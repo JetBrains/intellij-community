@@ -31,7 +31,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: May 25, 2010
  */
 public class AntMultiPathStringConverter extends Converter<List<File>> implements CustomReferenceConverter<List<File>> {
 
@@ -112,6 +111,6 @@ public class AntMultiPathStringConverter extends Converter<List<File>> implement
       }
     }
 
-    return result.toArray(new PsiReference[result.size()]);
+    return result.toArray(PsiReference.EMPTY_ARRAY);
   }
 }

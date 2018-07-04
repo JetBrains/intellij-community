@@ -31,16 +31,12 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.*;
 
 /**
  * @author dsl
@@ -109,14 +105,6 @@ public class RenameHandlerRegistry {
     return renameHandler instanceof TitledHandler ? StringUtil.capitalize(((TitledHandler)renameHandler).getActionTitle().toLowerCase()) : renameHandler.toString();
   }
 
-  /**
-   * @deprecated
-   * @see RenameHandler#EP_NAME
-   */
-  public void registerHandler(RenameHandler handler) {
-    myHandlers.add(handler);
-  }
-
   private static class HandlersChooser extends DialogWrapper {
     private final String[] myRenamers;
     private String mySelection;
@@ -144,15 +132,15 @@ public class RenameHandlerRegistry {
       for (final String renamer : myRenamers) {
         final JRadioButton rb = new JRadioButton(renamer, selected);
         myRButtons[rIdx++] = rb;
-        final ActionListener listener = new ActionListener() {
+        final ItemListener listener = new ItemListener() {
           @Override
-          public void actionPerformed(ActionEvent e) {
+          public void itemStateChanged(ItemEvent e) {
             if (rb.isSelected()) {
               mySelection = renamer;
             }
           }
         };
-        rb.addActionListener(listener);
+        rb.addItemListener(listener);
         selected = false;
         bg.add(rb);
         radioPanel.add(rb);

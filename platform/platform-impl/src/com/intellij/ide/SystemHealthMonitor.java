@@ -1,56 +1,40 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.ide.actions.EditCustomVmOptionsAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jna.JnaLoader;
 import com.intellij.notification.*;
+import com.intellij.notification.impl.NotificationFullContent;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Bitness;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.Version;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.HyperlinkAdapter;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.JdkBundle;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.lang.JavaVersion;
 import com.sun.jna.Library;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import java.awt.*;
 import java.io.File;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -61,10 +45,9 @@ import java.util.regex.Pattern;
 public class SystemHealthMonitor implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance(SystemHealthMonitor.class);
 
-  private static final NotificationGroup GROUP = new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, false);
-  private static final NotificationGroup LOG_GROUP = NotificationGroup.logOnlyGroup("System Health (minor)");
+  private static final NotificationGroup GROUP = new NotificationGroup("System Health", NotificationDisplayType.STICKY_BALLOON, true);
   private static final String SWITCH_JDK_ACTION = "SwitchBootJdk";
-  private static final String LATEST_JDK_RELEASE = "1.8.0u112";
+  private static final JavaVersion MIN_RECOMMENDED_JDK = JavaVersion.compose(8, 0, 144, 0, false);
 
   private final PropertiesComponent myProperties;
 
@@ -74,50 +57,49 @@ public class SystemHealthMonitor implements ApplicationComponent {
 
   @Override
   public void initComponent() {
-    checkRuntime();
-    checkReservedCodeCacheSize();
-    checkIBus();
-    checkSignalBlocking();
-    startDiskSpaceMonitoring();
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      checkRuntime();
+      checkReservedCodeCacheSize();
+      checkIBus();
+      checkSignalBlocking();
+      startDiskSpaceMonitoring();
+    });
   }
 
   private void checkRuntime() {
-    if (StringUtil.endsWithIgnoreCase(System.getProperty("java.version", ""), "-ea")) {
-      showNotification(new KeyHyperlinkAdapter("unsupported.jvm.ea.message"));
+    if (JavaVersion.current().ea) {
+      showNotification("unsupported.jvm.ea.message", null);
     }
 
-    JdkBundle bundle = JdkBundle.createBoot();
-    if (bundle != null && !bundle.isBundled()) {
-      Version version = bundle.getVersion();
-      Integer updateNumber = bundle.getUpdateNumber();
-      if (version != null && updateNumber != null && version.major == 1 && version.minor == 8 && updateNumber < 112) {
-        final String bundleVersion = version.toCompactString() + "u" + updateNumber;
-        boolean showSwitchOption = false;
+    JdkBundle bootJdk = JdkBundle.createBoot();
+    if (!bootJdk.isBundled()) {
+      boolean outdatedRuntime = bootJdk.getBundleVersion().compareTo(MIN_RECOMMENDED_JDK) < 0;
+      if (!SystemInfo.isJetBrainsJvm || outdatedRuntime) {
+        JdkBundle bundledJdk;
+        boolean validBundledJdk =
+          (SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux) &&
+          (bundledJdk = JdkBundle.createBundled()) != null &&
+          bundledJdk.isOperational();
 
-        final File bundledJDKAbsoluteLocation = JdkBundle.getBundledJDKAbsoluteLocation();
-        if (bundledJDKAbsoluteLocation.exists() && bundle.getBitness() == Bitness.x64) {
-          if (SystemInfo.isMacIntel64) {
-            showSwitchOption = true;
-          }
-          else if (SystemInfo.isWindows || SystemInfo.isLinux) {
-            JdkBundle bundledJdk = JdkBundle.createBundle(bundledJDKAbsoluteLocation, false, false);
-            if (bundledJdk != null && bundledJdk.getVersion() != null) {
-              showSwitchOption = true; // Version of bundled jdk is available, so the jdk is compatible with underlying OS
-            }
-          }
-        }
-
-        showNotification(new KeyHyperlinkAdapter(showSwitchOption ? "outdated.jvm.version.message1" : "outdated.jvm.version.message2") {
+        NotificationAction switchAction = new NotificationAction("Switch") {
           @Override
-          protected void hyperlinkActivated(HyperlinkEvent e) {
-            if ("switch".equals(e.getDescription())) {
-              ActionManager.getInstance().getAction(SWITCH_JDK_ACTION).actionPerformed(null);
-            }
-            else {
-              super.hyperlinkActivated(e);
-            }
+          public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+            notification.expire();
+            ActionManager.getInstance().getAction(SWITCH_JDK_ACTION).actionPerformed(null);
           }
-        }, bundleVersion, LATEST_JDK_RELEASE);
+        };
+
+        String current = bootJdk.getBundleVersion().toString();
+        if (!SystemInfo.isJetBrainsJvm) current += " by " + SystemInfo.JAVA_VENDOR;
+        if (outdatedRuntime && validBundledJdk) {
+          showNotification("outdated.jre.version.message1", switchAction, current, MIN_RECOMMENDED_JDK);
+        }
+        else if (outdatedRuntime) {
+          showNotification("outdated.jre.version.message2", null, current, MIN_RECOMMENDED_JDK);
+        }
+        else if (validBundledJdk) {
+          showNotification("bundled.jre.version.message", switchAction, current);
+        }
       }
     }
   }
@@ -126,7 +108,15 @@ public class SystemHealthMonitor implements ApplicationComponent {
     int minReservedCodeCacheSize = 240;
     int reservedCodeCacheSize = VMOptions.readOption(VMOptions.MemoryKind.CODE_CACHE, true);
     if (reservedCodeCacheSize > 0 && reservedCodeCacheSize < minReservedCodeCacheSize) {
-      showNotification(new KeyHyperlinkAdapter("vmoptions.warn.message"), reservedCodeCacheSize, minReservedCodeCacheSize);
+      EditCustomVmOptionsAction vmEditAction = new EditCustomVmOptionsAction();
+      NotificationAction action = new NotificationAction(IdeBundle.message("vmoptions.edit.action")) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          notification.expire();
+          ActionUtil.performActionDumbAware(vmEditAction, e);
+        }
+      };
+      showNotification("vmoptions.warn.message", vmEditAction.isEnabled() ? action : null, reservedCodeCacheSize, minReservedCodeCacheSize);
     }
   }
 
@@ -140,7 +130,7 @@ public class SystemHealthMonitor implements ApplicationComponent {
           if (m.find() && StringUtil.compareVersionNumbers(m.group(1), "1.5.11") < 0) {
             String fix = System.getenv("IBUS_ENABLE_SYNC_MODE");
             if (fix == null || fix.isEmpty() || fix.equals("0") || fix.equalsIgnoreCase("false")) {
-              showNotification(new KeyHyperlinkAdapter("ibus.blocking.warn.message"));
+              showNotification("ibus.blocking.warn.message", detailsAction("https://youtrack.jetbrains.com/issue/IDEA-78860"));
             }
           }
         }
@@ -151,12 +141,12 @@ public class SystemHealthMonitor implements ApplicationComponent {
   private void checkSignalBlocking() {
     if (SystemInfo.isUnix && JnaLoader.isLoaded()) {
       try {
-        LibC lib = (LibC)Native.loadLibrary("c", LibC.class);
+        LibC lib = Native.loadLibrary("c", LibC.class);
         Memory buf = new Memory(1024);
         if (lib.sigaction(LibC.SIGINT, null, buf) == 0) {
           long handler = Native.POINTER_SIZE == 8 ? buf.getLong(0) : buf.getInt(0);
           if (handler == LibC.SIG_IGN) {
-            showNotification(new KeyHyperlinkAdapter("ide.sigint.ignored.message"));
+            showNotification("ide.sigint.ignored.message", detailsAction("https://youtrack.jetbrains.com/issue/IDEA-157989"));
           }
         }
       }
@@ -166,38 +156,37 @@ public class SystemHealthMonitor implements ApplicationComponent {
     }
   }
 
-  private void showNotification(KeyHyperlinkAdapter adapter, Object... params) {
-    @PropertyKey(resourceBundle = "messages.IdeBundle") String key = adapter.key;
-    boolean ignored = adapter.isIgnored();
+  private void showNotification(@PropertyKey(resourceBundle = "messages.IdeBundle") String key,
+                                @Nullable NotificationAction action,
+                                Object... params) {
+    boolean ignored = myProperties.isValueSet("ignore." + key);
     LOG.info("issue detected: " + key + (ignored ? " (ignored)" : ""));
     if (ignored) return;
 
-    String message = IdeBundle.message(key, params) + IdeBundle.message("sys.health.acknowledge.link");
-
-    Application app = ApplicationManager.getApplication();
-    app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+    Notification notification = new MyNotification(IdeBundle.message(key, params));
+    if (action != null) {
+      notification.addAction(action);
+    }
+    notification.addAction(new NotificationAction(IdeBundle.message("sys.health.acknowledge.action")) {
       @Override
-      public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
-        app.invokeLater(() -> {
-          JComponent component = WindowManager.getInstance().findVisibleFrame().getRootPane();
-          if (component != null) {
-            Rectangle rect = component.getVisibleRect();
-            JBPopupFactory.getInstance()
-              .createHtmlTextBalloonBuilder(message, MessageType.WARNING, adapter)
-              .setFadeoutTime(-1)
-              .setHideOnFrameResize(false)
-              .setHideOnLinkClick(true)
-              .setDisposable(app)
-              .createBalloon()
-              .show(new RelativePoint(component, new Point(rect.x + 30, rect.y + rect.height - 10)), Balloon.Position.above);
-          }
-
-          Notification notification = LOG_GROUP.createNotification(message, NotificationType.WARNING);
-          notification.setImportant(true);
-          Notifications.Bus.notify(notification);
-        });
+      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+        notification.expire();
+        myProperties.setValue("ignore." + key, "true");
       }
     });
+    notification.setImportant(true);
+
+    ApplicationManager.getApplication().invokeLater(() -> Notifications.Bus.notify(notification));
+  }
+
+  private static final class MyNotification extends Notification implements NotificationFullContent {
+    public MyNotification(@NotNull String content) {
+      super(GROUP.getDisplayId(), "", content, NotificationType.WARNING);
+    }
+  }
+
+  private static NotificationAction detailsAction(String url) {
+    return new BrowseNotificationAction(IdeBundle.message("sys.health.details"), url);
   }
 
   private static void startDiskSpaceMonitoring() {
@@ -287,28 +276,5 @@ public class SystemHealthMonitor implements ApplicationComponent {
     int SIGINT = 2;
     long SIG_IGN = 1L;
     int sigaction(int signum, Pointer act, Pointer oldact);
-  }
-
-  private class KeyHyperlinkAdapter extends HyperlinkAdapter {
-    private final String key;
-
-    private KeyHyperlinkAdapter(@PropertyKey(resourceBundle = "messages.IdeBundle") String key) {
-      this.key = key;
-    }
-
-    private boolean isIgnored() {
-      return myProperties.isValueSet("ignore." + key);
-    }
-
-    @Override
-    protected void hyperlinkActivated(HyperlinkEvent e) {
-      String url = e.getDescription();
-      if ("ack".equals(url)) {
-        myProperties.setValue("ignore." + key, "true");
-      }
-      else {
-        BrowserUtil.browse(url);
-      }
-    }
   }
 }

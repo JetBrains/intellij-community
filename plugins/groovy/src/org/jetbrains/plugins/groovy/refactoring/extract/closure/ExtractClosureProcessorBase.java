@@ -55,6 +55,7 @@ public abstract class ExtractClosureProcessorBase extends BaseRefactoringProcess
     };
   }
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return EXTRACT_CLOSURE;

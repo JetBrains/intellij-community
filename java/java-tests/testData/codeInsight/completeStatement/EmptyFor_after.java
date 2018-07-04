@@ -1,6 +1,6 @@
 class Foo {
     {
-        for (;;) {
+        for (; ; ) {
             <caret>
         }
     }

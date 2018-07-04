@@ -3155,7 +3155,6 @@ class ConcurrentHashMap<K,V> extends AbstractMap<K,V>
             return true;
         }
 
-        private static final sun.misc.Unsafe U = sun.misc.Unsafe.getUnsafe();
         private static final long LOCKSTATE;
         static {
             try {

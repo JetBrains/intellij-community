@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -28,13 +14,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.update.UpdateEventHandler;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNRevisionRange;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.List;
@@ -44,7 +25,7 @@ public class Merger implements IMerger {
   protected final File myTarget;
   @Nullable protected final ProgressTracker myHandler;
   private final ProgressIndicator myProgressIndicator;
-  protected final SVNURL myCurrentBranchUrl;
+  protected final Url myCurrentBranchUrl;
   private final StringBuilder myCommitMessage;
   protected final SvnConfiguration mySvnConfig;
   private final Project myProject;
@@ -60,7 +41,7 @@ public class Merger implements IMerger {
                 final List<CommittedChangeList> changeLists,
                 final File target,
                 final UpdateEventHandler handler,
-                final SVNURL currentBranchUrl,
+                final Url currentBranchUrl,
                 String branchName) {
     this(vcs, changeLists, target, handler, currentBranchUrl, branchName, false, false, false);
   }
@@ -69,7 +50,7 @@ public class Merger implements IMerger {
                 final List<CommittedChangeList> changeLists,
                 final File target,
                 final UpdateEventHandler handler,
-                final SVNURL currentBranchUrl,
+                final Url currentBranchUrl,
                 String branchName,
                 boolean recordOnly,
                 boolean invertRange,
@@ -154,7 +135,7 @@ public class Merger implements IMerger {
   }
 
   protected void doMerge() throws VcsException {
-    SvnTarget source = SvnTarget.fromURL(myCurrentBranchUrl);
+    Target source = Target.on(myCurrentBranchUrl);
     MergeClient client = myVcs.getFactory(myTarget).createMergeClient();
 
     client.merge(source, myMergeChunk.revisionRange(), myTarget, Depth.INFINITY, mySvnConfig.isMergeDryRun(), myRecordOnly, true,
@@ -298,11 +279,11 @@ public class Merger implements IMerger {
     }
 
     @NotNull
-    public SVNRevisionRange revisionRange() {
-      SVNRevision startRevision = SVNRevision.create(lowestNumber() - 1);
-      SVNRevision endRevision = SVNRevision.create(highestNumber());
+    public RevisionRange revisionRange() {
+      Revision startRevision = Revision.of(lowestNumber() - 1);
+      Revision endRevision = Revision.of(highestNumber());
 
-      return myInvertRange ? new SVNRevisionRange(endRevision, startRevision) : new SVNRevisionRange(startRevision, endRevision);
+      return myInvertRange ? new RevisionRange(endRevision, startRevision) : new RevisionRange(startRevision, endRevision);
     }
 
     @Override

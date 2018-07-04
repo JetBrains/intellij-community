@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem
 
 import com.intellij.openapi.components.PersistentStateComponent
@@ -25,21 +11,22 @@ import com.intellij.openapi.module.ModuleServiceManager
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelElement
+import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Transient
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KProperty
 
-val EMPTY_STATE = ExternalStateComponent()
+val EMPTY_STATE: ExternalStateComponent = ExternalStateComponent()
 
 @Suppress("DEPRECATION")
 @State(name = "ExternalSystem")
 class ExternalSystemModulePropertyManager(private val module: Module) : PersistentStateComponent<ExternalStateComponent>, ProjectModelElement {
-  override fun getExternalSource() = store.externalSystem?.let { ExternalProjectSystemRegistry.getInstance().getSourceById(it) }
+  override fun getExternalSource(): ProjectModelExternalSource? = store.externalSystem?.let { ExternalProjectSystemRegistry.getInstance().getSourceById(it) }
 
   private var store = if (module.project.isExternalStorageEnabled) ExternalStateComponent() else ExternalStateModule(module)
 
-  override fun getState() = store as? ExternalStateComponent ?: EMPTY_STATE
+  override fun getState(): ExternalStateComponent = store as? ExternalStateComponent ?: EMPTY_STATE
 
   override fun loadState(state: ExternalStateComponent) {
     store = state
@@ -47,26 +34,26 @@ class ExternalSystemModulePropertyManager(private val module: Module) : Persiste
 
   companion object {
     @JvmStatic
-    fun getInstance(module: Module) = ModuleServiceManager.getService(module, ExternalSystemModulePropertyManager::class.java)!!
+    fun getInstance(module: Module): ExternalSystemModulePropertyManager = ModuleServiceManager.getService(module, ExternalSystemModulePropertyManager::class.java)!!
   }
 
   @Suppress("DEPRECATION")
-  fun getExternalSystemId() = store.externalSystem
+  fun getExternalSystemId(): String? = store.externalSystem
 
-  fun getExternalModuleType() = store.externalSystemModuleType
+  fun getExternalModuleType(): String? = store.externalSystemModuleType
 
-  fun getExternalModuleVersion() = store.externalSystemModuleVersion
+  fun getExternalModuleVersion(): String? = store.externalSystemModuleVersion
 
-  fun getExternalModuleGroup() = store.externalSystemModuleGroup
+  fun getExternalModuleGroup(): String? = store.externalSystemModuleGroup
 
-  fun getLinkedProjectId() = store.linkedProjectId
+  fun getLinkedProjectId(): String? = store.linkedProjectId
 
-  fun getRootProjectPath() = store.rootProjectPath
+  fun getRootProjectPath(): String? = store.rootProjectPath
 
-  fun getLinkedProjectPath() = store.linkedProjectPath
+  fun getLinkedProjectPath(): String? = store.linkedProjectPath
 
   @Suppress("DEPRECATION")
-  fun isMavenized() = store.isMavenized
+  fun isMavenized(): Boolean = store.isMavenized
 
   @Suppress("DEPRECATION")
   fun setMavenized(mavenized: Boolean) {
@@ -90,7 +77,11 @@ class ExternalSystemModulePropertyManager(private val module: Module) : Persiste
     }
 
     store.externalSystem = if (store is ExternalStateModule && isMaven) null else oldStore.externalSystem
-    store.isMavenized = isMaven
+    if (store !is ExternalStateComponent) {
+      // do not set isMavenized for ExternalStateComponent it just set externalSystem
+      store.isMavenized = isMaven
+    }
+
     store.linkedProjectId = oldStore.linkedProjectId
     store.linkedProjectPath = oldStore.linkedProjectPath
     store.rootProjectPath = oldStore.rootProjectPath
@@ -126,10 +117,6 @@ class ExternalSystemModulePropertyManager(private val module: Module) : Persiste
 
   fun setExternalModuleType(type: String?) {
     store.externalSystemModuleType = type
-  }
-
-  fun setLinkedProjectId(projectId: String) {
-    store.linkedProjectId = projectId
   }
 }
 

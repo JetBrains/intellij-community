@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.dnd.DnDManager;
@@ -77,13 +63,16 @@ public abstract class XVariablesViewBase extends XDebugView {
     DnDManager.getInstance().registerSource(myTreePanel, getTree());
   }
 
+  public JComponent getDefaultFocusedComponent() {
+    return myTreePanel.getTree();
+  }
+
   protected void buildTreeAndRestoreState(@NotNull final XStackFrame stackFrame) {
     XSourcePosition position = stackFrame.getSourcePosition();
     XDebuggerTree tree = getTree();
     tree.setSourcePosition(position);
     createNewRootNode(stackFrame);
-    final Project project = tree.getProject();
-    project.putUserData(XVariablesView.DEBUG_VARIABLES, new XVariablesView.InlineVariablesInfo());
+    XVariablesView.InlineVariablesInfo.set(getSession(tree), new XVariablesView.InlineVariablesInfo());
     clearInlays(tree);
     Object newEqualityObject = stackFrame.getEqualityObject();
     if (newEqualityObject != null) {
@@ -95,7 +84,7 @@ public abstract class XVariablesViewBase extends XDebugView {
     }
 
     if (position != null && Registry.is("debugger.valueTooltipAutoShowOnSelection")) {
-      registerInlineEvaluator(stackFrame, position, project);
+      registerInlineEvaluator(stackFrame, position, tree.getProject());
     }
   }
 
@@ -114,7 +103,7 @@ public abstract class XVariablesViewBase extends XDebugView {
   protected XValueContainerNode doCreateNewRootNode(@Nullable XStackFrame stackFrame) {
     XValueContainerNode root;
     if (stackFrame == null) {
-      root = new XValueContainerNode<XValueContainer>(getTree(), null, new XValueContainer() {}) {};
+      root = new XValueContainerNode<XValueContainer>(getTree(), null, true, new XValueContainer() {}) {};
     }
     else {
       root = new XStackFrameNode(getTree(), stackFrame);

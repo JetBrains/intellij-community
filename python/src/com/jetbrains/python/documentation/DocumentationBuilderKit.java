@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,47 +16,41 @@
 package com.jetbrains.python.documentation;
 
 import com.google.common.collect.Lists;
-import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.xml.CommonXmlStrings;
 import com.intellij.xml.util.XmlStringUtil;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.toolbox.ChainIterable;
-import com.jetbrains.python.toolbox.FP;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
-import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Function;
 
 class DocumentationBuilderKit {
   static final TagWrapper TagBold = new TagWrapper("b");
-  static final TagWrapper TagItalic = new TagWrapper("i");
   static final TagWrapper TagSmall = new TagWrapper("small");
   static final TagWrapper TagCode = new TagWrapper("code");
   static final TagWrapper TagSpan = new TagWrapper("span");
 
-  static final FP.Lambda1<String, String> LCombUp = new FP.Lambda1<String, String>() {
-    public String apply(String argname) {
-      return combUp(argname);
-    }
-  };
-  final static @NonNls String BR = "<br>";
-  static final FP.Lambda1<String, String> LSame1 = new FP.Lambda1<String, String>() {
-    public String apply(String name) {
-      return name;
-    }
-  };
-  static final FP.Lambda1<Iterable<String>, Iterable<String>> LSame2 = new FP.Lambda1<Iterable<String>, Iterable<String>>() {
-    public Iterable<String> apply(Iterable<String> what) {
-      return what;
-    }
-  };
-  public static FP.Lambda1<PyExpression, String> LReadableRepr = new FP.Lambda1<PyExpression, String>() {
-    public String apply(PyExpression arg) {
-      return PyUtil.getReadableRepr(arg, true);
-    }
-  };
+  public final static @NonNls String BR = "<br>";
+
+  @NotNull
+  static final Function<String, String> ESCAPE_ONLY = StringUtil::escapeXml;
+
+  @NotNull
+  static final Function<String, String> TO_ONE_LINE_AND_ESCAPE = s -> ESCAPE_ONLY.apply(s.replace('\n', ' '));
+
+  @NotNull
+  static final Function<String, String> ESCAPE_AND_SAVE_NEW_LINES_AND_SPACES =
+    s -> ESCAPE_ONLY.apply(s).replace("\n", BR).replace(" ", CommonXmlStrings.NBSP);
+
+  @NotNull
+  static final Function<String, String> WRAP_IN_ITALIC = s -> "<i>" + s + "</i>";
+
+  @NotNull
+  static final Function<String, String> WRAP_IN_BOLD = s -> "<b>" + s + "</b>";
 
   private DocumentationBuilderKit() {
   }
@@ -87,21 +81,10 @@ class DocumentationBuilderKit {
     return new ChainIterable<>(Arrays.asList(content));
   }
 
-  static <T> Iterable<T> interleave(Iterable<T> source, T filler) {
-    final List<T> ret = new LinkedList<>();
-    boolean isNext = false;
-    for (T what : source) {
-      if (isNext) ret.add(filler);
-      else isNext = true;
-      ret.add(what);
-    }
-    return ret;
-  }
-
   // make a first-order curried objects out of wrapInTag()
-  static class TagWrapper implements FP.Lambda1<Iterable<String>, Iterable<String>> {
+  static class TagWrapper implements Function<Iterable<String>, Iterable<String>> {
     private final String myTag;
-    private List<Pair<String, String>> myAttributes = Lists.newArrayList();
+    private final List<Pair<String, String>> myAttributes = Lists.newArrayList();
 
     TagWrapper(String tag) {
       myTag = tag;
@@ -118,20 +101,5 @@ class DocumentationBuilderKit {
       return wrapInTag(myTag, myAttributes, contents);
     }
 
-  }
-
-  static class LinkWrapper implements FP.Lambda1<Iterable<String>, Iterable<String>> {
-    private final String myLink;
-
-    LinkWrapper(String link) {
-      myLink = link;
-    }
-
-    public Iterable<String> apply(Iterable<String> contents) {
-      return new ChainIterable<String>()
-        .addItem("<a href=\"").addItem(DocumentationManagerProtocol.PSI_ELEMENT_PROTOCOL).addItem(myLink).addItem("\">")
-        .add(contents).addItem("</a>")
-      ;
-    }
   }
 }

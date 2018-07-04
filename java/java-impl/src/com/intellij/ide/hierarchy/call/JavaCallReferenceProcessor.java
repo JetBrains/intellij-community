@@ -42,7 +42,7 @@ public class JavaCallReferenceProcessor implements CallReferenceProcessor {
       if (qualifier instanceof PsiSuperExpression) { // filter super.foo() call inside foo() and similar cases (bug 8411)
         final PsiClass superClass = PsiUtil.resolveClassInType(qualifier.getType());
         if (superClass == null || originalClass.isInheritor(superClass, true)) {
-          return true;
+          return false;
         }
       }
       if (qualifier != null && !methodToFind.hasModifierProperty(PsiModifier.STATIC)) {
@@ -55,7 +55,7 @@ public class JavaCallReferenceProcessor implements CallReferenceProcessor {
             final PsiMethod callee = psiClass.findMethodBySignature(methodToFind, true);
             if (callee != null && !methodsToFind.contains(callee)) {
               // skip sibling methods
-              return true;
+              return false;
             }
           }
         }
@@ -69,12 +69,12 @@ public class JavaCallReferenceProcessor implements CallReferenceProcessor {
       final PsiElement parent = ((PsiElement)reference).getParent();
       if (parent instanceof PsiNewExpression) {
         if (((PsiNewExpression)parent).getClassReference() != reference) {
-          return true;
+          return false;
         }
       }
       else if (parent instanceof PsiAnonymousClass) {
         if (((PsiAnonymousClass)parent).getBaseClassReference() != reference) {
-          return true;
+          return false;
         }
       }
       else if (!(reference instanceof LightMemberReference)) {

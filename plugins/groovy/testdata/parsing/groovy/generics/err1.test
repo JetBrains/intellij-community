@@ -20,14 +20,14 @@ Groovy script
         Type extends bounds list
           <empty list>
       PsiElement(,)(',')
-      PsiErrorElement:Type parameter expected
+      PsiErrorElement:<type parameter> expected, got ','
         <empty list>
       PsiWhiteSpace(' ')
       PsiElement(,)(',')
-      PsiErrorElement:Type parameter expected
+      PsiErrorElement:<type parameter> expected, got ','
         <empty list>
       PsiElement(,)(',')
-      PsiErrorElement:Type parameter expected
+      PsiErrorElement:<type parameter> expected, got ','
         <empty list>
       PsiWhiteSpace(' ')
       PsiElement(,)(',')

@@ -34,6 +34,7 @@ import java.util.List;
  */
 public abstract class AbstractTestProxy extends CompositePrintable {
   public static final DataKey<AbstractTestProxy> DATA_KEY = DataKey.create("testProxy");
+  public static final DataKey<AbstractTestProxy[]> DATA_KEYS = DataKey.create("testProxies");
 
   protected Printer myPrinter = null;
 
@@ -151,6 +152,19 @@ public abstract class AbstractTestProxy extends CompositePrintable {
   public List<DiffHyperlink> getDiffViewerProviders() {
     final DiffHyperlink provider = getDiffViewerProvider();
     return provider == null ? Collections.emptyList() : Collections.singletonList(provider);
+  }
+
+  @Nullable
+  public DiffHyperlink getLeafDiffViewerProvider() {
+    DiffHyperlink provider = getDiffViewerProvider();
+    if (provider != null) return provider;
+    if (isDefect()) {
+      for (AbstractTestProxy child : getChildren()) {
+        provider = child.getLeafDiffViewerProvider();
+        if (provider != null) return provider;
+      }
+    }
+    return null;
   }
 
   @Nullable

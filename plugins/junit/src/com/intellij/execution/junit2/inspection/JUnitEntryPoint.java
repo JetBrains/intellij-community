@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.junit2.inspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.reference.EntryPoint;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.visibility.EntryPointWithVisibilityLevel;
 import com.intellij.execution.junit.JUnitUtil;
@@ -30,6 +15,7 @@ import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CommonProcessors;
+import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,13 +55,13 @@ public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
     }
     else if (psiElement instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)psiElement;
-      if (method.isConstructor() && method.getParameterList().getParametersCount() == 0) {
+      if (method.isConstructor() && method.getParameterList().isEmpty()) {
         return JUnitUtil.isTestClass(method.getContainingClass());
       }
       if (JUnitUtil.isTestMethodOrConfig(method)) return true;
     }
     else if (psiElement instanceof PsiField) {
-      return AnnotationUtil.isAnnotated((PsiField)psiElement, JUnitUtil.PARAMETRIZED_PARAMETER_ANNOTATION_NAME, false);
+      return AnnotationUtil.isAnnotated((PsiField)psiElement, JUnitUtil.PARAMETRIZED_PARAMETER_ANNOTATION_NAME, 0);
     }
     return false;
   }
@@ -92,8 +78,13 @@ public class JUnitEntryPoint extends EntryPointWithVisibilityLevel {
     if (container != null && JUnitUtil.isJUnit5TestClass(container, false)) {
       return PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
     }
+    
+    if (member instanceof PsiField && 
+        AnnotationUtil.isAnnotated(member, JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_EXTENSION_REGISTER_EXTENSION, 0)) {
+      return PsiUtil.ACCESS_LEVEL_PACKAGE_LOCAL;
+    }
 
-    return -1;
+    return ACCESS_LEVEL_INVALID;
   }
 
   @Override

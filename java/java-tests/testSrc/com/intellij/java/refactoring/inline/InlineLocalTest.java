@@ -189,40 +189,30 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
   }
   
   public void testLambdaExpr() {
-    doTest(true);
+    doTest(true, LanguageLevel.JDK_1_8);
   }
   
   public void testLambdaExprAsRefQualifier() {
-    doTest(true);
+    doTest(true, LanguageLevel.JDK_1_8);
   }
 
   public void testMethodRefAsRefQualifier() {
-    doTest(true);
+    doTest(true, LanguageLevel.JDK_1_8);
   }
 
   public void testLocalVarInsideLambdaBody() {
-    doTest(true);
+    doTest(true, LanguageLevel.JDK_1_8);
   }
 
   public void testLocalVarInsideLambdaBody1() {
-    doTest(true);
+    doTest(true, LanguageLevel.JDK_1_8);
   }
   
-  public void testLocalVarInsideLambdaBody2() {
-    doTest(true);
-  }
-
-  public void testLocalVarUsedInLambdaBody() {
-    doTest(true);
-  }
-
-  public void testCastAroundLambda() {
-    doTest(true);
-  }
-
-  public void testNoCastAroundLambda() {
-    doTest(true);
-  }
+  public void testLocalVarInsideLambdaBody2() { doTest(true, LanguageLevel.JDK_1_8); }
+  public void testLocalVarUsedInLambdaBody() { doTest(true, LanguageLevel.JDK_1_8); }
+  public void testCastAroundLambda() { doTest(true, LanguageLevel.JDK_1_8); }
+  public void testNoCastAroundLambda() { doTest(true, LanguageLevel.JDK_1_8); }
+  public void testNoCastWithVar() { doTest(true, LanguageLevel.JDK_10); }
 
   public void testUncheckedCast() {
     doTest(true);
@@ -301,9 +291,8 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
     doTest(false);
   }
 
-  public void testLocalInsideLambdaWithNestedLambda() {
-    doTest(true);
-  }
+  public void testLocalInsideLambdaWithNestedLambda() { doTest(true); }
+  public void testDefInMultiAssignmentStatement() { doTest(true); }
 
   private void doTest(final boolean inlineDef, String conflictMessage) {
     try {
@@ -311,13 +300,21 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
       fail("Conflict was not detected");
     }
     catch (RuntimeException e) {
-      assertEquals(e.getMessage(), conflictMessage);
+      assertEquals(conflictMessage, e.getMessage());
     }
   }
 
+  public void testVariableInsideResourceList() {
+    doTest(false, "Cannot perform refactoring.\n" +
+                  "Variable is used as resource reference");
+  }
 
   private void doTest(final boolean inlineDef) {
-    setLanguageLevel(LanguageLevel.JDK_1_7);
+    doTest(inlineDef, LanguageLevel.JDK_1_7);
+  }
+
+  private void doTest(final boolean inlineDef, LanguageLevel languageLevel) {
+    setLanguageLevel(languageLevel);
     String name = getTestName(false);
     String fileName = "/refactoring/inlineLocal/" + name + ".java";
     configureByFile(fileName);

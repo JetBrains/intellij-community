@@ -69,20 +69,10 @@ public class ModuleNode extends ExternalSystemNode<ModuleData> {
     return myChildNodes;
   }
 
-  @Override
-  public String getName() {
-    return myData.getId();
-  }
-
   @Nullable
   @Override
   protected String getMenuId() {
     return "ExternalSystemView.ModuleMenu";
-  }
-
-  @Override
-  public boolean isVisible() {
-    return super.isVisible();
   }
 
   @Override

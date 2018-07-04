@@ -26,6 +26,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,7 +77,7 @@ public class ReplaceCastWithVariableAction extends PsiElementBaseIntentionAction
 
     final PsiElement toReplace = typeCastExpression.getParent() instanceof PsiParenthesizedExpression ? typeCastExpression.getParent() : typeCastExpression;
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    toReplace.replace(factory.createExpressionFromText(myReplaceVariableName, toReplace));
+    new CommentTracker().replaceAndRestoreComments(toReplace, factory.createExpressionFromText(myReplaceVariableName, toReplace));
   }
 
   @Nullable

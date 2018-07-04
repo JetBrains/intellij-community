@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.*
 import com.intellij.psi.util.PropertyUtil
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression
@@ -31,10 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyMethodResultImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.*
 import org.jetbrains.plugins.groovy.util.NotNullCachedComputableWrapper
 import org.jetbrains.plugins.groovy.util.TestUtils
 
@@ -262,7 +247,7 @@ class ResolveMethodTest extends GroovyResolveTestCase {
   void testWrongConstructor() {
     myFixture.addFileToProject('Classes.groovy', 'class Foo { int a; int b }')
     def ref = configureByText('new Fo<caret>o(2, 3)')
-    assert !((GrNewExpression) ref.element.parent).advancedResolve().element
+    assert ((GrNewExpression) ref.element.parent).advancedResolve().element instanceof DefaultConstructor
   }
 
   void testLangImmutableConstructor() {
@@ -433,9 +418,7 @@ class ResolveMethodTest extends GroovyResolveTestCase {
   void testUnboxBigDecimal() {
     myFixture.addClass("package java.math; public class BigDecimal {}")
     PsiReference ref = configureByFile("unboxBigDecimal/A.groovy")
-    PsiElement resolved = ref.resolve()
-    assertTrue(resolved instanceof PsiMethod)
-    assertEquals(PsiType.DOUBLE, ((PsiMethod)resolved).returnType)
+    assertTrue(ref.resolve() instanceof PsiMethod)
   }
 
   void testGrvy1157() {
@@ -476,6 +459,7 @@ class ResolveMethodTest extends GroovyResolveTestCase {
 
   void testMethodCallTypeFromMultiResolve() {
     GrReferenceExpression ref = (GrReferenceExpression)configureByFile("methodCallTypeFromMultiResolve/A.groovy").element
+    def result = ref.advancedResolve()
     assertNull(ref.resolve())
     assertTrue(((GrMethodCallExpression)ref.parent).type.equalsToText("java.lang.String"))
   }
@@ -1396,7 +1380,7 @@ class _a {
   }
 
   void testRuntimeMixin22() {
-    assertNull resolveByText('''\
+    resolveByText '''\
 class ReentrantLock {}
 
 ReentrantLock.metaClass.withLock = { nestedCode -> }
@@ -1404,7 +1388,7 @@ ReentrantLock.metaClass.withLock = { nestedCode -> }
 new ReentrantLock().withLock {
     fo<caret>o(3)
 }
-''')
+''', null
   }
 
   void testRuntimeMixin23() {
@@ -1745,7 +1729,7 @@ class Bar {
 }
 
 def bar(Object o) {
-  if (o instanceof Foo && o instanceof Bar o.fo<caret>o() && o.bar()) {
+  if (o instanceof Foo && o instanceof Bar && o.fo<caret>o() && o.bar()) {
     print o.foo()
   }
 }
@@ -1763,7 +1747,7 @@ class Bar {
 }
 
 def bar(Object o) {
-  if (o instanceof Foo && o instanceof Bar o.foo() && o.b<caret>ar()) {
+  if (o instanceof Foo && o instanceof Bar && o.foo() && o.b<caret>ar()) {
     print o.foo()
   }
 }
@@ -1985,8 +1969,7 @@ def abc(String s) { print 'hjk' }
   }
 
 
-  //IDEA-125331
-  void _testScriptMethodVSStaticImportInsideClosure() {
+  void testScriptMethodVSStaticImportInsideClosure() {
     def method = resolveByText '''
 import static C.abc
 
@@ -2178,7 +2161,7 @@ v.ba<caret>r()
   }
 
   void testMethodReferenceWithDefaultParameters() {
-    resolveByText('''
+    def ref = configureByText '_.groovy', '''
 class X {
   def foo(def it = null) {print it}
 
@@ -2186,7 +2169,13 @@ class X {
     print this.&f<caret>oo
   }
 }
-''', PsiMethod)
+''', GroovyReference
+    def results = ref.multiResolve(false)
+    assert results.length == 2
+    for (result in results) {
+      assert result.element instanceof GrReflectedMethod
+      assert result.validResult
+    }
   }
 
   void 'test static trait method generic return type'() {
@@ -2194,7 +2183,7 @@ class X {
 trait GenericSourceTrait<E> {
     static E someOtherStaticMethod() {null}
 }
-class SourceConcrete implements GenericSourceTrait<String> {})
+class SourceConcrete implements GenericSourceTrait<String> {}
 SourceConcrete.someOtherStatic<caret>Method()
 ''', GrTraitMethod)
     assertEquals "java.lang.String", method.returnType.canonicalText
@@ -2292,5 +2281,20 @@ class SomeClass extends List<Integer> {
 new SomeClass().si<caret>ze()
 ''', GrMethodImpl
 
+  }
+
+  void 'test prefer varargs in no-arg call'() {
+    def file = fixture.configureByText('_.groovy', '''\
+class A {
+  A(String... a) { println "varargs" }
+  A(A a) { println "single" }
+}
+
+new A()
+''') as GroovyFile
+    def expression = file.statements.last() as GrNewExpression
+    def resolved = expression.resolveMethod()
+    assert resolved instanceof GrMethod
+    assert resolved.isVarArgs()
   }
 }

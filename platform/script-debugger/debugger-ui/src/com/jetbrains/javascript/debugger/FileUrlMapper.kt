@@ -7,12 +7,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.util.Url
-import com.intellij.util.containers.ObjectIntHashMap
+import org.jetbrains.debugger.sourcemap.SourceFileResolver
 
 abstract class FileUrlMapper {
   companion object {
     @JvmField
-    val EP_NAME = ExtensionPointName.create<FileUrlMapper>("com.jetbrains.fileUrlMapper")
+    val EP_NAME: ExtensionPointName<FileUrlMapper> = ExtensionPointName.create<FileUrlMapper>("com.jetbrains.fileUrlMapper")
   }
 
   open fun getUrls(file: VirtualFile, project: Project, currentAuthority: String?): List<Url> = emptyList()
@@ -28,14 +28,7 @@ abstract class FileUrlMapper {
    * Optional to implement, sometimes you cannot build URL, but can match.
    * Lifetime: resolve session lifetime. Could be called multiple times: n <= total sourcemap count
    */
-  open fun createSourceResolver(file: VirtualFile, project: Project): FileUrlMapperSourceResolver? = null
+  open fun createSourceResolver(file: VirtualFile, project: Project): SourceFileResolver? = null
 
   open fun getFileType(url: Url): FileType? = null
-}
-
-interface FileUrlMapperSourceResolver {
-  /**
-   * Return -1 if no match
-   */
-  fun resolve(map: ObjectIntHashMap<Url>, project: Project): Int
 }

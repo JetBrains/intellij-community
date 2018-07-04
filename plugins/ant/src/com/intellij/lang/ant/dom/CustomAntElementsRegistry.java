@@ -54,7 +54,6 @@ import java.util.*;
  * Storage for user-defined tasks and data types
  * parsed from ant files
  * @author Eugene Zhuravlev
- *         Date: Jul 1, 2010
  */
 public class CustomAntElementsRegistry {
 
@@ -93,8 +92,8 @@ public class CustomAntElementsRegistry {
     final Set<XmlName> result = new HashSet<>();
     
     final Pair<AntDomMacroDef, AntDomScriptDef> contextMacroOrScriptDef = getContextMacroOrScriptDef(parentElement);
-    final AntDomMacroDef restrictToMacroDef = contextMacroOrScriptDef != null? contextMacroOrScriptDef.getFirst() : null;
-    final AntDomScriptDef restrictToScriptDef = contextMacroOrScriptDef != null? contextMacroOrScriptDef.getSecond() : null;
+    final AntDomMacroDef restrictToMacroDef = Pair.getFirst(contextMacroOrScriptDef);
+    final AntDomScriptDef restrictToScriptDef = Pair.getSecond(contextMacroOrScriptDef);
     final boolean parentIsDataType = parentElement.isDataType();
 
     for (final XmlName xmlName : myCustomElements.keySet()) {
@@ -161,14 +160,14 @@ public class CustomAntElementsRegistry {
     
     if (declaration instanceof AntDomMacrodefElement) {
       final Pair<AntDomMacroDef, AntDomScriptDef> contextMacroOrScriptDef = getContextMacroOrScriptDef(parentElement);
-      final AntDomMacroDef macrodefUsed = contextMacroOrScriptDef != null? contextMacroOrScriptDef.getFirst() : null;
+      final AntDomMacroDef macrodefUsed = Pair.getFirst(contextMacroOrScriptDef);
       if (macrodefUsed == null || !macrodefUsed.equals(declaration.getParentOfType(AntDomMacroDef.class, true))) {
         return null;
       }
     }
     else if (declaration instanceof AntDomScriptdefElement) {
       final Pair<AntDomMacroDef, AntDomScriptDef> contextMacroOrScriptDef = getContextMacroOrScriptDef(parentElement);
-      final AntDomScriptDef scriptDefUsed = contextMacroOrScriptDef != null? contextMacroOrScriptDef.getSecond() : null;
+      final AntDomScriptDef scriptDefUsed = Pair.getSecond(contextMacroOrScriptDef);
       if (scriptDefUsed == null || !scriptDefUsed.equals(declaration.getParentOfType(AntDomScriptDef.class, true))) {
         return null;
       }

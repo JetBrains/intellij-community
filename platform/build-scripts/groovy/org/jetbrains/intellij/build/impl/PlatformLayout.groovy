@@ -32,6 +32,7 @@ import java.util.function.Consumer
  */
 class PlatformLayout extends BaseLayout {
   List<String> excludedProjectLibraries = []
+  final List<String> projectLibrariesWithRemovedVersionFromJarNames = []
 
   static PlatformLayout platform(Consumer<PlatformLayout> customizer, @DelegatesTo(PlatformLayoutSpec) Closure body = {}) {
     def layout = new PlatformLayout()
@@ -62,9 +63,20 @@ class PlatformLayout extends BaseLayout {
     }
 
     /**
+     * Remove version numbers from {@code libraryName}'s JAR file names before copying to the product distributions. Currently it's needed
+     * for libraries included into bootstrap classpath of the platform, because their names are hardcoded in startup scripts and it's not
+     * convenient to change them each time the library is updated. <strong>Do not use this method for anything else.</strong> This method
+     * will be removed when build scripts automatically compose bootstrap classpath.
+     */
+    void removeVersionFromProjectLibraryJarNames(String libraryName) {
+      layout.projectLibrariesWithRemovedVersionFromJarNames << libraryName
+    }
+
+    /**
      * Include all project libraries from dependencies of modules already included into layout to 'lib' directory
      */
     void withProjectLibrariesFromIncludedModules(BuildContext context) {
+      context.messages.debug("Collecting project libraries used by platform modules")
       layout.moduleJars.values().each {
         def module = context.findRequiredModule(it)
         JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll {
@@ -72,6 +84,7 @@ class PlatformLayout extends BaseLayout {
           !layout.projectLibrariesToUnpack.values().contains(it.name) &&
           !layout.excludedProjectLibraries.contains(it.name)
         }.each {
+          context.messages.debug(" module '$module.name': '$it.name'")
           withProjectLibrary(it.name)
         }
       }

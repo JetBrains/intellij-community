@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.value.DfaExpressionFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -28,7 +29,6 @@ import com.intellij.util.PairFunction;
 import com.intellij.util.containers.*;
 import com.intellij.util.containers.Queue;
 import one.util.streamex.IntStreamEx;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +42,8 @@ public class LiveVariablesAnalyzer {
   private final Instruction[] myInstructions;
   private final MultiMap<Instruction, Instruction> myForwardMap;
   private final MultiMap<Instruction, Instruction> myBackwardMap;
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") private final Map<PsiElement, List<DfaVariableValue>> myClosureReads = FactoryMap.createMap(closure-> {
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") private final Map<PsiElement, List<DfaVariableValue>> myClosureReads =
+    FactoryMap.create(closure -> {
       final Set<DfaVariableValue> result = ContainerUtil.newLinkedHashSet();
       closure.accept(new PsiRecursiveElementWalkingVisitor() {
         @Override
@@ -57,8 +58,7 @@ public class LiveVariablesAnalyzer {
         }
       });
       return ContainerUtil.newArrayList(result);
-    }
-  );
+    });
 
   public LiveVariablesAnalyzer(ControlFlow flow, DfaValueFactory factory) {
     myFactory = factory;
@@ -68,7 +68,7 @@ public class LiveVariablesAnalyzer {
   }
 
   private List<Instruction> getSuccessors(Instruction ins) {
-    return IntStreamEx.of(LoopAnalyzer.getSuccessorIndices(ins.getIndex(), myInstructions)).mapToObj(i -> myInstructions[i]).toList();
+    return IntStreamEx.of(LoopAnalyzer.getSuccessorIndices(ins.getIndex(), myInstructions)).elements(myInstructions).toList();
   }
 
   private MultiMap<Instruction, Instruction> calcBackwardMap() {
@@ -146,9 +146,10 @@ public class LiveVariablesAnalyzer {
         BitSet set = result.get(instruction);
         if (set != null) {
           set.or(liveVars);
-          return set;
-        } else {
-          result.put((FinishElementInstruction)instruction, liveVars);
+          return (BitSet)set.clone();
+        }
+        else if (!liveVars.isEmpty()) {
+          result.put((FinishElementInstruction)instruction, (BitSet)liveVars.clone());
         }
       }
 
@@ -156,7 +157,7 @@ public class LiveVariablesAnalyzer {
       if (written != null) {
         liveVars = (BitSet)liveVars.clone();
         liveVars.clear(written.getID());
-        for (DfaVariableValue var : myFactory.getVarFactory().getAllQualifiedBy(written)) {
+        for (DfaVariableValue var : written.getDependentVariables()) {
           liveVars.clear(var.getID());
         }
       } else {
@@ -207,9 +208,8 @@ public class LiveVariablesAnalyzer {
     if (ok) {
       for (FinishElementInstruction instruction : toFlush.keySet()) {
         Collection<DfaVariableValue> values = toFlush.get(instruction);
-        // Do not flush special values as they could be used implicitly
-        values.removeIf(var -> var.getQualifier() != null &&
-                               StreamEx.of(SpecialField.values()).anyMatch(sf -> sf.isMyAccessor(var.getPsiVariable())));
+        // Do not flush special values and this value as they could be used implicitly
+        values.removeIf(var -> var.getSource() instanceof SpecialField || var.getSource() instanceof DfaExpressionFactory.ThisSource);
         instruction.getVarsToFlush().addAll(values);
       }
     }

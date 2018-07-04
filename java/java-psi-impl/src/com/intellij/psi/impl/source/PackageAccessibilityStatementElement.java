@@ -1,28 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiKeyword;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.CharTable;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Pavel.Dolgov
@@ -30,6 +17,32 @@ import org.jetbrains.annotations.Nullable;
 public class PackageAccessibilityStatementElement extends CompositeElement {
   public PackageAccessibilityStatementElement(@NotNull IElementType type) {
     super(type);
+  }
+
+  @Override
+  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
+    if (first == last && first.getElementType() == JavaElementType.MODULE_REFERENCE && anchor == null) {
+      ASTNode lastChild = getLastChildNode(), addAfter = lastChild;
+      if (lastChild.getElementType() == JavaTokenType.SEMICOLON || lastChild.getElementType() == TokenType.ERROR_ELEMENT) {
+        addAfter = lastChild.getTreePrev();
+        lastChild = PsiImplUtil.skipWhitespaceAndCommentsBack(addAfter);
+      }
+      if (lastChild != null) {
+        CharTable charTable = SharedImplUtil.findCharTableByTree(this);
+        if (lastChild.getElementType() == JavaElementType.JAVA_CODE_REFERENCE) {
+          LeafElement to = Factory.createSingleLeafElement(JavaTokenType.TO_KEYWORD, PsiKeyword.TO, charTable, getManager());
+          anchor = super.addInternal(to, to, addAfter, Boolean.FALSE);
+          before = Boolean.FALSE;
+        }
+        else if (lastChild.getElementType() == JavaElementType.MODULE_REFERENCE) {
+          LeafElement comma = Factory.createSingleLeafElement(JavaTokenType.COMMA, ",", charTable, getManager());
+          anchor = super.addInternal(comma, comma, addAfter, Boolean.FALSE);
+          before = Boolean.FALSE;
+        }
+      }
+    }
+
+    return super.addInternal(first, last, anchor, before);
   }
 
   @Override
@@ -49,8 +62,7 @@ public class PackageAccessibilityStatementElement extends CompositeElement {
     super.deleteChildInternal(child);
   }
 
-  @Nullable
-  private static ASTNode findNearestComma(@NotNull ASTNode child) {
+  private static ASTNode findNearestComma(ASTNode child) {
     ASTNode next = PsiImplUtil.skipWhitespaceAndComments(child.getTreeNext());
     if (next != null && next.getElementType() == JavaTokenType.COMMA) {
       return next;

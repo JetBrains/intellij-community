@@ -25,7 +25,7 @@ public abstract class SpellcheckerInspectionTestCase extends LightPlatformCodeIn
     return true;
   }
 
-  public static String getSpellcheckerTestDataPath() {
+  protected static String getSpellcheckerTestDataPath() {
     return "/spellchecker/testData/";
   }
 

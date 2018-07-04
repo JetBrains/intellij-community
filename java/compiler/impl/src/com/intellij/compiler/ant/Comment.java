@@ -20,7 +20,6 @@ import java.io.PrintWriter;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 19, 2004
  */
 public class Comment extends Generator{
   private final String myComment;

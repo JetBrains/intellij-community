@@ -1,25 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.concurrencyAnnotations;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -27,7 +14,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class FieldAccessNotGuardedInspection extends BaseJavaBatchLocalInspectionTool {
+public class FieldAccessNotGuardedInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @Override
   @NotNull
@@ -95,7 +82,7 @@ public class FieldAccessNotGuardedInspection extends BaseJavaBatchLocalInspectio
           if (guardExpression instanceof PsiThisExpression) {
             final PsiThisExpression thisExpression = (PsiThisExpression)guardExpression;
             final PsiClass aClass = getClassFromThisExpression(thisExpression, field);
-            if (aClass == null || aClass.equals(containingMethod.getContainingClass())) {
+            if (aClass == null || InheritanceUtil.isInheritorOrSelf(containingMethod.getContainingClass(), aClass, true)) {
               return;
             }
           }
@@ -174,7 +161,7 @@ public class FieldAccessNotGuardedInspection extends BaseJavaBatchLocalInspectio
         else if (guardExpression instanceof PsiMethodCallExpression && lockExpression instanceof PsiMethodCallExpression) {
           final PsiMethodCallExpression methodCallExpression1 = (PsiMethodCallExpression)guardExpression;
           final PsiMethodCallExpression methodCallExpression2 = (PsiMethodCallExpression)lockExpression;
-          if (methodCallExpression2.getArgumentList().getExpressions().length == 0) {
+          if (methodCallExpression2.getArgumentList().isEmpty()) {
             final PsiMethod method1 = methodCallExpression1.resolveMethod();
             final PsiMethod method2 = methodCallExpression2.resolveMethod();
             if (method1 == null || method1.equals(method2)) {

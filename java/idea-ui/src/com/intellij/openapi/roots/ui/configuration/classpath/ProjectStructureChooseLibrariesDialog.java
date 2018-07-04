@@ -93,7 +93,7 @@ public class ProjectStructureChooseLibrariesDialog extends ChooseLibrariesFromTa
   @Override
   protected Library[] getLibraries(@NotNull LibraryTable table) {
     if (table.getTableLevel().equals(LibraryTableImplUtil.MODULE_LEVEL)) {
-      return myCreatedModuleLibraries.toArray(new Library[myCreatedModuleLibraries.size()]);
+      return myCreatedModuleLibraries.toArray(Library.EMPTY_ARRAY);
     }
     final LibrariesModifiableModel model = getLibrariesModifiableModel(table);
     if (model == null) return Library.EMPTY_ARRAY;

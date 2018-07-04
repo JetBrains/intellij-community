@@ -117,6 +117,9 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
     mySession = session;
     if (mySession != null) {
       mySession.shouldBeRefreshed();  // to init current revision!
+
+      List<VcsFileRevision> revisionList = mySession.getRevisionList();
+      while (myLimitHistoryCheck.isOver(revisionList.size())) revisionList.remove(revisionList.size() - 1);
     }
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
@@ -125,7 +128,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
         myFileHistoryPanel = createFileHistoryPanel(copy);
         createOrSelectContentIfNeeded();
       }
-      else if (session != null && !session.getRevisionList().isEmpty()){
+      else if (session != null && !session.getRevisionList().isEmpty()) {
         myFileHistoryPanel.getHistoryPanelRefresh().consume(copy);
       }
     });

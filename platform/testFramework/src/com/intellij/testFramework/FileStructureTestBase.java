@@ -16,11 +16,11 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
+import com.intellij.util.PathUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-
-import javax.swing.tree.TreePath;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Konstantin Bulenkov
@@ -36,43 +36,54 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
   }
 
   protected void configureDefault() {
-    myFixture.configureByFile(getFileName(getFileExtension()));
+    myFixture.configureByFile(PathUtil.makeFileName(getTestName(false), getFileExtension()));
   }
 
   protected abstract String getFileExtension();
 
   @Override
   public void tearDown() throws Exception {
-    Disposer.dispose(myPopupFixture);
-    myPopupFixture = null;
-    super.tearDown();
-  }
-
-  private String getFileName(String ext) {
-    return getTestName(false) + (StringUtil.isEmpty(ext) ? "" : "." + ext);
-  }
-
-  protected String getTreeFileName() {
-    return getFileName("tree");
+    try {
+      Disposer.dispose(myPopupFixture);
+      myPopupFixture = null;
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   protected void checkTree(String filter) {
-    configureDefault();
-    myPopupFixture.update();
-    myPopupFixture.getPopup().setSearchFilterForTests(filter);
-    myPopupFixture.getBuilder().refilter(null, false, true);
-    myPopupFixture.getBuilder().queueUpdate();
-    TreeUtil.selectPath(myPopupFixture.getTree(), (TreePath)myPopupFixture.getSpeedSearch().findElement(filter));
-    checkResult();
+    checkTree(filter, true);
   }
 
   protected void checkTree() {
+    checkTree(null, true);
+  }
+
+  protected void checkTree(boolean expandAll) {
+    checkTree(null, expandAll);
+  }
+  
+  protected void checkTree(@Nullable String filter, boolean expandAll) {
     configureDefault();
     myPopupFixture.update();
+    if (filter != null) {
+      setSearchFilter(filter);
+    }
+    if (expandAll) {
+      PlatformTestUtil.expandAll(myPopupFixture.getTree());
+    }
     checkResult();
   }
 
+  protected void setSearchFilter(@NotNull String filter) {
+    myPopupFixture.getPopup().setSearchFilterForTests(filter);
+    PlatformTestUtil.waitForPromise(myPopupFixture.getPopup().rebuildAndUpdate());
+    myPopupFixture.getSpeedSearch().findAndSelectElement(filter);
+  }
+
   protected void checkResult() {
-    assertSameLinesWithFile(getTestDataPath() + "/" + getTreeFileName(), PlatformTestUtil.print(myPopupFixture.getTree(), true).trim());
+    String expectedFileName = getTestDataPath() + "/" + PathUtil.makeFileName(getTestName(false), "tree");
+    assertSameLinesWithFile(expectedFileName, PlatformTestUtil.print(myPopupFixture.getTree(), true).trim());
   }
 }

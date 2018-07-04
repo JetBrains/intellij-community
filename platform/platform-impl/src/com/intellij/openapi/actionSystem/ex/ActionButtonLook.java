@@ -18,17 +18,35 @@ package com.intellij.openapi.actionSystem.ex;
 import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.Win10ActionButtonLook;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
 public abstract class ActionButtonLook {
-  @SuppressWarnings("StaticInitializerReferencesSubClass")
-  public static final ActionButtonLook DEFAULT_LOOK = UIUtil.isUnderWin10LookAndFeel() ?
-                                                       new Win10ActionButtonLook() :
-                                                       new IdeaActionButtonLook();
+  public static final ActionButtonLook SYSTEM_LOOK = new ActionButtonLook() {
+    private ActionButtonLook delegate;
+
+    { updateUI(); }
+
+    @Override public void updateUI() {
+      delegate = UIUtil.isUnderWin10LookAndFeel() ? new Win10ActionButtonLook() : new IdeaActionButtonLook();
+    }
+
+    @Override public void paintBackground(Graphics g, JComponent component, int state) {
+      delegate.paintBackground(g, component, state);
+    }
+
+    @Override public void paintBorder(Graphics g, JComponent component, int state) {
+      delegate.paintBorder(g, component, state);
+    }
+
+    @Override
+    public void paintBackground(@NotNull Graphics g, @NotNull JComponent component, @NotNull Color color) {
+      delegate.paintBackground(g, component, color);
+    }
+  };
 
   public static final ActionButtonLook INPLACE_LOOK = new ActionButtonLook() {
     @Override public void paintBackground(Graphics g, JComponent component, int state) {}
@@ -46,6 +64,12 @@ public abstract class ActionButtonLook {
   public abstract void paintBackground(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state);
 
   public abstract void paintBorder(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state);
+  
+  public void paintBackground(@NotNull Graphics g, @NotNull JComponent component, @NotNull Color color) {
+    
+  }
+
+  public void updateUI() {}
 
   @SuppressWarnings("MethodMayBeStatic")
   @ActionButtonComponent.ButtonState
@@ -59,14 +83,10 @@ public abstract class ActionButtonLook {
     int height = icon.getIconHeight();
     int x = (actionButton.getWidth() - width) / 2;
     int y = (actionButton.getHeight() - height) / 2;
-    paintIconAt(g, actionButton, icon, x, y);
+    paintIconAt(g, icon, x, y);
   }
 
-  public void paintIconAt(Graphics g, ActionButtonComponent button, Icon icon, int x, int y) {
+  public void paintIconAt(Graphics g, Icon icon, int x, int y) {
     icon.paintIcon(null, g, x, y);
-  }
-
-  public Insets getInsets() {
-    return JBUI.emptyInsets();
   }
 }

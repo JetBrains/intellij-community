@@ -1,14 +1,9 @@
 import threading
 import unittest
 import sys
-import os
-
-try:
-    import pydevconsole
-except:
-    sys.path.append(os.path.dirname(os.path.dirname(__file__)))
-    import pydevconsole
-from _pydev_bundle.pydev_imports import xmlrpclib, SimpleXMLRPCServer, StringIO
+import pydevconsole
+from _pydev_bundle.pydev_imports import xmlrpclib, SimpleXMLRPCServer
+from _pydevd_bundle import pydevd_io
 
 try:
     raw_input
@@ -23,7 +18,12 @@ class Test(unittest.TestCase):
 
     def test_console_hello(self):
         self.original_stdout = sys.stdout
-        sys.stdout = StringIO()
+        sys.stdout = pydevd_io.IOBuf()
+        try:
+            sys.stdout.encoding = sys.stdin.encoding
+        except AttributeError:
+            # In Python 3 encoding is not writable (whereas in Python 2 it doesn't exist).
+            pass
 
         try:
             client_port, _server_port = self.get_free_addresses()
@@ -42,7 +42,7 @@ class Test(unittest.TestCase):
 
     def test_console_requests(self):
         self.original_stdout = sys.stdout
-        sys.stdout = StringIO()
+        sys.stdout = pydevd_io.IOBuf()
 
         try:
             client_port, _server_port = self.get_free_addresses()
@@ -54,7 +54,7 @@ class Test(unittest.TestCase):
             from _pydev_bundle.pydev_console_utils import CodeFragment
 
             interpreter = pydevconsole.InterpreterInterface(pydev_localhost.get_localhost(), client_port, threading.currentThread())
-            sys.stdout = StringIO()
+            sys.stdout = pydevd_io.IOBuf()
             interpreter.add_exec(CodeFragment('class Foo:\n    CONSTANT=1\n'))
             interpreter.add_exec(CodeFragment('foo=Foo()'))
             interpreter.add_exec(CodeFragment('foo.__doc__=None'))
@@ -65,16 +65,20 @@ class Test(unittest.TestCase):
             try:
                 self.assertEqual(['50', 'input_request'], found)
             except:
-                self.assertEqual(['input_request'], found)  #IPython
+                try:
+                    self.assertEqual(['input_request'], found)  #IPython
+                except:
+                    self.assertEqual([u'50', u'input_request'], found[1:]) # IPython 5.1
+                    self.assertTrue(found[0].startswith(u'Out'))
 
             comps = interpreter.getCompletions('foo.', 'foo.')
-            self.assert_(
+            self.assertTrue(
                 ('CONSTANT', '', '', '3') in comps or ('CONSTANT', '', '', '4') in comps, \
                 'Found: %s' % comps
             )
 
             comps = interpreter.getCompletions('"".', '"".')
-            self.assert_(
+            self.assertTrue(
                 ('__add__', 'x.__add__(y) <==> x+y', '', '3') in comps or
                 ('__add__', '', '', '4') in comps or
                 ('__add__', 'x.__add__(y) <==> x+y\r\nx.__add__(y) <==> x+y', '()', '2') in comps or
@@ -95,26 +99,27 @@ class Test(unittest.TestCase):
                 if c[0] == 'RuntimeError':
                     self.fail('Did not expect to find RuntimeError there')
 
-            self.assert_(('__doc__', None, '', '3') not in interpreter.getCompletions('foo.CO', 'foo.'))
+            self.assertTrue(('__doc__', None, '', '3') not in interpreter.getCompletions('foo.CO', 'foo.'))
 
             comps = interpreter.getCompletions('va', 'va')
-            self.assert_(('val', '', '', '3') in comps or ('val', '', '', '4') in comps)
+            self.assertTrue(('val', '', '', '3') in comps or ('val', '', '', '4') in comps)
 
             interpreter.add_exec(CodeFragment('s = "mystring"'))
 
             desc = interpreter.getDescription('val')
-            self.assert_(desc.find('str(object) -> string') >= 0 or
+            self.assertTrue(desc.find('str(object) -> string') >= 0 or
                          desc == "'input_request'" or
                          desc.find('str(string[, encoding[, errors]]) -> str') >= 0 or
                          desc.find('str(Char* value)') >= 0 or
                          desc.find('str(object=\'\') -> string') >= 0 or
                          desc.find('str(value: Char*)') >= 0 or
-                         desc.find('str(object=\'\') -> str') >= 0
+                         desc.find('str(object=\'\') -> str') >= 0 or
+                         desc.find('The most base type') >= 0 # Jython 2.7 is providing this :P
                          ,
                          'Could not find what was needed in %s' % desc)
 
             desc = interpreter.getDescription('val.join')
-            self.assert_(desc.find('S.join(sequence) -> string') >= 0 or
+            self.assertTrue(desc.find('S.join(sequence) -> string') >= 0 or
                          desc.find('S.join(sequence) -> str') >= 0 or
                          desc.find('S.join(iterable) -> string') >= 0 or
                          desc == "<builtin method 'join'>"  or
@@ -180,29 +185,11 @@ class Test(unittest.TestCase):
 
 
     def get_free_addresses(self):
-        import socket
-        s = socket.socket()
-        s.bind(('', 0))
-        port0 = s.getsockname()[1]
-
-        s1 = socket.socket()
-        s1.bind(('', 0))
-        port1 = s1.getsockname()[1]
-        s.close()
-        s1.close()
-
-        if port0 <= 0 or port1 <= 0:
-            #This happens in Jython...
-            from java.net import ServerSocket  # @UnresolvedImport
-            s0 = ServerSocket(0)
-            port0 = s0.getLocalPort()
-
-            s1 = ServerSocket(0)
-            port1 = s1.getLocalPort()
-
-            s0.close()
-            s1.close()
-
+        from _pydev_bundle.pydev_localhost import get_socket_names
+        socket_names = get_socket_names(2, True)
+        port0 = socket_names[0][1]
+        port1 = socket_names[1][1]
+        
         assert port0 != port1
         assert port0 > 0
         assert port1 > 0
@@ -212,7 +199,7 @@ class Test(unittest.TestCase):
 
     def test_server(self):
         self.original_stdout = sys.stdout
-        sys.stdout = StringIO()
+        sys.stdout = pydevd_io.IOBuf()
         try:
             client_port, server_port = self.get_free_addresses()
             class ServerThread(threading.Thread):
@@ -232,7 +219,7 @@ class Test(unittest.TestCase):
 
             import time
             time.sleep(.3)  #let's give it some time to start the threads
-            sys.stdout = StringIO()
+            sys.stdout = pydevd_io.IOBuf()
 
             from _pydev_bundle import pydev_localhost
             server = xmlrpclib.Server('http://%s:%s' % (pydev_localhost.get_localhost(), server_port))
@@ -248,17 +235,13 @@ class Test(unittest.TestCase):
                     raise AssertionError('Did not get the return asked before the timeout.')
                 time.sleep(.1)
 
-            while ['input_request'] != sys.stdout.getvalue().split():
+            found = sys.stdout.getvalue()
+            while ['input_request'] != found.split():
+                found += sys.stdout.getvalue()
                 if time.time() - initial > 2:
                     break
                 time.sleep(.1)
-            self.assertEqual(['input_request'], sys.stdout.getvalue().split())
+            self.assertEqual(['input_request'], found.split())
         finally:
             sys.stdout = self.original_stdout
-
-#=======================================================================================================================
-# main
-#=======================================================================================================================
-if __name__ == '__main__':
-    unittest.main()
 

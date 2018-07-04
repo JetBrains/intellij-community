@@ -13,7 +13,8 @@ class Test {
         start = i;
       } else if (idx(i) != 24 && start != -1)
       {
-        result.add("".substring(id<caret>x(start)));
+        result.add("".substring(id<caret>x//c1
+          (start)));
       }
     }
     return result;

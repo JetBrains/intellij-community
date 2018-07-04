@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit.codeInsight
 
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.codeInsight.MetaAnnotationUtil
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix
-import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.execution.junit.JUnitUtil
 import com.intellij.openapi.projectRoots.JavaSdkVersion
@@ -30,11 +16,11 @@ import com.siyeh.ig.junit.JUnitCommonClassNames
 import com.siyeh.ig.psiutils.ExpressionUtils
 import org.jetbrains.annotations.Nls
 
-class JUnit5MalformedRepeatedTestInspection : BaseJavaBatchLocalInspectionTool() {
+class JUnit5MalformedRepeatedTestInspection : AbstractBaseJavaLocalInspectionTool() {
   object Annotations {
-    val NON_REPEATED_ANNOTATIONS = listOf(JUnitUtil.TEST5_ANNOTATION,
-                                          JUnitUtil.TEST5_FACTORY_ANNOTATION,
-                                          JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST)
+    val NON_REPEATED_ANNOTATIONS: List<String> = listOf(JUnitUtil.TEST5_ANNOTATION,
+                                                        JUnitUtil.TEST5_FACTORY_ANNOTATION,
+                                                        JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST)
   }
 
   @Nls
@@ -84,7 +70,7 @@ class JUnit5MalformedRepeatedTestInspection : BaseJavaBatchLocalInspectionTool()
                                        "RepetitionInfo is injected for @BeforeEach/@AfterEach only, but not for " + StringUtil.getShortName(qName!!))
               }
               else {
-                if (MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_CONFIG_METHODS) && method.containingClass?.methods?.find { MetaAnnotationUtil.isMetaAnnotated(it, JUnitUtil.TEST5_ANNOTATIONS)} != null) {
+                if (MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_CONFIG_METHODS) && method.containingClass?.methods?.find { MetaAnnotationUtil.isMetaAnnotated(it, Annotations.NON_REPEATED_ANNOTATIONS)} != null) {
                   holder.registerProblem(repetitionInfoParam.nameIdentifier ?: repetitionInfoParam,
                                          "RepetitionInfo won't be injected for @Test methods")
                 }

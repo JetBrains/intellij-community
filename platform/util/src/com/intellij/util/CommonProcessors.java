@@ -114,12 +114,17 @@ public class CommonProcessors {
 
     @Override
     public boolean process(T t) {
+      // in case of exception do not mark the element as processed, we couldn't recover otherwise
       synchronized (processed) {
-        if (!processed.add(t)) {
+        if (processed.contains(t)) {
           return true;
         }
       }
-      return myDelegate.process(t);
+      boolean result = myDelegate.process(t);
+      synchronized (processed) {
+        processed.add(t);
+      }
+      return result;
     }
   }
 
@@ -174,7 +179,22 @@ public class CommonProcessors {
       return true;
     }
   }
-
+  
+  /**
+   * @return processor that process all elements. 
+   * Useful if you know that the processor shouldn't be stopped by client. It protects you from accidentally returning false value  
+   */
+  @NotNull
+  public static <T> Processor<T> processAll(@NotNull final Consumer<T> consumer) {
+    return new Processor<T>() {
+      @Override
+      public boolean process(T t) {
+        consumer.consume(t);
+        return true;
+      }
+    };
+  }
+  
   private static final Processor FALSE = new Processor<Object>() {
     @Override
     public boolean process(Object t) {

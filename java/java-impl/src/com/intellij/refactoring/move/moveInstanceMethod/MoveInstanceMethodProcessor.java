@@ -40,7 +40,7 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
@@ -216,7 +216,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
       });
     }
 
-    return usages.toArray(new UsageInfo[usages.size()]);
+    return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   private static void addInheritorUsages(PsiClass aClass, final GlobalSearchScope searchScope, final List<UsageInfo> usages) {
@@ -230,6 +230,7 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
     }
   }
 
+  @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     LOG.assertTrue(elements.length == 3);
     myMethod = (PsiMethod) elements[0];
@@ -500,8 +501,13 @@ public class MoveInstanceMethodProcessor extends BaseRefactoringProcessor{
                     }
                   }
                 }
-                //Target is a field, replace target.m -> m
-                qualifier.delete();
+                if (expression instanceof PsiMethodReferenceExpression) {
+                  qualifier.replace(factory.createExpressionFromText("this", null));
+                }
+                else {
+                  //Target is a field, replace target.m -> m
+                  qualifier.delete();
+                }
                 return;
               }
               if (myTargetVariable.equals(resolved)) {

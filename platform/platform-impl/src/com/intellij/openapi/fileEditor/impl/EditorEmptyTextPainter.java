@@ -44,9 +44,7 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 public class EditorEmptyTextPainter {
   public void paintEmptyText(@NotNull final JComponent splitters, @NotNull Graphics g) {
     UISettings.setupAntialiasing(g);
-    g.setColor(new JBColor(Gray._80, Gray._160));
-    g.setFont(JBUI.Fonts.label(16f));
-    UIUtil.TextPainter painter = new UIUtil.TextPainter().withLineSpacing(1.8f);
+    UIUtil.TextPainter painter = createTextPainter();
     advertiseActions(splitters, painter);
     painter.draw(g, (width, height) -> {
       Dimension s = splitters.getSize();
@@ -57,7 +55,7 @@ public class EditorEmptyTextPainter {
   }
 
   protected double heightRatio() {
-    return 0.375; // fix vertical position @ golden ratio 
+    return 0.375; // fix vertical position @ golden ratio
   }
 
   protected void advertiseActions(@NotNull JComponent splitters, @NotNull UIUtil.TextPainter painter) {
@@ -115,5 +113,13 @@ public class EditorEmptyTextPainter {
       }
     }
     return false;
+  }
+
+  @NotNull
+  public static UIUtil.TextPainter createTextPainter() {
+    return new UIUtil.TextPainter()
+      .withLineSpacing(1.8f)
+      .withColor(new JBColor(Gray._80, Gray._160))
+      .withFont(JBUI.Fonts.label(16f));
   }
 }

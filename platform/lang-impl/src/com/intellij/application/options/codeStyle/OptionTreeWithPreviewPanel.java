@@ -53,7 +53,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   protected final JPanel myPanel = new JPanel(new GridBagLayout());
 
   private boolean myShowAllStandardOptions = false;
-  private Set<String> myAllowedOptions = new HashSet<>();
+  private final Set<String> myAllowedOptions = new HashSet<>();
   protected MultiMap<String, CustomBooleanOptionInfo> myCustomOptions = new MultiMap<>();
   protected boolean isFirstUpdate = true;
   private final Map<String, String> myRenamedFields = new THashMap<>();
@@ -374,7 +374,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
 
   private void doInitBooleanField(@NonNls String fieldName, String title, String groupName) {
     try {
-      Class styleSettingsClass = CodeStyleSettings.class;
+      Class styleSettingsClass = CommonCodeStyleSettings.class;
       Field field = styleSettingsClass.getField(fieldName);
       String actualGroupName = getRemappedGroup(fieldName, groupName);
 
@@ -642,6 +642,6 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   }
 
   private String getRemappedGroup(String fieldName, String defaultName) {
-    return myRemappedGroups.containsKey(fieldName) ? myRemappedGroups.get(fieldName) : defaultName;
+    return myRemappedGroups.getOrDefault(fieldName, defaultName);
   }
 }

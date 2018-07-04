@@ -16,11 +16,7 @@
 package org.jetbrains.idea.svn.info;
 
 import com.intellij.util.ThrowableConsumer;
-import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
-/**
- * @author Konstantin Kolosovsky.
- */
-public interface InfoConsumer extends ThrowableConsumer<Info, SVNException> {
+public interface InfoConsumer extends ThrowableConsumer<Info, SvnBindException> {
 }

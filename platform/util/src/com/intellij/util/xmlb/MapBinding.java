@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
+import com.intellij.util.xmlb.annotations.XMap;
 import gnu.trove.THashMap;
 import org.jdom.Attribute;
 import org.jdom.Content;
@@ -44,7 +32,10 @@ class MapBinding extends Binding implements MultiNodeBinding {
     }
   };
 
-  private final MapAnnotation myMapAnnotation;
+  private final MapAnnotation oldAnnotation;
+  private final XMap annotation;
+
+  @NotNull private final Class<? extends Map> mapClass;
 
   private Class<?> keyClass;
   private Class<?> valueClass;
@@ -52,10 +43,12 @@ class MapBinding extends Binding implements MultiNodeBinding {
   private Binding keyBinding;
   private Binding valueBinding;
 
-  public MapBinding(@NotNull MutableAccessor accessor) {
+  public MapBinding(@Nullable MutableAccessor accessor, @NotNull Class<? extends Map> mapClass) {
     super(accessor);
 
-    myMapAnnotation = accessor.getAnnotation(MapAnnotation.class);
+    oldAnnotation = accessor == null ? null : accessor.getAnnotation(MapAnnotation.class);
+    annotation = accessor == null ? null : accessor.getAnnotation(XMap.class);
+    this.mapClass = mapClass;
   }
 
   @Override
@@ -75,20 +68,28 @@ class MapBinding extends Binding implements MultiNodeBinding {
     return true;
   }
 
+  private boolean isSortMap(Map<?, ?> map) {
+    // for new XMap we do not sort LinkedHashMap
+    if (map instanceof TreeMap || (annotation != null && map instanceof LinkedHashMap)) {
+      return false;
+    }
+    return oldAnnotation == null || oldAnnotation.sortBeforeSave();
+  }
+
   @Nullable
   @Override
   public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
-    Element serialized = myMapAnnotation == null || myMapAnnotation.surroundWithTag() ? new Element(MAP) : (Element)context;
+    Element serialized = isSurroundWithTag() ? new Element(MAP) : (Element)context;
     assert serialized != null;
 
     Map map = (Map)o;
     Object[] keys = ArrayUtil.toObjectArray(map.keySet());
-    if (!(map instanceof TreeMap) && (myMapAnnotation == null || myMapAnnotation.sortBeforeSave())) {
+    if (isSortMap(map)) {
       Arrays.sort(keys, KEY_COMPARATOR);
     }
 
     for (Object k : keys) {
-      Element entry = new Element(getEntryAttributeName());
+      Element entry = new Element(getEntryElementName());
       serialized.addContent(entry);
 
       serializeKeyOrValue(entry, getKeyAttributeName(), k, keyBinding, filter);
@@ -98,23 +99,40 @@ class MapBinding extends Binding implements MultiNodeBinding {
     return serialized == context ? null : serialized;
   }
 
-  private String getEntryAttributeName() {
-    return myMapAnnotation == null ? ENTRY : myMapAnnotation.entryTagName();
+  protected boolean isSurroundWithTag() {
+    if (annotation != null) {
+      return false;
+    }
+    return oldAnnotation == null || oldAnnotation.surroundWithTag();
+  }
+
+  @NotNull
+  String getEntryElementName() {
+    if (annotation != null) {
+      return annotation.entryTagName();
+    }
+    return oldAnnotation == null ? ENTRY : oldAnnotation.entryTagName();
   }
 
   private String getKeyAttributeName() {
-    return myMapAnnotation == null ? KEY : myMapAnnotation.keyAttributeName();
+    if (annotation != null) {
+      return annotation.keyAttributeName();
+    }
+    return oldAnnotation == null ? KEY : oldAnnotation.keyAttributeName();
   }
 
   private String getValueAttributeName() {
-    return myMapAnnotation == null ? VALUE : myMapAnnotation.valueAttributeName();
+    if (annotation != null) {
+      return annotation.valueAttributeName();
+    }
+    return oldAnnotation == null ? VALUE : oldAnnotation.valueAttributeName();
   }
 
   @Nullable
   @Override
   public Object deserializeList(@Nullable Object context, @NotNull List<Element> elements) {
     List<Element> childNodes;
-    if (myMapAnnotation == null || myMapAnnotation.surroundWithTag()) {
+    if (isSurroundWithTag()) {
       assert elements.size() == 1;
       childNodes = elements.get(0).getChildren();
     }
@@ -131,7 +149,7 @@ class MapBinding extends Binding implements MultiNodeBinding {
 
   @Nullable
   public Object deserialize(@Nullable Object context, @NotNull Element element) {
-    if (myMapAnnotation == null || myMapAnnotation.surroundWithTag()) {
+    if (isSurroundWithTag()) {
       return deserialize(context, element.getChildren());
     }
     else {
@@ -141,19 +159,31 @@ class MapBinding extends Binding implements MultiNodeBinding {
 
   @Nullable
   private Map deserialize(@Nullable Object context, @NotNull List<Element> childNodes) {
-    Map map = (Map)context;
+    // if accessor is null, it is sub-map and we must not use context
+    Map map = myAccessor == null ? null : (Map)context;
     if (map != null) {
       map.clear();
     }
 
     for (Element childNode : childNodes) {
-      if (!childNode.getName().equals(getEntryAttributeName())) {
+      if (!childNode.getName().equals(getEntryElementName())) {
         LOG.warn("unexpected entry for serialized Map will be skipped: " + childNode);
         continue;
       }
 
       if (map == null) {
-        map = new THashMap();
+        if (mapClass == Map.class) {
+          map = new THashMap();
+        }
+        else {
+          try {
+            map = ReflectionUtil.newInstance(mapClass);
+          }
+          catch (Exception e) {
+            LOG.warn(e);
+            map = new THashMap();
+          }
+        }
       }
 
       //noinspection unchecked
@@ -163,35 +193,43 @@ class MapBinding extends Binding implements MultiNodeBinding {
     return map;
   }
 
-  private void serializeKeyOrValue(@NotNull Element entry, @NotNull String attributeName, @Nullable Object value, @Nullable Binding binding, @Nullable SerializationFilter filter) {
+  private void serializeKeyOrValue(@NotNull Element entry,
+                                   @NotNull String attributeName,
+                                   @Nullable Object value,
+                                   @Nullable Binding binding,
+                                   @Nullable SerializationFilter filter) {
     if (value == null) {
       return;
     }
 
     if (binding == null) {
-      entry.setAttribute(attributeName, XmlSerializerImpl.convertToString(value));
+      entry.setAttribute(attributeName, XmlSerializerImpl.removeControlChars(XmlSerializerImpl.convertToString(value)));
     }
     else {
       Object serialized = binding.serialize(value, entry, filter);
       if (serialized != null) {
-        if (myMapAnnotation != null && !myMapAnnotation.surroundKeyWithTag()) {
-          entry.addContent((Content)serialized);
-        }
-        else {
+        if (isSurroundKey()) {
           Element container = new Element(attributeName);
           container.addContent((Content)serialized);
           entry.addContent(container);
+        }
+        else {
+          entry.addContent((Content)serialized);
         }
       }
     }
   }
 
-  private Object deserializeKeyOrValue(@NotNull Element entry, @NotNull String attributeName, Object context, @Nullable Binding binding, @NotNull Class<?> valueClass) {
+  private Object deserializeKeyOrValue(@NotNull Element entry,
+                                       @NotNull String attributeName,
+                                       Object context,
+                                       @Nullable Binding binding,
+                                       @NotNull Class<?> valueClass) {
     Attribute attribute = entry.getAttribute(attributeName);
     if (attribute != null) {
       return XmlSerializerImpl.convert(attribute.getValue(), valueClass);
     }
-    else if (myMapAnnotation != null && !myMapAnnotation.surroundKeyWithTag()) {
+    else if (!isSurroundKey()) {
       assert binding != null;
       for (Element element : entry.getChildren()) {
         if (binding.isBoundTo(element)) {
@@ -207,16 +245,39 @@ class MapBinding extends Binding implements MultiNodeBinding {
       }
       else {
         assert binding != null;
-        return Binding.deserializeList(binding, context, children);
+        return Binding.deserializeList(binding, null, children);
       }
     }
     return null;
   }
 
+  private boolean isSurroundKey() {
+    if (annotation != null) {
+      return false;
+    }
+    return oldAnnotation == null || oldAnnotation.surroundKeyWithTag();
+  }
+
+  boolean isBoundToWithoutProperty(@NotNull Element element) {
+    String elementName = element.getName();
+    if (annotation != null) {
+      return elementName.equals(annotation.entryTagName());
+    }
+    else if (oldAnnotation != null && !oldAnnotation.surroundWithTag()) {
+      return elementName.equals(oldAnnotation.entryTagName());
+    }
+    else {
+      return elementName.equals(MAP);
+    }
+  }
+
   @Override
   public boolean isBoundTo(@NotNull Element element) {
-    if (myMapAnnotation != null && !myMapAnnotation.surroundWithTag()) {
-      return myMapAnnotation.entryTagName().equals(element.getName());
+    if (oldAnnotation != null && !oldAnnotation.surroundWithTag()) {
+      return oldAnnotation.entryTagName().equals(element.getName());
+    }
+    else if (annotation != null) {
+      return annotation.propertyElementName().equals(element.getName());
     }
     else {
       return element.getName().equals(MAP);

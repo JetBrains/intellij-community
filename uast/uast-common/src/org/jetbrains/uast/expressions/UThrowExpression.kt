@@ -25,22 +25,22 @@ import org.jetbrains.uast.visitor.UastVisitor
  * Represents a `throw` expression.
  */
 interface UThrowExpression : UExpression {
-    /**
-     * Returns ths thrown expression.
-     */
-    val thrownExpression: UExpression
+  /**
+   * Returns ths thrown expression.
+   */
+  val thrownExpression: UExpression
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitThrowExpression(this)) return
-        annotations.acceptList(visitor)
-        thrownExpression.accept(visitor)
-        visitor.afterVisitThrowExpression(this)
-    }
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitThrowExpression(this)) return
+    annotations.acceptList(visitor)
+    thrownExpression.accept(visitor)
+    visitor.afterVisitThrowExpression(this)
+  }
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
-            visitor.visitThrowExpression(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
+    visitor.visitThrowExpression(this, data)
 
-    override fun asRenderString() = "throw " + thrownExpression.asRenderString()
+  override fun asRenderString(): String = "throw " + thrownExpression.asRenderString()
 
-    override fun asLogString() = log()
+  override fun asLogString(): String = log()
 }

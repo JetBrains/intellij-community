@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.Dumpable;
-import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -33,23 +19,23 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapHelper;
+import com.intellij.openapi.editor.impl.view.EditorPainter;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.ui.EmptyClipboardOwner;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
-import java.awt.datatransfer.Clipboard;
-import java.awt.datatransfer.StringSelection;
 import java.util.List;
 
 public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
@@ -136,7 +122,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       return;
     }
     myEditor.getCaretModel().doWithCaretMerging(() -> {
-      final LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(offset);
+      List<Inlay> inlaysAtOffset = myEditor.getInlayModel().getInlineElementsInRange(offset, offset);
+      boolean leanForward = ContainerUtil.find(inlaysAtOffset, inlay -> !inlay.isRelatedToPrecedingText()) != null;
+      LogicalPosition logicalPosition = myEditor.offsetToLogicalPosition(offset).leanForward(leanForward);
       CaretEvent event = moveToLogicalPosition(logicalPosition, locateBeforeSoftWrap, null, false);
       final LogicalPosition positionByOffsetAfterMove = myEditor.offsetToLogicalPosition(getOffset());
       if (!positionByOffsetAfterMove.equals(logicalPosition)) {
@@ -148,13 +136,14 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         int textEnd = Math.min(document.getTextLength() - 1, Math.max(offset, actualOffset) + 1);
         CharSequence text = document.getCharsSequence().subSequence(textStart, textEnd);
         int inverseOffset = myEditor.logicalPositionToOffset(logicalPosition);
-        LogMessageEx.error(
-          LOG, "caret moved to wrong offset. Please submit a dedicated ticket and attach current editor's text to it.",
-          "Requested: offset=" + offset + ", logical position='" + logicalPosition + "' but actual: offset=" +
-          actualOffset + ", logical position='" + myLogicalCaret + "' (" + positionByOffsetAfterMove + "). " + myEditor.dumpState() +
-          "\ninterested text [" + textStart + ";" + textEnd + "): '" + text + "'\n debug trace: " + debugBuffer +
-          "\nLogical position -> offset ('" + logicalPosition + "'->'" + inverseOffset + "')"
-        );
+        LOG.error(
+          "caret moved to wrong offset. Please submit a dedicated ticket and attach current editor's text to it.",
+          new Throwable(),
+          AttachmentFactory.createContext(
+            "Requested: offset=" + offset + ", logical position='" + logicalPosition + "' but actual: offset=" +
+            actualOffset + ", logical position='" + myLogicalCaret + "' (" + positionByOffsetAfterMove + "). " + myEditor.dumpState() +
+            "\ninterested text [" + textStart + ";" + textEnd + "): '" + text + "'\n debug trace: " + debugBuffer +
+            "\nLogical position -> offset ('" + logicalPosition + "'->'" + inverseOffset + "')"));
       }
       if (event != null) {
         myEditor.getCaretModel().fireCaretPositionChanged(event);
@@ -181,7 +170,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       return;
     }
     if (myReportCaretMoves) {
-      LogMessageEx.error(LOG, "Unexpected caret move request");
+      LOG.error("Unexpected caret move request", new Throwable());
     }
     if (!myEditor.isStickySelection() && !myEditor.getDocument().isInEventsHandling()) {
       CopyPasteManager.getInstance().stopKillRings();
@@ -377,11 +366,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     validateCallContext();
     int column = pos.column;
     int line = pos.line;
-    int softWrapLinesBefore = pos.softWrapLinesBeforeCurrentLogicalLine;
-    int softWrapLinesCurrent = pos.softWrapLinesOnCurrentLogicalLine;
-    int softWrapColumns = pos.softWrapColumnDiff;
     boolean leansForward = pos.leansForward;
-    boolean leansRight = pos.visualPositionLeansRight;
 
     Document doc = myEditor.getDocument();
 
@@ -398,8 +383,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
           .append(" as it is greater than total document lines number\n");
       }
       line = lineCount - 1;
-      softWrapLinesBefore = 0;
-      softWrapLinesCurrent = 0;
     }
 
     EditorSettings editorSettings = myEditor.getSettings();
@@ -412,15 +395,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         int oldColumn = column;
         column = lineEndColumnNumber;
         leansForward = true;
-        leansRight = true;
-        if (softWrapColumns != 0) {
-          softWrapColumns -= column - lineEndColumnNumber;
-        }
         if (debugBuffer != null) {
           debugBuffer.append("Resetting target logical column (").append(oldColumn).append(") to ").append(lineEndColumnNumber)
             .append(" because caret is not allowed to be located after line end (offset: ").append(lineEndOffset).append(", ")
-            .append("logical position: ").append(endLinePosition).append("). Current soft wrap columns value: ").append(softWrapColumns)
-            .append("\n");
+            .append("logical position: ").append(endLinePosition).append(").\n");
         }
       }
     }
@@ -431,16 +409,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     LogicalPosition oldCaretPosition = myLogicalCaret;
     VisualPosition oldVisualPosition = myVisibleCaret;
 
-    LogicalPosition logicalPositionToUse;
-    if (pos.visualPositionAware) {
-      logicalPositionToUse = new LogicalPosition(
-        line, column, softWrapLinesBefore, softWrapLinesCurrent, softWrapColumns, pos.foldedLines, pos.foldingColumnDiff, 
-        leansForward, leansRight
-      );
-    }
-    else {
-      logicalPositionToUse = new LogicalPosition(line, column, leansForward);
-    }
+    LogicalPosition logicalPositionToUse = new LogicalPosition(line, column, leansForward);
     final int offset = myEditor.logicalPositionToOffset(logicalPositionToUse);
     if (debugBuffer != null) {
       debugBuffer.append("Resulting logical position to use: ").append(logicalPositionToUse).append(". It's mapped to offset ").append(offset).append("\n");
@@ -466,7 +435,6 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       finally {
         mySkipChangeRequests = false;
       }
-      logicalPositionToUse = logicalPositionToUse.visualPositionAware ? logicalPositionToUse.withoutVisualPositionInfo() : logicalPositionToUse;
     }
 
     setCurrentLogicalCaret(logicalPositionToUse);
@@ -507,9 +475,10 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
           }
         }
         else {
-          LogMessageEx.error(LOG, "Invalid editor dimension mapping", "Expected to map visual position '" +
-          visualPosition + "' to offset " + newOffset + " but got the following: -> logical position '" +
-          logicalPosition + "'; -> offset " + tmpOffset + ". State: " + myEditor.dumpState());
+          LOG.error("Invalid editor dimension mapping", new Throwable(), AttachmentFactory.createContext(
+            "Expected to map visual position '" +
+            visualPosition + "' to offset " + newOffset + " but got the following: -> logical position '" +
+            logicalPosition + "'; -> offset " + tmpOffset + ". State: " + myEditor.dumpState()));
         }
       }
     }
@@ -544,16 +513,19 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     final EditorComponentImpl content = myEditor.getContentComponent();
 
     int updateWidth = myEditor.getScrollPane().getHorizontalScrollBar().getValue() + visibleArea.width;
+    int additionalRepaintHeight = this == myEditor.getCaretModel().getPrimaryCaret() && Registry.is("editor.adjust.right.margin") && EditorPainter.isMarginShown(myEditor) ? 1 : 0;
     if (Math.abs(myCaretInfo.y - oldCaretInfo.y) <= 2 * lineHeight) {
       int minY = Math.min(oldCaretInfo.y, myCaretInfo.y);
       int maxY = Math.max(oldCaretInfo.y + oldCaretInfo.height, myCaretInfo.y + myCaretInfo.height);
-      content.repaintEditorComponent(0, minY, updateWidth, maxY - minY);
+      content.repaintEditorComponent(0, minY - additionalRepaintHeight, updateWidth, maxY - minY + additionalRepaintHeight);
       gutter.repaint(0, minY, gutter.getWidth(), maxY - minY);
     }
     else {
-      content.repaintEditorComponent(0, oldCaretInfo.y, updateWidth, oldCaretInfo.height + lineHeight);
+      content.repaintEditorComponent(0, oldCaretInfo.y - additionalRepaintHeight,
+                                     updateWidth, oldCaretInfo.height + lineHeight + additionalRepaintHeight);
       gutter.repaint(0, oldCaretInfo.y, updateWidth, oldCaretInfo.height + lineHeight);
-      content.repaintEditorComponent(0, myCaretInfo.y, updateWidth, myCaretInfo.height + lineHeight);
+      content.repaintEditorComponent(0, myCaretInfo.y - additionalRepaintHeight,
+                                     updateWidth, myCaretInfo.height + lineHeight + additionalRepaintHeight);
       gutter.repaint(0, myCaretInfo.y, updateWidth, myCaretInfo.height + lineHeight);
     }
   }
@@ -570,7 +542,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       return;
     }
     if (myReportCaretMoves) {
-      LogMessageEx.error(LOG, "Unexpected caret move request");
+      LOG.error("Unexpected caret move request");
     }
     if (!myEditor.isStickySelection() && !myEditor.getDocument().isInEventsHandling() && !pos.equals(myVisibleCaret)) {
       CopyPasteManager.getInstance().stopKillRings();
@@ -636,7 +608,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       return null;
     }
     if (myReportCaretMoves) {
-      LogMessageEx.error(LOG, "Unexpected caret move request");
+      LOG.error("Unexpected caret move request");
     }
     if (!myEditor.isStickySelection() && !myEditor.getDocument().isInEventsHandling() && !pos.equals(myLogicalCaret)) {
       CopyPasteManager.getInstance().stopKillRings();
@@ -1195,18 +1167,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       }
 
       if (updateSystemSelection) {
-        updateSystemSelection();
+        myEditor.getCaretModel().updateSystemSelection();
       }
     });
-  }
-
-  private void updateSystemSelection() {
-    if (GraphicsEnvironment.isHeadless()) return;
-
-    final Clipboard clip = myEditor.getComponent().getToolkit().getSystemSelection();
-    if (clip != null) {
-      clip.setContents(new StringSelection(myEditor.getSelectionModel().getSelectedText(true)), EmptyClipboardOwner.INSTANCE);
-    }
   }
 
   @Override
@@ -1574,7 +1537,9 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
         setIntervalStart(newOffset);
         setIntervalEnd(newOffset);
       }
-      if (oldOffset >= e.getOffset() && oldOffset <= e.getOffset() + e.getOldLength() && e.getNewLength() == 0) {
+      myLogicalColumnAdjustment = 0;
+      myVisualColumnAdjustment = 0;
+      if (oldOffset >= e.getOffset() && oldOffset <= e.getOffset() + e.getOldLength() && e.getNewLength() == 0 && e.getOldLength() > 0) {
         int inlaysToTheLeft = myEditor.getInlayModel().getInlineElementsInRange(e.getOffset(), e.getOffset()).size();
         boolean hasInlaysToTheRight = myEditor.getInlayModel().hasInlineElementAt(e.getOffset() + e.getOldLength());
         if (inlaysToTheLeft > 0 || hasInlaysToTheRight) {

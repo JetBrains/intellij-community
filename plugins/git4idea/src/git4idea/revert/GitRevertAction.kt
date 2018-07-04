@@ -21,8 +21,8 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.text.StringUtil.pluralize
 import com.intellij.vcs.log.VcsLogDataKeys
-import com.intellij.vcs.log.impl.VcsLogUtil.MAX_SELECTED_COMMITS
-import com.intellij.vcs.log.impl.VcsLogUtil.collectFirstPack
+import com.intellij.vcs.log.util.VcsLogUtil.MAX_SELECTED_COMMITS
+import com.intellij.vcs.log.util.VcsLogUtil.collectFirstPack
 import git4idea.GitUtil.getRepositoryManager
 import git4idea.config.GitVcsSettings
 

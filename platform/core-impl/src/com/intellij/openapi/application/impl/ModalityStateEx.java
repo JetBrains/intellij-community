@@ -32,11 +32,11 @@ public class ModalityStateEx extends ModalityState {
   @SuppressWarnings("unused")
   public ModalityStateEx() { } // used by reflection to initialize NON_MODAL
 
-  public ModalityStateEx(@NotNull Object[] modalEntities) {
+  ModalityStateEx(@NotNull Object... modalEntities) {
     Collections.addAll(myModalEntities, modalEntities);
   }
 
-  private List<Object> getModalEntities() {
+  List<Object> getModalEntities() {
     return myModalEntities.toStrongList();
   }
 
@@ -54,9 +54,15 @@ public class ModalityStateEx extends ModalityState {
     return new ModalityStateEx(list.toArray());
   }
 
+  void forceModalEntities(List<Object> entities) {
+    myModalEntities.clear();
+    myModalEntities.addAll(entities);
+  }
+
   @Override
   public boolean dominates(@NotNull ModalityState anotherState){
     if (anotherState == ModalityState.any()) return false;
+    if (myModalEntities.isEmpty()) return false;
 
     List<Object> otherEntities = ((ModalityStateEx)anotherState).getModalEntities();
     for (Object entity : getModalEntities()) {
@@ -67,23 +73,9 @@ public class ModalityStateEx extends ModalityState {
 
   @NonNls
   public String toString() {
-    return this == NON_MODAL ? "ModalityState.NON_MODAL" : "ModalityState:" + StringUtil.join(getModalEntities(), ", ");
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof ModalityStateEx)) return false;
-
-    List<Object> entities = getModalEntities();
-    if (entities.isEmpty()) return false; //e.g. NON_MODAL isn't equal to ANY
-
-    return entities.equals(((ModalityStateEx)o).getModalEntities());
-  }
-
-  @Override
-  public int hashCode() {
-    return getModalEntities().hashCode();
+    return this == NON_MODAL
+           ? "ModalityState.NON_MODAL"
+           : "ModalityState:{" + StringUtil.join(getModalEntities(), it -> "[" + it + "]", ", ") + "}";
   }
 
   void removeModality(Object modalEntity) {

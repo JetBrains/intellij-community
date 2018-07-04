@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 @file:JvmName("UastBinaryExpressionWithTypeUtils")
+
 package org.jetbrains.uast
 
 /**
@@ -21,17 +22,17 @@ package org.jetbrains.uast
  * Examples: type casts, instance checks.
  */
 open class UastBinaryExpressionWithTypeKind(val name: String) {
-    open class TypeCast(name: String) : UastBinaryExpressionWithTypeKind(name)
-    open class InstanceCheck(name: String) : UastBinaryExpressionWithTypeKind(name)
+  open class TypeCast(name: String) : UastBinaryExpressionWithTypeKind(name)
+  open class InstanceCheck(name: String) : UastBinaryExpressionWithTypeKind(name)
 
-    companion object {
-        @JvmField
-        val TYPE_CAST = TypeCast("as")
+  companion object {
+    @JvmField
+    val TYPE_CAST: TypeCast = TypeCast("as")
 
-        @JvmField
-        val INSTANCE_CHECK = InstanceCheck("is")
+    @JvmField
+    val INSTANCE_CHECK: InstanceCheck = InstanceCheck("is")
 
-        @JvmField
-        val UNKNOWN = UastBinaryExpressionWithTypeKind("<unknown>")
-    }
+    @JvmField
+    val UNKNOWN: UastBinaryExpressionWithTypeKind = UastBinaryExpressionWithTypeKind("<unknown>")
+  }
 }

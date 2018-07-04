@@ -1,31 +1,20 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeGlassPane;
+import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.switcher.QuickActionProvider;
@@ -420,6 +409,7 @@ public class JBTabsImpl extends JComponent
   }
 
   protected void resetTabsCache() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myAllTabs = null;
   }
 
@@ -993,25 +983,9 @@ public class JBTabsImpl extends JComponent
 
 
     if (isShowing()) {
-      return myFocusManager.requestFocus(new FocusCommand.ByComponent(toFocus, new Exception()), true);
-    }
-    else {
-      final ActionCallback result = new ActionCallback();
-      final FocusRequestor requestor = myFocusManager.getFurtherRequestor();
-      final Ref<Boolean> queued = new Ref<>(false);
-      Disposer.register(requestor, new Disposable() {
-        @Override
-        public void dispose() {
-          if (!queued.get()) {
-            result.setRejected();
-          }
-        }
-      });
-      myDeferredFocusRequest = () -> {
-        queued.set(true);
-        requestor.requestFocus(new FocusCommand.ByComponent(toFocus, toFocus, myProject, new Exception()), true).notify(result);
-      };
-      return result;
+      return myFocusManager.requestFocus(toFocus, true);
+    } else {
+      return ActionCallback.REJECTED;
     }
   }
 
@@ -1293,7 +1267,7 @@ public class JBTabsImpl extends JComponent
   }
 
   @Nullable
-  private TabInfo findEnabledForward(int from, boolean cycle) {
+  protected TabInfo findEnabledForward(int from, boolean cycle) {
     if (from < 0) return null;
     int index = from;
     List<TabInfo> infos = getVisibleInfos();
@@ -1316,7 +1290,7 @@ public class JBTabsImpl extends JComponent
   }
 
   @Nullable
-  private TabInfo findEnabledBackward(int from, boolean cycle) {
+  protected TabInfo findEnabledBackward(int from, boolean cycle) {
     if (from < 0) return null;
     int index = from;
     List<TabInfo> infos = getVisibleInfos();
@@ -1348,8 +1322,7 @@ public class JBTabsImpl extends JComponent
   public List<TabInfo> getTabs() {
     if (myAllTabs != null) return myAllTabs;
 
-    ArrayList<TabInfo> result = new ArrayList<>();
-    result.addAll(myVisibleInfos);
+    ArrayList<TabInfo> result = new ArrayList<>(myVisibleInfos);
 
     for (TabInfo each : myHiddenInfos.keySet()) {
       result.add(getIndexInVisibleArray(each), each);
@@ -1487,8 +1460,7 @@ public class JBTabsImpl extends JComponent
       }
 
 
-      List<TabInfo> visible = new ArrayList<>();
-      visible.addAll(getVisibleInfos());
+      List<TabInfo> visible = new ArrayList<>(getVisibleInfos());
 
       if (myDropInfo != null && !visible.contains(myDropInfo) && myShowDropLocation) {
         if (getDropInfoIndex() >= 0 && getDropInfoIndex() < visible.size()) {
@@ -2061,7 +2033,9 @@ public class JBTabsImpl extends JComponent
         imgG2d.dispose();
       }
 
-      UIUtil.drawImage(g2d, img, x, y, width, height, null);
+      UIUtil.drawImage(g2d, img,
+                       new Rectangle(x, y, width, height),
+                       new Rectangle(0, 0, width, height),null);
 
       label.setInactiveStateImage(img);
     }
@@ -2091,7 +2065,7 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public Color getBackground() {
-    return UIUtil.isUnderNimbusLookAndFeel() ? UIUtil.getPanelBackground() : UIUtil.getBgFillColor(getParent());
+    return UIUtil.getBgFillColor(getParent());
   }
 
   protected void doPaintInactive(Graphics2D g2d,
@@ -2509,6 +2483,8 @@ public class JBTabsImpl extends JComponent
 
   @NotNull
   private ActionCallback removeTab(TabInfo info, @Nullable TabInfo forcedSelectionTransfer, boolean transferFocus, boolean isDropTarget) {
+    if (myPopupInfo == info) myPopupInfo = null;
+
     if (!isDropTarget) {
       if (info == null || !getTabs().contains(info)) return ActionCallback.DONE;
     }
@@ -2868,8 +2844,7 @@ public class JBTabsImpl extends JComponent
     protected BaseNavigationAction(@NotNull String copyFromID, @NotNull JBTabsImpl tabs, @NotNull ActionManager mgr) {
       myActionManager = mgr;
       myTabs = tabs;
-      myShadow = new ShadowAction(this, myActionManager.getAction(copyFromID), tabs);
-      Disposer.register(tabs, myShadow);
+      myShadow = new ShadowAction(this, myActionManager.getAction(copyFromID), tabs, tabs);
       setEnabledInModalContext(true);
     }
 
@@ -3235,9 +3210,7 @@ public class JBTabsImpl extends JComponent
       final Component each = getComponent(i);
       if (each instanceof JComponent) {
         final JComponent jc = (JComponent)each;
-        boolean layoutDone = UIUtil.isClientPropertyTrue(jc, LAYOUT_DONE);
-        jc.setVisible(layoutDone);
-        if (!layoutDone) {
+        if (!UIUtil.isClientPropertyTrue(jc, LAYOUT_DONE)) {
           layout(jc, new Rectangle(0, 0, 0, 0));
         }
       }
@@ -3402,7 +3375,7 @@ public class JBTabsImpl extends JComponent
     public AccessibleJBTabsImpl() {
       super();
       getAccessibleComponent();
-      JBTabsImpl.this.addListener(new TabsListener.Adapter() {
+      JBTabsImpl.this.addListener(new TabsListener() {
         @Override
         public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
           firePropertyChange(AccessibleContext.ACCESSIBLE_SELECTION_PROPERTY, null, null);

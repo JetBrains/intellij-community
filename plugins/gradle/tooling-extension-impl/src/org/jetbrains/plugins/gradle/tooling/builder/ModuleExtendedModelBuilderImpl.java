@@ -51,11 +51,10 @@ import java.util.*;
  * @author Vladislav.Soroka
  * @since 11/5/13
  */
+@Deprecated
 public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
 
-  private static boolean is41orBetter = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.1")) >= 0;
-  private static boolean is4OorBetter = is41orBetter ||
-                                        GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.0")) >= 0;
+  private static final boolean is4OorBetter = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.0")) >= 0;
 
   private static final String SOURCE_SETS_PROPERTY = "sourceSets";
   private static final String TEST_SRC_DIRS_PROPERTY = "testSrcDirs";
@@ -105,7 +104,7 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     for (Task task : project.getTasks()) {
       if (task instanceof Test) {
         Test test = (Test)task;
-        if (is41orBetter) {
+        if (is4OorBetter) {
           testClassesDirs.addAll(test.getTestClassesDirs().getFiles());
         }
         else {
@@ -133,7 +132,13 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
 
           SourceSetOutput output = sourceSet.getOutput();
           if (SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.getName())) {
-            compilerOutput.setTestClassesDir(output.getClassesDir());
+            if (is4OorBetter) {
+              File firstClassesDir = CollectionUtils.findFirst(output.getClassesDirs().getFiles(), Specs.SATISFIES_ALL);
+              compilerOutput.setTestClassesDir(firstClassesDir);
+            }
+            else {
+              compilerOutput.setTestClassesDir(output.getClassesDir());
+            }
             compilerOutput.setTestResourcesDir(output.getResourcesDir());
           }
           if (SourceSet.MAIN_SOURCE_SET_NAME.equals(sourceSet.getName())) {
@@ -214,7 +219,7 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     Map<String, Set<File>> artifactsByConfiguration = new HashMap<String, Set<File>>();
     for (Map.Entry<String, Configuration> configurationEntry : configurationsByName.entrySet()) {
       Set<File> files = configurationEntry.getValue().getAllArtifacts().getFiles().getFiles();
-      artifactsByConfiguration.put(configurationEntry.getKey(), files);
+      artifactsByConfiguration.put(configurationEntry.getKey(), new LinkedHashSet<File>(files));
     }
     moduleVersionModel.setArtifactsByConfiguration(artifactsByConfiguration);
 
@@ -233,7 +238,13 @@ public class ModuleExtendedModelBuilderImpl implements ModelBuilderService {
     if (SourceSet.TEST_SOURCE_SET_NAME.equals(sourceSet.getName())) return true;
     if (SourceSet.MAIN_SOURCE_SET_NAME.equals(sourceSet.getName())) return false;
 
-    File sourceSetClassesDir = sourceSet.getOutput().getClassesDir();
+    File sourceSetClassesDir;
+    if (is4OorBetter) {
+      sourceSetClassesDir = CollectionUtils.findFirst(sourceSet.getOutput().getClassesDirs().getFiles(), Specs.SATISFIES_ALL);
+    }
+    else {
+      sourceSetClassesDir = sourceSet.getOutput().getClassesDir();
+    }
     for (File testClassesDir : testClassesDirs) {
       do {
         if (sourceSetClassesDir.getPath().equals(testClassesDir.getPath())) return true;

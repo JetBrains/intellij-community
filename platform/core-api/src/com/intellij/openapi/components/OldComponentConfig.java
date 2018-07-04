@@ -22,7 +22,12 @@ import com.intellij.util.xmlb.annotations.Tag;
  */
 @Tag("component")
 public class OldComponentConfig extends ComponentConfig {
-
+  /**
+   * @deprecated project components aren't loaded in the default project by default so there is not need to use this tag;
+   * use {@link #setLoadForDefaultProject(boolean) 'loadForDefaultProject'} if your really need to have your component in the default project.
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   @Tag(value = "skipForDefaultProject", textIfEmpty="true")
   public boolean skipForDefaultProject;
 

@@ -88,7 +88,7 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
 
   @Override
   protected boolean approximatelyHasRoots(@NotNull VcsContext dataContext) {
-    FileStatusManager manager = FileStatusManager.getInstance(dataContext.getProject());
+    ChangeListManager manager = ChangeListManager.getInstance(dataContext.getProject());
 
     return getRootsStream(dataContext)
       .map(FilePath::getVirtualFile)

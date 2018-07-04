@@ -21,13 +21,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
-/**
- * @author Tagir Valeev
- */
 public class JdkBulkMethodInfoProvider implements BulkMethodInfoProvider {
-  private static BulkMethodInfo[] INFOS = {
-    new BulkMethodInfo(CommonClassNames.JAVA_UTIL_COLLECTION, "add", "addAll"),
-    new BulkMethodInfo(CommonClassNames.JAVA_UTIL_LIST, "remove", "removeAll")
+  private static final BulkMethodInfo[] INFOS = {
+    new BulkMethodInfo(CommonClassNames.JAVA_UTIL_COLLECTION, "add", "addAll")
   };
 
   @NotNull

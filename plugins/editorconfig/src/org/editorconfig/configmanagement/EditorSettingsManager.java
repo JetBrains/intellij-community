@@ -1,12 +1,11 @@
 package org.editorconfig.configmanagement;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
-import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.event.EditorFactoryAdapter;
+import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.editorconfig.Utils;
@@ -14,33 +13,11 @@ import org.editorconfig.core.EditorConfig;
 import org.editorconfig.plugincomponents.SettingsProviderComponent;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-public class EditorSettingsManager extends FileDocumentManagerAdapter {
+public class EditorSettingsManager extends EditorFactoryAdapter {
   // Handles the following EditorConfig settings:
-  public static final String trimTrailingWhitespaceKey = "trim_trailing_whitespace";
-  public static final String insertFinalNewlineKey = "insert_final_newline";
-  private static final Map<String, String> trimMap;
-
-  static {
-    Map<String, String> map = new HashMap<>();
-    map.put("true", EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
-    map.put("false", EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
-    trimMap = Collections.unmodifiableMap(map);
-  }
-
-  private static final Map<String, Boolean> newlineMap;
-
-  static {
-    Map<String, Boolean> map = new HashMap<>();
-    map.put("true", Boolean.TRUE);
-    map.put("false", Boolean.FALSE);
-    newlineMap = Collections.unmodifiableMap(map);
-  }
-
+  public static final String maxLineLengthKey = "max_line_length";
   private final Project myProject;
 
   public EditorSettingsManager(Project project) {
@@ -48,39 +25,37 @@ public class EditorSettingsManager extends FileDocumentManagerAdapter {
   }
 
   @Override
-  public void beforeDocumentSaving(@NotNull Document document) {
-    // This is fired when any document is saved, regardless of whether it is part of a save-all or
-    // a save-one operation
-    final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    applySettings(file);
+  public void editorCreated(@NotNull EditorFactoryEvent event) {
+    applyEditorSettings(event.getEditor());
   }
 
-  private void applySettings(VirtualFile file) {
+  public void applyEditorSettings(Editor editor) {
+    Document document = editor.getDocument();
+    VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file == null) return;
     if (!Utils.isEnabled(CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings())) return;
-    // Get editorconfig settings
-    final String filePath = Utils.getFilePath(myProject, file);
-    final SettingsProviderComponent settingsProvider = SettingsProviderComponent.getInstance();
-    final List<EditorConfig.OutPair> outPairs = settingsProvider.getOutPairs(myProject, filePath);
-    // Apply trailing spaces setting
-    final String trimTrailingWhitespace = Utils.configValueForKey(outPairs, trimTrailingWhitespaceKey);
-    applyConfigValueToUserData(file, TrailingSpacesStripper.OVERRIDE_STRIP_TRAILING_SPACES_KEY,
-                               trimTrailingWhitespaceKey, trimTrailingWhitespace, trimMap);
-    // Apply final newline setting
-    final String insertFinalNewline = Utils.configValueForKey(outPairs, insertFinalNewlineKey);
-    applyConfigValueToUserData(file, TrailingSpacesStripper.OVERRIDE_ENSURE_NEWLINE_KEY,
-                               insertFinalNewlineKey, insertFinalNewline, newlineMap);
+
+    List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(myProject, file);
+    String maxLineLength = Utils.configValueForKey(outPairs, maxLineLengthKey);
+    applyMaxLineLength(maxLineLength, editor, file);
   }
 
-  private <T> void applyConfigValueToUserData(VirtualFile file, Key<T> userDataKey, String editorConfigKey,
-                                              String configValue, Map<String, T> configMap) {
-    if (configValue.isEmpty()) return;
-
-    final T data = configMap.get(configValue);
-    if (data == null) {
-      Utils.invalidConfigMessage(myProject, configValue, editorConfigKey, file.getCanonicalPath());
-    } else {
-      file.putUserData(userDataKey, data);
+  private void applyMaxLineLength(String maxLineLength, Editor editor, VirtualFile file) {
+    if (maxLineLength.isEmpty()) return;
+    if ("off".equals(maxLineLength)) {
+      editor.getSettings().setRightMarginShown(false);
+      return;
+    }
+    try {
+      int length = Integer.parseInt(maxLineLength);
+      if (length < 0) {
+        Utils.invalidConfigMessage(myProject, maxLineLength, maxLineLengthKey, file.getCanonicalPath());
+        return;
+      }
+      editor.getSettings().setRightMarginShown(true);
+      editor.getSettings().setRightMargin(length);
+    } catch (NumberFormatException e) {
+      Utils.invalidConfigMessage(myProject, maxLineLength, maxLineLengthKey, file.getCanonicalPath());
     }
   }
 }

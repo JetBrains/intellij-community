@@ -16,29 +16,63 @@
 package com.jetbrains.extenstions
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.extensions.getSdk
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyClass
-import com.jetbrains.python.psi.resolve.fromModule
-import com.jetbrains.python.psi.resolve.resolveModuleAt
-import com.jetbrains.python.psi.resolve.resolveQualifiedName
+import com.jetbrains.python.psi.resolve.*
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.sdk.PythonSdkType
 
+interface ContextAnchor {
+  val sdk: Sdk?
+  val project: Project
+  val qualifiedNameResolveContext: PyQualifiedNameResolveContext?
+  val scope: GlobalSearchScope
+  fun getRoots(): Array<VirtualFile> {
+    return sdk?.rootProvider?.getFiles(OrderRootType.CLASSES) ?: emptyArray()
+  }
+}
+
+class ModuleBasedContextAnchor(val module: Module) : ContextAnchor {
+  override val sdk: Sdk? = module.getSdk()
+  override val project: Project = module.project
+  override val qualifiedNameResolveContext: PyQualifiedNameResolveContext = fromModule(module)
+  override val scope: GlobalSearchScope = module.moduleContentScope
+  override fun getRoots(): Array<VirtualFile> {
+    val manager = ModuleRootManager.getInstance(module)
+    return super.getRoots() + manager.contentRoots + manager.sourceRoots
+  }
+}
+
+class ProjectSdkContextAnchor(override val project: Project, override val sdk: Sdk?) : ContextAnchor {
+  override val qualifiedNameResolveContext: PyQualifiedNameResolveContext? = sdk?.let { fromSdk(project, it) }
+  override val scope: GlobalSearchScope = GlobalSearchScope.projectScope(project) //TODO: Check if project scope includes SDK
+  override fun getRoots(): Array<VirtualFile> {
+    val manager = ProjectRootManager.getInstance(project)
+    return super.getRoots() + manager.contentRoots + manager.contentSourceRoots
+  }
+}
+
 
 data class QNameResolveContext(
-  val module: Module,
+  val contextAnchor: ContextAnchor,
   /**
    * Used for language level etc
    */
-  val sdk: Sdk? = module.getSdk(),
+  val sdk: Sdk? = contextAnchor.sdk,
+
   val evalContext: TypeEvalContext,
   /**
    * If not provided resolves against roots only. Resolved also against this folder otherwise
@@ -47,7 +81,7 @@ data class QNameResolveContext(
   /**
    * Use index, plain dirs with Py2 and so on. May resolve names unresolvable in other cases, but may return false results.
    */
-  val allowInaccurateResult:Boolean = false
+  val allowInaccurateResult: Boolean = false
 )
 
 /**
@@ -65,19 +99,19 @@ fun QualifiedName.getRelativeNameTo(root: QualifiedName): QualifiedName? {
  * Shortcut for [getElementAndResolvableName]
  * @see [getElementAndResolvableName]
  */
-fun QualifiedName.resolveToElement(context: QNameResolveContext): PsiElement? {
-  return getElementAndResolvableName(context)?.element
+fun QualifiedName.resolveToElement(context: QNameResolveContext, stopOnFirstFail: Boolean = false): PsiElement? {
+  return getElementAndResolvableName(context, stopOnFirstFail)?.element
 }
 
 
-data class NameAndElement(val name:QualifiedName, val element:PsiElement)
+data class NameAndElement(val name: QualifiedName, val element: PsiElement)
 
 /**
- * Resolves qname of any symbol to PSI element popping tail until element becomes resolved.
+ * Resolves qname of any symbol to PSI element popping tail until element becomes resolved or only one time if stopOnFirstFail
  * @return element and longest name that was resolved successfully.
  * @see [resolveToElement]
  */
-fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext): NameAndElement? {
+fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext, stopOnFirstFail: Boolean = false): NameAndElement? {
   var currentName = QualifiedName.fromComponents(this.components)
 
 
@@ -87,13 +121,13 @@ fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext): Nam
   var lastElement: String? = null
   var psiDirectory: PsiDirectory? = null
 
-  var resolveContext = fromModule(context.module).copyWithMembers()
+  var resolveContext = context.contextAnchor.qualifiedNameResolveContext?.copyWithMembers() ?: return null
   if (PythonSdkType.getLanguageLevelForSdk(context.sdk).isPy3K || context.allowInaccurateResult) {
     resolveContext = resolveContext.copyWithPlainDirectories()
   }
 
   if (context.folderToStart != null) {
-    psiDirectory = PsiManager.getInstance(context.module.project).findDirectory(context.folderToStart)
+    psiDirectory = PsiManager.getInstance(context.contextAnchor.project).findDirectory(context.folderToStart)
   }
 
 
@@ -104,10 +138,10 @@ fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext): Nam
     }
 
     if (element == null) { // Resolve against roots
-      element = resolveQualifiedName(currentName, resolveContext).firstOrNull()
+      element = resolveQualifiedNameWithClasses(currentName, resolveContext).firstOrNull()
     }
 
-    if (element != null) {
+    if (element != null || stopOnFirstFail) {
       break
     }
     lastElement = currentName.lastComponent!!
@@ -128,14 +162,15 @@ fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext): Nam
   if (element == null && this.firstComponent != null && context.allowInaccurateResult) {
     // If name starts with file which is not in root nor in folders -- use index.
     val nameToFind = this.firstComponent!!
-    val pyFile = PyModuleNameIndex.find(nameToFind, context.module.project, false).firstOrNull() ?: return element
+    val pyFile = PyModuleNameIndex.find(nameToFind, context.contextAnchor.project, false).firstOrNull() ?: return element
 
     val folder =
-    if (pyFile.name == PyNames.INIT_DOT_PY) { // We are in folder
-      pyFile.virtualFile.parent.parent
-    } else {
-      pyFile.virtualFile.parent
-    }
+      if (pyFile.name == PyNames.INIT_DOT_PY) { // We are in folder
+        pyFile.virtualFile.parent.parent
+      }
+      else {
+        pyFile.virtualFile.parent
+      }
     return getElementAndResolvableName(context.copy(folderToStart = folder))
   }
   return if (element != null) NameAndElement(currentName, element) else null

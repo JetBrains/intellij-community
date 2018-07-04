@@ -1,23 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
 import groovy.io.FileType
 import org.jetbrains.intellij.build.BuildContext
+
+import java.util.regex.Pattern
+
 /**
  * @author nik
  */
@@ -59,7 +50,7 @@ class CrossPlatformDistributionBuilder {
 
       Map<String, File> linuxFiles = collectFilesUnder(linuxDistPath)
       Map<String, File> macFiles = collectFilesUnder(macDistPath)
-      def commonFiles = linuxFiles.keySet().intersect(macFiles.keySet() as Iterable<String>)
+      def commonFiles = checkCommonFilesAreTheSame(linuxFiles, macFiles)
 
       String targetPath = "$buildContext.paths.artifacts/${buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)}.zip"
       buildContext.ant.zip(zipfile: targetPath, duplicate: "fail") {
@@ -67,12 +58,14 @@ class CrossPlatformDistributionBuilder {
           exclude(name: "bin/idea.properties")
         }
         fileset(dir: zipDir)
+        fileset(file: "$buildContext.paths.artifacts/dependencies.txt")
 
         fileset(dir: winDistPath) {
           exclude(name: "bin/fsnotifier*.exe")
           exclude(name: "bin/*.exe.vmoptions")
           exclude(name: "bin/${executableName}*.exe")
           exclude(name: "bin/idea.properties")
+          exclude(name: "help/**")
         }
         zipfileset(dir: "$winDistPath/bin", prefix: "bin/win") {
           include(name: "fsnotifier*.exe")
@@ -86,6 +79,17 @@ class CrossPlatformDistributionBuilder {
           exclude(name: "bin/*.py")
           exclude(name: "bin/idea.properties")
           exclude(name: "help/**")
+
+          buildContext.linuxDistributionCustomizer.extraExecutables.each {
+            exclude(name: it)
+          }
+        }
+        if (!buildContext.linuxDistributionCustomizer.extraExecutables.isEmpty()) {
+          zipfileset(dir: "$linuxDistPath", filemode: "775") {
+            buildContext.linuxDistributionCustomizer.extraExecutables.each {
+              include(name: it)
+            }
+          }
         }
         zipfileset(dir: "$linuxDistPath/bin", prefix: "bin", filemode: "775") {
           include(name: "*.sh")
@@ -103,8 +107,28 @@ class CrossPlatformDistributionBuilder {
           exclude(name: "bin/*.jnilib")
           exclude(name: "bin/idea.properties")
           exclude(name: "bin/*.vmoptions")
+
           commonFiles.each {
             exclude(name: it)
+          }
+
+          buildContext.macDistributionCustomizer.extraExecutables.each {
+            exclude(name: it)
+          }
+
+          if (buildContext.macDistributionCustomizer.helpId) {
+            exclude(name: "Resources/${buildContext.macDistributionCustomizer.helpId}.help/**")
+          }
+        }
+        if (!buildContext.macDistributionCustomizer.extraExecutables.isEmpty()) {
+          zipfileset(dir: "$macDistPath", filemode: "775") {
+            buildContext.macDistributionCustomizer.extraExecutables.each {
+              include(name: it)
+            }
+
+            commonFiles.each {
+              exclude(name: it)
+            }
           }
         }
         zipfileset(dir: "$macDistPath/bin", prefix: "bin", filemode: "775") {
@@ -116,6 +140,43 @@ class CrossPlatformDistributionBuilder {
       }
       buildContext.notifyArtifactBuilt(targetPath)
     }
+  }
+
+  private checkCommonFilesAreTheSame(Map<String, File> linuxFiles, Map<String, File> macFiles) {
+    def commonFiles = linuxFiles.keySet().intersect(macFiles.keySet() as Iterable<String>)
+
+    def knownExceptions = [
+            "bin/idea\\.properties",
+            "bin/printenv\\.py",
+            "bin/\\w+\\.vmoptions",
+            "bin/format\\.sh",
+            "bin/inspect\\.sh",
+            "bin/fsnotifier",
+    ]
+
+    def violations = new ArrayList<String>()
+    for (String commonFile : commonFiles) {
+      def linuxFile = linuxFiles[commonFile]
+      def macFile = macFiles[commonFile]
+
+      if (linuxFile.readBytes() != macFile.readBytes()) {
+        if (knownExceptions.any { Pattern.matches(it, commonFile) }) {
+          continue
+        }
+
+        violations.add("$commonFile: $linuxFile and $macFile")
+      }
+    }
+
+    if (!violations.isEmpty()) {
+      buildContext.messages.error(
+              "Files are at the same path in linux and mac distribution, " +
+                      "but have a different content in each. Please place them at different paths. " +
+                      "Files:\n" + violations.join("\n")
+      )
+    }
+
+    return commonFiles
   }
 
   private static Map<String, File> collectFilesUnder(String rootPath) {

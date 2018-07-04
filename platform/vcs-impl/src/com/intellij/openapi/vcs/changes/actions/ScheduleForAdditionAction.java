@@ -26,10 +26,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.intellij.openapi.vcs.changes.ui.CommitDialogChangesBrowser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -66,47 +68,54 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
                                        @NotNull List<VirtualFile> files,
                                        @NotNull Condition<FileStatus> unversionedFileCondition,
                                        @Nullable ChangesBrowserBase browser) {
-    boolean result = true;
+    LocalChangeList targetChangeList = null;
+    Consumer<List<Change>> changeConsumer = null;
 
-    if (!files.isEmpty()) {
-      FileDocumentManager.getInstance().saveAllDocuments();
-
-      @SuppressWarnings("unchecked")
-      Consumer<List<Change>> consumer = browser == null ? null : changes -> {
-        browser.rebuildList();
-        browser.getViewer().excludeChanges((List)files);
-        browser.getViewer().includeChanges((List)changes);
-      };
-      ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(project);
-      LocalChangeList targetChangeList =
-        browser == null ? manager.getDefaultChangeList() : (LocalChangeList)browser.getSelectedChangeList();
-      List<VcsException> exceptions = manager.addUnversionedFiles(targetChangeList, files, unversionedFileCondition, consumer);
-
-      result = exceptions.isEmpty();
+    if (browser instanceof CommitDialogChangesBrowser) {
+      targetChangeList = ((CommitDialogChangesBrowser)browser).getSelectedChangeList();
     }
 
-    return result;
+    if (browser != null) {
+      changeConsumer = changes -> browser.getViewer().includeChanges(changes);
+    }
+
+    return addUnversioned(project, files, targetChangeList, changeConsumer, unversionedFileCondition);
+  }
+
+  private static boolean addUnversioned(@NotNull Project project,
+                                        @NotNull List<VirtualFile> files,
+                                        @Nullable LocalChangeList targetChangeList,
+                                        @Nullable Consumer<List<Change>> changesConsumer,
+                                        @NotNull Condition<FileStatus> unversionedFileCondition) {
+    if (files.isEmpty()) return true;
+
+    ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(project);
+    if (targetChangeList == null) targetChangeList = manager.getDefaultChangeList();
+
+    FileDocumentManager.getInstance().saveAllDocuments();
+    List<VcsException> exceptions = manager.addUnversionedFiles(targetChangeList, files, unversionedFileCondition, changesConsumer);
+    return exceptions.isEmpty();
   }
 
   @NotNull
   private Stream<VirtualFile> getUnversionedFiles(@NotNull AnActionEvent e, @NotNull Project project) {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
+    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
     boolean hasExplicitUnversioned = !isEmpty(e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY));
 
     return hasExplicitUnversioned
            ? e.getRequiredData(ChangesListView.UNVERSIONED_FILES_DATA_KEY)
            : checkVirtualFiles(e)
-             ? notNullize(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)).filter(file -> isFileUnversioned(file, vcsManager, fileStatusManager))
+             ? notNullize(e.getData(VcsDataKeys.VIRTUAL_FILE_STREAM)).filter(file -> isFileUnversioned(file, vcsManager, changeListManager))
              : Stream.empty();
   }
 
   private boolean isFileUnversioned(@NotNull VirtualFile file,
                                     @NotNull ProjectLevelVcsManager vcsManager,
-                                    @NotNull FileStatusManager fileStatusManager) {
+                                    @NotNull ChangeListManager changeListManager) {
     AbstractVcs vcs = vcsManager.getVcsFor(file);
     return vcs != null && !vcs.areDirectoriesVersionedItems() && file.isDirectory() ||
-           isStatusForAddition(fileStatusManager.getStatus(file));
+           isStatusForAddition(changeListManager.getStatus(file));
   }
 
   protected boolean isStatusForAddition(FileStatus status) {

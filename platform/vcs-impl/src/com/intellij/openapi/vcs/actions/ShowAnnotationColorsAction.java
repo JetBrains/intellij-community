@@ -25,7 +25,7 @@ import java.util.ArrayList;
 /**
  * @author Konstantin Bulenkov
  */
-public class ShowAnnotationColorsAction extends ActionGroup {
+public class ShowAnnotationColorsAction extends ActionGroup implements DumbAware {
   private final AnAction[] myChildren;
 
   public ShowAnnotationColorsAction() {
@@ -35,7 +35,7 @@ public class ShowAnnotationColorsAction extends ActionGroup {
     for (ColorMode type : ColorMode.values()) {
       kids.add(new SetColorModeAction(type));
     }
-    myChildren = kids.toArray(new AnAction[kids.size()]);
+    myChildren = kids.toArray(AnAction.EMPTY_ARRAY);
   }
 
   @NotNull

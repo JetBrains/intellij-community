@@ -22,8 +22,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchUtil;
+import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.GitLineHandler;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,7 +58,7 @@ public class GitMerger {
   }
 
   public void mergeCommit(@NotNull VirtualFile root) throws VcsException {
-    GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitCommand.COMMIT);
+    GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.COMMIT);
     handler.setStdoutSuppressed(false);
 
     File messageFile = assertNotNull(myRepositoryManager.getRepositoryForRoot(root)).getRepositoryFiles().getMergeMessageFile();
@@ -69,7 +70,7 @@ public class GitMerger {
       handler.addParameters("-F", messageFile.getAbsolutePath());
     }
     handler.endOptions();
-    handler.run();
+    Git.getInstance().runCommand(handler).getOutputOrThrow();
   }
 
 }

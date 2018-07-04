@@ -22,89 +22,103 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Pavel.Dolgov
  */
 public class ExtractedParameter {
-  @NotNull public final List<PsiReferenceExpression> myPatternUsages = new ArrayList<>();
-  @NotNull public final PsiVariable myPatternVariable;
-  @NotNull public final PsiReferenceExpression myCandidateUsage;
-  @NotNull public final PsiVariable myCandidateVariable;
   @NotNull public final PsiType myType;
+  @NotNull public final ExtractableExpressionPart myPattern;
+  @NotNull public final ExtractableExpressionPart myCandidate;
+  @NotNull public final Set<PsiExpression> myPatternUsages = new HashSet<>();
 
-  ExtractedParameter(@NotNull PsiVariable patternVariable,
-                     @NotNull PsiReferenceExpression patternUsage,
-                     @NotNull PsiVariable candidateVariable,
-                     @NotNull PsiReferenceExpression candidateUsage,
-                     @NotNull PsiType type) {
-    myPatternVariable = patternVariable;
-    myPatternUsages.add(patternUsage);
-    myCandidateVariable = candidateVariable;
-    myCandidateUsage = candidateUsage;
+  public ExtractedParameter(@NotNull ExtractableExpressionPart patternPart,
+                            @NotNull ExtractableExpressionPart candidatePart,
+                            @NotNull PsiType type) {
     myType = type;
+    myPattern = patternPart;
+    myCandidate = candidatePart;
+    addUsages(patternPart);
   }
 
-  public static boolean match(PsiElement pattern, PsiElement candidate, @NotNull List<ExtractedParameter> parameters) {
-    if (pattern instanceof PsiReferenceExpression && candidate instanceof PsiReferenceExpression) {
-      PsiReferenceExpression patternUsage = (PsiReferenceExpression)pattern;
-      PsiReferenceExpression candidateUsage = (PsiReferenceExpression)candidate;
-      PsiElement resolvedPattern = patternUsage.resolve();
-      PsiElement resolvedCandidate = candidateUsage.resolve();
-      if (resolvedPattern instanceof PsiVariable && resolvedCandidate instanceof PsiVariable) {
-        PsiVariable patternVariable = (PsiVariable)resolvedPattern;
-        PsiVariable candidateVariable = (PsiVariable)resolvedCandidate;
-        if (isStaticOrLocal(patternVariable) && isStaticOrLocal(candidateVariable)) {
-
-          for (ExtractedParameter parameter : parameters) {
-            boolean samePattern = resolvedPattern.equals(parameter.myPatternVariable);
-            boolean sameCandidate = resolvedCandidate.equals(parameter.myCandidateVariable);
-            if (samePattern && sameCandidate) {
-              parameter.myPatternUsages.add(patternUsage);
-              return true;
-            }
-            if (samePattern || sameCandidate) {
-              return false;
-            }
-          }
-          PsiType type = getParameterType(patternVariable, candidateVariable);
-          if (type != null) {
-            parameters.add(new ExtractedParameter(patternVariable, patternUsage, candidateVariable, candidateUsage, type));
-            return true;
-          }
-        }
+  public static boolean match(@NotNull ExtractableExpressionPart patternPart,
+                              @NotNull ExtractableExpressionPart candidatePart,
+                              @NotNull List<ExtractedParameter> parameters) {
+    PsiType type = ExtractableExpressionPart.commonType(patternPart, candidatePart);
+    if (type == null) {
+      return false;
+    }
+    for (ExtractedParameter parameter : parameters) {
+      boolean samePattern = parameter.samePattern(patternPart);
+      boolean sameCandidate = parameter.sameCandidate(candidatePart);
+      if (samePattern && sameCandidate) {
+        parameter.addUsages(patternPart);
+        return true;
+      }
+      if (samePattern || sameCandidate) {
+        return false;
       }
     }
-
-    return false;
+    parameters.add(new ExtractedParameter(patternPart, candidatePart, type));
+    return true;
   }
 
-  public static List<Match> getCompatibleMatches(List<Match> matches, PsiElement[] pattern) {
-    Set<PsiVariable> patternVariables = null;
+  @NotNull
+  public ExtractedParameter copyWithCandidateUsage(@NotNull PsiExpression candidateUsage) {
+    ExtractedParameter result = new ExtractedParameter(myPattern, ExtractableExpressionPart.fromUsage(candidateUsage, myType), myType);
+    result.myPatternUsages.addAll(myPatternUsages);
+    return result;
+  }
+
+  @NotNull
+  public String getLocalVariableTypeText() {
+    PsiType type = GenericsUtil.getVariableTypeByExpressionType(myType);
+    return type.getCanonicalText();
+  }
+
+  public void addUsages(ExtractableExpressionPart patternPart) {
+    myPatternUsages.add(patternPart.getUsage());
+  }
+
+  private boolean sameCandidate(ExtractableExpressionPart part) {
+    return myCandidate.isEquivalent(part);
+  }
+
+  private boolean samePattern(ExtractableExpressionPart part) {
+    return myPattern.isEquivalent(part);
+  }
+
+  public static List<Match> getCompatibleMatches(List<Match> matches,
+                                                 PsiElement[] pattern,
+                                                 List<PsiElement[]> candidates) {
     List<Match> result = new ArrayList<>();
+    Set<PsiExpression> firstUsages = null;
     for (Match match : matches) {
       List<ExtractedParameter> parameters = match.getExtractedParameters();
-      if (patternVariables == null) {
-        patternVariables = getPatternVariables(parameters);
+      PsiElement[] candidateElements = ContainerUtil.find(candidates, elements -> match.getMatchStart() == elements[0]);
+      Set<PsiVariable> candidateVariables = ContainerUtil.map2SetNotNull(parameters, parameter -> parameter.myCandidate.myVariable);
+      if (candidateElements == null || containsModifiedField(candidateElements, candidateVariables)) {
+        continue;
+      }
+      Set<PsiExpression> patternUsages = StreamEx.of(parameters).map(p -> p.myPattern.getUsage()).toSet();
+      if (firstUsages == null) {
+        Set<PsiVariable> patternVariables = ContainerUtil.map2SetNotNull(parameters, parameter -> parameter.myPattern.myVariable);
         if (containsModifiedField(pattern, patternVariables)) {
           return Collections.emptyList();
         }
+        firstUsages = patternUsages;
         result.add(match);
       }
-      else if (patternVariables.equals(getPatternVariables(parameters))) {
+      else if (firstUsages.equals(patternUsages)) {
         result.add(match);
       }
     }
     return result;
   }
 
-  private static boolean containsModifiedField(PsiElement[] pattern, Set<PsiVariable> variables) {
+  private static boolean containsModifiedField(@NotNull PsiElement[] elements, Set<PsiVariable> variables) {
     Set<PsiField> fields = StreamEx.of(variables)
       .select(PsiField.class)
       .filter(field -> !field.hasModifierProperty(PsiModifier.FINAL))
@@ -112,7 +126,7 @@ public class ExtractedParameter {
 
     if (!fields.isEmpty()) {
       FieldModificationVisitor visitor = new FieldModificationVisitor(fields);
-      for (PsiElement element : pattern) {
+      for (PsiElement element : elements) {
         element.accept(visitor);
         if (visitor.myModified) {
           return true;
@@ -120,34 +134,6 @@ public class ExtractedParameter {
       }
     }
     return false;
-  }
-
-  @NotNull
-  static Set<PsiVariable> getPatternVariables(@Nullable List<ExtractedParameter> parameters) {
-    if (parameters != null) {
-      return ContainerUtil.map2Set(parameters, parameter -> parameter.myPatternVariable);
-    }
-    return Collections.emptySet();
-  }
-
-  static boolean isStaticOrLocal(@NotNull PsiVariable variable) {
-    if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.STATIC)) {
-      return true;
-    }
-    return variable instanceof PsiLocalVariable || variable instanceof PsiParameter;
-  }
-
-  @Nullable
-  static PsiType getParameterType(@NotNull PsiVariable patternVariable, @NotNull PsiVariable candidateVariable) {
-    PsiType patternType = patternVariable.getType();
-    PsiType candidateType = candidateVariable.getType();
-    if (patternType.isAssignableFrom(candidateType)) {
-      return patternType;
-    }
-    if (candidateType.isAssignableFrom(patternType)) {
-      return candidateType;
-    }
-    return null;
   }
 
   private static class FieldModificationVisitor extends JavaRecursiveElementWalkingVisitor {

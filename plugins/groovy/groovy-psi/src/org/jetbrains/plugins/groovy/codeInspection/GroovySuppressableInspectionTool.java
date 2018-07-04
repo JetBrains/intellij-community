@@ -1,28 +1,12 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.codeInspection;
 
-import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.BatchSuppressManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.codeInspection.SuppressionUtil;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiComment;
@@ -44,18 +28,23 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.regex.Matcher;
 
+import static com.intellij.codeInsight.daemon.impl.HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
+
 /**
  * @author peter
  */
 public abstract class GroovySuppressableInspectionTool extends LocalInspectionTool {
+
   @NotNull
   public static SuppressQuickFix[] getSuppressActions(@NotNull String toolId) {
-    final HighlightDisplayKey displayKey = HighlightDisplayKey.findById(toolId);
-    assert displayKey != null : toolId;
-    return new SuppressQuickFix[] {
-      new SuppressByGroovyCommentFix(displayKey),
-      new SuppressForMemberFix(displayKey, false),
-      new SuppressForMemberFix(displayKey, true),
+    if (GroovyUnusedDeclarationInspection.SHORT_NAME.equals(toolId)) {
+      // substitute id for suppression
+      toolId = UNUSED_SYMBOL_SHORT_NAME;
+    }
+    return new SuppressQuickFix[]{
+      new SuppressByGroovyCommentFix(toolId),
+      new SuppressForMemberFix(toolId, false),
+      new SuppressForMemberFix(toolId, true),
     };
   }
 
@@ -66,9 +55,17 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
   @Nullable
   public static PsiElement getElementToolSuppressedIn(final PsiElement place, @NotNull String toolId) {
     if (place == null) return null;
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
+    if (GroovyUnusedDeclarationInspection.SHORT_NAME.equals(toolId)) {
+      PsiElement forUnused = getElementToolSuppressedIn(place, UNUSED_SYMBOL_SHORT_NAME);
+      if (forUnused != null) {
+        return forUnused;
+      }
+      else {
+        // fallback to checking for old toolId to avoid introducing warnings into old code
+      }
+    }
 
-    try {
+    return ReadAction.compute(()->{
       final PsiElement statement = PsiUtil.findEnclosingStatement(place);
       if (statement != null) {
         PsiElement prev = statement.getPrevSibling();
@@ -108,10 +105,7 @@ public abstract class GroovySuppressableInspectionTool extends LocalInspectionTo
       }
 
       return null;
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   @NotNull

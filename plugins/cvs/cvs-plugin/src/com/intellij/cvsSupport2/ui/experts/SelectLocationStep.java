@@ -124,7 +124,7 @@ public abstract class SelectLocationStep extends WizardStep {
 
       public void dropFiles(final List<VirtualFile> files) {
         if (files.size() > 0) {
-          selectInTree(files.toArray(new VirtualFile[files.size()]));
+          selectInTree(files.toArray(VirtualFile.EMPTY_ARRAY));
         }
       }
     });

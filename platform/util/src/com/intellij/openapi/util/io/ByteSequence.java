@@ -18,66 +18,16 @@ package com.intellij.openapi.util.io;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author Eugene Zhuravlev
- *         Date: 11/23/10
+ * A sequence of bytes.
  */
-public class ByteSequence {
-  private final byte[] myBytes;
-  private final int myOffset;
-  private final int myLen;
+public interface ByteSequence {
+  int length();
 
-  public ByteSequence(@NotNull byte[] bytes) {
-    this(bytes, 0, bytes.length);
-  }
-  
-  public ByteSequence(@NotNull byte[] bytes, int offset, int len) {
-    myBytes = bytes;
-    myOffset = offset;
-    myLen = len;
-  }
+  byte byteAt(int index);
 
   @NotNull
-  public byte[] getBytes() {
-    return myBytes;
-  }
+  ByteSequence subSequence(int start, int end);
 
-  public int getOffset() {
-    return myOffset;
-  }
-
-  public int getLength() {
-    return myLen;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    ByteSequence sequence = (ByteSequence)o;
-    int len = myLen;
-    if (len != sequence.myLen) return false;
-
-    final byte[] thisBytes = myBytes;
-    final byte[] thatBytes = sequence.myBytes;
-    for (int i = 0, j = myOffset, k = sequence.myOffset; i < len; i++, j++, k++) {
-      if (thisBytes[j] != thatBytes[k]) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    final int len = myLen;
-    final byte[] thisBytes = myBytes;
-
-    int result = 1;
-    for (int i = 0, j = myOffset; i < len; i++, j++) {
-      result = result * 31 + thisBytes[j];
-    }
-    return result;
-  }
+  @NotNull
+  byte[] toBytes();
 }

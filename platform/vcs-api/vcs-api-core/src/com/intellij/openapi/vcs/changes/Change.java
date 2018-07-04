@@ -24,7 +24,7 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.impl.VcsPathPresenter;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsFilePathUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +38,7 @@ import java.util.Map;
  * @author max
  */
 public class Change {
-  private int myHash;
+  private int myHash = -1;
 
   public enum Type {
     MODIFICATION,
@@ -56,7 +56,7 @@ public class Change {
   protected boolean myRenameOrMoveCached = false;
   private boolean myIsReplaced;
   private Type myType;
-  private final Map<String, Change> myOtherLayers;
+  private Map<String, Change> myOtherLayers;
 
   public Change(@Nullable final ContentRevision beforeRevision, @Nullable final ContentRevision afterRevision) {
     this(beforeRevision, afterRevision, convertStatus(beforeRevision, afterRevision));
@@ -67,8 +67,15 @@ public class Change {
     myBeforeRevision = beforeRevision;
     myAfterRevision = afterRevision;
     myFileStatus = fileStatus == null ? convertStatus(beforeRevision, afterRevision) : fileStatus;
-    myHash = -1;
-    myOtherLayers = new HashMap<>(0);
+    myOtherLayers = null;
+  }
+
+  protected Change(@NotNull Change change) {
+    myBeforeRevision = change.getBeforeRevision();
+    myAfterRevision = change.getAfterRevision();
+    myFileStatus = change.getFileStatus();
+    myOtherLayers = change.myOtherLayers != null ? new HashMap<>(change.myOtherLayers) : null;
+    myIsReplaced = change.isIsReplaced();
   }
 
   private static FileStatus convertStatus(@Nullable ContentRevision beforeRevision, @Nullable ContentRevision afterRevision) {
@@ -78,35 +85,40 @@ public class Change {
   }
 
   public void addAdditionalLayerElement(final String name, final Change change) {
+    if (myOtherLayers == null) myOtherLayers = new HashMap<>(1);
     myOtherLayers.put(name, change);
   }
 
+  @NotNull
   public Map<String, Change> getOtherLayers() {
-    return myOtherLayers;
+    return ContainerUtil.notNullize(myOtherLayers);
   }
 
   public Type getType() {
-    if (myType == null) {
-      if (myBeforeRevision == null) {
-        myType = Type.NEW;
-        return myType;
-      }
-
-      if (myAfterRevision == null) {
-        myType = Type.DELETED;
-        return myType;
-      }
-
-      if ((! Comparing.equal(myBeforeRevision.getFile(), myAfterRevision.getFile())) ||
-          ((! SystemInfo.isFileSystemCaseSensitive) && VcsFilePathUtil
-            .caseDiffers(myBeforeRevision.getFile().getPath(), myAfterRevision.getFile().getPath()))) {
-        myType = Type.MOVED;
-        return myType;
-      }
-
-      myType = Type.MODIFICATION;
+    Type type = myType;
+    if (type == null) {
+      myType = type = calcType();
     }
-    return myType;
+    return type;
+  }
+
+  @NotNull
+  private Type calcType() {
+    if (myBeforeRevision == null) return Type.NEW;
+    if (myAfterRevision == null) return Type.DELETED;
+
+    FilePath bFile = myBeforeRevision.getFile();
+    FilePath aFile = myAfterRevision.getFile();
+    if (!Comparing.equal(bFile, aFile)) return Type.MOVED;
+
+    // enforce case-sensitive check
+    if (!SystemInfo.isFileSystemCaseSensitive) {
+      String bPath = bFile.getPath();
+      String aPath = aFile.getPath();
+      if (!bPath.equals(aPath) && bPath.equalsIgnoreCase(aPath)) return Type.MOVED;
+    }
+
+    return Type.MODIFICATION;
   }
 
   @Nullable
@@ -131,7 +143,7 @@ public class Change {
 
   public boolean equals(final Object o) {
     if (this == o) return true;
-    if (o == null || (! (o instanceof Change))) return false;
+    if ((!(o instanceof Change))) return false;
     final Change otherChange = ((Change)o);
 
     final ContentRevision br1 = getBeforeRevision();

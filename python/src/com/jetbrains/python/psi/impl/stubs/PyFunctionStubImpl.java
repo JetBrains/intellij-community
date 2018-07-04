@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.psi.stubs.IStubElementType;
@@ -28,6 +14,8 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
   private final String myDocString;
   private final String myDeprecationMessage;
   private final boolean myAsync;
+  private final boolean myGenerator;
+  private final boolean myOnlyRaisesNotImplementedError;
   private final String myTypeComment;
   private final String myAnnotation;
 
@@ -35,8 +23,10 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
                             @Nullable String docString,
                             @Nullable String deprecationMessage,
                             boolean isAsync,
+                            boolean isGenerator,
+                            boolean onlyRaisesNotImplementedError,
                             @Nullable String typeCommentContent,
-                            @Nullable String annotation, 
+                            @Nullable String annotation,
                             final StubElement parent,
                             @NotNull IStubElementType stubElementType) {
     super(parent, stubElementType);
@@ -44,6 +34,8 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
     myDocString = docString;
     myDeprecationMessage = deprecationMessage;
     myAsync = isAsync;
+    myGenerator = isGenerator;
+    myOnlyRaisesNotImplementedError = onlyRaisesNotImplementedError;
     myTypeComment = typeCommentContent;
     myAnnotation = annotation;
   }
@@ -81,6 +73,16 @@ public class PyFunctionStubImpl extends StubBase<PyFunction> implements PyFuncti
   @Override
   public boolean isAsync() {
     return myAsync;
+  }
+
+  @Override
+  public boolean isGenerator() {
+    return myGenerator;
+  }
+
+  @Override
+  public boolean onlyRaisesNotImplementedError() {
+    return myOnlyRaisesNotImplementedError;
   }
 
   @Override

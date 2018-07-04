@@ -18,12 +18,15 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class RemoveUnusedVariableUtil {
   public enum RemoveMode {
@@ -32,20 +35,21 @@ public class RemoveUnusedVariableUtil {
     CANCEL
   }
 
-  public static boolean checkSideEffects(PsiExpression element, @Nullable PsiVariable variableToIgnore, List<PsiElement> sideEffects) {
+  @Contract("_, _, null -> false; null, _, _ -> false")
+  public static boolean checkSideEffects(PsiExpression element,
+                                         @Nullable PsiVariable variableToIgnore,
+                                         List<? super PsiElement> sideEffects) {
     if (sideEffects == null || element == null) return false;
     List<PsiElement> writes = new ArrayList<>();
-    SideEffectChecker.checkSideEffects(element, writes);
-    if (variableToIgnore != null) {
-      for (int i = writes.size() - 1; i >= 0; i--) {
-        PsiElement write = writes.get(i);
-        if (!(write instanceof PsiAssignmentExpression)) continue;
-        PsiExpression lExpression = ((PsiAssignmentExpression)write).getLExpression();
-        if (lExpression instanceof PsiReference && ((PsiReference)lExpression).resolve() == variableToIgnore) {
-          writes.remove(i);
-        }
-      }
+    Predicate<PsiElement> allowedSideEffect;
+    if (variableToIgnore == null) {
+      allowedSideEffect = e -> false;
     }
+    else {
+      allowedSideEffect = e -> e instanceof PsiAssignmentExpression &&
+                               ExpressionUtils.isReferenceTo(((PsiAssignmentExpression)e).getLExpression(), variableToIgnore);
+    }
+    SideEffectChecker.checkSideEffects(element, writes, allowedSideEffect);
     sideEffects.addAll(writes);
     return !writes.isEmpty();
   }
@@ -59,6 +63,12 @@ public class RemoveUnusedVariableUtil {
       elementToReplace = element.getParent();
       expressionToReplaceWith =
       factory.createStatementFromText((expression == null ? "" : expression.getText()) + ";", null);
+      if (isForLoopUpdate(elementToReplace)) {
+        PsiElement lastChild = expressionToReplaceWith.getLastChild();
+        if (PsiUtil.isJavaToken(lastChild, JavaTokenType.SEMICOLON)) {
+          lastChild.delete();
+        }
+      }
     }
     else if (element.getParent() instanceof PsiDeclarationStatement) {
       expressionToReplaceWith =
@@ -83,7 +93,7 @@ public class RemoveUnusedVariableUtil {
     // just delete it altogether
     if (element.getParent() instanceof PsiExpressionStatement) {
       PsiExpressionStatement parent = (PsiExpressionStatement)element.getParent();
-      if (parent.getParent() instanceof PsiCodeBlock) {
+      if (parent.getParent() instanceof PsiCodeBlock || isForLoopUpdate(parent)) {
         parent.delete();
       }
       else {
@@ -96,13 +106,13 @@ public class RemoveUnusedVariableUtil {
     }
   }
 
-  static void deleteReferences(PsiVariable variable, List<PsiElement> references, @NotNull RemoveMode mode) throws IncorrectOperationException {
+  static void deleteReferences(PsiVariable variable, List<? extends PsiElement> references, @NotNull RemoveMode mode) throws IncorrectOperationException {
     for (PsiElement expression : references) {
       processUsage(expression, variable, null, mode);
     }
   }
 
-  static void collectReferences(@NotNull PsiElement context, final PsiVariable variable, final List<PsiElement> references) {
+  static void collectReferences(@NotNull PsiElement context, final PsiVariable variable, final List<? super PsiElement> references) {
     context.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expression) {
         if (expression.resolve() == variable) references.add(expression);
@@ -115,9 +125,9 @@ public class RemoveUnusedVariableUtil {
    * @param sideEffects if null, delete usages, otherwise collect side effects
    * @return true if there are at least one unrecoverable side effect found, false if no side effects,
    *         null if read usage found (may happen if interval between fix creation in invoke() call was long enough)
-   * @throws com.intellij.util.IncorrectOperationException
+   * @throws IncorrectOperationException
    */
-  static Boolean processUsage(PsiElement element, PsiVariable variable, List<PsiElement> sideEffects, @NotNull RemoveMode deleteMode)
+  static Boolean processUsage(PsiElement element, PsiVariable variable, List<? super PsiElement> sideEffects, @NotNull RemoveMode deleteMode)
     throws IncorrectOperationException {
     if (!element.isValid()) return null;
     PsiElementFactory factory = JavaPsiFacade.getInstance(variable.getProject()).getElementFactory();
@@ -130,17 +140,15 @@ public class RemoveUnusedVariableUtil {
           return null;
         }
         PsiExpression rExpression = expression.getRExpression();
-        rExpression = PsiUtil.deparenthesizeExpression(rExpression);
+        rExpression = PsiUtil.skipParenthesizedExprDown(rExpression);
         if (rExpression == null) return true;
         // replace assignment with expression and resimplify
         boolean sideEffectFound = checkSideEffects(rExpression, variable, sideEffects);
-        if (!(element.getParent() instanceof PsiExpressionStatement) || PsiUtil.isStatement(rExpression)) {
+        if (!isStatementExpression(expression) || PsiUtil.isStatement(rExpression)) {
           if (deleteMode == RemoveMode.MAKE_STATEMENT ||
               deleteMode == RemoveMode.DELETE_ALL && !(element.getParent() instanceof PsiExpressionStatement)) {
             element = replaceElementWithExpression(rExpression, factory, element);
-            while (element.getParent() instanceof PsiParenthesizedExpression) {
-              element = element.getParent().replace(element);
-            }
+            element = eraseUnnecessaryOuterParentheses(element);
             List<PsiElement> references = new ArrayList<>();
             collectReferences(element, variable, references);
             deleteReferences(variable, references, deleteMode);
@@ -200,5 +208,31 @@ public class RemoveUnusedVariableUtil {
       element = element.getParent();
     }
     return true;
+  }
+
+  @NotNull
+  private static PsiElement eraseUnnecessaryOuterParentheses(@NotNull PsiElement element) {
+    PsiElement parenthesizedParent = element;
+    while (parenthesizedParent.getParent() instanceof PsiParenthesizedExpression) {
+      parenthesizedParent = parenthesizedParent.getParent();
+    }
+    if (parenthesizedParent != element) {
+      // replace() will preserve the parentheses if they're mandatory due to operator precedence
+      return parenthesizedParent.replace(element);
+    }
+    return element;
+  }
+
+  public static boolean isForLoopUpdate(@Nullable PsiElement element) {
+    if(element == null) return false;
+    PsiElement parent = element.getParent();
+    return parent instanceof PsiForStatement &&
+           ((PsiForStatement)parent).getUpdate() == element;
+  }
+
+  private static boolean isStatementExpression(PsiExpression expression) {
+    PsiElement parent = expression.getParent();
+    return parent instanceof PsiExpressionStatement ||
+           parent instanceof PsiExpressionList && parent.getParent() instanceof PsiExpressionListStatement;
   }
 }

@@ -1,44 +1,64 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.LazySchemeProcessor
 import com.intellij.configurationStore.SchemeContentChangedHandler
 import com.intellij.configurationStore.SchemeDataHolder
+import com.intellij.execution.RunConfigurationConverter
+import com.intellij.execution.configurations.ConfigurationFactory
+import com.intellij.execution.configurations.ConfigurationType
+import com.intellij.execution.configurations.UnknownConfigurationType
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.InvalidDataException
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.attribute
+import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.function.Function
 
-internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl, private val isShared: Boolean) :
+private val LOG = logger<RunConfigurationSchemeManager>()
+
+internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl, private val templateDifferenceHelper: TemplateDifferenceHelper, private val isShared: Boolean, private val isWrapSchemeIntoComponentElement: Boolean) :
   LazySchemeProcessor<RunnerAndConfigurationSettingsImpl, RunnerAndConfigurationSettingsImpl>(), SchemeContentChangedHandler<RunnerAndConfigurationSettingsImpl> {
+
+  private val converters by lazy {
+    ConfigurationType.CONFIGURATION_TYPE_EP.extensions.filterIsInstance(RunConfigurationConverter::class.java)
+  }
+
+  override fun getSchemeKey(scheme: RunnerAndConfigurationSettingsImpl): String {
+    // here only isShared, because for workspace `workspaceSchemeManagerProvider.load` is used (see RunManagerImpl.loadState)
+    return when {
+      isShared -> {
+        if (scheme.type.isManaged) {
+          scheme.name
+        }
+        else {
+          // do not use name as scheme key for Unknown RC or for Rider (some Rider RC types can use RC with not unique names)
+          // using isManaged not strictly correct but separate API will be overkill for now
+          scheme.uniqueID
+        }
+      }
+      else -> "${scheme.type.id}-${scheme.name}"
+    }
+  }
+
   override fun createScheme(dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>, name: String, attributeProvider: Function<String, String?>, isBundled: Boolean): RunnerAndConfigurationSettingsImpl {
     val settings = RunnerAndConfigurationSettingsImpl(manager)
     val element = readData(settings, dataHolder)
-    manager.addConfiguration(element, settings)
+    manager.addConfiguration(element, settings, isCheckRecentsLimit = false)
     return settings
   }
 
   private fun readData(settings: RunnerAndConfigurationSettingsImpl, dataHolder: SchemeDataHolder<RunnerAndConfigurationSettingsImpl>): Element {
     var element = dataHolder.read()
-    // very important to not write file with only changed line separators.
-    dataHolder.updateDigest(element)
 
     if (isShared && element.name == "component") {
       element = element.getChild("configuration")
+    }
+
+    converters.any {
+      LOG.runAndLogException { it.convertRunConfigurationOnDemand(element) } ?: false
     }
 
     try {
@@ -47,10 +67,22 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     catch (e: InvalidDataException) {
       RunManagerImpl.LOG.error(e)
     }
+
+    var elementAfterStateLoaded: Element? = element
+    try {
+      elementAfterStateLoaded = writeScheme(settings)
+    }
+    catch (e: Throwable) {
+      LOG.error("Cannot compute digest for RC using state after load", e)
+    }
+
+    // very important to not write file with only changed line separators
+    dataHolder.updateDigest(elementAfterStateLoaded)
+
     return element
   }
 
-  override fun getName(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String {
+  override fun getSchemeKey(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String? {
     var name = attributeProvider.apply("name")
     if (name == "<template>" || name == null) {
       attributeProvider.apply("type")?.let {
@@ -60,7 +92,13 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
         name += " of type ${it}"
       }
     }
-    return name ?: throw IllegalStateException("name is missed in the scheme data")
+    else if (name != null && !isShared) {
+      val typeId = attributeProvider.apply("type")
+      LOG.assertTrue(typeId != null)
+      return "$typeId-${name}"
+    }
+
+    return name
   }
 
   override fun isExternalizable(scheme: RunnerAndConfigurationSettingsImpl) = true
@@ -78,13 +116,34 @@ internal class RunConfigurationSchemeManager(private val manager: RunManagerImpl
     manager.removeConfiguration(scheme)
   }
 
-  override fun writeScheme(scheme: RunnerAndConfigurationSettingsImpl): Element {
-    val result = super.writeScheme(scheme)
-    if (isShared) {
+  override fun writeScheme(scheme: RunnerAndConfigurationSettingsImpl): Element? {
+    val result = super.writeScheme(scheme) ?: return null
+    if (isShared && isWrapSchemeIntoComponentElement) {
       return Element("component")
         .attribute("name", "ProjectRunConfigurationManager")
         .addContent(result)
     }
+    else if (scheme.isTemplate) {
+      val factory = scheme.factory
+      if (factory != UnknownConfigurationType.getFactory() && !templateDifferenceHelper.isTemplateModified(result, factory)) {
+        return null
+      }
+    }
     return result
+  }
+}
+
+internal class TemplateDifferenceHelper(private val manager: RunManagerImpl) {
+  private val cachedSerializedTemplateIdToData = THashMap<ConfigurationFactory, Element>()
+
+  fun isTemplateModified(serialized: Element, factory: ConfigurationFactory): Boolean {
+    val originalTemplate = cachedSerializedTemplateIdToData.getOrPut(factory) {
+      JDOMUtil.internElement(manager.createTemplateSettings(factory).writeScheme())
+    }
+    return !JDOMUtil.areElementsEqual(serialized, originalTemplate)
+  }
+
+  fun clearCache() {
+    cachedSerializedTemplateIdToData.clear()
   }
 }

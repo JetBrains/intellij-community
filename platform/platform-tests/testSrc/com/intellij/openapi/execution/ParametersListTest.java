@@ -18,11 +18,13 @@ package com.intellij.openapi.execution;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.execution.ParametersListUtil;
-import org.junit.Assert;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
 import java.util.List;
 
 import static java.util.Arrays.asList;
@@ -139,6 +141,7 @@ public class ParametersListTest {
 
   @Test
   public void addParametersString() {
+    checkTokenizer("", ArrayUtil.EMPTY_STRING_ARRAY);
     checkTokenizer("a b c",
                    "a", "b", "c");
     checkTokenizer("a \"b\"",
@@ -199,6 +202,105 @@ public class ParametersListTest {
     assertEquals("\"bar bar\" bar", params.getProperties().get("foo.foo"));
   }
 
+  @Test
+  public void addEmptyProperties() {
+    ParametersList params = new ParametersList();
+    params.addProperty("foo.null", null);
+    params.addProperty("foo.empty", "");
+    params.addProperty("foo.value.less");
+    params.defineProperty("def.null", null);
+    params.defineProperty("def.empty", "");
+    params.defineProperty("foo.value.less", "anyway");
+    params.addNotEmptyProperty("empty.null", null);
+    params.addNotEmptyProperty("empty.empty", "");
+    params.addNotEmptyProperty("empty.spaces", "   \t\t\t");
+    assertTrue(params.hasProperty("foo.value.less"));
+    assertTrue(params.hasProperty("foo.empty"));
+    assertEquals("{foo.empty=, foo.value.less=, def.empty=}", params.getProperties().toString());
+  }
+
+  @Test
+  public void redefineProperty() {
+    ParametersList params = new ParametersList();
+    params.defineProperty("sample", "foo");
+    params.defineProperty("sample", "bar");
+    assertEquals(1, params.getProperties().size());
+    assertEquals("foo", params.getPropertyValue("sample"));
+    params.addProperty("sample", "baz");
+    assertEquals(1, params.getProperties().size());
+    assertEquals("baz", params.getPropertyValue("sample"));
+    params.defineProperty("ample.sample", "qux");
+    assertEquals(2, params.getProperties().size());
+    params.defineSystemProperty("ParameterListTest.prop");
+    params.defineSystemProperty("ParameterListTest.missing.prop");
+    assertNull(params.getPropertyValue("ParameterListTest.prop.value"));
+    assertEquals("my.system.value", params.getPropertyValue("ParameterListTest.prop"));
+  }
+
+  @Test
+  public void reAddProperty() {
+    ParametersList params = new ParametersList();
+    params.add("-Dp8=5");
+    params.add("-DpX=none");
+    params.addProperty("simple.prop");
+    params.addProperty("simple");
+    params.addProperty("foo", "$foo");
+    params.addProperty("bar", "$bar");
+    params.addProperty("foo", "$foo.foo");
+    params.addProperty("foo", "");
+    params.addProperty("simple");
+    params.addProperty("pX");
+    params.replaceOrAppend("-Dp8=", "-Dp8=8");
+    params.replaceOrAppend("-Dp27", "-Dp27=21");
+    params.replaceOrPrepend("-Dp27=", "-Dp27=27");
+    params.replaceOrPrepend("-Dp1st", "-Dp1st");
+    params.add("-Dsimple");
+    assertEquals("-Dp1st -Dp8=8 -DpX -Dsimple.prop -Dsimple -Dfoo -Dbar=$bar -Dp27=27 -Dsimple", params.getParametersString());
+  }
+
+  @Before
+  public void initMacros() {
+    System.setProperty("ParameterListTest.prop", "my.system.value");
+    ParametersList.setTestMacros(JBIterable.of("foo", "bar", "baz", "qux").toReverseMap(o -> "env." + o));
+  }
+
+  @Test
+  public void macrosInParameters() {
+    ParametersList params = new ParametersList();
+    params.add("foo", "${env.foo}");
+    params.add("${env.bar}", "bar");
+    params.add("${env.baz}:${env.baz}");
+    params.addParametersString("-${env.baz} \"foo:${env.foo}\"");
+    assertEquals("[foo, foo, ${env.bar}, bar, baz:baz, -baz, foo:foo]", params.toString());
+    params.addParamsGroup("group").addParameter("${env.qux}");
+    params.addParamsGroupAt(0, new ParamsGroup("first")).addParameter("${env.baz}");
+    assertEquals("foo foo ${env.bar} bar baz:baz -baz foo:foo baz qux", params.getParametersString());
+    assertEquals("[foo, foo, ${env.bar}, bar, baz:baz, -baz, foo:foo] and [first:[baz], group:[qux]]", params.toString());
+    params.replaceOrPrepend("foo", "${env.foo}:X");
+    assertEquals("foo foo ${env.bar} bar baz:baz -baz foo:X baz qux", params.getParametersString());
+  }
+
+  @Test
+  public void macroInProperties() {
+    ParametersList params = new ParametersList();
+    params.defineProperty("foo", "${env.foo}");
+    assertEquals("foo", params.getPropertyValue("foo"));
+    params.defineProperty("bar", "${env.bar}");
+    assertEquals("bar", params.getPropertyValue("bar"));
+    params.defineProperty("foo.bar", "${env.foo}${env.bar}");
+    assertEquals("foobar", params.getPropertyValue("foo.bar"));
+    params.defineProperty("foo.bar.ex", "prefix.${env.foo}.base.${env.bar}.suffix");
+    assertEquals("prefix.foo.base.bar.suffix", params.getPropertyValue("foo.bar.ex"));
+    params.defineProperty("foo.bar.flux", "pref${ix.${env.foo}.${base}.${env.bar}.suf}fix");
+    assertEquals("pref${ix.foo.${base}.bar.suf}fix", params.getPropertyValue("foo.bar.flux"));
+  }
+  
+  @After
+  public void clearMacros() {
+    ParametersList.setTestMacros(null);
+    System.clearProperty("ParameterListTest.prop");
+  }
+
   private static void checkTokenizer(String paramString, String... expected) {
     ParametersList params = new ParametersList();
     params.addParametersString(paramString);
@@ -210,7 +312,7 @@ public class ParametersListTest {
 
   @Test
   public void testParameterListUtil() {
-    final List<String> expected = Arrays.asList(
+    final List<String> expected = asList(
       "cmd",
       "-a",
       "-b",
@@ -225,12 +327,12 @@ public class ParametersListTest {
       "--foo=d e f"
     );
     final String doubleQuotes = "cmd -a -b arg0 -c --long-option    --long-opt2=arg1 arg2 arg3 -a \"a \\\"r g\" --foo=\"d e f\"\"\"";
-    Assert.assertEquals("Double quotes broken", expected, ParametersListUtil.parse(doubleQuotes, false, true));
+    assertEquals("Double quotes broken", expected, ParametersListUtil.parse(doubleQuotes, false, true));
 
     final String singleQuotes = "cmd -a -b arg0 -c --long-option    --long-opt2=arg1 arg2 arg3 -a 'a \"r g' --foo='d e f'";
-    Assert.assertEquals("Single quotes broken", expected, ParametersListUtil.parse(singleQuotes, false, true));
+    assertEquals("Single quotes broken", expected, ParametersListUtil.parse(singleQuotes, false, true));
 
     final String mixedQuotes = "cmd -a -b arg0 -c --long-option    --long-opt2=arg1 arg2 arg3 -a \"a \\\"r g\" --foo='d e f'";
-    Assert.assertEquals("Mixed quotes broken", expected, ParametersListUtil.parse(mixedQuotes, false, true));
+    assertEquals("Mixed quotes broken", expected, ParametersListUtil.parse(mixedQuotes, false, true));
   }
 }

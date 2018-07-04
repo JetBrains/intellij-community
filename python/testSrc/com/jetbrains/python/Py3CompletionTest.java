@@ -1,32 +1,24 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.openapi.module.Module;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.inspections.PyMethodParametersInspection;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author yole
  */
+@TestDataPath("$CONTENT_ROOT/../testData/completion")
 public class Py3CompletionTest extends PyTestCase {
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
@@ -78,6 +70,27 @@ public class Py3CompletionTest extends PyTestCase {
     myFixture.checkResultByFile(getTestName(true) + "/a.after.py");
   }
 
+
+  protected void doMultiFileTest(@NotNull List<String> sourceRoots) {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
+      myFixture.copyDirectoryToProject(getTestName(true), "");
+      final Module module = myFixture.getModule();
+      for (String root : sourceRoots) {
+        PsiTestUtil.addSourceRoot(module, myFixture.findFileInTempDir(root));
+      }
+      try {
+        myFixture.configureByFile("a.py");
+        myFixture.completeBasic();
+        myFixture.checkResultByFile(getTestName(true) + "/a.after.py");
+      }
+      finally {
+        for (String root : sourceRoots) {
+          PsiTestUtil.removeSourceRoot(module, myFixture.findFileInTempDir(root));
+        }
+      }
+    });
+  }
+
   @Nullable
   private List<String> doTestByText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
@@ -87,21 +100,20 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-4073
   public void testSpecialFunctionAttributesPy3() {
-    setLanguageLevel(LanguageLevel.PYTHON32);
-    try {
-      List<String> suggested = doTestByText("def func(): pass; func.func_<caret>");
-      assertNotNull(suggested);
-      assertEmpty(suggested);
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON34,
+      () -> {
+        List<String> suggested = doTestByText("def func(): pass; func.func_<caret>");
+        assertNotNull(suggested);
+        assertEmpty(suggested);
 
-      suggested = doTestByText("def func(): pass; func.__<caret>");
-      assertNotNull(suggested);
-      assertContainsElements(suggested, "__defaults__", "__globals__", "__closure__",
-                             "__code__", "__name__", "__doc__", "__dict__", "__module__");
-      assertContainsElements(suggested, "__annotations__", "__kwdefaults__");
-    }
-    finally {
-      setLanguageLevel(null);
-    }
+        suggested = doTestByText("def func(): pass; func.__<caret>");
+        assertNotNull(suggested);
+        assertContainsElements(suggested, "__defaults__", "__globals__", "__closure__",
+                               "__code__", "__name__", "__doc__", "__dict__", "__module__");
+        assertContainsElements(suggested, "__annotations__", "__kwdefaults__");
+      }
+    );
   }
 
   // PY-7375
@@ -165,7 +177,30 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-17828
   public void testDunderPrepare() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON34,
+      () -> {
+        final String testName = getTestName(true);
+        myFixture.configureByFile(testName + ".py");
+        myFixture.completeBasicAllCarets(null);
+        myFixture.checkResultByFile(testName + ".after.py");
+      }
+    );
+  }
+
+  // PY-17828
+  public void testDunderPrepareHonourInspectionSettings() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON34,
+      () -> {
+        myFixture.enableInspections(PyMethodParametersInspection.class);
+
+        final String testName = getTestName(true);
+        myFixture.configureByFile(testName + ".py");
+        myFixture.completeBasicAllCarets(null);
+        myFixture.checkResultByFile(testName + ".after.py");
+      }
+    );
   }
 
   // PY-20279
@@ -214,7 +249,6 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-21060
   public void testGenericTypeInheritor() {
-    myFixture.copyDirectoryToProject("../typing", "");
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
 
@@ -269,6 +303,75 @@ public class Py3CompletionTest extends PyTestCase {
     assertNotNull(suggested);
     assertDoesntContain(suggested, "meta_method");
   }
+
+  // PY-27398
+  public void testDataclassPostInit() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
+
+  // PY-27398
+  public void testDataclassWithInitVarPostInit() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
+
+  // PY-27398
+  public void testDataclassPostInitNoInit() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
+
+  // PY-26354
+  public void testAttrsPostInit() {
+    doTestByText("import attr\n" +
+                 "\n" +
+                 "@attr.s\n" +
+                 "class C:\n" +
+                 "    x = attr.ib()\n" +
+                 "    y = attr.ib(init=False)\n" +
+                 "\n" +
+                 "    def __attrs_<caret>");
+
+    myFixture.checkResult("import attr\n" +
+                          "\n" +
+                          "@attr.s\n" +
+                          "class C:\n" +
+                          "    x = attr.ib()\n" +
+                          "    y = attr.ib(init=False)\n" +
+                          "\n" +
+                          "    def __attrs_post_init__(self):");
+  }
+
+  // PY-26354
+  public void testAttrsPostInitNoInit() {
+    assertEmpty(
+      doTestByText("import attr\n" +
+                   "\n" +
+                   "@attr.s(init=False)\n" +
+                   "class C:\n" +
+                   "    x = attr.ib()\n" +
+                   "    y = attr.ib(init=False)\n" +
+                   "\n" +
+                   "    def __attrs_<caret>")
+    );
+  }
+
+  // PY-26354
+  public void testAttrsValidatorParameters() {
+    final String testName = getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasicAllCarets(null);
+    myFixture.checkResultByFile(testName + ".after.py");
+  }
+
+  //PY-28332
+  public void testImportNamespacePackageInMultipleRoots() {
+    doMultiFileTest(Arrays.asList("root1/src", "root2/src"));
+  }
+
+  //PY-28332
+  public void testImportNamespacePackageInMultipleRoots2() {
+    doMultiFileTest(Arrays.asList("root1/src", "root2/src"));
+  }
+
 
   @Override
   protected String getTestDataPath() {

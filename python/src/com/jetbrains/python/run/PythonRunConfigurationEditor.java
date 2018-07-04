@@ -24,7 +24,7 @@ import javax.swing.*;
 /**
  * @author Leonid Shalupov
  */
-public class PythonRunConfigurationEditor  extends SettingsEditor<PythonRunConfiguration> {
+public class PythonRunConfigurationEditor extends SettingsEditor<PythonRunConfiguration> {
   private PythonRunConfigurationForm myForm;
 
   public PythonRunConfigurationEditor(final PythonRunConfiguration configuration) {

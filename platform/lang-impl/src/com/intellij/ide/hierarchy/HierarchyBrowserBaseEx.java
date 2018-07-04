@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.ide.hierarchy;
 
@@ -43,6 +31,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
@@ -70,7 +59,10 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   public static final String SCOPE_TEST = IdeBundle.message("hierarchy.scope.test");
   public static final String SCOPE_CLASS = IdeBundle.message("hierarchy.scope.this.class");
 
-  private static final String HELP_ID = "reference.toolWindows.hierarchy";
+  public static final String HELP_ID = "reference.toolWindows.hierarchy";
+
+  /** @deprecated use {@link #getBuilderForType(String)} and {@link #getBuilders()} (to be removed in IDEA 2018) */
+  @Deprecated protected final Hashtable<String, HierarchyTreeBuilder> myBuilders = new Hashtable<>();
 
   private static final OccurenceNavigator EMPTY_NAVIGATOR = new OccurenceNavigator() {
     @Override
@@ -104,12 +96,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
   };
 
-  /** @deprecated use {@link #getBuilderForType(String)} and {@link #getBuilders()} (to be removed in IDEA 2018) */
-  @SuppressWarnings({"UseOfObsoleteCollectionType", "DeprecatedIsStillUsed"})
-  protected final Hashtable<String, HierarchyTreeBuilder> myBuilders = new Hashtable<>();
-
   /** @deprecated use {@link #getCurrentViewType()} (to be removed in IDEA 2018) */
-  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   protected String myCurrentViewType;
 
   private final Map<String, HierarchyTreeBuilder> myType2BuilderMap;
@@ -126,8 +114,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   public HierarchyBrowserBaseEx(@NotNull Project project, @NotNull PsiElement element) {
     super(project);
 
-    @SuppressWarnings("deprecation") Map<String, HierarchyTreeBuilder> mapView = myBuilders;
-    myType2BuilderMap = mapView;
+    myType2BuilderMap = new Hashtable<>();
 
     setHierarchyBase(element);
 
@@ -246,7 +233,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
         @Override
         public Color getFileColorFor(Object object) {
-          return ProjectViewTree.getColorForObject(object, myProject, toPsiConverter);
+          return ProjectViewTree.getColorForElement(toPsiConverter.fun(object));
         }
       };
 
@@ -309,10 +296,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
         @Override
         public Color getFileColorFor(Object object) {
-          return ProjectViewTree.getColorForObject(object, myProject, toPsiConverter);
+          return ProjectViewTree.getColorForElement(toPsiConverter.fun(object));
         }
       };
     }
+    HintUpdateSupply.installDataContextHintUpdateSupply(tree);
     configureTree(tree);
     EditSourceOnDoubleClickHandler.install(tree);
     EditSourceOnEnterKeyHandler.install(tree);
@@ -506,7 +494,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     myType2BuilderMap.clear();
   }
 
-  void doRefresh(boolean currentBuilderOnly) {
+  protected void doRefresh(boolean currentBuilderOnly) {
     if (currentBuilderOnly) LOG.assertTrue(getCurrentViewType() != null);
 
     if (!isValidBase()) return;
@@ -571,13 +559,13 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
   }
 
-  static class BaseOnThisElementAction extends AnAction {
+  protected static class BaseOnThisElementAction extends AnAction {
     private final String myBrowserDataKey;
     private final LanguageExtension<HierarchyProvider> myProviderLanguageExtension;
 
-    BaseOnThisElementAction(@NotNull String text,
-                            @NotNull String browserDataKey,
-                            @NotNull LanguageExtension<HierarchyProvider> providerLanguageExtension) {
+    protected BaseOnThisElementAction(@NotNull String text,
+                                      @NotNull String browserDataKey,
+                                      @NotNull LanguageExtension<HierarchyProvider> providerLanguageExtension) {
       super(text);
       myBrowserDataKey = browserDataKey;
       myProviderLanguageExtension = providerLanguageExtension;
@@ -662,6 +650,23 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
   }
 
+  protected Collection<String> getValidScopeNames() {
+    List<String> result = new ArrayList<>();
+    result.add(SCOPE_PROJECT);
+    result.add(SCOPE_TEST);
+    result.add(SCOPE_ALL);
+    result.add(SCOPE_CLASS);
+
+    final NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(myProject);
+    for (NamedScopesHolder holder : holders) {
+      NamedScope[] scopes = holder.getEditableScopes(); //predefined scopes already included
+      for (NamedScope scope : scopes) {
+        result.add(scope.getName());
+      }
+    }
+    return result;
+  }
+
   public class ChangeScopeAction extends ComboBoxAction {
     @Override
     public final void update(final AnActionEvent e) {
@@ -688,23 +693,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       group.add(new ConfigureScopesAction());
 
       return group;
-    }
-
-    private Collection<String> getValidScopeNames() {
-      List<String> result = new ArrayList<>();
-      result.add(SCOPE_PROJECT);
-      result.add(SCOPE_TEST);
-      result.add(SCOPE_ALL);
-      result.add(SCOPE_CLASS);
-
-      final NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(myProject);
-      for (NamedScopesHolder holder : holders) {
-        NamedScope[] scopes = holder.getEditableScopes(); //predefined scopes already included
-        for (NamedScope scope : scopes) {
-          result.add(scope.getName());
-        }
-      }
-      return result;
     }
 
     private void selectScope(final String scopeType) {

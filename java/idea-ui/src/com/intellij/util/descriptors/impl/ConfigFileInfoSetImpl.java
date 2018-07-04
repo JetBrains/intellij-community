@@ -27,7 +27,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.TreeSet;
 
 /**
  * @author nik
@@ -90,7 +92,7 @@ public class ConfigFileInfoSetImpl implements ConfigFileInfoSet {
 
   public ConfigFileInfo[] getConfigFileInfos() {
     final Collection<ConfigFileInfo> configurations = myConfigFiles.values();
-    return configurations.toArray(new ConfigFileInfo[configurations.size()]);
+    return configurations.toArray(new ConfigFileInfo[0]);
   }
 
   public void setConfigFileInfos(final Collection<ConfigFileInfo> descriptors) {

@@ -27,11 +27,13 @@ public class TestClassConfigurationProducer extends AbstractInClassConfiguration
     super(JUnitConfigurationType.getInstance());
   }
 
+  @SuppressWarnings("RedundantMethodOverride") // binary compatibility
   @Override
   public boolean isConfigurationFromContext(JUnitConfiguration configuration, ConfigurationContext context) {
     return super.isConfigurationFromContext(configuration, context);
   }
 
+  @SuppressWarnings("RedundantMethodOverride") // binary compatibility
   @Override
   protected boolean setupConfigurationFromContext(JUnitConfiguration configuration,
                                                   ConfigurationContext context,

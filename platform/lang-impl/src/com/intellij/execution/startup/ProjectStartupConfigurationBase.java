@@ -1,40 +1,23 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.startup;
 
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-/**
- * @author Irina.Chernushina on 8/19/2015.
- */
 public class ProjectStartupConfigurationBase implements PersistentStateComponent<ProjectStartupConfigurationBase> {
-  @Tag("configurations") @AbstractCollection(surroundWithTag = false)
-  private final List<ConfigurationDescriptor> myList;
+  @SuppressWarnings("FieldMayBeFinal")
+  @XCollection(propertyElementName = "configurations")
+  private List<ConfigurationDescriptor> myList;
 
   protected ProjectStartupConfigurationBase() {
     myList = new ArrayList<>();
@@ -47,7 +30,7 @@ public class ProjectStartupConfigurationBase implements PersistentStateComponent
   }
 
   @Override
-  public void loadState(ProjectStartupConfigurationBase state) {
+  public void loadState(@NotNull ProjectStartupConfigurationBase state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 

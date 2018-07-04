@@ -15,36 +15,39 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
+import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.psiutils.BlockUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import com.siyeh.ig.psiutils.StatementExtractor;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
-public class DeleteSideEffectsAwareFix implements IntentionAction, LowPriorityAction {
-  private final SmartPsiElementPointer<PsiExpressionStatement> myPointer;
+public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOnPsiElement implements LowPriorityAction {
+  private final SmartPsiElementPointer<PsiStatement> myStatementPtr;
+  private final SmartPsiElementPointer<PsiExpression> myExpressionPtr;
   private final String myMessage;
+  private final boolean myIsAvailable;
 
-  public DeleteSideEffectsAwareFix(PsiExpressionStatement statement) {
-    myPointer = SmartPointerManager.getInstance(statement.getProject()).createSmartPsiElementPointer(statement);
-    PsiExpression expression = statement.getExpression();
+  public DeleteSideEffectsAwareFix(@NotNull PsiStatement statement, PsiExpression expression) {
+    super(statement);
+    SmartPointerManager manager = SmartPointerManager.getInstance(statement.getProject());
+    myStatementPtr = manager.createSmartPsiElementPointer(statement);
+    myExpressionPtr = manager.createSmartPsiElementPointer(expression);
     List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(expression);
     if (sideEffects.isEmpty()) {
       myMessage = QuickFixBundle.message("delete.element.fix.text");
-    }
-    else if (sideEffects.size() == 1 && sideEffects.get(0) == PsiUtil.skipParenthesizedExprDown(expression)) {
-      // "Remove unnecessary parentheses" action is already present which will do the same
-      myMessage = "";
     }
     else {
       PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, expression);
@@ -55,6 +58,9 @@ public class DeleteSideEffectsAwareFix implements IntentionAction, LowPriorityAc
         myMessage = QuickFixBundle.message("extract.side.effects", statements.length);
       }
     }
+    // "Remove unnecessary parentheses" action is already present which will do the same
+    myIsAvailable = sideEffects.size() != 1 || !(statement instanceof PsiExpressionStatement) ||
+                    sideEffects.get(0) != PsiUtil.skipParenthesizedExprDown(expression);
   }
 
   @Nls
@@ -72,25 +78,36 @@ public class DeleteSideEffectsAwareFix implements IntentionAction, LowPriorityAc
   }
 
   @Override
-  public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return !myMessage.isEmpty();
+  public boolean isAvailable(@NotNull Project project,
+                             @NotNull PsiFile file,
+                             @NotNull PsiElement startElement,
+                             @NotNull PsiElement endElement) {
+    return myIsAvailable;
   }
 
   @Override
-  public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiExpressionStatement statement = myPointer.getElement();
+  public void invoke(@NotNull Project project,
+                     @NotNull PsiFile file,
+                     @Nullable Editor editor,
+                     @NotNull PsiElement startElement,
+                     @NotNull PsiElement endElement) {
+    PsiStatement statement = myStatementPtr.getElement();
     if (statement == null) return;
-    PsiExpression expression = statement.getExpression();
+    PsiExpression expression = myExpressionPtr.getElement();
+    if (expression == null) return;
     List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(expression);
+    CommentTracker ct = new CommentTracker();
+    sideEffects.forEach(ct::markUnchanged);
     PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, expression);
     if (statements.length > 0) {
-      BlockUtils.addBefore(statement, statements);
+      PsiStatement lastAdded = BlockUtils.addBefore(statement, statements);
+      statement = Objects.requireNonNull(PsiTreeUtil.getNextSiblingOfType(lastAdded, PsiStatement.class));
     }
-    statement.delete();
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
+    PsiElement parent = statement.getParent();
+    if (parent instanceof PsiStatement && !(parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getElseBranch() == statement)) {
+      ct.replaceAndRestoreComments(statement, "{}");
+    } else {
+      ct.deleteAndRestoreComments(statement);
+    }
   }
 }

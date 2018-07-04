@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -105,7 +106,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
   PsiType getGUIComponentType(final PsiPlainTextFile file, String fieldName) {
     final Map<String, Pair<PsiType, TextRange>> fieldNameToTypeMap = getCachedData(file).myFieldNameToTypeMap;
     final Pair<PsiType, TextRange> typeRangePair = fieldNameToTypeMap.get(fieldName);
-    return typeRangePair != null? typeRangePair.getFirst() : null;
+    return Pair.getFirst(typeRangePair);
   }
 
   public static void setGUIComponentType(PsiPlainTextFile file, String fieldName, String typeText) {
@@ -278,12 +279,12 @@ public class FormReferenceProvider extends PsiReferenceProvider {
     if (valueAttribute != null) {
       PsiReference reference = ReadAction.compute(() -> {
         final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(file.getProject());
-        final Module module = ModuleUtil.findModuleForPsiElement(file);
+        final Module module = ModuleUtilCore.findModuleForPsiElement(file);
         if (module == null) return null;
         final GlobalSearchScope scope = module.getModuleWithDependenciesAndLibrariesScope(false);
         PsiClass psiClass = psiFacade.findClass(className, scope);
         if (psiClass != null) {
-          PsiMethod getter = PropertyUtil.findPropertyGetter(psiClass, tag.getName(), false, true);
+          PsiMethod getter = PropertyUtilBase.findPropertyGetter(psiClass, tag.getName(), false, true);
           if (getter != null) {
             final PsiType returnType = getter.getReturnType();
             if (returnType instanceof PsiClassType) {

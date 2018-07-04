@@ -24,7 +24,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyAnnotation;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyAnnotationImpl;
@@ -65,5 +67,12 @@ public class PyAnnotationElementType extends PyStubElementType<PyAnnotationStub,
   public PyAnnotationStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub)
       throws IOException {
     return new PyAnnotationStubImpl(parentStub, PyElementTypes.ANNOTATION);
+  }
+
+  @Override
+  public boolean shouldCreateStub(ASTNode node) {
+    final IElementType parentType = node.getTreeParent().getElementType();
+    return PythonDialectsTokenSetProvider.INSTANCE.getFunctionDeclarationTokens().contains(parentType)
+           || PythonDialectsTokenSetProvider.INSTANCE.getParameterTokens().contains(parentType);
   }
 }

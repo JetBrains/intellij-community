@@ -55,7 +55,7 @@ public class ReplaceWithTernaryOperatorFix implements LocalQuickFix {
     PsiElement element = descriptor.getPsiElement();
     while (true) {
       PsiElement parent = element.getParent();
-      if (parent instanceof PsiReferenceExpression || parent instanceof PsiMethodCallExpression) {
+      if (parent instanceof PsiReferenceExpression || parent instanceof PsiCallExpression || parent instanceof PsiJavaCodeReferenceElement) {
         element = parent;
       }
       else {

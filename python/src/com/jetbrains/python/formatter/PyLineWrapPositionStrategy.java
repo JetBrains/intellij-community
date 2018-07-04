@@ -71,10 +71,11 @@ public class PyLineWrapPositionStrategy extends GenericLineWrapPositionStrategy 
                                    int endOffset,
                                    int maxPreferredOffset,
                                    boolean allowToBeyondMaxPreferredOffset,
-                                   boolean virtual) {
+                                   boolean isSoftWrap) {
 
     int wrapPosition =
-      super.calculateWrapPosition(document, project, startOffset, endOffset, maxPreferredOffset, allowToBeyondMaxPreferredOffset, virtual);
+      super.calculateWrapPosition(document, project, startOffset, endOffset, maxPreferredOffset, allowToBeyondMaxPreferredOffset,
+                                  isSoftWrap);
     if (wrapPosition < 0) return wrapPosition;
     final CharSequence text = document.getImmutableCharSequence();
 

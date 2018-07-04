@@ -41,7 +41,7 @@ abstract class Loader {
   }
 
   @Nullable
-  abstract Resource getResource(String name, boolean flag);
+  abstract Resource getResource(String name);
   
   @NotNull abstract ClasspathCache.LoaderData buildData() throws IOException;
 

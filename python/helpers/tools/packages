@@ -4759,3 +4759,4 @@ pipeline django-pipeline
 PIL Pillow
 robot robotframework
 cv2 opencv-python
+ldap pyldap

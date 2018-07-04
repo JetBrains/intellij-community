@@ -24,9 +24,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns
 
-val ANNO_FQN = "groovy.transform.Synchronized"
-val LOCK_NAME = "\$lock"
-val STATIC_LOCK_NAME = "\$LOCK"
+val ANNO_FQN: String = "groovy.transform.Synchronized"
+val LOCK_NAME: String = "\$lock"
+val STATIC_LOCK_NAME: String = "\$LOCK"
 
 internal val PATTERN: ElementPattern<out GrLiteral> = GroovyPatterns.stringLiteral().annotationParam(
     StandardPatterns.string().equalTo(ANNO_FQN), DEFAULT_REFERENCED_METHOD_NAME

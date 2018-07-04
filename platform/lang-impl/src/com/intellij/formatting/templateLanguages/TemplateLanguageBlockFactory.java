@@ -26,8 +26,6 @@ import java.util.List;
 
 /**
  * @author Alexey Chmutov
- *         Date: Oct 22, 2009
- *         Time: 6:56:55 PM
  */
 public interface TemplateLanguageBlockFactory {
   TemplateLanguageBlock createTemplateLanguageBlock(@NotNull ASTNode node,

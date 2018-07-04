@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
@@ -21,7 +7,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -60,7 +45,6 @@ import java.util.*;
 
 /**
  * @author db
- * Date: Sep 19, 2004
  */
 public class TypeMigrationLabeler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.typeMigration.TypeMigrationLabeler");
@@ -154,6 +138,7 @@ public class TypeMigrationLabeler {
         final PsiExpression expr = pair.getFirst().getElement();
         LOG.assertTrue(expr != null);
         return new UsageInfo(expr) {
+          @Override
           @Nullable
           public String getTooltipText() {
             final PsiType type = expr.isValid() ? expr.getType() : null;
@@ -174,6 +159,7 @@ public class TypeMigrationLabeler {
     for (final PsiElement element : myConversions.keySet()) {
       final Object conv = myConversions.get(element);
       usages[j++] = new TypeMigrationUsageInfo(element) {
+        @Override
         public String getTooltipText() {
           if (conv instanceof String) {   //todo
             final String conversion = (String)conv;
@@ -276,7 +262,7 @@ public class TypeMigrationLabeler {
   }
 
   MigrationProducer createMigratorFor(UsageInfo[] usages) {
-    final Map<UsageInfo, Object> conversions = new com.intellij.util.containers.HashMap<>();
+    final Map<UsageInfo, Object> conversions = new HashMap<>();
     for (UsageInfo usage : usages) {
       final Object conversion = getConversion(usage.getElement());
       if (conversion != null) {
@@ -371,7 +357,7 @@ public class TypeMigrationLabeler {
           MultiMap<PsiType, PsiVariable> variablesByMigrationType = new MultiMap<>();
           for (TypeMigrationUsageInfo migration : migrations) {
             final PsiElement var = migration.getElement();
-            if (var == null || !(var instanceof PsiLocalVariable || var instanceof PsiField)) {
+            if (!(var instanceof PsiLocalVariable || var instanceof PsiField)) {
               continue;
             }
             final PsiType type = getTypeEvaluator().getType(migration);
@@ -402,7 +388,7 @@ public class TypeMigrationLabeler {
 
     private void migrateMultiDeclarationVariable(TypeMigrationUsageInfo varUsageInfo) {
       final PsiElement var = varUsageInfo.getElement();
-      if (var == null || !(var instanceof PsiLocalVariable || var instanceof PsiField)) return;
+      if (!(var instanceof PsiLocalVariable || var instanceof PsiField)) return;
       ((PsiVariable) var).normalizeDeclaration();
       TypeMigrationReplacementUtil.migrateMemberOrVariableType(var, var.getProject(), getTypeEvaluator().getType(varUsageInfo));
     }
@@ -463,6 +449,13 @@ public class TypeMigrationLabeler {
     if (originalType.equals(PsiType.NULL)) {
       if (migrationType instanceof PsiPrimitiveType) {
         markFailedConversion(Pair.create(originalType, migrationType), expr);
+        return;
+      }
+      if (place instanceof PsiVariable) {
+        PsiType type = ((PsiVariable)place).getType();
+        if (((PsiVariable)place).getInitializer() == expr && myRules.shouldConvertNull(type, migrationType, expr)) {
+          convertExpression(expr, migrationType, type, isCovariant);
+        }
       }
       return;
     }
@@ -894,8 +887,7 @@ public class TypeMigrationLabeler {
   }
 
   public PsiReference[] markRootUsages(final PsiElement element, final PsiType migrationType) {
-    return markRootUsages(element, migrationType, ReferencesSearch.search(element, myRules.getSearchScope(), false).toArray(
-      PsiReference.EMPTY_ARRAY));
+    return markRootUsages(element, migrationType, ReferencesSearch.search(element, myRules.getSearchScope(), false).toArray(PsiReference.EMPTY_ARRAY));
   }
 
   PsiReference[] markRootUsages(final PsiElement element, final PsiType migrationType, final PsiReference[] refs) {
@@ -928,7 +920,7 @@ public class TypeMigrationLabeler {
 
     Collections.sort(validReferences, Comparator.comparingInt(o -> o.getElement().getTextOffset()));
 
-    return validReferences.toArray(new PsiReference[validReferences.size()]);
+    return validReferences.toArray(PsiReference.EMPTY_ARRAY);
   }
 
   public void setRootAndMigrate(final TypeMigrationUsageInfo newRootUsageInfo, final PsiType migrationType, final PsiReference[] usages) {
@@ -1082,6 +1074,11 @@ public class TypeMigrationLabeler {
     checkInterrupted();
   }
 
+  @NotNull
+  private PsiReference[] findReferences(PsiElement element) {
+    return ReferencesSearch.search(element, myRules.getSearchScope(), false).toArray(PsiReference.EMPTY_ARRAY);
+  }
+
   public TypeEvaluator getTypeEvaluator() {
     return myTypeEvaluator;
   }
@@ -1123,12 +1120,11 @@ public class TypeMigrationLabeler {
     return refs;
   }
 
-  private boolean canBeRoot(@Nullable PsiElement element, @NotNull SearchScope migrationScope) {
+  private static boolean canBeRoot(@Nullable PsiElement element, @NotNull SearchScope migrationScope) {
     if (element == null) return false;
     return element.isValid() &&
            element.isPhysical() &&
-           PsiSearchScopeUtil.isInScope(migrationScope, element) &&
-           ProjectRootManager.getInstance(element.getProject()).getFileIndex().isInSourceContent(element.getContainingFile().getVirtualFile());
+           PsiSearchScopeUtil.isInScope(migrationScope, element);
   }
 
   @TestOnly

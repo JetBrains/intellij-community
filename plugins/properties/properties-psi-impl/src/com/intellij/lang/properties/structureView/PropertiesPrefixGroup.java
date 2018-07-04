@@ -147,7 +147,7 @@ public class PropertiesPrefixGroup implements Group, ResourceBundleEditorViewEle
       }
       return null;
     });
-    return elements.toArray(new IProperty[elements.size()]);
+    return elements.toArray(IProperty.EMPTY_ARRAY);
   }
 
   @Nullable

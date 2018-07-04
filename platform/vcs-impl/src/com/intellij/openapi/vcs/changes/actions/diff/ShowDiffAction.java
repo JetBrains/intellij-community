@@ -18,19 +18,21 @@ package com.intellij.openapi.vcs.changes.actions.diff;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.chains.DiffRequestChain;
 import com.intellij.diff.util.DiffUserDataKeys;
-import com.intellij.idea.ActionsBundle;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.ListSelection;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.AnActionExtensionProvider;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsDataKeys;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -67,81 +69,11 @@ public class ShowDiffAction implements AnActionExtensionProvider {
 
   @Override
   public void actionPerformed(@NotNull final AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    final Change[] changes = e.getData(VcsDataKeys.CHANGES);
-    if (project == null || !canShowDiff(project, changes)) return;
-    if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
+    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    final Change[] changes = e.getRequiredData(VcsDataKeys.CHANGES);
 
-    final boolean needsConversion = checkIfThereAreFakeRevisions(project, changes);
-    final List<Change> changesInList = e.getData(VcsDataKeys.CHANGES_IN_LIST_KEY);
-
-    // this trick is essential since we are under some conditions to refresh changes;
-    // but we can only rely on callback after refresh
-    final Runnable performer = () -> {
-      Change[] convertedChanges;
-      if (needsConversion) {
-        convertedChanges = loadFakeRevisions(project, changes);
-      }
-      else {
-        convertedChanges = changes;
-      }
-
-      if (convertedChanges == null || convertedChanges.length == 0) {
-        return;
-      }
-
-      Change selectedChane = null;
-      List<Change> result = null;
-
-      if (convertedChanges.length == 1) {
-        selectedChane = convertedChanges[0];
-        ChangeList changeList = ChangeListManagerImpl.getInstanceImpl(project).getIdentityChangeList(selectedChane);
-        if (changeList != null) {
-          result = changesInList != null ? changesInList : new ArrayList<>(changeList.getChanges());
-        }
-      }
-      if (result == null) result = ContainerUtil.newArrayList(convertedChanges);
-
-      //ContainerUtil.sort(result, ChangesComparator.getInstance(false));
-      int index = selectedChane == null ? 0 : Math.max(0, ContainerUtil.indexOfIdentity(result, selectedChane));
-
-      showDiffForChange(project, result, index);
-    };
-
-    if (needsConversion) {
-      ChangeListManager.getInstance(project).invokeAfterUpdate(performer, InvokeAfterUpdateMode.BACKGROUND_CANCELLABLE,
-                                                               ActionsBundle.actionText(IdeActions.ACTION_SHOW_DIFF_COMMON),
-                                                               ModalityState.current());
-    }
-    else {
-      performer.run();
-    }
-  }
-
-  private static boolean checkIfThereAreFakeRevisions(@NotNull Project project, @NotNull Change[] changes) {
-    boolean needsConversion = false;
-    for (Change change : changes) {
-      final ContentRevision beforeRevision = change.getBeforeRevision();
-      final ContentRevision afterRevision = change.getAfterRevision();
-      if (beforeRevision instanceof FakeRevision) {
-        VcsDirtyScopeManager.getInstance(project).fileDirty(beforeRevision.getFile());
-        needsConversion = true;
-      }
-      if (afterRevision instanceof FakeRevision) {
-        VcsDirtyScopeManager.getInstance(project).fileDirty(afterRevision.getFile());
-        needsConversion = true;
-      }
-    }
-    return needsConversion;
-  }
-
-  @Nullable
-  private static Change[] loadFakeRevisions(@NotNull Project project, @NotNull Change[] changes) {
-    List<Change> matchingChanges = new ArrayList<>();
-    for (Change change : changes) {
-      matchingChanges.addAll(ChangeListManager.getInstance(project).getChangesIn(ChangesUtil.getFilePath(change)));
-    }
-    return matchingChanges.toArray(new Change[matchingChanges.size()]);
+    List<Change> result = ContainerUtil.newArrayList(changes);
+    showDiffForChange(project, result, 0);
   }
 
   //
@@ -157,48 +89,36 @@ public class ShowDiffAction implements AnActionExtensionProvider {
   }
 
   public static void showDiffForChange(@Nullable Project project,
+                                       @NotNull ListSelection<Change> changes) {
+    showDiffForChange(project, changes, new ShowDiffContext());
+  }
+
+  public static void showDiffForChange(@Nullable Project project,
                                        @NotNull Iterable<Change> changes,
                                        @NotNull Condition<Change> condition,
                                        @NotNull ShowDiffContext context) {
-    int index = 0;
-    List<ChangeDiffRequestProducer> presentables = new ArrayList<>();
-    for (Change change : changes) {
-      if (condition.value(change)) index = presentables.size();
-      ChangeDiffRequestProducer presentable = ChangeDiffRequestProducer.create(project, change, context.getChangeContext(change));
-      if (presentable != null) presentables.add(presentable);
-    }
-
-    showDiffForChange(project, presentables, index, context);
+    List<Change> list = ContainerUtil.newArrayList(changes);
+    int index = ContainerUtil.indexOf(list, condition);
+    showDiffForChange(project, ListSelection.createAt(list, index), context);
   }
 
   public static void showDiffForChange(@Nullable Project project,
                                        @NotNull Iterable<Change> changes,
                                        int index,
                                        @NotNull ShowDiffContext context) {
-    int i = 0;
-    int newIndex = 0;
-    List<ChangeDiffRequestProducer> presentables = new ArrayList<>();
-    for (Change change : changes) {
-      if (i == index) newIndex = presentables.size();
-      ChangeDiffRequestProducer presentable = ChangeDiffRequestProducer.create(project, change, context.getChangeContext(change));
-      if (presentable != null) {
-        presentables.add(presentable);
-      }
-      i++;
-    }
-
-    showDiffForChange(project, presentables, newIndex, context);
+    List<Change> list = ContainerUtil.newArrayList(changes);
+    showDiffForChange(project, ListSelection.createAt(list, index), context);
   }
 
-  private static void showDiffForChange(@Nullable Project project,
-                                        @NotNull List<ChangeDiffRequestProducer> presentables,
-                                        int index,
-                                        @NotNull ShowDiffContext context) {
+  public static void showDiffForChange(@Nullable Project project,
+                                       @NotNull ListSelection<Change> changes,
+                                       @NotNull ShowDiffContext context) {
+    ListSelection<ChangeDiffRequestProducer> presentables = changes.map(change -> {
+      return ChangeDiffRequestProducer.create(project, change, context.getChangeContext(change));
+    });
     if (presentables.isEmpty()) return;
-    if (index < 0 || index >= presentables.size()) index = 0;
 
-    DiffRequestChain chain = new ChangeDiffRequestChain(presentables);
-    chain.setIndex(index);
+    DiffRequestChain chain = new ChangeDiffRequestChain(presentables.getList(), presentables.getSelectedIndex());
 
     for (Map.Entry<Key, Object> entry : context.getChainContext().entrySet()) {
       chain.putUserData(entry.getKey(), entry.getValue());

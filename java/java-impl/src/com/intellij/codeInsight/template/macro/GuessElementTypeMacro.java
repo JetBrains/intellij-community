@@ -64,7 +64,7 @@ public class GuessElementTypeMacro extends Macro {
     for (PsiType type : types) {
       JavaTemplateUtil.addTypeLookupItem(set, type);
     }
-    return set.toArray(new LookupElement[set.size()]);
+    return set.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   @Nullable

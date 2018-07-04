@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.junit;
 
@@ -31,36 +17,55 @@ import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.junit4.JUnit4IdeaTestRunner;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.rt.execution.junit.IDEAJUnitListener;
 import com.intellij.rt.execution.junit.JUnitStarter;
 import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.rt.execution.testFrameworks.ForkedDebuggerHelper;
+import com.intellij.spi.SPIFileType;
+import com.intellij.spi.psi.SPIClassProviderReferenceElement;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.siyeh.ig.junit.JUnitCommonClassNames;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.opentest4j.MultipleFailuresError;
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
+import java.util.stream.Stream;
 
 public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitConfiguration> {
   private static final String DEBUG_RT_PATH = "idea.junit_rt.path";
@@ -72,35 +77,87 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   private final JUnitConfiguration myConfiguration;
   protected File myListenersFile;
-  public static TestObject fromString(final String id,
-                                      final JUnitConfiguration configuration,
-                                      @NotNull ExecutionEnvironment environment) {
-    if (JUnitConfiguration.TEST_METHOD.equals(id)) {
-      return new TestMethod(configuration, environment);
+  protected <T> void addClassesListToJavaParameters(Collection<? extends T> elements,
+                                                    Function<T, String> nameFunction,
+                                                    String packageName,
+                                                    boolean createTempFile, JavaParameters javaParameters) throws CantRunException {
+    try {
+      if (createTempFile) {
+        createTempFiles(javaParameters);
+      }
+
+      final Map<Module, List<String>> perModule = forkPerModule() ? new TreeMap<>(
+        (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true)) : null;
+
+      final List<String> testNames = new ArrayList<>();
+
+      if (elements.isEmpty() && perModule != null) {
+        final SourceScope sourceScope = getSourceScope();
+        Project project = getConfiguration().getProject();
+        if (sourceScope != null && packageName != null
+            && JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
+          final PsiPackage aPackage = JavaPsiFacade.getInstance(getConfiguration().getProject()).findPackage(packageName);
+          if (aPackage != null) {
+            final TestSearchScope scope = getScope();
+            if (scope != null) {
+              final GlobalSearchScope configurationSearchScope = GlobalSearchScopesCore.projectTestScope(project)
+                .intersectWith(sourceScope.getGlobalSearchScope());
+              final PsiDirectory[] directories = aPackage.getDirectories(configurationSearchScope);
+              for (PsiDirectory directory : directories) {
+                Module module = ModuleUtilCore.findModuleForFile(directory.getVirtualFile(), project);
+                if (module != null) {
+                  perModule.put(module, Collections.emptyList());
+                }
+              }
+            }
+          }
+        }
+      }
+
+      for (final T element : elements) {
+        final String name = nameFunction.fun(element);
+        if (name == null) {
+          continue;
+        }
+
+        final PsiElement psiElement = retrievePsiElement(element);
+        if (perModule != null && psiElement != null) {
+          final Module module = ModuleUtilCore.findModuleForPsiElement(psiElement);
+          if (module != null) {
+            List<String> list = perModule.get(module);
+            if (list == null) {
+              list = new ArrayList<>();
+              perModule.put(module, list);
+            }
+            list.add(name);
+          }
+        }
+        else {
+          testNames.add(name);
+        }
+      }
+      final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
+      if (perModule != null) {
+        for (List<String> perModuleClasses : perModule.values()) {
+          Collections.sort(perModuleClasses);
+          testNames.addAll(perModuleClasses);
+        }
+      }
+      else if (JUnitConfiguration.TEST_PACKAGE.equals(data.TEST_OBJECT)) {
+        Collections.sort(testNames); //sort tests in FQN order
+      }
+
+      final String category = JUnitConfiguration.TEST_CATEGORY.equals(data.TEST_OBJECT) 
+                              ? data.getCategory()
+                              : JUnitConfiguration.TEST_TAGS.equals(data.TEST_OBJECT) ? data.getTags().replaceAll(" ", "") : "";
+      final String filters = JUnitConfiguration.TEST_PATTERN.equals(data.TEST_OBJECT) ? data.getPatternPresentation() : "";
+      JUnitStarter.printClassesList(testNames, packageName, category, filters, myTempFile);
+
+      writeClassesPerModule(packageName, javaParameters, perModule);
     }
-    if (JUnitConfiguration.TEST_CLASS.equals(id)) {
-      return new TestClass(configuration, environment);
+    catch (IOException e) {
+      LOG.error(e);
     }
-    if (JUnitConfiguration.TEST_PACKAGE.equals(id)){
-      return new TestPackage(configuration, environment);
-    }
-    if (JUnitConfiguration.TEST_DIRECTORY.equals(id)) {
-      return new TestDirectory(configuration, environment);
-    }
-    if (JUnitConfiguration.TEST_CATEGORY.equals(id)) {
-      return new TestCategory(configuration, environment);
-    }
-    if (JUnitConfiguration.TEST_PATTERN.equals(id)) {
-      return new TestsPattern(configuration, environment);
-    }
-    if (JUnitConfiguration.BY_SOURCE_POSITION.equals(id)) {
-      return new TestBySource(configuration, environment);
-    }
-    if (JUnitConfiguration.BY_SOURCE_CHANGES.equals(id)) {
-      return new TestsByChanges(configuration, environment);
-    }
-    LOG.info(MESSAGE + id);
-    return null;
   }
 
   public Module[] getModulesToCompile() {
@@ -135,17 +192,26 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   }
 
   @Override
-  protected void configureRTClasspath(JavaParameters javaParameters) {
+  protected void configureRTClasspath(JavaParameters javaParameters) throws CantRunException{
     final String path = System.getProperty(DEBUG_RT_PATH);
     javaParameters.getClassPath().add(path != null ? path : PathUtil.getJarPathForClass(JUnitStarter.class));
 
     //include junit5 listeners for the case custom junit 5 engines would be detected on runtime
     javaParameters.getClassPath().add(getJUnit5RtFile());
+
+    String preferredRunner = getRunner();
+    if (JUnitStarter.JUNIT5_PARAMETER.equals(preferredRunner)) {
+      final Project project = getConfiguration().getProject();
+      GlobalSearchScope globalSearchScope = getScopeForJUnit(getConfiguration().getConfigurationModule().getModule(), project);
+      appendJUnit5LauncherClasses(javaParameters, project, globalSearchScope);
+    }
   }
 
   public static File getJUnit5RtFile() {
     File junit4Rt = new File(PathUtil.getJarPathForClass(JUnit4IdeaTestRunner.class));
-    String junit5Name = junit4Rt.getName().replace("junit", "junit5");
+    String junit4Name = junit4Rt.getName();
+    String junit5Name = junit4Rt.isDirectory() ? junit4Name.replace("junit", "junit.v5") 
+                                               : junit4Name.replace("junit", "junit5");
     return new File(junit4Rt.getParent(), junit5Name);
   }
 
@@ -168,40 +234,87 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       }
     }
 
-    final Project project = getConfiguration().getProject();
-    GlobalSearchScope globalSearchScope = getScopeForJUnit(getConfiguration().getConfigurationModule().getModule(), project);
     String preferredRunner = getRunner();
-    if (JUnitStarter.JUNIT5_PARAMETER.equals(preferredRunner)) {
-      final PathsList classPath = javaParameters.getClassPath();
-      File lib = new File(PathUtil.getJarPathForClass(MultipleFailuresError.class)).getParentFile();
-      File[] files = lib.listFiles();
-      if (files != null) {
-        JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-        for (File file : files) {
-          String fileName = file.getName();
-          if (fileName.startsWith("junit-platform-launcher-") && !hasPackageWithDirectories(psiFacade, "org.junit.platform.launcher", globalSearchScope) ||
-
-              fileName.startsWith("junit-platform-") && !hasPackageWithDirectories(psiFacade, "org.junit.platform", globalSearchScope) ||
-
-              fileName.startsWith("junit-platform-engine-") && !hasPackageWithDirectories(psiFacade, "org.junit.platform.engine", globalSearchScope) ||
-
-              fileName.startsWith("junit-jupiter-engine-") && !hasPackageWithDirectories(psiFacade, "org.junit.jupiter.engine", globalSearchScope) &&
-                                                               hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
-            classPath.add(file.getAbsolutePath());
-          }
-          else if (fileName.startsWith("junit-vintage-engine-") && !hasPackageWithDirectories(psiFacade, "org.junit.vintage", globalSearchScope)) {
-            if (hasPackageWithDirectories(psiFacade, "junit.framework", globalSearchScope)) {
-              classPath.add(file.getAbsolutePath());
-            }
-          }
-        }
-      }
-    }
     if (preferredRunner != null) {
       javaParameters.getProgramParametersList().add(preferredRunner);
     }
     
     return javaParameters;
+  }
+
+  public void appendJUnit5LauncherClasses(JavaParameters javaParameters, Project project, GlobalSearchScope globalSearchScope) throws CantRunException{
+    final PathsList classPath = javaParameters.getClassPath();
+    JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    PsiClass classFromCommon = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> psiFacade.findClass("org.junit.platform.commons.JUnitException", globalSearchScope));
+
+    String launcherVersion = getVersion(classFromCommon);
+    if (launcherVersion == null) {
+      LOG.info("Failed to detect junit 5 launcher version, please configure explicit dependency");
+      return;
+    }
+
+    if (!hasPackageWithDirectories(psiFacade, "org.junit.platform.launcher", globalSearchScope)) {
+      downloadDependenciesWhenRequired(project, classPath,
+                                       new RepositoryLibraryProperties("org.junit.platform", "junit-platform-launcher", launcherVersion));
+    }
+
+    //add standard engines only if no engine api is present
+    if (!hasPackageWithDirectories(psiFacade, "org.junit.platform.engine", globalSearchScope) ||
+        !isCustomJUnit5(globalSearchScope)) {
+
+      PsiClass testAnnotation = DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> psiFacade.findClass(JUnitUtil.TEST5_ANNOTATION, globalSearchScope));
+      String jupiterVersion = ObjectUtils.notNull(getVersion(testAnnotation), "5.0.0");
+      if (!hasPackageWithDirectories(psiFacade, "org.junit.jupiter.engine", globalSearchScope) &&
+          hasPackageWithDirectories(psiFacade, JUnitUtil.TEST5_PACKAGE_FQN, globalSearchScope)) {
+        downloadDependenciesWhenRequired(project, classPath,
+                                         new RepositoryLibraryProperties("org.junit.jupiter", "junit-jupiter-engine", jupiterVersion));
+      }
+
+      if (!hasPackageWithDirectories(psiFacade, "org.junit.vintage", globalSearchScope) &&
+          hasPackageWithDirectories(psiFacade, "junit.framework", globalSearchScope)) {
+        String version = StringUtil.compareVersionNumbers(launcherVersion, "1.1.0") < 0 
+                         ? "4.12." + StringUtil.getShortName(launcherVersion) 
+                         : jupiterVersion;
+        downloadDependenciesWhenRequired(project, classPath,
+                                         new RepositoryLibraryProperties("org.junit.vintage", "junit-vintage-engine", version));
+      }
+    }
+  }
+
+  private static String getVersion(PsiClass classFromCommon) {
+    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(classFromCommon);
+    if (virtualFile == null) return null;
+    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(classFromCommon.getProject());
+    VirtualFile root = index.getClassRootForFile(virtualFile);
+    if (root != null && root.getFileSystem() instanceof JarFileSystem) {
+      VirtualFile manifestFile = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
+      if (manifestFile == null) {
+        return null;
+      }
+
+      try (final InputStream inputStream = manifestFile.getInputStream()) {
+        return new Manifest(inputStream).getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+      }
+      catch (IOException e) {
+        return null;
+      }
+    }
+    return null;
+  }
+
+  private static void downloadDependenciesWhenRequired(Project project,
+                                                       PathsList classPath, 
+                                                       RepositoryLibraryProperties properties) throws CantRunException {
+    Collection<OrderRoot> roots = 
+      JarRepositoryManager.loadDependenciesModal(project, properties, false, false, null, null);
+    if (roots.isEmpty()) {
+      throw new CantRunException("Failed to resolve " + properties.getMavenId());
+    }
+    for (OrderRoot root : roots) {
+      if (root.getType() == OrderRootType.CLASSES) {
+        classPath.add(root.getFile());
+      }
+    }
   }
 
   private static boolean hasPackageWithDirectories(JavaPsiFacade psiFacade,
@@ -223,14 +336,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   @NotNull
   protected OSProcessHandler createHandler(Executor executor) throws ExecutionException {
     appendForkInfo(executor);
-    final String repeatMode = getConfiguration().getRepeatMode();
-    if (!RepeatCount.ONCE.equals(repeatMode)) {
-      final int repeatCount = getConfiguration().getRepeatCount();
-      final String countString = RepeatCount.N.equals(repeatMode) && repeatCount > 0
-                                 ? RepeatCount.getCountString(repeatCount)
-                                 : repeatMode;
-      getJavaParameters().getProgramParametersList().add(countString);
-    }
+    appendRepeatMode();
 
     final OSProcessHandler processHandler = new KillableColoredProcessHandler(createCommandLine());
     ProcessTerminatedListener.attach(processHandler);
@@ -239,6 +345,17 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
       searchForTestsTask.attachTaskToProcess(processHandler);
     }
     return processHandler;
+  }
+
+  public void appendRepeatMode() throws ExecutionException {
+    final String repeatMode = getConfiguration().getRepeatMode();
+    if (!RepeatCount.ONCE.equals(repeatMode)) {
+      final int repeatCount = getConfiguration().getRepeatCount();
+      final String countString = RepeatCount.N.equals(repeatMode) && repeatCount > 0
+                                 ? RepeatCount.getCountString(repeatCount)
+                                 : repeatMode;
+      getJavaParameters().getProgramParametersList().add(countString);
+    }
   }
 
   @Override
@@ -252,88 +369,55 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     return getConfiguration().getForkMode();
   }
 
-  protected <T> void addClassesListToJavaParameters(Collection<? extends T> elements,
-                                                    Function<T, String> nameFunction,
-                                                    String packageName,
-                                                    boolean createTempFile, JavaParameters javaParameters) throws CantRunException {
-    try {
-      if (createTempFile) {
-        createTempFiles(javaParameters);
-      }
-
-      final Map<Module, List<String>> perModule = forkPerModule() ? new TreeMap<>(
-        (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true)) : null;
-
-      final List<String> testNames = new ArrayList<>();
-
-      if (elements.isEmpty() && perModule != null) {
-        final SourceScope sourceScope = getSourceScope();
-        Project project = getConfiguration().getProject();
-        if (sourceScope != null && packageName != null 
-            && !JUnitStarter.JUNIT5_PARAMETER.equals(getRunner())) {
-          final PsiPackage aPackage = JavaPsiFacade.getInstance(getConfiguration().getProject()).findPackage(packageName);
-          if (aPackage != null) {
-            final TestSearchScope scope = getScope();
-            if (scope != null) {
-              final GlobalSearchScope configurationSearchScope = GlobalSearchScopesCore.projectTestScope(project)
-                .intersectWith(sourceScope.getGlobalSearchScope());
-              final PsiDirectory[] directories = aPackage.getDirectories(configurationSearchScope);
-              for (PsiDirectory directory : directories) {
-                Module module = ModuleUtilCore.findModuleForFile(directory.getVirtualFile(), project);
-                if (module != null) {
-                  perModule.put(module, Collections.emptyList());
-                }
-              }
-            }
-          }
-        }
-      }
-      
-      for (final T element : elements) {
-        final String name = nameFunction.fun(element);
-        if (name == null) {
-          continue;
-        }
-
-        final PsiElement psiElement = retrievePsiElement(element);
-        if (perModule != null && psiElement != null) {
-          final Module module = ModuleUtilCore.findModuleForPsiElement(psiElement);
-          if (module != null) {
-            List<String> list = perModule.get(module);
-            if (list == null) {
-              list = new ArrayList<>();
-              perModule.put(module, list);
-            }
-            list.add(name);
-          }
-        }
-        else {
-          testNames.add(name);
-        }
-      }
-      final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
-      if (perModule != null) {
-        for (List<String> perModuleClasses : perModule.values()) {
-          Collections.sort(perModuleClasses);
-          testNames.addAll(perModuleClasses);
-        }
-      }
-      else if (JUnitConfiguration.TEST_PACKAGE.equals(data.TEST_OBJECT)) {
-        Collections.sort(testNames); //sort tests in FQN order
-      }
-
-      final String category = JUnitConfiguration.TEST_CATEGORY.equals(data.TEST_OBJECT) ? data.getCategory() : "";
-      final String filters = JUnitConfiguration.TEST_PATTERN.equals(data.TEST_OBJECT) ? data.getPatternPresentation() : "";
-      JUnitStarter.printClassesList(testNames, packageName, category, filters, myTempFile);
-
-      writeClassesPerModule(packageName, javaParameters, perModule);
+  public static TestObject fromString(final String id,
+                                      final JUnitConfiguration configuration,
+                                      @NotNull ExecutionEnvironment environment) {
+    if (JUnitConfiguration.TEST_METHOD.equals(id)) {
+      return new TestMethod(configuration, environment);
     }
-    catch (IOException e) {
-      LOG.error(e);
+    if (JUnitConfiguration.TEST_CLASS.equals(id)) {
+      return new TestClass(configuration, environment);
     }
+    if (JUnitConfiguration.TEST_PACKAGE.equals(id)){
+      return new TestPackage(configuration, environment);
+    }
+    if (JUnitConfiguration.TEST_DIRECTORY.equals(id)) {
+      return new TestDirectory(configuration, environment);
+    }
+    if (JUnitConfiguration.TEST_CATEGORY.equals(id)) {
+      return new TestCategory(configuration, environment);
+    }
+    if (JUnitConfiguration.TEST_PATTERN.equals(id)) {
+      return new TestsPattern(configuration, environment);
+    }
+    if (JUnitConfiguration.TEST_UNIQUE_ID.equals(id)) {
+      return new TestUniqueId(configuration, environment);
+    }
+    if (JUnitConfiguration.TEST_TAGS.equals(id)) {
+      return new TestTags(configuration, environment);
+    }
+    if (JUnitConfiguration.BY_SOURCE_POSITION.equals(id)) {
+      return new TestBySource(configuration, environment);
+    }
+    if (JUnitConfiguration.BY_SOURCE_CHANGES.equals(id)) {
+      return new TestsByChanges(configuration, environment);
+    }
+    LOG.info(MESSAGE + id);
+    return null;
   }
 
   protected PsiElement retrievePsiElement(Object element) {
+    if (element instanceof String) {
+      SourceScope scope = getSourceScope();
+      Project project = getConfiguration().getProject();
+      String qName = (String)element;
+      int idx = qName.indexOf(',');
+      String className = idx > 0 ? qName.substring(0, idx) : qName;
+      return JavaPsiFacade.getInstance(project).findClass(className, scope != null
+                                                                     ? scope.getGlobalSearchScope() 
+                                                                     : GlobalSearchScope.projectScope(project));
+      
+    }
     return element instanceof PsiElement ? (PsiElement)element : null;
   }
 
@@ -417,21 +501,30 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
   private boolean isCustomJUnit5(GlobalSearchScope globalSearchScope) {
     Project project = myConfiguration.getProject();
     JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+
+    if (DumbService.isDumb(project)) {
+      return findCustomJUnit5TestEngineUsingClassLoader(globalSearchScope, project, psiFacade);
+    }
+    else {
+      return findCustomJunit5TestEngineUsingPsi(globalSearchScope, project, psiFacade);
+    }
+  }
+
+  private boolean findCustomJUnit5TestEngineUsingClassLoader(@NotNull GlobalSearchScope globalSearchScope, @NotNull Project project, @NotNull JavaPsiFacade psiFacade) {
     if (DumbService.getInstance(project)
-          .computeWithAlternativeResolveEnabled(() -> {
-            @Nullable PsiClass testEngine = ReadAction.compute(() -> psiFacade.findClass(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, globalSearchScope));
-            return testEngine;
-          }) == null) {
+                   .computeWithAlternativeResolveEnabled(() -> {
+                     @Nullable PsiClass testEngine = ReadAction.compute(() -> psiFacade.findClass(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, globalSearchScope));
+                     return testEngine;
+                   }) == null) {
       return false;
     }
-
     ClassLoader loader = TestClassCollector.createUsersClassLoader(myConfiguration);
     try {
-      ServiceLoader<?> serviceLoader = ServiceLoader.load(Class.forName(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, false, loader), loader);
+      ServiceLoader<?>
+        serviceLoader = ServiceLoader.load(Class.forName(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, false, loader), loader);
       for (Object engine : serviceLoader) {
         String engineClassName = engine.getClass().getName();
-        if (!"org.junit.jupiter.engine.JupiterTestEngine".equals(engineClassName) &&
-            !"org.junit.vintage.engine.VintageTestEngine".equals(engineClassName)) {
+        if (isCustomJunit5TestEngineName(engineClassName)) {
           return true;
         }
       }
@@ -440,5 +533,22 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
     catch (Throwable e) {
       return false;
     }
+  }
+
+  private static boolean findCustomJunit5TestEngineUsingPsi(@NotNull GlobalSearchScope globalSearchScope, @NotNull Project project, @NotNull JavaPsiFacade psiFacade) {
+    PsiClass testEngine = psiFacade.findClass(JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, globalSearchScope);
+    if (testEngine == null) return false;
+    return Stream.of(FilenameIndex.getFilesByName(project, JUnitCommonClassNames.ORG_JUNIT_PLATFORM_ENGINE_TEST_ENGINE, GlobalSearchScope.getScopeRestrictedByFileTypes(globalSearchScope, SPIFileType.INSTANCE)))
+                 .flatMap(f -> PsiTreeUtil.findChildrenOfType(f, SPIClassProviderReferenceElement.class).stream())
+                 .map(r -> r.resolve())
+                 .filter(e -> e instanceof PsiClass)
+                 .map(e -> (PsiClass)e)
+                 .filter(c -> isCustomJunit5TestEngineName(c.getQualifiedName()))
+                 .anyMatch(c -> InheritanceUtil.isInheritorOrSelf(c, testEngine, true));
+  }
+
+  private static boolean isCustomJunit5TestEngineName(@Nullable String engineImplClassName) {
+    return !"org.junit.jupiter.engine.JupiterTestEngine".equals(engineImplClassName) &&
+           !"org.junit.vintage.engine.VintageTestEngine".equals(engineImplClassName);
   }
 }

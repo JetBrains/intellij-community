@@ -43,7 +43,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
   private static final SelectWordUtil.CharCondition JAVA_IDENTIFIER_AND_HYPHEN_CONDITION = ch -> Character.isJavaIdentifierPart(ch) || ch == '-';
 
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     return canSelectElement(e);
   }
 
@@ -55,7 +55,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> result;
 
     if (!(e instanceof XmlToken) ||

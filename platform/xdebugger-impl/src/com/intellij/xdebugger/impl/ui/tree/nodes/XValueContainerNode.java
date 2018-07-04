@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -51,9 +37,14 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   private volatile boolean myObsolete;
   private volatile boolean myAlreadySorted;
 
-  protected XValueContainerNode(XDebuggerTree tree, final XDebuggerTreeNode parent, @NotNull ValueContainer valueContainer) {
-    super(tree, parent, true);
+  protected XValueContainerNode(XDebuggerTree tree, XDebuggerTreeNode parent, boolean leaf, @NotNull ValueContainer valueContainer) {
+    super(tree, parent, leaf);
     myValueContainer = valueContainer;
+  }
+
+  @Deprecated
+  protected XValueContainerNode(XDebuggerTree tree, XDebuggerTreeNode parent, @NotNull ValueContainer valueContainer) {
+    this(tree, parent, true, valueContainer);
   }
 
   private void loadChildren() {
@@ -117,7 +108,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
       fireNodesInserted(newChildren);
       if (last && myTemporaryMessageChildren != null) {
         final int[] ints = getNodesIndices(myTemporaryMessageChildren);
-        final TreeNode[] removed = myTemporaryMessageChildren.toArray(new TreeNode[myTemporaryMessageChildren.size()]);
+        final TreeNode[] removed = myTemporaryMessageChildren.toArray(new TreeNode[0]);
         myCachedAllChildren = null;
         myTemporaryMessageChildren = null;
         fireNodesRemoved(ints, removed);
@@ -198,7 +189,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     myCachedAllChildren = null;
     List<MessageTreeNode> toDelete = temporary ? myTemporaryMessageChildren : myMessageChildren;
     if (toDelete != null) {
-      fireNodesRemoved(getNodesIndices(toDelete), toDelete.toArray(new TreeNode[toDelete.size()]));
+      fireNodesRemoved(getNodesIndices(toDelete), toDelete.toArray(new TreeNode[0]));
     }
     if (temporary) {
       myTemporaryMessageChildren = messages;

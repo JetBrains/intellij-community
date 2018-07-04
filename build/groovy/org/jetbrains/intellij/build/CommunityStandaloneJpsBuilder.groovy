@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import org.jetbrains.intellij.build.impl.LayoutBuilder
-
 /**
  * Creates JARs containing classes required to run the external build for IDEA project without IDE.
  *
@@ -30,98 +15,82 @@ class CommunityStandaloneJpsBuilder {
   }
 
   void layoutJps(String targetDir, String buildNumber, @DelegatesTo(LayoutBuilder.LayoutSpec) Closure additionalJars) {
-    AntBuilder ant = buildContext.ant
-    String home = buildContext.paths.communityHome
-    new LayoutBuilder(ant, buildContext.project, false).layout(targetDir) {
+    def context = buildContext
+    new LayoutBuilder(buildContext, false).layout(targetDir) {
       zip("standalone-jps-${buildNumber}.zip") {
         jar("util.jar") {
-          module("annotations-common")
-          module("annotations")
-          module("util-rt")
-          module("util")
+          module("intellij.platform.util.rt")
+          module("intellij.platform.util")
         }
 
         jar("jps-launcher.jar") {
-          module("jps-launcher")
+          module("intellij.platform.jps.build.launcher")
         }
 
         jar("jps-model.jar") {
-          module("jps-model-api")
-          module("jps-model-impl")
-          module("jps-model-serialization")
+          module("intellij.platform.jps.model")
+          module("intellij.platform.jps.model.impl")
+          module("intellij.platform.jps.model.serialization")
         }
         jar("jps-builders.jar") {
-          module("forms_rt")
-          module("forms-compiler")
-          module("instrumentation-util")
-          module("instrumentation-util-8")
-          module("javac-ref-scanner-8")
-          module("jps-builders")
-          module("jps-standalone-builder")
+          module("intellij.java.guiForms.rt")
+          module("intellij.java.guiForms.compiler")
+          module("intellij.java.compiler.instrumentationUtil")
+          module("intellij.java.compiler.instrumentationUtil.java8")
+          module("intellij.java.jps.javacRefScanner8")
+          module("intellij.platform.jps.build")
+          module("intellij.tools.jps.build.standalone")
         }
         jar("idea_rt.jar") {
-          module("java-runtime")
+          module("intellij.java.rt")
         }
         jar("jps-builders-6.jar") {
-          module("jps-builders-6")
+          module("intellij.platform.jps.build.javac.rt")
         }
         //layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoots method
         jar("groovy-jps-plugin.jar") {
-          module("groovy-jps-plugin")
+          module("intellij.groovy.jps")
         }
         jar("groovy_rt.jar") {
-          module("groovy_rt")
+          module("intellij.groovy.rt")
         }
         jar("groovy-rt-constants.jar") {
-          module("groovy-rt-constants")
+          module("intellij.groovy.constants.rt")
         }
-        jar("ui-designer-jps-plugin.jar") { module("ui-designer-jps-plugin") }
+        jar("ui-designer-jps-plugin.jar") { module("intellij.java.guiForms.jps") }
 
 
-        jar("maven-jps-plugin.jar") { module("maven-jps-plugin") }
-        jar("aether-dependency-resolver.jar") { module("aether-dependency-resolver") }
-        jar("gradle-jps-plugin.jar") { module("gradle-jps-plugin") }
-        ant.fileset(dir: "$home/plugins/maven/maven30-server-impl/lib/maven3/lib") { include(name: "plexus-utils-*.jar") }
+        jar("maven-jps-plugin.jar") { module("intellij.maven.jps") }
+        jar("aether-dependency-resolver.jar") { module("intellij.java.aetherDependencyResolver") }
+        jar("gradle-jps-plugin.jar") { module("intellij.gradle.jps") }
+        moduleLibrary("intellij.maven.jps", "plexus-utils-2.0.6.jar")
 
         jar("eclipse-jps-plugin.jar") {
-          module("common-eclipse-util")
-          module("eclipse-jps-plugin")
+          module("intellij.eclipse.common")
+          module("intellij.eclipse.jps")
         }
-        jar("devkit-jps-plugin.jar") { module("devkit-jps-plugin") }
-        jar("intellilang-jps-plugin.jar") { module("intellilang-jps-plugin") }
-        ant.fileset(dir: "$home/lib") {
-          include(name: "jdom.jar")
-          include(name: "jna.jar")
-          include(name: "jna-platform.jar")
-          include(name: "oromatcher.jar")
-          include(name: "trove4j.jar")
-          include(name: "asm-all.jar")
-          include(name: "nanoxml-*.jar")
-          include(name: "protobuf-*.jar")
-          include(name: "cli-parser-*.jar")
-          include(name: "log4j.jar")
-          include(name: "jgoodies-forms.jar")
-          include(name: "ecj*.jar")
-          include(name: "netty-all-*.jar")
-          include(name: "snappy-in-java-*.jar")
-          include(name: "aether-*.jar")
-          include(name: "maven-aether-provider-*.jar")
-          include(name: "commons-codec-*.jar")
-          include(name: "commons-logging-*.jar")
-          include(name: "httpclient-*.jar")
-          include(name: "httpcore-*.jar")
-          include(name: "slf4j-api-*.jar")
+        jar("devkit-jps-plugin.jar") { module("intellij.devkit.jps") }
+        jar("intellilang-jps-plugin.jar") { module("intellij.java.langInjection.jps") }
+
+        [
+          "JDOM", "jna", "OroMatcher", "Trove4j", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
+          "netty-codec-http", "netty-handler", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava",
+          "jetbrains-annotations-java5"
+        ].each {
+          projectLibrary(it)
         }
-        ant.fileset(dir: "$home/jps/lib") {
-          include(name: "optimizedFileManager.jar")
+        context.findRequiredModule("intellij.java.aetherDependencyResolver").libraryCollection.libraries.each {
+          jpsLibrary(it)
         }
-        jar("ant-jps-plugin.jar") { module("ant-jps-plugin") }
+
+        moduleLibrary("intellij.platform.jps.build.javac.rt", "optimizedFileManager.jar")
+        jar("ant-jps-plugin.jar") { module("intellij.ant.jps") }
         include(additionalJars)
       }
       jar("jps-build-test-${buildNumber}.jar") {
-        moduleTests("jps-builders")
-        moduleTests("jps-model-tests")
-        moduleTests("jps-serialization-tests")
+        moduleTests("intellij.platform.jps.build")
+        moduleTests("intellij.platform.jps.model.tests")
+        moduleTests("intellij.platform.jps.model.serialization.tests")
       }
     }
     buildContext.notifyArtifactBuilt(targetDir)

@@ -19,7 +19,7 @@ import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
-import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
+import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
@@ -35,12 +35,13 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     enableInspectionTool(new UnusedDeclarationInspection());
+    enableInspectionTool(new UnusedImportInspection());
   }
 
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new UncheckedWarningLocalInspection(), new UnusedImportLocalInspection()};
+    return new LocalInspectionTool[]{new UncheckedWarningLocalInspection()};
   }
 
   public void testReferenceTypeParams() {
@@ -1013,6 +1014,8 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testArrayTypeUpperBound() { doTest(); }
+
   public void testNonGenericInnerOfGenericOuter() { doTest(); }
 
   public void testTypeParameterBoundsWithSubstitutionWhenMethodHierarchyIsChecked() {
@@ -1030,7 +1033,12 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   public void testConditionalExpressionInIncompleteCall() {
     doTest();
   }
+  
+  public void testIDEA194093 () {
+    doTest();
+  }
 
   public void testBridgeMethodOverriding() { doTest(); }
   public void testNestedWildcardsWithImplicitBounds() { doTest(); }
+  public void testNoCaptureConversionDuringDetectingSupertypesDeepInHierarchy() { doTest(); }
 }

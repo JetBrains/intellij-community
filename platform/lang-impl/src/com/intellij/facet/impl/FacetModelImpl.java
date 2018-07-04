@@ -17,10 +17,10 @@
 package com.intellij.facet.impl;
 
 import com.intellij.facet.Facet;
-import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.facet.FacetManagerImpl;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
@@ -109,7 +109,7 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
   @Override
   @NotNull
   public Facet[] getAllFacets() {
-    return myFacets.toArray(new Facet[myFacets.size()]);
+    return myFacets.toArray(Facet.EMPTY_ARRAY);
   }
 
   @Override
@@ -119,16 +119,9 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
   }
 
   @Override
-  public void addListener(@NotNull final Listener listener, @Nullable Disposable parentDisposable) {
+  public void addListener(@NotNull final Listener listener, @NotNull Disposable parentDisposable) {
     myListeners.add(listener);
-    if (parentDisposable != null) {
-      Disposer.register(parentDisposable, new Disposable() {
-        @Override
-        public void dispose() {
-          myListeners.remove(listener);
-        }
-      });
-    }
+    Disposer.register(parentDisposable, () -> myListeners.remove(listener));
   }
 
   @Override

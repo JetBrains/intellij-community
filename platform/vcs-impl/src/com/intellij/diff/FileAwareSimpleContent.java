@@ -15,13 +15,14 @@
  */
 package com.intellij.diff;
 
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.diff.SimpleContent;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,9 +41,9 @@ public class FileAwareSimpleContent extends SimpleContent {
   }
 
   @Override
-  public OpenFileDescriptor getOpenFileDescriptor(int offset) {
+  public Navigatable getOpenFileDescriptor(int offset) {
     VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(myFilePath.getIOFile());
-    return file == null ? null : new OpenFileDescriptor(myProject, file, offset);
+    return file == null ? null : PsiNavigationSupport.getInstance().createNavigatable(myProject, file, offset);
   }
 
 }

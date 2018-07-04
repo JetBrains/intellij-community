@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
+@SuppressWarnings("StringEqualsCharSequence")
 public class StringEqualsCharSequenceInspectionTest extends LightInspectionTestCase {
 
   public void testSimple() {

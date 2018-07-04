@@ -1,26 +1,12 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.siyeh.ipp.concatenation;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.*;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -64,15 +50,13 @@ public class ReplaceFormatStringWithConcatenationIntention extends Intention {
     int index = string.indexOf('%');
     final int length = string.length();
     int count = 0;
-    while (index >= 0) {
+    while (index >= 0 && length > index + 1) {
       final char c = string.charAt(index + 1);
-      if (length > index + 1) {
-        if (c == 's') {
-          count++;
-        }
-        else if (c != '%') {
-          return -1;
-        }
+      if (c == 's') {
+        count++;
+      }
+      else if (c != '%') {
+        return -1;
       }
       index = string.indexOf('%', index + 1);
     }
@@ -90,17 +74,16 @@ public class ReplaceFormatStringWithConcatenationIntention extends Intention {
     final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
     final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
     final PsiExpression[] arguments = argumentList.getExpressions();
-    final String replacementExpression;
-    if (ExpressionUtils.hasStringType(arguments[0])) {
-      replacementExpression = buildReplacementExpression(arguments, 0);
-    }
-    else {
-      replacementExpression = buildReplacementExpression(arguments, 1);
-    }
-    PsiReplacementUtil.replaceExpression(methodCallExpression, replacementExpression);
+    CommentTracker commentTracker = new CommentTracker();
+    final String replacementExpression =
+      ExpressionUtils.hasStringType(arguments[0]) ? buildReplacementExpression(arguments, 0, commentTracker)
+                                                  : buildReplacementExpression(arguments, 1, commentTracker);
+    PsiReplacementUtil.replaceExpression(methodCallExpression, replacementExpression, commentTracker);
   }
 
-  public String buildReplacementExpression(PsiExpression[] arguments, int indexOfFormatString) {
+  private static String buildReplacementExpression(PsiExpression[] arguments,
+                                                   int indexOfFormatString,
+                                                   CommentTracker commentTracker) {
     final StringBuilder builder = new StringBuilder();
     String value = (String)ExpressionUtils.computeConstantExpression(arguments[indexOfFormatString]);
     assert value != null;
@@ -113,24 +96,27 @@ public class ReplaceFormatStringWithConcatenationIntention extends Intention {
         if (builder.length() > 0) {
           builder.append('+');
         }
-        builder.append('"').append(value.substring(start, end)).append("\"+");
+        builder.append('"').append(StringUtil.escapeStringCharacters(value.substring(start, end))).append('"');
+      }
+      if (builder.length() > 0) {
+        builder.append('+');
       }
       count++;
       final PsiExpression argument = arguments[indexOfFormatString + count];
       if (builder.length() == 0 && !ExpressionUtils.hasStringType(argument)) {
-        builder.append("String.valueOf(").append(argument.getText()).append(')');
+        builder.append("String.valueOf(").append(commentTracker.text(argument)).append(')');
       }
       else {
-        builder.append(argument.getText());
+        builder.append(commentTracker.text(argument));
       }
       start = end + 2;
       end = value.indexOf("%s", start);
     }
-    if (start < value.length() - 1) {
+    if (start < value.length()) {
       if (builder.length() > 0) {
         builder.append('+');
       }
-      builder.append('"').append(value.substring(start)).append('"');
+      builder.append('"').append(StringUtil.escapeStringCharacters(value.substring(start))).append('"');
     }
     return builder.toString();
   }

@@ -354,4 +354,12 @@
   <action id="Git.Reword.Commit">
     <keyboard-shortcut first-keystroke="shift alt R"/>
   </action>
+  <action id="ShelvedChanges.Rename">
+    <keyboard-shortcut first-keystroke="shift alt R"/>
+  </action>
+  <action id="RunDashboard.ShowConfigurations">
+    <keyboard-shortcut first-keystroke="shift alt H"/>
+  </action>
+  <action id="Vcs.MoveChangedLinesToChangelist"/>
+  <action id="ChangesView.Move"/>
 </keymap>

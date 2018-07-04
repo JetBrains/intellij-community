@@ -31,20 +31,19 @@ import java.util.List;
  */
 public class SelectFilePathsDialog extends AbstractSelectFilesDialog<FilePath> {
 
-  private final ChangesTreeList<FilePath> myFileList;
+  private final ChangesTreeImpl<FilePath> myFileList;
 
   public SelectFilePathsDialog(final Project project, List<FilePath> originalFiles, final String prompt,
                                final VcsShowConfirmationOption confirmationOption,
                                @Nullable String okActionName, @Nullable String cancelActionName, boolean showDoNotAskOption) {
     super(project, false, confirmationOption, prompt, showDoNotAskOption);
-    myFileList = new FilePathChangesTreeList(project, originalFiles, true, true, null, null);
+    myFileList = new ChangesTreeImpl.FilePaths(project, true, true, originalFiles);
     if (okActionName != null) {
       getOKAction().putValue(Action.NAME, okActionName);
     }
     if (cancelActionName != null) {
       getCancelAction().putValue(Action.NAME, cancelActionName);
     }
-    myFileList.setChangesToDisplay(originalFiles);
     init();
   }
 
@@ -54,7 +53,7 @@ public class SelectFilePathsDialog extends AbstractSelectFilesDialog<FilePath> {
 
   @NotNull
   @Override
-  protected ChangesTreeList getFileList() {
+  protected ChangesTree getFileList() {
     return myFileList;
   }
 }

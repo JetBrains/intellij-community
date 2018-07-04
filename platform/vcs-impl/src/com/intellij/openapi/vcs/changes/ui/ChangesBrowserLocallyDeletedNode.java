@@ -1,32 +1,14 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-
-import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
 public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode<LocallyDeletedChange>
   implements TreeLinkMouseListener.HaveTooltip {
@@ -51,32 +33,24 @@ public class ChangesBrowserLocallyDeletedNode extends ChangesBrowserNode<Locally
     renderer.appendFileName(filePath.getVirtualFile(), filePath.getName(), FileStatus.NOT_CHANGED.getColor());
 
     if (renderer.isShowFlatten()) {
-      FilePath parentPath = filePath.getParentPath();
-      if (parentPath != null) {
-        renderer.append(spaceAndThinSpace() + parentPath.getPresentableUrl(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-      }
+      appendParentPath(renderer, filePath.getParentPath());
     }
-    else if (getFileCount() != 1 || getDirectoryCount() != 0) {
+
+    if (!renderer.isShowFlatten() && getFileCount() != 1 || getDirectoryCount() != 0) {
       appendCount(renderer);
     }
 
-    renderer.setIcon(getIcon());
+    Icon additionalIcon = getUserObject().getAddIcon();
+    if (additionalIcon != null) {
+      renderer.setIcon(additionalIcon);
+    }
+    else {
+      renderer.setIcon(filePath.getFileType(), filePath.isDirectory() || !isLeaf());
+    }
   }
 
   @Nullable
   public String getTooltip() {
     return getUserObject().getDescription();
-  }
-
-  @Nullable
-  private Icon getIcon() {
-    Icon result = getUserObject().getAddIcon();
-
-    if (result == null) {
-      FilePath filePath = getUserObject().getPath();
-      result = filePath.isDirectory() || !isLeaf() ? PlatformIcons.DIRECTORY_CLOSED_ICON : filePath.getFileType().getIcon();
-    }
-
-    return result;
   }
 }

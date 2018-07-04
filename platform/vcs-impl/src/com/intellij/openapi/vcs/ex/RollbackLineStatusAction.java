@@ -13,86 +13,25 @@
 package com.intellij.openapi.vcs.ex;
 
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.BitSet;
-import java.util.List;
 
-public class RollbackLineStatusAction extends DumbAwareAction {
+public class RollbackLineStatusAction extends LineStatusActionBase {
   @Override
-  public void update(AnActionEvent e) {
-    Project project = e.getProject();
-    Editor editor = e.getData(CommonDataKeys.EDITOR);
-    if (project == null || editor == null) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
-    }
-    LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
-    if (tracker == null || !tracker.isValid() || !tracker.isAvailableAt(editor)) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
-    }
-    if (!isSomeChangeSelected(editor, tracker)) {
-      e.getPresentation().setVisible(true);
-      e.getPresentation().setEnabled(false);
-      return;
-    }
-    e.getPresentation().setEnabledAndVisible(true);
+  protected void doAction(@NotNull LineStatusTrackerBase<?> tracker, @NotNull Editor editor) {
+    rollback(tracker, editor);
   }
 
-  @Override
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getProject();
-    Editor editor = e.getRequiredData(CommonDataKeys.EDITOR);
-    LineStatusTracker tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(editor.getDocument());
-    assert tracker != null;
-
-    rollback(tracker, editor, null);
+  public static void rollback(@NotNull LineStatusTrackerBase<?> tracker, @NotNull Editor editor) {
+    BitSet selectedLines = DiffUtil.getSelectedLines(editor);
+    tracker.rollbackChanges(selectedLines);
   }
 
-  protected static boolean isSomeChangeSelected(@NotNull Editor editor, @NotNull LineStatusTracker tracker) {
-    List<Caret> carets = editor.getCaretModel().getAllCarets();
-    if (carets.size() != 1) return true;
-    Caret caret = carets.get(0);
-    if (caret.hasSelection()) return true;
-    if (caret.getOffset() == editor.getDocument().getTextLength() &&
-        tracker.getRangeForLine(editor.getDocument().getLineCount()) != null) {
-      return true;
-    }
-    return tracker.getRangeForLine(caret.getLogicalPosition().line) != null;
-  }
-
-  protected static void rollback(@NotNull LineStatusTracker tracker, @Nullable Editor editor, @Nullable Range range) {
-    assert editor != null || range != null;
-
-    if (range != null) {
-      if (editor != null) DiffUtil.moveCaretToLineRangeIfNeeded(editor, range.getLine1(), range.getLine2());
-
-      doRollback(tracker, range);
-      return;
-    }
-
-    doRollback(tracker, DiffUtil.getSelectedLines(editor));
-  }
-
-  private static void doRollback(@NotNull final LineStatusTracker tracker, @NotNull final Range range) {
-    execute(tracker, () -> tracker.rollbackChanges(range));
-  }
-
-  private static void doRollback(@NotNull final LineStatusTracker tracker, @NotNull final BitSet lines) {
-    execute(tracker, () -> tracker.rollbackChanges(lines));
-  }
-
-  private static void execute(@NotNull final LineStatusTracker tracker, @NotNull final Runnable task) {
-    DiffUtil.executeWriteCommand(tracker.getDocument(), tracker.getProject(), VcsBundle.message("command.name.rollback.change"), task);
+  public static void rollback(@NotNull LineStatusTrackerBase<?> tracker, @NotNull Range range, @Nullable Editor editor) {
+    if (editor != null) DiffUtil.moveCaretToLineRangeIfNeeded(editor, range.getLine1(), range.getLine2());
+    tracker.rollbackChanges(range);
   }
 }

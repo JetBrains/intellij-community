@@ -64,7 +64,7 @@ public class PyAnnotatingVisitor implements Annotator {
       }
       annotators.add(annotator);
     }
-    myAnnotators = annotators.toArray(new PyAnnotator[annotators.size()]);
+    myAnnotators = annotators.toArray(new PyAnnotator[0]);
   }
 
   public void annotate(@NotNull PsiElement psiElement, @NotNull AnnotationHolder holder) {

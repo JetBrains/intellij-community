@@ -16,18 +16,28 @@
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ChooseByNameRegistry;
-import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.NotNull;
 
 public class GotoSymbolAction extends GotoActionBase {
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    if (Experiments.isFeatureEnabled("new.search.everywhere")) {
+      showInSearchEverywherePopup(SymbolSearchEverywhereContributor.class.getSimpleName(), e);
+    } else {
+      super.actionPerformed(e);
+    }
+  }
+
   @Override
   public void gotoActionPerformed(AnActionEvent e) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.symbol");
@@ -45,7 +55,7 @@ public class GotoSymbolAction extends GotoActionBase {
 
       @Override
       public void elementChosen(ChooseByNamePopup popup, Object element) {
-        EditSourceUtil.navigate((NavigationItem)element, true, popup.isOpenInCurrentWindowRequested());
+        GotoClassAction.handleSubMemberNavigation(popup, element);
       }
     }, "Symbols matching patterns", true);
   }

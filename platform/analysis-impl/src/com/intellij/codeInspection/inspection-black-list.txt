@@ -61,8 +61,6 @@ com.siyeh.ig.abstraction.MethodOnlyUsedFromInnerClassInspection
 com.siyeh.ig.abstraction.OverlyStrongTypeCastInspection
 com.siyeh.ig.abstraction.PublicMethodNotExposedInInterfaceInspection
 com.siyeh.ig.abstraction.TypeMayBeWeakenedInspection
-com.siyeh.ig.assignment.AssignmentToCollectionFieldFromParameterInspection
-com.siyeh.ig.assignment.AssignmentToDateFieldFromParameterInspection
 com.siyeh.ig.assignment.AssignmentToForLoopParameterInspection
 com.siyeh.ig.assignment.AssignmentToMethodParameterInspection
 com.siyeh.ig.assignment.ReplaceAssignmentWithOperatorAssignmentInspection
@@ -88,7 +86,6 @@ com.siyeh.ig.classmetrics.ConstructorCountInspection
 com.siyeh.ig.classmetrics.FieldCountInspection
 com.siyeh.ig.classmetrics.MethodCountInspection
 com.siyeh.ig.cloneable.CloneableImplementsCloneInspection
-com.siyeh.ig.controlflow.ConditionalExpressionInspection
 com.siyeh.ig.controlflow.ConfusingElseInspection
 com.siyeh.ig.controlflow.DuplicateConditionInspection
 com.siyeh.ig.controlflow.EnumSwitchStatementWhichMissesCasesInspection
@@ -115,7 +112,6 @@ com.siyeh.ig.encapsulation.PackageVisibleInnerClassInspection
 com.siyeh.ig.encapsulation.ProtectedInnerClassInspection
 com.siyeh.ig.encapsulation.PublicFieldInspection
 com.siyeh.ig.encapsulation.PublicInnerClassInspection
-com.siyeh.ig.encapsulation.ReturnOfCollectionFieldInspection
 com.siyeh.ig.encapsulation.UseOfAnotherObjectsPrivateFieldInspection
 com.siyeh.ig.errorhandling.BadExceptionCaughtInspection
 com.siyeh.ig.errorhandling.BadExceptionDeclaredInspection
@@ -140,10 +136,7 @@ com.siyeh.ig.j2me.OverlyLargePrimitiveArrayInitializerInspection
 com.siyeh.ig.javabeans.ClassWithoutNoArgConstructorInspection
 com.siyeh.ig.javadoc.UnnecessaryJavaDocLinkInspection
 com.siyeh.ig.jdk.AutoBoxingInspection
-com.siyeh.ig.junit.JUnitAbstractTestClassNamingConventionInspection
-com.siyeh.ig.junit.JUnitTestClassNamingConventionInspection
 com.siyeh.ig.junit.TestCaseWithNoTestMethodsInspection
-com.siyeh.ig.junit.TestMethodWithoutAssertionInspection
 com.siyeh.ig.logging.ClassWithMultipleLoggersInspection
 com.siyeh.ig.logging.ClassWithoutLoggerInspection
 com.siyeh.ig.logging.LoggerInitializedWithForeignClassInspection
@@ -163,15 +156,7 @@ com.siyeh.ig.migration.ForCanBeForeachInspection
 com.siyeh.ig.migration.IfCanBeSwitchInspection
 com.siyeh.ig.modularization.ModuleWithTooFewClassesInspection
 com.siyeh.ig.modularization.ModuleWithTooManyClassesInspection
-com.siyeh.ig.naming.AnnotationNamingConventionInspection
 com.siyeh.ig.naming.BooleanMethodNameMustStartWithQuestionInspection
-com.siyeh.ig.naming.ClassNamingConventionInspection
-com.siyeh.ig.naming.ConstantNamingConventionInspection
-com.siyeh.ig.naming.EnumeratedClassNamingConventionInspection
-com.siyeh.ig.naming.EnumeratedConstantNamingConventionInspection
-com.siyeh.ig.naming.InstanceMethodNamingConventionInspection
-com.siyeh.ig.naming.InstanceVariableNamingConventionInspection
-com.siyeh.ig.naming.InterfaceNamingConventionInspection
 com.siyeh.ig.naming.LocalVariableNamingConventionInspection
 com.siyeh.ig.naming.NonBooleanMethodNameMayNotStartWithQuestionInspection
 com.siyeh.ig.naming.OverloadedMethodsWithSameNumberOfParametersInspection
@@ -181,7 +166,6 @@ com.siyeh.ig.naming.ParameterNamingConventionInspection
 com.siyeh.ig.naming.QuestionableNameInspection
 com.siyeh.ig.naming.StaticMethodNamingConventionInspection
 com.siyeh.ig.naming.StaticVariableNamingConventionInspection
-com.siyeh.ig.naming.TypeParameterNamingConventionInspection
 com.siyeh.ig.numeric.CastThatLosesPrecisionInspection
 com.siyeh.ig.numeric.ImplicitNumericConversionInspection
 com.siyeh.ig.numeric.IntegerMultiplicationImplicitCastToLongInspection
@@ -195,7 +179,6 @@ com.siyeh.ig.performance.CallToSimpleSetterInClassInspection
 com.siyeh.ig.performance.MethodMayBeStaticInspection
 com.siyeh.ig.performance.SizeReplaceableByIsEmptyInspection
 com.siyeh.ig.performance.StringConcatenationInLoopsInspection
-com.siyeh.ig.performance.StringConstructorInspection
 com.siyeh.ig.performance.StringReplaceableByStringBufferInspection
 com.siyeh.ig.portability.HardcodedFileSeparatorsInspection
 com.siyeh.ig.resources.ChannelResourceInspection
@@ -249,13 +232,9 @@ org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyMultipleReturnPointsPe
 org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyComplexMethodInspection
 org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyLongMethodInspection
 org.jetbrains.plugins.groovy.codeInspection.metrics.GroovyOverlyNestedMethodInspection
-org.jetbrains.plugins.groovy.codeInspection.naming.GroovyAnnotationNamingConventionInspection
-org.jetbrains.plugins.groovy.codeInspection.naming.GroovyClassNamingConventionInspection
 org.jetbrains.plugins.groovy.codeInspection.naming.GroovyConstantNamingConventionInspection
-org.jetbrains.plugins.groovy.codeInspection.naming.GroovyEnumerationNamingConventionInspection
 org.jetbrains.plugins.groovy.codeInspection.naming.GroovyInstanceMethodNamingConventionInspection
 org.jetbrains.plugins.groovy.codeInspection.naming.GroovyInstanceVariableNamingConventionInspection
-org.jetbrains.plugins.groovy.codeInspection.naming.GroovyInterfaceNamingConventionInspection
 org.jetbrains.plugins.groovy.codeInspection.naming.GroovyLocalVariableNamingConventionInspection
 org.jetbrains.plugins.groovy.codeInspection.naming.GroovyParameterNamingConventionInspection
 org.jetbrains.plugins.groovy.codeInspection.naming.GroovyStaticMethodNamingConventionInspection

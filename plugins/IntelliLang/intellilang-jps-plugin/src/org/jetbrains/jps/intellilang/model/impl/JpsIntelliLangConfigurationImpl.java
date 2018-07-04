@@ -9,11 +9,10 @@ import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11/29/12
  */
 public class JpsIntelliLangConfigurationImpl extends JpsElementBase<JpsIntelliLangConfigurationImpl> implements
                                                                                              JpsIntelliLangConfiguration {
-  public static final JpsElementChildRole<JpsIntelliLangConfiguration> ROLE = JpsElementChildRoleBase.create("IntelliLang");
+  public static final JpsElementChildRole<JpsIntelliLangConfiguration> ROLE = JpsElementChildRoleBase.create("LangInjection");
 
   private String myPatternAnnotationClassName = "org.intellij.lang.annotations.Pattern";
   private InstrumentationType myInstrumentationType = InstrumentationType.ASSERT;

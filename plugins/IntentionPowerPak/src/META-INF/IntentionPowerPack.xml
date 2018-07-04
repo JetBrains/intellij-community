@@ -96,18 +96,6 @@
       <categoryKey>intention.category.conditional.operator</categoryKey>
     </intentionAction>
 
-    <intentionAction>
-      <className>com.siyeh.ipp.conditional.ReplaceConditionalWithIfIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.conditional.operator</categoryKey>
-    </intentionAction>
-
-    <intentionAction>
-      <className>com.siyeh.ipp.trivialif.ReplaceIfWithConditionalIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.conditional.operator</categoryKey>
-    </intentionAction>
-
     <!-- Shift -->
     <intentionAction>
       <className>com.siyeh.ipp.shift.ReplaceMultiplyWithShiftIntention</className>
@@ -122,12 +110,6 @@
     </intentionAction>
 
     <!-- JUnit -->
-    <intentionAction>
-      <className>com.siyeh.ipp.junit.ReplaceAssertEqualsWithAssertLiteralIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.junit</categoryKey>
-    </intentionAction>
-
     <intentionAction>
       <className>com.siyeh.ipp.junit.ReplaceAssertLiteralWithAssertEqualsIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
@@ -280,11 +262,6 @@
       <categoryKey>intention.category.control.flow</categoryKey>
     </intentionAction>
     <intentionAction>
-      <className>com.siyeh.ipp.forloop.ReplaceForLoopWithWhileLoopIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.control.flow</categoryKey>
-    </intentionAction>
-    <intentionAction>
       <className>com.siyeh.ipp.whileloop.ReplaceWhileLoopWithDoWhileLoopIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.control.flow</categoryKey>
@@ -412,11 +389,6 @@
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
-    <!--<intentionAction>
-      <className>com.siyeh.ipp.commutative.SwapMethodCallArgumentsIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.other</categoryKey>
-    </intentionAction>-->
     <intentionAction>
       <className>com.siyeh.ipp.concatenation.MakeCallChainIntoCallSequenceIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
@@ -458,11 +430,6 @@
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
-      <className>com.siyeh.ipp.constant.ConstantExpressionIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.other</categoryKey>
-    </intentionAction>
-    <intentionAction>
       <className>com.siyeh.ipp.constant.ConstantSubexpressionIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
@@ -474,11 +441,6 @@
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.increment.InlineIncrementIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.other</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.siyeh.ipp.parenthesis.AddClarifyingParenthesesIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>

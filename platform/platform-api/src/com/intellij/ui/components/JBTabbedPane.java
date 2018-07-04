@@ -18,6 +18,7 @@ package com.intellij.ui.components;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
@@ -65,6 +66,7 @@ public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
     JLabel label = new JLabel(title);
     label.setIcon(icon);
     label.setBorder(new EmptyBorder(1,1,1,1));
+    label.setFont(getFont());
     setTabComponentAt(index, label);
     updateSelectedTabForeground();
     label.putClientProperty(LABEL_FROM_TABBED_PANE, Boolean.TRUE);
@@ -122,5 +124,10 @@ public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
     for (int i=0; i<getTabCount(); i++) {
       getComponentAt(i).removeHierarchyListener(this);
     }
+  }
+
+  @Override
+  protected Graphics getComponentGraphics(Graphics graphics) {
+    return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 }

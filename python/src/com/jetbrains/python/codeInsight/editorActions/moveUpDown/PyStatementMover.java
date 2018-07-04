@@ -592,8 +592,8 @@ public class PyStatementMover extends LineMover {
 
   // use to keep elements
   static class MyLineRange extends LineRange {
-    private PsiElement myStartElement;
-    private PsiElement myEndElement;
+    private final PsiElement myStartElement;
+    private final PsiElement myEndElement;
     int size = 0;
     int statementsSize = 0;
 
@@ -622,9 +622,9 @@ public class PyStatementMover extends LineMover {
   }
 
   static class SelectionContainer {
-    private int myLen;
-    private int myAdditional;
-    private boolean myAtTheBeginning;
+    private final int myLen;
+    private final int myAdditional;
+    private final boolean myAtTheBeginning;
 
     public SelectionContainer(int len, int additional, boolean atTheBeginning) {
       myLen = len;
@@ -634,9 +634,9 @@ public class PyStatementMover extends LineMover {
   }
   // Use when element scope changed
   static class ScopeRange extends LineRange {
-    private PsiElement myScope;
-    @NotNull private PsiElement myAnchor;
-    private boolean addBefore;
+    private final PsiElement myScope;
+    @NotNull private final PsiElement myAnchor;
+    private final boolean addBefore;
     private boolean theSameLevel;
 
     public ScopeRange(@NotNull PsiElement scope, @NotNull PsiElement anchor, boolean before) {

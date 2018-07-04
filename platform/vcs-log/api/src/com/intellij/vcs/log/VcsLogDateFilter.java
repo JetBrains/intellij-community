@@ -15,9 +15,12 @@
  */
 package com.intellij.vcs.log;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
+
+import static com.intellij.vcs.log.VcsLogFilterCollection.DATE_FILTER;
 
 /**
  * Tells to filter by date. <br/>
@@ -36,4 +39,10 @@ public interface VcsLogDateFilter extends VcsLogDetailsFilter {
    */
   @Nullable
   Date getBefore();
+
+  @NotNull
+  @Override
+  default VcsLogFilterCollection.FilterKey<VcsLogDateFilter> getKey() {
+    return DATE_FILTER;
+  }
 }

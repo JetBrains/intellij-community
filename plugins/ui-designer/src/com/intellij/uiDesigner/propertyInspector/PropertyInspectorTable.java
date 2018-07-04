@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.ui.*;
 import com.intellij.uiDesigner.ErrorAnalyzer;
 import com.intellij.uiDesigner.ErrorInfo;
@@ -148,7 +148,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       public void mousePressed(final MouseEvent e){
         final int row = rowAtPoint(e.getPoint());
         final int column = columnAtPoint(e.getPoint());
-        if (row == -1){
+        if (row == -1 || column == -1){
           return;
         }
         final Property property = myProperties.get(row);
@@ -224,7 +224,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
   @Nullable
   public IntrospectedProperty getSelectedIntrospectedProperty(){
     Property property = getSelectedProperty();
-    if (property == null || !(property instanceof IntrospectedProperty)) {
+    if (!(property instanceof IntrospectedProperty)) {
       return null;
     }
 
@@ -273,12 +273,12 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
         return null;
       }
 
-      final PsiMethod getter = PropertyUtil.findPropertyGetter(aClass, introspectedProperty.getName(), false, true);
+      final PsiMethod getter = PropertyUtilBase.findPropertyGetter(aClass, introspectedProperty.getName(), false, true);
       if(getter != null){
         return getter;
       }
 
-      return PropertyUtil.findPropertySetter(aClass, introspectedProperty.getName(), false, true);
+      return PropertyUtilBase.findPropertySetter(aClass, introspectedProperty.getName(), false, true);
     }
     else if (CommonDataKeys.PSI_FILE.is(dataId) && myEditor != null) {
       return PsiManager.getInstance(myEditor.getProject()).findFile(myEditor.getFile());

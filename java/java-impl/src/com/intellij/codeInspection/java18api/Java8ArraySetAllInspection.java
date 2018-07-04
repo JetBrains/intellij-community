@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInspection.*;
@@ -20,11 +6,11 @@ import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
@@ -32,16 +18,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Predicate;
 
-/**
- * @author Tagir Valeev
- */
-public class Java8ArraySetAllInspection extends BaseJavaBatchLocalInspectionTool {
+public class Java8ArraySetAllInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(Java8ArraySetAllInspection.class);
 
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
+    if (!JavaFeature.ADVANCED_COLLECTIONS_API.isFeatureSupported(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
@@ -49,7 +32,7 @@ public class Java8ArraySetAllInspection extends BaseJavaBatchLocalInspectionTool
       public void visitForStatement(PsiForStatement statement) {
         super.visitForStatement(statement);
         CountingLoop loop = CountingLoop.from(statement);
-        if (loop == null || loop.isIncluding()) return;
+        if (loop == null || loop.isIncluding() || loop.isDescending()) return;
         IndexedContainer container = IndexedContainer.fromLengthExpression(loop.getBound());
         if (container == null || !(container.getQualifier().getType() instanceof PsiArrayType)) return;
         if (!StreamApiUtil.isSupportedStreamElement(container.getElementType())) return;

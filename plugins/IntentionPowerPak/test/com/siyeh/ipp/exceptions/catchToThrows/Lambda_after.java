@@ -5,7 +5,6 @@ class Lambda {
   void foo() {
     U u = () -> {
 
-
     };
   }
 

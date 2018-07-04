@@ -16,7 +16,11 @@
 package com.jetbrains.python.pyi;
 
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
@@ -26,17 +30,36 @@ import org.jetbrains.annotations.NotNull;
  * @author vlan
  */
 public class PyiInspectionsTest extends PyTestCase {
+
+  private Disposable myRootsDisposable;
+
+  @Override
+  protected void tearDown() throws Exception {
+    if (myRootsDisposable != null) {
+      Disposer.dispose(myRootsDisposable);
+      myRootsDisposable = null;
+    }
+
+    // clear cached extensions
+    // see com.jetbrains.python.PyFunctionTypeAnnotationParsingTest.tearDown()
+    PythonVisitorFilter.INSTANCE.removeExplicitExtension(PythonLanguage.INSTANCE, (visitorClass, file) -> false);
+    PythonVisitorFilter.INSTANCE.removeExplicitExtension(PyiLanguageDialect.getInstance(), (visitorClass, file) -> false);
+
+    super.tearDown();
+  }
+
   private void doTestByExtension(@NotNull Class<? extends LocalInspectionTool> inspectionClass, @NotNull String extension) {
     doTestByFileName(inspectionClass, getTestName(false) + extension);
   }
 
   private void doTestByFileName(@NotNull Class<? extends LocalInspectionTool> inspectionClass, String fileName) {
     myFixture.copyDirectoryToProject("pyi/inspections/" + getTestName(true), "");
-    myFixture.copyDirectoryToProject("typing", "");
     PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
-    myFixture.configureByFile(fileName);
+    final PsiFile file = myFixture.configureByFile(fileName);
     myFixture.enableInspections(inspectionClass);
     myFixture.checkHighlighting(true, false, true);
+    assertProjectFilesNotParsed(file);
+    assertSdkRootsNotParsed(file);
   }
 
   private void doPyTest(@NotNull Class<? extends LocalInspectionTool> inspectionClass) {
@@ -94,8 +117,12 @@ public class PyiInspectionsTest extends PyTestCase {
     doPyiTest(PyUnresolvedReferencesInspection.class);
   }
 
-  public void testPyiTopLevelForwardReferencesInAnnotations() {
+  public void testPyiTopLevelUnresolvedForwardReferencesInAnnotations() {
     doPyiTest(PyUnresolvedReferencesInspection.class);
+  }
+
+  public void testPyiTopLevelUnboundForwardReferencesInAnnotations() {
+    doPyiTest(PyUnboundLocalVariableInspection.class);
   }
 
   public void testPyiUnusedImports() {
@@ -103,7 +130,7 @@ public class PyiInspectionsTest extends PyTestCase {
   }
 
   public void testPyiRelativeImports() {
-    PyiTypeTest.addPyiStubsToContentRoot(myFixture);
+    myRootsDisposable = PyiTypeTest.addPyiStubsToContentRoot(myFixture);
     doTestByFileName(PyUnresolvedReferencesInspection.class, "package_with_stub_in_path/a.pyi");
   }
 }

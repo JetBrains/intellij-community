@@ -23,22 +23,20 @@ Groovy script
             Literal
               PsiElement(string)(''foo'')
           PsiElement(,)(',')
+          PsiErrorElement:<annotation attribute> expected, got ','
+            <empty list>
           PsiWhiteSpace(' ')
-          Annotation member value pair
-            PsiErrorElement:Annotation attribute expected
-              <empty list>
           PsiElement(,)(',')
           PsiWhiteSpace(' ')
           Annotation member value pair
             PsiElement(identifier)('x')
             PsiElement(=)('=')
-            PsiErrorElement:Annotation member value initializer expected
+            PsiErrorElement:<annotation attribute initializer> expected, got ','
               <empty list>
           PsiElement(,)(',')
+          PsiErrorElement:<annotation attribute> expected, got ','
+            <empty list>
           PsiWhiteSpace(' ')
-          Annotation member value pair
-            PsiErrorElement:Annotation attribute expected
-              <empty list>
           PsiElement(,)(',')
           PsiWhiteSpace(' ')
           Annotation member value pair

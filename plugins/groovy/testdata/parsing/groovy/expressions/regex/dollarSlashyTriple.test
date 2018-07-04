@@ -12,7 +12,7 @@ Groovy script
       PsiWhiteSpace(' ')
       Compound regular expression
         PsiElement($/ regex begin)('$/')
-        GrStringContentImpl(GString content element)
+        GrStringContentImpl(STRING_CONTENT)
           PsiElement($/ regex content)(' ')
         GString injection
           PsiElement($)('$')
@@ -21,12 +21,12 @@ Groovy script
             Parameter list
               <empty list>
             Literal
-              GroovyASTPsiElementImpl($/ regex literal)
+              GroovyASTPsiElementImpl(DOLLAR_SLASHY_LITERAL)
                 PsiElement($/ regex begin)('$/')
                 PsiElement($/ regex content)(' a ')
                 PsiElement($/ regex end)('/$')
             PsiElement(})('}')
-        GrStringContentImpl(GString content element)
+        GrStringContentImpl(STRING_CONTENT)
           PsiElement($/ regex content)(' ')
         GString injection
           PsiElement($)('$')
@@ -36,13 +36,13 @@ Groovy script
               <empty list>
             Compound regular expression
               PsiElement($/ regex begin)('$/')
-              GrStringContentImpl(GString content element)
+              GrStringContentImpl(STRING_CONTENT)
                 PsiElement($/ regex content)(' ')
               GString injection
                 PsiElement($)('$')
                 Reference expression
                   PsiElement(identifier)('b')
-              GrStringContentImpl(GString content element)
+              GrStringContentImpl(STRING_CONTENT)
                 PsiElement($/ regex content)(' ')
               GString injection
                 PsiElement($)('$')
@@ -51,15 +51,15 @@ Groovy script
                   Parameter list
                     <empty list>
                   Literal
-                    GroovyASTPsiElementImpl($/ regex literal)
+                    GroovyASTPsiElementImpl(DOLLAR_SLASHY_LITERAL)
                       PsiElement($/ regex begin)('$/')
                       PsiElement($/ regex content)(' c ')
                       PsiElement($/ regex end)('/$')
                   PsiElement(})('}')
-              GrStringContentImpl(GString content element)
+              GrStringContentImpl(STRING_CONTENT)
                 PsiElement($/ regex content)(' ')
               PsiElement($/ regex end)('/$')
             PsiElement(})('}')
-        GrStringContentImpl(GString content element)
+        GrStringContentImpl(STRING_CONTENT)
           PsiElement($/ regex content)(' ')
         PsiElement($/ regex end)('/$')

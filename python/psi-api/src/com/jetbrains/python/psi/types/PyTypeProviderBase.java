@@ -38,7 +38,7 @@ public class PyTypeProviderBase implements PyTypeProvider {
     .orElse(null);
 
   @SuppressWarnings({"MismatchedQueryAndUpdateOfCollection"})
-  private final Map<String, ReturnTypeDescriptor> myMethodToReturnTypeMap = FactoryMap.createMap(key -> new ReturnTypeDescriptor());
+  private final Map<String, ReturnTypeDescriptor> myMethodToReturnTypeMap = FactoryMap.create(key -> new ReturnTypeDescriptor());
 
   @Nullable
   @Override
@@ -47,7 +47,7 @@ public class PyTypeProviderBase implements PyTypeProvider {
   }
 
   @Override
-  public PyType getReferenceType(@NotNull PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor) {
+  public Ref<PyType> getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
     return null;
   }
 
@@ -65,7 +65,7 @@ public class PyTypeProviderBase implements PyTypeProvider {
 
   @Nullable
   @Override
-  public Ref<PyType> getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+  public Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     final ReturnTypeDescriptor descriptor;
     synchronized (myMethodToReturnTypeMap) {
       descriptor = myMethodToReturnTypeMap.get(function.getName());

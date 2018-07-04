@@ -49,6 +49,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
   @Nullable
   private String myIdeProjectPath;
   private boolean resolveModulePerSourceSet = true;
+  private boolean useQualifiedModuleNames = false;
 
   public GradleExecutionSettings(@Nullable String gradleHome,
                                  @Nullable String serviceDirectory,
@@ -116,6 +117,14 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     this.resolveModulePerSourceSet = resolveModulePerSourceSet;
   }
 
+  public boolean isUseQualifiedModuleNames() {
+    return useQualifiedModuleNames;
+  }
+
+  public void setUseQualifiedModuleNames(boolean useQualifiedModuleNames) {
+    this.useQualifiedModuleNames = useQualifiedModuleNames;
+  }
+
   @NotNull
   public List<ClassHolder<? extends GradleProjectResolverExtension>> getResolverExtensions() {
     return myResolverExtensions;
@@ -129,6 +138,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
    * @return VM options to use for the gradle daemon process (if any)
    * @deprecated use {@link #getVmOptions()}
    */
+  @Deprecated
   @Nullable
   public String getDaemonVmOptions() {
     return ParametersListUtil.join(ContainerUtilRt.newArrayList(getVmOptions()));

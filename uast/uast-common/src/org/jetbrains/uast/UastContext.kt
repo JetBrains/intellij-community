@@ -22,108 +22,112 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.reference.SoftReference
 
-val CACHED_UELEMENT_KEY = Key.create<SoftReference<UElement>>("org.jetbrains.uast.cachedElement")
+val CACHED_UELEMENT_KEY: Key<SoftReference<UElement>> = Key.create<SoftReference<UElement>>("org.jetbrains.uast.cachedElement")
 
 /**
  * Manages the UAST to PSI conversion.
  */
 class UastContext(val project: Project) : UastLanguagePlugin {
-    private companion object {
-        private val CONTEXT_LANGUAGE = object : Language("UastContextLanguage") {}
+  private companion object {
+    private val CONTEXT_LANGUAGE = object : Language("UastContextLanguage") {}
+  }
+
+  override val language: Language
+    get() = CONTEXT_LANGUAGE
+
+  override val priority: Int
+    get() = 0
+
+  val languagePlugins: Collection<UastLanguagePlugin>
+    get() = UastLanguagePlugin.getInstances()
+
+  fun findPlugin(element: PsiElement): UastLanguagePlugin? {
+    // we're searching for plugin for file because sometimes java elements are used in another languages (see Drools)
+    val containingFile = element.containingFile?.takeIf {
+      it !is PsiCompiledFile // Don't trust compiled files because of KT-18054
+    }
+    val language = (containingFile ?: element).language
+    return languagePlugins.firstOrNull { it.language == language }
+  }
+
+  override fun isFileSupported(fileName: String): Boolean = languagePlugins.any { it.isFileSupported(fileName) }
+
+  fun getMethod(method: PsiMethod): UMethod = convertWithParent<UMethod>(method)!!
+
+  fun getVariable(variable: PsiVariable): UVariable = convertWithParent<UVariable>(variable)!!
+
+  fun getClass(clazz: PsiClass): UClass = convertWithParent<UClass>(clazz)!!
+
+  override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? {
+    val cachedElement = element.getUserData(CACHED_UELEMENT_KEY)?.get()
+    if (cachedElement != null) {
+      return if (requiredType == null || requiredType.isInstance(cachedElement)) cachedElement else null
     }
 
-    override val language: Language
-        get() = CONTEXT_LANGUAGE
+    return findPlugin(element)?.convertElement(element, parent, requiredType)
+  }
 
-    override val priority: Int
-        get() = 0
-
-    val languagePlugins: Collection<UastLanguagePlugin>
-        get() = UastLanguagePlugin.getInstances()
-
-    fun findPlugin(element: PsiElement): UastLanguagePlugin? {
-        val language = element.language
-        return languagePlugins.firstOrNull { it.language == language }
+  override fun convertElementWithParent(element: PsiElement, requiredType: Class<out UElement>?): UElement? {
+    val cachedElement = element.getUserData(CACHED_UELEMENT_KEY)?.get()
+    if (cachedElement != null) {
+      return if (requiredType == null || requiredType.isInstance(cachedElement)) cachedElement else null
     }
 
-    override fun isFileSupported(fileName: String) = languagePlugins.any { it.isFileSupported(fileName) }
+    return findPlugin(element)?.convertElementWithParent(element, requiredType)
+  }
 
-    fun getMethod(method: PsiMethod): UMethod = convertWithParent<UMethod>(method)!!
+  override fun getMethodCallExpression(
+    element: PsiElement,
+    containingClassFqName: String?,
+    methodName: String
+  ): UastLanguagePlugin.ResolvedMethod? {
+    return findPlugin(element)?.getMethodCallExpression(element, containingClassFqName, methodName)
+  }
 
-    fun getVariable(variable: PsiVariable): UVariable = convertWithParent<UVariable>(variable)!!
+  override fun getConstructorCallExpression(
+    element: PsiElement,
+    fqName: String
+  ): UastLanguagePlugin.ResolvedConstructor? {
+    return findPlugin(element)?.getConstructorCallExpression(element, fqName)
+  }
 
-    fun getClass(clazz: PsiClass): UClass = convertWithParent<UClass>(clazz)!!
+  override fun isExpressionValueUsed(element: UExpression): Boolean {
+    val language = element.getLanguage()
+    return UastLanguagePlugin.byLanguage(language)?.isExpressionValueUsed(element) ?: false
+  }
 
-    override fun convertElement(element: PsiElement, parent: UElement?, requiredType: Class<out UElement>?): UElement? {
-        val cachedElement = element.getUserData(CACHED_UELEMENT_KEY)?.get()
-        if (cachedElement != null) {
-            return if (requiredType == null || requiredType.isInstance(cachedElement)) cachedElement else null
-        }
-
-        return findPlugin(element)?.convertElement(element, parent, requiredType)
-    }
-
-    override fun convertElementWithParent(element: PsiElement, requiredType: Class<out UElement>?): UElement? {
-        val cachedElement = element.getUserData(CACHED_UELEMENT_KEY)?.get()
-        if (cachedElement != null) {
-            return if (requiredType == null || requiredType.isInstance(cachedElement)) cachedElement else null
-        }
-
-        return findPlugin(element)?.convertElementWithParent(element, requiredType)
-    }
-
-    override fun getMethodCallExpression(
-            element: PsiElement,
-            containingClassFqName: String?,
-            methodName: String
-    ): UastLanguagePlugin.ResolvedMethod? {
-        return findPlugin(element)?.getMethodCallExpression(element, containingClassFqName, methodName)
-    }
-
-    override fun getConstructorCallExpression(
-            element: PsiElement,
-            fqName: String
-    ): UastLanguagePlugin.ResolvedConstructor? {
-        return findPlugin(element)?.getConstructorCallExpression(element, fqName)
-    }
-
-    override fun isExpressionValueUsed(element: UExpression): Boolean {
-        val language = element.getLanguage()
-        return (languagePlugins.firstOrNull { it.language == language })?.isExpressionValueUsed(element) ?: false
-    }
-
-    private tailrec fun UElement.getLanguage(): Language {
-        psi?.language?.let { return it }
-        val containingElement = this.uastParent ?: throw IllegalStateException("At least UFile should have a language")
-        return containingElement.getLanguage()
-    }
+  private tailrec fun UElement.getLanguage(): Language {
+    psi?.language?.let { return it }
+    val containingElement = this.uastParent ?: throw IllegalStateException("At least UFile should have a language")
+    return containingElement.getLanguage()
+  }
 }
 
 /**
  * Converts the element along with its parents to UAST.
  */
-fun PsiElement?.toUElement() =
-        this?.let { ServiceManager.getService(project, UastContext::class.java).convertElementWithParent(this, null) }
+fun PsiElement?.toUElement(): UElement? =
+  this?.let { ServiceManager.getService(project, UastContext::class.java).convertElementWithParent(this, null) }
 
 /**
  * Converts the element to an UAST element of the given type. Returns null if the PSI element type does not correspond
  * to the given UAST element type.
  */
 fun <T : UElement> PsiElement?.toUElement(cls: Class<out T>): T? =
-        this?.let { ServiceManager.getService(project, UastContext::class.java).convertElementWithParent(this, cls) as T? }
+  this?.let { ServiceManager.getService(project, UastContext::class.java).convertElementWithParent(this, cls) as T? }
 
 inline fun <reified T : UElement> PsiElement?.toUElementOfType(): T? =
-        this?.let { ServiceManager.getService(project, UastContext::class.java).convertElementWithParent(this, T::class.java) as T? }
+  this?.let { ServiceManager.getService(project, UastContext::class.java).convertElementWithParent(this, T::class.java) as T? }
 
 /**
  * Finds an UAST element of a given type at the given [offset] in the specified file. Returns null if there is no UAST
  * element of the given type at the given offset.
  */
 fun <T : UElement> PsiFile.findUElementAt(offset: Int, cls: Class<out T>): T? {
-    val element = findElementAt(offset) ?: return null
-    val uElement = element.toUElement() ?: return null
-    @Suppress("UNCHECKED_CAST")
-    return uElement.withContainingElements.firstOrNull { cls.isInstance(it) } as T?
+  val element = findElementAt(offset) ?: return null
+  val uElement = element.toUElement() ?: return null
+  @Suppress("UNCHECKED_CAST")
+  return uElement.withContainingElements.firstOrNull { cls.isInstance(it) } as T?
 }
 
 /**
@@ -131,12 +135,12 @@ fun <T : UElement> PsiFile.findUElementAt(offset: Int, cls: Class<out T>): T? {
  */
 @JvmOverloads
 fun <T : UElement> PsiElement?.getUastParentOfType(cls: Class<out T>, strict: Boolean = false): T? = this?.run {
-    val startingElement = if (strict) this.parent else this
-    val parentSequence = generateSequence(startingElement, PsiElement::getParent)
-    val firstUElement = parentSequence.mapNotNull { it.toUElement() }.firstOrNull() ?: return null
+  val startingElement = if (strict) this.parent else this
+  val parentSequence = generateSequence(startingElement, PsiElement::getParent)
+  val firstUElement = parentSequence.mapNotNull { it.toUElement() }.firstOrNull() ?: return null
 
-    @Suppress("UNCHECKED_CAST")
-    return firstUElement.withContainingElements.firstOrNull { cls.isInstance(it) } as T?
+  @Suppress("UNCHECKED_CAST")
+  return firstUElement.withContainingElements.firstOrNull { cls.isInstance(it) } as T?
 }
 
 inline fun <reified T : UElement> PsiElement?.getUastParentOfType(strict: Boolean = false): T? = getUastParentOfType(T::class.java, strict)

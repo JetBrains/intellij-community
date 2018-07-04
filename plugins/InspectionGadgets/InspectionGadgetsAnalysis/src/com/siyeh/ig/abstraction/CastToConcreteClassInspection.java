@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -95,18 +96,10 @@ public class CastToConcreteClassInspection extends BaseInspection {
         return;
       }
       final PsiType type = qualifier.getType();
-      if (!(type instanceof PsiClassType)) {
+      if (!CommonClassNames.JAVA_LANG_CLASS.equals(TypeUtils.resolvedClassName(type))) {
         return;
       }
       final PsiClassType classType = (PsiClassType)type;
-      final PsiClass aClass = classType.resolve();
-      if (aClass == null) {
-        return;
-      }
-      final String className = aClass.getQualifiedName();
-      if (!CommonClassNames.JAVA_LANG_CLASS.equals(className)) {
-        return;
-      }
       final PsiType[] parameters = classType.getParameters();
       if (parameters.length != 1) {
         return;

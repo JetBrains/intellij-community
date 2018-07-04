@@ -17,14 +17,15 @@
 
 package com.intellij.codeInspection.dataFlow
 
-import com.intellij.codeInspection.dataFlow.instructions.Instruction
-import com.intellij.codeInspection.dataFlow.value.DfaTypeValue
+import com.intellij.codeInspection.dataFlow.instructions.ControlTransferInstruction
+import com.intellij.codeInspection.dataFlow.value.DfaPsiType
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue
 import com.intellij.psi.*
 import com.intellij.util.containers.FList
 import java.util.*
+import kotlin.collections.ArrayList
 
 /**
  * @author peter
@@ -32,116 +33,137 @@ import java.util.*
 class DfaControlTransferValue(factory: DfaValueFactory,
                               val target: TransferTarget,
                               val traps: FList<Trap>) : DfaValue(factory) {
-  override fun toString() = target.toString() + " " + traps.toString()
+  fun dispatch(state: DfaMemoryState, runner: DataFlowRunner): List<DfaInstructionState> = ControlTransferHandler(state, runner, this).dispatch()
+  override fun toString(): String = target.toString() + (if (traps.isEmpty()) "" else " $traps")
 }
 
-interface TransferTarget
-data class ExceptionTransfer(val throwable: DfaValue) : TransferTarget
-data class InstructionTransfer(val offset: ControlFlow.ControlFlowOffset, val toFlush: List<DfaVariableValue>) : TransferTarget
+interface TransferTarget {
+  /** @return list of possible instruction offsets for given target */
+  fun getPossibleTargets() : Collection<Int> = emptyList()
+  /** @return next instruction states assuming no traps */
+  fun dispatch(state: DfaMemoryState, runner: DataFlowRunner) : List<DfaInstructionState> = emptyList()
+}
+data class ExceptionTransfer(val throwable: DfaPsiType?) : TransferTarget {
+  override fun toString(): String = "Exception($throwable)"
+}
+data class InstructionTransfer(val offset: ControlFlow.ControlFlowOffset, private val toFlush: List<DfaVariableValue>) : TransferTarget {
+  override fun dispatch(state: DfaMemoryState, runner: DataFlowRunner): List<DfaInstructionState> {
+    toFlush.forEach(state::flushVariable)
+    return listOf(DfaInstructionState(runner.getInstruction(offset.instructionOffset), state))
+  }
+
+  override fun getPossibleTargets(): List<Int> = listOf(offset.instructionOffset)
+  override fun toString(): String = "-> $offset" + (if (toFlush.isEmpty()) "" else "; flushing $toFlush")
+}
+data class ExitFinallyTransfer(private val enterFinally: Trap.EnterFinally) : TransferTarget {
+  override fun getPossibleTargets(): Set<Int> = enterFinally.backLinks.asIterable().flatMap { it.getPossibleTargetIndices() }
+    .filter { index -> index != enterFinally.jumpOffset.instructionOffset }.toSet()
+
+  override fun dispatch(state: DfaMemoryState, runner: DataFlowRunner): List<DfaInstructionState> {
+    return (state.pop() as DfaControlTransferValue).dispatch(state, runner)
+  }
+
+  override fun toString(): String = "ExitFinally"
+}
 object ReturnTransfer : TransferTarget {
-  override fun toString(): String = "ReturnTransfer"
-}
-
-open class ControlTransferInstruction(val transfer: DfaControlTransferValue?) : Instruction() {
-  override fun accept(runner: DataFlowRunner, state: DfaMemoryState, visitor: InstructionVisitor): Array<out DfaInstructionState> {
-    val transferValue = transfer ?: state.pop() as DfaControlTransferValue
-    return ControlTransferHandler(state, runner, transferValue.target).iteration(transferValue.traps).toTypedArray()
-  }
-
-  fun getPossibleTargetIndices() : List<Int> {
-    if (transfer == null) return emptyList()
-
-    val result = ArrayList(transfer.traps.flatMap(Trap::getPossibleTargets))
-    if (transfer.target is InstructionTransfer) {
-      result.add(transfer.target.offset.instructionOffset)
-    }
-    return result
-  }
-
-  fun getPossibleTargetInstructions(allInstructions: Array<Instruction>) = getPossibleTargetIndices().map { allInstructions[it] }
-
-  override fun toString() = transfer.toString()
+  override fun toString(): String = "Return"
 }
 
 sealed class Trap(val anchor: PsiElement) {
-  class TryCatch(tryStatement : PsiTryStatement, val clauses: LinkedHashMap<PsiCatchSection, ControlFlow.ControlFlowOffset>): Trap(tryStatement)
-  class TryFinally(val finallyBlock: PsiCodeBlock, val jumpOffset: ControlFlow.ControlFlowOffset): Trap(finallyBlock)
-  class InsideFinally(val finallyBlock: PsiCodeBlock): Trap(finallyBlock)
+  open fun link(instruction: ControlTransferInstruction) {}
 
-  internal fun getPossibleTargets(): Collection<Int> {
-    return when (this) {
-      is TryCatch -> clauses.values.map { it.instructionOffset }
-      is TryFinally -> listOf(jumpOffset.instructionOffset)
-      else -> emptyList()
+  internal abstract fun dispatch(handler: ControlTransferHandler): List<DfaInstructionState>
+  internal open fun getPossibleTargets(): Collection<Int> = emptyList()
+  override fun toString(): String = javaClass.simpleName!!
+
+  class TryCatch(tryStatement: PsiTryStatement, val clauses: LinkedHashMap<PsiCatchSection, ControlFlow.ControlFlowOffset>)
+    : Trap(tryStatement) {
+    override fun dispatch(handler: ControlTransferHandler): List<DfaInstructionState> {
+      return if (handler.target is ExceptionTransfer) handler.processCatches(handler.target.throwable, clauses)
+      else handler.dispatch()
+    }
+
+    override fun getPossibleTargets() = clauses.values.map { it.instructionOffset }
+    override fun toString(): String = "${super.toString()} -> ${clauses.values}"
+  }
+  abstract class EnterFinally(anchor: PsiElement, val jumpOffset: ControlFlow.ControlFlowOffset): Trap(anchor) {
+    internal val backLinks = ArrayList<ControlTransferInstruction>()
+
+    override fun link(instruction: ControlTransferInstruction) {
+      backLinks.add(instruction)
+    }
+
+    override fun dispatch(handler: ControlTransferHandler): List<DfaInstructionState> {
+      handler.state.push(handler.runner.factory.controlTransfer(handler.target, handler.traps))
+      return listOf(DfaInstructionState(handler.runner.getInstruction(jumpOffset.instructionOffset), handler.state))
+    }
+
+    override fun getPossibleTargets() = listOf(jumpOffset.instructionOffset)
+    override fun toString(): String = "${super.toString()} -> $jumpOffset"
+  }
+  class TryFinally(finallyBlock: PsiCodeBlock, jumpOffset: ControlFlow.ControlFlowOffset): EnterFinally(finallyBlock, jumpOffset)
+  class TwrFinally(resourceList: PsiResourceList, jumpOffset: ControlFlow.ControlFlowOffset) : EnterFinally(resourceList, jumpOffset) {
+    override fun dispatch(handler: ControlTransferHandler) =
+      if (handler.target is ExceptionTransfer) handler.dispatch()
+      else super.dispatch(handler)
+  }
+  class InsideFinally(finallyBlock: PsiElement): Trap(finallyBlock) {
+    override fun dispatch(handler: ControlTransferHandler): List<DfaInstructionState> {
+      handler.state.pop() as DfaControlTransferValue
+      return handler.dispatch()
+    }
+  }
+  class InsideInlinedBlock(block: PsiCodeBlock): Trap(block) {
+    override fun dispatch(handler: ControlTransferHandler): List<DfaInstructionState> {
+      (handler.state.pop() as DfaControlTransferValue).target as ReturnTransfer
+      return handler.dispatch()
     }
   }
 }
 
-private class ControlTransferHandler(val state: DfaMemoryState, val runner: DataFlowRunner, val target: TransferTarget) {
-  var throwableState: DfaVariableState? = null
+internal class ControlTransferHandler(val state: DfaMemoryState, val runner: DataFlowRunner, transferValue: DfaControlTransferValue) {
+  private var throwableType: TypeConstraint? = null
+  val target = transferValue.target
+  var traps = transferValue.traps
 
-  fun iteration(traps: FList<Trap>): List<DfaInstructionState> {
-    val (head, tail) = traps.head to traps.tail
-    return when (head) {
-      null -> transferToTarget()
-      is Trap.TryCatch -> if (target is ExceptionTransfer) processCatches(head, target.throwable, tail) else iteration(tail)
-      is Trap.TryFinally -> goToFinally(head.jumpOffset.instructionOffset, tail)
-      is Trap.InsideFinally -> leaveFinally(tail)
-    }
+  fun dispatch(): List<DfaInstructionState> {
+    val head = traps.head
+    traps = traps.tail ?: FList.emptyList()
+    state.emptyStack()
+    return head?.dispatch(this) ?: target.dispatch(state, runner)
   }
 
-  private fun transferToTarget(): List<DfaInstructionState> {
-    return when (target) {
-      is InstructionTransfer -> {
-        target.toFlush.forEach { state.flushVariable(it) }
-        listOf(DfaInstructionState(runner.getInstruction(target.offset.instructionOffset), state))
-      }
-      else -> emptyList()
-    }
-  }
-
-  private fun goToFinally(offset: Int, traps: FList<Trap>): List<DfaInstructionState> {
-    state.push(runner.factory.controlTransfer(target, traps))
-    return listOf(DfaInstructionState(runner.getInstruction(offset), state))
-  }
-
-  private fun leaveFinally(traps: FList<Trap>): List<DfaInstructionState> {
-    state.pop() as DfaControlTransferValue
-    return iteration(traps)
-  }
-
-  private fun processCatches(tryCatch: Trap.TryCatch, thrownValue: DfaValue, traps: FList<Trap>): List<DfaInstructionState> {
+  internal fun processCatches(thrownValue: DfaPsiType?,
+                              catches: Map<PsiCatchSection, ControlFlow.ControlFlowOffset>): List<DfaInstructionState> {
     val result = arrayListOf<DfaInstructionState>()
-    for ((catchSection, jumpOffset) in tryCatch.clauses) {
+    for ((catchSection, jumpOffset) in catches) {
       val param = catchSection.parameter ?: continue
-      if (throwableState == null) throwableState = initVariableState(param, thrownValue)
+      if (throwableType == null) {
+        throwableType = thrownValue?.asConstraint() ?: TypeConstraint.EMPTY
+      }
 
       for (caughtType in allCaughtTypes(param)) {
-        throwableState?.withInstanceofValue(caughtType)?.let { varState ->
-          result.add(DfaInstructionState(runner.getInstruction(jumpOffset.instructionOffset), stateForCatchClause(param, varState)))
+        throwableType?.withInstanceofValue(caughtType)?.let { constraint ->
+          result.add(DfaInstructionState(runner.getInstruction(jumpOffset.instructionOffset), stateForCatchClause(param, constraint)))
         }
 
-        throwableState = throwableState?.withNotInstanceofValue(caughtType) ?: return result
+        throwableType = throwableType?.withNotInstanceofValue(caughtType) ?: return result
       }
     }
-    return result + iteration(traps)
+    return result + dispatch()
   }
 
-  private fun allCaughtTypes(param: PsiParameter): List<DfaTypeValue> {
+  private fun allCaughtTypes(param: PsiParameter): List<DfaPsiType> {
     val psiTypes = param.type.let { if (it is PsiDisjunctionType) it.disjunctions else listOfNotNull(it) }
-    return psiTypes.map { runner.factory.createTypeValue(it, Nullness.NOT_NULL) }.filterIsInstance<DfaTypeValue>()
+    return psiTypes.map { runner.factory.createDfaType(it) }
   }
 
-  private fun stateForCatchClause(param: PsiParameter, varState: DfaVariableState): DfaMemoryState {
-    val catchingCopy = state.createCopy() as DfaMemoryStateImpl
-    catchingCopy.setVariableState(catchingCopy.factory.varFactory.createVariableValue(param, false), varState)
+  private fun stateForCatchClause(param: PsiParameter, constraint: TypeConstraint): DfaMemoryState {
+    val catchingCopy = state.createCopy()
+    val value = runner.factory.varFactory.createVariableValue(param)
+    catchingCopy.applyFact(value, DfaFactType.TYPE_CONSTRAINT, constraint)
+    catchingCopy.applyFact(value, DfaFactType.CAN_BE_NULL, false)
     return catchingCopy
-  }
-
-  private fun initVariableState(param: PsiParameter, throwable: DfaValue): DfaVariableState {
-    val sampleVar = (state as DfaMemoryStateImpl).factory.varFactory.createVariableValue(param, false)
-    val varState = state.createVariableState(sampleVar).withFact(DfaFactType.CAN_BE_NULL, false)
-    return if (throwable is DfaTypeValue) varState.withInstanceofValue(throwable)!! else varState
   }
 
 }

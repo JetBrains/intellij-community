@@ -16,10 +16,10 @@
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
@@ -99,7 +99,7 @@ public abstract class DiffContent {
    * @param offset in document returned by {@link #getDocument()}
    * @return {@link com.intellij.openapi.fileEditor.OpenFileDescriptor} to open this content in editor
    */
-  public abstract OpenFileDescriptor getOpenFileDescriptor(int offset);
+  public abstract Navigatable getOpenFileDescriptor(int offset);
 
   /**
    * @return VirtualFile from which this content gets data.

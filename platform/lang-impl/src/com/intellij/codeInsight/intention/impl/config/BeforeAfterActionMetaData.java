@@ -22,6 +22,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -35,7 +36,7 @@ import java.util.Arrays;
 import java.util.List;
 
 
-public abstract class BeforeAfterActionMetaData {
+public abstract class BeforeAfterActionMetaData implements BeforeAfterMetaData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.BeforeAfterActionMetaData");
 
   protected static final TextDescriptor[] EMPTY_EXAMPLE = new TextDescriptor[0];
@@ -47,19 +48,18 @@ public abstract class BeforeAfterActionMetaData {
   @NonNls private static final String AFTER_TEMPLATE_PREFIX = "after";
   protected final ClassLoader myLoader;
   protected final String myDescriptionDirectoryName;
-  protected TextDescriptor[] myExampleUsagesBefore = null;
-  protected TextDescriptor[] myExampleUsagesAfter = null;
-  protected TextDescriptor myDescription = null;
+  private TextDescriptor[] myExampleUsagesBefore;
+  private TextDescriptor[] myExampleUsagesAfter;
+  protected TextDescriptor myDescription;
 
-
-  public BeforeAfterActionMetaData(ClassLoader loader, String descriptionDirectoryName) {
+  public BeforeAfterActionMetaData(@Nullable ClassLoader loader, @NotNull String descriptionDirectoryName) {
     myLoader = loader;
     myDescriptionDirectoryName = descriptionDirectoryName;
   }
 
-  public BeforeAfterActionMetaData(final TextDescriptor description,
-                                   final TextDescriptor[] exampleUsagesBefore,
-                                   final TextDescriptor[] exampleUsagesAfter) {
+  public BeforeAfterActionMetaData(@NotNull TextDescriptor description,
+                                   @NotNull TextDescriptor[] exampleUsagesBefore,
+                                   @NotNull TextDescriptor[] exampleUsagesAfter) {
     myLoader = null;
     myDescriptionDirectoryName = null;
 
@@ -113,9 +113,10 @@ public abstract class BeforeAfterActionMetaData {
                 (children == null ? "" : "; directory contents: " + Arrays.asList(children)), cause);
       return EMPTY_EXAMPLE;
     }
-    return urls.toArray(new TextDescriptor[urls.size()]);
+    return urls.toArray(new TextDescriptor[0]);
   }
 
+  @Override
   @NotNull
   public TextDescriptor[] getExampleUsagesBefore() {
     if (myExampleUsagesBefore == null) {
@@ -130,6 +131,7 @@ public abstract class BeforeAfterActionMetaData {
     return myExampleUsagesBefore;
   }
 
+  @Override
   @NotNull
   public TextDescriptor[] getExampleUsagesAfter() {
     if (myExampleUsagesAfter == null) {
@@ -144,6 +146,7 @@ public abstract class BeforeAfterActionMetaData {
     return myExampleUsagesAfter;
   }
 
+  @Override
   @NotNull
   public TextDescriptor getDescription() {
     if (myDescription == null) {

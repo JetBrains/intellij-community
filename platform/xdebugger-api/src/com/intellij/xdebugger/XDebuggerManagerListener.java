@@ -16,10 +16,16 @@
 package com.intellij.xdebugger;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface
   XDebuggerManagerListener {
-  void processStarted(@NotNull XDebugProcess debugProcess);
+  default void processStarted(@NotNull XDebugProcess debugProcess) {
+  }
 
-  void processStopped(@NotNull XDebugProcess debugProcess);
+  default void processStopped(@NotNull XDebugProcess debugProcess) {
+  }
+
+  default void currentSessionChanged(@Nullable XDebugSession previousSession, @Nullable XDebugSession currentSession) {
+  }
 }

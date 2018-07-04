@@ -73,7 +73,7 @@ public class HgChangeProvider implements ChangeProvider {
   }
 
   public void getChanges(@NotNull VcsDirtyScope dirtyScope, @NotNull ChangelistBuilder builder,
-                         @NotNull ProgressIndicator progress, @NotNull ChangeListManagerGate addGate) throws VcsException {
+                         @NotNull ProgressIndicator progress, @NotNull ChangeListManagerGate addGate) {
     if (myProject.isDisposed()) return;
     final Collection<HgChange> changes = new HashSet<>();
     changes.addAll(process(builder, dirtyScope.getRecursivelyDirtyDirectories()));

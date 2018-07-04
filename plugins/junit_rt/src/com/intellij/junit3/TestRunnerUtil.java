@@ -22,7 +22,8 @@ import junit.framework.TestSuite;
 import junit.runner.BaseTestRunner;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
+import java.io.FileInputStream;
+import java.io.InputStreamReader;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -48,7 +49,7 @@ public class TestRunnerUtil {
         String[] classNames;
         String suiteName;
         try {
-          BufferedReader reader = new BufferedReader(new FileReader(suiteClassName.substring(1)));
+          BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(suiteClassName.substring(1)), "UTF-8"));
           Vector vector;
           try {
             suiteName = reader.readLine();

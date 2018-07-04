@@ -42,7 +42,7 @@ public class VcsIntegrationEnablerTest extends VcsRootBaseTest {
     String vcsNotifierKey = VcsNotifier.class.getName();
     picoContainer.unregisterComponent(vcsNotifierKey);
     picoContainer.registerComponentImplementation(vcsNotifierKey, TestVcsNotifier.class);
-    myTestRoot = myProjectRoot.getParent();
+    myTestRoot = projectRoot.getParent();
   }
 
   public void testOneRootForTheWholeProjectThenJustAddVcsRoot() {
@@ -51,7 +51,7 @@ public class VcsIntegrationEnablerTest extends VcsRootBaseTest {
 
   public void testNoMockRootsThenInitAndNotify() {
     doTest(given(),
-           notification("Created mock repository in " + myProjectRoot.getPresentableUrl()), ".", VcsTestUtil.toAbsolute(".", myProject));
+           notification("Created mock repository in " + projectRoot.getPresentableUrl()), ".", VcsTestUtil.toAbsolute(".", myProject));
   }
 
   public void testBelowMockNoInsideThenNotify() {
@@ -61,7 +61,7 @@ public class VcsIntegrationEnablerTest extends VcsRootBaseTest {
 
   public void testMockForProjectSomeInsideThenNotify() {
     doTest(given(".", "community"),
-           notification("Added mock roots: " + myProjectRoot.getPresentableUrl() + ", " + getPresentationForRoot("community")));
+           notification("Added mock roots: " + projectRoot.getPresentableUrl() + ", " + getPresentationForRoot("community")));
   }
 
   public void testBelowMockSomeInsideThenNotify() {
@@ -105,7 +105,7 @@ public class VcsIntegrationEnablerTest extends VcsRootBaseTest {
   }
 
   void assertMockInit(@NotNull String root) {
-    File rootFile = new File(myProjectRoot.getPath(), root);
+    File rootFile = new File(projectRoot.getPath(), root);
     assertTrue(new File(rootFile.getPath(), DOT_MOCK).exists());
   }
 

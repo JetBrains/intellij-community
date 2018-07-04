@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class DebuggerUtilsEx
@@ -20,6 +6,7 @@
  */
 package com.intellij.debugger.impl;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
@@ -58,7 +45,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.ui.content.Content;
@@ -84,6 +70,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.regex.PatternSyntaxException;
 
 public abstract class DebuggerUtilsEx extends DebuggerUtils {
@@ -217,7 +204,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     int i;
     for (i = 0; signature.charAt(i) == '['; i++) ;
     if (i == 0) return false;
-    signature = signature.substring(i, signature.length());
+    signature = signature.substring(i);
     return myCharOrIntegers.contains(signature);
   }
 
@@ -445,16 +432,29 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
+  /**
+   * @deprecated use {@link EvaluationContext#keep(Value)} directly
+   */
+  @Deprecated
   public static void keep(Value value, EvaluationContext context) {
-    if (value instanceof ObjectReference) {
-      ((SuspendContextImpl)context.getSuspendContext()).keep((ObjectReference)value);
-    }
+    context.keep(value);
+  }
+
+  public static StringReference mirrorOfString(@NotNull String s, VirtualMachineProxyImpl virtualMachineProxy, EvaluationContext context)
+    throws EvaluateException {
+    return context.computeAndKeep(() -> virtualMachineProxy.mirrorOf(s));
+  }
+
+  public static ArrayReference mirrorOfArray(@NotNull ArrayType arrayType, int dimension, EvaluationContext context)
+    throws EvaluateException {
+    return context.computeAndKeep(() -> context.getDebugProcess().newInstance(arrayType, dimension));
   }
 
   public abstract DebuggerTreeNode  getSelectedNode    (DataContext context);
 
   public abstract EvaluatorBuilder  getEvaluatorBuilder();
 
+  @NotNull
   public static CodeFragmentFactory getCodeFragmentFactory(@Nullable PsiElement context, @Nullable FileType fileType) {
     DefaultCodeFragmentFactory defaultFactory = DefaultCodeFragmentFactory.getInstance();
     if (fileType == null) {
@@ -555,12 +555,12 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
-  public static String methodNameWithArguments(Method m) {
-    return m.name() + "(" + StringUtil.join(m.argumentTypeNames(), DebuggerUtilsEx::getSimpleName, ", ") + ")";
+  public static String methodKey(Method m) {
+    return m.declaringType().name() + '.' + m.name() + m.signature();
   }
 
-  public static String getSimpleName(String fqn) {
-    return fqn.substring(fqn.lastIndexOf('.') + 1);
+  public static String methodNameWithArguments(Method m) {
+    return m.name() + "(" + StringUtil.join(m.argumentTypeNames(), StringUtil::getShortName, ", ") + ")";
   }
 
   public static String methodName(final Method m) {
@@ -625,6 +625,19 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
+  public static String getSourceName(Location location, Function<Throwable, String> defaultName) {
+    try {
+      return location.sourceName();
+    }
+    catch (InternalError | AbsentInformationException e) {
+      return defaultName.apply(e);
+    }
+  }
+
+  public static boolean isVoid(@NotNull Method method) {
+    return "void".equals(method.returnTypeName());
+  }
+
   @Nullable
   public static Method getMethod(Location location) {
     try {
@@ -637,62 +650,83 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, double value) {
-    if (PsiType.DOUBLE.getPresentableText().equals(expectedType)) {
+    if (PsiType.DOUBLE.getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
-    if (PsiType.FLOAT.getPresentableText().equals(expectedType)) {
+    if (PsiType.FLOAT.getName().equals(expectedType)) {
       return vm.mirrorOf((float)value);
     }
-    return createValue(vm, expectedType, (long)value);
+    if (PsiType.LONG.getName().equals(expectedType)) {
+      return vm.mirrorOf((long)value);
+    }
+    if (PsiType.INT.getName().equals(expectedType)) {
+      return vm.mirrorOf((int)value);
+    }
+    if (PsiType.SHORT.getName().equals(expectedType)) {
+      return vm.mirrorOf((short)value);
+    }
+    if (PsiType.BYTE.getName().equals(expectedType)) {
+      return vm.mirrorOf((byte)value);
+    }
+    if (PsiType.CHAR.getName().equals(expectedType)) {
+      return vm.mirrorOf((char)value);
+    }
+    return null;
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, long value) {
-    if (PsiType.LONG.getPresentableText().equals(expectedType)) {
+    if (PsiType.LONG.getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
-    if (PsiType.INT.getPresentableText().equals(expectedType)) {
+    if (PsiType.INT.getName().equals(expectedType)) {
       return vm.mirrorOf((int)value);
     }
-    if (PsiType.SHORT.getPresentableText().equals(expectedType)) {
+    if (PsiType.SHORT.getName().equals(expectedType)) {
       return vm.mirrorOf((short)value);
     }
-    if (PsiType.BYTE.getPresentableText().equals(expectedType)) {
+    if (PsiType.BYTE.getName().equals(expectedType)) {
       return vm.mirrorOf((byte)value);
     }
-    if (PsiType.CHAR.getPresentableText().equals(expectedType)) {
+    if (PsiType.CHAR.getName().equals(expectedType)) {
       return vm.mirrorOf((char)value);
     }
-    if (PsiType.DOUBLE.getPresentableText().equals(expectedType)) {
+    if (PsiType.DOUBLE.getName().equals(expectedType)) {
       return vm.mirrorOf((double)value);
     }
-    if (PsiType.FLOAT.getPresentableText().equals(expectedType)) {
+    if (PsiType.FLOAT.getName().equals(expectedType)) {
       return vm.mirrorOf((float)value);
     }
     return null;
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, boolean value) {
-    if (PsiType.BOOLEAN.getPresentableText().equals(expectedType)) {
+    if (PsiType.BOOLEAN.getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
     return null;
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, char value) {
-    if (PsiType.CHAR.getPresentableText().equals(expectedType)) {
+    if (PsiType.CHAR.getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
-    if (PsiType.LONG.getPresentableText().equals(expectedType)) {
+    if (PsiType.LONG.getName().equals(expectedType)) {
       return vm.mirrorOf((long)value);
     }
-    if (PsiType.INT.getPresentableText().equals(expectedType)) {
+    if (PsiType.INT.getName().equals(expectedType)) {
       return vm.mirrorOf((int)value);
     }
-    if (PsiType.SHORT.getPresentableText().equals(expectedType)) {
+    if (PsiType.SHORT.getName().equals(expectedType)) {
       return vm.mirrorOf((short)value);
     }
-    if (PsiType.BYTE.getPresentableText().equals(expectedType)) {
+    if (PsiType.BYTE.getName().equals(expectedType)) {
       return vm.mirrorOf((byte)value);
+    }
+    if (PsiType.DOUBLE.getName().equals(expectedType)) {
+      return vm.mirrorOf((double)value);
+    }
+    if (PsiType.FLOAT.getName().equals(expectedType)) {
+      return vm.mirrorOf((float)value);
     }
     return null;
   }
@@ -729,7 +763,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static String prepareValueText(String text, Project project) {
     text = StringUtil.unquoteString(text);
     text = StringUtil.unescapeStringCharacters(text);
-    int tabSize = CodeStyleSettingsManager.getSettings(project).getTabSize(StdFileTypes.JAVA);
+    int tabSize = CodeStyle.getSettings(project).getTabSize(StdFileTypes.JAVA);
     if (tabSize < 0) {
       tabSize = 0;
     }
@@ -815,8 +849,19 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     @Nullable
     @Override
     public TextRange getHighlightRange() {
-      return SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition);
+      return intersectWithLine(SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition), mySourcePosition.getFile(), getLine());
     }
+  }
+
+  @Nullable
+  public static TextRange intersectWithLine(@Nullable TextRange range, @Nullable PsiFile file, int line) {
+    if (range != null && file != null) {
+      Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      if (document != null) {
+        range = range.intersection(DocumentUtil.getLineTextRange(document, line));
+      }
+    }
+    return range;
   }
 
   @Nullable
@@ -877,15 +922,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static final Comparator<Method> LAMBDA_ORDINAL_COMPARATOR = Comparator.comparingInt(m -> getLambdaOrdinal(m.name()));
 
   public static int getLambdaOrdinal(@NotNull String name) {
-    int pos = name.lastIndexOf('$');
-    if (pos > -1) {
-      try {
-        return Integer.parseInt(name.substring(pos + 1));
-      }
-      catch (NumberFormatException ignored) {
-      }
-    }
-    return -1;
+    return StringUtil.parseInt(StringUtil.substringAfterLast(name, "$"), -1);
   }
 
   public static List<PsiLambdaExpression> collectLambdas(@NotNull SourcePosition position, final boolean onlyOnTheLine) {

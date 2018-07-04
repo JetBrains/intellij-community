@@ -1,6 +1,7 @@
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 class ValueSourcesTest {
   @ParameterizedTest
@@ -43,6 +44,17 @@ class ValueSourcesTest {
 
 }
 
+@ExtendWith( String.class ) //fake extension
+@interface RunnerExtension { }
+
+@RunnerExtension
+abstract class AbstractValueSource {}
+class ValueSourcesWithCustomProvider extends AbstractValueSource {
+  @ParameterizedTest
+  @ValueSource(ints = {1})
+  void testWithIntValues(int i, String fromExtension) { }
+}
+
 class ParameterizedTestsDemo {
 
   <warning descr="No sources are provided, the suite would be empty">@ParameterizedTest</warning>
@@ -72,4 +84,14 @@ class CustomArgProviderTest {
   @ParameterizedTest
   @CustomSource
   void jsonSourceTest(String param) { }
+}
+
+class ArgSources {
+  @ParameterizedTest
+  @org.junit.jupiter.params.provider.ArgumentsSources({@org.junit.jupiter.params.provider.ArgumentsSource})
+  void args(String param) { }
+
+  <warning descr="No sources are provided, the suite would be empty">@ParameterizedTest</warning>
+  @org.junit.jupiter.params.provider.ArgumentsSources({})
+  void emptyArgs(String param) { }
 }

@@ -33,11 +33,6 @@
     <item name='org.apache.velocity.runtime.RuntimeInstance boolean invokeVelocimacro(java.lang.String, java.lang.String, java.lang.String[], org.apache.velocity.context.Context, java.io.Writer) 4'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='org.apache.velocity.runtime.RuntimeInstance boolean isInitialized()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
     <item name='org.apache.velocity.runtime.RuntimeInstance boolean isVelocimacro(java.lang.String, java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -80,6 +75,9 @@
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.RuntimeInstance org.apache.velocity.runtime.parser.Parser createNewParser()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.runtime.RuntimeInstance org.apache.velocity.util.introspection.Introspector getIntrospector()'>

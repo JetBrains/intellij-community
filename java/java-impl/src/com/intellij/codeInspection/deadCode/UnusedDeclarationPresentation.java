@@ -1,22 +1,14 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInspection.deadCode;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.GlobalJavaInspectionContext;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.*;
@@ -24,6 +16,7 @@ import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -31,17 +24,16 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.HyperlinkAdapter;
@@ -67,7 +59,6 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
-import javax.swing.tree.TreePath;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -77,10 +68,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class UnusedDeclarationPresentation extends DefaultInspectionToolPresentation {
-
-  private final Set<RefEntity> myResolvedElements = ConcurrentCollectionFactory.createConcurrentSet(ContainerUtil.identityStrategy());
   private final Map<RefEntity, UnusedDeclarationHint> myFixedElements =
     ConcurrentCollectionFactory.createMap(ContainerUtil.identityStrategy());
+  private final Set<RefEntity> myExcludedElements = ConcurrentCollectionFactory.createConcurrentSet(ContainerUtil.identityStrategy());
 
   private WeakUnreferencedFilter myFilter;
   private DeadHTMLComposer myComposer;
@@ -150,12 +140,28 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
+  public boolean isExcluded(@NotNull RefEntity entity) {
+    return myExcludedElements.contains(entity);
+  }
+
+
+  @Override
+  public void amnesty(@NotNull RefEntity element) {
+    myExcludedElements.remove(element);
+  }
+
+  @Override
+  public void exclude(@NotNull RefEntity element) {
+    myExcludedElements.add(element);
+  }
+
+  @Override
   public void exportResults(@NotNull final Element parentNode,
                             @NotNull RefEntity refEntity,
                             @NotNull Predicate<CommonProblemDescriptor> excludedDescriptions) {
     if (!(refEntity instanceof RefJavaElement)) return;
     final RefFilter filter = getFilter();
-    if (!myResolvedElements.contains(refEntity) && filter.accepts((RefJavaElement)refEntity)) {
+    if (!myFixedElements.containsKey(refEntity) && filter.accepts((RefJavaElement)refEntity)) {
       refEntity = getRefManager().getRefinedElement(refEntity);
       if (!refEntity.isValid()) return;
       RefJavaElement refElement = (RefJavaElement)refEntity;
@@ -167,8 +173,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
 
       final HighlightSeverity severity = getSeverity(refElement);
-      final String attributeKey =
-        getTextAttributeKey(refElement.getRefManager().getProject(), severity, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+      final String attributeKey = HighlightInfoType.UNUSED_SYMBOL.getAttributesKey().getExternalName();
       problemClassElement.setAttribute("severity", severity.myName);
       problemClassElement.setAttribute("attribute_key", attributeKey);
 
@@ -196,28 +201,10 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @NotNull
   @Override
-  public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, @Nullable InspectionTree tree) {
-    boolean showFixes = false;
-    for (RefEntity element : refElements) {
-      if (!myResolvedElements.contains(element) && element.isValid()) {
-        showFixes = true;
-        break;
-      }
-    }
-
-    if (showFixes) {
-      final TreePath[] paths = tree != null ? tree.getSelectionPaths() : null;
-      if (paths != null) {
-        long count = Arrays.stream(paths).map(TreePath::getLastPathComponent)
-          .filter(component -> component instanceof ProblemDescriptionNode).count();
-        if (count > 0) {
-          final QuickFixAction[] fixes = super.getQuickFixes(refElements, tree);
-          return count == paths.length ? fixes : ArrayUtil.mergeArrays(fixes, myQuickFixActions);
-        }
-      }
-      return myQuickFixActions;
-    }
-    return QuickFixAction.EMPTY;
+  public QuickFixAction[] getQuickFixes(@NotNull RefEntity... refElements) {
+    return Arrays.stream(refElements).anyMatch(element -> element instanceof RefJavaElement && getFilter().accepts((RefJavaElement)element) && !myFixedElements.containsKey(element) && element.isValid())
+           ? myQuickFixActions
+           : QuickFixAction.EMPTY;
   }
 
   final QuickFixAction[] myQuickFixActions;
@@ -458,17 +445,12 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     };
   }
 
-  public void resolveElement(@NotNull RefEntity entity) {
-    myProblemElements.remove(entity);
-    myResolvedElements.add(entity);
-  }
-
   public boolean isProblemResolved(@Nullable RefEntity entity) {
-    return myResolvedElements.contains(entity);
+    return myFixedElements.containsKey(entity);
   }
 
   @Override
-  public void updateContent() {
+  public synchronized void updateContent() {
     getTool().checkForReachableRefs(getContext());
     myContents.clear();
     final UnusedSymbolLocalInspectionBase localInspectionTool = getTool().getSharedLocalInspectionTool();
@@ -477,7 +459,10 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         if (!(refEntity instanceof RefJavaElement)) return;//dead code doesn't work with refModule | refPackage
         RefJavaElement refElement = (RefJavaElement)refEntity;
         if (!compareVisibilities(refElement, localInspectionTool)) return;
-        if (!(getContext().getUIOptions().FILTER_RESOLVED_ITEMS && myResolvedElements.contains(refElement)) && refElement.isValid() && getFilter().accepts(refElement)) {
+        if (!(getContext().getUIOptions().FILTER_RESOLVED_ITEMS &&
+              (myFixedElements.containsKey(refElement) ||
+              isExcluded(refEntity) ||
+              isSuppressed(refElement))) && refElement.isValid() && getFilter().accepts(refElement)) {
           if (skipEntryPoints(refElement)) return;
           registerContentEntry(refEntity, RefJavaUtil.getInstance().getPackageName(refEntity));
         }
@@ -507,7 +492,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
           //todo store in the graph
           tool.isIgnoreAccessors()) {
         final PsiModifierListOwner listOwner = ((RefMethod)element).getElement();
-        if (listOwner instanceof PsiMethod && PropertyUtil.isSimplePropertyAccessor((PsiMethod)listOwner)) {
+        if (listOwner instanceof PsiMethod && PropertyUtilBase.isSimplePropertyAccessor((PsiMethod)listOwner)) {
           return null;
         }
       }
@@ -543,11 +528,6 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   }
 
   @Override
-  public boolean hasReportedProblems() {
-    return !myContents.isEmpty() || super.hasReportedProblems();
-  }
-
-  @Override
   public void ignoreElement(@NotNull RefEntity refEntity) {
     if (refEntity instanceof RefElement) {
       final CommonProblemDescriptor[] descriptors = getProblemElements().get(refEntity);
@@ -555,7 +535,15 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
         final PsiElement psiElement = ReadAction.compute(() -> ((RefElement)refEntity).getElement());
         List<CommonProblemDescriptor> foreignDescriptors = new ArrayList<>();
         for (CommonProblemDescriptor descriptor : descriptors) {
-          if (descriptor instanceof ProblemDescriptor && ReadAction.compute(() -> ((ProblemDescriptor)descriptor).getPsiElement()) == psiElement) continue;
+          if (descriptor instanceof ProblemDescriptor) {
+            PsiElement problemElement = ReadAction.compute(() -> {
+              PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
+              if (element instanceof PsiIdentifier) element = element.getParent();
+              return element;
+            });
+            if (problemElement == psiElement ||
+                problemElement instanceof PsiParameter && ((PsiParameter)problemElement).getDeclarationScope() == psiElement) continue;
+          }
           foreignDescriptors.add(descriptor);
         }
         if (foreignDescriptors.size() == descriptors.length) return;
@@ -567,7 +555,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   @Override
   public void cleanup() {
     super.cleanup();
-    myResolvedElements.clear();
+    myFixedElements.clear();
   }
 
   @Override
@@ -668,8 +656,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
           vFile = VfsUtil.findFileByURL(url);
         }
         if (vFile != null) {
-          final OpenFileDescriptor descriptor = new OpenFileDescriptor(project, vFile, offset);
-          FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+          Navigatable descriptor = PsiNavigationSupport.getInstance().createNavigatable(project, vFile, offset);
+          descriptor.navigate(true);
         }
       }
     });

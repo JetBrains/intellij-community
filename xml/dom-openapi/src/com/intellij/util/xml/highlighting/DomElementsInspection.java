@@ -150,7 +150,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
 
     List<ProblemDescriptor> problems =
       ContainerUtil.concat(list, s -> annotationsManager.createProblemDescriptors(manager, s));
-    return problems.toArray(new ProblemDescriptor[problems.size()]);
+    return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   /**

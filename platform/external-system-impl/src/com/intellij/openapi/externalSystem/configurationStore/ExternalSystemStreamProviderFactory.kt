@@ -1,38 +1,31 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.ProjectTopics
-import com.intellij.configurationStore.FileStorageAnnotation
+import com.intellij.configurationStore.StateStorageManager
 import com.intellij.configurationStore.StreamProviderFactory
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.isExternalStorageEnabled
 import com.intellij.openapi.roots.ProjectModelElement
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.util.Function
+import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.read
+import kotlin.concurrent.write
 
-private val EXTERNAL_MODULE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false, ExternalModuleStorage::class.java)
 private val LOG = logger<ExternalSystemStreamProviderFactory>()
 
 // todo handle module rename
@@ -41,6 +34,11 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
   val fileStorage = ProjectFileSystemExternalSystemStorage(project)
 
   private var isStorageFlushInProgress = false
+
+  private val isReimportOnMissedExternalStorageScheduled = AtomicBoolean(false)
+
+  private val storageSpecLock = ReentrantReadWriteLock()
+  private val storages = THashMap<String, Storage>()
 
   init {
     // flush on save to be sure that data is saved (it is easy to reimport if corrupted (force exit, blue screen), but we need to avoid it if possible)
@@ -72,7 +70,8 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
     })
   }
 
-  override fun customizeStorageSpecs(component: PersistentStateComponent<*>, componentManager: ComponentManager, storages: List<Storage>, operation: StateStorageOperation): List<Storage>? {
+  override fun customizeStorageSpecs(component: PersistentStateComponent<*>, storageManager: StateStorageManager, stateSpec: State, storages: List<Storage>, operation: StateStorageOperation): List<Storage>? {
+    val componentManager = storageManager.componentManager ?: return null
     val project = componentManager as? Project ?: (componentManager as Module).project
     // we store isExternalStorageEnabled option in the project workspace file, so, for such components external storage is always disabled and not applicable
     if ((storages.size == 1 && storages.first().value == StoragePathMacros.WORKSPACE_FILE) || !project.isExternalStorageEnabled) {
@@ -81,9 +80,15 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
 
     if (componentManager is Project) {
       val fileSpec = storages.firstOrNull()?.value
-      if (fileSpec == "libraries") {
+      if (fileSpec == "libraries" || fileSpec == "artifacts") {
+        val externalStorageSpec = getOrCreateExternalStorageSpec("$fileSpec.xml", stateSpec)
+        if (operation == StateStorageOperation.READ) {
+          return listOf(externalStorageSpec)
+        }
+
+        // write is separated, state is written to both storages and filtered by on serialization
         val result = ArrayList<Storage>(storages.size + 1)
-        result.add(FileStorageAnnotation("$fileSpec.xml", false, ExternalProjectStorage::class.java))
+        result.add(externalStorageSpec)
         result.addAll(storages)
         return result
       }
@@ -103,19 +108,47 @@ internal class ExternalSystemStreamProviderFactory(private val project: Project)
     // so, we just add our storage as first and default storages in the end as fallback
 
     // on write default storages also returned, because default FileBasedStorage will remove data if component has external source
-
-    val result = ArrayList<Storage>(storages.size + 1)
+    val annotation: Storage
     if (componentManager is Project) {
-      result.add(FileStorageAnnotation(storages.get(0).value, false, ExternalProjectStorage::class.java))
+      annotation = getOrCreateExternalStorageSpec(storages.get(0).value)
     }
     else {
-      result.add(EXTERNAL_MODULE_STORAGE_ANNOTATION)
+      annotation = getOrCreateExternalStorageSpec(StoragePathMacros.MODULE_FILE)
     }
+
+    if (stateSpec.externalStorageOnly) {
+      return listOf(annotation)
+    }
+
+    val result = ArrayList<Storage>(storages.size + 1)
+    result.add(annotation)
     result.addAll(storages)
     return result
   }
 
+  private fun getOrCreateExternalStorageSpec(fileSpec: String, inProjectStateSpec: State? = null): Storage {
+    return storageSpecLock.read { storages.get(fileSpec) } ?: return storageSpecLock.write {
+      storages.getOrPut(fileSpec) {
+        ExternalStorageSpec(fileSpec, inProjectStateSpec)
+      }
+    }
+  }
+
   fun readModuleData(name: String): Element? {
+    if (!moduleStorage.hasSomeData &&
+        isReimportOnMissedExternalStorageScheduled.compareAndSet(false, true) &&
+        !project.isInitialized &&
+        !ExternalSystemUtil.isNewProject(project)) {
+      StartupManager.getInstance(project).runWhenProjectIsInitialized {
+        val externalProjectsManager = ExternalProjectsManager.getInstance(project)
+        externalProjectsManager.runWhenInitialized {
+          if (!ExternalSystemUtil.isNewProject(project)) {
+            externalProjectsManager.externalProjectsWatcher.markDirtyAllExternalProjects()
+          }
+        }
+      }
+    }
+
     val result = moduleStorage.read(name)
     if (result == null) {
       // todo we must detect situation when module was really stored but file was somehow deleted by user / corrupted

@@ -101,3 +101,45 @@ class test {
     new_times.put(1l, new Long(2l));
   }
 }
+
+class WithLambdaUnfriendlyOverloads {
+  interface GetInt { int get(); }
+  interface GetInteger { Integer get(); }
+
+  private void m(GetInt getter) {
+    System.out.println(getter);
+  }
+
+  private void m(GetInteger getter) {
+    System.out.println(getter);
+  }
+
+  void test(boolean cond) {
+    m(() -> {
+      if (cond)
+        return (new Integer(42));
+      else
+        return foo();
+    });
+    m(() -> cond ? new Integer(42) : foo());
+    m(() -> new Integer(42));
+    m(() -> 42);
+  }
+
+  private <T> T foo() {
+    return null;
+  }
+
+  void testSynchronized() {
+    synchronized (Integer.valueOf(123)) {
+      System.out.println("hello");
+    }
+  }
+
+  void testVar() {
+    var x = Integer.valueOf(5);
+    Integer y = <warning descr="Unnecessary boxing 'Integer.valueOf(5)'">Integer.valueOf(5)</warning>;
+    System.out.println(x.getClass());
+    System.out.println(y.getClass());
+  }
+}

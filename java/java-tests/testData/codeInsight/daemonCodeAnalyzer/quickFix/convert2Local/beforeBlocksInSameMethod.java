@@ -3,7 +3,7 @@ import java.util.ArrayList;
 
 class ITest {
 
-  private ArrayList<String> may<caret>BeLocal = new ArrayList<String>();
+  private ArrayList<String> may<caret>BeLocal = new ArrayList<String>(); //my comment to keep in code
 
   public IntelliJBugConvertToLocal(int x, int z) {
 

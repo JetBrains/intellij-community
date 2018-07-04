@@ -23,18 +23,19 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
 public class BlockCommentSelectioner implements ExtendWordSelectionHandler {
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof PsiComment && !(e instanceof PsiDocCommentBase);
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(e.getLanguage());
     if (commenter == null) return null;
     String blockStart = commenter.getBlockCommentPrefix();

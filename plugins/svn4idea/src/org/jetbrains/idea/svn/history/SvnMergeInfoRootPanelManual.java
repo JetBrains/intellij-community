@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.project.Project;
@@ -29,12 +15,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.branchConfig.SelectBranchPopup;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchMapperManager;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.integrate.IntegratedSelectedOptionsDialog;
 import org.jetbrains.idea.svn.integrate.WorkingCopyInfo;
-import org.tmatesoft.svn.core.SVNURL;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,7 +42,7 @@ public class SvnMergeInfoRootPanelManual {
   @NotNull private final Runnable myListener;
   private boolean myOnlyOneRoot;
   @NotNull private WCInfoWithBranches myInfo;
-  @NotNull private final Map<String, String> myBranchToLocal;
+  @NotNull private final Map<Url, String> myBranchToLocal;
   private WCInfoWithBranches.Branch mySelectedBranch;
 
   public SvnMergeInfoRootPanelManual(@NotNull Project project,
@@ -81,7 +67,7 @@ public class SvnMergeInfoRootPanelManual {
     myUrlText.setText(myInfo.getUrl().toString());
     myFixedSelectLocal.addActionListener(e -> {
       if (mySelectedBranch != null) {
-        Pair<WorkingCopyInfo, SVNURL> info =
+        Pair<WorkingCopyInfo, Url> info =
           IntegratedSelectedOptionsDialog.selectWorkingCopy(myProject, myInfo.getUrl(), mySelectedBranch.getUrl(), false, null, null);
         if (info != null) {
           calculateBranchPathByBranch(mySelectedBranch.getUrl(), info.getFirst().getLocalPath());
@@ -112,12 +98,7 @@ public class SvnMergeInfoRootPanelManual {
   }
 
   private void init() {
-    myContentPanel = new JPanel(new GridBagLayout()) {
-      @Override
-      public void setBounds(final Rectangle r) {
-        super.setBounds(r);
-      }
-    };
+    myContentPanel = new JPanel(new GridBagLayout());
     myContentPanel.setMinimumSize(new Dimension(200, 100));
 
     final GridBagConstraints gb =
@@ -192,7 +173,7 @@ public class SvnMergeInfoRootPanelManual {
   }
 
   @Nullable
-  private static String getLocal(@NotNull String url, @Nullable String localPath) {
+  private static String getLocal(@NotNull Url url, @Nullable String localPath) {
     String result = null;
     Set<String> paths = SvnBranchMapperManager.getInstance().get(url);
 
@@ -204,7 +185,7 @@ public class SvnMergeInfoRootPanelManual {
   }
 
   // always assign to local area here
-  private void calculateBranchPathByBranch(@Nullable String url, @Nullable String localPath) {
+  private void calculateBranchPathByBranch(@Nullable Url url, @Nullable String localPath) {
     final String local = url == null ? null : getLocal(url, localPath == null ? myBranchToLocal.get(url) : localPath);
     if (local == null) {
       myLocalArea.setForeground(JBColor.RED);

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.ide.browsers;
 
 import com.google.common.net.HostAndPort;
@@ -15,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
-/**
- * @author Sergey Simonchik
- */
 public class BrowserStarter {
   private static final Logger LOG = Logger.getInstance(BrowserStarter.class);
 
@@ -35,7 +47,7 @@ public class BrowserStarter {
 
   public BrowserStarter(@NotNull RunConfiguration runConfiguration,
                         @NotNull StartBrowserSettings settings,
-                        @NotNull final ProcessHandler serverProcessHandler) {
+                        @NotNull ProcessHandler serverProcessHandler) {
     this(runConfiguration, settings, () -> serverProcessHandler.isProcessTerminating() || serverProcessHandler.isProcessTerminated());
   }
 
@@ -50,7 +62,7 @@ public class BrowserStarter {
     }
     else {
       // we can't check page availability gracefully, so we just open it after some delay
-      openPageLater(1000);
+      openPageLater();
     }
   }
 
@@ -68,35 +80,43 @@ public class BrowserStarter {
     return HostAndPort.fromParts(StringUtil.notNullize(url.getHost(), "127.0.0.1"), port);
   }
 
-  private void checkAndOpenPageLater(@NotNull final HostAndPort hostAndPort, final int attemptNumber, int delayMillis) {
+  private void checkAndOpenPageLater(@NotNull HostAndPort hostAndPort, int attemptNumber, int delayMillis) {
     JobScheduler.getScheduler().schedule(() -> checkAndOpenPage(hostAndPort, attemptNumber), delayMillis, TimeUnit.MILLISECONDS);
   }
 
-  private void checkAndOpenPage(@NotNull final HostAndPort hostAndPort, final int attemptNumber) {
-    if (NetUtils.canConnectToRemoteSocket(hostAndPort.getHostText(), hostAndPort.getPort())) {
+  private void checkAndOpenPage(@NotNull HostAndPort hostAndPort, int attemptNumber) {
+    if (isOutdated()) {
+      LOG.info("Opening " + hostAndPort + " aborted");
+    }
+    else if (NetUtils.canConnectToRemoteSocket(hostAndPort.getHost(), hostAndPort.getPort())) {
       openPageNow();
     }
+    else if (attemptNumber < 100) {
+      int delayMillis = getDelayMillis(attemptNumber);
+      LOG.info("#" + attemptNumber + " check " + hostAndPort + " failed, scheduling next check in " + delayMillis + "ms");
+      checkAndOpenPageLater(hostAndPort, attemptNumber + 1, delayMillis);
+    }
     else {
-      LOG.info("[attempt#" + attemptNumber + "] Checking " + hostAndPort + " failed");
-      if (!isOutdated()) {
-        int delayMillis = getDelayMillis(attemptNumber);
-        checkAndOpenPageLater(hostAndPort, attemptNumber + 1, delayMillis);
-      }
+      LOG.info("#" + attemptNumber + " check " + hostAndPort + " failed. Too many failed checks, opening " + hostAndPort);
+      openPageNow();
     }
   }
 
   private static int getDelayMillis(int attemptNumber) {
+    // [0 - 5 seconds] check each 500 ms
     if (attemptNumber < 10) {
-      return 400;
+      return 500;
     }
-    if (attemptNumber < 100) {
+    // [5 - 25 seconds] check each 1000 ms
+    if (attemptNumber < 20) {
       return 1000;
     }
-    return 2000;
+    // [25 - 425 seconds] check each 5000 ms
+    return 5000;
   }
 
-  private void openPageLater(int millis) {
-    JobScheduler.getScheduler().schedule(() -> openPageNow(), millis, TimeUnit.MILLISECONDS);
+  private void openPageLater() {
+    JobScheduler.getScheduler().schedule(() -> openPageNow(), 1000, TimeUnit.MILLISECONDS);
   }
 
   private void openPageNow() {

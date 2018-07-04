@@ -95,7 +95,7 @@ public class JarHandler extends ZipHandler {
     if (existingZipRef == null) {
       File file = getFile();
       try (ZipFile zipFile = new ZipFile(file)) {
-        setFileStampAndLength(this, file.getPath());
+        setFileAttributes(this, file.getPath());
         return buildEntryMapForZipFile(zipFile);
       }
     }

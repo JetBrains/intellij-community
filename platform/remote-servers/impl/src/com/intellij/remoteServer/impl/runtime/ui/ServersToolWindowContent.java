@@ -1,8 +1,10 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.remoteServer.impl.runtime.ui;
 
 import com.intellij.execution.dashboard.TreeContent;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
@@ -27,8 +29,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -93,13 +93,13 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   private final Tree myTree;
   private final CardLayout myPropertiesPanelLayout;
   private final JPanel myPropertiesPanel;
-  private final JPanelWithHtmlEmptyText myMessagePanel;
+  private final MessagePanel myMessagePanel;
   private final Map<String, JComponent> myLogComponents = new HashMap<>();
 
   private final DefaultTreeModel myTreeModel;
   private TreeBuilderBase myBuilder;
   private AbstractTreeNode<?> myLastSelection;
-  private Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
+  private final Set<Object> myCollapsedTreeNodeValues = new HashSet<>();
 
   private final Project myProject;
   private final RemoteServersViewContribution myContribution;
@@ -141,8 +141,9 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
     splitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myTree, SideBorder.LEFT));
     myPropertiesPanelLayout = new CardLayout();
     myPropertiesPanel = new JPanel(myPropertiesPanelLayout);
-    myMessagePanel = new JPanelWithHtmlEmptyText().withEmptyText(EMPTY_SELECTION_MESSAGE);
-    myPropertiesPanel.add(MESSAGE_CARD, myMessagePanel);
+    myMessagePanel = new ServersToolWindowMessagePanel();
+    myMessagePanel.setEmptyText(EMPTY_SELECTION_MESSAGE);
+    myPropertiesPanel.add(MESSAGE_CARD, myMessagePanel.getComponent());
     splitter.setSecondComponent(myPropertiesPanel);
     getMainPanel().add(splitter, BorderLayout.CENTER);
 
@@ -338,8 +339,6 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
   private JComponent createMainToolbar(@NotNull String actionGroupID) {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(ActionManager.getInstance().getAction(actionGroupID));
-    group.add(new Separator());
-    group.add(new ContextHelpAction(myContribution.getContextHelpId()));
 
     ActionToolbar actionToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, group, false);
 
@@ -417,50 +416,10 @@ public class ServersToolWindowContent extends JPanel implements Disposable, Serv
            && node.getDeployment().getName().equals(deploymentName);
   }
 
-  private static class JPanelWithHtmlEmptyText extends JPanel {
-    private final JLabel myLabel = new JLabel();
+  public interface MessagePanel {
+    void setEmptyText(@NotNull String text);
 
-    public JPanelWithHtmlEmptyText withEmptyText(@NotNull String text) {
-      setEmptyText(text);
-      return this;
-    }
-
-    public void setEmptyText(@NotNull String text) {
-      myLabel.setText(text);
-      repaint();
-    }
-
-    @Override
-    protected Graphics getComponentGraphics(Graphics graphics) {
-      return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-      super.paintComponent(g);
-
-      if (!UIUtil.uiChildren(this).filter(Component::isVisible).isEmpty()) {
-        return;
-      }
-
-      myLabel.setFont(getFont());
-      myLabel.setBackground(getBackground());
-      myLabel.setForeground(UIUtil.getInactiveTextColor());
-
-      Rectangle bounds = getBounds();
-      Dimension size = myLabel.getPreferredSize();
-      myLabel.setBounds(0, 0, size.width, size.height);
-
-      int x = (bounds.width - size.width) / 2;
-      int y = (bounds.height - size.height) / 3; // above center
-
-      Graphics g2 = g.create(bounds.x + x, bounds.y + y, bounds.width, bounds.height);
-      try {
-        myLabel.paint(g2);
-      }
-      finally {
-        g2.dispose();
-      }
-    }
+    @NotNull
+    JComponent getComponent();
   }
 }

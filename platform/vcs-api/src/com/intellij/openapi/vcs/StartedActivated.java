@@ -58,13 +58,6 @@ public abstract class StartedActivated {
     });
   }
 
-  // for tests only
-  protected StartedActivated() {
-    myStart = null;
-    myActivate = null;
-    myLock = null;
-  }
-
   protected abstract void start() throws VcsException;
   protected abstract void shutdown() throws VcsException;
   protected abstract void activate() throws VcsException;

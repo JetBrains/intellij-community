@@ -19,6 +19,8 @@ import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.io.FileUtil;
@@ -72,6 +74,7 @@ public class TestClassCollector {
         Files.walkFileTree(baseDir, new SimpleFileVisitor<Path>() {
           @Override
           public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+            ProgressManager.checkCanceled();
             FileVisitResult result = super.visitFile(file, attrs);
             File f = file.toFile();
             String fName = f.getName();
@@ -94,13 +97,16 @@ public class TestClassCollector {
                 }
               }
               catch (Throwable e) {
-                LOG.error(e);
+                LOG.info("error processing: " + fName + " of " + baseDir.toString(), e);
               }
             }
             return result;
           }
         });
       }
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
     }
     catch (Throwable e) {
       LOG.error(e);

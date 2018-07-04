@@ -21,8 +21,10 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
@@ -31,14 +33,15 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author konstantin.aleev
  */
 @ApiStatus.Experimental
 public interface RunDashboardManager {
-  Topic<DashboardListener> DASHBOARD_TOPIC =
-    Topic.create("run dashboard", DashboardListener.class, Topic.BroadcastDirection.TO_PARENT);
+  Topic<RunDashboardListener> DASHBOARD_TOPIC =
+    Topic.create("run dashboard", RunDashboardListener.class, Topic.BroadcastDirection.TO_PARENT);
 
   static RunDashboardManager getInstance(Project project) {
     return ServiceManager.getService(project, RunDashboardManager.class);
@@ -50,9 +53,13 @@ public interface RunDashboardManager {
 
   Icon getToolWindowIcon();
 
+  String getToolWindowContextHelpId();
+
   boolean isToolWindowAvailable();
 
   void createToolWindowContent(@NotNull ToolWindow toolWindow);
+
+  void updateDashboard(boolean withSStructure);
 
   List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> getRunConfigurations();
 
@@ -60,11 +67,21 @@ public interface RunDashboardManager {
 
   void setShowConfigurations(boolean value);
 
+  float getContentProportion();
+
   @Nullable
   RunDashboardAnimator getAnimator();
 
   boolean isShowInDashboard(@NotNull RunConfiguration runConfiguration);
 
+  @NotNull
+  Set<String> getTypes();
+
+  void setTypes(Set<String> types);
+
   @Nullable
   RunDashboardContributor getContributor(@NotNull ConfigurationType type);
+
+  @NotNull
+  Condition<Content> getReuseCondition();
 }

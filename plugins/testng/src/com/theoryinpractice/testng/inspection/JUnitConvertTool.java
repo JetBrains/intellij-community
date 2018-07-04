@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.theoryinpractice.testng.inspection;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
@@ -25,21 +13,20 @@ import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * @author Hani Suleiman Date: Aug 3, 2005 Time: 3:34:56 AM
+ * @author Hani Suleiman
  */
-public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
+public class JUnitConvertTool extends AbstractBaseJavaLocalInspectionTool {
 
   private static final Logger LOG = Logger.getInstance("TestNG QuickFix");
   private static final String DISPLAY_NAME = "Convert JUnit Tests to TestNG";
@@ -77,7 +64,7 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
   @Override
   @Nullable
   public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (TestNGUtil.inheritsJUnitTestCase(psiClass) || TestNGUtil.containsJunitAnnotions(psiClass)) {
+    if (TestNGUtil.inheritsJUnitTestCase(psiClass) || TestNGUtil.containsJunitAnnotations(psiClass)) {
       final PsiIdentifier nameIdentifier = psiClass.getNameIdentifier();
       ProblemDescriptor descriptor = manager.createProblemDescriptor(nameIdentifier != null ? nameIdentifier : psiClass, "TestCase can be converted to TestNG",
                                                                      new JUnitConverterQuickFix(),
@@ -94,15 +81,24 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
       return QUICKFIX_NAME;
     }
 
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiClass psiClass = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class);
-      if (!TestNGUtil.checkTestNGInClasspath(psiClass)) return;
+      if (psiClass == null || !TestNGUtil.checkTestNGInClasspath(psiClass)) return;
+      if (!FileModificationService.getInstance().preparePsiElementsForWrite(psiClass)) return;
+      WriteAction.run(() -> doFix(project, psiClass));
+    }
+
+    private static void doFix(@NotNull Project project, PsiClass psiClass) {
       try {
         final PsiManager manager = PsiManager.getInstance(project);
         final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
         final PsiJavaFile javaFile = (PsiJavaFile)psiClass.getContainingFile();
 
-        final List<PsiElement> convertedElements = new SmartList<>();
 
         for (PsiMethod method : psiClass.getMethods()) {
           final PsiMethodCallExpression[] methodCalls = getTestCaseCalls(method);
@@ -115,10 +111,10 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
               addMethodJavadoc(factory, method);
             }
             else {
-              if (TestNGUtil.containsJunitAnnotions(method)) {
-                convertedElements.addAll(convertJunitAnnotations(factory, method));
+              if (TestNGUtil.containsJunitAnnotations(method)) {
+                convertJunitAnnotations(factory, method);
               } else {
-                convertedElements.add(addMethodAnnotations(factory, method));
+                addMethodAnnotations(factory, method);
               }
             }
           }
@@ -164,7 +160,7 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
                 replaceTemplate = "org.testng.Assert." + replaceMethodWildCard + "($actual$, $expected$ " + (hasMessage ? ", $msg$" : "") + ")";
               }
             }
-            convertedElements.add(TypeConversionDescriptor.replaceExpression(methodCall, searchTemplate, replaceTemplate));
+            TypeConversionDescriptor.replaceExpression(methodCall, searchTemplate, replaceTemplate);
           }
         }
         final PsiClass superClass = psiClass.getSuperClass();
@@ -223,7 +219,7 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
           PsiExpression expression = statement.getExpression();
           if (expression instanceof PsiMethodCallExpression) {
             PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
-            if (methodCall.getArgumentList().getExpressions().length == 1) {
+            if (methodCall.getArgumentList().getExpressionCount() == 1) {
               PsiMethod resolved = methodCall.resolveMethod();
               if (resolved != null && "junit.framework.TestCase".equals(resolved.getContainingClass().getQualifiedName()) &&
                   "TestCase".equals(resolved.getName())) {
@@ -250,8 +246,8 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
             final PsiClass containingClass = method.getContainingClass();
             if (containingClass != null) {
               final String qualifiedName = containingClass.getQualifiedName();
-              if ("junit.framework.Assert".equals(qualifiedName) || 
-                  "org.junit.Assert".equals(qualifiedName) || 
+              if ("junit.framework.Assert".equals(qualifiedName) ||
+                  "org.junit.Assert".equals(qualifiedName) ||
                   "junit.framework.TestCase".equals(qualifiedName)) {
                 return true;
               }
@@ -269,10 +265,10 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
       if (method.getName().startsWith("test")) {
         addMethodJavadocLine(factory, method, " * @testng.test");
       }
-      else if ("setUp".equals(method.getName()) && method.getParameterList().getParameters().length == 0) {
+      else if ("setUp".equals(method.getName()) && method.getParameterList().isEmpty()) {
         addMethodJavadocLine(factory, method, " * @testng.before-test");
       }
-      else if ("tearDown".equals(method.getName()) && method.getParameterList().getParameters().length == 0) {
+      else if ("tearDown".equals(method.getName()) && method.getParameterList().isEmpty()) {
         addMethodJavadocLine(factory, method, " * @testng.after-test");
       }
     }
@@ -281,7 +277,7 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
       throws IncorrectOperationException {
       PsiComment newComment;
       PsiElement comment = method.getFirstChild();
-      if (comment != null && comment instanceof PsiComment) {
+      if (comment instanceof PsiComment) {
         String[] commentLines = comment.getText().split("\n");
         StringBuffer buf = new StringBuffer();
         for (int i = 0; i < commentLines.length; i++) {
@@ -323,10 +319,10 @@ public class JUnitConvertTool extends BaseJavaLocalInspectionTool {
       if (method.getName().startsWith("test")) {
         annotation = factory.createAnnotationFromText("@org.testng.annotations.Test", method);
       }
-      else if ("setUp".equals(method.getName()) && method.getParameterList().getParameters().length == 0) {
+      else if ("setUp".equals(method.getName()) && method.getParameterList().isEmpty()) {
         annotation = factory.createAnnotationFromText("@org.testng.annotations.BeforeMethod", method);
       }
-      else if ("tearDown".equals(method.getName()) && method.getParameterList().getParameters().length == 0) {
+      else if ("tearDown".equals(method.getName()) && method.getParameterList().isEmpty()) {
         annotation = factory.createAnnotationFromText("@org.testng.annotations.AfterMethod", method);
       }
       if (annotation != null) {

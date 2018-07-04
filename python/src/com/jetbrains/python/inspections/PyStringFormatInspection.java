@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.google.common.collect.ImmutableMap;
@@ -24,7 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
@@ -32,6 +18,7 @@ import com.jetbrains.python.inspections.quickfix.PyAddSpecifierToFormatQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -41,8 +28,7 @@ import java.math.BigInteger;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static com.jetbrains.python.inspections.PyStringFormatParser.filterSubstitutions;
-import static com.jetbrains.python.inspections.PyStringFormatParser.parsePercentFormat;
+import static com.jetbrains.python.inspections.PyStringFormatParser.*;
 import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
@@ -109,7 +95,7 @@ public class PyStringFormatInspection extends PyInspection {
         final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
 
         final String s = myFormatSpec.get("1");
-        if (PyUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
+        if (PsiTreeUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
           if (s != null) {
             final PyType rightType = myTypeEvalContext.getType(rightExpression);
             if (rightType instanceof PyTupleType) {
@@ -133,7 +119,13 @@ public class PyStringFormatInspection extends PyInspection {
         else if (rightExpression instanceof PyReferenceExpression) {
           if (PyNames.DICT.equals(rightExpression.getName())) return -1;
 
-          final PsiElement pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain(resolveContext).getElement();
+          final List<QualifiedRatedResolveResult> resolveResults =
+            ((PyReferenceExpression)rightExpression).multiFollowAssignmentsChain(resolveContext);
+          if (resolveResults.isEmpty()) {
+            return -1;
+          }
+
+          final PsiElement pyElement = PyUtil.filterTopPriorityResults(resolveResults).get(0).getElement();
           if (pyElement == rightExpression || !(pyElement instanceof PyExpression)) {
             return -1;
           }
@@ -168,7 +160,7 @@ public class PyStringFormatInspection extends PyInspection {
         else if (rightExpression instanceof PyDictLiteralExpression) {
           return inspectDict(rightExpression, problemTarget, false);
         }
-        else if (PyUtil.instanceOf(rightExpression, PySequenceExpression.class, PyComprehensionElement.class)) {
+        else if (PsiTreeUtil.instanceOf(rightExpression, PySequenceExpression.class, PyComprehensionElement.class)) {
           if (s != null) {
             checkTypeCompatible(problemTarget, builtinCache.getStrType(),
                                 PyTypeParser.getTypeByName(problemTarget, s, myTypeEvalContext));
@@ -220,7 +212,7 @@ public class PyStringFormatInspection extends PyInspection {
 
       private static Map<PyExpression, PyExpression> addSubscriptions(PsiFile file, String operand) {
         Map<PyExpression, PyExpression> additionalExpressions = new HashMap<>();
-        PySubscriptionExpression[] subscriptionExpressions = PyUtil.getAllChildrenOfType(file, PySubscriptionExpression.class);
+        Collection<PySubscriptionExpression> subscriptionExpressions = PsiTreeUtil.findChildrenOfType(file, PySubscriptionExpression.class);
         for (PySubscriptionExpression expr : subscriptionExpressions) {
           if (expr.getOperand().getText().equals(operand)) {
             PsiElement parent = expr.getParent();
@@ -347,7 +339,7 @@ public class PyStringFormatInspection extends PyInspection {
 
       private void inspectPercentFormat(@NotNull final PyStringLiteralExpression formatExpression) {
         final String value = formatExpression.getText();
-        final List<PyStringFormatParser.SubstitutionChunk> chunks = filterSubstitutions(parsePercentFormat(value));
+        final List<SubstitutionChunk> chunks = filterSubstitutions(parsePercentFormat(value));
 
         myExpectedArguments = chunks.size();
         myUsedMappingKeys.clear();
@@ -355,7 +347,7 @@ public class PyStringFormatInspection extends PyInspection {
         // if use mapping keys
         final boolean mapping = chunks.size() > 0 && chunks.get(0).getMappingKey() != null;
         for (int i = 0; i < chunks.size(); ++i) {
-          PyStringFormatParser.PercentSubstitutionChunk chunk = as(chunks.get(i), PyStringFormatParser.PercentSubstitutionChunk.class);
+          PercentSubstitutionChunk chunk = as(chunks.get(i), PercentSubstitutionChunk.class);
           if (chunk != null) {
             // Mapping key
             String mappingKey = Integer.toString(i + 1);
@@ -384,7 +376,7 @@ public class PyStringFormatInspection extends PyInspection {
               }
             }
             final LanguageLevel languageLevel = LanguageLevel.forElement(formatExpression);
-            if (PERCENT_FORMAT_CONVERSIONS.containsKey(conversionType) && !(!languageLevel.isPy3K() && conversionType == 'a')) {
+            if (PERCENT_FORMAT_CONVERSIONS.containsKey(conversionType) && !(languageLevel.isPython2() && conversionType == 'a')) {
               myFormatSpec.put(mappingKey, PERCENT_FORMAT_CONVERSIONS.get(conversionType));
               continue;
             }
@@ -487,25 +479,29 @@ public class PyStringFormatInspection extends PyInspection {
 
       public void inspect() {
         final String value = myFormatExpression.getText();
-        final List<PyStringFormatParser.SubstitutionChunk> chunks = filterSubstitutions(PyStringFormatParser.parseNewStyleFormat(value));
+        PyStringFormatParser parser = new PyStringFormatParser(value);
+        final List<NewStyleSubstitutionChunk> chunks = ContainerUtil.findAll(parser.parseNewStyle(), NewStyleSubstitutionChunk.class);
 
         for (int i = 0; i < chunks.size(); i++) {
-          final PyStringFormatParser.NewStyleSubstitutionChunk chunk =
-            as(chunks.get(i), PyStringFormatParser.NewStyleSubstitutionChunk.class);
+          final NewStyleSubstitutionChunk prevChunk = i > 0 ? chunks.get(i - 1) : null;
+          final NewStyleSubstitutionChunk chunk = chunks.get(i);
 
-          if (chunk != null) {
-            if (chunk.getPosition() == null) {
-              chunk.setPosition(i);
+          if (prevChunk != null) {
+            if (prevChunk.getManualPosition() != null && chunk.getAutoPosition() != null) {
+              registerProblem(myFormatExpression, PyBundle.message("INSP.manual.to.auto.field.numbering"));
             }
-            String mappingKey = inspectNewStyleChunkAndGetMappingKey(chunk);
-            if (!isProblem()) {
-              inspectArguments(chunk, mappingKey);
+            else if (prevChunk.getAutoPosition() != null && chunk.getManualPosition() != null) {
+              registerProblem(myFormatExpression, PyBundle.message("INSP.auto.to.manual.field.numbering"));
             }
+          }
+          String mappingKey = inspectNewStyleChunkAndGetMappingKey(chunk);
+          if (!isProblem()) {
+            inspectArguments(chunk, mappingKey);
           }
         }
       }
 
-      private String inspectNewStyleChunkAndGetMappingKey(@NotNull PyStringFormatParser.NewStyleSubstitutionChunk chunk) {
+      private String inspectNewStyleChunkAndGetMappingKey(@NotNull NewStyleSubstitutionChunk chunk) {
         final HashSet<String> supportedTypes = new HashSet<>();
         boolean hasTypeOptions = false;
 
@@ -545,10 +541,8 @@ public class PyStringFormatInspection extends PyInspection {
         return mappingKey;
       }
 
-      private void inspectArguments(@NotNull PyStringFormatParser.NewStyleSubstitutionChunk chunk, @NotNull String mappingKey) {
-        // it's true because we set position manually in inspect()
-        assert chunk.getPosition() != null;
-        final PsiElement target = new PySubstitutionChunkReference(myFormatExpression, chunk, chunk.getPosition()).resolve();
+      private void inspectArguments(@NotNull NewStyleSubstitutionChunk chunk, @NotNull String mappingKey) {
+        final PsiElement target = new PySubstitutionChunkReference(myFormatExpression, chunk).resolve();
         boolean hasElementIndex = chunk.getMappingKeyElementIndex() != null;
         if (target == null) {
           final String chunkMapping = chunk.getMappingKey();

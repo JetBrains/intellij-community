@@ -1,0 +1,18 @@
+<html>
+<body>
+This inspection reports stream API call chains ending with count() operation which
+could be optimized.
+<p>
+  The following call chains are replaced by this inspection:
+</p>
+<ul>
+  <li><code>Collection.stream().count()</code> &rarr; <code>Collection.size()</code>. In Java 8 Collection.stream().count()
+    actually iterates over collection elements to count them while Collection.size() is much faster for most of collections.</li>
+  <li><code>Stream.flatMap(Collection::stream).count()</code> &rarr; <code>Stream.mapToLong(Collection::size).sum()</code>. Similarly
+    there's no need to iterate all the nested collections. Instead, their sizes could be summed up.</li>
+  <li><code>collection.stream().filter(o -> ...).count() > 0</code> &rarr; <code>collection.stream().anyMatch(o -> ...)</code></li>
+  <li><code>collection.stream().filter(o -> ...).count() == 0</code> &rarr; <code>collection.stream().noneMatch(o -> ...)</code></li>
+</ul>
+<small>New in 2016.3</small>
+</body>
+</html>

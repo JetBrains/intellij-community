@@ -17,6 +17,8 @@ package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -24,6 +26,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
+import com.jetbrains.python.PythonModuleTypeBase;
+import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkType;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
@@ -42,8 +46,6 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
   private VirtualEnvSdkFlavor() {
   }
   private final static String[] NAMES = new String[]{"jython", "pypy", "python.exe", "jython.bat", "pypy.exe"};
-  public final static String[] CONDA_DEFAULT_ROOTS = new String[]{"anaconda", "anaconda2", "anaconda3", "miniconda", "miniconda2",
-    "miniconda3", "Anaconda", "Anaconda2", "Anaconda3", "Miniconda", "Miniconda2", "Miniconda3"};
 
   public static VirtualEnvSdkFlavor INSTANCE = new VirtualEnvSdkFlavor();
 
@@ -52,18 +54,17 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     List<String> candidates = new ArrayList<>();
     if (project != null) {
-      VirtualFile rootDir = project.getBaseDir();
-      if (rootDir != null)
-        candidates.addAll(findInDirectory(rootDir));
+      for (Module module : ModuleUtil.getModulesOfType(project, PythonModuleTypeBase.getInstance())) {
+        final VirtualFile baseDir = PySdkExtKt.getBaseDir(module);
+        if (baseDir != null) {
+          candidates.addAll(findInDirectory(baseDir));
+        }
+      }
     }
     
     final VirtualFile path = getDefaultLocation();
     if (path != null)
       candidates.addAll(findInDirectory(path));
-
-    for (VirtualFile file : getCondaDefaultLocations()) {
-      candidates.addAll(findInDirectory(file));
-    }
 
     final VirtualFile pyEnvLocation = getPyEnvDefaultLocations();
     if (pyEnvLocation != null) {
@@ -86,38 +87,6 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
       return userHome.findFileByRelativePath(".pyenv/versions");
     }
     return null;
-  }
-
-  public static List<VirtualFile> getCondaDefaultLocations() {
-    List<VirtualFile> roots = new ArrayList<>();
-    final VirtualFile userHome = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getUserHome().replace('\\','/'));
-    if (userHome != null) {
-      for (String root : CONDA_DEFAULT_ROOTS) {
-        VirtualFile condaFolder = userHome.findChild(root);
-        addEnvsFolder(roots, condaFolder);
-        if (SystemInfo.isWindows) {
-          final VirtualFile appData = userHome.findFileByRelativePath("AppData\\Local\\Continuum\\" + root);
-          addEnvsFolder(roots, appData);
-          condaFolder = LocalFileSystem.getInstance().findFileByPath("C:\\" + root);
-          addEnvsFolder(roots, condaFolder);
-        }
-        else {
-          final String systemWidePath = "/opt/anaconda";
-          condaFolder = LocalFileSystem.getInstance().findFileByPath(systemWidePath);
-          addEnvsFolder(roots, condaFolder);
-        }
-      }
-    }
-    return roots;
-  }
-
-  private static void addEnvsFolder(@NotNull final List<VirtualFile> roots, @Nullable final VirtualFile condaFolder) {
-    if (condaFolder != null) {
-      final VirtualFile envs = condaFolder.findChild("envs");
-      if (envs != null) {
-        roots.add(envs);
-      }
-    }
   }
 
   public static VirtualFile getDefaultLocation() {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.impl.jar.BasicJarHandler;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.impl.jar.JarHandler;
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem;
@@ -40,7 +27,13 @@ import org.junit.Test;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.jar.JarFile;
 import java.util.stream.Stream;
 
@@ -132,6 +125,72 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
+  public void testBasicJarHandlerWithInvalidJar() throws Exception {
+    final BasicJarHandler handler = new BasicJarHandler("some invalid path");
+    Runnable failingIOAction = () -> {
+      try {
+        handler.getInputStream("").close();
+        fail("Unexpected");
+      }
+      catch (IOException ignored) {
+      }
+    };
+    failingIOAction.run();
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(failingIOAction);
+    try {
+      future.get(1, TimeUnit.SECONDS);
+    }
+    catch (TimeoutException exception) {
+      fail("Deadlock detected");
+    }
+  }
+
+  @Test
+  public void testBasicJarHandlerConcurrency() throws Exception {
+    try {
+      int number = 40;
+      List<BasicJarHandler> handlers = new ArrayList<>();
+      for (int i = 0; i < number; ++i) {
+        File jar = IoTestUtil.createTestJar(tempDir.newFile("test" + i + ".jar"));
+        handlers.add(new BasicJarHandler(jar.getPath()));
+      }
+
+      int N = Math.max(2, Runtime.getRuntime().availableProcessors());
+      for (int iteration = 0; iteration < 200; ++iteration) {
+        List<Future> futuresToWait = new ArrayList<>();
+        CountDownLatch sameStartCondition = new CountDownLatch(N);
+
+        for (int i = 0; i < N; ++i) {
+          futuresToWait.add(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+            try {
+              sameStartCondition.countDown();
+              sameStartCondition.await();
+              Random random = new Random();
+              for (int j = 0; j < 2 * number; ++j) {
+                BasicJarHandler handler = handlers.get(random.nextInt(handlers.size()));
+                if (random.nextBoolean()) {
+                  assertNotNull(handler.getAttributes(JarFile.MANIFEST_NAME));
+                }
+                else {
+                  assertNotNull(handler.contentsToByteArray(JarFile.MANIFEST_NAME));
+                }
+              }
+            }
+            catch (Throwable t) {
+              t.printStackTrace();
+            }
+          }));
+        }
+
+        for (Future future : futuresToWait) future.get(2, TimeUnit.SECONDS);
+      }
+    }
+    catch (TimeoutException e) {
+      fail("Deadlock detected");
+    }
+  }
+
+  @Test
   public void testJarHandlerDoNotCreateCopyWhenListingArchive() throws Exception {
     File jar = IoTestUtil.createTestJar(tempDir.newFile("test.jar"));
     JarHandler handler = new JarHandler(jar.getPath());
@@ -145,9 +204,9 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
       // for performance reasons we create file copy on windows when we read contents and have the handle open to the copy
       Field resolved = handler.getClass().getDeclaredField("myFileWithMirrorResolved");
       resolved.setAccessible(true);
-      assertTrue(resolved.get(handler) == null);
+      assertNull(resolved.get(handler));
     }
-    
+
     jarFileSystem.setNoCopyJarForPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR);
     assertTrue(!jarFileSystem.isMakeCopyOfJar(jar));
   }

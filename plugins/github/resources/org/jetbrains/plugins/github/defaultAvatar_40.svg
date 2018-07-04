@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="40px" height="40px" viewBox="0 0 40 40" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 49.3 (51167) - http://www.bohemiancoding.com/sketch -->
+    <title>github/resources/org/jetbrains/plugins/github/GitHubAvatar_40</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="github/resources/org/jetbrains/plugins/github/GitHubAvatar_40" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" fill-opacity="0.5">
+        <g id="avatar" transform="translate(6.000000, 6.000000)" fill="#7F8B91" fill-rule="nonzero">
+            <path d="M14,14 C17.6833333,14 20.6666667,11.0166667 20.6666667,7.33333333 C20.6666667,3.65 17.6833333,0.666666667 14,0.666666667 C10.3166667,0.666666667 7.33333333,3.65 7.33333333,7.33333333 C7.33333333,11.0166667 10.3166667,14 14,14 Z M14,17.3333333 C9.55,17.3333333 0.666666667,19.5666667 0.666666667,24 L0.666666667,27.3333333 L27.3333333,27.3333333 L27.3333333,24 C27.3333333,19.5666667 18.45,17.3333333 14,17.3333333 Z" id="Shape"></path>
+        </g>
+    </g>
+</svg>

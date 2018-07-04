@@ -24,29 +24,29 @@ import org.jetbrains.uast.visitor.UastVisitor
  * Represents an expression with the label specified.
  */
 interface ULabeledExpression : UExpression, ULabeled {
-    /**
-     * Returns the expression label.
-     */
-    override val label: String
+  /**
+   * Returns the expression label.
+   */
+  override val label: String
 
-    /**
-     * Returns the expression itself.
-     */
-    val expression: UExpression
+  /**
+   * Returns the expression itself.
+   */
+  val expression: UExpression
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitLabeledExpression(this)) return
-        annotations.acceptList(visitor)
-        expression.accept(visitor)
-        visitor.afterVisitLabeledExpression(this)
-    }
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitLabeledExpression(this)) return
+    annotations.acceptList(visitor)
+    expression.accept(visitor)
+    visitor.afterVisitLabeledExpression(this)
+  }
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
-            visitor.visitLabeledExpression(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
+    visitor.visitLabeledExpression(this, data)
 
-    override fun evaluate() = expression.evaluate()
+  override fun evaluate(): Any? = expression.evaluate()
 
-    override fun asLogString() = log("label = $label")
+  override fun asLogString(): String = log("label = $label")
 
-    override fun asRenderString() = "$label@ ${expression.asRenderString()}"
+  override fun asRenderString(): String = "$label@ ${expression.asRenderString()}"
 }

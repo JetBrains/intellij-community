@@ -15,10 +15,11 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
@@ -31,7 +32,7 @@ public class PyWrapTest extends PyTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings();
+    final CodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject());
     final CommonCodeStyleSettings pythonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
     myOldWrap = settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
     myOldMargin = pythonSettings.RIGHT_MARGIN;
@@ -41,7 +42,7 @@ public class PyWrapTest extends PyTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings();
+    final CodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject());
     final CommonCodeStyleSettings pythonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
     settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = myOldWrap;
     pythonSettings.RIGHT_MARGIN = myOldMargin;
@@ -75,7 +76,9 @@ public class PyWrapTest extends PyTestCase {
     myFixture.configureByFile("wrap/WrapInStringLiteral.py");
 
     final int stringLiteralOffset = 114;
-    assertNotNull(InjectedLanguageUtil.findInjectedElementNoCommit(myFixture.getFile(), stringLiteralOffset + "\"".length()));
+    PsiFile hostFile = myFixture.getFile();
+    assertNotNull(
+      InjectedLanguageManager.getInstance(hostFile.getProject()).findInjectedElementAt(hostFile, stringLiteralOffset + "\"".length()));
 
     myFixture.type(" AND field");
     myFixture.checkResultByFile("wrap/WrapInStringLiteral.after.py", true);
@@ -87,7 +90,7 @@ public class PyWrapTest extends PyTestCase {
 
 
   public void testWrapRightMargin() {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings();
+    final CodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject());
     final CommonCodeStyleSettings pythonSettings = settings.getCommonSettings(PythonLanguage.getInstance());
     int oldValue = pythonSettings.RIGHT_MARGIN;
     boolean oldMarginValue = settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;

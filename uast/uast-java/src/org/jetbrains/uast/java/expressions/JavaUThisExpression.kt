@@ -15,20 +15,21 @@
  */
 package org.jetbrains.uast.java
 
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiThisExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.UThisExpression
 
 class JavaUThisExpression(
-        override val psi: PsiThisExpression,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UThisExpression {
-    override val label: String?
-        get() = psi.qualifier?.qualifiedName
+  override val psi: PsiThisExpression,
+  givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UThisExpression {
+  override val label: String?
+    get() = psi.qualifier?.qualifiedName
 
-    override val labelIdentifier: UIdentifier?
-        get() = psi.qualifier?.let { UIdentifier(it, this) }
+  override val labelIdentifier: UIdentifier?
+    get() = psi.qualifier?.let { UIdentifier(it, this) }
 
-    override fun resolve() = psi.qualifier?.resolve()
+  override fun resolve(): PsiElement? = psi.qualifier?.resolve()
 }

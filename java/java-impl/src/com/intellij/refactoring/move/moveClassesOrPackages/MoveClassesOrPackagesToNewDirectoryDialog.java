@@ -216,6 +216,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
                                                                 boolean searchInComments,
                                                                 boolean searchForTextOccurences) {
     final MoveDestination destination = createDestination(aPackage, directory);
+    if (destination == null) return null;
 
     MoveClassesOrPackagesProcessor processor = createMoveClassesOrPackagesProcessor(myDirectory.getProject(), myElementsToMove, destination,
         searchInComments, searchForTextOccurences, myMoveCallback);
@@ -227,6 +228,7 @@ public class MoveClassesOrPackagesToNewDirectoryDialog extends MoveDialogBase {
     return null;
   }
 
+  @Nullable
   protected MoveDestination createDestination(PsiPackage aPackage, PsiDirectory directory) {
     final Project project = aPackage.getProject();
     final VirtualFile sourceRoot = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(directory.getVirtualFile());

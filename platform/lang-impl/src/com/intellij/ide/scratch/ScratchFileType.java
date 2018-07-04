@@ -15,12 +15,12 @@
  */
 package com.intellij.ide.scratch;
 
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.fileTypes.ex.FileTypeIdentifiableByVirtualFile;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +39,7 @@ public class ScratchFileType extends LanguageFileType implements FileTypeIdentif
 
   @Override
   public boolean isMyFileType(@NotNull VirtualFile file) {
-    return ScratchFileService.getInstance().getRootType(file) != null;
+    return ScratchFileService.isInScratchRoot(file instanceof FakeVirtualFile ? file.getParent() : file);
   }
 
   @NotNull

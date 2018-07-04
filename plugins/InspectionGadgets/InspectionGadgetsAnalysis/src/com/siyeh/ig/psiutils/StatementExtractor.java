@@ -156,7 +156,8 @@ public class StatementExtractor {
       PsiPolyadicExpression condition = (PsiPolyadicExpression)myCondition;
       PsiExpression[] operands = condition.getOperands();
       String joiner = (condition.getOperationTokenType() == JavaTokenType.ANDAND) != invert ? "&&" : "||";
-      return StreamEx.of(operands, 0, myLimit).map(invert ? BoolUtils::getNegatedExpressionText : PsiExpression::getText)
+      return StreamEx.of(operands, 0, myLimit).map(invert ? condition1 -> BoolUtils.getNegatedExpressionText(condition1)
+                                                          : PsiExpression::getText)
         .joining(joiner);
     }
 

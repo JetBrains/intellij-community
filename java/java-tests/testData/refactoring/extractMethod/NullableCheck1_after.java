@@ -5,8 +5,8 @@ class Test {
 
        String xxx = newMethod(i, flag);
        if (xxx == null) return null;
-      
-      System.out.println(xxx);
+
+       System.out.println(xxx);
       return null;
    }
 

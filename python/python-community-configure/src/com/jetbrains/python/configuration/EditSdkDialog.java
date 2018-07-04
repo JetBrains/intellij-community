@@ -28,6 +28,9 @@ import com.intellij.util.NullableFunction;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.CondaEnvSdkFlavor;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -58,17 +61,16 @@ public class EditSdkDialog extends DialogWrapper {
         setOKActionEnabled(nameError == null);
       }
     });
-    myInterpreterPathTextField.setText(sdk.getHomePath());
+    final String homePath = sdk.getHomePath();
+    myInterpreterPathTextField.setText(homePath);
     myInterpreterPathTextField.addBrowseFolderListener(PyBundle.message("sdk.edit.dialog.specify.interpreter.path"), null, project,
                                                        PythonSdkType.getInstance().getHomeChooserDescriptor());
     myRemoveAssociationLabel.setVisible(false);
-    if (PythonSdkType.getVirtualEnvRoot(sdk.getHomePath()) == null) {
-      myAssociateCheckbox.setVisible(false);
-    }
-    else {
+    final PythonSdkFlavor sdkFlavor = PythonSdkFlavor.getPlatformIndependentFlavor(homePath);
+    if ((sdkFlavor instanceof VirtualEnvSdkFlavor) || (sdkFlavor instanceof CondaEnvSdkFlavor)) {
       PythonSdkAdditionalData data = (PythonSdkAdditionalData) sdk.getSdkAdditionalData();
       if (data != null) {
-        final String path = data.getAssociatedProjectPath();
+        final String path = data.getAssociatedModulePath();
         if (path != null) {
           myAssociateCheckbox.setSelected(true);
           final String basePath = project.getBasePath();
@@ -80,6 +82,9 @@ public class EditSdkDialog extends DialogWrapper {
           }
         }
       }
+    }
+    else {
+      myAssociateCheckbox.setVisible(false);
     }
     myWasAssociated = myAssociateCheckbox.isSelected();
     init();

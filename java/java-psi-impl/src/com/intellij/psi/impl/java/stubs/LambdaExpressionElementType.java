@@ -62,7 +62,7 @@ public class LambdaExpressionElementType extends FunctionalExpressionElementType
       }
 
       @Override
-      public int getChildRole(ASTNode child) {
+      public int getChildRole(@NotNull ASTNode child) {
         final IElementType elType = child.getElementType();
         if (elType == JavaTokenType.ARROW) {
           return ChildRole.ARROW;

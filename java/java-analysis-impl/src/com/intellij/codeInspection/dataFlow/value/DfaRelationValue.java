@@ -16,14 +16,15 @@
 
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class DfaRelationValue extends DfaValue {
@@ -32,9 +33,9 @@ public class DfaRelationValue extends DfaValue {
     return myFactory.getRelationFactory().createCanonicalRelation(myLeftOperand, myRelation.getNegated(), myRightOperand);
   }
 
-  private DfaValue myLeftOperand;
-  private DfaValue myRightOperand;
-  private RelationType myRelation;
+  private @NotNull final DfaValue myLeftOperand;
+  private @NotNull final DfaValue myRightOperand;
+  private @NotNull final RelationType myRelation;
 
   public enum RelationType {
     LE("<="), LT("<"), GE(">="), GT(">"), EQ("=="), NE("!="),
@@ -54,6 +55,20 @@ public class DfaRelationValue extends DfaValue {
 
     RelationType(String name) {
       myName = name;
+    }
+
+    public boolean isSubRelation(RelationType other) {
+      if (other == this) return true;
+      switch (this) {
+        case LE:
+          return other == LT || other == EQ;
+        case GE:
+          return other == GT || other == EQ;
+        case NE:
+          return other == LT || other == GT;
+        default:
+          return false;
+      }
     }
 
     @NotNull
@@ -98,6 +113,13 @@ public class DfaRelationValue extends DfaValue {
       }
     }
 
+    /**
+     * @return true if this relation is >, >=, <, != or <=
+     */
+    public boolean isInequality() {
+      return this == LE || this == GE || this == LT || this == GT || this == NE;
+    }
+
     @Override
     public String toString() {
       return myName;
@@ -134,18 +156,20 @@ public class DfaRelationValue extends DfaValue {
     }
   }
 
-  private DfaRelationValue(DfaValue leftOperand, DfaValue rightOperand, RelationType relationType,
+  private DfaRelationValue(@NotNull DfaValue leftOperand, @NotNull DfaValue rightOperand, @NotNull RelationType relationType,
                            DfaValueFactory factory) {
     super(factory);
-    this.myLeftOperand = leftOperand;
-    this.myRightOperand = rightOperand;
-    this.myRelation = relationType;
+    myLeftOperand = leftOperand;
+    myRightOperand = rightOperand;
+    myRelation = relationType;
   }
 
+  @NotNull
   public DfaValue getLeftOperand() {
     return myLeftOperand;
   }
 
+  @NotNull
   public DfaValue getRightOperand() {
     return myRightOperand;
   }
@@ -160,7 +184,8 @@ public class DfaRelationValue extends DfaValue {
     }
 
     public DfaRelationValue createRelation(DfaValue dfaLeft, RelationType relationType, DfaValue dfaRight) {
-      if ((relationType == RelationType.IS || relationType == RelationType.IS_NOT) && dfaRight instanceof DfaOptionalValue) {
+      if ((relationType == RelationType.IS || relationType == RelationType.IS_NOT) &&
+          dfaRight instanceof DfaFactMapValue && !(dfaLeft instanceof DfaFactMapValue)) {
         return createCanonicalRelation(dfaLeft, relationType, dfaRight);
       }
       if (dfaLeft instanceof DfaVariableValue || dfaLeft instanceof DfaBoxedValue || dfaLeft instanceof DfaUnboxedValue
@@ -171,13 +196,21 @@ public class DfaRelationValue extends DfaValue {
         }
         return createCanonicalRelation(dfaLeft, relationType, dfaRight);
       }
-      if (dfaLeft instanceof DfaTypeValue && dfaRight instanceof DfaConstValue) {
-        return createCanonicalRelation(DfaUnknownValue.getInstance(), relationType, dfaRight);
+      if (dfaLeft instanceof DfaFactMapValue && dfaRight instanceof DfaConstValue) {
+        return createConstBasedRelation((DfaFactMapValue)dfaLeft, relationType, (DfaConstValue)dfaRight);
       }
-      else if (dfaRight instanceof DfaTypeValue && dfaLeft instanceof DfaConstValue) {
-        return createCanonicalRelation(DfaUnknownValue.getInstance(), relationType, dfaLeft);
+      else if (dfaRight instanceof DfaFactMapValue && dfaLeft instanceof DfaConstValue) {
+        return createConstBasedRelation((DfaFactMapValue)dfaRight, relationType, (DfaConstValue)dfaLeft);
       }
       return null;
+    }
+
+    @NotNull
+    private DfaRelationValue createConstBasedRelation(DfaFactMapValue dfaLeft, RelationType relationType, DfaConstValue dfaRight) {
+      if (dfaRight.getValue() == null && Boolean.TRUE.equals(dfaLeft.get(DfaFactType.CAN_BE_NULL))) {
+        return createCanonicalRelation(myFactory.getFactValue(DfaFactType.CAN_BE_NULL, Boolean.TRUE), relationType, dfaRight);
+      }
+      return createCanonicalRelation(DfaUnknownValue.getInstance(), relationType, dfaRight);
     }
 
     @NotNull

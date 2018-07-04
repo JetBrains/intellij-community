@@ -1,1 +1,23 @@
+deprecated: browser-externalJavaDoc.png -> /actions/previousOccurence.svg; to be removed in IDEA 2020 - use AllIcons.Actions.PreviousOccurence
+deprecated: checkedBlack.png -> /actions/checked.png; to be removed in IDEA 2020 - use AllIcons.Actions.Checked
+deprecated: checkedGrey.png -> /actions/checked.png; to be removed in IDEA 2020 - use AllIcons.Actions.Checked
+deprecated: createFromUsage.png -> /actions/intentionBulb.png; to be removed in IDEA 2020 - use AllIcons.Actions.IntentionBulb
+deprecated: delete.png -> /actions/cancel.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Cancel
+deprecated: exclude.png -> /general/remove.svg; to be removed in IDEA 2020 - use AllIcons.General.Remove
+deprecated: export.png -> /toolbarDecorator/export.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Export
 deprecated: fileStatus.png
+deprecated: filter_small.png -> /general/filter.svg; to be removed in IDEA 2020 - use AllIcons.General.Filter
+deprecated: findPlain.png -> /actions/find.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Find
+deprecated: get.png -> /actions/download.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Download
+deprecated: menu-find.png -> /actions/find.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Find
+deprecated: menu-help.png -> /actions/help.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Help
+deprecated: menu-replace.png -> /actions/replace.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Replace
+deprecated: moveToStandardPlace.png -> /actions/MoveTo2.png; to be removed in IDEA 2020 - use AllIcons.Actions.MoveTo2
+deprecated: nextfile.png -> /actions/forward.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Forward
+deprecated: prevfile.png -> /actions/back.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Back
+deprecated: reset.png -> /actions/rollback.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Rollback
+deprecated: showViewer.png
+deprecated: sortAsc.png -> /actions/moveUp.svg; to be removed in IDEA 2020 - use AllIcons.Actions.MoveUp
+deprecated: sortDesc.png -> /actions/moveDown.svg; to be removed in IDEA 2020 - use AllIcons.Actions.MoveDown
+deprecated: submit1.png -> /actions/setDefault.svg; to be removed in IDEA 2020 - use AllIcons.Actions.SetDefault
+deprecated: synchronizeFS.png -> /actions/refresh.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Refresh

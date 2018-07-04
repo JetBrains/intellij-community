@@ -17,8 +17,10 @@ package com.intellij.java.codeInsight.folding
 
 import com.intellij.codeInsight.folding.impl.JavaFoldingBuilder
 import com.intellij.openapi.editor.impl.FoldingModelImpl
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.annotations.NotNull
+import org.junit.Assume
 
 /**
  * @author peter
@@ -90,5 +92,45 @@ class Test {
     def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
 
     assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("System.out.println"))?.placeholderText == '{...}'
+  }
+  
+  void "test folding code blocks"() {
+    Assume.assumeTrue(Registry.is("java.folding.icons.for.control.flow"))
+    def text = """\
+class Test {
+  void test(boolean b) {
+     if (b) {
+        System.out.println();
+     }
+  }
+}
+"""
+    configure text
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+
+    def indexOf = text.indexOf("System.out.println")
+    assert foldingModel.allFoldRegions.findAll {it -> it.startOffset < indexOf && indexOf < it.endOffset }.toString() == 
+      '[FoldRegion -(36:92), placeholder=\'{...}\', ' +
+      'FoldRegion -(50:88), placeholder=\'{...}\']'
+  }
+  
+  void "test parameter annotations"() {
+    configure """\
+class Some {
+    void m(@Anno("hello " +
+                 "world") int a,
+           @Anno("goodbye " +
+                 "world") int b) {}
+}
+
+@interface Anno { 
+    String value();
+}
+"""
+    assert myFixture.editor.foldingModel.allFoldRegions.toString() == 
+           '[FoldRegion -(11:141), placeholder=\'{...}\', ' +
+           'FoldRegion -(24:66), placeholder=\'@{...}\', ' +
+           'FoldRegion -(85:129), placeholder=\'@{...}\', ' +
+           'FoldRegion -(159:183), placeholder=\'{...}\']'
   }
 }

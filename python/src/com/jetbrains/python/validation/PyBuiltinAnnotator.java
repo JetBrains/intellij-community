@@ -16,8 +16,6 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -40,17 +38,8 @@ public class PyBuiltinAnnotator extends PyAnnotator {
     if (highlightedAsAttribute) {
       return;
     }
-    if (PyBuiltinCache.isInBuiltins(node) || PyUtil.isPy2ReservedWord(node)) {
-      final Annotation ann;
-      final PsiElement parent = node.getParent();
-      if (parent instanceof PyDecorator) {
-        // don't mark the entire decorator, only mark the "@", else we'll conflict with deco annotator
-        ann = getHolder().createInfoAnnotation(parent.getFirstChild(), null); // first child is there, or we'd not parse as deco
-      }
-      else {
-        ann = getHolder().createInfoAnnotation(node, null);
-      }
-      ann.setTextAttributes(PyHighlighter.PY_BUILTIN_NAME);
+    if ((PyBuiltinCache.isInBuiltins(node) || PyUtil.isPy2ReservedWord(node)) && !(node.getParent() instanceof PyDecorator)) {
+      addHighlightingAnnotation(node, PyHighlighter.PY_BUILTIN_NAME);
     }
   }
 
@@ -77,8 +66,7 @@ public class PyBuiltinAnnotator extends PyAnnotator {
         if (astNode != null) {
           final ASTNode tgt = astNode.findChildByType(PyTokenTypes.IDENTIFIER); // only the id, not all qualifiers subtree
           if (tgt != null) {
-            final Annotation ann = getHolder().createInfoAnnotation(tgt, null);
-            ann.setTextAttributes(PyHighlighter.PY_PREDEFINED_USAGE);
+            addHighlightingAnnotation(tgt, PyHighlighter.PY_PREDEFINED_USAGE);
             return true;
           }
         }

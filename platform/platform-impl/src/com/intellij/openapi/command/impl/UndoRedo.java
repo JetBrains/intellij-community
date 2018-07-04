@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.command.impl;
 
 import com.intellij.CommonBundle;
@@ -30,6 +16,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -65,6 +52,10 @@ abstract class UndoRedo {
     return myUndoableGroup.isTransparent();
   }
 
+  boolean isTemporary() {
+    return myUndoableGroup.isTemporary();
+  }
+
   boolean hasMoreActions() {
     return getStackHolder().canBeUndoneOrRedone(getDecRefs());
   }
@@ -89,7 +80,7 @@ abstract class UndoRedo {
 
   protected abstract void setBeforeState(EditorAndState state);
 
-  public boolean execute(boolean drop, boolean isInsideStartFinishGroup) {
+  public boolean execute(boolean drop, boolean disableConfirmation) {
     if (!myUndoableGroup.isUndoable()) {
       reportCannotUndo(CommonBundle.message("cannot.undo.error.contains.nonundoable.changes.message"),
                        myUndoableGroup.getAffectedDocuments());
@@ -103,7 +94,7 @@ abstract class UndoRedo {
     }
 
 
-    if (!isInsideStartFinishGroup && myUndoableGroup.shouldAskConfirmation(isRedo())) {
+    if (!disableConfirmation && myUndoableGroup.shouldAskConfirmation(isRedo()) && !UndoManagerImpl.ourNeverAskUser) {
       if (!askUser()) return false;
     }
     else {
@@ -198,12 +189,18 @@ abstract class UndoRedo {
     final boolean[] isOk = new boolean[1];
     TransactionGuard.getInstance().submitTransactionAndWait(() -> {
       String actionText = getActionName(myUndoableGroup.getCommandName());
-
-      if (actionText.length() > 80) {
-        actionText = actionText.substring(0, 80) + "... ";
-      }
-
       isOk[0] = Messages.showOkCancelDialog(myManager.getProject(), actionText + "?", getActionName(),
+                                            Messages.getQuestionIcon()) == Messages.OK;
+    });
+    return isOk[0];
+  }
+
+  boolean confirmSwitchTo(@NotNull UndoRedo other) {
+    final boolean[] isOk = new boolean[1];
+    TransactionGuard.getInstance().submitTransactionAndWait(() -> {
+      String message = CommonBundle.message("undo.conflicting.change.confirmation.message") + "\n" +
+                       getActionName(other.myUndoableGroup.getCommandName()) + "?";
+      isOk[0] = Messages.showOkCancelDialog(myManager.getProject(), message, getActionName(),
                                             Messages.getQuestionIcon()) == Messages.OK;
     });
     return isOk[0];
@@ -211,22 +208,7 @@ abstract class UndoRedo {
 
   private boolean restore(EditorAndState pair, boolean onlyIfDiffers) {
     // editor can be invalid if underlying file is deleted during undo (e.g. after undoing scratch file creation)
-    if (pair == null || myEditor == null || !myEditor.isValid()) return false;
-
-    FileEditor editor = pair.getEditor();
-    if (editor == null) return false;
-
-    // we cannot simply compare editors here because of the following scenario:
-    // 1. make changes in editor for file A
-    // 2. move caret
-    // 3. close editor
-    // 4. re-open editor for A via Ctrl-E
-    // 5. undo -> position is not affected, because instance created in step 4 is not the same!!!
-    if (!myEditor.getClass().equals(editor.getClass())) return false;
-
-    VirtualFile myFile = myEditor.getFile();
-    VirtualFile file = editor.getFile();
-    if (myFile != null && file != null && !myFile.equals(file)) return false;
+    if (pair == null || myEditor == null || !myEditor.isValid() || !pair.canBeAppliedTo(myEditor)) return false;
     
     // If current editor state isn't equals to remembered state then
     // we have to try to restore previous state. But sometime it's
@@ -239,5 +221,10 @@ abstract class UndoRedo {
 
     myEditor.setState(pair.getState());
     return true;
+  }
+
+  public boolean isBlockedByOtherChanges() {
+    return myUndoableGroup.isGlobal() && myUndoableGroup.isUndoable() &&
+           !getStackHolder().collectClashingActions(myUndoableGroup).isEmpty();
   }
 }

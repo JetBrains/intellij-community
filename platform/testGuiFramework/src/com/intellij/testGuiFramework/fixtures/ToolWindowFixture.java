@@ -62,7 +62,7 @@ public abstract class ToolWindowFixture {
         toolWindowRef.set(toolWindow);
         return toolWindow != null;
       }
-    }, GuiTestUtil.SHORT_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
     myRobot = robot;
     myToolWindow = toolWindowRef.get();
   }
@@ -84,7 +84,7 @@ public abstract class ToolWindowFixture {
           }
           return false;
         }
-      }, GuiTestUtil.SHORT_TIMEOUT);
+      }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
     } catch (WaitTimedOutError e) {
       throw new ComponentLookupException("Cannot find content with " + displayName);
     }
@@ -123,7 +123,7 @@ public abstract class ToolWindowFixture {
 
   @Nullable
   protected Content getContent(@NotNull final TextMatcher displayNameMatcher) {
-    return getContent(displayNameMatcher, GuiTestUtil.SHORT_TIMEOUT);
+    return getContent(displayNameMatcher, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
   }
 
   @Nullable
@@ -152,7 +152,7 @@ public abstract class ToolWindowFixture {
   }
 
   private void activateAndWaitUntilIsVisible() {
-    activateAndWaitUntilIsVisible(GuiTestUtil.SHORT_TIMEOUT);
+    activateAndWaitUntilIsVisible(GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
   }
 
   private void activateAndWaitUntilIsVisible(@NotNull Timeout timeout) {
@@ -164,7 +164,7 @@ public abstract class ToolWindowFixture {
   }
 
   @NotNull
-  private Content[] getContents() {
+  public Content[] getContents() {
     return myToolWindow.getContentManager().getContents();
   }
 
@@ -196,11 +196,11 @@ public abstract class ToolWindowFixture {
       public boolean test() {
         return callback.finished;
       }
-    }, GuiTestUtil.SHORT_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
   }
 
   protected void waitUntilIsVisible() {
-    waitUntilIsVisible(GuiTestUtil.THIRTY_SEC_TIMEOUT);
+    waitUntilIsVisible(GuiTestUtil.INSTANCE.getTHIRTY_SEC_TIMEOUT());
   }
 
   protected void waitUntilIsVisible(@NotNull Timeout timeout) {
@@ -215,7 +215,7 @@ public abstract class ToolWindowFixture {
     }, timeout);
   }
 
-  private boolean isVisible() {
+  public boolean isVisible() {
     //noinspection ConstantConditions
     return execute(new GuiQuery<Boolean>() {
       @Override

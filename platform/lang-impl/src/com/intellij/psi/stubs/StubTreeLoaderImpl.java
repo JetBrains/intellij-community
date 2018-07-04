@@ -32,6 +32,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,15 +109,9 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
 
     if (size == 1) {
       SerializedStubTree stubTree = datas.get(0);
-      
-      if (!stubTree.contentLengthMatches(vFile.getLength(), getCurrentTextContentLength(project, vFile, document))) {
-        return processError(vFile,
-                            "Outdated stub in index: " + vFile + " " + getIndexingStampInfo(vFile) +
-                            ", doc=" + document +
-                            ", docSaved=" + saved +
-                            ", wasIndexedAlready=" + wasIndexedAlready +
-                            ", queried at " + vFile.getTimeStamp(),
-                            null);
+
+      if (!checkLengthMatch(project, vFile, wasIndexedAlready, document, saved, stubTree)) {
+        return null;
       }
 
       Stub stub;
@@ -139,6 +134,47 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
     return null;
   }
 
+  private boolean checkLengthMatch(Project project,
+                                   VirtualFile vFile,
+                                   boolean wasIndexedAlready,
+                                   Document document,
+                                   boolean saved,
+                                   SerializedStubTree stubTree) {
+    PsiFile cachedPsi = PsiManagerEx.getInstanceEx(project).getFileManager().getCachedPsiFile(vFile);
+    if (!stubTree.contentLengthMatches(vFile.getLength(), getCurrentTextContentLength(project, vFile, document, cachedPsi))) {
+      diagnoseLengthMismatch(vFile, wasIndexedAlready, document, saved, stubTree, cachedPsi);
+      return false;
+    }
+    return true;
+  }
+
+  private void diagnoseLengthMismatch(VirtualFile vFile,
+                                      boolean wasIndexedAlready,
+                                      @Nullable Document document,
+                                      boolean saved,
+                                      @NotNull SerializedStubTree stubTree,
+                                      @Nullable PsiFile cachedPsi) {
+    String message = "Outdated stub in index: " + vFile + " " + getIndexingStampInfo(vFile) +
+                     ", doc=" + document +
+                     ", docSaved=" + saved +
+                     ", wasIndexedAlready=" + wasIndexedAlready +
+                     ", queried at " + vFile.getTimeStamp();
+    message += "\nindexed lengths=" + stubTree.dumpLengths() +
+               "\ndoc length=" + (document == null ? -1 : document.getTextLength()) +
+               "\nfile length=" + vFile.getLength();
+    if (cachedPsi != null) {
+      message += "\ncached PSI " + cachedPsi.getClass();
+      if (cachedPsi instanceof PsiFileImpl && ((PsiFileImpl)cachedPsi).isContentsLoaded()) {
+        message += "\nPSI length=" + cachedPsi.getTextLength();
+      }
+      List<Project> projects = ContainerUtil.findAll(ProjectManager.getInstance().getOpenProjects(),
+                                                p -> PsiManagerEx.getInstanceEx(p).getFileManager().findCachedViewProvider(vFile) != null);
+      message += "\nprojects with file: " + (LOG.isDebugEnabled() ? projects.toString() : projects.size());
+    }
+
+    processError(vFile, message, new Exception());
+  }
+
   private static void checkDeserializationCreatesNoPsi(ObjectStubTree<?> tree) {
     if (ourStubReloadingProhibited) return;
 
@@ -153,16 +189,10 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
     }
   }
 
-  @Override
-  public boolean isStubReloadingProhibited() {
-    return ourStubReloadingProhibited;
-  }
-
-  private static int getCurrentTextContentLength(Project project, VirtualFile vFile, Document document) {
+  private static int getCurrentTextContentLength(Project project, VirtualFile vFile, Document document, PsiFile psiFile) {
     if (vFile.getFileType().isBinary()) {
       return -1;
     }
-    PsiFile psiFile = PsiManagerEx.getInstanceEx(project).getFileManager().getCachedPsiFile(vFile);
     if (psiFile instanceof PsiFileImpl && ((PsiFileImpl)psiFile).isContentsLoaded()) {
       return psiFile.getTextLength();
     }
@@ -212,4 +242,22 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
   protected IndexingStampInfo getIndexingStampInfo(@NotNull VirtualFile file) {
     return StubUpdatingIndex.getIndexingStampInfo(file);
   }
+
+  @Override
+  protected boolean isPrebuilt(@NotNull VirtualFile virtualFile) {
+      boolean canBePrebuilt = false;
+      try {
+        final PrebuiltStubsProvider prebuiltStubsProvider =
+          PrebuiltStubsProviders.INSTANCE.forFileType(virtualFile.getFileType());
+        if (prebuiltStubsProvider != null) {
+          canBePrebuilt = null !=
+                          prebuiltStubsProvider
+                            .findStub(new FileContentImpl(virtualFile, virtualFile.contentsToByteArray()));
+        }
+      }
+      catch (Exception e) {
+        // pass
+      }
+      return canBePrebuilt;
+    }
 }

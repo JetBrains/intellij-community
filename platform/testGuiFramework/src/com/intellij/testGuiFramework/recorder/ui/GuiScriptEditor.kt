@@ -15,36 +15,36 @@
  */
 package com.intellij.testGuiFramework.recorder.ui
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
-import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.testGuiFramework.recorder.Writer
 import com.intellij.ui.EditorTextField
-import java.lang.Boolean
+import javax.swing.JComponent
 import kotlin.with
 
 /**
  * @author Sergey Karashevich
  */
-class GuiScriptEditor {
+class GuiScriptEditor : Disposable {
 
-  var myEditor: EditorEx? = null
-  var syncEditor = false
+  val myEditor: EditorEx
 
-  fun getPanel() = myEditor!!.component
+  fun getPanel(): JComponent = myEditor.component
 
   init {
     val editorFactory = EditorFactory.getInstance()
-    val editorDocument = editorFactory.createDocument(Writer.getScript())
-    val editor = (editorFactory.createEditor(editorDocument, ProjectManager.getInstance().defaultProject) as EditorEx)
-    EditorTextField.SUPPLEMENTARY_KEY.set(editor, Boolean.TRUE)
-    editor.colorsScheme = EditorColorsManager.getInstance().globalScheme
-    with(editor.settings) {
+    val editorDocument = editorFactory.createDocument("")
+    myEditor = editorFactory.createEditor(editorDocument, ProjectManager.getInstance().defaultProject) as EditorEx
+    Disposer.register(ProjectManager.getInstance().defaultProject,this)
+    EditorTextField.SUPPLEMENTARY_KEY.set(myEditor, true)
+    myEditor.colorsScheme = EditorColorsManager.getInstance().globalScheme
+    with(myEditor.settings) {
       isLineNumbersShown = true
       isWhitespacesShown = true
       isLineMarkerAreaShown = false
@@ -56,25 +56,11 @@ class GuiScriptEditor {
     }
 
     val pos = LogicalPosition(0, 0)
-    editor.caretModel.moveToLogicalPosition(pos)
-    editor.highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(LightVirtualFile("a.kt"), editor.colorsScheme, null)
-
-    myEditor = editor
-
-    //let editor be synchronised by default
-    syncEditor = true
-    val editorImpl = (myEditor as EditorImpl)
-
-//        Disposer.register(editorImpl.disposable, Disposable {
-//            GuiRecorderComponent.getFrame()!!.getGuiScriptEditorPanel().createAndAddGuiScriptEditor()
-//            editorImpl
-//        })
+    myEditor.caretModel.moveToLogicalPosition(pos)
+    myEditor.highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(LightVirtualFile("a.kt"), myEditor.colorsScheme, null)
   }
 
-  //Editor should be realised before Application is closed
-  fun releaseEditor() {
-    EditorFactory.getInstance().releaseEditor(myEditor!!)
-    myEditor = null
+  override fun dispose() {
+    EditorFactory.getInstance().releaseEditor(myEditor)
   }
-
 }

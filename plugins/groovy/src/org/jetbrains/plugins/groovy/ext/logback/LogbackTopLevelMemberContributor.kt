@@ -28,7 +28,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 
 class LogbackTopLevelMemberContributor : NonCodeMembersContributor() {
 
-  override fun getParentClassName() = "logback"
+  override fun getParentClassName(): String = "logback"
 
   override fun processDynamicElements(qualifierType: PsiType,
                                       aClass: PsiClass?,

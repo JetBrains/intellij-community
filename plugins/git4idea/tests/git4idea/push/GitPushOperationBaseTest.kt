@@ -29,28 +29,28 @@ abstract class GitPushOperationBaseTest : GitPlatformTest() {
   override fun setUp() {
     super.setUp()
 
-    pushSupport = getPushSupport(myVcs) as GitPushSupport
+    pushSupport = getPushSupport(vcs) as GitPushSupport
   }
 
   override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#" + GitPushOperation::class.java.name)
 
   protected fun updateRepositories() {
-    myGitRepositoryManager.updateAllRepositories()
+    repositoryManager.updateAllRepositories()
   }
 
   protected fun agreeToUpdate(exitCode: Int) {
-    myDialogManager.registerDialogHandler(GitRejectedPushUpdateDialog::class.java,
-                                          TestDialogHandler<GitRejectedPushUpdateDialog> { exitCode })
+    dialogManager.registerDialogHandler(GitRejectedPushUpdateDialog::class.java,
+                                        TestDialogHandler { exitCode })
   }
 
   internal fun assertResult(type: GitPushRepoResult.Type, pushedCommits: Int, from: String, to: String,
                              updateResult: GitUpdateResult?,
                              actualResult: GitPushRepoResult) {
-    val message = "Result is incorrect: " + actualResult
+    val message = "Result is incorrect: $actualResult"
     assertEquals(message, type, actualResult.type)
     assertEquals(message, pushedCommits, actualResult.numberOfPushedCommits)
     assertEquals(message, GitBranch.REFS_HEADS_PREFIX + from, actualResult.sourceBranch)
     assertEquals(message, GitBranch.REFS_REMOTES_PREFIX + to, actualResult.targetBranch)
-    assertEquals(message, updateResult, actualResult.updateResult)
+    if (updateResult != null) assertEquals(message, updateResult, actualResult.updateResult)
   }
 }

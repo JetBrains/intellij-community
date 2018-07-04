@@ -27,15 +27,10 @@ public class JavaImportSearcher extends ImportSearcher {
     final PsiFile containingFile = element.getContainingFile();
     if (!(containingFile instanceof PsiJavaFile)) return null;
 
-    if (onlyNonStatic) {
-      PsiElement parent = element.getParent();
-      if (parent instanceof PsiImportStatement) {
-        return parent;
-      }
+    PsiImportStatementBase importStatementBase = PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class);
+    if (onlyNonStatic && importStatementBase instanceof PsiImportStaticStatement) {
+      return null;
     }
-    else {
-      return PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class);
-    }
-    return null;
+    return importStatementBase;
   }
 }

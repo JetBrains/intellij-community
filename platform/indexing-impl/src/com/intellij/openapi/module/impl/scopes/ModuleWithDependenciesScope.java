@@ -17,6 +17,8 @@ package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.DirectoryInfo;
+import com.intellij.openapi.roots.impl.ProjectFileIndexImpl;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiBundle;
@@ -45,7 +47,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   @ScopeConstant
   private final int myOptions;
 
-  private final ProjectFileIndex myProjectFileIndex;
+  private final ProjectFileIndexImpl myProjectFileIndex;
 
   private volatile Set<Module> myModules;
   private final TObjectIntHashMap<VirtualFile> myRoots = new TObjectIntHashMap<>();
@@ -55,7 +57,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
     myModule = module;
     myOptions = options;
 
-    myProjectFileIndex = ProjectRootManager.getInstance(module.getProject()).getFileIndex();
+    myProjectFileIndex = (ProjectFileIndexImpl)ProjectRootManager.getInstance(module.getProject()).getFileIndex();
 
     final LinkedHashSet<VirtualFile> roots = ContainerUtil.newLinkedHashSet();
 
@@ -150,13 +152,14 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
+    DirectoryInfo info = myProjectFileIndex.getInfoForFileOrDirectory(file);
     if (hasOption(CONTENT)) {
-      return myRoots.contains(myProjectFileIndex.getContentRootForFile(file));
+      return myRoots.contains(ProjectFileIndexImpl.getContentRootForFile(info, file, true));
     }
-    if (myProjectFileIndex.isInContent(file) && myRoots.contains(myProjectFileIndex.getSourceRootForFile(file))) {
+    if (ProjectFileIndexImpl.isFileInContent(file, info) && myRoots.contains(ProjectFileIndexImpl.getSourceRootForFile(file, info))) {
       return true;
     }
-    return myRoots.contains(myProjectFileIndex.getClassRootForFile(file));
+    return myRoots.contains(ProjectFileIndexImpl.getClassRootForFile(file, info));
   }
 
   @Override
@@ -177,15 +180,16 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
 
   @Nullable
   private VirtualFile getFileRoot(@NotNull VirtualFile file) {
-    VirtualFile root = myProjectFileIndex.getClassRootForFile(file);
-    return root != null ? root : myProjectFileIndex.getSourceRootForFile(file);
+    DirectoryInfo info = myProjectFileIndex.getInfoForFileOrDirectory(file);
+    VirtualFile root = ProjectFileIndexImpl.getClassRootForFile(file, info);
+    return root != null ? root : ProjectFileIndexImpl.getSourceRootForFile(file, info);
   }
 
   @TestOnly
   public Collection<VirtualFile> getRoots() {
     //noinspection unchecked
     List<VirtualFile> result = (List)ContainerUtil.newArrayList(myRoots.keys());
-    Collections.sort(result, (o1, o2) -> myRoots.get(o1) - myRoots.get(o2));
+    Collections.sort(result, Comparator.comparingInt(myRoots::get));
     return result;
   }
 

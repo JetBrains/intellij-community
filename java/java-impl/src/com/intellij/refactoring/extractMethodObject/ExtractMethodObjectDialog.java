@@ -240,12 +240,12 @@ public class ExtractMethodObjectDialog extends DialogWrapper implements Abstract
     myFoldCb.setSelected(myVariableData.isFoldingSelectedByDefault());
     myFoldCb.setVisible(myVariableData.isFoldable());
     myVariableData.setFoldingAvailable(myFoldCb.isSelected());
-    myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
+    myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[0]);
     myFoldCb.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         myVariableData.setFoldingAvailable(myFoldCb.isSelected());
-        myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[myVariableData.getInputVariables().size()]);
+        myInputVariables = myVariableData.getInputVariables().toArray(new VariableData[0]);
         myParametersTableContainer.removeAll();
         myParametersTableContainer.add(createParametersPanel(), BorderLayout.CENTER);
         myParametersTableContainer.revalidate();

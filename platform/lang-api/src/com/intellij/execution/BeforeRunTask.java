@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,20 @@
 
 package com.intellij.execution;
 
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.util.Key;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: May 18, 2009
  */
 public abstract class BeforeRunTask<T extends BeforeRunTask> implements Cloneable {
   @NotNull
   protected final Key<T> myProviderId;
+
+  // cannot be set to true by default, because RunManager.getHardcodedBeforeRunTasks creates before run task for each provider
+  // and some providers set enabled to true in the constructor to indicate, that before run task should be added to RC by default (on create)
   private boolean myIsEnabled;
 
   protected BeforeRunTask(@NotNull Key<T> providerId) {
@@ -46,18 +49,29 @@ public abstract class BeforeRunTask<T extends BeforeRunTask> implements Cloneabl
     myIsEnabled = isEnabled;
   }
 
-  public void writeExternal(Element element) {
-    element.setAttribute("enabled", String.valueOf(myIsEnabled));
+  /**
+   * @deprecated Use {@link PersistentStateComponent} instead (see {@link com.intellij.ide.browsers.LaunchBrowserBeforeRunTask} for example).
+   */
+  @Deprecated
+  public void writeExternal(@NotNull Element element) {
+    if (this instanceof PersistentStateComponent) {
+      ((PersistentStateComponent)this).getState();
+    }
+    else {
+      element.setAttribute("enabled", String.valueOf(myIsEnabled));
+    }
   }
 
-  public void readExternal(Element element) {
+  /**
+   * @deprecated Use {@link PersistentStateComponent} instead (see {@link com.intellij.ide.browsers.LaunchBrowserBeforeRunTask} for example).
+   */
+  @Deprecated
+  public void readExternal(@NotNull Element element) {
     String attribValue = element.getAttributeValue("enabled");
     if (attribValue == null) {
       attribValue = element.getAttributeValue("value"); // maintain compatibility with old format
     }
-    if (attribValue == null)
-      attribValue = "true";
-    myIsEnabled = Boolean.valueOf(attribValue).booleanValue();
+    myIsEnabled = attribValue == null || Boolean.parseBoolean(attribValue);
   }
 
   //Task may aggregate several items or targets to do (e.g. BuildArtifactsBeforeRunTask)

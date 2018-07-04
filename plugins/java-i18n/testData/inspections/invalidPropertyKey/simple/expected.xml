@@ -21,4 +21,46 @@
     <line>14</line>
     <description>Property 'with.params' expected 3 parameters, passed 0</description>
   </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>19</line>
+    <problem_class severity="ERROR" attribute_key="WRONG_REFERENCES_ATTRIBUTES">Invalid property key</problem_class>
+    <description>String literal '.params' doesn't appear to be valid property key</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>23</line>
+    <problem_class severity="ERROR" attribute_key="WRONG_REFERENCES_ATTRIBUTES">Invalid property key</problem_class>
+    <description>Invalid resource bundle reference 'invalid'</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>26</line>
+    <problem_class severity="ERROR" attribute_key="WRONG_REFERENCES_ATTRIBUTES">Invalid property key</problem_class>
+    <description>String literal 'invalid' doesn't appear to be valid property key</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>27</line>
+    <problem_class severity="ERROR" attribute_key="WRONG_REFERENCES_ATTRIBUTES">Invalid property key</problem_class>
+    <description>String literal 'invalid' doesn't appear to be valid property key</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>31</line>
+    <problem_class severity="ERROR" attribute_key="WRONG_REFERENCES_ATTRIBUTES">Invalid property key</problem_class>
+    <description>String literal 'invalid' doesn't appear to be valid property key</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>41</line>
+    <problem_class severity="ERROR" attribute_key="WRONG_REFERENCES_ATTRIBUTES">Invalid property key</problem_class>
+    <description>String literal 'invalid' doesn't appear to be valid property key</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>42</line>
+    <problem_class severity="ERROR" attribute_key="WRONG_REFERENCES_ATTRIBUTES">Invalid property key</problem_class>
+    <description>String literal 'invalid' doesn't appear to be valid property key</description>
+  </problem>
 </problems>

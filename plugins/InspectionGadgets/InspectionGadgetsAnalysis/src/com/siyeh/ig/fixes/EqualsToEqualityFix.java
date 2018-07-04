@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.siyeh.ig.fixes;
 
@@ -20,12 +8,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiReferenceExpression;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.EqualityCheck;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -52,29 +41,20 @@ public class EqualsToEqualityFix extends InspectionGadgetsFix {
 
   @Override
   protected void doFix(Project project, ProblemDescriptor descriptor) {
-    final PsiMethodCallExpression call = (PsiMethodCallExpression)descriptor.getPsiElement().getParent().getParent();
-    if (call == null) {
-      return;
-    }
-    final PsiReferenceExpression methodExpression = call.getMethodExpression();
-    final PsiExpression lhs = PsiUtil.deparenthesizeExpression(methodExpression.getQualifierExpression());
-    if (lhs == null) {
-      return;
-    }
-    final PsiExpression rhs = PsiUtil.deparenthesizeExpression(call.getArgumentList().getExpressions()[0]);
-    if (rhs == null) {
-      return;
-    }
+    final PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class, false);
+    EqualityCheck check = EqualityCheck.from(call);
+    if (check == null) return;
+    PsiExpression lhs = check.getLeft();
+    PsiExpression rhs = check.getRight();
     final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(call);
+    final CommentTracker commentTracker = new CommentTracker();
+    final String lhsText = commentTracker.text(lhs, ParenthesesUtils.EQUALITY_PRECEDENCE);
+    final String rhsText = commentTracker.text(rhs, ParenthesesUtils.EQUALITY_PRECEDENCE);
     if (parent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)parent)) {
-      PsiReplacementUtil.replaceExpression((PsiExpression)parent, getText(lhs) + "!=" + getText(rhs));
+      PsiReplacementUtil.replaceExpression((PsiExpression)parent, lhsText + "!=" + rhsText, commentTracker);
     }
     else {
-      PsiReplacementUtil.replaceExpression(call, getText(lhs) + "==" + getText(rhs));
+      PsiReplacementUtil.replaceExpression(call, lhsText + "==" + rhsText, commentTracker);
     }
-  }
-
-  private static String getText(PsiExpression rhs) {
-    return ParenthesesUtils.getPrecedence(rhs) > ParenthesesUtils.EQUALITY_PRECEDENCE ? '(' + rhs.getText() + ')' : rhs.getText();
   }
 }

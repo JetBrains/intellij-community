@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.icons.AllIcons;
@@ -22,6 +8,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Couple;
@@ -37,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.AbstractIntegrateChangesAction;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.integrate.ChangeListsMergerFactory;
 import org.jetbrains.idea.svn.integrate.MergerFactory;
@@ -381,7 +370,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   }
 
 
-  private class MyRefresh extends AnAction {
+  private class MyRefresh extends DumbAwareAction {
     private MyRefresh() {
       super(SvnBundle.message("committed.changes.action.merge.highlighting.refresh.text"),
             SvnBundle.message("committed.changes.action.merge.highlighting.refresh.description"), AllIcons.Actions.Refresh);
@@ -406,7 +395,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
   }
 
-  private class HighlightFrom extends ToggleAction {
+  private class HighlightFrom extends DumbAwareToggleAction {
     @Override
     public void update(final AnActionEvent e) {
       super.update(e);
@@ -430,7 +419,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
   }
 
-  private abstract class CommonFilter extends ToggleAction {
+  private abstract class CommonFilter extends DumbAwareToggleAction {
     private boolean mySelected;
     private final Icon myIcon;
 
@@ -534,12 +523,11 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
 
     @Nullable
-    protected String getSelectedBranchUrl(SelectedCommittedStuffChecker checker) {
-      final SvnMergeInfoRootPanelManual data = getPanelData(checker.getSelectedLists());
-      if (data != null) {
-        return data.getBranch().getUrl();
-      }
-      return null;
+    @Override
+    protected Url getSelectedBranchUrl(SelectedCommittedStuffChecker checker) {
+      SvnMergeInfoRootPanelManual data = getPanelData(checker.getSelectedLists());
+
+      return data != null && data.getBranch() != null ? data.getBranch().getUrl() : null;
     }
 
     @Nullable
@@ -591,12 +579,12 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
       }
     }
 
-    protected String getSelectedBranchUrl(SelectedCommittedStuffChecker checker) {
-      final SvnMergeInfoRootPanelManual data = getPanelData(checker.getSelectedLists());
-      if (data != null && data.getBranch() != null) {
-        return data.getBranch().getUrl();
-      }
-      return null;
+    @Nullable
+    @Override
+    protected Url getSelectedBranchUrl(SelectedCommittedStuffChecker checker) {
+      SvnMergeInfoRootPanelManual data = getPanelData(checker.getSelectedLists());
+
+      return data != null && data.getBranch() != null ? data.getBranch().getUrl() : null;
     }
 
     protected String getSelectedBranchLocalPath(SelectedCommittedStuffChecker checker) {
@@ -639,8 +627,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     if (wcPath == null) {
       for (Map.Entry<String, SvnMergeInfoRootPanelManual> entry : myMergePanels.entrySet()) {
         final SvnMergeInfoRootPanelManual panelManual = entry.getValue();
-        if ((panelManual.getBranch() != null) && (panelManual.getBranch().getUrl() != null) &&
-            svnList.allPathsUnder(panelManual.getBranch().getUrl())) {
+        if (panelManual.getBranch() != null && svnList.allPathsUnder(panelManual.getBranch().getUrl().toDecodedString())) {
           holder = getHolder(entry.getKey());
         }
       }

@@ -116,6 +116,7 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testIDEA149774() { doTest(); }
   public void testDisjunctionTypes() { doTest(); }
   public void testValidIntersectionTypeWithCapturedBounds() { doTest(); }
+  public void testValidIntersectionTypeWithCapturedBounds1() { doTest(); }
   public void testPushErasedStateToArguments() { doTest(); }
   public void testStopAtStandaloneConditional() { doTest(); }
   public void testTransitiveInferenceVariableDependencies() { doTest(); }
@@ -170,21 +171,32 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   //public void _testResolutionOrderForVariableCycles() { doTest(); }
   public void testPostponeUnresolvedVariables() { doTest(); }
   public void testErasureOfReturnTypeIffUncheckedConversionWasNecessaryDuringApplicabilityCheckOnly() { doTest(); }
+  public void testErasureOfReturnTypeIffUncheckedConversionWasNecessaryDuringApplicabilityCheckOnly1() { doTest(); }
+  public void testErasureOfReturnTypeIffUncheckedConversionWasNecessaryDuringApplicabilityCheckOnly2() { doTest(); }
   public void testTwoDifferentParameterizationCheckWithInterfaceTypeArguments() { doTest(); }
   public void testNonGenericInnerClassOfGenericsOuterInReturnType() { doTest(); }
+  public void testInferredApplicabilityForAnonymousClassConstructor() { doTest(); }
   public void testNonGenericInnerClassOfGenericsOuterWithWildcardsInReturnType() { doTest(); }
   public void testUncheckedConversionDuringProperTypeExpressionConstraintResolution() { doTest(); }
   //public void _testAssignabilityOfStandaloneExpressionsDuringApplicabilityCheck() { doTest(); }
   public void testRecursiveTypeWithCapture() { doTest(); }
   public void testFreshVariablesDuringApplicabilityCheck() { doTest(); }
+  public void testPostponeConditionalExpressionErrorToMethodLevel() { doTest(); }
+  public void testNestedCallsWithFreshVariables() { doTest(); }
 
   public void testPertinentToApplicabilityCheckForBlockLambda() { doTest(); }
+  public void testCheckGlbConflictsAfterIntersectionTypeCreated() { doTest(); }
   public void testRestoreCapturedWildcardsInReturnTypesWhenNoAdditionalConstraintsDetected() { doTest(); }
+  public void testIntersectionWithSameInterfaceButDifferentTypeArgument() { doTest(); }
+  public void testVarargsMethodPreferred() { doTest(); }
+  public void testSameNamedFreshVariables() { doTest(); }
+  public void testEnsureOrderOfFreshVariablesWhenCaptureNonProperTypes() { doTest(); }
+  public void testFreshVariablesBounds() { doTest(); }
 
   public void testApplicabilityCheckFailsExpressionTypeCheckPasses() {
     doTest();
   }
-
+  public void testNotInferredVarShouldNotBeUsedForInferenceJava10() { doTest(); }
   public void testTopLevelParentNoParameters() {
     doTest();
   }

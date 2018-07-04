@@ -57,7 +57,7 @@ public class MacGestureSupportForEditor {
     fillActionsList(shortcut, IdeKeyEventDispatcher.isModalContext(component));
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     if (actionManager != null) {
-      AnAction[] actions = myActions.toArray(new AnAction[myActions.size()]);
+      AnAction[] actions = myActions.toArray(AnAction.EMPTY_ARRAY);
       for (AnAction action : actions) {
         DataContext dataContext = DataManager.getInstance().getDataContext(component);
         Presentation presentation = myPresentationFactory.getPresentation(action);

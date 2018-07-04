@@ -16,6 +16,7 @@
 package com.intellij.openapi.diff.impl.dir.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diff.impl.dir.DirDiffTableModel;
 import com.intellij.util.containers.JBIterable;
@@ -40,7 +41,8 @@ public class SynchronizeDiff extends DirDiffAction {
     if (!e.getPresentation().isEnabled()) {
       return;
     }
-    boolean enabled = !JBIterable.from(mySelectedOnly ? getModel().getSelectedElements() : getModel().getElements())
+    boolean enabled = e.getData(CommonDataKeys.EDITOR) == null;
+    enabled &= !JBIterable.from(mySelectedOnly ? getModel().getSelectedElements() : getModel().getElements())
       .filter(d -> d.getOperation() == COPY_FROM || d.getOperation() == COPY_TO || d.getOperation() == DELETE)
       .filter(d -> d.getSource() == null || d.getSource().isOperationsEnabled())
       .filter(d -> d.getTarget() == null || d.getTarget().isOperationsEnabled())
@@ -60,11 +62,6 @@ public class SynchronizeDiff extends DirDiffAction {
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    return false;
-  }
-
-  @Override
-  protected boolean isFullReload() {
     return false;
   }
 

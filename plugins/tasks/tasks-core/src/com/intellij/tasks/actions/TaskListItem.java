@@ -24,7 +24,6 @@ import javax.swing.*;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 9/6/12
  */
 abstract class TaskListItem {
 

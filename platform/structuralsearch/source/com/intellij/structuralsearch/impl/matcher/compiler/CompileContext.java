@@ -22,8 +22,6 @@ import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 
 /**
  * @author maxim
- * Date: 17.11.2004
- * Time: 19:26:37
  */
 public class CompileContext {
   private final OptimizingSearchHelper searchHelper;

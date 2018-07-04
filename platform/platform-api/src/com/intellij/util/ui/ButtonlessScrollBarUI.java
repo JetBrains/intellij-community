@@ -19,7 +19,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Gray;
@@ -45,30 +44,14 @@ import java.lang.reflect.Method;
  * @author Konstantin Bulenkov
  */
 public class ButtonlessScrollBarUI extends BasicScrollBarUI {
-  /**
-   * This key is used in the {@link ButtonlessScrollBarUI}
-   * to paint the scrollbar maxi thumb.
-   *
-   * @see RegionPainter
-   * @see UIUtil#putClientProperty
-   */
-  @Deprecated
-  public static final Key<RegionPainter<Integer>> MAXI_THUMB = Key.create("BUTTONLESS_SCROLL_BAR_UI_MAXI_THUMB");
-
   private static final Logger LOG = Logger.getInstance(ButtonlessScrollBarUI.class);
 
-  protected JBColor getGradientLightColor() {
-    return jbColor(Gray._251, Gray._95);
-  }
-
-  protected JBColor getGradientDarkColor() {
-    return jbColor(Gray._215, Gray._80);
-  }
-
+  @Deprecated
   public static JBColor getTrackBackgroundDefault() {
     return new JBColor(LightColors.SLIGHTLY_GRAY, UIUtil.getListBackground());
   }
 
+  @Deprecated
   public static JBColor getTrackBorderColorDefault() {
     return new JBColor(Gray._230, UIUtil.getListBackground());
   }
@@ -404,12 +387,9 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     }
   }
 
+  @Deprecated
   public static BasicScrollBarUI createNormal() {
     return new ButtonlessScrollBarUI();
-  }
-
-  public static BasicScrollBarUI createTransparent() {
-    return new Transparent();
   }
 
   @Override
@@ -437,6 +417,8 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   @Override
   protected void installListeners() {
+    myDisposed = false;
+
     initRegularThumbAnimator();
     initMacScrollbarAnimators();
 
@@ -816,7 +798,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     int baseSize = vertical ? baseBounds.width : baseBounds.height;
 
     int maxSize = baseSize - (thumb ? borderSize * 2 : 0);
-    int minSize = Math.min(baseSize / 2, 7) + (thumb ? 0 : borderSize * 2);
+    int minSize = Math.min(baseSize / 2, JBUI.scale(7)) + (thumb ? 0 : borderSize * 2);
 
     int currentSize = minSize + (int)(myMouseOverScrollbarExpandLevel * (maxSize - minSize));
 
@@ -844,12 +826,6 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     height = Math.max(height, currentSize);
 
     return new Rectangle(x, y, width, height);
-  }
-
-  protected void paintMaxiThumb(Graphics2D g, Rectangle thumbBounds) {
-    ThumbPainter.DEFAULT.setScrollBar(scrollbar);
-    ThumbPainter.DEFAULT.paint(g, 0, 0, thumbBounds.width, thumbBounds.height, myThumbFadeColorShift);
-    ThumbPainter.DEFAULT.setScrollBar(null);
   }
 
   @Override
@@ -922,174 +898,10 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     void call(Graphics g);
   }
 
-  /**
-   * The default painter for non-Mac scroll bar.
-   */
-  public static class ThumbPainter implements RegionPainter<Integer> {
-    private static final ThumbPainter DEFAULT = new ThumbPainter(null);
-    private static final BasicStroke BASIC_STROKE = new BasicStroke();
-    private JScrollBar myScrollBar;
-
-    void setScrollBar(JScrollBar bar) {
-      myScrollBar = bar;
-    }
-
-    public ThumbPainter(JScrollBar bar) {
-      setScrollBar(bar);
-    }
-
-    @Override
-    public void paint(Graphics2D g, int x, int y, int width, int height, Integer value) {
-      float alpha = getAlpha();
-      if (alpha > 0) {
-        int gap = getBorderOffset();
-        if (isVertical()) {
-          x += isLeftToRight() ? gap : 0;
-          width -= gap;
-        }
-        else {
-          y += gap;
-          height -= gap;
-        }
-        if (width > 1 && height > 1) {
-          g = (Graphics2D)g.create(x, y, width, height);
-          g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-          g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
-          g.setStroke(BASIC_STROKE);
-          if (alpha < 1) {
-            g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha));
-          }
-          paint(g, width, height, value);
-          g.dispose();
-        }
-      }
-    }
-
-    protected void paint(Graphics2D g, int width, int height, Integer value) {
-      int x = 1;
-      int y = 1;
-      width -= x + x;
-      height -= y + y;
-
-      int arc = JBUI.scale(4);
-      Color border = getBorderColor();
-      Color start = getGradientStart(value);
-      Color stop = getGradientStop(value);
-      if (start != null || stop != null) {
-        if (start == null) {
-          g.setColor(stop);
-        }
-        else if (stop == null) {
-          g.setColor(start);
-        }
-        else if (isVertical()) {
-          g.setPaint(UIUtil.getGradientPaint(x, y, start, x + width, y, stop));
-        }
-        else {
-          g.setPaint(UIUtil.getGradientPaint(x, y, start, x, y + height, stop));
-        }
-        g.fillRoundRect(x, y, width, height, arc, arc);
-      }
-      if (border != null) {
-        g.setColor(border);
-        g.setStroke(BASIC_STROKE);
-        g.drawRoundRect(x, y, width - 1, height - 1, arc, arc);
-      }
-    }
-
-    protected boolean isVertical() {
-      return myScrollBar == null || Adjustable.VERTICAL == myScrollBar.getOrientation();
-    }
-
-    protected boolean isLeftToRight() {
-      return myScrollBar == null || myScrollBar.getComponentOrientation().isLeftToRight();
-    }
-
-    /**
-     * Returns the constant alpha to be multiplied with the alpha of the source.
-     * The alpha must be a floating point number in the range [0.0, 1.0].
-     *
-     * @return the constant alpha
-     */
-    protected float getAlpha() {
-      return 1;
-    }
-
-    /**
-     * Returns the offset for a color
-     * according to the specified value from animator.
-     *
-     * @param value the value from animator
-     * @return the offset for a color
-     */
-    protected int getColorOffset(Integer value) {
-      return value == null ? 0 : value;
-    }
-
-    /**
-     * Returns the start color for a gradient of a thumb's background
-     * according to the specified value from animator.
-     *
-     * @param value the value from animator
-     * @return the start color for a gradient
-     */
-    protected Color getGradientStart(Integer value) {
-      int offset = getColorOffset(value);
-      return getColor(UIUtil.isUnderDarcula() ? 95 + offset : 251 - offset);
-    }
-
-    /**
-     * Returns the stop color for a gradient of a thumb's background
-     * according to the specified value from animator.
-     *
-     * @param value the value from animator
-     * @return the stop color for a gradient
-     */
-    protected Color getGradientStop(Integer value) {
-      int offset = getColorOffset(value);
-      return getColor(UIUtil.isUnderDarcula() ? 80 + offset : 215 - offset);
-    }
-
-    /**
-     * Returns the color for thumb's border.
-     *
-     * @return the border color
-     */
-    protected Color getBorderColor() {
-      int offset = getColorOffset(null);
-      return getColor(UIUtil.isUnderDarcula() ? 85 + offset : 201 - offset);
-    }
-
-    /**
-     * @return additional offset corresponding to the default track border
-     */
-    protected int getBorderOffset() {
-      return 1;
-    }
-
-    private static Color getColor(int gray) {
-      return Gray.get(gray < 0 ? 0 : gray > 255 ? 255 : gray);
-    }
-  }
-
   public static class Transparent extends ButtonlessScrollBarUI {
     @Override
     public boolean alwaysShowTrack() {
       return false;
-    }
-
-    @Override
-    protected void paintMaxiThumb(Graphics2D g, Rectangle thumbBounds) {
-      int arc = JBUI.scale(3);
-      g.setColor(adjustColor(getGradientDarkColor()));
-      int gap = JBUI.scale(2);
-
-      if (isVertical()) {
-        g.fillRoundRect(0, gap, thumbBounds.width, thumbBounds.height - 2 * gap, arc, arc);
-      }
-      else {
-        g.fillRoundRect(gap, 0, thumbBounds.width - 2 * gap, thumbBounds.height, arc, arc);
-      }
     }
   }
 

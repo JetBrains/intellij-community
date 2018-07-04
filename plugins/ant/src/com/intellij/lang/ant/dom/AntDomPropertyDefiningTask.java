@@ -24,7 +24,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 10, 2010
  */
 public abstract class AntDomPropertyDefiningTask extends AntDomPropertyDefiningElement {
 

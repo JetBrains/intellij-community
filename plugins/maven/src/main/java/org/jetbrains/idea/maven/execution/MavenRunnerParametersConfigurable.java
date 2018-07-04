@@ -16,6 +16,7 @@ public abstract class MavenRunnerParametersConfigurable extends MavenRunnerParam
     super(project);
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {

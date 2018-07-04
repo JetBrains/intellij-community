@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.LazyParseableElement;
 import com.intellij.psi.util.PsiUtilCore;
@@ -41,12 +42,7 @@ import java.io.IOException;
 public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void invokeTestRunnable(@NotNull final Runnable runnable) {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        runnable.run();
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> runnable.run());
   }
 
   public void testCopyTextFile() throws Exception{
@@ -282,7 +278,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     assertEquals(" class A{}", document.getText());
   }
 
-  public void testASTBecomesInvalidOnExternalChange() {
+  public void testASTBecomesInvalidOnExternalChange() throws IOException {
     final String text = "class A{}";
     final PsiJavaFile file = (PsiJavaFile)myFixture.addFileToProject("a.java", text);
     PsiElement leaf = file.findElementAt(5);
@@ -290,12 +286,7 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
     PlatformTestUtil.tryGcSoftlyReachableObjects();
     assertNull(PsiDocumentManager.getInstance(getProject()).getCachedDocument(file));
 
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        VfsUtil.saveText(file.getVirtualFile(), text + "   ");
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> VfsUtil.saveText(file.getVirtualFile(), text + "   "));
 
     assertTrue(file.isValid());
     assertFalse(leaf.isValid());
@@ -389,5 +380,27 @@ public class MiscPsiTest extends LightCodeInsightFixtureTestCase {
 
     assertEquals("Foo", bar.getSuperClass().getName());
     PsiUtilCore.ensureValid(bar.getSuperClass());
+  }
+
+  public void testLoadingNodeDuringCommitWithoutReparse_Stress() {
+    // it's a stress test to disable test checks that load file content prematurely (AbstractFileViewProvider.checkLengthConsistency)
+    PsiFile file = myFixture.addFileToProject("a.java", "class Foo {}");
+
+    myFixture.getPsiManager().addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
+      @Override
+      public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
+        PsiElement parent = event.getParent();
+        if (parent == file) {
+          assertNotNull(file.getNode());
+        }
+      }
+    }, getTestRootDisposable());
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      Document document = file.getViewProvider().getDocument();
+      document.insertString(0, " ");
+      ((PsiDocumentManagerImpl)PsiDocumentManager.getInstance(getProject())).doCommitWithoutReparse(document);
+    });
+
+    assertEquals(" class Foo {}", file.getText());
   }
 }

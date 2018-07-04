@@ -16,38 +16,7 @@
 package com.intellij.util.io;
 
 import java.io.Closeable;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class ResourceHandle<T> implements Closeable {
-  private final T myResource;
-  private final AtomicInteger myRefCount = new AtomicInteger(1);
-
-  public ResourceHandle(T resource) {
-    myResource = resource;
-  }
-
-  public void allocate() {
-    myRefCount.incrementAndGet();
-  }
-
-  public final void release() {
-    if (myRefCount.decrementAndGet() == 0) {
-      disposeResource();
-    }
-  }
-
-  public T get() {
-    return myResource;
-  }
-
-  public int getRefCount() {
-    return myRefCount.get();
-  }
-
-  protected abstract void disposeResource();
-
-  @Override
-  public void close() {
-    release();
-  }
+  public abstract T get();
 }

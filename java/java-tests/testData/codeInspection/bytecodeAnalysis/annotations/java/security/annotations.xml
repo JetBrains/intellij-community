@@ -86,11 +86,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.security.Policy boolean isSet()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
     <item name='java.security.Policy java.lang.String getType()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -396,6 +391,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.security.Security java.io.File securityPropFile(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.security.Security java.io.File securityPropFile(java.lang.String) 0'>

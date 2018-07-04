@@ -21,11 +21,16 @@
       <option name="SEPARATOR_ABOVE_COLOR" value=""/>
       <option name="SEPARATOR_BELOW_COLOR" value="e4e4e4"/>
       <option name="READONLY_FRAGMENT_BACKGROUND" value="cfe7ff"/>
+      <option name="VISUAL_INDENT_GUIDE" value="eeeeee"/>
+      <option name="FOLDED_TEXT_BORDER_COLOR" value="add9c7"/>
 
       <option name="ADDED_LINES_COLOR" value="c9dec1" deuteranopia="99ca90" protanopia="99ca90"/>
       <option name="MODIFIED_LINES_COLOR" value="c3d6e8" deuteranopia="9ca9bf" protanopia="9ca9bf"/>
       <option name="DELETED_LINES_COLOR" value="9f9f9f" deuteranopia="7f7f7f" protanopia="7f7f7f"/>
       <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="eddcbc" deuteranopia="c5cad4" protanopia="c5cad4"/>
+      <option name="IGNORED_ADDED_LINES_BORDER_COLOR" value="a0c495"/>
+      <option name="IGNORED_MODIFIED_LINES_BORDER_COLOR" value="95b2ce"/>
+      <option name="IGNORED_DELETED_LINES_BORDER_COLOR" value="9f9f9f"/>
       <option name="CONSOLE_BACKGROUND_KEY" value="ffffff" />
       <option name="DIFF_SEPARATORS_BACKGROUND" value="D9D9D9"/>
       <option name="DIFF_SEPARATORS_TOP_BORDER" value="C8C8C8"/>
@@ -115,6 +120,18 @@
       </option>
       <option name="DEFAULT_PARAMETER">
         <value/>
+      </option>
+      <option name="DEFAULT_REASSIGNED_PARAMETER">
+        <value>
+          <option name="EFFECT_COLOR" value="909090"/>
+          <option name="EFFECT_TYPE" value="1"/>
+        </value>
+      </option>
+      <option name="DEFAULT_REASSIGNED_LOCAL_VARIABLE">
+        <value>
+          <option name="EFFECT_COLOR" value="909090"/>
+          <option name="EFFECT_TYPE" value="1"/>
+        </value>
       </option>
       <option name="DEFAULT_STATIC_METHOD">
         <value>
@@ -291,6 +308,13 @@
           <option name="ERROR_STRIPE_COLOR" value="cf5b56" deuteranopia="d95716" protanopia="d95716"/>
         </value>
       </option>
+      <option name="RUNTIME_ERROR">
+        <value>
+          <option name="EFFECT_COLOR" value="f49810" />
+          <option name="ERROR_STRIPE_COLOR" value="cf5b56" />
+          <option name="EFFECT_TYPE" value="5" />
+        </value>
+      </option>
       <option name="BLINKING_HIGHLIGHTS_ATTRIBUTES">
         <value>
           <option name="FOREGROUND"/>
@@ -428,8 +452,14 @@
       </option>
       <option name="INLINE_PARAMETER_HINT_HIGHLIGHTED">
         <value>
-          <option name="FOREGROUND" value="ffffff"/>
-          <option name="BACKGROUND" value="787878"/>
+          <option name="FOREGROUND" value="5b5b5b"/>
+          <option name="BACKGROUND" value="cccccc"/>
+        </value>
+      </option>
+      <option name="INLINE_PARAMETER_HINT_CURRENT">
+        <value>
+          <option name="FOREGROUND" value="5b5b5b"/>
+          <option name="BACKGROUND" value="bcdaf7"/>
         </value>
       </option>
       <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
@@ -746,6 +776,12 @@
           <option name="EFFECT_TYPE" value="3"/>
         </value>
       </option>
+      <option name="MARKED_FOR_REMOVAL_ATTRIBUTES">
+        <value>
+          <option name="EFFECT_COLOR" value="ff0000"/>
+          <option name="EFFECT_TYPE" value="3"/>
+        </value>
+      </option>
 
       <option name="XML_PROLOGUE">
         <value>
@@ -772,6 +808,21 @@
         <value>
           <option name="FOREGROUND" value="7f0000" deuteranopia="d95716" protanopia="d95716"/>
           <option name="FONT_TYPE" deuteranopia="bold" protanopia="bold"/>
+        </value>
+      </option>
+      <option name="LOG_DEBUG_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="00cccc"/>
+        </value>
+      </option>
+      <option name="LOG_VERBOSE_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="0000ee"/>
+        </value>
+      </option>
+      <option name="LOG_INFO_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="00cd00"/>
         </value>
       </option>
       <option name="LOG_WARNING_OUTPUT">
@@ -1085,6 +1136,9 @@
       <option name="ADDED_LINES_COLOR" value="384C38" deuteranopia="355237" protanopia="355237"/>
       <option name="MODIFIED_LINES_COLOR" value="374752" deuteranopia="345a67" protanopia="345a67"/>
       <option name="DELETED_LINES_COLOR" value="656e76"/>
+      <option name="IGNORED_ADDED_LINES_BORDER_COLOR" value="4c674c"/>
+      <option name="IGNORED_MODIFIED_LINES_BORDER_COLOR" value="455663"/>
+      <option name="IGNORED_DELETED_LINES_BORDER_COLOR" value="656e76"/>
       <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="4c4638" deuteranopia="34434d" protanopia="34434d"/>
 
       <option name="ANNOTATIONS_COLOR" value="8b999f" />
@@ -1126,6 +1180,8 @@
       <option name="DIFF_SEPARATORS_TOP_BORDER" value="1E1E1E"/>
       <option name="DIFF_SEPARATORS_BACKGROUND" value="232323"/>
       <option name="DIFF_SEPARATORS_BOTTOM_BORDER" value="222222"/>
+      <option name="VISUAL_INDENT_GUIDE" value="3c3c3c"/>
+      <option name="FOLDED_TEXT_BORDER_COLOR" value="43474a"/>
 
       <option name="VCS_ANNOTATIONS_COLOR_1" value="464c43"/>
       <option name="VCS_ANNOTATIONS_COLOR_2" value="444342"/>
@@ -1169,6 +1225,7 @@
       <option name="BREAKPOINT_ATTRIBUTES">
         <value>
           <option name="BACKGROUND" value="3a2323" deuteranopia="42372b" protanopia="42372b"/>
+          <option name="ERROR_STRIPE_COLOR" value="664233" />
         </value>
       </option>
       <option name="COFFEESCRIPT.GLOBAL_VARIABLE">
@@ -1508,6 +1565,18 @@
           <option name="FOREGROUND" value="cc7832" deuteranopia="5c7ab8" protanopia="5c7ab8"/>
         </value>
       </option>
+      <option name="DEFAULT_REASSIGNED_PARAMETER">
+        <value>
+          <option name="EFFECT_COLOR" value="707d95" />
+          <option name="EFFECT_TYPE" value="1" />
+        </value>
+      </option>
+      <option name="DEFAULT_REASSIGNED_LOCAL_VARIABLE">
+        <value>
+          <option name="EFFECT_COLOR" value="707d95" />
+          <option name="EFFECT_TYPE" value="1" />
+        </value>
+      </option>
       <option name="DELETED_TEXT_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="bbbbbb" />
@@ -1522,6 +1591,13 @@
           <option name="EFFECT_TYPE" value="3" />
         </value>
       </option>
+      <option name="MARKED_FOR_REMOVAL_ATTRIBUTES">
+        <value>
+          <option name="EFFECT_COLOR" value="bc3f3c" deuteranopia="e57132" protanopia="e57132"/>
+          <option name="EFFECT_TYPE" value="3"/>
+        </value>
+      </option>
+
       <option name="DIFF_CONFLICT">
         <value>
           <option name="BACKGROUND" value="45302b" deuteranopia="453900" protanopia="453900"/>
@@ -1563,6 +1639,13 @@
           <option name="ERROR_STRIPE_COLOR" value="9e2927" deuteranopia="ff8f40" protanopia="ff8f40"/>
         </value>
       </option>
+      <option name="RUNTIME_ERROR">
+        <value>
+          <option name="EFFECT_COLOR" value="f49810"/>
+          <option name="EFFECT_TYPE" value="5" />
+          <option name="ERROR_STRIPE_COLOR" value="9e2927"/>
+        </value>
+      </option>
       <option name="EXECUTIONPOINT_ATTRIBUTES">
         <value>
           <option name="BACKGROUND" value="2d6099" />
@@ -1570,7 +1653,7 @@
       </option>
       <option name="NOT_TOP_FRAME_ATTRIBUTES">
         <value>
-          <option name="BACKGROUND" value="243040"/>
+          <option name="BACKGROUND" value="2f3f55"/>
         </value>
       </option>
       <option name="EVALUATED_EXPRESSION_ATTRIBUTES">
@@ -1693,8 +1776,14 @@
       </option>
       <option name="INLINE_PARAMETER_HINT_HIGHLIGHTED">
         <value>
-          <option name="FOREGROUND" value="1d1d1d"/>
-          <option name="BACKGROUND" value="7a7a7a"/>
+          <option name="FOREGROUND" value="acacac"/>
+          <option name="BACKGROUND" value="4d4d4d"/>
+        </value>
+      </option>
+      <option name="INLINE_PARAMETER_HINT_CURRENT">
+        <value>
+          <option name="FOREGROUND" value="acacac"/>
+          <option name="BACKGROUND" value="305d78"/>
         </value>
       </option>
       <option name="IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES">
@@ -1732,11 +1821,6 @@
           <option name="FONT_TYPE" value="1" />
         </value>
       </option>
-      <option name="JSP_SCRIPTING_BACKGROUND">
-        <value>
-          <option name="FOREGROUND" value="cc7832" deuteranopia="597cc2" protanopia="597cc2"/>
-        </value>
-      </option>
       <option name="LESS_VARIABLE">
         <value>
           <option name="FOREGROUND" value="d0d0ff" />
@@ -1766,6 +1850,21 @@
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR" value="ff0000"/>
           <option name="EFFECT_TYPE" value="0"/>
+        </value>
+      </option>
+      <option name="LOG_DEBUG_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="299999"/>
+        </value>
+      </option>
+      <option name="LOG_VERBOSE_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="5394ec"/>
+        </value>
+      </option>
+      <option name="LOG_INFO_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="abc023"/>
         </value>
       </option>
       <option name="LOG_WARNING_OUTPUT">
@@ -1909,7 +2008,7 @@
       <option name="SEARCH_RESULT_ATTRIBUTES">
         <value>
           <option name="BACKGROUND" value="155221" deuteranopia="404861" protanopia="404861"/>
-          <option name="ERROR_STRIPE_COLOR" deuteranopia="4b6f99" protanopia="4b6f99"/>
+          <option name="ERROR_STRIPE_COLOR" value="00530d" deuteranopia="4b6f99" protanopia="4b6f99"/>
         </value>
       </option>
       <option name="SPY-JS.FUNCTION_SCOPE">
@@ -2077,7 +2176,7 @@
       <option name="WRITE_SEARCH_RESULT_ATTRIBUTES">
         <value>
           <option name="BACKGROUND" value="532b2e" deuteranopia="2f4794" protanopia="2f4794"/>
-          <option name="ERROR_STRIPE_COLOR" deuteranopia="5fcc" protanopia="5fcc"/>
+          <option name="ERROR_STRIPE_COLOR" value="8d4457" deuteranopia="5fcc" protanopia="5fcc"/>
         </value>
       </option>
       <option name="WRONG_REFERENCES_ATTRIBUTES">

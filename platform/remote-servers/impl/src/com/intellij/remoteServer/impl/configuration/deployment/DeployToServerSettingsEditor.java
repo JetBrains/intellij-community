@@ -45,51 +45,45 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author nik
  */
-public class DeployToServerSettingsEditor<S extends ServerConfiguration, D extends DeploymentConfiguration>
+public abstract class DeployToServerSettingsEditor<S extends ServerConfiguration, D extends DeploymentConfiguration>
   extends SettingsEditor<DeployToServerRunConfiguration<S, D>> {
 
   private final DeploymentConfigurator<D, S> myDeploymentConfigurator;
   private final Project myProject;
   private final WithAutoDetectCombo<S> myServerCombo;
-  private final ComboBox<DeploymentSource> mySourceComboBox;
-  private final SortedComboBoxModel<DeploymentSource> mySourceListModel;
   private final JPanel myDeploymentSettingsComponent;
   private SettingsEditor<D> myDeploymentSettingsEditor;
   private DeploymentSource myLastSelectedSource;
   private RemoteServer<S> myLastSelectedServer;
 
-  public DeployToServerSettingsEditor(final ServerType<S> type, DeploymentConfigurator<D, S> deploymentConfigurator, Project project) {
+  public DeployToServerSettingsEditor(@NotNull ServerType<S> type,
+                                      @NotNull DeploymentConfigurator<D, S> deploymentConfigurator,
+                                      @NotNull Project project) {
+
     myDeploymentConfigurator = deploymentConfigurator;
     myProject = project;
 
     myServerCombo = new WithAutoDetectCombo<>(type);
+    Disposer.register(this, myServerCombo);
     myServerCombo.addChangeListener(e -> updateDeploymentSettingsEditor());
 
-    mySourceListModel = new SortedComboBoxModel<>((o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
-    mySourceListModel.addAll(deploymentConfigurator.getAvailableDeploymentSources());
-    mySourceComboBox = new ComboBox<>(mySourceListModel);
-    mySourceComboBox.setRenderer(new ListCellRendererWrapper<DeploymentSource>() {
-      @Override
-      public void customize(JList list, DeploymentSource value, int index, boolean selected, boolean hasFocus) {
-        if (value == null) return;
-        setIcon(value.getIcon());
-        setText(value.getPresentableName());
-      }
-    });
-
     myDeploymentSettingsComponent = new JPanel(new BorderLayout());
-    mySourceComboBox.addActionListener(e -> updateDeploymentSettingsEditor());
   }
 
-  private void updateDeploymentSettingsEditor() {
+  protected abstract DeploymentSource getSelectedSource();
+
+  protected abstract void resetSelectedSourceFrom(@NotNull DeployToServerRunConfiguration<S, D> configuration);
+
+  protected final void updateDeploymentSettingsEditor() {
     RemoteServer<S> selectedServer = myServerCombo.getSelectedServer();
-    DeploymentSource selectedSource = mySourceListModel.getSelectedItem();
+    DeploymentSource selectedSource = getSelectedSource();
     if (Comparing.equal(selectedSource, myLastSelectedSource) && Comparing.equal(selectedServer, myLastSelectedServer)) {
       return;
     }
@@ -120,7 +114,8 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
   @Override
   protected void resetEditorFrom(@NotNull DeployToServerRunConfiguration<S, D> configuration) {
     myServerCombo.selectServerInCombo(configuration.getServerName());
-    mySourceComboBox.setSelectedItem(configuration.getDeploymentSource());
+    resetSelectedSourceFrom(configuration);
+
     D deploymentConfiguration = configuration.getDeploymentConfiguration();
     updateDeploymentSettingsEditor();
     if (deploymentConfiguration != null && myDeploymentSettingsEditor != null) {
@@ -135,7 +130,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
     myServerCombo.validateAutoDetectedItem();
 
     configuration.setServerName(Optional.ofNullable(myServerCombo.getSelectedServer()).map(RemoteServer::getName).orElse(null));
-    DeploymentSource deploymentSource = mySourceListModel.getSelectedItem();
+    DeploymentSource deploymentSource = getSelectedSource();
     configuration.setDeploymentSource(deploymentSource);
 
     if (deploymentSource != null) {
@@ -156,11 +151,86 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
   @NotNull
   @Override
   protected JComponent createEditor() {
-    return FormBuilder.createFormBuilder()
-      .addLabeledComponent("Server:", myServerCombo)
-      .addLabeledComponent("Deployment:", mySourceComboBox)
+    FormBuilder builder = FormBuilder.createFormBuilder()
+      .addLabeledComponent("Server:", myServerCombo);
+
+    addDeploymentSourceUi(builder);
+
+    return builder
       .addComponentFillVertically(myDeploymentSettingsComponent, UIUtil.DEFAULT_VGAP)
       .getPanel();
+  }
+
+  protected abstract void addDeploymentSourceUi(FormBuilder formBuilder);
+
+  public static class AnySource<S extends ServerConfiguration, D extends DeploymentConfiguration>
+    extends DeployToServerSettingsEditor<S, D> {
+
+    private final ComboBox<DeploymentSource> mySourceComboBox;
+    private final SortedComboBoxModel<DeploymentSource> mySourceListModel;
+
+    public AnySource(ServerType<S> type, DeploymentConfigurator<D, S> deploymentConfigurator, Project project) {
+      super(type, deploymentConfigurator, project);
+
+      mySourceListModel = new SortedComboBoxModel<>(
+        Comparator.comparing(DeploymentSource::getPresentableName, String.CASE_INSENSITIVE_ORDER));
+
+      mySourceListModel.addAll(deploymentConfigurator.getAvailableDeploymentSources());
+      mySourceComboBox = new ComboBox<>(mySourceListModel);
+      mySourceComboBox.setRenderer(new ListCellRendererWrapper<DeploymentSource>() {
+        @Override
+        public void customize(JList list, DeploymentSource value, int index, boolean selected, boolean hasFocus) {
+          if (value == null) return;
+          setIcon(value.getIcon());
+          setText(value.getPresentableName());
+        }
+      });
+      mySourceComboBox.addActionListener(e -> updateDeploymentSettingsEditor());
+    }
+
+    @Override
+    protected DeploymentSource getSelectedSource() {
+      return mySourceListModel.getSelectedItem();
+    }
+
+    @Override
+    protected void resetSelectedSourceFrom(@NotNull DeployToServerRunConfiguration<S, D> configuration) {
+      mySourceComboBox.setSelectedItem(configuration.getDeploymentSource());
+    }
+
+    @Override
+    protected void addDeploymentSourceUi(FormBuilder formBuilder) {
+      formBuilder.addLabeledComponent("Deployment:", mySourceComboBox);
+    }
+  }
+
+  public static class LockedSource<S extends ServerConfiguration, D extends DeploymentConfiguration>
+    extends DeployToServerSettingsEditor<S, D> {
+
+    private final DeploymentSource myLockedSource;
+
+    public LockedSource(@NotNull ServerType<S> type,
+                        @NotNull DeploymentConfigurator<D, S> deploymentConfigurator,
+                        @NotNull Project project,
+                        @NotNull DeploymentSource lockedSource) {
+      super(type, deploymentConfigurator, project);
+      myLockedSource = lockedSource;
+    }
+
+    @Override
+    protected void addDeploymentSourceUi(FormBuilder formBuilder) {
+      //
+    }
+
+    @Override
+    protected void resetSelectedSourceFrom(@NotNull DeployToServerRunConfiguration<S, D> configuration) {
+      assert configuration.getDeploymentSource() == myLockedSource;
+    }
+
+    @Override
+    protected DeploymentSource getSelectedSource() {
+      return myLockedSource;
+    }
   }
 
   private static class WithAutoDetectCombo<S extends ServerConfiguration> extends RemoteServerCombo<S> {
@@ -276,7 +346,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
         }
       }
 
-      private void connectionTested(boolean wasConnected, String errorStatus) {
+      private void connectionTested(boolean wasConnected, @SuppressWarnings("unused") String errorStatus) {
         assert myLastStartedTestConnectionMillis > 0;
         waitABit(2000);
 
@@ -286,8 +356,10 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
         if (wasConnected) {
           setTestConnectionState(TestConnectionState.SUCCESSFUL);
           UIUtil.invokeLaterIfNeeded(() -> {
-            RemoteServersManager.getInstance().addServer(testedServer);
-            refillModel(testedServer);
+            if (!Disposer.isDisposed(WithAutoDetectCombo.this)) {
+              RemoteServersManager.getInstance().addServer(testedServer);
+              refillModel(testedServer);
+            }
           });
         }
         else {

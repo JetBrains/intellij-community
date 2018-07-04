@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.javaee;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,7 +14,6 @@ import com.intellij.ui.AddEditRemovePanel;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,8 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ExternalResourceConfigurable extends BaseConfigurable
-  implements Configurable.NoScroll {
+public class ExternalResourceConfigurable extends BaseConfigurable implements Configurable.NoScroll {
   private JPanel myPanel;
   private List<NameLocationPair> myPairs;
   private List<String> myIgnoredUrls;
@@ -163,10 +147,7 @@ public class ExternalResourceConfigurable extends BaseConfigurable
         }
       }
 
-      for (Object myIgnoredUrl : myIgnoredUrls) {
-        String url = (String)myIgnoredUrl;
-        manager.addIgnoredResource(url);
-      }
+      manager.addIgnoredResources(myIgnoredUrls, null);
     });
 
     setModified(false);
@@ -283,8 +264,9 @@ public class ExternalResourceConfigurable extends BaseConfigurable
         } else {
           path = LocalFileSystem.getInstance().findFileByPath(loc);
         }
-
-        setForeground(path != null ? isSelected ? UIUtil.getTableSelectionForeground() : Color.black : new Color(210, 0, 0));
+        if (path == null) {
+          setForeground(new Color(210, 0, 0));
+        }
       }
       return rendererComponent;
     }
@@ -301,21 +283,6 @@ public class ExternalResourceConfigurable extends BaseConfigurable
     @Override
     public Object getField(String o, int columnIndex) {
       return o;
-    }
-
-    @Override
-    public Class getColumnClass(int columnIndex) {
-      return String.class;
-    }
-
-    @Override
-    public boolean isEditable(int column) {
-      return false;
-    }
-
-    @Override
-    public void setValue(Object aValue, String data, int columnIndex) {
-
     }
 
     @Override

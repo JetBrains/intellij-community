@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.ui;
 
 import com.intellij.find.FindSettings;
@@ -58,7 +46,6 @@ import java.util.List;
 
 /**
  * @author anna
- * Date: 25-Mar-2008
  */
 public abstract class TypeMigrationDialog extends RefactoringDialog {
   private static final Logger LOG = Logger.getInstance(TypeMigrationDialog.class);
@@ -70,8 +57,8 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
   private final ScopeChooserCombo myScopeChooserCombo;
 
   public TypeMigrationDialog(@NotNull Project project,
-                             PsiElement[] roots,
-                             TypeMigrationRules rules) {
+                             @NotNull PsiElement[] roots,
+                             @Nullable TypeMigrationRules rules) {
     super(project, false);
     myRoots = roots;
     myRules = rules;
@@ -95,7 +82,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     }
     FindSettings.getInstance().setDefaultScopeName(myScopeChooserCombo.getSelectedScopeName());
     if (myRules == null) {
-      myRules = new TypeMigrationRules();
+      myRules = new TypeMigrationRules(getProject());
       myRules.setBoundScope(myScopeChooserCombo.getSelectedScope());
     }
     invokeRefactoring(new TypeMigrationProcessor(myProject, myRoots, getMigrationTypeFunction(), myRules, true));
@@ -134,7 +121,10 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
   public static class MultipleElements extends TypeMigrationDialog {
     private final Function<PsiElement, PsiType> myMigrationTypeFunction;
 
-    public MultipleElements(@NotNull Project project, PsiElement[] roots, Function<PsiElement, PsiType> migrationTypeFunction, TypeMigrationRules rules) {
+    public MultipleElements(@NotNull Project project,
+                            @NotNull PsiElement[] roots,
+                            @NotNull Function<PsiElement, PsiType> migrationTypeFunction,
+                            @NotNull TypeMigrationRules rules) {
       super(project, roots, rules);
       myMigrationTypeFunction = migrationTypeFunction;
       init();
@@ -152,14 +142,11 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
     private final EditorComboBox myToTypeEditor;
 
     public SingleElement(@NotNull Project project,
-                         PsiElement[] roots,
-                         PsiType migrationType,
-                         TypeMigrationRules rules) {
-      super(project, roots, rules);
+                         @NotNull PsiElement[] roots) {
+      super(project, roots, null);
       LOG.assertTrue(roots.length > 0);
       final PsiType rootType = getRootType();
-      final String text = migrationType != null ? migrationType.getCanonicalText(true) :
-                          rootType != null ? rootType.getCanonicalText(true) : "";
+      final String text = rootType != null ? rootType.getCanonicalText(true) : "";
       int flags = 0;
       PsiElement root = roots[0];
       if (root instanceof PsiParameter) {
@@ -226,7 +213,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
         }
       }
       try {
-        final PsiExpression[] occurrences = expressions.toArray(new PsiExpression[expressions.size()]);
+        final PsiExpression[] occurrences = expressions.toArray(PsiExpression.EMPTY_ARRAY);
         final PsiType[] psiTypes = new TypeSelectorManagerImpl(project, myTypeCodeFragment.getType(), occurrences).getTypesForAll();
         if (psiTypes.length > 0) {
           final String[] history = new String[psiTypes.length];

@@ -23,8 +23,13 @@ public class PySearchableOptionContributor extends SearchableOptionContributor {
   @Override
   public void processOptions(@NotNull SearchableOptionProcessor processor) {
     processIntegratedTools(processor);
-
     processProjectSettings(processor);
+    processScientific(processor);
+  }
+
+  private static void processScientific(@NotNull final SearchableOptionProcessor processor) {
+    String id = "PyScientificConfigurable";
+    processor.addOptions("matplotlib", null, null, id, null, true);
   }
 
   private static void processProjectSettings(SearchableOptionProcessor processor) {
@@ -70,5 +75,7 @@ public class PySearchableOptionContributor extends SearchableOptionContributor {
                          configurableId, displayName, false);
     processor.addOptions("Attests", displayName, "Default test runner",
                          configurableId, displayName, false);
+    processor.addOptions("Path to Pipenv executable", displayName, "Path to Pipenv executable",
+                         configurableId, displayName, true);
   }
 }

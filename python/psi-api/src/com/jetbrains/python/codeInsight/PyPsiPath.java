@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,8 +12,16 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public abstract class PyPsiPath {
+
+  /**
+   * Resolves psi path in specified context.
+   *
+   * @param context        psi element to be used as psi context
+   * @param resolveContext context to be used in resolve
+   * @return resolved element
+   */
   @Nullable
-  public abstract PsiElement resolve(PsiElement module);
+  public abstract PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext);
 
   public static class ToFile extends PyPsiPath {
     private final QualifiedName myQualifiedName;
@@ -37,7 +32,7 @@ public abstract class PyPsiPath {
 
     @Nullable
     @Override
-    public PsiElement resolve(PsiElement context) {
+    public PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
       final PyPsiFacade facade = PyPsiFacade.getInstance(context.getProject());
       return facade.resolveQualifiedName(myQualifiedName, facade.createResolveContextFromFoothold(context))
         .stream().findFirst().orElse(null);
@@ -53,7 +48,7 @@ public abstract class PyPsiPath {
 
     @Nullable
     @Override
-    public PsiElement resolve(PsiElement context) {
+    public PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
       return PyPsiFacade.getInstance(context.getProject()).findClass(myQualifiedName.toString());
     }
   }
@@ -68,24 +63,27 @@ public abstract class PyPsiPath {
     }
 
     @Override
-    public PsiElement resolve(PsiElement context) {
-      PsiElement parent = myParent.resolve(context);
+    public PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
+      final PsiElement parent = myParent.resolve(context, resolveContext);
       if (parent == null) {
         return null;
       }
       if (parent instanceof PyFile) {
         return ((PyFile) parent).findTopLevelClass(myClassName);
       }
-      if (parent instanceof PyClass) {
-        for (PsiElement element : parent.getChildren()) {
-          if (element instanceof PyClass && myClassName.equals(((PyClass)element).getName())) {
-            return element;
+      if (resolveContext.getTypeEvalContext().maySwitchToAST(parent)) {
+        if (parent instanceof PyClass) {
+          for (PsiElement element : parent.getChildren()) {
+            if (element instanceof PyClass && myClassName.equals(((PyClass)element).getName())) {
+              return element;
+            }
           }
         }
+        final ClassFinder finder = new ClassFinder(myClassName);
+        parent.acceptChildren(finder);
+        return finder.myResult != null ? finder.myResult : parent;
       }
-      ClassFinder finder = new ClassFinder(myClassName);
-      parent.acceptChildren(finder);
-      return finder.myResult != null ? finder.myResult : parent;
+      return parent;
     }
   }
 
@@ -116,8 +114,8 @@ public abstract class PyPsiPath {
     }
 
     @Override
-    public PsiElement resolve(PsiElement context) {
-      PsiElement parent = myParent.resolve(context);
+    public PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
+      final PsiElement parent = myParent.resolve(context, resolveContext);
       if (parent == null) {
         return null;
       }
@@ -125,11 +123,13 @@ public abstract class PyPsiPath {
         return ((PyFile) parent).findTopLevelFunction(myFunctionName);
       }
       if (parent instanceof PyClass) {
-        return ((PyClass) parent).findMethodByName(myFunctionName, false, null);
+        return ((PyClass) parent).findMethodByName(myFunctionName, false, resolveContext.getTypeEvalContext());
       }
-      for (PsiElement element : parent.getChildren()) {
-        if (element instanceof PyFunction && myFunctionName.equals(((PyFunction)element).getName())) {
-          return element;
+      if (resolveContext.getTypeEvalContext().maySwitchToAST(parent)) {
+        for (PsiElement element : parent.getChildren()) {
+          if (element instanceof PyFunction && myFunctionName.equals(((PyFunction)element).getName())) {
+            return element;
+          }
         }
       }
       return parent;
@@ -163,12 +163,12 @@ public abstract class PyPsiPath {
     }
 
     @Override
-    public PsiElement resolve(PsiElement context) {
-      PsiElement parent = myParent.resolve(context);
-      if (parent == null) {
+    public PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
+      final PsiElement parent = myParent.resolve(context, resolveContext);
+      if (parent == null || !resolveContext.getTypeEvalContext().maySwitchToAST(parent)) {
         return null;
       }
-      FunctionFinder finder = new FunctionFinder(myFunctionName);
+      final FunctionFinder finder = new FunctionFinder(myFunctionName);
       parent.acceptChildren(finder);
       return finder.myResult != null ? finder.myResult : parent;
     }
@@ -184,12 +184,12 @@ public abstract class PyPsiPath {
     }
 
     @Override
-    public PsiElement resolve(PsiElement context) {
-      PsiElement parent = myParent.resolve(context);
+    public PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
+      final PsiElement parent = myParent.resolve(context, resolveContext);
       if (!(parent instanceof PyClass)) {
         return null;
       }
-      return ((PyClass)parent).findClassAttribute(myAttributeName, true, null);
+      return ((PyClass)parent).findClassAttribute(myAttributeName, true, resolveContext.getTypeEvalContext());
     }
   }
 
@@ -205,12 +205,12 @@ public abstract class PyPsiPath {
     }
 
     @Override
-    public PsiElement resolve(PsiElement context) {
-      PsiElement parent = myParent.resolve(context);
-      if (parent == null) {
+    public PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
+      final PsiElement parent = myParent.resolve(context, resolveContext);
+      if (parent == null || !resolveContext.getTypeEvalContext().maySwitchToAST(parent)) {
         return null;
       }
-      CallFinder finder = new CallFinder(myCallName, myArgs);
+      final CallFinder finder = new CallFinder(myCallName, myArgs);
       parent.accept(finder);
       return finder.myResult != null ? finder.myResult : parent;
     }
@@ -235,7 +235,7 @@ public abstract class PyPsiPath {
 
       final PyExpression callee = node.getCallee();
       if (callee instanceof PyReferenceExpression) {
-        String calleeName = ((PyReferenceExpression) callee).getReferencedName();
+        final String calleeName = ((PyReferenceExpression) callee).getReferencedName();
         if (myCallName.equals(calleeName)) {
           final PyExpression[] args = node.getArguments();
           if (myArgs.length <= args.length) {
@@ -267,12 +267,12 @@ public abstract class PyPsiPath {
 
     @Nullable
     @Override
-    public PsiElement resolve(PsiElement context) {
-      PsiElement parent = myParent.resolve(context);
-      if (parent == null) {
+    public PsiElement resolve(@NotNull PsiElement context, @NotNull PyResolveContext resolveContext) {
+      final PsiElement parent = myParent.resolve(context, resolveContext);
+      if (parent == null || !resolveContext.getTypeEvalContext().maySwitchToAST(parent)) {
         return null;
       }
-      AssignmentFinder finder = new AssignmentFinder(myAssignee);
+      final AssignmentFinder finder = new AssignmentFinder(myAssignee);
       parent.accept(finder);
       return finder.myResult != null ? finder.myResult : parent;
     }
@@ -288,7 +288,7 @@ public abstract class PyPsiPath {
 
     @Override
     public void visitPyAssignmentStatement(PyAssignmentStatement node) {
-      PyExpression lhs = node.getLeftHandSideExpression();
+      final PyExpression lhs = node.getLeftHandSideExpression();
       if (lhs != null && myAssignee.equals(lhs.getText())) {
         myResult = node;
       }

@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -34,7 +32,8 @@ import java.util.*;
 
 public abstract class SdkType implements SdkTypeId {
   public static final ExtensionPointName<SdkType> EP_NAME = ExtensionPointName.create("com.intellij.sdkType");
-  public static final Comparator<Sdk> ALPHABETICAL_COMPARATOR = (sdk1, sdk2) -> StringUtil.compare(sdk1.getName(), sdk2.getName(), true);
+
+  private static final Comparator<Sdk> ALPHABETICAL_COMPARATOR = (sdk1, sdk2) -> StringUtil.compare(sdk1.getName(), sdk2.getName(), true);
 
   private final String myName;
 
@@ -84,19 +83,16 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   @Nullable
-  public String getVersionString(String sdkHome){
+  public String getVersionString(String sdkHome) {
     return null;
   }
 
   public abstract String suggestSdkName(String currentSdkName, String sdkHome);
 
-  public void setupSdkPaths(@NotNull Sdk sdk) {}
-
   /**
-   * Returns comparator which is used to order sdks in project or module settings combo boxes.
-   * If different sdk types return the same comparator instance then they are sorted together.
+   * Returns a comparator used to order SDKs in project or module settings combo boxes.
+   * When different SDK types return the same comparator instance, they are sorted together.
    */
-
   @NotNull
   public Comparator<Sdk> getComparator() {
     return ALPHABETICAL_COMPARATOR;
@@ -107,8 +103,10 @@ public abstract class SdkType implements SdkTypeId {
     return true;
   }
 
+  public void setupSdkPaths(@NotNull Sdk sdk) {}
+
   /**
-   * @return Configurable object for the sdk's additional data or null if not applicable
+   * @return Configurable object for the SDKs additional data or null if not applicable
    */
   @Nullable
   public abstract AdditionalDataConfigurable createAdditionalDataConfigurable(@NotNull SdkModel sdkModel, @NotNull SdkModificator sdkModificator);
@@ -152,7 +150,7 @@ public abstract class SdkType implements SdkTypeId {
     if (this == o) return true;
     if (!(o instanceof SdkType)) return false;
 
-    final SdkType sdkType = (SdkType)o;
+    SdkType sdkType = (SdkType)o;
 
     if (!myName.equals(sdkType.myName)) return false;
 
@@ -171,13 +169,13 @@ public abstract class SdkType implements SdkTypeId {
 
   @NotNull
   public FileChooserDescriptor getHomeChooserDescriptor() {
-    final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
+    FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
       @Override
       public void validateSelectedFiles(VirtualFile[] files) throws Exception {
-        if (files.length != 0){
-          final String selectedPath = files[0].getPath();
+        if (files.length != 0) {
+          String selectedPath = files[0].getPath();
           boolean valid = isValidSdkHome(selectedPath);
-          if (!valid){
+          if (!valid) {
             valid = isValidSdkHome(adjustSelectedSdkHome(selectedPath));
             if (!valid) {
               String message = files[0].isDirectory()
@@ -193,14 +191,13 @@ public abstract class SdkType implements SdkTypeId {
     return descriptor;
   }
 
-
   @NotNull
   public String getHomeFieldLabel() {
     return ProjectBundle.message("sdk.configure.type.home.path", getPresentableName());
   }
 
   @Nullable
-  public String getDefaultDocumentationUrl(@NotNull final Sdk sdk) {
+  public String getDefaultDocumentationUrl(@NotNull Sdk sdk) {
     return null;
   }
 
@@ -212,20 +209,28 @@ public abstract class SdkType implements SdkTypeId {
   @NotNull
   public static SdkType[] getAllTypes() {
     List<SdkType> allTypes = new ArrayList<>();
+    //noinspection deprecation
     Collections.addAll(allTypes, ApplicationManager.getApplication().getComponents(SdkType.class));
     Collections.addAll(allTypes, Extensions.getExtensions(EP_NAME));
-    return allTypes.toArray(new SdkType[allTypes.size()]);
+    return allTypes.toArray(new SdkType[0]);
   }
 
   @NotNull
   public static <T extends SdkType> T findInstance(@NotNull Class<T> sdkTypeClass) {
     for (SdkType sdkType : Extensions.getExtensions(EP_NAME)) {
       if (sdkTypeClass.equals(sdkType.getClass())) {
-        //noinspection unchecked
-        return (T)sdkType;
+        return sdkTypeClass.cast(sdkType);
       }
     }
-    assert false;
+    throw new IllegalArgumentException("Unknown SDk type: " + sdkTypeClass);
+  }
+
+  /**
+   * @return for sdk build over another sdk, returns type of the nested sdk, 
+   *         e.g. plugins or android sdks are build over java sdk and for them the method returns {@link JavaSdkType},
+   *         null otherwise
+   */
+  public SdkType getDependencyType() {
     return null;
   }
 
@@ -248,24 +253,26 @@ public abstract class SdkType implements SdkTypeId {
    * Shows the custom SDK create UI based on selected SDK in parent component. The returned SDK needs to have the correct name and home path;
    * the framework will call setupSdkPaths() on the returned SDK.
    *
-   * @param sdkModel the list of SDKs currently displayed in the configuration dialog.
-   * @param parentComponent the parent component for showing the dialog.
-   * @param selectedSdk current selected sdk in parentComponent
+   * @param sdkModel           the list of SDKs currently displayed in the configuration dialog.
+   * @param parentComponent    the parent component for showing the dialog.
+   * @param selectedSdk        current selected sdk in parentComponent
    * @param sdkCreatedCallback the callback to which the created SDK is passed.
    * @since 2017.1
+   * @implSpec method's implementations should not add sdk to the jdkTable neither  invoke {@link SdkType#setupSdkPaths}. Only create and
+   * and pass to the callback. The rest is done by {@link ProjectSdksModel#setupSdk}
    */
   public void showCustomCreateUI(@NotNull SdkModel sdkModel,
                                  @NotNull JComponent parentComponent,
                                  @Nullable Sdk selectedSdk,
                                  @NotNull Consumer<Sdk> sdkCreatedCallback) {
+    //noinspection deprecation
     showCustomCreateUI(sdkModel, parentComponent, sdkCreatedCallback);
   }
 
-  /**
-   * @deprecated Use {@link #showCustomCreateUI(SdkModel, JComponent, Sdk, Consumer)} method instead
-   */
-  public void showCustomCreateUI(@NotNull SdkModel sdkModel, @NotNull JComponent parentComponent, @NotNull Consumer<Sdk> sdkCreatedCallback) {
-  }
+  /** @deprecated use {@link #showCustomCreateUI(SdkModel, JComponent, Sdk, Consumer)} method instead */
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public void showCustomCreateUI(@NotNull SdkModel sdkModel, @NotNull JComponent parentComponent, @NotNull Consumer<Sdk> sdkCreatedCallback) { }
 
   /**
    * Checks if the home directory of the specified SDK is valid. By default, checks that the directory points to a valid local

@@ -15,20 +15,25 @@
  */
 package git4idea.branch;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import git4idea.DialogManager;
+import git4idea.ui.ChangesBrowserWithRollback;
+import git4idea.util.GitSimplePathsBrowser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
+import java.util.Collection;
+import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.capitalize;
 
@@ -66,17 +71,18 @@ public class GitSmartOperationDialog extends DialogWrapper {
    * Shows the dialog with the list of local changes preventing merge/checkout and returns the user's choice.
    */
   @NotNull
-  static Choice showAndGetAnswer(@NotNull Project project,
-                                 @NotNull JComponent fileBrowser,
-                                 @NotNull String operationTitle,
-                                 @Nullable String forceButtonTitle) {
-    Ref<Choice> exitCode = Ref.create();
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      GitSmartOperationDialog dialog = new GitSmartOperationDialog(project, fileBrowser, operationTitle, forceButtonTitle);
-      DialogManager.show(dialog);
-      exitCode.set(Choice.fromDialogExitCode(dialog.getExitCode()));
-    });
-    return exitCode.get();
+  static Choice show(@NotNull Project project,
+                     @NotNull List<Change> changes,
+                     @NotNull Collection<String> paths,
+                     @NotNull String operationTitle,
+                     @Nullable String forceButtonTitle) {
+    JComponent fileBrowser = !changes.isEmpty()
+                             ? new ChangesBrowserWithRollback(project, changes)
+                             : new GitSimplePathsBrowser(project, paths);
+    GitSmartOperationDialog dialog = new GitSmartOperationDialog(project, fileBrowser, operationTitle, forceButtonTitle);
+    if (fileBrowser instanceof Disposable) Disposer.register(dialog.getDisposable(), (Disposable)fileBrowser);
+    DialogManager.show(dialog);
+    return Choice.fromDialogExitCode(dialog.getExitCode());
   }
 
   private GitSmartOperationDialog(@NotNull Project project, @NotNull JComponent fileBrowser, @NotNull String operationTitle,

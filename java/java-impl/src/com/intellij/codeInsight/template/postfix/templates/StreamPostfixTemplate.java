@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,28 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
-import com.intellij.psi.PsiElement;
+import com.intellij.openapi.util.Condition;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils.selectorAllExpressionsWithCurrentOffset;
 
 public class StreamPostfixTemplate extends StringBasedPostfixTemplate {
+  private static final Condition<PsiElement> IS_SUPPORTED_ARRAY = element -> {
+    if (!(element instanceof PsiExpression)) return false;
+
+    PsiType type = ((PsiExpression)element).getType();
+    if (!(type instanceof PsiArrayType)) return false;
+
+    PsiType componentType = ((PsiArrayType)type).getComponentType();
+    if (!(componentType instanceof PsiPrimitiveType)) return true;
+
+    return componentType.equals(PsiType.INT) || componentType.equals(PsiType.LONG) || componentType.equals(PsiType.DOUBLE);
+  };
+
   public StreamPostfixTemplate() {
-    super("stream", "Arrays.stream(expr)", JavaPostfixTemplatesUtils.atLeastJava8Selector(selectorAllExpressionsWithCurrentOffset(JavaPostfixTemplatesUtils.IS_ARRAY)));
+    super("stream", "Arrays.stream(expr)", JavaPostfixTemplatesUtils.atLeastJava8Selector(selectorAllExpressionsWithCurrentOffset(IS_SUPPORTED_ARRAY)));
   }
 
   @Nullable

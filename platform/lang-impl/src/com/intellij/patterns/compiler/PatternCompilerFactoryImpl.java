@@ -39,7 +39,7 @@ public class PatternCompilerFactoryImpl extends PatternCompilerFactory {
       for (PatternClassBean bean : PATTERN_CLASS_EP.getExtensions()) {
         if (typeList == null || typeList.contains(bean.getAlias())) result.add(bean.getPatternClass());
       }
-      return result.isEmpty()? ArrayUtil.EMPTY_CLASS_ARRAY : result.toArray(new Class[result.size()]);
+      return result.isEmpty()? ArrayUtil.EMPTY_CLASS_ARRAY : result.toArray(ArrayUtil.EMPTY_CLASS_ARRAY);
     }
   );
   private final Map<List<Class>, PatternCompiler> myCompilers =

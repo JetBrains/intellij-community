@@ -543,7 +543,7 @@ class CompoundRendererConfigurable extends JPanel {
             s -> {
               JavaCodeFragment fragment = new PsiTypeCodeFragmentImpl(project, true, "fragment.java", s, 0, null) {
                 @Override
-                public boolean importClass(PsiClass aClass) {
+                public boolean importClass(@NotNull PsiClass aClass) {
                   return false;
                 }
               };

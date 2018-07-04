@@ -55,4 +55,13 @@ public interface ImplicitUsageProvider {
   default boolean isImplicitlyNotNullInitialized(@NotNull PsiElement element) {
     return false;
   }
+
+  /**
+   * @return true if given element is represents a class (or another data structure declaration depending on language)
+   * which instances may have implicit initialization steps not directly available in the source code
+   * (e.g. Java class initializer is processed via annotation processor and custom steps added)
+   */
+  default boolean isClassWithCustomizedInitialization(@NotNull PsiElement element) {
+    return false;
+  }
 }

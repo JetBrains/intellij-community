@@ -38,32 +38,26 @@ import java.util.List;
 
 import static com.jetbrains.python.codeInsight.intentions.SpecifyTypeInPy3AnnotationsIntention.*;
 import static com.jetbrains.python.codeInsight.intentions.TypeIntention.getMultiCallable;
-import static com.jetbrains.python.codeInsight.intentions.TypeIntention.resolvesToFunction;
 
 /**
  * @author traff
  */
 public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
   
-  public PyAnnotateTypesIntention() {
-    setText(PyBundle.message("INTN.annotate.types"));
-  }
-
   @NotNull
   public String getFamilyName() {
-    return PyBundle.message("INTN.annotate.types");
+    return PyBundle.message("INTN.add.type.hints.for.function.family");
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PyFile) || file instanceof PyDocstringFile) return false;
 
-    updateText();
-
     final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     if (elementAt == null) return false;
 
-    if (resolvesToFunction(elementAt, input -> true)) {
-      updateText();
+    final PyFunction function = TypeIntention.findSuitableFunction(elementAt, input -> true);
+    if (function != null) {
+      setText(PyBundle.message("INTN.add.type.hints.for.function", function.getName()));
       return true;
     }
     return false;
@@ -138,24 +132,28 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
       }
 
 
-      function = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(function);
+      PsiElement element = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(function);
+
+      while (element != null && !element.getText().contains(replacementTextBuilder.toString())) {
+        element = element.getParent();
+      }
       
-      if (function != null) {
+      if (element != null) {
         final TemplateBuilder builder =
-          TemplateBuilderFactory.getInstance().createTemplateBuilder(function);
+          TemplateBuilderFactory.getInstance().createTemplateBuilder(element);
 
         for (Pair<Integer, String> template : templates) {
           builder.replaceRange(TextRange.from(
-            offset - function.getTextRange().getStartOffset() + replacementTextBuilder.toString().indexOf('#') + template.first,
+            offset - element.getTextRange().getStartOffset() + replacementTextBuilder.toString().indexOf('#') + template.first,
             template.second.length()), template.second);
         }
 
-        startTemplate(project, function, builder);
+        startTemplate(project, element, builder);
       }
     }
   }
 
-  private static void startTemplate(Project project, PyCallable callable, TemplateBuilder builder) {
+  private static void startTemplate(Project project, PsiElement callable, TemplateBuilder builder) {
     final Template template = ((TemplateBuilderImpl)builder).buildInlineTemplate();
 
     int offset = callable.getTextRange().getStartOffset();
@@ -173,7 +171,7 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
   }
 
   private static boolean isPy3k(PsiFile file) {
-    return LanguageLevel.forElement(file).isPy3K();
+    return !LanguageLevel.forElement(file).isPython2();
   }
 
   private static void generatePy3kTypeAnnotations(@NotNull Project project, Editor editor, PyCallable callable) {
@@ -216,9 +214,5 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
     if (callable != null) {
       startTemplate(project, callable, builder);
     }
-  }
-
-  protected void updateText() {
-    setText(PyBundle.message("INTN.annotate.types"));
   }
 }

@@ -1,28 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.execution.ExecutionManager
+import com.intellij.execution.ProgramRunnerUtil
 import com.intellij.execution.RunProfileStarter
 import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.runners.ExecutionEnvironment
-import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.openapi.Disposable
@@ -39,7 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 class ExecutionManagerKtImpl(project: Project) : ExecutionManagerImpl(project) {
   @set:TestOnly
-  @Volatile var forceCompilationInTests = false
+  @Volatile var forceCompilationInTests: Boolean = false
 
   override fun startRunProfile(starter: RunProfileStarter, state: RunProfileState, environment: ExecutionEnvironment) {
     val project = environment.project
@@ -65,7 +51,7 @@ class ExecutionManagerKtImpl(project: Project) : ExecutionManagerImpl(project) {
 
       fun handleError(e: Throwable) {
         if (e !is ProcessCanceledException) {
-          ExecutionUtil.handleExecutionError(project, contentManager.getToolWindowIdByEnvironment(environment), environment.runProfile.name, e)
+          ProgramRunnerUtil.handleExecutionError(project, environment, e, environment.runProfile)
           LOG.debug(e)
         }
         processNotStarted()
@@ -73,7 +59,7 @@ class ExecutionManagerKtImpl(project: Project) : ExecutionManagerImpl(project) {
 
       try {
         starter.executeAsync(state, environment)
-          .done { descriptor ->
+          .onSuccess { descriptor ->
             AppUIUtil.invokeLaterIfProjectAlive(project) {
               if (descriptor == null) {
                 processNotStarted()
@@ -83,7 +69,9 @@ class ExecutionManagerKtImpl(project: Project) : ExecutionManagerImpl(project) {
               val trinity = Trinity.create(descriptor, environment.runnerAndConfigurationSettings, executor)
               myRunningConfigurations.add(trinity)
               Disposer.register(descriptor, Disposable { myRunningConfigurations.remove(trinity) })
-              contentManager.showRunContent(executor, descriptor, environment.contentToReuse)
+              if(!descriptor.isHiddenContent) {
+                contentManager.showRunContent(executor, descriptor, environment.contentToReuse)
+              }
               val processHandler = descriptor.processHandler
               if (processHandler != null) {
                 if (!processHandler.isStartNotified) {
@@ -112,7 +100,7 @@ class ExecutionManagerKtImpl(project: Project) : ExecutionManagerImpl(project) {
               environment.contentToReuse = descriptor
             }
           }
-          .rejected(::handleError)
+          .onError(::handleError)
       }
       catch (e: Throwable) {
         handleError(e)

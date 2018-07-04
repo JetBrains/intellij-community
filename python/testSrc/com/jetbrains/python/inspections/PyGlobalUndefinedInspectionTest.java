@@ -15,9 +15,10 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
-public class PyGlobalUndefinedInspectionTest extends PyTestCase {
+public class PyGlobalUndefinedInspectionTest extends PyInspectionTestCase {
 
   public void testTruePositive() {
     doTest();
@@ -27,9 +28,9 @@ public class PyGlobalUndefinedInspectionTest extends PyTestCase {
     doTest();
   }
 
-  private void doTest() {
-    myFixture.configureByFile("inspections/PyGlobalUndefinedInspection/" + getTestName(true) + ".py");
-    myFixture.enableInspections(PyGlobalUndefinedInspection.class);
-    myFixture.checkHighlighting(false, false, true);
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyGlobalUndefinedInspection.class;
   }
 }

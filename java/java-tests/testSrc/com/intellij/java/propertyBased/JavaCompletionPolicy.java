@@ -15,14 +15,14 @@
  */
 package com.intellij.java.propertyBased;
 
-import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.propertyBased.CompletionPolicy;
-import com.intellij.testFramework.propertyBased.MadTestingUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,10 +32,34 @@ import java.util.Arrays;
  * @author peter
  */
 class JavaCompletionPolicy extends CompletionPolicy {
+  @Nullable
+  @Override
+  protected String getExpectedVariant(@NotNull Editor editor, @NotNull PsiFile file, @NotNull PsiElement leaf, @Nullable PsiReference ref) {
+    if (isBuggyInjection(file)) return null;
+
+    return super.getExpectedVariant(editor, file, leaf, ref);
+  }
+
+  // a language where there are bugs in completion which maintainers of this Java-specific test can't or don't want to fix
+  private static boolean isBuggyInjection(@NotNull PsiFile file) {
+    return Arrays.asList("XML", "HTML", "PointcutExpression").contains(file.getLanguage().getID());
+  }
 
   @Override
-  public boolean shouldCheckDuplicates(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement leaf) {
-    return !MadTestingUtil.isAfterError(file, editor.getCaretModel().getOffset());
+  protected boolean isAfterError(@NotNull PsiFile file, @NotNull PsiElement leaf) {
+    return super.isAfterError(file, leaf) ||
+           isAdoptedOrphanPsiAfterClassEnd(leaf) ||
+           isInsideAnnotationWithErrors(leaf) ||
+           isUnexpectedStatementInSwitchBody(leaf);
+  }
+
+  private static boolean isUnexpectedStatementInSwitchBody(@NotNull PsiElement leaf) {
+    return PsiJavaPatterns.psiElement().withParents(PsiReturnStatement.class, PsiCodeBlock.class, PsiSwitchStatement.class).accepts(leaf);
+  }
+
+  private static boolean isInsideAnnotationWithErrors(PsiElement leaf) {
+    PsiAnnotationParameterList list = PsiTreeUtil.getParentOfType(leaf, PsiAnnotationParameterList.class);
+    return list != null && PsiTreeUtil.findChildOfType(list, PsiErrorElement.class) != null;
   }
 
   @Override
@@ -45,26 +69,55 @@ class JavaCompletionPolicy extends CompletionPolicy {
         !shouldSuggestJavaTarget((PsiJavaCodeReferenceElement)refElement, target)) {
       return false;
     }
-    if (ref instanceof FileReference && target instanceof PsiFile) {
-      return false; // IDEA-177167
+    if (ref instanceof FileReference) {
+      if (target instanceof PsiFile) {
+        return false; // IDEA-177167
+      }
+      if (target instanceof PsiDirectory && ((PsiDirectory)target).getName().endsWith(".jar") && ((PsiDirectory)target).getParentDirectory() == null) {
+        return false; // IDEA-178629
+      }
     }
     return true;
+  }
+
+  private static boolean isAdoptedOrphanPsiAfterClassEnd(PsiElement element) {
+    PsiClass topmostClass = PsiTreeUtil.getTopmostParentOfType(element, PsiClass.class);
+    if (topmostClass != null) {
+      ASTNode rBrace = topmostClass.getNode().findChildByType(JavaTokenType.RBRACE); 
+      // not PsiClass#getRBrace, because we need the first one, and invalid classes can contain several '}'
+      if (rBrace != null && rBrace.getTextRange().getStartOffset() < element.getTextRange().getStartOffset()) return true;
+    }
+    return false;
   }
 
   private static boolean shouldSuggestJavaTarget(PsiJavaCodeReferenceElement ref, @NotNull PsiElement target) {
     if (PsiTreeUtil.getParentOfType(ref, PsiPackageStatement.class) != null) return false;
 
+    PsiAnnotation anno = PsiTreeUtil.getParentOfType(ref, PsiAnnotation.class);
     if (!ref.isQualified() && target instanceof PsiPackage) return false;
     if (target instanceof PsiClass) {
       if (isCyclicInheritance(ref, target)) return false;
-      if (ref.getParent() instanceof PsiAnnotation && !((PsiClass)target).isAnnotationType()) {
-        return false; // red code
+      if (anno != null && !((PsiClass)target).isAnnotationType()) {
+        if (ref.getParent() == anno) {
+          return false; // red code
+        }
+        if (PsiTreeUtil.isAncestor(anno.getNameReferenceElement(), ref, true)) {
+          return false; // inner annotation
+        }
       }
+    }
+    if (target instanceof PsiVariable && PsiTreeUtil.isAncestor(target, ref, false)) {
+      return false; // non-initialized variable
     }
     if (target instanceof PsiField &&
         SyntaxTraverser.psiApi().parents(ref).find(e -> e instanceof PsiMethod && ((PsiMethod)e).isConstructor()) != null) {
       // https://youtrack.jetbrains.com/issue/IDEA-174744 on red code
       return false;
+    }
+    if (anno != null) {
+      if (target instanceof PsiMethod || target instanceof PsiField && !ExpressionUtils.isConstant((PsiField)target)) {
+        return false; // red code;
+      }
     }
     if (isStaticWithInstanceQualifier(ref, target)) {
       return false;
@@ -83,27 +136,43 @@ class JavaCompletionPolicy extends CompletionPolicy {
   private static boolean isStaticWithInstanceQualifier(PsiJavaCodeReferenceElement ref, @NotNull PsiElement target) {
     PsiElement qualifier = ref.getQualifier();
     return target instanceof PsiModifierListOwner &&
-           ((PsiModifierListOwner)target).hasModifier(JvmModifier.STATIC) &&
+           ((PsiModifierListOwner)target).hasModifierProperty(PsiModifier.STATIC) &&
            qualifier instanceof PsiJavaCodeReferenceElement &&
            !(((PsiJavaCodeReferenceElement)qualifier).resolve() instanceof PsiClass);
   }
 
   @Override
   protected boolean shouldSuggestNonReferenceLeafText(@NotNull PsiElement leaf) {
+    PsiElement parent = leaf.getParent();
     if (leaf instanceof PsiKeyword) {
-      if (leaf.getParent() instanceof PsiClassObjectAccessExpression &&
-          PsiUtil.resolveClassInType(((PsiClassObjectAccessExpression)leaf.getParent()).getOperand().getType()) == null) {
+      if (parent instanceof PsiExpression && hasUnresolvedRefsBefore(leaf, parent)) {
         return false;
       }
-      if (leaf.getParent() instanceof PsiModifierList &&
-          Arrays.stream(leaf.getParent().getNode().getChildren(null)).filter(e -> leaf.textMatches(e.getText())).count() > 1) {
-        return false;
+      if (parent instanceof PsiModifierList) {
+        if (Arrays.stream(parent.getNode().getChildren(null)).filter(e -> leaf.textMatches(e.getText())).count() > 1) {
+          return false;
+        }
+        if (parent.getParent() instanceof PsiModifierListOwner && PsiTreeUtil.getParentOfType(parent.getParent(), PsiCodeBlock.class, true, PsiClass.class) != null) {
+          return false; // no modifiers for local classes/variables
+        }
       }
     }
     if (leaf.textMatches(PsiKeyword.TRUE) || leaf.textMatches(PsiKeyword.FALSE)) {
       return false; // boolean literal presence depends on expected types, which can be missing in red files
     }
+    if (leaf.textMatches(PsiKeyword.IMPLEMENTS)) {
+      PsiClass cls = PsiTreeUtil.getParentOfType(leaf, PsiClass.class);
+      if (cls == null || cls.isInterface()) {
+        return false;
+      }
+    }
     return true;
   }
 
+  private static boolean hasUnresolvedRefsBefore(PsiElement leaf, PsiElement parent) {
+    return SyntaxTraverser.psiTraverser(parent)
+                          .filter(PsiJavaCodeReferenceElement.class)
+                          .filter(r -> r.getTextRange().getEndOffset() < leaf.getTextRange().getEndOffset() && r.resolve() == null)
+                          .isNotEmpty();
+  }
 }

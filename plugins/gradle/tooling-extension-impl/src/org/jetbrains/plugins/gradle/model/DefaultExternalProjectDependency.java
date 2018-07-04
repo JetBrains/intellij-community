@@ -15,8 +15,8 @@
  */
 package org.jetbrains.plugins.gradle.model;
 
-import com.google.common.base.Objects;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.internal.impldep.com.google.common.base.Objects;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -33,6 +33,7 @@ public class DefaultExternalProjectDependency extends AbstractExternalDependency
   private String myProjectPath;
   private String myConfigurationName = Dependency.DEFAULT_CONFIGURATION;
   private Collection<File> myProjectDependencyArtifacts;
+  private Collection<File> myProjectDependencyArtifactsSources;
 
   public DefaultExternalProjectDependency() {
   }
@@ -76,6 +77,15 @@ public class DefaultExternalProjectDependency extends AbstractExternalDependency
 
   public void setProjectDependencyArtifacts(Collection<File> projectArtifacts) {
     myProjectDependencyArtifacts = projectArtifacts;
+  }
+
+  @Override
+  public Collection<File> getProjectDependencyArtifactsSources() {
+    return myProjectDependencyArtifactsSources;
+  }
+
+  public void setProjectDependencyArtifactsSources(Collection<File> projectArtifactsSources) {
+    myProjectDependencyArtifactsSources = projectArtifactsSources;
   }
 
   @Override

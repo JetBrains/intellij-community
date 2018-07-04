@@ -61,7 +61,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
     NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer, reader, notNullAnnotations);
     reader.accept(instrumenter, 0);
     instrumenter.myAuxGenerator.generateReportingMethod(writer);
-    return instrumenter.isModification();
+    return instrumenter.myIsModification;
   }
 
   private static Map<String, Map<Integer, String>> getAllParameterNames(ClassReader reader) {
@@ -103,10 +103,6 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
     return methodParamNames;
   }
 
-  public boolean isModification() {
-    return myIsModification;
-  }
-
   @Override
   public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
     super.visit(version, access, name, signature, superName, interfaces);
@@ -116,6 +112,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
   @Override
   public void visitOuterClass(String owner, String name, String desc) {
+    super.visitOuterClass(owner, name, desc);
     myInner = true;
   }
 
@@ -191,7 +188,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
       @Override
       public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
-        AnnotationVisitor av = mv.visitTypeAnnotation(typeRef, null, desc, visible);
+        AnnotationVisitor av = mv.visitTypeAnnotation(typeRef, typePath, desc, visible);
         if (typePath != null) return av;
 
         TypeReference ref = new TypeReference(typeRef);
@@ -212,7 +209,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
       }
 
       private AnnotationVisitor checkNotNullParameter(int parameter, String anno, AnnotationVisitor av) {
-        if (isReferenceType(args[parameter]) && myNotNullAnnos.contains(anno)) {
+        if (parameter >= 0 && parameter < args.length && isReferenceType(args[parameter]) && myNotNullAnnos.contains(anno)) {
           NotNullState state = new NotNullState(anno, IAE_CLASS_NAME);
           myNotNullParams.put(parameter, state);
           return collectNotNullArgs(av, state);

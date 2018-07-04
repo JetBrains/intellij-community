@@ -16,73 +16,96 @@
 
 package org.jetbrains.uast.java
 
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiAnonymousClass
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiJavaCodeReferenceElement
+import com.intellij.psi.*
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
-abstract class AbstractJavaUClass : UClass, JavaUElementWithComments {
-    override val uastDeclarations by lz {
-        mutableListOf<UDeclaration>().apply {
-            addAll(fields)
-            addAll(initializers)
-            addAll(methods)
-            addAll(innerClasses)
-        }
+abstract class AbstractJavaUClass(givenParent: UElement?) : JavaAbstractUElement(
+  givenParent), UClassTypeSpecific, JavaUElementWithComments, UAnchorOwner, UDeclarationEx {
+
+  abstract override val javaPsi: PsiClass
+
+  @Suppress("unused") // Used in Kotlin, to be removed in 2018.1
+  @Deprecated("use AbstractJavaUClass(givenParent)", ReplaceWith("AbstractJavaUClass(givenParent)"))
+  constructor() : this(null)
+
+  override val uastDeclarations: MutableList<UDeclaration> by lz {
+    mutableListOf<UDeclaration>().apply {
+      addAll(fields)
+      addAll(initializers)
+      addAll(methods)
+      addAll(innerClasses)
+    }
+  }
+
+  protected fun createJavaUTypeReferenceExpression(referenceElement: PsiJavaCodeReferenceElement): LazyJavaUTypeReferenceExpression =
+    LazyJavaUTypeReferenceExpression(referenceElement, this) {
+      JavaPsiFacade.getElementFactory(referenceElement.project).createType(referenceElement)
     }
 
-    override val uastSuperTypes: List<UTypeReferenceExpression>
-        get() {
-            fun createJavaUTypeReferenceExpression(referenceElement: PsiJavaCodeReferenceElement) =
-                    LazyJavaUTypeReferenceExpression(referenceElement, this) {
-                        JavaPsiFacade.getElementFactory(referenceElement.project).createType(referenceElement)
-                    }
+  override val uastSuperTypes: List<UTypeReferenceExpression> by lazy {
+    psi.extendsList?.referenceElements?.map { createJavaUTypeReferenceExpression(it) }.orEmpty() +
+    psi.implementsList?.referenceElements?.map { createJavaUTypeReferenceExpression(it) }.orEmpty()
+  }
 
-            return psi.extendsList?.referenceElements?.map(::createJavaUTypeReferenceExpression).orEmpty() +
-                    psi.implementsList?.referenceElements?.map(::createJavaUTypeReferenceExpression).orEmpty()
-        }
+  override val uastAnchor: UIdentifier?
+    get() = UIdentifier(psi.nameIdentifier, this)
 
-    override val uastAnchor: UElement?
-        get() = UIdentifier(psi.nameIdentifier, this)
+  override val annotations: List<UAnnotation>
+    get() = psi.annotations.map { JavaUAnnotation(it, this) }
 
-    override val annotations: List<UAnnotation>
-        get() = psi.annotations.map { JavaUAnnotation(it, this) }
-
-    override fun equals(other: Any?) = other is AbstractJavaUClass && psi == other.psi
-    override fun hashCode() = psi.hashCode()
+  override fun equals(other: Any?): Boolean = other is AbstractJavaUClass && psi == other.psi
+  override fun hashCode(): Int = psi.hashCode()
 }
 
-class JavaUClass private constructor(psi: PsiClass, override val uastParent: UElement?) :
-        AbstractJavaUClass(), PsiClass by psi {
-    override val psi = unwrap<UClass, PsiClass>(psi)
+class JavaUClass private constructor(psi: PsiClass, val givenParent: UElement?) :
+  AbstractJavaUClass(givenParent), UAnchorOwner, PsiClass by psi {
 
-    override fun getSuperClass(): UClass? = super.getSuperClass()
-    override fun getFields(): Array<UField> = super.getFields()
-    override fun getInitializers(): Array<UClassInitializer> = super.getInitializers()
-    override fun getMethods(): Array<UMethod> = super.getMethods()
-    override fun getInnerClasses(): Array<UClass> = super.getInnerClasses()
+  override val psi: PsiClass
+    get() = javaPsi
 
-    companion object {
-        fun create(psi: PsiClass, containingElement: UElement?): UClass {
-            return if (psi is PsiAnonymousClass) 
-                JavaUAnonymousClass(psi, containingElement)
-            else
-                JavaUClass(psi, containingElement)
-        }
+  override val javaPsi: PsiClass = unwrap<UClass, PsiClass>(psi)
+
+  override fun getSuperClass(): UClass? = super.getSuperClass()
+  override fun getFields(): Array<UField> = super.getFields()
+  override fun getInitializers(): Array<UClassInitializer> = super.getInitializers()
+  override fun getMethods(): Array<UMethod> = super.getMethods()
+  override fun getInnerClasses(): Array<UClass> = super.getInnerClasses()
+
+  companion object {
+    fun create(psi: PsiClass, containingElement: UElement?): UClass {
+      return if (psi is PsiAnonymousClass)
+        JavaUAnonymousClass(psi, containingElement)
+      else
+        JavaUClass(psi, containingElement)
     }
+  }
 }
 
 class JavaUAnonymousClass(
-        psi: PsiAnonymousClass,
-        override val uastParent: UElement?
-) : AbstractJavaUClass(), UAnonymousClass, PsiAnonymousClass by psi {
-    override val psi: PsiAnonymousClass = unwrap<UAnonymousClass, PsiAnonymousClass>(psi)
+  psi: PsiAnonymousClass,
+  uastParent: UElement?
+) : AbstractJavaUClass(uastParent), UAnonymousClass, UAnchorOwner, PsiAnonymousClass by psi {
+  override val psi: PsiAnonymousClass
+    get() = javaPsi
 
-    override fun getSuperClass(): UClass? = super<AbstractJavaUClass>.getSuperClass()
-    override fun getFields(): Array<UField> = super<AbstractJavaUClass>.getFields()
-    override fun getInitializers(): Array<UClassInitializer> = super<AbstractJavaUClass>.getInitializers()
-    override fun getMethods(): Array<UMethod> = super<AbstractJavaUClass>.getMethods()
-    override fun getInnerClasses(): Array<UClass> = super<AbstractJavaUClass>.getInnerClasses()
+  override val javaPsi: PsiAnonymousClass = unwrap<UAnonymousClass, PsiAnonymousClass>(psi)
+
+  override val uastSuperTypes: List<UTypeReferenceExpression> by lazy {
+    listOf(createJavaUTypeReferenceExpression(psi.baseClassReference)) + super.uastSuperTypes
+  }
+
+  override val uastAnchor: UIdentifier? by lazy {
+    when (javaPsi) {
+      is PsiEnumConstantInitializer ->
+        (javaPsi.parent as? PsiEnumConstant)?.let { UIdentifier(it.nameIdentifier, this) }
+      else -> UIdentifier(psi.baseClassReference.referenceNameElement, this)
+    }
+  }
+
+  override fun getSuperClass(): UClass? = super<AbstractJavaUClass>.getSuperClass()
+  override fun getFields(): Array<UField> = super<AbstractJavaUClass>.getFields()
+  override fun getInitializers(): Array<UClassInitializer> = super<AbstractJavaUClass>.getInitializers()
+  override fun getMethods(): Array<UMethod> = super<AbstractJavaUClass>.getMethods()
+  override fun getInnerClasses(): Array<UClass> = super<AbstractJavaUClass>.getInnerClasses()
 }

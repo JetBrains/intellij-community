@@ -16,15 +16,19 @@
 package com.jetbrains.python.codeInsight.imports;
 
 import com.google.common.collect.Ordering;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.lang.ImportOptimizer;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -45,6 +49,16 @@ import static com.jetbrains.python.psi.PyUtil.as;
  * @author yole
  */
 public class PyImportOptimizer implements ImportOptimizer {
+  private static final Logger LOG = Logger.getInstance(PyImportOptimizer.class);
+
+  private boolean mySortImports = true;
+
+  @NotNull
+  public static PyImportOptimizer onlyRemoveUnused() {
+    final PyImportOptimizer optimizer = new PyImportOptimizer();
+    optimizer.mySortImports = false;
+    return optimizer;
+  }
 
   @Override
   public boolean supports(PsiFile file) {
@@ -66,10 +80,12 @@ public class PyImportOptimizer implements ImportOptimizer {
       }
     });
     return () -> {
+      LOG.debug(String.format("----------------- OPTIMIZE IMPORTS STARTED (%s) -----------------", file.getVirtualFile()));
       visitor.optimizeImports();
-      if (file instanceof PyFile) {
+      if (mySortImports && file instanceof PyFile) {
         new ImportSorter((PyFile)file).run();
       }
+      LOG.debug("----------------- OPTIMIZE IMPORTS FINISHED -----------------");
     };
   }
 
@@ -86,11 +102,11 @@ public class PyImportOptimizer implements ImportOptimizer {
     private final PyCodeStyleSettings myPySettings;
     private final List<PyImportStatementBase> myImportBlock;
     private final Map<ImportPriority, List<PyImportStatementBase>> myGroups;
-    
+
     private final MultiMap<PyImportStatementBase, PsiComment> myOldImportToLineComments = MultiMap.create();
     private final MultiMap<PyImportStatementBase, PsiComment> myOldImportToInnerComments = MultiMap.create();
     private final MultiMap<String, PyFromImportStatement> myOldFromImportBySources = MultiMap.create();
-    
+
     private final MultiMap<PyImportStatementBase, PsiComment> myNewImportToLineComments = MultiMap.create();
     // Contains trailing and nested comments of modified (split and joined) imports
     private final MultiMap<PyImportStatementBase, PsiComment> myNewImportToInnerComments = MultiMap.create();
@@ -98,7 +114,7 @@ public class PyImportOptimizer implements ImportOptimizer {
 
     private ImportSorter(@NotNull PyFile file) {
       myFile = file;
-      myPySettings = CodeStyleSettingsManager.getSettings(myFile.getProject()).getCustomSettings(PyCodeStyleSettings.class);
+      myPySettings = CodeStyle.getCustomSettings(myFile, PyCodeStyleSettings.class);
       myImportBlock = myFile.getImportBlock();
       myGroups = new EnumMap<>(ImportPriority.class);
       for (ImportPriority priority : ImportPriority.values()) {
@@ -114,8 +130,10 @@ public class PyImportOptimizer implements ImportOptimizer {
       analyzeImports(myImportBlock);
 
       for (PyImportStatementBase importStatement : myImportBlock) {
-        final ImportPriority priority = AddImportHelper.getImportPriority(importStatement);
-        myGroups.get(priority).add(importStatement);
+        final AddImportHelper.ImportPriorityChoice choice = AddImportHelper.getImportPriorityWithReason(importStatement);
+        LOG.debug(String.format("Import group for '%s' is %s: %s",
+                                importStatement.getText(), choice.getPriority(), choice.getDescription()));
+        myGroups.get(choice.getPriority()).add(importStatement);
       }
 
       boolean hasTransformedImports = false;
@@ -150,8 +168,7 @@ public class PyImportOptimizer implements ImportOptimizer {
     private List<PyImportStatementBase> transformImportStatements(@NotNull List<PyImportStatementBase> imports) {
       final List<PyImportStatementBase> result = new ArrayList<>();
 
-      final Project project = myFile.getProject();
-      final PyElementGenerator generator = PyElementGenerator.getInstance(project);
+      final PyElementGenerator generator = PyElementGenerator.getInstance(myFile.getProject());
       final LanguageLevel langLevel = LanguageLevel.forElement(myFile);
 
       for (PyImportStatementBase statement : imports) {
@@ -164,7 +181,7 @@ public class PyImportOptimizer implements ImportOptimizer {
               ContainerUtil.map(importElements, e -> generator.createImportStatement(langLevel, e.getText(), null));
             final PyImportStatement topmostImport;
             if (myPySettings.OPTIMIZE_IMPORTS_SORT_IMPORTS) {
-              topmostImport = Collections.min(newImports, AddImportHelper.getSameGroupImportsComparator(project));
+              topmostImport = Collections.min(newImports, AddImportHelper.getSameGroupImportsComparator(myFile));
             }
             else {
               topmostImport = newImports.get(0);
@@ -182,6 +199,7 @@ public class PyImportOptimizer implements ImportOptimizer {
           final PyFromImportStatement fromImport = (PyFromImportStatement)statement;
           final String source = getNormalizedFromImportSource(fromImport);
           final List<PyImportElement> newStatementElements = new ArrayList<>();
+          boolean forceParentheses = false;
 
           // We can neither sort, nor combine star imports
           if (!fromImport.isStarImport()) {
@@ -189,6 +207,8 @@ public class PyImportOptimizer implements ImportOptimizer {
             if (sameSourceImports.isEmpty()) {
               continue;
             }
+
+            forceParentheses = sameSourceImports.size() == 1 && fromImport.getLeftParen() != null;
 
             // Join multiple "from" imports with the same source, like "from module import foo; from module import bar as b"
             if (myPySettings.OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE && sameSourceImports.size() > 1) {
@@ -210,7 +230,10 @@ public class PyImportOptimizer implements ImportOptimizer {
             if (myPySettings.OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS) {
               Collections.sort(newStatementElements, IMPORT_ELEMENT_COMPARATOR);
             }
-            final String importedNames = StringUtil.join(newStatementElements, ImportSorter::getNormalizedImportElementText, ", ");
+            String importedNames = StringUtil.join(newStatementElements, ImportSorter::getNormalizedImportElementText, ", ");
+            if (forceParentheses) {
+              importedNames = "(" + importedNames + ")";
+            }
             final PyFromImportStatement combinedImport = generator.createFromImportStatement(langLevel, source, importedNames, null);
             ContainerUtil.map2LinkedSet(newStatementElements, e -> (PyImportStatementBase)e.getParent()).forEach(affected -> {
               myNewImportToLineComments.putValues(combinedImport, myOldImportToLineComments.get(affected));
@@ -261,7 +284,7 @@ public class PyImportOptimizer implements ImportOptimizer {
         return false;
       }
       final Ordering<PyImportStatementBase> importOrdering =
-        Ordering.from(AddImportHelper.getSameGroupImportsComparator(myFile.getProject()));
+        Ordering.from(AddImportHelper.getSameGroupImportsComparator(myFile));
       return ContainerUtil.exists(myGroups.values(), imports -> !importOrdering.isOrdered(imports));
     }
 
@@ -273,7 +296,7 @@ public class PyImportOptimizer implements ImportOptimizer {
       if (myPySettings.OPTIMIZE_IMPORTS_SORT_IMPORTS) {
         for (ImportPriority priority : myGroups.keySet()) {
           final List<PyImportStatementBase> imports = myGroups.get(priority);
-          Collections.sort(imports, AddImportHelper.getSameGroupImportsComparator(myFile.getProject()));
+          Collections.sort(imports, AddImportHelper.getSameGroupImportsComparator(myFile));
           myGroups.put(priority, imports);
         }
       }

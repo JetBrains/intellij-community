@@ -28,7 +28,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 5/25/12
  */
 public final class ProcessorConfigProfileImpl implements ProcessorConfigProfile {
 

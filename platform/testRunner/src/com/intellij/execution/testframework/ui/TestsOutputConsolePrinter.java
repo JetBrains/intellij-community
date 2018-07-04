@@ -20,7 +20,10 @@ import com.intellij.execution.testframework.*;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Key;
+import com.intellij.terminal.TerminalExecutionConsole;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class TestsOutputConsolePrinter implements Printer, Disposable {
   private final ConsoleView myConsole;
@@ -114,8 +117,11 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
   }
 
   private boolean isRoot() {
-    final AbstractTestProxy currentTest = myCurrentTest;
-    return currentTest != null && currentTest.getParent() == myUnboundOutputRoot;
+    return isRoot(myCurrentTest);
+  }
+
+  private boolean isRoot(@Nullable AbstractTestProxy proxy) {
+    return proxy != null && proxy.getParent() == myUnboundOutputRoot;
   }
 
   public void printHyperlink(final String text, final HyperlinkInfo info) {
@@ -143,5 +149,16 @@ public class TestsOutputConsolePrinter implements Printer, Disposable {
         myConsole.scrollTo(myMarkOffset);
       }
     });
+  }
+
+  @Override
+  public void printWithAnsiColoring(@NotNull String text, @NotNull Key processOutputType) {
+    if (myConsole instanceof TerminalExecutionConsole) {
+      // Terminal console handles ANSI escape sequences itself
+      print(text, ConsoleViewContentType.getConsoleViewType(processOutputType));
+    }
+    else {
+      Printer.super.printWithAnsiColoring(text, processOutputType);
+    }
   }
 }

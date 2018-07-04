@@ -130,7 +130,7 @@ class LoadTest : IcsTestCase() {
     }
   }
 
-  inline fun Repository.useAsReadOnlySource(runnable: () -> Unit) {
+  private inline fun Repository.useAsReadOnlySource(runnable: () -> Unit) {
     createAndRegisterReadOnlySource()
     try {
       runnable()

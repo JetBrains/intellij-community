@@ -15,10 +15,15 @@
  */
 package com.intellij.psi.controlFlow;
 
-public interface Instruction extends Cloneable {
-  Instruction clone();
-  int   nNext ();
-  int getNext (int index, int no);
+import org.jetbrains.annotations.NotNull;
 
-  void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset);
+public interface Instruction extends Cloneable {
+  @NotNull
+  Instruction clone();
+
+  int nNext();
+
+  int getNext(int index, int no);
+
+  void accept(@NotNull ControlFlowInstructionVisitor visitor, int offset, int nextOffset);
 }

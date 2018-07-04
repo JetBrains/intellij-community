@@ -17,9 +17,9 @@ package com.intellij.testFramework.vcs;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.util.ui.UIUtil;
 import org.junit.After;
 import org.junit.Before;
 
@@ -40,13 +40,6 @@ public abstract class FileBasedTest {
   @After
   public void tearDown() throws Exception {
     myProject = null;
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      try {
-        myProjectFixture.tearDown();
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    });
+    EdtTestUtil.runInEdtAndWait(() -> myProjectFixture.tearDown());
   }
 }

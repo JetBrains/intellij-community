@@ -41,6 +41,7 @@ public class EclipseFileType implements FileType {
     return EclipseBundle.message("eclipse.file.type.descr");
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getDefaultExtension() {
@@ -52,14 +53,17 @@ public class EclipseFileType implements FileType {
     return EclipseIcons.Eclipse;
   }
 
+  @Override
   public boolean isBinary() {
     return false;
   }
 
+  @Override
   public boolean isReadOnly() {
     return false;
   }
 
+  @Override
   public String getCharset(@NotNull final VirtualFile file, @NotNull final byte[] content) {
     return CharsetToolkit.UTF8;
   }

@@ -1,22 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
+import com.intellij.diagnostic.MessagePool
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.Ref
+import com.intellij.testGuiFramework.framework.GuiTestUtil
+import com.intellij.ui.EngravedLabel
 import org.fest.swing.core.ComponentMatcher
+import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
 import org.fest.swing.edt.GuiActionRunner
 import org.fest.swing.edt.GuiQuery
@@ -26,12 +17,16 @@ import org.fest.swing.exception.WaitTimedOutError
 import org.fest.swing.timing.Condition
 import org.fest.swing.timing.Pause
 import org.fest.swing.timing.Timeout
+import org.fest.swing.timing.Wait
 import java.awt.Component
 import java.awt.Container
+import java.awt.Window
 import java.util.*
 import java.util.concurrent.TimeUnit
+import javax.swing.JDialog
 import javax.swing.JLabel
 import javax.swing.JRadioButton
+import kotlin.collections.ArrayList
 
 /**
  * @author Sergey Karashevich
@@ -126,9 +121,9 @@ object GuiTestUtilKt {
       return child
     }
 
-    fun countChildren() = children.count()
+    fun countChildren(): Int = children.count()
 
-    fun isLeaf() = (children.count() == 0)
+    fun isLeaf(): Boolean = (children.count() == 0)
 
   }
 
@@ -232,6 +227,39 @@ object GuiTestUtilKt {
 
   }
 
+  fun <ComponentType : Component> waitUntilGone(robot: Robot, timeoutInSeconds: Int = 30, root: Container? = null, matcher: GenericTypeMatcher<ComponentType>) {
+    return GuiTestUtil.waitUntilGone(root, timeoutInSeconds, matcher)
+  }
+
+  fun GuiTestCase.waitProgressDialogUntilGone(dialogTitle: String, timeoutToAppearInSeconds: Int = 5, timeoutToGoneInSeconds: Int = 60) {
+    waitProgressDialogUntilGone(this.robot(), dialogTitle, timeoutToAppearInSeconds, timeoutToGoneInSeconds)
+  }
+
+  fun waitProgressDialogUntilGone(robot: Robot, progressTitle: String, timeoutToAppearInSeconds: Int = 5, timeoutToGoneInSeconds: Int = 60) {
+    //wait dialog appearance. In a bad case we could pass dialog appearance.
+    var dialog: JDialog? = null
+    try {
+      waitUntil("progress dialog with title $progressTitle will appear", timeoutToAppearInSeconds) {
+        dialog = findProgressDialog(robot, progressTitle)
+        dialog != null
+      }
+    } catch (timeoutError: WaitTimedOutError) { return }
+    waitUntil("progress dialog with title $progressTitle will gone", timeoutToGoneInSeconds) { dialog == null || !dialog!!.isShowing }
+  }
+
+  fun findProgressDialog(robot: Robot, progressTitle: String): JDialog? {
+    return robot.finder().findAll(typeMatcher(JDialog::class.java) {
+      findAllWithBFS(it, EngravedLabel::class.java).filter { it.isShowing && it.text == progressTitle }.any()
+    } ).firstOrNull()
+  }
+
+  fun <ComponentType : Component?> typeMatcher(componentTypeClass: Class<ComponentType>,
+                                                       matcher: (ComponentType) -> Boolean): GenericTypeMatcher<ComponentType> {
+    return object : GenericTypeMatcher<ComponentType>(componentTypeClass) {
+      override fun isMatching(component: ComponentType): Boolean = matcher(component)
+    }
+  }
+
 
   fun <ReturnType> computeOnEdt(query: () -> ReturnType): ReturnType?
     = GuiActionRunner.execute(object : GuiQuery<ReturnType>() {
@@ -241,17 +269,64 @@ object GuiTestUtilKt {
   fun <ReturnType> computeOnEdtWithTry(query: () -> ReturnType?): ReturnType? {
     val result = GuiActionRunner.execute(object : GuiQuery<Pair<ReturnType?, Throwable?>>() {
       override fun executeInEDT(): kotlin.Pair<ReturnType?, Throwable?> {
-        try {
-          return Pair(query(), null)
+        return try {
+          Pair(query(), null)
         }
         catch (e: Exception) {
-          return Pair(null, e)
+          Pair(null, e)
         }
       }
     })
     if (result?.second != null) throw result.second!!
     return result?.first
   }
+
+  fun ensureCreateHasDone(guiTestCase: GuiTestCase) {
+    try {
+      com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntilGone(robot = guiTestCase.robot(),
+                                                                     matcher = com.intellij.testGuiFramework.impl.GuiTestUtilKt.typeMatcher(
+                                                                       com.intellij.openapi.wm.impl.welcomeScreen.FlatWelcomeFrame::class.java) { it.isShowing })
+    }
+    catch (timeoutError: WaitTimedOutError) {
+      with(guiTestCase) {
+        welcomeFrame { button("Create").clickWhenEnabled() }
+      }
+    }
+  }
+
+  fun windowsShowing(): List<Window> {
+    val listBuilder = ArrayList<Window>()
+    Window.getWindows().filterTo(listBuilder) { it.isShowing }
+    return listBuilder
+  }
+
+  fun fatalErrorsFromIde(afterDate: Date = Date(0)): List<Error> {
+    val errorMessages = MessagePool.getInstance().getFatalErrors(true, true)
+    val freshErrorMessages = errorMessages.filter { it.date > afterDate }
+    val errors = mutableListOf<Error>()
+    for (errorMessage in freshErrorMessages) {
+      val messageBuilder = StringBuilder(errorMessage.message ?: "")
+      val additionalInfo : String? = errorMessage.additionalInfo
+      if (additionalInfo != null && additionalInfo.isNotEmpty())
+        messageBuilder.append(System.getProperty("line.separator")).append("Additional Info: ").append(additionalInfo)
+      val error = Error(messageBuilder.toString(), errorMessage.throwable)
+      errors.add(error)
+    }
+    return Collections.unmodifiableList(errors)
+  }
+
+  fun waitForBackgroundTasks(robot: Robot, timeoutInSeconds: Int = 120) {
+    Wait.seconds(timeoutInSeconds.toLong()).expecting("background tasks to finish")
+      .until {
+        robot.waitForIdle()
+
+        val progressManager = ProgressManager.getInstance()
+        !progressManager.hasModalProgressIndicator() &&
+        !progressManager.hasProgressIndicator() &&
+        !progressManager.hasUnsafeProgressIndicator()
+      }
+  }
+
 
 }
 

@@ -33,5 +33,6 @@ public class AssertionCanBeIfInspectionTest extends IGQuickFixesTestCase {
   }
 
   public void testIncomplete() { assertQuickfixNotAvailable(); }
+  public void testIncomplete2() { assertQuickfixNotAvailable(); }
   public void testMessage() { doTest(); }
 }

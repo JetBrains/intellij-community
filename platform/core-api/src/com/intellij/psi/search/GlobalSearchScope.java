@@ -58,7 +58,9 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
    *         a negative integer (-1), if file1 is located in the classpath after file2
    *         zero - otherwise or when the files are not comparable.
    */
-  public abstract int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2);
+  public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
+    return 0;
+  }
 
   // optimization methods:
 
@@ -119,7 +121,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
         result.add(element2);
       }
     }
-    return result.isEmpty() ? EMPTY_SCOPE : new LocalSearchScope(result.toArray(new PsiElement[result.size()]), null, localScope2.isIgnoreInjectedPsi());
+    return result.isEmpty() ? EMPTY_SCOPE : new LocalSearchScope(result.toArray(PsiElement.EMPTY_ARRAY), null, localScope2.isIgnoreInjectedPsi());
   }
 
   @Override
@@ -633,7 +635,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
         if (restrict.myBaseScope == myBaseScope) {
           List<FileType> intersection = new ArrayList<>(Arrays.asList(restrict.myFileTypes));
           intersection.retainAll(Arrays.asList(myFileTypes));
-          return new FileTypeRestrictionScope(myBaseScope, intersection.toArray(new FileType[intersection.size()]));
+          return new FileTypeRestrictionScope(myBaseScope, intersection.toArray(FileType.EMPTY_ARRAY));
         }
       }
       return super.intersectWith(scope);
@@ -774,7 +776,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     /**
      * @deprecated use {@link GlobalSearchScope#filesScope(Project, Collection)}
      */
-    public FilesScope(@Nullable Project project, @NotNull Collection<VirtualFile> files) {
+    @Deprecated
+    private FilesScope(@Nullable Project project, @NotNull Collection<VirtualFile> files) {
       this(project, files, null, false);
     }
 
@@ -790,11 +793,6 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     @Override
     public boolean contains(@NotNull final VirtualFile file) {
       return myFiles.contains(file);
-    }
-
-    @Override
-    public int compare(@NotNull final VirtualFile file1, @NotNull final VirtualFile file2) {
-      return 0;
     }
 
     @Override

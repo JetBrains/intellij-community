@@ -17,7 +17,6 @@ package com.intellij.psi.tree;
 
 import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementManipulators;
@@ -26,12 +25,12 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
 import gnu.trove.TObjectIntHashMap;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -45,7 +44,7 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testCount() {
     int count = IElementType.getAllocatedTypesCount();
     LOG.debug("Preloaded: " + count +" element types");
-    LanguageExtensionPoint[] extensions = Extensions.getExtensions(new ExtensionPointName<LanguageExtensionPoint>("com.intellij.lang.parserDefinition"));
+    LanguageExtensionPoint[] extensions = Extensions.getExtensions(LanguageParserDefinitions.INSTANCE.getName(), null);
     LOG.debug("ParserDefinitions: " + extensions.length);
 
     THashMap<Language, String> languageMap = new THashMap<>();
@@ -65,7 +64,7 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
         Lexer lexer = definition.createLexer(getProject());
         PsiParser parser = definition.createParser(getProject());
       }
-      catch (UnsupportedOperationException e1) {
+      catch (UnsupportedOperationException ignored) {
       }
 
       // language-based calculation: per-class-loading stuff commented
@@ -120,8 +119,7 @@ public class IElementTypeTest extends LightPlatformCodeInsightFixtureTestCase {
   }
 
   public void testManipulatorRegistered() {
-    LanguageExtensionPoint[] extensions =
-      Extensions.getExtensions(new ExtensionPointName<LanguageExtensionPoint>("com.intellij.lang.parserDefinition"));
+    LanguageExtensionPoint[] extensions = Extensions.getExtensions(LanguageParserDefinitions.INSTANCE.getName(), null);
     Set<String> classes = new HashSet<>();
     List<String> failures = new ArrayList<>();
     int total = 0;

@@ -42,7 +42,7 @@ public class EmmetCompositeConfigurable extends SearchableConfigurable.Parent.Ab
   }
 
   public EmmetCompositeConfigurable(Collection<Configurable> nestedConfigurables, @NotNull Configurable... innerConfigurables) {
-    myNestedConfigurables = nestedConfigurables.toArray(new Configurable[nestedConfigurables.size()]);
+    myNestedConfigurables = nestedConfigurables.toArray(new Configurable[0]);
     myInnerConfigurables = innerConfigurables;
     myTemplateExpandShortcutPanel = new TemplateExpandShortcutPanel(XmlBundle.message("emmet.expand.abbreviation.with"));
   }

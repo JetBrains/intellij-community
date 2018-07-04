@@ -53,6 +53,10 @@ public class OptimizeImportsTest extends OptimizeImportsTestCase {
     doTest();
   }
 
+  public void testConflictingOnDemandImports() {
+    doTest();
+  }
+
   public void testExcludeNonStaticElementsFromStaticConflictingMembers() {
     doTest();
   }

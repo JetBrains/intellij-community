@@ -44,7 +44,9 @@ public abstract class SerializableInspectionBase extends BaseInspection {
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    superClassString = formatString(superClassList);
+    if (!superClassList.isEmpty()) {
+      superClassString = formatString(superClassList);
+    }
     super.writeSettings(node);
   }
 
@@ -53,7 +55,7 @@ public abstract class SerializableInspectionBase extends BaseInspection {
     return EMPTY_COMPONENT_ARRAY;
   }
 
-  protected boolean isIgnoredSubclass(PsiClass aClass) {
+  protected boolean isIgnoredSubclass(@NotNull PsiClass aClass) {
     if (SerializationUtils.isDirectlySerializable(aClass)) {
       return false;
     }

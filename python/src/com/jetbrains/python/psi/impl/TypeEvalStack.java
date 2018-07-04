@@ -24,7 +24,7 @@ import java.util.Set;
  * @author yole
  */
 public class TypeEvalStack {
-  private static ThreadLocal<TypeEvalStack> STACK = new ThreadLocal<TypeEvalStack>() {
+  private static final ThreadLocal<TypeEvalStack> STACK = new ThreadLocal<TypeEvalStack>() {
     @Override
     protected TypeEvalStack initialValue() {
       return new TypeEvalStack();

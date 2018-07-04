@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.startup;
 
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,20 +19,29 @@ import java.util.List;
  */
 public class StartupActionScriptManager {
   public static final String STARTUP_WIZARD_MODE = "StartupWizardMode";
-
-  private static final String ACTION_SCRIPT_FILE = "action.script";
+  public static final String ACTION_SCRIPT_FILE = "action.script";
 
   private StartupActionScriptManager() { }
 
   public static synchronized void executeActionScript() throws IOException {
     try {
-      List<ActionCommand> commands = loadActionScript();
-      for (ActionCommand actionCommand : commands) {
-        actionCommand.execute();
+      List<ActionCommand> commands = loadActionScript(getActionScriptFile());
+      for (ActionCommand command : commands) {
+        command.execute();
       }
     }
     finally {
       saveActionScript(null);  // deleting a file should not cause an exception
+    }
+  }
+
+  public static synchronized void executeActionScript(@NotNull File scriptFile, @NotNull File oldTarget, @NotNull File newTarget) throws IOException {
+    List<ActionCommand> commands = loadActionScript(scriptFile);
+    for (ActionCommand command : commands) {
+      ActionCommand toExecute = mapPaths(command, oldTarget, newTarget);
+      if (toExecute != null) {
+        toExecute.execute();
+      }
     }
   }
 
@@ -60,8 +56,16 @@ public class StartupActionScriptManager {
       }
     }
     else {
-      List<ActionCommand> script = loadActionScript();
-      script.addAll(commands);
+      List<ActionCommand> script;
+      try {
+        script = loadActionScript(getActionScriptFile());
+        script.addAll(commands);
+      }
+      catch (ObjectStreamException e) {
+        Logger.getInstance(StartupActionScriptManager.class).warn(e);
+        script = new ArrayList<>(commands);
+      }
+
       saveActionScript(script);
     }
   }
@@ -70,8 +74,7 @@ public class StartupActionScriptManager {
     return new File(PathManager.getPluginTempPath(), ACTION_SCRIPT_FILE);
   }
 
-  private static List<ActionCommand> loadActionScript() throws IOException {
-    File scriptFile = getActionScriptFile();
+  private static List<ActionCommand> loadActionScript(File scriptFile) throws IOException {
     if (scriptFile.isFile()) {
       try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(scriptFile))) {
         Object data = ois.readObject();
@@ -86,7 +89,7 @@ public class StartupActionScriptManager {
         }
       }
       catch (ReflectiveOperationException e) {
-        throw new IOException("Stream error: " + scriptFile, e);
+        throw (StreamCorruptedException)new StreamCorruptedException("Stream error: " + scriptFile).initCause(e);
       }
     }
 
@@ -108,6 +111,43 @@ public class StartupActionScriptManager {
       FileUtilRt.delete(scriptFile);
     }
   }
+
+  private static ActionCommand mapPaths(ActionCommand command, File oldTarget, File newTarget) {
+    if (command instanceof CopyCommand) {
+      File destination = mapPath(((CopyCommand)command).myDestination, oldTarget, newTarget);
+      if (destination != null) {
+        return new CopyCommand(new File(((CopyCommand)command).mySource), destination);
+      }
+    }
+    else if (command instanceof UnzipCommand) {
+      File destination = mapPath(((UnzipCommand)command).myDestination, oldTarget, newTarget);
+      if (destination != null) {
+        return new UnzipCommand(new File(((UnzipCommand)command).mySource), destination, ((UnzipCommand)command).myFilenameFilter);
+      }
+    }
+    else if (command instanceof DeleteCommand) {
+      File source = mapPath(((DeleteCommand)command).mySource, oldTarget, newTarget);
+      if (source != null) {
+        return new DeleteCommand(source);
+      }
+    }
+
+    return null;
+  }
+
+  private static File mapPath(String path, File oldTarget, File newTarget) {
+    String oldTargetPath = oldTarget.getPath();
+    if (path.startsWith(oldTargetPath)) {
+      if (path.length() == oldTargetPath.length()) {
+        return newTarget;
+      }
+      if (path.charAt(oldTargetPath.length()) == File.separatorChar) {
+        return new File(newTarget, path.substring(oldTargetPath.length() + 1));
+      }
+    }
+    return null;
+  }
+
 
   public interface ActionCommand {
     ActionCommand[] EMPTY_ARRAY = new ActionCommand[0];
@@ -134,7 +174,7 @@ public class StartupActionScriptManager {
       }
 
       File destDir = destination.getParentFile();
-      if (!(destDir.exists() || destDir.mkdirs())) {
+      if (!(destDir.isDirectory() || destDir.mkdirs())) {
         throw new IOException("Cannot create directory: " + destDir);
       }
 
@@ -172,9 +212,8 @@ public class StartupActionScriptManager {
         throw new IOException("Source file missing: " + source);
       }
 
-      File destDir = destination.getParentFile();
-      if (!(destDir.exists() || destDir.mkdirs())) {
-        throw new IOException("Cannot create directory: " + destDir);
+      if (!(destination.isDirectory() || destination.mkdirs())) {
+        throw new IOException("Cannot create directory: " + destination);
       }
 
       ZipUtil.extract(source, destination, myFilenameFilter);

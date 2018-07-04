@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public class PyTypingTest extends PyTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    setLanguageLevel(LanguageLevel.PYTHON32);
+    setLanguageLevel(LanguageLevel.PYTHON34);
   }
 
   @Override
@@ -145,7 +145,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testGenericType() {
-    doTest("TypeVar('A')",
+    doTest("A",
            "from typing import TypeVar\n" +
            "\n" +
            "T = TypeVar('A')\n" +
@@ -155,7 +155,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testGenericBoundedType() {
-    doTest("TypeVar('T', int, str)",
+    doTest("T",
            "from typing import TypeVar\n" +
            "\n" +
            "T = TypeVar('T', int, str)\n" +
@@ -275,6 +275,15 @@ public class PyTypingTest extends PyTestCase {
            "    pass\n");
   }
 
+  // PY-28032
+  public void testOptionalOfAny() {
+    doTest("Optional[Any]",
+           "from typing import Optional, Any\n" +
+           "\n" +
+           "x = None  # type: Optional[Any]\n" +
+           "expr = x\n");
+  }
+
   public void testOptionalFromDefaultNone() {
     doTest("Optional[int]",
            "def foo(expr: int = None):\n" +
@@ -312,7 +321,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-19220
   public void testMultiLineAssignmentComment() {
-    doTest("List[str]", 
+    doTest("List[str]",
            "from typing import List\n" +
            "\n" +
            "expr = [\n" +
@@ -333,6 +342,50 @@ public class PyTypingTest extends PyTestCase {
            "def foo(x):\n" +
            "    with x as expr:  # type: int\n" +
            "        pass\n");
+  }
+
+  // PY-21191
+  public void testTypeCommentWithParenthesizedTuple() {
+    doTest("int",
+           "expr, x = undefined()  # type: (int, str) ");
+  }
+
+  // PY-21191
+  public void testTypeCommentWithNestedTuplesInAssignment() {
+    doTest("int",
+           "_, (_, expr) = undefined()  # type: str, (str, int)");
+  }
+
+  // PY-21191
+  public void testTypeCommentStructuralMismatch1() {
+    doTest("Any",
+           "expr = undefined()  # type: str, int");
+  }
+
+  // PY-21191
+  public void testTypeCommentStructuralMismatch2() {
+    doTest("Any",
+           "_, (_, expr) = undefined()  # type: str, (str, str, int)");
+  }
+
+  // PY-21191
+  public void testTypeCommentStructuralMismatch3() {
+    doTest("Any",
+           "_, (_, expr) = undefined()  # type: (str, str), int");
+  }
+
+  // PY-21191
+  public void testTypeCommentWithNestedTuplesInWithStatement() {
+    doTest("int",
+           "with undefined() as (_, (_, expr)):  # type: str, (str, int)\n" +
+           "    pass");
+  }
+
+  // PY-21191
+  public void testTypeCommentWithNestedTuplesInForStatement() {
+    doTest("int",
+           "for (_, (_, expr)) in undefined():  # type: str, (str, int)\n" +
+           "    pass");
   }
 
   // PY-16585
@@ -384,6 +437,18 @@ public class PyTypingTest extends PyTestCase {
   public void testVariableTypeCommentInjectionTuple() {
     doTestInjectedText("x, y = undefined()  # type: int,<caret> int", 
                        "int, int");
+  }
+
+  // PY-21195
+  public void testVariableTypeCommentWithSubsequentComment() {
+    doTestInjectedText("x, y = undefined()  # type: int,<caret> str # comment",
+                       "int, str");
+  }
+
+  // PY-21195
+  public void testVariableTypeCommentWithSubsequentCommentWithoutSpacesInBetween() {
+    doTestInjectedText("x, y = undefined()  # type: int,<caret> str# comment",
+                       "int, str");
   }
 
   // PY-22620
@@ -486,7 +551,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-18726
   public void testFunctionTypeCommentCallableParameter() {
-    doTest("(bool, str) -> int", 
+    doTest("(bool, str) -> int",
            "from typing import Callable\n" +
            "\n" +
            "def f(cb):\n" +
@@ -536,12 +601,12 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-18598
   public void testFunctionTypeCommentEllipsisParameters() {
-   doTest("(x: Any, y: Any, z: Any) -> int", 
+   doTest("(x: Any, y: Any, z: Any) -> int",
           "def f(x, y=42, z='foo'):\n" +
           "    # type: (...) -> int \n" +
           "    pass\n" +
           "\n" +
-          "expr = f"); 
+          "expr = f");
   }
 
   // PY-20421
@@ -558,7 +623,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-18762
   public void testHomogeneousTuple() {
-    doTest("Tuple[int, ...]", 
+    doTest("Tuple[int, ...]",
            "from typing import Tuple\n" +
            "\n" +
            "def f(xs: Tuple[int, ...]):\n" +
@@ -578,7 +643,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-18762
   public void testHomogeneousTupleUnpackingTarget() {
-    doTest("int", 
+    doTest("int",
            "from typing import Tuple\n" +
            "\n" +
            "xs = unknown() # type: Tuple[int, ...]\n" +
@@ -618,7 +683,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-18877
   public void testFunctionTypeCommentOnTheSameLine() {
-    doTest("(x: int, y: int) -> None", 
+    doTest("(x: int, y: int) -> None",
            "def f(x,\n" +
            "      y):  # type: (int, int) -> None\n" +
            "    pass\n" +
@@ -720,6 +785,95 @@ public class PyTypingTest extends PyTestCase {
            "    expr = x");
   }
 
+  // PY-21864
+  public void testLocalVariableAnnotationAheadOfTimeWithTarget() {
+    doTest("int",
+           "x: int\n" +
+           "with foo() as x:\n" +
+           "    expr = x\n");
+  }
+
+  // PY-21864
+  public void testTopLevelVariableAnnotationAheadOfTimeInAnotherFileWithTarget() {
+    doMultiFileStubAwareTest("int",
+                             "from other import x\n" +
+                             "\n" +
+                             "expr = x");
+  }
+
+  public void testLocalVariableAnnotationAheadOfTimeForTarget() {
+    doTest("int",
+           "x: int\n" +
+           "for x in foo():\n" +
+           "    expr = x\n");
+  }
+
+  // PY-21864
+  public void testTopLevelVariableAnnotationAheadOfTimeInAnotherFileForTarget() {
+    doMultiFileStubAwareTest("int",
+                             "from other import x\n" +
+                             "\n" +
+                             "expr = x");
+  }
+
+  // PY-21864
+  public void testLocalVariableAnnotationAheadOfTimeUnpackingTarget() {
+    doTest("int",
+           "x: int\n" +
+           "x, y = foo()\n" +
+           "expr = x");
+  }
+
+  // PY-21864
+  public void testTopLevelVariableAnnotationAheadOfTimeInAnotherFileUnpackingTarget() {
+    doMultiFileStubAwareTest("int",
+                             "from other import x\n" +
+                             "\n" +
+                             "expr = x");
+  }
+
+  // PY-21864
+  public void testLocalVariableAnnotationAheadOfTimeOnlyFirstHintConsidered() {
+    doTest("int",
+           "x: int\n" +
+           "x = foo()\n" +
+           "x: str\n" +
+           "x = baz()\n" +
+           "expr = x");
+  }
+
+  // PY-16412
+  public void testLocalVariableAnnotationAheadOfTimeExplicitAny() {
+    doTest("Any",
+           "from typing import Any\n" +
+           "\n" +
+           "def func(x):\n" +
+           "    var: Any\n" +
+           "    var = x\n" +
+           "    expr = var\n");
+  }
+
+  // PY-28032
+  public void testClassAttributeAnnotationExplicitAny() {
+    doTest("Any",
+           "from typing import Any\n" +
+           "\n" +
+           "class C:\n" +
+           "    attr: Any = None\n" +
+           "    \n" +
+           "    def m(self, x):\n" +
+           "        self.attr = x\n" +
+           "        expr = self.attr");
+  }
+
+  // PY-21864
+  public void testClassAttributeAnnotationAheadOfTimeInAnotherFile() {
+    doMultiFileStubAwareTest("int",
+                             "from other import C\n" +
+                             "\n" +
+                             "expr = C().attr");
+  }
+
   public void testInstanceAttributeAnnotation() {
     doTest("int",
            "class C:\n" +
@@ -729,7 +883,7 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testIllegalAnnotationTargets() {
-    doTest("Tuple[Any, int, Any, Any]", 
+    doTest("Tuple[Any, int, Any, Any]",
            "(w, _): Tuple[int, Any]\n" +
            "((x)): int\n" +
            "y: bool = z = undefined()\n" +
@@ -781,30 +935,32 @@ public class PyTypingTest extends PyTestCase {
   }
 
   public void testAsyncGeneratorAnnotation() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
-      doTest("AsyncGenerator[int, str]",
-             "from typing import AsyncGenerator\n" +
-             "\n" +
-             "async def g() -> AsyncGenerator[int, str]:\n" +
-             "    s = (yield 42)\n" +
-             "    \n" +
-             "expr = g()");
-    });
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("AsyncGenerator[int, str]",
+                   "from typing import AsyncGenerator\n" +
+                   "\n" +
+                   "async def g() -> AsyncGenerator[int, str]:\n" +
+                   "    s = (yield 42)\n" +
+                   "    \n" +
+                   "expr = g()")
+    );
   }
 
   public void testCoroutineReturnsGenerator() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
-      doTest("Coroutine[Any, Any, Generator[int, Any, Any]]",
-             "from typing import Generator\n" +
-             "\n" +
-             "async def coroutine() -> Generator[int, Any, Any]:\n" +
-             "    def gen():\n" +
-             "        yield 42\n" +
-             "    \n" +
-             "    return gen()\n" +
-             "    \n" +
-             "expr = coroutine()");
-    });
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTest("Coroutine[Any, Any, Generator[int, Any, Any]]",
+                   "from typing import Generator\n" +
+                   "\n" +
+                   "async def coroutine() -> Generator[int, Any, Any]:\n" +
+                   "    def gen():\n" +
+                   "        yield 42\n" +
+                   "    \n" +
+                   "    return gen()\n" +
+                   "    \n" +
+                   "expr = coroutine()")
+    );
   }
 
   public void testGenericRenamedParameter() {
@@ -839,7 +995,7 @@ public class PyTypingTest extends PyTestCase {
   
   // PY-20057
   public void testConstrainedClassObjectTypeOfParam() {
-    doTest("Type[TypeVar('T', int)]",
+    doTest("Type[T]",
            "from typing import Type, TypeVar\n" +
            "\n" +
            "T = TypeVar('T', bound=int)\n" +
@@ -929,7 +1085,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-23053
   public void testListContainingClasses() {
-    doTest("Type[str]", 
+    doTest("Type[str]",
            "xs = [str]\n" +
            "expr = xs.pop()");
   }
@@ -953,7 +1109,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-24260
   public void testGenericClassParameterTakenFromGenericClassObject() {
-    doTest("MyClass[TypeVar('T')]",
+    doTest("MyClass[T]",
            "from typing import TypeVar, Generic, Type\n" +
            "\n" +
            "T = TypeVar(\"T\")\n" +
@@ -985,6 +1141,265 @@ public class PyTypingTest extends PyTestCase {
            "        expr = x\n");
   }
 
+  // PY-24729
+  public void testAnnotatedInstanceAttributeReferenceOutsideClass() {
+    doTest("int",
+           "class C:\n" +
+           "    attr: int\n" +
+           "\n" +
+           "    def __init__(self):\n" +
+           "        self.attr = 'foo'\n" +
+           "\n" +
+           "expr = C().attr\n");
+  }
+
+  // PY-24729
+  public void testAnnotatedInstanceAttributeReferenceInsideClass() {
+    doTest("int",
+           "class C:\n" +
+           "    attr: int\n" +
+           "\n" +
+           "    def __init__(self):\n" +
+           "        self.attr = 'foo'\n" +
+           "        \n" +
+           "    def m(self):\n" +
+           "        expr = self.attr\n");
+  }
+
+  // PY-24729
+  public void testAnnotatedInstanceAttributeInOtherFile() {
+    doMultiFileStubAwareTest("int",
+                             "from other import C\n" +
+                             "\n" +
+                             "expr = C().attr");
+  }
+
+  // PY-24990
+  public void testSelfAnnotationSameClassInstance() {
+    doTest("C",
+           "from typing import TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class C:\n" +
+           "    def method(self: T) -> T:\n" +
+           "        pass\n" +
+           "\n" +
+           "expr = C().method()");
+  }
+
+  // PY-24990
+  public void testSelfAnnotationSubclassInstance() {
+    doTest("D",
+           "from typing import TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class C:\n" +
+           "    def method(self: T) -> T:\n" +
+           "        pass\n" +
+           "\n" +
+           "class D(C):\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = D().method()");
+  }
+
+  // PY-24990
+  public void testClsAnnotationSameClassInstance() {
+    doTest("C",
+           "from typing import TypeVar, Type\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class C:\n" +
+           "    @classmethod\n" +
+           "    def factory(cls: Type[T]) -> T:\n" +
+           "        pass\n" +
+           "\n" +
+           "expr = C.factory()");
+  }
+
+  // PY-24990
+  public void testClsAnnotationSubclassInstance() {
+    doTest("D",
+           "from typing import TypeVar, Type\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class C:\n" +
+           "    @classmethod\n" +
+           "    def factory(cls: Type[T]) -> T:\n" +
+           "        pass\n" +
+           "\n" +
+           "class D(C): \n" +
+           "    pass\n" +
+           "\n" +
+           "expr = D.factory()");
+  }
+
+  // PY-24990
+  public void testClsAnnotationClassMethodCalledOnInstance() {
+    doTest("D",
+           "from typing import TypeVar, Type\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class C:\n" +
+           "    @classmethod\n" +
+           "    def factory(cls: Type[T]) -> T:\n" +
+           "        pass\n" +
+           "\n" +
+           "class D(C): \n" +
+           "    pass\n" +
+           "\n" +
+           "expr = D().factory()");
+  }
+
+  // PY-24990
+  public void testSelfAnnotationReceiverUnionType() {
+    doTest("Union[A, B]",
+           "from typing import TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class Base:\n" +
+           "    def method(self: T) -> T:\n" +
+           "        pass\n" +
+           "\n" +
+           "class A(Base):\n" +
+           "    pass\n" +
+           "\n" +
+           "class B(Base): \n" +
+           "    pass\n" +
+           "\n" +
+           "expr = (A() or B()).method()");
+  }
+
+  // PY-24990
+  public void _testClsAnnotationReceiverUnionType() {
+    doTest("Union[A, B]",
+           "from typing import TypeVar, Type\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class Base:\n" +
+           "    @classmethod\n" +
+           "    def factory(cls: Type[T]) -> T:\n" +
+           "        pass\n" +
+           "\n" +
+           "class A(Base):\n" +
+           "    pass\n" +
+           "\n" +
+           "class B(Base):\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = (A or B).factory()");
+  }
+
+  // PY-24990
+  public void testClsAnnotationReceiverUnionTypeClassMethodCalledOnMixedInstanceClassObject() {
+    doTest("A",
+           "from typing import TypeVar, Type\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class Base:\n" +
+           "    @classmethod\n" +
+           "    def factory(cls: Type[T]) -> T:\n" +
+           "        pass\n" +
+           "\n" +
+           "class A(Base):\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = (A or A()).factory()");
+  }
+
+  // PY-24990
+  public void testSelfAnnotationInstanceMethodCalledOnClassObject() {
+    doTest("D",
+           "from typing import TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class C:\n" +
+           "    def method(self: T) -> T:\n" +
+           "        pass\n" +
+           "\n" +
+           "class D(C):\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = C.method(D())");
+  }
+
+  // PY-24990
+  public void testSelfAnnotationInTypeCommentSameClassInstance() {
+    doTest("C",
+           "from typing import TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class C:\n" +
+           "    def method(self):\n" +
+           "        # type: (T) -> T\n" +
+           "        pass\n" +
+           "\n" +
+           "expr = C().method()");
+  }
+
+  // PY-24990
+  public void testSelfAnnotationInTypeCommentSubclassInstance() {
+    doTest("D",
+           "from typing import TypeVar\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class C:\n" +
+           "    def method(self):\n" +
+           "        # type: (T) -> T\n" +
+           "        pass\n" +
+           "\n" +
+           "class D(C):\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = D().method()");
+  }
+
+  // PY-24990
+  public void testClsAnnotationInTypeCommentSameClassInstance() {
+    doTest("C",
+           "from typing import TypeVar, Type\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class C:\n" +
+           "    @classmethod\n" +
+           "    def factory(cls) -> T:\n" +
+           "        # type: (Type[T]) -> T\n" +
+           "        pass\n" +
+           "\n" +
+           "expr = C.factory()");
+  }
+
+  // PY-24990
+  public void testClsAnnotationInTypeCommentSubclassInstance() {
+    doTest("D",
+           "from typing import TypeVar, Type\n" +
+           "\n" +
+           "T = TypeVar('T')\n" +
+           "\n" +
+           "class C:\n" +
+           "    @classmethod\n" +
+           "    def factory(cls):\n" +
+           "        # type: (Type[T]) -> T\n" +
+           "        pass\n" +
+           "\n" +
+           "class D(C): \n" +
+           "    pass\n" +
+           "\n" +
+           "expr = D.factory()");
+  }
+
   private void doTestNoInjectedText(@NotNull String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
@@ -1005,12 +1420,24 @@ public class PyTypingTest extends PyTestCase {
   }
 
   private void doTest(@NotNull String expectedType, @NotNull String text) {
-    myFixture.copyDirectoryToProject("typing", "");
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
-    final TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(),expr.getContainingFile());
+    final TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
     final TypeEvalContext userInitiated = TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()).withTracing();
     assertType("Failed in code analysis context", expectedType, expr, codeAnalysis);
+    assertType("Failed in user initiated context", expectedType, expr, userInitiated);
+  }
+
+  private void doMultiFileStubAwareTest(@NotNull final String expectedType, @NotNull final String text) {
+    myFixture.copyDirectoryToProject("types/" + getTestName(false), "");
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
+    final PyExpression expr = myFixture.findElementByText("expr", PyExpression.class);
+
+    final TypeEvalContext codeAnalysis = TypeEvalContext.codeAnalysis(expr.getProject(), expr.getContainingFile());
+    assertType("Failed in code analysis context", expectedType, expr, codeAnalysis);
+    assertProjectFilesNotParsed(expr.getContainingFile());
+
+    final TypeEvalContext userInitiated = TypeEvalContext.userInitiated(expr.getProject(), expr.getContainingFile()).withTracing();
     assertType("Failed in user initiated context", expectedType, expr, userInitiated);
   }
 }

@@ -1,0 +1,1 @@
+x = undefined()  # type: <caret>!

@@ -20,6 +20,7 @@ import com.intellij.tasks.timeTracking.model.WorkItem;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 import java.util.List;
@@ -53,6 +54,11 @@ public abstract class LocalTask extends Task {
   public abstract void addChangelist(ChangeListInfo info);
 
   public abstract void removeChangelist(final ChangeListInfo info);
+
+  @Nullable
+  public abstract String getShelfName();
+
+  public abstract void setShelfName(String shelfName);
 
   /**
    * For serialization only.

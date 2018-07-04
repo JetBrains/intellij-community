@@ -16,7 +16,7 @@
 package com.siyeh.ig.visibility;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
-import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.module.Module;
@@ -40,7 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-public class ClassEscapesItsScopeInspection extends BaseJavaBatchLocalInspectionTool {
+public class ClassEscapesItsScopeInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @SuppressWarnings("PublicField") public boolean checkModuleApi = true; // public & protected fields & methods within exported packages
   @SuppressWarnings("PublicField") public boolean checkPublicApi; // All public & protected fields & methods

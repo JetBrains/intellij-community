@@ -28,8 +28,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class TypeUtils {
+  private static final String[] EQUAL_CONTRACT_CLASSES = {CommonClassNames.JAVA_UTIL_LIST,
+    CommonClassNames.JAVA_UTIL_SET, CommonClassNames.JAVA_UTIL_MAP, CommonClassNames.JAVA_UTIL_MAP_ENTRY};
 
   private static final Map<PsiType, Integer> typePrecisions = new HashMap<>(7);
 
@@ -58,7 +61,7 @@ public class TypeUtils {
   }
 
   public static PsiClassType getType(@NotNull PsiClass aClass) {
-    return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass);
+    return JavaPsiFacade.getElementFactory(aClass.getProject()).createType(aClass);
   }
 
   public static PsiClassType getObjectType(@NotNull PsiElement context) {
@@ -110,7 +113,7 @@ public class TypeUtils {
     if (type == null) {
       return false;
     }
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(expression.getProject());
     for (String rhsTypeText : rhsTypeTexts) {
       final PsiClassType rhsType = factory.createTypeByFQClassName(rhsTypeText, expression.getResolveScope());
       if (type.isAssignableFrom(rhsType)) {
@@ -130,17 +133,11 @@ public class TypeUtils {
     if (expression == null) {
       return null;
     }
-    final PsiType type = expression instanceof PsiFunctionalExpression
-                         ? ((PsiFunctionalExpression)expression).getFunctionalInterfaceType()
-                         : expression.getType();
+    final PsiType type = FunctionalExpressionUtils.getFunctionalExpressionType(expression);
     if (type == null) {
       return null;
     }
-    if (!(type instanceof PsiClassType)) {
-      return null;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass aClass = classType.resolve();
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
     if (aClass == null) {
       return null;
     }
@@ -156,15 +153,7 @@ public class TypeUtils {
     if (expression == null) {
       return false;
     }
-    final PsiType type = expression.getType();
-    if (type == null) {
-      return false;
-    }
-    if (!(type instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass aClass = classType.resolve();
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
     if (aClass == null) {
       return false;
     }
@@ -180,12 +169,7 @@ public class TypeUtils {
     if (variable == null) {
       return false;
     }
-    final PsiType type = variable.getType();
-    if (!(type instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass aClass = classType.resolve();
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(variable.getType());
     if (aClass == null) {
       return false;
     }
@@ -233,11 +217,7 @@ public class TypeUtils {
   }
 
   public static boolean isTypeParameter(PsiType type) {
-    if (!(type instanceof PsiClassType)) {
-      return false;
-    }
-    final PsiClassType classType = (PsiClassType)type;
-    final PsiClass aClass = classType.resolve();
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
     return aClass instanceof PsiTypeParameter;
   }
 
@@ -263,5 +243,53 @@ public class TypeUtils {
       return PsiType.DOUBLE;
     }
     return type;
+  }
+
+  @Contract("null -> null")
+  public static String resolvedClassName(PsiType type) {
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    return aClass == null ? null : aClass.getQualifiedName();
+  }
+
+  /**
+   * Returns true if instances of two given types may be equal according to equals method contract even if they belong to
+   * inconvertible classes (e.g. {@code ArrayList} and {@code LinkedList}). This method does not check any type parameters that
+   * may be present.
+   *
+   * @param type1 first type
+   * @param type2 second type
+   * @return true if instances of given types may be equal
+   */
+  public static boolean mayBeEqualByContract(PsiType type1, PsiType type2) {
+    return Stream.of(EQUAL_CONTRACT_CLASSES).anyMatch(className -> areConvertibleSubtypesOf(type1, type2, className));
+  }
+
+  private static boolean areConvertibleSubtypesOf(PsiType type1, PsiType type2, String className) {
+    PsiClass class1 = PsiUtil.resolveClassInClassTypeOnly(type1);
+    if (class1 == null) return false;
+    PsiClass class2 = PsiUtil.resolveClassInClassTypeOnly(type2);
+    if (class2 == null) return false;
+    PsiClass superClass = JavaPsiFacade.getInstance(class1.getProject()).findClass(className, class1.getResolveScope());
+    if (superClass == null) return false;
+    return InheritanceUtil.isInheritorOrSelf(class1, superClass, true) && InheritanceUtil.isInheritorOrSelf(class2, superClass, true);
+  }
+
+  /**
+   * Returns true if instances of two given types cannot be equal according to equals method contract
+   * (e.g. {@code java.util.Set} and {@code java.util.List}).
+   *
+   * @param type1 first type
+   * @param type2 second type
+   * @return true if instances of given types cannot be equal
+   */
+  public static boolean cannotBeEqualByContract(PsiType type1, PsiType type2) {
+    // java.util.Set and java.util.List cannot be equal by contract
+    if (InheritanceUtil.isInheritor(type1, CommonClassNames.JAVA_UTIL_SET) && InheritanceUtil.isInheritor(type2, CommonClassNames.JAVA_UTIL_LIST)) {
+      return true;
+    }
+    if (InheritanceUtil.isInheritor(type1, CommonClassNames.JAVA_UTIL_LIST) && InheritanceUtil.isInheritor(type2, CommonClassNames.JAVA_UTIL_SET)) {
+      return true;
+    }
+    return false;
   }
 }

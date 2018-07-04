@@ -17,7 +17,6 @@ package com.jetbrains.python.findUsages;
 
 import com.intellij.find.findUsages.AbstractFindUsagesDialog;
 import com.intellij.find.findUsages.CommonFindUsagesDialog;
-import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
@@ -79,8 +78,7 @@ public class PyModuleFindUsagesHandler extends PyFindUsagesHandler {
       target = ((PyImportedModule) target).resolve();
     }
     if (target instanceof PyFile && PyNames.INIT_DOT_PY.equals(((PyFile)target).getName())) {
-      List<PsiReference> result = new ArrayList<>();
-      result.addAll(super.findReferencesToHighlight(target, searchScope));
+      List<PsiReference> result = new ArrayList<>(super.findReferencesToHighlight(target, searchScope));
       PsiElement targetDir = PyUtil.turnInitIntoDir(target);
       if (targetDir != null) {
         result.addAll(ReferencesSearch.search(targetDir, searchScope, false).findAll());

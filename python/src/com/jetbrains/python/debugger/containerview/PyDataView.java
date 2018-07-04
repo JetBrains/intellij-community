@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger.containerview;
 
 import com.intellij.execution.process.ProcessHandler;
@@ -27,8 +13,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ToolWindowType;
-import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.tabs.TabInfo;
@@ -51,7 +36,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class PyDataView implements DumbAware {
-  public static final String DATA_VIEWER_ID = "Data View";
+  public static final String DATA_VIEWER_ID = "SciView";
   public static final String COLORED_BY_DEFAULT = "python.debugger.dataview.coloredbydefault";
   public static final String AUTO_RESIZE = "python.debugger.dataview.autoresize";
   public static final String EMPTY_TAB_NAME = "empty";
@@ -66,6 +51,18 @@ public class PyDataView implements DumbAware {
   }
 
   public void show(@NotNull PyDebugValue value) {
+    if (ToolWindowManager.getInstance(myProject).getToolWindow(DATA_VIEWER_ID) != null) {
+      showInToolwindow(value);
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        final PyDataViewDialog dialog = new PyDataViewDialog(myProject, value);
+        dialog.show();
+      });
+    }
+  }
+
+  private void showInToolwindow(@NotNull PyDebugValue value) {
     ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DATA_VIEWER_ID);
     if (window == null) {
       LOG.error("Tool window '" + DATA_VIEWER_ID + "' is not found");
@@ -77,6 +74,10 @@ public class PyDataView implements DumbAware {
       dataViewerPanel.apply(value);
     });
     window.show(null);
+    final Content dataView = window.getContentManager().getContent(0);
+    if (dataView != null) {
+      window.getContentManager().setSelectedContent(dataView);
+    }
   }
 
   public void closeTabs(Predicate<PyFrameAccessor> ifClose) {
@@ -162,10 +163,10 @@ public class PyDataView implements DumbAware {
     myTabs = new PyDataViewTabs(myProject);
     myTabs.setPopupGroup(new DefaultActionGroup(new ColoredAction()), ActionPlaces.UNKNOWN, true);
     myTabs.setTabDraggingEnabled(true);
-    final Content content = ContentFactory.SERVICE.getInstance().createContent(myTabs, "", false);
+    final Content content = ContentFactory.SERVICE.getInstance().createContent(myTabs, "Data", false);
     content.setCloseable(true);
     toolWindow.getContentManager().addContent(content);
-    ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).addToolWindowManagerListener(new ToolWindowManagerAdapter() {
+    myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
       public void stateChanged() {
         ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(DATA_VIEWER_ID);
@@ -180,7 +181,7 @@ public class PyDataView implements DumbAware {
     });
   }
 
-  private TabInfo addTab(@NotNull PyFrameAccessor frameAccessor) {
+  public TabInfo addTab(@NotNull PyFrameAccessor frameAccessor) {
     if (hasOnlyEmptyTab()) {
       myTabs.removeTab(myTabs.getSelectedInfo());
     }
@@ -216,7 +217,7 @@ public class PyDataView implements DumbAware {
     return getPanel(info).getSliceTextField().getText().isEmpty();
   }
 
-  private List<TabInfo> getVisibleTabs() {
+  public List<TabInfo> getVisibleTabs() {
     return myTabs.getTabs().stream().filter(tabInfo -> !tabInfo.isHidden()).collect(Collectors.toList());
   }
 

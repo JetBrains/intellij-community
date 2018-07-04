@@ -50,13 +50,13 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
   public void testEmptyInvisibleRoot() throws Exception {
     myTree.setRootVisible(false);
     showTree();
-    assertTree("+/\n");
+    assertTree("/\n");
 
     updateFromRoot();
-    assertTree("+/\n");
+    assertTree("/\n");
 
     buildNode("/", false);
-    assertTree("+/\n");
+    assertTree("/\n");
 
     myTree.setRootVisible(true);
     buildNode("/", false);
@@ -449,7 +449,7 @@ public class TreeUiTest extends AbstractTreeBuilderTest {
     myRoot.removeAll();
     updateFromRoot();
 
-    assertTree("+/\n");
+    assertTree("/\n");
   }
 
   public void testAutoExpand() throws Exception {

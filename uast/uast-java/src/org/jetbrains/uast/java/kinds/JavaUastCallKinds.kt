@@ -18,6 +18,6 @@ package org.jetbrains.uast.java
 import org.jetbrains.uast.UastCallKind
 
 object JavaUastCallKinds {
-    @JvmField
-    val ASSERT = UastCallKind("assert")
+  @JvmField
+  val ASSERT: UastCallKind = UastCallKind("assert")
 }

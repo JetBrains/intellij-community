@@ -15,7 +15,7 @@
  */
 package com.intellij.internal.statistic.libraryJar;
 
-import com.intellij.facet.frameworks.SettingsConnectionService;
+import com.intellij.facet.frameworks.LibrariesDownloadConnectionService;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -35,32 +35,28 @@ import java.net.URL;
 /**
  * @author Ivan Chirkov
  */
-public class LibraryJarStatisticsService extends SettingsConnectionService implements StartupActivity, DumbAware {
+public class LibraryJarStatisticsService implements StartupActivity, DumbAware {
+
   private static final String FILE_NAME = "statistics/library-jar-statistics.xml";
-  private static final String DEFAULT_SETTINGS_URL = "https://www.jetbrains.com/idea/download-assistant.xml";
-  private static final String DEFAULT_SERVICE_URL = "https://frameworks.jetbrains.com";
 
-  private static final LibraryJarStatisticsService myInstance = new LibraryJarStatisticsService();
-  private LibraryJarDescriptor[] myDescriptors;
+  private static final LibraryJarStatisticsService ourInstance = new LibraryJarStatisticsService();
+  private LibraryJarDescriptor[] ourDescriptors;
 
+  @NotNull
   public static LibraryJarStatisticsService getInstance() {
-    return myInstance;
-  }
-
-  protected LibraryJarStatisticsService() {
-    super(DEFAULT_SETTINGS_URL, DEFAULT_SERVICE_URL);
+    return ourInstance;
   }
 
   @NotNull
   public LibraryJarDescriptor[] getTechnologyDescriptors() {
-    if (myDescriptors == null) {
+    if (ourDescriptors == null) {
       if (!StatisticsUploadAssistant.isSendAllowed()) return LibraryJarDescriptor.EMPTY;
       final URL url = createVersionsUrl();
       if (url == null) return LibraryJarDescriptor.EMPTY;
       final LibraryJarDescriptors descriptors = deserialize(url);
-      myDescriptors = descriptors == null ? LibraryJarDescriptor.EMPTY : descriptors.getDescriptors();
+      ourDescriptors = descriptors == null ? LibraryJarDescriptor.EMPTY : descriptors.getDescriptors();
     }
-    return myDescriptors;
+    return ourDescriptors;
   }
 
   @Nullable
@@ -78,8 +74,8 @@ public class LibraryJarStatisticsService extends SettingsConnectionService imple
   }
 
   @Nullable
-  private URL createVersionsUrl() {
-    final String serviceUrl = getServiceUrl();
+  private static URL createVersionsUrl() {
+    final String serviceUrl = LibrariesDownloadConnectionService.getInstance().getServiceUrl();
     if (StringUtil.isNotEmpty(serviceUrl)) {
       try {
         final String url = serviceUrl + "/" + FILE_NAME;

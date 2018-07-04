@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -37,7 +24,7 @@ import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLocalInspectionTool {
+public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
@@ -143,7 +130,7 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
         boolean suitableMethod = method != null &&
                                  referenceNameElement != null &&
                                  !method.isVarArgs() &&
-                                 call.getArgumentList().getExpressions().length == method.getParameterList().getParametersCount() &&
+                                 call.getArgumentList().getExpressionCount() == method.getParameterList().getParametersCount() &&
                                  elementContainerPredicate.test(call);
         if (!suitableMethod) return;
         final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(interfaceType);
@@ -216,7 +203,7 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
     inlineCallArguments(callExpression, element, ct);
     // body could be invalidated after inlining
     expression = LambdaUtil.extractSingleExpressionFromBody(element.getBody());
-    ct.replaceAndRestoreComments(callExpression, ct.markUnchanged(expression));
+    ct.replaceAndRestoreComments(callExpression, expression);
   }
 
   private static void replaceCodeBlock(PsiLambdaExpression element) {
@@ -246,7 +233,7 @@ public class TrivialFunctionalExpressionUsageInspection extends BaseJavaBatchLoc
     }
     final PsiExpression returnValue = statement == null ? null : statement.getReturnValue();
     if (returnValue != null) {
-      ct.replaceAndRestoreComments(callExpression, ct.markUnchanged(returnValue));
+      ct.replaceAndRestoreComments(callExpression, returnValue);
     }
     else {
       ct.deleteAndRestoreComments(callExpression);

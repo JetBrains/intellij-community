@@ -28,6 +28,7 @@ import com.intellij.diff.util.Side;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -44,16 +45,12 @@ import org.jetbrains.annotations.Nullable;
 public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
   @Nullable
   private static Editor getEditor(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project == null) return null;
-
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor != null) return editor;
 
-    editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
-    if (editor != null) return editor;
-
-    return null;
+    Project project = e.getProject();
+    if (project == null) return null;
+    return FileEditorManager.getInstance(project).getSelectedTextEditor();
   }
 
   @Nullable
@@ -81,12 +78,13 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
   @Nullable
   @Override
   protected DiffRequest getDiffRequest(@NotNull AnActionEvent e) {
-    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
+    Project project = e.getProject();
     Editor editor = getEditor(e);
     FileType editorFileType = getEditorFileType(e);
     assert editor != null;
 
-    DocumentContent content2 = createContent(project, editor, editorFileType);
+    DiffContent selectedContent = e.getData(DiffDataKeys.CURRENT_CONTENT);
+    DocumentContent content2 = createContent(project, editor, editorFileType, selectedContent);
     DocumentContent content1 = DiffContentFactory.getInstance().createClipboardContent(project, content2);
 
     String title1 = DiffBundle.message("diff.content.clipboard.content.title");
@@ -103,8 +101,22 @@ public class CompareClipboardWithSelectionAction extends BaseShowDiffAction {
   }
 
   @NotNull
-  private static DocumentContent createContent(@NotNull Project project, @NotNull Editor editor, @Nullable FileType type) {
-    DocumentContent content = DiffContentFactory.getInstance().create(project, editor.getDocument(), type);
+  private static DocumentContent createContent(@Nullable Project project,
+                                               @NotNull Editor editor,
+                                               @Nullable FileType type,
+                                               @Nullable DiffContent selectedContent) {
+    DocumentContent content = null;
+    if (selectedContent instanceof DocumentContent) {
+      Document contentDocument = ((DocumentContent)selectedContent).getDocument();
+      Document editorDocument = editor.getDocument();
+      if (contentDocument.equals(editorDocument)) {
+        content = (DocumentContent)selectedContent;
+      }
+    }
+
+    if (content == null) {
+      content = DiffContentFactory.getInstance().create(project, editor.getDocument(), type);
+    }
 
     SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection()) {

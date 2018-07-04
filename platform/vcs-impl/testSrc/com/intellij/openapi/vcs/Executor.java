@@ -15,12 +15,9 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.execution.process.CapturingProcessHandler;
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -34,28 +31,6 @@ import java.util.List;
 public class Executor {
 
   protected static final Logger LOG = Logger.getInstance(Executor.class);
-
-  public static class ExecutionException extends RuntimeException {
-
-    private final int myExitCode;
-    @NotNull private final String myOutput;
-
-    ExecutionException(int exitCode, @NotNull String output) {
-      super("Failed with exit code " + exitCode);
-      myExitCode = exitCode;
-      myOutput = output;
-    }
-
-    public int getExitCode() {
-      return myExitCode;
-    }
-
-    @NotNull
-    public String getOutput() {
-      return myOutput;
-    }
-
-  }
 
   private static String ourCurrentDir;
 
@@ -182,44 +157,6 @@ public class Executor {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-  }
-
-  @NotNull
-  public static String run(@NotNull File workingDir, @NotNull List<String> params, boolean ignoreNonZeroExitCode)
-    throws ExecutionException
-  {
-    final ProcessBuilder builder = new ProcessBuilder().command(params);
-    builder.directory(workingDir);
-    builder.redirectErrorStream(true);
-    Process clientProcess;
-    try {
-      clientProcess = builder.start();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-
-    String commandLine = StringUtil.join(params, " ");
-    CapturingProcessHandler handler = new CapturingProcessHandler(clientProcess, CharsetToolkit.getDefaultSystemCharset(), commandLine);
-    ProcessOutput result = handler.runProcess(30 * 1000);
-    if (result.isTimeout()) {
-      throw new RuntimeException("Timeout waiting for the command execution. Command: " + commandLine);
-    }
-
-    String stdout = result.getStdout().trim();
-    if (result.getExitCode() != 0) {
-      if (ignoreNonZeroExitCode) {
-        debug("{" + result.getExitCode() + "}");
-      }
-      debug(stdout);
-      if (!ignoreNonZeroExitCode) {
-        throw new ExecutionException(result.getExitCode(), stdout);
-      }
-    }
-    else {
-      debug(stdout);
-    }
-    return stdout;
   }
 
   @NotNull

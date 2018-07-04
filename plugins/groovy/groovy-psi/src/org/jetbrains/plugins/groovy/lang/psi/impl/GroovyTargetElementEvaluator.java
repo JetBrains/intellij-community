@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
@@ -25,13 +11,21 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.compiled.ClsMethodImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrRenameableLightElement;
+
+import java.util.Collection;
+
+import static com.intellij.util.containers.ContainerUtil.mapNotNull;
+import static org.jetbrains.plugins.groovy.lang.resolve.CollapsingKt.collapseReflectedMethods;
 
 /**
  * @author Maxim.Medvedev
@@ -48,23 +42,32 @@ public class GroovyTargetElementEvaluator extends JavaTargetElementEvaluator {
     if (sourceElement instanceof GrCodeReferenceElement) {
       GrNewExpression newExpr;
 
-      if (sourceElement.getParent() instanceof GrNewExpression) {
-        newExpr = (GrNewExpression)sourceElement.getParent();
+      PsiElement parent = sourceElement.getParent();
+      if (parent instanceof GrNewExpression) {
+        newExpr = (GrNewExpression)parent;
       }
-      else if (sourceElement.getParent().getParent() instanceof GrNewExpression) {//anonymous class declaration
-        newExpr = (GrNewExpression)sourceElement.getParent().getParent();
+      else if (parent instanceof GrAnonymousClassDefinition) {
+        PsiElement grandParent = parent.getParent();
+        if (grandParent instanceof GrNewExpression) {
+          newExpr = (GrNewExpression)grandParent;
+        }
+        else {
+          return null;
+        }
       }
       else {
         return null;
       }
 
       final PsiMethod constructor = newExpr.resolveMethod();
+      if (constructor instanceof DefaultConstructor) return constructor.getContainingClass();
+
       final GrArgumentList argumentList = newExpr.getArgumentList();
       if (constructor != null &&
           argumentList != null &&
           PsiImplUtil.hasNamedArguments(argumentList) &&
           !PsiImplUtil.hasExpressionArguments(argumentList)) {
-        if (constructor.getParameterList().getParametersCount() == 0) return constructor.getContainingClass();
+        if (constructor.getParameterList().isEmpty()) return constructor.getContainingClass();
       }
 
       return constructor;
@@ -98,5 +101,20 @@ public class GroovyTargetElementEvaluator extends JavaTargetElementEvaluator {
       }
     }
     return target;
+  }
+
+  @Nullable
+  @Override
+  public Collection<PsiElement> getTargetCandidates(@NotNull PsiReference reference) {
+    if (reference instanceof GrReferenceExpression) {
+      GrReferenceExpression referenceExpression = (GrReferenceExpression)reference;
+      if (referenceExpression.hasMemberPointer()) {
+        GroovyResolveResult[] results = referenceExpression.multiResolve(false);
+        if (results.length > 0) {
+          return collapseReflectedMethods(mapNotNull(results, it -> it.getElement()));
+        }
+      }
+    }
+    return super.getTargetCandidates(reference);
   }
 }

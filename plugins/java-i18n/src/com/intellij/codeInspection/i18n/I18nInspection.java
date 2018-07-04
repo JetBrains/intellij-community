@@ -1,27 +1,13 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.editor.Document;
@@ -39,13 +25,12 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
-import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExceptionUtils;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -66,7 +51,10 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class I18nInspection extends BaseLocalInspectionTool {
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
+import static com.intellij.codeInsight.AnnotationUtil.CHECK_HIERARCHY;
+
+public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implements CustomSuppressableInspectionTool {
   public boolean ignoreForAssertStatements = true;
   public boolean ignoreForExceptionConstructors = true;
   @NonNls
@@ -90,11 +78,19 @@ public class I18nInspection extends BaseLocalInspectionTool {
   @NotNull
   @Override
   public SuppressIntentionAction[] getSuppressActions(PsiElement element) {
-    SuppressIntentionAction[] actions = {};
-    if (myCachedNonNlsPattern != null) {
-      actions = new SuppressIntentionAction[]{new SuppressByCommentOutAction(nonNlsCommentPattern)};
+    HighlightDisplayKey key = HighlightDisplayKey.find(getShortName());
+    assert key != null : "No key for '" + getShortName() + "' / " + getClass();
+    SuppressIntentionAction[] defaultSuppressors = SuppressManager.getInstance().createSuppressActions(key);
+
+    if (myCachedNonNlsPattern == null) {
+      return defaultSuppressors;
     }
-    return ArrayUtil.mergeArrays(actions, super.getSuppressActions(element));
+    else {
+      List<SuppressIntentionAction> suppressors = new ArrayList<>(defaultSuppressors.length + 1);
+      suppressors.add(new SuppressByCommentOutAction(nonNlsCommentPattern));
+      ContainerUtil.addAll(suppressors, defaultSuppressors);
+      return suppressors.toArray(SuppressIntentionAction.EMPTY_ARRAY);
+    }
   }
 
   private static final String SKIP_FOR_ENUM = "ignoreForEnumConstant";
@@ -362,13 +358,13 @@ public class I18nInspection extends BaseLocalInspectionTool {
     final PsiClassInitializer[] initializers = aClass.getInitializers();
     List<ProblemDescriptor> result = new ArrayList<>();
     for (PsiClassInitializer initializer : initializers) {
-      final ProblemDescriptor[] descriptors = checkElement(initializer, manager, isOnTheFly);
+      final ProblemDescriptor[] descriptors = checkElement(initializer.getBody(), manager, isOnTheFly);
       if (descriptors != null) {
         ContainerUtil.addAll(result, descriptors);
       }
     }
 
-    return result.isEmpty() ? null : result.toArray(new ProblemDescriptor[result.size()]);
+    return result.isEmpty() ? null : result.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Override
@@ -378,7 +374,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     if (containingClass == null || isClassNonNls(containingClass)) {
       return null;
     }
-    if (AnnotationUtil.isAnnotated(field, AnnotationUtil.NON_NLS, false, false)) {
+    if (AnnotationUtil.isAnnotated(field, AnnotationUtil.NON_NLS, CHECK_EXTERNAL)) {
       return null;
     }
     final PsiExpression initializer = field.getInitializer();
@@ -400,7 +396,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     StringI18nVisitor visitor = new StringI18nVisitor(manager, isOnTheFly);
     element.accept(visitor);
     List<ProblemDescriptor> problems = visitor.getProblems();
-    return problems.isEmpty() ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
+    return problems.isEmpty() ? null : problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -456,6 +452,10 @@ public class I18nInspection extends BaseLocalInspectionTool {
     }
 
     @Override
+    public void visitClassInitializer(PsiClassInitializer initializer) {
+    }
+
+    @Override
     public void visitLiteralExpression(PsiLiteralExpression expression) {
       Object value = expression.getValue();
       if (!(value instanceof String)) return;
@@ -487,7 +487,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
         final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
         if (PsiUtil.isLanguageLevel5OrHigher(expression)) {
           for (PsiModifierListOwner element : nonNlsTargets) {
-            if (!AnnotationUtil.isAnnotated(element, AnnotationUtil.NLS, true, false)) {
+            if (!AnnotationUtil.isAnnotated(element, AnnotationUtil.NLS, CHECK_HIERARCHY | CHECK_EXTERNAL)) {
               if (!element.getManager().isInProject(element) ||
                   facade.findClass(AnnotationUtil.NON_NLS, element.getResolveScope()) != null) {
                 fixes.add(new AddAnnotationFix(AnnotationUtil.NON_NLS, element));
@@ -496,7 +496,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
           }
         }
 
-        LocalQuickFix[] farr = fixes.toArray(new LocalQuickFix[fixes.size()]);
+        LocalQuickFix[] farr = fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
         final ProblemDescriptor problem = myManager.createProblemDescriptor(expression,
                                                                             description, myOnTheFly, farr,
                                                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
@@ -533,7 +533,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
       return false;
     }
 
-    if (JavaI18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NON_NLS, new HashMap<>(), nonNlsTargets)) {
+    if (JavaI18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NON_NLS, null, nonNlsTargets)) {
       return false;
     }
 
@@ -549,7 +549,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
       return false;
     }
 
-    if (JavaI18nUtil.mustBePropertyKey(expression, new HashMap<>())) {
+    if (JavaI18nUtil.mustBePropertyKey(expression, null)) {
       return false;
     }
 
@@ -559,7 +559,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     if (ignoreForAssertStatements && isArgOfAssertStatement(expression)) {
       return false;
     }
-    if (ignoreForExceptionConstructors && isArgOfExceptionConstructor(expression)) {
+    if (ignoreForExceptionConstructors && ExceptionUtils.isExceptionArgument(expression)) {
       return false;
     }
     if (ignoreForEnumConstants && isArgOfEnumConstant(expression)) {
@@ -624,11 +624,6 @@ public class I18nInspection extends BaseLocalInspectionTool {
     return JavaPsiFacade.getInstance(expression.getProject()).findClass(value, GlobalSearchScope.allScope(expression.getProject())) != null;
   }
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
-  }
-
   private static boolean isClassNonNls(@NotNull PsiClass clazz) {
     final PsiDirectory directory = clazz.getContainingFile().getContainingDirectory();
     return directory != null && isPackageNonNls(JavaDirectoryService.getInstance().getPackage(directory));
@@ -639,7 +634,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
       return false;
     }
     final PsiModifierList pkgModifierList = psiPackage.getAnnotationList();
-    return pkgModifierList != null && pkgModifierList.findAnnotation(AnnotationUtil.NON_NLS) != null
+    return pkgModifierList != null && pkgModifierList.hasAnnotation(AnnotationUtil.NON_NLS)
            || isPackageNonNls(psiPackage.getParentPackage());
   }
 
@@ -698,7 +693,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
         return JavaI18nUtil.isMethodParameterAnnotatedWith(method, index, null, AnnotationUtil.NON_NLS, null, null);
       }
     }
-    return AnnotationUtil.isAnnotated(parent, AnnotationUtil.NON_NLS, false, false);
+    return AnnotationUtil.isAnnotated(parent, AnnotationUtil.NON_NLS, CHECK_EXTERNAL);
   }
 
   private static boolean isInNonNlsEquals(PsiExpression expression, final Set<PsiModifierListOwner> nonNlsTargets) {
@@ -825,7 +820,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     }
     if (method == null) return false;
 
-    if (AnnotationUtil.isAnnotated(method, AnnotationUtil.NON_NLS, true, false)) {
+    if (AnnotationUtil.isAnnotated(method, AnnotationUtil.NON_NLS, CHECK_HIERARCHY | CHECK_EXTERNAL)) {
       return true;
     }
     nonNlsTargets.add(method);
@@ -837,7 +832,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     if (method == null) return false;
     final PsiType returnType = method.getReturnType();
     return TO_STRING.equals(method.getName())
-           && method.getParameterList().getParametersCount() == 0
+           && method.getParameterList().isEmpty()
            && returnType != null
            && "java.lang.String".equals(returnType.getCanonicalText());
   }
@@ -873,41 +868,6 @@ public class I18nInspection extends BaseLocalInspectionTool {
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     final PsiClass junitAssert = JavaPsiFacade.getInstance(project).findClass("junit.framework.Assert", scope);
     return junitAssert != null && !containingClass.isInheritor(junitAssert, true);
-  }
-
-  private static boolean isArgOfExceptionConstructor(PsiExpression expression) {
-    final PsiElement parent = PsiTreeUtil.getParentOfType(expression, PsiExpressionList.class, PsiClass.class);
-    if (!(parent instanceof PsiExpressionList)) {
-      return false;
-    }
-    final PsiElement grandparent = parent.getParent();
-    final PsiClass aClass;
-    if (RefactoringChangeUtil.isSuperOrThisMethodCall(grandparent)) {
-      final PsiMethod method = ((PsiMethodCallExpression)grandparent).resolveMethod();
-      if (method != null) {
-        aClass = method.getContainingClass();
-      } else {
-        return false;
-      }
-    } else {
-      if (!(grandparent instanceof PsiNewExpression)) {
-        return false;
-      }
-      final PsiJavaCodeReferenceElement reference = ((PsiNewExpression)grandparent).getClassReference();
-      if (reference == null) {
-        return false;
-      }
-      final PsiElement referent = reference.resolve();
-      if (!(referent instanceof PsiClass)) {
-        return false;
-      }
-
-      aClass = (PsiClass)referent;
-    }
-    final Project project = expression.getProject();
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final PsiClass throwable = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_THROWABLE, scope);
-    return throwable != null && aClass.isInheritor(throwable, true);
   }
 
   private static boolean isArgOfSpecifiedExceptionConstructor(PsiExpression expression, String[] specifiedExceptions) {

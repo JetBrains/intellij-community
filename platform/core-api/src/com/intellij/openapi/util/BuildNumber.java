@@ -88,20 +88,23 @@ public class BuildNumber implements Comparable<BuildNumber> {
   }
 
   public static BuildNumber fromString(String version) {
-    return fromString(version, null);
+    return fromString(version, null, null);
   }
 
-  public static BuildNumber fromString(String version, @Nullable String name) {
+  public static BuildNumber fromStringWithProductCode(String version, String productCode) {
+    return fromString(version, null, productCode);
+  }
+
+  public static BuildNumber fromString(String version, @Nullable String pluginName, @Nullable String productCodeIfAbsentInVersion) {
     if (StringUtil.isEmptyOrSpaces(version)) return null;
 
     if (BUILD_NUMBER.equals(version) || SNAPSHOT.equals(version)) {
-      final String productCode = name != null ? name : "";
-      return new BuildNumber(productCode, currentVersion().myComponents);
+      return new BuildNumber(productCodeIfAbsentInVersion != null ? productCodeIfAbsentInVersion : "", currentVersion().myComponents);
     }
 
     String code = version;
     int productSeparator = code.indexOf('-');
-    final String productCode;
+    String productCode;
     if (productSeparator > 0) {
       productCode = code.substring(0, productSeparator);
       code = code.substring(productSeparator + 1);
@@ -109,6 +112,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
     else {
       productCode = "";
     }
+    productCode = productCode == "" && productCodeIfAbsentInVersion != null ? productCodeIfAbsentInVersion : productCode;
 
     int baselineVersionSeparator = code.indexOf('.');
     int baselineVersion;
@@ -122,7 +126,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
       TIntArrayList intComponentsList = new TIntArrayList();
 
       for (String stringComponent : stringComponents) {
-        int comp = parseBuildNumber(version, stringComponent, name);
+        int comp = parseBuildNumber(version, stringComponent, pluginName);
         intComponentsList.add(comp);
         if (comp == SNAPSHOT_VALUE) break;
       }
@@ -132,7 +136,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
       return new BuildNumber(productCode, intComponents);
     }
     else {
-      buildNumber = parseBuildNumber(version, code, name);
+      buildNumber = parseBuildNumber(version, code, pluginName);
 
       if (buildNumber <= 2000) {
         // it's probably a baseline, not a build number
@@ -144,7 +148,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
     }
   }
 
-  private static int parseBuildNumber(String version, String code, String name) {
+  private static int parseBuildNumber(String version, String code, String pluginName) {
     if (SNAPSHOT.equals(code) || BUILD_NUMBER.equals(code)) {
       return SNAPSHOT_VALUE;
     }
@@ -156,7 +160,7 @@ public class BuildNumber implements Comparable<BuildNumber> {
       return Integer.parseInt(code);
     }
     catch (NumberFormatException e) {
-      throw new RuntimeException("Invalid version number: " + version + "; plugin name: " + name);
+      throw new RuntimeException("Invalid version number: " + version + "; plugin name: " + pluginName);
     }
   }
 
@@ -179,11 +183,6 @@ public class BuildNumber implements Comparable<BuildNumber> {
    */
   public static BuildNumber currentVersion() {
     return Holder.CURRENT_VERSION;
-  }
-
-  @Deprecated
-  public static BuildNumber fallback() {
-    return fromString(FALLBACK_VERSION);
   }
 
   @Override

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -23,14 +9,17 @@ import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjec
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
+import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.DelegatingGradleSettingsListenerAdapter;
 
+import java.util.Collection;
 import java.util.Set;
 
 /**
@@ -74,7 +63,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   }
 
   @Override
-  public void loadState(MyState state) {
+  public void loadState(@NotNull MyState state) {
     super.loadState(state);
   }
 
@@ -129,16 +118,29 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     if (old.isResolveModulePerSourceSet() != current.isResolveModulePerSourceSet()) {
       ExternalProjectsManager.getInstance(getProject()).getExternalProjectsWatcher().markDirty(current.getExternalProjectPath());
     }
-    if (old.isStoreProjectFilesExternally() != current.isStoreProjectFilesExternally()) {
-      ExternalProjectsManagerImpl.getInstance(getProject()).setStoreExternally(current.isStoreProjectFilesExternally());
+    ThreeState storeProjectFilesExternally = current.getStoreProjectFilesExternally();
+    if (old.getStoreProjectFilesExternally() != storeProjectFilesExternally) {
+      ExternalProjectsManagerImpl.getInstance(getProject()).setStoreExternally(storeProjectFilesExternally != ThreeState.NO);
     }
   }
 
+  @NotNull
+  @Override
+  public Collection<GradleProjectSettings> getLinkedProjectsSettings() {
+    Collection<GradleProjectSettings> settings = super.getLinkedProjectsSettings();
+    boolean isStoredExternally = ExternalStorageConfigurationManager.getInstance(getProject()).isEnabled();
+    // GradleProjectSettings has transient field isStoredExternally - used when no project yet,
+    // but when project created, isStoredExternally stored in the ExternalProjectsManagerImpl and we need to transfer it
+    for (GradleProjectSettings setting : settings) {
+      setting.setStoreProjectFilesExternally(ThreeState.fromBoolean(isStoredExternally));
+    }
+    return settings;
+  }
+
   public static class MyState implements State<GradleProjectSettings> {
+    private final Set<GradleProjectSettings> myProjectSettings = ContainerUtilRt.newTreeSet();
 
-    private Set<GradleProjectSettings> myProjectSettings = ContainerUtilRt.newTreeSet();
-
-    @AbstractCollection(surroundWithTag = false, elementTypes = {GradleProjectSettings.class})
+    @XCollection(elementTypes = {GradleProjectSettings.class})
     public Set<GradleProjectSettings> getLinkedExternalProjectsSettings() {
       return myProjectSettings;
     }

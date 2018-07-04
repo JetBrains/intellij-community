@@ -28,7 +28,7 @@ import java.awt.event.ItemListener;
  */
 public class HgUpdateDialog {
 
-  private JComponent myContentPanel;
+  private final JComponent myContentPanel;
   private JCheckBox myPullCheckBox;
   private JCheckBox myCommitAfterMergeCheckBox;
   private JRadioButton myOnlyUpdateButton;

@@ -33,10 +33,12 @@ import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ColoredTreeCellRenderer
+import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.TreeSpeedSearch
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.treeStructure.Tree
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.graph.*
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.tree.TreeUtil
@@ -45,13 +47,13 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.GridBagConstraints
 import java.awt.GridBagLayout
+import java.awt.event.MouseEvent
 import java.util.*
 import javax.swing.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.MutableTreeNode
 import javax.swing.tree.TreePath
-import kotlin.comparisons.compareBy
 
 /**
  * @author nik
@@ -98,22 +100,10 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
     val moveAllToUnloadedButton = JButton(ProjectBundle.message("module.unload.all.button.text"))
     val moveAllToLoadedButton = JButton(ProjectBundle.message("module.load.all.button.text"))
     moveToUnloadedButton.addActionListener {
-      val modulesToMove = includeMissingModules(loadedModulesTree.getSelectedModules(), unloadedModulesTree.getAllModules(),
-                                                dependentsGraph,
-                                                ProjectBundle.message("module.unload.dependents.dialog.title"),
-                                                { selectedSize, additionalSize, additionalFirst -> ProjectBundle.message("module.unload.dependents.dialog.text", selectedSize, additionalSize, additionalFirst)},
-                                                ProjectBundle.message("module.unload.with.dependents.button.text"),
-                                                ProjectBundle.message("module.unload.without.dependents.button.text"))
-      moveModules(modulesToMove, loadedModulesTree, unloadedModulesTree)
+      moveToUnloaded()
     }
     moveToLoadedButton.addActionListener {
-      val modulesToMove = includeMissingModules(unloadedModulesTree.getSelectedModules(), loadedModulesTree.getAllModules(),
-                                                GraphAlgorithms.getInstance().invertEdgeDirections(dependentsGraph),
-                                                ProjectBundle.message("module.load.dependencies.dialog.title"),
-                                                { selectedSize, additionalSize, additionalFirst -> ProjectBundle.message("module.load.dependencies.dialog.text", selectedSize, additionalSize, additionalFirst)},
-                                                ProjectBundle.message("module.load.with.dependencies.button.text"),
-                                                ProjectBundle.message("module.load.without.dependencies.button.text"))
-      moveModules(modulesToMove, unloadedModulesTree, loadedModulesTree)
+      moveToLoaded()
     }
     moveAllToUnloadedButton.addActionListener {
       moveAllNodes(loadedModulesTree, unloadedModulesTree)
@@ -125,6 +115,8 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
     buttonsPanel.add(moveToLoadedButton)
     buttonsPanel.add(moveAllToUnloadedButton)
     buttonsPanel.add(moveAllToLoadedButton)
+    loadedModulesTree.installDoubleClickListener(this::moveToUnloaded)
+    unloadedModulesTree.installDoubleClickListener(this::moveToLoaded)
 
     val mainPanel = JPanel(BorderLayout())
     val gridBag = GridBag().setDefaultWeightX(0, 0.5).setDefaultWeightX(1, 0.0).setDefaultWeightX(2, 0.5)
@@ -141,6 +133,32 @@ class ConfigureUnloadedModulesDialog(private val project: Project, selectedModul
     //current label text looks better when it's split on 2.5 lines, so set size of the whole component accordingly
     mainPanel.preferredSize = Dimension(Math.max(treesPanel.preferredSize.width, statusLabel.preferredSize.width*2/5), treesPanel.preferredSize.height)
     return mainPanel
+  }
+
+  private fun moveToLoaded() {
+    val modulesToMove = includeMissingModules(unloadedModulesTree.getSelectedModules(), loadedModulesTree.getAllModules(),
+                                              GraphAlgorithms.getInstance().invertEdgeDirections(dependentsGraph),
+                                              ProjectBundle.message("module.load.dependencies.dialog.title"),
+                                              { selectedSize, additionalSize, additionalFirst ->
+                                                ProjectBundle.message("module.load.dependencies.dialog.text", selectedSize, additionalSize,
+                                                                      additionalFirst)
+                                              },
+                                              ProjectBundle.message("module.load.with.dependencies.button.text"),
+                                              ProjectBundle.message("module.load.without.dependencies.button.text"))
+    moveModules(modulesToMove, unloadedModulesTree, loadedModulesTree)
+  }
+
+  private fun moveToUnloaded() {
+    val modulesToMove = includeMissingModules(loadedModulesTree.getSelectedModules(), unloadedModulesTree.getAllModules(),
+                                              dependentsGraph,
+                                              ProjectBundle.message("module.unload.dependents.dialog.title"),
+                                              { selectedSize, additionalSize, additionalFirst ->
+                                                ProjectBundle.message("module.unload.dependents.dialog.text", selectedSize, additionalSize,
+                                                                      additionalFirst)
+                                              },
+                                              ProjectBundle.message("module.unload.with.dependents.button.text"),
+                                              ProjectBundle.message("module.unload.without.dependents.button.text"))
+    moveModules(modulesToMove, loadedModulesTree, unloadedModulesTree)
   }
 
   private fun includeMissingModules(selected: List<ModuleDescription>, availableTargetModules: List<ModuleDescription>,
@@ -223,6 +241,18 @@ private class ModuleDescriptionsTree(project: Project) {
 
   fun getAllModules() = getAllModulesUnder(root)
 
+  fun installDoubleClickListener(action: () -> Unit) {
+    object : DoubleClickListener() {
+      override fun onDoubleClick(event: MouseEvent): Boolean {
+        if (tree.selectionPaths?.all { (it?.lastPathComponent as? ModuleDescriptionTreeNode)?.isLeaf == true } ?: false) {
+          action()
+          return true
+        }
+        return false
+      }
+    }.installOn(tree)
+  }
+
   private fun getAllModulesUnder(node: ModuleDescriptionTreeNode): List<ModuleDescription> {
     val modules = ArrayList<ModuleDescription>()
     TreeUtil.traverse(node, { node ->
@@ -237,6 +267,10 @@ private class ModuleDescriptionsTree(project: Project) {
   fun fillTree(modules: Collection<ModuleDescription>) {
     removeAllNodes()
     helper.createModuleNodes(modules, root, model)
+    expandRoot()
+  }
+
+  private fun expandRoot() {
     tree.expandPath(TreePath(root))
   }
 
@@ -250,6 +284,7 @@ private class ModuleDescriptionsTree(project: Project) {
     for (node in toRemove) {
       helper.removeNode(node, root, model)
     }
+    expandRoot()
   }
 
   private fun findNodes(condition: (ModuleDescriptionNode) -> Boolean): List<ModuleDescriptionNode> {
@@ -294,6 +329,9 @@ private fun createModuleDescriptionHelper(project: Project): ModuleGroupingTreeH
 }
 
 private class ModuleDescriptionGrouping(private val moduleGrouper: ModuleGrouper) : ModuleGroupingImplementation<ModuleDescription> {
+  override val compactGroupNodes: Boolean
+    get() = moduleGrouper.compactGroupNodes
+
   override fun getGroupPath(m: ModuleDescription): List<String> {
     return moduleGrouper.getGroupPath(m)
   }
@@ -307,19 +345,29 @@ private val nodeComparator = compareBy(NaturalComparator.INSTANCE) { node: Modul
 private interface ModuleDescriptionTreeNode : MutableTreeNode {
   val text: String
   val icon: Icon
+  val group: ModuleGroup?
 }
 
 private class ModuleDescriptionNode(val moduleDescription: ModuleDescription, val moduleGrouper: ModuleGrouper) : DefaultMutableTreeNode(), ModuleDescriptionTreeNode {
   override val text: String
-    get() = moduleGrouper.getShortenedNameByFullModuleName(moduleDescription.name)
+    get() = moduleGrouper.getShortenedNameByFullModuleName(moduleDescription.name, (parent as? ModuleDescriptionTreeNode)?.group?.qualifiedName)
 
   override val icon: Icon
     get() = AllIcons.Nodes.Module
+
+  override val group: ModuleGroup?
+    get() = moduleGrouper.getModuleAsGroupPath(moduleDescription)?.let {ModuleGroup(it)}
 }
 
-private class ModuleGroupNode(val group: ModuleGroup) : DefaultMutableTreeNode(), ModuleDescriptionTreeNode {
+private class ModuleGroupNode(override val group: ModuleGroup) : DefaultMutableTreeNode(), ModuleDescriptionTreeNode {
   override val text: String
-    get() = group.presentableText()
+    get() {
+      val parentGroupPath = (parent as? ModuleDescriptionTreeNode)?.group?.groupPathList
+      if (parentGroupPath != null && ContainerUtil.startsWith(group.groupPathList, parentGroupPath)) {
+        return group.groupPathList.drop(parentGroupPath.size).joinToString(".")
+      }
+      return group.groupPathList.last()
+    }
 
   override val icon: Icon
     get() = AllIcons.Nodes.ModuleGroup
@@ -331,4 +379,7 @@ private class RootNode: DefaultMutableTreeNode(), ModuleDescriptionTreeNode {
 
   override val icon: Icon
     get() = AllIcons.Nodes.ModuleGroup
+
+  override val group: ModuleGroup?
+    get() = null
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -22,63 +8,46 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.SyntheticLibrary;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.pom.NavigatableWithText;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 public class SyntheticLibraryElementNode extends ProjectViewNode<SyntheticLibrary> implements NavigatableWithText {
-  public SyntheticLibraryElementNode(@NotNull Project project, @NotNull SyntheticLibrary library, ViewSettings settings) {
+  @NotNull private final ItemPresentation myItemPresentation;
+
+  public SyntheticLibraryElementNode(@NotNull Project project, @NotNull SyntheticLibrary library,
+                                     @NotNull ItemPresentation itemPresentation, ViewSettings settings) {
     super(project, library, settings);
+    myItemPresentation = itemPresentation;
   }
 
   @Override
   public boolean contains(@NotNull VirtualFile file) {
-    SyntheticLibrary library = getLibrary();
-    return VfsUtilCore.isUnder(file, ContainerUtil.newHashSet(library.getSourceRoots()))
-           && !VfsUtilCore.isUnder(file, library.getExcludedRoots());
+    return getLibrary().contains(file);
   }
 
   @NotNull
   @Override
   public Collection<AbstractTreeNode> getChildren() {
-    List<AbstractTreeNode> children = new ArrayList<>();
     SyntheticLibrary library = getLibrary();
     Project project = Objects.requireNonNull(getProject());
-    PsiManager psiManager = PsiManager.getInstance(project);
     Set<VirtualFile> excludedRoots = library.getExcludedRoots();
-    for (VirtualFile file : library.getSourceRoots()) {
-      if (!file.isValid() || excludedRoots.contains(file)) continue;
-      if (file.isDirectory()) {
-        PsiDirectory psiDir = psiManager.findDirectory(file);
-        if (psiDir != null) {
-          children.add(new PsiDirectoryNode(project, psiDir, getSettings()));
-        }
-      }
-      else {
-        PsiFile psiFile = psiManager.findFile(file);
-        if (psiFile != null) {
-          children.add(new PsiFileNode(project, psiFile, getSettings()));
-        }
-      }
-    }
-    return children;
+    List<VirtualFile> children = ContainerUtil.filter(library.getAllRoots(), file -> file.isValid() && !excludedRoots.contains(file));
+    return ProjectViewDirectoryHelper.getInstance(project).createFileAndDirectoryNodes(children, getSettings());
   }
 
   @Override
   public String getName() {
-    SyntheticLibrary library = getLibrary();
-    //noinspection CastToIncompatibleInterface
-    return ((ItemPresentation)library).getPresentableText();
+    return myItemPresentation.getPresentableText();
   }
 
   @NotNull
@@ -88,8 +57,7 @@ public class SyntheticLibraryElementNode extends ProjectViewNode<SyntheticLibrar
 
   @Override
   protected void update(PresentationData presentation) {
-    //noinspection CastToIncompatibleInterface
-    presentation.updateFrom((ItemPresentation)getLibrary());
+    presentation.updateFrom(myItemPresentation);
   }
 
   @Nullable

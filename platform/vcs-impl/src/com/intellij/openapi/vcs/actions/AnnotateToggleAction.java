@@ -15,11 +15,9 @@
  */
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Separator;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -120,6 +118,8 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
                                  @NotNull final AbstractVcs vcs,
                                  @NotNull final UpToDateLineNumberProvider upToDateLineNumbers,
                                  final boolean warnAboutSuspiciousAnnotations) {
+    if (project.isDisposed() || editor.isDisposed()) return;
+
     if (warnAboutSuspiciousAnnotations) {
       int expectedLines = Math.max(upToDateLineNumbers.getLineCount(), 1);
       int actualLines = Math.max(fileAnnotation.getLineCount(), 1);
@@ -130,6 +130,39 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
         return;
       }
     }
+
+
+    fileAnnotation.setCloser(() -> {
+      UIUtil.invokeLaterIfNeeded(() -> {
+        if (project.isDisposed()) return;
+        editor.getGutter().closeAllAnnotations();
+      });
+    });
+
+    fileAnnotation.setReloader(newFileAnnotation -> {
+      if (project.isDisposed()) return;
+      if (editor.getGutter().isAnnotationsShown()) {
+        if (newFileAnnotation != null) {
+          assert Comparing.equal(fileAnnotation.getFile(), newFileAnnotation.getFile());
+          doAnnotate(editor, project, currentFile, newFileAnnotation, vcs, upToDateLineNumbers, false);
+        }
+        else {
+          DataContext dataContext = DataManager.getInstance().getDataContext(editor.getComponent());
+          AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext);
+          Provider provider = getProvider(event);
+
+          if (provider != null && provider.isEnabled(event) && !provider.isSuspended(event)) {
+            provider.perform(event, true);
+          }
+          else {
+            editor.getGutter().closeAllAnnotations();
+          }
+        }
+      }
+    });
+
+    if (fileAnnotation.isClosed()) return;
+
 
     Disposable disposable = new Disposable() {
       @Override
@@ -151,20 +184,6 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
     }
 
     editor.getGutter().closeAllAnnotations();
-
-    fileAnnotation.setCloser(() -> {
-      UIUtil.invokeLaterIfNeeded(() -> {
-        if (project.isDisposed()) return;
-        editor.getGutter().closeAllAnnotations();
-      });
-    });
-
-    fileAnnotation.setReloader(newFileAnnotation -> {
-      if (editor.getGutter().isAnnotationsShown()) {
-        assert Comparing.equal(fileAnnotation.getFile(), newFileAnnotation.getFile());
-        doAnnotate(editor, project, currentFile, newFileAnnotation, vcs, upToDateLineNumbers, false);
-      }
-    });
 
     final List<AnnotationFieldGutter> gutters = new ArrayList<>();
     final AnnotationSourceSwitcher switcher = fileAnnotation.getAnnotationSourceSwitcher();

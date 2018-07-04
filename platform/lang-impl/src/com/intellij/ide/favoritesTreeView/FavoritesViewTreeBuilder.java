@@ -26,7 +26,6 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
@@ -35,10 +34,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -81,7 +77,8 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
 
       @Override
       protected void childrenChanged(PsiElement parent, final boolean stopProcessingForThisModificationCount) {
-        if (findNodeByElement(parent) == null) {
+        PsiElement containingFile = parent instanceof PsiDirectory ? parent : parent.getContainingFile();
+        if (containingFile != null && findNodeByElement(containingFile) == null) {
           queueUpdate(true);
         }
         else {
@@ -98,8 +95,7 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(psiTreeChangeListener, this);
     FileStatusListener fileStatusListener = new MyFileStatusListener();
     FileStatusManager.getInstance(myProject).addFileStatusListener(fileStatusListener, this);
-    CopyPasteUtil.DefaultCopyPasteListener copyPasteListener = new CopyPasteUtil.DefaultCopyPasteListener(getUpdater());
-    CopyPasteManager.getInstance().addContentChangedListener(copyPasteListener, this);
+    CopyPasteUtil.addDefaultListener(this, this::addSubtreeToUpdateByElement);
 
     FavoritesListener favoritesListener = new FavoritesListener() {
       @Override
@@ -139,13 +135,12 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
     updateFromRootCB();
   }
 
-  @Override
   @NotNull
   public ActionCallback updateFromRootCB() {
     getStructure().rootsChanged();
     if (isDisposed()) return ActionCallback.DONE;
     getUpdater().cancelAllRequests();
-    return super.updateFromRootCB();
+    return queueUpdate();
   }
 
   @NotNull
@@ -232,10 +227,10 @@ public class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
         element = psiManager.findFile(vFile);
       }
 
-      if (!getUpdater().addSubtreeToUpdateByElement(element) &&
+      if (!addSubtreeToUpdateByElement(element) &&
           element instanceof PsiFile &&
           ((PsiFile)element).getFileType() == StdFileTypes.JAVA) {
-        getUpdater().addSubtreeToUpdateByElement(((PsiFile)element).getContainingDirectory());
+        addSubtreeToUpdateByElement(((PsiFile)element).getContainingDirectory());
       }
     }
   }

@@ -18,7 +18,7 @@ package com.intellij.openapi.editor.impl.softwrap.mapping;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.SoftWrap;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.TextChangeImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapImpl;
@@ -99,7 +99,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapAwareDocumentParsingLi
     int softWrappedLinesDiff = myStorage.getNumberOfSoftWrapsInRange(event.getStartOffset() + 1, myEditor.getDocument().getTextLength());
     boolean softWrapsChanged = softWrappedLinesDiff > 0;
     for (int i = 0; i < myAffectedByUpdateSoftWraps.size(); i++) {
-      SoftWrap softWrap = myAffectedByUpdateSoftWraps.get(i);
+      SoftWrapImpl softWrap = myAffectedByUpdateSoftWraps.get(i);
       if (firstIndex < 0) {
         if (softWrap.getStart() > recalcEndOffsetTranslated) {
           firstIndex = i;
@@ -112,7 +112,7 @@ public class CachingSoftWrapDataMapper implements SoftWrapAwareDocumentParsingLi
         }
       } 
       if (firstIndex >= 0 && i >= firstIndex) {
-        ((SoftWrapImpl)softWrap).advance(lengthDiff);
+        softWrap.advance(lengthDiff);
       }
     }
     if (firstIndex >= 0) {

@@ -9,4 +9,13 @@ class Test {
   }
 
   private static native boolean someMethodWithUnknownContract(Object o);
+
+  private volatile boolean field;
+  @org.jetbrains.annotations.Contract("->fail")
+  void fail() {
+    if (field) {
+    }
+    throw new AssertionError();
+  }
+
 }

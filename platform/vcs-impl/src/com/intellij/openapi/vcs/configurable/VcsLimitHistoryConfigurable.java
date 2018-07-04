@@ -51,7 +51,7 @@ public class VcsLimitHistoryConfigurable extends VcsCheckBoxWithSpinnerConfigura
   }
 
   @Override
-  public void apply() throws ConfigurationException {
+  public void apply() {
     myConfiguration.LIMIT_HISTORY = myHighlightRecentlyChanged.isSelected();
     myConfiguration.MAXIMUM_HISTORY_ROWS = ((Number) myHighlightInterval.getValue()).intValue();
   }

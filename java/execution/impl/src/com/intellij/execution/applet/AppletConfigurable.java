@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.execution.applet;
 
@@ -31,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import org.jetbrains.annotations.NonNls;
@@ -43,7 +32,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class AppletConfigurable extends SettingsEditor<AppletConfiguration> implements CheckableRunConfigurationEditor<AppletConfiguration>,
@@ -74,25 +62,25 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
 
   private static final ColumnInfo[] PARAMETER_COLUMNS = new ColumnInfo[]{
     new MyColumnInfo(ExecutionBundle.message("applet.configuration.parameter.name.column")) {
-      public String valueOf(final AppletConfiguration.AppletParameter appletParameter) {
+      public String valueOf(final AppletParameter appletParameter) {
         return appletParameter.getName();
       }
 
-      public void setValue(final AppletConfiguration.AppletParameter appletParameter, final String name) {
+      public void setValue(final AppletParameter appletParameter, final String name) {
         appletParameter.setName(name);
       }
     },
     new MyColumnInfo(ExecutionBundle.message("applet.configuration.parameter.value.column")) {
-      public String valueOf(final AppletConfiguration.AppletParameter appletParameter) {
+      public String valueOf(final AppletParameter appletParameter) {
         return appletParameter.getValue();
       }
 
-      public void setValue(final AppletConfiguration.AppletParameter appletParameter, final String value) {
+      public void setValue(final AppletParameter appletParameter, final String value) {
         appletParameter.setValue(value);
       }
     }
   };
-  private final ListTableModel<AppletConfiguration.AppletParameter> myParameters;
+  private final ListTableModel<AppletParameter> myParameters;
   private final TableView myTable;
   @NonNls
   protected static final String HTTP_PREFIX = "http:/";
@@ -167,9 +155,9 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   }
 
   private void addParameter() {
-    final ArrayList<AppletConfiguration.AppletParameter> newItems =
+    final ArrayList<AppletParameter> newItems =
       new ArrayList<>(myParameters.getItems());
-    final AppletConfiguration.AppletParameter parameter = new AppletConfiguration.AppletParameter("newParameter", "");
+    final AppletParameter parameter = new AppletParameter("newParameter", "");
     newItems.add(parameter);
     myParameters.setItems(newItems);
 
@@ -186,10 +174,10 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     return myPolicyFile.getComponent();
   }
 
-  private static List<AppletConfiguration.AppletParameter> cloneParameters(final List<AppletConfiguration.AppletParameter> items) {
-    final List<AppletConfiguration.AppletParameter> params = new ArrayList<>();
-    for (AppletConfiguration.AppletParameter appletParameter : items) {
-      params.add(new AppletConfiguration.AppletParameter(appletParameter.getName(), appletParameter.getValue()));
+  private static List<AppletParameter> cloneParameters(@NotNull List<AppletParameter> items) {
+    List<AppletParameter> params = new SmartList<>();
+    for (AppletParameter appletParameter : items) {
+      params.add(new AppletParameter(appletParameter.getName(), appletParameter.getValue()));
     }
     return params;
   }
@@ -206,12 +194,7 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     return myHtmlFile;
   }
 
-  private String toNull(String s) {
-    s = s.trim();
-    return s.length() == 0 ? null : s;
-  }
-
-  private String toSystemFormat(String s) {
+  private static String toSystemFormat(String s) {
     s = s.trim();
     return s.length() == 0 ? null : s.replace(File.separatorChar, '/');
   }
@@ -219,32 +202,28 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
   public void applyEditorTo(@NotNull final AppletConfiguration configuration) {
     checkEditorData(configuration);
     myTable.stopEditing();
-    final List<AppletConfiguration.AppletParameter> params = cloneParameters(myParameters.getItems());
-    configuration.setAppletParameters(params);
+    configuration.getOptions().setAppletParameters(cloneParameters(myParameters.getItems()));
   }
 
-  public void resetEditorFrom(@NotNull final AppletConfiguration configuration) {
-    getClassNameComponent().setText(configuration.MAIN_CLASS_NAME);
-    String presentableHtmlName = configuration.HTML_FILE_NAME;
+  public void resetEditorFrom(@NotNull AppletConfiguration runConfiguration) {
+    AppletConfigurationOptions configuration = runConfiguration.getOptions();
+    getClassNameComponent().setText(configuration.getMainClassName());
+    String presentableHtmlName = configuration.getHtmlFileName();
     if (presentableHtmlName != null && !StringUtil.startsWithIgnoreCase(presentableHtmlName, HTTP_PREFIX)) {
       presentableHtmlName = presentableHtmlName.replace('/', File.separatorChar);
     }
     getHtmlPathComponent().setText(presentableHtmlName);
-    getPolicyFileComponent().setText(configuration.getPolicyFile());
-    getVMParametersComponent().setText(configuration.VM_PARAMETERS);
-    getWidthComponent().setText(Integer.toString(configuration.WIDTH));
-    getHeightComponent().setText(Integer.toString(configuration.HEIGHT));
+    getPolicyFileComponent().setText(runConfiguration.getPolicyFile());
+    getVMParametersComponent().setText(configuration.getVmParameters());
+    getWidthComponent().setText(Integer.toString(configuration.getWidth()));
+    getHeightComponent().setText(Integer.toString(configuration.getHeight()));
 
-    (configuration.HTML_USED ? myURL : myMainClass).setSelected(true);
+    (configuration.getHtmlUsed() ? myURL : myMainClass).setSelected(true);
     changePanel();
 
-    final AppletConfiguration.AppletParameter[] appletParameters = configuration.getAppletParameters();
-    if (appletParameters != null) {
-      myParameters.setItems(cloneParameters(Arrays.asList(appletParameters)));
-    }
-    myModuleSelector.reset(configuration);
-    myJrePathEditor
-      .setPathOrName(configuration.ALTERNATIVE_JRE_PATH, configuration.ALTERNATIVE_JRE_PATH_ENABLED);
+    myParameters.setItems(cloneParameters(configuration.getAppletParameters()));
+    myModuleSelector.reset(runConfiguration);
+    myJrePathEditor.setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
   }
 
   private RawCommandLineEditor getVMParametersComponent() {
@@ -261,25 +240,26 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     return myWholePanel;
   }
 
-  public void checkEditorData(final AppletConfiguration configuration) {
-    configuration.MAIN_CLASS_NAME = toNull(getClassNameComponent().getText());
-    configuration.HTML_FILE_NAME = toSystemFormat(getHtmlPathComponent().getText());
-    configuration.VM_PARAMETERS = toNull(getVMParametersComponent().getText());
-    configuration.setPolicyFile(getPolicyFileComponent().getText());
-    myModuleSelector.applyTo(configuration);
+  public void checkEditorData(@NotNull AppletConfiguration runConfiguration) {
+    AppletConfigurationOptions configuration = runConfiguration.getOptions();
+    runConfiguration.setMainClassName(getClassNameComponent().getText().trim());
+    configuration.setHtmlFileName(toSystemFormat(getHtmlPathComponent().getText()));
+    configuration.setVmParameters(getVMParametersComponent().getText().trim());
+    runConfiguration.setPolicyFile(getPolicyFileComponent().getText());
+    myModuleSelector.applyTo(runConfiguration);
     try {
-      configuration.WIDTH = Integer.parseInt(getWidthComponent().getText());
+      configuration.setWidth(Integer.parseInt(getWidthComponent().getText()));
     }
-    catch (NumberFormatException e) {
+    catch (NumberFormatException ignored) {
     }
     try {
-      configuration.HEIGHT = Integer.parseInt(getHeightComponent().getText());
+      configuration.setHeight(Integer.parseInt(getHeightComponent().getText()));
     }
-    catch (NumberFormatException e) {
+    catch (NumberFormatException ignored) {
     }
-    configuration.HTML_USED = myURL.isSelected();
-    configuration.ALTERNATIVE_JRE_PATH = myJrePathEditor.getJrePathOrName();
-    configuration.ALTERNATIVE_JRE_PATH_ENABLED = myJrePathEditor.isAlternativeJreSelected();
+    configuration.setHtmlUsed(myURL.isSelected());
+    configuration.setAlternativeJrePath(myJrePathEditor.getJrePathOrName());
+    configuration.setAlternativeJrePathEnabled(myJrePathEditor.isAlternativeJreSelected());
   }
 
   private void createUIComponents() {
@@ -301,18 +281,18 @@ public class AppletConfigurable extends SettingsEditor<AppletConfiguration> impl
     myHtmlFileLabel.setAnchor(anchor);
   }
 
-  private static abstract class MyColumnInfo extends ColumnInfo<AppletConfiguration.AppletParameter, String> {
+  private static abstract class MyColumnInfo extends ColumnInfo<AppletParameter, String> {
     public MyColumnInfo(final String name) {
       super(name);
     }
 
-    public TableCellEditor getEditor(final AppletConfiguration.AppletParameter item) {
+    public TableCellEditor getEditor(final AppletParameter item) {
       final JTextField textField = new JTextField();
       textField.setBorder(BorderFactory.createLineBorder(Color.BLACK));
       return new DefaultCellEditor(textField);
     }
 
-    public boolean isCellEditable(final AppletConfiguration.AppletParameter appletParameter) {
+    public boolean isCellEditable(final AppletParameter appletParameter) {
       return true;
     }
   }

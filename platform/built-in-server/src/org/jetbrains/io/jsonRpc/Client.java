@@ -1,8 +1,8 @@
 package org.jetbrains.io.jsonRpc;
 
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.channel.Channel;
@@ -13,12 +13,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 
-import java.util.Enumeration;
+import java.util.Collection;
 
 public abstract class Client extends UserDataHolderBase {
   protected final Channel channel;
 
-  final ConcurrentIntObjectMap<AsyncPromise<Object>> messageCallbackMap = ContainerUtil.createConcurrentIntObjectMap();
+  final IntObjectMap<AsyncPromise<Object>> messageCallbackMap = ContainerUtil.createConcurrentIntObjectMap();
 
   protected Client(@NotNull Channel channel) {
     this.channel = channel;
@@ -55,10 +55,10 @@ public abstract class Client extends UserDataHolderBase {
 
   final void rejectAsyncResults(@NotNull ExceptionHandler exceptionHandler) {
     if (!messageCallbackMap.isEmpty()) {
-      Enumeration<AsyncPromise<Object>> elements = messageCallbackMap.elements();
-      while (elements.hasMoreElements()) {
+      Collection<AsyncPromise<Object>> elements = messageCallbackMap.values();
+      for (AsyncPromise<Object> element : elements) {
         try {
-          elements.nextElement().setError("rejected");
+          element.setError("rejected");
         }
         catch (Throwable e) {
           exceptionHandler.exceptionCaught(e);
@@ -69,9 +69,9 @@ public abstract class Client extends UserDataHolderBase {
 
   private static final class ChannelFutureAwarePromise<T> extends AsyncPromise<T> implements ChannelFutureListener {
     private final int messageId;
-    private final ConcurrentIntObjectMap<?> messageCallbackMap;
+    private final IntObjectMap<?> messageCallbackMap;
 
-    public ChannelFutureAwarePromise(int messageId, ConcurrentIntObjectMap<?> messageCallbackMap) {
+    public ChannelFutureAwarePromise(int messageId, IntObjectMap<?> messageCallbackMap) {
       this.messageId = messageId;
       this.messageCallbackMap = messageCallbackMap;
     }

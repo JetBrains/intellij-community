@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
-import com.intellij.internal.statistic.customUsageCollectors.ui.ShortcutsCollector;
+import com.intellij.internal.statistic.collectors.fus.ui.persistence.ShortcutsCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -25,7 +11,6 @@ import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -169,12 +154,12 @@ public class ModifierKeyDoubleClickHandler implements Disposable, ApplicationCom
             resetState();
             return false;
           }
-          if (myActionKeyCode == -1 && ourOtherKeyWasPressed.get() && Clock.getTime() - ourLastTimePressed.get() < 100) {
+          if (myActionKeyCode == -1 && ourOtherKeyWasPressed.get() && keyEvent.getWhen() - ourLastTimePressed.get() < 100) {
             resetState();
             return false;
           }
           ourOtherKeyWasPressed.set(false);
-          if (ourPressed.first.get() && Clock.getTime() - ourLastTimePressed.get() > 500) {
+          if (ourPressed.first.get() && keyEvent.getWhen() - ourLastTimePressed.get() > 500) {
             resetState();
           }
           handleModifier((KeyEvent)event);
@@ -188,7 +173,7 @@ public class ModifierKeyDoubleClickHandler implements Disposable, ApplicationCom
           }
           return false;
         } else {
-          ourLastTimePressed.set(Clock.getTime());
+          ourLastTimePressed.set(keyEvent.getWhen());
           ourOtherKeyWasPressed.set(true);
           if (keyCode == KeyEvent.VK_ESCAPE || keyCode == KeyEvent.VK_TAB)  {
             ourLastTimePressed.set(0);
@@ -210,7 +195,7 @@ public class ModifierKeyDoubleClickHandler implements Disposable, ApplicationCom
     }
 
     private void handleModifier(KeyEvent event) {
-      if (ourPressed.first.get() && Clock.getTime() - ourLastTimePressed.get() > 300) {
+      if (ourPressed.first.get() && event.getWhen() - ourLastTimePressed.get() > 300) {
         resetState();
         return;
       }
@@ -219,19 +204,19 @@ public class ModifierKeyDoubleClickHandler implements Disposable, ApplicationCom
         if (!ourPressed.first.get()) {
           resetState();
           ourPressed.first.set(true);
-          ourLastTimePressed.set(Clock.getTime());
+          ourLastTimePressed.set(event.getWhen());
           return;
         } else {
           if (ourPressed.first.get() && ourReleased.first.get()) {
             ourPressed.second.set(true);
-            ourLastTimePressed.set(Clock.getTime());
+            ourLastTimePressed.set(event.getWhen());
             return;
           }
         }
       } else if (event.getID() == KeyEvent.KEY_RELEASED) {
         if (ourPressed.first.get() && !ourReleased.first.get()) {
           ourReleased.first.set(true);
-          ourLastTimePressed.set(Clock.getTime());
+          ourLastTimePressed.set(event.getWhen());
           return;
         } else if (ourPressed.first.get() && ourReleased.first.get() && ourPressed.second.get()) {
           resetState();

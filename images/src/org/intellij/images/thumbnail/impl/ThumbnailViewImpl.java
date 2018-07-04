@@ -1,20 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/** $Id$ */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.intellij.images.thumbnail.impl;
 
@@ -50,7 +34,7 @@ final class ThumbnailViewImpl implements ThumbnailView {
   private VirtualFile root = null;
   private final ThumbnailViewUI myThubmnailViewUi;
   private ThemeFilter myFilter;
-  private TagFilter myTagFilter;
+  private TagFilter[] myTagFilters;
 
   public ThumbnailViewImpl(Project project) {
     this.project = project;
@@ -135,15 +119,15 @@ final class ThumbnailViewImpl implements ThumbnailView {
   }
 
   @Override
-  public void setTagFilter(TagFilter filter) {
-    myTagFilter = filter;
+  public void setTagFilters(TagFilter[] filter) {
+    myTagFilters = filter;
     updateUI();
   }
 
   @Nullable
   @Override
-  public TagFilter getTagFilter() {
-    return myTagFilter;
+  public TagFilter[] getTagFilters() {
+    return myTagFilters;
   }
 
   public void setVisible(boolean visible) {
@@ -153,8 +137,13 @@ final class ThumbnailViewImpl implements ThumbnailView {
       getUI().refresh();
     }
     else {
-      getUI().dispose();
+      Disposer.dispose(getUI());
     }
+  }
+
+  @Override
+  public void refresh() {
+    updateUI();
   }
 
   private void updateUI() {

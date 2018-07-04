@@ -3,6 +3,7 @@ package pkg;
 public abstract class TestLocalClass {
    void foo() {
       boolean var1 = true;// 8
+
       class Local {
          void foo() {
             boolean var1 = true;// 11
@@ -25,11 +26,11 @@ public abstract class TestLocalClass {
 
 class 'pkg/TestLocalClass$1Local' {
    method 'foo ()V' {
-      0      7
-      1      7
-      2      8
-      3      8
-      4      9
+      0      8
+      1      8
+      2      9
+      3      9
+      4      10
    }
 }
 
@@ -37,33 +38,33 @@ class 'pkg/TestLocalClass' {
    method 'foo ()V' {
       0      4
       1      4
-      a      12
-      c      13
-      f      14
+      a      13
+      c      14
+      f      15
    }
 
    method 'boo ()V' {
-      0      17
-      1      17
-      2      18
+      0      18
+      1      18
+      2      19
    }
 
    method 'zoo ()V' {
-      0      21
-      1      21
-      2      22
+      0      22
+      1      22
+      2      23
    }
 }
 
 Lines mapping:
 8 <-> 5
-11 <-> 8
-12 <-> 9
-13 <-> 10
-15 <-> 13
-16 <-> 14
-17 <-> 15
-20 <-> 18
-21 <-> 19
-24 <-> 22
-25 <-> 23
+11 <-> 9
+12 <-> 10
+13 <-> 11
+15 <-> 14
+16 <-> 15
+17 <-> 16
+20 <-> 19
+21 <-> 20
+24 <-> 23
+25 <-> 24

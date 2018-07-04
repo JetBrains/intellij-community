@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.todo.configurable;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoFilter;
-import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -46,11 +31,12 @@ import java.util.List;
 /**
  * @author Vladimir Kondratyev
  */
-public class TodoConfigurable extends BaseConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public class TodoConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   /*
    * UI resources
    */
   private JPanel myPanel;
+  private JCheckBox myMultiLineCheckBox;
   private JBTable myPatternsTable;
   private JBTable myFiltersTable;
   protected final List<TodoPattern> myPatterns;
@@ -101,18 +87,20 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
     // This method is always invoked before close configuration dialog or leave "ToDo" page.
     // So it's a good place to commit all changes.
     stopEditing();
-    return arePatternsModified() || areFiltersModified();
+    return TodoConfiguration.getInstance().isMultiLine() != myMultiLineCheckBox.isSelected() ||
+           arePatternsModified() || areFiltersModified();
   }
 
   @Override
   public void apply() throws ConfigurationException {
     stopEditing();
+    TodoConfiguration.getInstance().setMultiLine(myMultiLineCheckBox.isSelected());
     if (arePatternsModified()) {
-      TodoPattern[] patterns = myPatterns.toArray(new TodoPattern[myPatterns.size()]);
+      TodoPattern[] patterns = myPatterns.toArray(new TodoPattern[0]);
       TodoConfiguration.getInstance().setTodoPatterns(patterns);
     }
     if (areFiltersModified()) {
-      TodoFilter[] filters = myFilters.toArray(new TodoFilter[myFilters.size()]);
+      TodoFilter[] filters = myFilters.toArray(new TodoFilter[0]);
       TodoConfiguration.getInstance().setTodoFilters(filters);
     }
   }
@@ -129,6 +117,8 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
 
   @Override
   public JComponent createComponent() {
+    myMultiLineCheckBox = new JCheckBox(IdeBundle.message("label.todo.multiline"));
+
     myPatternsTable = new JBTable(myPatternsModel);
     myPatternsTable.getEmptyText().setText(IdeBundle.message("text.todo.no.patterns"));
     TableColumn typeColumn = myPatternsTable.getColumnModel().getColumn(0);
@@ -278,8 +268,11 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
       }
     }.installOn(myFiltersTable);
 
-    myPanel = FormBuilder.createFormBuilder().addComponentFillVertically(patternsPanel, 0)
-      .addComponentFillVertically(filtersPanel, 0).getPanel();
+    myPanel = FormBuilder.createFormBuilder()
+                         .addComponent(myMultiLineCheckBox)
+                         .addComponentFillVertically(patternsPanel, 0)
+                         .addComponentFillVertically(filtersPanel, 0)
+                         .getPanel();
     return myPanel;
   }
 
@@ -357,6 +350,7 @@ public class TodoConfigurable extends BaseConfigurable implements SearchableConf
 
   @Override
   public void reset() {
+    myMultiLineCheckBox.setSelected(TodoConfiguration.getInstance().isMultiLine());
     // Patterns
     myPatterns.clear();
     TodoConfiguration todoConfiguration = TodoConfiguration.getInstance();

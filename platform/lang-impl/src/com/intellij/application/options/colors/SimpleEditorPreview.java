@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.application.options.colors;
 
@@ -38,6 +24,7 @@ import com.intellij.openapi.options.colors.RainbowColorSettingsPage;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.ui.EditorCustomization;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
@@ -59,6 +46,7 @@ public class SimpleEditorPreview implements PreviewPanel {
   static {
     INLINE_ELEMENTS.put("parameter_hint", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT);
     INLINE_ELEMENTS.put("parameter_hint_highlighted", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED);
+    INLINE_ELEMENTS.put("parameter_hint_current", DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_CURRENT);
   }
 
   private final ColorSettingsPage myPage;
@@ -80,10 +68,14 @@ public class SimpleEditorPreview implements PreviewPanel {
     myOptions = options;
     myPage = page;
 
-    myHighlightsExtractor = new HighlightsExtractor(page.getAdditionalHighlightingTagToDescriptorMap(), INLINE_ELEMENTS);
+    myHighlightsExtractor = new HighlightsExtractor(page.getAdditionalHighlightingTagToDescriptorMap(), INLINE_ELEMENTS, 
+                                                    page.getAdditionalHighlightingTagToColorKeyMap());
     myEditor = (EditorEx)FontEditorPreview.createPreviewEditor(
       myHighlightsExtractor.extractHighlights(page.getDemoText(), myHighlightData), // text without tags
       10, 3, -1, myOptions.getSelectedScheme(), false);
+    if (page instanceof EditorCustomization) {
+      ((EditorCustomization)page).customize(myEditor);
+    }
 
     FontEditorPreview.installTrafficLights(myEditor);
     myBlinkingAlarm = new Alarm().setActivationComponent(myEditor.getComponent());
@@ -124,7 +116,8 @@ public class SimpleEditorPreview implements PreviewPanel {
       // tag-based navigation first
       type = RainbowHighlighter.isRainbowTempKey(highlightData.getHighlightKey())
              ? RainbowHighlighter.RAINBOW_TYPE
-             : highlightData.getHighlightType();
+             : highlightData.getAdditionalColorKey() == null ? highlightData.getHighlightType() 
+                                                             : highlightData.getAdditionalColorKey().getExternalName();
     }
     else {
       // if failed, try the highlighter-based navigation
@@ -266,21 +259,23 @@ public class SimpleEditorPreview implements PreviewPanel {
     List<HighlightData> highlights = new ArrayList<>();
     List<HighlightData> matchingHighlights = new ArrayList<>();
     for (HighlightData highlightData : myHighlightData) {
-      boolean highlight = show && highlightData.getHighlightType().equals(attrKey);
+      boolean highlight = show && (highlightData.getHighlightType().equals(attrKey) || 
+                                   highlightData.getAdditionalColorKey() != null && 
+                                   highlightData.getAdditionalColorKey().getExternalName().equals(attrKey));
       highlightData.addToCollection(highlights, highlight);
       if (highlight) {
         matchingHighlights.add(highlightData);
         found = true;
       }
     }
-    if (!found && highlighter != null) {
+    if (show && !found && highlighter != null) {
       HighlighterIterator iterator = editor.getHighlighter().createIterator(0);
       do {
         IElementType tokenType = iterator.getTokenType();
         TextAttributesKey[] tokenHighlights = highlighter.getTokenHighlights(tokenType);
         for (final TextAttributesKey tokenHighlight : tokenHighlights) {
           String type = tokenHighlight.getExternalName();
-          if (show && type != null && type.equals(attrKey)) {
+          if (type != null && type.equals(attrKey)) {
             HighlightData highlightData = new HighlightData(iterator.getStart(), iterator.getEnd(), BLINKING_HIGHLIGHTS_ATTRIBUTES);
             highlights.add(highlightData);
             matchingHighlights.add(highlightData);

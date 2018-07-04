@@ -32,10 +32,12 @@ import org.fest.swing.edt.GuiQuery
 import org.fest.swing.exception.ComponentLookupException
 import java.awt.Component
 import java.awt.Container
+import java.lang.Error
 import java.util.*
 import javax.annotation.Nonnull
 import javax.annotation.Nullable
 import javax.swing.*
+import javax.swing.tree.DefaultMutableTreeNode
 
 
 /**
@@ -45,11 +47,10 @@ class ExtendedJTreeCellReader : BasicJTreeCellReader(), JTreeCellReader {
 
   override fun valueAt(tree: JTree, modelValue: Any?): String? {
     if (modelValue == null) return null
-
-    val cellRendererComponent = tree.cellRenderer.getTreeCellRendererComponent(tree, modelValue, false, false, false, 0, false)
+    val isLeaf: Boolean = try { modelValue is DefaultMutableTreeNode && modelValue.isLeaf } catch (e: Error) { false }
+    val cellRendererComponent = tree.cellRenderer.getTreeCellRendererComponent(tree, modelValue, false, false, isLeaf, 0, false)
     return getValueWithCellRenderer(cellRendererComponent)
   }
-
 }
 
 class ExtendedJListCellReader : BasicJListCellReader(), JListCellReader {
@@ -63,7 +64,7 @@ class ExtendedJListCellReader : BasicJListCellReader(), JListCellReader {
   }
 }
 
-class ExtendedJTableCellReader: BasicJTableCellReader(), JTableCellReader {
+class ExtendedJTableCellReader : BasicJTableCellReader(), JTableCellReader {
 
   override fun valueAt(table: JTable, row: Int, column: Int): String? {
     val cellRendererComponent = table.prepareRenderer(table.getCellRenderer(row, column), row, column)
@@ -118,7 +119,7 @@ private fun Component.findText(): String? {
         .filter { !it.getText().isNullOrEmpty() }
         .map { it.getText()!! }
     )
-    return resultList.filter { !it.isNullOrEmpty() }.firstOrNull()
+    return resultList.firstOrNull { !it.isEmpty() }
   }
   catch (ignored: ComponentLookupException) {
     return null

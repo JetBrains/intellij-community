@@ -25,8 +25,8 @@ import com.intellij.openapi.module.ModuleType;
 import org.jetbrains.annotations.NotNull;
 
 public class RepositoryLibrarySupportInModuleProvider extends FrameworkSupportInModuleProvider {
-  @NotNull private RepositoryLibraryDescription libraryDescription;
-  @NotNull private FrameworkTypeEx myFrameworkType;
+  @NotNull private final RepositoryLibraryDescription libraryDescription;
+  @NotNull private final FrameworkTypeEx myFrameworkType;
 
   public RepositoryLibrarySupportInModuleProvider(@NotNull FrameworkTypeEx type,
                                                   @NotNull RepositoryLibraryDescription libraryDescription) {

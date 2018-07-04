@@ -65,12 +65,7 @@ public abstract class DiffGutterRenderer extends GutterIconRenderer implements N
   @Nullable
   @Override
   public AnAction getClickAction() {
-    return new DumbAwareAction() {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        performAction(e);
-      }
-    };
+    return DumbAwareAction.create(e -> performAction(e));
   }
 
   @Override

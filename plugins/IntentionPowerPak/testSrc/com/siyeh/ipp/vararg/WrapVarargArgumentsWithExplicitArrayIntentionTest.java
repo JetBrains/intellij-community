@@ -22,6 +22,7 @@ import com.siyeh.ipp.IPPTestCase;
  */
 public class WrapVarargArgumentsWithExplicitArrayIntentionTest extends IPPTestCase {
 
+  @SuppressWarnings("ConfusingArgumentToVarargsMethod")
   public void testNullArgument() {
     doTestIntentionNotAvailable("class X {" +
                                 "  void a(String... ss) {}" +
@@ -31,6 +32,7 @@ public class WrapVarargArgumentsWithExplicitArrayIntentionTest extends IPPTestCa
                                 "}");
   }
 
+  @SuppressWarnings("RedundantArrayCreation")
   public void testEnumConstants() {
     doTest("enum X {" +
            "  A(/*_Wrap vararg arguments with explicit array creation*/1), B(1,2), C(1,2,3);" +
@@ -43,6 +45,7 @@ public class WrapVarargArgumentsWithExplicitArrayIntentionTest extends IPPTestCa
            "}");
   }
 
+  @SuppressWarnings("RedundantArrayCreation")
   public void testConstructorCall() {
     doTest("class A {" +
            "  A(int... is) {}" +

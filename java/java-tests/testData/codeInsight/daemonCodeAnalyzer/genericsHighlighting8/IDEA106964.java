@@ -8,9 +8,6 @@ abstract class Test {
 
     private void call(){
         String s = <error descr="Incompatible types. Required String but 'test' was inferred to T:
-no instance(s) of type variable(s)  exist so that String[] conforms to String
-inference variable T has incompatible bounds:
- equality constraints: String[]
-upper bounds: Object, String">test(String[].class);</error>
+no instance(s) of type variable(s)  exist so that String[] conforms to String">test(String[].class);</error>
     }
 }

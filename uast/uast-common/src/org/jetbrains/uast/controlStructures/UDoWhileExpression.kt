@@ -30,37 +30,37 @@ import org.jetbrains.uast.visitor.UastVisitor
  * loop expression.
  */
 interface UDoWhileExpression : ULoopExpression {
-    /**
-     * Returns the loop post-condition.
-     */
-    val condition: UExpression
+  /**
+   * Returns the loop post-condition.
+   */
+  val condition: UExpression
 
-    /**
-     * Returns an identifier for the 'do' keyword.
-     */
-    val doIdentifier: UIdentifier
+  /**
+   * Returns an identifier for the 'do' keyword.
+   */
+  val doIdentifier: UIdentifier
 
-    /**
-     * Returns an identifier for the 'while' keyword.
-     */
-    val whileIdentifier: UIdentifier
+  /**
+   * Returns an identifier for the 'while' keyword.
+   */
+  val whileIdentifier: UIdentifier
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitDoWhileExpression(this)) return
-        annotations.acceptList(visitor)
-        condition.accept(visitor)
-        body.accept(visitor)
-        visitor.afterVisitDoWhileExpression(this)
-    }
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitDoWhileExpression(this)) return
+    annotations.acceptList(visitor)
+    condition.accept(visitor)
+    body.accept(visitor)
+    visitor.afterVisitDoWhileExpression(this)
+  }
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
-            visitor.visitDoWhileExpression(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
+    visitor.visitDoWhileExpression(this, data)
 
-    override fun asRenderString() = buildString {
-        append("do ")
-        append(body.asRenderString())
-        appendln("while (${condition.asRenderString()})")
-    }
+  override fun asRenderString(): String = buildString {
+    append("do ")
+    append(body.asRenderString())
+    appendln("while (${condition.asRenderString()})")
+  }
 
-    override fun asLogString() = log()
+  override fun asLogString(): String = log()
 }

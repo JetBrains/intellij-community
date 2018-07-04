@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight;
 
@@ -24,7 +10,6 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageExtension;
-import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -131,16 +116,13 @@ public class TargetElementUtil extends TargetElementUtilBase {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
 
-    offset = adjustOffset(file, document, offset);
-
-    return file.findReferenceAt(offset);
-  }
-
-  /**
-   * @deprecated adjust offset with PsiElement should be used instead to provide correct checking for identifier part
-   */
-  public static int adjustOffset(Document document, final int offset) {
-    return adjustOffset(null, document, offset);
+    PsiReference ref = file.findReferenceAt(adjustOffset(file, document, offset));
+    if (ref == null) return null;
+    int elementOffset = ref.getElement().getTextRange().getStartOffset();
+    if (ref.getRangeInElement().shiftRight(elementOffset).containsOffset(offset)) {
+      return ref;
+    }
+    return null;
   }
 
   public static int adjustOffset(@Nullable PsiFile file, Document document, final int offset) {
@@ -153,8 +135,14 @@ public class TargetElementUtil extends TargetElementUtilBase {
     else if (!isIdentifierPart(file, text, offset)) {
       correctedOffset--;
     }
-    if (correctedOffset < 0 || !isIdentifierPart(file, text, correctedOffset)) return offset;
-    return correctedOffset;
+    if (correctedOffset >= 0) {
+      char charAt = text.charAt(correctedOffset);
+      if (charAt == '\'' || charAt == '"' || charAt == ')' || charAt == ']' ||
+          isIdentifierPart(file, text, correctedOffset)) {
+        return correctedOffset;
+      }
+    }
+    return offset;
   }
 
   private static boolean isIdentifierPart(@Nullable PsiFile file, CharSequence text, int offset) {
@@ -229,9 +217,9 @@ public class TargetElementUtil extends TargetElementUtilBase {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
 
-    offset = adjustOffset(file, document, offset);
+    int adjusted = adjustOffset(file, document, offset);
 
-    PsiElement element = file.findElementAt(offset);
+    PsiElement element = file.findElementAt(adjusted);
     if (BitUtil.isSet(flags, REFERENCED_ELEMENT_ACCEPTED)) {
       final PsiElement referenceOrReferencedElement = getReferenceOrReferencedElement(file, editor, flags, offset);
       //if (referenceOrReferencedElement == null) {
@@ -246,7 +234,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
     if (BitUtil.isSet(flags, ELEMENT_NAME_ACCEPTED)) {
       if (element instanceof PsiNamedElement) return element;
-      return getNamedElement(element, offset - element.getTextRange().getStartOffset());
+      return getNamedElement(element, adjusted - element.getTextRange().getStartOffset());
     }
     return null;
   }
@@ -279,7 +267,6 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return true;
   }
 
-  @Override
   @Nullable
   public PsiElement adjustElement(final Editor editor, final int flags, @Nullable PsiElement element, @Nullable PsiElement contextElement) {
     PsiElement langElement = element == null ? contextElement : element;
@@ -290,7 +277,6 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return element;
   }
 
-  @Override
   @Nullable
   public PsiElement adjustReference(@NotNull PsiReference ref) {
     PsiElement element = ref.getElement();
@@ -320,7 +306,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
     PsiElement parent = element;
 
     int offset = offsetInElement;
-    while (parent != null) {
+    while (parent != null && !(parent instanceof PsiFileSystemItem)) {
       for (PomDeclarationSearcher searcher : PomDeclarationSearcher.EP_NAME.getExtensions()) {
         searcher.findDeclarationsAt(parent, offset, consumer);
         if (!targets.isEmpty()) {
@@ -348,10 +334,8 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
     PsiElement parent;
     if ((parent = PsiTreeUtil.getParentOfType(element, PsiNamedElement.class, false)) != null) {
-      boolean isInjected = parent instanceof PsiFile
-                           && InjectedLanguageManager.getInstance(parent.getProject()).isInjectedFragment((PsiFile)parent);
-      // A bit hacky depends on navigation offset correctly overridden
-      if (!isInjected && parent.getTextOffset() == element.getTextRange().getStartOffset()) {
+      // A bit hacky: depends on the named element's text offset being overridden correctly
+      if (!(parent instanceof PsiFile) && parent.getTextOffset() == element.getTextRange().getStartOffset()) {
         if (evaluator == null || evaluator.isAcceptableNamedParent(parent)) {
           return parent;
         }
@@ -450,7 +434,6 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return evaluator == null || evaluator.includeSelfInGotoImplementation(element);
   }
 
-  @Override
   public boolean acceptImplementationForReference(@Nullable PsiReference reference, @Nullable PsiElement element) {
     TargetElementEvaluatorEx2 evaluator = element != null ? getElementEvaluatorsEx2(ReadAction.compute(element::getLanguage)) : null;
     return evaluator == null || evaluator.acceptImplementationForReference(reference, element);
@@ -464,10 +447,10 @@ public class TargetElementUtil extends TargetElementUtilBase {
     if (result != null) return result;
 
     PsiFile file = element.getContainingFile();
-    return PsiSearchHelper.SERVICE.getInstance(element.getProject()).getUseScope(file != null ? file : element);
+    return PsiSearchHelper.getInstance(element.getProject()).getUseScope(file != null ? file : element);
   }
 
-  protected final LanguageExtension<TargetElementEvaluator> targetElementEvaluator =
+  protected static final LanguageExtension<TargetElementEvaluator> targetElementEvaluator =
     new LanguageExtension<>("com.intellij.targetElementEvaluator");
   @Nullable
   private TargetElementEvaluatorEx getElementEvaluatorsEx(@NotNull Language language) {

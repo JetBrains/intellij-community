@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.todo.nodes;
 
@@ -23,6 +9,7 @@ import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.todo.*;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -31,12 +18,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.search.TodoItemImpl;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.ui.HighlightedRegion;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.*;
 
@@ -107,13 +94,17 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
       @Override
       public void visitElement(PsiElement element) {
         if (element instanceof PsiLanguageInjectionHost) {
-          InjectedLanguageUtil.enumerate(element, (injectedPsi, places) -> {
+          InjectedLanguageManager.getInstance(psiFile.getProject()).enumerate(element, (injectedPsi, places) -> {
             if (places.size() == 1) {
               Document document = PsiDocumentManager.getInstance(injectedPsi.getProject()).getCachedDocument(injectedPsi);
               if (!(document instanceof DocumentWindow)) return;
               for (TodoItem item : helper.findTodoItems(injectedPsi)) {
                 TextRange rangeInHost = ((DocumentWindow)document).injectedToHost(item.getTextRange());
-                todoItems.add(new TodoItemImpl(psiFile, rangeInHost.getStartOffset(), rangeInHost.getEndOffset(), item.getPattern()));
+                List<TextRange> additionalRanges = ContainerUtil.map(item.getAdditionalTextRanges(),
+                                                                     ((DocumentWindow)document)::injectedToHost);
+                TodoItemImpl hostItem = new TodoItemImpl(psiFile, rangeInHost.getStartOffset(), rangeInHost.getEndOffset(),
+                                                         item.getPattern(), additionalRanges);
+                todoItems.add(hostItem);
               }
             }
           });
@@ -121,7 +112,7 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
         super.visitElement(element);
       }
     });
-    return todoItems.toArray(new TodoItem[todoItems.size()]);
+    return todoItems.toArray(new TodoItem[0]);
   }
 
   private Collection<AbstractTreeNode> createGeneralList() {

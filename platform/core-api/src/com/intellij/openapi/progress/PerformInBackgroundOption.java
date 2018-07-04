@@ -19,15 +19,9 @@ package com.intellij.openapi.progress;
  * @author max
  */
 public interface PerformInBackgroundOption {
-  PerformInBackgroundOption DEAF = new PerformInBackgroundOption() {
-    @Override
-    public boolean shouldStartInBackground() { return false; }
-  };
+  PerformInBackgroundOption DEAF = () -> false;
 
-  PerformInBackgroundOption ALWAYS_BACKGROUND = new PerformInBackgroundOption() {
-    @Override
-    public boolean shouldStartInBackground() { return true; }
-  };
+  PerformInBackgroundOption ALWAYS_BACKGROUND = () -> true;
 
   boolean shouldStartInBackground();
 

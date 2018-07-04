@@ -21,9 +21,8 @@
       </ant>
       <ant>
         <classpath>
-          <classpathItem dir="file://$APPLICATION_HOME_DIR$/lib/ant/lib" />
-          <classpathItem path="file://$APPLICATION_HOME_DIR$/lib/trove4j.jar" />
-          <classpathItem dir="file://$APPLICATION_HOME_DIR$/lib/dev" />
+          <classpathItem dir="file://$MY_ANT_HOME_DIR$/lib" />
+          <classpathItem path="file://$MY_ANT_HOME_DIR$/foo.jar" />
         </classpath>
         <homeDir value="$APPLICATION_HOME_DIR$/lib/ant" />
         <name value="Patched Ant" />

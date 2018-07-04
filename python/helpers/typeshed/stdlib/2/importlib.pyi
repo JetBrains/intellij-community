@@ -1,3 +1,0 @@
-import types
-
-def import_module(name: str, package: str = ...) -> types.ModuleType: ...

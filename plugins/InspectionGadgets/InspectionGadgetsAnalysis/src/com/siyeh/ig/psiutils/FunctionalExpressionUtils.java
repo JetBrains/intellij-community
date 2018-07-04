@@ -20,6 +20,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Utility methods related to the expressions of functional type
@@ -66,5 +67,61 @@ public class FunctionalExpressionUtils {
       return MethodCallUtils.isCallToMethod(call, className, returnType, methodName, parameterTypes);
     }
     return false;
+  }
+
+  /**
+   * Returns a class of object constructed by the supplied function using default constructor.
+   *
+   * @param expression function to extract a class from
+   * @return an extracted class or null if supplied expression is not a function,
+   * or it does not construct a new object using the default constructor.
+   */
+  @Nullable
+  public static PsiClass getClassOfDefaultConstructorFunction(PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    if (expression instanceof PsiMethodReferenceExpression) {
+      PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)expression;
+      if (!methodRef.isConstructor()) return null;
+      PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(methodRef.getFunctionalInterfaceType());
+      if (method == null || !method.getParameterList().isEmpty()) return null;
+      PsiTypeElement type = methodRef.getQualifierType();
+      if (type == null) {
+        if (methodRef.getQualifier() instanceof PsiReference) {
+          return ObjectUtils.tryCast(((PsiReference)methodRef.getQualifier()).resolve(), PsiClass.class);
+        }
+        return null;
+      }
+      return PsiUtil.resolveClassInClassTypeOnly(type.getType());
+    }
+    if (expression instanceof PsiLambdaExpression) {
+      PsiLambdaExpression lambda = (PsiLambdaExpression)expression;
+      if (!lambda.getParameterList().isEmpty()) return null;
+      PsiExpression body = PsiUtil.skipParenthesizedExprDown(LambdaUtil.extractSingleExpressionFromBody(lambda.getBody()));
+      if (!(body instanceof PsiNewExpression)) return null;
+      PsiNewExpression newExpression = (PsiNewExpression)body;
+      PsiExpressionList args = newExpression.getArgumentList();
+      if (args == null || !args.isEmpty() || newExpression.getAnonymousClass() != null) return null;
+      PsiReference classRef = newExpression.getClassReference();
+      return classRef == null ? null : ObjectUtils.tryCast(classRef.resolve(), PsiClass.class);
+    }
+    return null;
+  }
+
+  /**
+   * Returns the type of functional expression (not {@link PsiLambdaExpressionType} or {@link PsiMethodReferenceType},
+   * but actual functional interface type).
+   *
+   * @param expression expression to find the type of.
+   * @return type of functional expression.
+   */
+  public static PsiType getFunctionalExpressionType(PsiExpression expression) {
+    PsiType argumentType;
+    if (expression instanceof PsiFunctionalExpression) {
+      argumentType = ((PsiFunctionalExpression)expression).getFunctionalInterfaceType();
+    }
+    else {
+      argumentType = expression.getType();
+    }
+    return argumentType;
   }
 }

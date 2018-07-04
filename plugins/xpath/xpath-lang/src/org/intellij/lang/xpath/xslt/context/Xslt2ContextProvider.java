@@ -161,7 +161,7 @@ public class Xslt2ContextProvider extends XsltContextProviderBase {
   }
 
   private static class MyFunctionProvider implements ParameterizedCachedValueProvider<Map<Pair<QName, Integer>, Function>, XmlFile> {
-    private static ParameterizedCachedValueProvider<Map<Pair<QName,Integer>,Function>,XmlFile> INSTANCE = new MyFunctionProvider();
+    private static final ParameterizedCachedValueProvider<Map<Pair<QName,Integer>,Function>,XmlFile> INSTANCE = new MyFunctionProvider();
 
     @Override
     public CachedValueProvider.Result<Map<Pair<QName, Integer>, Function>> compute(XmlFile param) {

@@ -1,52 +1,39 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
-import com.intellij.openapi.projectRoots.ex.ProjectRoot;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.RootProvider;
+import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.impl.RootProviderBaseImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.StandardFileSystems;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModificator {
+public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModificator, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.impl.ProjectJdkImpl");
-  private final ProjectRootContainerImpl myRootContainer;
   private String myName;
   private String myVersionString;
   private boolean myVersionDefined;
   private String myHomePath = "";
-  private final MyRootProvider myRootProvider = new MyRootProvider();
+  private final RootsAsVirtualFilePointers myRoots;
   private ProjectJdkImpl myOrigin;
   private SdkAdditionalData myAdditionalData;
   private SdkTypeId mySdkType;
@@ -57,18 +44,49 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
   @NonNls private static final String ELEMENT_ROOTS = "roots";
   @NonNls private static final String ELEMENT_HOMEPATH = "homePath";
   @NonNls private static final String ELEMENT_ADDITIONAL = "additional";
+  private final MyRootProvider myRootProvider = new MyRootProvider();
 
   public ProjectJdkImpl(String name, SdkTypeId sdkType) {
     mySdkType = sdkType;
-    myRootContainer = new ProjectRootContainerImpl(true);
     myName = name;
-    myRootContainer.addProjectRootContainerListener(myRootProvider);
+
+    myRoots = new RootsAsVirtualFilePointers(true, tellAllProjectsTheirRootsAreGoingToChange, this);
+    Disposer.register(ApplicationManager.getApplication(), this);
   }
 
   public ProjectJdkImpl(String name, SdkTypeId sdkType, String homePath, String version) {
     this(name, sdkType);
     myHomePath = homePath;
     myVersionString = version;
+  }
+
+  private static final VirtualFilePointerListener tellAllProjectsTheirRootsAreGoingToChange = new VirtualFilePointerListener() {
+    @Override
+    public void beforeValidityChanged(@NotNull VirtualFilePointer[] pointers) {
+      //todo check if this sdk is really used in the project
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).getRootsValidityChangedListener();
+        listener.beforeValidityChanged(pointers);
+      }
+    }
+
+    @Override
+    public void validityChanged(@NotNull VirtualFilePointer[] pointers) {
+      //todo check if this sdk is really used in the project
+      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
+        VirtualFilePointerListener listener = ((ProjectRootManagerImpl)ProjectRootManager.getInstance(project)).getRootsValidityChangedListener();
+        listener.validityChanged(pointers);
+      }
+    }
+  };
+
+  @NotNull
+  public static VirtualFilePointerListener getGlobalVirtualFilePointerListener() {
+    return tellAllProjectsTheirRootsAreGoingToChange;
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @Override
@@ -131,7 +149,8 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
   }
 
   public void readExternal(@NotNull Element element, @Nullable ProjectJdkTable projectJdkTable) throws InvalidDataException {
-    myName = element.getChild(ELEMENT_NAME).getAttributeValue(ATTRIBUTE_VALUE);
+    Element elementName = assertNotMissing(element, ELEMENT_NAME);
+    myName = elementName.getAttributeValue(ATTRIBUTE_VALUE);
     final Element typeChild = element.getChild(ELEMENT_TYPE);
     final String sdkTypeName = typeChild != null ? typeChild.getAttributeValue(ATTRIBUTE_VALUE) : null;
     if (sdkTypeName != null) {
@@ -151,14 +170,14 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
       myVersionDefined = false;
     }
 
-    myRootContainer.changeRoots(() -> {
-      String versionValue = element.getAttributeValue(ELEMENT_VERSION, "");
-      if (versionValue.isEmpty() || !"2".equals(versionValue)) {
-        throw new InvalidDataException("Too old version is not supported: " + versionValue);
-      }
-      myHomePath = element.getChild(ELEMENT_HOMEPATH).getAttributeValue(ATTRIBUTE_VALUE);
-      myRootContainer.readExternal(element.getChild(ELEMENT_ROOTS));
-    });
+    String versionValue = element.getAttributeValue(ELEMENT_VERSION, "");
+    if (versionValue.isEmpty() || !"2".equals(versionValue)) {
+      throw new InvalidDataException("Too old version is not supported: " + versionValue);
+    }
+    Element homePath = assertNotMissing(element, ELEMENT_HOMEPATH);
+    myHomePath = homePath.getAttributeValue(ATTRIBUTE_VALUE);
+    Element elementRoots = assertNotMissing(element, ELEMENT_ROOTS);
+    myRoots.readExternal(elementRoots);
 
     final Element additional = element.getChild(ELEMENT_ADDITIONAL);
     if (additional != null) {
@@ -170,7 +189,14 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     }
   }
 
-  public void writeExternal(Element element) {
+  @NotNull
+  private static Element assertNotMissing(@NotNull Element parent, @NotNull String childName) {
+    Element child = parent.getChild(childName);
+    if (child == null) throw new InvalidDataException("mandatory element '" + childName + "' is missing: " + parent);
+    return child;
+  }
+
+  public void writeExternal(@NotNull Element element) {
     element.setAttribute(ELEMENT_VERSION, "2");
 
     final Element name = new Element(ELEMENT_NAME);
@@ -194,7 +220,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     element.addContent(home);
 
     Element roots = new Element(ELEMENT_ROOTS);
-    myRootContainer.writeExternal(roots);
+    myRoots.writeExternal(roots);
     element.addContent(roots);
 
     Element additional = new Element(ELEMENT_ADDITIONAL);
@@ -236,29 +262,21 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     dest.myVersionDefined = myVersionDefined;
     dest.myVersionString = myVersionString;
     dest.setSdkAdditionalData(getSdkAdditionalData());
-    dest.copyRootsFrom(myRootContainer);
-  }
-
-  void copyRootsFrom(@NotNull ProjectRootContainerImpl rootContainer) {
-    myRootContainer.copyRootsFrom(rootContainer);
+    dest.myRoots.copyRootsFrom(myRoots);
+    dest.myRootProvider.rootsChanged();
   }
 
   private class MyRootProvider extends RootProviderBaseImpl implements ProjectRootListener {
     @Override
     @NotNull
     public String[] getUrls(@NotNull OrderRootType rootType) {
-      final ProjectRoot[] rootFiles = myRootContainer.getRoots(rootType);
-      final ArrayList<String> result = new ArrayList<>();
-      for (ProjectRoot rootFile : rootFiles) {
-        ContainerUtil.addAll(result, rootFile.getUrls());
-      }
-      return ArrayUtil.toStringArray(result);
+      return myRoots.getUrls(rootType);
     }
 
     @Override
     @NotNull
     public VirtualFile[] getFiles(@NotNull final OrderRootType rootType) {
-      return myRootContainer.getRootFiles(rootType);
+      return myRoots.getFiles(rootType);
     }
 
     private final List<RootSetChangedListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -298,8 +316,6 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
   public SdkModificator getSdkModificator() {
     ProjectJdkImpl sdk = clone();
     sdk.myOrigin = this;
-    sdk.myRootContainer.startChange();
-    sdk.update();
     return sdk;
   }
 
@@ -309,6 +325,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
 
     copyTo(myOrigin);
     myOrigin = null;
+    Disposer.dispose(this);
   }
 
   @Override
@@ -323,47 +340,49 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
 
   @NotNull
   @Override
-  public VirtualFile[] getRoots(OrderRootType rootType) {
-    final ProjectRoot[] roots = myRootContainer.getRoots(rootType); // use getRoots() cause the data is most up-to-date there
-    final List<VirtualFile> files = new ArrayList<>(roots.length);
-    for (ProjectRoot root : roots) {
-      ContainerUtil.addAll(files, root.getVirtualFiles());
-    }
-    return VfsUtilCore.toVirtualFileArray(files);
+  public VirtualFile[] getRoots(@NotNull OrderRootType rootType) {
+    return myRoots.getFiles(rootType);
+  }
+
+  @NotNull
+  @Override
+  public String[] getUrls(@NotNull OrderRootType rootType) {
+    return myRoots.getUrls(rootType);
   }
 
   @Override
   public void addRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) {
-    myRootContainer.addRoot(root, rootType);
+    myRoots.addRoot(root, rootType);
+  }
+
+  @Override
+  public void addRoot(@NotNull String url, @NotNull OrderRootType rootType) {
+    myRoots.addRoot(url, rootType);
   }
 
   @Override
   public void removeRoot(@NotNull VirtualFile root, @NotNull OrderRootType rootType) {
-    myRootContainer.removeRoot(root, rootType);
+    myRoots.removeRoot(root, rootType);
+  }
+
+  @Override
+  public void removeRoot(@NotNull String url, @NotNull OrderRootType rootType) {
+    myRoots.removeRoot(url, rootType);
   }
 
   @Override
   public void removeRoots(@NotNull OrderRootType rootType) {
-    myRootContainer.removeAllRoots(rootType);
+    myRoots.removeAllRoots(rootType);
   }
 
   @Override
   public void removeAllRoots() {
-    myRootContainer.removeAllRoots();
+    myRoots.removeAllRoots();
   }
 
   @Override
   public boolean isWritable() {
     return myOrigin != null;
-  }
-
-  public void update() {
-    try {
-      myRootContainer.update();
-    }
-    finally {
-      resetVersionString();
-    }
   }
 
   @Override

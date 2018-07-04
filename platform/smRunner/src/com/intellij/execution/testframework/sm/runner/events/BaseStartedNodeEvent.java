@@ -17,6 +17,7 @@ package com.intellij.execution.testframework.sm.runner.events;
 
 import com.intellij.openapi.util.text.StringUtil;
 import jetbrains.buildServer.messages.serviceMessages.MessageWithAttributes;
+import jetbrains.buildServer.messages.serviceMessages.ServiceMessage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,7 +98,7 @@ public abstract class BaseStartedNodeEvent extends TreeNodeEvent {
   }
 
   @Nullable
-  public static String getMetainfo(@NotNull MessageWithAttributes message) {
+  public static String getMetainfo(@NotNull ServiceMessage message) {
     return message.getAttributes().get("metainfo");
   }
 

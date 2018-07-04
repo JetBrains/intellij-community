@@ -50,7 +50,6 @@ import java.util.List;
 
 /**
  * @author dsl
- * Date: 18.06.2002
  */
 public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo, PsiMember, PsiClass> {
   private final Callback myCallback;
@@ -139,7 +138,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
     }
 
     List<MemberInfo> infos = getSelectedMemberInfos();
-    invokeRefactoring(new PullUpProcessor(myClass, superClass, infos.toArray(new MemberInfo[infos.size()]),
+    invokeRefactoring(new PullUpProcessor(myClass, superClass, infos.toArray(new MemberInfo[0]),
                                                new DocCommentPolicy(getJavaDocPolicy())));
     close(OK_EXIT_CODE);
   }
@@ -199,17 +198,17 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
       final boolean isInterface = currentSuperClass.isInterface();
       if (!isInterface) return true;
 
-      PsiElement element = member.getMember();
+      PsiModifierListOwner element = member.getMember();
       if (element instanceof PsiClass && ((PsiClass) element).isInterface()) return true;
       if (element instanceof PsiField) {
-        return ((PsiModifierListOwner) element).hasModifierProperty(PsiModifier.STATIC);
+        return element.hasModifierProperty(PsiModifier.STATIC);
       }
       if (element instanceof PsiMethod) {
         final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(currentSuperClass, myClass, PsiSubstitutor.EMPTY);
         final MethodSignature signature = ((PsiMethod) element).getSignature(superSubstitutor);
         final PsiMethod superClassMethod = MethodSignatureUtil.findMethodBySignature(currentSuperClass, signature, false);
         if (superClassMethod != null && !PsiUtil.isLanguageLevel8OrHigher(currentSuperClass)) return false;
-        return !((PsiModifierListOwner) element).hasModifierProperty(PsiModifier.STATIC) || PsiUtil.isLanguageLevel8OrHigher(currentSuperClass);
+        return !element.hasModifierProperty(PsiModifier.STATIC) || PsiUtil.isLanguageLevel8OrHigher(currentSuperClass);
       }
       return true;
     }

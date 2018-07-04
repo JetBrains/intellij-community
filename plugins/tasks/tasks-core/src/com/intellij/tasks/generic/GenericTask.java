@@ -17,7 +17,7 @@ public class GenericTask extends Task {
   private Date myUpdated;
   private Date myCreated;
   private String myIssueUrl;
-  private TaskRepository myRepository;
+  private final TaskRepository myRepository;
   private boolean myClosed;
 
   public GenericTask(final String id, final String summary, final TaskRepository repository) {

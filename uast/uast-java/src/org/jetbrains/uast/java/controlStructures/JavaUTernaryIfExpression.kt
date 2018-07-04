@@ -17,23 +17,24 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiConditionalExpression
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.UIfExpression
 
 class JavaUTernaryIfExpression(
-        override val psi: PsiConditionalExpression,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UIfExpression {
-    override val condition by lz { JavaConverter.convertOrEmpty(psi.condition, this) }
-    override val thenExpression by lz { JavaConverter.convertOrEmpty(psi.thenExpression, this) }
-    override val elseExpression by lz { JavaConverter.convertOrEmpty(psi.elseExpression, this) }
+  override val psi: PsiConditionalExpression,
+  givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UIfExpression {
+  override val condition: UExpression by lz { JavaConverter.convertOrEmpty(psi.condition, this) }
+  override val thenExpression: UExpression by lz { JavaConverter.convertOrEmpty(psi.thenExpression, this) }
+  override val elseExpression: UExpression by lz { JavaConverter.convertOrEmpty(psi.elseExpression, this) }
 
-    override val isTernary: Boolean
-        get() = true
+  override val isTernary: Boolean
+    get() = true
 
-    override val ifIdentifier: UIdentifier
-        get() = UIdentifier(null, this)
+  override val ifIdentifier: UIdentifier
+    get() = UIdentifier(null, this)
 
-    override val elseIdentifier: UIdentifier?
-        get() = UIdentifier(null, this)
+  override val elseIdentifier: UIdentifier?
+    get() = UIdentifier(null, this)
 }

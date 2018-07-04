@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -21,9 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -45,13 +28,13 @@ import java.util.concurrent.ExecutorService;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 4/18/12
  */
 public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.server.DefaultMessageHandler");
   public static final long CONSTANT_SEARCH_TIME_LIMIT = 60 * 1000L; // one minute
   private final Project myProject;
-  private final ExecutorService myTaskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("DefaultMessageHandler pool");
+  private final ExecutorService myTaskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
+    "DefaultMessageHandler Pool");
   private volatile long myConstantSearchTime = 0L;
 
   protected DefaultMessageHandler(Project project) {
@@ -79,7 +62,11 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         handleBuildEvent(sessionId, event);
         break;
       case COMPILE_MESSAGE:
-        handleCompileMessage(sessionId, msg.getCompileMessage());
+        CmdlineRemoteProto.Message.BuilderMessage.CompileMessage compileMessage = msg.getCompileMessage();
+        handleCompileMessage(sessionId, compileMessage);
+        if (compileMessage.getKind() == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.INTERNAL_BUILDER_ERROR) {
+          LOG.error("Internal build error:\n" + compileMessage.getText());
+        }
         break;
       case CONSTANT_SEARCH_TASK:
         final CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask task = msg.getConstantSearchTask();
@@ -93,20 +80,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   protected abstract void handleBuildEvent(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event);
 
   private void handleConstantSearchTask(final Channel channel, final UUID sessionId, final CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask task) {
-    ProgressIndicatorUtils.scheduleWithWriteActionPriority(myTaskExecutor, new ReadTask() {
-      @Override
-      public Continuation runBackgroundProcess(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
-        return DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
-          doHandleConstantSearchTask(channel, sessionId, task);
-          return null;
-        });
-      }
-
-      @Override
-      public void onCanceled(@NotNull ProgressIndicator indicator) {
-        DumbService.getInstance(myProject).runWhenSmart(() -> handleConstantSearchTask(channel, sessionId, task));
-      }
-    });
+    ReadAction.nonBlocking(() -> doHandleConstantSearchTask(channel, sessionId, task)).inSmartMode(myProject).submit(myTaskExecutor);
   }
 
   private void doHandleConstantSearchTask(Channel channel, UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask task) {
@@ -184,7 +158,10 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
                     // optimization: don't need to search, cause may be used only in this class
                     continue;
                   }
-                  affectDirectUsages(changedField, accessChanged, affectedPaths);
+                  if (!affectDirectUsages(changedField, accessChanged, affectedPaths)) {
+                    isSuccess.set(Boolean.FALSE);
+                    break;
+                  }
                 }
               }
             }
@@ -253,11 +230,16 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
 
 
   private boolean performRemovedConstantSearch(@Nullable final PsiClass aClass, String fieldName, int fieldAccessFlags, final Set<String> affectedPaths) {
-    final PsiSearchHelper psiSearchHelper = PsiSearchHelper.SERVICE.getInstance(myProject);
+    final PsiSearchHelper psiSearchHelper = PsiSearchHelper.getInstance(myProject);
 
     final Ref<Boolean> result = new Ref<>(Boolean.TRUE);
     final PsiFile fieldContainingFile = aClass != null? aClass.getContainingFile() : null;
 
+    SearchScope searchScope = getSearchScope(aClass, fieldAccessFlags);
+    if (containsUnloadedModules(searchScope)) {
+      LOG.debug("Constant search tasks: there may be usages of " + (aClass!= null ? aClass.getQualifiedName() + "::": "") + fieldName + " in unloaded modules");
+      return false;
+    }
     processIdentifiers(psiSearchHelper, new PsiElementProcessor<PsiIdentifier>() {
       @Override
       public boolean execute(@NotNull PsiIdentifier identifier) {
@@ -283,7 +265,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
           return false;
         }
       }
-    }, fieldName, getSearchScope(aClass, fieldAccessFlags), UsageSearchContext.IN_CODE);
+    }, fieldName, searchScope, UsageSearchContext.IN_CODE);
 
     return result.get();
   }
@@ -313,10 +295,10 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
     return helper.processElementsWithWord(processor1, javaScope, identifier, searchContext, true, false);
   }
 
-  private void affectDirectUsages(final PsiField psiField,
+  private boolean affectDirectUsages(final PsiField psiField,
                                   final boolean ignoreAccessScope,
                                   final Set<String> affectedPaths) throws ProcessCanceledException {
-    ApplicationManager.getApplication().runReadAction(() -> {
+    return ReadAction.compute(() -> {
       if (psiField.isValid()) {
         final PsiFile fieldContainingFile = psiField.getContainingFile();
         final Set<PsiFile> processedFiles = new HashSet<>();
@@ -326,6 +308,10 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         // if field is invalid, the file might be changed, so next time it is compiled,
         // the constant value change, if any, will be processed
         final Collection<PsiReferenceExpression> references = doFindReferences(psiField, ignoreAccessScope);
+        if (references == null) {
+          return false;
+        }
+
         for (final PsiReferenceExpression ref : references) {
           final PsiElement usage = ref.getElement();
           final PsiFile containingPsi = usage.getContainingFile();
@@ -337,15 +323,22 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
           }
         }
       }
+      return true;
     });
   }
 
+  @Nullable("returns null if search failed")
   private Collection<PsiReferenceExpression> doFindReferences(final PsiField psiField, boolean ignoreAccessScope) {
     final SmartList<PsiReferenceExpression> result = new SmartList<>();
 
     final SearchScope searchScope = (ignoreAccessScope? psiField.getContainingFile() : psiField).getUseScope();
+    if (containsUnloadedModules(searchScope)) {
+      PsiClass aClass = psiField.getContainingClass();
+      LOG.debug("Constant search tasks: there may be usages of " + (aClass != null ? aClass.getQualifiedName() + "::" : "") + psiField.getName() + " in unloaded modules");
+      return null;
+    }
 
-    processIdentifiers(PsiSearchHelper.SERVICE.getInstance(myProject), new PsiElementProcessor<PsiIdentifier>() {
+    processIdentifiers(PsiSearchHelper.getInstance(myProject), new PsiElementProcessor<PsiIdentifier>() {
       @Override
       public boolean execute(@NotNull PsiIdentifier identifier) {
         final PsiElement parent = identifier.getParent();
@@ -382,6 +375,19 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
       element = element.getParent();
     }
     return null;
+  }
+
+  private static boolean containsUnloadedModules(SearchScope scope) {
+    if (scope instanceof LocalSearchScope) {
+      return false;
+    }
+    else if (scope instanceof GlobalSearchScope) {
+      return !((GlobalSearchScope)scope).getUnloadedModulesBelongingToScope().isEmpty();
+    }
+    else {
+      //cannot happen now, every SearchScope's implementation extends either LocalSearchScope or GlobalSearchScope
+      return true;
+    }
   }
 
   private static boolean isPackageLocal(int flags) {

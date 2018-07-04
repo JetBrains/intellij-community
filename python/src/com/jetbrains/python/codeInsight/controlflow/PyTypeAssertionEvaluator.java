@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.controlflow;
 
 import com.intellij.openapi.util.Ref;
@@ -20,8 +6,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyConstantExpressionEvaluator;
+import com.jetbrains.python.psi.impl.PyEvaluator;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +23,7 @@ import java.util.function.Function;
  * @author traff
  */
 public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
-  private Stack<Assertion> myStack = new Stack<>();
+  private final Stack<Assertion> myStack = new Stack<>();
   private boolean myPositive;
 
   public PyTypeAssertionEvaluator() {
@@ -79,7 +66,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       if (args.length == 1 && args[0] instanceof PyReferenceExpression) {
         final PyReferenceExpression target = (PyReferenceExpression)args[0];
 
-        pushAssertion(target, myPositive, false, context -> PyTypeParser.getTypeByName(target, "collections." + PyNames.CALLABLE, context));
+        pushAssertion(target, myPositive, false, context -> PyTypingTypeProvider.createTypingCallableType(node));
       }
     }
     else if (node.isCalleeText(PyNames.ISSUBCLASS)) {
@@ -116,25 +103,23 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       final boolean leftIsNone = lhs instanceof PyNoneLiteralExpression || PyNames.NONE.equals(lhs.getName());
       final boolean rightIsNone = rhs instanceof PyNoneLiteralExpression || PyNames.NONE.equals(rhs.getName());
 
-      if (leftIsNone && rightIsNone) {
-        return;
-      }
+      if (leftIsNone ^ rightIsNone) {
+        final PyReferenceExpression target = (PyReferenceExpression)(rightIsNone ? lhs : rhs);
 
-      final PyReferenceExpression target = (PyReferenceExpression)(rightIsNone ? lhs : rhs);
+        if (node.isOperator(PyNames.IS)) {
+          pushAssertion(target, myPositive, false, context -> PyNoneType.INSTANCE);
+          return;
+        }
 
-      if (node.isOperator(PyNames.IS)) {
-        pushAssertion(target, myPositive, false, context -> PyNoneType.INSTANCE);
-        return;
-      }
-
-      if (node.isOperator("isnot")) {
-        pushAssertion(target, !myPositive, false, context -> PyNoneType.INSTANCE);
-        return;
+        if (node.isOperator("isnot")) {
+          pushAssertion(target, !myPositive, false, context -> PyNoneType.INSTANCE);
+          return;
+        }
       }
     }
 
-    final Object leftValue = PyConstantExpressionEvaluator.evaluate(lhs);
-    final Object rightValue = PyConstantExpressionEvaluator.evaluate(rhs);
+    final Object leftValue = PyEvaluator.evaluateNoResolve(lhs, Object.class);
+    final Object rightValue = PyEvaluator.evaluateNoResolve(rhs, Object.class);
 
     if (leftValue instanceof Boolean && rightValue instanceof Boolean) {
       return;
@@ -160,6 +145,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     final PyType transformedType = transformTypeFromAssertion(suggested, transformToDefinition);
     if (positive) {
       if (!(initial instanceof PyUnionType) &&
+          !(initial instanceof PyStructuralType) &&
           !PyTypeChecker.isUnknown(initial, context) &&
           PyTypeChecker.match(transformedType, initial, context)) {
         return Ref.create(initial);
@@ -169,7 +155,9 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     else if (initial instanceof PyUnionType) {
       return Ref.create(((PyUnionType)initial).exclude(transformedType, context));
     }
-    else if (initial != null && PyTypeChecker.match(transformedType, initial, context)) {
+    else if (!(initial instanceof PyStructuralType) &&
+             !PyTypeChecker.isUnknown(initial, context) &&
+             PyTypeChecker.match(transformedType, initial, context)) {
       return null;
     }
     return Ref.create(initial);

@@ -3,7 +3,8 @@ class X {
   void m() {
 
       String s = getStr();
-      switch (s) {<caret>
+      //keep me
+      switch (s) {
       }
 
   }

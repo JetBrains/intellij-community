@@ -16,24 +16,55 @@
 package org.jetbrains.idea.maven.utils.library.propertiesEditor;
 
 import com.google.common.base.Strings;
+import com.intellij.util.containers.ContainerUtil;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 public class RepositoryLibraryPropertiesModel {
   private String version;
   private boolean downloadSources;
   private boolean downloadJavaDocs;
+  private boolean includeTransitiveDependencies;
+  private List<String> myExcludedDependencies;
 
   public RepositoryLibraryPropertiesModel(String version, boolean downloadSources, boolean downloadJavaDocs) {
+    this(version, downloadSources, downloadJavaDocs, true, ContainerUtil.emptyList());
+  }
+
+  public RepositoryLibraryPropertiesModel(String version, boolean downloadSources, boolean downloadJavaDocs,
+                                          boolean includeTransitiveDependencies, List<String> excludedDependencies) {
     this.version = version;
     this.downloadSources = downloadSources;
     this.downloadJavaDocs = downloadJavaDocs;
+    this.includeTransitiveDependencies = includeTransitiveDependencies;
+    myExcludedDependencies = new ArrayList<>(excludedDependencies);
   }
 
   public RepositoryLibraryPropertiesModel clone() {
-    return new RepositoryLibraryPropertiesModel(version, downloadSources, downloadJavaDocs);
+    return new RepositoryLibraryPropertiesModel(version, downloadSources, downloadJavaDocs, includeTransitiveDependencies,
+                                                new ArrayList<>(myExcludedDependencies));
   }
 
   public boolean isValid() {
     return !Strings.isNullOrEmpty(version);
+  }
+
+  public boolean isIncludeTransitiveDependencies() {
+    return includeTransitiveDependencies;
+  }
+
+  public void setIncludeTransitiveDependencies(boolean includeTransitiveDependencies) {
+    this.includeTransitiveDependencies = includeTransitiveDependencies;
+  }
+
+  public List<String> getExcludedDependencies() {
+    return myExcludedDependencies;
+  }
+
+  public void setExcludedDependencies(Collection<String> excludedDependencies) {
+    myExcludedDependencies = new ArrayList<>(excludedDependencies);
   }
 
   public boolean isDownloadSources() {
@@ -69,8 +100,9 @@ public class RepositoryLibraryPropertiesModel {
 
     if (downloadSources != model.downloadSources) return false;
     if (downloadJavaDocs != model.downloadJavaDocs) return false;
+    if (includeTransitiveDependencies != model.includeTransitiveDependencies) return false;
     if (version != null ? !version.equals(model.version) : model.version != null) return false;
-
+    if (!myExcludedDependencies.equals(model.myExcludedDependencies)) return false;
     return true;
   }
 
@@ -78,7 +110,9 @@ public class RepositoryLibraryPropertiesModel {
   public int hashCode() {
     int result = (downloadSources ? 1 : 0);
     result = 31 * result + (downloadJavaDocs ? 1 : 0);
+    result = 31 * result + (includeTransitiveDependencies ? 1 : 0);
     result = 31 * result + (version != null ? version.hashCode() : 0);
+    result = 31 * result + myExcludedDependencies.hashCode();
     return result;
   }
 }

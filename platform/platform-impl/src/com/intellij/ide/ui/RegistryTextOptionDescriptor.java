@@ -33,7 +33,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class RegistryTextOptionDescriptor extends OptionDescription implements Changeable {
-  private RegistryValue myValue;
+  private final RegistryValue myValue;
 
   public RegistryTextOptionDescriptor(RegistryValue value) {
     super(value.getKey());

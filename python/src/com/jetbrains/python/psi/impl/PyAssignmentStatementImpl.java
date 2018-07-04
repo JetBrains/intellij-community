@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,11 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.toolbox.FP;
+import one.util.streamex.IntStreamEx;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +41,7 @@ import java.util.List;
  * @author yole
  */
 public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssignmentStatement {
-  private PyExpression[] myTargets;
+  @Nullable private volatile PyExpression[] myTargets;
 
   public PyAssignmentStatementImpl(ASTNode astNode) {
     super(astNode);
@@ -50,11 +52,13 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     pyVisitor.visitPyAssignmentStatement(this);
   }
 
+  @NotNull
   public PyExpression[] getTargets() {
-    if (myTargets == null) {
-      myTargets = calcTargets(false);
+    PyExpression[] result = myTargets;
+    if (result == null) {
+      myTargets = result = calcTargets(false);
     }
-    return myTargets;
+    return result;
   }
 
   @NotNull
@@ -63,6 +67,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
     return calcTargets(true);
   }
 
+  @NotNull
   private PyExpression[] calcTargets(boolean raw) {
     final ASTNode[] eqSigns = getNode().getChildren(TokenSet.create(PyTokenTypes.EQ));
     if (eqSigns.length == 0) {
@@ -93,7 +98,7 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
         targets.add(expr);
       }
     }
-    return targets.toArray(new PyExpression[targets.size()]);
+    return targets.toArray(PyExpression.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -210,11 +215,21 @@ public class PyAssignmentStatementImpl extends PyElementImpl implements PyAssign
         }
         ++counter;
       }
-      //  map.addAll(FP.zipList(Arrays.asList(lhs_tuple.getElements()), new RepeatIterable<PyExpression>(rhs_one)));
     }
     else if (lhs_tuple != null && rhs_tuple != null) { // multiple both sides: piecewise mapping
-      map.addAll(FP.zipList(Arrays.asList(lhs_tuple.getElements()), Arrays.asList(rhs_tuple.getElements()), null, null));
+      final List<PyExpression> lhsTupleElements = Arrays.asList(lhs_tuple.getElements());
+      final List<PyExpression> rhsTupleElements = Arrays.asList(rhs_tuple.getElements());
+      final int size = Math.max(lhsTupleElements.size(), rhsTupleElements.size());
+
+      map.addAll(StreamEx.zip(alignToSize(lhsTupleElements, size), alignToSize(rhsTupleElements, size), Pair::create).toList());
     }
+  }
+
+  @NotNull
+  private static <T> List<T> alignToSize(@NotNull List<T> list, int size) {
+    return list.size() == size
+           ? list
+           : IntStreamEx.range(size).mapToObj(index -> ContainerUtil.getOrElse(list, index, null)).toList();
   }
 
   @NotNull

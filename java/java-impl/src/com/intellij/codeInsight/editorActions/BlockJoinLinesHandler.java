@@ -15,20 +15,21 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 public class BlockJoinLinesHandler implements JoinLinesHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.BlockJoinLinesHandler");
 
   @Override
-  public int tryJoinLines(final Document document, final PsiFile psiFile, final int start, final int end) {
+  public int tryJoinLines(@NotNull final Document document, @NotNull final PsiFile psiFile, final int start, final int end) {
     PsiElement elementAtStartLineEnd = psiFile.findElementAt(start);
     PsiElement elementAtNextLineStart = psiFile.findElementAt(end);
     if (elementAtStartLineEnd == null || elementAtNextLineStart == null) return -1;
@@ -67,7 +68,7 @@ public class BlockJoinLinesHandler implements JoinLinesHandlerDelegate {
   }
 
   private static int getForceBraceSetting(PsiElement statement) {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(statement.getProject());
+    CodeStyleSettings settings = CodeStyle.getSettings(statement.getContainingFile());
     final CommonCodeStyleSettings codeStyleSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     if (statement instanceof PsiIfStatement) {
       return codeStyleSettings.IF_BRACE_FORCE;

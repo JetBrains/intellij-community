@@ -28,7 +28,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -62,8 +61,9 @@ public class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
     return false;
   }
 
+  @Override
   @NotNull
-  public byte[] contentsToByteArray() throws IOException {
+  public byte[] contentsToByteArray() {
     if (myContentLoadFailed || myProcessingBeforeContentsChange) {
       return ArrayUtil.EMPTY_BYTE_ARRAY;
     }

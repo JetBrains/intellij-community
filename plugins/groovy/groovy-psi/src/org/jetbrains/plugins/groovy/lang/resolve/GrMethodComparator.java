@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -38,9 +24,6 @@ public abstract class GrMethodComparator {
 
     @Nullable
     PsiType[] getTypeArguments();
-
-    @Nullable
-    PsiType getThisType();
 
     @NotNull
     PsiElement getPlace();
@@ -84,19 +67,25 @@ public abstract class GrMethodComparator {
     boolean firstIsPreferable = checkDominated(result2, result1, context);
     boolean secondIsPreferable = checkDominated(result1, result2, context);
 
-    if (secondIsPreferable) {
-      if (firstIsPreferable) {
-        if (method2 instanceof GrGdkMethod && !(method1 instanceof GrGdkMethod)) {
-          return -1;
-        }
+    if (firstIsPreferable == secondIsPreferable) {
+      if (method1 instanceof GrGdkMethod && !(method2 instanceof GrGdkMethod)) {
+        return 1;
       }
-      return 1;
+      if (!(method1 instanceof GrGdkMethod) && method2 instanceof GrGdkMethod) {
+        return -1;
+      }
+      if (secondIsPreferable) {
+        return 1;
+      }
+      else {
+        return 0;
+      }
     }
-
-    if (firstIsPreferable) {
+    else if (firstIsPreferable) {
       return -1;
     }
-
-    return 0;
+    else {
+      return 1;
+    }
   }
 }

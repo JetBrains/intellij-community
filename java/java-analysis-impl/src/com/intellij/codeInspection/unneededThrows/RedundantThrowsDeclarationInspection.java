@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
@@ -31,6 +18,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,6 +69,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
       if (unThrown == null) return null;
 
       PsiMethod psiMethod = (PsiMethod)refMethod.getElement();
+      if (psiMethod == null) return null;
       PsiClassType[] throwsList = psiMethod.getThrowsList().getReferencedTypes();
       PsiJavaCodeReferenceElement[] throwsRefs = psiMethod.getThrowsList().getReferenceElements();
       List<ProblemDescriptor> problems = null;
@@ -118,7 +107,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
       }
 
       if (problems != null) {
-        return problems.toArray(new CommonProblemDescriptor[problems.size()]);
+        return problems.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
       }
     }
 
@@ -171,6 +160,12 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
     return fix instanceof MyQuickFix ? ((MyQuickFix)fix).myHint : null;
   }
 
+  @Nullable
+  @Override
+  public RefGraphAnnotator getAnnotator(@NotNull RefManager refManager) {
+    return new RedundantThrowsGraphAnnotator(refManager);
+  }
+
   private static class MyQuickFix implements LocalQuickFix {
     private final ProblemDescriptionsProcessor myProcessor;
     private final String myHint;
@@ -219,7 +214,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
         if (psiMethod == null) return; //invalid refMethod
         final Project project = psiMethod.getProject();
         final PsiManager psiManager = PsiManager.getInstance(project);
-        final List<PsiJavaCodeReferenceElement> refsToDelete = new ArrayList<>();
+        final List<PsiElement> refsToDelete = new ArrayList<>();
         for (CommonProblemDescriptor problem : problems) {
           final PsiElement psiElement = ((ProblemDescriptor)problem).getPsiElement();
           if (psiElement instanceof PsiJavaCodeReferenceElement) {
@@ -243,7 +238,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
         if (!FileModificationService.getInstance().preparePsiElementsForWrite(refsToDelete)) return;
 
         WriteAction.run(() -> {
-          for (final PsiJavaCodeReferenceElement aRefsToDelete : refsToDelete) {
+          for (final PsiElement aRefsToDelete : refsToDelete) {
             if (aRefsToDelete.isValid()) {
               aRefsToDelete.delete();
             }
@@ -255,32 +250,22 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
       }
     }
 
-    @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    private static void removeException(final RefMethod refMethod,
-                                        final PsiType exceptionType,
-                                        final List<PsiJavaCodeReferenceElement> refsToDelete,
-                                        final PsiMethod psiMethod) {
-      PsiManager psiManager = psiMethod.getManager();
-
-      PsiJavaCodeReferenceElement[] refs = psiMethod.getThrowsList().getReferenceElements();
-      for (PsiJavaCodeReferenceElement ref : refs) {
-        PsiType refType = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createType(ref);
-        if (exceptionType.isAssignableFrom(refType)) {
-          refsToDelete.add(ref);
-        }
-      }
+    private void removeException(RefMethod refMethod,
+                                 PsiType exceptionType,
+                                 List<PsiElement> refsToDelete,
+                                 PsiMethod psiMethod) {
+      ContainerUtil.addAll(refsToDelete, MethodThrowsFix.Remove.extractRefsToRemove(psiMethod, exceptionType));
 
       if (refMethod != null) {
+        assert myProcessor != null;
+
         for (RefMethod refDerived : refMethod.getDerivedMethods()) {
           PsiModifierListOwner method = refDerived.getElement();
           if (method != null) {
             removeException(refDerived, exceptionType, refsToDelete, (PsiMethod)method);
           }
         }
+        ProblemDescriptionsProcessor.resolveAllProblemsInElement(myProcessor, refMethod);
       } else {
         final Query<PsiMethod> query = OverridingMethodsSearch.search(psiMethod);
         query.forEach(m -> {
@@ -288,6 +273,11 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
           return true;
         });
       }
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return false;
     }
   }
 

@@ -15,17 +15,12 @@
  */
 package org.jetbrains.idea.maven.server.embedder;
 
-import org.apache.maven.model.Plugin;
 import org.apache.maven.plugin.DefaultPluginDescriptorCache;
-import org.apache.maven.plugin.PluginDescriptorCache;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.codehaus.plexus.component.repository.ComponentDependency;
-import org.sonatype.aether.RepositorySystemSession;
-import org.sonatype.aether.repository.RemoteRepository;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,7 +28,7 @@ import java.util.Map;
  */
 public class CustomPluginDescriptorCache extends DefaultPluginDescriptorCache {
 
-  private Map<Key, PluginDescriptor> descriptors = new HashMap<Key, PluginDescriptor>(128);
+  private final Map<Key, PluginDescriptor> descriptors = new HashMap<Key, PluginDescriptor>(128);
 
   public void flush() {
     descriptors.clear();

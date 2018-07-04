@@ -24,7 +24,6 @@ import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Feb 27, 2008
  */
 public abstract class UpdatableValueContainer<T> extends ValueContainer<T> {
 

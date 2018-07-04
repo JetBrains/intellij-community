@@ -36,7 +36,7 @@ public abstract class PsiBasedStripTrailingSpacesFilter implements StripTrailing
   @NotNull private final BitSet myDisabledLinesBitSet;
   @NotNull private final Document myDocument;
 
-  private static Logger LOG = Logger.getInstance(PsiBasedStripTrailingSpacesFilter.class);
+  private static final Logger LOG = Logger.getInstance(PsiBasedStripTrailingSpacesFilter.class);
   
   public abstract static class Factory extends StripTrailingSpacesFilterFactory {
     @NotNull

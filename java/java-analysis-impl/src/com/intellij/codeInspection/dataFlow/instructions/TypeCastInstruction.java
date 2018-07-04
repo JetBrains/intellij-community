@@ -16,13 +16,13 @@
 
 package com.intellij.codeInspection.dataFlow.instructions;
 
+import com.intellij.codeInspection.dataFlow.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeCastExpression;
-import com.intellij.codeInspection.dataFlow.DfaInstructionState;
-import com.intellij.codeInspection.dataFlow.DataFlowRunner;
-import com.intellij.codeInspection.dataFlow.DfaMemoryState;
-import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 
 public class TypeCastInstruction extends Instruction {
   private final PsiTypeCastExpression myCastExpression;
@@ -50,5 +50,10 @@ public class TypeCastInstruction extends Instruction {
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
     return visitor.visitTypeCast(this, runner, stateBefore);
+  }
+
+  @Override
+  public String toString() {
+    return "CAST_TO "+myCastTo.getCanonicalText();
   }
 }

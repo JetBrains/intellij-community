@@ -1,34 +1,27 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
+import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
@@ -59,11 +52,16 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
     }
   }
 
+  private void createUIComponents() {
+    myRestoreLink = LinkLabel.create(XDebuggerBundle.message("xbreakpoints.restore.label"), () -> WriteAction.run(
+      () -> ((XBreakpointManagerImpl)XDebuggerManager.getInstance(myBreakpoint.getProject()).getBreakpointManager())
+        .restoreLastRemovedBreakpoint()));
+  }
+
   public interface Delegate {
     void showMoreOptions();
   }
 
-  private JPanel myConditionExpressionPanel;
   private JPanel myConditionPanel;
   private JPanel myMainPanel;
 
@@ -86,8 +84,11 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
   private JPanel myCustomRightPropertiesPanelWrapper;
   private JBCheckBox myConditionEnabledCheckbox;
   private JPanel myCustomTopPropertiesPanelWrapper;
-  private JPanel myConditionEnabledPanel;
   private JBLabel myBreakpointNameLabel;
+  private JPanel myConditionCheckboxPanel;
+  private JPanel myLanguageChooserPanel;
+  private JPanel myConditionExpressionPanel;
+  private LinkLabel myRestoreLink;
   private final List<XBreakpointCustomPropertiesPanel> myCustomPanels;
 
   private final List<XBreakpointPropertiesSubPanel> mySubPanels = new ArrayList<>();
@@ -134,13 +135,14 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
       myActionsPanel.hide();
     }
 
+    XSourcePosition sourcePosition = myBreakpoint.getSourcePosition();
     myCustomPanels = new ArrayList<>();
     if (debuggerEditorsProvider != null) {
       myConditionEnabledCheckbox = new JBCheckBox(XDebuggerBundle.message("xbreakpoints.condition.checkbox"));
-      myConditionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, CONDITION_HISTORY_ID, myBreakpoint.getSourcePosition(), true);
-      JComponent conditionComponent = myConditionComboBox.getComponent();
-      conditionComponent.setBorder(JBUI.Borders.empty(0, 4));
-      myConditionExpressionPanel.add(conditionComponent, BorderLayout.CENTER);
+      myConditionComboBox = new XDebuggerExpressionComboBox(project, debuggerEditorsProvider, CONDITION_HISTORY_ID,
+                                                            sourcePosition, true, false);
+      myLanguageChooserPanel.add(myConditionComboBox.getLanguageChooser(), BorderLayout.CENTER);
+      myConditionExpressionPanel.add(myConditionComboBox.getComponent(), BorderLayout.CENTER);
       myConditionEnabledCheckbox.addActionListener(e -> onCheckboxChanged());
       DebuggerUIUtil.focusEditorOnCheck(myConditionEnabledCheckbox, myConditionComboBox.getEditorComponent());
     } else {
@@ -208,6 +210,11 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
     });
 
     myEnabledCheckbox.addActionListener(e -> myBreakpoint.setEnabled(myEnabledCheckbox.isSelected()));
+    XBreakpointBase lastRemovedBreakpoint = ((XBreakpointManagerImpl)breakpointManager).getLastRemovedBreakpoint();
+    myRestoreLink.setVisible(lastRemovedBreakpoint != null &&
+                             breakpointType.equals(lastRemovedBreakpoint.getType()) &&
+                             XSourcePosition.isOnTheSameLine(sourcePosition, lastRemovedBreakpoint.getSourcePosition()) &&
+                             XBreakpointManagerImpl.statesAreDifferent(lastRemovedBreakpoint.getState(), breakpoint.getState(), true));
   }
 
   private void onCheckboxChanged() {
@@ -241,15 +248,17 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
       myConditionComboBox.setExpression(condition);
       boolean hideCheckbox = !myShowAllOptions && condition == null;
       myConditionEnabledCheckbox.setSelected(hideCheckbox || (myBreakpoint.isConditionEnabled() && condition != null));
-      myConditionEnabledPanel.removeAll();
+      myConditionCheckboxPanel.removeAll();
       if (hideCheckbox) {
         JBLabel label = new JBLabel(XDebuggerBundle.message("xbreakpoints.condition.checkbox"));
-        label.setBorder(JBUI.Borders.emptyLeft(4));
+        label.setBorder(JBUI.Borders.empty(0, 4, 4, 0));
         label.setLabelFor(myConditionComboBox.getComboBox());
-        myConditionEnabledPanel.add(label);
+        myConditionCheckboxPanel.add(label);
+        myConditionExpressionPanel.setBorder(JBUI.Borders.emptyLeft(3));
       }
       else {
-        myConditionEnabledPanel.add(myConditionEnabledCheckbox);
+        myConditionCheckboxPanel.add(myConditionEnabledCheckbox);
+        myConditionExpressionPanel.setBorder(JBUI.Borders.emptyLeft(UIUtil.getCheckBoxTextHorizontalOffset(myConditionEnabledCheckbox)));
       }
 
       onCheckboxChanged();
@@ -268,7 +277,7 @@ public class XLightBreakpointPropertiesPanel implements XSuspendPolicyPanel.Dele
 
   public void dispose() {
     myActionsPanel.dispose();
-    myCustomPanels.forEach(XBreakpointCustomPropertiesPanel::dispose);
+    myCustomPanels.forEach(Disposer::dispose);
     myCustomPanels.clear();
   }
 }

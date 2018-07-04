@@ -22,13 +22,13 @@ import org.jetbrains.uast.test.env.AbstractUastFixtureTest
 import java.io.File
 
 abstract class AbstractJavaUastTest : AbstractUastFixtureTest() {
-    protected companion object {
-        val TEST_JAVA_MODEL_DIR = File(PathManagerEx.getCommunityHomePath(), "uast/uast-tests/java")
-    }
+  protected companion object {
+    val TEST_JAVA_MODEL_DIR = File(PathManagerEx.getCommunityHomePath(), "uast/uast-tests/java")
+  }
 
-    override fun getVirtualFile(testName: String): VirtualFile {
-        val localPath = File(TEST_JAVA_MODEL_DIR, testName).path
-        val vFile = LocalFileSystem.getInstance().findFileByPath(localPath)
-        return vFile ?: throw IllegalStateException("Couldn't find virtual file for $localPath")
-    }
+  override fun getVirtualFile(testName: String): VirtualFile {
+    val localPath = File(TEST_JAVA_MODEL_DIR, testName).path
+    val vFile = LocalFileSystem.getInstance().findFileByPath(localPath)
+    return vFile ?: throw IllegalStateException("Couldn't find virtual file for $localPath")
+  }
 }

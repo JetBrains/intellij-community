@@ -15,6 +15,7 @@
  */
 package com.intellij.ide;
 
+import com.intellij.application.options.CodeStyleBean;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.JavaIndentOptionsEditor;
 import com.intellij.lang.Language;
@@ -28,8 +29,10 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.LocalTimeCounter;
-import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.application.options.JavaDocFormattingPanel.*;
 
 /**
  * @author rvishnyakov
@@ -69,13 +72,17 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       groupName = CodeStyleSettingsCustomizable.SPACES_IN_TYPE_PARAMETERS;
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER", ApplicationBundle.message("checkbox.spaces.before.opening.angle.bracket"), groupName);
       consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS", "Around type bounds", groupName);
+
+      groupName = CodeStyleSettingsCustomizable.SPACES_OTHER;
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_BEFORE_COLON_IN_FOREACH", ApplicationBundle.message(
+        "checkbox.spaces.before.colon.in.foreach"), groupName);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "SPACE_INSIDE_ONE_LINE_ENUM_BRACES", ApplicationBundle.message(
+        "checkbox.spaces.inside.one.line.enum"), groupName);
     }
     else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showStandardOptions("RIGHT_MARGIN",
                                    "WRAP_ON_TYPING",
                                    "KEEP_CONTROL_STATEMENT_IN_ONE_LINE",
-                                   "LINE_COMMENT_AT_FIRST_COLUMN",
-                                   "BLOCK_COMMENT_AT_FIRST_COLUMN",
                                    "KEEP_LINE_BREAKS",
                                    "KEEP_FIRST_COLUMN_COMMENT",
                                    "CALL_PARAMETERS_WRAP",
@@ -180,7 +187,66 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
       consumer.showCustomOption(JavaCodeStyleSettings.class, "BLANK_LINES_AROUND_INITIALIZER", ApplicationBundle.message("editbox.blanklines.around.initializer"), CodeStyleSettingsCustomizable.BLANK_LINES);
     }
     else if (settingsType == SettingsType.COMMENTER_SETTINGS) {
-      consumer.showStandardOptions("LINE_COMMENT_ADD_SPACE");
+      consumer.showAllStandardOptions();
+    }
+    else if (settingsType == SettingsType.LANGUAGE_SPECIFIC) {
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ALIGN_PARAM_COMMENTS",
+                                ApplicationBundle.message("checkbox.align.parameter.descriptions"),
+                                ALIGNMENT_GROUP);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ALIGN_EXCEPTION_COMMENTS",
+                                ApplicationBundle.message("checkbox.align.thrown.exception.descriptions"),
+                                ALIGNMENT_GROUP);
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ADD_BLANK_AFTER_DESCRIPTION",
+                                ApplicationBundle.message("checkbox.after.description"),
+                                BLANK_LINES_GROUP);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ADD_BLANK_AFTER_PARM_COMMENTS",
+                                ApplicationBundle.message("checkbox.after.parameter.descriptions"),
+                                BLANK_LINES_GROUP);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_ADD_BLANK_AFTER_RETURN",
+                                ApplicationBundle.message("checkbox.after.return.tag"),
+                                BLANK_LINES_GROUP);
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_KEEP_INVALID_TAGS",
+                                ApplicationBundle.message("checkbox.keep.invalid.tags"),
+                                INVALID_TAGS_GROUP);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_KEEP_EMPTY_PARAMETER",
+                                ApplicationBundle.message("checkbox.keep.empty.param.tags"),
+                                INVALID_TAGS_GROUP);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_KEEP_EMPTY_RETURN",
+                                ApplicationBundle.message("checkbox.keep.empty.return.tags"),
+                                INVALID_TAGS_GROUP);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_KEEP_EMPTY_EXCEPTION",
+                                ApplicationBundle.message("checkbox.keep.empty.throws.tags"),
+                                INVALID_TAGS_GROUP);
+
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_LEADING_ASTERISKS_ARE_ENABLED",
+                                ApplicationBundle.message("checkbox.enable.leading.asterisks"),
+                                OTHER_GROUP);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_USE_THROWS_NOT_EXCEPTION",
+                                ApplicationBundle.message("checkbox.use.throws.rather.than.exception"),
+                                OTHER_GROUP);
+      consumer.showStandardOptions("WRAP_COMMENTS");
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_P_AT_EMPTY_LINES",
+                                ApplicationBundle.message("checkbox.generate.p.on.empty.lines"),
+                                OTHER_GROUP);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_KEEP_EMPTY_LINES",
+                                ApplicationBundle.message("checkbox.keep.empty.lines"),
+                                OTHER_GROUP);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_DO_NOT_WRAP_ONE_LINE_COMMENTS",
+                                ApplicationBundle.message("checkbox.do.not.wrap.one.line.comments"),
+                                OTHER_GROUP);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_PRESERVE_LINE_FEEDS",
+                                ApplicationBundle.message("checkbox.preserve.line.feeds"),
+                                OTHER_GROUP);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_PARAM_DESCRIPTION_ON_NEW_LINE",
+                                ApplicationBundle.message("checkbox.param.description.on.new.line"),
+                                OTHER_GROUP);
+      consumer.showCustomOption(JavaCodeStyleSettings.class, "JD_INDENT_ON_CONTINUATION",
+                                ApplicationBundle.message("checkbox.param.indent.on.continuation"),
+                                OTHER_GROUP);
+
+
     }
     else {
       consumer.showAllStandardOptions();
@@ -194,12 +260,6 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     );
     file.putUserData(PsiUtil.FILE_LANGUAGE_LEVEL_KEY, LanguageLevel.HIGHEST);
     return file;
-  }
-
-  @Override
-  public DisplayPriority getDisplayPriority() {
-    if (PlatformUtils.isIntelliJ()) return DisplayPriority.KEY_LANGUAGE_SETTINGS;
-    return DisplayPriority.LANGUAGE_SETTINGS;
   }
 
   @Override
@@ -217,29 +277,45 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   @Override
   @NotNull
-  public DocCommentSettings getDocCommentSettings(@NotNull PsiFile file) {
-    if (file.isValid()) {
-      return new DocCommentSettings() {
-        private final JavaCodeStyleSettings mySettings =
-          CodeStyleSettingsManager.getSettings(file.getProject()).getCustomSettings(JavaCodeStyleSettings.class);
+  public DocCommentSettings getDocCommentSettings(@NotNull CodeStyleSettings rootSettings) {
+    return new DocCommentSettings() {
+      private final JavaCodeStyleSettings mySettings =
+        rootSettings.getCustomSettings(JavaCodeStyleSettings.class);
 
-        @Override
-        public boolean isDocFormattingEnabled() {
-          return mySettings.ENABLE_JAVADOC_FORMATTING;
-        }
+      @Override
+      public boolean isDocFormattingEnabled() {
+        return mySettings.ENABLE_JAVADOC_FORMATTING;
+      }
 
-        @Override
-        public void setDocFormattingEnabled(boolean formattingEnabled) {
-          mySettings.ENABLE_JAVADOC_FORMATTING = formattingEnabled;
-        }
+      @Override
+      public void setDocFormattingEnabled(boolean formattingEnabled) {
+        mySettings.ENABLE_JAVADOC_FORMATTING = formattingEnabled;
+      }
 
-        @Override
-        public boolean isLeadingAsteriskEnabled() {
-          return mySettings.JD_LEADING_ASTERISKS_ARE_ENABLED;
-        }
-      };
-    }
-    return super.getDocCommentSettings(file);
+      @Override
+      public boolean isLeadingAsteriskEnabled() {
+        return mySettings.JD_LEADING_ASTERISKS_ARE_ENABLED;
+      }
+
+      @Override
+      public boolean isRemoveEmptyTags() {
+        return mySettings.JD_KEEP_EMPTY_EXCEPTION || mySettings.JD_KEEP_EMPTY_PARAMETER || mySettings.JD_KEEP_EMPTY_RETURN;
+      }
+
+      @Override
+      public void setRemoveEmptyTags(boolean removeEmptyTags) {
+        mySettings.JD_KEEP_EMPTY_RETURN = !removeEmptyTags;
+        mySettings.JD_KEEP_EMPTY_PARAMETER = !removeEmptyTags;
+        mySettings.JD_KEEP_EMPTY_EXCEPTION = !removeEmptyTags;
+      }
+    };
+
+  }
+
+  @Nullable
+  @Override
+  public CodeStyleBean createBean() {
+    return new JavaCodeStyleBean();
   }
 
   private static final String GENERAL_CODE_SAMPLE =
@@ -406,7 +482,7 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     "    super.getFoo().foo().getBar().bar();\n" +
     "\n" +
     "    label: " +
-    "    if (2 < 3) return; else if (2 > 3) return; else return;\n" +
+    "    if (2 < 3) {return;} else if (2 > 3) return; else return;\n" +
     "    for (int i = 0; i < 0xFFFFFF; i += 2) System.out.println(i);\n" +
     "    while (x < 50000) x++;\n" +
     "    do x++; while (x < 10000);\n" +

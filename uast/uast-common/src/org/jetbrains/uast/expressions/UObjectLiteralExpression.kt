@@ -25,42 +25,42 @@ import org.jetbrains.uast.visitor.UastVisitor
  * Represents an object literal expression, e.g. `new Runnable() {}` in Java.
  */
 interface UObjectLiteralExpression : UCallExpression {
-    /**
-     * Returns the class declaration.
-     */
-    val declaration: UClass
+  /**
+   * Returns the class declaration.
+   */
+  val declaration: UClass
 
-    override val methodIdentifier: UIdentifier?
-        get() = null
-    
-    override val kind: UastCallKind
-        get() = UastCallKind.CONSTRUCTOR_CALL
+  override val methodIdentifier: UIdentifier?
+    get() = null
 
-    override val methodName: String?
-        get() = null
+  override val kind: UastCallKind
+    get() = UastCallKind.CONSTRUCTOR_CALL
 
-    override val receiver: UExpression?
-        get() = null
-    
-    override val receiverType: PsiType?
-        get() = null
+  override val methodName: String?
+    get() = null
 
-    override val returnType: PsiType?
-        get() = null
-    
-    
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitObjectLiteralExpression(this)) return
-        annotations.acceptList(visitor)
-        valueArguments.acceptList(visitor)
-        declaration.accept(visitor)
-        visitor.afterVisitObjectLiteralExpression(this)
-    }
+  override val receiver: UExpression?
+    get() = null
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
-            visitor.visitObjectLiteralExpression(this, data)
+  override val receiverType: PsiType?
+    get() = null
 
-    override fun asLogString() = log()
+  override val returnType: PsiType?
+    get() = null
 
-    override fun asRenderString() = "anonymous " + declaration.text
+
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitObjectLiteralExpression(this)) return
+    annotations.acceptList(visitor)
+    valueArguments.acceptList(visitor)
+    declaration.accept(visitor)
+    visitor.afterVisitObjectLiteralExpression(this)
+  }
+
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
+    visitor.visitObjectLiteralExpression(this, data)
+
+  override fun asLogString(): String = log()
+
+  override fun asRenderString(): String = "anonymous " + declaration.text
 }

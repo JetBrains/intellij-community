@@ -34,7 +34,14 @@ public abstract class BasicAttributeValueReference implements PsiReference {
   }
 
   public BasicAttributeValueReference(final PsiElement element, int offset) {
-    this ( element, new TextRange(offset, element.getTextLength() - offset));
+    this (element, createTextRange(element, offset));
+  }
+
+  @NotNull
+  private static TextRange createTextRange(PsiElement element, int offset) {
+    int valueEndOffset = element.getTextLength() - offset;
+    // in case of not closed quote
+    return new TextRange(offset, Math.max(offset, valueEndOffset));
   }
 
   public BasicAttributeValueReference(final PsiElement element, TextRange range) {
@@ -42,10 +49,12 @@ public abstract class BasicAttributeValueReference implements PsiReference {
     myRange = range;
   }
 
+  @NotNull
   public PsiElement getElement() {
     return myElement;
   }
 
+  @NotNull
   public TextRange getRangeInElement() {
     return myRange;
   }

@@ -92,7 +92,7 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
     String className = containingClass.getName();
     PsiMethod[] constructors = containingClass.getConstructors();
     boolean noArgConstructor =
-      constructors.length == 0 || Arrays.stream(constructors).anyMatch(constructor -> constructor.getParameterList().getParametersCount() == 0);
+      constructors.length == 0 || Arrays.stream(constructors).anyMatch(constructor -> constructor.getParameterList().isEmpty());
     if (noArgConstructor) {
       targetQualifiers.add("this / new " + className + "()");
     }

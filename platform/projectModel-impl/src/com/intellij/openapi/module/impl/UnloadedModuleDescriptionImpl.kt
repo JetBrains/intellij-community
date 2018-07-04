@@ -32,21 +32,21 @@ import java.nio.file.Paths
 class UnloadedModuleDescriptionImpl(val modulePath: ModulePath,
                                     private val dependencyModuleNames: List<String>,
                                     private val contentRoots: List<VirtualFilePointer>) : UnloadedModuleDescription {
-  override fun getGroupPath() = modulePath.group?.split(ModuleManagerImpl.MODULE_GROUP_SEPARATOR) ?: emptyList()
+  override fun getGroupPath(): List<String> = modulePath.group?.split(ModuleManagerImpl.MODULE_GROUP_SEPARATOR) ?: emptyList()
 
-  override fun getName() = modulePath.moduleName
+  override fun getName(): String = modulePath.moduleName
 
-  override fun getContentRoots() = contentRoots
+  override fun getContentRoots(): List<VirtualFilePointer> = contentRoots
 
-  override fun getDependencyModuleNames() = dependencyModuleNames
+  override fun getDependencyModuleNames(): List<String> = dependencyModuleNames
 
-  override fun equals(other: Any?) = other is UnloadedModuleDescriptionImpl && name == other.name
+  override fun equals(other: Any?): Boolean = other is UnloadedModuleDescriptionImpl && name == other.name
 
-  override fun hashCode() = name.hashCode()
+  override fun hashCode(): Int = name.hashCode()
 
   companion object {
     @JvmStatic
-    fun createFromPaths(paths: List<ModulePath>, parentDisposable: Disposable): List<UnloadedModuleDescriptionImpl> {
+    fun createFromPaths(paths: Collection<ModulePath>, parentDisposable: Disposable): List<UnloadedModuleDescriptionImpl> {
       val pathVariables = JpsGlobalLoader.computeAllPathVariables(PathManager.getOptionsPath())
       val modules = JpsProjectLoader.loadModules(paths.map { Paths.get(it.path) }, null, pathVariables)
       val pathsByName = paths.associateBy { it.moduleName }

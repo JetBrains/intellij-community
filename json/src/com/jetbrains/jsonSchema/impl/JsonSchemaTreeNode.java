@@ -16,6 +16,7 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,11 +36,13 @@ public class JsonSchemaTreeNode {
   @Nullable private final JsonSchemaObject mySchema;
   @NotNull private final List<JsonSchemaVariantsTreeBuilder.Step> mySteps = new SmartList<>();
 
+  @Nullable private final JsonSchemaTreeNode myParent;
   @NotNull private final List<JsonSchemaTreeNode> myChildren = new ArrayList<>();
 
   public JsonSchemaTreeNode(@Nullable JsonSchemaTreeNode parent,
                             @Nullable JsonSchemaObject schema) {
     assert schema != null || parent != null;
+    myParent = parent;
     mySchema = schema;
     if (parent != null && !parent.getSteps().isEmpty()) {
       mySteps.addAll(parent.getSteps().subList(1, parent.getSteps().size()));
@@ -80,7 +83,11 @@ public class JsonSchemaTreeNode {
   }
 
   private List<JsonSchemaTreeNode> convertToNodes(List<JsonSchemaObject> children) {
-    return children.stream().map(s -> new JsonSchemaTreeNode(this, s)).collect(Collectors.toList());
+    List<JsonSchemaTreeNode> nodes = ContainerUtil.newArrayListWithCapacity(children.size());
+    for (JsonSchemaObject child: children) {
+      nodes.add(new JsonSchemaTreeNode(this, child));
+    }
+    return nodes;
   }
 
   @NotNull
@@ -111,6 +118,11 @@ public class JsonSchemaTreeNode {
     return mySteps;
   }
 
+  @Nullable
+  public JsonSchemaTreeNode getParent() {
+    return myParent;
+  }
+
   @NotNull
   public List<JsonSchemaTreeNode> getChildren() {
     return myChildren;
@@ -136,6 +148,7 @@ public class JsonSchemaTreeNode {
     if (myNothing != node.myNothing) return false;
     if (myResolveState != node.myResolveState) return false;
     if (mySchema != null ? !mySchema.equals(node.mySchema) : node.mySchema != null) return false;
+    //noinspection RedundantIfStatement
     if (!mySteps.equals(node.mySteps)) return false;
 
     return true;

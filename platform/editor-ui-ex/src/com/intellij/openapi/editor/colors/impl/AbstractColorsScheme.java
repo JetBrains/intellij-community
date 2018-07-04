@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.colors.impl;
 
@@ -29,13 +15,15 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.options.SchemeState;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Ref;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.JdomKt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashMap;
 import org.jdom.Element;
@@ -61,7 +49,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   public static final Color INHERITED_COLOR_MARKER = ColorUtil.marker("INHERITED_COLOR_MARKER");
   public static final Color NULL_COLOR_MARKER = ColorUtil.marker("NULL_COLOR_MARKER");
 
-  private static final int CURR_VERSION = 142;
+  public static final int CURR_VERSION = 142;
 
   // todo: unify with UIUtil.DEF_SYSTEM_FONT_SIZE
   private static final FontSize DEFAULT_FONT_SIZE = FontSize.SMALL;
@@ -195,6 +183,18 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   @NotNull
   public Set<ColorKey> getColorKeys() {
     return myColorsMap.keySet();
+  }
+
+  /**
+   * Returns the collection of text attribute keys for which this color scheme defines attributes.
+   */
+  @NotNull
+  public Set<TextAttributesKey> getAttributeKeys() {
+    HashSet<TextAttributesKey> result = new HashSet<>(myAttributesMap.keySet());
+    if (myParentScheme instanceof DefaultColorsScheme) {
+      result.addAll(((DefaultColorsScheme) myParentScheme).getAttributeKeys());
+    }
+    return result;
   }
 
   @Override
@@ -579,15 +579,12 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       parentNode.addContent(metaInfoToElement());
     }
 
-    if (getLineSpacing() != FontPreferences.DEFAULT_LINE_SPACING) {
-      JdomKt.addOptionTag(parentNode, LINE_SPACING, String.valueOf(getLineSpacing()));
-    }
-
     // IJ has used a 'single customizable font' mode for ages. That's why we want to support that format now, when it's possible
     // to specify fonts sequence (see getFontPreferences()), there are big chances that many clients still will use a single font.
     // That's why we want to use old format when zero or one font is selected and 'extended' format otherwise.
     boolean useOldFontFormat = myFontPreferences.getEffectiveFontFamilies().size() <= 1;
     if (!(myFontPreferences instanceof DelegatingFontPreferences)) {
+      JdomKt.addOptionTag(parentNode, LINE_SPACING, String.valueOf(getLineSpacing()));
       if (useOldFontFormat) {
         JdomKt.addOptionTag(parentNode, EDITOR_FONT_SIZE, String.valueOf(getEditorFontSize()));
         JdomKt.addOptionTag(parentNode, EDITOR_FONT_NAME, myFontPreferences.getFontFamily());
@@ -610,7 +607,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
         writeFontPreferences(CONSOLE_FONT, parentNode, myConsoleFontPreferences);
       }
       writeLigaturesPreferences(parentNode, myConsoleFontPreferences, CONSOLE_LIGATURES);
-      if (getConsoleLineSpacing() != FontPreferences.DEFAULT_LINE_SPACING) {
+      if ((myFontPreferences instanceof DelegatingFontPreferences) || getConsoleLineSpacing() != getLineSpacing()) {
         JdomKt.addOptionTag(parentNode, CONSOLE_LINE_SPACING, Float.toString(getConsoleLineSpacing()));
       }
     }
@@ -650,7 +647,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     }
   }
 
-  private void writeAttributes(@NotNull Element attrElements) throws WriteExternalException {
+  private void writeAttributes(@NotNull Element attrElements) {
     List<TextAttributesKey> list = new ArrayList<>(myAttributesMap.keySet());
     list.sort(null);
     for (TextAttributesKey key : list) {
@@ -698,7 +695,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       key -> {
         TextAttributes attrs = myAttributesMap.get(key);
         if (attrs == INHERITED_ATTRS_MARKER) {
-          return key.getFallbackAttributeKey() == null;
+          return !hasExplicitlyDefinedAttributes(parentScheme, key);
         }
         TextAttributes parent = parentScheme instanceof DefaultColorsScheme ?
                                 ((DefaultColorsScheme)parentScheme).getAttributes(key, false) : parentScheme.getAttributes(key);
@@ -709,7 +706,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       key -> {
         Color color = myColorsMap.get(key);
         if (color == INHERITED_COLOR_MARKER) {
-          return key.getFallbackColorKey() == null;
+          return !hasExplicitlyDefinedColors(parentScheme, key);
         }
 
         Color parent = parentScheme instanceof DefaultColorsScheme ?
@@ -718,6 +715,20 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       }
     ).toList());
   }
+
+  private static boolean hasExplicitlyDefinedAttributes(@NotNull EditorColorsScheme scheme, @NotNull TextAttributesKey key) {
+    TextAttributes directAttrs =
+      scheme instanceof DefaultColorsScheme ? ((DefaultColorsScheme)scheme).getDirectlyDefinedAttributes(key) : null;
+    return directAttrs != null && directAttrs != INHERITED_ATTRS_MARKER;
+  }
+
+  private static boolean hasExplicitlyDefinedColors(@NotNull EditorColorsScheme scheme, @NotNull ColorKey key) {
+    Color directColor =
+      scheme instanceof DefaultColorsScheme ? ((DefaultColorsScheme)scheme).getDirectlyDefinedColor(key) : null;
+    return directColor != null && directColor != INHERITED_COLOR_MARKER;
+  }
+
+
   
   @NotNull
   private Element metaInfoToElement() {
@@ -759,16 +770,21 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     }
 
     if (myParentScheme != null) {
-      Color parentColor = myParentScheme instanceof AbstractColorsScheme
-                          ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedColor(key)
-                          : myParentScheme.getColor(key);
-      if (parentColor != null && color.equals(parentColor)) {
+      Color parent = myParentScheme instanceof AbstractColorsScheme
+                     ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedColor(key)
+                     : myParentScheme.getColor(key);
+      if (parent != null && colorsEqual(color, parent)) {
         return;
       }
     }
 
     String rgb = color == NULL_COLOR_MARKER ? "" : Integer.toString(color.getRGB() & 0xFFFFFF, 16);
     JdomKt.addOptionTag(colorElements, key.getExternalName(), rgb);
+  }
+
+  private static boolean colorsEqual(@Nullable Color c1, @Nullable Color c2) {
+    if (c1 == NULL_COLOR_MARKER) return c1 == c2;
+    return Comparing.equal(c1, c2 == NULL_COLOR_MARKER ? null : c2);
   }
 
   private ModifiableFontPreferences ensureEditableFontPreferences() {
@@ -905,8 +921,8 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
    */
   @Nullable
   public Color getDirectlyDefinedColor(@NotNull ColorKey key) {
-    Color attributes = myColorsMap.get(key);
-    return attributes != null ? attributes :
+    Color color = myColorsMap.get(key);
+    return color != null ? color :
            myParentScheme instanceof AbstractColorsScheme ? ((AbstractColorsScheme)myParentScheme).getDirectlyDefinedColor(key) :
            null;
   }
@@ -950,7 +966,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     String originalSchemeName = getMetaProperties().getProperty(META_INFO_ORIGINAL);
     if (originalSchemeName != null) {
       EditorColorsScheme originalScheme = EditorColorsManager.getInstance().getScheme(originalSchemeName);
-      if (originalScheme instanceof AbstractColorsScheme) return (AbstractColorsScheme)originalScheme;
+      if (originalScheme instanceof AbstractColorsScheme && originalScheme != this) return (AbstractColorsScheme)originalScheme;
     }
     return null;
   }
@@ -1012,7 +1028,13 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   protected boolean colorsEqual(AbstractColorsScheme otherScheme, @Nullable Predicate<ColorKey> colorKeyFilter) {
-    return myColorsMap.equals(otherScheme.myColorsMap);
+    if (myColorsMap.size() != otherScheme.myColorsMap.size()) return false;
+    for (ColorKey key : myColorsMap.keySet()) {
+      Color c1 = myColorsMap.get(key);
+      Color c2 = otherScheme.myColorsMap.get(key);
+      if (!colorsEqual(c1, c2)) return false;
+    }
+    return true;
   }
 
   @Nullable
@@ -1029,9 +1051,9 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   
   private static class TemporaryParent extends EditorColorsSchemeImpl {
 
-    private static Logger LOG = Logger.getInstance(TemporaryParent.class);
+    private static final Logger LOG = Logger.getInstance(TemporaryParent.class);
     
-    private String myParentName;
+    private final String myParentName;
     private boolean isErrorReported;
 
     public TemporaryParent(@NotNull String parentName) {
@@ -1073,7 +1095,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     if (myParentScheme instanceof TemporaryParent) {
       String parentName = ((TemporaryParent)myParentScheme).getParentName();
       EditorColorsScheme newParent = nameResolver.apply(parentName);
-      if (newParent == null || !(newParent instanceof ReadOnlyColorsScheme)) {
+      if (!(newParent instanceof ReadOnlyColorsScheme)) {
         throw new InvalidDataException(parentName);
       }
       myParentScheme = newParent;

@@ -17,11 +17,13 @@ package com.siyeh.ipp.modifiers;
 
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
@@ -71,6 +73,10 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
       return;
     }
     final MultiMap<PsiElement, String> conflicts = checkForConflicts(member);
+    if (conflicts == null) {
+      //canceled by user
+      return;
+    }
     final Project project = member.getProject();
     final boolean conflictsDialogOK;
     if (conflicts.isEmpty()) {
@@ -141,28 +147,34 @@ abstract class ModifierIntention extends Intention implements LowPriorityAction 
     if (modifierList == null || modifierList.hasModifierProperty(PsiModifier.PRIVATE)) {
       return MultiMap.emptyInstance();
     }
+    PsiModifierList copy = (PsiModifierList)modifierList.copy();
+    copy.setModifierProperty(getModifier(), true);
+    SearchScope useScope = member.getUseScope();
     final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-    if (member instanceof PsiMethod) {
-      JavaChangeSignatureUsageProcessor.ConflictSearcher.searchForHierarchyConflicts((PsiMethod)member, conflicts, getModifier());
+    if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      if (member instanceof PsiMethod) {
+        JavaChangeSignatureUsageProcessor.ConflictSearcher.searchForHierarchyConflicts((PsiMethod)member, conflicts, getModifier());
+      }
+
+      final Query<PsiReference> search = ReferencesSearch.search(member, useScope);
+      search.forEach(reference -> {
+        final PsiElement element = reference.getElement();
+        if (JavaResolveUtil.isAccessible(member, member.getContainingClass(), copy, element, null, null)) {
+          return true;
+        }
+        final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiField.class, PsiClass.class, PsiFile.class);
+        if (context == null) {
+          return true;
+        }
+        conflicts.putValue(element, RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
+                                                              RefactoringUIUtil.getDescription(member, false),
+                                                              PsiBundle.visibilityPresentation(getModifier()),
+                                                              RefactoringUIUtil.getDescription(context, true)));
+        return true;
+      });
+    }, RefactoringBundle.message("detecting.possible.conflicts"), true, member.getProject())) {
+      return null;
     }
-    final PsiModifierList modifierListCopy = (PsiModifierList)modifierList.copy();
-    modifierListCopy.setModifierProperty(getModifier(), true);
-    final Query<PsiReference> search = ReferencesSearch.search(member, member.getUseScope());
-    search.forEach(reference -> {
-      final PsiElement element = reference.getElement();
-      if (JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, element, null, null)) {
-        return true;
-      }
-      final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiMethod.class, PsiField.class, PsiClass.class, PsiFile.class);
-      if (context == null) {
-        return true;
-      }
-      conflicts.putValue(element, RefactoringBundle.message("0.with.1.visibility.is.not.accessible.from.2",
-                                                            RefactoringUIUtil.getDescription(member, false),
-                                                            PsiBundle.visibilityPresentation(getModifier()),
-                                                            RefactoringUIUtil.getDescription(context, true)));
-      return true;
-    });
     return conflicts;
   }
 

@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -47,7 +48,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -164,7 +164,11 @@ public class IdeaGateway {
 
   @Nullable
   public VirtualFile findVirtualFile(@NotNull String path) {
-    return LocalFileSystem.getInstance().findFileByPath(path);
+    VirtualFile file = LocalFileSystem.getInstance().findFileByPath(path);
+    if (file == null && ApplicationManager.getApplication().isUnitTestMode()) {
+      return TempFileSystem.getInstance().findFileByPath(path);
+    }
+    return file;
   }
 
   @NotNull
@@ -430,12 +434,9 @@ public class IdeaGateway {
   }
 
   private static byte[] bytesFromDocument(@NotNull Document d) {
-    try {
-      return d.getText().getBytes(getFile(d).getCharset().name());
-    }
-    catch (UnsupportedEncodingException e) {
-      return d.getText().getBytes();
-    }
+    VirtualFile file = getFile(d);
+    Charset charset = file != null ? file.getCharset() : EncodingRegistry.getInstance().getDefaultCharset();
+    return d.getText().getBytes(charset);
   }
 
   public String stringFromBytes(@NotNull byte[] bytes, @NotNull String path) {

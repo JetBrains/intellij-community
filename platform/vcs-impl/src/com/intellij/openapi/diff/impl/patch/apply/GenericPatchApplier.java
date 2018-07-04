@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.openapi.diff.impl.patch.ApplyPatchStatus.ALREADY_APPLIED;
+import static com.intellij.openapi.diff.impl.patch.ApplyPatchStatus.SUCCESS;
 
 public class GenericPatchApplier {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier");
@@ -49,8 +50,8 @@ public class GenericPatchApplier {
   private final ArrayList<SplitHunk> myNotBound;
   private final ArrayList<SplitHunk> myNotExact;
   private boolean mySuppressNewLineInEnd;
-  @NotNull private List<AppliedTextPatch.AppliedSplitPatchHunk> myAppliedInfo;
-  private static IntPair EMPTY_OFFSET = new IntPair(0, 0);
+  @NotNull private final List<AppliedTextPatch.AppliedSplitPatchHunk> myAppliedInfo;
+  private static final IntPair EMPTY_OFFSET = new IntPair(0, 0);
 
   private static void debug(final String s) {
     if (LOG.isDebugEnabled()) {
@@ -69,6 +70,55 @@ public class GenericPatchApplier {
     myNotExact = new ArrayList<>();
     myNotBound = new ArrayList<>();
     myAppliedInfo = new ArrayList<>();
+  }
+
+  @Nullable
+  public static AppliedPatch apply(CharSequence text, List<PatchHunk> hunks) {
+    String patchedText = PlainSimplePatchApplier.apply(text, hunks);
+    if (patchedText != null) {
+      return new AppliedPatch(patchedText, SUCCESS);
+    }
+
+    GenericPatchApplier applier = new GenericPatchApplier(text, hunks);
+    boolean success = applier.execute();
+
+    if (!success) return null;
+
+    return new AppliedPatch(applier.getAfter(), applier.getStatus());
+  }
+
+  @NotNull
+  public static AppliedSomehowPatch applySomehow(CharSequence text, List<PatchHunk> hunks) {
+    String patchedText = PlainSimplePatchApplier.apply(text, hunks);
+    if (patchedText != null) {
+      return new AppliedSomehowPatch(patchedText, SUCCESS, false);
+    }
+
+    GenericPatchApplier applier = new GenericPatchApplier(text, hunks);
+    boolean success = applier.execute();
+
+    if (!success) applier.trySolveSomehow();
+
+    return new AppliedSomehowPatch(applier.getAfter(), applier.getStatus(), !success);
+  }
+
+  public static class AppliedPatch {
+    @NotNull public final String patchedText;
+    @NotNull public final ApplyPatchStatus status;
+
+    public AppliedPatch(@NotNull String patchedText, @NotNull ApplyPatchStatus status) {
+      this.patchedText = patchedText;
+      this.status = status;
+    }
+  }
+
+  public static class AppliedSomehowPatch extends AppliedPatch {
+    public final boolean isAppliedSomehow;
+
+    public AppliedSomehowPatch(@NotNull String text, @NotNull ApplyPatchStatus status, boolean isAppliedSomehow) {
+      super(text, status);
+      this.isAppliedSomehow = isAppliedSomehow;
+    }
   }
 
   public ApplyPatchStatus getStatus() {
@@ -624,11 +674,11 @@ public class GenericPatchApplier {
   }
 
   private static class Point {
-    private int myDistance;
-    private int myContextDistance;
-    private int myCommon;
+    private final int myDistance;
+    private final int myContextDistance;
+    private final int myCommon;
     private final boolean myUsesAlreadyApplied;
-    private TextRange myInOldDocument;
+    private final TextRange myInOldDocument;
 
     private Point(int distance, TextRange inOldDocument, boolean usesAlreadyApplied, int contextDistance, int common) {
       myDistance = distance;
@@ -662,7 +712,7 @@ public class GenericPatchApplier {
     private int myDistance;
     // in the end, will be [excluding] end of changing interval
     private int myIdx;
-    private int myStartIdx;
+    private final int myStartIdx;
     private final boolean myForward;
     private boolean myUsesAlreadyApplied;
 
@@ -938,12 +988,12 @@ public class GenericPatchApplier {
 
   // will not find consider fragments that intersect
   private class FragmentMatcher {
-    private int myIdx;
+    private final int myIdx;
     private int myOffsetIdxInHunk;
     // if we set index in hunk != 0, then we will check only one side
     private Boolean myBeforeSide;
     private boolean myIsInBefore;
-    private int myIdxInHunk;
+    private final int myIdxInHunk;
     private final BeforeAfter<List<String>> myBeforeAfter;
 
     private FragmentMatcher(int idx, BeforeAfter<List<String>> beforeAfter) {
@@ -1170,8 +1220,7 @@ public class GenericPatchApplier {
         }
         i = endIdx;
         if (i < lines.size()) {
-          contextBefore = new ArrayList<>();
-          contextBefore.addAll(contextAfter);
+          contextBefore = new ArrayList<>(contextAfter);
         }
       }
       return result;

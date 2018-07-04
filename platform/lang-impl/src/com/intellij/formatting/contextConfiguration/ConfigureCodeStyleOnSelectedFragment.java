@@ -15,9 +15,9 @@
  */
 package com.intellij.formatting.contextConfiguration;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -34,7 +34,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCodeFragmentFilter;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
@@ -81,10 +80,9 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    UsageTrigger.trigger(ID);
     SelectedTextFormatter textFormatter = new SelectedTextFormatter(project, editor, file);
     CodeStyleSettingsToShow settingsToShow = calculateAffectingSettings(editor, file);
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+    CodeStyleSettings settings = CodeStyle.getSettings(file);
     new FragmentCodeStyleSettingsDialog(editor, textFormatter, file.getLanguage(), settings, settingsToShow).show();
   }
 
@@ -105,8 +103,8 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
     private final CodeFragmentCodeStyleSettingsPanel myTabbedLanguagePanel;
     private final Editor myEditor;
     private final Document myDocument;
-    private SelectedTextFormatter mySelectedTextFormatter;
-    private CodeStyleSettings mySettings;
+    private final SelectedTextFormatter mySelectedTextFormatter;
+    private final CodeStyleSettings mySettings;
 
 
     public FragmentCodeStyleSettingsDialog(@NotNull final Editor editor,
@@ -180,14 +178,14 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
     private class DialogPositionProvider {
       private static final int PREFERRED_PADDING = 100;
 
-      private JComponent myEditorComponent;
-      private JComponent myContentComponent;
+      private final JComponent myEditorComponent;
+      private final JComponent myContentComponent;
 
       private int mySelectionStartY;
       private int mySelectionEndY;
       private int myTextRangeMaxColumnX;
-      private int myEditorComponentWidth;
-      private int myEditorComponentHeight;
+      private final int myEditorComponentWidth;
+      private final int myEditorComponentHeight;
 
       public DialogPositionProvider() {
         myContentComponent = myEditor.getContentComponent();
@@ -298,7 +296,7 @@ public class ConfigureCodeStyleOnSelectedFragment implements IntentionAction {
     }
 
     private class ApplyToSettings extends AbstractAction implements OptionAction {
-      private Action[] myOptions = {
+      private final Action[] myOptions = {
         new ApplyToSettingsAndReformat()
       };
 

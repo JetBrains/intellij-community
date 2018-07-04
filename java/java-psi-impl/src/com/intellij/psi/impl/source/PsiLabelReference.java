@@ -35,11 +35,13 @@ public class PsiLabelReference implements PsiReference{
     myIdentifier = identifier;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement(){
     return myStatement;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement(){
     final int parent = myIdentifier.getStartOffsetInParent();

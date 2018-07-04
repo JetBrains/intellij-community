@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.BeforeRunTask;
@@ -20,6 +6,9 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,14 +36,14 @@ public interface RunConfiguration extends RunProfile, Cloneable {
    */
   @NotNull
   default ConfigurationType getType() {
-    return getFactory().getType();
+    ConfigurationFactory factory = getFactory();
+    return factory == null ? UnknownConfigurationType.INSTANCE : factory.getType();
   }
 
   /**
    * Returns the factory that has created the run configuration.
-   *
-   * @return the factory instance.
    */
+  @Nullable
   ConfigurationFactory getFactory();
 
   /**
@@ -77,8 +66,6 @@ public interface RunConfiguration extends RunProfile, Cloneable {
 
   /**
    * Returns the project in which the run configuration exists.
-   *
-   * @return the project instance.
    */
   Project getProject();
 
@@ -124,6 +111,33 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   }
 
   /**
+   * Returns the unique identifier of the run configuration. Return null if not applicable.
+   * Used only for non-managed RC type.
+   */
+  @Nullable
+  default String getId() {
+    return null;
+  }
+
+  @NotNull
+  @Transient
+  default String getPresentableType() {
+    if (PlatformUtils.isPhpStorm()) {
+      return " (" + StringUtil.first(getType().getDisplayName(), 10, true) + ")";
+    }
+    return "";
+  }
+
+  /**
+   * If this method returns true, disabled executor buttons (e.g. Run) will be hidden when this configuration is selected.
+   * Note that this will lead to UI flickering when switching between this configuration and others for which this property
+   * is false, so you should avoid overriding this method unless you're really sure of what you're doing.
+   */
+  default boolean hideDisabledExecutorButtons() {
+    return false;
+  }
+
+  /**
    * Checks whether the run configuration settings are valid.
    * Note that this check may be invoked on every change (i.e. after each character typed in an input field).
    *
@@ -135,7 +149,7 @@ public interface RunConfiguration extends RunProfile, Cloneable {
   default void checkConfiguration() throws RuntimeConfigurationException {
   }
 
-  default void readExternal(Element element) {
+  default void readExternal(@NotNull Element element) {
   }
 
   default void writeExternal(Element element) {

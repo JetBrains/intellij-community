@@ -138,7 +138,7 @@ public class NotificationsUtil {
   @Nullable
   public static String getFontName() {
     Pair<String, Integer> data = getFontData();
-    return data == null ? null : data.first;
+    return Pair.getFirst(data);
   }
 
   @Nullable
@@ -170,7 +170,7 @@ public class NotificationsUtil {
       case WARNING:
         return AllIcons.General.BalloonWarning;
       case ERROR:
-        return AllIcons.Ide.FatalError;
+        return AllIcons.General.BalloonError;
       case INFORMATION:
       default:
         return AllIcons.General.BalloonInformation;

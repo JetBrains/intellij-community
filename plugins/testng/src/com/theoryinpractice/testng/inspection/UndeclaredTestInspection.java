@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.theoryinpractice.testng.inspection;
 
@@ -45,7 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
+public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(UndeclaredTestInspection.class);
 
   @Nls
@@ -87,7 +73,7 @@ public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
       for (final String name : names) {
         final boolean isFullName = qName.equals(name);
         final boolean[] found = new boolean[]{false};
-        PsiSearchHelper.SERVICE.getInstance(project)
+        PsiSearchHelper.getInstance(project)
           .processUsagesInNonJavaFiles(name, (file, startOffset, endOffset) -> {
             if (file.findReferenceAt(startOffset) != null) {
               if (!isFullName) { //special package tag required
@@ -145,11 +131,9 @@ public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
       LOG.assertTrue(psiFile instanceof XmlFile);
       final XmlFile testngXML = (XmlFile)psiFile;
-      new WriteCommandAction(project, getName(), testngXML) {
-        protected void run(@NotNull final Result result) throws Throwable {
-          patchTestngXml(testngXML, psiClass);
-        }
-      }.execute();
+      WriteCommandAction.writeCommandAction(project, testngXML).withName(getName()).run(() -> {
+        patchTestngXml(testngXML, psiClass);
+      });
     }
 
     @Override
@@ -196,20 +180,19 @@ public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
         final PsiManager psiManager = PsiManager.getInstance(project);
         final PsiDirectory directory = psiManager.findDirectory(file);
         LOG.assertTrue(directory != null);
-        new WriteCommandAction(project, getName(), null) {
-          protected void run(@NotNull final Result result) throws Throwable {
-            XmlFile testngXml = (XmlFile)PsiFileFactory.getInstance(psiManager.getProject())
-              .createFileFromText("testng.xml", "<!DOCTYPE suite SYSTEM \"http://testng.org/testng-1.0.dtd\">\n<suite></suite>");
-            try {
-              testngXml = (XmlFile)directory.add(testngXml);
-            }
-            catch (IncorrectOperationException e) {
-              //todo suggest new name
-              return;
-            }
-            patchTestngXml(testngXml, psiClass);
+        WriteCommandAction.writeCommandAction(project, PsiFile.EMPTY_ARRAY).withName(getName()).run(() -> {
+          XmlFile testngXml = (XmlFile)PsiFileFactory.getInstance(psiManager.getProject())
+                                                     .createFileFromText("testng.xml",
+                                                                         "<!DOCTYPE suite SYSTEM \"http://testng.org/testng-1.0.dtd\">\n<suite></suite>");
+          try {
+            testngXml = (XmlFile)directory.add(testngXml);
           }
-        }.execute();
+          catch (IncorrectOperationException e) {
+            //todo suggest new name
+            return;
+          }
+          patchTestngXml(testngXml, psiClass);
+        });
       }
     }
 

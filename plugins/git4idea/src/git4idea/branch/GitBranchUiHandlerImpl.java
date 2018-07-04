@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
 import com.intellij.notification.Notification;
@@ -35,13 +21,10 @@ import git4idea.GitUtil;
 import git4idea.commands.Git;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
-import git4idea.ui.ChangesBrowserWithRollback;
-import git4idea.util.GitSimplePathsBrowser;
 import git4idea.util.GitUntrackedFilesHelper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.util.Collection;
 import java.util.List;
@@ -91,7 +74,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
         public void hyperlinkUpdate(@NotNull Notification notification,
                                     @NotNull HyperlinkEvent event) {
           if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED && event.getDescription().equals("resolve")) {
-            GitConflictResolver.Params params = new GitConflictResolver.Params().
+            GitConflictResolver.Params params = new GitConflictResolver.Params(myProject).
               setMergeDescription(String.format("The following files have unresolved conflicts. You need to resolve them before %s.",
                                                 operationName)).
               setErrorNotificationTitle("Unresolved files remain.");
@@ -140,14 +123,11 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
                                                                  @NotNull Collection<String> paths,
                                                                  @NotNull String operation,
                                                                  @Nullable String forceButtonTitle) {
-    JComponent fileBrowser;
-    if (!changes.isEmpty()) {
-      fileBrowser = new ChangesBrowserWithRollback(project, changes);
-    }
-    else {
-      fileBrowser = new GitSimplePathsBrowser(project, paths);
-    }
-    return GitSmartOperationDialog.showAndGetAnswer(myProject, fileBrowser, operation, forceButtonTitle);
+    Ref<GitSmartOperationDialog.Choice> exitCode = Ref.create();
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      exitCode.set(GitSmartOperationDialog.show(project, changes, paths, operation, forceButtonTitle));
+    });
+    return exitCode.get();
   }
 
   @Override

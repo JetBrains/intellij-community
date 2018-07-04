@@ -102,7 +102,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     }
   }
 
-  static void showMessageWhenNoHighlights(Project project, PsiFile file, Editor editor) {
+  private static void showMessageWhenNoHighlights(Project project, PsiFile file, Editor editor) {
     DaemonCodeAnalyzerImpl codeHighlighter = (DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(project);
     String message = codeHighlighter.isErrorAnalyzingFinished(file)
                      ? InspectionsBundle.message("no.errors.found.in.this.file")

@@ -36,7 +36,6 @@ import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.HashSet;
@@ -81,7 +80,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
       final MultiMap<PsiElement, String> conflicts = usageProcessor.findConflicts(changeInfo, refUsages);
       for (PsiElement key : conflicts.keySet()) {
         Collection<String> collection = conflictDescriptions.get(key);
-        if (collection.isEmpty()) collection = new com.intellij.util.containers.HashSet<>();
+        if (collection.isEmpty()) collection = new java.util.HashSet<>();
         collection.addAll(conflicts.get(key));
         conflictDescriptions.put(key, collection);
       }
@@ -99,7 +98,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
       }
     }
     infos = filterUsages(infos);
-    return infos.toArray(new UsageInfo[infos.size()]);
+    return infos.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   protected static List<UsageInfo> filterUsages(List<UsageInfo> infos) {
@@ -229,6 +228,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     }
   }
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return RefactoringBundle.message("changing.signature.of.0", DescriptiveNameUtil.getDescriptiveName(myChangeInfo.getMethod()));

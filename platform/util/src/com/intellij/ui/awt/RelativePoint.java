@@ -32,9 +32,6 @@ public class RelativePoint {
 
   public RelativePoint(@NotNull MouseEvent event) {
     init(event.getComponent(), event.getPoint());
-
-    myOriginalComponent = event.getComponent();
-    myOriginalPoint = event.getPoint();
   }
 
   public RelativePoint(@NotNull Component aComponent, Point aPointOnComponent) {
@@ -69,9 +66,8 @@ public class RelativePoint {
       myComponent = aComponent;
       myPointOnComponent = aPointOnComponent;
     }
-
-    myOriginalComponent = myComponent;
-    myOriginalPoint = myPointOnComponent;
+    myOriginalComponent = aComponent;
+    myOriginalPoint = aPointOnComponent;
   }
 
   public Component getComponent() {
@@ -151,7 +147,7 @@ public class RelativePoint {
     return new RelativePoint(component, point);
   }
 
-  @NotNull
+  @NotNull @SuppressWarnings("unused")
   public static RelativePoint getNorthEastOf(@NotNull JComponent component) {
     final Rectangle visibleRect = component.getVisibleRect();
     final Point point = new Point(visibleRect.x + visibleRect.width, visibleRect.y);
@@ -169,6 +165,7 @@ public class RelativePoint {
     return myOriginalComponent;
   }
 
+  @SuppressWarnings("unused")
   public Point getOriginalPoint() {
     return myOriginalPoint;
   }

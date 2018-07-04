@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.stdlib;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -20,14 +6,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.psi.AccessDirection;
-import com.jetbrains.python.psi.PyCallSiteExpression;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.impl.PyElementImpl;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,48 +17,50 @@ import java.util.*;
 /**
  * @author yole
  */
-public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType {
-
-  @NotNull
-  private final PsiElement myDeclaration;
+public class PyNamedTupleType extends PyTupleType implements PyCallableType {
 
   @NotNull
   private final String myName;
 
   @NotNull
-  private final Map<String, FieldTypeAndDefaultValue> myFields;
+  private final LinkedHashMap<String, FieldTypeAndDefaultValue> myFields;
 
   @NotNull
   private final DefinitionLevel myDefinitionLevel;
 
+  private final boolean myTyped;
+  private final PyTargetExpression myTargetExpression;
+
   public PyNamedTupleType(@NotNull PyClass tupleClass,
-                          @NotNull PsiElement declaration,
                           @NotNull String name,
-                          @NotNull Map<String, FieldTypeAndDefaultValue> fields,
-                          @NotNull DefinitionLevel definitionLevel) {
-    super(tupleClass, definitionLevel != DefinitionLevel.INSTANCE);
-    myDeclaration = declaration;
-    myFields = Collections.unmodifiableMap(fields);
-    myName = name;
-    myDefinitionLevel = definitionLevel;
+                          @NotNull LinkedHashMap<String, FieldTypeAndDefaultValue> fields,
+                          @NotNull DefinitionLevel definitionLevel,
+                          boolean typed) {
+    this(tupleClass, name, fields, definitionLevel, typed, null);
   }
 
-  @Nullable
+  public PyNamedTupleType(@NotNull PyClass tupleClass,
+                          @NotNull String name,
+                          @NotNull LinkedHashMap<String, FieldTypeAndDefaultValue> fields,
+                          @NotNull DefinitionLevel definitionLevel,
+                          boolean typed,
+                          @Nullable PyTargetExpression target) {
+    super(tupleClass,
+          Collections.unmodifiableList(ContainerUtil.map(fields.values(), typeAndValue -> typeAndValue.getType())),
+          false,
+          definitionLevel != DefinitionLevel.INSTANCE);
+
+    myFields = new LinkedHashMap<>(fields);
+    myName = name;
+    myDefinitionLevel = definitionLevel;
+    myTyped = typed;
+    myTargetExpression = target;
+  }
+
+  @NotNull
   @Override
-  public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
-                                                          @Nullable PyExpression location,
-                                                          @NotNull AccessDirection direction,
-                                                          @NotNull PyResolveContext resolveContext,
-                                                          boolean inherited) {
-    final List<? extends RatedResolveResult> classMembers = super.resolveMember(name, location, direction, resolveContext, inherited);
-    if (classMembers != null && !classMembers.isEmpty()) {
-      return classMembers;
-    }
-    if (myFields.containsKey(name)) {
-      // It's important to make a copy of declaration otherwise members will have the same type as their class
-      return Collections.singletonList(new RatedResolveResult(RatedResolveResult.RATE_HIGH, new PyElementImpl(myDeclaration.getNode())));
-    }
-    return null;
+  public PyQualifiedNameOwner getDeclarationElement() {
+    return myTargetExpression;
   }
 
   @Override
@@ -103,12 +86,12 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
 
   @Nullable
   @Override
-  public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
+  public PyNamedTupleType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
     if (myDefinitionLevel == DefinitionLevel.NT_FUNCTION) {
-      return new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.NEW_TYPE);
+      return new PyNamedTupleType(myClass, myName, myFields, DefinitionLevel.NEW_TYPE, myTyped, myTargetExpression);
     }
     else if (myDefinitionLevel == DefinitionLevel.NEW_TYPE) {
-      return new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.INSTANCE);
+      return getCallDefinitionType(callSite, context);
     }
 
     return null;
@@ -116,18 +99,18 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
 
   @NotNull
   @Override
-  public PyClassType toInstance() {
+  public PyNamedTupleType toInstance() {
     return myDefinitionLevel == DefinitionLevel.NEW_TYPE
-           ? new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.INSTANCE)
+           ? new PyNamedTupleType(myClass, myName, myFields, DefinitionLevel.INSTANCE, myTyped, myTargetExpression)
            : this;
   }
 
   @NotNull
   @Override
-  public PyClassLikeType toClass() {
+  public PyNamedTupleType toClass() {
     return myDefinitionLevel == DefinitionLevel.INSTANCE
-           ? this
-           : new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.NEW_TYPE);
+           ? new PyNamedTupleType(myClass, myName, myFields, DefinitionLevel.NEW_TYPE, myTyped, myTargetExpression)
+           : this;
   }
 
   @Override
@@ -161,13 +144,9 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
     return result;
   }
 
-  public int getElementCount() {
-    return myFields.size();
-  }
-
   @NotNull
   public Map<String, FieldTypeAndDefaultValue> getFields() {
-    return myFields;
+    return Collections.unmodifiableMap(myFields);
   }
 
   @Override
@@ -181,6 +160,51 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
     return isCallable()
            ? ContainerUtil.map(myFields.entrySet(), field -> fieldToCallableParameter(field.getKey(), field.getValue()))
            : null;
+  }
+
+  public boolean isTyped() {
+    return myTyped;
+  }
+
+  @NotNull
+  public PyNamedTupleType clarifyFields(@NotNull Map<String, PyType> fieldNameToType) {
+    if (!myTyped) {
+      final LinkedHashMap<String, FieldTypeAndDefaultValue> newFields = new LinkedHashMap<>(myFields);
+
+      for (Map.Entry<String, PyType> entry : fieldNameToType.entrySet()) {
+        final String fieldName = entry.getKey();
+
+        if (newFields.containsKey(fieldName)) {
+          newFields.put(fieldName, new FieldTypeAndDefaultValue(entry.getValue(), null));
+        }
+      }
+
+      return new PyNamedTupleType(myClass, myName, newFields, myDefinitionLevel, false, myTargetExpression);
+    }
+
+    return this;
+  }
+
+  @NotNull
+  private PyNamedTupleType getCallDefinitionType(@NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+    if (!myTyped) {
+      final List<PyExpression> arguments = callSite.getArguments(null);
+
+      if (arguments.size() == myFields.size()) {
+        final Map<String, PyType> result = new HashMap<>();
+
+        for (Map.Entry<String, PyExpression> entry : StreamEx.ofKeys(myFields).zipWith(StreamEx.of(arguments))) {
+          final String name = entry.getKey();
+          final PyType type = context.getType(entry.getValue());
+
+          result.put(name, type);
+        }
+
+        return toInstance().clarifyFields(result);
+      }
+    }
+
+    return toInstance();
   }
 
   @NotNull

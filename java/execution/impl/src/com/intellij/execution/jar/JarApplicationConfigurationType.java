@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jar;
 
 import com.intellij.execution.ExecutionBundle;
@@ -35,7 +21,7 @@ public class JarApplicationConfigurationType extends ConfigurationTypeBase imple
 
   public JarApplicationConfigurationType() {
     super("JarApplication", ExecutionBundle.message("jar.application.configuration.name"),
-          ExecutionBundle.message("jar.application.configuration.description"), AllIcons.FileTypes.Archive);
+          ExecutionBundle.message("jar.application.configuration.description"), lazyIcon(() -> AllIcons.FileTypes.Archive));
     addFactory(new ConfigurationFactoryEx(this) {
       @Override
       public void onNewConfigurationCreated(@NotNull RunConfiguration configuration) {
@@ -46,7 +32,8 @@ public class JarApplicationConfigurationType extends ConfigurationTypeBase imple
         }
       }
 
-      public RunConfiguration createTemplateConfiguration(Project project) {
+      @NotNull
+      public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
         return new JarApplicationConfiguration(project, this, "");
       }
     });

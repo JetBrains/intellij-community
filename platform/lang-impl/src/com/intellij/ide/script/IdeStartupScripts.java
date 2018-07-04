@@ -27,13 +27,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,13 +42,11 @@ import org.jetbrains.ide.script.IdeScriptEngine;
 import org.jetbrains.ide.script.IdeScriptEngineManager;
 import org.jetbrains.ide.script.IdeScriptException;
 
+import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.stream.Collectors;
 
 class IdeStartupScripts implements ApplicationComponent {
   private static final Logger LOG = Logger.getInstance(IdeStartupScripts.class);
@@ -61,7 +59,7 @@ class IdeStartupScripts implements ApplicationComponent {
     if (application.isUnitTestMode()) return;
     MessageBusConnection connection = application.getMessageBus().connect();
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
-      Future<List<Pair<VirtualFile, IdeScriptEngine>>> future;
+      Future<List<Pair<File, IdeScriptEngine>>> future;
       @Override
       public void projectOpened(Project project) {
         if (future == null) {
@@ -77,25 +75,25 @@ class IdeStartupScripts implements ApplicationComponent {
   }
 
   @NotNull
-  private static List<Pair<VirtualFile, IdeScriptEngine>> prepareScriptsAndEngines() {
-    List<VirtualFile> scripts = getScripts();
+  private static List<Pair<File, IdeScriptEngine>> prepareScriptsAndEngines() {
+    List<File> scripts = getScripts();
     LOG.info(scripts.size() + " startup script(s) found");
     if (scripts.isEmpty()) return Collections.emptyList();
 
     IdeScriptEngineManager scriptEngineManager = IdeScriptEngineManager.getInstance();
-    List<Pair<VirtualFile, IdeScriptEngine>> result = ContainerUtil.newArrayList();
-    for (VirtualFile script : scripts) {
-      String extension = script.getExtension();
-      IdeScriptEngine engine = extension != null ? scriptEngineManager.getEngineForFileExtension(extension, null) : null;
+    List<Pair<File, IdeScriptEngine>> result = ContainerUtil.newArrayList();
+    for (File script : scripts) {
+      String extension = FileUtilRt.getExtension(script.getName());
+      IdeScriptEngine engine = extension.isEmpty() ? null : scriptEngineManager.getEngineForFileExtension(extension, null);
       result.add(Pair.create(script, engine));
     }
     return result;
   }
 
   private static void runImpl(@NotNull Project project,
-                              @NotNull VirtualFile script,
-                              @NotNull IdeScriptEngine engine) throws ExecutionException, IOException, IdeScriptException {
-    String scriptText = VfsUtilCore.loadText(script);
+                              @NotNull File script,
+                              @NotNull IdeScriptEngine engine) throws IOException, IdeScriptException {
+    String scriptText = FileUtil.loadFile(script);
     IdeConsoleScriptBindings.ensureIdeIsBound(project, engine);
 
     LOG.info(script.getPath());
@@ -109,17 +107,11 @@ class IdeStartupScripts implements ApplicationComponent {
   }
 
   @NotNull
-  private static List<VirtualFile> getScripts() {
-    List<VirtualFile> scripts;
-    try {
-      VirtualFile scriptDir = getScriptsRootDirectory();
-      VirtualFile[] scriptDirChildren = scriptDir != null ? scriptDir.getChildren() : VirtualFile.EMPTY_ARRAY;
-      Condition<VirtualFile> regularFileFilter = ExtensionsRootType.regularFileFilter();
-      scripts = Arrays.stream(scriptDirChildren).filter(regularFileFilter::value).collect(Collectors.toList());
-    }
-    catch (IOException ignore) {
-      return Collections.emptyList();
-    }
+  private static List<File> getScripts() {
+    File directory = getScriptsRootDirectory();
+    List<File> scripts = JBIterable.of(directory == null ? null : directory.listFiles())
+      .filter(ExtensionsRootType.regularFileFilter())
+      .toList();
 
     ContainerUtil.sort(scripts, (f1, f2) -> {
       String f1Name = f1 != null ? f1.getName() : null;
@@ -130,14 +122,19 @@ class IdeStartupScripts implements ApplicationComponent {
   }
 
   @Nullable
-  private static VirtualFile getScriptsRootDirectory() throws IOException {
+  private static File getScriptsRootDirectory() {
     PluginId corePlugin = ObjectUtils.assertNotNull(PluginId.findId(PluginManagerCore.CORE_PLUGIN_ID));
-    return ExtensionsRootType.getInstance().findResourceDirectory(corePlugin, SCRIPT_DIR, false);
+    try {
+      return ExtensionsRootType.getInstance().findResourceDirectory(corePlugin, SCRIPT_DIR, false);
+    }
+    catch (IOException ignore) {
+    }
+    return null;
   }
 
-  private static void runAllScriptsImpl(@NotNull Project project, @NotNull Future<List<Pair<VirtualFile, IdeScriptEngine>>> future) {
+  private static void runAllScriptsImpl(@NotNull Project project, @NotNull Future<List<Pair<File, IdeScriptEngine>>> future) {
     try {
-      for (Pair<VirtualFile, IdeScriptEngine> pair : future.get()) {
+      for (Pair<File, IdeScriptEngine> pair : future.get()) {
         try {
           if (pair.second == null) {
             LOG.warn(pair.first.getPath() + " not supported (no script engine)");

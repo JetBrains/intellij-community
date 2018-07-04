@@ -1,26 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.google.common.net.InetAddresses
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.util.SystemProperties
 import com.intellij.util.Url
 import com.intellij.util.Urls
 import com.intellij.util.net.NetUtils
@@ -29,8 +14,6 @@ import io.netty.bootstrap.BootstrapUtil
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.buffer.ByteBuf
 import io.netty.channel.*
-import io.netty.channel.kqueue.KQueueEventLoopGroup
-import io.netty.channel.kqueue.KQueueServerSocketChannel
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.oio.OioEventLoopGroup
 import io.netty.channel.socket.ServerSocketChannel
@@ -44,7 +27,6 @@ import io.netty.handler.ssl.SslHandler
 import io.netty.resolver.ResolvedAddressTypes
 import io.netty.util.concurrent.GenericFutureListener
 import org.jetbrains.ide.PooledThreadExecutor
-import org.jetbrains.io.BuiltInServer
 import org.jetbrains.io.NettyUtil
 import java.io.IOException
 import java.net.InetAddress
@@ -82,7 +64,7 @@ fun serverBootstrap(group: EventLoopGroup): ServerBootstrap {
 private fun EventLoopGroup.serverSocketChannelClass(): Class<out ServerSocketChannel> = when {
   this is NioEventLoopGroup -> NioServerSocketChannel::class.java
   this is OioEventLoopGroup -> OioServerSocketChannel::class.java
-  SystemInfo.isMacOSSierra && this is KQueueEventLoopGroup -> KQueueServerSocketChannel::class.java
+//  SystemInfo.isMacOSSierra && this is KQueueEventLoopGroup -> KQueueServerSocketChannel::class.java
   else -> throw Exception("Unknown event loop group type: ${this.javaClass.name}")
 }
 
@@ -128,6 +110,10 @@ private fun doConnect(bootstrap: Bootstrap,
                        remoteAddress: InetSocketAddress,
                        maxAttemptCount: Int,
                        stopCondition: Condition<Void>): ConnectToChannelResult {
+  if (ApplicationManager.getApplication().isDispatchThread) {
+    logger("com.intellij.util.io.netty").error("Synchronous connection to socket shouldn't be performed on EDT.")
+  }
+
   var attemptCount = 0
   if (bootstrap.config().group() !is OioEventLoopGroup) {
     return connectNio(bootstrap, remoteAddress, maxAttemptCount, stopCondition, attemptCount)
@@ -142,22 +128,20 @@ private fun doConnect(bootstrap: Bootstrap,
       return ConnectToChannelResult(channel)
     }
     catch (e: IOException) {
-      if (stopCondition.value(null)) {
-        return ConnectToChannelResult()
-      }
-      else if (maxAttemptCount == -1) {
-        sleep(300)?.let {
-          return ConnectToChannelResult(it)
+      when {
+        stopCondition.value(null) -> return ConnectToChannelResult()
+        maxAttemptCount == -1 -> {
+          sleep(300)?.let {
+            return ConnectToChannelResult(it)
+          }
+          attemptCount++
         }
-        attemptCount++
-      }
-      else if (++attemptCount < maxAttemptCount) {
-        sleep(attemptCount * NettyUtil.MIN_START_TIME)?.let {
-          return ConnectToChannelResult(it)
+        ++attemptCount < maxAttemptCount -> {
+          sleep(attemptCount * NettyUtil.MIN_START_TIME)?.let {
+            return ConnectToChannelResult(it)
+          }
         }
-      }
-      else {
-        return ConnectToChannelResult(e)
+        else -> return ConnectToChannelResult(e)
       }
     }
   }
@@ -277,7 +261,9 @@ fun isLocalHost(host: String, onlyAnyOrLoopback: Boolean, hostsOnly: Boolean = f
 }
 
 @JvmOverloads
-fun HttpRequest.isLocalOrigin(onlyAnyOrLoopback: Boolean = true, hostsOnly: Boolean = false) = parseAndCheckIsLocalHost(origin, onlyAnyOrLoopback, hostsOnly) && parseAndCheckIsLocalHost(referrer, onlyAnyOrLoopback, hostsOnly)
+fun HttpRequest.isLocalOrigin(onlyAnyOrLoopback: Boolean = true, hostsOnly: Boolean = false): Boolean {
+  return parseAndCheckIsLocalHost(origin, onlyAnyOrLoopback, hostsOnly) && parseAndCheckIsLocalHost(referrer, onlyAnyOrLoopback, hostsOnly)
+}
 
 private fun isTrustedChromeExtension(url: Url): Boolean {
   return url.scheme == "chrome-extension" && (url.authority == "hmhgeddbohgjknpmjagkdomcpobmllji" || url.authority == "offnedcbhjldheanlbojaefbfbllddna")
@@ -305,7 +291,7 @@ fun parseAndCheckIsLocalHost(uri: String?, onlyAnyOrLoopback: Boolean = true, ho
   return false
 }
 
-fun HttpRequest.isRegularBrowser() = userAgent?.startsWith("Mozilla/5.0") ?: false
+fun HttpRequest.isRegularBrowser(): Boolean = userAgent?.startsWith("Mozilla/5.0") ?: false
 
 // forbid POST requests from browser without Origin
 fun HttpRequest.isWriteFromBrowserWithoutOrigin(): Boolean {
@@ -315,31 +301,33 @@ fun HttpRequest.isWriteFromBrowserWithoutOrigin(): Boolean {
 
 fun ByteBuf.readUtf8(): String = toString(Charsets.UTF_8)
 
-fun ByteBuf.writeUtf8(data: CharSequence) = writeCharSequence(data, Charsets.UTF_8)
+fun ByteBuf.writeUtf8(data: CharSequence): Int = writeCharSequence(data, Charsets.UTF_8)
 
+@Suppress("FunctionName")
 fun MultiThreadEventLoopGroup(workerCount: Int, threadFactory: ThreadFactory): MultithreadEventLoopGroup {
-  if (SystemInfo.isMacOSSierra && SystemProperties.getBooleanProperty("native.net.io", false)) {
-    try {
-      return KQueueEventLoopGroup(workerCount, threadFactory)
-    }
-    catch (e: Throwable) {
-      logger<BuiltInServer>().warn("Cannot use native event loop group", e)
-    }
-  }
+//  if (SystemInfo.isMacOSSierra && SystemProperties.getBooleanProperty("native.net.io", false)) {
+//    try {
+//      return KQueueEventLoopGroup(workerCount, threadFactory)
+//    }
+//    catch (e: Throwable) {
+//      logger<BuiltInServer>().warn("Cannot use native event loop group", e)
+//    }
+//  }
 
   return NioEventLoopGroup(workerCount, threadFactory)
 }
 
+@Suppress("FunctionName")
 fun MultiThreadEventLoopGroup(workerCount: Int): MultithreadEventLoopGroup {
-  if (SystemInfo.isMacOSSierra && SystemProperties.getBooleanProperty("native.net.io", false)) {
-    try {
-      return KQueueEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE)
-    }
-    catch (e: Throwable) {
-      // error instead of warn to easy spot it
-      logger<BuiltInServer>().error("Cannot use native event loop group", e)
-    }
-  }
+//  if (SystemInfo.isMacOSSierra && SystemProperties.getBooleanProperty("native.net.io", false)) {
+//    try {
+//      return KQueueEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE)
+//    }
+//    catch (e: Throwable) {
+//      // error instead of warn to easy spot it
+//      logger<BuiltInServer>().error("Cannot use native event loop group", e)
+//    }
+//  }
 
   return NioEventLoopGroup(workerCount, PooledThreadExecutor.INSTANCE)
 }

@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.util;
 
-import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +27,6 @@ public interface Iconable {
   int ICON_FLAG_VISIBILITY = 0x0001;
   int ICON_FLAG_READ_STATUS = 0x0002;
   @Deprecated int ICON_FLAG_OPEN = 0x0004;
-  @Deprecated int ICON_FLAG_CLOSED = 0x0008;
 
   Key<Integer> ICON_FLAG_IGNORE_MASK = new Key<>("ICON_FLAG_IGNORE_MASK");
 
@@ -37,16 +36,16 @@ public interface Iconable {
   Icon getIcon(@IconFlags int flags);
 
   class LastComputedIcon {
-    private static final Key<ConcurrentIntObjectMap<Icon>> LAST_COMPUTED_ICON = Key.create("lastComputedIcon");
+    private static final Key<IntObjectMap<Icon>> LAST_COMPUTED_ICON = Key.create("lastComputedIcon");
 
     @Nullable
     public static Icon get(@NotNull UserDataHolder holder, int flags) {
-      ConcurrentIntObjectMap<Icon> map = holder.getUserData(LAST_COMPUTED_ICON);
+      IntObjectMap<Icon> map = holder.getUserData(LAST_COMPUTED_ICON);
       return map == null ? null : map.get(flags);
     }
 
     public static void put(@NotNull UserDataHolder holder, Icon icon, int flags) {
-      ConcurrentIntObjectMap<Icon> map = holder.getUserData(LAST_COMPUTED_ICON);
+      IntObjectMap<Icon> map = holder.getUserData(LAST_COMPUTED_ICON);
       if (icon == null) {
         if (map != null) {
           map.remove(flags);

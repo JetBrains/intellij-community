@@ -1,32 +1,18 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
-import com.intellij.internal.statistic.UsageTrigger;
-import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -37,6 +23,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import javax.swing.event.HyperlinkListener;
 
 public class ProgramRunnerUtil {
   private static final Logger LOG = Logger.getInstance(ProgramRunnerUtil.class);
@@ -53,6 +41,11 @@ public class ProgramRunnerUtil {
     executeConfigurationAsync(environment, showSettings, assignNewId, null);
   }
 
+  @NotNull
+  public static String getCannotRunOnErrorMessage(@NotNull RunProfile profile, @NotNull ExecutionTarget target) {
+    return StringUtil.escapeXml("Cannot run '" + profile.getName() + "' on '" + target.getDisplayName() + "'");
+  }
+
   public static void executeConfigurationAsync(@NotNull final ExecutionEnvironment environment, boolean showSettings, boolean assignNewId, ProgramRunner.Callback callback) {
     if (ExecutorRegistry.getInstance().isStarting(environment)) {
       return;
@@ -63,7 +56,7 @@ public class ProgramRunnerUtil {
     if (runnerAndConfigurationSettings != null) {
       if (!ExecutionTargetManager.canRun(environment)) {
         ExecutionUtil.handleExecutionError(environment, new ExecutionException(
-          StringUtil.escapeXml("Cannot run '" + environment.getRunProfile().getName() + "' on '" + environment.getExecutionTarget().getDisplayName() + "'")));
+          getCannotRunOnErrorMessage(environment.getRunProfile(), environment.getExecutionTarget())));
         return;
       }
 
@@ -86,8 +79,6 @@ public class ProgramRunnerUtil {
           }
         }
       }
-
-      UsageTrigger.trigger("execute." + ConvertUsagesUtil.ensureProperKey(runnerAndConfigurationSettings.getType().getId()) + "." + environment.getExecutor().getId());
     }
 
     try {
@@ -102,20 +93,69 @@ public class ProgramRunnerUtil {
       }
     }
     catch (ExecutionException e) {
-      String name = runnerAndConfigurationSettings != null ? runnerAndConfigurationSettings.getName() : null;
-      if (name == null) {
-        name = environment.getRunProfile().getName();
-      }
-      if (name == null && environment.getContentToReuse() != null) {
-        name = environment.getContentToReuse().getDisplayName();
-      }
-      if (name == null) {
-        name = "<Unknown>";
-      }
-      ExecutionUtil.handleExecutionError(project,
-                                         ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(environment),
-                                         name, e);
+      handleExecutionError(project, environment, e, runnerAndConfigurationSettings != null ? runnerAndConfigurationSettings.getConfiguration() : null);
     }
+  }
+
+  public static void handleExecutionError(Project project,
+                                          @NotNull ExecutionEnvironment environment,
+                                          Throwable e,
+                                          RunProfile configuration) {
+    String name = configuration != null ? configuration.getName() : null;
+    if (name == null) {
+      name = environment.getRunProfile().getName();
+    }
+    if (name == null && environment.getContentToReuse() != null) {
+      name = environment.getContentToReuse().getDisplayName();
+    }
+    if (name == null) {
+      name = "<Unknown>";
+    }
+    String windowId = ExecutionManager.getInstance(project).getContentManager().getToolWindowIdByEnvironment(environment);
+
+    if (configuration instanceof ConfigurationWithCommandLineShortener && ExecutionUtil.isProcessNotCreated(e)) {
+      handelProcessNotStartedError((ConfigurationWithCommandLineShortener)configuration, (ProcessNotCreatedException)e, name, windowId);
+    }
+    else {
+      ExecutionUtil.handleExecutionError(project, windowId, name, e);
+    }
+  }
+
+  private static void handelProcessNotStartedError(ConfigurationWithCommandLineShortener configuration,
+                                                   ExecutionException e,
+                                                   String name,
+                                                   String windowId) {
+    String description = e.getMessage();
+    HyperlinkListener listener = null;
+    Project project = configuration.getProject();
+    RunManager runManager = RunManager.getInstance(project);
+    RunnerAndConfigurationSettings runnerAndConfigurationSettings = runManager.getAllSettings().stream()
+      .filter(settings -> settings.getConfiguration() == configuration)
+      .findFirst()
+      .orElse(null);
+    if (runnerAndConfigurationSettings != null &&
+        (configuration.getShortenCommandLine() == null || configuration.getShortenCommandLine() == ShortenCommandLine.NONE)) {
+      ConfigurationFactory factory = runnerAndConfigurationSettings.getFactory();
+      RunnerAndConfigurationSettings configurationTemplate = runManager.getConfigurationTemplate(factory);
+      description = "Command line is too long. Shorten command line for <a href=\"current\">" + name + "</a>";
+      if (((ConfigurationWithCommandLineShortener)configurationTemplate.getConfiguration()).getShortenCommandLine() == null) {
+        description += " or also for " + factory.getName() + " <a href=\"default\">default</a> configuration";
+      }
+      description += ".";
+
+      listener = event -> {
+        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+          boolean isDefaultConfigurationChosen = "default".equals(event.getDescription());
+          SingleConfigurableEditor dialog = RunDialog.editShortenClasspathSetting(isDefaultConfigurationChosen ? configurationTemplate : runnerAndConfigurationSettings,
+                                                                                  "Edit" + (isDefaultConfigurationChosen ? " Default" : "") + " Configuration");
+          if (dialog.showAndGet() && isDefaultConfigurationChosen) {
+            configuration
+              .setShortenCommandLine(((ConfigurationWithCommandLineShortener)configurationTemplate.getConfiguration()).getShortenCommandLine());
+          }
+        }
+      };
+    }
+    ExecutionUtil.handleExecutionError(project, windowId, name, e, description, listener);
   }
 
   /**
@@ -156,16 +196,13 @@ public class ProgramRunnerUtil {
   }
 
   @NotNull
-  public static Icon getRawIcon(RunnerAndConfigurationSettings settings) {
-    RunConfiguration configuration = settings.getConfiguration();
-    ConfigurationFactory factory = settings.getFactory();
-    Icon icon =  factory != null ? factory.getIcon(configuration) : null;
-    if (icon == null) icon = AllIcons.RunConfigurations.Unknown;
-    return icon;
+  public static Icon getRawIcon(@NotNull RunnerAndConfigurationSettings settings) {
+    Icon icon = settings.getFactory().getIcon(settings.getConfiguration());
+    return icon == null ? AllIcons.RunConfigurations.Unknown : icon;
   }
 
   public static Icon getTemporaryIcon(@NotNull Icon rawIcon) {
-     return IconLoader.getTransparentIcon(rawIcon, 0.3f);
+    return IconLoader.getTransparentIcon(rawIcon, 0.3f);
   }
 
   public static String shortenName(@Nullable String name, final int toBeAdded) {

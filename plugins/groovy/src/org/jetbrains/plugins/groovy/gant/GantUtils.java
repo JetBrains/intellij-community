@@ -20,7 +20,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -62,7 +61,7 @@ public class GantUtils {
         }
       }
     }
-    return labels.toArray(new GrArgumentLabel[labels.size()]);
+    return labels.toArray(GrArgumentLabel.EMPTY_ARRAY);
   }
 
   public static boolean isPlainIdentifier(final GrArgumentLabel label) {

@@ -34,9 +34,11 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathMappingSettings;
+import com.intellij.util.Processor;
 import com.intellij.util.concurrency.BlockingSet;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.jetbrains.python.PyBundle;
@@ -44,7 +46,6 @@ import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.psi.PyUtil;
-import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +55,7 @@ import java.awt.*;
 import java.io.File;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -64,7 +66,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class PythonSdkUpdater implements StartupActivity {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.PythonSdkUpdater");
-  public static final int INITIAL_ACTIVITY_DELAY = 7000;
+  public static final int INITIAL_ACTIVITY_DELAY = 3000;
 
   private static final Object ourLock = new Object();
   private static final Set<String> ourScheduledToRefresh = Sets.newHashSet();
@@ -79,18 +81,19 @@ public class PythonSdkUpdater implements StartupActivity {
     if (application.isUnitTestMode()) {
       return;
     }
-    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Python Paths", false) {
-      @Override
-      public void run(@NotNull ProgressIndicator indicator) {
-        final Project project = getProject();
-        if (project.isDisposed()) {
-          return;
-        }
-        for (final Sdk sdk : getPythonSdks(project)) {
-          update(sdk, null, project, null);
-        }
+    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
+      if (project.isDisposed()) {
+        return;
       }
-    }), INITIAL_ACTIVITY_DELAY, TimeUnit.MILLISECONDS);
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Python Paths", false) {
+        @Override
+        public void run(@NotNull ProgressIndicator indicator) {
+          for (Sdk sdk : getPythonSdks(project)) {
+            update(sdk, null, project, null);
+          }
+        }
+      });
+    }, INITIAL_ACTIVITY_DELAY, TimeUnit.MILLISECONDS);
   }
 
   /**
@@ -113,12 +116,35 @@ public class PythonSdkUpdater implements StartupActivity {
     synchronized (ourLock) {
       ourScheduledToRefresh.add(key);
     }
+
+    final Application application = ApplicationManager.getApplication();
+
+    String sdkHome = sdk.getHomePath();
+    if (sdkHome != null && (PythonSdkType.isVirtualEnv(sdkHome) || PythonSdkType.isCondaVirtualEnv(sdk))) {
+      final Future<?> updateSdkFeature = application.executeOnPooledThread(() -> {
+        sdk.putUserData(PythonSdkType.ENVIRONMENT_KEY,
+                        PythonSdkType.activateVirtualEnv(sdkHome)); // pre-cache virtualenv activated environment
+      });
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        // Running SDK update in background is inappropriate for tests: test may complete before update and updater thread will leak
+        try {
+          updateSdkFeature.get();
+        }
+        catch (final InterruptedException | java.util.concurrent.ExecutionException e) {
+          throw new AssertionError("Exception thrown while synchronizing with sdk updater ", e);
+        }
+      }
+    }
+
+    updateLocalSdkVersion(sdk, sdkModificator);
+
     if (!updateLocalSdkPaths(sdk, sdkModificator, project)) {
       return false;
     }
 
-
-    final Application application = ApplicationManager.getApplication();
+    if (project == null) {
+      return true;
+    }
 
     if (application.isUnitTestMode()) {
       // All actions we take after this line are dedicated to skeleton update process. Not all tests do need them. To find test API that
@@ -134,7 +160,10 @@ public class PythonSdkUpdater implements StartupActivity {
         }
         ourScheduledToRefresh.remove(key);
       }
-      if (project != null && project.isDisposed()) {
+      if (project.isDisposed()) {
+        return;
+      }
+      if (PythonSdkType.findSdkByKey(key) == null) {
         return;
       }
       ProgressManager.getInstance().run(new Task.Backgroundable(project, PyBundle.message("sdk.gen.updating.interpreter"), false) {
@@ -173,13 +202,7 @@ public class PythonSdkUpdater implements StartupActivity {
                 }
               }
               catch (InvalidSdkException e) {
-                if (PythonSdkType.isVagrant(sdkInsideTask)
-                    || new CredentialsTypeExChecker() {
-                  @Override
-                  protected boolean checkLanguageContribution(PyCredentialsContribution languageContribution) {
-                    return languageContribution.shouldNotifySdkSkeletonFail();
-                  }
-                }.check(sdkInsideTask)) {
+                if (PythonSdkType.isRemote(sdkInsideTask)) {
                   PythonSdkType.notifyRemoteSdkSkeletonsFail(e, () -> {
                     final Sdk sdkInsideNotify = PythonSdkType.findSdkByKey(key);
                     if (sdkInsideNotify != null) {
@@ -210,7 +233,7 @@ public class PythonSdkUpdater implements StartupActivity {
   /**
    * Updates the paths of an SDK and regenerates its skeletons as a background task. Shows an error message if the update fails.
    *
-   * @see {@link #update(Sdk, SdkModificator, Project, Component)}
+   * @see #update(Sdk, SdkModificator, Project, Component)
    */
   public static void updateOrShowError(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator, @Nullable Project project,
                                        @Nullable Component ownerComponent) {
@@ -219,6 +242,24 @@ public class PythonSdkUpdater implements StartupActivity {
       Messages.showErrorDialog(project,
                                PyBundle.message("MSG.cant.setup.sdk.$0", getSdkPresentableName(sdk)),
                                PyBundle.message("MSG.title.bad.sdk"));
+    }
+  }
+
+  /**
+   * Changes the version string of an SDK if it's out of date.
+   *
+   * May be invoked from any thread. May freeze the current thread while evaluating the run-time Python version.
+   */
+  private static void updateLocalSdkVersion(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator) {
+    if (!PythonSdkType.isRemote(sdk)) {
+      final SdkModificator modificatorToRead = sdkModificator != null ? sdkModificator : sdk.getSdkModificator();
+      final String versionString = sdk.getSdkType().getVersionString(sdk);
+      if (!StringUtil.equals(versionString, modificatorToRead.getVersionString())) {
+        changeSdkModificator(sdk, sdkModificator, modificatorToWrite -> {
+          modificatorToWrite.setVersionString(versionString);
+          return true;
+        });
+      }
     }
   }
 
@@ -419,22 +460,36 @@ public class PythonSdkUpdater implements StartupActivity {
                                               @Nullable final SdkModificator sdkModificator,
                                               @NotNull final List<VirtualFile> sdkPaths,
                                               boolean forceCommit) {
-    final String key = PythonSdkType.getSdkKey(sdk);
-    final SdkModificator modificatorToGetRoots = sdkModificator != null ? sdkModificator : sdk.getSdkModificator();
-    final List<VirtualFile> currentSdkPaths = Arrays.asList(modificatorToGetRoots.getRoots(OrderRootType.CLASSES));
+    final SdkModificator modificatorToRead = sdkModificator != null ? sdkModificator : sdk.getSdkModificator();
+    final List<VirtualFile> currentSdkPaths = Arrays.asList(modificatorToRead.getRoots(OrderRootType.CLASSES));
     if (forceCommit || !Sets.newHashSet(sdkPaths).equals(Sets.newHashSet(currentSdkPaths))) {
-      TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
-      ApplicationManager.getApplication().invokeAndWait(() -> {
-        final Sdk sdkInsideInvoke = PythonSdkType.findSdkByKey(key);
-        final SdkModificator modificatorToCommit = sdkModificator != null ? sdkModificator :
-                                                   sdkInsideInvoke != null ? sdkInsideInvoke.getSdkModificator() : modificatorToGetRoots;
-        modificatorToCommit.removeAllRoots();
+      changeSdkModificator(sdk, sdkModificator, effectiveModificator -> {
+        effectiveModificator.removeAllRoots();
         for (VirtualFile sdkPath : sdkPaths) {
-          modificatorToCommit.addRoot(PythonSdkType.getSdkRootVirtualFile(sdkPath), OrderRootType.CLASSES);
+          effectiveModificator.addRoot(PythonSdkType.getSdkRootVirtualFile(sdkPath), OrderRootType.CLASSES);
         }
-        modificatorToCommit.commitChanges();
+        return true;
       });
     }
+  }
+
+  /**
+   * Applies a processor to an SDK modificator or an SDK and commits it.
+   *
+   * You may invoke it from any threads. Blocks until the commit is done in the AWT thread.
+   */
+  private static void changeSdkModificator(@NotNull Sdk sdk, @Nullable SdkModificator sdkModificator,
+                                           @NotNull Processor<SdkModificator> processor) {
+    final String key = PythonSdkType.getSdkKey(sdk);
+    TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      final Sdk sdkInsideInvoke = PythonSdkType.findSdkByKey(key);
+      final SdkModificator effectiveModificator = sdkModificator != null ? sdkModificator :
+                                                  sdkInsideInvoke != null ? sdkInsideInvoke.getSdkModificator() : sdk.getSdkModificator();
+      if (processor .process(effectiveModificator)) {
+        effectiveModificator.commitChanges();
+      }
+    });
   }
 
   /**

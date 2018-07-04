@@ -25,40 +25,40 @@ import org.jetbrains.uast.visitor.UastVisitor
  * Represents the lambda expression.
  */
 interface ULambdaExpression : UExpression {
-    /**
-     * Returns the list of lambda value parameters.
-     */
-    val valueParameters: List<UParameter>
+  /**
+   * Returns the list of lambda value parameters.
+   */
+  val valueParameters: List<UParameter>
 
-    /**
-     * Returns the lambda body expression.
-     */
-    val body: UExpression
+  /**
+   * Returns the lambda body expression.
+   */
+  val body: UExpression
 
-    /**
-     * Returns SAM type the lambda expression corresponds to or null when no SAM type could be found
-     */
-    val functionalInterfaceType: PsiType?
+  /**
+   * Returns SAM type the lambda expression corresponds to or null when no SAM type could be found
+   */
+  val functionalInterfaceType: PsiType?
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitLambdaExpression(this)) return
-        annotations.acceptList(visitor)
-        valueParameters.acceptList(visitor)
-        body.accept(visitor)
-        visitor.afterVisitLambdaExpression(this)
-    }
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitLambdaExpression(this)) return
+    annotations.acceptList(visitor)
+    valueParameters.acceptList(visitor)
+    body.accept(visitor)
+    visitor.afterVisitLambdaExpression(this)
+  }
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
-            visitor.visitLambdaExpression(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
+    visitor.visitLambdaExpression(this, data)
 
-    override fun asLogString() = log()
-    
-    override fun asRenderString(): String {
-        val renderedValueParameters = if (valueParameters.isEmpty())
-            ""
-        else
-            valueParameters.joinToString { it.asRenderString() } + " ->" + LINE_SEPARATOR
+  override fun asLogString(): String = log()
 
-        return "{ " + renderedValueParameters + body.asRenderString().withMargin + LINE_SEPARATOR + "}"
-    }
+  override fun asRenderString(): String {
+    val renderedValueParameters = if (valueParameters.isEmpty())
+      ""
+    else
+      valueParameters.joinToString { it.asRenderString() } + " ->" + LINE_SEPARATOR
+
+    return "{ " + renderedValueParameters + body.asRenderString().withMargin + LINE_SEPARATOR + "}"
+  }
 }

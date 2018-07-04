@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.scope.JavaCompletionProcessor;
 import com.intellij.codeInsight.editorActions.wordSelection.DocTagSelectioner;
@@ -25,17 +26,18 @@ import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection;
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspectionBase;
 import com.intellij.codeInspection.javaDoc.JavadocHighlightUtil;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.PsiElementPattern;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.TrueFilter;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
@@ -75,13 +77,16 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       }
     }
   };
+  static final PsiElementPattern.Capture<PsiElement> THROWS_TAG_EXCEPTION = psiElement().inside(
+    psiElement(PsiDocTag.class).withName(
+      string().oneOf(PsiKeyword.THROWS, "exception")));
 
   public JavaDocCompletionContributor() {
     extend(CompletionType.BASIC, PsiJavaPatterns.psiElement(JavaDocTokenType.DOC_TAG_NAME), new TagChooser());
 
     extend(CompletionType.BASIC, PsiJavaPatterns.psiElement().inside(PsiDocComment.class), new CompletionProvider<CompletionParameters>() {
       @Override
-      protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
+      protected void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull CompletionResultSet result) {
         final PsiElement position = parameters.getPosition();
         boolean isArg = PsiJavaPatterns.psiElement().afterLeaf("(").accepts(position);
         PsiDocTag tag = PsiTreeUtil.getParentOfType(position, PsiDocTag.class);
@@ -89,6 +94,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
 
         final PsiReference ref = position.getContainingFile().findReferenceAt(parameters.getOffset());
         if (ref instanceof PsiJavaReference) {
+          result = JavaCompletionSorting.addJavaSorting(parameters, result);
           result.stopHere();
 
           for (LookupElement item : completeJavadocReference(position, (PsiJavaReference)ref)) {
@@ -115,9 +121,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       }
     });
 
-    extend(CompletionType.SMART, psiElement().inside(
-      psiElement(PsiDocTag.class).withName(
-        string().oneOf(PsiKeyword.THROWS, "exception"))), new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.SMART, THROWS_TAG_EXCEPTION, new CompletionProvider<CompletionParameters>() {
       @Override
       public void addCompletions(@NotNull final CompletionParameters parameters, final ProcessingContext context, @NotNull final CompletionResultSet result) {
         final PsiElement element = parameters.getPosition();
@@ -187,7 +191,9 @@ public class JavaDocCompletionContributor extends CompletionContributor {
         suggestSimilarParameterDescriptions(result, position, param);
       }
 
-      suggestLinkWrappingVariants(parameters, result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(parameters)), position);
+      if (!(position.getParent() instanceof PsiInlineDocTag)) {
+        suggestLinkWrappingVariants(parameters, result.withPrefixMatcher(CompletionUtil.findJavaIdentifierPrefix(parameters)), position);
+      }
 
       suggestCodeLiterals(result, position);
 
@@ -432,7 +438,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       int signatureOffset = afterSharp;
 
       PsiElement element = context.getFile().findElementAt(signatureOffset - 1);
-      final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(context.getProject());
+      final CodeStyleSettings styleSettings = CodeStyle.getSettings(context.getFile());
       PsiDocTag tag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class);
       if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR && tag != null) {
         final PsiDocTagValue valueElement = tag.getValueElement();
@@ -453,7 +459,7 @@ public class JavaDocCompletionContributor extends CompletionContributor {
 
         if (i < parameters.length - 1) {
           buffer.append(",");
-          if (styleSettings.SPACE_AFTER_COMMA) buffer.append(" ");
+          if (styleSettings.getCommonSettings(JavaLanguage.INSTANCE).SPACE_AFTER_COMMA) buffer.append(" ");
         }
       }
       buffer.append(")");

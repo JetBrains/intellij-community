@@ -18,25 +18,48 @@ package org.jetbrains.jps.model.library;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+
 /**
  * @author Eugene Zhuravlev
- *         Date: 13-Jun-16
  */
 public class JpsMavenRepositoryLibraryDescriptor {
   private final String myMavenId;
   private final String myGroupId;
   private final String myArtifactId;
   private final String myVersion;
+  private final boolean myIncludeTransitiveDependencies;
+  private final List<String> myExcludedDependencies;
 
   public JpsMavenRepositoryLibraryDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version) {
+    this(groupId, artifactId, version, true, Collections.emptyList());
+  }
+
+  public JpsMavenRepositoryLibraryDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version,
+                                             boolean includeTransitiveDependencies, @NotNull List<String> excludedDependencies) {
     myGroupId = groupId;
     myArtifactId = artifactId;
     myVersion = version;
+    myIncludeTransitiveDependencies = includeTransitiveDependencies;
+    myExcludedDependencies = excludedDependencies;
     myMavenId = groupId + ":" + artifactId + ":" + version;
   }
 
   public JpsMavenRepositoryLibraryDescriptor(@Nullable String mavenId) {
+    this(mavenId, true, Collections.emptyList());
+  }
+
+  public JpsMavenRepositoryLibraryDescriptor(@NotNull String groupId, @NotNull String artifactId, @NotNull String version,
+                                             boolean includeTransitiveDependencies) {
+    this(groupId, artifactId, version, includeTransitiveDependencies, Collections.emptyList());
+  }
+
+  public JpsMavenRepositoryLibraryDescriptor(@Nullable String mavenId,
+                                             boolean includeTransitiveDependencies, List<String> excludedDependencies) {
     myMavenId = mavenId;
+    myIncludeTransitiveDependencies = includeTransitiveDependencies;
     if (mavenId == null) {
       myGroupId = myArtifactId = myVersion = null;
     }
@@ -46,6 +69,7 @@ public class JpsMavenRepositoryLibraryDescriptor {
       myArtifactId = parts.length > 1 ? parts[1] : null;
       myVersion = parts.length > 2 ? parts[2] : null;
     }
+    myExcludedDependencies = excludedDependencies;
   }
 
 
@@ -61,6 +85,17 @@ public class JpsMavenRepositoryLibraryDescriptor {
     return myArtifactId;
   }
 
+  public boolean isIncludeTransitiveDependencies() {
+    return myIncludeTransitiveDependencies;
+  }
+
+  /**
+   * Returns list of excluded transitive dependencies in {@code "<groupId>:<artifactId>"} format.
+   */
+  public List<String> getExcludedDependencies() {
+    return myExcludedDependencies;
+  }
+
   public String getVersion() {
     return myVersion;
   }
@@ -71,15 +106,13 @@ public class JpsMavenRepositoryLibraryDescriptor {
     if (o == null || getClass() != o.getClass()) return false;
 
     JpsMavenRepositoryLibraryDescriptor that = (JpsMavenRepositoryLibraryDescriptor)o;
-
-    if (myMavenId != null ? !myMavenId.equals(that.myMavenId) : that.myMavenId != null) return false;
-
-    return true;
+    return Objects.equals(myMavenId, that.myMavenId) && myIncludeTransitiveDependencies == that.myIncludeTransitiveDependencies
+           && myExcludedDependencies.equals(that.myExcludedDependencies);
   }
 
   @Override
   public int hashCode() {
-    return myMavenId != null ? myMavenId.hashCode() : 0;
+    return myExcludedDependencies.hashCode() * 31 * 31 + Objects.hashCode(myMavenId) * 31 + (myIncludeTransitiveDependencies ? 1 : 0);
   }
 
   @Override

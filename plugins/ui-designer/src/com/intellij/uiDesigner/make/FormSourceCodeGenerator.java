@@ -108,6 +108,7 @@ public final class FormSourceCodeGenerator {
   public void generate(final VirtualFile formFile) {
     myNeedLoadLabelText = false;
     myNeedLoadButtonText = false;
+    myGetFontMethod = null;
 
     final Module module = ModuleUtil.findModuleForFile(formFile, myProject);
     if (module == null) {
@@ -463,7 +464,6 @@ public final class FormSourceCodeGenerator {
 
   private void generateMethodIfRequired(PsiClass aClass, PsiMethod anchor, final String methodName, String methodText, boolean condition) throws IncorrectOperationException {
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(myProject).getElementFactory();
-    PsiMethod newMethod = null;
     PsiMethod[] oldMethods = aClass.findMethodsByName(methodName, false);
     if (!condition) {
       for(PsiMethod oldMethod: oldMethods) {
@@ -471,12 +471,12 @@ public final class FormSourceCodeGenerator {
       }
     }
     else {
-      newMethod = elementFactory.createMethodFromText(methodText, aClass);
+      PsiMethod newMethod = elementFactory.createMethodFromText(methodText, aClass);
       if (oldMethods.length > 0) {
-        newMethod = (PsiMethod) oldMethods [0].replace(newMethod);
+        oldMethods[0].replace(newMethod);
       }
       else {
-        newMethod = (PsiMethod) aClass.addAfter(newMethod, anchor);
+        aClass.addAfter(newMethod, anchor);
       }
     }
   }
@@ -497,6 +497,7 @@ public final class FormSourceCodeGenerator {
     deleteMethods(aClass, AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME);
     deleteMethods(aClass, AsmCodeGenerator.LOAD_BUTTON_TEXT_METHOD);
     deleteMethods(aClass, AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD);
+    deleteMethods(aClass, AsmCodeGenerator.GET_FONT_METHOD_NAME);
   }
 
   private static void deleteMethods(final PsiClass aClass, final String methodName) throws IncorrectOperationException {

@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.process.BaseOSProcessHandler;
+import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.openapi.application.PathManager;
@@ -34,6 +21,7 @@ import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -79,7 +67,7 @@ class ProcessProxyImpl implements ProcessProxy {
     execute(() -> {
       int pid = -1;
       if (SystemInfo.isUnix && processHandler instanceof BaseOSProcessHandler) {
-        pid = UnixProcessManager.getProcessPid(((BaseOSProcessHandler)processHandler).getProcess());
+        pid = OSProcessUtil.getProcessID(((BaseOSProcessHandler)processHandler).getProcess());
       }
       synchronized (myLock) {
         myPid = pid;
@@ -89,7 +77,7 @@ class ProcessProxyImpl implements ProcessProxy {
 
   private void writeLine(String s) {
     execute(() -> {
-      ByteBuffer out = ByteBuffer.wrap((s + '\n').getBytes("US-ASCII"));
+      ByteBuffer out = ByteBuffer.wrap((s + '\n').getBytes(StandardCharsets.US_ASCII));
       synchronized (myLock) {
         myConnection.write(out);
       }

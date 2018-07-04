@@ -17,7 +17,6 @@
 package com.maddyhome.idea.copyright.ui;
 
 import com.intellij.copyright.CopyrightManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.options.ConfigurationException;
@@ -33,9 +32,7 @@ import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.pattern.EntityUtil;
 import com.maddyhome.idea.copyright.pattern.VelocityHelper;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -54,7 +51,7 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
   private boolean myModified;
 
   private String myDisplayName;
-  private EditorTextField myEditor;
+  private final EditorTextField myEditor;
   private JButton myValidateButton;
   private JTextField myKeywordTf;
   private JTextField myAllowReplaceTextField;
@@ -69,8 +66,7 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
     ContainerUtil.addIfNotNull(features, SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization());
     features.add(SoftWrapsEditorCustomization.ENABLED);
     features.add(AdditionalPageAtBottomEditorCustomization.DISABLED);
-    EditorTextFieldProvider service = ServiceManager.getService(project, EditorTextFieldProvider.class);
-    myEditor = service.getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features);
+    myEditor = EditorTextFieldProvider.getInstance().getEditorField(FileTypes.PLAIN_TEXT.getLanguage(), project, features);
     myEditorPanel.add(myEditor.getComponent(), BorderLayout.CENTER);
   }
 
@@ -110,13 +106,6 @@ public class CopyrightConfigurable extends NamedConfigurable<CopyrightProfile> {
   @Nls
   public String getDisplayName() {
     return myCopyrightProfile.getName();
-  }
-
-  @Override
-  @Nullable
-  @NonNls
-  public String getHelpTopic() {
-    return null;
   }
 
   @Override

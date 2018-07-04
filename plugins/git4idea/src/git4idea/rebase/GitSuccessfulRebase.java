@@ -44,34 +44,40 @@ class GitSuccessfulRebase extends GitRebaseStatus {
     REBASED {
       @NotNull
       @Override
-      public String formatMessage(@Nullable String currentBranch, @NotNull String baseBranch, boolean withCheckout) {
+      public String formatMessage(@Nullable String currentBranch, @Nullable String baseBranch, boolean withCheckout) {
+        String msg;
         if (withCheckout) {
-          return "Checked out" + mention(currentBranch) + " and rebased it on " + baseBranch;
+          msg = "Checked out" + mention(currentBranch) + " and rebased it";
         }
         else {
-          return "Rebased" + mention(currentBranch) + " on " + baseBranch;
+          msg = "Rebased" + mention(currentBranch);
         }
+        if (baseBranch != null) msg += " on " + baseBranch;
+        return msg;
       }
     },
     UP_TO_DATE {
       @NotNull
       @Override
-      public String formatMessage(@Nullable String currentBranch, @NotNull String baseBranch, boolean withCheckout) {
+      public String formatMessage(@Nullable String currentBranch, @Nullable String baseBranch, boolean withCheckout) {
         String msg = currentBranch != null ? currentBranch + " is up-to-date" : "Up-to-date";
-        msg += " with " + baseBranch;
+        if (baseBranch != null) msg += " with " + baseBranch;
         return msg;
       }
     },
     FAST_FORWARDED {
       @NotNull
       @Override
-      public String formatMessage(@Nullable String currentBranch, @NotNull String baseBranch, boolean withCheckout) {
+      public String formatMessage(@Nullable String currentBranch, @Nullable String baseBranch, boolean withCheckout) {
+        String msg;
         if (withCheckout) {
-          return "Checked out" + mention(currentBranch) + " and fast-forwarded it to " + baseBranch;
+          msg = "Checked out" + mention(currentBranch) + " and fast-forwarded it";
         }
         else {
-          return "Fast-forwarded" + mention(currentBranch) + " to " + baseBranch;
+          msg = "Fast-forwarded" + mention(currentBranch);
         }
+        if (baseBranch != null) msg += " to " + baseBranch;
+        return msg;
       }
     };
 
@@ -81,7 +87,7 @@ class GitSuccessfulRebase extends GitRebaseStatus {
     }
 
     @NotNull
-    abstract String formatMessage(@Nullable String currentBranch, @NotNull String baseBranch, boolean withCheckout);
+    abstract String formatMessage(@Nullable String currentBranch, @Nullable String baseBranch, boolean withCheckout);
 
     @NotNull
     public static SuccessType fromOutput(@NotNull List<String> output) {

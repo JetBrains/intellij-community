@@ -17,29 +17,26 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.JavaTokenType
 import com.intellij.psi.PsiPrefixExpression
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UIdentifier
-import org.jetbrains.uast.UPrefixExpression
-import org.jetbrains.uast.UastPrefixOperator
+import org.jetbrains.uast.*
 
 class JavaUPrefixExpression(
-        override val psi: PsiPrefixExpression,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UPrefixExpression {
-    override val operand by lz { JavaConverter.convertOrEmpty(psi.operand, this) }
+  override val psi: PsiPrefixExpression,
+  givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UPrefixExpression {
+  override val operand: UExpression by lz { JavaConverter.convertOrEmpty(psi.operand, this) }
 
-    override val operatorIdentifier: UIdentifier?
-        get() = UIdentifier(psi.operationSign, this)
+  override val operatorIdentifier: UIdentifier?
+    get() = UIdentifier(psi.operationSign, this)
 
-    override fun resolveOperator() = null
+  override fun resolveOperator(): Nothing? = null
 
-    override val operator = when (psi.operationTokenType) {
-        JavaTokenType.PLUS -> UastPrefixOperator.UNARY_PLUS
-        JavaTokenType.MINUS -> UastPrefixOperator.UNARY_MINUS
-        JavaTokenType.PLUSPLUS -> UastPrefixOperator.INC
-        JavaTokenType.MINUSMINUS-> UastPrefixOperator.DEC
-        JavaTokenType.EXCL -> UastPrefixOperator.LOGICAL_NOT
-        JavaTokenType.TILDE -> UastPrefixOperator.BITWISE_NOT
-        else -> UastPrefixOperator.UNKNOWN
-    }
+  override val operator: UastPrefixOperator = when (psi.operationTokenType) {
+    JavaTokenType.PLUS -> UastPrefixOperator.UNARY_PLUS
+    JavaTokenType.MINUS -> UastPrefixOperator.UNARY_MINUS
+    JavaTokenType.PLUSPLUS -> UastPrefixOperator.INC
+    JavaTokenType.MINUSMINUS -> UastPrefixOperator.DEC
+    JavaTokenType.EXCL -> UastPrefixOperator.LOGICAL_NOT
+    JavaTokenType.TILDE -> UastPrefixOperator.BITWISE_NOT
+    else -> UastPrefixOperator.UNKNOWN
+  }
 }

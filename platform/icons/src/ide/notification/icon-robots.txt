@@ -1,0 +1,1 @@
+deprecated: closeHover.png -> /ide/notification/close.svg; to be removed in IDEA 2020 - use AllIcons.Ide.Notification.Close

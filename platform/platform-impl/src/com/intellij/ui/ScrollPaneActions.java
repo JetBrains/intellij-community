@@ -15,52 +15,24 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.util.ui.UIUtil;
 
-import javax.swing.Action;
-import javax.swing.ActionMap;
+import javax.swing.JComponent;
 import javax.swing.JScrollPane;
-import java.awt.Component;
-import java.awt.KeyboardFocusManager;
-import java.awt.event.ActionEvent;
 
-import static com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT;
+import static com.intellij.util.ui.UIUtil.getParentOfType;
 
 /**
  * @author Sergey.Malenkov
  */
-public abstract class ScrollPaneActions extends AnAction {
-  private final String mySwingActionId;
-
+public abstract class ScrollPaneActions extends SwingActionDelegate {
   private ScrollPaneActions(String actionId) {
-    mySwingActionId = actionId;
+    super(actionId);
   }
 
   @Override
-  public void update(AnActionEvent event) {
-    JScrollPane pane = getScrollPane(event);
-    event.getPresentation().setEnabled(pane != null && null != getSwingAction(pane));
-  }
-
-  @Override
-  public void actionPerformed(AnActionEvent event) {
-    JScrollPane pane = getScrollPane(event);
-    if (pane == null) return;
-    Action action = getSwingAction(pane);
-    if (action == null) return;
-    action.actionPerformed(new ActionEvent(pane, ActionEvent.ACTION_PERFORMED, mySwingActionId));
-  }
-
-  private JScrollPane getScrollPane(AnActionEvent event) {
-    Component component = event.getData(CONTEXT_COMPONENT);
-    return UIUtil.getParentOfType(JScrollPane.class, component);
-  }
-
-  private Action getSwingAction(JScrollPane pane) {
-    ActionMap map = pane.getActionMap();
-    return map == null ? null : map.get(mySwingActionId);
+  protected JComponent getComponent(AnActionEvent event) {
+    return getParentOfType(JScrollPane.class, super.getComponent(event));
   }
 
   public static final class Home extends ScrollPaneActions {

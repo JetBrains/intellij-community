@@ -30,31 +30,31 @@ import org.jetbrains.uast.visitor.UastVisitor
  *  expression.
  */
 interface UWhileExpression : ULoopExpression {
-    /**
-     * Returns the loop condition.
-     */
-    val condition: UExpression
+  /**
+   * Returns the loop condition.
+   */
+  val condition: UExpression
 
-    /**
-     * Returns an identifier for the 'while' keyword.
-     */
-    val whileIdentifier: UIdentifier
+  /**
+   * Returns an identifier for the 'while' keyword.
+   */
+  val whileIdentifier: UIdentifier
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitWhileExpression(this)) return
-        annotations.acceptList(visitor)
-        condition.accept(visitor)
-        body.accept(visitor)
-        visitor.afterVisitWhileExpression(this)
-    }
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitWhileExpression(this)) return
+    annotations.acceptList(visitor)
+    condition.accept(visitor)
+    body.accept(visitor)
+    visitor.afterVisitWhileExpression(this)
+  }
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
-            visitor.visitWhileExpression(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
+    visitor.visitWhileExpression(this, data)
 
-    override fun asRenderString() = buildString {
-        append("while (${condition.asRenderString()}) ")
-        append(body.asRenderString())
-    }
+  override fun asRenderString(): String = buildString {
+    append("while (${condition.asRenderString()}) ")
+    append(body.asRenderString())
+  }
 
-    override fun asLogString() = log()
+  override fun asLogString(): String = log()
 }

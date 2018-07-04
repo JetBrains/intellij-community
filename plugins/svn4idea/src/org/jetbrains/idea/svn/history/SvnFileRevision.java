@@ -1,95 +1,88 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
-import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.checkin.CommitInfo;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import static com.intellij.openapi.progress.ProgressManager.progress;
+import static com.intellij.util.containers.ContainerUtil.newArrayList;
+import static com.intellij.vcsUtil.VcsUtil.getFilePathOnNonLocal;
+import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnUtil.getFileContents;
+import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
+
 public class SvnFileRevision implements VcsFileRevision {
-  private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history.SvnFileRevision");
+  private final static Logger LOG = Logger.getInstance(SvnFileRevision.class);
 
   private final Date myDate;
   private String myCommitMessage;
   private final String myAuthor;
-  private final SvnRevisionNumber myRevisionNumber;
-  private final SvnVcs myVCS;
-  private final String myURL;
-  private final SVNRevision myPegRevision;
-  private final SVNRevision myRevision;
+  @NotNull private final SvnRevisionNumber myRevisionNumber;
+  @NotNull private final SvnVcs myVCS;
+  @NotNull private final Url myURL;
+  private final Revision myPegRevision;
   private final String myCopyFromPath;
-  private final List<SvnFileRevision> myMergeSources;
+  @NotNull private final List<SvnFileRevision> myMergeSources = newArrayList();
 
-  public SvnFileRevision(SvnVcs vcs,
-                         SVNRevision pegRevision,
-                         SVNRevision revision,
-                         String url,
+  @Deprecated // Required for compatibility with external plugins.
+  public SvnFileRevision(@NotNull SvnVcs vcs,
+                         Revision pegRevision,
+                         @NotNull Revision revision,
+                         @NotNull String url,
+                         String author,
+                         Date date,
+                         String commitMessage,
+                         String copyFromPath) {
+    this(vcs, pegRevision, revision, parseUrl(url, false), author, date, commitMessage, copyFromPath);
+  }
+
+  public SvnFileRevision(@NotNull SvnVcs vcs,
+                         Revision pegRevision,
+                         @NotNull Revision revision,
+                         @NotNull Url url,
                          String author,
                          Date date,
                          String commitMessage,
                          String copyFromPath) {
     myRevisionNumber = new SvnRevisionNumber(revision);
     myPegRevision = pegRevision;
-    myRevision = revision;
     myAuthor = author;
     myDate = date;
     myCommitMessage = commitMessage;
     myCopyFromPath = copyFromPath;
     myVCS = vcs;
     myURL = url;
-    myMergeSources = new ArrayList<>();
   }
 
-  public SvnFileRevision(SvnVcs vcs,
-                         SVNRevision pegRevision,
+  public SvnFileRevision(@NotNull SvnVcs vcs,
+                         Revision pegRevision,
                          LogEntry logEntry,
-                         String url,
+                         @NotNull Url url,
                          String copyFromPath) {
-    final SVNRevision revision = SVNRevision.create(logEntry.getRevision());
-    myRevisionNumber = new SvnRevisionNumber(revision);
+    myRevisionNumber = new SvnRevisionNumber(Revision.of(logEntry.getRevision()));
     myPegRevision = pegRevision;
-    myRevision = revision;
     myAuthor = logEntry.getAuthor();
     myDate = logEntry.getDate();
     myCommitMessage = logEntry.getMessage();
     myCopyFromPath = copyFromPath;
     myVCS = vcs;
     myURL = url;
-    myMergeSources = new ArrayList<>();
   }
 
   @NotNull
@@ -97,17 +90,17 @@ public class SvnFileRevision implements VcsFileRevision {
     return new CommitInfo.Builder(myRevisionNumber.getRevision().getNumber(), myDate, myAuthor).build();
   }
 
-  public String getURL() {
+  @NotNull
+  public Url getURL() {
     return myURL;
   }
 
-  public SVNRevision getPegRevision() {
+  public Revision getPegRevision() {
     return myPegRevision;
   }
 
-
   @NotNull
-  public VcsRevisionNumber getRevisionNumber() {
+  public SvnRevisionNumber getRevisionNumber() {
     return myRevisionNumber;
   }
 
@@ -117,7 +110,7 @@ public class SvnFileRevision implements VcsFileRevision {
 
   @Nullable
   @Override
-  public RepositoryLocation getChangedRepositoryPath() {
+  public SvnRepositoryLocation getChangedRepositoryPath() {
     return new SvnRepositoryLocation(myURL);
   }
 
@@ -133,20 +126,20 @@ public class SvnFileRevision implements VcsFileRevision {
     return myCommitMessage;
   }
 
-  public void addMergeSource(final SvnFileRevision source) {
+  public void addMergeSource(@NotNull SvnFileRevision source) {
     myMergeSources.add(source);
   }
 
+  @NotNull
   public List<SvnFileRevision> getMergeSources() {
     return myMergeSources;
   }
 
-  public byte[] loadContent() throws IOException, VcsException {
-    ContentLoader loader = new ContentLoader(myURL, myRevision, myPegRevision);
-    if (ApplicationManager.getApplication().isDispatchThread() &&
-        !myRevision.isLocal()) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(loader, SvnBundle.message("progress.title.loading.file.content"),
-                                                                        false, myVCS.getProject());
+  public byte[] loadContent() throws VcsException {
+    ContentLoader loader = new ContentLoader();
+    if (ApplicationManager.getApplication().isDispatchThread() && !getRevision().isLocal()) {
+      ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously(loader, message("progress.title.loading.file.content"), false, myVCS.getProject());
     }
     else {
       loader.run();
@@ -155,11 +148,13 @@ public class SvnFileRevision implements VcsFileRevision {
     VcsException exception = loader.getException();
     if (exception == null) {
       final byte[] contents = loader.getContents();
-      ContentRevisionCache.checkContentsSize(myURL, contents.length);
+      ContentRevisionCache.checkContentsSize(myURL.toDecodedString(), contents.length);
       return contents;
     }
     else {
-      LOG.info("Failed to load file '" + myURL + "' content at revision: " + myRevision + "\n" + exception.getMessage(), exception);
+      LOG
+        .info("Failed to load file '" + myURL.toDecodedString() + "' content at revision: " + getRevision() + "\n" + exception.getMessage(),
+              exception);
       throw exception;
     }
   }
@@ -167,13 +162,13 @@ public class SvnFileRevision implements VcsFileRevision {
   public byte[] getContent() throws IOException, VcsException {
     byte[] result;
 
-    if (SVNRevision.HEAD.equals(myRevision)) {
+    if (Revision.HEAD.equals(getRevision())) {
       result = loadContent();
     }
     else {
-      result = ContentRevisionCache.getOrLoadAsBytes(myVCS.getProject(), VcsUtil.getFilePathOnNonLocal(myURL, false), getRevisionNumber(),
-                                                     myVCS.getKeyInstanceMethod(), ContentRevisionCache.UniqueType.REMOTE_CONTENT,
-                                                     () -> loadContent());
+      result = ContentRevisionCache
+        .getOrLoadAsBytes(myVCS.getProject(), getFilePathOnNonLocal(myURL.toDecodedString(), false), getRevisionNumber(),
+                          myVCS.getKeyInstanceMethod(), ContentRevisionCache.UniqueType.REMOTE_CONTENT, () -> loadContent());
     }
 
     return result;
@@ -188,17 +183,8 @@ public class SvnFileRevision implements VcsFileRevision {
   }
 
   private class ContentLoader implements Runnable {
-    private final SVNRevision myRevision;
-    private final SVNRevision myPegRevision;
-    private final String myURL;
     private VcsException myException;
     private byte[] myContents;
-
-    public ContentLoader(String url, SVNRevision revision, SVNRevision pegRevision) {
-      myURL = url;
-      myRevision = revision;
-      myPegRevision = pegRevision;
-    }
 
     public VcsException getException() {
       return myException;
@@ -209,14 +195,11 @@ public class SvnFileRevision implements VcsFileRevision {
     }
 
     public void run() {
-      ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
-      if (progress != null) {
-        progress.setText(SvnBundle.message("progress.text.loading.contents", myURL));
-        progress.setText2(SvnBundle.message("progress.text2.revision.information", myRevision));
-      }
+      progress(message("progress.text.loading.contents", myURL.toDecodedString()),
+               message("progress.text2.revision.information", getRevision()));
 
       try {
-        myContents = SvnUtil.getFileContents(myVCS, SvnTarget.fromURL(SvnUtil.parseUrl(myURL)), myRevision, myPegRevision);
+        myContents = getFileContents(myVCS, Target.on(myURL), getRevision(), myPegRevision);
       }
       catch (VcsException e) {
         myException = e;
@@ -224,7 +207,8 @@ public class SvnFileRevision implements VcsFileRevision {
     }
   }
 
-  public SVNRevision getRevision() {
-    return myRevision;
+  @NotNull
+  public Revision getRevision() {
+    return myRevisionNumber.getRevision();
   }
 }

@@ -67,7 +67,7 @@ class JDOMElementBinding extends NotNullDeserializeBinding implements MultiNodeB
   @Override
   public Object deserializeList(@SuppressWarnings("NullableProblems") @NotNull Object context, @NotNull List<Element> elements) {
     if (myAccessor.getValueClass().isArray()) {
-      myAccessor.set(context, elements.toArray(new Element[elements.size()]));
+      myAccessor.set(context, elements.toArray(new Element[0]));
     }
     else {
       myAccessor.set(context, elements.get(0));

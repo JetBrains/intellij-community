@@ -29,9 +29,8 @@ import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.refactoring.NamesValidator;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -65,6 +64,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collection;
@@ -96,7 +97,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
       if (elements.length != 1) {
         if (elements.length == 0 && suggestCandidates(TargetElementUtil.findReference(editor, offset)).isEmpty()) {
           PsiElement element = findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset());
-          if (startFindUsages(editor, element)) {
+          if (startFindUsages(editor, project, element)) {
             return;
           }
 
@@ -115,7 +116,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
 
       PsiElement element = elements[0];
       if (element == findElementToShowUsagesOf(editor, editor.getCaretModel().getOffset()) &&
-          startFindUsages(editor, element)) {
+          startFindUsages(editor, project, element)) {
         return;
       }
 
@@ -133,18 +134,25 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     }
   }
 
-  private static boolean startFindUsages(@NotNull Editor editor, PsiElement element) {
-    if (element != null) {
+  private static boolean startFindUsages(@NotNull Editor editor, @NotNull Project project, PsiElement element) {
+    if (element == null) {
+      return false;
+    }
+    if (DumbService.getInstance(project).isDumb()) {
+      AnAction action = ActionManager.getInstance().getAction(ShowUsagesAction.ID);
+      String name = action.getTemplatePresentation().getText();
+      DumbService.getInstance(project).showDumbModeNotification(ActionUtil.getUnavailableMessage(name, false));
+    }
+    else {
       RelativePoint popupPosition = JBPopupFactory.getInstance().guessBestPopupLocation(editor);
       new ShowUsagesAction().startFindUsages(element, popupPosition, editor, ShowUsagesAction.getUsagesPageSize());
-      return true;
     }
-    return false;
+    return true;
   }
 
-  public static <T> T underModalProgress(@NotNull Project project,
-                                         @NotNull @Nls(capitalization = Nls.Capitalization.Title) String progressTitle,
-                                         @NotNull Computable<T> computable) throws ProcessCanceledException {
+  static <T> T underModalProgress(@NotNull Project project,
+                                  @NotNull @Nls(capitalization = Nls.Capitalization.Title) String progressTitle,
+                                  @NotNull Computable<T> computable) throws ProcessCanceledException {
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       DumbService.getInstance(project).setAlternativeResolveEnabled(true);
       try {
@@ -161,6 +169,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   private static void chooseAmbiguousTarget(final Editor editor, int offset, PsiElement[] elements, PsiFile currentFile) {
+    if (!editor.getComponent().isShowing()) return;
     PsiElementProcessor<PsiElement> navigateProcessor = element -> {
       gotoTargetElement(element, editor, currentFile);
       return true;
@@ -173,7 +182,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
   }
 
   private static boolean navigateInCurrentEditor(@NotNull PsiElement element, @NotNull PsiFile currentFile, @NotNull Editor currentEditor) {
-    if (element.getContainingFile() == currentFile) {
+    if (element.getContainingFile() == currentFile && !currentEditor.isDisposed()) {
       int offset = element.getTextOffset();
       PsiElement leaf = currentFile.findElementAt(offset);
       // check that element is really physically inside the file
@@ -323,6 +332,14 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
     if (event.getProject() == null ||
         event.getData(EditorGutter.KEY) != null ||
         Boolean.TRUE.equals(event.getData(CommonDataKeys.EDITOR_VIRTUAL_SPACE))) {
+      event.getPresentation().setEnabled(false);
+      return;
+    }
+
+    InputEvent inputEvent = event.getInputEvent();
+    Editor editor = event.getData(CommonDataKeys.EDITOR);
+    if (editor != null && inputEvent instanceof MouseEvent &&
+        editor.getInlayModel().getElementAt(new RelativePoint((MouseEvent)inputEvent).getPoint(editor.getContentComponent())) != null) {
       event.getPresentation().setEnabled(false);
       return;
     }

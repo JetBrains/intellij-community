@@ -24,13 +24,15 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.BranchChangeListener;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.MultiMap;
 import git4idea.GitUtil;
+import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.commands.GitMessageWithFilesDetector;
 import git4idea.config.GitVcsSettings;
@@ -43,6 +45,7 @@ import java.util.*;
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static git4idea.GitUtil.getRepositoryManager;
+import static java.util.stream.Collectors.toList;
 
 /**
  * Common class for Git operations with branches aware of multi-root configuration,
@@ -240,8 +243,15 @@ abstract class GitBranchOperation {
   /**
    * Updates the recently visited branch in the settings.
    * This is to be performed after successful checkout operation.
+   * @param branchName
    */
-  protected void updateRecentBranch() {
+  protected void updateRecentBranch(@Nullable String branchName) {
+    if (branchName != null) {
+      ApplicationManager.getApplication().invokeAndWait(() -> {
+        if (myProject.isDisposed()) return;
+        myProject.getMessageBus().syncPublisher(BranchChangeListener.VCS_BRANCH_CHANGED).branchHasChanged(branchName);
+      });
+    }
     if (getRepositories().size() == 1) {
       GitRepository repository = myRepositories.iterator().next();
       String currentHead = myCurrentHeads.get(repository);
@@ -257,6 +267,16 @@ abstract class GitBranchOperation {
       if (recentCommonBranch != null) {
         mySettings.setRecentCommonBranch(recentCommonBranch);
       }
+    }
+  }
+
+  protected void branchWillChange() {
+    String currentBranch = myCurrentHeads.values().iterator().next();
+    if (currentBranch != null) {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        if (myProject.isDisposed()) return;
+        myProject.getMessageBus().syncPublisher(BranchChangeListener.VCS_BRANCH_CHANGED).branchWillChange(currentBranch);
+      });
     }
   }
 
@@ -293,15 +313,6 @@ abstract class GitBranchOperation {
     myUiHandler.showUnmergedFilesNotification(getOperationName(), getRepositories());
   }
 
-  /**
-   * Asynchronously refreshes the VFS root directory of the given repository.
-   */
-  protected void refreshRoot(@NotNull GitRepository repository) {
-    // marking all files dirty, because sometimes FileWatcher is unable to process such a large set of changes that can happen during
-    // checkout on a large repository: IDEA-89944
-    VfsUtil.markDirtyAndRefresh(false, true, false, repository.getRoot());
-  }
-
   protected void fatalLocalChangesError(@NotNull String reference) {
     String title = String.format("Couldn't %s %s", getOperationName(), reference);
     if (wereSuccessful()) {
@@ -336,26 +347,21 @@ abstract class GitBranchOperation {
   }
 
   /**
-   * TODO this is non-optimal and even incorrect, since such diff shows the difference between committed changes
    * For each of the given repositories looks to the diff between current branch and the given branch and converts it to the list of
    * local changes.
    */
   @NotNull
   Map<GitRepository, List<Change>> collectLocalChangesConflictingWithBranch(@NotNull Collection<GitRepository> repositories,
-                                                                            @NotNull String currentBranch, @NotNull String otherBranch) {
+                                                                            @NotNull String otherBranch) {
     Map<GitRepository, List<Change>> changes = new HashMap<>();
     for (GitRepository repository : repositories) {
-      try {
-        Collection<String> diff = GitUtil.getPathsDiffBetweenRefs(myGit, repository, currentBranch, otherBranch);
+      Collection<Change> diffWithWorkingTree = GitChangeUtils.getDiffWithWorkingTree(repository, otherBranch, false);
+      if (diffWithWorkingTree != null) {
+        List<String> diff = ChangesUtil.getPaths(diffWithWorkingTree.stream()).map(FilePath::getPath).collect(toList());
         List<Change> changesInRepo = GitUtil.findLocalChangesForPaths(myProject, repository.getRoot(), diff, false);
         if (!changesInRepo.isEmpty()) {
           changes.put(repository, changesInRepo);
         }
-      }
-      catch (VcsException e) {
-        // ignoring the exception: this is not fatal if we won't collect such a diff from other repositories.
-        // At worst, use will get double dialog proposing the smart checkout.
-        LOG.warn(String.format("Couldn't collect diff between %s and %s in %s", currentBranch, otherBranch, repository.getRoot()), e);
       }
     }
     return changes;
@@ -384,7 +390,7 @@ abstract class GitBranchOperation {
     // get all other conflicting changes
     // get changes in all other repositories (except those which already have succeeded) to avoid multiple dialogs proposing smart checkout
     Map<GitRepository, List<Change>> conflictingChangesInRepositories =
-      collectLocalChangesConflictingWithBranch(getRemainingRepositoriesExceptGiven(currentRepository), currentBranch, nextBranch);
+      collectLocalChangesConflictingWithBranch(getRemainingRepositoriesExceptGiven(currentRepository), nextBranch);
 
     Set<GitRepository> otherProblematicRepositories = conflictingChangesInRepositories.keySet();
     List<GitRepository> allConflictingRepositories = new ArrayList<>(otherProblematicRepositories);

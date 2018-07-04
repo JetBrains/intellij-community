@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.ex.util;
 
 import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer.RestartableLexer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ExceptionWithAttachments;
@@ -38,10 +39,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
-import com.intellij.util.text.MergingCharSequence;
 import com.intellij.util.text.SingleCharSequence;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +67,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     myScheme = scheme;
     myLexer = highlighter.getHighlightingLexer();
     myLexer.start(ArrayUtil.EMPTY_CHAR_SEQUENCE);
-    myInitialState = myLexer.getState();
+    myInitialState = myLexer instanceof RestartableLexer ? ((RestartableLexer)myLexer).getRestartableState() : myLexer.getState();
     myHighlighter = highlighter;
     mySegments = createSegments();
   }
@@ -185,7 +186,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       int startOffset = mySegments.getSegmentStart(startIndex);
       int newEndOffset = e.getOffset() + e.getNewLength();
 
-      myLexer.start(text, startOffset, text.length(), myInitialState);
+      myLexer.start(text, startOffset, text.length(), startOffset == 0 && myLexer instanceof RestartableLexer ? ((RestartableLexer)myLexer).getStartState() : myInitialState);
 
       int lastTokenStart = -1;
       int lastLexerState = -1;
@@ -375,7 +376,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
 
     final TokenProcessor processor = createTokenProcessor(0);
     final int textLength = text.length();
-    myLexer.start(text, 0, textLength, myInitialState);
+    myLexer.start(text, 0, textLength, myLexer instanceof RestartableLexer ? ((RestartableLexer)myLexer).getStartState() : myInitialState);
     mySegments.removeAll();
     int i = 0;
     while (true) {
@@ -421,9 +422,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
   public List<TextAttributes> getAttributesForPreviousAndTypedChars(@NotNull Document document, int offset, char c) {
     final CharSequence text = document.getImmutableCharSequence();
 
-    final CharSequence newText = new MergingCharSequence(
-      new MergingCharSequence(text.subSequence(0, offset), new SingleCharSequence(c)),
-      text.subSequence(offset, text.length()));
+    CharSequence newText = StringUtil.replaceSubSequence(text, offset, offset, new SingleCharSequence(c));
 
     final List<IElementType> tokenTypes = getTokenType(newText, offset);
 
@@ -454,7 +453,7 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
       startOffset = mySegments.getSegmentStart(startIndex);
     }
 
-    myLexer.start(text, startOffset, text.length(), myInitialState);
+    myLexer.start(text, startOffset, text.length(), offset == 0 && myLexer instanceof RestartableLexer ? ((RestartableLexer)myLexer).getStartState() : myInitialState);
 
     while (myLexer.getTokenType() != null) {
       if (startIndex >= oldStartIndex) break;

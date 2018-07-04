@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.util;
 
@@ -30,7 +16,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VFileProperty;
@@ -38,15 +23,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import java.awt.*;
 import java.util.Comparator;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtilBase");
   public static final Comparator<Language> LANGUAGE_COMPARATOR = Comparator.comparing(Language::getID);
 
-  public static boolean isUnderPsiRoot(PsiFile root, PsiElement element) {
+  public static boolean isUnderPsiRoot(@NotNull PsiFile root, @NotNull PsiElement element) {
     PsiFile containingFile = element.getContainingFile();
     if (containingFile == root) return true;
     for (PsiFile psiRoot : root.getPsiRoots()) {
@@ -110,10 +98,12 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     return getPsiFileAtOffset(file, mostProbablyCorrectLanguageOffset);
   }
 
-  public static PsiFile getPsiFileAtOffset(final PsiFile file, final int offset) {
+  public static PsiFile getPsiFileAtOffset(@NotNull PsiFile file, final int offset) {
     PsiElement elt = getElementAtOffset(file, offset);
 
-    assert elt.isValid() : elt + "; file: "+file + "; isvalid: "+file.isValid();
+    if (!elt.isValid()) {
+      LOG.error(elt + "; file: " + file + "; isValid: " + file.isValid());
+    }
     return elt.getContainingFile();
   }
 
@@ -156,7 +146,10 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     while (true) {
       PsiElement parent = elt.getParent();
       TextRange range = elt.getTextRange();
-      assert range != null : "Range is null for " + elt + "; " + elt.getClass();
+      if (range == null) {
+        LOG.error("Range is null for " + elt + "; " + elt.getClass());
+        return file.getLanguage();
+      }
       if (range.contains(selectionRange) || parent == null || elt instanceof PsiFile) {
         return elt.getLanguage();
       }
@@ -210,7 +203,8 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
     Project project = psiFile.getProject();
     if (virtualFile.isInLocalFileSystem() || virtualFile.getFileSystem() instanceof NonPhysicalFileSystem) {
       // Try to find editor for the real file.
-      final FileEditor[] editors = FileEditorManager.getInstance(project).getEditors(virtualFile);
+      FileEditorManager fileEditorManager = FileEditorManager.getInstance(project);
+      final FileEditor[] editors = fileEditorManager != null ? fileEditorManager.getEditors(virtualFile) : new FileEditor[0];
       for (FileEditor editor : editors) {
         if (editor instanceof TextEditor) {
           return ((TextEditor)editor).getEditor();
@@ -218,9 +212,16 @@ public class PsiUtilBase extends PsiUtilCore implements PsiEditorUtil {
       }
     }
     // We assume that data context from focus-based retrieval should success if performed from EDT.
-    AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
-    if (asyncResult.isDone()) {
-      Editor editor = CommonDataKeys.EDITOR.getData(asyncResult.getResult());
+    Promise<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocusAsync();
+    if (asyncResult.isSucceeded()) {
+      Editor editor = null;
+      try {
+        editor = CommonDataKeys.EDITOR.getData(asyncResult.blockingGet(-1));
+      }
+      catch (TimeoutException | ExecutionException e) {
+        LOG.error(e);
+      }
+
       if (editor != null) {
         Document cachedDocument = PsiDocumentManager.getInstance(project).getCachedDocument(psiFile);
         // Ensure that target editor is found by checking its document against the one from given PSI element.

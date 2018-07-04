@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.ex.Descriptor;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.ide.IdeTooltip;
@@ -41,7 +26,6 @@ import com.intellij.ui.treeStructure.treetable.TreeTableTree;
 import com.intellij.util.Alarm;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
@@ -104,7 +88,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
     severitiesColumn.setMaxWidth(JBUI.scale(20));
 
     TableColumn isEnabledColumn = getColumnModel().getColumn(IS_ENABLED_COLUMN);
-    isEnabledColumn.setMaxWidth(JBUI.scale(20 + getAdditionalPadding()));
+    isEnabledColumn.setMaxWidth(JBUI.scale(22 + getAdditionalPadding()));
     ThreeStateCheckBoxRenderer boxRenderer = new ThreeStateCheckBoxRenderer();
     boxRenderer.setOpaque(true);
     isEnabledColumn.setCellRenderer(boxRenderer);
@@ -187,6 +171,18 @@ public class InspectionsConfigTreeTable extends TreeTable {
     getEmptyText().setText("No enabled inspections available");
   }
 
+  @Nullable
+  public InspectionConfigTreeNode.Tool getStrictlySelectedToolNode() {
+    TreePath[] paths = getTree().getSelectionPaths();
+    return paths != null && paths.length == 1 && paths[0].getLastPathComponent() instanceof InspectionConfigTreeNode.Tool
+           ? (InspectionConfigTreeNode.Tool)paths[0].getLastPathComponent()
+           : null;
+  }
+
+  public Collection<InspectionConfigTreeNode.Tool> getSelectedToolNodes() {
+    return InspectionsAggregationUtil.getInspectionsNodes(getTree().getSelectionPaths());
+  }
+
   @Override
   public void paint(@NotNull Graphics g) {
     super.paint(g);
@@ -233,7 +229,7 @@ public class InspectionsConfigTreeTable extends TreeTable {
     private final Runnable myUpdateRunnable;
     private TreeTable myTreeTable;
 
-    private Alarm myUpdateAlarm;
+    private final Alarm myUpdateAlarm;
 
     public InspectionsConfigTreeTableModel(final InspectionsConfigTreeTableSettings settings, @NotNull Disposable parentDisposable) {
       super(settings.getRoot());
@@ -316,9 +312,9 @@ public class InspectionsConfigTreeTable extends TreeTable {
       }
       final boolean doEnable = (Boolean) aValue;
       final InspectionProfileImpl profile = mySettings.getInspectionProfile();
-      for (final InspectionConfigTreeNode aNode : InspectionsAggregationUtil.getInspectionsNodes((InspectionConfigTreeNode)node)) {
+      if (profile == null) return;
+      for (final InspectionConfigTreeNode.Tool aNode : InspectionsAggregationUtil.getInspectionsNodes((InspectionConfigTreeNode)node)) {
         setToolEnabled(doEnable, profile, aNode.getKey().toString(), mySettings.getProject());
-        aNode.dropCache();
         mySettings.onChanged(aNode);
       }
       updateRightPanel();
@@ -350,12 +346,12 @@ public class InspectionsConfigTreeTable extends TreeTable {
       final boolean newState = !Boolean.TRUE.equals(state);
 
       final InspectionProfileImpl profile = mySettings.getInspectionProfile();
+      if (profile == null) return;
       for (HighlightDisplayKey tool : tools) {
         setToolEnabled(newState, profile, tool.toString(), mySettings.getProject());
       }
 
       for (InspectionConfigTreeNode node : nodes) {
-        node.dropCache();
         mySettings.onChanged(node);
       }
 
@@ -379,14 +375,12 @@ public class InspectionsConfigTreeTable extends TreeTable {
       }
       nodes.add(node);
 
-      final Descriptor descriptor = node.getDefaultDescriptor();
-      if (descriptor == null) {
+      if (node instanceof InspectionConfigTreeNode.Group) {
         for (int i = 0; i < node.getChildCount(); i++) {
           collectInspectionFromNodes((InspectionConfigTreeNode)node.getChildAt(i), tools, nodes);
         }
       } else {
-        final HighlightDisplayKey key = descriptor.getKey();
-        tools.add(key);
+        tools.add(((InspectionConfigTreeNode.Tool)node).getKey());
       }
     }
 

@@ -40,7 +40,7 @@ public abstract class VariableTypeMacroBase extends Macro {
     for (PsiElement element : vars) {
       JavaTemplateUtil.addElementLookupItem(set, element);
     }
-    return set.toArray(new LookupElement[set.size()]);
+    return set.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   @Override

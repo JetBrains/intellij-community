@@ -9,7 +9,7 @@ def f2(x):
         return bar
 
 def f3(x):
-    return foo + [x]
+    return bar + [x]
 
 def f4(x):
     global bar

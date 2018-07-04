@@ -15,8 +15,10 @@
  */
 package com.intellij.util.containers;
 
-import org.jetbrains.annotations.Nullable;
 
+/**
+ * see also {@link com.intellij.openapi.util.Condition} and {@link java.util.function.Predicate}
+ */
 public interface Predicate<T> {
-  boolean apply(@Nullable T input);
+  boolean apply(T input);
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
@@ -22,6 +8,8 @@ import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.override.PyOverrideImplementUtil;
+import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.inspections.quickfix.PyImplementMethodsQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
@@ -30,8 +18,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -58,10 +45,10 @@ public class PyAbstractClassInspection extends PyInspection {
 
     @Override
     public void visitPyClass(PyClass pyClass) {
-      if (isAbstract(pyClass)) {
+      if (isAbstract(pyClass) || PyProtocolsKt.isProtocol(pyClass, myTypeEvalContext)) {
         return;
       }
-      final Set<PyFunction> toImplement = new HashSet<>(PyOverrideImplementUtil.getAllSuperAbstractMethods(pyClass, myTypeEvalContext));
+      final List<PyFunction> toImplement = PyOverrideImplementUtil.getAllSuperAbstractMethods(pyClass, myTypeEvalContext);
       final ASTNode nameNode = pyClass.getNameNode();
       if (!toImplement.isEmpty() && nameNode != null) {
         registerProblem(nameNode.getPsi(),
@@ -82,7 +69,7 @@ public class PyAbstractClassInspection extends PyInspection {
         }
       }
       for (PyFunction method : pyClass.getMethods()) {
-        if (PyUtil.isDecoratedAsAbstract(method)) {
+        if (PyKnownDecoratorUtil.hasAbstractDecorator(method, myTypeEvalContext)) {
           return true;
         }
       }

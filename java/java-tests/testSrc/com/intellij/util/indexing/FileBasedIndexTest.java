@@ -8,7 +8,6 @@ import com.intellij.util.text.CharArrayCharSequence;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 5/23/13
  */
 public class FileBasedIndexTest extends LightCodeInsightFixtureTestCase {
 

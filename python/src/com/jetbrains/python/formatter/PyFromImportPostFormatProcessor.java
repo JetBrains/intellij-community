@@ -16,10 +16,12 @@
 package com.jetbrains.python.formatter;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor;
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessorHelper;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,8 +55,8 @@ public class PyFromImportPostFormatProcessor implements PostFormatProcessor {
     private final List<PyFromImportStatement> myImportStatements = new ArrayList<>();
     private PsiElement myRootElement;
 
-    public Visitor(@NotNull CommonCodeStyleSettings settings) {
-      myHelper = new PostFormatProcessorHelper(settings);
+    public Visitor(@NotNull CodeStyleSettings settings) {
+      myHelper = new PostFormatProcessorHelper(settings.getCommonSettings(PythonLanguage.getInstance()));
     }
 
     @Override
@@ -65,7 +67,7 @@ public class PyFromImportPostFormatProcessor implements PostFormatProcessor {
         final List<PyImportElement> importedNames = ContainerUtil.filter(node.getImportElements(), elem -> elem.getTextLength() != 0);
         if (importedNames.size() > 1) {
 
-          final PyCodeStyleSettings pySettings = ((CodeStyleSettings)myHelper.getSettings()).getCustomSettings(PyCodeStyleSettings.class);
+          final PyCodeStyleSettings pySettings = myHelper.getSettings().getRootSettings().getCustomSettings(PyCodeStyleSettings.class);
           final boolean forcedParens = pySettings.FROM_IMPORT_PARENTHESES_FORCE_IF_MULTILINE && PostFormatProcessorHelper.isMultiline(node);
           final boolean forcedComma = pySettings.FROM_IMPORT_TRAILING_COMMA_IF_MULTILINE && PostFormatProcessorHelper.isMultiline(node);
           final PyImportElement lastImportedName = importedNames.get(importedNames.size() - 1);
@@ -138,7 +140,7 @@ public class PyFromImportPostFormatProcessor implements PostFormatProcessor {
           }
           lastElementWasComment = cur instanceof PsiComment;
         }
-        final PyCodeStyleSettings pySettings = ((CodeStyleSettings)myHelper.getSettings()).getCustomSettings(PyCodeStyleSettings.class);
+        final PyCodeStyleSettings pySettings = myHelper.getSettings().getRootSettings().getCustomSettings(PyCodeStyleSettings.class);
         if (lastVisibleNameCommaOffset != -1 && pySettings.FROM_IMPORT_TRAILING_COMMA_IF_MULTILINE) {
           newStatementText.insert(lastVisibleNameCommaOffset, ",");
         }

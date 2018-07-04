@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -20,43 +6,38 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
+import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
 import java.io.File;
-import java.util.Map;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
+import static org.jetbrains.idea.svn.SvnUtil.append;
+
+
 public class SvnCopyPathTracker {
 
   private static final Logger LOG = Logger.getInstance(SvnCopyPathTracker.class);
 
   @NotNull private String myCurrentPath;
-  private String myRepositoryRoot;
+  @NotNull private final Url myRepositoryUrl;
   private boolean myHadChanged;
 
-  public SvnCopyPathTracker(@NotNull String repositoryUrl, @NotNull String relativeUrl) {
-    myRepositoryRoot = repositoryUrl;
-    myCurrentPath = relativeUrl;
+  public SvnCopyPathTracker(@NotNull Url repositoryUrl, @NotNull String repositoryRelativeUrl) {
+    myRepositoryUrl = repositoryUrl;
+    myCurrentPath = repositoryRelativeUrl;
   }
 
-  public void accept(@NotNull final LogEntry entry) {
-    final Map changedPaths = entry.getChangedPaths();
-    if (changedPaths == null) return;
-
-    for (Object o : changedPaths.values()) {
-      final LogEntryPath entryPath = (LogEntryPath) o;
+  public void accept(@NotNull LogEntry entry) {
+    for (LogEntryPath entryPath : entry.getChangedPaths().values()) {
       if (entryPath != null && 'A' == entryPath.getType() && entryPath.getCopyPath() != null) {
         if (myCurrentPath.equals(entryPath.getPath())) {
           myHadChanged = true;
           myCurrentPath = entryPath.getCopyPath();
           return;
-        } else if (SVNPathUtil.isAncestor(entryPath.getPath(), myCurrentPath)) {
-          final String relativePath = SVNPathUtil.getRelativePath(entryPath.getPath(), myCurrentPath);
-          myCurrentPath = SVNPathUtil.append(entryPath.getCopyPath(), relativePath);
+        }
+        else if (Url.isAncestor(entryPath.getPath(), myCurrentPath)) {
+          myCurrentPath = Url.append(entryPath.getCopyPath(), Url.getRelative(entryPath.getPath(), myCurrentPath));
           myHadChanged = true;
           return;
         }
@@ -65,15 +46,17 @@ public class SvnCopyPathTracker {
   }
 
   @Nullable
-  public FilePath getFilePath(final SvnVcs vcs) {
-    if (! myHadChanged) return null;
-    final SvnFileUrlMapping svnFileUrlMapping = vcs.getSvnFileUrlMapping();
-    final String absolutePath = SVNPathUtil.append(myRepositoryRoot, myCurrentPath);
-    final File localPath = svnFileUrlMapping.getLocalPath(absolutePath);
+  public FilePath getFilePath(@NotNull SvnVcs vcs) throws SvnBindException {
+    if (!myHadChanged) return null;
+
+    Url currentUrl = append(myRepositoryUrl, myCurrentPath);
+    File localPath = vcs.getSvnFileUrlMapping().getLocalPath(currentUrl);
+
     if (localPath == null) {
-      LOG.info("Cannot find local path for url: " + absolutePath);
+      LOG.info("Cannot find local path for url: " + currentUrl);
       return null;
     }
+
     return VcsUtil.getFilePath(localPath, false);
   }
 }

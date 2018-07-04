@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,10 +39,10 @@ public class ExpandBooleanIntentionTest extends IPPTestCase {
 
   public void testIncomplete1() { doTest("Expand boolean return to 'if else'"); }
   public void testIncomplete2() { doTest("Expand boolean assignment to 'if else'"); }
-  public void testIncomplete3() { doTest("Expand boolean assignment to 'if else'"); }
-  public void testIncomplete4() { doTest(); }
-  public void testIncomplete5() { doTest("Expand boolean assignment to 'if else'"); }
-  public void testIncomplete6() { doTest("Expand boolean return to 'if else'"); }
+  public void testIncomplete3() { assertIntentionNotAvailable("Expand boolean assignment to 'if else'"); }
+  public void testIncomplete4() { assertIntentionNotAvailable(); }
+  public void testIncomplete5() { assertIntentionNotAvailable("Expand boolean assignment to 'if else'"); }
+  public void testIncomplete6() { assertIntentionNotAvailable("Expand boolean return to 'if else'"); }
 
   @Override
   protected String getRelativePath() {

@@ -774,7 +774,7 @@ public class AdvancedEnhancer extends AbstractClassGenerator
     EmitUtils.constructor_switch(e, constructors, new ObjectSwitchCallback() {
       public void processCase(Object key, $Label end) {
         MethodInfo constructor = (MethodInfo)key;
-        $Type types[] = constructor.getSignature().getArgumentTypes();
+        $Type[] types = constructor.getSignature().getArgumentTypes();
         for (int i = 0; i < types.length; i++) {
           e.load_arg(1);
           e.push(i);

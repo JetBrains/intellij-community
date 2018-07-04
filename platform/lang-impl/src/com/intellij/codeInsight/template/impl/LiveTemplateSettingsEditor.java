@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.EverywhereContextType;
 import com.intellij.codeInsight.template.TemplateContextType;
 import com.intellij.icons.AllIcons;
@@ -26,10 +11,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
@@ -38,12 +21,11 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
@@ -99,8 +81,8 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myNodeChanged = nodeChanged;
     myDefaultShortcutItem = CodeInsightBundle.message("dialog.edit.template.shortcut.default", defaultShortcut);
 
-    myKeyField=new JTextField();
-    myDescription=new JTextField();
+    myKeyField = new JTextField(20);
+    myDescription = new JTextField(100);
     myTemplateEditor = TemplateEditorUtil.createEditor(false, myTemplate.getString(), context);
     myTemplate.setId(null);
 
@@ -135,16 +117,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   }
 
   void dispose() {
-    if (!myTemplateEditor.isDisposed()) {
-      final Project project = myTemplateEditor.getProject();
-      if (project != null && !project.isDisposed()) {
-        final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(myTemplateEditor.getDocument());
-        if (psiFile != null) {
-          DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(psiFile, true);
-        }
-      }
-      EditorFactory.getInstance().releaseEditor(myTemplateEditor);
-    }
+    TemplateEditorUtil.disposeTemplateEditor(myTemplateEditor);
   }
 
   private void createComponents(boolean allowNoContexts) {
@@ -321,10 +294,10 @@ public class LiveTemplateSettingsEditor extends JPanel {
       String oldPrefix = "";
       for (TemplateContextType type : getApplicableContexts()) {
         final TemplateContextType base = type.getBaseContextType();
-        String ownName = UIUtil.removeMnemonic(type.getPresentableName());
+        String ownName = presentableName(type);
         String prefix = "";
         if (base != null && !(base instanceof EverywhereContextType)) {
-          prefix = UIUtil.removeMnemonic(base.getPresentableName()) + ": ";
+          prefix = presentableName(base) + ": ";
           ownName = StringUtil.decapitalize(ownName);
         }
         if (type instanceof EverywhereContextType) {
@@ -389,6 +362,11 @@ public class LiveTemplateSettingsEditor extends JPanel {
     return panel;
   }
 
+  @NotNull
+  private static String presentableName(TemplateContextType type) {
+    return UIUtil.removeMnemonic(type.getPresentableName());
+  }
+
   private boolean disposeContextPopup() {
     if (myContextPopup != null && myContextPopup.isVisible()) {
       myContextPopup.cancel();
@@ -420,20 +398,26 @@ public class LiveTemplateSettingsEditor extends JPanel {
       protected void onNodeStateChanged(CheckedTreeNode node) {
         final TemplateContextType type = (TemplateContextType)((Pair)node.getUserObject()).first;
         if (type != null) {
-          context.setEnabled(type, node.isChecked());
+          boolean enabled = node.isChecked();
+          context.setEnabled(type, enabled);
+          for (TemplateContextType inheritor : hierarchy.get(type)) {
+            if (context.getOwnValue(inheritor) == null) {
+              context.setEnabled(inheritor, !enabled);
+            }
+          }
         }
         onChange.run();
 
       }
     };
 
-    for (TemplateContextType type : hierarchy.get(null)) {
+    for (TemplateContextType type : sortContexts(hierarchy.get(null))) {
       addContextNode(hierarchy, root, type, context);
     }
 
     ((DefaultTreeModel)checkboxTree.getModel()).nodeStructureChanged(root);
 
-    TreeUtil.traverse(root, _node -> {
+    TreeUtil.treeNodeTraverser(root).traverse(TreeTraversal.POST_ORDER_DFS).consumeEach(_node -> {
       final CheckedTreeNode node = (CheckedTreeNode)_node;
       if (node.isChecked()) {
         final TreeNode[] path = node.getPath();
@@ -441,8 +425,8 @@ public class LiveTemplateSettingsEditor extends JPanel {
           checkboxTree.expandPath(new TreePath(path).getParentPath());
         }
       }
-      return true;
     });
+    TreeUtil.expand(checkboxTree, 2);
 
     panel.add(ScrollPaneFactory.createScrollPane(checkboxTree));
     final Dimension size = checkboxTree.getPreferredSize();
@@ -451,25 +435,28 @@ public class LiveTemplateSettingsEditor extends JPanel {
     return panel;
   }
 
+  @NotNull
+  private static List<TemplateContextType> sortContexts(Collection<TemplateContextType> contextTypes) {
+    return ContainerUtil.sorted(contextTypes, (o1, o2) -> StringUtil.compare(presentableName(o1), presentableName(o2), true));
+  }
+
   private static void addContextNode(MultiMap<TemplateContextType, TemplateContextType> hierarchy,
                                      CheckedTreeNode parent,
                                      TemplateContextType type, TemplateContext context) {
-    final Collection<TemplateContextType> children = hierarchy.get(type);
-    final String name = UIUtil.removeMnemonic(type.getPresentableName());
-    final CheckedTreeNode node = new CheckedTreeNode(Pair.create(children.isEmpty() ? type : null, name));
+    Collection<TemplateContextType> children = hierarchy.get(type);
+    String name = presentableName(type);
+    CheckedTreeNode node = new CheckedTreeNode(Pair.create(children.isEmpty() ? type : null, name));
     parent.add(node);
 
-    if (children.isEmpty()) {
-      node.setChecked(context.isEnabled(type));
-    }
-    else {
-      for (TemplateContextType child : children) {
+    if (!children.isEmpty()) {
+      for (TemplateContextType child : sortContexts(children)) {
         addContextNode(hierarchy, node, child, context);
       }
       final CheckedTreeNode other = new CheckedTreeNode(Pair.create(type, "Other"));
       other.setChecked(context.isEnabled(type));
       node.add(other);
     }
+    node.setChecked(context.isEnabled(type));
   }
 
   private boolean isExpandableFromEditor() {

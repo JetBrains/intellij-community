@@ -29,10 +29,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
-import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.*;
 import com.jetbrains.python.PyNames;
 
 /**
@@ -51,13 +48,16 @@ public class CreatePackageAction extends DumbAwareAction {
     final PsiDirectory directory = DirectoryChooserUtil.getOrChooseDirectory(view);
 
     if (directory == null) return;
+    final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
+    final SmartPsiElementPointer<PsiDirectory> directoryPointer = pointerManager.createSmartPsiElementPointer(directory);
     final CreateDirectoryOrPackageHandler validator = new CreateDirectoryOrPackageHandler(project, directory, false, ".") {
       @Override
       protected void createDirectories(String subDirName) {
         super.createDirectories(subDirName);
         PsiFileSystemItem element = getCreatedElement();
-        if (element instanceof PsiDirectory) {
-          createInitPyInHierarchy((PsiDirectory)element, directory);
+        final PsiDirectory restoredDirectory = directoryPointer.getElement();
+        if (element instanceof PsiDirectory && restoredDirectory != null) {
+          createInitPyInHierarchy((PsiDirectory)element, restoredDirectory);
         }
       }
     };
@@ -74,7 +74,7 @@ public class CreatePackageAction extends DumbAwareAction {
     do {
       createInitPy(created);
       created = created.getParent();
-    } while(created != null && created != ancestor);
+    } while(created != null && !created.equals(ancestor));
   }
 
   private static void createInitPy(PsiDirectory directory) {

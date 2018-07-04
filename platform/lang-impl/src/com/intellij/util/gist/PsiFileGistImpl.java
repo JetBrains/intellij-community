@@ -84,7 +84,7 @@ class PsiFileGistImpl<Data> implements PsiFileGist<Data> {
 
   private static PsiFile getPsiFile(@NotNull Project project, @NotNull VirtualFile file) {
     PsiFile psi = PsiManager.getInstance(project).findFile(file);
-    if (psi == null || !(psi instanceof PsiFileImpl) || ((PsiFileImpl)psi).isContentsLoaded()) {
+    if (!(psi instanceof PsiFileImpl) || ((PsiFileImpl)psi).isContentsLoaded()) {
       return psi;
     }
 

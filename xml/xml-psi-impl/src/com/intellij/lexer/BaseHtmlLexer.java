@@ -116,7 +116,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
       }
 
       String name = TreeUtil.getTokenText(lexer);
-      if (caseInsensitive) name = name.toLowerCase();
+      if (caseInsensitive) name = name.toLowerCase(Locale.US);
 
       final boolean style = name.equals(TOKEN_STYLE);
       final int state = getState() & BASE_STATE_MASK;
@@ -360,7 +360,7 @@ public abstract class BaseHtmlLexer extends DelegateLexer {
 
         if (base.getTokenType() == XmlTokenType.XML_NAME) {
           String name = TreeUtil.getTokenText(base);
-          if (caseInsensitive) name = name.toLowerCase();
+          if (caseInsensitive) name = name.toLowerCase(Locale.US);
 
           if(endOfTheEmbeddment(name)) {
             break; // really found end

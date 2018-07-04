@@ -71,11 +71,13 @@ class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
 
     PsiMethod[] methods = OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
     for (PsiMethod psiMethod : methods) {
+      if (NullableStuffInspectionBase.shouldSkipOverriderAsGenerated(psiMethod)) continue;
+      
       PsiParameter[] psiParameters = psiMethod.getParameterList().getParameters();
       if (index >= psiParameters.length) continue;
-      PsiParameter psiParameter = psiParameters[index];
-      if (PsiManager.getInstance(project).isInProject(psiMethod) && AddAnnotationPsiFix.isAvailable(psiMethod, myAnnotation)) {
-        toAnnotate.add(psiParameter);
+      
+      if (AddAnnotationPsiFix.isAvailable(psiParameters[index], myAnnotation)) {
+        toAnnotate.add(psiParameters[index]);
       }
     }
 
@@ -87,7 +89,7 @@ class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
         if (AnnotationUtil.isAnnotatingApplicable(psiParam, myAnnotation)) {
           AddAnnotationPsiFix fix = new AddAnnotationPsiFix(myAnnotation, psiParam, PsiNameValuePair.EMPTY_ARRAY, myAnnosToRemove);
           PsiFile containingFile = psiParam.getContainingFile();
-          if (fix.isAvailable(project, containingFile, psiParam, psiParam)) {
+          if (psiParam.isValid() && fix.isAvailable(project, containingFile, psiParam, psiParam)) {
             fix.invoke(project, containingFile, psiParam, psiParam);
           }
         }

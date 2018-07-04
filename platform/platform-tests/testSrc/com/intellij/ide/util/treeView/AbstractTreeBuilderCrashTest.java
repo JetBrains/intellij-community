@@ -258,7 +258,7 @@ public abstract class AbstractTreeBuilderCrashTest extends BaseTreeTestCase  {
 
     @Override
     final Node[] getChildren() {
-      return myChildren.toArray(new Node[myChildren.size()]);
+      return myChildren.toArray(new Node[0]);
     }
   }
 

@@ -29,7 +29,7 @@ public class SwitchStatementsWithoutDefault
                 break;
         }
 
-        switch(bar)
+        <warning descr="'switch' statement without 'default' branch">switch</warning>(bar)
         {
             case 3:
             case 4:
@@ -52,16 +52,39 @@ public class SwitchStatementsWithoutDefault
             case baz:
                 break;
         }
-        switch(var)
+        <warning descr="'switch' statement without 'default' branch">switch</warning>(var)
         {
             case bar:
             case baz:
                 break;
         }
-        switch (var)
+        switch (var)<EOLError descr="'{' expected"></EOLError>
     }
 
     enum MyEnum {
         foo, bar, baz;
+    }
+
+    enum T {
+        A,
+        B;
+
+        public static T C = A;
+    }
+
+    public void test() {
+        T t = T.C;
+        switch (t) {
+            case A:
+                break;
+            case B:
+                break;
+        }
+    }
+
+    void empty(T t) {
+        switch (t) {
+
+        }
     }
 }

@@ -22,6 +22,7 @@ public class UserBinaryFileType extends UserFileType<UserBinaryFileType> {
     return null;
   }
 
+  @Override
   public boolean isBinary() {
     return true;
   }

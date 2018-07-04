@@ -28,7 +28,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 19, 2004
  */
 public class Target extends Tag{
   public Target(@NonNls String name, @Nullable String depends, @Nullable String description, @Nullable String unlessCondition) {
@@ -49,7 +48,7 @@ public class Target extends Tag{
     if (names.length > 5) {
       appendIfNonEmpty(options, names[4], names[5]);
     }
-    return options.toArray(new Pair[options.size()]);
+    return options.toArray(new Pair[0]);
   }
 
   private static void appendIfNonEmpty(List<Pair> options, final String paramName, String value) {

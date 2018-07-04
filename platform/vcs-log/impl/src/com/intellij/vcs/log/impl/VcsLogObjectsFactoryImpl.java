@@ -1,12 +1,9 @@
 package com.intellij.vcs.log.impl;
 
-import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
 import java.util.List;
 
 public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
@@ -51,19 +48,6 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
     VcsUser author = createUser(authorName, authorEmail);
     VcsUser committer = createUser(committerName, committerEmail);
     return new VcsCommitMetadataImpl(hash, parents, commitTime, root, subject, author, message, committer, authorTime);
-  }
-
-  @NotNull
-  @Override
-  public VcsFullCommitDetails createFullDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, VirtualFile root,
-                                                @NotNull String subject, @NotNull String authorName, @NotNull String authorEmail,
-                                                @NotNull String message, @NotNull String committerName, @NotNull String committerEmail,
-                                                long authorTime,
-                                                @NotNull ThrowableComputable<Collection<Change>, ? extends Exception> changesGetter) {
-    VcsUser author = createUser(authorName, authorEmail);
-    VcsUser committer = createUser(committerName, committerEmail);
-    return new VcsChangesLazilyParsedDetails(hash, parents, commitTime, root, subject, author, message, committer, authorTime,
-                                             changesGetter);
   }
 
   @NotNull

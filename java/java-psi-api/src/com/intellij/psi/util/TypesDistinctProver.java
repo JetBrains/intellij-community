@@ -17,7 +17,7 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 
 import java.util.Set;
 
@@ -85,7 +85,7 @@ public class TypesDistinctProver {
         }
 
         final PsiType bound = ((PsiWildcardType)type1).getBound();
-        return bound != null && !bound.equals(psiClass2);
+        return bound != null && !bound.equals(type2);
       }
       
       if (type2 instanceof PsiArrayType) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.remoteServer.runtime;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.runtime.deployment.DeploymentLogManager;
@@ -55,7 +56,7 @@ public interface ServerConnection<D extends DeploymentConfiguration> {
   Collection<Deployment> getDeployments();
 
   @Nullable
-  DeploymentLogManager getLogManager(@NotNull Deployment deployment);
+  DeploymentLogManager getLogManager(@NotNull Project project, @NotNull Deployment deployment);
 
   void connectIfNeeded(ServerConnector.ConnectionCallback<D> callback);
 }

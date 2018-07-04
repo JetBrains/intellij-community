@@ -385,7 +385,7 @@ public class ReformatOnlyVcsChangedTextTest extends LightPlatformTestCase {
   }
 
   class ChangedFilesStructure {
-    private TestFileStructure myFileStructure;
+    private final TestFileStructure myFileStructure;
 
     public ChangedFilesStructure(@NotNull PsiDirectory directory) {
       myFileStructure = new TestFileStructure(getModule(), directory);

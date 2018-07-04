@@ -27,6 +27,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
+import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -67,6 +68,19 @@ public class TestMethods extends TestMethod {
     return javaParameters;
   }
 
+  @Override
+  protected PsiElement retrievePsiElement(Object element) {
+    if (element instanceof SMTestProxy) {
+      JUnitConfiguration configuration = getConfiguration();
+      Location location = ((SMTestProxy)element).getLocation(configuration.getProject(),
+                                                             configuration.getConfigurationModule().getSearchScope());
+      if (location != null) {
+        return location.getPsiElement();
+      }
+    }
+    return super.retrievePsiElement(element);
+  }
+
   @Nullable
   @Override
   public SourceScope getSourceScope() {
@@ -84,7 +98,12 @@ public class TestMethods extends TestMethod {
     final Location location = testInfo.getLocation(project, searchScope);
     final PsiElement element = location != null ? location.getPsiElement() : null;
     if (element instanceof PsiMethod) {
-      final PsiClass containingClass = location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass() 
+      String nodeId = TestUniqueId.getEffectiveNodeId(testInfo, project, searchScope);
+      if (nodeId != null) {
+        return TestUniqueId.getUniqueIdPresentation().fun(nodeId);
+      }
+
+      final PsiClass containingClass = location instanceof MethodLocation ? ((MethodLocation)location).getContainingClass()
                                                                           : location instanceof PsiMemberParameterizedLocation ? ((PsiMemberParameterizedLocation)location).getContainingClass() 
                                                                                                                                : ((PsiMethod)element).getContainingClass();
       if (containingClass != null) {

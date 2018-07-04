@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers
 
 import com.intellij.CommonBundle
@@ -37,6 +23,7 @@ import org.jetbrains.annotations.Contract
 import java.awt.Desktop
 import java.io.File
 import java.io.IOException
+import java.net.URI
 import java.util.*
 
 open class BrowserLauncherAppless : BrowserLauncher() {
@@ -67,17 +54,11 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 
     private val defaultBrowserCommand: List<String>?
       get() {
-        if (SystemInfo.isWindows) {
-          return listOf(ExecUtil.getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""))
-        }
-        else if (SystemInfo.isMac) {
-          return listOf(ExecUtil.getOpenCommandPath())
-        }
-        else if (SystemInfo.isUnix && SystemInfo.hasXdgOpen()) {
-          return listOf("xdg-open")
-        }
-        else {
-          return null
+        return when {
+          SystemInfo.isWindows -> listOf(ExecUtil.windowsShellName, "/c", "start", GeneralCommandLine.inescapableQuote(""))
+          SystemInfo.isMac -> listOf(ExecUtil.openCommandPath)
+          SystemInfo.isUnix && SystemInfo.hasXdgOpen() -> listOf("xdg-open")
+          else -> null
         }
       }
 
@@ -100,15 +81,15 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       }
     }
 
-    fun isOpenCommandUsed(command: GeneralCommandLine) = SystemInfo.isMac && ExecUtil.getOpenCommandPath() == command.exePath
+    fun isOpenCommandUsed(command: GeneralCommandLine): Boolean = SystemInfo.isMac && ExecUtil.openCommandPath == command.exePath
   }
 
-  override fun open(url: String) = openOrBrowse(url, false)
+  override fun open(url: String): Unit = openOrBrowse(url, false)
 
   override fun browse(file: File) {
     var path = file.absolutePath
     if (SystemInfo.isWindows && path[0] != '/') {
-      path = '/' + path
+      path = "/$path"
     }
     openOrBrowse("${StandardFileSystems.FILE_PROTOCOL_PREFIX}$path", true)
   }
@@ -119,6 +100,16 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 
   private fun openOrBrowse(_url: String, browse: Boolean, project: Project? = null) {
     val url = signUrl(_url.trim { it <= ' ' })
+
+    if (url.startsWith("mailto:") && Desktop.getDesktop().isSupported(Desktop.Action.MAIL)) {
+      try {
+        Desktop.getDesktop().mail(URI(url))
+      }
+      catch (e: Exception) {
+        LOG.warn("failed to open: $url", e)
+      }
+      return
+    }
 
     if (!BrowserUtil.isAbsoluteURL(url)) {
       val file = File(url)
@@ -175,9 +166,9 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     browseUsingNotSystemDefaultBrowserPolicy(url, settings, project = project)
   }
 
-  open protected fun signUrl(url: String): String = url
+  protected open fun signUrl(url: String): String = url
 
-  override final fun browse(url: String, browser: WebBrowser?, project: Project?) {
+  final override fun browse(url: String, browser: WebBrowser?, project: Project?) {
     val effectiveBrowser = getEffectiveBrowser(browser)
     // if browser is not passed, UrlOpener should be not used for non-http(s) urls
     if (effectiveBrowser == null || (browser == null && !url.startsWith(URLUtil.HTTP_PROTOCOL))) {
@@ -245,13 +236,13 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 
     addArgs(commandLine, browserSpecificSettings, additionalParameters)
 
-    try {
+    return try {
       checkCreatedProcess(browser, project, commandLine, commandLine.createProcess(), launchTask)
-      return true
+      true
     }
     catch (e: ExecutionException) {
       showError(e.message, browser, project, null, null)
-      return false
+      false
     }
 
   }
@@ -264,5 +255,5 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     LOG.warn(error)
   }
 
-  open protected fun getEffectiveBrowser(browser: WebBrowser?): WebBrowser? = browser
+  protected open fun getEffectiveBrowser(browser: WebBrowser?): WebBrowser? = browser
 }

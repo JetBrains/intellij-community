@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.util.ObjectUtils;
@@ -31,10 +18,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.siyeh.ig.psiutils.MethodCallUtils.getQualifierMethodCall;
 
-/**
- * @author Tagir Valeev
- */
-public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalInspectionTool {
+public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher STREAM_COUNT =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "count").parameterCount(0);
   private static final CallMatcher COLLECTION_STREAM =
@@ -42,10 +26,14 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
   private static final CallMatcher STREAM_FLAT_MAP =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "flatMap").parameterTypes(
       CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION);
+  private static final CallMatcher STREAM_FILTER =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_BASE_STREAM, "filter").parameterCount(1);
 
   private static final CallMapper<CountFix> FIX_MAPPER = new CallMapper<CountFix>()
-    .register(COLLECTION_STREAM, call -> new CountFix(false))
-    .register(STREAM_FLAT_MAP, call -> doesFlatMapCallCollectionStream(call) ? new CountFix(true) : null);
+    .register(COLLECTION_STREAM, call -> new CountFix(SimplificationMode.COLLECTION_SIZE))
+    .register(STREAM_FLAT_MAP, call -> doesFlatMapCallCollectionStream(call) ? new CountFix(SimplificationMode.SUM) : null)
+    .register(STREAM_FILTER, call -> extractComparisonWithZero(call) != null ? new CountFix(SimplificationMode.ANY_MATCH) : null)
+    .register(STREAM_FILTER, call -> extractComparisonWithZeroEq(call) != null ? new CountFix(SimplificationMode.NONE_MATCH) : null);
 
   private static final Logger LOG = Logger.getInstance(ReplaceInefficientStreamCountInspection.class);
 
@@ -80,13 +68,46 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
     };
   }
 
+  @Nullable
+  private static PsiBinaryExpression extractComparisonWithZero(PsiMethodCallExpression filterCall) {
+    PsiBinaryExpression binary = extractBinary(filterCall);
+    if (binary == null) return null;
+    IElementType tokenType = binary.getOperationTokenType();
+    if(ExpressionUtils.isZero(binary.getLOperand()) && (tokenType == JavaTokenType.LT || tokenType == JavaTokenType.NE) ||
+       ExpressionUtils.isZero(binary.getROperand()) && (tokenType == JavaTokenType.GT || tokenType == JavaTokenType.NE)) {
+      return binary;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiBinaryExpression extractComparisonWithZeroEq(PsiMethodCallExpression filterCall) {
+    PsiBinaryExpression binary = extractBinary(filterCall);
+    if (binary == null) return null;
+    IElementType tokenType = binary.getOperationTokenType();
+    if(ExpressionUtils.isZero(binary.getLOperand()) && tokenType == JavaTokenType.EQEQ ||
+       ExpressionUtils.isZero(binary.getROperand()) && tokenType == JavaTokenType.EQEQ) {
+      return binary;
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiBinaryExpression extractBinary(PsiMethodCallExpression filterCall) {
+    PsiMethodCallExpression countCall = ExpressionUtils.getCallForQualifier(filterCall);
+    if(countCall == null) return null;
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(countCall.getParent());
+    if(parent == null) return null;
+    return ObjectUtils.tryCast(parent, PsiBinaryExpression.class);
+  }
+
   static boolean doesFlatMapCallCollectionStream(PsiMethodCallExpression flatMapCall) {
     PsiElement function = flatMapCall.getArgumentList().getExpressions()[0];
     if (function instanceof PsiMethodReferenceExpression) {
       PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)function;
       if (!STREAM_METHOD.equals(methodRef.getReferenceName())) return false;
       PsiMethod method = ObjectUtils.tryCast(methodRef.resolve(), PsiMethod.class);
-      if (method != null && STREAM_METHOD.equals(method.getName()) && method.getParameterList().getParametersCount() == 0) {
+      if (method != null && STREAM_METHOD.equals(method.getName()) && method.getParameterList().isEmpty()) {
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass != null && CommonClassNames.JAVA_UTIL_COLLECTION.equals(containingClass.getQualifiedName())) {
           return true;
@@ -116,20 +137,41 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
     return PsiUtil.skipParenthesizedExprDown(expression);
   }
 
-  private static class CountFix implements LocalQuickFix {
-    private final boolean myFlatMapMode;
+  private enum SimplificationMode {
+    SUM("Replace Stream.flatMap().count() with Stream.mapToLong().sum()", "Stream.flatMap().count() can be replaced with Stream.mapToLong().sum()"),
+    COLLECTION_SIZE("Replace Collection.stream().count() with Collection.size()", "Collection.stream().count() can be replaced with Collection.size()"),
+    ANY_MATCH("Replace Stream().filter().count() > 0 with stream.anyMatch()", "Stream().filter().count() > 0 can be replaced with stream.anyMatch()"),
+    NONE_MATCH("Replace Stream().filter().count() == 0 with stream.noneMatch()", "Stream().filter().count() == 0 can be replaced with stream.noneMatch()");
 
-    CountFix(boolean flatMapMode) {
-      myFlatMapMode = flatMapMode;
+    private final String myName;
+    private final String myMessage;
+
+    public String getName() {
+      return myName;
+    }
+
+    SimplificationMode(String name, String message) {
+      myName = name;
+      myMessage = message;
+    }
+
+    public String getMessage() {
+      return myMessage;
+    }
+  }
+
+  private static class CountFix implements LocalQuickFix {
+    private final SimplificationMode mySimplificationMode;
+
+    CountFix(SimplificationMode simplificationMode) {
+      mySimplificationMode = simplificationMode;
     }
 
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return myFlatMapMode
-             ? "Replace Stream.flatMap().count() with Stream.mapToLong().sum()"
-             : "Replace Collection.stream().count() with Collection.size()";
+      return mySimplificationMode.getName();
     }
 
     @Nls
@@ -148,12 +190,33 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
       if (countName == null) return;
       PsiMethodCallExpression qualifierCall = getQualifierMethodCall(countCall);
       if (qualifierCall == null) return;
-      if(myFlatMapMode) {
-        replaceFlatMap(countName, qualifierCall);
+      switch (mySimplificationMode) {
+        case SUM:
+          replaceFlatMap(countName, qualifierCall);
+          break;
+        case COLLECTION_SIZE:
+          replaceSimpleCount(countCall, qualifierCall);
+          break;
+        case ANY_MATCH:
+          replaceFilterCountComparison(qualifierCall, true);
+          break;
+        case NONE_MATCH:
+          replaceFilterCountComparison(qualifierCall, false);
+          break;
       }
-      else {
-        replaceSimpleCount(countCall, qualifierCall);
-      }
+    }
+
+    private static void replaceFilterCountComparison(PsiMethodCallExpression filterCall, boolean isAnyMatch) {
+      if(!STREAM_FILTER.test(filterCall)) return;
+      PsiBinaryExpression comparison = isAnyMatch? extractComparisonWithZero(filterCall) : extractComparisonWithZeroEq(filterCall);
+      if(comparison == null) return;
+      String filterText = filterCall.getArgumentList().getExpressions()[0].getText();
+      PsiExpression filterQualifier = filterCall.getMethodExpression().getQualifierExpression();
+      if(filterQualifier == null) return;
+      String base = filterQualifier.getText();
+      CommentTracker ct = new CommentTracker();
+      ct.markUnchanged(filterQualifier);
+      ct.replaceAndRestoreComments(comparison, base + "." + (isAnyMatch? "anyMatch" : "noneMatch") + "(" + filterText + ")");
     }
 
     private static void replaceSimpleCount(PsiMethodCallExpression countCall, PsiMethodCallExpression qualifierCall) {
@@ -214,8 +277,7 @@ public class ReplaceInefficientStreamCountInspection extends BaseJavaBatchLocalI
     }
 
     public String getMessage() {
-      return myFlatMapMode ? "Stream.flatMap().count() can be replaced with Stream.mapToLong().sum()" :
-             "Collection.stream().count() can be replaced with Collection.size()";
+      return mySimplificationMode.getMessage();
     }
   }
 }

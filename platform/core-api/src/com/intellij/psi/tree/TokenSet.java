@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.tree;
 
 import com.intellij.openapi.diagnostic.LogUtil;
+import com.intellij.psi.TokenType;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +21,7 @@ public class TokenSet {
   public static final TokenSet ANY = new TokenSet(Short.MAX_VALUE, (short)0) {
     @Override public boolean contains(IElementType t) { return true; }
   };
+  public static final TokenSet WHITE_SPACE = doCreate(TokenType.WHITE_SPACE);
 
   private final short myShift;
   private final short myMax;
@@ -86,7 +74,7 @@ public class TokenSet {
             list.add(type);
           }
         }
-        types = list.toArray(new IElementType[list.size()]);
+        types = list.toArray(IElementType.EMPTY_ARRAY);
       }
       myTypes = types;
     }
@@ -108,7 +96,14 @@ public class TokenSet {
   @NotNull
   public static TokenSet create(@NotNull IElementType... types) {
     if (types.length == 0) return EMPTY;
+    if (types.length == 1 && types[0] == TokenType.WHITE_SPACE) {
+      return WHITE_SPACE;
+    }
+    return doCreate(types);
+  }
 
+  @NotNull
+  private static TokenSet doCreate(@NotNull IElementType... types) {
     short min = Short.MAX_VALUE;
     short max = 0;
     for (IElementType type : types) {

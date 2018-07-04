@@ -41,8 +41,10 @@ class JpsCompilationData {
   final File dataStorageRoot
   final Set<String> compiledModules = new HashSet<>()
   final Set<String> compiledModuleTests = new HashSet<>()
+  final Set<String> builtArtifacts = new HashSet<>()
   Logger.Factory fileLoggerFactory
   boolean statisticsReported
+  boolean projectDependenciesResolved
 
   JpsCompilationData(File dataStorageRoot, File buildLogFile, String categoriesWithDebugLevel, BuildMessages messages) {
     this.dataStorageRoot = dataStorageRoot

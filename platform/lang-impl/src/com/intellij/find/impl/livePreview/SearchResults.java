@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl.livePreview;
 
 
@@ -29,13 +15,13 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -195,9 +181,11 @@ public class SearchResults implements DocumentListener {
     searchCompleted(new ArrayList<>(), getEditor(), null, false, null, getStamp());
   }
 
-  void updateThreadSafe(@NotNull FindModel findModel, final boolean toChangeSelection, @Nullable final TextRange next, final int stamp) {
-    if (myDisposed) return;
+  ActionCallback updateThreadSafe(@NotNull FindModel findModel, final boolean toChangeSelection, 
+                                  @Nullable final TextRange next, final int stamp) {
+    if (myDisposed) return ActionCallback.DONE;
 
+    ActionCallback result = new ActionCallback();
     final Editor editor = getEditor();
 
     updatePreviousFindModel(findModel);
@@ -227,7 +215,16 @@ public class SearchResults implements DocumentListener {
         }
       }
 
-      final Runnable searchCompletedRunnable = () -> searchCompleted(results, editor, findModel, toChangeSelection, next, stamp);
+      long documentTimeStamp = editor.getDocument().getModificationStamp();
+      final Runnable searchCompletedRunnable = () -> {
+        if (editor.getDocument().getModificationStamp() == documentTimeStamp) {
+          searchCompleted(results, editor, findModel, toChangeSelection, next, stamp);
+          result.setDone();
+        }
+        else {
+          result.setRejected();
+        }
+      };
 
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         searchCompletedRunnable.run();
@@ -236,6 +233,7 @@ public class SearchResults implements DocumentListener {
         UIUtil.invokeLaterIfNeeded(searchCompletedRunnable);
       }
     });
+    return result;
   }
 
   private void updatePreviousFindModel(@NotNull FindModel model) {
@@ -271,7 +269,8 @@ public class SearchResults implements DocumentListener {
   private void findInRange(@NotNull TextRange range, @NotNull Editor editor, @NotNull FindModel findModel, @NotNull List<FindResult> results) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
 
-    CharSequence charSequence = editor.getDocument().getCharsSequence();
+    // Document can change even while we're holding read lock (example case - console), so we're taking an immutable snapshot of text here
+    CharSequence charSequence = editor.getDocument().getImmutableCharSequence();
 
     int offset = range.getStartOffset();
     int maxOffset = Math.min(range.getEndOffset(), charSequence.length());
@@ -282,6 +281,7 @@ public class SearchResults implements DocumentListener {
       try {
         CharSequence bombedCharSequence = StringUtil.newBombedCharSequence(charSequence, 3000);
         result = findManager.findString(bombedCharSequence, offset, findModel, virtualFile);
+        ((StringUtil.BombedCharSequence)bombedCharSequence).defuse();
       }
       catch(PatternSyntaxException | ProcessCanceledException e) {
         result = null;

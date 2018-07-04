@@ -21,7 +21,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Oct 22, 2008
  */
 public interface DebuggerClassFilterProvider {
   ExtensionPointName<DebuggerClassFilterProvider> EP_NAME = new ExtensionPointName<>("com.intellij.debuggerClassFilterProvider");

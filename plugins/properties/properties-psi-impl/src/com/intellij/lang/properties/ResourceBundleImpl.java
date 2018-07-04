@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 /**
@@ -21,44 +9,49 @@ package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
 
 public class ResourceBundleImpl extends ResourceBundle {
-  @NotNull private final PropertiesFile myDefaultPropertiesFile;
+  @NotNull
+  private final SmartPsiElementPointer<PsiFile> myDefaultPropertiesFile;
   private boolean myValid = true;
 
   public ResourceBundleImpl(@NotNull final PropertiesFile defaultPropertiesFile) {
-    myDefaultPropertiesFile = defaultPropertiesFile;
+    myDefaultPropertiesFile = SmartPointerManager.getInstance(defaultPropertiesFile.getProject()).createSmartPsiElementPointer(defaultPropertiesFile.getContainingFile());
   }
 
   @NotNull
   @Override
   public List<PropertiesFile> getPropertiesFiles() {
-    return PropertiesImplUtil.getResourceBundleWithCachedFiles(myDefaultPropertiesFile).getFiles();
+    return PropertiesImplUtil.getResourceBundleFiles(getDefaultPropertiesFile());
   }
 
   @NotNull
   @Override
   public PropertiesFile getDefaultPropertiesFile() {
-    return myDefaultPropertiesFile;
+    return Objects.requireNonNull(PropertiesImplUtil.getPropertiesFile(myDefaultPropertiesFile.getElement()));
   }
 
   @NotNull
   @Override
   public String getBaseName() {
-    return ResourceBundleManager.getInstance(getProject()).getBaseName(myDefaultPropertiesFile.getContainingFile());
+    return ResourceBundleManager.getInstance(getProject()).getBaseName(Objects.requireNonNull(myDefaultPropertiesFile.getElement()));
   }
 
   @NotNull
   public VirtualFile getBaseDirectory() {
-    return myDefaultPropertiesFile.getParent().getVirtualFile();
+    return getDefaultPropertiesFile().getParent().getVirtualFile();
   }
 
   @Override
   public boolean isValid() {
-    return myValid && myDefaultPropertiesFile.getContainingFile().isValid();
+    return myValid && myDefaultPropertiesFile.getElement() != null;
   }
 
   public void invalidate() {

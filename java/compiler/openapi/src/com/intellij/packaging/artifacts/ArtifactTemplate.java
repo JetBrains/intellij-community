@@ -26,27 +26,10 @@ public abstract class ArtifactTemplate {
 
   public abstract String getPresentableName();
 
-  /**
-   * @deprecated override {@link #createArtifact()} instead
-   */
-  @Deprecated
-  public CompositePackagingElement<?> createRootElement(@NotNull String artifactName) {
-    return null;
-  }
-
-  /**
-   * @deprecated override {@link #createArtifact()} instead
-   */
-  @Deprecated
-  @NotNull
-  public String suggestArtifactName() {
-    return "unnamed";
-  }
-
   @Nullable
   public NewArtifactConfiguration createArtifact() {
-    final String name = suggestArtifactName();
-    return new NewArtifactConfiguration(createRootElement(name), name, null);
+    final String name = "unnamed";
+    return new NewArtifactConfiguration(null, name, null);
   }
 
   public void setUpArtifact(@NotNull Artifact artifact, @NotNull NewArtifactConfiguration configuration) {

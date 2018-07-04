@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,13 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.SwitchUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -35,6 +39,7 @@ public class SwitchStatementsWithoutDefaultInspection extends BaseInspection {
     return InspectionGadgetsBundle.message("switch.statements.without.default.display.name");
   }
 
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -63,70 +68,23 @@ public class SwitchStatementsWithoutDefaultInspection extends BaseInspection {
     @Override
     public void visitSwitchStatement(@NotNull PsiSwitchStatement statement) {
       super.visitSwitchStatement(statement);
-      if (switchStatementHasDefault(statement)) {
+      final int count = SwitchUtils.calculateBranchCount(statement);
+      if (count <= 0) {
         return;
       }
-      if (m_ignoreFullyCoveredEnums && switchStatementIsFullyCoveredEnum(statement)) {
+      if (m_ignoreFullyCoveredEnums && switchStatementIsFullyCoveredEnum(statement, count)) {
         return;
       }
       registerStatementError(statement);
     }
 
-    private boolean switchStatementHasDefault(PsiSwitchStatement statement) {
-      final PsiCodeBlock body = statement.getBody();
-      if (body == null) {
-        return true; // do not warn about incomplete code
-      }
-      final PsiStatement[] statements = body.getStatements();
-      if (statements.length == 0) {
-        return true; // do not warn when no switch branches are present at all
-      }
-      for (final PsiStatement child : statements) {
-        if (!(child instanceof PsiSwitchLabelStatement)) {
-          continue;
-        }
-        final PsiSwitchLabelStatement switchLabelStatement = (PsiSwitchLabelStatement)child;
-        if (switchLabelStatement.isDefaultCase()) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    private boolean switchStatementIsFullyCoveredEnum(PsiSwitchStatement statement) {
+    private boolean switchStatementIsFullyCoveredEnum(PsiSwitchStatement statement, int branchCount) {
       final PsiExpression expression = statement.getExpression();
       if (expression == null) {
-        return false;
+        return true; // don't warn on incomplete code
       }
-      final PsiType type = expression.getType();
-      if (!(type instanceof PsiClassType)) {
-        return false;
-      }
-      final PsiClassType classType = (PsiClassType)type;
-      final PsiClass aClass = classType.resolve();
-      if (aClass == null || !aClass.isEnum()) {
-        return false;
-      }
-      final PsiCodeBlock body = statement.getBody();
-      if (body == null) {
-        return false;
-      }
-      final PsiStatement[] statements = body.getStatements();
-      int numCases = 0;
-      for (final PsiStatement child : statements) {
-        if (child instanceof PsiSwitchLabelStatement) {
-          numCases++;
-        }
-      }
-      final PsiField[] fields = aClass.getFields();
-      int numEnums = 0;
-      for (final PsiField field : fields) {
-        final PsiType fieldType = field.getType();
-        if (fieldType.equals(type)) {
-          numEnums++;
-        }
-      }
-      return numEnums == numCases;
+      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(expression.getType());
+      return aClass != null && aClass.isEnum() && ControlFlowUtils.hasChildrenOfTypeCount(aClass, branchCount, PsiEnumConstant.class);
     }
   }
 }

@@ -44,19 +44,16 @@ public class SvnAddTest extends Svn17TestCase {
   @Test
   public void testDirAndFileInCommand() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      public void run() {
-        try {
-          VirtualFile dir = myWorkingCopyDir.createChildDirectory(this, "child");
-          dir.createChildData(this, "a.txt");
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      try {
+        VirtualFile dir = myWorkingCopyDir.createChildDirectory(this, "child");
+        dir.createChildData(this, "a.txt");
       }
-    }.execute();
-    
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    });
+
     runAndVerifyStatusSorted("A child", "A child" + File.separatorChar + "a.txt");
   }
 

@@ -60,7 +60,7 @@ public class GenerateConstructorTest extends LightCodeInsightFixtureTestCase {
   public void testSubstitution() { doTest(true); }
 
   public void testImmediatelyAfterRBrace() {    // IDEADEV-28811
-    CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
+    CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).CLASS_BRACE_STYLE = CommonCodeStyleSettings.NEXT_LINE;
     doTest();
   }
 
@@ -76,7 +76,7 @@ public class GenerateConstructorTest extends LightCodeInsightFixtureTestCase {
 
   @NotNull
   private JavaCodeStyleSettings getJavaSettings() {
-    return CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().getCustomSettings(JavaCodeStyleSettings.class);
+    return JavaCodeStyleSettings.getInstance(getProject());
   }
 
   public void testFieldPrefixCoincidence1() {
@@ -92,6 +92,8 @@ public class GenerateConstructorTest extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testNullableField() { doTest(); }
+
   private void doTest() {
     doTest(false);
   }
@@ -104,7 +106,7 @@ public class GenerateConstructorTest extends LightCodeInsightFixtureTestCase {
       protected ClassMember[] chooseMembers(ClassMember[] members, boolean allowEmpty, boolean copyJavadoc, Project project, Editor editor) {
         if (preSelect) {
           List<ClassMember> preselection = GenerateConstructorHandler.preselect(members);
-          return preselection.toArray(new ClassMember[preselection.size()]);
+          return preselection.toArray(ClassMember.EMPTY_ARRAY);
         }
         else {
           return members;

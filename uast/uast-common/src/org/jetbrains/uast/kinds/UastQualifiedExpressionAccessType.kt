@@ -20,12 +20,12 @@ package org.jetbrains.uast
  * Additional type examples: Kotlin safe call (?.).
  */
 open class UastQualifiedExpressionAccessType(val name: String) {
-    companion object {
-        @JvmField
-        val SIMPLE = UastQualifiedExpressionAccessType(".")
-    }
+  companion object {
+    @JvmField
+    val SIMPLE: UastQualifiedExpressionAccessType = UastQualifiedExpressionAccessType(".")
+  }
 
-    override fun toString(): String{
-        return "UastQualifiedExpressionAccessType(name='$name')"
-    }
+  override fun toString(): String {
+    return "UastQualifiedExpressionAccessType(name='$name')"
+  }
 }

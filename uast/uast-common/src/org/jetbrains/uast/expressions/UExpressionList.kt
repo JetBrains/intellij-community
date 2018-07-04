@@ -24,29 +24,29 @@ import org.jetbrains.uast.visitor.UastVisitor
  * Represents a generic list of expressions.
  */
 interface UExpressionList : UExpression {
-    /**
-     * Returns the list of expressions.
-     */
-    val expressions: List<UExpression>
+  /**
+   * Returns the list of expressions.
+   */
+  val expressions: List<UExpression>
 
-    /**
-     * Returns the list kind.
-     */
-    val kind: UastSpecialExpressionKind
+  /**
+   * Returns the list kind.
+   */
+  val kind: UastSpecialExpressionKind
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitExpressionList(this)) return
-        annotations.acceptList(visitor)
-        expressions.acceptList(visitor)
-        visitor.afterVisitExpressionList(this)
-    }
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitExpressionList(this)) return
+    annotations.acceptList(visitor)
+    expressions.acceptList(visitor)
+    visitor.afterVisitExpressionList(this)
+  }
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
-            visitor.visitExpressionList(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
+    visitor.visitExpressionList(this, data)
 
-    fun firstOrNull(): UExpression? = expressions.firstOrNull()
+  fun firstOrNull(): UExpression? = expressions.firstOrNull()
 
-    override fun asLogString() = log(kind.name)
+  override fun asLogString(): String = log(kind.name)
 
-    override fun asRenderString() = kind.name + " " + expressions.joinToString(" : ") { it.asRenderString() }
+  override fun asRenderString(): String = kind.name + " " + expressions.joinToString(" : ") { it.asRenderString() }
 }

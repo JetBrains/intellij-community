@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 30, 2010
  */
 public abstract class AntDomCustomElement extends AntDomElement{
 

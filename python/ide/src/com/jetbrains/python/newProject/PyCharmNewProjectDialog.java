@@ -23,4 +23,9 @@ public class PyCharmNewProjectDialog extends AbstractNewProjectDialog {
   protected PyCharmNewProjectStep createRootStep() {
     return new PyCharmNewProjectStep();
   }
+
+  @Override
+  protected String getHelpId() {
+    return "concepts.project";
+  }
 }

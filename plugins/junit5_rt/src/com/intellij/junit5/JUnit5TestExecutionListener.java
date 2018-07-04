@@ -38,7 +38,6 @@ import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class JUnit5TestExecutionListener implements TestExecutionListener {
   private static final String NO_LOCATION_HINT = "";
@@ -46,10 +45,11 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   private final PrintStream myPrintStream;
   private TestPlan myTestPlan;
   private long myCurrentTestStart;
-  private int myFinishCount;
+  private int myFinishCount = 0;
   private String myRootName;
-  private Set<String> myRoots = new HashSet<>();
-  private boolean mySuccessful;
+  private boolean mySuccessful = true;
+  private String myIdSuffix = "";
+  private final Set<TestIdentifier> myActiveRoots = new HashSet<>();
 
   public JUnit5TestExecutionListener() {
     this(System.out);
@@ -64,10 +64,16 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     return mySuccessful;
   }
 
-  public void initialize() {
-    mySuccessful = true;
-    myFinishCount = 0;
+  public void initializeIdSuffix(boolean forked) {
+    if (forked && myIdSuffix.length() == 0) {
+      myIdSuffix = String.valueOf(System.currentTimeMillis());
+    }
   }
+  
+  public void initializeIdSuffix(int i) {
+    myIdSuffix = i + "th"; 
+  }
+
 
   @Override
   public void reportingEntryPublished(TestIdentifier testIdentifier, ReportEntry entry) {
@@ -111,7 +117,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       testStarted(testIdentifier);
       myCurrentTestStart = System.currentTimeMillis();
     }
-    else if (!myRoots.contains(testIdentifier.getUniqueId())){
+    else if (hasNonTrivialParent(testIdentifier)) {
       myFinishCount = 0;
       myPrintStream.println("##teamcity[testSuiteStarted" + idAndName(testIdentifier) + getLocationHint(testIdentifier) + "]");
     }
@@ -119,7 +125,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
 
   @Override
   public void dynamicTestRegistered(TestIdentifier testIdentifier) {
-    int i = 0;
+    myTestPlan.add(testIdentifier);
   }
 
   @Override
@@ -146,7 +152,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       testFinished(testIdentifier, duration);
       myFinishCount++;
     }
-    else if (!myRoots.contains(testIdentifier.getUniqueId())){
+    else if (hasNonTrivialParent(testIdentifier)){
       String messageName = null;
       if (status == TestExecutionResult.Status.FAILED) {
         messageName = MapSerializerUtil.TEST_FAILED;
@@ -158,9 +164,9 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
         if (status == TestExecutionResult.Status.FAILED) {
           String parentId = getParentId(testIdentifier);
           String nameAndId = " name=\'" + JUnit4TestListener.CLASS_CONFIGURATION +
-                             "\' nodeId=\'" + escapeName(testIdentifier.getUniqueId()) +
+                             "\' nodeId=\'" + escapeName(getId(testIdentifier)) +
                              "\' parentNodeId=\'" + parentId + "\' ";
-          testFailure(JUnit4TestListener.CLASS_CONFIGURATION, testIdentifier.getUniqueId(), parentId, messageName, throwableOptional, 0, reason, true);
+          testFailure(JUnit4TestListener.CLASS_CONFIGURATION, getId(testIdentifier), parentId, messageName, throwableOptional, 0, reason, true);
           myPrintStream.println("\n##teamcity[testFinished" + nameAndId + "]");
         }
 
@@ -176,6 +182,10 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       }
       myPrintStream.println("##teamcity[testSuiteFinished " + idAndName(testIdentifier, displayName) + "]");
     }
+  }
+
+  private boolean hasNonTrivialParent(TestIdentifier testIdentifier) {
+    return testIdentifier.getParentId().isPresent() || (myActiveRoots.size() > 1 && myActiveRoots.contains(testIdentifier));
   }
 
   protected long getDuration() {
@@ -196,7 +206,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
                            long duration,
                            String reason,
                            boolean includeThrowable) {
-    testFailure(testIdentifier.getDisplayName(), testIdentifier.getUniqueId(), getParentId(testIdentifier), messageName, ex, duration, reason, includeThrowable);
+    testFailure(testIdentifier.getDisplayName(), getId(testIdentifier), getParentId(testIdentifier), messageName, ex, duration, reason, includeThrowable);
   }
 
   private void testFailure(String methodName,
@@ -259,19 +269,34 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     return stringWriter.toString();
   }
 
+  public void setTestPlan(TestPlan testPlan) {
+    myTestPlan = testPlan;
+  }
 
   public void sendTree(TestPlan testPlan, String rootName) {
     myTestPlan = testPlan;
     myRootName = rootName;
-    Set<TestIdentifier> roots = testPlan.getRoots();
-    myRoots = roots.stream().map(identifier -> identifier.getUniqueId()).collect(Collectors.toSet());
-    for (TestIdentifier root : roots) {
-      assert root.isContainer();
-      for (TestIdentifier testIdentifier : testPlan.getChildren(root)) {
-        sendTreeUnderRoot(testPlan, testIdentifier, new HashSet<>());
+    if (Boolean.parseBoolean(System.getProperty("idea.junit.show.engines", "true"))) {
+      testPlan.getRoots().stream().filter(root1 -> !testPlan.getChildren(root1).isEmpty()).forEach(myActiveRoots::add);
+    }
+    if (myActiveRoots.size() > 1) {
+      for (TestIdentifier root : myActiveRoots) {
+        sendTreeUnderRoot(testPlan, root, new HashSet<>());
+      }
+    }
+    else { //skip engine node when one engine available
+      for (TestIdentifier root : testPlan.getRoots()) {
+        assert root.isContainer();
+        for (TestIdentifier testIdentifier : testPlan.getChildren(root)) {
+          sendTreeUnderRoot(testPlan, testIdentifier, new HashSet<>());
+        }
       }
     }
     myPrintStream.println("##teamcity[treeEnded]");
+  }
+
+  private String getId(TestIdentifier identifier) {
+    return identifier.getUniqueId() + myIdSuffix;
   }
 
   private void sendTreeUnderRoot(TestPlan testPlan,
@@ -285,7 +310,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
           sendTreeUnderRoot(testPlan, childIdentifier, visited);
         }
         else {
-          System.err.println("Identifier \'" + childIdentifier.getUniqueId() + "\' is reused");
+          System.err.println("Identifier \'" + getId(childIdentifier) + "\' is reused");
         }
       }
       myPrintStream.println("##teamcity[suiteTreeEnded" + idAndName + "]");
@@ -300,28 +325,38 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   }
 
   private String idAndName(TestIdentifier testIdentifier, String displayName) {
-    return " id=\'" + escapeName(testIdentifier.getUniqueId()) +
+    return " id=\'" + escapeName(getId(testIdentifier)) +
            "\' name=\'" + escapeName(displayName) +
-           "\' nodeId=\'" + escapeName(testIdentifier.getUniqueId()) +
+           "\' nodeId=\'" + escapeName(getId(testIdentifier)) +
            "\' parentNodeId=\'" + escapeName(getParentId(testIdentifier)) + "\'";
   }
 
   private String getParentId(TestIdentifier testIdentifier) {
-    String parentId = testIdentifier.getParentId().orElse("0");
-    if (myRoots.contains(parentId)) {
-      parentId = "0";
+    Optional<TestIdentifier> parent = myTestPlan.getParent(testIdentifier);
+    if (myActiveRoots.size() <= 1 && !parent.map(identifier -> identifier.getParentId().orElse(null)).isPresent()) {
+      return "0";
     }
-    return parentId;
+
+    return parent
+      .map(identifier -> identifier.getUniqueId() + myIdSuffix)
+      .orElse("0");
   }
 
   static String getLocationHint(TestIdentifier root) {
     return root.getSource()
       .map(testSource -> getLocationHintValue(testSource))
       .filter(maybeLocationHintValue -> !NO_LOCATION_HINT_VALUE.equals(maybeLocationHintValue))
-      .map(locationHintValue -> "locationHint=\'" + locationHintValue + "\'")
+      .map(locationHintValue -> "locationHint=\'" + locationHintValue + "\'" + getMetainfo(root))
       .orElse(NO_LOCATION_HINT);
   }
 
+  private static String getMetainfo(TestIdentifier root) {
+    return root.getSource()
+      .filter(testSource -> testSource instanceof MethodSource)
+      .map(testSource -> " metainfo=\'" + ((MethodSource)testSource).getMethodParameterTypes() + "\'")
+      .orElse(NO_LOCATION_HINT);
+  }
+  
   static String getLocationHintValue(TestSource testSource) {
 
     if (testSource instanceof CompositeTestSource) {
@@ -359,7 +394,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
 
   private static String javaLocation(String className, String maybeMethodName, boolean isTest) {
     String type = isTest ? "test" : "suite";
-    String methodName = maybeMethodName == null ? "" : "." + maybeMethodName;
+    String methodName = maybeMethodName == null ? "" : "/" + maybeMethodName;
     String location = escapeName(className + methodName);
     return "java:" + type + "://" + location;
   }

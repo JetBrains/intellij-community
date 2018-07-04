@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.settings;
 
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +46,7 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
 
   private boolean myUseAutoImport;
   private boolean myCreateEmptyContentRootDirectories;
+  private boolean myUseQualifiedModuleNames = !ExternalSystemApiUtil.isJavaCompatibleIde();
 
   public String getExternalProjectPath() {
     return myExternalProjectPath;
@@ -68,6 +70,14 @@ public abstract class ExternalProjectSettings implements Comparable<ExternalProj
 
   public void setCreateEmptyContentRootDirectories(boolean createEmptyContentRootDirectories) {
     myCreateEmptyContentRootDirectories = createEmptyContentRootDirectories;
+  }
+
+  public boolean isUseQualifiedModuleNames() {
+    return myUseQualifiedModuleNames;
+  }
+
+  public void setUseQualifiedModuleNames(boolean useQualifiedModuleNames) {
+    myUseQualifiedModuleNames = useQualifiedModuleNames;
   }
 
   @Override

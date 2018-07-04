@@ -22,10 +22,12 @@ import groovy.transform.CompileStatic
 class GradleRunner {
   private final File projectDir
   private final BuildMessages messages
+  private final String javaHome
 
-  GradleRunner(File projectDir, BuildMessages messages) {
+  GradleRunner(File projectDir, BuildMessages messages, String javaHome) {
     this.messages = messages
     this.projectDir = projectDir
+    this.javaHome = javaHome
   }
 
   /**
@@ -51,7 +53,7 @@ class GradleRunner {
       result = runInner(tasks)
       if (!result) {
         def errorMessage = "Failed to complete `gradle ${tasks.join(' ')}`"
-        if (!force) {
+        if (force) {
           messages.warning(errorMessage)
         }
         else {
@@ -69,7 +71,9 @@ class GradleRunner {
     command.addAll(tasks)
     command.add('--stacktrace')
     command.add('--no-daemon')
-    def process = new ProcessBuilder(command).directory(projectDir).start()
+    def processBuilder = new ProcessBuilder(command).directory(projectDir)
+    processBuilder.environment().put("JAVA_HOME", javaHome)
+    def process = processBuilder.start()
     process.consumeProcessOutputStream((OutputStream)System.out)
     process.consumeProcessErrorStream((OutputStream)System.err)
     return process.waitFor() == 0

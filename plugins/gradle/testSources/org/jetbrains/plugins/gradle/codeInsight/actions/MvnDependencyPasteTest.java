@@ -62,10 +62,10 @@ public class MvnDependencyPasteTest extends LightCodeInsightTestCase {
     performPaste();
     checkResultByText("dependencies {\n" +
                       "    <dependency>\n" +
-                      "    <groupId>group</groupId>\n" +
-                      "  <version>1.0</version>\n" +
-                      "    <scope>runtime</scope>\n" +
-                      "</dependency>\n" +
+                      "      <groupId>group</groupId>\n" +
+                      "      <version>1.0</version>\n" +
+                      "      <scope>runtime</scope>\n" +
+                      "    </dependency>\n" +
                       "}");
   }
 
@@ -81,8 +81,19 @@ public class MvnDependencyPasteTest extends LightCodeInsightTestCase {
                       "    compile 'group:artifact:1.0'\n" +
                       "}");
   }
-  
-  
+
+  public void test_AddProvided() {
+    configureFromFileText("pom.xml", getDependency("group", "artifact", "1.0", "provided", null));
+    selectWholeFile();
+    performCut();
+
+    configureGradleFile();
+    performPaste();
+    checkResultByText("dependencies {\n" +
+                      "    compileOnly 'group:artifact:1.0'\n" +
+                      "}");
+  }
+
 
   @NotNull
   private static String getDependency(@Nullable String groupId,

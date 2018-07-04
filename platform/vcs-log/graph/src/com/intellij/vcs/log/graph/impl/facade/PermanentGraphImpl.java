@@ -39,37 +39,18 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, PermanentGraphInfo<CommitId> {
-
-  @NotNull
-  public static <CommitId> PermanentGraphImpl<CommitId> newInstance(@NotNull List<? extends GraphCommit<CommitId>> graphCommits,
-                                                                    @NotNull final GraphColorManager<CommitId> graphColorManager,
-                                                                    @NotNull Set<CommitId> branchesCommitId) {
-    PermanentLinearGraphBuilder<CommitId> permanentLinearGraphBuilder = PermanentLinearGraphBuilder.newInstance(graphCommits);
-    NotLoadedCommitsIdsGenerator<CommitId> idsGenerator = new NotLoadedCommitsIdsGenerator<>();
-    PermanentLinearGraphImpl linearGraph = permanentLinearGraphBuilder.build(idsGenerator);
-
-    final PermanentCommitsInfoImpl<CommitId> commitIdPermanentCommitsInfo =
-      PermanentCommitsInfoImpl.newInstance(graphCommits, idsGenerator.getNotLoadedCommits());
-
-    GraphLayoutImpl permanentGraphLayout = GraphLayoutBuilder.build(linearGraph, (nodeIndex1, nodeIndex2) -> {
-      CommitId commitId1 = commitIdPermanentCommitsInfo.getCommitId(nodeIndex1);
-      CommitId commitId2 = commitIdPermanentCommitsInfo.getCommitId(nodeIndex2);
-      return graphColorManager.compareHeads(commitId2, commitId1);
-    });
-
-    return new PermanentGraphImpl<>(linearGraph, permanentGraphLayout, commitIdPermanentCommitsInfo, graphColorManager,
-                                    branchesCommitId);
-  }
-
   @NotNull private final PermanentCommitsInfoImpl<CommitId> myPermanentCommitsInfo;
   @NotNull private final PermanentLinearGraphImpl myPermanentLinearGraph;
   @NotNull private final GraphLayoutImpl myPermanentGraphLayout;
-  @NotNull private final GraphColorManager<CommitId> myGraphColorManager;
   @NotNull private final Set<Integer> myBranchNodeIds;
-  @NotNull private final ReachableNodes myReachableNodes;
+
   @NotNull private final Supplier<BekIntMap> myBekIntMap;
+
+  @NotNull private final GraphColorManager<CommitId> myGraphColorManager;
+  @NotNull private final ReachableNodes myReachableNodes;
 
   public PermanentGraphImpl(@NotNull PermanentLinearGraphImpl permanentLinearGraph,
                             @NotNull GraphLayoutImpl permanentGraphLayout,
@@ -84,6 +65,36 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
     myReachableNodes = new ReachableNodes(LinearGraphUtils.asLiteLinearGraph(permanentLinearGraph));
     myBekIntMap = Suppliers.memoize(
       () -> BekSorter.createBekMap(myPermanentLinearGraph, myPermanentGraphLayout, myPermanentCommitsInfo.getTimestampGetter()));
+  }
+
+  /**
+   * Create new instance of PermanentGraph.
+   *
+   * @param graphCommits      topologically sorted list of commits in the graph
+   * @param graphColorManager color manager for the graph
+   * @param branchesCommitId  commit ids of all the branch heads
+   * @param <CommitId>        commit id type
+   * @return new instance of PermanentGraph
+   */
+  @NotNull
+  public static <CommitId> PermanentGraphImpl<CommitId> newInstance(@NotNull List<? extends GraphCommit<CommitId>> graphCommits,
+                                                                    @NotNull GraphColorManager<CommitId> graphColorManager,
+                                                                    @NotNull Set<CommitId> branchesCommitId) {
+    PermanentLinearGraphBuilder<CommitId> permanentLinearGraphBuilder = PermanentLinearGraphBuilder.newInstance(graphCommits);
+    NotLoadedCommitsIdsGenerator<CommitId> idsGenerator = new NotLoadedCommitsIdsGenerator<>();
+    PermanentLinearGraphImpl linearGraph = permanentLinearGraphBuilder.build(idsGenerator);
+
+    final PermanentCommitsInfoImpl<CommitId> commitIdPermanentCommitsInfo =
+      PermanentCommitsInfoImpl.newInstance(graphCommits, idsGenerator.getNotLoadedCommits());
+
+    GraphLayoutImpl permanentGraphLayout = GraphLayoutBuilder.build(linearGraph, (nodeIndex1, nodeIndex2) -> {
+      CommitId commitId1 = commitIdPermanentCommitsInfo.getCommitId(nodeIndex1);
+      CommitId commitId2 = commitIdPermanentCommitsInfo.getCommitId(nodeIndex2);
+      return graphColorManager.compareHeads(commitId1, commitId2);
+    });
+
+    return new PermanentGraphImpl<>(linearGraph, permanentGraphLayout, commitIdPermanentCommitsInfo, graphColorManager,
+                                    branchesCommitId);
   }
 
   @NotNull
@@ -101,26 +112,29 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   private LinearGraphController createFilteredController(@NotNull LinearGraphController baseController,
                                                          @NotNull SortType sortType,
                                                          @Nullable Set<CommitId> visibleHeads, @Nullable Set<CommitId> matchingCommits) {
-    LinearGraphController controller;
+    Set<Integer> visibleHeadsIds = visibleHeads != null ? myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true) : null;
     if (matchingCommits != null) {
-      controller = new FilteredController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(matchingCommits));
-      if (visibleHeads != null) {
-        return new BranchFilterController(controller, this, myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true));
-      }
-      return controller;
+      return new FilteredController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(matchingCommits), visibleHeadsIds);
     }
 
     if (sortType == SortType.LinearBek) {
-      if (visibleHeads != null) {
-        return new BranchFilterController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true));
+      if (visibleHeadsIds != null) {
+        return new BranchFilterController(baseController, this, visibleHeadsIds);
       }
       return baseController;
     }
 
-    if (visibleHeads != null) {
-      return new CollapsedController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true));
-    }
-    return new CollapsedController(baseController, this, null);
+    return new CollapsedController(baseController, this, visibleHeadsIds);
+  }
+
+  @NotNull
+  public VisibleGraph<CommitId> createVisibleGraph(@NotNull SortType sortType,
+                                                   @Nullable Set<CommitId> visibleHeads,
+                                                   @Nullable Set<CommitId> matchingCommits,
+                                                   @NotNull BiConsumer<LinearGraphController, PermanentGraphInfo<CommitId>> preprocessor) {
+    LinearGraphController controller = createFilteredController(createBaseController(sortType), sortType, visibleHeads, matchingCommits);
+    preprocessor.accept(controller, this);
+    return new VisibleGraphImpl<>(controller, this, myGraphColorManager);
   }
 
   @NotNull
@@ -128,8 +142,8 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   public VisibleGraph<CommitId> createVisibleGraph(@NotNull SortType sortType,
                                                    @Nullable Set<CommitId> visibleHeads,
                                                    @Nullable Set<CommitId> matchingCommits) {
-    LinearGraphController controller = createFilteredController(createBaseController(sortType), sortType, visibleHeads, matchingCommits);
-    return new VisibleGraphImpl<>(controller, this, myGraphColorManager);
+    return createVisibleGraph(sortType, visibleHeads, matchingCommits, (controller, info) -> {
+    });
   }
 
   @NotNull

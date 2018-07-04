@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/gen" isTestSource="false" generated="true" />
+    </content>
+    <content url="file://$MODULE_DIR$/../../plugins/InspectionGadgets">
+      <sourceFolder url="file://$MODULE_DIR$/../../plugins/InspectionGadgets/src" isTestSource="false" />
+    </content>
+    <content url="file://$MODULE_DIR$/../../plugins/IntentionPowerPak">
+      <sourceFolder url="file://$MODULE_DIR$/../../plugins/IntentionPowerPak/src" isTestSource="false" />
+    </content>
+    <content url="file://$MODULE_DIR$/../../plugins/generate-tostring">
+      <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/src" isTestSource="false" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.platform.util" />
+    <orderEntry type="module" module-name="intellij.java" />
+    <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="library" name="OroMatcher" level="project" />
+    <orderEntry type="module" module-name="intellij.xml.impl" />
+    <orderEntry type="module" module-name="intellij.java.rt" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.jsp" />
+    <orderEntry type="module" module-name="intellij.jsp.spi" />
+    <orderEntry type="module" module-name="intellij.java.execution" />
+    <orderEntry type="module" module-name="intellij.xml.dom" />
+    <orderEntry type="module" module-name="intellij.xml.dom.impl" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
+    <orderEntry type="module" module-name="intellij.platform.icons" />
+    <orderEntry type="library" name="jcip" level="project" />
+    <orderEntry type="module" module-name="intellij.java.psi.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.regexp" />
+    <orderEntry type="module" module-name="intellij.java.indexing.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.java.indexing" />
+    <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
+    <orderEntry type="module" module-name="intellij.java.analysis.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem" />
+    <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="library" name="Xerces" level="project" />
+    <orderEntry type="library" name="Velocity" level="project" />
+    <orderEntry type="module" module-name="intellij.java.structureView" exported="" />
+    <orderEntry type="module" module-name="intellij.spellchecker" />
+    <orderEntry type="library" name="nekohtml" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
+    <orderEntry type="module" module-name="intellij.java.uast" />
+    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="module" module-name="intellij.java.compiler" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../../lib/wadl-core.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="netty-codec-http" level="project" />
+  </component>
+  <component name="copyright">
+    <Base>
+      <setting name="state" value="1" />
+    </Base>
+  </component>
+</module>

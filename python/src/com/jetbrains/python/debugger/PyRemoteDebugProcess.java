@@ -3,11 +3,10 @@ package com.jetbrains.python.debugger;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
-import com.jetbrains.python.debugger.PyDebugProcess;
-import com.jetbrains.python.debugger.PyRemoteDebugProcessAware;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,6 +18,7 @@ import java.net.ServerSocket;
 public class PyRemoteDebugProcess extends PyDebugProcess {
   private final int myLocalPort;
   private final String mySettraceCall;
+  private boolean isStopCalled = false;
 
   public PyRemoteDebugProcess(@NotNull XDebugSession session,
                               @NotNull final ServerSocket serverSocket,
@@ -57,8 +57,19 @@ public class PyRemoteDebugProcess extends PyDebugProcess {
   }
 
   @Override
+  protected boolean shouldLogConnectionException(Exception e) {
+    return !(isStopCalled && e.getMessage().contains("closed"));
+  }
+
+  @Override
   protected void detachDebuggedProcess() {
     waitForNextConnection(); // in case of remote debug we should wait for the next connection
+  }
+
+  @Override
+  public void stop() {
+    super.stop();
+    isStopCalled = true;
   }
 
   @Override
@@ -79,8 +90,8 @@ public class PyRemoteDebugProcess extends PyDebugProcess {
     }
     if (!isWaitingForConnection()) {
       setWaitingForConnection(true);
-
-      UIUtil.invokeLaterIfNeeded(() -> waitForConnection(getCurrentStateMessage(), getConnectionTitle()));
+      ApplicationManager.getApplication().invokeLater(() -> waitForConnection(getCurrentStateMessage(), getConnectionTitle()),
+                                                      ModalityState.defaultModalityState());
     }
   }
 

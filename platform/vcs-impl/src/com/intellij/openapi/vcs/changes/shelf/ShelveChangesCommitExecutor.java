@@ -55,6 +55,11 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
     return "reference.dialogs.vcs.shelve";
   }
 
+  @Override
+  public boolean supportsPartialCommit() {
+    return true;
+  }
+
   private class ShelveChangesCommitSession implements CommitSession, CommitSessionContextAware {
     @Override
     public void setContext(CommitContext context) {
@@ -76,14 +81,10 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
         final ShelvedChangeList list = ShelveChangesManager.getInstance(myProject).shelveChanges(changes, commitMessage, true);
         ShelvedChangesViewManager.getInstance(myProject).activateView(list);
 
-        Change[] changesArray = changes.toArray(new Change[changes.size()]);
-        // todo better under lock   
-        ChangeList changeList = ChangesUtil.getChangeListIfOnlyOne(myProject, changesArray);
-        if (changeList instanceof LocalChangeList) {
-          LocalChangeList localChangeList = (LocalChangeList) changeList;
-          if (localChangeList.getChanges().size() == changes.size() && !localChangeList.isReadOnly() && (! localChangeList.isDefault())) {
-            ChangeListManager.getInstance(myProject).removeChangeList(localChangeList.getName());
-          }
+        Change[] changesArray = changes.toArray(new Change[0]);
+        LocalChangeList changeList = ChangesUtil.getChangeListIfOnlyOne(myProject, changesArray);
+        if (changeList != null) {
+          ChangeListManager.getInstance(myProject).scheduleAutomaticEmptyChangeListDeletion(changeList, true);
         }
       }
       catch (final Exception ex) {
@@ -91,10 +92,6 @@ public class ShelveChangesCommitExecutor extends LocalCommitExecutor {
         WaitForProgressToShow.runOrInvokeLaterAboveProgress(
           () -> Messages.showErrorDialog(myProject, VcsBundle.message("create.patch.error.title", ex.getMessage()), CommonBundle.getErrorTitle()), ModalityState.NON_MODAL, myProject);
       }
-    }
-
-    @Override
-    public void executionCanceled() {
     }
 
     @Override

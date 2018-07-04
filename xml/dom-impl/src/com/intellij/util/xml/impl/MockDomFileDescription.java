@@ -15,34 +15,32 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomFileDescription;
-import com.intellij.openapi.module.Module;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
 */
 public class MockDomFileDescription<T> extends DomFileDescription<T> {
-  private final XmlFile myFile;
+  private final VirtualFile myFile;
 
-  public MockDomFileDescription(final Class<T> aClass, final String rootTagName, final XmlFile file) {
+  public MockDomFileDescription(final Class<T> aClass, final String rootTagName, @Nullable VirtualFile file) {
     super(aClass, rootTagName);
     myFile = file;
   }
 
   @Override
   public boolean isMyFile(@NotNull final XmlFile xmlFile, final Module module) {
-    return myFile == xmlFile;
+    return xmlFile.getViewProvider().getVirtualFile().equals(myFile);
   }
 
   @Override
   public boolean acceptsOtherRootTagNames() {
     return true;
-  }
-
-  @Override
-  protected void initializeFileDescription() {
   }
 
   @Override

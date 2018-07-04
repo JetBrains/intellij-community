@@ -55,8 +55,8 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
       root.add(child);
     }
 
-    root.add(buildRootGroup(AllIcons.General.Configure, "Configure", IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE));
-    root.add(buildRootGroup(AllIcons.General.ReadHelp, "Docs and How-Tos", IdeActions.GROUP_WELCOME_SCREEN_DOC));
+    root.add(buildRootGroup(AllIcons.General.Settings, "Configure", IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE));
+    root.add(buildRootGroup(AllIcons.Actions.Help, "Docs and How-Tos", IdeActions.GROUP_WELCOME_SCREEN_DOC));
 
     // so, we sure this is the last action
     final AnAction register = actionManager.getAction("WelcomeScreen.Register");
@@ -148,7 +148,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
   }
   
   public static boolean isNewWelcomeScreen(@NotNull AnActionEvent e) {
-    return e.getPlace() == ActionPlaces.WELCOME_SCREEN && FlatWelcomeFrameProvider.isAvailable();
+    return e.getPlace() == ActionPlaces.WELCOME_SCREEN;
   }
 
   private static class WelcomeScreenGroup extends DefaultActionGroup {

@@ -50,8 +50,7 @@ public abstract class EditorColorPalette {
   }
 
   private Collection<Color> orderBy(@Nullable Comparator<Color> comparator) {
-    List<Color> sorted = new ArrayList<>();
-    sorted.addAll(myColors.keySet());
+    List<Color> sorted = new ArrayList<>(myColors.keySet());
     Collections.sort(sorted, comparator);
     return sorted;
   }
@@ -60,7 +59,6 @@ public abstract class EditorColorPalette {
     return (color.getRed() + color.getGreen() + color.getBlue()) / 3;
   }
 
-  @SuppressWarnings("unused")
   @Contract(pure = true)
   private static int getDefaultOrder(@NotNull Color color) { return 0; }
 

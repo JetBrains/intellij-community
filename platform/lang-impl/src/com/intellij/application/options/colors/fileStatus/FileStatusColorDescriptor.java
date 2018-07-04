@@ -22,9 +22,9 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 
 public class FileStatusColorDescriptor {
-  private FileStatus myStatus;
+  private final FileStatus myStatus;
   private Color myColor;
-  private Color myDefaultColor;
+  private final Color myDefaultColor;
 
   public FileStatusColorDescriptor(@NotNull FileStatus fileStatus, Color color, Color defaultColor) {
     myStatus = fileStatus;
@@ -51,5 +51,9 @@ public class FileStatusColorDescriptor {
 
   public void resetToDefault() {
     myColor = myDefaultColor;
+  }
+
+  public Color getDefaultColor() {
+    return myDefaultColor;
   }
 }

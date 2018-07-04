@@ -21,35 +21,14 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.text.EditDistance;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
-import java.util.Set;
 import java.util.stream.Stream;
 
 public final class MethodChainsSearchUtil {
-  private final static int COMMON_PART_MIN_LENGTH = 3;
-
   private MethodChainsSearchUtil() {
-  }
-
-  public static boolean isSimilar(@NotNull String target,
-                                  @NotNull String candidate) {
-    return EditDistance.levenshtein(target, sanitizedToLowerCase(candidate), true) >= COMMON_PART_MIN_LENGTH;
-  }
-
-  @NotNull
-  public static String sanitizedToLowerCase(@NotNull String name) {
-    StringBuilder result = new StringBuilder();
-    for (int i = 0; i < name.length(); i++) {
-      char ch = name.charAt(i);
-      if (Character.isLetter(ch)) {
-        result.append(Character.toLowerCase(ch));
-      }
-    }
-    return result.toString();
   }
 
   @Nullable
@@ -65,9 +44,7 @@ public final class MethodChainsSearchUtil {
           }
         }
         return true;
-      })
-      .sorted(Comparator.comparing(MethodChainsSearchUtil::getNonPrimitiveParameterCount))
-      .findFirst().orElse(null);
+      }).min(Comparator.comparing(MethodChainsSearchUtil::getNonPrimitiveParameterCount)).orElse(null);
   }
 
   private static int getNonPrimitiveParameterCount(PsiMethod method) {

@@ -125,29 +125,15 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     }
   }
 
-  /**
-   * @deprecated use {@link #addFavoritesListener(FavoritesListener, Disposable)} instead
-   */
-  public void addFavoritesListener(FavoritesListener listener) {
-    myListeners.add(listener);
-    listener.rootsChanged();
-  }
   public void addFavoritesListener(final FavoritesListener listener, @NotNull Disposable parent) {
     myListeners.add(listener);
     listener.rootsChanged();
     Disposer.register(parent, new Disposable() {
       @Override
       public void dispose() {
-        removeFavoritesListener(listener);
+        myListeners.remove(listener);
       }
     });
-  }
-
-  /**
-   * @deprecated use {@link #addFavoritesListener(FavoritesListener, Disposable)} instead
-   */
-  public void removeFavoritesListener(FavoritesListener listener) {
-    myListeners.remove(listener);
   }
 
   List<AbstractTreeNode> createRootNodes() {
@@ -575,8 +561,7 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
 
   private static void iterateTreeItems(final Collection<TreeItem<Pair<AbstractUrl, String>>> coll,
                                        Consumer<TreeItem<Pair<AbstractUrl, String>>> consumer) {
-    final ArrayDeque<TreeItem<Pair<AbstractUrl, String>>> queue = new ArrayDeque<>();
-    queue.addAll(coll);
+    final ArrayDeque<TreeItem<Pair<AbstractUrl, String>>> queue = new ArrayDeque<>(coll);
     while (!queue.isEmpty()) {
       final TreeItem<Pair<AbstractUrl, String>> item = queue.removeFirst();
       consumer.consume(item);

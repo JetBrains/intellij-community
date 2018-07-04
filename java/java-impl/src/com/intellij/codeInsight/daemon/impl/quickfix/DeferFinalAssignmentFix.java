@@ -149,7 +149,7 @@ public class DeferFinalAssignmentFix implements IntentionAction {
                                                         PsiStatement finalAssignment,
                                                         ControlFlow controlFlow,
                                                         int minOffset,
-                                                        List references) throws IncorrectOperationException {
+                                                        @NotNull List<? extends PsiElement> references) throws IncorrectOperationException {
     int offset = ControlFlowUtil.getMinDefinitelyReachedOffset(controlFlow, minOffset, references);
     if (offset == controlFlow.getSize()) {
       codeBlock.add(finalAssignment);

@@ -38,6 +38,25 @@ public class GithubUrlUtil {
     return url;
   }
 
+  /**
+   * Will only work correctly after {@link #removeProtocolPrefix(String)}
+   */
+  @NotNull
+  public static String removePort(@NotNull String url) {
+    int index = url.indexOf(':');
+    if (index == -1) return url;
+    int slashIndex = url.indexOf('/');
+    if (slashIndex != -1 && slashIndex < index) return url;
+
+    String beforePort = url.substring(0, index);
+    if (slashIndex == -1) {
+      return beforePort;
+    }
+    else {
+      return beforePort + url.substring(slashIndex);
+    }
+  }
+
   @NotNull
   public static String removeTrailingSlash(@NotNull String s) {
     if (s.endsWith("/")) {
@@ -52,59 +71,9 @@ public class GithubUrlUtil {
   }
 
   @NotNull
-  public static String getApiProtocol() {
-    return getApiProtocolFromUrl(GithubSettings.getInstance().getHost());
-  }
-
-  @NotNull
   public static String getApiProtocolFromUrl(@NotNull String urlFromSettings) {
     if (StringUtil.startsWithIgnoreCase(urlFromSettings.trim(), "http://")) return "http://";
     return "https://";
-  }
-
-  /**
-   * E.g.: https://api.github.com
-   *       https://my.company.url/api/v3
-   */
-  @NotNull
-  public static String getApiUrl() {
-    return getApiUrl(GithubSettings.getInstance().getHost());
-  }
-
-  /**
-   * Returns the "host" part of Github URLs.
-   * E.g.: https://github.com
-   *       https://my.company.url
-   * Note: there is no trailing slash in the returned url.
-   */
-  @NotNull
-  public static String getGithubHost() {
-    return getApiProtocol() + getGitHostWithoutProtocol();
-  }
-
-  /**
-   * E.g.: https://github.com/suffix/ -> github.com
-   *       github.com:8080/ -> github.com
-   */
-  @NotNull
-  public static String getHostFromUrl(@NotNull String url) {
-    String path = removeProtocolPrefix(url).replace(':', '/');
-    int index = path.indexOf('/');
-    if (index == -1) {
-      return path;
-    }
-    else {
-      return path.substring(0, index);
-    }
-  }
-
-  /**
-   * E.g.: github.com
-   *       my.company.url
-   */
-  @NotNull
-  public static String getGitHostWithoutProtocol() {
-    return removeTrailingSlash(removeProtocolPrefix(GithubSettings.getInstance().getHost()));
   }
 
   /*
@@ -132,25 +101,9 @@ public class GithubUrlUtil {
     }
   }
 
-  public static boolean isGithubUrl(@NotNull String url) {
-    return isGithubUrl(url, GithubSettings.getInstance().getHost());
-  }
-
-  public static boolean isGithubUrl(@NotNull String url, @NotNull String host) {
-    host = getHostFromUrl(host);
-    url = removeProtocolPrefix(url);
-    if (StringUtil.startsWithIgnoreCase(url, host)) {
-      if (url.length() > host.length() && ":/".indexOf(url.charAt(host.length())) == -1) {
-        return false;
-      }
-      return true;
-    }
-    return false;
-  }
-
   /**
    * assumed isGithubUrl(remoteUrl)
-   *
+   * <p>
    * git@github.com:user/repo.git -> user/repo
    */
   @Nullable
@@ -173,25 +126,6 @@ public class GithubUrlUtil {
     return new GithubFullPath(username, reponame);
   }
 
-  /**
-   * assumed isGithubUrl(remoteUrl)
-   *
-   * git@github.com:user/repo -> https://github.com/user/repo
-   */
-  @Nullable
-  public static String makeGithubRepoUrlFromRemoteUrl(@NotNull String remoteUrl) {
-    return makeGithubRepoUrlFromRemoteUrl(remoteUrl, getGithubHost());
-  }
-
-  @Nullable
-  public static String makeGithubRepoUrlFromRemoteUrl(@NotNull String remoteUrl, @NotNull String host) {
-    GithubFullPath repo = getUserAndRepositoryFromRemoteUrl(remoteUrl);
-    if (repo == null) {
-      return null;
-    }
-    return host + '/' + repo.getUser() + '/' + repo.getRepository();
-  }
-
   @NotNull
   private static String removeEndingDotGit(@NotNull String url) {
     url = removeTrailingSlash(url);
@@ -202,18 +136,37 @@ public class GithubUrlUtil {
     return url;
   }
 
+  //region Deprecated
+  /**
+   * E.g.: https://github.com/suffix/ -> github.com
+   * github.com:8080/ -> github.com
+   *
+   * @deprecated {@link org.jetbrains.plugins.github.api.GithubRepositoryPath}
+   */
+  @Deprecated
   @NotNull
-  public static String getCloneUrl(@NotNull GithubFullPath path) {
-    return getCloneUrl(path.getUser(), path.getRepository());
-  }
-
-  @NotNull
-  public static String getCloneUrl(@NotNull String user, @NotNull String repo) {
-    if (GithubSettings.getInstance().isCloneGitUsingSsh()) {
-      return "git@" + getGitHostWithoutProtocol() + ":" + user + "/" + repo + ".git";
+  public static String getHostFromUrl(@NotNull String url) {
+    String path = removeProtocolPrefix(url).replace(':', '/');
+    int index = path.indexOf('/');
+    if (index == -1) {
+      return path;
     }
     else {
-      return getApiProtocol() + getGitHostWithoutProtocol() + "/" + user + "/" + repo + ".git";
+      return path.substring(0, index);
     }
   }
+
+  /**
+   * @deprecated {@link org.jetbrains.plugins.github.api.GithubRepositoryPath}
+   */
+  @Deprecated
+  @Nullable
+  public static String makeGithubRepoUrlFromRemoteUrl(@NotNull String remoteUrl, @NotNull String host) {
+    GithubFullPath repo = getUserAndRepositoryFromRemoteUrl(remoteUrl);
+    if (repo == null) {
+      return null;
+    }
+    return host + '/' + repo.getUser() + '/' + repo.getRepository();
+  }
+  //endregion
 }

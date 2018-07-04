@@ -7,7 +7,7 @@ public class InLambdas
 {
   public void test()
   {
-    AtomicInteger x = new AtomicInteger(0);
+    AtomicInteger x = new AtomicInteger();
     Runnable r1 = () -> x.getAndIncrement();
     Runnable r2 = () -> x.addAndGet(2);
     Runnable r3 = () -> x.updateAndGet(v -> v * 2);

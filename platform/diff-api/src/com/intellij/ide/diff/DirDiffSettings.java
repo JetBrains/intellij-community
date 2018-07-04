@@ -42,6 +42,8 @@ public class DirDiffSettings {
   public boolean showNewOnTarget = true;
   public boolean showCompareModes = true;
   public boolean enableChoosers = true;
+  /** If {@code true} it's allowed to synchronize the left and the right parts by copying and deleting files directly in the diff viewer */
+  public boolean enableOperations = true;
   public CompareMode compareMode = CompareMode.CONTENT;
   public double compareTimestampAccuracy = 0;
   public CustomSourceChooser customSourceChooser;
@@ -71,8 +73,8 @@ public class DirDiffSettings {
   }
 
   public enum CompareMode {
-    CONTENT("Content"), // the most honest, the slowest. Compares size, if equal compares contents. Ignores timestamps
-    CONTENT_IGNORE_SEPARATORS("Content Ignoring Line Separators"),
+    CONTENT("Binary Content"), // the most honest, the slowest. Compares size, if equal compares contents. Ignores timestamps
+    TEXT("Text"), // compare by text representation (Ignore used charset/line separators).
     SIZE("Size"), // Compares size only
     TIMESTAMP("Size and Timestamp"); // Compares size, if equal compares timestamps
 

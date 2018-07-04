@@ -138,7 +138,7 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
               fixes.add(GroovyQuickFixFactory.getInstance().createDynamicPropertyFix(label, (PsiClass)element));
             }
 
-            registerError(label, GroovyBundle.message("no.such.property", label.getName()), fixes.toArray(new LocalQuickFix[fixes.size()]),
+            registerError(label, GroovyBundle.message("no.such.property", label.getName()), fixes.toArray(LocalQuickFix.EMPTY_ARRAY),
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
         }

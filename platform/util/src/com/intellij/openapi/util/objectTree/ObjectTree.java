@@ -30,6 +30,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public final class ObjectTree<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectTree");
+  
+  private static final ThreadLocal<Throwable> ourTopmostDisposeTrace = new ThreadLocal<Throwable>();
 
   private final List<ObjectTreeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -49,8 +51,13 @@ public final class ObjectTree<T> {
     return myObject2NodeMap.get(object);
   }
 
-  ObjectNode<T> putNode(@NotNull T object, @Nullable("null means remove") ObjectNode<T> node) {
-    return node == null ? myObject2NodeMap.remove(object) : myObject2NodeMap.put(object, node);
+  void putNode(@NotNull T object, @Nullable("null means remove") ObjectNode<T> node) {
+    if (node == null) {
+      myObject2NodeMap.remove(object);
+    }
+    else {
+      myObject2NodeMap.put(object, node);
+    }
   }
 
   @NotNull
@@ -60,14 +67,18 @@ public final class ObjectTree<T> {
 
   public final void register(@NotNull T parent, @NotNull T child) {
     if (parent == child) throw new IllegalArgumentException("Cannot register to itself: "+parent);
-    Object wasDisposed = getDisposalInfo(parent);
-    if (wasDisposed != null) {
-      throw new IncorrectOperationException("Sorry but parent: " + parent + " has already been disposed " +
-                                            "(see the cause for stacktrace) so the child: "+child+" will never be disposed",
-                                            wasDisposed instanceof Throwable ? (Throwable)wasDisposed : null);
-    }
-
     synchronized (treeLock) {
+      Object wasDisposed = getDisposalInfo(parent);
+      if (wasDisposed != null) {
+        throw new IncorrectOperationException("Sorry but parent: " + parent + " has already been disposed " +
+                                              "(see the cause for stacktrace) so the child: "+child+" will never be disposed",
+                                              wasDisposed instanceof Throwable ? (Throwable)wasDisposed : null);
+      }
+
+      if (isDisposing(parent)) {
+        throw new IncorrectOperationException("Sorry but parent: " + parent + " is being disposed so the child: "+child+" will never be disposed");
+      }
+
       myDisposedObjects.remove(child); // if we dispose thing and then register it back it means it's not disposed anymore
       ObjectNode<T> parentNode = getNode(parent);
       if (parentNode == null) parentNode = createNodeFor(parent, null);
@@ -120,21 +131,42 @@ public final class ObjectTree<T> {
     return myModification.incrementAndGet();
   }
 
-  public final boolean executeAll(@NotNull T object, @NotNull ObjectTreeAction<T> action, boolean processUnregistered) {
+  public final void executeAll(@NotNull T object, @NotNull ObjectTreeAction<T> action, boolean processUnregistered) {
     ObjectNode<T> node;
     synchronized (treeLock) {
       node = getNode(object);
     }
-    if (node == null) {
-      if (processUnregistered) {
-        rememberDisposedTrace(object);
-        executeUnregistered(object, action);
-        return true;
-      }
-      return false;
+    boolean needTrace = (node != null || processUnregistered) && Disposer.isDebugMode() && ourTopmostDisposeTrace.get() == null;
+    if (needTrace) {
+      ourTopmostDisposeTrace.set(ThrowableInterner.intern(new Throwable()));
     }
-    node.execute(action);
-    return true;
+    try {
+      if (node == null) {
+        if (processUnregistered) {
+          rememberDisposedTrace(object);
+          executeUnregistered(object, action);
+        }
+      }
+      else {
+        node.execute(action);
+      }
+    }
+    finally {
+      if (needTrace) {
+        ourTopmostDisposeTrace.remove();
+      }
+    }
+  }
+
+  public boolean isDisposing(@NotNull T disposable) {
+    List<ObjectNode<T>> guard = getNodesInExecution();
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
+    synchronized (guard) {
+      for (ObjectNode<T> node : guard) {
+        if (node.getObject() == disposable) return true;
+      }
+    }
+    return false;
   }
 
   @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
@@ -260,7 +292,8 @@ public final class ObjectTree<T> {
 
   private void rememberDisposedTrace(@NotNull Object object) {
     synchronized (treeLock) {
-      myDisposedObjects.put(object, Disposer.isDebugMode() ? ThrowableInterner.intern(new Throwable()) : Boolean.TRUE);
+      Throwable trace = ourTopmostDisposeTrace.get();
+      myDisposedObjects.put(object, trace != null ? trace : Boolean.TRUE);
     }
   }
 

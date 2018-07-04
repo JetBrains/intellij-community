@@ -1,3 +1,6 @@
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.remoteServer.impl.configuration;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -20,6 +23,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +42,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
 
   private final RemoteServersManager myServersManager;
   private RemoteServer<?> myLastSelectedServer;
-  private String myInitialSelectedName;
+  private final String myInitialSelectedName;
   private final List<ServerType<?>> myDisplayedServerTypes;
 
   private RemoteServerListConfigurable(@NotNull RemoteServersManager manager,
@@ -214,6 +218,14 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
     return myLastSelectedServer;
   }
 
+  @Override
+  protected void reInitWholePanelIfNeeded() {
+    super.reInitWholePanelIfNeeded();
+    if (myWholePanel.getBorder() == null) {
+      myWholePanel.setBorder(JBUI.Borders.emptyLeft(10));
+    }
+  }
+
   private List<NamedConfigurable<RemoteServer<?>>> getConfiguredServers() {
     List<NamedConfigurable<RemoteServer<?>>> configurables = new ArrayList<>();
     for (int i = 0; i < myRoot.getChildCount(); i++) {
@@ -243,11 +255,6 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
     @Override
     public ActionGroup getActionGroup() {
       return this;
-    }
-
-    @Override
-    public int getDefaultIndex() {
-      return 0;
     }
   }
 

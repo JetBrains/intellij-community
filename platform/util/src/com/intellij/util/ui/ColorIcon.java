@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
+import static java.lang.Math.ceil;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -52,7 +54,7 @@ public class ColorIcon extends EmptyIcon {
 
   @NotNull
   @Override
-  protected ColorIcon copy() {
+  public ColorIcon copy() {
     return new ColorIcon(this);
   }
 
@@ -79,7 +81,7 @@ public class ColorIcon extends EmptyIcon {
   }
 
   private int getColorSize() {
-    return scaleVal(myColorSize);
+    return (int)ceil(scaleVal(myColorSize));
   }
 
   @Override

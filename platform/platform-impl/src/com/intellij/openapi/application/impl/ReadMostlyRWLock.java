@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ex.ApplicationUtil;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -109,7 +110,7 @@ class ReadMostlyRWLock {
       status.blocked = true;
       try {
         throwIfImpatient(status);
-        LockSupport.parkNanos(this, 1000000);  // unparked by writeUnlock
+        LockSupport.parkNanos(this, 1_000_000);  // unparked by writeUnlock
       }
       finally {
         status.blocked = false;
@@ -122,9 +123,13 @@ class ReadMostlyRWLock {
 
   private void throwIfImpatient(Reader status) {
     // when client explicitly runs in non-cancelable block do not throw from within nested read actions
-    if (status.impatientReads && writeRequested && !ProgressManager.getInstance().isInNonCancelableSection()) {
-      throw new ApplicationUtil.CannotRunReadActionException();
+    if (status.impatientReads && writeRequested && !ProgressManager.getInstance().isInNonCancelableSection() && CoreProgressManager.ENABLED) {
+      throw ApplicationUtil.CannotRunReadActionException.create();
     }
+  }
+
+  boolean isInImpatientReader() {
+    return R.get().impatientReads;
   }
 
   /**
@@ -189,7 +194,7 @@ class ReadMostlyRWLock {
       }
 
       if (iter > SPIN_TO_WAIT_FOR_LOCK) {
-        LockSupport.parkNanos(this, 1000000);  // unparked by readUnlock
+        LockSupport.parkNanos(this, 1_000_000);  // unparked by readUnlock
       }
       else {
         Thread.yield();

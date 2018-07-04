@@ -52,7 +52,7 @@ public abstract class CaseCollector {
         }
       });
     }
-    return ArrayUtil.mergeArrays(cases, exCases.toArray(new CredentialsCase[exCases.size()]));
+    return ArrayUtil.mergeArrays(cases, exCases.toArray(new CredentialsCase[0]));
   }
 
   protected abstract void processWithType(CredentialsTypeEx typeEx, Object credentials);

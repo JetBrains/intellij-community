@@ -34,9 +34,8 @@ public class AssociateFileTypeAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    DataContext dataContext = e.getDataContext();
-    VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    Project project = e.getProject();
     boolean haveSmthToDo;
     if (project == null || file == null || file.isDirectory()) {
       haveSmthToDo = false;

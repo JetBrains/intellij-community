@@ -3,6 +3,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.beans.beancontext.BeanContextServicesSupport java.util.Iterator getCurrentServiceClasses()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.beans.beancontext.BeanContextServicesSupport java.util.Iterator getCurrentServiceSelectors(java.lang.Class)'>
@@ -43,6 +46,16 @@
     <item name='java.beans.beancontext.BeanContextServicesSupport.BCSSChild.BCSSCServiceClassRef java.lang.Class getServiceClass()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.beans.beancontext.BeanContextServicesSupport.BCSSChild.BCSSCServiceClassRef java.util.Iterator cloneOfEntries()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.beans.beancontext.BeanContextServicesSupport.BCSSChild.BCSSCServiceClassRef java.util.Iterator entries()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
         </annotation>
     </item>
     <item name='java.beans.beancontext.BeanContextServicesSupport.BCSSChild.BCSSCServiceRef BCSSCServiceRef(java.beans.beancontext.BeanContextServicesSupport.BCSSChild.BCSSCServiceClassRef, boolean)'>

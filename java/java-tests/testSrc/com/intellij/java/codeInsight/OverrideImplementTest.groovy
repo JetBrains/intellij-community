@@ -16,6 +16,7 @@
 package com.intellij.java.codeInsight
 
 import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.generation.OverrideImplementExploreUtil
 import com.intellij.codeInsight.generation.OverrideImplementUtil
 import com.intellij.codeInsight.generation.OverrideImplementsAnnotationsHandler
 import com.intellij.idea.ActionsBundle
@@ -50,6 +51,12 @@ class OverrideImplementTest extends LightCodeInsightFixtureTestCase {
   void testOverrideInInterface() { doTest(false) }
 
   void testMultipleInheritanceWithThrowables() { doTest(true) }
+
+  void testBrokenMethodDeclaration() {
+    myFixture.addClass("interface A { m();}")
+    def psiClass = myFixture.addClass("class B implements A {<caret>}")
+    assertEmpty(OverrideImplementExploreUtil.getMethodSignaturesToImplement(psiClass))
+  }
 
   void testImplementInInterface() {
     myFixture.addClass """\
@@ -277,7 +284,7 @@ class Test implements A {
   }
 
   void testCustomOverrideImplementsHandler() throws Exception {
-    myFixture.addClass """package a; public @interface A { }"""
+    myFixture.addClass """package a; public @interface A { String value();}"""
 
     PlatformTestUtil.registerExtension(Extensions.getRootArea(), OverrideImplementsAnnotationsHandler.EP_NAME, new OverrideImplementsAnnotationsHandler() {
       @Override
@@ -290,7 +297,7 @@ class Test implements A {
       import a.*;
 
       interface I {
-          @A List<String> i(@A String p);
+          @A("") List<String> i(@A("a") String p);
       }
 
       class C implements I {
@@ -304,13 +311,13 @@ class Test implements A {
       import a.*;
 
       interface I {
-          @A List<String> i(@A String p);
+          @A("") List<String> i(@A("a") String p);
       }
 
       class C implements I {
-          @A
+          @A("")
           @Override
-          public List<String> i(@A String p) {
+          public List<String> i(@A("a") String p) {
               return null;
           }
       }""".stripIndent()

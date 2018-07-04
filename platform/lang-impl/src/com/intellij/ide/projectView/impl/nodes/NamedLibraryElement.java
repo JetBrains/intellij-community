@@ -23,8 +23,6 @@ import com.intellij.openapi.util.Comparing;
 
 /**
  * @author Eugene Zhuravlev
- * Date: Sep 17, 2003
- * Time: 7:08:30 PM
  */
 public final class NamedLibraryElement {
   public static final DataKey<NamedLibraryElement[]> ARRAY_DATA_KEY = DataKey.create("namedLibrary.array");

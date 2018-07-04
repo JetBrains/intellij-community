@@ -54,7 +54,7 @@ public class RefactoringMessageDialog extends DialogWrapper {
     if (myHelpTopic != null) {
       actions.add(getHelpAction());
     }
-    return actions.toArray(new Action[actions.size()]);
+    return actions.toArray(new Action[0]);
   }
 
   @Override

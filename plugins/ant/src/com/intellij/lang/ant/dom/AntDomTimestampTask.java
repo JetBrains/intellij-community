@@ -23,7 +23,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 12, 2010
  */
 public abstract class AntDomTimestampTask extends AntDomPropertyDefiningElement {
   // implicit properties
@@ -43,9 +42,5 @@ public abstract class AntDomTimestampTask extends AntDomPropertyDefiningElement 
       prefix += ".";
     }
     return Arrays.asList(prefix + DSTAMP, prefix + TSTAMP, prefix + TODAY);
-  }
-  // todo: provide real values if that is really needed
-  protected String calcPropertyValue(String propertyName) {
-    return super.calcPropertyValue(propertyName);
   }
 }

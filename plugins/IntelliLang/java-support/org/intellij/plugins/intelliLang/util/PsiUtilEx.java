@@ -75,9 +75,9 @@ public class PsiUtilEx {
   public static boolean isStringOrCharacterLiteral(final PsiElement place) {
     if (place instanceof PsiLiteralExpression) {
       final PsiElement child = place.getFirstChild();
-      if (child != null && child instanceof PsiJavaToken) {
+      if (child instanceof PsiJavaToken) {
         final IElementType tokenType = ((PsiJavaToken)child).getTokenType();
-        if (tokenType == JavaTokenType.STRING_LITERAL || tokenType == JavaTokenType.CHARACTER_LITERAL) {
+        if (tokenType == JavaTokenType.STRING_LITERAL || tokenType == JavaTokenType.RAW_STRING_LITERAL || tokenType == JavaTokenType.CHARACTER_LITERAL) {
           return true;
         }
       }

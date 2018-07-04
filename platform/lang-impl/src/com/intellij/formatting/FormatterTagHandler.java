@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -51,7 +50,7 @@ public class FormatterTagHandler {
         ASTNode node = ((ASTBlock)block).getNode();
         if (node != null) {
           PsiElement element = node.getPsi();
-          if (element != null && element instanceof PsiComment) {
+          if (element instanceof PsiComment) {
             return getFormatterTag((PsiComment)element);
           }
         }

@@ -17,7 +17,6 @@ package com.intellij.lang.ant.dom;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 5, 2010
  */
 public abstract class AntDomClasspath extends AntDomPath{
 }

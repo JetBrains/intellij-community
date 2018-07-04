@@ -1,22 +1,6 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.newProjectWizard.modes.ImportMode;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
@@ -26,21 +10,26 @@ import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectImportProvider;
-import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+
+import static java.util.stream.Collectors.*;
 
 public class AddModuleWizard extends AbstractProjectWizard {
-  private static final String ADD_MODULE_TITLE = IdeBundle.message("title.add.module");
-  private static final String NEW_PROJECT_TITLE = IdeBundle.message("title.new.project");
-  private ProjectImportProvider[] myImportProviders;
+  private final ProjectImportProvider[] myImportProviders;
   private final ModulesProvider myModulesProvider;
   private WizardMode myWizardMode;
 
@@ -114,10 +103,20 @@ public class AddModuleWizard extends AbstractProjectWizard {
   @Nullable
   public static Sdk getMostRecentSuitableSdk(final WizardContext context) {
     if (context.getProject() == null) {
-      @Nullable final ProjectBuilder projectBuilder = context.getProjectBuilder();
-      return ProjectJdkTable.getInstance().findMostRecentSdk(
-        sdk -> projectBuilder == null || projectBuilder.isSuitableSdkType(sdk.getSdkType()));
+      List<Sdk> sdks = Arrays.asList(ProjectJdkTable.getInstance().getAllJdks());
+
+      ProjectBuilder builder = context.getProjectBuilder();
+      if (builder != null) {
+        sdks = ContainerUtil.filter(sdks, sdk -> builder.isSuitableSdkType(sdk.getSdkType()));
+      }
+
+      Map<SdkTypeId, List<Sdk>> sdksByType = sdks.stream().collect(groupingBy(Sdk::getSdkType, mapping(Function.identity(), toList())));
+      Map.Entry<SdkTypeId, List<Sdk>> pair = ContainerUtil.getFirstItem(sdksByType.entrySet());
+      if (pair != null) {
+        return pair.getValue().stream().max(pair.getKey().versionComparator()).orElse(null);
+      }
     }
+
     return null;
   }
 
@@ -138,7 +137,7 @@ public class AddModuleWizard extends AbstractProjectWizard {
    *                to return {@code true} for the step to go to
    * @return        {@code true} if current wizard is navigated to the target step; {@code false} otherwise
    */
-  public boolean navigateToStep(@NotNull Function<Step, Boolean> filter) {
+  public boolean navigateToStep(@NotNull com.intellij.util.Function<Step, Boolean> filter) {
     for (int i = 0, myStepsSize = mySteps.size(); i < myStepsSize; i++) {
       ModuleWizardStep step = mySteps.get(i);
       if (filter.fun(step) != Boolean.TRUE) {

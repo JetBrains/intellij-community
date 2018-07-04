@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.editor.ex;
 
@@ -26,7 +14,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -37,6 +24,9 @@ import java.util.Set;
 
 @State(name = "EditorSettings", storages = @Storage("editor.xml"))
 public class EditorSettingsExternalizable implements PersistentStateComponent<EditorSettingsExternalizable.OptionSet> {
+  @NonNls
+  public static String PROP_VIRTUAL_SPACE = "VirtualSpace";
+
   public static final UINumericRange BLINKING_RANGE = new UINumericRange(500, 10, 1500);
   public static final UINumericRange QUICK_DOC_DELAY_RANGE = new UINumericRange(500, 1, 5000);
 
@@ -95,14 +85,11 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public BidiTextDirection BIDI_TEXT_DIRECTION = BidiTextDirection.CONTENT_BASED;
 
     public boolean SHOW_PARAMETER_NAME_HINTS = true;
-    public int MIN_PARAM_NAME_LENGTH_TO_SHOW = 3;
-    public int MIN_PARAMS_TO_SHOW = 2;
-    
+
     public boolean KEEP_TRAILING_SPACE_ON_CARET_LINE = true;
 
     private final Map<String, Boolean> mapLanguageBreadcrumbs = new HashMap<>();
 
-    @SuppressWarnings("unused")
     public Map<String, Boolean> getLanguageBreadcrumbsMap() {
       return mapLanguageBreadcrumbs;
     }
@@ -137,8 +124,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   @MagicConstant(stringValues = {STRIP_TRAILING_SPACES_NONE, STRIP_TRAILING_SPACES_CHANGED, STRIP_TRAILING_SPACES_WHOLE})
   public @interface StripTrailingSpaces {}
 
-  @NonNls public static final String DEFAULT_FONT_NAME = "Courier";
-
   public static EditorSettingsExternalizable getInstance() {
     if (ApplicationManager.getApplication().isDisposed()) {
       return new EditorSettingsExternalizable();
@@ -156,19 +141,21 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }
 
-  @Nullable
+  @NotNull
   @Override
   public OptionSet getState() {
     return myOptions;
   }
 
   @Override
-  public void loadState(OptionSet state) {
+  public void loadState(@NotNull OptionSet state) {
     myOptions = state;
     parseRawSoftWraps();
   }
 
   private void parseRawSoftWraps() {
+    myPlacesToUseSoftWraps.clear();
+
     if (StringUtil.isEmpty(myOptions.USE_SOFT_WRAPS)) {
       return;
     }
@@ -389,7 +376,9 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public void setVirtualSpace(boolean val) {
+    boolean oldValue = myOptions.IS_VIRTUAL_SPACE;
     myOptions.IS_VIRTUAL_SPACE = val;
+    myPropertyChangeSupport.firePropertyChange(PROP_VIRTUAL_SPACE, oldValue, val);
   }
 
   public boolean isCaretInsideTabs() {

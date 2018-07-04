@@ -36,7 +36,6 @@ import java.util.List;
 
 /**
 * @author Dmitry Avdeev
-*         Date: 16.07.13
 */
 public class TaskAutoCompletionListProvider extends TextFieldWithAutoCompletionListProvider<Task> {
 

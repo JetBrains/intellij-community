@@ -36,6 +36,7 @@ public class NonEmptyActionGroup extends DefaultActionGroup implements DumbAware
     presentation.setVisible(getChildrenCount() > 0);
   }
 
+  @Override
   public boolean hideIfNoVisibleChildren() {
     return true;
   }

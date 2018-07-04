@@ -33,6 +33,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,7 +97,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       usages.addAll(nonCodeUsages);
     }
 
-    return usages.toArray(new UsageInfo[usages.size()]);
+    return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -108,11 +109,13 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     return super.getElementsToWrite(descriptor);
   }
 
+  @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     assert elements.length == 1;
     myClass = (PsiClass) elements [0];
   }
 
+  @Override
   protected boolean isPreviewUsages(@NotNull UsageInfo[] usages) {
     if (super.isPreviewUsages(usages)) return true;
     for(UsageInfo usage: usages) {
@@ -202,7 +205,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         final PsiElement resolved = methodExpression.resolve();
         if (resolved instanceof PsiMethod) {
           final PsiMethod method = (PsiMethod)resolved;
-          if ("getClass".equals(method.getName()) && method.getParameterList().getParametersCount() == 0) {
+          if ("getClass".equals(method.getName()) && method.getParameterList().isEmpty()) {
             result.putValue(methodExpression, "Result of getClass() invocation would be changed");
           }
         }
@@ -221,7 +224,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       if (element instanceof PsiNewExpression) {
         newExpressions.add((PsiNewExpression)element);
       }
-      else if (element.getParent() instanceof PsiNewExpression) {
+      else if (element != null && element.getParent() instanceof PsiNewExpression) {
         newExpressions.add((PsiNewExpression) element.getParent());
       }
       else {
@@ -265,7 +268,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
 
   private void replaceNewOrType(final PsiNewExpression psiNewExpression, final PsiClassType superType) {
     try {
-      if (psiNewExpression.getArrayDimensions().length == 0 && psiNewExpression.getArrayInitializer() == null) {
+      if (!ExpressionUtils.isArrayCreationExpression(psiNewExpression)) {
         new InlineToAnonymousConstructorProcessor(myClass, psiNewExpression, superType).run();
       }
       else {
@@ -324,6 +327,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
     return superType;
   }
 
+  @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("inline.to.anonymous.command.name", myClass.getQualifiedName());
   }

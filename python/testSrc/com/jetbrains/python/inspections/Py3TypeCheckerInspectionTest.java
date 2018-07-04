@@ -1,28 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author vlan
  */
-public class Py3TypeCheckerInspectionTest extends PyTestCase {
+public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public static final String TEST_DIRECTORY = "inspections/PyTypeCheckerInspection/";
 
   @Override
@@ -30,21 +17,30 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
     return ourPy3Descriptor;
   }
 
-  private void doTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
-      myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
-      myFixture.enableInspections(PyTypeCheckerInspection.class);
-      myFixture.checkHighlighting(true, false, true);
-    });
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyTypeCheckerInspection.class;
   }
 
-  private void doMultiFileTest() {
-    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> {
-      myFixture.copyDirectoryToProject(TEST_DIRECTORY + getTestName(false), "");
-      myFixture.configureFromTempProjectFile("a.py");
-      myFixture.enableInspections(PyTypeCheckerInspection.class);
-      myFixture.checkHighlighting(true, false, true);
-    });
+  @Override
+  protected boolean isLowerCaseTestFile() {
+    return false;
+  }
+
+  @Override
+  protected String getTestCaseDirectory() {
+    return TEST_DIRECTORY;
+  }
+
+  @Override
+  protected void doTest() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> super.doTest());
+  }
+
+  @Override
+  protected void doMultiFileTest() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, () -> super.doMultiFileTest());
   }
 
   // PY-9289
@@ -88,7 +84,6 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   
   // PY-18762
   public void testHomogeneousTuples() {
-    myFixture.copyDirectoryToProject("typing/typing.py", TEST_DIRECTORY);
     doTest();
   }
 
@@ -188,7 +183,7 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   }
 
   // PY-20073
-  public void testMapArgumentsInOppositeOrder() {
+  public void testMapArgumentsInOppositeOrderPy3() {
     doTest();
   }
 
@@ -251,6 +246,21 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-21302
+  public void testInitializingNewType() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-21302
+  public void testNewTypeAsParameter() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-21302
+  public void testNewTypeInheritance() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
   // PY-24287
   public void testPromotingBytearrayToBytes() {
     doTest();
@@ -267,5 +277,72 @@ public class Py3TypeCheckerInspectionTest extends PyTestCase {
   // PY-24789
   public void testTypingSupports() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-25994
+  public void testUnresolvedReceiverGeneric() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  public void testMatchingOpenFunctionCallTypesPy3() {
+    doMultiFileTest();
+  }
+
+  public void testChainedComparisonsGenericMatching() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-27398
+  public void testInitializingDataclass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, () -> super.doMultiFileTest());
+  }
+
+  // PY-28442
+  public void testDataclassClsCallType() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, () -> super.doMultiFileTest());
+  }
+
+  // PY-26354
+  public void testInitializingAttrs() {
+    doTestByText("import attr\n" +
+                 "import typing\n" +
+                 "\n" +
+                 "@attr.s\n" +
+                 "class Weak1:\n" +
+                 "    x = attr.ib()\n" +
+                 "    y = attr.ib(default=0)\n" +
+                 "    z = attr.ib(default=attr.Factory(list))\n" +
+                 "    \n" +
+                 "Weak1(1, \"str\", 2)\n" +
+                 "\n" +
+                 "\n" +
+                 "@attr.s\n" +
+                 "class Weak2:\n" +
+                 "    x = attr.ib()\n" +
+                 "    \n" +
+                 "    @x.default\n" +
+                 "    def __init_x__(self):\n" +
+                 "        return 1\n" +
+                 "    \n" +
+                 "Weak2(\"str\")\n" +
+                 "\n" +
+                 "\n" +
+                 "@attr.s\n" +
+                 "class Strong:\n" +
+                 "    x = attr.ib(type=int)\n" +
+                 "    y = attr.ib(default=0, type=int)\n" +
+                 "    z = attr.ib(default=attr.Factory(list), type=typing.List[int])\n" +
+                 "    \n" +
+                 "Strong(1, <warning descr=\"Expected type 'int', got 'str' instead\">\"str\"</warning>, <warning descr=\"Expected type 'List[int]', got 'List[str]' instead\">[\"str\"]</warning>)");
+  }
+
+  // PY-28957
+  public void testDataclassesReplace() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, () -> super.doMultiFileTest());
+  }
+
+  // PY-28127
+  public void testInitializingTypeVar() {
+    doTest();
   }
 }

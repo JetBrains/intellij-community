@@ -57,6 +57,17 @@ def get_what_to_run_by_env(environment):
     return base_dir, scenarios, what_to_run
 
 
+def get_location(base_dir, location_file, location_line):
+    """
+    Generates location that PyCharm resolves to file
+    :param base_dir: base directory to resolve relative path against
+    :param location_file: path to file
+    :param location_line: line number
+    """
+    my_file = str(location_file).lstrip("/\\")
+    return "file:///{0}:{1}".format(os.path.normpath(os.path.join(base_dir, my_file)), location_line)
+
+
 class BddRunner(object):
     """
     Extends this class, implement abstract methods and use its API to implement new BDD frameworks.
@@ -101,8 +112,7 @@ class BddRunner(object):
         :param location object with "file" (relative to base_dir) and "line" fields.
         :return: location in format file:line (as supported in tcmessages)
         """
-        my_file = str(location.file).lstrip("/\\")
-        return "file:///{0}:{1}".format(os.path.normpath(os.path.join(self.__base_dir, my_file)), location.line)
+        return get_location(self.__base_dir, location.file, location.line)
 
     def _test_undefined(self, test_name, location):
         """

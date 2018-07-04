@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,25 +18,24 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
 import org.jetbrains.idea.svn.properties.PropertyValue;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.File;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -146,20 +133,20 @@ public class PropertiesComponent extends JPanel {
   private static void collectProperties(@NotNull SvnVcs vcs, @NotNull File file, @NotNull final Map<String, String> props) {
     try {
       PropertyConsumer handler = new PropertyConsumer() {
-        public void handleProperty(File path, PropertyData property) throws SVNException {
+        public void handleProperty(File path, PropertyData property) {
           final PropertyValue value = property.getValue();
           if (value != null) {
             props.put(property.getName(), PropertyValue.toString(property.getValue()));
           }
         }
 
-        public void handleProperty(SVNURL url, PropertyData property) throws SVNException {
+        public void handleProperty(Url url, PropertyData property) {
         }
 
-        public void handleProperty(long revision, PropertyData property) throws SVNException {
+        public void handleProperty(long revision, PropertyData property) {
         }
       };
-      vcs.getFactory(file).createPropertyClient().list(SvnTarget.fromFile(file, SVNRevision.UNDEFINED), SVNRevision.WORKING, Depth.EMPTY,
+      vcs.getFactory(file).createPropertyClient().list(Target.on(file, Revision.UNDEFINED), Revision.WORKING, Depth.EMPTY,
                                                        handler);
     }
     catch (VcsException e) {
@@ -232,7 +219,7 @@ public class PropertiesComponent extends JPanel {
     }
   }
 
-  private static class CloseAction extends AnAction {
+  private static class CloseAction extends DumbAwareAction {
 
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Close");
@@ -246,7 +233,7 @@ public class PropertiesComponent extends JPanel {
     }
   }
 
-  private class RefreshAction extends AnAction {
+  private class RefreshAction extends DumbAwareAction {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Refresh");
       e.getPresentation().setDescription("Reload properties");
@@ -260,7 +247,7 @@ public class PropertiesComponent extends JPanel {
     }
   }
 
-  private abstract class BasePropertyAction extends AnAction {
+  private abstract class BasePropertyAction extends DumbAwareAction {
 
     protected void setProperty(@Nullable String property, @Nullable String value, boolean recursive, boolean force) {
       if (!StringUtil.isEmpty(property)) {
@@ -296,7 +283,7 @@ public class PropertiesComponent extends JPanel {
       PropertyValue propValue = null;
       try {
         propValue = myVcs.getFactory(myFile).createPropertyClient()
-          .getProperty(SvnTarget.fromFile(myFile), SvnPropertyKeys.SVN_KEYWORDS, false, SVNRevision.WORKING);
+          .getProperty(Target.on(myFile), SvnPropertyKeys.SVN_KEYWORDS, false, Revision.WORKING);
       }
       catch (VcsException e1) {
         // show erorr message
@@ -366,7 +353,7 @@ public class PropertiesComponent extends JPanel {
     }
   }
 
-  private class FollowSelectionAction extends ToggleAction {
+  private class FollowSelectionAction extends DumbAwareToggleAction {
 
     public boolean isSelected(AnActionEvent e) {
       return myIsFollowSelection;

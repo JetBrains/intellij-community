@@ -51,7 +51,7 @@ public class PsiProximityComparator implements Comparator<Object> {
   public PsiProximityComparator(@Nullable PsiElement context) {
     myContext = context;
     myContextModule = context == null ? null : ModuleUtilCore.findModuleForPsiElement(context);
-    myProximities = FactoryMap.createMap(key -> getProximity(key, myContext));
+    myProximities = FactoryMap.create(key -> getProximity(key, myContext));
   }
 
   @Override

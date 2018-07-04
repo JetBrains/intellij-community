@@ -24,7 +24,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -34,6 +33,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,22 +56,31 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
     final PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
     if (leaf == null) return false;
     final PsiModifierListOwner owner = ObjectUtils.tryCast(leaf.getParent(), PsiModifierListOwner.class);
+    return isAvailable(project, file, owner);
+  }
+
+  public boolean isAvailable(@NotNull Project project, PsiFile file, PsiModifierListOwner owner) {
     if (owner != null && owner.getLanguage().isKindOf(JavaLanguage.INSTANCE) && isWritable(owner) &&
         ModuleUtilCore.findModuleForPsiElement(file) != null &&
         PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_5)) {
-      final PsiAnnotation[] annotations = InferredAnnotationsManager.getInstance(project).findInferredAnnotations(owner);
-      if (annotations.length > 0) {
-        final String annos = StringUtil.join(annotations, annotation -> {
-          final PsiJavaCodeReferenceElement nameRef = correctAnnotation(annotation).getNameReferenceElement();
-          final String name = nameRef != null ? nameRef.getReferenceName() : annotation.getQualifiedName();
-          return "@" + name + annotation.getParameterList().getText();
-        }, " ");
-        setText("Insert '" + annos + "'");
+      String annotations = StreamEx.of(InferredAnnotationsManager.getInstance(project).findInferredAnnotations(owner))
+                                   .remove(InferredAnnotationsManagerImpl::isExperimentalInferredAnnotation)
+                                   .map(MakeInferredAnnotationExplicit::getAnnotationPresentation)
+                                   .joining(" ");
+      if (!annotations.isEmpty()) {
+        setText("Insert '" + annotations + "'");
         return true;
       }
     }
     
     return false;
+  }
+
+  @NotNull
+  private static String getAnnotationPresentation(PsiAnnotation annotation) {
+    final PsiJavaCodeReferenceElement nameRef = correctAnnotation(annotation).getNameReferenceElement();
+    final String name = nameRef != null ? nameRef.getReferenceName() : annotation.getQualifiedName();
+    return "@" + name + annotation.getParameterList().getText();
   }
 
   private static boolean isWritable(PsiModifierListOwner owner) {
@@ -87,6 +96,10 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
     assert leaf != null;
     final PsiModifierListOwner owner = ObjectUtils.tryCast(leaf.getParent(), PsiModifierListOwner.class);
     assert owner != null;
+    makeAnnotationsExplicit(project, file, owner);
+  }
+
+  public void makeAnnotationsExplicit(@NotNull Project project, PsiFile file, PsiModifierListOwner owner) {
     final PsiModifierList modifierList = owner.getModifierList();
     assert modifierList != null;
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
@@ -97,6 +110,7 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
 
     for (PsiAnnotation inferred : InferredAnnotationsManager.getInstance(project).findInferredAnnotations(owner)) {
+      if (InferredAnnotationsManagerImpl.isExperimentalInferredAnnotation(inferred)) continue;
       final PsiAnnotation toInsert = correctAnnotation(inferred);
       final String qname = toInsert.getQualifiedName();
       assert qname != null;
@@ -104,12 +118,10 @@ public class MakeInferredAnnotationExplicit extends BaseIntentionAction {
           !InferNullityAnnotationsAction.addAnnotationsDependency(project, Collections.singleton(module), qname, getFamilyName())) {
         return;
       }
-      
+
       WriteCommandAction.runWriteCommandAction(project, () -> DumbService.getInstance(project).withAlternativeResolveEnabled(
         () -> JavaCodeStyleManager.getInstance(project).shortenClassReferences(modifierList.addAfter(toInsert, null))));
     }
-
-    
   }
 
   @NotNull

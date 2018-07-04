@@ -19,7 +19,6 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -27,9 +26,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.List;
 
-public class SimpleDiffRequestChain extends UserDataHolderBase implements DiffRequestChain {
+public class SimpleDiffRequestChain extends DiffRequestChainBase {
   @NotNull private final List<DiffRequestProducerWrapper> myRequests;
-  private int myIndex = 0;
 
   public SimpleDiffRequestChain(@NotNull DiffRequest request) {
     this(Collections.singletonList(request));
@@ -43,17 +41,6 @@ public class SimpleDiffRequestChain extends UserDataHolderBase implements DiffRe
   @NotNull
   public List<DiffRequestProducerWrapper> getRequests() {
     return myRequests;
-  }
-
-  @Override
-  public int getIndex() {
-    return myIndex;
-  }
-
-  @Override
-  public void setIndex(int index) {
-    assert index >= 0 && index < myRequests.size();
-    myIndex = index;
   }
 
   public static class DiffRequestProducerWrapper implements DiffRequestProducer {
@@ -77,7 +64,7 @@ public class SimpleDiffRequestChain extends UserDataHolderBase implements DiffRe
     @NotNull
     @Override
     public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
-      throws DiffRequestProducerException, ProcessCanceledException {
+      throws ProcessCanceledException {
       return myRequest;
     }
   }

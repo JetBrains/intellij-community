@@ -31,6 +31,4 @@ public interface ProgressIndicatorStacked extends ProgressIndicator {
 
   @NotNull
   Stack<String> getText2Stack();
-
-  int getNonCancelableCount();
 }

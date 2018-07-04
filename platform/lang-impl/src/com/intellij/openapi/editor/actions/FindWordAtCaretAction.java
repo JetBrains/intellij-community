@@ -17,10 +17,8 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.find.FindUtil;
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -31,13 +29,13 @@ public class FindWordAtCaretAction extends EditorAction {
   private static class Handler extends EditorActionHandler {
     @Override
     public void execute(@NotNull Editor editor, DataContext dataContext) {
-      Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
       FindUtil.findWordAtCaret(project, editor);
     }
 
     @Override
     public boolean isEnabled(Editor editor, DataContext dataContext) {
-      Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
       return project != null;
     }
   }

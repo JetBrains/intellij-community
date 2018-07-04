@@ -31,7 +31,7 @@ public class ExternalizableWithoutPublicNoArgConstructorInspectionBase extends B
     final PsiMethod[] constructors = aClass.getConstructors();
     for (PsiMethod constructor : constructors) {
       final PsiParameterList parameterList = constructor.getParameterList();
-      if (parameterList.getParametersCount() == 0) {
+      if (parameterList.isEmpty()) {
         return constructor;
       }
     }

@@ -71,16 +71,34 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
     myCaseSensitive = caseSensitive;
   }
 
+  @Nullable
+  public static XmlAttributeDescriptor getCommonAttributeDescriptor(@NotNull final String attributeName, @Nullable final XmlTag context) {
+    final XmlElementDescriptor descriptor = guessTagForCommonAttributes(context);
+    if (descriptor != null) {
+      return descriptor.getAttributeDescriptor(attributeName, context);
+    }
+    return null;
+  }
+
+  @NotNull
   public static XmlAttributeDescriptor[] getCommonAttributeDescriptors(XmlTag context) {
-    final XmlNSDescriptor nsDescriptor = context != null ? context.getNSDescriptor(context.getNamespace(), false) : null;
+    final XmlElementDescriptor descriptor = guessTagForCommonAttributes(context);
+    if (descriptor != null) {
+      return descriptor.getAttributesDescriptors(context);
+    }
+    return XmlAttributeDescriptor.EMPTY;
+  }
+
+  @Nullable
+  public static XmlElementDescriptor guessTagForCommonAttributes(@Nullable final XmlTag context) {
+    if (context == null) return null;
+    final XmlNSDescriptor nsDescriptor = context.getNSDescriptor(context.getNamespace(), false);
     if (nsDescriptor instanceof HtmlNSDescriptorImpl) {
       XmlElementDescriptor descriptor = ((HtmlNSDescriptorImpl)nsDescriptor).getElementDescriptorByName("div");
       descriptor = descriptor == null ? ((HtmlNSDescriptorImpl)nsDescriptor).getElementDescriptorByName("span") : descriptor;
-      if (descriptor != null) {
-        return descriptor.getAttributesDescriptors(context);
-      }
+      return descriptor;
     }
-    return XmlAttributeDescriptor.EMPTY;
+    return null;
   }
 
   private Map<String,XmlElementDescriptor> buildDeclarationMap() {

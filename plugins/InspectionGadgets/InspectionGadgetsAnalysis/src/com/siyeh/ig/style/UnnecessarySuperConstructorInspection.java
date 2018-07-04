@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -38,15 +37,13 @@ public class UnnecessarySuperConstructorInspection extends BaseInspection implem
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.super.constructor.display.name");
+    return InspectionGadgetsBundle.message("unnecessary.super.constructor.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "unnecessary.super.constructor.problem.descriptor");
+    return InspectionGadgetsBundle.message("unnecessary.super.constructor.problem.descriptor");
   }
 
   @Override
@@ -54,19 +51,16 @@ public class UnnecessarySuperConstructorInspection extends BaseInspection implem
     return new UnnecessarySuperConstructorFix();
   }
 
-  private static class UnnecessarySuperConstructorFix
-    extends InspectionGadgetsFix {
+  private static class UnnecessarySuperConstructorFix extends InspectionGadgetsFix {
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message(
-        "unnecessary.super.constructor.remove.quickfix");
+      return InspectionGadgetsBundle.message("unnecessary.super.constructor.remove.quickfix");
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement superCall = descriptor.getPsiElement();
       final PsiElement callStatement = superCall.getParent();
       assert callStatement != null;
@@ -79,22 +73,16 @@ public class UnnecessarySuperConstructorInspection extends BaseInspection implem
     return new UnnecessarySuperConstructorVisitor();
   }
 
-  private static class UnnecessarySuperConstructorVisitor
-    extends BaseInspectionVisitor {
+  private static class UnnecessarySuperConstructorVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression call) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
-      final PsiReferenceExpression methodExpression =
-        call.getMethodExpression();
-      final String methodText = methodExpression.getText();
-      if (!PsiKeyword.SUPER.equals(methodText)) {
+      final PsiReferenceExpression methodExpression = call.getMethodExpression();
+      if (methodExpression.isQualified() || !PsiKeyword.SUPER.equals(methodExpression.getReferenceName())) {
         return;
       }
-      final PsiExpressionList argumentList = call.getArgumentList();
-      final PsiExpression[] args = argumentList.getExpressions();
-      if (args.length != 0) {
+      if (!call.getArgumentList().isEmpty()) {
         return;
       }
       registerError(call, ProblemHighlightType.LIKE_UNUSED_SYMBOL);

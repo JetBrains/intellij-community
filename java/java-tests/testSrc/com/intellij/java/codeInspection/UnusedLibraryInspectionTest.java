@@ -19,6 +19,10 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.unusedLibraries.UnusedLibrariesInspection;
+import com.intellij.openapi.roots.DependencyScope;
+import com.intellij.openapi.roots.LibraryOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.testFramework.InspectionTestCase;
@@ -35,6 +39,13 @@ public class UnusedLibraryInspectionTest extends InspectionTestCase {
   protected void setupRootModel(@NotNull String testDir, @NotNull VirtualFile[] sourceDir, String sdkName) {
     super.setupRootModel(testDir, sourceDir, sdkName);
     PsiTestUtil.addProjectLibrary(getModule(), "JUnit", IntelliJProjectConfiguration.getProjectLibraryClassesRootPaths("JUnit4"));
+    if (getTestName(true).endsWith("Runtime")) {
+      for (OrderEntry entry : ModuleRootManager.getInstance(getModule()).getOrderEntries()) {
+        if (entry instanceof LibraryOrderEntry && "JUnit".equals(((LibraryOrderEntry)entry).getLibraryName())) {
+          ((LibraryOrderEntry)entry).setScope(DependencyScope.RUNTIME);
+        }
+      }
+    }
   }
 
   private void doTest() {
@@ -49,6 +60,7 @@ public class UnusedLibraryInspectionTest extends InspectionTestCase {
 
   public void testSimple() { doTest(); }
   public void testUsedJunit() { doTest(); }
+  public void testJunitAsRuntime() { doTest(); }
   public void testUsedJunitFromField() { doTest(); }
   public void testUsedInParameterAnnotation() { doTest(); }
 }

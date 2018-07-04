@@ -47,7 +47,7 @@ public class CommitNode extends DefaultMutableTreeNode implements CustomRendered
     renderer.append("   ");
     TreeNode parent = getParent();
     new IssueLinkRenderer(myProject, renderer).appendTextWithLinks(getUserObject().getSubject(), PushLogTreeUtil
-      .addTransparencyIfNeeded(SimpleTextAttributes.REGULAR_ATTRIBUTES,
+      .addTransparencyIfNeeded(renderer, SimpleTextAttributes.REGULAR_ATTRIBUTES,
                                !(parent instanceof RepositoryNode) || ((RepositoryNode)parent).isChecked()));
   }
 

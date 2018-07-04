@@ -215,7 +215,7 @@ public class ToggleToolbarAction extends ToggleAction implements DumbAware {
       boolean popup = result.size() > 3;
       setPopup(popup);
       if (!popup && !result.isEmpty()) result.add(Separator.getInstance());
-      return result.toArray(new AnAction[result.size()]);
+      return result.toArray(AnAction.EMPTY_ARRAY);
     }
   }
 }

@@ -19,47 +19,42 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiMethod
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 
 class TransformationResult(
-    val methods: Array<PsiMethod>,
-    val fields: Array<GrField>,
-    val innerClasses: Array<PsiClass>,
-    val implementsTypes: Array<PsiClassType>,
-    val extendsTypes: Array<PsiClassType>
+  val methods: Array<PsiMethod>,
+  val fields: Array<GrField>,
+  val innerClasses: Array<PsiClass>,
+  val implementsTypes: Array<PsiClassType>,
+  val extendsTypes: Array<PsiClassType>
 )
 
-private val ourTransformationContext = object : ThreadLocal<MutableMap<GrTypeDefinition, Boolean>>() {
-  override fun initialValue(): MutableMap<GrTypeDefinition, Boolean> = ContainerUtil.newHashMap()
+private val ourTransformationContext = object : ThreadLocal<MutableSet<GrTypeDefinition>>() {
+  override fun initialValue(): MutableSet<GrTypeDefinition> = HashSet()
 }
 
+private inline val transformationContext get() = ourTransformationContext.get()
+
 fun transformDefinition(definition: GrTypeDefinition): TransformationResult {
-  ourTransformationContext.get().put(definition, true)
+  assert(transformationContext.add(definition))
   try {
     val transformationContext = TransformationContextImpl(definition)
-    for (transformation in org.jetbrains.plugins.groovy.transformations.AstTransformationSupport.EP_NAME.extensions) {
+    for (transformation in AstTransformationSupport.EP_NAME.extensions) {
       ProgressManager.checkCanceled()
       transformation.applyTransformation(transformationContext)
     }
     return transformationContext.transformationResult
   }
   finally {
-    ourTransformationContext.get().remove(definition)
+    transformationContext.remove(definition)
   }
 }
 
 fun isUnderTransformation(clazz: PsiClass?): Boolean {
-  return if (clazz is GrTypeDefinition) {
-    val result = ourTransformationContext.get()[clazz]
-    result != null && result
-  }
-  else {
-    false
-  }
+  return clazz is GrTypeDefinition && clazz in transformationContext
 }
 
-infix operator fun TransformationContext.plusAssign(method: PsiMethod) = addMethod(method)
+infix operator fun TransformationContext.plusAssign(method: PsiMethod): Unit = addMethod(method)
 
-infix operator fun TransformationContext.plusAssign(field: GrField) = addField(field)
+infix operator fun TransformationContext.plusAssign(field: GrField): Unit = addField(field)

@@ -15,16 +15,10 @@
  */
 package com.jetbrains.python.sdk;
 
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkAdditionalData;
-import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl;
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.ListSeparator;
@@ -33,81 +27,64 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.NullableConsumer;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.packaging.PyCondaPackageService;
-import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.sdk.add.PyAddSdkDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collection;
+import java.util.Arrays;
 import java.util.List;
 
 public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
-  @Nullable private DialogWrapper myMore;
-  private final Project myProject;
-  private final Component myOwnerComponent;
+  @Nullable private final DialogWrapper myShowAll;
+  @Nullable private final Project myProject;
+  @Nullable private final Module myModule;
   private final Sdk[] myExistingSdks;
   private final NullableConsumer<Sdk> mySdkAddedCallback;
 
-  private static final String LOCAL = PyBundle.message("sdk.details.step.add.local");
-  private static final String REMOTE = PyBundle.message("sdk.details.step.add.remote");
-  private static final String VIRTUALENV = PyBundle.message("sdk.details.step.create.virtual.env");
-  private static final String CONDA = PyBundle.message("sdk.details.step.create.conda.env");
-  private static final String MORE = PyBundle.message("sdk.details.step.show.more");
-  private boolean myNewProject;
+  private static final String ADD = PyBundle.message("sdk.details.step.add");
+  private static final String ALL = PyBundle.message("sdk.details.step.show.all");
+  @Nullable private String myNewProjectPath;
 
-  public static void show(final Project project,
-                          final Sdk[] existingSdks,
-                          @Nullable final DialogWrapper moreDialog,
-                          JComponent ownerComponent, final Point popupPoint,
-                          final NullableConsumer<Sdk> sdkAddedCallback) {
-    show(project, existingSdks, moreDialog, ownerComponent, popupPoint, sdkAddedCallback, false);
-
-  }
-
-  public static void show(final Project project,
-                          final Sdk[] existingSdks,
-                          @Nullable final DialogWrapper moreDialog,
-                          JComponent ownerComponent, final Point popupPoint,
-                          final NullableConsumer<Sdk> sdkAddedCallback, boolean isNewProject) {
-    final PythonSdkDetailsStep sdkHomesStep = new PythonSdkDetailsStep(project, moreDialog, ownerComponent, existingSdks, sdkAddedCallback);
-    sdkHomesStep.setNewProject(isNewProject);
-    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
-    popup.showInScreenCoordinates(ownerComponent, popupPoint);
-  }
-
-  private void setNewProject(boolean isNewProject) {
-    myNewProject = isNewProject;
+  public static void show(@Nullable final Project project,
+                          @Nullable final Module module,
+                          @NotNull final Sdk[] existingSdks,
+                          @Nullable final DialogWrapper showAllDialog,
+                          @NotNull JComponent ownerComponent,
+                          @NotNull final Point popupPoint,
+                          @Nullable String newProjectPath,
+                          @NotNull final NullableConsumer<Sdk> sdkAddedCallback) {
+    final PythonSdkDetailsStep sdkHomesStep = new PythonSdkDetailsStep(project, module, showAllDialog, existingSdks, sdkAddedCallback);
+    if (showAllDialog == null) {
+      sdkHomesStep.createLocalSdk();
+    }
+    else {
+      sdkHomesStep.myNewProjectPath = newProjectPath;
+      final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
+      popup.showInScreenCoordinates(ownerComponent, popupPoint);
+    }
   }
 
   public PythonSdkDetailsStep(@Nullable final Project project,
-                              @Nullable final DialogWrapper moreDialog, @NotNull final Component ownerComponent,
+                              @Nullable final Module module,
+                              @Nullable final DialogWrapper showAllDialog,
                               @NotNull final Sdk[] existingSdks,
                               @NotNull final NullableConsumer<Sdk> sdkAddedCallback) {
-    super(null, getAvailableOptions(moreDialog != null));
+    super(null, getAvailableOptions(showAllDialog != null));
     myProject = project;
-    myMore = moreDialog;
-    myOwnerComponent = ownerComponent;
+    myModule = module;
+    myShowAll = showAllDialog;
     myExistingSdks = existingSdks;
     mySdkAddedCallback = sdkAddedCallback;
   }
 
-  private static List<String> getAvailableOptions(boolean showMore) {
+  private static List<String> getAvailableOptions(boolean showAll) {
     final List<String> options = new ArrayList<>();
-    options.add(LOCAL);
-    if (PythonRemoteInterpreterManager.getInstance() != null) {
-      options.add(REMOTE);
-    }
-    options.add(VIRTUALENV);
-    if (PyCondaPackageService.getSystemCondaExecutable() != null) {
-      options.add(CONDA);
-    }
-
-    if (showMore) {
-      options.add(MORE);
+    options.add(ADD);
+    if (showAll) {
+      options.add(ALL);
     }
     return options;
   }
@@ -115,105 +92,25 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   @Nullable
   @Override
   public ListSeparator getSeparatorAbove(String value) {
-    return MORE.equals(value) ? new ListSeparator() : null;
+    return ALL.equals(value) ? new ListSeparator() : null;
   }
 
   private void optionSelected(final String selectedValue) {
-    if (!MORE.equals(selectedValue) && myMore != null)
-      Disposer.dispose(myMore.getDisposable());
-    if (LOCAL.equals(selectedValue)) {
+    if (!ALL.equals(selectedValue) && myShowAll != null)
+      Disposer.dispose(myShowAll.getDisposable());
+    if (ADD.equals(selectedValue)) {
       createLocalSdk();
     }
-    else if (REMOTE.equals(selectedValue)) {
-      createRemoteSdk();
-    }
-    else if (VIRTUALENV.equals(selectedValue)) {
-      createVirtualEnvSdk();
-    }
-    else if (CONDA.equals(selectedValue)) {
-      createCondaEnvSdk();
-    }
-    else if (myMore != null) {
-      myMore.show();
+    else if (myShowAll != null) {
+      myShowAll.show();
     }
   }
 
   private void createLocalSdk() {
-    SdkConfigurationUtil.createSdk(myProject, myExistingSdks, mySdkAddedCallback, false, false, PythonSdkType.getInstance());
-  }
-
-  private void createRemoteSdk() {
-    PythonRemoteInterpreterManager remoteInterpreterManager = PythonRemoteInterpreterManager.getInstance();
-    if (remoteInterpreterManager != null) {
-      remoteInterpreterManager.addRemoteSdk(myProject, myOwnerComponent, Lists.newArrayList(myExistingSdks), mySdkAddedCallback);
-    }
-    else {
-      final String pathToPluginsPage = ShowSettingsUtil.getSettingsMenuName() + " | Plugins";
-      Messages.showErrorDialog(PyBundle.message("remote.interpreter.error.plugin.missing", pathToPluginsPage),
-                               PyBundle.message("remote.interpreter.add.title"));
-    }
-  }
-
-  private void createVirtualEnvSdk() {
-    AbstractCreateVirtualEnvDialog.VirtualEnvCallback callback = getVEnvCallback();
-
-    final CreateVirtualEnvDialog dialog;
-    final List<Sdk> allSdks = Lists.newArrayList(myExistingSdks);
-    Iterables.removeIf(allSdks, sdk -> !(sdk.getSdkType() instanceof PythonSdkType));
-    final List<PythonSdkFlavor> flavors = PythonSdkFlavor.getApplicableFlavors(false);
-    for (PythonSdkFlavor flavor : flavors) {
-      final Collection<String> strings = flavor.suggestHomePaths();
-      for (String string : SdkConfigurationUtil.filterExistingPaths(PythonSdkType.getInstance(), strings, myExistingSdks)) {
-        allSdks.add(new PyDetectedSdk(string));
-      }
-    }
-    if (myProject != null) {
-      dialog = new CreateVirtualEnvDialog(myProject, allSdks);
-    }
-    else {
-      dialog = new CreateVirtualEnvDialog(myOwnerComponent, allSdks);
-    }
-    if (dialog.showAndGet()) {
-      dialog.createVirtualEnv(callback);
-    }
-  }
-
-  @NotNull
-  private AbstractCreateVirtualEnvDialog.VirtualEnvCallback getVEnvCallback() {
-    return new CreateVirtualEnvDialog.VirtualEnvCallback() {
-        @Override
-        public void virtualEnvCreated(Sdk sdk, boolean associateWithProject) {
-          if (associateWithProject) {
-            SdkAdditionalData additionalData = sdk.getSdkAdditionalData();
-            if (additionalData == null) {
-              additionalData = new PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(sdk.getHomePath()));
-              ((ProjectJdkImpl)sdk).setSdkAdditionalData(additionalData);
-            }
-            if (myNewProject) {
-              ((PythonSdkAdditionalData)additionalData).associateWithNewProject();
-            }
-            else if (myProject != null) {
-              ((PythonSdkAdditionalData)additionalData).associateWithProject(myProject);
-            }
-          }
-          mySdkAddedCallback.consume(sdk);
-        }
-      };
-  }
-
-  private void createCondaEnvSdk() {
-    AbstractCreateVirtualEnvDialog.VirtualEnvCallback callback = getVEnvCallback();
-
-    final CreateCondaEnvDialog dialog;
-    if (myProject != null) {
-      dialog = new CreateCondaEnvDialog(myProject);
-    }
-    else {
-      dialog = new CreateCondaEnvDialog(myOwnerComponent);
-    }
-    if (dialog.showAndGet()) {
-      dialog.createVirtualEnv(callback);
-    }
+    final Project project = myNewProjectPath != null ? null : myProject;
+    final PyAddSdkDialog dialog = PyAddSdkDialog.create(project, myModule, Arrays.asList(myExistingSdks), myNewProjectPath);
+    final Sdk sdk = dialog.showAndGet() ? dialog.getOrCreateSdk() : null;
+    mySdkAddedCallback.consume(sdk);
   }
 
   @Override
@@ -223,8 +120,8 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
 
   @Override
   public void canceled() {
-    if (getFinalRunnable() == null && myMore != null)
-      Disposer.dispose(myMore.getDisposable());
+    if (getFinalRunnable() == null && myShowAll != null)
+      Disposer.dispose(myShowAll.getDisposable());
   }
 
   @Override

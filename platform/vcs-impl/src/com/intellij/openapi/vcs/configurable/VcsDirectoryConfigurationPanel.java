@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.configurable;
 
@@ -20,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.io.FileUtil;
@@ -32,6 +19,7 @@ import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.UriUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -53,6 +41,7 @@ import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static com.intellij.openapi.progress.util.ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
 import static com.intellij.openapi.project.ProjectUtil.guessProjectDir;
 import static com.intellij.openapi.vcs.VcsConfiguration.getInstance;
 import static com.intellij.util.containers.ContainerUtil.map;
@@ -63,6 +52,8 @@ import static com.intellij.util.ui.UIUtil.DEFAULT_VGAP;
  * @author yole
  */
 public class VcsDirectoryConfigurationPanel extends JPanel implements Configurable {
+  private static final int POSTPONE_MAPPINGS_LOADING_PANEL = DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS;
+
   private final Project myProject;
   private final String myProjectMessage;
   private final ProjectLevelVcsManager myVcsManager;
@@ -81,6 +72,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   private JCheckBox myShowChangedRecursively;
   private final VcsLimitHistoryConfigurable myLimitHistory;
   private final VcsUpdateInfoScopeFilterConfigurable myScopeFilterConfig;
+  private JBLoadingPanel myLoadingPanel;
 
   private static class MapInfo {
     static final MapInfo SEPARATOR = new MapInfo(new VcsDirectoryMapping("SEPARATOR", "SEP"), Type.SEPARATOR);
@@ -116,6 +108,12 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
     private MapInfo(@NotNull VcsDirectoryMapping mapping, @NotNull Type type) {
       this.mapping = mapping;
       this.type = type;
+    }
+
+    @Override
+    public String toString() {
+      if (type == Type.SEPARATOR) return "";
+      return mapping.toString();
     }
   }
 
@@ -348,32 +346,38 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   }
 
   private void initializeModel() {
+    myRecentlyChangedConfigurable.reset();
+    myLimitHistory.reset();
+    myScopeFilterConfig.reset();
+    myShowChangedRecursively.setSelected(myVcsConfiguration.SHOW_DIRTY_RECURSIVELY);
+
     List<MapInfo> mappings = new ArrayList<>();
     for (VcsDirectoryMapping mapping : ProjectLevelVcsManager.getInstance(myProject).getDirectoryMappings()) {
       mappings.add(MapInfo.registered(new VcsDirectoryMapping(mapping.getDirectory(), mapping.getVcs(), mapping.getRootSettings()),
                                       isMappingValid(mapping)));
     }
-
-    Collection<VcsRootError> errors = findUnregisteredRoots();
-    if (!errors.isEmpty()) {
-      mappings.add(MapInfo.SEPARATOR);
-      for (VcsRootError error : errors) {
-        mappings.add(MapInfo.unregistered(error.getMapping(), error.getVcsKey().getName()));
-      }
-    }
-
     myModel = new ListTableModel<>(new ColumnInfo[]{DIRECTORY, VCS_SETTING}, mappings, 0);
-    myDirectoryMappingTable.setModelAndUpdateColumns(myModel);
 
-    myRecentlyChangedConfigurable.reset();
-    myLimitHistory.reset();
-    myScopeFilterConfig.reset();
-    myShowChangedRecursively.setSelected(myVcsConfiguration.SHOW_DIRTY_RECURSIVELY);
+    BackgroundTaskUtil.executeAndTryWait(indicator -> {
+      Collection<VcsRootError> errors = findUnregisteredRoots();
+      return () -> {
+        if (!errors.isEmpty()) {
+          List<MapInfo> newMappings = new ArrayList<>(mappings);
+          newMappings.add(MapInfo.SEPARATOR);
+          for (VcsRootError error : errors) {
+            newMappings.add(MapInfo.unregistered(error.getMapping(), error.getVcsKey().getName()));
+          }
+          myModel.setItems(newMappings);
+        }
+        myDirectoryMappingTable.setModelAndUpdateColumns(myModel);
+        myLoadingPanel.stopLoading();
+      };
+    }, () -> myLoadingPanel.startLoading(), POSTPONE_MAPPINGS_LOADING_PANEL, false);
   }
 
   @NotNull
   private Collection<VcsRootError> findUnregisteredRoots() {
-    return ContainerUtil.filter(VcsRootErrorsFinder.getInstance(myProject).find(),
+    return ContainerUtil.filter(VcsRootErrorsFinder.getInstance(myProject).getOrFind(),
                                 error -> error.getType() == VcsRootError.Type.UNREGISTERED_ROOT);
   }
 
@@ -492,7 +496,11 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       .setDefaultWeightX(1)
       .setDefaultFill(GridBagConstraints.HORIZONTAL);
 
-    panel.add(createMappingsTable(), gb.nextLine().next().fillCell().weighty(1.0));
+    JComponent mappingsTable = createMappingsTable();
+    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), myProject, POSTPONE_MAPPINGS_LOADING_PANEL * 2); // don't start loading automatically
+    myLoadingPanel.add(mappingsTable);
+    panel.add(myLoadingPanel, gb.nextLine().next().fillCell().weighty(1.0));
+
     panel.add(createProjectMappingDescription(), gb.nextLine().next());
     panel.add(myLimitHistory.createComponent(), gb.nextLine().next());
     panel.add(createShowRecursivelyDirtyOption(), gb.nextLine().next());
@@ -667,11 +675,6 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
   @Nls
   public String getDisplayName() {
     return "Mappings";
-  }
-
-  @Override
-  public String getHelpTopic() {
-    return null;
   }
 
   @Override

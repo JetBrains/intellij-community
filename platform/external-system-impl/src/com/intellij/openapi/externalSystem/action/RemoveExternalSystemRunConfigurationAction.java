@@ -53,7 +53,7 @@ public class RemoveExternalSystemRunConfigurationAction extends ExternalSystemAc
 
     int res = Messages.showYesNoDialog(project, "Delete \"" + settings.getName() + "\"?", "Confirmation", Messages.getQuestionIcon());
     if (res == Messages.YES) {
-      ((RunManagerEx)RunManager.getInstance(project)).removeConfiguration(settings);
+      RunManager.getInstance(project).removeConfiguration(settings);
     }
   }
 }

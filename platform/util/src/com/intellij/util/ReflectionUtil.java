@@ -580,7 +580,7 @@ public class ReflectionUtil {
   }
 
   @NotNull
-  public static Class forName(@NotNull String fqn) {
+  public static Class<?> forName(@NotNull String fqn) {
     try {
       return Class.forName(fqn);
     }
@@ -624,13 +624,13 @@ public class ReflectionUtil {
 
   @NotNull
   public static JBTreeTraverser<Class> classTraverser(@Nullable Class root) {
-    return new JBTreeTraverser<Class>(CLASS_STRUCTURE).unique().withRoot(root);
+    return CLASS_TRAVERSER.unique().withRoot(root);
   }
 
-  private static final Function<Class, Iterable<Class>> CLASS_STRUCTURE = new Function<Class, Iterable<Class>>() {
+  private static final JBTreeTraverser<Class> CLASS_TRAVERSER = JBTreeTraverser.from(new Function<Class, Iterable<Class>>() {
     @Override
     public Iterable<Class> fun(Class aClass) {
       return JBIterable.of(aClass.getSuperclass()).append(aClass.getInterfaces());
     }
-  };
+  });
 }

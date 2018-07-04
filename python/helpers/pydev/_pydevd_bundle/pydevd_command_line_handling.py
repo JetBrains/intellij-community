@@ -73,13 +73,15 @@ def get_pydevd_file():
     f = pydevd.__file__
     if f.endswith('.pyc'):
         f = f[:-1]
+    elif f.endswith('$py.class'):
+        f = f[:-len('$py.class')] + '.py'
     return f
 
 def setup_to_argv(setup):
     '''
     :param dict setup:
         A dict previously gotten from process_command_line.
-        
+
     :note: does not handle --file nor --DEBUG.
     '''
     ret = [get_pydevd_file()]
@@ -106,7 +108,7 @@ def process_command_line(argv):
             handler.handle_argv(argv, i, setup)
 
         elif argv[i].startswith('--qt-support'):
-            # The --qt-support is special because we want to keep backward compatibility: 
+            # The --qt-support is special because we want to keep backward compatibility:
             # Previously, just passing '--qt-support' meant that we should use the auto-discovery mode
             # whereas now, if --qt-support is passed, it should be passed as --qt-support=<mode>, where
             # mode can be one of 'auto', 'none', 'pyqt5', 'pyqt4', 'pyside'.
@@ -127,7 +129,6 @@ def process_command_line(argv):
                 raise ValueError("Unexpected definition for qt-support flag: " + argv[i])
 
             del argv[i]
-
 
         elif argv[i] == '--file':
             # --file is special because it's the last one (so, no handler for it).

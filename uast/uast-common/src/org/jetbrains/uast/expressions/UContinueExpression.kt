@@ -16,9 +16,9 @@
 
 package org.jetbrains.uast
 
-import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
+import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.visitor.UastVisitor
 
 /**
@@ -26,16 +26,16 @@ import org.jetbrains.uast.visitor.UastVisitor
  */
 interface UContinueExpression : UJumpExpression {
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitContinueExpression(this)) return
-        annotations.acceptList(visitor)
-        visitor.afterVisitContinueExpression(this)
-    }
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitContinueExpression(this)) return
+    annotations.acceptList(visitor)
+    visitor.afterVisitContinueExpression(this)
+  }
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
-            visitor.visitContinueExpression(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
+    visitor.visitContinueExpression(this, data)
 
-    override fun asLogString() = log("label = $label")
+  override fun asLogString(): String = log("label = $label")
 
-    override fun asRenderString() = label?.let { "continue@$it" } ?: "continue"
+  override fun asRenderString(): String = label?.let { "continue@$it" } ?: "continue"
 }

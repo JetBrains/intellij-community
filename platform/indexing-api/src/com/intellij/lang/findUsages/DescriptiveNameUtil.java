@@ -16,30 +16,29 @@
 package com.intellij.lang.findUsages;
 
 import com.intellij.lang.Language;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
 public class DescriptiveNameUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.lang.findUsages.DescriptiveNameUtil");
 
   @NotNull
   public static String getMetaDataName(@NotNull PsiMetaData metaData) {
-    final String name = metaData.getName();
+    String name = metaData.getName();
     return StringUtil.isEmpty(name) ? "''" : name;
   }
 
   @NotNull
   public static String getDescriptiveName(@NotNull PsiElement psiElement) {
-    LOG.assertTrue(psiElement.isValid());
+    PsiUtilCore.ensureValid(psiElement);
 
     if (psiElement instanceof PsiMetaOwner) {
-      final PsiMetaOwner psiMetaOwner = (PsiMetaOwner)psiElement;
-      final PsiMetaData metaData = psiMetaOwner.getMetaData();
+      PsiMetaOwner psiMetaOwner = (PsiMetaOwner)psiElement;
+      PsiMetaData metaData = psiMetaOwner.getMetaData();
       if (metaData != null) return getMetaDataName(metaData);
     }
 
@@ -47,9 +46,11 @@ public class DescriptiveNameUtil {
       return ((PsiFile)psiElement).getName();
     }
     
-    final Language lang = psiElement.getLanguage();
-    final FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(lang);
-    assert provider != null : lang;
+    Language lang = psiElement.getLanguage();
+    FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(lang);
+    if (provider == null) {
+      throw new AssertionError(lang);
+    }
     return provider.getDescriptiveName(psiElement);
   }
 }

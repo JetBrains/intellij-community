@@ -1,0 +1,3 @@
+import com.intellij.openapi.components.ApplicationComponent
+
+abstract class UnregisteredAbstractApplicationComponent : ApplicationComponent

@@ -28,7 +28,6 @@ import java.util.Properties;
 
 /**
  * @author MYakovlev
- * Date: Jul 24, 2002
  */
 public abstract class FileTemplateManager{
   public static final Key<Properties> DEFAULT_TEMPLATE_PROPERTIES = Key.create("DEFAULT_TEMPLATE_PROPERTIES");
@@ -136,10 +135,6 @@ public abstract class FileTemplateManager{
 
   @NotNull
   public abstract String internalTemplateToSubject(@NotNull @NonNls String templateName);
-
-  @Deprecated
-  @NotNull
-  public abstract String localizeInternalTemplateName(@NotNull FileTemplate template);
 
   public abstract FileTemplate getPattern(@NotNull @NonNls String name);
 

@@ -16,8 +16,10 @@
 package com.intellij.execution.dashboard.tree;
 
 import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.dashboard.*;
-import com.intellij.icons.AllIcons;
+import com.intellij.execution.dashboard.RunDashboardGroup;
+import com.intellij.execution.dashboard.RunDashboardGroupingRule;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationStatus;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentation;
 import com.intellij.ide.util.treeView.smartTree.ActionPresentationData;
@@ -25,10 +27,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Comparator;
+
 /**
  * @author konstantin.aleev
  */
-public class StatusDashboardGroupingRule implements DashboardGroupingRule {
+public class StatusDashboardGroupingRule implements RunDashboardGroupingRule {
   @NonNls private static final String NAME = "StatusDashboardGroupingRule";
 
   @Override
@@ -42,12 +46,7 @@ public class StatusDashboardGroupingRule implements DashboardGroupingRule {
   public ActionPresentation getPresentation() {
     return new ActionPresentationData(ExecutionBundle.message("run.dashboard.group.by.status.action.name"),
                                       ExecutionBundle.message("run.dashboard.group.by.status.action.name"),
-                                      AllIcons.Actions.GroupByPrefix); // TODO [konstantin.aleev] provide new icon
-  }
-
-  @Override
-  public int getPriority() {
-    return Priorities.BY_STATUS;
+                                      null);
   }
 
   @Override
@@ -62,15 +61,18 @@ public class StatusDashboardGroupingRule implements DashboardGroupingRule {
 
   @Nullable
   @Override
-  public DashboardGroup getGroup(AbstractTreeNode<?> node) {
-    if (node instanceof DashboardRunConfigurationNode) {
-      DashboardRunConfigurationNode runConfigurationNode = (DashboardRunConfigurationNode)node;
-      RunDashboardContributor contributor = runConfigurationNode.getContributor();
-      if (contributor != null) {
-        DashboardRunConfigurationStatus status = contributor.getStatus(runConfigurationNode);
-        return new DashboardGroupImpl<>(status, status.getName(), status.getIcon());
-      }
+  public RunDashboardGroup getGroup(AbstractTreeNode<?> node) {
+    if (node instanceof RunDashboardRunConfigurationNode) {
+      RunDashboardRunConfigurationNode runConfigurationNode = (RunDashboardRunConfigurationNode)node;
+      RunDashboardRunConfigurationStatus status = runConfigurationNode.getStatus();
+      return new RunDashboardGroupImpl<>(status, status.getName(), status.getIcon());
     }
     return null;
+  }
+
+  @Override
+  public Comparator<RunDashboardGroup> getGroupComparator() {
+    //noinspection unchecked
+    return Comparator.comparing(group -> ((RunDashboardGroupImpl<RunDashboardRunConfigurationStatus>)group).getValue().getPriority());
   }
 }

@@ -16,16 +16,19 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiPolyadicExpression
-import org.jetbrains.uast.*
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
+import org.jetbrains.uast.UPolyadicExpression
+import org.jetbrains.uast.UastBinaryOperator
 
 
 class JavaUPolyadicExpression(
-        override val psi: PsiPolyadicExpression,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UPolyadicExpression {
-    override val operands: List<UExpression> by lz {
-        psi.operands.map { JavaConverter.convertOrEmpty(it, this) }
-    }
+  override val psi: PsiPolyadicExpression,
+  givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UPolyadicExpression {
+  override val operands: List<UExpression> by lz {
+    psi.operands.map { JavaConverter.convertOrEmpty(it, this) }
+  }
 
-    override val operator: UastBinaryOperator by lz { psi.operationTokenType.getOperatorType() }
+  override val operator: UastBinaryOperator by lz { psi.operationTokenType.getOperatorType() }
 }

@@ -1030,13 +1030,13 @@ datatypes w = "http://whattf.org/datatype-draft"
 		}
 	body.attrs &= body.attrs.link?
 
-## marginbottom attribute
+## bottommargin attribute
 
-	body.attrs.marginbottom =
-		attribute marginbottom {
+	body.attrs.bottommargin =
+		attribute bottommargin {
 			string
 		}
-	body.attrs &= body.attrs.marginbottom?
+	body.attrs &= body.attrs.bottommargin?
 
 ## marginheight attribute
 
@@ -1052,29 +1052,29 @@ datatypes w = "http://whattf.org/datatype-draft"
 		}
 	iframe.attrs &= iframe.attrs.marginheight?
 
-## marginleft attribute
+## leftmargin attribute
 
-	body.attrs.marginleft =
-		attribute marginleft {
+	body.attrs.leftmargin =
+		attribute leftmargin {
 			string
 		}
-	body.attrs &= body.attrs.marginleft?
+	body.attrs &= body.attrs.leftmargin?
 
-## marginright attribute
+## rightmargin attribute
 
-	body.attrs.marginright =
-		attribute marginright {
+	body.attrs.rightmargin =
+		attribute rightmargin {
 			string
 		}
-	body.attrs &= body.attrs.marginright?
+	body.attrs &= body.attrs.rightmargin?
 
-## margintop attribute
+## topmargin attribute
 
-	body.attrs.margintop =
-		attribute margintop {
+	body.attrs.topmargin =
+		attribute topmargin {
 			string
 		}
-	body.attrs &= body.attrs.margintop?
+	body.attrs &= body.attrs.topmargin?
 
 ## marginwidth attribute
 

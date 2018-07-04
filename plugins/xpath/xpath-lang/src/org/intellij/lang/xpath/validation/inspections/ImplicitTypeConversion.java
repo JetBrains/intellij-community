@@ -86,11 +86,13 @@ public class ImplicitTypeConversion extends XPathInspection {
         return new Options();
     }
 
+    @Override
     public void readSettings(@NotNull Element node) throws InvalidDataException {
         super.readSettings(node);
         update();
     }
 
+    @Override
     public void writeSettings(@NotNull Element node) throws WriteExternalException {
         BITS = 0;
         for (int i=11; i>=0; i--) {

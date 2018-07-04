@@ -24,24 +24,24 @@ import org.jetbrains.uast.visitor.UastVisitor
  * Represents a parenthesized expression, e.g. `(23 + 3)`.
  */
 interface UParenthesizedExpression : UExpression {
-    /**
-     * Returns an expression inside the parenthesis.
-     */
-    val expression: UExpression
+  /**
+   * Returns an expression inside the parenthesis.
+   */
+  val expression: UExpression
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitParenthesizedExpression(this)) return
-        annotations.acceptList(visitor)
-        expression.accept(visitor)
-        visitor.afterVisitParenthesizedExpression(this)
-    }
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitParenthesizedExpression(this)) return
+    annotations.acceptList(visitor)
+    expression.accept(visitor)
+    visitor.afterVisitParenthesizedExpression(this)
+  }
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
-            visitor.visitParenthesizedExpression(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
+    visitor.visitParenthesizedExpression(this, data)
 
-    override fun evaluate() = expression.evaluate()
+  override fun evaluate(): Any? = expression.evaluate()
 
-    override fun asLogString() = log()
+  override fun asLogString(): String = log()
 
-    override fun asRenderString() = '(' + expression.asRenderString() + ')'
+  override fun asRenderString(): String = '(' + expression.asRenderString() + ')'
 }

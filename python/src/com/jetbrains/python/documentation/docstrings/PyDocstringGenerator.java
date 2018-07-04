@@ -56,7 +56,7 @@ public class PyDocstringGenerator {
   private final List<DocstringParam> myRemovedParams = Lists.newArrayList();
   private final String myDocStringText;
   // Updated after buildAndInsert()
-  @Nullable private PyDocStringOwner myDocStringOwner;
+  @Nullable private final PyDocStringOwner myDocStringOwner;
   private final String myDocStringIndent;
   private final DocStringFormat myDocStringFormat;
   private final PsiElement mySettingsAnchor;
@@ -277,16 +277,13 @@ public class PyDocstringGenerator {
         if (type != null) {
           // Google and Numpy docstring formats combine type and description in single declaration, thus
           // if both declaration with type and without it are requested, we should filter out duplicates
-          if (format == DocStringFormat.GOOGLE || format == DocStringFormat.NUMPY) {
-            filtered.add(new DocstringParam(param.getName(), type, param.isReturnValue()));
-          }
-          else {
+          if (format != DocStringFormat.GOOGLE && format != DocStringFormat.NUMPY) {
             // In reST and Epydoc for each parameter add two tags, e.g. in reST (Sphinx)
             // :param foo:
             // :type foo:
             filtered.add(param);
-            filtered.add(new DocstringParam(param.getName(), type, param.isReturnValue()));
           }
+          filtered.add(new DocstringParam(param.getName(), type, param.isReturnValue()));
         }
         else {
           // no type was given and it's not required by settings
@@ -420,7 +417,9 @@ public class PyDocstringGenerator {
       }
     }
     else if (myDocStringFormat == DocStringFormat.GOOGLE || myDocStringFormat == DocStringFormat.NUMPY) {
-      builder = myDocStringFormat == DocStringFormat.GOOGLE ? GoogleCodeStyleDocStringBuilder.forProject(mySettingsAnchor.getProject()) : new NumpyDocStringBuilder();
+      builder = myDocStringFormat == DocStringFormat.GOOGLE
+                ? GoogleCodeStyleDocStringBuilder.forSettings(mySettingsAnchor.getContainingFile())
+                : new NumpyDocStringBuilder();
       final SectionBasedDocStringBuilder sectionBuilder = (SectionBasedDocStringBuilder)builder;
       if (myAddFirstEmptyLine) {
         sectionBuilder.addEmptyLine();
@@ -465,9 +464,9 @@ public class PyDocstringGenerator {
     }
     else if (myDocStringFormat == DocStringFormat.GOOGLE) {
       //noinspection ConstantConditions
-      updater = GoogleCodeStyleDocStringUpdater.forProject((GoogleCodeStyleDocString)getStructuredDocString(), 
-                                                           myDocStringIndent, 
-                                                           mySettingsAnchor.getProject());
+      updater = GoogleCodeStyleDocStringUpdater.forSettings((GoogleCodeStyleDocString)getStructuredDocString(),
+                                                            myDocStringIndent,
+                                                            mySettingsAnchor.getContainingFile());
     }
     else if (myDocStringFormat == DocStringFormat.NUMPY) {
       //noinspection ConstantConditions

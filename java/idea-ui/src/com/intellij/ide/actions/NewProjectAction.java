@@ -20,7 +20,9 @@ import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.projectWizard.NewProjectWizard;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.wm.impl.welcomeScreen.NewWelcomeScreen;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +35,10 @@ public class NewProjectAction extends AnAction implements DumbAware {
 
   public void actionPerformed(AnActionEvent e) {
     NewProjectWizard wizard = new NewProjectWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, null);
-    NewProjectUtil.createNewProject(getEventProject(e), wizard);
+    Project eventProject = getEventProject(e);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      NewProjectUtil.createNewProject(eventProject, wizard);
+    });
   }
 
   @Override

@@ -16,30 +16,32 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.LibraryUtil;
-import com.siyeh.ig.psiutils.MethodMatcher;
-import com.siyeh.ig.psiutils.SideEffectChecker;
+import com.siyeh.ig.psiutils.*;
 import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -48,6 +50,14 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "collect").parameterCount(1);
   private static final CallMatcher COLLECTOR_TO_COLLECTION =
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toCollection").parameterCount(1);
+
+  private static final CallMapper<String> KNOWN_EXCEPTIONAL_SIDE_EFFECTS = new CallMapper<String>()
+    .register(CallMatcher.staticCall("java.util.regex.Pattern", "compile"), "java.util.regex.PatternSyntaxException")
+    .register(CallMatcher.anyOf(
+      CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "parseInt", "valueOf"),
+      CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "parseLong", "valueOf"),
+      CallMatcher.staticCall(CommonClassNames.JAVA_LANG_DOUBLE, "parseDouble", "valueOf"),
+      CallMatcher.staticCall(CommonClassNames.JAVA_LANG_FLOAT, "parseFloat", "valueOf")), "java.lang.NumberFormatException");
 
   /**
    * @noinspection PublicField
@@ -73,14 +83,16 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
       .add("java.lang.Short",".*")
       .add("java.lang.StrictMath",".*")
       .add("java.lang.String",".*")
+      .add("java.lang.Thread", "interrupted")
       .add("java.math.BigInteger",".*")
       .add("java.math.BigDecimal",".*")
       .add("java.net.InetAddress",".*")
       .add("java.net.URI",".*")
+      .add("java.util.Arrays", ".*")
       .add("java.util.List", "of")
       .add("java.util.Set", "of")
       .add("java.util.Map", "of|ofEntries|entry")
-      .add("java.util.Collections", "unmodifiable.*|singleton.*|checked.*|min|max|stream")
+      .add("java.util.Collections", "(?!addAll).*")
       .add("java.util.UUID",".*")
       .add("java.util.regex.Matcher","pattern|toMatchResult|start|end|group|groupCount|matches|find|lookingAt|quoteReplacement|replaceAll|replaceFirst|regionStart|regionEnd|hasTransparentBounds|hasAnchoringBounds|hitEnd|requireEnd")
       .add("java.util.regex.Pattern",".*")
@@ -144,14 +156,12 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-      PsiElement parent = expression.getParent();
-      if (parent instanceof PsiExpressionStatement ||
-          parent instanceof PsiLambdaExpression && PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)parent))) {
+      if (ExpressionUtils.isVoidContext(expression)) {
         final PsiMethod method = expression.resolveMethod();
         if (method == null || method.isConstructor()) {
           return;
         }
-        visitCalledExpression(expression, method, parent);
+        visitCalledExpression(expression, method, expression.getParent());
       }
     }
 
@@ -159,16 +169,10 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
                                        PsiMethod method,
                                        @Nullable PsiElement errorContainer) {
       final PsiType returnType = method.getReturnType();
-      if (PsiType.VOID.equals(returnType)) {
-        return;
-      }
+      if (PsiType.VOID.equals(returnType)) return;
       final PsiClass aClass = method.getContainingClass();
-      if (aClass == null) {
-        return;
-      }
-      if (errorContainer != null && PsiUtilCore.hasErrorElementChild(errorContainer)) {
-        return;
-      }
+      if (aClass == null) return;
+      if (errorContainer != null && PsiUtilCore.hasErrorElementChild(errorContainer)) return;
       if (PropertyUtil.isSimpleGetter(method)) {
         registerMethodCallOrRefError(call, aClass);
         return;
@@ -178,26 +182,55 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
         return;
       }
 
+      if (isKnownExceptionalSideEffectCaught(call)) return;
+
       if (isPureMethod(method)) {
         registerMethodCallOrRefError(call, aClass);
         return;
       }
-      final PsiAnnotation annotation = findAnnotationInTree(method, null, Collections.singleton("javax.annotation.CheckReturnValue"));
+
+      PsiAnnotation annotation = findAnnotationInTree(method, null, Collections.singleton("javax.annotation.CheckReturnValue"));
+      if (annotation == null) {
+        annotation = getAnnotationByShortNameCheckReturnValue(method);
+      }
+
       if (annotation != null) {
         final PsiElement owner = (PsiElement)annotation.getOwner();
         if (findAnnotationInTree(method, owner, Collections.singleton("com.google.errorprone.annotations.CanIgnoreReturnValue")) != null) {
           return;
         }
       }
-      if (!myMethodMatcher.matches(method) && annotation == null) {
-        return;
-      }
-
-      if (isHardcodedException(call)) {
-        return;
-      }
+      if (!myMethodMatcher.matches(method) && annotation == null) return;
+      if (isHardcodedException(call)) return;
 
       registerMethodCallOrRefError(call, aClass);
+    }
+
+    private PsiAnnotation getAnnotationByShortNameCheckReturnValue(PsiMethod method) {
+      for (PsiAnnotation psiAnnotation : method.getAnnotations()) {
+        String qualifiedName = psiAnnotation.getQualifiedName();
+        if (qualifiedName != null && "CheckReturnValue".equals(StringUtil.getShortName(qualifiedName))) {
+          return psiAnnotation;
+        }
+      }
+      return null;
+    }
+
+    private boolean isKnownExceptionalSideEffectCaught(PsiExpression call) {
+      String exception = null;
+      if (call instanceof PsiMethodCallExpression) {
+        exception = KNOWN_EXCEPTIONAL_SIDE_EFFECTS.mapFirst((PsiMethodCallExpression)call);
+      }
+      else if (call instanceof PsiMethodReferenceExpression) {
+        exception = KNOWN_EXCEPTIONAL_SIDE_EFFECTS.mapFirst((PsiMethodReferenceExpression)call);
+      }
+      if (exception == null) return false;
+      PsiClass exceptionClass = JavaPsiFacade.getInstance(call.getProject()).findClass(exception, call.getResolveScope());
+      if (exceptionClass == null) return false;
+      PsiTryStatement parentTry = PsiTreeUtil.getParentOfType(call, PsiTryStatement.class);
+      if (parentTry == null || !PsiTreeUtil.isAncestor(parentTry.getTryBlock(), call, true)) return false;
+      return ExceptionUtils.getExceptionTypesHandled(parentTry).stream()
+        .anyMatch(type -> InheritanceUtil.isInheritor(exceptionClass, type.getCanonicalText()));
     }
 
     private boolean isHardcodedException(PsiExpression expression) {
@@ -223,12 +256,20 @@ public class IgnoreResultOfCallInspectionBase extends BaseInspection {
     }
 
     private boolean isPureMethod(PsiMethod method) {
-      final PsiAnnotation anno = ControlFlowAnalyzer.findContractAnnotation(method);
-      if (anno == null) return false;
       final boolean honorInferred = Registry.is("ide.ignore.call.result.inspection.honor.inferred.pure");
-      if (!honorInferred && AnnotationUtil.isInferredAnnotation(anno)) return false;
-      return Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(anno, "pure")) &&
-             !SideEffectChecker.mayHaveExceptionalSideEffect(method);
+      if (!honorInferred && !JavaMethodContractUtil.hasExplicitContractAnnotation(method)) return false;
+      return JavaMethodContractUtil.isPure(method) &&
+             !SideEffectChecker.mayHaveExceptionalSideEffect(method) &&
+             !hasTrivialReturnValue(method);
+    }
+
+    private boolean hasTrivialReturnValue(PsiMethod method) {
+      List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, null);
+      return !contracts.isEmpty() &&
+             contracts.stream()
+                      .map(MethodContract::getReturnValue)
+                      .allMatch(returnValue -> returnValue.equals(ContractReturnValue.returnThis()) ||
+                                               returnValue instanceof ContractReturnValue.ParameterReturnValue);
     }
 
     private void registerMethodCallOrRefError(PsiExpression call, PsiClass aClass) {

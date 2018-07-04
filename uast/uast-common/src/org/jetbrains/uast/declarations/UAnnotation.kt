@@ -15,7 +15,12 @@
  */
 package org.jetbrains.uast
 
+import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.SyntaxTraverser
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
@@ -25,45 +30,74 @@ import org.jetbrains.uast.visitor.UastVisitor
  * An annotation wrapper to be used in [UastVisitor].
  */
 interface UAnnotation : UElement, UResolvable {
-    /**
-     * Returns the annotation qualified name.
-     */
-    val qualifiedName: String?
 
-    /**
-     * Returns the annotation class, or null if the class reference was not resolved.
-     */
-    override fun resolve(): PsiClass?
+  override val javaPsi: PsiAnnotation?
+  /**
+   * Returns the annotation qualified name.
+   */
+  val qualifiedName: String?
 
-    /**
-     * Returns the annotation values.
-     */
-    val attributeValues: List<UNamedExpression>
+  /**
+   * Returns the annotation class, or null if the class reference was not resolved.
+   */
+  override fun resolve(): PsiClass?
 
-    fun findAttributeValue(name: String?): UExpression?
+  /**
+   * Returns the annotation values.
+   */
+  val attributeValues: List<UNamedExpression>
 
-    fun findDeclaredAttributeValue(name: String?): UExpression?
+  fun findAttributeValue(name: String?): UExpression?
 
-    override fun asRenderString() = buildString {
-        append("@")
-        append(qualifiedName)
-        if(attributeValues.isNotEmpty()) {
-            attributeValues.joinTo(
-                    buffer = this,
-                    prefix = "(",
-                    postfix = ")",
-                    transform = UNamedExpression::asRenderString)
+  fun findDeclaredAttributeValue(name: String?): UExpression?
+
+  override fun asRenderString(): String = buildString {
+    append("@")
+    append(qualifiedName)
+    if (attributeValues.isNotEmpty()) {
+      attributeValues.joinTo(
+        buffer = this,
+        prefix = "(",
+        postfix = ")",
+        transform = UNamedExpression::asRenderString)
+    }
+  }
+
+  override fun asLogString(): String = log("fqName = $qualifiedName")
+
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitAnnotation(this)) return
+    attributeValues.acceptList(visitor)
+    visitor.afterVisitAnnotation(this)
+  }
+
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
+    visitor.visitAnnotation(this, data)
+}
+
+/**
+ * Handy method to get psiElement for reporting warnings and putting gutters
+ */
+val UAnnotation?.namePsiElement: PsiElement?
+  get() {
+    if (this is UAnnotationEx) return this.uastAnchor?.sourcePsi
+    // A workaround for IDEA-184211
+    val sourcePsiElement = this?.sourcePsiElement ?: return null
+    val identifier = sourcePsiElement.navigationElement ?: return null
+    val qualifiedName = this.qualifiedName
+    if (qualifiedName != null) {
+      val shortName = StringUtilRt.getShortName(qualifiedName)
+      SyntaxTraverser.psiTraverser(sourcePsiElement)
+        .filter { psi -> psi.references.isNotEmpty() && psi.text.contains(shortName) }
+        .traverse()
+        .first()
+        ?.let {
+          return PsiTreeUtil.getDeepestFirst(it)
         }
     }
 
-    override fun asLogString() = log("fqName = $qualifiedName")
+    return PsiTreeUtil.getDeepestFirst(identifier)
+  }
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitAnnotation(this)) return
-        attributeValues.acceptList(visitor)
-        visitor.afterVisitAnnotation(this)
-    }
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
-            visitor.visitAnnotation(this, data)
-}
+interface UAnnotationEx : UAnnotation, UAnchorOwner

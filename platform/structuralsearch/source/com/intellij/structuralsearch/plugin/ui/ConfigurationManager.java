@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.components.*;
@@ -61,15 +47,19 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
   }
 
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     configurations.clear();
     historyConfigurations.clear();
     readConfigurations(state, configurations, historyConfigurations);
+    historyConfigurations.forEach(c -> c.getMatchOptions().initScope(myProject));
   }
 
-  public void addHistoryConfiguration(Configuration configuration) {
-    historyConfigurations.remove(configuration); // move to most recent
+  public void addHistoryConfiguration(@NotNull Configuration configuration) {
+    configuration = configuration.copy();
     configuration.setCreated(System.currentTimeMillis());
+    configuration.setName(configuration.getMatchOptions().getSearchPattern());
+    final Configuration old = findConfigurationByName(historyConfigurations, configuration.getName());
+    if (old != null) historyConfigurations.remove(old); // move to most recent
     historyConfigurations.add(0, configuration);
     while (historyConfigurations.size() > MAX_RECENT_SIZE) {
       historyConfigurations.remove(historyConfigurations.size() - 1);
@@ -84,10 +74,15 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     configurations.remove(configuration);
   }
 
-  public static void writeConfigurations(@NotNull Element element,
+  public static void writeConfigurations(@NotNull Element element, @NotNull Collection<Configuration> configurations) {
+    writeConfigurations(element, configurations, Collections.emptyList());
+  }
+
+  private static void writeConfigurations(@NotNull Element element,
                                          @NotNull Collection<Configuration> configurations,
                                          @NotNull Collection<Configuration> historyConfigurations) {
     for (final Configuration configuration : configurations) {
+      configuration.getMatchOptions().setScope(null);
       saveConfiguration(element, configuration);
     }
 
@@ -104,7 +99,11 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     return infoElement;
   }
 
-  public static void readConfigurations(@NotNull Element element,
+  public static void readConfigurations(@NotNull Element element, @NotNull Collection<Configuration> configurations) {
+    readConfigurations(element, configurations, new SmartList<>());
+  }
+
+  private static void readConfigurations(@NotNull Element element,
                                         @NotNull Collection<Configuration> configurations,
                                         @NotNull Collection<Configuration> historyConfigurations) {
     for (final Element pattern : element.getChildren()) {
@@ -192,7 +191,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     }
     if (name != null) {
       newConfiguration.setName(name);
-      configurations.add(newConfiguration);
+      configurations.add(newConfiguration.copy());
       return true;
     }
     return false;

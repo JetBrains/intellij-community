@@ -1,11 +1,16 @@
 <component name="libraryTable">
-  <library name="trilead-ssh2">
+  <library name="trilead-ssh2" type="repository">
+    <properties maven-id="org.jenkins-ci:trilead-ssh2:build-217-jenkins-11" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/trilead-ssh2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jenkins-ci/trilead-ssh2/build-217-jenkins-11/trilead-ssh2-build-217-jenkins-11.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/i2p/crypto/eddsa/0.2.0/eddsa-0.2.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/connectbot/jbcrypt/jbcrypt/1.0.0/jbcrypt-1.0.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/trilead-ssh2-src.zip!/trilead-ssh2/src/main/java" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jenkins-ci/trilead-ssh2/build-217-jenkins-11/trilead-ssh2-build-217-jenkins-11-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/i2p/crypto/eddsa/0.2.0/eddsa-0.2.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/connectbot/jbcrypt/jbcrypt/1.0.0/jbcrypt-1.0.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

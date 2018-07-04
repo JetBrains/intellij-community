@@ -43,7 +43,7 @@ public class HgQNewCommand extends HgCommitTypeCommand {
   }
 
   @Override
-  protected void executeChunked(@NotNull List<List<String>> chunkedCommits) throws HgCommandException, VcsException {
+  protected void executeChunked(@NotNull List<List<String>> chunkedCommits) throws VcsException {
     if (chunkedCommits.isEmpty()) {
       executeQNewInCurrentThread(ContainerUtil.emptyList());
     }

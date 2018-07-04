@@ -20,6 +20,30 @@ from datetime import timedelta
 from teamcity.messages import TeamcityServiceMessages
 from teamcity.common import convert_error_to_string, dump_test_stderr, dump_test_stdout
 from teamcity import is_running_under_teamcity
+from teamcity import diff_tools
+
+diff_tools.patch_unittest_diff()
+
+
+def fetch_diff_error_from_message(err_message):
+    line_with_diff = None
+    diff_error_message = None
+    lines = err_message.split("\n")
+    if err_message.startswith("AssertionError: assert"):
+        # Everything in one line
+        line_with_diff = lines[0][len("AssertionError: assert "):]
+    elif len(err_message.split("\n")) > 1:
+        err_line = lines[1]
+        line_with_diff = err_line[len("assert "):]
+        diff_error_message = lines[0]
+
+    if line_with_diff and line_with_diff.count("==") == 1:
+        parts = [x.strip() for x in line_with_diff.split("==")]
+        parts = [s[1:-1] if s.startswith("'") or s.startswith('"') else s for s in parts]
+        # Pytest cuts too long lines, no need to check is_too_big
+        return diff_tools.EqualsAssertionError(parts[0], parts[1], diff_error_message)
+    else:
+        return None
 
 
 def pytest_addoption(parser):
@@ -29,6 +53,9 @@ def pytest_addoption(parser):
                      dest="teamcity", default=0, help="force output of JetBrains TeamCity service messages")
     group._addoption('--no-teamcity', action="count",
                      dest="no_teamcity", default=0, help="disable output of JetBrains TeamCity service messages")
+
+    parser.addini("skippassedoutput", help="skip output of passed tests for JetBrains TeamCity service messages",
+                  type="bool")
 
 
 def pytest_configure(config):
@@ -42,8 +69,13 @@ def pytest_configure(config):
     if enabled:
         output_capture_enabled = getattr(config.option, 'capture', 'fd') != 'no'
         coverage_controller = _get_coverage_controller(config)
+        skip_passed_output = config.getini('skippassedoutput')
 
-        config._teamcityReporting = EchoTeamCityMessages(output_capture_enabled, coverage_controller)
+        config._teamcityReporting = EchoTeamCityMessages(
+            output_capture_enabled,
+            coverage_controller,
+            skip_passed_output
+        )
         config.pluginmanager.register(config._teamcityReporting)
 
 
@@ -63,9 +95,10 @@ def _get_coverage_controller(config):
 
 
 class EchoTeamCityMessages(object):
-    def __init__(self, output_capture_enabled, coverage_controller):
+    def __init__(self, output_capture_enabled, coverage_controller, skip_passed_output):
         self.coverage_controller = coverage_controller
         self.output_capture_enabled = output_capture_enabled
+        self.skip_passed_output = skip_passed_output
 
         self.teamcity = TeamcityServiceMessages()
         self.test_start_reported_mark = set()
@@ -144,15 +177,18 @@ class EchoTeamCityMessages(object):
         self.teamcity.testCount(len(items))
 
     def pytest_runtest_logstart(self, nodeid, location):
-        self.ensure_test_start_reported(self.format_test_id(nodeid, location))
+        # test name fetched from location passed as metainfo to PyCharm
+        # it will be used to run specific test using "-k"
+        # See IDEA-176950
+        self.ensure_test_start_reported(self.format_test_id(nodeid, location), location[2])
 
-    def ensure_test_start_reported(self, test_id):
+    def ensure_test_start_reported(self, test_id, metainfo=None):
         if test_id not in self.test_start_reported_mark:
             if self.output_capture_enabled:
                 capture_standard_output = "false"
             else:
                 capture_standard_output = "true"
-            self.teamcity.testStarted(test_id, flowId=test_id, captureStandardOutput=capture_standard_output)
+            self.teamcity.testStarted(test_id, flowId=test_id, captureStandardOutput=capture_standard_output, metainfo=metainfo)
             self.test_start_reported_mark.add(test_id)
 
     def report_has_output(self, report):
@@ -191,7 +227,38 @@ class EchoTeamCityMessages(object):
         self.ensure_test_start_reported(test_id)
         if report_output:
             self.report_test_output(report, test_id)
-        self.teamcity.testFailed(test_id, message, str(report.longrepr), flowId=test_id)
+
+        diff_error = None
+        try:
+            err_message = str(report.longrepr.reprcrash.message)
+            diff_name = diff_tools.EqualsAssertionError.__name__
+            # There is a string like "foo.bar.DiffError: [serialized_data]"
+            if diff_name in err_message:
+                serialized_data = err_message[err_message.index(diff_name) + len(diff_name) + 1:]
+                diff_error = diff_tools.deserialize_error(serialized_data)
+
+            # AssertionError is patched in py.test, we can try to fetch diff from it
+            # In general case message starts with "AssertionError: ", but can also starts with "assert" for top-level
+            # function. To support both cases we unify them
+            if err_message.startswith("assert"):
+                err_message = "AssertionError: " + err_message
+            if err_message.startswith("AssertionError:"):
+                diff_error = fetch_diff_error_from_message(err_message)
+        except Exception:
+            pass
+
+        if diff_error:
+            # Cut everything after postfix: it is internal view of DiffError
+            strace = str(report.longrepr)
+            data_postfix = "_ _ _ _ _"
+            if data_postfix in strace:
+                strace = strace[0:strace.index(data_postfix)]
+            self.teamcity.testFailed(test_id, diff_error.msg if diff_error.msg else message, strace,
+                                     flowId=test_id,
+                                     comparison_failure=diff_error
+                                     )
+        else:
+            self.teamcity.testFailed(test_id, message, str(report.longrepr), flowId=test_id)
         self.report_test_finished(test_id, duration)
 
     def report_test_skip(self, test_id, report):
@@ -222,10 +289,11 @@ class EchoTeamCityMessages(object):
             # Do not report passed setup/teardown if no output
             if report.when == 'call':
                 self.ensure_test_start_reported(test_id)
-                self.report_test_output(report, test_id)
+                if not self.skip_passed_output:
+                    self.report_test_output(report, test_id)
                 self.report_test_finished(test_id, duration)
             else:
-                if self.report_has_output(report):
+                if self.report_has_output(report) and not self.skip_passed_output:
                     block_name = "test " + report.when
                     self.teamcity.blockOpened(block_name, flowId=test_id)
                     self.report_test_output(report, test_id)
@@ -258,7 +326,7 @@ class EchoTeamCityMessages(object):
         if self.coverage_controller is not None:
             try:
                 self._report_coverage()
-            except:
+            except Exception:
                 tb = traceback.format_exc()
                 self.teamcity.customMessage("Coverage statistics reporting failed", "ERROR", errorDetails=tb)
 
@@ -294,7 +362,7 @@ class EchoTeamCityMessages(object):
                         total += nums
                     except KeyboardInterrupt:
                         raise
-                    except:
+                    except Exception:
                         if self.config.ignore_errors:
                             continue
 

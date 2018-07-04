@@ -245,7 +245,7 @@ public class XsltSymbolIndex extends FileBasedIndexExtension<String, XsltSymbolI
         }
 
         public NavigationItem[] getResult() {
-            return myResult.toArray(new NavigationItem[myResult.size()]);
+            return myResult.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
         }
     }
 }

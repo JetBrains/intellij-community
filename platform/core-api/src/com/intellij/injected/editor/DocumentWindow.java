@@ -26,18 +26,23 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface DocumentWindow extends Document {
-  @NotNull Document getDelegate();
-  int injectedToHost(int injectedOffset);
-  @NotNull TextRange injectedToHost(@NotNull TextRange injectedOffset);
-  int hostToInjected(int hostOffset);
+  @NotNull
+  Document getDelegate();
 
   /**
-   * Use com.intellij.lang.injection.InjectedLanguageManager#intersectWithAllEditableFragments(com.intellij.psi.PsiFile, com.intellij.openapi.util.TextRange)
-   * since editable fragments may well spread over several injection hosts
+   * @deprecated use {@link #injectedToHost(int)} instead
    */
   @Deprecated
-  @Nullable
-  TextRange intersectWithEditable(@NotNull TextRange range);
+  default int hostToInjectedUnescaped(int hostOffset) {
+    return injectedToHost(hostOffset);
+  }
+
+  int injectedToHost(int injectedOffset);
+
+  @NotNull
+  TextRange injectedToHost(@NotNull TextRange injectedOffset);
+
+  int hostToInjected(int hostOffset);
 
   @Nullable
   TextRange getHostRange(int hostOffset);
@@ -51,5 +56,7 @@ public interface DocumentWindow extends Document {
 
   boolean isValid();
 
-  boolean containsRange(int start, int end);
+  boolean containsRange(int hostStart, int hostEnd);
+
+  boolean isOneLine();
 }

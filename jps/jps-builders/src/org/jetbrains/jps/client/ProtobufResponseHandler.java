@@ -19,7 +19,6 @@ import com.google.protobuf.MessageLite;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 1/22/12
  */
 public interface ProtobufResponseHandler {
 

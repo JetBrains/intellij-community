@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.ide.fileTemplates.impl
 
 import com.intellij.ide.fileTemplates.FileTemplate
@@ -26,6 +12,7 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.JavaDirectoryService
@@ -140,9 +127,7 @@ class FileTemplatesTest extends IdeaTestCase {
     String name = "my_class"
     FileTemplate template = addTestTemplate(name, 'package ${PACKAGE_NAME}; public class ${NAME} {}')
 
-    File temp = FileUtil.createTempDirectory(getTestName(true), "")
-
-    myFilesToDelete.add(temp)
+    File temp = createTempDirectory(false)
     VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp)
 
     PsiTestUtil.addSourceRoot(getModule(), tempDir)
@@ -154,6 +139,19 @@ class FileTemplatesTest extends IdeaTestCase {
     assertNotNull(psiClass)
     assertEquals("public class XXX {\n}", psiClass.getContainingFile().getText())
     FileTemplateManager.getInstance(getProject()).removeTemplate(template)
+  }
+
+  void testDirPath() {
+    FileTemplate template = FileTemplateManager.getInstance(getProject()).addTemplate(name, "txt")
+    disposeOnTearDown({ FileTemplateManager.getInstance(getProject()).removeTemplate(template) } as Disposable)
+    template.setText('${DIR_PATH}; ${FILE_NAME}')
+
+    File temp = createTempDirectory(false)
+    VirtualFile tempDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(temp)
+    def directory = PsiManager.getInstance(project).findDirectory(tempDir)
+    def element = FileTemplateUtil.createFromTemplate(template, "foo", new Properties(), directory)
+
+    assertEquals("idea_test_; foo.txt", element.getText())
   }
 
   private FileTemplate addTestTemplate(String name, String text) {
@@ -193,6 +191,35 @@ class FileTemplatesTest extends IdeaTestCase {
   }
 
   void testSaveLoadCustomTemplateDottedExt() {
-    doTestSaveLoadTemplate("name", "ext.has.dots")
+    if (checkFileWithUnicodeNameCanBeFound()) {
+      doTestSaveLoadTemplate("name", "ext.has.dots")
+    }
+  }
+
+  private boolean checkFileWithUnicodeNameCanBeFound() {
+    try {
+      //noinspection GroovyAccessibility
+      String name = FTManager.encodeFileName("test", "ext.has.dots")
+      File file = createTempFile(name, "test")
+      FileUtil.loadFile(new File(file.getAbsolutePath()), CharsetToolkit.UTF8_CHARSET)
+      LOG.debug("File loaded: " + file.getAbsolutePath())
+      File dir = new File(file.getParent())
+      File[] files = dir.listFiles()
+      assertNotNull(files)
+      List<String> nameList = new ArrayList<>()
+      for (File child : files) {
+        nameList.add(child.getName())
+      }
+      for (String listedName : nameList) {
+        if (listedName == name) {
+          return true
+        }
+      }
+      LOG.debug("No matching file found, locale: " + Locale.getDefault().displayName)
+      return false
+    }
+    catch (IOException ignored) {
+      return false
+    }
   }
 }

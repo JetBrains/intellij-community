@@ -17,8 +17,8 @@ package com.jetbrains.python.psi.impl.references;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -32,8 +32,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
-import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author vlan
@@ -92,29 +90,10 @@ public class PyOperatorReference extends PyReferenceImpl {
 
   @Nullable
   public PyExpression getReceiver() {
-    if (myElement instanceof PyBinaryExpression) {
-      return getBinaryOperatorReceiver((PyBinaryExpression)myElement);
-    }
-    else if (myElement instanceof PySubscriptionExpression) {
-      return ((PySubscriptionExpression)myElement).getOperand();
-    }
-    else if (myElement instanceof PyPrefixExpression) {
-      return ((PyPrefixExpression)myElement).getOperand();
+    if (myElement instanceof PyCallSiteExpression) {
+      return ((PyCallSiteExpression)myElement).getReceiver(null);
     }
     return null;
-  }
-
-  @Nullable
-  private static PyExpression getBinaryOperatorReceiver(PyBinaryExpression expr) {
-    final PyExpression leftOperand = expr.getLeftExpression();
-    // Chained comparisons
-    if (PyTokenTypes.COMPARISON_OPERATIONS.contains(expr.getOperator())) {
-      final PyBinaryExpression leftBinaryExpr = as(leftOperand, PyBinaryExpression.class);
-      if (leftBinaryExpr != null && PyTokenTypes.COMPARISON_OPERATIONS.contains(leftBinaryExpr.getOperator())) {
-        return leftBinaryExpr.getRightExpression();
-      }
-    }
-    return leftOperand;
   }
 
   @NotNull
@@ -125,7 +104,7 @@ public class PyOperatorReference extends PyReferenceImpl {
     typeEvalContext.trace("Trying to resolve left operator");
     typeEvalContext.traceIndent();
     try {
-      result.addAll(resolveMember(getBinaryOperatorReceiver(expr), name));
+      result.addAll(resolveMember(expr.getReceiver(null), name));
     }
     finally {
       typeEvalContext.traceUnindent();
@@ -147,16 +126,15 @@ public class PyOperatorReference extends PyReferenceImpl {
     final ArrayList<RatedResolveResult> results = new ArrayList<>();
     if (object != null && name != null) {
       final TypeEvalContext typeEvalContext = myContext.getTypeEvalContext();
-      PyType type = typeEvalContext.getType(object);
+      final PyType type = typeEvalContext.getType(object);
       typeEvalContext.trace("Side text is %s, type is %s", object.getText(), type);
-      if (type instanceof PyClassLikeType) {
-        if (((PyClassLikeType)type).isDefinition()) {
-          type = ((PyClassLikeType)type).getMetaClassType(typeEvalContext, true);
-        }
-      }
       if (type != null) {
-        List<? extends RatedResolveResult> res = type.resolveMember(name, object, AccessDirection.of(myElement), myContext);
-        if (res != null && res.size() > 0) {
+        final List<? extends RatedResolveResult> res =
+          type instanceof PyClassLikeType && ((PyClassLikeType)type).isDefinition()
+          ? resolveDefinitionMember((PyClassLikeType)type, object, name)
+          : type.resolveMember(name, object, AccessDirection.of(myElement), myContext);
+
+        if (!ContainerUtil.isEmpty(res)) {
           results.addAll(res);
         }
         else if (typeEvalContext.tracing()) {
@@ -171,5 +149,22 @@ public class PyOperatorReference extends PyReferenceImpl {
       }
     }
     return results;
+  }
+
+  @Nullable
+  private List<? extends RatedResolveResult> resolveDefinitionMember(@NotNull PyClassLikeType classLikeType,
+                                                                     @NotNull PyExpression object,
+                                                                     @NotNull String name) {
+    final PyClassLikeType metaClassType = classLikeType.getMetaClassType(myContext.getTypeEvalContext(), true);
+    if (metaClassType != null) {
+      final List<? extends RatedResolveResult> results =
+        metaClassType.resolveMember(name, object, AccessDirection.of(myElement), myContext);
+
+      if (!ContainerUtil.isEmpty(results)) return results;
+    }
+
+    return name.equals(PyNames.GETITEM) && LanguageLevel.forElement(object).isAtLeast(LanguageLevel.PYTHON37)
+           ? classLikeType.resolveMember(PyNames.CLASS_GETITEM, object, AccessDirection.of(myElement), myContext)
+           : null;
   }
 }

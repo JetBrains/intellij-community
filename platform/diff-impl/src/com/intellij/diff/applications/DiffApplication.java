@@ -18,7 +18,10 @@ package com.intellij.diff.applications;
 import com.intellij.diff.DiffDialogHints;
 import com.intellij.diff.DiffManagerEx;
 import com.intellij.diff.DiffRequestFactory;
+import com.intellij.diff.chains.SimpleDiffRequestChain;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.diff.util.DiffPlaces;
+import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
@@ -30,7 +33,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-public class DiffApplication extends ApplicationStarterBase {
+public class DiffApplication extends DiffApplicationBase {
   @Override
   protected boolean checkArguments(@NotNull String[] args) {
     return (args.length == 3 || args.length == 4) && "diff".equals(args[0]);
@@ -50,18 +53,23 @@ public class DiffApplication extends ApplicationStarterBase {
 
   @Override
   public void processCommand(@NotNull String[] args, @Nullable String currentDirectory) throws Exception {
-    Project project = getProject();
-
     List<String> filePaths = Arrays.asList(args).subList(1, args.length);
     List<VirtualFile> files = findFiles(filePaths, currentDirectory);
+    Project project = guessProject(files);
 
     DiffRequest request;
     if (files.size() == 3) {
+      files = replaceNullsWithEmptyFile(files);
       request = DiffRequestFactory.getInstance().createFromFiles(project, files.get(0), files.get(2), files.get(1));
     }
     else {
       request = DiffRequestFactory.getInstance().createFromFiles(project, files.get(0), files.get(1));
     }
-    DiffManagerEx.getInstance().showDiffBuiltin(project, request, DiffDialogHints.MODAL);
+
+    SimpleDiffRequestChain chain = new SimpleDiffRequestChain(request);
+    chain.putUserData(DiffUserDataKeys.PLACE, DiffPlaces.EXTERNAL);
+
+    DiffDialogHints dialogHints = project != null ? DiffDialogHints.DEFAULT : DiffDialogHints.MODAL;
+    DiffManagerEx.getInstance().showDiffBuiltin(project, chain, dialogHints);
   }
 }

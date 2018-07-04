@@ -29,7 +29,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Stream;
+
+import static java.util.Collections.emptyList;
 
 public interface VcsContext extends PlaceProvider<String> {
   @Nullable Project getProject();
@@ -43,6 +46,11 @@ public interface VcsContext extends PlaceProvider<String> {
   @NotNull
   default Stream<VirtualFile> getSelectedFilesStream() {
     return Arrays.stream(getSelectedFiles());
+  }
+
+  @NotNull
+  default List<VirtualFile> getSelectedUnversionedFiles() {
+    return emptyList();
   }
 
   Editor getEditor();

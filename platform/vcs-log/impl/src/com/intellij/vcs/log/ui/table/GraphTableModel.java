@@ -3,6 +3,7 @@ package com.intellij.vcs.log.ui.table;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -11,7 +12,7 @@ import com.intellij.vcs.log.data.CommitIdByStringCondition;
 import com.intellij.vcs.log.data.DataGetter;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.util.VcsUserUtil;
@@ -37,16 +38,16 @@ public class GraphTableModel extends AbstractTableModel {
   private static final int DOWN_PRELOAD_COUNT = 40;
 
   @NotNull private final VcsLogData myLogData;
-  @NotNull protected final AbstractVcsLogUi myUi;
+  @NotNull private final Consumer<Runnable> myRequestMore;
 
   @NotNull protected VisiblePack myDataPack;
 
   private boolean myMoreRequested;
 
-  public GraphTableModel(@NotNull VisiblePack dataPack, @NotNull VcsLogData logData, @NotNull AbstractVcsLogUi ui) {
+  public GraphTableModel(@NotNull VisiblePack dataPack, @NotNull VcsLogData logData, @NotNull Consumer<Runnable> requestMore) {
     myLogData = logData;
-    myUi = ui;
     myDataPack = dataPack;
+    myRequestMore = requestMore;
   }
 
   @Override
@@ -93,8 +94,7 @@ public class GraphTableModel extends AbstractTableModel {
    */
   public void requestToLoadMore(@NotNull Runnable onLoaded) {
     myMoreRequested = true;
-    myUi.getRefresher().moreCommitsNeeded(onLoaded);
-    myUi.getTable().setPaintBusy(true);
+    myRequestMore.consume(onLoaded);
   }
 
   @NotNull

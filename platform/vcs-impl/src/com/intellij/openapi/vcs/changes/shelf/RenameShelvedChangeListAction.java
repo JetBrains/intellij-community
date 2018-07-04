@@ -15,51 +15,21 @@
  */
 package com.intellij.openapi.vcs.changes.shelf;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 
 import java.util.List;
 
-/**
- * @author yole
- */
-public class RenameShelvedChangeListAction extends AnAction {
+public class RenameShelvedChangeListAction extends DumbAwareAction {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     final List<ShelvedChangeList> changelists = ShelvedChangesViewManager.getShelvedLists(e.getDataContext());
     final ShelvedChangeList changeList = ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(changelists));
-    String newName = Messages.showInputDialog(project, VcsBundle.message("shelve.changes.rename.prompt"),
-                                              VcsBundle.message("shelve.changes.rename.title"),
-                                              Messages.getQuestionIcon(), changeList.DESCRIPTION,
-                                              new InputValidator() {
-                                                public boolean checkInput(final String inputString) {
-                                                  if (inputString.length() == 0) {
-                                                    return false;
-                                                  }
-                                                  final List<ShelvedChangeList> list =
-                                                    ShelveChangesManager.getInstance(project).getShelvedChangeLists();
-                                                  for (ShelvedChangeList oldList : list) {
-                                                    if (oldList != changeList && oldList.DESCRIPTION.equals(inputString)) {
-                                                      return false;
-                                                    }
-                                                  }
-                                                  return true;
-                                                }
-
-                                                public boolean canClose(final String inputString) {
-                                                  return checkInput(inputString);
-                                                }
-                                              });
-    if (newName != null && !newName.equals(changeList.DESCRIPTION)) {
-      ShelveChangesManager.getInstance(project).renameChangeList(changeList, newName);
-    }
+    ShelvedChangesViewManager.getInstance(project).startEditing(changeList);
   }
 
   public void update(final AnActionEvent e) {

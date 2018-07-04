@@ -15,6 +15,8 @@
  */
 package com.intellij.vcs.commit;
 
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
@@ -23,6 +25,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
@@ -30,22 +33,18 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static com.intellij.codeInspection.InspectionProfileEntry.getShortName;
-import static com.intellij.util.ObjectUtils.notNull;
-import static java.util.stream.Collectors.toList;
 
 @State(name = "CommitMessageInspectionProfile", storages = @Storage("vcs.xml"))
 public class CommitMessageInspectionProfile extends InspectionProfileImpl
   implements PersistentStateComponent<CommitMessageInspectionProfile.State> {
 
-  public static final String PROFILE_NAME = "Commit Dialog";
+  private static final String PROFILE_NAME = "Commit Dialog";
   public static final InspectionProfileImpl DEFAULT =
     new InspectionProfileImpl(PROFILE_NAME, new CommitMessageInspectionToolSupplier(), (InspectionProfileImpl)null);
 
   @NotNull private final Project myProject;
-  @NotNull private State myState = new State();
 
   public CommitMessageInspectionProfile(@NotNull Project project) {
     super(PROFILE_NAME, new CommitMessageInspectionToolSupplier(), DEFAULT);
@@ -61,15 +60,27 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
     return getInstance(project).getBodyRightMargin();
   }
 
+  public static int getSubjectRightMargin(@NotNull Project project) {
+    return getInstance(project).getSubjectRightMargin();
+  }
+
   @NotNull
   public Project getProject() {
     return myProject;
   }
 
-  public int getBodyRightMargin() {
-    InspectionToolWrapper toolWrapper = getInspectionTool(getShortName(BodyLimitInspection.class.getSimpleName()), myProject);
+  private int getBodyRightMargin() {
+    return getTool(BodyLimitInspection.class).RIGHT_MARGIN;
+  }
 
-    return ((BodyLimitInspection)notNull(toolWrapper).getTool()).RIGHT_MARGIN;
+  private int getSubjectRightMargin() {
+    return getTool(SubjectLimitInspection.class).RIGHT_MARGIN;
+  }
+
+  public <T extends LocalInspectionTool> T getTool(Class<T> aClass) {
+    InspectionToolWrapper tool = getInspectionTool(InspectionProfileEntry.getShortName(aClass.getSimpleName()), myProject);
+    //noinspection unchecked
+    return (T)ObjectUtils.notNull(tool).getTool();
   }
 
   @Override
@@ -89,9 +100,9 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
   public State getState() {
     Element element = newProfileElement();
     writeExternal(element);
-    myState.myProfile = element;
-
-    return myState;
+    State state = new State();
+    state.myProfile = element;
+    return state;
   }
 
   @Override
@@ -122,8 +133,8 @@ public class CommitMessageInspectionProfile extends InspectionProfileImpl
     public List<InspectionToolWrapper> get() {
       return Stream.of(new SubjectBodySeparationInspection(), new SubjectLimitInspection(), new BodyLimitInspection(),
                        new CommitMessageSpellCheckingInspection())
-        .map(LocalInspectionToolWrapper::new)
-        .collect(toList());
+                   .map(LocalInspectionToolWrapper::new)
+                   .collect(Collectors.toList());
     }
   }
 }

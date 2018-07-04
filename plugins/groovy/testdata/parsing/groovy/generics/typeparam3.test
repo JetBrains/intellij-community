@@ -45,7 +45,7 @@ Groovy script
             PsiElement(identifier)('F')
           PsiWhiteSpace(' ')
           PsiElement(&)('&')
-          PsiErrorElement:Type expected
+          PsiErrorElement:<type> expected, got '>'
             <empty list>
       PsiElement(>)('>')
     Extends clause

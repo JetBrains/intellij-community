@@ -1,10 +1,29 @@
 <html>
 <body>
-Reports <b>if</b>
-statements with identical "then" and <b>else</b> branches. Such statements are almost certainly
-programmer error.
+Inspection that can extract common parts from branches of if statement.
 <!-- tooltip end -->
-<p>
-
+<p>Before:</p>
+<pre><code>
+  if (x > 12) {
+    doSomethingBefore();
+    doSomethingDifferent1();
+    doSomethingAfter();
+  } else {
+    doSomething();
+    doSomethingDifferent2();
+    doSomethingAfter();
+  }
+</code></pre>
+<p>After:</p>
+<pre><code>
+  doSomethingBefore();
+  if (x > 12) {
+    doSomethingDifferent1();
+  } else {
+    doSomethingDifferent2();
+  }
+  doSomethingAfter();
+</code></pre>
+<p><small>Updated in 2018.1</small></p>
 </body>
 </html>

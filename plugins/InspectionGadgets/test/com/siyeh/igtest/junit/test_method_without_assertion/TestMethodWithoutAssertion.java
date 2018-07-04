@@ -3,6 +3,7 @@ package com.siyeh.igtest.junit;
 import junit.framework.TestCase;
 import org.junit.Test;
 import org.junit.Assert;
+import mockit.*;
 
 public class TestMethodWithoutAssertion extends TestCase
 {
@@ -56,5 +57,19 @@ public class TestMethodWithoutAssertion extends TestCase
 
     private void check() {
         Assert.assertTrue(true);
+    }
+
+    @Test
+    public void testExecuteReverseAcknowledgement(@Mocked final Object messageDAO)  {
+        System.out.println(messageDAO);
+
+        new Verifications() {{
+            messageDAO.toString();
+        }};
+    }
+
+    @Test
+    public void testMethodWhichThrowsExceptionOnFailure() throws AssertionError {
+        if (true) throw new AssertionError();
     }
 }

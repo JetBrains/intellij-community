@@ -1,0 +1,473 @@
+package pkg;
+
+class PrivateClasses {
+   private static final Runnable R1 = new Runnable() {
+      public void run() {
+         final String s = "";// 11
+
+         class NonCapturingLocalR1 {
+            private final String s;
+
+            public NonCapturingLocalR1(String s) {
+               this.s = s;// 17
+            }// 18
+
+            public String toString() {
+               return this.s;// 22
+            }
+         }
+
+         (new NonCapturingLocalR1(s)).toString();// 39
+
+         class CapturingLocalR1 {
+            private final int i;
+
+            public CapturingLocalR1(int i) {
+               this.i = i;// 30
+            }// 31
+
+            public String toString() {
+               return s + ":" + this.i;// 35
+            }
+         }
+
+         (new CapturingLocalR1(42)).toString();// 40
+         PrivateClasses.Callable<String> c1 = new PrivateClasses.Callable<String>() {
+            public String call() {
+               return null;// 45
+            }
+         };// 42
+         PrivateClasses.Callable<String> c2 = new PrivateClasses.Callable<String>() {
+            public String call() {
+               return s;// 52
+            }
+         };// 49
+         ((String)c1.call() + (String)c2.call()).length();// 56
+      }// 57
+   };
+   private final Runnable R2 = new Runnable() {
+      public void run() {
+         final String s = "";// 63
+
+         class NonCapturingLocalR2 {
+            private final String s;
+
+            public NonCapturingLocalR2(String s) {
+               this.s = s;// 69
+            }// 70
+
+            public String toString() {
+               return this.s;// 74
+            }
+         }
+
+         (new NonCapturingLocalR2(s)).toString();// 91
+
+         class CapturingLocalR1 {
+            private final int i;
+
+            public CapturingLocalR1(int i) {
+               this.i = i;// 82
+            }// 83
+
+            public String toString() {
+               return s + ":" + this.i;// 87
+            }
+         }
+
+         (new CapturingLocalR1(42)).toString();// 92
+         PrivateClasses.Callable<String> c1 = new PrivateClasses.Callable<String>() {
+            public String call() {
+               return null;// 97
+            }
+         };// 94
+         PrivateClasses.Callable<String> c2 = new PrivateClasses.Callable<String>() {
+            public String call() {
+               return s;// 104
+            }
+         };// 101
+         ((String)c1.call() + (String)c2.call()).length();// 108
+      }// 109
+   };
+
+   public static void m1(final String s) {
+      class NonCapturingLocalM1 {
+         private final String s;
+
+         public NonCapturingLocalM1(String s) {
+            this.s = s;// 117
+         }// 118
+
+         public String toString() {
+            return this.s;// 122
+         }
+      }
+
+      (new NonCapturingLocalM1(s)).toString();// 139
+
+      class CapturingLocalM1 {
+         private final int i;
+
+         public CapturingLocalM1(int i) {
+            this.i = i;// 130
+         }// 131
+
+         public String toString() {
+            return s + ":" + this.i;// 135
+         }
+      }
+
+      (new CapturingLocalM1(42)).toString();// 140
+      PrivateClasses.Callable<String> c1 = new PrivateClasses.Callable<String>() {
+         public String call() {
+            return null;// 145
+         }
+      };// 142
+      PrivateClasses.Callable<String> c2 = new PrivateClasses.Callable<String>() {
+         public String call() {
+            return s;// 152
+         }
+      };// 149
+      ((String)c1.call() + (String)c2.call()).length();// 156
+   }// 157
+
+   public void m2(final String s) {
+      class NonCapturingLocalM2 {
+         private final String s;
+
+         public NonCapturingLocalM2(String s) {
+            this.s = s;// 164
+         }// 165
+
+         public String toString() {
+            return this.s;// 169
+         }
+      }
+
+      (new NonCapturingLocalM2(s)).toString();// 186
+
+      class CapturingLocalM2 {
+         private final int i;
+
+         public CapturingLocalM2(int i) {
+            this.i = i;// 177
+         }// 178
+
+         public String toString() {
+            return s + ":" + this.i;// 182
+         }
+      }
+
+      (new CapturingLocalM2(42)).toString();// 187
+      PrivateClasses.Callable<String> c1 = new PrivateClasses.Callable<String>() {
+         public String call() {
+            return null;// 192
+         }
+      };// 189
+      PrivateClasses.Callable<String> c2 = new PrivateClasses.Callable<String>() {
+         public String call() {
+            return s;// 199
+         }
+      };// 196
+      ((String)c1.call() + (String)c2.call()).length();// 203
+   }// 204
+
+   private interface Callable<T> {
+      T call();
+   }
+}
+
+class 'pkg/PrivateClasses$1$1NonCapturingLocalR1' {
+   method '<init> (Lpkg/PrivateClasses$1;Ljava/lang/String;)V' {
+      b      11
+      e      12
+   }
+
+   method 'toString ()Ljava/lang/String;' {
+      1      15
+      4      15
+   }
+}
+
+class 'pkg/PrivateClasses$1$1CapturingLocalR1' {
+   method '<init> (Lpkg/PrivateClasses$1;ILjava/lang/String;)V' {
+      10      25
+      13      26
+   }
+
+   method 'toString ()Ljava/lang/String;' {
+      e      29
+      14      29
+      1a      29
+      1d      29
+   }
+}
+
+class 'pkg/PrivateClasses$1$1' {
+   method 'call ()Ljava/lang/String;' {
+      0      36
+      1      36
+   }
+}
+
+class 'pkg/PrivateClasses$1$2' {
+   method 'call ()Ljava/lang/String;' {
+      4      41
+   }
+}
+
+class 'pkg/PrivateClasses$1' {
+   method 'run ()V' {
+      0      5
+      2      5
+      c      19
+      15      33
+      1b      33
+      27      38
+      31      43
+      3a      44
+      3f      44
+      46      44
+      4b      44
+      51      44
+      54      44
+      58      45
+   }
+}
+
+class 'pkg/PrivateClasses$2$1NonCapturingLocalR2' {
+   method '<init> (Lpkg/PrivateClasses$2;Ljava/lang/String;)V' {
+      b      55
+      e      56
+   }
+
+   method 'toString ()Ljava/lang/String;' {
+      1      59
+      4      59
+   }
+}
+
+class 'pkg/PrivateClasses$2$1CapturingLocalR1' {
+   method '<init> (Lpkg/PrivateClasses$2;ILjava/lang/String;)V' {
+      10      69
+      13      70
+   }
+
+   method 'toString ()Ljava/lang/String;' {
+      e      73
+      14      73
+      1a      73
+      1d      73
+   }
+}
+
+class 'pkg/PrivateClasses$2$1' {
+   method 'call ()Ljava/lang/String;' {
+      0      80
+      1      80
+   }
+}
+
+class 'pkg/PrivateClasses$2$2' {
+   method 'call ()Ljava/lang/String;' {
+      4      85
+   }
+}
+
+class 'pkg/PrivateClasses$2' {
+   method 'run ()V' {
+      0      49
+      2      49
+      c      63
+      15      77
+      1b      77
+      27      82
+      31      87
+      3a      88
+      3f      88
+      46      88
+      4b      88
+      51      88
+      54      88
+      58      89
+   }
+}
+
+class 'pkg/PrivateClasses$1NonCapturingLocalM1' {
+   method '<init> (Ljava/lang/String;)V' {
+      6      97
+      9      98
+   }
+
+   method 'toString ()Ljava/lang/String;' {
+      1      101
+      4      101
+   }
+}
+
+class 'pkg/PrivateClasses$1CapturingLocalM1' {
+   method '<init> (ILjava/lang/String;)V' {
+      b      111
+      e      112
+   }
+
+   method 'toString ()Ljava/lang/String;' {
+      e      115
+      14      115
+      1a      115
+      1d      115
+   }
+}
+
+class 'pkg/PrivateClasses$3' {
+   method 'call ()Ljava/lang/String;' {
+      0      122
+      1      122
+   }
+}
+
+class 'pkg/PrivateClasses$4' {
+   method 'call ()Ljava/lang/String;' {
+      4      127
+   }
+}
+
+class 'pkg/PrivateClasses' {
+   method 'm1 (Ljava/lang/String;)V' {
+      8      105
+      10      119
+      16      119
+      21      124
+      2a      129
+      33      130
+      38      130
+      3f      130
+      44      130
+      4a      130
+      4d      130
+      51      131
+   }
+
+   method 'm2 (Ljava/lang/String;)V' {
+      9      146
+      12      160
+      18      160
+      24      165
+      2e      170
+      37      171
+      3c      171
+      43      171
+      48      171
+      4e      171
+      51      171
+      55      172
+   }
+}
+
+class 'pkg/PrivateClasses$1NonCapturingLocalM2' {
+   method '<init> (Lpkg/PrivateClasses;Ljava/lang/String;)V' {
+      b      138
+      e      139
+   }
+
+   method 'toString ()Ljava/lang/String;' {
+      1      142
+      4      142
+   }
+}
+
+class 'pkg/PrivateClasses$1CapturingLocalM2' {
+   method '<init> (Lpkg/PrivateClasses;ILjava/lang/String;)V' {
+      10      152
+      13      153
+   }
+
+   method 'toString ()Ljava/lang/String;' {
+      e      156
+      14      156
+      1a      156
+      1d      156
+   }
+}
+
+class 'pkg/PrivateClasses$5' {
+   method 'call ()Ljava/lang/String;' {
+      0      163
+      1      163
+   }
+}
+
+class 'pkg/PrivateClasses$6' {
+   method 'call ()Ljava/lang/String;' {
+      4      168
+   }
+}
+
+Lines mapping:
+11 <-> 6
+17 <-> 12
+18 <-> 13
+22 <-> 16
+30 <-> 26
+31 <-> 27
+35 <-> 30
+39 <-> 20
+40 <-> 34
+42 <-> 39
+45 <-> 37
+49 <-> 44
+52 <-> 42
+56 <-> 45
+57 <-> 46
+63 <-> 50
+69 <-> 56
+70 <-> 57
+74 <-> 60
+82 <-> 70
+83 <-> 71
+87 <-> 74
+91 <-> 64
+92 <-> 78
+94 <-> 83
+97 <-> 81
+101 <-> 88
+104 <-> 86
+108 <-> 89
+109 <-> 90
+117 <-> 98
+118 <-> 99
+122 <-> 102
+130 <-> 112
+131 <-> 113
+135 <-> 116
+139 <-> 106
+140 <-> 120
+142 <-> 125
+145 <-> 123
+149 <-> 130
+152 <-> 128
+156 <-> 131
+157 <-> 132
+164 <-> 139
+165 <-> 140
+169 <-> 143
+177 <-> 153
+178 <-> 154
+182 <-> 157
+186 <-> 147
+187 <-> 161
+189 <-> 166
+192 <-> 164
+196 <-> 171
+199 <-> 169
+203 <-> 172
+204 <-> 173
+Not mapped:
+16
+29
+68
+81
+116
+129
+163
+176

@@ -18,6 +18,7 @@ package com.siyeh.ig.visibility;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -124,7 +125,7 @@ public class ParameterHidingMemberVariableInspectionBase extends BaseInspection 
           return;
         }
 
-        if (PropertyUtil.isSimplePropertySetter(method)) {
+        if (PropertyUtilBase.isSimplePropertySetter(method)) {
           return;
         }
       }

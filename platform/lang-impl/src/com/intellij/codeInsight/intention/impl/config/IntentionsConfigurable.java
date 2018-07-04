@@ -16,7 +16,8 @@
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.openapi.options.Configurable;
+import org.jetbrains.annotations.NotNull;
 
 public interface IntentionsConfigurable extends Configurable {
-  void selectIntention(String familyName);
+  void selectIntention(@NotNull String familyName);
 }

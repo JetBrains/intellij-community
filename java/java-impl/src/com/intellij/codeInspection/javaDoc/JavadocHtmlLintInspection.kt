@@ -22,7 +22,7 @@ import com.intellij.psi.PsiElement
 
 class JavadocHtmlLintInspection : LocalInspectionTool(), ExternalAnnotatorBatchInspection {
   companion object {
-    val SHORT_NAME = "JavadocHtmlLint"
+    val SHORT_NAME: String = "JavadocHtmlLint"
   }
 
   override fun getBatchSuppressActions(element: PsiElement?): Array<out SuppressQuickFix> = SuppressQuickFix.EMPTY_ARRAY

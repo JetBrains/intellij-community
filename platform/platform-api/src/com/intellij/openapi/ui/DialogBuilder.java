@@ -458,7 +458,7 @@ public class DialogBuilder implements Disposable {
         actions.add(actionDescriptor.getAction(this));
       }
       if (myHelpId != null) actions.add(getHelpAction());
-      return actions.toArray(new Action[actions.size()]);
+      return actions.toArray(new Action[0]);
     }
   }
 

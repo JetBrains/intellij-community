@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.lang.PsiBuilder;
@@ -20,6 +6,7 @@ import com.intellij.lang.java.lexer.JavaLexer;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -29,6 +16,7 @@ import com.intellij.psi.impl.source.JavaDummyElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Opcodes;
@@ -177,34 +165,14 @@ public class ClsParsingUtil {
   }
 
   @Nullable
-  public static LanguageLevel getLanguageLevelByVersion(int major) {
-    switch (major) {
-      case Opcodes.V1_1:
-      case 45:  // other variant of 1.1
-      case Opcodes.V1_2:
-      case Opcodes.V1_3:
-        return LanguageLevel.JDK_1_3;
-
-      case Opcodes.V1_4:
-        return LanguageLevel.JDK_1_4;
-
-      case Opcodes.V1_5:
-        return LanguageLevel.JDK_1_5;
-
-      case Opcodes.V1_6:
-        return LanguageLevel.JDK_1_6;
-
-      case Opcodes.V1_7:
-        return LanguageLevel.JDK_1_7;
-
-      case Opcodes.V1_8:
-        return LanguageLevel.JDK_1_8;
-
-      case Opcodes.V1_9:
-        return LanguageLevel.JDK_1_9;
-
-      default:
-        return null;
+  public static JavaSdkVersion getJdkVersionByBytecode(int major) {
+    if (major == Opcodes.V1_1 || major == 45) {
+      return JavaSdkVersion.JDK_1_1;
     }
+    if (major >= 46) {
+      JavaVersion version = JavaVersion.compose(major - 44);  // 46 = 1.2, 47 = 1.3 etc.
+      return JavaSdkVersion.fromJavaVersion(version);
+    }
+    return null;
   }
 }

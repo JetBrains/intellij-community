@@ -57,11 +57,12 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
   }
 
   @Override
-  public boolean isValidTarget(final PsiElement psiElement, PsiElement[] sources) {
-    return isValidTarget(psiElement);
+  public boolean isValidTarget(final PsiElement targetElement, PsiElement[] sources) {
+    return isValidTarget(targetElement);
   }
 
   public static boolean isValidTarget(PsiElement psiElement) {
+    if (psiElement == null) return true;
     if (!(psiElement instanceof PsiDirectory || psiElement instanceof PsiDirectoryContainer)) return false;
     if (psiElement.getManager().isInProject(psiElement)) return true;
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);

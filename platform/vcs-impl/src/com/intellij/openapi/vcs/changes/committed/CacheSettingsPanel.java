@@ -16,7 +16,6 @@
 package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nls;
 
@@ -49,7 +48,7 @@ public class CacheSettingsPanel implements Configurable {
     myCache = CommittedChangesCache.getInstance(project);
   }
 
-  public void apply() throws ConfigurationException {
+  public void apply() {
     final CommittedChangesCache.State state = new CommittedChangesCache.State();
     state.setInitialCount(((SpinnerNumberModel)myCountSpinner.getModel()).getNumber().intValue());
     state.setInitialDays(((SpinnerNumberModel)myDaysSpinner.getModel()).getNumber().intValue());
@@ -101,15 +100,13 @@ public class CacheSettingsPanel implements Configurable {
     return "Cache";
   }
 
+  @Override
   public String getHelpTopic() {
     return "project.propVCSSupport.Cache";
   }
 
   public JComponent createComponent() {
     return getPanel();
-  }
-
-  public void disposeUIResources() {
   }
 
   public void setEnabled(final boolean value) {

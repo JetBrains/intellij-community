@@ -63,7 +63,7 @@ public class CopyPasteFoldingProcessor extends CopyPastePostProcessor<FoldingTra
       }
     }
 
-    return Collections.singletonList(new FoldingTransferableData(list.toArray(new FoldingData[list.size()])));
+    return Collections.singletonList(new FoldingTransferableData(list.toArray(new FoldingData[0])));
   }
 
   @NotNull

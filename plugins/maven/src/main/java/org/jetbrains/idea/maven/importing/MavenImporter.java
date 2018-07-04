@@ -172,12 +172,14 @@ public abstract class MavenImporter {
   /**
    * @deprecated override {@link #collectSourceRoots} instead
    */
+  @Deprecated
   public void collectSourceFolders(MavenProject mavenProject, List<String> result) {
   }
 
   /**
    * @deprecated override {@link #collectSourceRoots} instead
    */
+  @Deprecated
   public void collectTestFolders(MavenProject mavenProject, List<String> result) {
   }
 

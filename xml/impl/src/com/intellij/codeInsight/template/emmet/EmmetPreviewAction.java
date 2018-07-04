@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,6 @@ public class EmmetPreviewAction extends BaseCodeInsightAction implements DumbAwa
   @Override
   protected boolean isValidForFile(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     return super.isValidForFile(project, editor, file) &&
-           ZenCodingTemplate.findApplicableDefaultGenerator(CustomTemplateCallback.getContext(file, CustomTemplateCallback.getOffset(editor)),
-                                                            false) instanceof XmlZenCodingGenerator;
+           ZenCodingTemplate.findApplicableDefaultGenerator(new CustomTemplateCallback(editor, file), false) instanceof XmlZenCodingGenerator;
   }
 }

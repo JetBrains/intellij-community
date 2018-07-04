@@ -34,9 +34,7 @@ public class EditorConfigIndentOptionsProvider extends FileIndentOptionsProvider
     if (project.isDisposed() || !Utils.isEnabled(settings)) return null;
 
     // Get editorconfig settings
-    final String filePath = Utils.getFilePath(project, file);
-    final SettingsProviderComponent settingsProvider = SettingsProviderComponent.getInstance();
-    final List<EditorConfig.OutPair> outPairs = settingsProvider.getOutPairs(project, filePath);
+    final List<EditorConfig.OutPair> outPairs = SettingsProviderComponent.getInstance().getOutPairs(project, file);
     // Apply editorconfig settings for the current editor
     return applyCodeStyleSettings(project, outPairs, file, settings);
   }

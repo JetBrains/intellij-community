@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
@@ -22,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.PlatformComponentManagerImpl;
 import com.intellij.openapi.components.impl.ProjectPathMacroManager;
@@ -45,7 +32,6 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
@@ -56,12 +42,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.TimedReference;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemDependent;
-import org.jetbrains.annotations.SystemIndependent;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.picocontainer.*;
 
 import javax.swing.*;
@@ -212,10 +193,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return plugin.getProjectComponents();
   }
 
-  @Override
   @Nullable
-  @SystemIndependent
-  public String getProjectFilePath() {
+  @Override
+  public @SystemIndependent String getProjectFilePath() {
     return isDefault() ? null : getStateStore().getProjectFilePath();
   }
 
@@ -229,10 +209,9 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return isDefault() ? null : LocalFileSystem.getInstance().findFileByPath(getStateStore().getProjectBasePath());
   }
 
-  @Nullable
   @Override
-  @SystemIndependent
-  public String getBasePath() {
+  @Nullable
+  public @SystemIndependent String getBasePath() {
     return isDefault() ? null : getStateStore().getProjectBasePath();
   }
 
@@ -245,9 +224,8 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     return myName;
   }
 
-  @SystemDependent
   @Override
-  public String getPresentableUrl() {
+  public @SystemDependent String getPresentableUrl() {
     if (isDefault()) {
       return null;
     }
@@ -278,14 +256,16 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public void init() {
+    Application application = ApplicationManager.getApplication();
+
     long start = System.currentTimeMillis();
 
     ProgressIndicator progressIndicator = isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
-    init(progressIndicator);
+    init(progressIndicator,
+         () -> application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this));
 
     long time = System.currentTimeMillis() - start;
     String message = getComponentConfigCount() + " project components initialized in " + time + " ms";
-    Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode()) {
       LOG.debug(message);
     } else {
@@ -334,7 +314,11 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public void save() {
-    if (ApplicationManagerEx.getApplicationEx().isDoNotSave()) {
+    save(false);
+  }
+
+  public void save(boolean isForce) {
+    if (!ApplicationManagerEx.getApplicationEx().isSaveAllowed()) {
       // no need to save
       return;
     }
@@ -346,7 +330,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
     HeavyProcessLatch.INSTANCE.prioritizeUiActivity();
 
     try {
-      StoreUtil.save(ServiceKt.getStateStore(this), this);
+      StoreUtil.save(ServiceKt.getStateStore(this), this, isForce);
     }
     finally {
       mySavingInProgress.set(false);
@@ -375,6 +359,7 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
       application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).afterProjectClosed(this);
     }
     TimedReference.disposeTimed();
+    LaterInvocator.purgeExpiredItems();
   }
 
   @NotNull

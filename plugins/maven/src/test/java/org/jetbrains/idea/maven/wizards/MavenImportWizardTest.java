@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.projectWizard.ProjectWizardTestCase;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
@@ -25,13 +26,13 @@ import java.io.IOException;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 11/6/12
  */
 public class MavenImportWizardTest extends ProjectWizardTestCase {
   @Override
   public void tearDown() throws Exception {
     try {
       MavenServerManager.getInstance().shutdown(true);
+      JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
     }
     finally {
       super.tearDown();

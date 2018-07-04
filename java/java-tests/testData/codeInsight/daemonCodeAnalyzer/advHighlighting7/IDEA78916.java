@@ -3,12 +3,14 @@ enum EnumPrivateMethodTest {
         @Override
         public void execute() {
             this.<error descr="'firstMethod()' has private access in 'EnumPrivateMethodTest'">firstMethod</error>();
+            String s = this.<error descr="'myDescription' has private access in 'EnumPrivateMethodTest'">myDescription</error>;
         }
     };
 
     public abstract void execute();
 
     private void firstMethod() {}
+    private final String myDescription = "description";
 }
 
 abstract class EnumPrivateMethodTest1 {

@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 2/5/13
  */
 public abstract class ProjectTemplateParameterFactory {
 

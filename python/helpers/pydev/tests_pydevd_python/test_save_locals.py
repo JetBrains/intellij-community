@@ -3,6 +3,8 @@ import sys
 import unittest
 
 from _pydevd_bundle.pydevd_save_locals import save_locals
+from _pydevd_bundle.pydevd_constants import IS_JYTHON, IS_IRONPYTHON
+import pytest
 
 
 def use_save_locals(name, value):
@@ -29,11 +31,11 @@ def check_method(fn):
 
 
 
+@pytest.mark.skipif(IS_JYTHON or IS_IRONPYTHON, reason='CPython/pypy only')
 class TestSetLocals(unittest.TestCase):
     """
     Test setting locals in one function from another function using several approaches.
     """
-
 
     def test_set_locals_using_save_locals(self):
         x = check_method(use_save_locals)
@@ -45,7 +47,7 @@ class TestSetLocals(unittest.TestCase):
         a = 20
         frame.f_locals['a'] = 50
         save_locals(frame)
-        self.assertEquals(50, a)
+        self.assertEqual(50, a)
 
 
     def test_frame_co_freevars(self):
@@ -56,7 +58,7 @@ class TestSetLocals(unittest.TestCase):
             frame = sys._getframe()
             frame.f_locals['outer_var'] = 50
             save_locals(frame)
-            self.assertEquals(50, outer_var)
+            self.assertEqual(50, outer_var)
 
         func()
 
@@ -71,14 +73,14 @@ class TestSetLocals(unittest.TestCase):
             frame = sys._getframe()
             frame.f_locals['a'] = 50
             save_locals(frame)
-            self.assertEquals(50, a)
+            self.assertEqual(50, a)
 
         check_co_vars(1)
 
 
     def test_frame_change_in_inner_frame(self):
         def change(f):
-            self.assert_(f is not sys._getframe())
+            self.assertTrue(f is not sys._getframe())
             f.f_locals['a']= 50
             save_locals(f)
 
@@ -86,7 +88,7 @@ class TestSetLocals(unittest.TestCase):
         frame = sys._getframe()
         a = 20
         change(frame)
-        self.assertEquals(50, a)
+        self.assertEqual(50, a)
 
 
 if __name__ == '__main__':

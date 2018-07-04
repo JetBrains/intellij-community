@@ -1,36 +1,27 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.actions.ShowContentAction;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.ToolWindowContentUiType;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
@@ -40,6 +31,7 @@ import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.EmptyIterator;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +42,6 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
@@ -63,7 +54,6 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
   public static final String HIDE_ID_LABEL = "HideIdLabel";
 
   ContentManager myManager;
-
 
   final JPanel myContent = new JPanel(new BorderLayout());
   ToolWindowImpl myWindow;
@@ -79,13 +69,13 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
   private ToolWindowContentUiType myType = ToolWindowContentUiType.TABBED;
 
+  public Predicate<Point> isResizableArea = p -> true;
+
   public ToolWindowContentUi(ToolWindowImpl window) {
     myWindow = window;
     myContent.setOpaque(false);
     myContent.setFocusable(false);
     setOpaque(false);
-
-    myShowContent = new ShowContentAction(myWindow, myContent);
 
     setBorder(new EmptyBorder(0, 0, 0, 2));
 
@@ -109,6 +99,32 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
             .iterator();
         }
       });
+
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(UISettingsListener.TOPIC, uiSettings -> {
+        revalidate();
+        repaint();
+    });
+  }
+
+  private boolean isResizeable() {
+    if (myWindow.getType() == ToolWindowType.FLOATING || myWindow.getType() == ToolWindowType.WINDOWED) return false;
+    if (myWindow.getAnchor() == ToolWindowAnchor.BOTTOM) return true;
+    if (myWindow.getAnchor() == ToolWindowAnchor.TOP) return false;
+    if (!myWindow.isSplitMode()) return false;
+    ToolWindowManagerImpl manager = myWindow.getToolWindowManager();
+    List<String> ids = manager.getIdsOn(myWindow.getAnchor());
+    for (String id : ids) {
+      if (id.equals(myWindow.getId())) continue;
+      ToolWindow window = manager.getToolWindow(id);
+      if (window != null && window.isVisible() && (window.getType() == ToolWindowType.DOCKED || window.getType() == ToolWindowType.SLIDING)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean isResizeable(@NotNull Point point) {
+    return isResizableArea.apply(point);
   }
 
   public void setType(@NotNull ToolWindowContentUiType type) {
@@ -174,13 +190,14 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       }
     });
 
-    initMouseListeners(this, this);
+    initMouseListeners(this, this, true);
 
     rebuild();
 
     myCloseAllAction = new TabbedContentAction.CloseAllAction(myManager);
     myNextTabAction = new TabbedContentAction.MyNextTabAction(myManager);
     myPreviousTabAction = new TabbedContentAction.MyPreviousTabAction(myManager);
+    myShowContent = new ShowContentAction(myWindow, myContent, myManager);
   }
 
   private void ensureSelectedContentVisible() {
@@ -244,6 +261,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
       final Component each = getComponent(i);
       size.height = Math.max(each.getPreferredSize().height, size.height);
     }
+    size.width = Math.max(size.width, getCurrentLayout().getMinimumWidth());
     return size;
   }
 
@@ -301,37 +319,68 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
     return getCurrentLayout().getNextContentActionName();
   }
 
-  public static void initMouseListeners(final JComponent c, final ToolWindowContentUi ui) {
+  public static void initMouseListeners(final JComponent c, final ToolWindowContentUi ui, final boolean allowResize) {
     if (c.getClientProperty(ui) != null) return;
 
+    MouseAdapter mouseAdapter = new MouseAdapter() {
+      final Ref<Point> myLastPoint = Ref.create();
+      final Ref<Point> myPressPoint = Ref.create();
+      final Ref<Integer> myInitialHeight = Ref.create(0);
+      final Ref<Boolean> myIsLastComponent = Ref.create();
 
-    final Point[] myLastPoint = new Point[1];
 
-    c.addMouseMotionListener(new MouseMotionAdapter() {
-      public void mouseDragged(final MouseEvent e) {
-        if (myLastPoint[0] == null) return;
+      private Component getActualSplitter() {
+        if (!allowResize || !ui.isResizeable()) return null;
 
-        final Window window = SwingUtilities.windowForComponent(c);
+        Component component = c;
+        Component parent = component.getParent();
+        while(parent != null) {
 
-        if (window instanceof IdeFrame) return;
-
-        final Point windowLocation = window.getLocationOnScreen();
-        PointerInfo info = MouseInfo.getPointerInfo();
-        if (info == null) return;
-        final Point newPoint = info.getLocation();
-        Point p = myLastPoint[0];
-        windowLocation.translate(newPoint.x - p.x, newPoint.y - p.y);
-        window.setLocation(windowLocation);
-        myLastPoint[0] = newPoint;
+          if (parent instanceof ThreeComponentsSplitter && ((ThreeComponentsSplitter)parent).getOrientation()) {
+            if (component != ((ThreeComponentsSplitter)parent).getFirstComponent()) {
+              return parent;
+            }
+          }
+          if (parent instanceof Splitter && ((Splitter)parent).isVertical()
+              && ((Splitter)parent).getSecondComponent() == component
+              && ((Splitter)parent).getFirstComponent() != null) {
+            return parent;
+          }
+          component = parent;
+          parent = parent.getParent();
+        }
+        return null;
       }
-    });
 
-    c.addMouseListener(new MouseAdapter() {
-      public void mousePressed(final MouseEvent e) {
+      private void arm(Component c) {
+        Component component = c != null ? getActualSplitter() : null;
+        if (component instanceof ThreeComponentsSplitter) {
+          ThreeComponentsSplitter splitter = (ThreeComponentsSplitter)component;
+          myIsLastComponent.set(SwingUtilities.isDescendingFrom(c, splitter.getLastComponent()));
+          myInitialHeight.set(myIsLastComponent.get() ? splitter.getLastSize() : splitter.getFirstSize());
+          return;
+        }
+        if (component instanceof Splitter) {
+          Splitter splitter = (Splitter)component;
+          myIsLastComponent.set(true);
+          myInitialHeight.set(splitter.getSecondComponent().getHeight());
+          return;
+        }
+        myIsLastComponent.set(null);
+        myInitialHeight.set(null);
+        myPressPoint.set(null);
+      }
+
+      @Override
+      public void mousePressed(MouseEvent e) {
         PointerInfo info = MouseInfo.getPointerInfo();
-        myLastPoint[0] = info != null ? info.getLocation() : e.getLocationOnScreen();
         if (!e.isPopupTrigger()) {
           if (!UIUtil.isCloseClick(e)) {
+            myLastPoint.set(info != null ? info.getLocation() : e.getLocationOnScreen());
+            if (allowResize && ui.isResizeable()) {
+              myPressPoint.set(myLastPoint.get());
+              arm(c.getComponentAt(e.getPoint()) == c && ui.isResizeable(e.getPoint()) ? c : null);
+            }
             ui.myWindow.fireActivated();
           }
         }
@@ -343,9 +392,52 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
           if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_RELEASED)) {
             ui.processHide(e);
           }
+          arm(null);
         }
       }
-    });
+
+      @Override
+      public void mouseMoved(MouseEvent e) {
+        c.setCursor(allowResize && ui.isResizeable() && getActualSplitter() != null && c.getComponentAt(e.getPoint()) == c && ui.isResizeable(e.getPoint())
+                    ? Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR)
+                    : Cursor.getDefaultCursor());
+      }
+
+      @Override
+      public void mouseDragged(MouseEvent e) {
+        if (myLastPoint.isNull()) return;
+
+        PointerInfo info = MouseInfo.getPointerInfo();
+        if (info == null) return;
+        final Point newPoint = info.getLocation();
+        Point p = myLastPoint.get();
+
+        final Window window = SwingUtilities.windowForComponent(c);
+        if (!(window instanceof IdeFrame)) {
+          final Point windowLocation = window.getLocationOnScreen();
+          windowLocation.translate(newPoint.x - p.x, newPoint.y - p.y);
+          window.setLocation(windowLocation);
+        }
+
+        myLastPoint.set(newPoint);
+        Component component = getActualSplitter();
+        if (component instanceof ThreeComponentsSplitter) {
+          ThreeComponentsSplitter splitter = (ThreeComponentsSplitter)component;
+          if (myIsLastComponent.get() == Boolean.TRUE) {
+            splitter.setLastSize(myInitialHeight.get() + myPressPoint.get().y - myLastPoint.get().y);
+          } else {
+            splitter.setFirstSize(myInitialHeight.get() + myLastPoint.get().y - myPressPoint.get().y);
+          }
+        }
+        if (component instanceof Splitter) {
+          Splitter splitter = (Splitter)component;
+          splitter.setProportion(Math.max(0, Math.min(1, 1f - (float)(myInitialHeight.get() + myPressPoint.get().y - myLastPoint.get().y )/ splitter.getHeight())));
+        }
+      }
+    };
+
+    c.addMouseMotionListener(mouseAdapter);
+    c.addMouseListener(mouseAdapter);
 
 
     c.addMouseListener(new PopupHandler() {
@@ -511,7 +603,7 @@ public class ToolWindowContentUi extends JPanel implements ContentUI, PropertyCh
 
   private class CloseContentTarget implements CloseAction.CloseTarget {
 
-    private Content myContent;
+    private final Content myContent;
 
     private CloseContentTarget(Content content) {
       myContent = content;

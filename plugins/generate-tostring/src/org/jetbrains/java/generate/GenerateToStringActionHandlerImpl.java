@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -100,6 +101,11 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                 @Override
                 protected String getHelpId() {
                     return "editing.altInsert.tostring";
+                }
+
+                @Override
+                protected boolean isInsertOverrideAnnotationSelected() {
+                    return JavaCodeStyleSettings.getInstance(clazz.getContainingFile()).INSERT_OVERRIDE_ANNOTATION;
                 }
             };
         //noinspection DialogTitleCapitalization
@@ -196,7 +202,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
             super(new GridBagLayout());
 
             final Collection<TemplateResource> templates = ToStringTemplatesManager.getInstance().getAllTemplates();
-            final TemplateResource[] all = templates.toArray(new TemplateResource[templates.size()]);
+            final TemplateResource[] all = templates.toArray(new TemplateResource[0]);
 
             final JButton settingsButton = new JButton("Settings");
             settingsButton.setMnemonic(KeyEvent.VK_S);
@@ -219,6 +225,8 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                 public void actionPerformed(ActionEvent e) {
                   final TemplatesPanel ui = new TemplatesPanel(clazz.getProject());
                   Configurable composite = new TabbedConfigurable() {
+                        @Override
+                        @NotNull
                         protected List<Configurable> createConfigurables() {
                             List<Configurable> res = new ArrayList<>();
                             res.add(new GenerateToStringConfigurable(clazz.getProject()));
@@ -230,6 +238,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                             return "toString() Generation Settings";
                         }
 
+                        @Override
                         public String getHelpTopic() {
                             return "editing.altInsert.tostring.settings";
                         }

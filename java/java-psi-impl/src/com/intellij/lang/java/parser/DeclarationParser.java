@@ -1,30 +1,16 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.parser;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.util.Pair;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.Function;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +33,7 @@ public class DeclarationParser {
   private static final TokenSet PARAM_LIST_STOPPERS = TokenSet.create(
     JavaTokenType.RPARENTH, JavaTokenType.LBRACE, JavaTokenType.ARROW);
   private static final TokenSet TYPE_START = TokenSet.orSet(
-    ElementType.PRIMITIVE_TYPE_BIT_SET, TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.AT));
+    ElementType.PRIMITIVE_TYPE_BIT_SET, TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.AT, JavaTokenType.VAR_KEYWORD));
   private static final TokenSet RESOURCE_EXPRESSIONS = TokenSet.create(
     JavaElementType.REFERENCE_EXPRESSION, JavaElementType.THIS_EXPRESSION,
     JavaElementType.METHOD_CALL_EXPRESSION, JavaElementType.NEW_EXPRESSION);
@@ -134,6 +120,7 @@ public class DeclarationParser {
   }
 
   private void parseEnumConstants(final PsiBuilder builder) {
+    boolean first = true;
     while (builder.getTokenType() != null) {
       if (expect(builder, JavaTokenType.SEMICOLON)) {
         return;
@@ -144,16 +131,21 @@ public class DeclarationParser {
         return;
       }
 
-      final PsiBuilder.Marker enumConstant = parseEnumConstant(builder);
-      if (enumConstant == null) {
-        error(builder, JavaErrorMessages.message("expected.identifier"));
+      PsiBuilder.Marker enumConstant = parseEnumConstant(builder);
+      if (enumConstant == null && builder.getTokenType() == JavaTokenType.COMMA && first) {
+        IElementType next = builder.lookAhead(1);
+        if (next != JavaTokenType.SEMICOLON && next != JavaTokenType.RBRACE) {
+          error(builder, JavaErrorMessages.message("expected.identifier"));
+        }
       }
 
-      if (!expect(builder, JavaTokenType.COMMA)) {
-        if (builder.getTokenType() != null && builder.getTokenType() != JavaTokenType.SEMICOLON) {
-          error(builder, JavaErrorMessages.message("expected.comma.or.semicolon"));
-          return;
-        }
+      first = false;
+
+      if (!expect(builder, JavaTokenType.COMMA) &&
+          builder.getTokenType() != null &&
+          builder.getTokenType() != JavaTokenType.SEMICOLON) {
+        error(builder, JavaErrorMessages.message("expected.comma.or.semicolon"));
+        return;
       }
     }
   }
@@ -195,6 +187,7 @@ public class DeclarationParser {
       final IElementType tokenType = builder.getTokenType();
       if (tokenType == null || tokenType == JavaTokenType.RBRACE) break;
 
+      //noinspection Duplicates
       if (tokenType == JavaTokenType.SEMICOLON) {
         if (invalidElements != null) {
           invalidElements.error(JavaErrorMessages.message("unexpected.token"));
@@ -237,7 +230,7 @@ public class DeclarationParser {
     if (tokenType == JavaTokenType.LBRACE) {
       if (context == Context.FILE || context == Context.CODE_BLOCK) return null;
     }
-    else if (tokenType == JavaTokenType.IDENTIFIER || ElementType.PRIMITIVE_TYPE_BIT_SET.contains(tokenType)) {
+    else if (TYPE_START.contains(tokenType) && tokenType != JavaTokenType.AT) {
       if (context == Context.FILE) return null;
     }
     else if (tokenType instanceof ILazyParseableElementType) {
@@ -273,7 +266,7 @@ public class DeclarationParser {
     }
 
     PsiBuilder.Marker typeParams = null;
-    if (builder.getTokenType() == JavaTokenType.LT) {
+    if (builder.getTokenType() == JavaTokenType.LT && context != Context.CODE_BLOCK) {
       typeParams = myParser.getReferenceParser().parseTypeParameters(builder);
     }
 
@@ -285,7 +278,7 @@ public class DeclarationParser {
 
     if (builder.getTokenType() == JavaTokenType.LBRACE) {
       if (context == Context.CODE_BLOCK) {
-        error(builder, JavaErrorMessages.message("expected.identifier.or.type"), typeParams);
+        error(builder, JavaErrorMessages.message("expected.identifier.or.type"), null);
         declaration.drop();
         return modList;
       }
@@ -302,12 +295,14 @@ public class DeclarationParser {
       return declaration;
     }
 
-    PsiBuilder.Marker type = null;
+    ReferenceParser.TypeInfo type = null;
 
     if (TYPE_START.contains(builder.getTokenType())) {
       PsiBuilder.Marker pos = builder.mark();
 
-      type = myParser.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
+      int flags = ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD;
+      if (context == Context.CODE_BLOCK) flags |= ReferenceParser.VAR_TYPE;
+      type = myParser.getReferenceParser().parseTypeInfo(builder, flags);
 
       if (type == null) {
         pos.rollbackTo();
@@ -352,31 +347,33 @@ public class DeclarationParser {
     }
 
     if (!expect(builder, JavaTokenType.IDENTIFIER)) {
-      if ((context == Context.CODE_BLOCK) && Boolean.TRUE.equals(modListInfo.second)) {
-        declaration.rollbackTo();
-        return null;
-      }
-      else {
+      if (context != Context.CODE_BLOCK ||
+          Boolean.FALSE.equals(modListInfo.second) ||
+          (type.isPrimitive && builder.getTokenType() != JavaTokenType.DOT)) {
         if (typeParams != null) {
-          typeParams.precede().errorBefore(JavaErrorMessages.message("unexpected.token"), type);
+          typeParams.precede().errorBefore(JavaErrorMessages.message("unexpected.token"), type.marker);
         }
         builder.error(JavaErrorMessages.message("expected.identifier"));
         declaration.drop();
         return modList;
+      }
+      else {
+        declaration.rollbackTo();
+        return null;
       }
     }
 
     if (builder.getTokenType() == JavaTokenType.LPARENTH) {
       if (context == Context.CLASS || context == Context.ANNOTATION_INTERFACE) {  // method
         if (typeParams == null) {
-          emptyElement(type, JavaElementType.TYPE_PARAMETER_LIST);
+          emptyElement(type.marker, JavaElementType.TYPE_PARAMETER_LIST);
         }
         return parseMethodFromLeftParenth(builder, declaration, (context == Context.ANNOTATION_INTERFACE), false);
       }
     }
 
     if (typeParams != null) {
-      typeParams.precede().errorBefore(JavaErrorMessages.message("unexpected.token"), type);
+      typeParams.precede().errorBefore(JavaErrorMessages.message("unexpected.token"), type.marker);
     }
     return parseFieldOrLocalVariable(builder, declaration, declarationStart, context);
   }
@@ -452,25 +449,21 @@ public class DeclarationParser {
     return declaration;
   }
 
-  @NotNull
-  public PsiBuilder.Marker parseParameterList(PsiBuilder builder) {
-    return parseElementList(builder, ListType.METHOD);
+  public void parseParameterList(PsiBuilder builder) {
+    parseElementList(builder, ListType.METHOD);
   }
 
-  @NotNull
-  public PsiBuilder.Marker parseResourceList(PsiBuilder builder) {
-    return parseElementList(builder, ListType.RESOURCE);
+  public void parseResourceList(PsiBuilder builder) {
+    parseElementList(builder, ListType.RESOURCE);
   }
 
-  @NotNull
-  public PsiBuilder.Marker parseLambdaParameterList(PsiBuilder builder, boolean typed) {
-    return parseElementList(builder, typed ? ListType.LAMBDA_TYPED : ListType.LAMBDA_UNTYPED);
+  public void parseLambdaParameterList(PsiBuilder builder, boolean typed) {
+    parseElementList(builder, typed ? ListType.LAMBDA_TYPED : ListType.LAMBDA_UNTYPED);
   }
 
   private enum ListType {METHOD, RESOURCE, LAMBDA_TYPED, LAMBDA_UNTYPED}
 
-  @NotNull
-  private PsiBuilder.Marker parseElementList(PsiBuilder builder, ListType type) {
+  private void parseElementList(PsiBuilder builder, ListType type) {
     final boolean lambda = (type == ListType.LAMBDA_TYPED || type == ListType.LAMBDA_UNTYPED);
     final boolean resources = (type == ListType.RESOURCE);
     final PsiBuilder.Marker elementList = builder.mark();
@@ -528,7 +521,7 @@ public class DeclarationParser {
       else {
         final PsiBuilder.Marker listElement = resources ? parseResource(builder) :
                                               lambda ? parseLambdaParameter(builder, type == ListType.LAMBDA_TYPED) :
-                                              parseParameter(builder, true, false);
+                                              parseParameter(builder, true, false, false);
         if (listElement != null) {
           delimiterExpected = true;
           if (invalidElements != null) {
@@ -567,12 +560,15 @@ public class DeclarationParser {
     }
 
     done(elementList, resources ? JavaElementType.RESOURCE_LIST : JavaElementType.PARAMETER_LIST);
-    return elementList;
   }
 
   @Nullable
-  public PsiBuilder.Marker parseParameter(PsiBuilder builder, boolean ellipsis, boolean disjunctiveType) {
-    return parseListElement(builder, true, ellipsis, disjunctiveType, false);
+  public PsiBuilder.Marker parseParameter(PsiBuilder builder, boolean ellipsis, boolean disjunctiveType, boolean varType) {
+    int typeFlags = 0;
+    if (ellipsis) typeFlags |= ReferenceParser.ELLIPSIS;
+    if (disjunctiveType) typeFlags |= ReferenceParser.DISJUNCTIONS;
+    if (varType) typeFlags |= ReferenceParser.VAR_TYPE;
+    return parseListElement(builder, true, typeFlags, false);
   }
 
   @Nullable
@@ -587,25 +583,25 @@ public class DeclarationParser {
 
     marker.rollbackTo();
 
-    return parseListElement(builder, true, false, false, true);
+    return parseListElement(builder, true, ReferenceParser.VAR_TYPE, true);
   }
 
   @Nullable
   public PsiBuilder.Marker parseLambdaParameter(PsiBuilder builder, boolean typed) {
-    return parseListElement(builder, typed, true, false, false);
+    int flags = ReferenceParser.ELLIPSIS;
+    if (getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_11)) flags |= ReferenceParser.VAR_TYPE;
+    return parseListElement(builder, typed, flags, false);
   }
 
   @Nullable
-  private PsiBuilder.Marker parseListElement(PsiBuilder builder, boolean typed, boolean ellipsis, boolean disjunctiveType, boolean resource) {
+  private PsiBuilder.Marker parseListElement(PsiBuilder builder, boolean typed, int typeFlags, boolean resource) {
     PsiBuilder.Marker param = builder.mark();
 
     Pair<PsiBuilder.Marker, Boolean> modListInfo = parseModifierList(builder);
 
     ReferenceParser.TypeInfo typeInfo = null;
     if (typed) {
-      int flags = ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD;
-      if (ellipsis) flags |= ReferenceParser.ELLIPSIS;
-      if (disjunctiveType) flags |= ReferenceParser.DISJUNCTIONS;
+      int flags = ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD | typeFlags;
       typeInfo = myParser.getReferenceParser().parseTypeInfo(builder, flags);
 
       if (typeInfo == null) {
@@ -815,18 +811,17 @@ public class DeclarationParser {
     return anno;
   }
 
-  @NotNull
-  private PsiBuilder.Marker parseAnnotationParameterList(final PsiBuilder builder) {
+  private void parseAnnotationParameterList(final PsiBuilder builder) {
     PsiBuilder.Marker list = builder.mark();
 
     if (!expect(builder, JavaTokenType.LPARENTH)) {
       done(list, JavaElementType.ANNOTATION_PARAMETER_LIST);
-      return list;
+      return;
     }
 
     if (expect(builder, JavaTokenType.RPARENTH)) {
       done(list, JavaElementType.ANNOTATION_PARAMETER_LIST);
-      return list;
+      return;
     }
 
     final boolean isFirstParamNamed = parseAnnotationParameter(builder, true);
@@ -868,7 +863,6 @@ public class DeclarationParser {
     }
 
     done(list, JavaElementType.ANNOTATION_PARAMETER_LIST);
-    return list;
   }
 
   private boolean parseAnnotationParameter(final PsiBuilder builder, final boolean mayBeSimple) {
@@ -896,16 +890,13 @@ public class DeclarationParser {
     return hasName;
   }
 
-  @NotNull
-  public PsiBuilder.Marker parseAnnotationValue(PsiBuilder builder) {
+  public void parseAnnotationValue(PsiBuilder builder) {
     PsiBuilder.Marker result = doParseAnnotationValue(builder);
 
     if (result == null) {
       result = builder.mark();
       result.error(JavaErrorMessages.message("expected.value"));
     }
-
-    return result;
   }
 
   @Nullable

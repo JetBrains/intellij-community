@@ -24,7 +24,7 @@ import com.jetbrains.python.psi.PyCustomPackageIdentifier
  * @author vlan
  */
 class PyiCustomPackageIdentifier : PyCustomPackageIdentifier {
-  override fun isPackage(directory: PsiDirectory) = directory.findFile(PyNames.INIT_DOT_PYI) != null
+  override fun isPackage(directory: PsiDirectory): Boolean = directory.findFile(PyNames.INIT_DOT_PYI) != null
 
-  override fun isPackageFile(file: PsiFile) = file.name == PyNames.INIT_DOT_PYI
+  override fun isPackageFile(file: PsiFile): Boolean = file.name == PyNames.INIT_DOT_PYI
 }

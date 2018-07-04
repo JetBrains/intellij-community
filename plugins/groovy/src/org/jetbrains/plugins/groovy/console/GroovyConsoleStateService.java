@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.openapi.components.*;
@@ -65,7 +51,7 @@ public class GroovyConsoleStateService implements PersistentStateComponent<Groov
       for (Map.Entry<VirtualFile, Pair<Module, String>> entry : myFileModuleMap.entrySet()) {
         final VirtualFile file = entry.getKey();
         final Pair<Module, String> pair = entry.getValue();
-        final Module module = pair == null ? null : pair.first;
+        final Module module = Pair.getFirst(pair);
         final Entry e = new Entry();
         e.url = file.getUrl();
         e.moduleName = module == null ? "" : module.getName();
@@ -77,7 +63,7 @@ public class GroovyConsoleStateService implements PersistentStateComponent<Groov
   }
 
   @Override
-  public void loadState(MyState state) {
+  public void loadState(@NotNull MyState state) {
     synchronized (myFileModuleMap) {
       myFileModuleMap.clear();
       for (Entry entry : state.list) {
@@ -98,13 +84,13 @@ public class GroovyConsoleStateService implements PersistentStateComponent<Groov
   @Nullable
   public Module getSelectedModule(@NotNull VirtualFile file) {
     final Pair<Module, String> pair = myFileModuleMap.get(file);
-    return pair == null ? null : pair.first;
+    return Pair.getFirst(pair);
   }
 
   @Nullable
   public String getSelectedModuleTitle(@NotNull VirtualFile file) {
     final Pair<Module, String> pair = myFileModuleMap.get(file);
-    return pair == null ? null : pair.second;
+    return Pair.getSecond(pair);
   }
 
   public void setFileModule(@NotNull VirtualFile file, @NotNull Module module) {

@@ -18,6 +18,7 @@ package com.intellij.ide.util.newProjectWizard;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -46,7 +47,6 @@ import java.io.File;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 19.09.13
  */
 public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardStep> {
   protected final WizardContext myWizardContext;
@@ -138,6 +138,25 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
     }
     return path;
   }
+
+  @Nullable
+  public ProjectBuilder getBuilder(Project project) {
+    final ProjectBuilder builder = getProjectBuilder();
+    if (builder instanceof ModuleBuilder) {
+      final ModuleBuilder moduleBuilder = (ModuleBuilder)builder;
+      if (moduleBuilder.getName() == null) {
+        moduleBuilder.setName(getProjectName());
+      }
+      if (moduleBuilder.getModuleFilePath() == null) {
+        moduleBuilder.setModuleFilePath(getModuleFilePath());
+      }
+    }
+    if (builder == null || !builder.validate(project, project)) {
+      return null;
+    }
+    return builder;
+  }
+
 
   @Override
   protected void updateStep() {

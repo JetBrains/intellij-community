@@ -36,7 +36,11 @@ public class SerializableSchemeExporter extends SchemeExporter<Scheme> {
   @Override
   public void exportScheme(@NotNull Scheme scheme, @NotNull OutputStream outputStream) throws Exception {
     assert scheme instanceof SerializableScheme;
-    writeToStream(outputStream, ((SerializableScheme)scheme).writeScheme());
+    writeToStream((SerializableScheme)scheme, outputStream);
+  }
+
+  public static void writeToStream(@NotNull SerializableScheme scheme, @NotNull OutputStream outputStream) throws IOException {
+    writeToStream(outputStream, scheme.writeScheme());
   }
 
   @Override

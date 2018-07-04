@@ -112,7 +112,8 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
   protected abstract LanguageFileType getFileType();
 
-  protected abstract ParameterTableModel createParametersInfoModel(Descriptor method);
+  @NotNull
+  protected abstract ParameterTableModel createParametersInfoModel(@NotNull Descriptor method);
 
   protected abstract BaseRefactoringProcessor createRefactoringProcessor();
 
@@ -128,7 +129,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
   protected abstract VisibilityPanelBase<Visibility> createVisibilityControl();
 
-  public ChangeSignatureDialogBase(Project project, final Descriptor method, boolean allowDelegation, PsiElement defaultValueContext) {
+  public ChangeSignatureDialogBase(@NotNull Project project, @NotNull Descriptor method, boolean allowDelegation, PsiElement defaultValueContext) {
     super(project, true);
     myMethod = method;
     myDefaultValueContext = defaultValueContext;
@@ -215,6 +216,9 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     return myParametersList == null ? myParametersTable : myParametersList.getTable();
   }
 
+  public boolean placeReturnTypeBeforeName() {
+    return true;
+  }
 
   @Override
   protected JComponent createNorthPanel() {
@@ -270,11 +274,20 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
       typePanel.add(typeLabel, BorderLayout.NORTH);
       IJSwingUtilities.adjustComponentsOnMac(typeLabel, myReturnTypeField);
       typePanel.add(myReturnTypeField, BorderLayout.SOUTH);
-      panel.add(typePanel, gbc);
-      gbc.gridx++;
+      if (placeReturnTypeBeforeName()) {
+        panel.add(typePanel, gbc);
+        gbc.gridx++;
+        panel.add(myNamePanel, gbc);
+      }
+      else {
+        panel.add(myNamePanel, gbc);
+        gbc.gridx++;
+        panel.add(typePanel, gbc);
+      }
     }
-
-    panel.add(myNamePanel, gbc);
+    else {
+      panel.add(myNamePanel, gbc);
+    }
 
     return panel;
   }
@@ -350,7 +363,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     }
 
     myPropagateParamChangesButton =
-      new AnActionButton(RefactoringBundle.message("changeSignature.propagate.parameters.title"), null, AllIcons.Hierarchy.Caller) {
+      new AnActionButton(RefactoringBundle.message("changeSignature.propagate.parameters.title"), null, AllIcons.Hierarchy.Supertypes) {
         @Override
         public void actionPerformed(AnActionEvent e) {
           final Ref<CallerChooserBase<Method>> chooser = new Ref<>();
@@ -446,11 +459,6 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
           ((CodeFragmentTableCellEditorBase)editor).addDocumentListener(listener);
         }
         return super.prepareEditor(editor, row, column);
-      }
-
-      @Override
-      public void editingCanceled(ChangeEvent e) {
-        super.editingCanceled(e);
       }
     };
 

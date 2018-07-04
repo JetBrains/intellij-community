@@ -1,37 +1,20 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.util;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configuration.ConfigurationFactoryEx;
-import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.module.ModulePointerManager;
-import com.intellij.openapi.project.Project;
-import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
-import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationType;
+import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationTypesRegistrar;
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfiguration;
 import com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceImpl;
+import org.jetbrains.annotations.NotNull;
 
 
 public class CloudRunConfigurationUtil {
@@ -44,50 +27,35 @@ public class CloudRunConfigurationUtil {
   }
 
   public static <SC extends ServerConfiguration, DC extends DeploymentConfiguration>
-  DeployToServerRunConfiguration<SC, DC> createRunConfiguration(RemoteServer<SC> account,
-                                                                Module module,
-                                                                DeploymentSource deploymentSource,
+  DeployToServerRunConfiguration<SC, DC> createRunConfiguration(@NotNull RemoteServer<SC> account,
+                                                                @NotNull Module module,
+                                                                @NotNull DeploymentSource deploymentSource,
                                                                 DC deploymentConfiguration) {
-    Project project = module.getProject();
 
-    String accountName = account.getName();
+    final RunManager runManager = RunManager.getInstance(module.getProject());
+    String name = generateRunConfigurationName(account, module);
 
-    String name = generateRunConfigurationName(accountName, module.getName());
+    final ConfigurationFactoryEx configurationFactory =
+      DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(account.getType()).getFactoryForType(deploymentSource.getType());
 
-    final RunManager runManager = RunManager.getInstance(project);
-    ConfigurationFactory configurationFactory = getRunConfigurationType(account.getType()).getConfigurationFactories()[0];
     final RunnerAndConfigurationSettings runSettings = runManager.createRunConfiguration(name, configurationFactory);
 
     final DeployToServerRunConfiguration<SC, DC> result = (DeployToServerRunConfiguration<SC, DC>)runSettings.getConfiguration();
 
-    result.setServerName(accountName);
-
+    result.setServerName(account.getName());
     result.setDeploymentSource(deploymentSource);
-
     result.setDeploymentConfiguration(deploymentConfiguration);
+    configurationFactory.onNewConfigurationCreated(runSettings.getConfiguration());
 
-    ((ConfigurationFactoryEx)configurationFactory).onNewConfigurationCreated(runSettings.getConfiguration());
-
-    runManager.addConfiguration(runSettings, false);
+    runManager.addConfiguration(runSettings);
     runManager.setSelectedConfiguration(runSettings);
 
     return result;
   }
 
-  private static DeployToServerConfigurationType getRunConfigurationType(ServerType<?> cloudType) {
-    String id = DeployToServerConfigurationType.getId(cloudType);
-    for (ConfigurationType configurationType : ConfigurationType.CONFIGURATION_TYPE_EP.getExtensions()) {
-      if (configurationType instanceof DeployToServerConfigurationType) {
-        DeployToServerConfigurationType deployConfigurationType = (DeployToServerConfigurationType)configurationType;
-        if (deployConfigurationType.getId().equals(id)) {
-          return deployConfigurationType;
-        }
-      }
-    }
-    return null;
-  }
-
-  private static String generateRunConfigurationName(String serverName, String moduleName) {
-    return CloudBundle.getText("run.configuration.name", serverName, moduleName);
+  private static String generateRunConfigurationName(@NotNull RemoteServer<?> account, Module module) {
+    String accountName = account.getName();
+    String moduleName = module.getName();
+    return CloudBundle.getText("run.configuration.name", accountName, moduleName);
   }
 }

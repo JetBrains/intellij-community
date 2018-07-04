@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.evaluate.quick;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -21,7 +7,6 @@ import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,6 +20,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
@@ -82,6 +68,7 @@ public class XValueHint extends AbstractValueHint {
   private final boolean myFromKeyboard;
   private final String myExpression;
   private final String myValueName;
+  private final PsiElement myElement;
   private final XSourcePosition myExpressionPosition;
   private Disposable myDisposable;
 
@@ -125,6 +112,7 @@ public class XValueHint extends AbstractValueHint {
     myFromKeyboard = fromKeyboard;
     myExpression = XDebuggerEvaluateActionHandler.getExpressionText(expressionInfo, editor.getDocument());
     myValueName = XDebuggerEvaluateActionHandler.getDisplayText(expressionInfo, editor.getDocument());
+    myElement = expressionInfo.getElement();
 
     VirtualFile file;
     ConsoleView consoleView = ConsoleViewImpl.CONSOLE_VIEW_IN_EDITOR_VIEW.get(editor);
@@ -184,7 +172,7 @@ public class XValueHint extends AbstractValueHint {
       }
     }, 200, TimeUnit.MILLISECONDS);
 
-    myEvaluator.evaluate(myExpression, new XEvaluationCallbackBase() {
+    XEvaluationCallbackBase callback = new XEvaluationCallbackBase() {
       @Override
       public void evaluated(@NotNull final XValue result) {
         result.computePresentation(new XValueNodePresentationConfigurator.ConfigurableXValueNodeImpl() {
@@ -223,12 +211,8 @@ public class XValueHint extends AbstractValueHint {
                 disposeVisibleHint();
                 myDisposable = Disposer.newDisposable();
                 ShortcutSet shortcut = ActionManager.getInstance().getAction("ShowErrorDescription").getShortcutSet();
-                new DumbAwareAction() {
-                  @Override
-                  public void actionPerformed(@NotNull AnActionEvent e) {
-                    showTree(result);
-                  }
-                }.registerCustomShortcutSet(shortcut, getEditor().getContentComponent(), myDisposable);
+                DumbAwareAction.create(e -> showTree(result))
+                               .registerCustomShortcutSet(shortcut, getEditor().getContentComponent(), myDisposable);
               }
 
               showHint(createExpandableHintComponent(text, () -> showTree(result)));
@@ -261,7 +245,13 @@ public class XValueHint extends AbstractValueHint {
         });
         LOG.debug("Cannot evaluate '" + myExpression + "':" + errorMessage);
       }
-    }, myExpressionPosition);
+    };
+    if (myElement != null && myEvaluator instanceof XDebuggerPsiEvaluator) {
+      ((XDebuggerPsiEvaluator)myEvaluator).evaluate(myElement, callback);
+    }
+    else {
+      myEvaluator.evaluate(myExpression, callback, myExpressionPosition);
+    }
   }
 
   @NotNull

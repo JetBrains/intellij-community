@@ -23,6 +23,15 @@ import com.siyeh.ipp.IPPTestCase;
  */
 public class FlipCommaIntentionTest extends IPPTestCase {
 
+  public void testFlipParameters() {
+    doTest("class C {" +
+           "  void foo(int a,/*_Flip ','*/ String b) {}" +
+           "}",
+           "class C {" +
+           "  void foo(String b, int a) {}" +
+           "}");
+  }
+
   public void testMultipleFieldsSingleDeclaration() {
     doTest("class C {\n" +
            "    int a,/*_Flip ','*/ b;\n" +

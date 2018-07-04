@@ -18,7 +18,6 @@ package com.intellij.codeInsight.generation;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiClass;
-import com.intellij.util.Function;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 
@@ -42,7 +41,7 @@ public class GenerateAccessorProviderRegistrar {
 
   /** @see #EP_NAME */
   @Deprecated
-  public synchronized static void registerProvider(NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>> function) {
+  synchronized static void registerProvider(NotNullFunction<PsiClass, Collection<EncapsulatableClassMember>> function) {
     ourProviders.add(function);
   }
 

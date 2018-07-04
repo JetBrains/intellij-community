@@ -295,11 +295,11 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
     }
 
     final IpnbEditablePanel cellToMergePanel = getSelectedCellPanel();
-    final IpnbCell cellToMerge = cellToMergePanel.getCell();
+    final IpnbEditableCell cellToMerge = cellToMergePanel.getCell();
     final List<String> currentCellSource = getCellSource(currentCellPanel);
-    final List<String> cellToMergeSource = ((IpnbEditableCell)cellToMerge).getSource();
+    final List<String> cellToMergeSource = cellToMerge.getSource();
     final ArrayList<String> source = mergeCellsSource(currentCellSource, cellToMergeSource, below);
-    ((IpnbEditableCell)cellToMerge).setSource(source);
+    cellToMerge.setSource(source);
     cellToMergePanel.updateCellView();
 
     actualizeCellData(cellToMerge);
@@ -382,15 +382,13 @@ public class IpnbFilePanel extends JPanel implements Scrollable, DataProvider, D
   }
 
   private static ArrayList<String> createCellSourceFromText(@NotNull String oldCellText) {
-    final ArrayList<String> source = new ArrayList<>();
-    source.addAll(Arrays.stream(oldCellText.split("\n")).map(s -> s + "\n").collect(Collectors.toList()));
-    return source;
+    return Arrays.stream(oldCellText.split("\n")).map(s -> s + "\n").collect(Collectors.toCollection(ArrayList::new));
   }
 
   @NotNull
   private static List<String> getCellSource(@NotNull IpnbEditablePanel cellPanel) {
-    final IpnbCell cell = cellPanel.getCell();
-    return ((IpnbEditableCell)cell).getSource();
+    final IpnbEditableCell cell = cellPanel.getCell();
+    return cell.getSource();
   }
 
   public void deleteSelectedCell() {

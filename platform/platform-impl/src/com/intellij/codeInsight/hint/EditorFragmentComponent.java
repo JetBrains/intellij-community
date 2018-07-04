@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -59,72 +45,78 @@ public class EditorFragmentComponent extends JPanel {
   }
 
   private void doInit(Component anchorComponent, EditorEx editor, int startLine, int endLine, boolean showFolding, boolean showGutter) {
-    Document doc = editor.getDocument();
-    final int endOffset = endLine < doc.getLineCount() ? doc.getLineEndOffset(endLine) : doc.getTextLength();
     boolean newRendering = editor instanceof EditorImpl;
-    int widthAdjustment = newRendering ? EditorUtil.getSpaceWidth(Font.PLAIN, editor) : 0;
-    final int textImageWidth = Math.min(
-      editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset) + widthAdjustment,
-      getWidthLimit(editor)
-    );
+    int savedScrollOffset = newRendering ? 0 : editor.getScrollingModel().getHorizontalScrollOffset();
+    int textImageWidth;
+    int markersImageWidth;
+    int textImageHeight;
+    BufferedImage textImage;
+    BufferedImage markersImage;
+    JComponent rowHeader;
 
     FoldingModelEx foldingModel = editor.getFoldingModel();
     boolean isFoldingEnabled = foldingModel.isFoldingEnabled();
     if (!showFolding) {
       foldingModel.setFoldingEnabled(false);
     }
+    try {
+      Document doc = editor.getDocument();
+      int endOffset = endLine < doc.getLineCount() ? doc.getLineEndOffset(Math.max(0, endLine - 1)) : doc.getTextLength();
+      int widthAdjustment = newRendering ? EditorUtil.getSpaceWidth(Font.PLAIN, editor) : 0;
+      textImageWidth = Math.min(
+        editor.getMaxWidthInRange(doc.getLineStartOffset(startLine), endOffset) + widthAdjustment,
+        getWidthLimit(editor)
+      );
 
-    Point p1 = editor.logicalPositionToXY(new LogicalPosition(startLine, 0));
-    Point p2 = editor.logicalPositionToXY(new LogicalPosition(Math.max(endLine, startLine + 1), 0));
-    int y1 = p1.y;
-    int y2 = p2.y;
-    final int textImageHeight = y2 - y1 == 0 ? editor.getLineHeight() : y2 - y1;
-    LOG.assertTrue(textImageHeight > 0, "Height: " + textImageHeight + "; startLine:" + startLine + "; endLine:" + endLine + "; p1:" + p1 + "; p2:" + p2);
+      Point p1 = editor.logicalPositionToXY(new LogicalPosition(startLine, 0));
+      Point p2 = editor.logicalPositionToXY(new LogicalPosition(Math.max(endLine, startLine + 1), 0));
+      int y1 = p1.y;
+      int y2 = p2.y;
+      textImageHeight = y2 - y1 == 0 ? editor.getLineHeight() : y2 - y1;
+      LOG.assertTrue(textImageHeight > 0,
+                     "Height: " + textImageHeight + "; startLine:" + startLine + "; endLine:" + endLine + "; p1:" + p1 + "; p2:" + p2);
 
-    int savedScrollOffset = newRendering ? 0 : editor.getScrollingModel().getHorizontalScrollOffset();
-    if (savedScrollOffset > 0) {
-      editor.getScrollingModel().scrollHorizontally(0);
+      if (savedScrollOffset > 0) {
+        editor.getScrollingModel().scrollHorizontally(0);
+      }
+
+      textImage = UIUtil.createImage(anchorComponent == null ? editor.getContentComponent() : anchorComponent,
+                                     textImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
+      Graphics textGraphics = textImage.getGraphics();
+      EditorUIUtil.setupAntialiasing(textGraphics);
+
+      if (showGutter) {
+        rowHeader = editor.getGutterComponentEx();
+        markersImageWidth = Math.max(1, rowHeader.getWidth());
+
+        markersImage = UIUtil.createImage(editor.getComponent(), markersImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
+        Graphics markerGraphics = markersImage.getGraphics();
+        EditorUIUtil.setupAntialiasing(markerGraphics);
+
+        markerGraphics.translate(0, -y1);
+        markerGraphics.setClip(0, y1, rowHeader.getWidth(), textImageHeight);
+        markerGraphics.setColor(getBackgroundColor(editor));
+        markerGraphics.fillRect(0, y1, rowHeader.getWidth(), textImageHeight);
+        rowHeader.paint(markerGraphics);
+      }
+      else {
+        markersImageWidth = 0;
+        rowHeader = null;
+        markersImage = null;
+      }
+
+      textGraphics.translate(0, -y1);
+      textGraphics.setClip(0, y1, textImageWidth, textImageHeight);
+      boolean wasVisible = editor.setCaretVisible(false);
+      editor.getContentComponent().paint(textGraphics);
+      if (wasVisible) {
+        editor.setCaretVisible(true);
+      }
     }
-
-    final BufferedImage textImage = UIUtil.createImage(anchorComponent == null ? editor.getContentComponent() : anchorComponent,
-                                                       textImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
-    Graphics textGraphics = textImage.getGraphics();
-    EditorUIUtil.setupAntialiasing(textGraphics);
-
-    final JComponent rowHeader;
-    final BufferedImage markersImage;
-    final int markersImageWidth;
-
-    if (showGutter) {
-      rowHeader = editor.getGutterComponentEx();
-      markersImageWidth = Math.max(1, rowHeader.getWidth());
-
-      markersImage = UIUtil.createImage(editor.getComponent(), markersImageWidth, textImageHeight, BufferedImage.TYPE_INT_RGB);
-      Graphics markerGraphics = markersImage.getGraphics();
-      EditorUIUtil.setupAntialiasing(markerGraphics);
-
-      markerGraphics.translate(0, -y1);
-      markerGraphics.setClip(0, y1, rowHeader.getWidth(), textImageHeight);
-      markerGraphics.setColor(getBackgroundColor(editor));
-      markerGraphics.fillRect(0, y1, rowHeader.getWidth(), textImageHeight);
-      rowHeader.paint(markerGraphics);
-    }
-    else {
-      markersImageWidth = 0;
-      rowHeader = null;
-      markersImage = null;
-    }
-
-    textGraphics.translate(0, -y1);
-    textGraphics.setClip(0, y1, textImageWidth, textImageHeight);
-    final boolean wasVisible = editor.setCaretVisible(false);
-    editor.getContentComponent().paint(textGraphics);
-    if (wasVisible) {
-      editor.setCaretVisible(true);
-    }
-
-    if (!showFolding) {
-      foldingModel.setFoldingEnabled(isFoldingEnabled);
+    finally {
+      if (!showFolding) {
+        foldingModel.setFoldingEnabled(isFoldingEnabled);
+      }
     }
 
     if (savedScrollOffset > 0) {
@@ -304,6 +296,21 @@ public class EditorFragmentComponent extends JPanel {
     Border outsideBorder = JBUI.Borders.customLine(borderColor, LINE_BORDER_THICKNESS);
     Border insideBorder = JBUI.Borders.empty(EMPTY_BORDER_THICKNESS, EMPTY_BORDER_THICKNESS);
     return BorderFactory.createCompoundBorder(outsideBorder, insideBorder);
+  }
+
+  public static int getAvailableVisualLinesAboveEditor(@NotNull Editor editor) {
+    int availableVisualLines = 2;
+    JComponent editorComponent = editor.getComponent();
+    Container editorComponentParent = editorComponent.getParent();
+    if (editorComponentParent != null) {
+      Container contentPane = editorComponent.getRootPane().getContentPane();
+      if (contentPane != null) {
+        int y = SwingUtilities.convertPoint(editorComponentParent, editorComponent.getLocation(), contentPane).y;
+        int visualLines = y / editor.getLineHeight();
+        availableVisualLines = Math.max(availableVisualLines, visualLines);
+      }
+    }
+    return availableVisualLines;
   }
 
   private static class MyComponentHint extends LightweightHint {

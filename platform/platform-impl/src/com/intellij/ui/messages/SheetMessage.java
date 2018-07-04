@@ -1,30 +1,18 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.messages;
 
 import com.apple.eawt.FullScreenUtilities;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.MacMainFrameDecorator;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.Animator;
 import org.jetbrains.annotations.NotNull;
@@ -41,27 +29,26 @@ import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
 /**
  * Created by Denis Fokin
  */
-public class SheetMessage implements Disposable {
+class SheetMessage implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.messages.SheetMessage");
 
   private final JDialog myWindow;
   private final Window myParent;
   private final SheetController myController;
 
-  private final static int TIME_TO_SHOW_SHEET = 250;
+  private static final int TIME_TO_SHOW_SHEET = 250;
 
   private Image staticImage;
   private int imageHeight;
 
-  public SheetMessage(final Window owner,
-                      final String title,
-                      final String message,
-                      final Icon icon,
-                      final String[] buttons,
-                      final DialogWrapper.DoNotAskOption doNotAskOption,
-                      final String defaultButton,
-                      final String focusedButton)
-  {
+  SheetMessage(final Window owner,
+               final String title,
+               final String message,
+               final Icon icon,
+               final String[] buttons,
+               final DialogWrapper.DoNotAskOption doNotAskOption,
+               final String defaultButton,
+               final String focusedButton) {
     final Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
     final Component recentFocusOwner = activeWindow == null ? null : activeWindow.getMostRecentFocusOwner();
     WeakReference<Component> beforeShowFocusOwner = new WeakReference<>(recentFocusOwner);
@@ -71,16 +58,9 @@ public class SheetMessage implements Disposable {
     myWindow = new JDialog(owner, "This should not be shown", Dialog.ModalityType.APPLICATION_MODAL);
     myWindow.getRootPane().putClientProperty("apple.awt.draggableWindowBackground", Boolean.FALSE);
 
-    WindowAdapter windowListener = new WindowAdapter() {
-      @Override
-      public void windowActivated(@NotNull WindowEvent e) {
-        super.windowActivated(e);
-      }
-    };
-    myWindow.addWindowListener(windowListener);
-    Disposer.register(this, () -> myWindow.removeWindowListener(windowListener));
-
-    myParent = owner;
+    //Sometimes we cannot find the owner from the project. For instance, WelcomeScreen could be showing without a
+    // project being loaded. Let's employ the focus manager then.
+    myParent = (owner == null) ? KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() : owner;
 
     myWindow.setUndecorated(true);
     myWindow.setBackground(Gray.TRANSPARENT);
@@ -103,26 +83,20 @@ public class SheetMessage implements Disposable {
     Disposer.register(this, () -> myParent.removeComponentListener(componentAdapter));
     myWindow.setFocusable(true);
     myWindow.setFocusableWindowState(true);
-    if (SystemInfo.isJavaVersionAtLeast("1.7")) {
-      myWindow.setSize(myController.SHEET_NC_WIDTH, 0);
+    myWindow.setSize(myController.SHEET_NC_WIDTH, 0);
 
-      setWindowOpacity(0.0f);
+    setWindowOpacity(0.0f);
 
-      ComponentAdapter componentListener = new ComponentAdapter() {
-        @Override
-        public void componentShown(@NotNull ComponentEvent e) {
-          super.componentShown(e);
-          setWindowOpacity(1.0f);
-          myWindow.setSize(myController.SHEET_NC_WIDTH, myController.SHEET_NC_HEIGHT);
-        }
-      };
-      myWindow.addComponentListener(componentListener);
-      Disposer.register(this, () -> myWindow.removeComponentListener(componentListener));
-    } else {
-      myWindow.setModal(true);
-      myWindow.setSize(myController.SHEET_NC_WIDTH, myController.SHEET_NC_HEIGHT);
-      setPositionRelativeToParent();
-    }
+    ComponentAdapter componentListener = new ComponentAdapter() {
+      @Override
+      public void componentShown(@NotNull ComponentEvent e) {
+        super.componentShown(e);
+        setWindowOpacity(1.0f);
+        myWindow.setSize(myController.SHEET_NC_WIDTH, myController.SHEET_NC_HEIGHT);
+      }
+    };
+    myWindow.addComponentListener(componentListener);
+    Disposer.register(this, () -> myWindow.removeComponentListener(componentListener));
 
     KeyListener animationKeyListener = new KeyListener() {
       @Override
@@ -136,7 +110,7 @@ public class SheetMessage implements Disposable {
                              | InputEvent.ALT_DOWN_MASK
                              | InputEvent.META_DOWN_MASK;
 
-        boolean modifiersAreNotPressed = ((modifiers & modifiersUnion) == 0);
+        boolean modifiersAreNotPressed = (modifiers & modifiersUnion) == 0;
 
         if (modifiersAreNotPressed) {
           if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
@@ -166,6 +140,7 @@ public class SheetMessage implements Disposable {
     }
 
     LaterInvocator.enterModal(myWindow);
+    _showTouchBar(buttons, myController.getDefaultButton() != null ? myController.getDefaultButton().getText() : null);
     myWindow.setVisible(true);
     LaterInvocator.leaveModal(myWindow);
 
@@ -188,6 +163,21 @@ public class SheetMessage implements Disposable {
   public void dispose() {
     DialogWrapper.cleanupRootPane(myWindow.getRootPane());
     myWindow.dispose();
+  }
+
+  private void _showTouchBar(String[] buttons, String defaultButton) {
+    if (!TouchBarsManager.isTouchBarAvailable())
+      return;
+
+    final Runnable[] actions = new Runnable[buttons.length];
+    final ModalityState ms = LaterInvocator.getCurrentModalityState();
+    for (int c = 0; c < buttons.length; ++c) {
+      final String sb = buttons[c];
+      actions[c] = () -> ApplicationManager.getApplication().invokeLater(() -> myController.setResultAndStartClose(sb), ms);
+    }
+    final Disposable tb = TouchBarsManager.showSheetMessageButtons(buttons, actions, defaultButton);
+    if (tb != null)
+      Disposer.register(this, tb);
   }
 
   private static void maximizeIfNeeded(final Window owner) {
@@ -262,7 +252,7 @@ public class SheetMessage implements Disposable {
       public void paintNow(int frame, int totalFrames, int cycle) {
         setPositionRelativeToParent();
         float percentage = (float)frame/(float)totalFrames;
-        imageHeight = enlarge ? (int)(((float)myController.SHEET_NC_HEIGHT) * percentage):
+        imageHeight = enlarge ? (int)((float)myController.SHEET_NC_HEIGHT * percentage) :
                       (int)(myController.SHEET_NC_HEIGHT - percentage * myController.SHEET_HEIGHT);
         myWindow.repaint();
       }
@@ -277,7 +267,7 @@ public class SheetMessage implements Disposable {
 
           IJSwingUtilities.moveMousePointerOn(myWindow.getRootPane().getDefaultButton());
           myController.requestFocus();
-        } 
+        }
         else {
           Disposer.dispose(SheetMessage.this);
         }

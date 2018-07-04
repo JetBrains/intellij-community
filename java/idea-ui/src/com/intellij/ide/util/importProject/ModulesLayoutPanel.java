@@ -25,12 +25,11 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 16, 2007
  */
 public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
   private final LibraryFilter myLibrariesFilter;
 
-  public static interface LibraryFilter {
+  public interface LibraryFilter {
     boolean isLibraryChosen(LibraryDescriptor libDescriptor);
   }
   public ModulesLayoutPanel(ModuleInsight insight, final LibraryFilter libFilter) {
@@ -52,8 +51,7 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
   }
 
   protected Collection getDependencies(final ModuleDescriptor entry) {
-    final List deps = new ArrayList();
-    deps.addAll(entry.getDependencies());
+    final List<Object> deps = new ArrayList<>(entry.getDependencies());
     final Collection<LibraryDescriptor> libDependencies = getInsight().getLibraryDependencies(entry);
     for (LibraryDescriptor libDependency : libDependencies) {
       if (myLibrariesFilter.isLibraryChosen(libDependency)) {

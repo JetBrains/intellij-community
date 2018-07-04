@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -23,9 +9,9 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.*;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
-import com.intellij.debugger.memory.component.InstancesTracker;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
-import com.intellij.debugger.memory.component.MemoryViewManager;
+import com.intellij.xdebugger.memory.component.InstancesTracker;
+import com.intellij.xdebugger.memory.component.MemoryViewManager;
 import com.intellij.debugger.memory.ui.ClassesFilteredView;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.AlternativeSourceNotificationProvider;
@@ -119,7 +105,7 @@ public class JavaDebugProcess extends XDebugProcess {
               (shouldApplyContext(newContext) || event == DebuggerSession.Event.REFRESH_WITH_STACK)) {
             process.getManagerThread().schedule(new SuspendContextCommandImpl(newSuspendContext) {
               @Override
-              public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+              public void contextAction(@NotNull SuspendContextImpl suspendContext) {
                 ThreadReferenceProxyImpl threadProxy = newContext.getThreadProxy();
                 newSuspendContext.initExecutionStacks(threadProxy);
 
@@ -189,7 +175,7 @@ public class JavaDebugProcess extends XDebugProcess {
           XSourcePosition position = frame.getSourcePosition();
           if (position != null) {
             VirtualFile file = position.getFile();
-            if (!AlternativeSourceNotificationProvider.fileProcessed(file)) {
+            if (!AlternativeSourceNotificationProvider.isFileProcessed(file)) {
               EditorNotifications.getInstance(session.getProject()).updateNotifications(file);
             }
           }
@@ -220,7 +206,7 @@ public class JavaDebugProcess extends XDebugProcess {
   private void saveNodeHistory(final StackFrameProxyImpl frameProxy) {
     myJavaSession.getProcess().getManagerThread().invoke(new DebuggerCommandImpl() {
       @Override
-      protected void action() throws Exception {
+      protected void action() {
         myNodeManager.setHistoryByContext(frameProxy);
       }
 
@@ -371,7 +357,7 @@ public class JavaDebugProcess extends XDebugProcess {
         final ClassesFilteredView classesFilteredView = new ClassesFilteredView(session, process, tracker);
 
         final Content memoryViewContent =
-          ui.createContent(MemoryViewManager.MEMORY_VIEW_CONTENT, classesFilteredView, "Memory View",
+          ui.createContent(MemoryViewManager.MEMORY_VIEW_CONTENT, classesFilteredView, "Memory",
                            AllIcons.Debugger.MemoryView.Active, null);
 
         memoryViewContent.setCloseable(false);
@@ -402,30 +388,16 @@ public class JavaDebugProcess extends XDebugProcess {
       private void registerOverheadMonitor(@NotNull RunnerLayoutUi ui) {
         if (!Registry.is("debugger.enable.overhead.monitor")) return;
 
-        OverheadView monitor = new OverheadView(myJavaSession.getProcess());
-        Content overheadContent = ui.createContent("OverheadMonitor", monitor, "Overhead", AllIcons.Debugger.Db_obsolete, null);
+        DebugProcessImpl process = myJavaSession.getProcess();
+        OverheadView monitor = new OverheadView(process);
+        Content overheadContent = ui.createContent("OverheadMonitor", monitor, "Overhead", AllIcons.Debugger.Overhead, null);
+
+        monitor.setBouncer(() -> ui.setBouncing(overheadContent, true));
 
         overheadContent.setCloseable(false);
         overheadContent.setShouldDisposeContent(true);
 
-        //session.addSessionListener(new XDebugSessionListener() {
-        //  @Override
-        //  public void sessionStopped() {
-        //    session.removeSessionListener(this);
-        //    data.getTrackedStacks().clear();
-        //  }
-        //});
-
         ui.addContent(overheadContent, 0, PlaceInGrid.right, true);
-        //final DebuggerManagerThreadImpl managerThread = process.getManagerThread();
-        //ui.addListener(new ContentManagerAdapter() {
-        //  @Override
-        //  public void selectionChanged(ContentManagerEvent event) {
-        //    if (event != null && event.getContent() == overheadContent) {
-        //      classesFilteredView.setActive(overheadContent.isSelected(), managerThread);
-        //    }
-        //  }
-        //}, overheadContent);
       }
     };
   }

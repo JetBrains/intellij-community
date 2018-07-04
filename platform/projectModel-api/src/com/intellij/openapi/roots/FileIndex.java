@@ -25,7 +25,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import java.util.Set;
 
 /**
- * Provides information about files contained in a project or module.
+ * Provides information about files contained in a project or module. Should be used from a read action.
  *
  * @see ProjectRootManager#getFileIndex()
  * @see ModuleRootManager#getFileIndex()

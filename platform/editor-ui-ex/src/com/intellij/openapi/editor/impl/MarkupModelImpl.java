@@ -55,8 +55,8 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
   @Override
   public void dispose() {
-    myHighlighterTree.dispose();
-    myHighlighterTreeForLines.dispose();
+    myHighlighterTree.dispose(myDocument);
+    myHighlighterTreeForLines.dispose(myDocument);
   }
 
   @Override
@@ -97,7 +97,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
       CommonProcessors.CollectProcessor<RangeHighlighterEx> collectProcessor = new CommonProcessors.CollectProcessor<>(list);
       myHighlighterTree.processAll(collectProcessor);
       myHighlighterTreeForLines.processAll(collectProcessor);
-      myCachedHighlighters = list.toArray(new RangeHighlighter[list.size()]);
+      myCachedHighlighters = list.toArray(RangeHighlighter.EMPTY_ARRAY);
     }
     return myCachedHighlighters;
   }

@@ -21,5 +21,5 @@ Groovy script
       PsiElement(new line)('\n')
       Literal
         PsiElement(Integer)('3')
-      PsiErrorElement:'}' expected
+      PsiErrorElement:';', <statement>, new line or '}' expected
         <empty list>

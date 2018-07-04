@@ -23,8 +23,8 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.EditSourceForDialogAction;
+import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -65,7 +65,7 @@ public class PushLog extends JPanel implements DataProvider {
   private static final String CONTEXT_MENU = "Vcs.Push.ContextMenu";
   private static final String START_EDITING = "startEditing";
   private static final String SPLITTER_PROPORTION = "Vcs.Push.Splitter.Proportion";
-  private final ChangesBrowser myChangesBrowser;
+  private final SimpleChangesBrowser myChangesBrowser;
   private final CheckboxTree myTree;
   private final MyTreeCellRenderer myTreeCellRenderer;
   private final JScrollPane myScrollPane;
@@ -105,7 +105,7 @@ public class PushLog extends JPanel implements DataProvider {
           return "";
         }
         Object node = path.getLastPathComponent();
-        if (node == null || (!(node instanceof DefaultMutableTreeNode))) {
+        if ((!(node instanceof DefaultMutableTreeNode))) {
           return "";
         }
         if (node instanceof TooltipNode) {
@@ -156,7 +156,6 @@ public class PushLog extends JPanel implements DataProvider {
     myTree.setUI(new MyTreeUi());
     myTree.setBorder(new EmptyBorder(2, 0, 0, 0));  //additional vertical indent
     myTree.setEditable(true);
-    myTree.setHorizontalAutoScrollingEnabled(false);
     myTree.setShowsRootHandles(root.getChildCount() > 1);
     MyTreeCellEditor treeCellEditor = new MyTreeCellEditor();
     myTree.setCellEditor(treeCellEditor);
@@ -164,7 +163,7 @@ public class PushLog extends JPanel implements DataProvider {
       @Override
       public void editingStopped(ChangeEvent e) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
-        if (node != null && node instanceof EditableTreeNode) {
+        if (node instanceof EditableTreeNode) {
           JComponent editedComponent = (JComponent)node.getUserObject();
           InputVerifier verifier = editedComponent.getInputVerifier();
           if (verifier != null && !verifier.verify(editedComponent)) {
@@ -190,7 +189,7 @@ public class PushLog extends JPanel implements DataProvider {
       @Override
       public void editingCanceled(ChangeEvent e) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
-        if (node != null && node instanceof EditableTreeNode) {
+        if (node instanceof EditableTreeNode) {
           ((EditableTreeNode)node).fireOnCancel();
         }
         resetEditSync();
@@ -216,7 +215,7 @@ public class PushLog extends JPanel implements DataProvider {
       @Override
       public void focusLost(FocusEvent e) {
         DefaultMutableTreeNode node = (DefaultMutableTreeNode)myTree.getLastSelectedPathComponent();
-        if (node != null && node instanceof RepositoryNode && myTree.isEditing()) {
+        if (node instanceof RepositoryNode && myTree.isEditing()) {
           //need to force repaint foreground  for non-focused editing node
           myTree.getCellEditor().getTreeCellEditorComponent(myTree, node, true, false, false, myTree.getRowForPath(
             TreeUtil.getPathFromRoot(node)));
@@ -237,9 +236,7 @@ public class PushLog extends JPanel implements DataProvider {
     ToolTipManager.sharedInstance().registerComponent(myTree);
     PopupHandler.installPopupHandler(myTree, VcsLogActionPlaces.POPUP_ACTION_GROUP, CONTEXT_MENU);
 
-    myChangesBrowser =
-      new ChangesBrowser(project, null, Collections.emptyList(), null, false, false, null, ChangesBrowser.MyUseCase.LOCAL_CHANGES,
-                         null);
+    myChangesBrowser = new SimpleChangesBrowser(project, false, false);
     myChangesBrowser.getDiffAction().registerCustomShortcutSet(myChangesBrowser.getDiffAction().getShortcutSet(), myTree);
     final EditSourceForDialogAction editSourceAction = new EditSourceForDialogAction(myChangesBrowser);
     editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myChangesBrowser);

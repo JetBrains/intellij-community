@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.codeInspection.javaDoc
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey
@@ -25,6 +13,7 @@ import com.intellij.lang.annotation.Annotation
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
@@ -53,14 +42,17 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
   data class Anno(val row: Int, val col: Int, val error: Boolean, val message: String)
   data class Result(val annotations: List<Anno>)
 
-  override fun getPairedBatchInspectionShortName() = JavadocHtmlLintInspection.SHORT_NAME
+  override fun getPairedBatchInspectionShortName(): String = JavadocHtmlLintInspection.SHORT_NAME
 
   override fun collectInformation(file: PsiFile): Info? =
-      if (isJava8SourceFile(file) && "/**" in file.text) Info(file) else null
+    runReadAction { if (isJava8SourceFile(file) && "/**" in file.text) Info(file) else null }
 
   override fun doAnnotate(collectedInfo: Info): Result? {
+    val text = runReadAction { if (collectedInfo.file.isValid) collectedInfo.file.text else null }
+    if (text == null) return null
+
     val file = collectedInfo.file.virtualFile!!
-    val copy = createTempFile(collectedInfo.file.text.toByteArray(file.charset))
+    val copy = createTempFile(text.toByteArray(file.charset))
 
     try {
       val command = toolCommand(file, collectedInfo.file.project, copy)
@@ -111,8 +103,11 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
   private val lintPattern = "^.+:(\\d+):\\s+(error|warning):\\s+(.+)$".toPattern()
 
   private fun isJava8SourceFile(file: PsiFile) =
-      file is PsiJavaFile && file.languageLevel.isAtLeast(LanguageLevel.JDK_1_8) &&
-      file.virtualFile != null && ProjectFileIndex.SERVICE.getInstance(file.project).isInSourceContent(file.virtualFile)
+    file.isValid &&
+    file is PsiJavaFile &&
+    file.languageLevel.isAtLeast(LanguageLevel.JDK_1_8) &&
+    file.virtualFile != null &&
+    ProjectFileIndex.SERVICE.getInstance(file.project).isInSourceContent(file.virtualFile)
 
   private fun createTempFile(bytes: ByteArray): File {
     val tempFile = FileUtil.createTempFile(File(PathManager.getTempPath()), "javadocHtmlLint", ".java")
@@ -198,7 +193,7 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
   }
 
   private fun registerFix(annotation: Annotation) =
-      annotation.registerFix(EmptyIntentionAction(InspectionsBundle.message("inspection.javadoc.lint.display.name")), null, key.value)
+    annotation.registerFix(EmptyIntentionAction(InspectionsBundle.message("inspection.javadoc.lint.display.name")), null, key.value)
 
   //</editor-fold>
 }

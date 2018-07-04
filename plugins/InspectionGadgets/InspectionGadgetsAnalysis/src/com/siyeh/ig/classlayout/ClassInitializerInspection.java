@@ -29,12 +29,12 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ChangeModifierFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
-import java.util.Iterator;
 
 public class ClassInitializerInspection extends BaseInspection {
 
@@ -107,7 +107,9 @@ public class ClassInitializerInspection extends BaseInspection {
       for (PsiMethod constructor : constructors) {
         addCodeToMethod(initializer, constructor);
       }
-      initializer.delete();
+      CommentTracker tracker = new CommentTracker();
+      tracker.markUnchanged(initializer.getBody());
+      tracker.deleteAndRestoreComments(initializer);
     }
 
     private static void addCodeToMethod(PsiClassInitializer initializer, PsiMethod constructor) {
@@ -137,12 +139,7 @@ public class ClassInitializerInspection extends BaseInspection {
 
     @NotNull
     private static Collection<PsiMethod> removeChainedConstructors(@NotNull Collection<PsiMethod> constructors) {
-      for (final Iterator<PsiMethod> iterator = constructors.iterator(); iterator.hasNext(); ) {
-        final PsiMethod constructor = iterator.next();
-        if (JavaHighlightUtil.getChainedConstructors(constructor) != null) {
-          iterator.remove();
-        }
-      }
+      constructors.removeIf(constructor -> !JavaHighlightUtil.getChainedConstructors(constructor).isEmpty());
       return constructors;
     }
   }

@@ -16,12 +16,11 @@
 
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.IgnoreUnversionedDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -32,21 +31,14 @@ import java.util.stream.Collectors;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.UNVERSIONED_FILES_DATA_KEY;
 import static com.intellij.util.containers.UtilKt.isEmpty;
 
-public class IgnoreUnversionedAction extends AnAction {
+public class IgnoreUnversionedAction extends DumbAwareAction {
 
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
 
     if (!ChangeListManager.getInstance(project).isFreezedWithNotification(null)) {
       List<VirtualFile> files = e.getRequiredData(UNVERSIONED_FILES_DATA_KEY).collect(Collectors.toList());
-      ChangesBrowserBase<?> browser = e.getData(ChangesBrowserBase.DATA_KEY);
-      Runnable callback = browser == null ? null : () -> {
-        browser.rebuildList();
-        //noinspection unchecked
-        browser.getViewer().excludeChanges((List)files);
-      };
-
-      IgnoreUnversionedDialog.ignoreSelectedFiles(project, files, callback);
+      IgnoreUnversionedDialog.ignoreSelectedFiles(project, files);
     }
   }
 

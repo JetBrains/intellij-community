@@ -41,7 +41,7 @@ public class MapInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<Ke
   }
 
   @Override
-  public void differentiate(@NotNull Map<Key, Value> newData,
+  public boolean differentiate(@NotNull Map<Key, Value> newData,
                             @NotNull KeyValueUpdateProcessor<Key, Value> addProcessor,
                             @NotNull KeyValueUpdateProcessor<Key, Value> updateProcessor,
                             @NotNull RemovedKeyProcessor<Key> removeProcessor) throws StorageException {
@@ -85,16 +85,24 @@ public class MapInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<Ke
         totalRemovals.addAndGet(myMap.size());
         totalAdditions.addAndGet(newData.size());
 
-        if ((totalRequests & 0xFFF) == 0 && DebugAssertions.DEBUG) {
+        if ((totalRequests & 0xFFFF) == 0 && DebugAssertions.DEBUG) {
           Logger.getInstance(getClass()).info("Incremental index diff update:" + requests +
                                               ", removals:" + totalRemovals + "->" + incrementalRemovals +
-                                              ", additions:" + totalAdditions + "->" + incrementalAdditions);
+                                              ", additions:" + totalAdditions + "->" + incrementalAdditions +
+                                              ", no op changes:" + noopModifications
+                                              );
+        }
+
+        if (added == 0 && removed == 0) {
+          noopModifications.incrementAndGet();
+          return false;
         }
       }
     }
     else {
       CollectionInputDataDiffBuilder.differentiateWithKeySeq(myMap.keySet(), newData, myInputId, addProcessor, removeProcessor);
     }
+    return true;
   }
 
   private void processAllKeysAsDeleted(final RemovedKeyProcessor<Key> removeProcessor) throws StorageException {
@@ -122,9 +130,14 @@ public class MapInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<Ke
     }
   }
 
+  public Map<Key, Value> getMap() {
+    return myMap;
+  }
+
   private static final AtomicInteger requests = new AtomicInteger();
   private static final AtomicInteger totalRemovals = new AtomicInteger();
   private static final AtomicInteger totalAdditions = new AtomicInteger();
   private static final AtomicInteger incrementalRemovals = new AtomicInteger();
   private static final AtomicInteger incrementalAdditions = new AtomicInteger();
+  private static final AtomicInteger noopModifications = new AtomicInteger();
 }

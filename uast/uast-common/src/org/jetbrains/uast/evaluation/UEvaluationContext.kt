@@ -21,51 +21,51 @@ import org.jetbrains.uast.values.UValue
 import java.lang.ref.SoftReference
 
 interface UEvaluationContext {
-    val uastContext: UastContext
+  val uastContext: UastContext
 
-    val extensions: List<UEvaluatorExtension>
+  val extensions: List<UEvaluatorExtension>
 
-    fun analyzeAll(file: UFile, state: UEvaluationState = file.createEmptyState()): UEvaluationContext
+  fun analyzeAll(file: UFile, state: UEvaluationState = file.createEmptyState()): UEvaluationContext
 
-    fun analyze(declaration: UDeclaration, state: UEvaluationState = declaration.createEmptyState()): UEvaluator
+  fun analyze(declaration: UDeclaration, state: UEvaluationState = declaration.createEmptyState()): UEvaluator
 
-    fun valueOf(expression: UExpression): UValue
+  fun valueOf(expression: UExpression): UValue
 
-    fun valueOfIfAny(expression: UExpression): UValue?
+  fun valueOfIfAny(expression: UExpression): UValue?
 
-    fun getEvaluator(declaration: UDeclaration): UEvaluator
+  fun getEvaluator(declaration: UDeclaration): UEvaluator
 }
 
 fun UFile.analyzeAll(context: UastContext = getUastContext(), extensions: List<UEvaluatorExtension> = emptyList()): UEvaluationContext =
-        MapBasedEvaluationContext(context, extensions).analyzeAll(this)
+  MapBasedEvaluationContext(context, extensions).analyzeAll(this)
 
 @JvmOverloads
 fun UExpression?.uValueOf(extensions: List<UEvaluatorExtension> = emptyList()): UValue? {
-    if (this == null) return null
-    val declaration = getContainingAnalyzableDeclaration() ?: return null
-    val context = declaration.getEvaluationContextWithCaching(extensions)
-    context.analyze(declaration)
-    return context.valueOf(this)
+  if (this == null) return null
+  val declaration = getContainingAnalyzableDeclaration() ?: return null
+  val context = declaration.getEvaluationContextWithCaching(extensions)
+  context.analyze(declaration)
+  return context.valueOf(this)
 }
 
 fun UExpression?.uValueOf(vararg extensions: UEvaluatorExtension): UValue? = uValueOf(extensions.asList())
 
 private fun UElement.getContainingAnalyzableDeclaration() = withContainingElements.filterIsInstance<UDeclaration>().firstOrNull {
-    it is UMethod ||
-    it is UField // TODO: think about field analysis (should we use class as analyzable declaration)
+  it is UMethod ||
+  it is UField // TODO: think about field analysis (should we use class as analyzable declaration)
 }
 
 fun UDeclaration.getEvaluationContextWithCaching(extensions: List<UEvaluatorExtension> = emptyList()): UEvaluationContext {
-    return containingFile?.let { file ->
-        val cachedContext = file.getUserData(EVALUATION_CONTEXT_KEY)?.get()
-        if (cachedContext != null && cachedContext.extensions == extensions)
-            cachedContext
-        else
-            MapBasedEvaluationContext(getUastContext(), extensions).apply {
-                file.putUserData(EVALUATION_CONTEXT_KEY, SoftReference(this))
-            }
+  return containingFile?.let { file ->
+    val cachedContext = file.getUserData(EVALUATION_CONTEXT_KEY)?.get()
+    if (cachedContext != null && cachedContext.extensions == extensions)
+      cachedContext
+    else
+      MapBasedEvaluationContext(getUastContext(), extensions).apply {
+        file.putUserData(EVALUATION_CONTEXT_KEY, SoftReference(this))
+      }
 
-    } ?: MapBasedEvaluationContext(getUastContext(), extensions)
+  } ?: MapBasedEvaluationContext(getUastContext(), extensions)
 }
 
-val EVALUATION_CONTEXT_KEY = Key<SoftReference<out UEvaluationContext>>("uast.EvaluationContext")
+val EVALUATION_CONTEXT_KEY: Key<SoftReference<out UEvaluationContext>> = Key<SoftReference<out UEvaluationContext>>("uast.EvaluationContext")

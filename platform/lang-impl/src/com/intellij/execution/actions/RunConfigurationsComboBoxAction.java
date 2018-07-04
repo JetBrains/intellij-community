@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.actions;
 
@@ -23,6 +9,7 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.DumbAware;
@@ -35,19 +22,26 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Map;
 
 public class RunConfigurationsComboBoxAction extends ComboBoxAction implements DumbAware {
+  private static final String BUTTON_MODE = "ButtonMode";
 
   public static final Icon CHECKED_ICON = JBUI.scale(new SizedIcon(AllIcons.Actions.Checked, 16, 16));
   public static final Icon CHECKED_SELECTED_ICON = JBUI.scale(new SizedIcon(AllIcons.Actions.Checked_selected, 16, 16));
   public static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
+
+  private ComboBoxButton myButton;
 
   @Override
   public void update(AnActionEvent e) {
@@ -58,14 +52,15 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
     try {
       if (project == null || project.isDisposed() || !project.isOpen()) {
-        updatePresentation(null, null, null, presentation);
+        updatePresentation(null, null, null, presentation, e.getPlace());
         presentation.setEnabled(false);
       }
       else {
         updatePresentation(ExecutionTargetManager.getActiveTarget(project),
                            RunManager.getInstance(project).getSelectedConfiguration(),
                            project,
-                           presentation);
+                           presentation,
+                           e.getPlace());
         presentation.setEnabled(true);
       }
     }
@@ -77,13 +72,15 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   private static void updatePresentation(@Nullable ExecutionTarget target,
                                          @Nullable RunnerAndConfigurationSettings settings,
                                          @Nullable Project project,
-                                         @NotNull Presentation presentation) {
+                                         @NotNull Presentation presentation,
+                                         String actionPlace) {
+    presentation.putClientProperty(BUTTON_MODE, null);
     if (project != null && target != null && settings != null) {
       String name = Executor.shortenNameIfNeed(settings.getName());
       if (target != DefaultExecutionTarget.INSTANCE) {
         name += " | " + target.getDisplayName();
       } else {
-        if (!settings.canRunOn(target)) {
+        if (!ExecutionTargetManager.canRun(settings, target)) {
           name += " | Nothing to run on";
         }
       }
@@ -91,8 +88,13 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       setConfigurationIcon(presentation, settings, project);
     }
     else {
-      presentation.setText(""); // IDEA-21657
-      presentation.setIcon(null);
+      presentation.putClientProperty(BUTTON_MODE, Boolean.TRUE);
+      presentation.setText("Add Configuration...");
+      presentation.setDescription(ActionsBundle.actionDescription(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS));
+      if (ActionPlaces.TOUCHBAR_GENERAL.equals(actionPlace))
+        presentation.setIcon(AllIcons.General.Add);
+      else
+        presentation.setIcon(null);
     }
   }
 
@@ -116,17 +118,62 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
   @Override
+  public void actionPerformed(AnActionEvent e) {
+    if (ActionPlaces.TOUCHBAR_GENERAL.equals(e.getPlace())) {
+      final Presentation presentation = e.getPresentation();
+      if (Boolean.TRUE.equals(presentation.getClientProperty(BUTTON_MODE))) {
+        performWhenButton(myButton, ActionPlaces.TOUCHBAR_GENERAL);
+        return;
+      }
+    }
+    super.actionPerformed(e);
+  }
+
+  @Override
   protected boolean shouldShowDisabledActions() {
     return true;
   }
 
   @Override
   public JComponent createCustomComponent(final Presentation presentation) {
-    ComboBoxButton button = createComboBoxButton(presentation);
+    myButton = new ComboBoxButton(presentation) {
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension d = super.getPreferredSize();
+        d.width = Math.max(d.width, JBUI.scale(75));
+        return d;
+      }
+
+      @Override
+      protected void fireActionPerformed(ActionEvent event) {
+        if (Boolean.TRUE.equals(presentation.getClientProperty(BUTTON_MODE))) {
+          performWhenButton(this, ActionPlaces.UNKNOWN);
+          return;
+        }
+
+        super.fireActionPerformed(event);
+      }
+
+      @Override
+      protected boolean isArrowVisible(@NotNull Presentation presentation) {
+        return !Boolean.TRUE.equals(presentation.getClientProperty(BUTTON_MODE));
+      }
+    };
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
-    panel.setBorder(JBUI.Borders.emptyRight(2));
-    panel.add(button);
+    Border border = UIUtil.isUnderDefaultMacTheme() ?
+                    JBUI.Borders.empty(0, 2) : JBUI.Borders.empty(0, 5, 0, 4);
+
+    panel.setBorder(border);
+    panel.add(myButton);
     return panel;
+  }
+
+  private void performWhenButton(@NotNull Component src, String place) {
+    ActionManager manager = ActionManager.getInstance();
+    manager.tryToExecute(manager.getAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS),
+      new MouseEvent(src, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(), 0, 0, 0, 0,false, 0),
+      src, place, true
+    );
   }
 
 
@@ -249,7 +296,8 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       updatePresentation(ExecutionTargetManager.getActiveTarget(myProject),
                          RunManager.getInstance(myProject).getSelectedConfiguration(),
                          myProject,
-                         e.getPresentation());
+                         e.getPresentation(),
+                         e.getPlace());
     }
 
     @Override
@@ -283,7 +331,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     @Override
     public void actionPerformed(final AnActionEvent e) {
       RunManager.getInstance(myProject).setSelectedConfiguration(myConfiguration);
-      updatePresentation(ExecutionTargetManager.getActiveTarget(myProject), myConfiguration, myProject, e.getPresentation());
+      updatePresentation(ExecutionTargetManager.getActiveTarget(myProject), myConfiguration, myProject, e.getPresentation(), e.getPlace());
     }
 
     @Override

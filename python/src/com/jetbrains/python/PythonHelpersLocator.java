@@ -17,7 +17,6 @@ package com.jetbrains.python;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +25,6 @@ import java.io.File;
 
 public class PythonHelpersLocator {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.PythonHelpersLocator");
-  private static final String COMMUNITY_SUFFIX = "-community";
 
   private PythonHelpersLocator() {}
 
@@ -44,9 +42,7 @@ public class PythonHelpersLocator {
       return new File(pluginBaseDir, "helpers");
     }
 
-    jarPath = StringUtil.trimEnd(jarPath, COMMUNITY_SUFFIX);
-
-    return new File(jarPath + "-helpers");
+    return new File(new File(jarPath).getParentFile(), "intellij.python.helpers");
   }
 
   /**

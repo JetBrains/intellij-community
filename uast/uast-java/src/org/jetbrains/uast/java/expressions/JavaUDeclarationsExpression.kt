@@ -16,28 +16,25 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.uast.UAnnotation
-import org.jetbrains.uast.UDeclaration
-import org.jetbrains.uast.UDeclarationsExpression
-import org.jetbrains.uast.UElement
+import org.jetbrains.uast.*
 
 class JavaUDeclarationsExpression(
-        override val uastParent: UElement?
-) : UDeclarationsExpression {
-    override lateinit var declarations: List<UDeclaration>
-        internal set
+  uastParent: UElement?
+) : JavaAbstractUElement(uastParent), UDeclarationsExpression, JvmDeclarationUElement {
+  override lateinit var declarations: List<UDeclaration>
+    internal set
 
-    constructor(parent: UElement?, declarations: List<UDeclaration>) : this(parent) {
-        this.declarations = declarations
-    }
+  constructor(parent: UElement?, declarations: List<UDeclaration>) : this(parent) {
+    this.declarations = declarations
+  }
 
-    override val annotations: List<UAnnotation>
-        get() = emptyList()
+  override val annotations: List<UAnnotation>
+    get() = emptyList()
 
-    override val psi: PsiElement?
-        get() = null
+  override val psi: PsiElement?
+    get() = null
 
-    override fun equals(other: Any?) = other is JavaUDeclarationsExpression && declarations == other.declarations
+  override fun equals(other: Any?): Boolean = other is JavaUDeclarationsExpression && declarations == other.declarations
 
-    override fun hashCode() = declarations.hashCode()
+  override fun hashCode(): Int = declarations.hashCode()
 }

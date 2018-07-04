@@ -22,7 +22,9 @@ import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author peter
@@ -59,7 +61,7 @@ public class PathInterner {
       key.add(interned);
       start += flyweightKey.len;
     }
-    return key.toArray(new SubstringWrapper[key.size()]);
+    return key.toArray(new SubstringWrapper[0]);
   }
 
   private static String restorePath(SubstringWrapper[] seq) {

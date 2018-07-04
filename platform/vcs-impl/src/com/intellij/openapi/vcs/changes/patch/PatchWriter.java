@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes.patch;
 
-import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.PatchEP;
@@ -67,7 +67,7 @@ public class PatchWriter {
                             @Nullable String basePath,
                             @NotNull List<FilePatch> patches,
                             @Nullable CommitContext commitContext, boolean includeBinaries) throws IOException {
-    final String lineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
+    final String lineSeparator = CodeStyle.getSettings(project).getLineSeparator();
     UnifiedDiffWriter
       .write(project, basePath, patches, writer, lineSeparator, Extensions.getExtensions(PatchEP.EP_NAME, project), commitContext);
     if (includeBinaries) {

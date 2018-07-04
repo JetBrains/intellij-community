@@ -27,17 +27,19 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,25 +50,26 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.Content;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.UsageInFile;
 import com.intellij.util.AdapterProcessor;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
 import java.util.*;
 
 public class ReplaceInProjectManager {
-  static final NotificationGroup NOTIFICATION_GROUP = FindInPathAction.NOTIFICATION_GROUP;
+  private static final NotificationGroup NOTIFICATION_GROUP = FindInPathAction.NOTIFICATION_GROUP;
 
   private final Project myProject;
-  private boolean myIsFindInProgress = false;
+  private boolean myIsFindInProgress;
 
   public static ReplaceInProjectManager getInstance(Project project) {
     return ServiceManager.getService(project, ReplaceInProjectManager.class);
@@ -76,7 +79,7 @@ public class ReplaceInProjectManager {
     myProject = project;
   }
 
-  public static boolean hasReadOnlyUsages(final Collection<Usage> usages) {
+  private static boolean hasReadOnlyUsages(final Collection<Usage> usages) {
     for (Usage usage : usages) {
       if (usage.isReadOnly()) return true;
     }
@@ -105,71 +108,81 @@ public class ReplaceInProjectManager {
     }
 
     @NotNull
-    public Set<Usage> getExcludedSetCached() {
+    Set<Usage> getExcludedSetCached() {
       if (excludedSet == null) excludedSet = usageView.getExcludedUsages();
       return excludedSet;
     }
 
-    public void invalidateExcludedSetCache() {
+    void invalidateExcludedSetCache() {
       excludedSet = null;
     }
   }
 
-  public void replaceInProject(@NotNull DataContext dataContext) {
-    final boolean isOpenInNewTabEnabled;
-    final boolean toOpenInNewTab;
-    final Content selectedContent = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent(true);
-    if (selectedContent != null && selectedContent.isPinned()) {
-      toOpenInNewTab = true;
-      isOpenInNewTabEnabled = false;
-    }
-    else {
-      toOpenInNewTab = FindSettings.getInstance().isShowResultsInSeparateView();
-      isOpenInNewTabEnabled = com.intellij.usageView.UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0;
-    }
+  /**
+   * @param model would be used for replacing if not null, otherwise shared (project-level) model would be used
+   */
+  public void replaceInProject(@NotNull DataContext dataContext, @Nullable FindModel model) {
     final FindManager findManager = FindManager.getInstance(myProject);
-    final FindModel findModel = findManager.getFindInProjectModel().clone();
-    findModel.setReplaceState(true);
-    findModel.setOpenInNewTabVisible(true);
-    findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
-    findModel.setOpenInNewTab(toOpenInNewTab);
-    FindInProjectUtil.setDirectoryName(findModel, dataContext);
-    FindInProjectUtil.initStringToFindFromDataContext(findModel, dataContext);
-
-    findManager.showFindDialog(findModel, () -> {
-      if (!findModel.isProjectScope() &&
-          FindInProjectUtil.getDirectory(findModel) == null &&
-          findModel.getModuleName() == null &&
-          findModel.getCustomScope() == null) {
-        return;
+    final FindModel findModel;
+    if (model == null) {
+      final boolean isOpenInNewTabEnabled;
+      final boolean toOpenInNewTab;
+      final Content selectedContent = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent(true);
+      if (selectedContent != null && selectedContent.isPinned()) {
+        toOpenInNewTab = true;
+        isOpenInNewTabEnabled = false;
+      }
+      else {
+        toOpenInNewTab = FindSettings.getInstance().isShowResultsInSeparateView();
+        isOpenInNewTabEnabled = com.intellij.usageView.UsageViewManager.getInstance(myProject).getReusableContentsCount() > 0;
       }
 
-      UsageViewManager manager = UsageViewManager.getInstance(myProject);
+      findModel = findManager.getFindInProjectModel().clone();
+      findModel.setReplaceState(true);
+      findModel.setOpenInNewTabVisible(true);
+      findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
+      findModel.setOpenInNewTab(toOpenInNewTab);
+      FindInProjectUtil.setDirectoryName(findModel, dataContext);
+      FindInProjectUtil.initStringToFindFromDataContext(findModel, dataContext);
+    }
+    else {
+      findModel = model;
+    }
 
-      if (manager == null) return;
-      findManager.getFindInProjectModel().copyFrom(findModel);
-      final FindModel findModelCopy = findModel.clone();
-
-      final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModel.isOpenInNewTab(), findModelCopy);
-      final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, true, presentation);
-
-      UsageSearcherFactory factory = new UsageSearcherFactory(findModelCopy, processPresentation);
-      searchAndShowUsages(manager, factory, findModelCopy, presentation, processPresentation, findManager);
+    findManager.showFindDialog(findModel, () -> {
+      if (findModel.isReplaceState()) {
+        replaceInPath(findModel);
+      } else {
+        FindInProjectManager.getInstance(myProject).findInPath(findModel);
+      }
     });
   }
 
-  public void searchAndShowUsages(@NotNull UsageViewManager manager,
-                                  @NotNull Factory<UsageSearcher> usageSearcherFactory,
-                                  @NotNull FindModel findModelCopy,
-                                  @NotNull FindManager findManager) {
-    final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(true, findModelCopy);
-    final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, true, presentation);
+  public void replaceInPath(@NotNull FindModel findModel) {
+    FindManager findManager = FindManager.getInstance(myProject);
+    if (!findModel.isProjectScope() &&
+        FindInProjectUtil.getDirectory(findModel) == null &&
+        findModel.getModuleName() == null &&
+        findModel.getCustomScope() == null) {
+      return;
+    }
 
-    searchAndShowUsages(manager, usageSearcherFactory, findModelCopy, presentation, processPresentation, findManager);
+    UsageViewManager manager = UsageViewManager.getInstance(myProject);
+
+    if (manager == null) return;
+    findManager.getFindInProjectModel().copyFrom(findModel);
+    final FindModel findModelCopy = findModel.clone();
+
+    final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModel.isOpenInNewTab(), findModelCopy);
+    final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, true, presentation);
+    processPresentation.setShowFindOptionsPrompt(findModel.isPromptOnReplace());
+
+    UsageSearcherFactory factory = new UsageSearcherFactory(findModelCopy, processPresentation);
+    searchAndShowUsages(manager, factory, findModelCopy, presentation, processPresentation);
   }
 
   private static class ReplaceInProjectTarget extends FindInProjectUtil.StringUsageTarget {
-    public ReplaceInProjectTarget(@NotNull Project project, @NotNull FindModel findModel) {
+    ReplaceInProjectTarget(@NotNull Project project, @NotNull FindModel findModel) {
       super(project, findModel);
     }
 
@@ -177,7 +190,7 @@ public class ReplaceInProjectManager {
     @Override
     public String getLongDescriptiveName() {
       UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(false, myFindModel);
-      return "Replace "+ StringUtil.decapitalize(presentation.getToolwindowTitle())+" with '"+ myFindModel.getStringToReplace()+"'";
+      return "Replace " + StringUtil.decapitalize(presentation.getToolwindowTitle()) + " with '" + myFindModel.getStringToReplace() + "'";
     }
 
     @Override
@@ -190,7 +203,7 @@ public class ReplaceInProjectManager {
       Content selectedContent = com.intellij.usageView.UsageViewManager.getInstance(myProject).getSelectedContent(true);
       JComponent component = selectedContent == null ? null : selectedContent.getComponent();
       ReplaceInProjectManager findInProjectManager = getInstance(myProject);
-      findInProjectManager.replaceInProject(DataManager.getInstance().getDataContext(component));
+      findInProjectManager.replaceInProject(DataManager.getInstance().getDataContext(component), myFindModel);
     }
   }
 
@@ -198,25 +211,26 @@ public class ReplaceInProjectManager {
                                   @NotNull Factory<UsageSearcher> usageSearcherFactory,
                                   @NotNull final FindModel findModelCopy,
                                   @NotNull UsageViewPresentation presentation,
-                                  @NotNull FindUsagesProcessPresentation processPresentation,
-                                  final FindManager findManager) {
+                                  @NotNull FindUsagesProcessPresentation processPresentation) {
     presentation.setMergeDupLinesAvailable(false);
-    final ReplaceContext[] context = new ReplaceContext[1];
     final ReplaceInProjectTarget target = new ReplaceInProjectTarget(myProject, findModelCopy);
     ((FindManagerImpl)FindManager.getInstance(myProject)).getFindUsagesManager().addToHistory(target);
+    final ReplaceContext[] context = new ReplaceContext[1];
     manager.searchAndShowUsages(new UsageTarget[]{target},
                                 usageSearcherFactory, processPresentation, presentation, new UsageViewManager.UsageViewStateListener() {
         @Override
         public void usageViewCreated(@NotNull UsageView usageView) {
           context[0] = new ReplaceContext(usageView, findModelCopy);
           addReplaceActions(context[0]);
+          usageView.setReRunActivity(
+            () -> searchAndShowUsages(manager, usageSearcherFactory, findModelCopy, presentation, processPresentation));
         }
 
         @Override
         public void findingUsagesFinished(final UsageView usageView) {
-          if (context[0] != null && findManager.getFindInProjectModel().isPromptOnReplace()) {
+          if (context[0] != null && !processPresentation.isShowFindOptionsPrompt()) {
             TransactionGuard.submitTransaction(myProject, () -> {
-              replaceWithPrompt(context[0]);
+              replaceUsagesUnderCommand(context[0], usageView.getUsages());
               context[0].invalidateExcludedSetCache();
             });
           }
@@ -224,189 +238,208 @@ public class ReplaceInProjectManager {
       });
   }
 
-  private void replaceWithPrompt(final ReplaceContext replaceContext) {
-    final List<Usage> _usages = replaceContext.getUsageView().getSortedUsages();
-
-    if (hasReadOnlyUsages(_usages)) {
-      WindowManager.getInstance().getStatusBar(myProject)
-        .setInfo(FindBundle.message("find.replace.occurrences.found.in.read.only.files.status"));
-      return;
-    }
-
-    final Usage[] usages = _usages.toArray(new Usage[_usages.size()]);
-
-    //usageView.expandAll();
-    for (int i = 0; i < usages.length; ++i) {
-      final Usage usage = usages[i];
-      final UsageInfo usageInfo = ((UsageInfo2UsageAdapter)usage).getUsageInfo();
-
-      final PsiElement elt = usageInfo.getElement();
-      if (elt == null) continue;
-      final PsiFile psiFile = elt.getContainingFile();
-      if (!psiFile.isWritable()) continue;
-
-      final VirtualFile virtualFile = psiFile.getVirtualFile();
-
-      Runnable selectOnEditorRunnable = () -> {
-        if (virtualFile != null && ReadAction.compute(() -> virtualFile.isValid()).booleanValue()) {
-
-          if (usage.isValid()) {
-            usage.highlightInEditor();
-            replaceContext.getUsageView().selectUsages(new Usage[]{usage});
-          }
-        }
-      };
-
-      String path = ReadAction.compute(() -> virtualFile != null ? virtualFile.getPath() : null);
-      CommandProcessor.getInstance()
-        .executeCommand(myProject, selectOnEditorRunnable, FindBundle.message("find.replace.select.on.editor.command"), null);
-      String title = FindBundle.message("find.replace.found.usage.title", i + 1, usages.length, path);
-
-      int result;
-      try {
-        replaceUsage(usage, replaceContext.getFindModel(), replaceContext.getExcludedSetCached(), true);
-        result = FindManager.getInstance(myProject).showPromptDialog(replaceContext.getFindModel(), title);
-      }
-      catch (FindManager.MalformedReplacementStringException e) {
-        markAsMalformedReplacement(replaceContext, usage);
-        result = FindManager.getInstance(myProject).showMalformedReplacementPrompt(replaceContext.getFindModel(), title, e);
-      }
-
-      if (result == FindManager.PromptResult.CANCEL) {
-        return;
-      }
-      if (result == FindManager.PromptResult.SKIP) {
-        continue;
-      }
-
-      final int currentNumber = i;
-      if (result == FindManager.PromptResult.OK) {
-        final Ref<Boolean> success = Ref.create();
-        Runnable runnable = () -> success.set(replaceUsageAndRemoveFromView(usage, replaceContext));
-        CommandProcessor.getInstance().executeCommand(myProject, runnable, FindBundle.message("find.replace.command"), null);
-        if (closeUsageViewIfEmpty(replaceContext.getUsageView(), success.get())) {
-          return;
-        }
-      }
-
-      if (result == FindManager.PromptResult.SKIP_ALL_IN_THIS_FILE) {
-        int j;
-        for(j = i + 1;j < usages.length; ++j) {
-          final PsiElement nextElt = ((UsageInfo2UsageAdapter)usages[j]).getUsageInfo().getElement();
-          if (nextElt == null) continue;
-          if (nextElt.getContainingFile() == psiFile) continue;
-          break;
-        }
-        i = j -1;
-      }
-
-      if (result == FindManager.PromptResult.ALL_IN_THIS_FILE) {
-        final int[] nextNumber = new int[1];
-
-        Runnable runnable = () -> {
-          int j = currentNumber;
-          boolean  success = true;
-          for (; j < usages.length; j++) {
-            final Usage usage1 = usages[j];
-            final UsageInfo usageInfo1 = ((UsageInfo2UsageAdapter)usage1).getUsageInfo();
-
-            final PsiElement elt1 = usageInfo1.getElement();
-            if (elt1 == null) continue;
-            PsiFile otherPsiFile = elt1.getContainingFile();
-            if (!otherPsiFile.equals(psiFile)) {
-              break;
-            }
-            if (!replaceUsageAndRemoveFromView(usage1, replaceContext)) {
-              success = false;
-            }
-          }
-          closeUsageViewIfEmpty(replaceContext.getUsageView(), success);
-          nextNumber[0] = j;
-        };
-
-        CommandProcessor.getInstance().executeCommand(myProject, runnable, FindBundle.message("find.replace.command"), null);
-
-        //noinspection AssignmentToForLoopParameter
-        i = nextNumber[0] - 1;
-      }
-
-      if (result == FindManager.PromptResult.ALL_FILES) {
-        CommandProcessor.getInstance().executeCommand(myProject, () -> {
-          final boolean success = replaceUsages(replaceContext, _usages);
-          closeUsageViewIfEmpty(replaceContext.getUsageView(), success);
-        }, FindBundle.message("find.replace.command"), null);
-        break;
-      }
-    }
+  public boolean showReplaceAllConfirmDialog(@NotNull String usagesCount, @NotNull String stringToFind, @NotNull String filesCount, @NotNull String stringToReplace) {
+    return Messages.YES == MessageDialogBuilder.yesNo(
+      FindBundle.message("find.replace.all.confirmation.title"),
+      FindBundle.message("find.replace.all.confirmation", usagesCount, StringUtil.escapeXml(stringToFind), filesCount,
+                         StringUtil.escapeXml(stringToReplace)))
+                                               .yesText(FindBundle.message("find.replace.command"))
+                                               .project(myProject)
+                                               .noText(Messages.CANCEL_BUTTON).show();
   }
 
-  private boolean replaceUsageAndRemoveFromView(Usage usage, ReplaceContext replaceContext) {
-    try {
-      if (replaceUsage(usage, replaceContext.getFindModel(), replaceContext.getExcludedSetCached(), false)) {
-        replaceContext.getUsageView().removeUsage(usage);
+  private static Set<VirtualFile> getFiles(@NotNull ReplaceContext replaceContext, boolean selectedOnly) {
+    Set<Usage> usages = selectedOnly
+                        ? replaceContext.getUsageView().getSelectedUsages()
+                        : replaceContext.getUsageView().getUsages();
+    if (usages.isEmpty()) {
+      return Collections.emptySet();
+    }
+
+    Set<VirtualFile> files = new HashSet<>();
+    for (Usage usage : usages) {
+      if (usage instanceof UsageInfo2UsageAdapter) {
+        files.add(((UsageInfo2UsageAdapter)usage).getFile());
       }
     }
-    catch (FindManager.MalformedReplacementStringException e) {
-      markAsMalformedReplacement(replaceContext, usage);
-      return false;
+    return files;
+  }
+
+  private static Set<Usage> getAllUsagesForFile(@NotNull ReplaceContext replaceContext, @NotNull VirtualFile file) {
+    Set<Usage> usages = replaceContext.getUsageView().getUsages();
+    Set<Usage> result = new LinkedHashSet<>();
+    for (Usage usage : usages) {
+      if (usage instanceof UsageInfo2UsageAdapter && Comparing.equal(((UsageInfo2UsageAdapter)usage).getFile(), file)) {
+        result.add(usage);
+      }
     }
-    return true;
+    return result;
   }
 
   private void addReplaceActions(final ReplaceContext replaceContext) {
-    final Runnable replaceRunnable = () -> replaceUsagesUnderCommand(replaceContext, replaceContext.getUsageView().getUsages());
-    replaceContext.getUsageView().addButtonToLowerPane(replaceRunnable, FindBundle.message("find.replace.all.action"));
+    final AbstractAction replaceAllAction = new AbstractAction(FindBundle.message("find.replace.all.action")) {
+      {
+        KeyStroke altShiftEnter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK);
+        putValue(ACCELERATOR_KEY, altShiftEnter);
+        putValue(SHORT_DESCRIPTION, KeymapUtil.getKeystrokeText(altShiftEnter));
+      }
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        Set<Usage> usages = replaceContext.getUsageView().getUsages();
+        if (usages.isEmpty()) return;
+        Set<VirtualFile> files = getFiles(replaceContext, false);
+        if (files.size() < 2 || showReplaceAllConfirmDialog(
+          String.valueOf(usages.size()),
+          replaceContext.getFindModel().getStringToFind(),
+          String.valueOf(files.size()),
+          replaceContext.getFindModel().getStringToReplace())) {
+          replaceUsagesUnderCommand(replaceContext, usages);
+        }
+      }
 
-    final Runnable replaceSelectedRunnable =
-      () -> replaceUsagesUnderCommand(replaceContext, replaceContext.getUsageView().getSelectedUsages());
+      @Override
+      public boolean isEnabled() {
+        return !replaceContext.getUsageView().getUsages().isEmpty();
+      }
+    };
+    replaceContext.getUsageView().addButtonToLowerPane(replaceAllAction);
 
-    replaceContext.getUsageView().addButtonToLowerPane(replaceSelectedRunnable, FindBundle.message("find.replace.selected.action"));
+    final AbstractAction replaceSelectedAction = new AbstractAction() {
+      {
+        KeyStroke altEnter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_DOWN_MASK);
+        putValue(ACCELERATOR_KEY, altEnter);
+        putValue(LONG_DESCRIPTION, KeymapUtil.getKeystrokeText(altEnter));
+        putValue(SHORT_DESCRIPTION, KeymapUtil.getKeystrokeText(altEnter));
+      }
+      
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        replaceUsagesUnderCommand(replaceContext, replaceContext.getUsageView().getSelectedUsages());
+      }
+
+      @Override
+      public Object getValue(String key) {
+        return Action.NAME.equals(key)
+               ? FindBundle.message("find.replace.selected.action", replaceContext.getUsageView().getSelectedUsages().size())
+               : super.getValue(key);
+      }
+
+      @Override
+      public boolean isEnabled() {
+        return !replaceContext.getUsageView().getSelectedUsages().isEmpty();
+      }
+    };
+
+    replaceContext.getUsageView().addButtonToLowerPane(replaceSelectedAction);
+
+    final AbstractAction replaceAllInThisFileAction = new AbstractAction() {
+      {
+        putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK));
+      }
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        Set<VirtualFile> files = getFiles(replaceContext, true);
+        if (files.size() == 1) {
+          replaceUsagesUnderCommand(replaceContext, getAllUsagesForFile(replaceContext, files.iterator().next()));
+        }
+      }
+
+      @Override
+      public Object getValue(String key) {
+        return Action.NAME.equals(key)
+               ? FindBundle.message("find.replace.this.file.action", replaceContext.getUsageView().getSelectedUsages().size())
+               : super.getValue(key);
+      }
+
+      @Override
+      public boolean isEnabled() {
+        return getFiles(replaceContext, true).size() == 1;
+      }
+    };
+
+    //replaceContext.getUsageView().addButtonToLowerPane(replaceAllInThisFileAction);
+
+    final AbstractAction skipThisFileAction = new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        Set<VirtualFile> files = getFiles(replaceContext, true);
+        if (files.size() != 1) return;
+        VirtualFile selectedFile = files.iterator().next();
+        Set<Usage> toSkip = getAllUsagesForFile(replaceContext, selectedFile);
+        Usage usageToSelect = ((UsageViewImpl)replaceContext.getUsageView()).getNextToSelect(toSkip);
+        replaceContext.getUsageView().excludeUsages(toSkip.toArray(Usage.EMPTY_ARRAY));
+        if (usageToSelect != null) {
+          replaceContext.getUsageView().selectUsages(new Usage[]{usageToSelect});
+        } else {
+          replaceContext.getUsageView().selectUsages(Usage.EMPTY_ARRAY);
+        }
+      }
+
+      @Override
+      public Object getValue(String key) {
+        return Action.NAME.equals(key)
+               ? FindBundle.message("find.replace.skip.this.file.action", replaceContext.getUsageView().getSelectedUsages().size())
+               : super.getValue(key);
+      }
+
+      @Override
+      public boolean isEnabled() {
+        Set<VirtualFile> files = getFiles(replaceContext, true);
+        if (files.size() != 1) return false;
+        VirtualFile selectedFile = files.iterator().next();
+        Set<Usage> toSkip = getAllUsagesForFile(replaceContext, selectedFile);
+        return ((UsageViewImpl)replaceContext.getUsageView()).getNextToSelect(toSkip) != null;
+      }
+    };
+
+    //replaceContext.getUsageView().addButtonToLowerPane(skipThisFileAction);
   }
 
   private boolean replaceUsages(@NotNull ReplaceContext replaceContext, @NotNull Collection<Usage> usages) {
     if (!ensureUsagesWritable(replaceContext, usages)) {
       return true;
     }
-    
+
     int[] replacedCount = {0};
     final boolean[] success = {true};
 
-    success[0] &= ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithProgressInDispatchThread(
-      FindBundle.message("find.replace.all.action"), 
-      myProject, 
+    success[0] &= ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
+      FindBundle.message("find.replace.all.confirmation.title"),
+      myProject,
       null,
-      "Stop",
       indicator -> {
         int processed = 0;
         VirtualFile lastFile = null;
-        
+
         for (final Usage usage : usages) {
           ++processed;
           indicator.checkCanceled();
           indicator.setFraction((float)processed / usages.size());
-          
-          if(usage instanceof UsageInFile) {
+
+          if (usage instanceof UsageInFile) {
             VirtualFile virtualFile = ((UsageInFile)usage).getFile();
             if (virtualFile != null && !virtualFile.equals(lastFile)) {
               indicator.setText2(virtualFile.getPresentableUrl());
               lastFile = virtualFile;
             }
           }
-          
+
           ProgressManager.getInstance().executeNonCancelableSection(() -> {
             try {
               if (replaceUsage(usage, replaceContext.getFindModel(), replaceContext.getExcludedSetCached(), false)) {
                 replacedCount[0]++;
               }
-            } catch (FindManager.MalformedReplacementStringException ex) {
+            }
+            catch (FindManager.MalformedReplacementStringException ex) {
               markAsMalformedReplacement(replaceContext, usage);
               success[0] = false;
             }
-          });           
+          });
         }
       }
     );
-    
+
     replaceContext.getUsageView().removeUsagesBulk(usages);
     reportNumberReplacedOccurrences(myProject, replacedCount[0]);
     return success[0];
@@ -439,7 +472,7 @@ public class ReplaceInProjectManager {
       final Document document = ((UsageInfo2UsageAdapter)usage).getDocument();
       if (!document.isWritable()) return false;
 
-      boolean result1 = ((UsageInfo2UsageAdapter)usage).processRangeMarkers(segment -> {
+      return ((UsageInfo2UsageAdapter)usage).processRangeMarkers(segment -> {
         final int textOffset = segment.getStartOffset();
         final int textEndOffset = segment.getEndOffset();
         final Ref<String> stringToReplace = Ref.create();
@@ -455,7 +488,6 @@ public class ReplaceInProjectManager {
         }
         return true;
       });
-      return result1;
     });
 
     if (!exceptionResult.isNull()) {
@@ -471,16 +503,17 @@ public class ReplaceInProjectManager {
     if (textOffset < 0 || textOffset >= document.getTextLength()) {
       return false;
     }
-    if (textEndOffset < 0 || textOffset > document.getTextLength()) {
+    if (textEndOffset < 0 || textEndOffset > document.getTextLength()) {
       return false;
     }
     FindManager findManager = FindManager.getInstance(myProject);
     final CharSequence foundString = document.getCharsSequence().subSequence(textOffset, textEndOffset);
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-    FindResult findResult = findManager.findString(document.getCharsSequence(), textOffset, findModel, file != null ? file.getVirtualFile() : null);
+    FindResult findResult =
+      findManager.findString(document.getCharsSequence(), textOffset, findModel, file != null ? file.getVirtualFile() : null);
     if (!findResult.isStringFound() ||
         // find result should be in needed range
-        !(findResult.getStartOffset() >= textOffset && findResult.getEndOffset() <= textEndOffset) ) {
+        !(findResult.getStartOffset() >= textOffset && findResult.getEndOffset() <= textEndOffset)) {
       return false;
     }
 
@@ -506,7 +539,7 @@ public class ReplaceInProjectManager {
 
       if (closeUsageViewIfEmpty(usageView, success)) return;
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-        IdeFocusManager.getGlobalInstance().requestFocus(usageView.getComponent(), true);
+        IdeFocusManager.getGlobalInstance().requestFocus(usageView.getPreferredFocusableComponent(), true);
       });
     }, FindBundle.message("find.replace.command"), null);
 
@@ -564,27 +597,23 @@ public class ReplaceInProjectManager {
     private final FindUsagesProcessPresentation myProcessPresentation;
 
     private UsageSearcherFactory(@NotNull FindModel findModelCopy,
-                                @NotNull FindUsagesProcessPresentation processPresentation) {
+                                 @NotNull FindUsagesProcessPresentation processPresentation) {
       myFindModelCopy = findModelCopy;
       myProcessPresentation = processPresentation;
     }
 
     @Override
     public UsageSearcher create() {
-      return new UsageSearcher() {
+      return processor -> {
+        try {
+          myIsFindInProgress = true;
 
-        @Override
-        public void generate(@NotNull final Processor<Usage> processor) {
-          try {
-            myIsFindInProgress = true;
-
-            FindInProjectUtil.findUsages(myFindModelCopy, myProject,
-                                         new AdapterProcessor<>(processor, UsageInfo2UsageAdapter.CONVERTER),
-                                         myProcessPresentation);
-          }
-          finally {
-            myIsFindInProgress = false;
-          }
+          FindInProjectUtil.findUsages(myFindModelCopy, myProject,
+                                       new AdapterProcessor<>(processor, UsageInfo2UsageAdapter.CONVERTER),
+                                       myProcessPresentation);
+        }
+        finally {
+          myIsFindInProgress = false;
         }
       };
     }

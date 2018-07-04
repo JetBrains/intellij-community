@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.codeHighlighting.Pass;
@@ -27,7 +13,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CollectionQuery;
 import com.intellij.util.Function;
 import com.intellij.util.Query;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
@@ -102,34 +87,35 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     return builder.toString();
   };
 
-  private static final PyLineMarkerNavigator<PsiElement> ourSuperMethodNavigator = new PyLineMarkerNavigator<PsiElement>() {
+  private static final PyLineMarkerNavigator<PsiElement> SUPER_METHOD_NAVIGATOR = new PyLineMarkerNavigator<PsiElement>() {
     @Override
-    protected String getTitle(final PsiElement elt) {
-      return "Choose Super Method of " + ((PyFunction)elt.getParent()).getName();
+    protected String getTitle(@NotNull PsiElement nameIdentifier) {
+      return "Choose Super Method of " + ((PyFunction)nameIdentifier.getParent()).getName();
     }
 
     @Override
     @Nullable
-    protected Query<PsiElement> search(final PsiElement elt, @NotNull final TypeEvalContext context) {
-      if (!(elt.getParent() instanceof PyFunction)) return null;
-      return PySuperMethodsSearch.search((PyFunction)elt.getParent(), context);
+    protected Query<PsiElement> search(@NotNull PsiElement nameIdentifier, @NotNull final TypeEvalContext context) {
+      if (!(nameIdentifier.getParent() instanceof PyFunction)) return null;
+      return PySuperMethodsSearch.search((PyFunction)nameIdentifier.getParent(), context);
     }
   };
 
-  private static final PyLineMarkerNavigator<PsiElement> ourSuperAttributeNavigator = new PyLineMarkerNavigator<PsiElement>() {
+  private static final PyLineMarkerNavigator<PsiElement> SUPER_ATTRIBUTE_NAVIGATOR = new PyLineMarkerNavigator<PsiElement>() {
     @Override
-    protected String getTitle(final PsiElement elt) {
-      return "Choose Super Attribute of " + ((PyTargetExpression)elt).getName();
+    protected String getTitle(@NotNull PsiElement nameIdentifier) {
+      return "Choose Super Attribute of " + ((PyTargetExpression)nameIdentifier.getParent()).getName();
     }
 
     @Override
     @Nullable
-    protected Query<PsiElement> search(final PsiElement elt, @NotNull final TypeEvalContext context) {
-      List<PsiElement> result = new ArrayList<>();
-      PyClass containingClass = PsiTreeUtil.getParentOfType(elt, PyClass.class);
-      if (containingClass != null && elt instanceof PyTargetExpression) {
+    protected Query<PsiElement> search(@NotNull PsiElement nameIdentifier, @NotNull TypeEvalContext context) {
+      if (!(nameIdentifier.getParent() instanceof PyTargetExpression)) return null;
+      final List<PsiElement> result = new ArrayList<>();
+      final PyClass containingClass = PsiTreeUtil.getParentOfType(nameIdentifier, PyClass.class);
+      if (containingClass != null) {
         for (PyClass ancestor : containingClass.getAncestorClasses(context)) {
-          final PyTargetExpression attribute = ancestor.findClassAttribute(((PyTargetExpression)elt).getReferencedName(), false, context);
+          final PyTargetExpression attribute = ancestor.findClassAttribute(nameIdentifier.getText(), false, context);
           if (attribute != null) {
             result.add(attribute);
           }
@@ -185,7 +171,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
   }
 
   @Override
-  public boolean isSeparatorAllowed(PsiElement element) {
+  public boolean isSeparatorAllowed(@Nullable PsiElement element) {
     return element instanceof PyFunction || element instanceof PyClass;
   }
 
@@ -194,7 +180,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     if (PyNames.INIT.equals(function.getName())) {
       return null;
     }
-    final TypeEvalContext context = TypeEvalContext.codeAnalysis(identifier.getProject(), (function != null ? function.getContainingFile() : null));
+    final TypeEvalContext context = TypeEvalContext.codeAnalysis(identifier.getProject(), function.getContainingFile());
     final PsiElement superMethod = PySuperMethodsSearch.search(function, context).findFirst();
     if (superMethod != null) {
       PyClass superClass = null;
@@ -203,9 +189,9 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
       }
       // TODO: show "implementing" instead of "overriding" icon for Python implementations of Java interface methods
       return new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.OverridingMethod,
-                                            Pass.LINE_MARKERS,
+                                  Pass.LINE_MARKERS,
                                             superClass == null ? null : new TooltipProvider("Overrides method in " + superClass.getName()),
-                                            ourSuperMethodNavigator,GutterIconRenderer.Alignment.RIGHT);
+                                  SUPER_METHOD_NAVIGATOR, GutterIconRenderer.Alignment.RIGHT);
     }
     return null;
   }
@@ -227,7 +213,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
           return new LineMarkerInfo<>(identifier, identifier.getTextRange(),
                                       AllIcons.Gutter.OverridingMethod, Pass.LINE_MARKERS,
                                       new TooltipProvider("Overrides attribute in " + ancestor.getName()),
-                                      ourSuperAttributeNavigator, GutterIconRenderer.Alignment.RIGHT);
+                                      SUPER_ATTRIBUTE_NAVIGATOR, GutterIconRenderer.Alignment.RIGHT);
         }
       }
     }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.ide.actions.CloseTabToolbarAction;
@@ -42,6 +28,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction;
@@ -73,6 +60,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.AppIcon;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManagerUtil;
 import com.intellij.ui.content.MessageView;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.AsynchConsumer;
@@ -80,7 +68,6 @@ import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ConfirmationDialog;
-import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
@@ -117,24 +104,20 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
         messageView.getContentManager().addContent(content);
         Disposer.register(content, errorTreeView);
         messageView.getContentManager().setSelectedContent(content);
-        removeContents(content, tabDisplayName);
+        ContentManagerUtil.cleanupContents(content, myProject, tabDisplayName);
 
         ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.MESSAGES_WINDOW).activate(null);
       });
     }, VcsBundle.message("command.name.open.error.message.view"), null);
   }
 
-  public void showFileHistory(@NotNull VcsHistoryProvider historyProvider,
-                              @NotNull FilePath path,
-                              @NotNull AbstractVcs vcs,
-                              @Nullable String repositoryPath) {
-    showFileHistory(historyProvider, vcs.getAnnotationProvider(), path, repositoryPath, vcs);
+  public void showFileHistory(@NotNull VcsHistoryProvider historyProvider, @NotNull FilePath path, @NotNull AbstractVcs vcs) {
+    showFileHistory(historyProvider, vcs.getAnnotationProvider(), path, vcs);
   }
 
   public void showFileHistory(@NotNull VcsHistoryProvider historyProvider,
                               @Nullable AnnotationProvider annotationProvider,
                               @NotNull FilePath path,
-                              @Nullable String repositoryPath,
                               @NotNull AbstractVcs vcs) {
     FileHistoryRefresherI refresher = FileHistoryRefresher.findOrCreate(historyProvider, path, vcs);
     refresher.run(false, true);
@@ -164,7 +147,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
 
     if (files.size() == 1 && singleFilePromptTemplate != null) {
-      String filePrompt = MessageFormat.format(singleFilePromptTemplate, files.get(0).getPresentableUrl());
+      String filePrompt = MessageFormat.format(singleFilePromptTemplate,
+                                               FileUtil.getLocationRelativeToUserHome(files.get(0).getPresentableUrl()));
       if (ConfirmationDialog
         .requestForConfirmation(confirmationOption, myProject, filePrompt, singleFileTitle, Messages.getQuestionIcon())) {
         return files;
@@ -271,7 +255,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myProject.isDisposed()) return;
       if (isEmpty) {
-        removeContents(null, tabDisplayName);
+        ContentManagerUtil.cleanupContents(null, myProject, tabDisplayName);
         return;
       }
 
@@ -323,23 +307,6 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
   }
 
-  protected void removeContents(Content notToRemove, final String tabDisplayName) {
-    MessageView messageView = MessageView.SERVICE.getInstance(myProject);
-    Content[] contents = messageView.getContentManager().getContents();
-    for (Content content : contents) {
-      LOG.assertTrue(content != null);
-      if (content.isPinned()) continue;
-      if (tabDisplayName.equals(content.getDisplayName()) && content != notToRemove) {
-        ErrorTreeView listErrorView = (ErrorTreeView)content.getComponent();
-        if (listErrorView != null) {
-          if (messageView.getContentManager().removeContent(content, true)) {
-            content.release();
-          }
-        }
-      }
-    }
-  }
-
   public List<VcsException> runTransactionRunnable(AbstractVcs vcs, TransactionRunnable runnable, Object vcsParameters) {
     List<VcsException> exceptions = new ArrayList<>();
 
@@ -347,12 +314,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     boolean transactionSupported = transactionProvider != null;
 
     if (transactionSupported) {
-      try {
-        transactionProvider.startTransaction(vcsParameters);
-      }
-      catch (VcsException e) {
-        return Collections.singletonList(e);
-      }
+      transactionProvider.startTransaction(vcsParameters);
     }
 
     runnable.run(exceptions);
@@ -719,6 +681,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       final Application application = ApplicationManager.getApplication();
       try {
         myProvider.loadCommittedChanges(mySettings, myLocation, 0, new AsynchConsumer<CommittedChangeList>() {
+          @Override
           public void consume(CommittedChangeList committedChangeList) {
             myRevisionsReturned = true;
             bufferedListConsumer.consumeOne(committedChangeList);
@@ -727,6 +690,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
             }
           }
 
+          @Override
           public void finished() {
             bufferedListConsumer.flush();
             appender.finished();

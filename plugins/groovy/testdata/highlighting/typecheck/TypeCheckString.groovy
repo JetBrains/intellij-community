@@ -10,16 +10,16 @@ class FooString {
 
   def stringCast() {
     (String)null
-    <error descr="Cannot cast 'char' to 'String'">(String)1 as char</error>
-    <error descr="Cannot cast 'BigDecimal' to 'String'">(String)1 as BigDecimal</error>
-    <error descr="Cannot cast 'BigInteger' to 'String'">(String)1 as BigInteger</error>
-    <error descr="Cannot cast 'double' to 'String'">(String)1 as double</error>
-    <error descr="Cannot cast 'float' to 'String'">(String)1 as float</error>
-    <error descr="Cannot cast 'int' to 'String'">(String)1 as int</error>
-    <error descr="Cannot cast 'short' to 'String'">(String)1 as short</error>
-    <error descr="Cannot cast 'long' to 'String'">(String)1 as long</error>
-    <error descr="Cannot cast 'boolean' to 'String'">(String)1 as boolean</error>
-    <error descr="Cannot cast 'void' to 'String'">(String)1 as void</error>
+    <error descr="Cannot cast 'char' to 'String'">(String) (1 as char)</error>
+    <error descr="Cannot cast 'BigDecimal' to 'String'">(String) (1 as BigDecimal)</error>
+    <error descr="Cannot cast 'BigInteger' to 'String'">(String) (1 as BigInteger)</error>
+    <error descr="Cannot cast 'double' to 'String'">(String) (1 as double)</error>
+    <error descr="Cannot cast 'float' to 'String'">(String) (1 as float)</error>
+    <error descr="Cannot cast 'int' to 'String'">(String) (1 as int)</error>
+    <error descr="Cannot cast 'short' to 'String'">(String) (1 as short)</error>
+    <error descr="Cannot cast 'long' to 'String'">(String) (1 as long)</error>
+    <error descr="Cannot cast 'boolean' to 'String'">(String) (1 as boolean)</error>
+    <error descr="Cannot cast 'void' to 'String'">(String) (1 as void)</error>
     <error descr="Cannot cast 'void' to 'String'">(String)explicitVoid()</error>
     <error descr="Cannot cast 'Date' to 'String'">(String)new Date()</error>
     (String)"a"
@@ -28,7 +28,7 @@ class FooString {
     <error descr="Cannot cast 'Object[]' to 'String'">(String)new Object[0]</error>
     <error descr="Cannot cast 'Closure<Integer>' to 'String'">(String){ int a, int b -> a + b }</error>
     (String)o
-    <error descr="Cannot cast 'Matcher' to 'String'">(String)"aaa" =~ /aaa/</error>
+    <error descr="Cannot cast 'Matcher' to 'String'">(String) ("aaa" =~ /aaa/)</error>
     <error descr="Cannot cast 'List' to 'String'">(String)[]</error>
   }
 
@@ -44,7 +44,7 @@ class FooString {
     s = 1 as short
     s = 1 as long
     s = 1 as boolean
-    s = explicitVoid()
+    <warning descr="Cannot assign 'void' to 'String'">s</warning> = explicitVoid()
     s = new Date()
     s = "a"
     s = "${System.in.read()}"
@@ -75,7 +75,7 @@ class FooString {
     String s7 = 1 as short
     String s8 = 1 as long
     String s9 = 1 as boolean
-    String s10 = explicitVoid()
+    String <warning descr="Cannot assign 'void' to 'String'">s10</warning> = explicitVoid()
     String s11 = new Date()
     String s12 = "a"
     String s13 = "${System.in.read()}"
@@ -104,7 +104,7 @@ class FooString {
       case 7: return 1 as short
       case 8: return 1 as long
       case 9: return 1 as boolean
-      case 10: return explicitVoid()
+      case 10: <warning descr="Cannot return 'void' from method returning 'String'">return</warning> explicitVoid()
       case 11: return new Date()
       case 12: return "a"
       case 13: return "${System.in.read()}"

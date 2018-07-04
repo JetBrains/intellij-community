@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.ExecutionException;
@@ -24,12 +10,11 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -47,6 +32,9 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.EmptyIcon;
+import com.sun.jna.Native;
+import com.sun.jna.platform.win32.Kernel32;
+import com.sun.jna.platform.win32.WinDef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -57,6 +45,7 @@ import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.*;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
@@ -65,14 +54,21 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.text.StringUtil.defaultIfEmpty;
 
-public class ShowFilePathAction extends AnAction {
+public class ShowFilePathAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance(ShowFilePathAction.class);
 
   public static final NotificationListener FILE_SELECTING_LISTENER = new NotificationListener.Adapter() {
     @Override
     protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
       URL url = e.getURL();
-      if (url != null) openFile(new File(url.getPath()));
+      if (url != null) {
+        try {
+          openFile(new File(url.toURI()));
+        }
+        catch (URISyntaxException ex) {
+          LOG.warn("invalid URL: " + url, ex);
+        }
+      }
       notification.expire();
     }
   };
@@ -148,7 +144,9 @@ public class ShowFilePathAction extends AnAction {
       show(file, popup -> {
         DataManager dataManager = DataManager.getInstance();
         if (dataManager != null) {
-          dataManager.getDataContextFromFocus().doWhenDone(((Consumer<DataContext>)popup::showInBestPositionFor));
+          dataManager
+            .getDataContextFromFocusAsync()
+            .onSuccess((popup::showInBestPositionFor));
         }
       });
     }
@@ -283,9 +281,9 @@ public class ShowFilePathAction extends AnAction {
     String toSelect = _toSelect != null ? FileUtil.toSystemDependentName(FileUtil.toCanonicalPath(_toSelect.getPath())) : null;
 
     if (SystemInfo.isWindows) {
-      String cmd = toSelect != null ? "explorer /select," + toSelect : "explorer /root," + dir;
+      String cmd = toSelect != null ? "explorer /select,\"" + shortPath(toSelect) + '"' : "explorer /root,\"" + shortPath(dir) + '"';
       LOG.debug(cmd);
-      Process process = Runtime.getRuntime().exec(cmd);  // no quoting/escaping is needed
+      Process process = Runtime.getRuntime().exec(cmd);  // no advanced quoting/escaping is needed
       new CapturingProcessHandler(process, null, cmd).runProcess().checkSuccess(LOG);
     }
     else if (SystemInfo.isMac) {
@@ -306,6 +304,20 @@ public class ShowFilePathAction extends AnAction {
     else {
       Messages.showErrorDialog("This action isn't supported on the current platform", "Cannot Open File");
     }
+  }
+
+  private static String shortPath(String path) {
+    if (path.contains("  ")) {
+      // On the way from Runtime.exec() to CreateProcess(), a command line goes through couple rounds of merging and splitting
+      // which breaks paths containing a sequence of two or more spaces.
+      // Conversion to a short format is an ugly hack allowing to open such paths in Explorer.
+      char[] result = new char[WinDef.MAX_PATH];
+      if (Kernel32.INSTANCE.GetShortPathName(path, result, result.length) <= result.length) {
+        return Native.toString(result);
+      }
+    }
+
+    return path;
   }
 
   private static void schedule(GeneralCommandLine cmd) {

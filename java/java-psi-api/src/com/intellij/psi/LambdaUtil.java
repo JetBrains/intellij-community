@@ -1,37 +1,26 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Producer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * @author anna
@@ -150,8 +139,13 @@ public class LambdaUtil {
     return context instanceof PsiLambdaExpression ||
            context instanceof PsiReturnStatement ||
            context instanceof PsiAssignmentExpression ||
-           context instanceof PsiVariable ||
+           context instanceof PsiVariable && !withInferredType((PsiVariable)context) ||
            context instanceof PsiArrayInitializerExpression;
+  }
+
+  private static boolean withInferredType(PsiVariable variable) {
+    PsiTypeElement typeElement = variable.getTypeElement();
+    return typeElement != null && typeElement.isInferredType();
   }
 
   @Contract("null -> null")
@@ -344,9 +338,9 @@ public class LambdaUtil {
     PsiElement parent = expression.getParent();
     PsiElement element = expression;
     while (parent instanceof PsiParenthesizedExpression || parent instanceof PsiConditionalExpression) {
-      if (parent instanceof PsiConditionalExpression &&
-          ((PsiConditionalExpression)parent).getThenExpression() != element &&
-          ((PsiConditionalExpression)parent).getElseExpression() != element) break;
+      if (parent instanceof PsiConditionalExpression && ((PsiConditionalExpression)parent).getCondition() == element) {
+        return PsiType.BOOLEAN;
+      }
       element = parent;
       parent = parent.getParent();
     }
@@ -364,10 +358,11 @@ public class LambdaUtil {
       if (psiType instanceof PsiArrayType) {
         return ((PsiArrayType)psiType).getComponentType();
       }
-    } else if (parent instanceof PsiTypeCastExpression) {
-      //ensure no capture is performed to target type of cast expression, from 15.16 Cast Expressions:
-      //Casts can be used to explicitly "tag" a lambda expression or a method reference expression with a particular target type. 
-      //To provide an appropriate degree of flexibility, the target type may be a list of types denoting an intersection type, 
+    }
+    else if (parent instanceof PsiTypeCastExpression) {
+      // Ensure no capture is performed to target type of cast expression, from 15.16 "Cast Expressions":
+      // Casts can be used to explicitly "tag" a lambda expression or a method reference expression with a particular target type.
+      // To provide an appropriate degree of flexibility, the target type may be a list of types denoting an intersection type,
       // provided the intersection induces a functional interface (p9.8).
       final PsiTypeElement castTypeElement = ((PsiTypeCastExpression)parent).getCastType();
       final PsiType castType = castTypeElement != null ? castTypeElement.getType() : null;
@@ -387,8 +382,7 @@ public class LambdaUtil {
     else if (parent instanceof PsiExpressionList) {
       final PsiExpressionList expressionList = (PsiExpressionList)parent;
       final int lambdaIdx = getLambdaIdx(expressionList, expression);
-      if (lambdaIdx > -1) {
-
+      if (lambdaIdx >= 0) {
         PsiElement gParent = expressionList.getParent();
 
         if (gParent instanceof PsiAnonymousClass) {
@@ -466,9 +460,16 @@ public class LambdaUtil {
           gParent = gParent.getParent();
         }
 
+        JavaResolveResult[] results = null;
         if (gParent instanceof PsiMethodCallExpression) {
+          results = ((PsiMethodCallExpression)gParent).getMethodExpression().multiResolve(true);
+        }
+        else if (gParent instanceof PsiConstructorCall){
+          results = getConstructorCandidates((PsiConstructorCall)gParent);
+        }
+        
+        if (results != null) {
           final Set<PsiType> types = new HashSet<>();
-          final JavaResolveResult[] results = ((PsiMethodCallExpression)gParent).getMethodExpression().multiResolve(true);
           for (JavaResolveResult result : results) {
             final PsiType functionalExpressionType = getSubstitutedType(functionalExpression, true, lambdaIdx, result);
             if (functionalExpressionType != null && types.add(functionalExpressionType)) {
@@ -481,7 +482,29 @@ public class LambdaUtil {
     }
     return false;
   }
-  
+
+  @Nullable
+  private static JavaResolveResult[] getConstructorCandidates(PsiConstructorCall parentCall) {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(parentCall.getProject());
+    PsiExpressionList argumentList = parentCall.getArgumentList();
+    if (argumentList != null) {
+      PsiClassType classType = null;
+      if (parentCall instanceof PsiNewExpression) {
+        PsiJavaCodeReferenceElement ref = ((PsiNewExpression)parentCall).getClassReference();
+        classType = ref != null ? facade.getElementFactory().createType(ref) : null;
+      }
+      else if (parentCall instanceof PsiEnumConstant) {
+        PsiClass containingClass = ((PsiEnumConstant)parentCall).getContainingClass();
+        classType = containingClass != null ? facade.getElementFactory().createType(containingClass) : null;
+      }
+      
+      if (classType != null) {
+        return facade.getResolveHelper().multiResolveConstructor(classType, argumentList, parentCall);
+      }
+    }
+    return null;
+  }
+
   @Nullable
   private static PsiType extractFunctionalConjunct(PsiIntersectionType type) {
     PsiType conjunct = null;
@@ -502,7 +525,7 @@ public class LambdaUtil {
 
     return conjunct;
   }
-  
+
   private static PsiType getFunctionalInterfaceTypeByContainingLambda(@NotNull PsiLambdaExpression parentLambda) {
     final PsiType parentInterfaceType = parentLambda.getFunctionalInterfaceType();
     return parentInterfaceType != null ? getFunctionalInterfaceReturnType(parentInterfaceType) : null;
@@ -559,10 +582,7 @@ public class LambdaUtil {
   @Contract("null -> false")
   public static boolean isExpressionStatementExpression(PsiElement body) {
     return body instanceof PsiAssignmentExpression ||
-           body instanceof PsiPrefixExpression &&
-           (((PsiPrefixExpression)body).getOperationTokenType() == JavaTokenType.PLUSPLUS ||
-            ((PsiPrefixExpression)body).getOperationTokenType() == JavaTokenType.MINUSMINUS) ||
-           body instanceof PsiPostfixExpression ||
+           PsiUtil.isIncrementDecrementOperation(body) ||
            body instanceof PsiCallExpression ||
            body instanceof PsiReferenceExpression && !body.isPhysical();
   }
@@ -596,7 +616,7 @@ public class LambdaUtil {
   }
 
   // http://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.2.1
-  // A lambda expression or a method reference expression is potentially compatible with a type variable 
+  // A lambda expression or a method reference expression is potentially compatible with a type variable
   // if the type variable is a type parameter of the candidate method.
   public static boolean isPotentiallyCompatibleWithTypeParameter(PsiFunctionalExpression expression,
                                                                  PsiExpressionList argsList,
@@ -773,7 +793,6 @@ public class LambdaUtil {
   }
 
   public static PsiCall copyTopLevelCall(@NotNull PsiCall call) {
-    PsiCall copyCall = (PsiCall)call.copy();
     if (call instanceof PsiEnumConstant) {
       PsiClass containingClass = ((PsiEnumConstant)call).getContainingClass();
       if (containingClass == null) {
@@ -787,11 +806,16 @@ public class LambdaUtil {
       if (resolveMethod == null) {
         return null;
       }
-      PsiClass anEnum = JavaPsiFacade.getElementFactory(call.getProject()).createEnum(enumName);
+      PsiElement contextFile = call.getContainingFile().copy();
+      PsiClass anEnum = (PsiClass)contextFile.add(JavaPsiFacade.getElementFactory(call.getProject()).createEnum(enumName));
       anEnum.add(resolveMethod);
       return  (PsiCall)anEnum.add(call);
     }
-    return copyCall;
+    PsiType type = PsiTypesUtil.getExpectedTypeByParent(call);
+    if (type != null) {
+      return (PsiCall)copyWithExpectedType(call, type);
+    }
+    return (PsiCall)call.copy();
   }
 
   public static <T> T performWithSubstitutedParameterBounds(final PsiTypeParameter[] typeParameters,
@@ -804,7 +828,7 @@ public class LambdaUtil {
           final List<PsiType> conjuncts = ContainerUtil.map(types, type -> substitutor.substitute(type));
           //don't glb to avoid flattening = Object&Interface would be preserved
           //otherwise methods with different signatures could get same erasure
-          final PsiType upperBound = PsiIntersectionType.createIntersection(false, conjuncts.toArray(new PsiType[conjuncts.size()]));
+          final PsiType upperBound = PsiIntersectionType.createIntersection(false, conjuncts.toArray(PsiType.EMPTY_ARRAY));
           getFunctionalTypeMap().put(parameter, upperBound);
         }
       }
@@ -856,9 +880,162 @@ public class LambdaUtil {
    */
   public static boolean isIdentityLambda(PsiLambdaExpression lambda) {
     PsiParameterList parameters = lambda.getParameterList();
-    if(parameters.getParametersCount() != 1) return false;
+    if (parameters.getParametersCount() != 1) return false;
     PsiExpression expression = PsiUtil.skipParenthesizedExprDown(extractSingleExpressionFromBody(lambda.getBody()));
     return expression instanceof PsiReferenceExpression &&
            ((PsiReferenceExpression)expression).isReferenceTo(parameters.getParameters()[0]);
+  }
+
+  private static boolean isSafeLambdaReplacement(@NotNull PsiLambdaExpression lambda,
+                                                 @NotNull Function<PsiLambdaExpression, PsiExpression> replacer) {
+    PsiElement body = lambda.getBody();
+    if (body == null) return false;
+    final PsiCall call = treeWalkUp(body);
+    if (call != null) {
+      JavaResolveResult result = call.resolveMethodGenerics();
+      PsiElement oldTarget = result.getElement();
+      if (oldTarget != null) {
+        String origErrorMessage = result instanceof MethodCandidateInfo ? ((MethodCandidateInfo)result).getInferenceErrorMessage() : null;
+        Object marker = new Object();
+        PsiTreeUtil.mark(lambda, marker);
+        PsiType origType = call instanceof PsiExpression ? ((PsiExpression)call).getType() : null;
+        PsiCall copyCall = copyTopLevelCall(call);
+        if (copyCall == null) return false;
+        PsiLambdaExpression lambdaCopy = ObjectUtils.tryCast(PsiTreeUtil.releaseMark(copyCall, marker), PsiLambdaExpression.class);
+        if (lambdaCopy == null) return false;
+        PsiExpression function = replacer.apply(lambdaCopy);
+        if (function == null) return false;
+        JavaResolveResult resultCopy = copyCall.resolveMethodGenerics();
+        if (resultCopy.getElement() != oldTarget) return false;
+        String copyMessage = resultCopy instanceof MethodCandidateInfo ? ((MethodCandidateInfo)resultCopy).getInferenceErrorMessage() : null;
+        if (!Objects.equals(origErrorMessage, copyMessage)) return false;
+        if (function instanceof PsiFunctionalExpression && ((PsiFunctionalExpression)function).getFunctionalInterfaceType() == null) {
+          return false;
+        }
+        PsiType newType = copyCall instanceof PsiExpression ? ((PsiExpression)copyCall).getType() : null;
+        if (origType instanceof PsiClassType && newType instanceof PsiClassType &&
+            ((PsiClassType)origType).isRaw() != ((PsiClassType)newType).isRaw()) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Returns false if after suggested replacement of lambda body, containing method call would resolve to something else
+   * or its return type will change.
+   *
+   * @param lambda              a lambda whose body is going to be replaced
+   * @param newFunctionSupplier replacement for lambda to check,
+   *                            lazy computed for lambdas in invocation context only.
+   *                            Replacement evaluated to {@code null} is treated as invalid overload
+   */
+  public static boolean isSafeLambdaReplacement(@NotNull PsiLambdaExpression lambda, @NotNull Supplier<PsiExpression> newFunctionSupplier) {
+    return isSafeLambdaReplacement(lambda, l -> {
+      PsiExpression replacement = newFunctionSupplier.get();
+      return replacement == null ? null : (PsiExpression)l.replace(replacement);
+    });
+  }
+
+  /**
+   * Returns false if after suggested replacement of lambda body, containing method call would resolve to something else
+   * or its return type will change.
+   *
+   * @param lambda          a lambda whose body is going to be replaced
+   * @param replacementText a text of new expression to replace lambda
+   */
+  public static boolean isSafeLambdaReplacement(@NotNull PsiLambdaExpression lambda, @NotNull String replacementText) {
+    return isSafeLambdaReplacement(lambda, () -> JavaPsiFacade.getElementFactory(lambda.getProject())
+      .createExpressionFromText(replacementText, lambda.getParent()));
+  }
+
+  /**
+   * Returns false if after suggested replacement of lambda body, containing method call would resolve to something else
+   * or its return type will change.
+   *
+   * <p>
+   * True will be returned for lambdas in non-invocation context as well as for lambdas in invocation context,
+   * when invoked method is not overloaded or all overloads are 'lambda friendly'
+   *
+   * <p>
+   *   Value-compatible lambda like {@code () -> foo() == true} can be converted to value-compatible AND void-compatible
+   *   {@code () -> foo()} during simplification. This could lead to ambiguity during containing method call resolution and thus
+   *   to the errors after applying the suggestion.
+   * </p>
+   *
+   * @param lambda          a lambda whose body is going to be replaced
+   * @param newBodySupplier replacement for lambda's body to check,
+   *                        lazy computed for lambdas in invocation context only.
+   *                        Replacement evaluated to {@code null} is treated as invalid overload
+   */
+  public static boolean isSafeLambdaBodyReplacement(@NotNull PsiLambdaExpression lambda, @NotNull Supplier<PsiElement> newBodySupplier) {
+    return isSafeLambdaReplacement(lambda, l -> {
+      PsiElement oldBody = l.getBody();
+      PsiElement newBody = newBodySupplier.get();
+      if (oldBody == null || newBody == null) return null;
+      oldBody.replace(newBody);
+      return l;
+    });
+  }
+
+  /**
+   * {@link #isSafeLambdaBodyReplacement(PsiLambdaExpression, Supplier)} overload to test the same lambda body,
+   * but with only return value {@code expression} changed to {@code replacement}
+   * @param lambdaReturnExpression a return expression inside lambda body
+   * @param replacement a replacement for return expression
+   */
+  public static boolean isSafeLambdaReturnValueReplacement(@NotNull PsiExpression lambdaReturnExpression,
+                                                           @NotNull PsiExpression replacement) {
+    if (lambdaReturnExpression.getParent() instanceof PsiReturnStatement || lambdaReturnExpression.getParent() instanceof PsiLambdaExpression) {
+      PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(lambdaReturnExpression, PsiLambdaExpression.class, true, PsiMethod.class);
+      if (lambdaExpression != null &&
+          !isSafeLambdaBodyReplacement(lambdaExpression, () -> {
+            PsiLambdaExpression lambdaExpression1 = PsiTreeUtil.getParentOfType(lambdaReturnExpression, PsiLambdaExpression.class);
+            if (lambdaExpression1 == null) return null;
+            PsiElement body = lambdaExpression1.getBody();
+            if (body == null) return null;
+            Object marker = new Object();
+            PsiTreeUtil.mark(lambdaReturnExpression, marker);
+            PsiElement copy = body.copy();
+            PsiElement exprInReturn = PsiTreeUtil.releaseMark(copy, marker);
+            if (exprInReturn == null) return null;
+            if (exprInReturn == copy) {
+              return exprInReturn.replace(replacement);
+            }
+            exprInReturn.replace(replacement);
+            return copy;
+          })) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public static PsiElement copyWithExpectedType(PsiElement expression, PsiType type) {
+    String canonicalText = type.getCanonicalText();
+    if (!PsiUtil.isLanguageLevel8OrHigher(expression)) {
+      final String arrayInitializer = "new " + canonicalText + "[]{0}";
+      PsiNewExpression newExpr = (PsiNewExpression)createExpressionFromText(arrayInitializer, expression);
+      final PsiArrayInitializerExpression initializer = newExpr.getArrayInitializer();
+      LOG.assertTrue(initializer != null);
+      return initializer.getInitializers()[0].replace(expression);
+    }
+
+    final String callableWithExpectedType = "(java.util.concurrent.Callable<" + canonicalText + ">)() -> x";
+    PsiTypeCastExpression typeCastExpr = (PsiTypeCastExpression)createExpressionFromText(callableWithExpectedType, expression);
+    PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)typeCastExpr.getOperand();
+    LOG.assertTrue(lambdaExpression != null);
+    PsiElement body = lambdaExpression.getBody();
+    LOG.assertTrue(body instanceof PsiExpression);
+    return body.replace(expression);
+  }
+
+  private static PsiExpression createExpressionFromText(String exprText, PsiElement context) {
+    PsiExpression expr = JavaPsiFacade.getInstance(context.getProject())
+                                      .getElementFactory()
+                                      .createExpressionFromText(exprText, context);
+    //ensure refs to inner classes are collapsed to avoid raw types (container type would be raw in qualified text)
+    return (PsiExpression)JavaCodeStyleManager.getInstance(context.getProject()).shortenClassReferences(expr);
   }
 }

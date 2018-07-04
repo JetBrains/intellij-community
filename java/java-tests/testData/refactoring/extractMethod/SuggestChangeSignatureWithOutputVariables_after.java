@@ -2,10 +2,10 @@ import org.jetbrains.annotations.NotNull;
 
 class Test {
 
-  private BigDecimal getRevenue() {
+  private String getRevenue() {
       final String revenue = newMethod("revenues");
-    
-    return revenue;
+
+      return revenue;
   }
 
     @NotNull
@@ -17,10 +17,10 @@ class Test {
         return revenue;
     }
 
-    public BigDecimal getExpense() {
+    public String getExpense() {
         final String expense = newMethod("expenses");
 
-    return expense;
+        return expense;
   }
 
   private String createNamedQuery(String expenses) {

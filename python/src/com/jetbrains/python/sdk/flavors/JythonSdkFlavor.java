@@ -61,8 +61,8 @@ public class JythonSdkFlavor extends PythonSdkFlavor {
   }
 
   @Override
-  public void initPythonPath(GeneralCommandLine cmd, Collection<String> path) {
-    initPythonPath(path, cmd.getEnvironment());
+  public void initPythonPath(GeneralCommandLine cmd, boolean passParentEnvs, Collection<String> path) {
+    initPythonPath(path, passParentEnvs, cmd.getEnvironment());
     ParamsGroup paramGroup = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);
     assert paramGroup != null;
     for (String param : paramGroup.getParameters()) {
@@ -74,8 +74,10 @@ public class JythonSdkFlavor extends PythonSdkFlavor {
   }
 
   @Override
-  public void initPythonPath(Collection<String> path, Map<String, String> env) {
-    path = appendSystemEnvPaths(path, JYTHONPATH);
+  public void initPythonPath(Collection<String> path, boolean passParentEnvs, Map<String, String> env) {
+    if (passParentEnvs) {
+      path = appendSystemEnvPaths(path, JYTHONPATH);
+    }
     final String jythonPath = StringUtil.join(path, File.pathSeparator);
     addToEnv(JYTHONPATH, jythonPath, env);
   }

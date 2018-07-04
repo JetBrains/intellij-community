@@ -52,6 +52,7 @@ public class OverriderUsageInfo extends UsageInfo implements OverriderMethodUsag
   /**
    * @deprecated use {@link #getOverridingMethod()} instead
    */
+  @Deprecated
   @Nullable
   @Override
   public PsiMethod getElement() {

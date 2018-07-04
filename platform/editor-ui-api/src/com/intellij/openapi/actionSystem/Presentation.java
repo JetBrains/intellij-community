@@ -17,6 +17,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.util.SmartFMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -110,7 +111,6 @@ public final class Presentation implements Cloneable {
     myChangeSupport.removePropertyChangeListener(l);
   }
 
-  @Nullable
   public String getText() {
     return myText;
   }
@@ -129,6 +129,7 @@ public final class Presentation implements Cloneable {
 
       if (mayContainMnemonic) {
         StringBuilder plainText = new StringBuilder();
+        int backShift = 0;
         for (int i = 0; i < text.length(); i++) {
           char ch = text.charAt(i);
           if (myMnemonic == 0 && (ch == '_' || ch == '&')) {
@@ -143,8 +144,10 @@ public final class Presentation implements Cloneable {
               }
               else {
                 myMnemonic = Character.toUpperCase(ch);  // mnemonics are case insensitive
-                myDisplayedMnemonicIndex = i - 1;
+                myDisplayedMnemonicIndex = i - 1 - backShift;
               }
+            } else if (myMnemonic == 0) {
+              backShift++;
             }
           }
           plainText.append(ch);
@@ -309,10 +312,21 @@ public final class Presentation implements Cloneable {
     setText(presentation.getTextWithMnemonic(), presentation.myDisplayedMnemonicIndex > -1);
     setDescription(presentation.getDescription());
     setIcon(presentation.getIcon());
+    setSelectedIcon(presentation.getSelectedIcon());
     setDisabledIcon(presentation.getDisabledIcon());
     setHoveredIcon(presentation.getHoveredIcon());
     setVisible(presentation.isVisible());
     setEnabled(presentation.isEnabled());
+  }
+
+  @Nullable
+  public <T> T getClientProperty(@NotNull Key<T> key) {
+    //noinspection unchecked
+    return (T)myUserMap.get(key.toString());
+  }
+
+  public <T> void putClientProperty(@NotNull Key<T> key, @Nullable T value) {
+    putClientProperty(key.toString(), value);
   }
 
   @Nullable

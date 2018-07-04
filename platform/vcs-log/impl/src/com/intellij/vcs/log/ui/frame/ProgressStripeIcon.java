@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.ui.frame;
 
-import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
@@ -135,7 +134,7 @@ public abstract class ProgressStripeIcon implements Icon {
     public void paint(@NotNull Graphics2D g2, int x, int y, int shift) {
       Color dark;
       Color light;
-      if (IntelliJLaf.isGraphite()) {
+      if (UIUtil.isGraphite()) {
         dark = DARK_GRAY;
         light = LIGHT_GRAY;
       }
@@ -171,7 +170,7 @@ public abstract class ProgressStripeIcon implements Icon {
     }
 
     Icon passive = result.get(0);
-    AsyncProcessIcon icon = new AsyncProcessIcon("ProgressWithStripes", result.toArray(new Icon[result.size()]), passive) {
+    AsyncProcessIcon icon = new AsyncProcessIcon("ProgressWithStripes", result.toArray(new Icon[0]), passive) {
       @Override
       public Dimension getPreferredSize() {
         return new Dimension(component.getWidth(), passive.getIconHeight());

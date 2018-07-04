@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -53,11 +54,15 @@ public class InlineUtil {
                                              PsiJavaCodeReferenceElement ref,
                                              PsiExpression thisAccessExpr)
     throws IncorrectOperationException {
+    final PsiElement parent = ref.getParent();
+    if (parent instanceof PsiResourceExpression) {
+      LOG.error("Unable to inline resource reference");
+      return (PsiExpression)ref;
+    }
     PsiManager manager = initializer.getManager();
 
     PsiClass thisClass = RefactoringChangeUtil.getThisClass(initializer);
     PsiClass refParent = RefactoringChangeUtil.getThisClass(ref);
-    final PsiElement parent = ref.getParent();
     final PsiType varType = variable.getType();
     initializer = RefactoringUtil.convertInitializerToNormalExpression(initializer, varType);
     if (initializer instanceof PsiPolyadicExpression) {
@@ -156,6 +161,9 @@ public class InlineUtil {
     if (typeElement == null) {
       typeElement = factory.createTypeElement(variable.getType());
     }
+    else if (typeElement.isInferredType()) {
+      return expr;
+    }
     castTypeElement.replace(typeElement);
     final PsiExpression operand = cast.getOperand();
     assert operand != null;
@@ -209,7 +217,8 @@ public class InlineUtil {
         arrayCreation.delete();
         return;
       }
-
+      
+      CommentTracker cm = new CommentTracker();
       PsiExpression[] initializers = arrayInitializer.getInitializers();
       if (initializers.length > 0) {
         PsiElement lastInitializerSibling = initializers[initializers.length - 1];
@@ -233,8 +242,9 @@ public class InlineUtil {
           firstElement = leadingComment;
         }
         argumentList.addRange(firstElement, lastInitializerSibling);
+        cm.markRangeUnchanged(firstElement, lastInitializerSibling);
       }
-      args[args.length - 1].delete();
+      cm.deleteAndRestoreComments(args[args.length - 1]);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -311,16 +321,26 @@ public class InlineUtil {
 
   public static TailCallType getTailCallType(@NotNull final PsiReference psiReference) {
     PsiElement element = psiReference.getElement();
-    if (element instanceof PsiMethodReferenceExpression) return TailCallType.None;
+    if (element instanceof PsiMethodReferenceExpression) return TailCallType.Return;
     PsiExpression methodCall = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
     if (methodCall == null) return TailCallType.None;
-    if (methodCall.getParent() instanceof PsiReturnStatement) return TailCallType.Return;
-    if (methodCall.getParent() instanceof PsiExpressionStatement) {
-      PsiStatement callStatement = (PsiStatement) methodCall.getParent();
-      PsiMethod callerMethod = PsiTreeUtil.getParentOfType(callStatement, PsiMethod.class);
-      if (callerMethod != null) {
-        final PsiStatement[] psiStatements = callerMethod.getBody().getStatements();
-        return psiStatements.length > 0 && callStatement == psiStatements [psiStatements.length-1] ? TailCallType.Simple : TailCallType.None;
+    PsiElement callParent = methodCall.getParent();
+    if (callParent instanceof PsiReturnStatement || callParent instanceof PsiLambdaExpression) {
+      return TailCallType.Return;
+    }
+    if (callParent instanceof PsiExpressionStatement) {
+      PsiStatement curElement = (PsiStatement)callParent;
+      while (true) {
+        if (PsiTreeUtil.getNextSiblingOfType(curElement, PsiStatement.class) != null) return TailCallType.None;
+        PsiElement parent = curElement.getParent();
+        if (parent instanceof PsiCodeBlock) {
+          PsiElement blockParent = parent.getParent();
+          if (blockParent instanceof PsiMethod || blockParent instanceof PsiLambdaExpression) return TailCallType.Simple;
+          if (!(blockParent instanceof PsiBlockStatement)) return TailCallType.None;
+          parent = blockParent.getParent();
+        }
+        if (!(parent instanceof PsiLabeledStatement) && !(parent instanceof PsiIfStatement)) return TailCallType.None;
+        curElement = (PsiStatement)parent;
       }
     }
     return TailCallType.None;

@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,6 +42,7 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutImpl;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
 import org.jetbrains.annotations.Nullable;
@@ -56,6 +58,7 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
   public static final ExtensionPointName<WelcomeFrameProvider> EP = ExtensionPointName.create("com.intellij.welcomeFrameProvider");
   static final String DIMENSION_KEY = "WELCOME_SCREEN";
   private static IdeFrame ourInstance;
+  private static Disposable ourTouchbar;
   private final WelcomeScreen myScreen;
   private final BalloonLayout myBalloonLayout;
 
@@ -141,22 +144,30 @@ public class WelcomeFrame extends JFrame implements IdeFrame, AccessibleContextA
   
   public static void resetInstance() {
     ourInstance = null;
+    if (ourTouchbar != null) {
+      ourTouchbar.dispose();
+      ourTouchbar = null;
+    }
   }
 
   public static void showNow() {
-    if (ourInstance == null) {
-      IdeFrame frame = null;
-      for (WelcomeFrameProvider provider : EP.getExtensions()) {
-        frame = provider.createFrame();
-        if (frame != null) break;
-      }
-      if (frame == null) {
-        frame = new WelcomeFrame();
-      }
-      IdeMenuBar.installAppMenuIfNeeded((JFrame)frame);
-      ((JFrame)frame).setVisible(true);
-      ourInstance = frame;
+    if (ourInstance != null) return;
+    if (!GeneralSettings.getInstance().isShowWelcomeScreen()) {
+      ApplicationManagerEx.getApplicationEx().exit(false, true);
     }
+
+    IdeFrame frame = null;
+    for (WelcomeFrameProvider provider : EP.getExtensions()) {
+      frame = provider.createFrame();
+      if (frame != null) break;
+    }
+    if (frame == null) {
+      frame = new WelcomeFrame();
+    }
+    IdeMenuBar.installAppMenuIfNeeded((JFrame)frame);
+    ((JFrame)frame).setVisible(true);
+    ourInstance = frame;
+    ourTouchbar = TouchBarsManager.showDialogWrapperButtons(frame.getComponent());
   }
 
   public static void showIfNoProjectOpened() {

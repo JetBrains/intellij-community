@@ -78,7 +78,10 @@ public class PsiFileFactoryImpl extends PsiFileFactory {
                                     boolean eventSystemEnabled, boolean markAsCopy, boolean noSizeLimit,
                                     @Nullable VirtualFile original) {
     LightVirtualFile virtualFile = new LightVirtualFile(name, language, text);
-    if (original != null) virtualFile.setOriginalFile(original);
+    if (original != null) {
+      virtualFile.setOriginalFile(original);
+      virtualFile.setFileType(original.getFileType());
+    }
     if (noSizeLimit) {
       SingleRootFileViewProvider.doNotCheckFileSizeLimit(virtualFile);
     }

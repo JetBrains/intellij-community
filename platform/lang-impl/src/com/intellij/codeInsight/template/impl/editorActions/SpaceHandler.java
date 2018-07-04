@@ -22,10 +22,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 public class SpaceHandler extends TypedHandlerDelegate {
+  @NotNull
   @Override
-  public Result beforeCharTyped(char charTyped, Project project, Editor editor, PsiFile file, FileType fileType) {
+  public Result beforeCharTyped(char charTyped, @NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, @NotNull FileType fileType) {
     if (charTyped == TemplateSettings.SPACE_CHAR && TemplateManager.getInstance(project).startTemplate(editor, TemplateSettings.SPACE_CHAR)) {
       return Result.STOP;
     }

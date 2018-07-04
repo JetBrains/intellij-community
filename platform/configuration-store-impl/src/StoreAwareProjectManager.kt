@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
+import com.intellij.configurationStore.schemeManager.SchemeChangeEvent
+import com.intellij.configurationStore.schemeManager.SchemeFileTracker
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ModalityState
@@ -25,6 +13,7 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.debug
+import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
@@ -44,6 +33,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 
 private val CHANGED_FILES_KEY = Key.create<MultiMap<ComponentStoreImpl, StateStorage>>("CHANGED_FILES_KEY")
+private val CHANGED_SCHEMES_KEY = Key.create<MultiMap<SchemeFileTracker, SchemeChangeEvent>>("CHANGED_SCHEMES_KEY")
 
 /**
  * Should be a separate service, not closely related to ProjectManager, but it requires some cleanup/investigation.
@@ -63,11 +53,32 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
         continue
       }
 
-      val changes = CHANGED_FILES_KEY.get(project) ?: continue
-      CHANGED_FILES_KEY.set(project, null)
-      if (!changes.isEmpty) {
-        runBatchUpdate(project.messageBus) {
-          for ((store, storages) in changes.entrySet()) {
+      val changedSchemes = project.getUserData(CHANGED_SCHEMES_KEY)
+      if (changedSchemes != null) {
+        CHANGED_SCHEMES_KEY.set(project, null)
+      }
+
+      val changedStorages = project.getUserData(CHANGED_FILES_KEY)
+      if (changedStorages != null) {
+        CHANGED_FILES_KEY.set(project, null)
+      }
+
+      if ((changedSchemes == null || changedSchemes.isEmpty) && (changedStorages == null || changedStorages.isEmpty)) {
+        continue
+      }
+
+      runBatchUpdate(project.messageBus) {
+        // reload schemes first because project file can refer to scheme (e.g. inspection profile)
+        if (changedSchemes != null) {
+          for ((tracker, files) in changedSchemes.entrySet()) {
+            LOG.runAndLogException {
+              tracker.reload(files)
+            }
+          }
+        }
+
+        if (changedStorages != null) {
+          for ((store, storages) in changedStorages.entrySet()) {
             if ((store.storageManager as? StateStorageManagerImpl)?.componentManager?.isDisposed == true) {
               continue
             }
@@ -186,6 +197,26 @@ class StoreAwareProjectManager(virtualFileManager: VirtualFileManager, progressM
 
     if (storage is StateStorageBase<*>) {
       storage.disableSaving()
+    }
+
+    if (isReloadUnblocked()) {
+      changedFilesAlarm.cancelAndRequest()
+    }
+  }
+
+  internal fun registerChangedScheme(event: SchemeChangeEvent, schemeFileTracker: SchemeFileTracker, project: Project) {
+    if (LOG.isDebugEnabled) {
+      LOG.debug("[RELOAD] Registering scheme to reload: $event", Exception())
+    }
+
+    var changes = CHANGED_SCHEMES_KEY.get(project)
+    if (changes == null) {
+      changes = MultiMap.createLinkedSet()
+      CHANGED_SCHEMES_KEY.set(project, changes)
+    }
+
+    synchronized(changes) {
+      changes.putValue(schemeFileTracker, event)
     }
 
     if (isReloadUnblocked()) {

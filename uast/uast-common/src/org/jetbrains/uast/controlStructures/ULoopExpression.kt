@@ -21,10 +21,10 @@ import org.jetbrains.uast.visitor.UastTypedVisitor
  * Represents a loop expression.
  */
 interface ULoopExpression : UExpression {
-    /**
-     * Returns the loop body [UExpression].
-     */
-    val body: UExpression
+  /**
+   * Returns the loop body [UExpression].
+   */
+  val body: UExpression
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) = visitor.visitLoopExpression(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitLoopExpression(this, data)
 }

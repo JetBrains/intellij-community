@@ -19,15 +19,15 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import org.jetbrains.uast.internal.log
 
-class UComment(override val psi: PsiComment, override val uastParent: UElement) : UElement {
-    @Deprecated("Use a constructor that takes PsiComment as parameter")
-    constructor(psi: PsiElement, parent: UElement) : this(psi as PsiComment, parent)
+class UComment(override val psi: PsiComment, override val uastParent: UElement) : JvmDeclarationUElement {
+  @Deprecated("Use a constructor that takes PsiComment as parameter")
+  constructor(psi: PsiElement, parent: UElement) : this(psi as PsiComment, parent)
 
-    val text: String
-        get() = asSourceString()
+  val text: String
+    get() = asSourceString()
 
-    override fun asLogString() = log()
+  override fun asLogString(): String = log()
 
-    override fun asRenderString(): String = asSourceString()
-    override fun asSourceString(): String = psi.text
+  override fun asRenderString(): String = asSourceString()
+  override fun asSourceString(): String = psi.text
 }

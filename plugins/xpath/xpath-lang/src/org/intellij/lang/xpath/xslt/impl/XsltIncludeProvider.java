@@ -84,6 +84,6 @@ public class XsltIncludeProvider extends FileIncludeProvider {
     };
 
     NanoXmlUtil.parse(CharArrayUtil.readerFromCharSequence(contentAsText), builder);
-    return infos.toArray(new FileIncludeInfo[infos.size()]);
+    return infos.toArray(FileIncludeInfo.EMPTY);
   }
 }

@@ -531,7 +531,7 @@ public class MvcModuleStructureUtil {
 
     final ModifiableModuleModel moduleModel = moduleManager.getModifiableModel();
 
-    ModuleDeleteProvider.removeModule(toRemove, null, usingModels, moduleModel);
+    ModuleDeleteProvider.removeModule(toRemove, usingModels, moduleModel);
 
     ModifiableModelCommitter.multiCommit(usingModels, moduleModel);
   }

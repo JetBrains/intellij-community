@@ -15,11 +15,14 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author peter
@@ -34,7 +37,7 @@ public abstract class CodeStyleSettingsProvider {
   }
 
   @NotNull
-  public abstract Configurable createSettingsPage(CodeStyleSettings settings, final CodeStyleSettings originalSettings);
+  public abstract Configurable createSettingsPage(CodeStyleSettings settings, final CodeStyleSettings modelSettings);
 
   /**
    * Returns the name of the configurable page without creating a Configurable instance.
@@ -53,7 +56,8 @@ public abstract class CodeStyleSettingsProvider {
   }
 
   public DisplayPriority getPriority() {
-    return DisplayPriority.LANGUAGE_SETTINGS;
+    List<Language> primaryIdeLanguages = IdeLanguageCustomization.getInstance().getPrimaryIdeLanguages();
+    return primaryIdeLanguages.contains(getLanguage()) ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
   }
 
   /**

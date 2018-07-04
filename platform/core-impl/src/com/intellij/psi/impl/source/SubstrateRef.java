@@ -42,13 +42,13 @@ public abstract class SubstrateRef {
   public abstract ASTNode getNode();
 
   @Nullable
-  public Stub getStub(int stubIndex) {
+  public Stub getStub() {
     return null;
   }
 
   @Nullable
-  public Stub getGreenStub(int index) {
-    return getStub(index);
+  public Stub getGreenStub() {
+    return getStub();
   }
 
   public abstract boolean isValid();
@@ -119,7 +119,7 @@ public abstract class SubstrateRef {
 
     @NotNull
     @Override
-    public Stub getStub(int stubIndex) {
+    public Stub getStub() {
       return myStub;
     }
 

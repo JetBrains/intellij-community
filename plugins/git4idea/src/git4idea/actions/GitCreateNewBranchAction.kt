@@ -108,7 +108,7 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
     return suggestedNames.distinct().singleOrNull()
   }
 
-  fun createBranch(project: Project, repositories: List<GitRepository>) {
+  private fun createBranch(project: Project, repositories: List<GitRepository>) {
     val options = getNewBranchNameFromUser(project, repositories, "Create New Branch", null)
     if (options != null) {
       val brancher = GitBrancher.getInstance(project)
@@ -121,7 +121,7 @@ internal class GitCreateNewBranchAction : DumbAwareAction() {
     }
   }
 
-  fun createBranchStartingFrom(repository: GitRepository, commit: Hash, initialName: String?) {
+  private fun createBranchStartingFrom(repository: GitRepository, commit: Hash, initialName: String?) {
     val project = repository.project
     val options = getNewBranchNameFromUser(project, setOf(repository), "Create New Branch From ${commit.toShortString()}", initialName)
     if (options != null) {

@@ -46,7 +46,7 @@ public abstract class ZenCodingGenerator {
     return null;
   }
 
-  public abstract boolean isMyContext(@NotNull PsiElement context, boolean wrapping);
+  public abstract boolean isMyContext(@NotNull CustomTemplateCallback callback, boolean wrapping);
 
   @Nullable
   public String getSuffix() {

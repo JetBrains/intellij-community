@@ -21,6 +21,7 @@ import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.util.ArrayFactory;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.stubs.PyClassStub;
@@ -265,7 +266,13 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
   boolean isSubclass(@NotNull String superClassQName, @Nullable TypeEvalContext context);
 
   /**
-   * Returns the aggregated list of names defined in __slots__ attributes of the class and its ancestors.
+   * Returns the aggregated list of names defined in `__slots__` attributes of the class and its ancestors.
+   * <p>
+   * Returned value is `null` if class or at least one of its ancestor does not follow the next conditions:
+   * <ul>
+   * <li>it should be a new style class</li>
+   * <li>its `__slots__` should exist and should not contain `__dict__`</li>
+   * </ul>
    *
    * @param context (will be used default if null)
    */
@@ -295,9 +302,38 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
    * Returns the type representing the metaclass of the class if it is explicitly set, null otherwise.
    * <p/>
    * The metaclass might be defined outside the class in case of Python 2 file-level __metaclass__ attributes.
+   *
+   * @deprecated Use {@link #getMetaClassType(boolean, TypeEvalContext)} with inherited=false.
    */
+  @Deprecated
   @Nullable
   PyType getMetaClassType(@NotNull TypeEvalContext context);
+
+  /**
+   * If {@code inherited} is false returns the respective type for the metaclass specified using either
+   * {@code metaclass} keyword argument in the list of base classes in Python 3 or {@code __metaclass__} attribute
+   * defined in this class itself or the module containing it in Python 2. If none is present, returns {@code null}.
+   * <p>
+   * If {@code inherited} is true, this method performs the same check for every class in MRO additionally taking
+   * into account instantiated metaclass ancestors as in the following example:
+   * <p>
+   * <code><pre>
+   * class Meta(type):
+   *     pass
+   *
+   * Base = Meta('Base', (), {})
+   *
+   * class MyClass(Base):
+   *     pass
+   * </pre></code>
+   * <p>
+   * If several candidates are found, the most-derived one (the lowest one in the hierarchy) is returned,
+   * and if it cannot be deduced, {@code type} is used as the fallback value.
+   */
+  @Nullable
+  default PyClassLikeType getMetaClassType(boolean inherited, @NotNull TypeEvalContext context) {
+    return ObjectUtils.tryCast(getMetaClassType(context), PyClassLikeType.class);
+  }
 
   /**
    * Returns the expression that defines the metaclass of the class.

@@ -91,10 +91,12 @@ public class JavaDocLocalInspection extends JavaDocLocalInspectionBase {
       additionalTagsPanel.setText(myAdditionalJavadocTags);
       add(additionalTagsPanel, gc);
 
-      JTabbedPane tabs = new JBTabbedPane(SwingConstants.BOTTOM);
+      JTabbedPane tabs = new JBTabbedPane(SwingConstants.BOTTOM, JTabbedPane.SCROLL_TAB_LAYOUT);
       String[] tags = {"@author", "@version", "@since"};
       tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title.package"),
                createOptionsPanel(new String[]{NONE, PUBLIC}, tags, PACKAGE_OPTIONS));
+      tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title.module"),
+               createOptionsPanel(new String[]{NONE, PUBLIC}, tags, MODULE_OPTIONS));
       tags = new String[]{"@author", "@version", "@since", "@param"};
       tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title"),
                createOptionsPanel(new String[]{NONE, PUBLIC, PACKAGE_LOCAL}, tags, TOP_LEVEL_CLASS_OPTIONS));
@@ -116,15 +118,15 @@ public class JavaDocLocalInspection extends JavaDocLocalInspectionBase {
       periodCheckBox.addActionListener(e -> IGNORE_JAVADOC_PERIOD = periodCheckBox.isSelected());
       add(periodCheckBox, gc);
 
-      JCheckBox ignoreDuplicateThrowsCheckBox = new JCheckBox("Ignore duplicate throws tag", isIgnoreDuplicatedThrows());
+      JCheckBox ignoreDuplicateThrowsCheckBox = new JCheckBox(InspectionsBundle.message("inspection.javadoc.option.ignore.throws"), isIgnoreDuplicatedThrows());
       ignoreDuplicateThrowsCheckBox.addActionListener(e -> setIgnoreDuplicatedThrows(ignoreDuplicateThrowsCheckBox.isSelected()));
       add(ignoreDuplicateThrowsCheckBox, gc);
 
-      JCheckBox ignorePointToItselfCheckBox = new JCheckBox("Ignore javadoc pointing to itself", IGNORE_POINT_TO_ITSELF);
+      JCheckBox ignorePointToItselfCheckBox = new JCheckBox(InspectionsBundle.message("inspection.javadoc.option.ignore.self.ref"), IGNORE_POINT_TO_ITSELF);
       ignorePointToItselfCheckBox.addActionListener(e -> IGNORE_POINT_TO_ITSELF = ignorePointToItselfCheckBox.isSelected());
       add(ignorePointToItselfCheckBox, gc);
 
-      JCheckBox ignoreSimpleAccessorsCheckBox = new JCheckBox("Ignore simple property accessors", isIgnoreSimpleAccessors());
+      JCheckBox ignoreSimpleAccessorsCheckBox = new JCheckBox(InspectionsBundle.message("inspection.javadoc.option.ignore.simple"), isIgnoreSimpleAccessors());
       ignoreSimpleAccessorsCheckBox.addActionListener(e -> setIgnoreSimpleAccessors(ignoreSimpleAccessorsCheckBox.isSelected()));
       add(ignoreSimpleAccessorsCheckBox, gc);
     }
@@ -325,6 +327,12 @@ public class JavaDocLocalInspection extends JavaDocLocalInspectionBase {
     public AddMissingParamTagFix(String name) {
       super("param", name);
       myName = name;
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return InspectionsBundle.message("inspection.javadoc.problem.add.param.tag.family");
     }
 
     @Override

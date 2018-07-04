@@ -17,6 +17,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -49,7 +50,7 @@ import java.util.*;
 @SuppressWarnings("UtilityClassWithoutPrivateConstructor")
 public class RecursionManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.RecursionManager");
-  private static final Object NULL = new Object();
+  private static final Object NULL = ObjectUtils.sentinel("RecursionManager.NULL");
   private static final ThreadLocal<CalculationStack> ourStack = new ThreadLocal<CalculationStack>() {
     @Override
     protected CalculationStack initialValue() {
@@ -81,7 +82,7 @@ public class RecursionManager {
 
         if (stack.checkReentrancy(realKey)) {
           if (ourAssertOnPrevention) {
-            throw new AssertionError("Endless recursion prevention occurred");
+            throw new StackOverflowPreventedException("Endless recursion prevention occurred");
           }
           return null;
         }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler
 
 import com.intellij.JavaTestUtil
@@ -23,9 +9,10 @@ import com.intellij.ide.highlighter.ArchiveFileType
 import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent
-import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileTypes.StdFileTypes
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
@@ -38,11 +25,22 @@ import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.io.URLUtil
+import com.intellij.util.ui.tree.TreeUtil
 
 class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
   override fun setUp() {
     super.setUp()
     myFixture.testDataPath = "${PluginPathManager.getPluginHomePath("java-decompiler")}/plugin/testData"
+  }
+
+  override fun tearDown() {
+    try {
+      FileEditorManagerEx.getInstanceEx(project).closeAllFiles()
+      EditorHistoryManager.getInstance(project).removeAllFiles()
+    }
+    finally {
+      super.tearDown()
+    }
   }
 
   fun testSimple() {
@@ -120,7 +118,7 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
   fun testPerformance() {
     val decompiler = IdeaDecompiler()
     val file = getTestFile("${PlatformTestUtil.getRtJarPath()}!/javax/swing/JTable.class")
-    PlatformTestUtil.startPerformanceTest("decompiling JTable.class", 10000, { decompiler.getText(file) }).assertTiming()
+    PlatformTestUtil.startPerformanceTest("decompiling JTable.class", 10000) { decompiler.getText(file) }.assertTiming()
   }
 
   fun testStructureView() {
@@ -129,13 +127,11 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
 
     val editor = FileEditorManager.getInstance(project).openFile(file, false)[0]
     val builder = StructureViewBuilder.PROVIDER.getStructureViewBuilder(StdFileTypes.CLASS, file, project)!!
-    val viewComponent = builder.createStructureView(editor, project) as StructureViewComponent
-    Disposer.register(myFixture.testRootDisposable, viewComponent)
-    viewComponent.setActionActive(JavaAnonymousClassesNodeProvider.ID, true)
-
-    val treeStructure = viewComponent.treeStructure
-    PlatformTestUtil.updateRecursively(treeStructure.rootElement as AbstractTreeNode<*>)
-    PlatformTestUtil.assertTreeStructureEquals(treeStructure, """
+    val svc = builder.createStructureView(editor, project) as StructureViewComponent
+    Disposer.register(myFixture.testRootDisposable, svc)
+    svc.setActionActive(JavaAnonymousClassesNodeProvider.ID, true)
+    TreeUtil.expandAll(svc.tree)
+    PlatformTestUtil.assertTreeStructureEquals(svc.tree.model, """
       StructureView.java
        StructureView
         B
@@ -173,10 +169,8 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
         println(file.path)
       }
       else if (file.fileType === StdFileTypes.CLASS && !file.name.contains('$')) {
-        val clsFile = psiManager.findFile(file)!!
-        val mirror = (clsFile as ClsFileImpl).mirror
-        val decompiled = mirror.text
-        assertTrue(file.path, decompiled.startsWith(IdeaDecompiler.BANNER) || file.name == "package-info.class")
+        val decompiled = (psiManager.findFile(file)!! as ClsFileImpl).mirror.text
+        assertTrue(file.path, decompiled.startsWith(IdeaDecompiler.BANNER) || file.name.endsWith("-info.class"))
 
         // check that no mapped line number is on an empty line
         val prefix = "// "
@@ -188,9 +182,9 @@ class IdeaDecompilerTest : LightCodeInsightFixtureTestCase() {
         }
       }
       else if (ArchiveFileType.INSTANCE == file.fileType) {
-        val jarFile = JarFileSystem.getInstance().getRootByLocal(file)
-        if (jarFile != null) {
-          VfsUtilCore.visitChildrenRecursively(jarFile, this)
+        val jarRoot = JarFileSystem.getInstance().getRootByLocal(file)
+        if (jarRoot != null) {
+          VfsUtilCore.visitChildrenRecursively(jarRoot, this)
         }
       }
 

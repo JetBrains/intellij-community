@@ -2,12 +2,12 @@ public class Test {
     {
         int x = 0;
 
-        newMethod("foo".substring(x));
+        newMethod(x, "foo");
 
-        newMethod("bar".substring(x));
+        newMethod(x, "bar");
     }
 
-    private void newMethod(String substring) {
-        System.out.println(substring);
+    private void newMethod(int x, String foo) {
+        System.out.println(foo.substring(x));
     }
 }

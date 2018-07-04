@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.editorActions.SmartBackspaceMode;
@@ -23,19 +9,23 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.DifferenceFilter;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Field;
 
 @State(
   name = "CodeInsightSettings",
@@ -70,6 +60,12 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
     }
   }
 
+  public boolean SHOW_EXTERNAL_ANNOTATIONS_INLINE = true;
+  public boolean SHOW_INFERRED_ANNOTATIONS_INLINE = false;
+
+
+  public boolean SHOW_METHOD_CHAIN_TYPES_INLINE = true;
+
   public boolean SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
   public boolean AUTO_POPUP_PARAMETER_INFO = true;
   public int PARAMETER_INFO_DELAY = 1000;
@@ -87,6 +83,7 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   public boolean AUTOCOMPLETE_ON_CODE_COMPLETION = true;
   public boolean AUTOCOMPLETE_ON_SMART_TYPE_COMPLETION = true;
 
+  @Deprecated
   public boolean AUTOCOMPLETE_COMMON_PREFIX = true;
 
   public boolean SHOW_FULL_SIGNATURES_IN_PARAMETER_INFO;
@@ -147,11 +144,13 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
   /**
    * @deprecated use {@link CodeInsightWorkspaceSettings#optimizeImportsOnTheFly}
    */
-  public boolean OPTIMIZE_IMPORTS_ON_THE_FLY;
+  @SuppressWarnings("MissingDeprecatedAnnotation") public boolean OPTIMIZE_IMPORTS_ON_THE_FLY;
 
   public boolean ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
   public boolean ADD_MEMBER_IMPORTS_ON_THE_FLY = true;
   public boolean JSP_ADD_UNAMBIGIOUS_IMPORTS_ON_THE_FLY;
+
+  public boolean TAB_EXITS_BRACKETS_AND_QUOTES;
 
   /**
    * Names of classes and packages excluded from (Java) auto-import and completion. These are only IDE-specific settings
@@ -159,20 +158,37 @@ public class CodeInsightSettings implements PersistentStateComponent<Element>, C
    * So please don't reference this field directly, use JavaProjectCodeInsightSettings instead.
    */
   @Property(surroundWithTag = false)
-  @AbstractCollection(
-    surroundWithTag = false,
-    elementTag = "EXCLUDED_PACKAGE",
-    elementValueAttribute = "NAME")
+  @XCollection(elementName = "EXCLUDED_PACKAGE", valueAttributeName = "NAME")
   public String[] EXCLUDED_PACKAGES = ArrayUtil.EMPTY_STRING_ARRAY;
 
   @Override
-  public void loadState(final Element state) {
+  public void loadState(@NotNull Element state) {
+    // 'Write' save only diff from default. Before load do reset to default values.
+    setDefaults();
+
     try {
       XmlSerializer.deserializeInto(this, state);
     }
     catch (XmlSerializationException e) {
       LOG.info(e);
     }
+  }
+
+  private void setDefaults() {
+    try {
+      ReflectionUtil.copyFields(CodeInsightSettings.class.getDeclaredFields(), new CodeInsightSettings(), this,
+                                new DifferenceFilter<Object>(null, null) {
+                                  @Override
+                                  public boolean isAccept(@NotNull Field field) {
+                                    return !field.getName().equals("EXCLUDED_PACKAGES");
+                                  }
+                                });
+    }
+    catch (Throwable e) {
+      LOG.info(e);
+    }
+
+    EXCLUDED_PACKAGES = ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   @Override

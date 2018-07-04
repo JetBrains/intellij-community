@@ -1,30 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
-import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -35,10 +18,10 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.impl.FileTypeRenderer;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
@@ -52,15 +35,13 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
-import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -73,7 +54,6 @@ import java.util.List;
 /**
  *  Class to show the user the request for search
  */
-@SuppressWarnings({"RefusedBequest", "AssignmentToStaticFieldFromInstanceMethod"})
 public class SearchDialog extends DialogWrapper {
   protected SearchContext searchContext;
 
@@ -86,13 +66,11 @@ public class SearchDialog extends DialogWrapper {
   private JCheckBox recursiveMatching;
   private JCheckBox caseSensitiveMatch;
 
-  private JComboBox<FileType> fileTypes;
-  private JComboBox<String> contexts;
-  private JComboBox<Language> dialects;
+  private FileTypeSelector fileTypes;
   private JLabel status;
   private JLabel statusText;
 
-  protected SearchModel model;
+  protected Configuration myConfiguration;
   private JCheckBox openInNewTab;
   private final Alarm myAlarm;
 
@@ -110,6 +88,7 @@ public class SearchDialog extends DialogWrapper {
   private String mySavedEditorText;
   private JPanel myContentPanel;
   private JComponent myEditorPanel;
+  private JButton myEditVariablesButton;
 
   public SearchDialog(SearchContext searchContext) {
     this(searchContext, true, true);
@@ -128,10 +107,16 @@ public class SearchDialog extends DialogWrapper {
       setOKButtonText(FindBundle.message("find.dialog.find.button"));
     }
 
-    model = new SearchModel(createConfiguration());
+    myConfiguration = createConfiguration(null);
 
     init();
-    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD,myDisposable);
+    myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
+    ProjectManager.getInstance().addProjectManagerListener(searchContext.getProject(), new ProjectManagerListener() {
+      @Override
+      public void projectClosing(Project project) {
+        close(CANCEL_EXIT_CODE);
+      }
+    });
   }
 
   public void setUseLastConfiguration(boolean useLastConfiguration) {
@@ -139,7 +124,6 @@ public class SearchDialog extends DialogWrapper {
   }
 
   void setSearchPattern(final Configuration config) {
-    model.setShadowConfig(config);
     setValuesFromConfig(config);
     initiateValidation();
   }
@@ -148,12 +132,15 @@ public class SearchDialog extends DialogWrapper {
     Editor editor = null;
 
     if (fileTypes != null) {
-      final FileType fileType = (FileType)fileTypes.getSelectedItem();
-      final Language dialect = (Language)dialects.getSelectedItem();
+      final FileTypeInfo info = fileTypes.getSelectedItem();
+      if (info != null) {
+        final FileType fileType = info.getFileType();
+        final Language dialect = info.getDialect();
 
-      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
-      if (profile != null) {
-        editor = profile.createEditor(searchContext, fileType, dialect, text, useLastConfiguration);
+        final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
+        if (profile != null) {
+          editor = profile.createEditor(searchContext.getProject(), fileType, dialect, text);
+        }
       }
     }
 
@@ -178,17 +165,11 @@ public class SearchDialog extends DialogWrapper {
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(() -> {
       try {
-        ApplicationManager.getApplication().runReadAction(() -> {
-          final boolean valid = isValid();
-          ApplicationManager.getApplication().invokeLater(() -> {
-            if (!valid) {
-              getOKAction().setEnabled(false);
-            }
-            else {
-              getOKAction().setEnabled(true);
-              reportMessage(null, null);
-            }
-          });
+        final boolean valid = isValid();
+        final boolean compiled = isCompiled();
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myEditVariablesButton.setEnabled(compiled);
+          getOKAction().setEnabled(valid);
         });
       }
       catch (ProcessCanceledException e) {
@@ -197,7 +178,15 @@ public class SearchDialog extends DialogWrapper {
       catch (RuntimeException e) {
         Logger.getInstance(SearchDialog.class).error(e);
       }
-    }, 500);
+    }, 250);
+  }
+
+  private boolean isCompiled() {
+    try {
+      return PatternCompiler.compilePattern(getProject(), myConfiguration.getMatchOptions(), false) != null;
+    } catch (MalformedPatternException e) {
+      return false;
+    }
   }
 
   protected void buildOptions(JPanel searchOptions) {
@@ -218,76 +207,24 @@ public class SearchDialog extends DialogWrapper {
     }
     Collections.sort(types, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
 
-    final DefaultComboBoxModel<FileType> comboBoxModel = new DefaultComboBoxModel<>(types.toArray(new FileType[types.size()]));
-    fileTypes = new ComboBox<>(comboBoxModel);
-    fileTypes.setRenderer(new FileTypeRenderer());
-    new ComboboxSpeedSearch(fileTypes) {
-      @Override
-      protected String getElementText(Object element) {
-        return ((FileType)element).getName();
-      }
-    };
-    contexts = new ComboBox<>(60);
-
-    dialects = new ComboBox<>(120);
-    dialects.setRenderer(new ListCellRendererWrapper<Language>() {
-      @Override
-      public void customize(JList list, Language value, int index, boolean selected, boolean hasFocus) {
-        if (value == null) {
-          setText("None");
-        }
-        else {
-          setText(value.getDisplayName());
-        }
-      }
-    });
-    dialects.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        updateEditor();
-      }
-    });
-    new ComboboxSpeedSearch(dialects);
+    fileTypes = new FileTypeSelector(types);
 
     final JLabel jLabel = new JLabel(SSRBundle.message("search.dialog.file.type.label"));
-    final JLabel jLabel2 = new JLabel(SSRBundle.message("search.dialog.context.label"));
-    final JLabel jLabel3 = new JLabel(SSRBundle.message("search.dialog.file.dialect.label"));
-    searchOptions.add(
-      UIUtil.createOptionLine(
-        new JComponent[]{
-          jLabel,
-          fileTypes,
-          (JComponent)Box.createHorizontalStrut(8),
-          jLabel2,
-          contexts,
-          (JComponent)Box.createHorizontalStrut(8),
-          jLabel3,
-          dialects,
-        }
-      )
-    );
-
+    searchOptions.add(UIUtil.createOptionLine(jLabel, fileTypes));
     jLabel.setLabelFor(fileTypes);
-    jLabel2.setLabelFor(contexts);
-    jLabel3.setLabelFor(dialects);
 
     detectFileTypeAndDialect();
 
-    fileTypes.setSelectedItem(ourFtSearchVariant);
+    fileTypes.setSelectedItem(ourFtSearchVariant, ourDialect, ourContext);
     fileTypes.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
         if (e.getStateChange() == ItemEvent.SELECTED) {
-          updateDialectsAndContexts();
           updateEditor();
           initiateValidation();
         }
       }
     });
-    dialects.setSelectedItem(ourDialect);
-    contexts.setSelectedItem(ourContext);
-
-    updateDialectsAndContexts();
   }
 
   void updateEditor() {
@@ -299,36 +236,8 @@ public class SearchDialog extends DialogWrapper {
       myEditorPanel = createEditorContent();
       myContentPanel.add(myEditorPanel, BorderLayout.CENTER);
       myContentPanel.revalidate();
-      searchCriteriaEdit.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, model.getConfig());
+      searchCriteriaEdit.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
     }
-  }
-
-  void updateDialectsAndContexts() {
-    final FileType fileType = (FileType)fileTypes.getSelectedItem();
-    if (fileType instanceof LanguageFileType) {
-      Language language = ((LanguageFileType)fileType).getLanguage();
-      Language[] languageDialects = LanguageUtil.getLanguageDialects(language);
-      Arrays.sort(languageDialects, Comparator.comparing(Language::getDisplayName));
-      Language[] variants = new Language[languageDialects.length + 1];
-      variants[0] = null;
-      System.arraycopy(languageDialects, 0, variants, 1, languageDialects.length);
-      dialects.setModel(new DefaultComboBoxModel<>(variants));
-      dialects.setEnabled(variants.length > 1);
-    }
-
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
-
-    if (profile instanceof StructuralSearchProfileBase) {
-      final String[] contextNames = ((StructuralSearchProfileBase)profile).getContextNames();
-      if (contextNames.length > 0) {
-        contexts.setModel(new DefaultComboBoxModel<>(contextNames));
-        contexts.setSelectedItem(contextNames[0]);
-        contexts.setEnabled(true);
-        return;
-      }
-    }
-    contexts.setSelectedItem(null);
-    contexts.setEnabled(false);
   }
 
   private void detectFileTypeAndDialect() {
@@ -372,57 +281,29 @@ public class SearchDialog extends DialogWrapper {
   }
 
   protected boolean isRecursiveSearchEnabled() {
-    return true;
+    return myShowScopePanel;
   }
 
   public void setValuesFromConfig(Configuration configuration) {
-    setDialogTitle(configuration);
-    final MatchOptions matchOptions = configuration.getMatchOptions();
+    myConfiguration = createConfiguration(configuration);
+    setDialogTitle(myConfiguration);
+    final MatchOptions matchOptions = myConfiguration.getMatchOptions();
 
-    UIUtil.setContent(
-      searchCriteriaEdit,
-      matchOptions.getSearchPattern(),
-      0,
-      searchCriteriaEdit.getDocument().getTextLength(),
-      searchContext.getProject()
-    );
+    UIUtil.setContent(searchCriteriaEdit, matchOptions.getSearchPattern());
 
-    model.getConfig().getMatchOptions().setSearchPattern(
-      matchOptions.getSearchPattern()
-    );
+    recursiveMatching.setSelected(isRecursiveSearchEnabled() && matchOptions.isRecursiveSearch());
+    caseSensitiveMatch.setSelected(matchOptions.isCaseSensitiveMatch());
 
-    recursiveMatching.setSelected(
-      isRecursiveSearchEnabled() && matchOptions.isRecursiveSearch()
-    );
-
-    caseSensitiveMatch.setSelected(
-      matchOptions.isCaseSensitiveMatch()
-    );
-
-    model.getConfig().getMatchOptions().clearVariableConstraints();
-    for (String name : matchOptions.getVariableConstraintNames()) {
-      final MatchVariableConstraint constraint = (MatchVariableConstraint)matchOptions.getVariableConstraint(name).clone();
-      model.getConfig().getMatchOptions().addVariableConstraint(constraint);
-    }
-
-    MatchOptions options = configuration.getMatchOptions();
-    StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
-    assert profile != null;
-    fileTypes.setSelectedItem(options.getFileType());
-    dialects.setSelectedItem(options.getDialect());
-    if (options.getPatternContext() != null) {
-      contexts.setSelectedItem(options.getPatternContext());
-    }
+    fileTypes.setSelectedItem(matchOptions.getFileType(), matchOptions.getDialect(), matchOptions.getPatternContext());
+    searchCriteriaEdit.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
   }
 
   void setDialogTitle(final Configuration configuration) {
     setTitle(getDefaultTitle() + " - " + configuration.getName());
   }
 
-  public Configuration createConfiguration() {
-    SearchConfiguration configuration = new SearchConfiguration();
-    configuration.setName(USER_DEFINED);
-    return configuration;
+  public Configuration createConfiguration(Configuration template) {
+    return (template == null) ? new SearchConfiguration(USER_DEFINED, USER_DEFINED) : new SearchConfiguration(template);
   }
 
   protected void setText(String text) {
@@ -431,7 +312,7 @@ public class SearchDialog extends DialogWrapper {
 
   protected final void setTextForEditor(final String selection, Editor editor) {
     final Project project = searchContext.getProject();
-    UIUtil.setContent(editor, selection, 0, -1, project);
+    UIUtil.setContent(editor, selection);
     final Document document = editor.getDocument();
     editor.getSelectionModel().setSelection(0, document.getTextLength());
     final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
@@ -439,15 +320,13 @@ public class SearchDialog extends DialogWrapper {
     final PsiFile file = documentManager.getPsiFile(document);
     if (file == null) return;
 
-    new WriteCommandAction(project, file) {
-      @Override protected void run(@NotNull Result result) throws Throwable {
-        CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(0, document.getTextLength()));
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(project, file).run(() -> {
+      CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(0, document.getTextLength()));
+    });
   }
 
   protected void startSearching() {
-    new SearchCommand(model.getConfig(), searchContext).startSearching();
+    new SearchCommand(myConfiguration, searchContext).startSearching();
   }
 
   protected String getDefaultTitle() {
@@ -464,7 +343,7 @@ public class SearchDialog extends DialogWrapper {
     final JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 2, 0));
     labelPanel.add(new JLabel(SSRBundle.message("search.template")));
 
-    labelPanel.add(UIUtil.createCompleteMatchInfo(() -> model.getConfig()));
+    labelPanel.add(UIUtil.createCompleteMatchInfo(() -> myConfiguration));
     result.add(BorderLayout.NORTH, labelPanel);
 
     return result;
@@ -496,15 +375,15 @@ public class SearchDialog extends DialogWrapper {
     searchOptions.setBorder(IdeBorderFactory.createTitledBorder(SSRBundle.message("ssdialog.options.group.border"),
                                                                 true));
 
-    myScopeChooserCombo = new ScopeChooserCombo(
-      searchContext.getProject(),
-      true,
-      false,
-      FindSettings.getInstance().getDefaultScopeName()
-    );
-    Disposer.register(myDisposable, myScopeChooserCombo);
     JPanel allOptions = new JPanel(new BorderLayout());
     if (myShowScopePanel) {
+      myScopeChooserCombo = new ScopeChooserCombo(
+        searchContext.getProject(),
+        true,
+        false,
+        FindSettings.getInstance().getDefaultScopeName()
+      );
+      Disposer.register(myDisposable, myScopeChooserCombo);
       JPanel scopePanel = new JPanel(new GridBagLayout());
 
       TitledSeparator separator = new TitledSeparator(SSRBundle.message("search.dialog.scope.label"), myScopeChooserCombo.getComboBox());
@@ -526,6 +405,10 @@ public class SearchDialog extends DialogWrapper {
         }
       });
     }
+    else {
+      myScopeChooserCombo = null;
+    }
+
 
     buildOptions(searchOptions);
 
@@ -584,7 +467,7 @@ public class SearchDialog extends DialogWrapper {
     panel.add(Box.createHorizontalStrut(8));
 
     panel.add(
-      createJButtonForAction(
+      myEditVariablesButton = createJButtonForAction(
         new AbstractAction() {
           {
             putValue(NAME, SSRBundle.message("edit.variables.button"));
@@ -594,8 +477,9 @@ public class SearchDialog extends DialogWrapper {
           public void actionPerformed(ActionEvent e) {
             new EditVarConstraintsDialog(
               searchContext.getProject(),
-              model.getConfig(), getVariablesFromListeners(),
-              (FileType)fileTypes.getSelectedItem()
+              myConfiguration,
+              getVariablesFromListeners(),
+              fileTypes.getSelectedFileType()
             ).show();
             initiateValidation();
           }
@@ -621,6 +505,7 @@ public class SearchDialog extends DialogWrapper {
             Configuration[] configurations = dialog.getSelectedConfigurations();
             if (configurations.length == 1) {
               setSearchPattern(configurations[0]);
+              initiateValidation();
             }
           }
         }
@@ -654,11 +539,11 @@ public class SearchDialog extends DialogWrapper {
     return panel;
   }
 
-  protected List<Variable> getVariablesFromListeners() {
+  protected List<String> getVariablesFromListeners() {
     return getVarsFrom(searchCriteriaEdit);
   }
 
-  protected static List<Variable> getVarsFrom(Editor searchCriteriaEdit) {
+  protected static List<String> getVarsFrom(Editor searchCriteriaEdit) {
     SubstitutionShortInfoHandler handler = SubstitutionShortInfoHandler.retrieve(searchCriteriaEdit);
     return (handler == null) ? new ArrayList<>() : new ArrayList<>(handler.getVariables());
   }
@@ -706,14 +591,10 @@ public class SearchDialog extends DialogWrapper {
     return searchCriteriaEdit.getContentComponent();
   }
 
-  // Performs ok action
   @Override
   protected void doOKAction() {
-    SearchScope selectedScope = getSelectedScope();
-    if (selectedScope == null) return;
-
     myDoingOkAction = true;
-    boolean result = isValid();
+    final boolean result = isValid();
     myDoingOkAction = false;
     if (!result) return;
 
@@ -721,22 +602,16 @@ public class SearchDialog extends DialogWrapper {
     super.doOKAction();
     if (!myRunFindActionOnClose) return;
 
+    final SearchScope selectedScope = myScopeChooserCombo.getSelectedScope();
+    if (selectedScope == null) return;
+
     final FindSettings findSettings = FindSettings.getInstance();
     findSettings.setDefaultScopeName(selectedScope.getDisplayName());
     findSettings.setShowResultsInSeparateView(openInNewTab.isSelected());
 
     try {
-      final Configuration configuration = model.getConfig();
-      if (model.getShadowConfig() != null) {
-        if (model.getShadowConfig().isPredefined()) {
-          configuration.setName(model.getShadowConfig().getName());
-        } //else {
-        //  // user template, save it
-        //  setValuesToConfig(model.getShadowConfig());
-        //}
-      }
-      filterOutUnusedVariableConstraints(configuration);
-      ConfigurationManager.getInstance(getProject()).addHistoryConfiguration(configuration);
+      removeUnusedVariableConstraints(myConfiguration);
+      ConfigurationManager.getInstance(getProject()).addHistoryConfiguration(myConfiguration);
 
       startSearching();
     }
@@ -745,41 +620,26 @@ public class SearchDialog extends DialogWrapper {
     }
   }
 
-  private void filterOutUnusedVariableConstraints(Configuration configuration) {
-    final List<Variable> variables = getVariablesFromListeners();
-    final List<String> variableNames = new ArrayList<>();
-    for (Variable variable : variables) {
-      variableNames.add(variable.getName());
-    }
+  private void removeUnusedVariableConstraints(Configuration configuration) {
+    final List<String> variableNames = getVariablesFromListeners();
     variableNames.add(Configuration.CONTEXT_VAR_NAME);
     configuration.getMatchOptions().retainVariableConstraints(variableNames);
   }
 
   public Configuration getConfiguration() {
-    final Configuration config = model.getConfig();
-    if (config.getName().equals(USER_DEFINED) && model.getShadowConfig() != null) {
-      config.setName(model.getShadowConfig().getName());
-    }
-    filterOutUnusedVariableConstraints(config);
-    setValuesToConfig(config);
-    return config;
-  }
-
-  private SearchScope getSelectedScope() {
-    return myScopeChooserCombo.getSelectedScope();
+    removeUnusedVariableConstraints(myConfiguration);
+    setValuesToConfig(myConfiguration);
+    return myConfiguration;
   }
 
   protected boolean isValid() {
-    setValuesToConfig(model.getConfig());
     try {
-      Matcher.validate(searchContext.getProject(), model.getConfig().getMatchOptions());
+      Matcher.validate(searchContext.getProject(), getConfiguration().getMatchOptions());
     }
     catch (MalformedPatternException ex) {
-      if (myRunFindActionOnClose) {
-        reportMessage(SSRBundle.message("this.pattern.is.malformed.message",
-                                        (ex.getMessage() != null) ? ex.getMessage() : ""), searchCriteriaEdit);
-        return false;
-      }
+      reportMessage(SSRBundle.message("this.pattern.is.malformed.message",
+                                      (ex.getMessage() != null) ? ex.getMessage() : ""), searchCriteriaEdit);
+      return false;
     }
     catch (UnsupportedPatternException ex) {
       reportMessage(SSRBundle.message("this.pattern.is.unsupported.message", ex.getMessage()), searchCriteriaEdit);
@@ -789,6 +649,7 @@ public class SearchDialog extends DialogWrapper {
       reportMessage(e.getMessage(), searchCriteriaEdit);
       return false;
     }
+    reportMessage("", null);
     return true;
   }
 
@@ -804,16 +665,18 @@ public class SearchDialog extends DialogWrapper {
   protected void setValuesToConfig(Configuration config) {
     MatchOptions options = config.getMatchOptions();
 
-    boolean searchWithinHierarchy = IdeBundle.message("scope.class.hierarchy").equals(myScopeChooserCombo.getSelectedScopeName());
-    // We need to reset search within hierarchy scope during online validation since the scope works with user participation
-    options.setScope(
-      searchWithinHierarchy && !myDoingOkAction ? GlobalSearchScope.projectScope(getProject()) : myScopeChooserCombo.getSelectedScope());
-    options.setLooseMatching(true);
+    if (myShowScopePanel) {
+      boolean searchWithinHierarchy = IdeBundle.message("scope.class.hierarchy").equals(myScopeChooserCombo.getSelectedScopeName());
+      // We need to reset search within hierarchy scope during online validation since the scope works with user participation
+      options.setScope(
+        searchWithinHierarchy && !myDoingOkAction ? GlobalSearchScope.projectScope(getProject()) : myScopeChooserCombo.getSelectedScope());
+    }
     options.setRecursiveSearch(isRecursiveSearchEnabled() && recursiveMatching.isSelected());
 
-    ourFtSearchVariant = (FileType)fileTypes.getSelectedItem();
-    ourDialect = (Language)dialects.getSelectedItem();
-    ourContext = (String)contexts.getSelectedItem();
+    final FileTypeInfo info = fileTypes.getSelectedItem();
+    ourFtSearchVariant = info != null ? info.getFileType() : null;
+    ourDialect = info != null ? info.getDialect() : null;
+    ourContext = info != null ? info.getContext() : null;
     FileType fileType = ourFtSearchVariant;
     options.setFileType(fileType);
     options.setDialect(ourDialect);
@@ -853,9 +716,5 @@ public class SearchDialog extends DialogWrapper {
   @Override
   protected String getHelpId() {
     return "find.structuredSearch";
-  }
-
-  public SearchContext getSearchContext() {
-    return searchContext;
   }
 }

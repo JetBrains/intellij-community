@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * Fixture for the tree widget, on the left hand side of "Run" window (when running tests).
  */
 public class UnitTestTreeFixture {
-  private ExecutionToolWindowFixture.ContentFixture myContentFixture;
+  private final ExecutionToolWindowFixture.ContentFixture myContentFixture;
   private final TestTreeView myTreeView;
 
   public UnitTestTreeFixture(@NotNull ExecutionToolWindowFixture.ContentFixture contentFixture,

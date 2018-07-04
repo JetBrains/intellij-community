@@ -22,46 +22,48 @@ import org.jetbrains.uast.*
 
 
 class JavaUAssertExpression(
-        override val psi: PsiAssertStatement,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UCallExpression {
-    val condition: UExpression by lz { JavaConverter.convertOrEmpty(psi.assertCondition, this) }
-    val message: UExpression? by lz { JavaConverter.convertOrNull(psi.assertDescription, this) }
-    
-    override val methodIdentifier: UIdentifier?
-        get() = null
+  override val psi: PsiAssertStatement,
+  givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UCallExpressionEx {
+  val condition: UExpression by lz { JavaConverter.convertOrEmpty(psi.assertCondition, this) }
+  val message: UExpression? by lz { JavaConverter.convertOrNull(psi.assertDescription, this) }
 
-    override val classReference: UReferenceExpression?
-        get() = null
+  override val methodIdentifier: UIdentifier?
+    get() = null
 
-    override val methodName: String
-        get() = "assert"
+  override val classReference: UReferenceExpression?
+    get() = null
 
-    override val receiver: UExpression?
-        get() = null
+  override val methodName: String
+    get() = "assert"
 
-    override val receiverType: PsiType?
-        get() = null
-    
-    override val valueArgumentCount: Int
-        get() = if (message != null) 2 else 1
+  override val receiver: UExpression?
+    get() = null
 
-    override val valueArguments by lz {
-        val message = this.message
-        if (message != null) listOf(condition, message) else listOf(condition)
-    }
+  override val receiverType: PsiType?
+    get() = null
 
-    override val typeArgumentCount: Int
-        get() = 0
-    
-    override val typeArguments: List<PsiType>
-        get() = emptyList()
+  override val valueArgumentCount: Int
+    get() = if (message != null) 2 else 1
 
-    override val returnType: PsiType
-        get() = PsiType.VOID
-    
-    override val kind: UastCallKind
-        get() = JavaUastCallKinds.ASSERT
+  override val valueArguments: List<UExpression> by lz {
+    val message = this.message
+    if (message != null) listOf(condition, message) else listOf(condition)
+  }
 
-    override fun resolve() = null
+  override fun getArgumentForParameter(i: Int): UExpression? = valueArguments.getOrNull(i)
+
+  override val typeArgumentCount: Int
+    get() = 0
+
+  override val typeArguments: List<PsiType>
+    get() = emptyList()
+
+  override val returnType: PsiType
+    get() = PsiType.VOID
+
+  override val kind: UastCallKind
+    get() = JavaUastCallKinds.ASSERT
+
+  override fun resolve(): Nothing? = null
 }

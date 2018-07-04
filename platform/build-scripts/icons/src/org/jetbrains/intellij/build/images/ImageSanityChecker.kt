@@ -15,6 +15,8 @@
  */
 package org.jetbrains.intellij.build.images
 
+import com.intellij.util.containers.MultiMap
+import org.jetbrains.intellij.build.images.ImageExtension.*
 import org.jetbrains.intellij.build.images.ImageSanityCheckerBase.Severity.*
 import org.jetbrains.intellij.build.images.ImageType.*
 import org.jetbrains.jps.model.module.JpsModule
@@ -23,6 +25,13 @@ import java.io.File
 import java.util.*
 
 abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: Boolean) {
+  private val STUB_PNG_MD5 = "5a87124746c39b00aad480e92672eca0" // /actions/stub.svg - 16x16
+
+  private val IMAGES_WITH_BOTH_SVG_AND_PNG = MultiMap.createSet<String, String>().apply {
+    //putValue("intellij.platform.icons", "general/settings")
+    //putValue("intellij.platform.icons", "actions/cross")
+  }
+
   fun check(module: JpsModule) {
     val allImages = ImageCollector(projectHome, false, ignoreSkipTag).collect(module)
 
@@ -33,27 +42,34 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
     checkHaveCompleteIconSet(images, module)
     checkHaveValidSize(images, module)
     checkAreNotAmbiguous(images, module)
+    checkSvgFallbackVersionsAreStubIcons(images, module)
+    checkOverridingFallbackVersionsAreStubIcons(images, module)
+    checkIconsWithBothSvgAndPng(images, module)
   }
 
   private fun checkHaveRetinaVersion(images: List<ImagePaths>, module: JpsModule) {
     process(images, Severity.INFO, "image without retina version", module) { image ->
-      val hasRetina = RETINA in image.files
-      val hasRetinaDarcula = RETINA_DARCULA in image.files
-      return@process hasRetina || hasRetinaDarcula
+      return@process image.getFiles(RETINA, RETINA_DARCULA).isNotEmpty()
     }
   }
 
   private fun checkHaveCompleteIconSet(images: List<ImagePaths>, module: JpsModule) {
     process(images, WARNING, "image without complete set of additional icons", module) { image ->
-      val hasRetina = RETINA in image.files
-      val hasDarcula = DARCULA in image.files
-      val hasRetinaDarcula = RETINA_DARCULA in image.files
+      return@process image.files.groupBy { ImageExtension.fromFile(it) }.all { (_, files) ->
+        val types = files.map { ImageType.fromFile(it) }
+        val hasBasic = types.contains(BASIC)
+        val hasRetina = types.contains(RETINA)
+        val hasDarcula = types.contains(DARCULA)
+        val hasRetinaDarcula = types.contains(RETINA_DARCULA)
 
-      if (hasRetinaDarcula) {
-        return@process hasRetina && hasDarcula
-      }
-      else {
-        return@process !hasRetina || !hasDarcula
+        if (!hasBasic)
+          false
+        else if (hasRetinaDarcula) {
+          hasRetina && hasDarcula
+        }
+        else {
+          !hasRetina || !hasDarcula
+        }
       }
     }
   }
@@ -61,25 +77,84 @@ abstract class ImageSanityCheckerBase(val projectHome: File, val ignoreSkipTag: 
   private fun checkHaveValidSize(images: List<ImagePaths>, module: JpsModule) {
     process(images, WARNING, "icon with suspicious size", module) { image ->
       if (!isIcon(image.file!!)) return@process true
-      val sizes = image.files.mapValues { imageSize(it.value) }
 
-      val sizeBasic = sizes[BASIC]!!
-      val sizeRetina = sizes[RETINA]
-      val sizeDarcula = sizes[DARCULA]
-      val sizeRetinaDarcula = sizes[RETINA_DARCULA]
+      return@process image.files.groupBy { ImageExtension.fromFile(it) }.all { (_, files) ->
+        val basicSizes = files.filter { ImageType.fromFile(it) in setOf(BASIC, DARCULA) }.mapNotNull { imageSize(it) }.toSet()
+        val retinaSizes = files.filter { ImageType.fromFile(it) in setOf(RETINA, RETINA_DARCULA) }.mapNotNull { imageSize(it) }.toSet()
 
-      val sizeBasicTwice = Dimension(sizeBasic.width * 2, sizeBasic.height * 2)
-      return@process (sizeDarcula == null || sizeBasic == sizeDarcula) &&
-                     (sizeRetina == null || sizeRetinaDarcula == null || sizeRetina == sizeRetinaDarcula) &&
-                     (sizeRetina == null || sizeBasicTwice == sizeRetina)
+        if (basicSizes.size > 1) return@all false
+        if (retinaSizes.size > 1) return@all false
+        if (basicSizes.size == 1 && retinaSizes.size == 1) {
+          val sizeBasic = basicSizes.single()
+          val sizeRetina = retinaSizes.single()
+          val sizeBasicTwice = Dimension(sizeBasic.width * 2, sizeBasic.height * 2)
+          return@all sizeBasicTwice == sizeRetina
+        }
+        return@all true
+      }
     }
   }
 
   private fun checkAreNotAmbiguous(images: List<ImagePaths>, module: JpsModule) {
-    process(images, WARNING, "image with ambiguous definition (ex: has both '.png' and '.gif' versions)", module) { image ->
-      return@process !image.ambiguous
+    process(images, WARNING, "image with ambiguous definition (has both '.png' and '.gif' versions)", module) { image ->
+      val extensions = image.files.map { ImageExtension.fromFile(it) }
+      return@process GIF !in extensions || PNG !in extensions
     }
   }
+
+  private fun checkSvgFallbackVersionsAreStubIcons(images: List<ImagePaths>, module: JpsModule) {
+    val imagesWithSvgAndPng = IMAGES_WITH_BOTH_SVG_AND_PNG[module.name]
+    val filteredImages = images.filter { !imagesWithSvgAndPng.contains(it.id) }
+
+    process(filteredImages, WARNING, "SVG icons should use stub.png as fallback", module) { image ->
+      if (image.files.none { ImageExtension.fromFile(it) == SVG }) return@process true
+
+      val legacyFiles = image.files.filter { ImageExtension.fromFile(it) != SVG }
+      return@process isStubFallbackVersion(legacyFiles)
+    }
+  }
+
+  private fun checkOverridingFallbackVersionsAreStubIcons(images: List<ImagePaths>, module: JpsModule) {
+    process(images, WARNING, "Overridden icons should be replaced with stub.png as fallback", module) { image ->
+      if (image.deprecation?.replacement == null) return@process true
+
+      return@process isStubFallbackVersion(image.files)
+    }
+  }
+
+  private fun checkIconsWithBothSvgAndPng(images: List<ImagePaths>, module: JpsModule) {
+    val imagesWithSvgAndPng = IMAGES_WITH_BOTH_SVG_AND_PNG[module.name]
+    val filteredImages = images.filter { imagesWithSvgAndPng.contains(it.id) }
+
+    if (filteredImages.size != imagesWithSvgAndPng.size) {
+      val notFoundImagesIds = imagesWithSvgAndPng.toMutableSet().apply {
+        filteredImages.forEach { this.remove(it.id) }
+      }
+      log(WARNING, "This icon should have both SVG and PNG versions, but was not found\n" +
+                   "see ImageSanityCheckerBase.IMAGES_WITH_BOTH_SVG_AND_PNG", module,
+          notFoundImagesIds.map { ImagePaths(it, module.sourceRoots.first()) })
+    }
+
+    process(filteredImages, WARNING, "This icon should have both SVG and PNG versions\n" +
+                                     "see ImageSanityCheckerBase.IMAGES_WITH_BOTH_SVG_AND_PNG", module) { image ->
+      val svgFiles = image.files.filter { ImageExtension.fromFile(it) == SVG }
+      val pngFiles = image.files.filter { ImageExtension.fromFile(it) == PNG }
+
+      return@process svgFiles.isNotEmpty() && !isStubFallbackVersion(pngFiles)
+    }
+  }
+
+  private fun isStubFallbackVersion(files: List<File>): Boolean {
+    if (files.isEmpty()) return true
+    if (files.size > 1) return false
+
+    val file = files.single()
+    if (ImageType.fromFile(file) != BASIC) return false
+
+    val md5 = md5(file)
+    return md5 == STUB_PNG_MD5
+  }
+
 
   private fun process(images: List<ImagePaths>, severity: Severity, message: String, module: JpsModule,
                       processor: (ImagePaths) -> Boolean) {

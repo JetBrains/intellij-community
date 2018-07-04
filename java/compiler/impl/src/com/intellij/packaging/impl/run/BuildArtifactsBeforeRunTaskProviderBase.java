@@ -26,7 +26,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
@@ -62,7 +61,7 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
           for (T task : tasks) {
             final String artifactName = artifact.getName();
             final List<ArtifactPointer> pointersList = task.getArtifactPointers();
-            final ArtifactPointer[] pointers = pointersList.toArray(new ArtifactPointer[pointersList.size()]);
+            final ArtifactPointer[] pointers = pointersList.toArray(new ArtifactPointer[0]);
             for (ArtifactPointer pointer : pointers) {
               if (pointer.getArtifactName().equals(artifactName) &&
                   ArtifactManager.getInstance(myProject).findArtifact(artifactName) == null) {
@@ -80,7 +79,7 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
     return true;
   }
 
-  public boolean configureTask(RunConfiguration runConfiguration, T task) {
+  public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull T task) {
     final Artifact[] artifacts = ArtifactManager.getInstance(myProject).getArtifacts();
     Set<ArtifactPointer> pointers = new THashSet<>();
     for (Artifact artifact : artifacts) {
@@ -111,7 +110,7 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
   }
 
   @Override
-  public boolean canExecuteTask(RunConfiguration configuration, T task) {
+  public boolean canExecuteTask(@NotNull RunConfiguration configuration, @NotNull T task) {
     for (ArtifactPointer pointer : (List<ArtifactPointer>)task.getArtifactPointers()) {
       if (pointer.getArtifact() != null) {
         return true;
@@ -121,21 +120,19 @@ public abstract class BuildArtifactsBeforeRunTaskProviderBase<T extends BuildArt
   }
 
   public boolean executeTask(DataContext context,
-                             RunConfiguration configuration,
-                             final ExecutionEnvironment env,
-                             final T task) {
+                             @NotNull RunConfiguration configuration,
+                             @NotNull final ExecutionEnvironment env,
+                             @NotNull final T task) {
     final Ref<Boolean> result = Ref.create(false);
     final Semaphore finished = new Semaphore();
 
     final List<Artifact> artifacts = new ArrayList<>();
-    new ReadAction() {
-      protected void run(@NotNull final Result result) {
-        List<ArtifactPointer> pointers = task.getArtifactPointers();
-        for (ArtifactPointer pointer : pointers) {
-          ContainerUtil.addIfNotNull(artifacts, pointer.getArtifact());
-        }
+    ReadAction.run(() -> {
+      List<ArtifactPointer> pointers = task.getArtifactPointers();
+      for (ArtifactPointer pointer : pointers) {
+        ContainerUtil.addIfNotNull(artifacts, pointer.getArtifact());
       }
-    }.execute();
+    });
 
     final ProjectTaskNotification callback = new ProjectTaskNotification() {
       @Override

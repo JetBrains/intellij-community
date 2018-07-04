@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.extensions;
 
-import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,8 +62,7 @@ public abstract class SmartExtensionPoint<Extension,V> implements ExtensionPoint
         myExtensionPoint = getExtensionPoint();
         myExtensionPoint.addExtensionPointListener(this);
         myCache = new ArrayList<>(myExplicitExtensions);
-        myCache.addAll(ContainerUtil.mapNotNull(myExtensionPoint.getExtensions(),
-                                                (NullableFunction<Extension, V>)extension -> getExtension(extension)));
+        myCache.addAll(ContainerUtil.mapNotNull(myExtensionPoint.getExtensions(), this::getExtension));
       }
       return myCache;
     }
@@ -91,7 +89,7 @@ public abstract class SmartExtensionPoint<Extension,V> implements ExtensionPoint
   }
 
   @Override
-  public void areaReplaced(final ExtensionsArea area) {
+  public void areaReplaced(@NotNull final ExtensionsArea area) {
     dropCache();
   }
 }

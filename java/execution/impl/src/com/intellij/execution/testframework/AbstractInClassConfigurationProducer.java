@@ -26,7 +26,10 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -36,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public abstract class AbstractInClassConfigurationProducer<T extends JavaTestConfigurationBase> extends AbstractJavaTestConfigurationProducer<T> {
+  private static final Logger LOG = Logger.getInstance(AbstractInClassConfigurationProducer.class);
 
   protected AbstractInClassConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
@@ -144,6 +148,19 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
     }
 
     configuration.restoreOriginalModule(originalModule);
+    Module module = configuration.getConfigurationModule().getModule();
+    if (module == null) {
+      PsiFile containingFile = psiClass.getContainingFile();
+      LOG.error("No module found", new Attachment("context.txt",
+                                                  "generated name:" + configuration.getName() +
+                                                  "; valid: " + psiClass.isValid() +
+                                                  "; physical: " + psiClass.isPhysical() +
+                                                  "; className: " + psiClass.getQualifiedName() +
+                                                  "; file: " + containingFile +
+                                                  "; module: " + ModuleUtilCore.findModuleForPsiElement(psiClass) + 
+                                                  "; original module: " + originalModule));
+      return false;
+    }
     settings.setName(configuration.getName());
     sourceElement.set(psiElement);
     return true;

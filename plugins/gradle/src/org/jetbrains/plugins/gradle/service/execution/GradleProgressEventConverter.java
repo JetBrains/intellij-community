@@ -31,6 +31,9 @@ import org.gradle.tooling.events.test.JvmTestOperationDescriptor;
 import org.gradle.tooling.internal.protocol.events.InternalOperationDescriptor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Vladislav.Soroka
  * @since 12/17/2015
@@ -39,17 +42,36 @@ public class GradleProgressEventConverter {
 
   @NotNull
   public static ExternalSystemTaskNotificationEvent convert(ExternalSystemTaskId id, ProgressEvent event) {
+    return convert(id, event, "");
+  }
+
+  @NotNull
+  public static ExternalSystemTaskNotificationEvent convert(@NotNull ExternalSystemTaskId id,
+                                                            @NotNull ProgressEvent event,
+                                                            @NotNull String operationId) {
     final InternalOperationDescriptor internalDesc =
       event.getDescriptor() instanceof DefaultOperationDescriptor ? ((DefaultOperationDescriptor)event.getDescriptor())
         .getInternalOperationDescriptor() : null;
-    final String eventId = internalDesc == null ? event.getDescriptor().getDisplayName() : internalDesc.getId().toString();
+    final String eventId;
+    if (internalDesc == null) {
+      eventId = operationId + event.getDescriptor().getDisplayName();
+    }
+    else {
+      eventId = operationId + internalDesc.getId().toString();
+    }
     final String parentEventId;
     if (event.getDescriptor().getParent() == null) {
       parentEventId = null;
     }
     else {
-      parentEventId = internalDesc == null ? event.getDescriptor().getParent().getDisplayName() : internalDesc.getParentId().toString();
+      if (internalDesc == null) {
+        parentEventId = operationId + event.getDescriptor().getParent().getDisplayName();
+      }
+      else {
+        parentEventId = operationId + internalDesc.getParentId().toString();
+      }
     }
+
     final String description = event.getDescriptor().getName();
 
     if (event instanceof StartEvent) {
@@ -98,7 +120,12 @@ public class GradleProgressEventConverter {
   @NotNull
   private static OperationResult convert(org.gradle.tooling.events.OperationResult operationResult) {
     if (operationResult instanceof FailureResult) {
-      return new FailureResultImpl(operationResult.getStartTime(), operationResult.getEndTime());
+      FailureResult failureResult = (FailureResult)operationResult;
+      List<Failure> myFailures = new ArrayList<>();
+      for (org.gradle.tooling.Failure failure : failureResult.getFailures()) {
+        myFailures.add(convert(failure));
+      }
+      return new FailureResultImpl(failureResult.getStartTime(), failureResult.getEndTime(), myFailures);
     }
     else if (operationResult instanceof SkippedResult) {
       return new SkippedResultImpl(operationResult.getStartTime(), operationResult.getEndTime());
@@ -107,5 +134,13 @@ public class GradleProgressEventConverter {
       final boolean isUpToDate = operationResult instanceof TaskSuccessResult && ((TaskSuccessResult)operationResult).isUpToDate();
       return new SuccessResultImpl(operationResult.getStartTime(), operationResult.getEndTime(), isUpToDate);
     }
+  }
+
+  private static Failure convert(org.gradle.tooling.Failure failure) {
+    List<Failure> causes = new ArrayList<>();
+    for (org.gradle.tooling.Failure cause : failure.getCauses()) {
+      causes.add(convert(cause));
+    }
+    return new FailureImpl(failure.getMessage(), failure.getDescription(), causes);
   }
 }

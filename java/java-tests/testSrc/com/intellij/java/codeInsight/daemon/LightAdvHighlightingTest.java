@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.ToolExtensionPoints;
@@ -31,7 +17,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.sillyAssignment.SillyAssignmentInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationLocalInspection;
-import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
+import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageAnnotators;
@@ -60,6 +46,7 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -86,6 +73,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     super.setUp();
     myUnusedDeclarationInspection = new UnusedDeclarationInspection(isUnusedInspectionRequired());
     enableInspectionTool(myUnusedDeclarationInspection);
+    enableInspectionTool(new UnusedImportInspection());
     setLanguageLevel(LanguageLevel.JDK_1_4);
   }
 
@@ -101,7 +89,6 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
       new AccessStaticViaInstance(),
       new DeprecationInspection(),
       new RedundantThrowsDeclarationLocalInspection(),
-      new UnusedImportLocalInspection(),
       new UncheckedWarningLocalInspection()
     };
   }
@@ -133,6 +120,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testLocalVariableInitialization() { doTest(false); }
   public void testVarDoubleInitialization() { doTest(false); }
   public void testFieldDoubleInitialization() { doTest(false); }
+  public void testFinalFieldInitialization() { doTest(false); }
   public void testAssignToFinal() { doTest(false); }
   public void testUnhandledExceptionsInSuperclass() { doTest(false); }
   public void testNoUnhandledExceptionsMultipleInheritance() { doTest(false); }
@@ -168,7 +156,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testDeprecated() { doTest(true); }
   public void testJavadoc() { enableInspectionTool(new JavaDocLocalInspection()); doTest(true); }
   public void testExpressionsInSwitch () { doTest(false); }
-  public void testAccessInner() throws IOException {
+  public void testAccessInner() {
     Editor e = createSaveAndOpenFile("x/BeanContextServicesSupport.java",
                                      "" +
                                      "package x;\n" +
@@ -196,10 +184,10 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
     }
     finally {
       PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      VirtualFile file = FileDocumentManager.getInstance().getFile(e.getDocument());
+      VirtualFile file = ObjectUtils.notNull(FileDocumentManager.getInstance().getFile(e.getDocument()));
       FileEditorManager.getInstance(getProject()).closeFile(file);
       VfsTestUtil.deleteFile(file);
-      VirtualFile file2 = FileDocumentManager.getInstance().getFile(e2.getDocument());
+      VirtualFile file2 = ObjectUtils.notNull(FileDocumentManager.getInstance().getFile(e2.getDocument()));
       FileEditorManager.getInstance(getProject()).closeFile(file2);
       VfsTestUtil.deleteFile(file2);
     }
@@ -215,7 +203,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testExtendMultipleClasses() { doTest(false); }
   public void testRecursiveConstructorInvocation() { doTest(false); }
   public void testMethodCalls() { doTest(false); }
-  public void testSingleTypeImportConflicts() throws IOException {
+  public void testSingleTypeImportConflicts() {
     createSaveAndOpenFile("sql/Date.java", "package sql; public class Date{}");
     UIUtil.dispatchAllInvocationEvents();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -261,8 +249,6 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEADEV11919() { doTest(false); }
   public void testIDEA67829() { doTest(false); }
   public void testMethodCannotBeApplied() { doTest(false); }
-  public void testDefaultPackageClassInStaticImport() { doTest(false); }
-
   public void testUnusedParamsOfPublicMethod() { doTest(true); }
   public void testInnerClassesShadowing() { doTest(false); }
 
@@ -475,6 +461,11 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testIllegalWhitespaces() { doTest(false); }
+  
+  public void testMarkUsedDefaultAnnotationMethodUnusedInspection() {
+    setLanguageLevel(LanguageLevel.JDK_1_5);
+    doTest(true);
+  }
 
   // must stay public for PicoContainer to work
   public static class MyAnnotator implements Annotator {

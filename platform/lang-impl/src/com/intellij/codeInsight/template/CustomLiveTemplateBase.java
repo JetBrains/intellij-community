@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ abstract public class CustomLiveTemplateBase implements CustomLiveTemplate {
    * Implementation should returns {@code true} if it has own lookup item in completion autopopup
    * and it is supposed that template should be expanded while completion auto-popup is active.
    */
-  public boolean hasCompletionItem(@NotNull PsiFile file, int offset) {
+  public boolean hasCompletionItem(@NotNull CustomTemplateCallback callback, int offset) {
     return false;
   }
 

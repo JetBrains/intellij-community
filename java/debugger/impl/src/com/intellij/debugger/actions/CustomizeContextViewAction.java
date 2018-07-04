@@ -65,6 +65,7 @@ public class CustomizeContextViewAction extends XDebuggerTreeActionBase {
   }
 
   private static class MyTabbedConfigurable extends TabbedConfigurable {
+    @NotNull
     @Override
     protected List<Configurable> createConfigurables() {
       return JavaDebuggerSettings.createDataViewsConfigurable();

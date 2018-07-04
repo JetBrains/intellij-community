@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.template.TemplateManager;
@@ -118,8 +104,8 @@ public class AutoHardWrapHandler {
       return;
     }
 
-    VisualPosition visEndLinePosition = editor.offsetToVisualPosition(endOffset);
-    if (margin >= visEndLinePosition.column) {
+    LogicalPosition logEndLinePosition = editor.offsetToLogicalPosition(endOffset);
+    if (margin >= logEndLinePosition.column) {
       if (change != null) {
         change.modificationStamp = document.getModificationStamp();
       }
@@ -159,9 +145,9 @@ public class AutoHardWrapHandler {
     change.update(editor);
 
     // Is assumed to be max possible number of characters inserted on the visual line with caret.
-    int maxPreferredOffset = editor.logicalPositionToOffset(editor.visualToLogicalPosition(
-      new VisualPosition(caretModel.getVisualPosition().line, margin - FormatConstants.getReservedLineWrapWidthInColumns(editor))
-    ));
+    int maxPreferredOffset = editor.logicalPositionToOffset(
+      new LogicalPosition(caretModel.getLogicalPosition().line, margin - FormatConstants.getReservedLineWrapWidthInColumns(editor))
+    );
 
     int wrapOffset = strategy.calculateWrapPosition(document, project, startOffset, endOffset, maxPreferredOffset, true, false);
     if (wrapOffset < 0) {

@@ -1,24 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.emmet;
 
 import com.intellij.codeInsight.template.CustomTemplateCallback;
-import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeTooltipManager;
-import com.intellij.ide.TooltipEvent;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -27,10 +11,9 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBLabel;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,7 +29,7 @@ public class EmmetAbbreviationBalloon {
   private final String myAbbreviationsHistoryKey;
   private final String myLastAbbreviationKey;
   private final Callback myCallback;
-  @NotNull private final String myDocumentation;
+  @NotNull private final EmmetContextHelp myContextHelp;
 
   @Nullable
   private static String ourTestingAbbreviation;
@@ -55,11 +38,11 @@ public class EmmetAbbreviationBalloon {
   public EmmetAbbreviationBalloon(@NotNull String abbreviationsHistoryKey,
                                   @NotNull String lastAbbreviationKey,
                                   @NotNull Callback callback,
-                                  @NotNull String documentation) {
+                                  @NotNull EmmetContextHelp contextHelp) {
     myAbbreviationsHistoryKey = abbreviationsHistoryKey;
     myLastAbbreviationKey = lastAbbreviationKey;
     myCallback = callback;
-    myDocumentation = documentation;
+    myContextHelp = contextHelp;
   }
 
 
@@ -90,9 +73,8 @@ public class EmmetAbbreviationBalloon {
     field.setPreferredSize(new Dimension(Math.max(220, fieldPreferredSize.width), fieldPreferredSize.height));
     field.setHistorySize(10);
 
-    JBLabel label = new JBLabel(AllIcons.General.ContextHelp);
+    ContextHelpLabel label = myContextHelp.createHelpLabel();
     label.setBorder(JBUI.Borders.empty(0, 3, 0, 1));
-    IdeTooltipManager.getInstance().setCustomTooltip(label, new ContextHelpTooltip(label, myDocumentation));
 
     panel.add(field, BorderLayout.CENTER);
     panel.add(label, BorderLayout.EAST);
@@ -146,7 +128,7 @@ public class EmmetAbbreviationBalloon {
     };
     field.addKeyboardListener(keyListener);
 
-    balloon.addListener(new JBPopupListener.Adapter() {
+    balloon.addListener(new JBPopupListener() {
       @Override
       public void beforeShown(LightweightWindowEvent event) {
         field.setText(PropertiesComponent.getInstance().getValue(myLastAbbreviationKey, ""));
@@ -156,7 +138,6 @@ public class EmmetAbbreviationBalloon {
       public void onClosed(LightweightWindowEvent event) {
         field.removeKeyListener(keyListener);
         field.removeDocumentListener(documentListener);
-        super.onClosed(event);
       }
     });
     balloon.show(popupFactory.guessBestPopupLocation(customTemplateCallback.getEditor()), Balloon.Position.below);
@@ -184,36 +165,36 @@ public class EmmetAbbreviationBalloon {
     return !callback.getEditor().isDisposed();
   }
 
-  public interface Callback {
-    void onEnter(@NotNull String abbreviation);
+  public static class EmmetContextHelp {
+    @NotNull
+    private final String myDescription;
+
+    @Nullable
+    private String myLinkText = null;
+
+    @Nullable
+    private String myLinkUrl = null;
+
+    public EmmetContextHelp(@NotNull String description) {
+      myDescription = description;
+    }
+
+    public EmmetContextHelp(@NotNull String description, @NotNull String linkText, @NotNull String linkUrl) {
+      myDescription = description;
+      myLinkText = linkText;
+      myLinkUrl = linkUrl;
+    }
+
+    @NotNull
+    public ContextHelpLabel createHelpLabel() {
+      if (StringUtil.isEmpty(myLinkText) || StringUtil.isEmpty(myLinkUrl)) {
+        return ContextHelpLabel.create(myDescription);
+      }
+      return ContextHelpLabel.createWithLink(null, myDescription, myLinkText, () -> BrowserUtil.browse(myLinkUrl));
+    }
   }
 
-  private static class ContextHelpTooltip extends TooltipWithClickableLinks.ForBrowser {
-    public ContextHelpTooltip(@NotNull JComponent component, @NotNull String text) {
-      super(component, text);
-
-      JBInsets insets = JBUI.insets(11, 10, 11, 17);
-      setBorderInsets(insets);
-      setPreferredPosition(Balloon.Position.below);
-      setCalloutShift(insets.top);
-      setBorderColor(new JBColor(Gray._161, new Color(91, 92, 94)));
-      setTextBackground(new JBColor(Gray._247, new Color(70, 72, 74)));
-      setTextForeground(new JBColor(Gray._33, Gray._191));
-    }
-
-    @Override
-    protected boolean canAutohideOn(TooltipEvent event) {
-      return event.getInputEvent() != null && super.canAutohideOn(event);
-    }
-
-    @Override
-    public int getShowDelay() {
-      return 0;
-    }
-
-    @Override
-    public boolean canBeDismissedOnTimeout() {
-      return true;
-    }
+  public interface Callback {
+    void onEnter(@NotNull String abbreviation);
   }
 }

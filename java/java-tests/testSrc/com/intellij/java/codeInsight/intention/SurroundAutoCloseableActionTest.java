@@ -17,6 +17,7 @@ package com.intellij.java.codeInsight.intention;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
@@ -34,6 +35,11 @@ public class SurroundAutoCloseableActionTest extends LightCodeInsightFixtureTest
   public void testSplitVar() { doTest(); }
   public void testExpression() { doTest(); }
   public void testExpressionIncomplete() { doTest(); }
+  public void testUnrelatedVariable() { doTest(); }
+  public void testCommentsInVarDeclaration() {
+    JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_LOCALS = true;
+    doTest();
+  }
 
   private void doTest() {
     String name = getTestName(false);

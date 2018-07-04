@@ -157,7 +157,7 @@ public class ConversionContextImpl implements ConversionContext {
       filePath = macros.substitute(filePath, true);
       files.add(new File(FileUtil.toSystemDependentName(filePath)));
     }
-    return files.toArray(new File[files.size()]);
+    return files.toArray(new File[0]);
   }
 
   @NotNull
@@ -444,10 +444,8 @@ public class ConversionContextImpl implements ConversionContext {
     if (component != null) {
       final Element componentElement = component.getComponentElement(ProjectFileVersionImpl.COMPONENT_NAME);
       if (componentElement != null) {
-        Set<String> performedConversionIds = new HashSet<>();
         final ProjectFileVersionState state = XmlSerializer.deserialize(componentElement, ProjectFileVersionState.class);
-        performedConversionIds.addAll(state.getPerformedConversionIds());
-        return performedConversionIds;
+        return new HashSet<>(state.getPerformedConversionIds());
       }
     }
     return Collections.emptySet();

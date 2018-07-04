@@ -59,7 +59,7 @@ public class BodyLimitInspectionOptions implements ConfigurableUi<Project> {
   }
 
   @Override
-  public void apply(@NotNull Project project) throws ConfigurationException {
+  public void apply(@NotNull Project project) {
     VcsConfiguration settings = VcsConfiguration.getInstance(project);
 
     myInspection.RIGHT_MARGIN = myMarginSpinner.getNumber();

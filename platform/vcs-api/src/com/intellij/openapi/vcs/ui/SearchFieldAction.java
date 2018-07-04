@@ -29,8 +29,9 @@ import javax.swing.border.CompoundBorder;
 import java.awt.event.KeyEvent;
 
 /**
- * @author irengrig
+ * @deprecated Use {@link SearchTextField}.
  */
+@Deprecated
 public abstract class SearchFieldAction extends AnAction implements CustomComponentAction {
   private final JPanel myComponent;
   private final SearchTextField myField;
@@ -70,7 +71,7 @@ public abstract class SearchFieldAction extends AnAction implements CustomCompon
       myField.setBorder(emptyBorder);
     }
 
-    myField.setSearchIcon(AllIcons.Actions.Filter_small);
+    myField.setSearchIcon(AllIcons.General.Filter);
     myComponent = new JPanel();
     final BoxLayout layout = new BoxLayout(myComponent, BoxLayout.X_AXIS);
     myComponent.setLayout(layout);

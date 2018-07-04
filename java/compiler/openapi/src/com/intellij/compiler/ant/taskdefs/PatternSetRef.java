@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 19, 2004
  */
 public class PatternSetRef extends Tag{
   public PatternSetRef(@NonNls final String refid) {

@@ -5,7 +5,6 @@ class T {
     }
     void f(boolean b) {
         g(() -> {
-            int n = -1;
             while (true) {
                 if (h()) {
                     return 1;

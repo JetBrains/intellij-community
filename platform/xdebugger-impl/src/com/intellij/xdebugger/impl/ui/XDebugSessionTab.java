@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.debugger.ui.DebuggerContentInfo;
@@ -24,13 +10,11 @@ import com.intellij.execution.runners.RunContentBuilder;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.execution.ui.RunnerLayoutUi;
-import com.intellij.execution.ui.actions.CloseAction;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.execution.ui.layout.impl.ViewImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -65,7 +49,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   public static final DataKey<XDebugSessionTab> TAB_KEY = DataKey.create("XDebugSessionTab");
 
   private XWatchesViewImpl myWatchesView;
-  private XFramesView myFramesView;
   private boolean myWatchesInVariables = Registry.is("debugger.watches.in.variables");
   private final LinkedHashMap<String, XDebugView> myViews = new LinkedHashMap<>();
 
@@ -116,6 +99,11 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     setSession(session, environment, icon);
 
     myUi.addContent(createFramesContent(), 0, PlaceInGrid.left, false);
+
+    if (Registry.is("debugger.new.threads.view")) {
+      myUi.addContent(createThreadsContent(), 0, PlaceInGrid.right, true);
+    }
+
     addVariablesAndWatches(session);
 
     attachToSession(session);
@@ -156,7 +144,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       restartActions = AnAction.EMPTY_ARRAY;
     }
     else {
-      restartActions = restartActionsList.toArray(new AnAction[restartActionsList.size()]);
+      restartActions = restartActionsList.toArray(AnAction.EMPTY_ARRAY);
     }
 
     myRunContentDescriptor = new RunContentDescriptor(myConsole, session.getDebugProcess().getProcessHandler(),
@@ -171,9 +159,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   public Object getData(@NonNls String dataId) {
     if (XWatchesView.DATA_KEY.is(dataId)) {
       return myWatchesView;
-    }
-    else if (XFramesView.DATA_KEY.is(dataId)) {
-      return myFramesView;
     }
     else if (TAB_KEY.is(dataId)) {
       return this;
@@ -205,7 +190,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView);
     Content result = myUi.createContent(DebuggerContentInfo.VARIABLES_CONTENT, variablesView.getPanel(),
                                         XDebuggerBundle.message("debugger.session.tab.variables.title"),
-                                        AllIcons.Debugger.Value, null);
+                                        AllIcons.Debugger.Value, variablesView.getDefaultFocusedComponent());
     result.setCloseable(false);
 
     ActionGroup group = getCustomizedActionGroup(XDebuggerActions.VARIABLES_TREE_TOOLBAR_GROUP);
@@ -217,17 +202,28 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myWatchesView = new XWatchesViewImpl(session, myWatchesInVariables);
     registerView(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView);
     Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getPanel(),
-                                                XDebuggerBundle.message("debugger.session.tab.watches.title"), AllIcons.Debugger.Watches, null);
+                                                XDebuggerBundle.message("debugger.session.tab.watches.title"), AllIcons.Debugger.Watch, myWatchesView.getDefaultFocusedComponent());
     watchesContent.setCloseable(false);
     return watchesContent;
   }
 
   @NotNull
   private Content createFramesContent() {
-    myFramesView = new XFramesView(myProject);
-    registerView(DebuggerContentInfo.FRAME_CONTENT, myFramesView);
-    Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, myFramesView.getMainPanel(),
-                                               XDebuggerBundle.message("debugger.session.tab.frames.title"), AllIcons.Debugger.Frame, null);
+    XFramesView framesView = new XFramesView(myProject);
+    registerView(DebuggerContentInfo.FRAME_CONTENT, framesView);
+    Content framesContent = myUi.createContent(DebuggerContentInfo.FRAME_CONTENT, framesView.getMainPanel(),
+                                               XDebuggerBundle.message("debugger.session.tab.frames.title"), AllIcons.Debugger.Frame, framesView.getDefaultFocusedComponent());
+    framesContent.setCloseable(false);
+    return framesContent;
+  }
+
+  @NotNull
+  private Content createThreadsContent() {
+    XThreadsView stacksView = new XThreadsView(myProject, mySession);
+    registerView(DebuggerContentInfo.THREADS_CONTENT, stacksView);
+    Content framesContent = myUi.createContent(DebuggerContentInfo.THREADS_CONTENT, stacksView.getPanel(),
+                                               XDebuggerBundle.message("debugger.session.tab.threads.title"), AllIcons.Debugger.Threads,
+                                               stacksView.getDefaultFocusedComponent());
     framesContent.setCloseable(false);
     return framesContent;
   }
@@ -235,9 +231,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   public void rebuildViews() {
     AppUIUtil.invokeLaterIfProjectAlive(myProject, () -> {
       if (mySession != null) {
-        for (XDebugView view : myViews.values()) {
-          view.processSessionEvent(XDebugView.SessionEvent.SETTINGS_CHANGED, mySession);
-        }
+        mySession.rebuildViews();
       }
     });
   }
@@ -264,6 +258,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     DefaultActionGroup leftToolbar = new DefaultActionGroup();
     final Executor debugExecutor = DefaultDebugExecutor.getDebugExecutorInstance();
+    consoleContent.setHelpId(debugExecutor.getHelpId());
     if (myEnvironment != null) {
       leftToolbar.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RERUN));
       List<AnAction> additionalRestartActions = session.getRestartActions();
@@ -293,8 +288,6 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     leftToolbar.addSeparator();
 
     leftToolbar.add(PinToolwindowTabAction.getPinAction());
-    leftToolbar.add(new CloseAction(myEnvironment != null ? myEnvironment.getExecutor() : debugExecutor, myRunContentDescriptor, myProject));
-    leftToolbar.add(new ContextHelpAction(debugExecutor.getHelpId()));
 
     DefaultActionGroup topToolbar = new DefaultActionGroup();
     topToolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_GROUP));
@@ -362,9 +355,9 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
       // restore watches tab if minimized
       tab.restoreContent(viewId);
 
-      JComponent component = tab.getUi().getComponent();
-      if (component instanceof DataProvider) {
-        RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)component));
+      RunnerLayoutUi layoutUi = tab.getUi();
+      if (layoutUi instanceof DataProvider) {
+        RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)layoutUi));
         if (ui != null) {
           Content content = ui.findContent(viewId);
 
@@ -430,9 +423,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   private void restoreContent(String contentId) {
-    JComponent component = myUi.getComponent();
-    if (component instanceof DataProvider) {
-      RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)component));
+    if (myUi instanceof DataProvider) {
+      RunnerContentUi ui = RunnerContentUi.KEY.getData(((DataProvider)myUi));
       if (ui != null) {
         ui.restoreContent(contentId);
       }

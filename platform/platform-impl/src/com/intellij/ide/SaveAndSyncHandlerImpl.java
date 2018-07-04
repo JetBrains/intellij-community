@@ -133,10 +133,12 @@ public class SaveAndSyncHandlerImpl extends SaveAndSyncHandler implements Dispos
   }
 
   private void doScheduledRefresh() {
-    if (canSyncOrSave()) {
-      refreshOpenFiles();
-    }
-    maybeRefresh(ModalityState.NON_MODAL);
+    TransactionGuard.submitTransaction(this, () -> {
+      if (canSyncOrSave()) {
+        refreshOpenFiles();
+      }
+      maybeRefresh(ModalityState.NON_MODAL);
+    });
   }
 
   public void maybeRefresh(@NotNull ModalityState modalityState) {

@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CreateFileAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -34,7 +21,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.ActionRunner;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
@@ -42,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -95,23 +80,12 @@ public class PackageUtil {
   /**
    * @deprecated
    */
+  @Deprecated
   @Nullable
   public static PsiDirectory findOrCreateDirectoryForPackage(Project project,
                                                              String packageName,
                                                              PsiDirectory baseDir,
                                                              boolean askUserToCreate) throws IncorrectOperationException {
-    return findOrCreateDirectoryForPackage(project, packageName, baseDir, askUserToCreate, false);
-  }
-
-  /**
-   * @deprecated
-   */
-  @Nullable
-  public static PsiDirectory findOrCreateDirectoryForPackage(Project project,
-                                                             String packageName,
-                                                             PsiDirectory baseDir,
-                                                             boolean askUserToCreate, boolean filterSourceDirsForTestBaseDir) throws IncorrectOperationException {
-
     PsiDirectory psiDirectory = null;
 
     if (!"".equals(packageName)) {
@@ -124,9 +98,6 @@ public class PackageUtil {
           postfixToShow = File.separatorChar + postfixToShow;
         }
         PsiDirectory[] directories = rootPackage.getDirectories();
-        if (filterSourceDirsForTestBaseDir) {
-          directories = filterSourceDirectories(baseDir, project, directories);
-        }
         psiDirectory = DirectoryChooserUtil.selectDirectory(project, directories, baseDir, postfixToShow);
         if (psiDirectory == null) return null;
       }
@@ -231,7 +202,7 @@ public class PackageUtil {
           directoryList.add(directory);
         }
       }
-      PsiDirectory[] sourceDirectories = directoryList.toArray(new PsiDirectory[directoryList.size()]);
+      PsiDirectory[] sourceDirectories = directoryList.toArray(PsiDirectory.EMPTY_ARRAY);
       psiDirectory = DirectoryChooserUtil.selectDirectory(project, sourceDirectories, baseDir,
                                      File.separatorChar + packageName.replace('.', File.separatorChar));
       if (psiDirectory == null) return null;
@@ -258,17 +229,10 @@ public class PackageUtil {
 
         final PsiDirectory psiDirectory1 = psiDirectory;
         try {
-          psiDirectory = ActionRunner.runInsideWriteAction(new ActionRunner.InterruptibleRunnableWithResult<PsiDirectory>() {
-            public PsiDirectory run() throws Exception {
-              return psiDirectory1.createSubdirectory(name);
-            }
-          });
+          psiDirectory = WriteAction.compute(() -> psiDirectory1.createSubdirectory(name));
         }
         catch (IncorrectOperationException e) {
           throw e;
-        }
-        catch (IOException e) {
-          throw new IncorrectOperationException(e);
         }
         catch (Exception e) {
           LOG.error(e);
@@ -292,7 +256,7 @@ public class PackageUtil {
           result.add(moduleDirectory);
         }
       }
-      moduleDirectories = result.toArray(new PsiDirectory[result.size()]);
+      moduleDirectories = result.toArray(PsiDirectory.EMPTY_ARRAY);
     }
     return moduleDirectories;
   }
@@ -397,5 +361,9 @@ public class PackageUtil {
   @NotNull
   public static PsiDirectory findOrCreateSubdirectory(@NotNull PsiDirectory directory, @NotNull String directoryName) {
     return CreateFileAction.findOrCreateSubdirectory(directory, directoryName);
+  }
+
+  public static boolean isPackageInfoFile(@Nullable PsiElement element) {
+    return element instanceof PsiJavaFile && PsiPackage.PACKAGE_INFO_FILE.equals(((PsiJavaFile)element).getName());
   }
 }

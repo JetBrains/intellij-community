@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 
 package com.intellij.application.options.editor;
 
@@ -23,6 +11,7 @@ import com.intellij.codeInsight.hints.settings.ParameterNameHintsConfigurable;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.CompositeConfigurable;
@@ -128,7 +117,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     myCbShowIntentionBulbCheckBox.setSelected(editorSettings.isShowIntentionBulb());
     //myAntialiasingInEditorCheckBox.setSelected(UISettings.getInstance().ANTIALIASING_IN_EDITOR);
     //myUseLCDRendering.setSelected(UISettings.getInstance().USE_LCD_RENDERING_IN_EDITOR);
-    myShowCodeLensInEditorCheckBox.setSelected(UISettings.getInstance().getShowToolWindowsNumbers());
+    myShowCodeLensInEditorCheckBox.setSelected(UISettings.getInstance().getShowEditorToolTip());
 
     updateWhitespaceCheckboxesState();
 
@@ -176,7 +165,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     //}
 
     if (uiSettings.getShowEditorToolTip() != myShowCodeLensInEditorCheckBox.isSelected()) {
-      uiSettings.setShowToolWindowsNumbers(myShowCodeLensInEditorCheckBox.isSelected());
+      uiSettings.setShowEditorToolTip(myShowCodeLensInEditorCheckBox.isSelected());
       uiSettingsModified = true;
       lafSettingsModified = true;
     }
@@ -188,6 +177,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
       uiSettings.fireUISettingsChanged();
     }
     EditorOptionsPanel.restartDaemons();
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorOptionsListener.APPEARANCE_CONFIGURABLE_TOPIC).changesApplied();
 
     super.apply();
   }
@@ -248,6 +238,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
     super.disposeUIResources();
   }
 
+  @NotNull
   @Override
   protected List<UnnamedConfigurable> createConfigurables() {
     return ConfigurableWrapper.createConfigurables(EP_NAME);

@@ -102,10 +102,11 @@ public class TemplatesPanel extends NamedItemsListEditor<TemplateResource> {
         return "template";
     }
 
+    @Override
     @Nullable
     @NonNls
     public String getHelpTopic() {
-        return "Templates Dialog";
+        return "Templates_Dialog";
     }
 
     @Override

@@ -16,7 +16,6 @@
 package com.intellij.lang.ant.dom;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,18 +23,17 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 22, 2010
  */
 public class TargetResolver extends PropertyProviderFinder {
 
-  private List<String> myDeclaredTargetRefs;
-  private @Nullable AntDomTarget myContextTarget;
+  private final List<String> myDeclaredTargetRefs;
+  private @Nullable final AntDomTarget myContextTarget;
 
-  private Result myResult;
+  private final Result myResult;
 
   public static class Result {
     private String myRefsString;
-    private Map<String, Pair<AntDomTarget, String>> myMap = new HashMap<>(); // declared target name -> pair[target, effective name]
+    private final Map<String, Pair<AntDomTarget, String>> myMap = new HashMap<>(); // declared target name -> pair[target, effective name]
     private Map<String, AntDomTarget> myVariants;
 
     void add(String declaredTargetRef, Pair<AntDomTarget, String> pair) {

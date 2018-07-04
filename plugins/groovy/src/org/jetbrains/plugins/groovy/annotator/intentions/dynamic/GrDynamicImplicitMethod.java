@@ -153,7 +153,7 @@ public class GrDynamicImplicitMethod extends GrLightMethodBuilder implements GrD
 
       Object root = model.getRoot();
 
-      if (root == null || !(root instanceof DefaultMutableTreeNode)) return;
+      if (!(root instanceof DefaultMutableTreeNode)) return;
 
       DefaultMutableTreeNode treeRoot = ((DefaultMutableTreeNode) root);
       DefaultMutableTreeNode desiredNode;

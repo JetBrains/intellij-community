@@ -74,6 +74,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   boolean processQueue() {
     KeyReference<K, V> wk;
     boolean processed = false;
+    //noinspection unchecked
     while ((wk = (KeyReference)myReferenceQueue.poll()) != null) {
       V value = wk.getValue();
       myMap.remove(wk, value);
@@ -104,6 +105,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     }
   };
   private ConcurrentRefHashMap(int initialCapacity, float loadFactor) {
+    //noinspection unchecked
     this(initialCapacity, loadFactor, 4, THIS);
   }
 
@@ -138,6 +140,11 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     return result;
   }
 
+  @Override
+  public boolean containsValue(Object value) {
+    throw RefValueHashMap.pointlessContainsValue();
+  }
+
   private static class HardKey<K, V> implements KeyReference<K, V> {
     private K myKey;
     private int myHash;
@@ -158,6 +165,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
       throw new UnsupportedOperationException();
     }
 
+    @SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
     @Override
     public boolean equals(Object o) {
       return o.equals(this); // see com.intellij.util.containers.ConcurrentSoftHashMap.SoftKey or com.intellij.util.containers.ConcurrentWeakHashMap.WeakKey
@@ -323,6 +331,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
     public boolean remove(Object o) {
       processQueue();
       if (!(o instanceof Map.Entry)) return false;
+      //noinspection unchecked
       Map.Entry<K,V> e = (Map.Entry)o;
       V ev = e.getValue();
 
@@ -370,6 +379,7 @@ abstract class ConcurrentRefHashMap<K, V> extends AbstractMap<K, V> implements C
   @Override
   public boolean remove(@Nullable final Object key, @NotNull Object value) {
     processQueue();
+    //noinspection unchecked
     return myMap.remove(createKeyReference((K)key, (V)value), value);
   }
 

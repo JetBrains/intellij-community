@@ -40,8 +40,10 @@ import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 import static com.intellij.util.containers.ContainerUtil.map2Array;
 
@@ -65,12 +67,21 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
   }
 
   public ProjectDataManagerImpl() {
+    this(() -> ProjectDataService.EP_NAME.getExtensions());
+  }
+
+  @TestOnly
+  ProjectDataManagerImpl(ProjectDataService... dataServices) {
+    this(() -> dataServices);
+  }
+
+  private ProjectDataManagerImpl(Supplier<ProjectDataService[]> supplier) {
     myServices = new NotNullLazyValue<Map<Key<?>, List<ProjectDataService<?, ?>>>>() {
       @NotNull
       @Override
       protected Map<Key<?>, List<ProjectDataService<?, ?>>> compute() {
         Map<Key<?>, List<ProjectDataService<?, ?>>> result = ContainerUtilRt.newHashMap();
-        for (ProjectDataService<?, ?> service : ProjectDataService.EP_NAME.getExtensions()) {
+        for (ProjectDataService<?, ?> service : supplier.get()) {
           List<ProjectDataService<?, ?>> services = result.get(service.getTargetDataKey());
           if (services == null) {
             result.put(service.getTargetDataKey(), services = ContainerUtilRt.newArrayList());
@@ -95,11 +106,6 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     if (project.isDisposed()) return;
 
     MultiMap<Key<?>, DataNode<?>> grouped = ExternalSystemApiUtil.recursiveGroup(nodes);
-    for (Key<?> key : myServices.getValue().keySet()) {
-      if (!grouped.containsKey(key)) {
-        grouped.put(key, Collections.emptyList());
-      }
-    }
 
     final Collection<DataNode<?>> projects = grouped.get(ProjectKeys.PROJECT);
     // only one project(can be multi-module project) expected for per single import
@@ -124,24 +130,42 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     }
 
     List<Runnable> onSuccessImportTasks = ContainerUtil.newSmartList();
+    List<Runnable> onFailureImportTasks = ContainerUtil.newSmartList();
+    final Collection<DataNode<?>> traceNodes = grouped.get(PerformanceTrace.TRACE_NODE_KEY);
+
+    final PerformanceTrace trace;
+    if (traceNodes.size() > 0) {
+      trace = (PerformanceTrace)traceNodes.iterator().next().getData();
+    } else {
+      trace = new PerformanceTrace();
+      grouped.putValue(PerformanceTrace.TRACE_NODE_KEY, new DataNode<>(PerformanceTrace.TRACE_NODE_KEY, trace, null));
+    }
+
+    long allStartTime = System.currentTimeMillis();
     try {
-      final Set<Map.Entry<Key<?>, Collection<DataNode<?>>>> entries = grouped.entrySet();
+      // keep order of services execution
+      final Set<Key<?>> allKeys = new TreeSet(grouped.keySet());
+      allKeys.addAll(myServices.getValue().keySet());
+
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       if (indicator != null) {
         indicator.setIndeterminate(false);
       }
-      final int size = entries.size();
+      final int size = allKeys.size();
       int count = 0;
       List<Runnable> postImportTasks = ContainerUtil.newSmartList();
-      for (Map.Entry<Key<?>, Collection<DataNode<?>>> entry : entries) {
+      for (Key<?> key : allKeys) {
         if (indicator != null) {
           String message = ExternalSystemBundle.message(
             "progress.update.text", projectSystemId != null ? projectSystemId.getReadableName() : "",
-            "Refresh " + getReadableText(entry.getKey()));
+            "Refresh " + getReadableText(key));
           indicator.setText(message);
           indicator.setFraction((double)count++ / size);
         }
-        doImportData(entry.getKey(), entry.getValue(), projectData, project, modelsProvider, postImportTasks, onSuccessImportTasks);
+        long startTime = System.currentTimeMillis();
+        doImportData(key, grouped.get(key), projectData, project, modelsProvider,
+                     postImportTasks, onSuccessImportTasks, onFailureImportTasks);
+        trace.logPerformance("Data import by " + key.toString(), System.currentTimeMillis() - startTime);
       }
 
       for (Runnable postImportTask : postImportTasks) {
@@ -155,19 +179,29 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
 
       project.getMessageBus().syncPublisher(ProjectDataImportListener.TOPIC)
         .onImportFinished(projectData != null ? projectData.getLinkedExternalProjectPath() : null);
+      trace.logPerformance("Data import total", System.currentTimeMillis() - allStartTime);
     }
     catch (Throwable t) {
+      runFinalTasks(synchronous, onFailureImportTasks);
       dispose(modelsProvider, project, synchronous);
       ExceptionUtil.rethrowAllAsUnchecked(t);
     }
+    runFinalTasks(synchronous, onSuccessImportTasks);
+  }
 
+  private static void runFinalTasks(boolean synchronous, List<Runnable> tasks) {
     Runnable runnable = () -> {
-      for (Runnable onSuccessImportTask : ContainerUtil.reverse(onSuccessImportTasks)) {
-        onSuccessImportTask.run();
+      for (Runnable task : ContainerUtil.reverse(tasks)) {
+        task.run();
       }
     };
     if (synchronous) {
-      runnable.run();
+      try {
+        runnable.run();
+      }
+      catch (Exception e) {
+        LOG.warn(e);
+      }
     }
     else {
       ApplicationManager.getApplication().invokeLater(runnable);
@@ -224,7 +258,8 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
                                 @NotNull final Project project,
                                 @NotNull final IdeModifiableModelsProvider modifiableModelsProvider,
                                 @NotNull final List<Runnable> postImportTasks,
-                                @NotNull final List<Runnable> onSuccessImportTasks) {
+                                @NotNull final List<Runnable> onSuccessImportTasks,
+                                @NotNull final List<Runnable> onFailureImportTasks) {
     if (project.isDisposed()) return;
     if (project instanceof ProjectImpl) {
       assert ((ProjectImpl)project).isComponentsCreated();
@@ -289,6 +324,18 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
           }
         }
       });
+      onFailureImportTasks.add(() -> {
+        for (ProjectDataService<?, ?> service : services) {
+          if (service instanceof AbstractProjectDataService) {
+            final long taskStartTime = System.currentTimeMillis();
+            ((AbstractProjectDataService)service).onFailureImport(project);
+            if (LOG.isDebugEnabled()) {
+              final long taskTimeInMs = (System.currentTimeMillis() - taskStartTime);
+              LOG.debug(String.format("Service %s run failure import task in %d ms", service.getClass().getSimpleName(), taskTimeInMs));
+            }
+          }
+        }
+      });
       onSuccessImportTasks.add(() -> {
         IdeModelsProvider modelsProvider = new IdeModelsProviderImpl(project);
         for (ProjectDataService<?, ?> service : services) {
@@ -297,7 +344,7 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
             ((AbstractProjectDataService)service).onSuccessImport(toImport, projectData, project, modelsProvider);
             if (LOG.isDebugEnabled()) {
               final long taskTimeInMs = (System.currentTimeMillis() - taskStartTime);
-              LOG.debug(String.format("Service %s run post import task in %d ms", service.getClass().getSimpleName(), taskTimeInMs));
+              LOG.debug(String.format("Service %s run success import task in %d ms", service.getClass().getSimpleName(), taskTimeInMs));
             }
           }
         }

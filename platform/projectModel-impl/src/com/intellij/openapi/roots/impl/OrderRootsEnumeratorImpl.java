@@ -51,8 +51,8 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
   OrderRootsEnumeratorImpl(@NotNull OrderEnumeratorBase orderEnumerator,
                            @NotNull NotNullFunction<OrderEntry, OrderRootType> rootTypeProvider) {
     myOrderEnumerator = orderEnumerator;
-    myRootTypeProvider = rootTypeProvider;
     myRootType = null;
+    myRootTypeProvider = rootTypeProvider;
   }
 
   @NotNull
@@ -98,6 +98,7 @@ class OrderRootsEnumeratorImpl implements OrderRootsEnumerator {
     LOG.assertTrue(!myWithoutSelfModuleOutput, "Caching not supported for OrderRootsEnumerator with 'withoutSelfModuleOutput' option");
   }
 
+  @NotNull 
   private Collection<VirtualFile> computeRoots() {
     final Collection<VirtualFile> result = new LinkedHashSet<>();
     myOrderEnumerator.forEach((orderEntry, customHandlers) -> {

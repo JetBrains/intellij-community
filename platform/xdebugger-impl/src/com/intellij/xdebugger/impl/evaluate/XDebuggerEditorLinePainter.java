@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.xdebugger.impl.evaluate;
 
@@ -32,7 +20,6 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
-import com.intellij.xdebugger.impl.frame.XDebugView;
 import com.intellij.xdebugger.impl.frame.XVariablesView;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererImpl;
@@ -60,7 +47,12 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
       return null;
     }
 
-    XVariablesView.InlineVariablesInfo data = project.getUserData(XVariablesView.DEBUG_VARIABLES);
+    XDebugSession session = XDebuggerManager.getInstance(project).getCurrentSession();
+    if (session == null) {
+      return null;
+    }
+
+    XVariablesView.InlineVariablesInfo data = XVariablesView.InlineVariablesInfo.get(session);
     final Document doc = FileDocumentManager.getInstance().getDocument(file);
 
     if (data == null || doc == null) {
@@ -74,7 +66,6 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
     }
     List<XValueNodeImpl> values = data.get(file, lineNumber, doc.getModificationStamp());
     if (values != null && !values.isEmpty()) {
-      XDebugSession session = XDebugView.getSession(values.iterator().next().getTree());
       final int bpLine = getCurrentBreakPointLineInFile(session, file);
       boolean isTopFrame = session instanceof XDebugSessionImpl && ((XDebugSessionImpl)session).isTopFrameSelected();
       final TextAttributes attributes = bpLine == lineNumber && isTopFrame &&
@@ -151,23 +142,18 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
     return -1;
   }
 
-  private static boolean isDarkEditor() {
-    Color bg = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
-    return ColorUtil.isDark(bg);
-  }
-
-  public static TextAttributes getNormalAttributes() {
+  private static TextAttributes getNormalAttributes() {
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.INLINED_VALUES);
     if (attributes == null || attributes.getForegroundColor() == null) {
-     return new TextAttributes(new JBColor(() -> isDarkEditor() ? new Color(0x3d8065) : Gray._135), null, null, null, Font.ITALIC);
+     return new TextAttributes(new JBColor(() -> EditorColorsManager.getInstance().isDarkEditor() ? new Color(0x3d8065) : Gray._135), null, null, null, Font.ITALIC);
     }
     return attributes;
   }
 
-  public static TextAttributes getChangedAttributes() {
+  private static TextAttributes getChangedAttributes() {
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.INLINED_VALUES_MODIFIED);
     if (attributes == null || attributes.getForegroundColor() == null) {
-      return new TextAttributes(new JBColor(() -> isDarkEditor() ? new Color(0xa1830a) : new Color(0xca8021)), null, null, null, Font.ITALIC);
+      return new TextAttributes(new JBColor(() -> EditorColorsManager.getInstance().isDarkEditor() ? new Color(0xa1830a) : new Color(0xca8021)), null, null, null, Font.ITALIC);
     }
     return attributes;
   }
@@ -176,7 +162,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
     TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DebuggerColors.INLINED_VALUES_EXECUTION_LINE);
     if (attributes == null || attributes.getForegroundColor() == null) {
       //noinspection UseJBColor
-      return new TextAttributes(isDarkEditor() ? new Color(255, 235, 9) : new Color(0, 255, 86), null, null, null, Font.ITALIC);
+      return new TextAttributes(EditorColorsManager.getInstance().isDarkEditor() ? new Color(255, 235, 9) : new Color(0, 255, 86), null, null, null, Font.ITALIC);
     }
     return attributes;
   }
@@ -205,9 +191,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
 
     @Override
     public int hashCode() {
-      int result = lineNumber;
-      result = 31 * result + name.hashCode();
-      return result;
+      return Objects.hash(lineNumber, name);
     }
   }
 
@@ -216,7 +200,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
    private String old;
    private int valueNodeHashCode;
 
-    public VariableValue(String actual, String old, int valueNodeHashCode) {
+    VariableValue(String actual, String old, int valueNodeHashCode) {
       this.actual = actual;
       this.old = old;
       this.valueNodeHashCode = valueNodeHashCode;
@@ -226,7 +210,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
       return old != null && !StringUtil.equals(actual, old);
     }
 
-    public void produceChangedParts(List<LineExtensionInfo> result) {
+    void produceChangedParts(List<? super LineExtensionInfo> result) {
       if (isArray(actual) && isArray(old)) {
         List<String> actualParts = getArrayParts(actual);
         List<String> oldParts = getArrayParts(old);
@@ -259,7 +243,7 @@ public class XDebuggerEditorLinePainter extends EditorLinePainter {
 
   private static class VariableText {
     final List<LineExtensionInfo> infos = new ArrayList<>();
-    int length = 0;
+    int length;
 
     void add(LineExtensionInfo info) {
       infos.add(info);

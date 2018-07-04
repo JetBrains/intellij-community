@@ -21,7 +21,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
@@ -95,7 +94,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
     if (myDocument != null) {
       if (myDocument.getModificationStamp() != myInitialDocStamp) return false;
       PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myDocument);
-      if (file == null || !file.isValid()) return false;
+      return file != null && file.isValid();
     }
 
     return true;
@@ -104,7 +103,7 @@ public abstract class TextEditorHighlightingPass implements HighlightingPass {
   @Override
   public final void applyInformationToEditor() {
     if (!isValid()) return; // Document has changed.
-    if (DumbService.getInstance(myProject).isDumb() && !(this instanceof DumbAware)) {
+    if (DumbService.getInstance(myProject).isDumb() && !DumbService.isDumbAware(this)) {
       Document document = getDocument();
       PsiFile file = document == null ? null : PsiDocumentManager.getInstance(myProject).getPsiFile(document);
       if (file != null) {

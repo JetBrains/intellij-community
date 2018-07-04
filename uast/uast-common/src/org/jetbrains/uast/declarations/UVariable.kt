@@ -25,123 +25,162 @@ import org.jetbrains.uast.visitor.UastVisitor
  * A variable wrapper to be used in [UastVisitor].
  */
 interface UVariable : UDeclaration, PsiVariable {
-    override val psi: PsiVariable
+  override val psi: PsiVariable
 
-    /**
-     * Returns the variable initializer or the parameter default value, or null if the variable has not an initializer.
-     */
-    val uastInitializer: UExpression?
+  /**
+   * Returns the variable initializer or the parameter default value, or null if the variable has not an initializer.
+   */
+  val uastInitializer: UExpression?
 
-    /**
-     * Returns variable type reference.
-     */
-    val typeReference: UTypeReferenceExpression?
+  /**
+   * Returns variable type reference.
+   */
+  val typeReference: UTypeReferenceExpression?
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitVariable(this)) return
-        visitContents(visitor)
-        visitor.afterVisitVariable(this)
+  override fun getType(): PsiType
+
+  override fun getName(): String?
+
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitVariable(this)) return
+    visitContents(visitor)
+    visitor.afterVisitVariable(this)
+  }
+
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
+    visitor.visitVariable(this, data)
+
+  @Deprecated("Use uastInitializer instead.", ReplaceWith("uastInitializer"))
+  override fun getInitializer(): PsiExpression? = psi.initializer
+
+  override fun asLogString(): String = log("name = $name")
+
+  override fun asRenderString(): String = buildString {
+    if (annotations.isNotEmpty()) {
+      annotations.joinTo(this, separator = " ", postfix = " ") { it.asRenderString() }
     }
+    append(psi.renderModifiers())
+    append("var ").append(psi.name).append(": ").append(psi.type.getCanonicalText(false))
+    uastInitializer?.let { initializer -> append(" = " + initializer.asRenderString()) }
+  }
+}
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
-            visitor.visitVariable(this, data)
-
-    @Deprecated("Use uastInitializer instead.", ReplaceWith("uastInitializer"))
-    override fun getInitializer() = psi.initializer
-
-    override fun asLogString() = log("name = $name")
-
-    override fun asRenderString() = buildString {
-        if (annotations.isNotEmpty()) {
-            annotations.joinTo(this, separator = " ", postfix = " ") { it.asRenderString() }
-        }
-        append(psi.renderModifiers())
-        append("var ").append(psi.name).append(": ").append(psi.type.getCanonicalText(false))
-        uastInitializer?.let { initializer -> append(" = " + initializer.asRenderString()) }
-    }
+/**
+ * @since 2018.2
+ */
+interface UVariableEx : UVariable, UDeclarationEx {
+  override val javaPsi: PsiVariable
 }
 
 private fun UVariable.visitContents(visitor: UastVisitor) {
-    annotations.acceptList(visitor)
-    uastInitializer?.accept(visitor)
+  annotations.acceptList(visitor)
+  uastInitializer?.accept(visitor)
 }
 
 interface UParameter : UVariable, PsiParameter {
-    override val psi: PsiParameter
+  override val psi: PsiParameter
 
-    override fun asLogString() = log("name = $name")
+  override fun asLogString(): String = log("name = $name")
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitParameter(this)) return
-        visitContents(visitor)
-        visitor.afterVisitParameter(this)
-    }
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitParameter(this)) return
+    visitContents(visitor)
+    visitor.afterVisitParameter(this)
+  }
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) = visitor.visitParameter(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitParameter(this, data)
+}
+
+/**
+ * @since 2018.2
+ */
+interface UParameterEx : UParameter, UDeclarationEx {
+  override val javaPsi: PsiParameter
 }
 
 interface UField : UVariable, PsiField {
-    override val psi: PsiField
+  override val psi: PsiField
 
-    override fun asLogString() = log("name = $name")
+  override fun asLogString(): String = log("name = $name")
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitField(this)) return
-        visitContents(visitor)
-        visitor.afterVisitField(this)
-    }
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitField(this)) return
+    visitContents(visitor)
+    visitor.afterVisitField(this)
+  }
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) = visitor.visitField(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitField(this, data)
+}
+
+/**
+ * @since 2018.2
+ */
+interface UFieldEx : UField, UDeclarationEx {
+  override val javaPsi: PsiField
 }
 
 interface ULocalVariable : UVariable, PsiLocalVariable {
-    override val psi: PsiLocalVariable
+  override val psi: PsiLocalVariable
 
-    override fun asLogString() = log("name = $name")
+  override fun asLogString(): String = log("name = $name")
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitLocalVariable(this)) return
-        visitContents(visitor)
-        visitor.afterVisitLocalVariable(this)
-    }
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitLocalVariable(this)) return
+    visitContents(visitor)
+    visitor.afterVisitLocalVariable(this)
+  }
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) = visitor.visitLocalVariable(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitLocalVariable(this, data)
+}
+
+/**
+ * @since 2018.2
+ */
+interface ULocalVariableEx : ULocalVariable, UDeclarationEx {
+  override val javaPsi: PsiLocalVariable
 }
 
 interface UEnumConstant : UField, UCallExpression, PsiEnumConstant {
-    override val psi: PsiEnumConstant
+  override val psi: PsiEnumConstant
 
-    val initializingClass: UClass?
+  val initializingClass: UClass?
 
-    override fun asLogString() = log("name = $name")
+  override fun asLogString(): String = log("name = $name")
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitEnumConstant(this)) return
-        annotations.acceptList(visitor)
-        methodIdentifier?.accept(visitor)
-        classReference?.accept(visitor)
-        valueArguments.acceptList(visitor)
-        initializingClass?.accept(visitor)
-        visitor.afterVisitEnumConstant(this)
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitEnumConstant(this)) return
+    annotations.acceptList(visitor)
+    methodIdentifier?.accept(visitor)
+    classReference?.accept(visitor)
+    valueArguments.acceptList(visitor)
+    initializingClass?.accept(visitor)
+    visitor.afterVisitEnumConstant(this)
+  }
+
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
+    visitor.visitEnumConstantExpression(this, data)
+
+  override fun asRenderString(): String = buildString {
+    if (annotations.isNotEmpty()) {
+      annotations.joinTo(this, separator = " ", postfix = " ", transform = UAnnotation::asRenderString)
     }
-
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
-            visitor.visitEnumConstantExpression(this, data)
-
-    override fun asRenderString() = buildString {
-        if (annotations.isNotEmpty()) {
-            annotations.joinTo(this, separator = " ", postfix = " ", transform = UAnnotation::asRenderString)
-        }
-        append(name ?: "<ERROR>")
-        if (valueArguments.isNotEmpty()) {
-            valueArguments.joinTo(this, prefix = "(", postfix = ")", transform = UExpression::asRenderString)
-        }
-        initializingClass?.let {
-            appendln(" {")
-            it.uastDeclarations.forEach { declaration ->
-                appendln(declaration.asRenderString().withMargin)
-            }
-            append("}")
-        }
+    append(name)
+    if (valueArguments.isNotEmpty()) {
+      valueArguments.joinTo(this, prefix = "(", postfix = ")", transform = UExpression::asRenderString)
     }
+    initializingClass?.let {
+      appendln(" {")
+      it.uastDeclarations.forEach { declaration ->
+        appendln(declaration.asRenderString().withMargin)
+      }
+      append("}")
+    }
+  }
+}
+
+/**
+ * @since 2018.2
+ */
+interface UEnumConstantEx : UEnumConstant, UDeclarationEx {
+  override val javaPsi: PsiEnumConstant
 }

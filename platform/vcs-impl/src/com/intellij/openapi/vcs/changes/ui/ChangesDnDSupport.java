@@ -22,8 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +35,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.vcs.changes.ChangesViewManager.getDropRootNode;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.IGNORED_FILES_TAG;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.UNVERSIONED_FILES_TAG;
 import static com.intellij.openapi.vcs.changes.ui.ChangesListView.getChanges;
@@ -98,47 +99,47 @@ public class ChangesDnDSupport implements DnDDropHandler, DnDTargetChecker {
     aEvent.setDropPossible(false, "");
 
     Object attached = aEvent.getAttachedObject();
-    if (!(attached instanceof ChangeListDragBean)) return false;
+    ChangesBrowserNode dropNode = getDropRootNode(myTree, aEvent);
 
-    final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
-    if (dragBean.getSourceComponent() != myTree) return false;
-    dragBean.setTargetNode(null);
-
-    RelativePoint dropPoint = aEvent.getRelativePoint();
-    Point onTree = dropPoint.getPoint(myTree);
-    final TreePath dropPath = myTree.getPathForLocation(onTree.x, onTree.y);
-
-    if (dropPath == null) return false;
-
-    ChangesBrowserNode dropNode = (ChangesBrowserNode)dropPath.getLastPathComponent();
-    while (!((ChangesBrowserNode)dropNode.getParent()).isRoot()) {
-      dropNode = (ChangesBrowserNode)dropNode.getParent();
+    if (attached instanceof ChangeListDragBean) {
+      final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
+      dragBean.setTargetNode(dropNode);
+      if (dragBean.getSourceComponent() != myTree || dropNode == null || !dropNode.canAcceptDrop(dragBean)) return true;
+    }
+    else if (attached instanceof ShelvedChangeListDragBean) {
+      if (!(dropNode == null || dropNode instanceof ChangesBrowserChangeListNode)) return true;
+    }
+    else {
+      return true;
     }
 
-    if (!dropNode.canAcceptDrop(dragBean)) {
-      return false;
+    if (dropNode != null) {
+      highlightDropNode(aEvent, dropNode);
     }
 
+    aEvent.setDropPossible(true);
+    return false;
+  }
+
+  private void highlightDropNode(@NotNull DnDEvent aEvent, @NotNull ChangesBrowserNode dropNode) {
     final Rectangle tableCellRect = myTree.getPathBounds(new TreePath(dropNode.getPath()));
     if (fitsInBounds(tableCellRect)) {
       aEvent.setHighlighting(new RelativeRectangle(myTree, tableCellRect), DnDEvent.DropTargetHighlightingType.RECTANGLE);
     }
-
-    aEvent.setDropPossible(true);
-    dragBean.setTargetNode(dropNode);
-
-    return false;
   }
 
   @Override
   public void drop(DnDEvent aEvent) {
     Object attached = aEvent.getAttachedObject();
-    if (!(attached instanceof ChangeListDragBean)) return;
-
-    final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
-    final ChangesBrowserNode changesBrowserNode = dragBean.getTargetNode();
-    if (changesBrowserNode != null) {
-      changesBrowserNode.acceptDrop(myChangeListManager, dragBean);
+    if (attached instanceof ShelvedChangeListDragBean) {
+      ShelveChangesManager.unshelveSilentlyWithDnd(myProject, (ShelvedChangeListDragBean)attached, getDropRootNode(myTree, aEvent));
+    }
+    else if (attached instanceof ChangeListDragBean) {
+      final ChangeListDragBean dragBean = (ChangeListDragBean)attached;
+      final ChangesBrowserNode changesBrowserNode = dragBean.getTargetNode();
+      if (changesBrowserNode != null) {
+        changesBrowserNode.acceptDrop(myChangeListManager, dragBean);
+      }
     }
   }
 

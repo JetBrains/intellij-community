@@ -66,12 +66,12 @@ public final class PyMagicLiteralRenameHandler implements RenameHandler {
   }
 
   @Override
-  public boolean isAvailableOnDataContext(final DataContext dataContext) {
+  public boolean isAvailableOnDataContext(@NotNull final DataContext dataContext) {
     return getStringLiteral(dataContext) != null;
   }
 
   @Override
-  public boolean isRenaming(final DataContext dataContext) {
+  public boolean isRenaming(@NotNull final DataContext dataContext) {
     final PyStringLiteralExpression literal = getStringLiteral(dataContext);
     return !((literal == null) || !PyMagicLiteralTools.isMagicLiteral(literal));
   }

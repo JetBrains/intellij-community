@@ -25,22 +25,22 @@ import org.jetbrains.uast.visitor.UastVisitor
  * Represents a `return` expression.
  */
 interface UReturnExpression : UExpression {
-    /**
-     * Returns the `return` value.
-     */
-    val returnExpression: UExpression?
+  /**
+   * Returns the `return` value.
+   */
+  val returnExpression: UExpression?
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitReturnExpression(this)) return
-        annotations.acceptList(visitor)
-        returnExpression?.accept(visitor)
-        visitor.afterVisitReturnExpression(this)
-    }
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitReturnExpression(this)) return
+    annotations.acceptList(visitor)
+    returnExpression?.accept(visitor)
+    visitor.afterVisitReturnExpression(this)
+  }
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
-            visitor.visitReturnExpression(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
+    visitor.visitReturnExpression(this, data)
 
-    override fun asRenderString() = returnExpression.let { if (it == null) "return" else "return " + it.asRenderString() }
+  override fun asRenderString(): String = returnExpression.let { if (it == null) "return" else "return " + it.asRenderString() }
 
-    override fun asLogString() = log()
+  override fun asLogString(): String = log()
 }

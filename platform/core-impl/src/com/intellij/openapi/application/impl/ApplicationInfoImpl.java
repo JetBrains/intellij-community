@@ -1,37 +1,21 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBRectangle;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +42,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myBuildNumber;
   private String myApiVersion;
   private String myCompanyName = "JetBrains s.r.o.";
+  private String myCopyrightStart = "2000";
   private String myShortCompanyName;
   private String myCompanyUrl = "https://www.jetbrains.com/";
   private Color myProgressColor;
@@ -70,7 +55,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private int myProgressHeight = 2;
   private int myProgressX = 1;
   private int myProgressY = 350;
-  private int myLicenseOffsetY = Registry.is("ide.new.about") ? 85 : 30;
+  private int myLicenseOffsetY = 85;
   private String mySplashImageUrl;
   private String myAboutImageUrl;
   @SuppressWarnings("UseJBColor") private Color mySplashTextColor = new Color(0, 35, 135);  // idea blue
@@ -110,9 +95,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private List<PluginChooserPage> myPluginChooserPages = new ArrayList<>();
   private String[] myEssentialPluginsIds;
   private String myStatisticsSettingsUrl;
+  private String myFUStatisticsSettingsUrl;
   private String myStatisticsServiceUrl;
   private String myStatisticsServiceKey;
-  private String myThirdPartySoftwareUrl;
+  private String myEventLogSettingsUrl;
   private String myJetbrainsTvUrl;
   private String myEvalLicenseUrl = "https://www.jetbrains.com/store/license.html";
   private String myKeyConversionUrl = "https://www.jetbrains.com/shop/eform/keys-exchange";
@@ -143,6 +129,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_MAJOR_RELEASE_DATE = "majorReleaseDate";
   private static final String ELEMENT_LOGO = "logo";
   private static final String ATTRIBUTE_URL = "url";
+  private static final String COPYRIGHT_START = "copyrightStart";
   private static final String ATTRIBUTE_TEXT_COLOR = "textcolor";
   private static final String ATTRIBUTE_PROGRESS_COLOR = "progressColor";
   private static final String ATTRIBUTE_ABOUT_FOREGROUND_COLOR = "foreground";
@@ -193,9 +180,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_MAC_URL = "mac";
   private static final String ELEMENT_STATISTICS = "statistics";
   private static final String ATTRIBUTE_STATISTICS_SETTINGS = "settings";
+  private static final String ATTRIBUTE_FU_STATISTICS_SETTINGS = "fus-settings";
   private static final String ATTRIBUTE_STATISTICS_SERVICE = "service";
   private static final String ATTRIBUTE_STATISTICS_SERVICE_KEY = "service-key";
-  private static final String ELEMENT_THIRD_PARTY = "third-party";
+  private static final String ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS = "event-log-settings";
   private static final String ELEMENT_JB_TV = "jetbrains-tv";
   private static final String CUSTOMIZE_IDE_WIZARD_STEPS = "customize-ide-wizard";
   private static final String STEPS_PROVIDER = "provider";
@@ -238,7 +226,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public BuildNumber getBuild() {
-    return BuildNumber.fromString(myBuildNumber, getProductPrefix());
+    return BuildNumber.fromStringWithProductCode(myBuildNumber, getProductPrefix());
   }
 
   private static String getProductPrefix() {
@@ -256,7 +244,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   public String getApiVersion() {
     BuildNumber build = getBuild();
     if (myApiVersion != null) {
-      BuildNumber api = BuildNumber.fromString(myApiVersion, build.getProductCode());
+      BuildNumber api = BuildNumber.fromStringWithProductCode(myApiVersion, build.getProductCode());
       if (api != null) {
         return api.asString();
       }
@@ -328,7 +316,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public String getCompanyURL() {
-    return myCompanyUrl;
+    return IdeUrlTrackingParametersProvider.getInstance().augmentUrl(myCompanyUrl);
   }
 
   @Nullable
@@ -536,8 +524,16 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return myShowLicensee;
   }
 
+  public String getCopyrightStart() {
+    return myCopyrightStart;
+  }
+
   public String getStatisticsSettingsUrl() {
     return myStatisticsSettingsUrl;
+  }
+
+  public String getFUStatisticsSettingsUrl() {
+    return myFUStatisticsSettingsUrl;
   }
 
   public String getStatisticsServiceUrl() {
@@ -548,9 +544,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     return myStatisticsServiceKey;
   }
 
-  @Override
-  public String getThirdPartySoftwareURL() {
-    return myThirdPartySoftwareUrl;
+  public String getEventLogSettingsUrl() {
+    return myEventLogSettingsUrl;
   }
 
   @Override
@@ -644,6 +639,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myCompanyName = companyElement.getAttributeValue(ATTRIBUTE_NAME, myCompanyName);
       myShortCompanyName = companyElement.getAttributeValue("shortName", shortenCompanyName(myCompanyName));
       myCompanyUrl = companyElement.getAttributeValue(ATTRIBUTE_URL, myCompanyUrl);
+      myCopyrightStart = companyElement.getAttributeValue(COPYRIGHT_START, myCopyrightStart);
     }
 
     Element buildElement = getChild(parentNode, ELEMENT_BUILD);
@@ -656,13 +652,13 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       if (dateString.equals("__BUILD_DATE__")) {
         myBuildDate = new GregorianCalendar();
         try {
-          final JarFile bootJar = new JarFile(PathManager.getHomePath() + File.separator + "lib" + File.separator + "boot.jar");
+          final JarFile bootstrapJar = new JarFile(PathManager.getHomePath() + File.separator + "lib" + File.separator + "bootstrap.jar");
           try {
-            final JarEntry jarEntry = bootJar.entries().nextElement(); // /META-INF is always updated on build
+            final JarEntry jarEntry = bootstrapJar.entries().nextElement(); // /META-INF is always updated on build
             myBuildDate.setTime(new Date(jarEntry.getTime()));
           }
           finally {
-            bootJar.close();
+            bootstrapJar.close();
           }
         }
         catch (Exception ignore) { }
@@ -682,7 +678,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myMajorVersion + "." + myMinorVersion + "#" + myBuildNumber +
       " " + ApplicationNamesInfo.getInstance().getProductName() +
       ", eap:" + myEAP + ", os:" + SystemInfoRt.OS_NAME + " " + SystemInfoRt.OS_VERSION +
-      ", java-version:" + SystemProperties.getJavaVendor() + " " + SystemInfo.JAVA_RUNTIME_VERSION);
+      ", java-version:" + SystemInfo.JAVA_VENDOR + " " + SystemInfo.JAVA_RUNTIME_VERSION);
 
     Element logoElement = getChild(parentNode, ELEMENT_LOGO);
     if (logoElement != null) {
@@ -743,12 +739,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       String logoH = aboutLogoElement.getAttributeValue("logoH");
       if (logoX != null && logoY != null && logoW != null && logoH != null) {
         try {
-          myAboutLogoRect =
-            new JBRectangle(Integer.parseInt(logoX), Integer.parseInt(logoY), Integer.parseInt(logoW), Integer.parseInt(logoH));
+          myAboutLogoRect = new Rectangle(Integer.parseInt(logoX), Integer.parseInt(logoY), Integer.parseInt(logoW), Integer.parseInt(logoH));
         }
-        catch (NumberFormatException nfe) {
-          // ignore
-        }
+        catch (NumberFormatException ignored) { }
       }
     }
 
@@ -844,7 +837,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
       myPluginsDownloadUrl = downloadUrl != null ? downloadUrl : myPluginManagerUrl + (closed ? "" : "/") + "pluginManager/";
 
       if (!getBuild().isSnapshot()) {
-        myBuiltinPluginsUrl = pluginsElement.getAttributeValue(ATTRIBUTE_BUILTIN_URL);
+        myBuiltinPluginsUrl = StringUtil.nullize(pluginsElement.getAttributeValue(ATTRIBUTE_BUILTIN_URL));
       }
     }
     else {
@@ -882,18 +875,17 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
     Element statisticsElement = getChild(parentNode, ELEMENT_STATISTICS);
     if (statisticsElement != null) {
       myStatisticsSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SETTINGS);
+      myFUStatisticsSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_FU_STATISTICS_SETTINGS);
       myStatisticsServiceUrl  = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SERVICE);
       myStatisticsServiceKey  = statisticsElement.getAttributeValue(ATTRIBUTE_STATISTICS_SERVICE_KEY);
+      myEventLogSettingsUrl = statisticsElement.getAttributeValue(ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS);
     }
     else {
       myStatisticsSettingsUrl = "https://www.jetbrains.com/idea/statistics/stat-assistant.xml";
+      myFUStatisticsSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-assistant.xml";
       myStatisticsServiceUrl  = "https://www.jetbrains.com/idea/statistics/index.jsp";
       myStatisticsServiceKey  = null;
-    }
-
-    Element thirdPartyElement = getChild(parentNode, ELEMENT_THIRD_PARTY);
-    if (thirdPartyElement != null) {
-      myThirdPartySoftwareUrl = thirdPartyElement.getAttributeValue(ATTRIBUTE_URL);
+      myEventLogSettingsUrl = "https://www.jetbrains.com/idea/statistics/fus-lion-v2-assistant.xml";
     }
 
     Element tvElement = getChild(parentNode, ELEMENT_JB_TV);

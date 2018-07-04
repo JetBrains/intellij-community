@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
@@ -26,6 +12,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -41,15 +29,19 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 
 /**
  * @author anna
- * Date: 20-Dec-2007
  */
 public class RefJavaManagerImpl extends RefJavaManager {
+  private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION = Conditions
+    .and(Conditions.instanceOf(PsiFile.class, PsiClass.class, PsiMethod.class, PsiField.class, PsiJavaModule.class), Conditions.notInstanceOf(PsiTypeParameter.class));
+
   private static final Logger LOG = Logger.getInstance(RefJavaManagerImpl.class);
   private final PsiMethod myAppMainPattern;
   private final PsiMethod myAppPremainPattern;
@@ -71,8 +63,8 @@ public class RefJavaManagerImpl extends RefJavaManager {
     myAppPremainPattern = factory.createMethodFromText("void premain(String[] args, java.lang.instrument.Instrumentation i);", null);
     myAppAgentmainPattern = factory.createMethodFromText("void agentmain(String[] args, java.lang.instrument.Instrumentation i);", null);
 
-    myApplet = JavaPsiFacade.getInstance(psiManager.getProject()).findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
-    myServlet = JavaPsiFacade.getInstance(psiManager.getProject()).findClass("javax.servlet.Servlet", GlobalSearchScope.allScope(project));
+    myApplet = JavaPsiFacade.getInstance(project).findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
+    myServlet = JavaPsiFacade.getInstance(project).findClass("javax.servlet.Servlet", GlobalSearchScope.allScope(project));
   }
 
   @Override
@@ -204,8 +196,8 @@ public class RefJavaManagerImpl extends RefJavaManager {
     LOG.assertTrue(myRefManager.isValidPointForReference(), "References may become invalid after process is finished");
     
     return myRefManager.getFromRefTableOrCache(param, () -> {
-      RefParameter ref = new RefParameterImpl(param, index, myRefManager);
-      ((RefParameterImpl)ref).initialize();
+      RefParameterImpl ref = new RefParameterImpl(param, index, myRefManager);
+      ref.initialize();
       return ref;
     });
   }
@@ -250,7 +242,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   @Override
   @Nullable
-  public RefElement createRefElement(final PsiElement elem) {
+  public RefElement createRefElement(@NotNull final PsiElement elem) {
     if (elem instanceof PsiClass) {
       return new RefClassImpl((PsiClass)elem, myRefManager);
     }
@@ -277,6 +269,12 @@ public class RefJavaManagerImpl extends RefJavaManager {
     return null;
   }
 
+  @Nullable
+  @Override
+  public PsiNamedElement getElementContainer(@NotNull PsiElement psiElement) {
+    return (PsiNamedElement)PsiTreeUtil.findFirstParent(psiElement, PROBLEM_ELEMENT_CONDITION);
+  }
+
   @Override
   @Nullable
   public RefEntity getReference(final String type, final String fqName) {
@@ -298,12 +296,15 @@ public class RefJavaManagerImpl extends RefJavaManager {
     if (PACKAGE.equals(type)) {
       return RefPackageImpl.packageFromFQName(myRefManager, fqName);
     }
+    if (JAVA_MODULE.equals(type)) {
+      return RefJavaModuleImpl.moduleFromExternalName(myRefManager, fqName);
+    }
     return null;
   }
 
   @Override
   @Nullable
-  public String getType(final RefEntity ref) {
+  public String getType(@NotNull final RefEntity ref) {
     if (ref instanceof RefImplicitConstructor) {
       return IMPLICIT_CONSTRUCTOR;
     }
@@ -338,7 +339,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  public void visitElement(final PsiElement element) {
+  public void visitElement(@NotNull final PsiElement element) {
     PsiElementVisitor projectIterator = myProjectIterator;
     if (projectIterator == null) {
       myProjectIterator = projectIterator = new MyJavaElementVisitor();
@@ -348,41 +349,47 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   @Override
   @Nullable
-  public String getGroupName(final RefEntity entity) {
+  public String getGroupName(@NotNull final RefEntity entity) {
     if (entity instanceof RefFile && !(entity instanceof RefJavaFileImpl)) return null;
     return RefJavaUtil.getInstance().getPackageName(entity);
   }
 
   @Override
-  public boolean belongsToScope(final PsiElement psiElement) {
+  public boolean belongsToScope(@NotNull final PsiElement psiElement) {
     return !(psiElement instanceof PsiTypeParameter);
   }
 
   @Override
   public void export(@NotNull final RefEntity refEntity, @NotNull final Element element) {
-    if (refEntity instanceof RefElement) {
-      final SmartPsiElementPointer pointer = ((RefElement)refEntity).getPointer();
-      if (pointer != null) {
-        final PsiFile psiFile = pointer.getContainingFile();
-        if (psiFile instanceof PsiJavaFile) {
-          appendPackageElement(element, ((PsiJavaFile)psiFile).getPackageName());
-        }
-      }
+    String packageName = RefJavaUtil.getInstance().getPackageName(refEntity);
+    if (packageName != null) {
+      final Element packageElement = new Element("package");
+      packageElement.addContent(packageName.isEmpty() ? InspectionsBundle.message("inspection.reference.default.package") : packageName);
+      element.addContent(packageElement);
     }
   }
 
   @Override
-  public void onEntityInitialized(RefElement refElement, PsiElement psiElement) {
-    if (myRefManager.isOfflineView()) return;
+  public void onEntityInitialized(@NotNull RefElement refElement, @NotNull PsiElement psiElement) {
+    if (myRefManager.isOfflineView() || !myRefManager.isDeclarationsFound()) return;
     if (isEntryPoint(refElement)) {
       getEntryPointsManager().addEntryPoint(refElement, false);
     }
   }
 
-  private static void appendPackageElement(final Element element, final String packageName) {
-    final Element packageElement = new Element("package");
-    packageElement.addContent(packageName.isEmpty() ? InspectionsBundle.message("inspection.reference.default.package") : packageName);
-    element.addContent(packageElement);
+  @Override
+  public boolean shouldProcessExternalFile(@NotNull PsiFile file) {
+    return file instanceof PsiClassOwner;
+  }
+
+  @NotNull
+  @Override
+  public Stream<? extends PsiElement> extractExternalFileImplicitReferences(@NotNull PsiFile psiFile) {
+    return Arrays
+      .stream(((PsiClassOwner)psiFile).getClasses())
+      .flatMap(c -> Arrays.stream(c.getSuperTypes()))
+      .map(PsiClassType::resolve)
+      .filter(Objects::nonNull);
   }
 
   @Override
@@ -393,11 +400,6 @@ public class RefJavaManagerImpl extends RefJavaManager {
       myEntryPointsManager = entryPointsManager = new EntryPointsManagerBase(project) {
         @Override
         public void configureAnnotations() {
-        }
-
-        @Override
-        public JButton createConfigureAnnotationsBtn() {
-          return null;
         }
       };
       Disposer.register(project, entryPointsManager);

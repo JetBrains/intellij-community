@@ -157,14 +157,14 @@ public class ApplyPatchAction extends DumbAwareAction {
   }
 
   @NotNull
-  public static ApplyPatchStatus applyOnly(@Nullable final Project project,
-                                           @NotNull final ApplyFilePatchBase patch,
-                                           @Nullable final ApplyPatchContext context,
-                                           @NotNull final VirtualFile file,
-                                           @Nullable final CommitContext commitContext,
-                                           boolean reverse,
-                                           @Nullable String leftPanelTitle,
-                                           @Nullable String rightPanelTitle) {
+  public static ApplyPatchStatus applyContent(@Nullable final Project project,
+                                              @NotNull final ApplyFilePatchBase patch,
+                                              @Nullable final ApplyPatchContext context,
+                                              @NotNull final VirtualFile file,
+                                              @Nullable final CommitContext commitContext,
+                                              boolean reverse,
+                                              @Nullable String leftPanelTitle,
+                                              @Nullable String rightPanelTitle) {
     final ApplyFilePatch.Result result = tryApplyPatch(project, patch, context, file, commitContext);
 
     final ApplyPatchStatus status = result.getStatus();
@@ -256,7 +256,7 @@ public class ApplyPatchAction extends DumbAwareAction {
       }
       catch (IOException e) {
         LOG.error(e);
-        return ApplyFilePatch.Result.createThrow(e);
+        return ApplyFilePatch.FAILURE;
       }
     });
   }

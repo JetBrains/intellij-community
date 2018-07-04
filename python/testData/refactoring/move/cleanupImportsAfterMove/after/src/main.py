@@ -1,5 +1,5 @@
-from lib import C
 from lib import D
+from lib import C
 
 
 class C3:

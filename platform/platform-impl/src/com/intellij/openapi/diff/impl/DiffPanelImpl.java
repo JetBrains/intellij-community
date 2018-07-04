@@ -18,7 +18,6 @@ package com.intellij.openapi.diff.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.EditSourceAction;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
@@ -54,8 +53,8 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -151,7 +150,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
                        boolean horizontal,
                        int diffDividerPolygonsOffset,
                        DiffTool parentTool) {
-    UsageTrigger.trigger("diff.DiffPanelImpl");
+    DiffUsageTriggerCollector.trigger("deprecated.DiffPanelImpl");
 
     myProject = project;
     myIsHorizontal = horizontal;
@@ -214,16 +213,13 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
 
   private void registerActions() {
     //control+tab switches editors
-    new AnAction(){
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        if (getEditor1() != null && getEditor2() != null) {
-          Editor focus = getEditor1().getContentComponent().hasFocus() ? getEditor2() : getEditor1();
-          IdeFocusManager.getGlobalInstance().requestFocus(focus.getContentComponent(), true);
-          focus.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-        }
+    DumbAwareAction.create(e -> {
+      if (getEditor1() != null && getEditor2() != null) {
+        Editor focus = getEditor1().getContentComponent().hasFocus() ? getEditor2() : getEditor1();
+        IdeFocusManager.getGlobalInstance().requestFocus(focus.getContentComponent(), true);
+        focus.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("control TAB"), myPanel, this);
+    }).registerCustomShortcutSet(CustomShortcutSet.fromString("control TAB"), myPanel, this);
   }
 
   protected DiffPanelState createDiffPanelState(@NotNull Disposable parentDisposable) {
@@ -614,7 +610,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return myData.getProject();
   }
 
-  public void showSource(@Nullable OpenFileDescriptor descriptor) {
+  public void showSource(@Nullable Navigatable descriptor) {
     myOptions.showSource(descriptor);
   }
 

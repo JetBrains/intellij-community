@@ -8,7 +8,7 @@ ZDOTDIR=$_OLD_ZDOTDIR
 
 if [ -n "$JEDITERM_USER_RCFILE" ]
 then
-  source $JEDITERM_USER_RCFILE
+  source "$JEDITERM_USER_RCFILE"
   unset JEDITERM_USER_RCFILE
 fi
 
@@ -44,3 +44,21 @@ then
   source $(echo $JEDITERM_SOURCE)
   unset JEDITERM_SOURCE
 fi
+
+function override_jb_variables {
+  for VARIABLE in $(env)
+  do
+    NAME=${VARIABLE%%=*}
+    if [[ $NAME = '_INTELLIJ_FORCE_SET_'* ]]
+    then
+      NEW_NAME=${NAME:20}
+      if [ -n "$NEW_NAME" ]
+      then
+        VALUE=${VARIABLE#*=}
+        export "$NEW_NAME"="$VALUE"
+      fi
+    fi
+  done
+}
+
+override_jb_variables

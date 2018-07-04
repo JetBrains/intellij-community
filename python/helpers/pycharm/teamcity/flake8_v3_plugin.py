@@ -35,11 +35,12 @@ class TeamcityReport(base.BaseFormatter):
         position = '%s:%d:%d' % (
             normalized_filename, error.line_number, error.column_number)
         error_message = '%s %s' % (error.code, error.text)
-        test_name = 'pep8: %s: %s' % (position, error_message)
+        test_name = 'pep8: %s: %s' % (normalized_filename, error_message)
 
         line = error.physical_line
         offset = error.column_number
         details = [
+            position,
             line.rstrip(),
             re.sub(r'\S', ' ', line[:offset]) + '^',
         ]

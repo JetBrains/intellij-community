@@ -17,7 +17,7 @@ package com.intellij.refactoring.ui;
 
 import com.intellij.psi.PsiType;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;

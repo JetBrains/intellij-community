@@ -94,8 +94,8 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
 
     inlays.forEach((hint) -> {
       int offset = hint.getOffset();
-      TextRange rootRange = myRootElement.getTextRange();
-      if (offset <= rootRange.getStartOffset() || offset >= rootRange.getEndOffset()) return;
+      if (!canShowHintsAtOffset(offset)) return;
+
       String presentation = provider.getInlayPresentation(hint.getText());
       if (hint.isShowOnlyIfExistedBefore()) {
         myShowOnlyIfExistedBeforeHints.put(offset, presentation);
@@ -137,6 +137,21 @@ public class ParameterHintsPass extends EditorBoundHighlightingPass {
       .getInlineElementsInRange(elementStart + 1, elementEnd - 1);
 
     return ContainerUtil.filter(inlays, (hint) -> manager.isParameterHint(hint));
+  }
+
+  /**
+   * Adding hints on the borders of root element (at startOffset or endOffset)
+   * is allowed only in the case when root element is a document
+   *
+   * @return true iff a given offset can be used for hint rendering
+   */
+  private boolean canShowHintsAtOffset(int offset) {
+    TextRange rootRange = myRootElement.getTextRange();
+
+    if (!rootRange.containsOffset(offset)) return false;
+    if (offset > rootRange.getStartOffset() && offset < rootRange.getEndOffset()) return true;
+
+    return myDocument != null && myDocument.getTextLength() == rootRange.getLength();
   }
   
   public static class HintData {

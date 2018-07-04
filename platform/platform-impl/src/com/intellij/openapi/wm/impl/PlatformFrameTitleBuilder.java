@@ -15,11 +15,11 @@
  */
 package com.intellij.openapi.wm.impl;
 
-import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtilCore;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,10 +42,10 @@ public class PlatformFrameTitleBuilder extends FrameTitleBuilder {
 
   @Override
   public String getFileTitle(@NotNull Project project, @NotNull VirtualFile file) {
-    String fileTitle = EditorTabbedContainer.calcTabTitle(project, file);
-
-    VirtualFile parent = file.getParent();
-    if (parent == null || !fileTitle.endsWith(file.getPresentableName())) return fileTitle;
+    String fileTitle = VfsPresentationUtil.getPresentableNameForUI(project, file);
+    if (!fileTitle.endsWith(file.getPresentableName()) || file.getParent() == null) {
+      return fileTitle;
+    }
 
     return ProjectUtilCore.displayUrlRelativeToProject(file, file.getPresentableUrl(), project, true, false);
   }

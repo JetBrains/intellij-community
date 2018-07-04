@@ -24,7 +24,6 @@
     <keyboard-shortcut first-keystroke="control alt E"/>
   </action>
   <action id="$Paste">
-    <keyboard-shortcut first-keystroke="alt P"/>
     <keyboard-shortcut first-keystroke="shift INSERT"/>
     <keyboard-shortcut first-keystroke="control Y"/>
   </action>
@@ -311,4 +310,6 @@
   <action id="GotoImplementation"/>
   <action id="EditorScrollUp"/>
   <action id="EditorScrollDown"/>
+  <action id="Vcs.MoveChangedLinesToChangelist"/>
+  <action id="ChangesView.Move"/>
 </keymap>

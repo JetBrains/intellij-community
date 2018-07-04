@@ -1,31 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -56,7 +41,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -72,7 +56,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.OptionsMessageDialog;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -100,17 +83,14 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   public ExternalAnnotationsManagerImpl(@NotNull final Project project, final PsiManager psiManager) {
     super(psiManager);
     myBus = project.getMessageBus();
-    final MessageBusConnection connection = myBus.connect(project);
-    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+    myBus.connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
         dropCache();
       }
     });
 
-    final MyVirtualFileListener fileListener = new MyVirtualFileListener();
-    VirtualFileManager.getInstance().addVirtualFileListener(fileListener);
-    Disposer.register(myPsiManager.getProject(), () -> VirtualFileManager.getInstance().removeVirtualFileListener(fileListener));
+    VirtualFileManager.getInstance().addVirtualFileListener(new MyVirtualFileListener(), project);
   }
 
   private void notifyAfterAnnotationChanging(@NotNull PsiModifierListOwner owner, @NotNull String annotationFQName, boolean successful) {
@@ -162,7 +142,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
         DumbService.getInstance(project).setAlternativeResolveEnabled(true);
         try {
           if (!setupRootAndAnnotateExternally(entry, project, listOwner, annotationFQName, fromFile, packageName, value)) {
-            throw CanceledConfigurationException.INSTANCE;
+            throw new CanceledConfigurationException();
           }
         }
         finally {
@@ -204,28 +184,25 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
       return false;
     }
     String externalName = getExternalName(listOwner, false);
-    new WriteCommandAction(project) {
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-        appendChosenAnnotationsRoot(entry, newRoot);
-        XmlFile xmlFileInRoot = findXmlFileInRoot(findExternalAnnotationsXmlFiles(listOwner), newRoot);
-        if (xmlFileInRoot != null) { //file already exists under appeared content root
-          if (!FileModificationService.getInstance().preparePsiElementForWrite(xmlFileInRoot)) {
-            notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
-            return;
-          }
-          annotateExternally(listOwner, annotationFQName, xmlFileInRoot, fromFile, value, externalName);
+    WriteCommandAction.writeCommandAction(project).run(() -> {
+      appendChosenAnnotationsRoot(entry, newRoot);
+      XmlFile xmlFileInRoot = findXmlFileInRoot(findExternalAnnotationsXmlFiles(listOwner), newRoot);
+      if (xmlFileInRoot != null) { //file already exists under appeared content root
+        if (!FileModificationService.getInstance().preparePsiElementForWrite(xmlFileInRoot)) {
+          notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
+          return;
         }
-        else {
-          final XmlFile annotationsXml = createAnnotationsXml(newRoot, packageName);
-          if (annotationsXml != null) {
-            List<PsiFile> createdFiles = new SmartList<>(annotationsXml);
-            cacheExternalAnnotations(packageName, fromFile, createdFiles);
-          }
-          annotateExternally(listOwner, annotationFQName, annotationsXml, fromFile, value, externalName);
-        }
+        annotateExternally(listOwner, annotationFQName, xmlFileInRoot, fromFile, value, externalName);
       }
-    }.execute();
+      else {
+        final XmlFile annotationsXml = createAnnotationsXml(newRoot, packageName);
+        if (annotationsXml != null) {
+          List<PsiFile> createdFiles = new SmartList<>(annotationsXml);
+          cacheExternalAnnotations(packageName, fromFile, createdFiles);
+        }
+        annotateExternally(listOwner, annotationFQName, annotationsXml, fromFile, value, externalName);
+      }
+    });
     return true;
   }
 
@@ -304,40 +281,36 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
     Set<PsiFile> annotationFiles = xmlFiles == null ? new THashSet<>() : new THashSet<>(xmlFiles);
     String externalName = getExternalName(listOwner, false);
-    new WriteCommandAction(project) {
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-       
-        if (existingXml != null) {
-          annotateExternally(listOwner, annotationFQName, existingXml, fromFile, value, externalName);
+    WriteCommandAction.writeCommandAction(project).run(() -> {
+      if (existingXml != null) {
+        annotateExternally(listOwner, annotationFQName, existingXml, fromFile, value, externalName);
+      }
+      else {
+        XmlFile newXml = createAnnotationsXml(root, packageName);
+        if (newXml == null) {
+          notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
         }
         else {
-          XmlFile newXml = createAnnotationsXml(root, packageName);
-          if (newXml == null) {
-            notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
-          }
-          else {
-            annotationFiles.add(newXml);
-            cacheExternalAnnotations(packageName, fromFile, new SmartList<>(annotationFiles));
-            annotateExternally(listOwner, annotationFQName, newXml, fromFile, value, externalName);
-          }
+          annotationFiles.add(newXml);
+          cacheExternalAnnotations(packageName, fromFile, new SmartList<>(annotationFiles));
+          annotateExternally(listOwner, annotationFQName, newXml, fromFile, value, externalName);
+        }
+      }
+
+      UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction() {
+        @Override
+        public void undo() {
+          dropCache();
+          notifyChangedExternally();
         }
 
-        UndoManager.getInstance(project).undoableActionPerformed(new BasicUndoableAction() {
-          @Override
-          public void undo() {
-            dropCache();
-            notifyChangedExternally();
-          }
-
-          @Override
-          public void redo() {
-            dropCache();
-            notifyChangedExternally();
-          }
-        });
-      }
-    }.execute();
+        @Override
+        public void redo() {
+          dropCache();
+          notifyChangedExternally();
+        }
+      });
+    });
   }
 
   @Override
@@ -489,8 +462,8 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
     //choose external place iff USE_EXTERNAL_ANNOTATIONS option is on,
     //otherwise external annotations should be read-only
-    if (CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS) {
-      final PsiFile containingFile = element.getContainingFile();
+    final PsiFile containingFile = element.getContainingFile();
+    if (JavaCodeStyleSettings.getInstance(containingFile).USE_EXTERNAL_ANNOTATIONS) {
       final VirtualFile virtualFile = containingFile.getVirtualFile();
       LOG.assertTrue(virtualFile != null);
       final List<OrderEntry> entries = ProjectRootManager.getInstance(project).getFileIndex().getOrderEntriesForFile(virtualFile);
@@ -707,7 +680,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   @Nullable
   @VisibleForTesting
   public static XmlFile createAnnotationsXml(@NotNull VirtualFile root, @NonNls @NotNull String packageName, PsiManager manager) {
-    final String[] dirs = packageName.split("[\\.]");
+    final String[] dirs = packageName.split("\\.");
     for (String dir : dirs) {
       if (dir.isEmpty()) break;
       VirtualFile subdir = root.findChild(dir);
@@ -754,14 +727,24 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
   @Override
   protected void duplicateError(@NotNull PsiFile file, @NotNull String externalName, @NotNull String text) {
-    String message = text + "; for signature: '" + externalName + "' in the file " + file.getVirtualFile().getPresentableUrl();
-    LogMessageEx.error(LOG, message, file.getText());
+    String message = text + "; for signature: '" + externalName + "' in the file " + file.getName();
+    LOG.error(message, new Throwable(), AttachmentFactory.createAttachment(file.getVirtualFile()));
   }
 
   public static boolean areExternalAnnotationsApplicable(@NotNull PsiModifierListOwner owner) {
-    if (!owner.isPhysical()) return false;
+    if (!owner.isPhysical()) {
+      PsiElement originalElement = owner.getOriginalElement();
+      if (!(originalElement instanceof PsiCompiledElement)) {
+        return false;
+      }
+    }
+    if (owner instanceof PsiLocalVariable) return false;
+    if (owner instanceof PsiParameter) {
+      PsiElement parent = owner.getParent();
+      if (parent == null || !(parent.getParent() instanceof PsiMethod)) return false;
+    }
     if (!owner.getManager().isInProject(owner)) return true;
-    return CodeStyleSettingsManager.getSettings(owner.getProject()).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS;
+    return JavaCodeStyleSettings.getInstance(owner.getContainingFile()).USE_EXTERNAL_ANNOTATIONS;
   }
 
   private static class MyExternalPromptDialog extends OptionsMessageDialog {

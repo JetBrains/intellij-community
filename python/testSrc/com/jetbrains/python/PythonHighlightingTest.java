@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -24,7 +10,7 @@ import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 
@@ -34,13 +20,9 @@ import java.awt.*;
  * @author yole
  */
 public class PythonHighlightingTest extends PyTestCase {
-  private static final String TEST_PATH = "/highlighting/";
 
   public void testBuiltins() {
-    EditorColorsManager manager = EditorColorsManager.getInstance();
-    EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
-    manager.addColorsScheme(scheme);
-    EditorColorsManager.getInstance().setGlobalScheme(scheme);
+    EditorColorsScheme scheme = createTemporaryColorScheme();
 
     TextAttributesKey xKey;
     TextAttributes xAttributes;
@@ -57,10 +39,7 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testDeclarations() {
-    EditorColorsManager manager = EditorColorsManager.getInstance();
-    EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
-    manager.addColorsScheme(scheme);
-    EditorColorsManager.getInstance().setGlobalScheme(scheme);
+    EditorColorsScheme scheme = createTemporaryColorScheme();
 
     TextAttributesKey xKey = TextAttributesKey.find("PY.CLASS_DEFINITION");
     TextAttributes xAttributes = new TextAttributes(Color.blue, Color.black, Color.white, EffectType.BOXED, Font.BOLD);
@@ -78,17 +57,15 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testAssignmentTargets() {
-    setLanguageLevel(LanguageLevel.PYTHON26);
-    doTest(true, false);
+    runWithLanguageLevel(LanguageLevel.PYTHON26, () -> doTest(true, false));
   }
 
   public void testAssignmentTargetWith() {  // PY-7529
-    setLanguageLevel(LanguageLevel.PYTHON27);
-    doTest(true, false);
+    runWithLanguageLevel(LanguageLevel.PYTHON27, () -> doTest(true, false));
   }
 
   public void testAssignmentTargets3K() {
-    doTest(LanguageLevel.PYTHON30, true, false);    
+    doTest(LanguageLevel.PYTHON34, true, false);    
   }
   
   public void testBreakOutsideOfLoop() {
@@ -99,7 +76,7 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest();
   }
 
-  public void testContinueInFinallyBlock() {
+  public void testContinueOutsideOfLoop() {
     doTest(false, false);
   }
 
@@ -151,11 +128,11 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testRegularAfterVarArgs() {
-    doTest(LanguageLevel.PYTHON30, true, false);
+    doTest(LanguageLevel.PYTHON34, true, false);
   }
 
   public void testKeywordOnlyArguments() {
-    doTest(LanguageLevel.PYTHON30, true, false);
+    doTest(LanguageLevel.PYTHON34, true, false);
   }
 
   public void testMalformedStringTripleQuoteUnterminated() {
@@ -179,17 +156,12 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testUnsupportedFeaturesInPython3() {
-    doTest(LanguageLevel.PYTHON30, true, false);
+    doTest(LanguageLevel.PYTHON34, true, false);
   }
 
   // PY-6703
   public void testUnicode33() {
-    doTest(LanguageLevel.PYTHON33, true, false);
-  }
-
-  // PY-6702
-  public void testYieldFromBefore33() {
-    doTest(LanguageLevel.PYTHON32, true, false);
+    doTest(LanguageLevel.PYTHON34, true, false);
   }
 
   public void testParenthesizedGenerator() {
@@ -197,11 +169,11 @@ public class PythonHighlightingTest extends PyTestCase {
   }
 
   public void testStarInGenerator() {  // PY-10177
-    doTest(LanguageLevel.PYTHON33, false, false);
+    doTest(LanguageLevel.PYTHON34, false, false);
   }
 
   public void testStarArgs() {  // PY-6456
-    doTest(LanguageLevel.PYTHON32, true, false);
+    doTest(LanguageLevel.PYTHON34, true, false);
   }
 
   public void testDocstring() {  // PY-8025
@@ -217,10 +189,7 @@ public class PythonHighlightingTest extends PyTestCase {
 
   public void testYieldInNestedFunction() {
     // highlight func declaration first, lest we get an "Extra fragment highlighted" error.
-    EditorColorsManager manager = EditorColorsManager.getInstance();
-    EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
-    manager.addColorsScheme(scheme);
-    EditorColorsManager.getInstance().setGlobalScheme(scheme);
+    EditorColorsScheme scheme = createTemporaryColorScheme();
 
     TextAttributesKey xKey = TextAttributesKey.find("PY.FUNC_DEFINITION");
     TextAttributes xAttributes = new TextAttributes(Color.red, Color.black, Color.white, EffectType.BOXED, Font.BOLD);
@@ -288,10 +257,7 @@ public class PythonHighlightingTest extends PyTestCase {
 
   // PY-19927
   public void testMagicMethods() {
-    EditorColorsManager manager = EditorColorsManager.getInstance();
-    EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
-    manager.addColorsScheme(scheme);
-    EditorColorsManager.getInstance().setGlobalScheme(scheme);
+    EditorColorsScheme scheme = createTemporaryColorScheme();
 
     TextAttributesKey xKey = TextAttributesKey.find("PY.PREDEFINED_DEFINITION");
     TextAttributes xAttributes = new TextAttributes(Color.green, Color.black, Color.white, EffectType.BOXED, Font.BOLD);
@@ -303,6 +269,16 @@ public class PythonHighlightingTest extends PyTestCase {
   // PY-19775
   public void testAsyncBuiltinMethods() {
     doTest(LanguageLevel.PYTHON35, true, false);
+  }
+
+  // PY-28017
+  public void testAsyncModuleBuiltinMethods() {
+    doTest(LanguageLevel.PYTHON37, true, false);
+  }
+
+  // PY-28017
+  public void testModuleBuiltinMethods() {
+    doTest(LanguageLevel.PYTHON37, false, true);
   }
 
   public void testImplicitOctLongInteger() {
@@ -375,24 +351,90 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest(true, true);
   }
 
+  // PY-25381
+  public void testBuiltinDecorator() {
+    doTest(true, true);
+  }
+
+  // PY-11418
+  public void testFunctionCalls() {
+    doTest();
+  }
+
+  // PY-20401
+  public void testAnnotations() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-22729
+  public void testParametersWithAnnotationsAndDefaults() {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
+  }
+
+  // PY-26491
+  public void testMultiplePositionalContainers() {
+    doTest(LanguageLevel.PYTHON35, true, false);
+  }
+
+  // PY-26491
+  public void testMultipleKeywordContainers() {
+    doTest(LanguageLevel.PYTHON35, true, false);
+  }
+
+  // PY-26510
+  public void testEmptyRaise() {
+    doTest(false, false);
+  }
+
+  // PY-28247
+  public void testAsyncAndAwaitAsIdentifiersIn37() {
+    doTest(LanguageLevel.PYTHON37, false, false);
+  }
+
+  // PY-27913
+  public void testDunderClassGetItem() {
+    doTest(LanguageLevel.PYTHON37, false, true);
+  }
+
+  // PY-28313
+  public void testVarargs() {
+    doTest();
+  }
+
+  // PY-28313
+  public void testKwargs() {
+    doTest();
+  }
+
+  // PY-20530
+  public void testUnparsedTypeHints() {
+    doTest(LanguageLevel.PYTHON36, false, false);
+  }
+
+  @NotNull
+  private static EditorColorsScheme createTemporaryColorScheme() {
+    EditorColorsManager manager = EditorColorsManager.getInstance();
+    EditorColorsScheme scheme = (EditorColorsScheme)manager.getGlobalScheme().clone();
+    manager.addColorsScheme(scheme);
+    EditorColorsManager.getInstance().setGlobalScheme(scheme);
+    return scheme;
+  }
+
   // ---
   private void doTest(final LanguageLevel languageLevel, final boolean checkWarnings, final boolean checkInfos) {
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
-    try {
-      doTest(checkWarnings, checkInfos);
-    }
-    finally {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
-    }
+    runWithLanguageLevel(languageLevel, () -> doTest(checkWarnings, checkInfos));
   }
 
   private void doTest() {
-    final String TEST_PATH = "/highlighting/";
-    myFixture.testHighlighting(true, true, false, TEST_PATH + getTestName(true) + PyNames.DOT_PY);
+    doTest(true, true);
   }
 
   private void doTest(boolean checkWarnings, boolean checkInfos) {
-    myFixture.testHighlighting(checkWarnings, checkInfos, false, TEST_PATH + getTestName(true) + PyNames.DOT_PY);
+    myFixture.testHighlighting(checkWarnings, checkInfos, false, getTestName(true) + PyNames.DOT_PY);
   }
 
+  @Override
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + "/highlighting/";
+  }
 }

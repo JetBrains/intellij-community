@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     return QuickFixBundle.message("create.method.from.usage.text", name);
   }
 
-  private static boolean isMethodSignatureExists(PsiMethodCallExpression call, PsiClass target) {
+  public static boolean isMethodSignatureExists(PsiMethodCallExpression call, PsiClass target) {
     String name = call.getMethodExpression().getReferenceName();
     final JavaResolveResult resolveResult = call.getMethodExpression().advancedResolve(false);
     PsiExpressionList list = call.getArgumentList();
@@ -85,7 +85,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     return false;
   }
 
-  static boolean hasErrorsInArgumentList(final PsiMethodCallExpression call) {
+  public static boolean hasErrorsInArgumentList(final PsiMethodCallExpression call) {
     Project project = call.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(call.getContainingFile());
     if (document == null) return true;
@@ -237,8 +237,8 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     CreateFromUsageUtils.setupMethodParameters(method, builder, context, substitutor, arguments);
     final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
     if (returnTypeElement != null) {
-      new GuessTypeParameters(JavaPsiFacade.getInstance(project).getElementFactory())
-        .setupTypeElement(returnTypeElement, expectedTypes, substitutor, builder, context, targetClass);
+      new GuessTypeParameters(project, JavaPsiFacade.getInstance(project).getElementFactory(), builder, substitutor)
+        .setupTypeElement(returnTypeElement, expectedTypes, context, targetClass);
     }
     PsiCodeBlock body = method.getBody();
     builder.setEndVariableAfter(shouldBeAbstract || body == null ? method : body.getLBrace());

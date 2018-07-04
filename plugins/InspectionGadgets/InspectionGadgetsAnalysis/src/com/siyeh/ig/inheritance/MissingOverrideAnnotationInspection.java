@@ -1,24 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.inheritance;
 
-import com.intellij.codeInspection.AnnotateMethodFix;
-import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
-import com.intellij.codeInspection.CleanupLocalInspectionTool;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -32,24 +15,28 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.JavaOverridingMethodUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-public class MissingOverrideAnnotationInspection extends BaseJavaBatchLocalInspectionTool implements CleanupLocalInspectionTool{
+public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool{
   private static final String OVERRIDE_SHORT_NAME = StringUtil.getShortName(CommonClassNames.JAVA_LANG_OVERRIDE);
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreObjectMethods = true;
 
-  @SuppressWarnings({"PublicField"})
-  public boolean ignoreAnonymousClassMethods = false;
+  @SuppressWarnings("PublicField")
+  public boolean ignoreAnonymousClassMethods;
 
   @Override
   @NotNull
@@ -61,6 +48,47 @@ public class MissingOverrideAnnotationInspection extends BaseJavaBatchLocalInspe
   @NotNull
   public String getDisplayName() {
     return InspectionGadgetsBundle.message("missing.override.annotation.display.name");
+  }
+
+  /**
+   * @deprecated
+   * Use {@link AnnotateMethodFix}. To be removed in 2019.1.
+   */
+  @Deprecated
+  @SuppressWarnings("unused")
+  protected InspectionGadgetsFix buildFix(Object... infos) {
+    return new InspectionGadgetsFix() {
+      private final AnnotateMethodFix myFix = new AnnotateMethodFix(CommonClassNames.JAVA_LANG_OVERRIDE);
+
+      @Override
+      protected void doFix(Project project, ProblemDescriptor descriptor) {
+        myFix.applyFix(project, descriptor);
+      }
+
+      @Nls
+      @NotNull
+      @Override
+      public String getFamilyName() {
+        return myFix.getFamilyName();
+      }
+    };
+  }
+
+  /**
+   * @deprecated To be removed in 2019.1.
+   */
+  @Deprecated
+  @SuppressWarnings("unused")
+  protected String buildErrorString(Object... infos) {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * @deprecated  To be removed in 2019.1.
+   */
+  @Deprecated
+  protected BaseInspectionVisitor buildVisitor() {
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -109,17 +137,7 @@ public class MissingOverrideAnnotationInspection extends BaseJavaBatchLocalInspe
                                  InspectionGadgetsBundle.message(result.requireAnnotation
                                                                  ? "missing.override.annotation.problem.descriptor"
                                                                  : "missing.override.annotation.in.overriding.problem.descriptor"),
-                                 new AnnotateMethodFix(CommonClassNames.JAVA_LANG_OVERRIDE) {
-                                   @Override
-                                   protected boolean annotateSelf() {
-                                     return result.requireAnnotation;
-                                   }
-
-                                   @Override
-                                   protected boolean annotateOverriddenMethods() {
-                                     return result.hierarchyAnnotated == ThreeState.NO;
-                                   }
-                                 });
+                                 createAnnotateFix(result.requireAnnotation, result.hierarchyAnnotated));
         }
       }
 
@@ -134,16 +152,8 @@ public class MissingOverrideAnnotationInspection extends BaseJavaBatchLocalInspe
 
         GlobalSearchScope scope = getLanguageLevelScope(minimal, project);
         if (scope == null) return;
-        Stream<PsiMethod> overridingMethods = JavaOverridingMethodUtil
-          .getOverridingMethodsIfCheapEnough(method, scope, m -> {
-          for (PsiAnnotation annotation : m.getModifierList().getAnnotations()) {
-            PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
-            if (ref != null && OVERRIDE_SHORT_NAME.equals(ref.getReferenceName())) {
-              return false;
-            }
-          }
-          return true;
-        });
+        Predicate<PsiMethod> preFilter = m -> !JavaOverridingMethodUtil.containsAnnotationWithName(m, OVERRIDE_SHORT_NAME);
+        Stream<PsiMethod> overridingMethods = JavaOverridingMethodUtil.getOverridingMethodsIfCheapEnough(method, scope, preFilter);
         if (overridingMethods == null) return;
         result.hierarchyAnnotated = ThreeState.fromBoolean(!overridingMethods.findAny().isPresent());
       }
@@ -171,7 +181,7 @@ public class MissingOverrideAnnotationInspection extends BaseJavaBatchLocalInspe
 
       private boolean hasOverrideAnnotation(PsiModifierListOwner element) {
         final PsiModifierList modifierList = element.getModifierList();
-        return modifierList != null && modifierList.findAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE) != null;
+        return modifierList != null && modifierList.hasAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE);
       }
 
       private boolean isJdk6Override(PsiMethod method, PsiClass methodClass) {
@@ -216,8 +226,23 @@ public class MissingOverrideAnnotationInspection extends BaseJavaBatchLocalInspe
     };
   }
 
+  @NotNull
+  private static AnnotateMethodFix createAnnotateFix(final boolean requireAnnotation, final ThreeState hierarchyAnnotated) {
+    return new AnnotateMethodFix(CommonClassNames.JAVA_LANG_OVERRIDE) {
+      @Override
+      protected boolean annotateSelf() {
+        return requireAnnotation;
+      }
+
+      @Override
+      protected boolean annotateOverriddenMethods() {
+        return hierarchyAnnotated == ThreeState.NO;
+      }
+    };
+  }
+
   private static class InspectionResult {
-    private boolean requireAnnotation = false;
+    private boolean requireAnnotation;
     private ThreeState hierarchyAnnotated = ThreeState.UNSURE;
   }
 

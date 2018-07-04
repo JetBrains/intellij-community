@@ -59,9 +59,9 @@ public class PyCodeFragmentTest extends LightMarkedTestCase {
     assertTrue(resultMarker != -1);
 
     final StringBuilder builder = new StringBuilder();
-    builder.append(fileText.substring(0, beginMarker));
-    builder.append(fileText.substring(beginMarker + BEGIN_MARKER.length(), endMarker));
-    builder.append((fileText.substring(endMarker + END_MARKER.length(), resultMarker)));
+    builder.append(fileText, 0, beginMarker);
+    builder.append(fileText, beginMarker + BEGIN_MARKER.length(), endMarker);
+    builder.append(fileText, endMarker + END_MARKER.length(), resultMarker);
 
     final String result = fileText.substring(resultMarker + RESULT_MARKER.length());
 

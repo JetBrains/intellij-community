@@ -16,19 +16,19 @@
 
 /*
  * @author: Eugene Zhuravlev
- * Date: Jan 20, 2003
- * Time: 5:34:19 PM
  */
 package com.intellij.compiler.impl;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.UnloadedModuleDescription;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.util.CommonProcessors;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,9 +38,10 @@ public class ModuleCompileScope extends FileIndexCompileScope {
   private final Project myProject;
   private final Set<Module> myScopeModules;
   private final Module[] myModules;
+  private final Collection<String> myIncludedUnloadedModules;
 
   public ModuleCompileScope(final Module module, boolean includeDependentModules) {
-    this(module.getProject(), Collections.singleton(module), includeDependentModules, false);
+    this(module.getProject(), Collections.singleton(module), Collections.emptyList(), includeDependentModules, false);
   }
 
   public ModuleCompileScope(Project project, final Module[] modules, boolean includeDependentModules) {
@@ -48,11 +49,12 @@ public class ModuleCompileScope extends FileIndexCompileScope {
   }
 
   public ModuleCompileScope(Project project, final Module[] modules, boolean includeDependentModules, boolean includeRuntimeDependencies) {
-    this(project, Arrays.asList(modules), includeDependentModules, includeRuntimeDependencies);
+    this(project, Arrays.asList(modules), Collections.emptyList(), includeDependentModules, includeRuntimeDependencies);
   }
 
-  private ModuleCompileScope(Project project, final Collection<Module> modules, boolean includeDependentModules, boolean includeRuntimeDeps) {
+  public ModuleCompileScope(Project project, final Collection<Module> modules, Collection<String> includedUnloadedModules, boolean includeDependentModules, boolean includeRuntimeDeps) {
     myProject = project;
+    myIncludedUnloadedModules = includedUnloadedModules;
     myScopeModules = new HashSet<>();
     for (Module module : modules) {
       if (module == null) {
@@ -74,7 +76,13 @@ public class ModuleCompileScope extends FileIndexCompileScope {
 
   @NotNull
   public Module[] getAffectedModules() {
-    return myScopeModules.toArray(new Module[myScopeModules.size()]);
+    return myScopeModules.toArray(Module.EMPTY_ARRAY);
+  }
+
+  @NotNull
+  @Override
+  public Collection<String> getAffectedUnloadedModules() {
+    return Collections.unmodifiableCollection(myIncludedUnloadedModules);
   }
 
   protected FileIndex[] getFileIndices() {
@@ -87,7 +95,7 @@ public class ModuleCompileScope extends FileIndexCompileScope {
   }
 
   public boolean belongs(final String url) {
-    if (myScopeModules.isEmpty()) {
+    if (myScopeModules.isEmpty() && myIncludedUnloadedModules.isEmpty()) {
       return false; // optimization
     }
     Module candidateModule = null;
@@ -138,6 +146,18 @@ public class ModuleCompileScope extends FileIndexCompileScope {
       for (String sourceRootUrl : sourceRootUrls) {
         if (isUrlUnderRoot(url, sourceRootUrl)) {
           return true;
+        }
+      }
+    }
+
+    ModuleManager moduleManager = ModuleManager.getInstance(myProject);
+    for (String unloadedModule : myIncludedUnloadedModules) {
+      UnloadedModuleDescription moduleDescription = moduleManager.getUnloadedModuleDescription(unloadedModule);
+      if (moduleDescription != null) {
+        for (VirtualFilePointer pointer : moduleDescription.getContentRoots()) {
+          if (isUrlUnderRoot(url, pointer.getUrl())) {
+            return true;
+          }
         }
       }
     }

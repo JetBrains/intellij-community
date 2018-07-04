@@ -15,8 +15,8 @@
  */
 package com.intellij.execution.configurations;
 
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.execution.ExecutionBundle;
+import com.intellij.openapi.options.ConfigurationException;
 
 public class RuntimeConfigurationException extends ConfigurationException {
   public RuntimeConfigurationException(final String message, final String title) {

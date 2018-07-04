@@ -24,12 +24,9 @@ public interface BulkFileListener {
   /**
    * @deprecated obsolete, implement {@link BulkFileListener} directly (to be removed in IDEA 2019)
    */
+  @Deprecated
   class Adapter implements BulkFileListener {
-    @Override
-    public void before(@NotNull List<? extends VFileEvent> events) { }
 
-    @Override
-    public void after(@NotNull List<? extends VFileEvent> events) { }
   }
 
   default void before(@NotNull List<? extends VFileEvent> events) { }

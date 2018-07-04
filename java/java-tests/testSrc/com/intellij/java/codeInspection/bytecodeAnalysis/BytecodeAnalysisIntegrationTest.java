@@ -10,7 +10,6 @@ import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.codeInspection.bytecodeAnalysis.BytecodeAnalysisConverter;
 import com.intellij.codeInspection.bytecodeAnalysis.ClassDataIndexer;
 import com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -29,6 +28,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -80,8 +80,9 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
   }
 
   private void setUpLibraries() {
-    String libDir = PathManagerEx.getCommunityHomePath() + "/lib";
-    PsiTestUtil.addLibrary(myModule, "velocity", libDir, new String[]{"/velocity.jar!/"}, ArrayUtil.EMPTY_STRING_ARRAY);
+    ModuleRootModificationUtil.addModuleLibrary(myModule, "velocity",
+                                                IntelliJProjectConfiguration.getProjectLibraryClassesRootUrls("Velocity"),
+                                                Collections.emptyList());
   }
 
   private void setUpExternalUpAnnotations() {
@@ -300,31 +301,28 @@ public class BytecodeAnalysisIntegrationTest extends JavaCodeInsightFixtureTestC
     private void saveXmlForPackage(VirtualFile root, PsiPackage aPackage, XmlTag newContent) {
       XmlTag[] tags = newContent.getSubTags();
       if (tags.length == 0) return;
-      new WriteCommandAction(getProject()) {
-        @Override
-        protected void run(@NotNull Result result) {
-          XmlFile xml = ExternalAnnotationsManagerImpl.createAnnotationsXml(root, aPackage.getQualifiedName(), aPackage.getManager());
-          if (xml == null) {
-            throw new IllegalStateException("Unable to get XML for package " + aPackage.getQualifiedName() + "; root = " + root);
-          }
-          XmlTag rootTag = xml.getRootTag();
-          if (rootTag == null) {
-            throw new IllegalStateException("No root tag in " + xml);
-          }
-          XmlTag[] existingItems = rootTag.getSubTags();
-          if (existingItems.length > 0) {
-            rootTag.deleteChildRange(ArrayUtil.getFirstElement(existingItems), ArrayUtil.getLastElement(existingItems));
-          }
-          rootTag.collapseIfEmpty();
-          for (XmlTag item : tags) {
-            rootTag.addSubTag(item, false);
-          }
-          PsiDocumentManager documentManager = PsiDocumentManager.getInstance(xml.getProject());
-          Document doc = documentManager.getDocument(xml);
-          documentManager.doPostponedOperationsAndUnblockDocument(doc);
-          FileDocumentManager.getInstance().saveDocument(doc);
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+        XmlFile xml = ExternalAnnotationsManagerImpl.createAnnotationsXml(root, aPackage.getQualifiedName(), aPackage.getManager());
+        if (xml == null) {
+          throw new IllegalStateException("Unable to get XML for package " + aPackage.getQualifiedName() + "; root = " + root);
         }
-      }.execute();
+        XmlTag rootTag = xml.getRootTag();
+        if (rootTag == null) {
+          throw new IllegalStateException("No root tag in " + xml);
+        }
+        XmlTag[] existingItems = rootTag.getSubTags();
+        if (existingItems.length > 0) {
+          rootTag.deleteChildRange(ArrayUtil.getFirstElement(existingItems), ArrayUtil.getLastElement(existingItems));
+        }
+        rootTag.collapseIfEmpty();
+        for (XmlTag item : tags) {
+          rootTag.addSubTag(item, false);
+        }
+        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(xml.getProject());
+        Document doc = documentManager.getDocument(xml);
+        documentManager.doPostponedOperationsAndUnblockDocument(doc);
+        FileDocumentManager.getInstance().saveDocument(doc);
+      });
     }
 
     @NotNull

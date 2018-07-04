@@ -85,11 +85,7 @@ public class SerializableStoresNonSerializableInspection extends BaseInspection 
     public void visitLambdaExpression(PsiLambdaExpression lambda) {
       super.visitLambdaExpression(lambda);
       final PsiType type = lambda.getFunctionalInterfaceType();
-      if (!(type instanceof PsiClassType)) {
-        return;
-      }
-      final PsiClassType classType = (PsiClassType)type;
-      final PsiClass aClass = classType.resolve();
+      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
       if (!SerializationUtils.isSerializable(aClass)) {
         return;
       }

@@ -40,7 +40,7 @@ public class JUnit5NamingTest extends JUnit5CodeInsightTest {
         Arrays.stream(file.getClasses()[0].getMethods())
           .map(method -> JUnitConfiguration.Data.getMethodPresentation(method))
           .toArray(String[]::new);
-      Assertions.assertArrayEquals(new String[] {"foo([int)",
+      Assertions.assertArrayEquals(new String[] {"foo(int[])",
                                      "foo(int)", 
                                      "foo([Ljava.lang.String;)", 
                                      "foo(java.lang.String)", 

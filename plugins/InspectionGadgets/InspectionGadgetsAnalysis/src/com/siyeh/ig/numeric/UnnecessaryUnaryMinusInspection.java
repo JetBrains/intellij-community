@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2015 Bas Leijdekkers
+ * Copyright 2007-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -62,11 +63,12 @@ public class UnnecessaryUnaryMinusInspection extends BaseInspection {
       final PsiElement element = descriptor.getPsiElement();
       final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)element.getParent();
       final PsiExpression parentExpression = (PsiExpression)prefixExpression.getParent();
+      CommentTracker commentTracker = new CommentTracker();
       @NonNls final StringBuilder newExpression = new StringBuilder();
       if (parentExpression instanceof PsiAssignmentExpression) {
         final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parentExpression;
         final PsiExpression lhs = assignmentExpression.getLExpression();
-        newExpression.append(lhs.getText());
+        newExpression.append(commentTracker.text(lhs));
         final IElementType tokenType = assignmentExpression.getOperationTokenType();
         if (tokenType.equals(JavaTokenType.PLUSEQ)) {
           newExpression.append("-=");
@@ -78,7 +80,7 @@ public class UnnecessaryUnaryMinusInspection extends BaseInspection {
       else if (parentExpression instanceof PsiBinaryExpression) {
         final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)parentExpression;
         final PsiExpression lhs = binaryExpression.getLOperand();
-        newExpression.append(lhs.getText());
+        newExpression.append(commentTracker.text(lhs));
         final IElementType tokenType = binaryExpression.getOperationTokenType();
         if (tokenType.equals(JavaTokenType.PLUS)) {
           newExpression.append('-');
@@ -91,8 +93,9 @@ public class UnnecessaryUnaryMinusInspection extends BaseInspection {
       if (operand == null) {
         return;
       }
-      newExpression.append(operand.getText());
-      PsiReplacementUtil.replaceExpression(parentExpression, newExpression.toString());
+
+      newExpression.append(commentTracker.text(operand));
+      PsiReplacementUtil.replaceExpression(parentExpression, newExpression.toString(), commentTracker);
     }
   }
 

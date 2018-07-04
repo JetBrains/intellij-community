@@ -17,7 +17,6 @@ package com.intellij.ide.customize;
 
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.startup.StartupActionScriptManager;
-import com.intellij.internal.statistic.customUsageCollectors.ideSettings.IdeInitialConfigButtonUsages;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,7 +39,7 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
   private static final String BUTTONS = "BUTTONS";
   private static final String NO_BUTTONS = "NO_BUTTONS";
 
-  private final JButton mySkipButton = new JButton("Skip All and Set Defaults");
+  private final JButton mySkipButton = new JButton("Skip Remaining and Set Defaults");
   private final JButton myBackButton = new JButton("Back");
   private final JButton myNextButton = new JButton("Next");
 
@@ -178,8 +177,13 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
         return;
       }
     }
-    IdeInitialConfigButtonUsages.setSkipRemainingPressedScreen(mySteps.get(myIndex).getClass().getName());
     super.doOKAction();
+  }
+
+  @Nullable
+  @Override
+  protected String getLoggedDialogId() {
+    return null;
   }
 
   private void initCurrentStep(boolean forward) {
@@ -198,7 +202,6 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     if (myIndex > 0) {
       myBackButton.setText("Back to " + mySteps.get(myIndex - 1).getTitle());
     }
-    mySkipButton.setText("Skip " + (myIndex > 0 ? "Remaining" : "All") + " and Set Defaults");
 
     myNextButton.setText(myIndex < mySteps.size() - 1
                          ? "Next: " + mySteps.get(myIndex + 1).getTitle()

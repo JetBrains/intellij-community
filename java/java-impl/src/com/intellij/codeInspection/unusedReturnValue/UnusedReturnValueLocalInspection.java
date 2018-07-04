@@ -1,34 +1,21 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unusedReturnValue;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class UnusedReturnValueLocalInspection extends BaseJavaLocalInspectionTool {
+public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspectionTool {
   private final UnusedReturnValue myGlobal;
 
   public UnusedReturnValueLocalInspection(UnusedReturnValue global) {myGlobal = global;}
@@ -61,18 +48,25 @@ public class UnusedReturnValueLocalInspection extends BaseJavaLocalInspectionToo
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (method.isConstructor() ||
         PsiType.VOID.equals(method.getReturnType()) ||
-        myGlobal.IGNORE_BUILDER_PATTERN && PropertyUtil.isSimplePropertySetter(method) ||
+        myGlobal.IGNORE_BUILDER_PATTERN && PropertyUtilBase.isSimplePropertySetter(method) ||
         method.hasModifierProperty(PsiModifier.NATIVE) ||
         MethodUtils.hasSuper(method) ||
-        RefUtil.isImplicitRead(method)) return null;
+        RefUtil.isImplicitRead(method) ||
+        UnusedReturnValue.canIgnoreReturnValue(method) ||
+        UnusedDeclarationInspectionBase.isDeclaredAsEntryPoint(method)) return null;
 
     final boolean[] atLeastOneUsageExists = new boolean[]{false};
     if (UnusedSymbolUtil.processUsages(manager.getProject(), method.getContainingFile(), method, new EmptyProgressIndicator(), null, u -> {
       if (!atLeastOneUsageExists[0]) atLeastOneUsageExists[0] = true;
-      return PsiJavaPatterns.psiElement(PsiReferenceExpression.class)
-        .withParent(PsiJavaPatterns.psiElement(PsiMethodCallExpression.class)
-                                   .withParent(PsiExpressionStatement.class))
-        .accepts(u.getElement());
+      PsiElement element = u.getElement();
+      if (element instanceof PsiReferenceExpression) {
+        PsiElement parent = element.getParent();
+        if (parent instanceof PsiMethodCallExpression) {
+          return ExpressionUtils.isVoidContext((PsiExpression)parent);
+        }
+      }
+      return element instanceof PsiMethodReferenceExpression &&
+             PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)element));
     })) {
       if (atLeastOneUsageExists[0]) {
         return new ProblemDescriptor[]{UnusedReturnValue.createProblemDescriptor(method, manager, null, false)};

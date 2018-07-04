@@ -1,21 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.mergeinfo;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -31,11 +17,11 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.history.CopyData;
 import org.jetbrains.idea.svn.history.FirstInBranch;
 import org.jetbrains.idea.svn.history.SvnChangeList;
-import org.tmatesoft.svn.core.SVNURL;
 
 import java.util.Map;
 
@@ -45,7 +31,7 @@ public class SvnMergeInfoCache {
 
   @NotNull private final Project myProject;
   // key - working copy root url
-  @NotNull private final Map<String, MyCurrentUrlData> myCurrentUrlMapping;
+  @NotNull private final Map<Url, MyCurrentUrlData> myCurrentUrlMapping;
 
   public static Topic<SvnMergeInfoCacheListener> SVN_MERGE_INFO_CACHE =
     new Topic<>("SVN_MERGE_INFO_CACHE", SvnMergeInfoCacheListener.class);
@@ -56,7 +42,7 @@ public class SvnMergeInfoCache {
   }
 
   public static SvnMergeInfoCache getInstance(@NotNull Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetService(project, SvnMergeInfoCache.class);
+    return ServiceManager.getService(project, SvnMergeInfoCache.class);
   }
 
   public void clear(@NotNull WCInfoWithBranches info, String branchPath) {
@@ -79,11 +65,11 @@ public class SvnMergeInfoCache {
                                    @NotNull SvnChangeList list,
                                    @NotNull WCInfoWithBranches.Branch selectedBranch,
                                    final String branchPath) {
-    MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(info.getRootUrl());
+    MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(info.getUrl());
     BranchInfo mergeChecker = null;
     if (rootMapping == null) {
       rootMapping = new MyCurrentUrlData();
-      myCurrentUrlMapping.put(info.getRootUrl(), rootMapping);
+      myCurrentUrlMapping.put(info.getUrl(), rootMapping);
     } else {
       mergeChecker = rootMapping.getBranchInfo(branchPath);
     }
@@ -103,7 +89,7 @@ public class SvnMergeInfoCache {
 
   @Nullable
   private BranchInfo getBranchInfo(@NotNull WCInfoWithBranches info, String branchPath) {
-    MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(info.getRootUrl());
+    MyCurrentUrlData rootMapping = myCurrentUrlMapping.get(info.getUrl());
 
     return rootMapping != null ? rootMapping.getBranchInfo(branchPath) : null;
   }
@@ -122,9 +108,9 @@ public class SvnMergeInfoCache {
 
   static class CopyRevison {
     private final String myPath;
-    private volatile long myRevision;
+    private final long myRevision;
 
-    CopyRevison(final SvnVcs vcs, final String path, @NotNull SVNURL repositoryRoot, final String branchUrl, final String trunkUrl) {
+    CopyRevison(final SvnVcs vcs, final String path, @NotNull Url repositoryRoot, @NotNull Url branchUrl, @NotNull Url trunkUrl) {
       myPath = path;
       myRevision = -1;
 

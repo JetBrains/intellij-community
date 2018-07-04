@@ -69,7 +69,7 @@ public class ContentsUtil {
     contentManager.removeContent(content, true);
   }
 
-  private static void dispose(@NotNull JComponent component) {
+  public static void dispose(@NotNull JComponent component) {
     Object disposable = component.getClientProperty(DISPOSABLE_KEY);
     if (disposable instanceof Disposable) {
       Disposer.dispose((Disposable)disposable);

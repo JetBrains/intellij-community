@@ -16,33 +16,25 @@
 
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.StubBuilder;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.impl.source.PsiFileImpl;
-import com.intellij.psi.stubs.IStubElementType;
-import com.intellij.psi.stubs.StubBase;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubTree;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStrongWhitespaceHolderElementType;
-import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.ListIterator;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TreeUtil {
   private static final Key<String> UNCLOSED_ELEMENT_PROPERTY = Key.create("UNCLOSED_ELEMENT_PROPERTY");
@@ -71,8 +63,8 @@ public class TreeUtil {
 
   @Nullable
   public static ASTNode findChildBackward(ASTNode parent, IElementType type) {
-    if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED) {
-      ApplicationManager.getApplication().assertReadAccessAllowed();
+    if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED && parent instanceof TreeElement) {
+      ((TreeElement)parent).assertReadAccessAllowed();
     }
     for (ASTNode element = parent.getLastChildNode(); element != null; element = element.getTreePrev()) {
       if (element.getElementType() == type) return element;
@@ -265,6 +257,11 @@ public class TreeUtil {
     return nextLeaf((TreeElement)node, null);
   }
 
+  @Nullable
+  public static LeafElement nextLeaf(@NotNull final LeafElement node) {
+    return nextLeaf(node, null);
+  }
+
   public static final Key<FileElement> CONTAINING_FILE_KEY_AFTER_REPARSE = Key.create("CONTAINING_FILE_KEY_AFTER_REPARSE");
   public static FileElement getFileElement(TreeElement element) {
     TreeElement parent = element;
@@ -421,50 +418,27 @@ public class TreeUtil {
     return element;
   }
 
+  public static boolean containsOuterLanguageElements(@NotNull ASTNode node) {
+    AtomicBoolean result = new AtomicBoolean(false);
+    ((TreeElement)node).acceptTree(new RecursiveTreeElementWalkingVisitor() {
+      @Override
+      protected void visitNode(TreeElement element) {
+        if (element instanceof OuterLanguageElement) {
+          result.set(true);
+          stopWalking();
+          return;
+        }
+        super.visitNode(element);
+      }
+    });
+    return result.get();
+  }
+
   public static final class CommonParentState {
     TreeElement startLeafBranchStart;
     public ASTNode nextLeafBranchStart;
     CompositeElement strongWhiteSpaceHolder;
     boolean isStrongElementOnRisingSlope = true;
-  }
-
-  public static class StubBindingException extends RuntimeException {
-    StubBindingException(String message) {
-      super(message);
-    }
-  }
-
-  public static void bindStubsToTree(@NotNull PsiFileImpl file, @NotNull StubTree stubTree, @NotNull FileElement tree) throws StubBindingException {
-    final ListIterator<StubElement<?>> stubs = stubTree.getPlainList().listIterator();
-    stubs.next();  // skip file root stub
-
-    final IStubFileElementType type = file.getElementTypeForStubBuilder();
-    assert type != null;
-    final StubBuilder builder = type.getBuilder();
-    tree.acceptTree(new RecursiveTreeElementWalkingVisitor() {
-      @Override
-      protected void visitNode(TreeElement node) {
-        CompositeElement parent = node.getTreeParent();
-        if (parent != null && builder.skipChildProcessingWhenBuildingStubs(parent, node)) {
-          return;
-        }
-
-        IElementType type = node.getElementType();
-        if (type instanceof IStubElementType && ((IStubElementType)type).shouldCreateStub(node)) {
-          final StubElement stub = stubs.hasNext() ? stubs.next() : null;
-          if (stub == null || stub.getStubType() != type) {
-            throw new StubBindingException("stub:" + stub + ", AST:" + type);
-          }
-
-          StubBasedPsiElementBase psi = (StubBasedPsiElementBase)node.getPsi();
-          //noinspection unchecked
-          ((StubBase)stub).setPsi(psi);
-          psi.setStubIndex(stubs.previousIndex());
-        }
-
-        super.visitNode(node);
-      }
-    });
   }
 
   @Nullable

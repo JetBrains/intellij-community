@@ -15,19 +15,15 @@
  */
 package com.intellij.openapi.ui;
 
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.Gray;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.plaf.ComboBoxUI;
@@ -37,8 +33,6 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.lang.reflect.Method;
 
 /**
@@ -47,21 +41,9 @@ import java.lang.reflect.Method;
  * User: spLeaner
  */
 public class FixedComboBoxEditor implements ComboBoxEditor {
-  public static final Border EDITOR_BORDER = new MacComboBoxEditorBorder(false);
-  public static final Border DISABLED_EDITOR_BORDER = new MacComboBoxEditorBorder(true);
-
-  @NotNull private final JBTextField myField;
+  @NotNull
+  private final JBTextField myField = UIUtil.isUnderDefaultMacTheme() ? new MacComboBoxTextField() : new JBTextField();
   private Object oldValue;
-
-  public FixedComboBoxEditor() {
-    if (SystemInfo.isMac && (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderIntelliJLaF())) {
-      myField = new MacComboBoxTextField();
-    }
-    else {
-      myField = new JBTextField();
-      myField.setBorder(null);
-    }
-  }
 
   @NotNull
   public JBTextField getField() {
@@ -95,8 +77,8 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
         // Must take the value from the editor and get the value and cast it to the new type.
         Class cls = oldValue.getClass();
         try {
-          Method method = cls.getMethod("valueOf", new Class[]{String.class});
-          newValue = method.invoke(oldValue, new Object[]{myField.getText()});
+          Method method = cls.getMethod("valueOf", String.class);
+          newValue = method.invoke(oldValue, myField.getText());
         }
         catch (Exception ex) {
           // Fail silently and return the newValue (a String object)
@@ -108,22 +90,16 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
 
   public void selectAll() {
     myField.selectAll();
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-      IdeFocusManager.getGlobalInstance().requestFocus(myField, true);
-    });
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myField, true));
   }
 
-  @Override
-  public void addActionListener(ActionListener l) {
-  }
+  @Override public void addActionListener(ActionListener l) {}
 
-  @Override
-  public void removeActionListener(ActionListener l) {
-  }
+  @Override public void removeActionListener(ActionListener l) {}
 
   @Nullable
-  private static ComboPopup getComboboxPopup(final JComboBox comboBox) {
-    final ComboBoxUI ui = comboBox.getUI();
+  private static ComboPopup getComboboxPopup(JComboBox comboBox) {
+    ComboBoxUI ui = comboBox.getUI();
     ComboPopup popup = null;
     if (ui instanceof BasicComboBoxUI) {
       popup = ReflectionUtil.getField(BasicComboBoxUI.class, ui, ComboPopup.class, "popup");
@@ -134,15 +110,7 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
 
   private class MacComboBoxTextField extends JBTextField implements DocumentListener, FocusListener {
     private MacComboBoxTextField() {
-      if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
-        setBorder(JBUI.Borders.empty());
-        setOpaque(false);
-      } else {
-        setBorder(isEnabled() ? EDITOR_BORDER : DISABLED_EDITOR_BORDER);
-      }
-      //setFont(UIUtil.getListFont());
-
-      final InputMap inputMap = getInputMap();
+      InputMap inputMap = getInputMap();
 
       inputMap.put(KeyStroke.getKeyStroke("DOWN"), "aquaSelectNext");
       inputMap.put(KeyStroke.getKeyStroke("KP_DOWN"), "aquaSelectNext");
@@ -157,30 +125,12 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
       inputMap.put(KeyStroke.getKeyStroke("ENTER"), "aquaEnterPressed");
       inputMap.put(KeyStroke.getKeyStroke("SPACE"), "aquaSpacePressed");
 
-      //getActionMap().put("macEnterPressed", macEnterPressedAction);
-      //getDocument().addDocumentListener(this);
-
-      addPropertyChangeListener(new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          if ("enabled".equals(evt.getPropertyName())) {
-            if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
-              //ignore
-            } else {
-              setBorder(Boolean.TRUE.equals(evt.getNewValue()) ? EDITOR_BORDER : DISABLED_EDITOR_BORDER);
-            }
-
-            repaint();
-          }
-        }
-      });
-
       addFocusListener(this);
     }
 
     @Override
     public boolean hasFocus() {
-      final Container parent = getParent();
+      Container parent = getParent();
       if (parent instanceof ComboBox && ((ComboBox)parent).myPaintingNow) {
         return false; // to disable focus painting around combobox button
       }
@@ -192,40 +142,25 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
       repaintCombobox();
     }
 
+    @Override
+    public void focusLost(FocusEvent e) {
+      repaintCombobox();
+    }
+
     private void repaintCombobox() {
-      final Container parent = getParent();
-      if (parent == null) return;
-      if (parent instanceof JComponent && Boolean.TRUE == ((JComponent)parent).getClientProperty("JComboBox.isTableCellEditor")) return;
-      final Container grandParent = parent.getParent();
+      Container parent = getParent();
+
+      if (parent == null || parent instanceof JComponent && Boolean.TRUE == ((JComponent)parent).getClientProperty("JComboBox.isTableCellEditor")) return;
+
+      Container grandParent = parent.getParent();
       if (grandParent != null) {
         grandParent.repaint();
       }
     }
 
     @Override
-    public void focusLost(FocusEvent e) {
-      repaintCombobox();
-    }
-
-    @Override
-    public Dimension getMinimumSize() {
-      final Dimension minimumSize = super.getMinimumSize();
-      return new Dimension(minimumSize.width, minimumSize.height + 2);
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      return getMinimumSize();
-    }
-
-    @Override
-    public void setBounds(final int x, final int y, final int width, final int height) {
-      UIUtil.setComboBoxEditorBounds(x, y, width, height, this);
-    }
-
-    @Override
     public Color getBackground() {
-      if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
+      if (UIUtil.isUnderDefaultMacTheme()) {
         Container parent = getParent();
         if (parent != null && !parent.isEnabled()) {
           return Gray.xF8;
@@ -250,18 +185,18 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
     }
 
     private void textChanged() {
-      final Container ancestor = SwingUtilities.getAncestorOfClass(JComboBox.class, this);
+      Container ancestor = SwingUtilities.getAncestorOfClass(JComboBox.class, this);
       if (ancestor == null || !ancestor.isVisible()) return;
 
-      final JComboBox comboBox = (JComboBox)ancestor;
+      JComboBox comboBox = (JComboBox)ancestor;
       if (!comboBox.isPopupVisible()) return;
 
-      final ComboPopup popup = getComboboxPopup(comboBox);
+      ComboPopup popup = getComboboxPopup(comboBox);
       if (popup == null) return;
 
       String s = myField.getText();
 
-      final ListModel listmodel = comboBox.getModel();
+      ListModel listmodel = comboBox.getModel();
       int i = listmodel.getSize();
       if (s.length() > 0) {
         for (int j = 0; j < i; j++) {
@@ -277,67 +212,6 @@ public class FixedComboBoxEditor implements ComboBoxEditor {
       }
 
       popup.getList().clearSelection();
-    }
-  }
-
-  public static class MacComboBoxEditorBorder implements Border {
-
-    private boolean myDisabled;
-
-    public MacComboBoxEditorBorder(final boolean disabled) {
-      myDisabled = disabled;
-    }
-
-    @Override
-    public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
-      Color topColor;
-      Color secondTopColor;
-      Color leftRightColor;
-      Color bottomColor;
-
-      if (myDisabled) {
-        topColor = Gray._200;
-        secondTopColor = Gray._250;
-        leftRightColor = Gray._205;
-        bottomColor = Gray._220;
-      }
-      else {
-        topColor = Gray._150;
-        secondTopColor = Gray._230;
-        leftRightColor = Gray._175;
-        bottomColor = Gray._200;
-      }
-
-      int _y = y + MacUIUtil.MAC_COMBO_BORDER_V_OFFSET;
-      
-      g.setColor(topColor);
-      g.drawLine(x + 3, _y + 3, x + width - 1, _y + 3);
-
-      g.setColor(secondTopColor);
-      g.drawLine(x + 3, _y + 4, x + width - 1, _y + 4);
-
-      g.setColor(leftRightColor);
-      g.drawLine(x + 3, _y + 4, x + 3, _y + height - 4);
-      g.drawLine(x + width - 1, _y + 4, x + width - 1, _y + height - 4);
-
-      g.setColor(bottomColor);
-      g.drawLine(x + 4, _y + height - 4, x + width - 2, _y + height - 4);
-
-      g.setColor(UIUtil.getPanelBackground());
-
-      g.fillRect(x,  y, width, 3 + (SystemInfo.isMacOSLion ? 1 : 0));
-      g.fillRect(x, _y, 3, height);
-      g.fillRect(x, _y + height - 3, width, 3);
-    }
-
-    @Override
-    public Insets getBorderInsets(final Component c) {
-      return new Insets(6, 6, 4, 3);
-    }
-
-    @Override
-    public boolean isBorderOpaque() {
-      return true;
     }
   }
 }

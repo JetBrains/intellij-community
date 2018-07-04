@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.importing;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -34,6 +33,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.JavaCompilerConfigurationProxy;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -43,9 +43,13 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static com.intellij.openapi.util.text.StringUtil.nullize;
+import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 
 public class MavenModuleImporter {
 
@@ -103,6 +107,7 @@ public class MavenModuleImporter {
     configFolders();
     configDependencies();
     configLanguageLevel();
+    configCompilerArguments();
   }
 
   public void preConfigFacets() {
@@ -194,15 +199,12 @@ public class MavenModuleImporter {
   private void configDependencies() {
     THashSet<String> dependencyTypesFromSettings = new THashSet<>();
 
-    AccessToken accessToken = ReadAction.start();
-    try {
-      if (myModule.getProject().isDisposed()) return;
+    if (!ReadAction.compute(()->{
+      if (myModule.getProject().isDisposed()) return false;
 
       dependencyTypesFromSettings.addAll(MavenProjectsManager.getInstance(myModule.getProject()).getImportingSettings().getDependencyTypesAsSet());
-    }
-    finally {
-      accessToken.finish();
-    }
+      return true;
+    })) return;
 
 
     for (MavenArtifact artifact : myMavenProject.getDependencies()) {
@@ -276,6 +278,22 @@ public class MavenModuleImporter {
         myRootModelAdapter.addSystemDependency(artifact, scope);
       }
       else {
+        if ("bundle".equals(dependencyType)) {
+          artifact = new MavenArtifact(
+            artifact.getGroupId(),
+            artifact.getArtifactId(),
+            artifact.getVersion(),
+            artifact.getBaseVersion(),
+            "jar",
+            artifact.getClassifier(),
+            artifact.getScope(),
+            artifact.isOptional(),
+            "jar",
+            null,
+            myMavenProject.getLocalRepository(),
+            false, false
+          );
+        }
         LibraryOrderEntry libraryOrderEntry =
           myRootModelAdapter.addLibraryDependency(artifact, scope, myModifiableModelsProvider, myMavenProject);
         myModifiableModelsProvider.trySubstitute(
@@ -372,7 +390,15 @@ public class MavenModuleImporter {
     }
 
     if (level == null) {
-      level = LanguageLevel.parse(myMavenProject.getSourceLevel());
+      String mavenProjectSourceLevel = myMavenProject.getSourceLevel();
+      level = LanguageLevel.parse(mavenProjectSourceLevel);
+      if (level == null) {
+        String mavenProjectReleaseLevel = myMavenProject.getReleaseLevel();
+        level = LanguageLevel.parse(mavenProjectReleaseLevel);
+        if (level == null && (StringUtil.isNotEmpty(mavenProjectSourceLevel) || StringUtil.isNotEmpty(mavenProjectReleaseLevel))) {
+          level = LanguageLevel.HIGHEST;
+        }
+      }
     }
 
     // default source and target settings of maven-compiler-plugin is 1.5, see details at http://maven.apache.org/plugins/maven-compiler-plugin
@@ -381,5 +407,27 @@ public class MavenModuleImporter {
     }
 
     myRootModelAdapter.setLanguageLevel(level);
+  }
+
+  private void configCompilerArguments() {
+    List<String> options = new ArrayList<>();
+
+    Element compilerConfiguration = myMavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
+    if (compilerConfiguration != null) {
+      addIfNotNull(options, nullize(compilerConfiguration.getChildTextTrim("compilerArgument")));
+
+      Element compilerArgs = compilerConfiguration.getChild("compilerArgs");
+      if (compilerArgs != null) {
+        for (Element arg: compilerArgs.getChildren("arg")) {
+          addIfNotNull(options, nullize(arg.getTextTrim()));
+        }
+        for (Element compilerArg: compilerArgs.getChildren("compilerArg")) {
+          addIfNotNull(options, nullize(compilerArg.getTextTrim()));
+        }
+      }
+
+    }
+
+    JavaCompilerConfigurationProxy.setAdditionalOptions(myModule.getProject(), myModule, options);
   }
 }

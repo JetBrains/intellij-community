@@ -43,10 +43,14 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
    */
   Stream<String> names();
 
+  @Contract("null -> false")
   boolean methodReferenceMatches(PsiMethodReferenceExpression methodRef);
 
   @Contract("null -> false")
   boolean test(@Nullable PsiMethodCallExpression call);
+
+  @Contract("null -> false")
+  boolean methodMatches(@Nullable PsiMethod method);
 
   /**
    * Returns true if the supplied expression is (possibly parenthesized) method call which matches this matcher
@@ -84,6 +88,16 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       }
 
       @Override
+      public boolean methodMatches(PsiMethod method) {
+        for (CallMatcher m : matchers) {
+          if (m.methodMatches(method)) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      @Override
       public boolean test(PsiMethodCallExpression call) {
         for (CallMatcher m : matchers) {
           if (m.test(call)) {
@@ -108,7 +122,18 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
    * @return a new matcher
    */
   static Simple instanceCall(@NotNull String className, String... methodNames) {
-    return new Simple(className, ContainerUtil.newTroveSet(methodNames), null, false);
+    return new Simple(className, ContainerUtil.newTroveSet(methodNames), null, CallType.INSTANCE);
+  }
+
+  /**
+   * Creates a matcher which matches an instance method having one of supplied names which class is exactly a className
+   *
+   * @param className fully-qualified class name
+   * @param methodNames names of the methods
+   * @return a new matcher
+   */
+  static Simple exactInstanceCall(@NotNull String className, String... methodNames) {
+    return new Simple(className, ContainerUtil.newTroveSet(methodNames), null, CallType.EXACT_INSTANCE);
   }
 
   /**
@@ -119,20 +144,20 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
    * @return a new matcher
    */
   static Simple staticCall(@NotNull String className, String... methodNames) {
-    return new Simple(className, ContainerUtil.newTroveSet(methodNames), null, true);
+    return new Simple(className, ContainerUtil.newTroveSet(methodNames), null, CallType.STATIC);
   }
 
   class Simple implements CallMatcher {
     private final @NotNull String myClassName;
     private final @NotNull Set<String> myNames;
     private final @Nullable String[] myParameters;
-    private final boolean myStatic;
+    private final CallType myCallType;
 
-    private Simple(@NotNull String className, @NotNull Set<String> names, @Nullable String[] parameters, boolean aStatic) {
+    private Simple(@NotNull String className, @NotNull Set<String> names, @Nullable String[] parameters, CallType callType) {
       myClassName = className;
       myNames = names;
       myParameters = parameters;
-      myStatic = aStatic;
+      myCallType = callType;
     }
 
     @Override
@@ -151,7 +176,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       if (myParameters != null) {
         throw new IllegalStateException("Parameter count is already set to " + count);
       }
-      return new Simple(myClassName, myNames, count == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : new String[count], myStatic);
+      return new Simple(myClassName, myNames, count == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : new String[count], myCallType);
     }
 
     /**
@@ -166,7 +191,7 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
       if (myParameters != null) {
         throw new IllegalStateException("Parameters are already registered");
       }
-      return new Simple(myClassName, myNames, types.length == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : types.clone(), myStatic);
+      return new Simple(myClassName, myNames, types.length == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : types.clone(), myCallType);
     }
 
     private static boolean parameterTypeMatches(String type, PsiParameter parameter) {
@@ -197,13 +222,13 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
         if (args.length < myParameters.length) return false;
       }
       PsiMethod method = call.resolveMethod();
-      if (!methodMatches(method)) return false;
+      if (method == null) return false;
       PsiParameterList parameterList = method.getParameterList();
       if (parameterList.getParametersCount() > args.length ||
           (!MethodCallUtils.isVarArgCall(call) && parameterList.getParametersCount() < args.length)) {
         return false;
       }
-      return parametersMatch(parameterList);
+      return methodMatches(method);
     }
 
     private boolean parametersMatch(@NotNull PsiParameterList parameterList) {
@@ -214,21 +239,41 @@ public interface CallMatcher extends Predicate<PsiMethodCallExpression> {
     }
 
     @Contract("null -> false")
-    private boolean methodMatches(PsiMethod method) {
+    public boolean methodMatches(PsiMethod method) {
       if (method == null) return false;
+      if (!myNames.contains(method.getName())) return false;
       PsiClass aClass = method.getContainingClass();
       if (aClass == null) return false;
-      if (myStatic != method.getModifierList().hasExplicitModifier(PsiModifier.STATIC) ||
-          (myStatic && !myClassName.equals(aClass.getQualifiedName())) ||
-          (!myStatic && !InheritanceUtil.isInheritor(aClass, myClassName))) {
-        return false;
-      }
-      return true;
+      return myCallType.matches(aClass, myClassName, method.hasModifierProperty(PsiModifier.STATIC)) &&
+             parametersMatch(method.getParameterList());
     }
 
     @Override
     public String toString() {
       return myClassName + "." + String.join("|", myNames);
     }
+  }
+
+  enum CallType {
+    STATIC {
+      @Override
+      boolean matches(PsiClass aClass, String className, boolean isStatic) {
+        return isStatic && className.equals(aClass.getQualifiedName());
+      }
+    },
+    INSTANCE {
+      @Override
+      boolean matches(PsiClass aClass, String className, boolean isStatic) {
+        return !isStatic && InheritanceUtil.isInheritor(aClass, className);
+      }
+    },
+    EXACT_INSTANCE {
+      @Override
+      boolean matches(PsiClass aClass, String className, boolean isStatic) {
+        return !isStatic && className.equals(aClass.getQualifiedName());
+      }
+    };
+
+    abstract boolean matches(PsiClass aClass, String className, boolean isStatic);
   }
 }

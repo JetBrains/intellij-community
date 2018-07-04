@@ -30,7 +30,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.containers.SLRUMap;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Contract;
@@ -220,7 +220,7 @@ public class ContentRevisionCache {
   private static VcsRevisionNumber putIntoCurrentCache(final ContentRevisionCache cache,
                                                                      FilePath path,
                                                                      @NotNull VcsKey vcsKey,
-                                                                     final CurrentRevisionProvider loader) throws VcsException, IOException {
+                                                                     final CurrentRevisionProvider loader) throws VcsException {
     VcsRevisionNumber loadedRevisionNumber;
     Pair<VcsRevisionNumber, Long> currentRevision;
 

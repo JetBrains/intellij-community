@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reflectiveAccess;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
-import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiredModuleFix;
-import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
+import com.intellij.codeInsight.daemon.impl.quickfix.AddRequiresDirectiveFix;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.project.Project;
@@ -34,7 +20,7 @@ import static com.intellij.psi.impl.source.resolve.reference.impl.JavaReflection
 /**
  * @author Pavel.Dolgov
  */
-public class Java9ReflectionClassVisibilityInspection extends BaseJavaBatchLocalInspectionTool {
+public class Java9ReflectionClassVisibilityInspection extends AbstractBaseJavaLocalInspectionTool {
 
   @NotNull
   @Override
@@ -77,7 +63,7 @@ public class Java9ReflectionClassVisibilityInspection extends BaseJavaBatchLocal
             if (!JavaModuleGraphUtil.reads(javaModule, otherModule)) {
               String message = InspectionsBundle.message(
                 "module.not.in.requirements", javaModule.getName(), otherModule.getName());
-              holder.registerProblem(classNameArgument, message, new AddRequiredModuleFix(javaModule, otherModule.getName()));
+              holder.registerProblem(classNameArgument, message, new AddRequiresDirectiveFix(javaModule, otherModule.getName()));
               return;
             }
 

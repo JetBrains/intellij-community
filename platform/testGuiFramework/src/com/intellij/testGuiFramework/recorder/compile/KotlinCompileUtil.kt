@@ -15,75 +15,63 @@
  */
 package com.intellij.testGuiFramework.recorder.compile
 
-import com.intellij.ide.plugins.PluginManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.recorder.actions.PerformScriptAction
 import java.io.File
 import java.net.URL
 import java.nio.file.Paths
+import java.util.jar.JarFile
 
 object KotlinCompileUtil {
 
-  private val LOG by lazy { Logger.getInstance("#${KotlinCompileUtil::class.qualifiedName}") }
-
   private val localCompiler: LocalCompiler by lazy { LocalCompiler() }
-
-  fun compile(codeString: String) {
-    localCompiler.compileOnPooledThread(ScriptWrapper.wrapScript(codeString), getAllUrls().map { Paths.get(it.toURI()).toFile().path })
-  }
 
   fun compileAndRun(codeString: String) {
     localCompiler.compileAndRunOnPooledThread(ScriptWrapper.wrapScript(codeString),
                                               getAllUrls().map { Paths.get(it.toURI()).toFile().path })
   }
 
-  fun getAllUrls(): List<URL> {
+  private fun getAllUrls(): List<URL> {
     if (ServiceManager::class.java.classLoader.javaClass.name.contains("Launcher\$AppClassLoader")) {
       //lets substitute jars with a common lib dir to avoid Windows long path error
       val urls = ServiceManager::class.java.classLoader.forcedUrls()
-      val libUrl = urls.filter { url ->
+      val libUrl = urls.first { url ->
         (url.file.endsWith("idea.jar") && File(url.path).parentFile.name == "lib")
-      }.firstOrNull()!!.getParentURL()
+      }.getParentURL()
       urls.filter { url -> !url.file.startsWith(libUrl.file) }.plus(libUrl).toSet()
-
-      //add git4idea urls to allow git configuration from local runner
-//            if (System.getenv("TEAMCITY_VERSION") != null) urls.plus(getGit4IdeaUrls())
-
       if (!ApplicationManager.getApplication().isUnitTestMode)
         urls.plus(ServiceManager::class.java.classLoader.forcedBaseUrls())
       return urls.toList()
     }
 
-    var list: List<URL> = (ServiceManager::class.java.classLoader.forcedUrls()
-                           + PerformScriptAction::class.java.classLoader.forcedUrls())
+    val set = mutableSetOf<URL>()
+    set.addAll(ServiceManager::class.java.classLoader.forcedUrls())
+    set.addAll(PerformScriptAction::class.java.classLoader.forcedUrls())
     if (!ApplicationManager.getApplication().isUnitTestMode)
-      list += ServiceManager::class.java.classLoader.forcedBaseUrls()
-    return list
+      set.addAll(ServiceManager::class.java.classLoader.forcedBaseUrls())
+    expandClasspathInJar(set)
+    return set.toList()
   }
 
-  fun getGit4IdeaUrls(): List<URL> {
-    val git4IdeaPluginClassLoader = PluginManager.getPlugins().filter { pluginDescriptor -> pluginDescriptor.name.toLowerCase() == "git integration" }.firstOrNull()!!.pluginClassLoader
-    val urls = git4IdeaPluginClassLoader.forcedUrls()
-    val libUrl = urls.filter { url ->
-      (url.file.endsWith("git4idea.jar") && File(url.path).parentFile.name == "lib")
-    }.firstOrNull()!!.getParentURL()
-    urls.filter { url -> !url.file.startsWith(libUrl.file) }.plus(libUrl).toSet()
-    return urls
+  private fun expandClasspathInJar(setOfUrls: MutableSet<URL>) {
+    val classpathUrl = setOfUrls.firstOrNull{Regex("classpath\\d*.jar").containsMatchIn(it.path) || it.path.endsWith("pathing.jar")}
+    if (classpathUrl != null) {
+      val classpathFile = Paths.get(classpathUrl.toURI()).toFile()
+      val classpathLine = JarFile(classpathFile).manifest.mainAttributes.getValue("Class-Path")
+      val classpathList = classpathLine.split(" ").filter { it.startsWith("file") }.map { URL(it) }
+      setOfUrls.addAll(classpathList)
+      setOfUrls.remove(classpathUrl)
+    }
   }
 
+  private fun URL.getParentURL() = File(this.file).parentFile.toURI().toURL()!!
 
-  fun URL.getParentURL() = File(this.file).parentFile.toURI().toURL()
+  private fun ClassLoader.forcedUrls(): List<URL> {
+    var methodName = "getUrls"
+    val methodAlternativeName = "getURLs"
 
-  fun ClassLoader.forcedUrls(): List<URL> {
-
-    val METHOD_DEFAULT_NAME: String = "getUrls"
-    val METHOD_ALTERNATIVE_NAME: String = "getURLs"
-
-    var methodName: String = METHOD_DEFAULT_NAME
-
-    if (this.javaClass.methods.any { mtd -> mtd.name == METHOD_ALTERNATIVE_NAME }) methodName = METHOD_ALTERNATIVE_NAME
+    if (this.javaClass.methods.any { mtd -> mtd.name == methodAlternativeName }) methodName = methodAlternativeName
     val method = this.javaClass.getMethod(methodName)
     method.isAccessible
     val methodResult = method.invoke(this)
@@ -91,7 +79,7 @@ object KotlinCompileUtil {
     return myList.filterIsInstance(URL::class.java)
   }
 
-  fun ClassLoader.forcedBaseUrls(): List<URL> {
+  private fun ClassLoader.forcedBaseUrls(): List<URL> {
     try {
       return ((this.javaClass.getMethod("getBaseUrls").invoke(
         this) as? List<*>)!!.filter { it is URL && it.protocol == "file" && !it.file.endsWith("jar!") }) as List<URL>
@@ -100,8 +88,6 @@ object KotlinCompileUtil {
     catch (e: NoSuchMethodException) {
       return emptyList()
     }
-
-
   }
 
 }

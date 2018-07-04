@@ -275,6 +275,34 @@ public class Test {
 
   }
 
+  fun `test suppress for erroneous parameters`() {
+    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(false)
+    check("""
+public class Test {
+    void foo(String foo) {}
+    void foo(String foo, String bar) {}
+    void foo(String foo, String bar, String baz) {}
+
+    void test() {
+        foo("a"++"b"); // no hint
+    }
+}
+""")
+    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
+    check("""
+public class Test {
+    void foo(String foo) {}
+    void foo(String foo, String bar) {}
+    void foo(String foo, String bar, String baz) {}
+
+    void test() {
+        foo(<hint text="foo:"/>"a"++"b");
+    }
+}
+""")
+
+  }
+
 
   fun `test ignored methods`() {
     check("""

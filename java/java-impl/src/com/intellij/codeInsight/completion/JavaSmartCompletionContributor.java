@@ -266,7 +266,7 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
           result.add(new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.SEMICOLON, null, ExpectedTypeInfoImpl.NULL));
         }
       }
-      return result.toArray(new ExpectedTypeInfo[result.size()]);
+      return result.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
 
     PsiExpression expression = PsiTreeUtil.getContextOfType(position, PsiExpression.class, true);

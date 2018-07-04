@@ -17,7 +17,6 @@ package com.siyeh.ig.fixes.controlflow;
 
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
-import com.siyeh.ig.controlflow.ConstantIfStatementInspection;
 import com.siyeh.ig.controlflow.SimplifiableEqualsExpressionInspection;
 
 public class SimplifiableEqualsExpressionFixTest extends IGQuickFixesTestCase {

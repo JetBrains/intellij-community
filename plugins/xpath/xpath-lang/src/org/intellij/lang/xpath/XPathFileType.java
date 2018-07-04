@@ -41,6 +41,7 @@ public final class XPathFileType extends LanguageFileType {
         return "XPath";
     }
 
+    @Override
     @NotNull
     public String getDefaultExtension() {
         return getLanguage().getID().toLowerCase();

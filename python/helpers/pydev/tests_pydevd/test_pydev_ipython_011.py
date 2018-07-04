@@ -2,24 +2,36 @@ import sys
 import unittest
 import threading
 import os
-from nose.tools import eq_
-from _pydev_bundle.pydev_imports import StringIO, SimpleXMLRPCServer
+from _pydev_bundle.pydev_imports import SimpleXMLRPCServer
 from _pydev_bundle.pydev_localhost import get_localhost
 from _pydev_bundle.pydev_console_utils import StdIn
 import socket
-from _pydev_bundle.pydev_ipython_console_011 import get_pydev_frontend
 import time
+from _pydevd_bundle import pydevd_io
+import pytest
 
 try:
     xrange
 except:
     xrange = range
 
+def eq_(a, b):
+    if a != b:
+        raise AssertionError('%s != %s' % (a, b))
+    
+try:
+    from IPython import core
+    has_ipython = True
+except:
+    has_ipython = False
 
+@pytest.mark.skipif(not has_ipython, reason='IPython not available')
 class TestBase(unittest.TestCase):
 
 
     def setUp(self):
+        from _pydev_bundle.pydev_ipython_console_011 import get_pydev_frontend
+
         # PyDevFrontEnd depends on singleton in IPython, so you
         # can't make multiple versions. So we reuse self.front_end for
         # all the tests
@@ -40,39 +52,45 @@ class TestBase(unittest.TestCase):
         from IPython.utils import io
 
         self.original_stdout = sys.stdout
-        sys.stdout = io.stdout = StringIO()
+        sys.stdout = io.stdout = pydevd_io.IOBuf()
 
     def restore_stdout(self):
         from IPython.utils import io
         io.stdout = sys.stdout = self.original_stdout
 
 
+@pytest.mark.skipif(not has_ipython, reason='IPython not available')
 class TestPyDevFrontEnd(TestBase):
 
     def testAddExec_1(self):
         self.add_exec('if True:', True)
 
+    
     def testAddExec_2(self):
         #Change: 'more' must now be controlled in the client side after the initial 'True' returned.
         self.add_exec('if True:\n    testAddExec_a = 10\n', False)
         assert 'testAddExec_a' in self.front_end.get_namespace()
 
+    
     def testAddExec_3(self):
         assert 'testAddExec_x' not in self.front_end.get_namespace()
         self.add_exec('if True:\n    testAddExec_x = 10\n\n')
         assert 'testAddExec_x' in self.front_end.get_namespace()
         eq_(self.front_end.get_namespace()['testAddExec_x'], 10)
 
+    
     def test_get_namespace(self):
         assert 'testGetNamespace_a' not in self.front_end.get_namespace()
         self.add_exec('testGetNamespace_a = 10')
         assert 'testGetNamespace_a' in self.front_end.get_namespace()
         eq_(self.front_end.get_namespace()['testGetNamespace_a'], 10)
 
+    
     def test_complete(self):
         unused_text, matches = self.front_end.complete('%')
         assert len(matches) > 1, 'at least one magic should appear in completions'
 
+    
     def test_complete_does_not_do_python_matches(self):
         # Test that IPython's completions do not do the things that
         # PyDev's completions will handle
@@ -82,6 +100,7 @@ class TestPyDevFrontEnd(TestBase):
         unused_text, matches = self.front_end.complete('testComplete_')
         assert len(matches) == 0
 
+    
     def testGetCompletions_1(self):
         # Test the merged completions include the standard completions
         self.add_exec('testComplete_a = 5')
@@ -92,6 +111,7 @@ class TestPyDevFrontEnd(TestBase):
         assert len(matches) == 3
         eq_(set(['testComplete_a', 'testComplete_b', 'testComplete_c']), set(matches))
 
+    
     def testGetCompletions_2(self):
         # Test that we get IPython completions in results
         # we do this by checking kw completion which PyDev does
@@ -101,6 +121,7 @@ class TestPyDevFrontEnd(TestBase):
         matches = [f[0] for f in res]
         assert 'ABC=' in matches
 
+    
     def testGetCompletions_3(self):
         # Test that magics return IPYTHON magic as type
         res = self.front_end.getCompletions('%cd', '%cd')
@@ -108,7 +129,9 @@ class TestPyDevFrontEnd(TestBase):
         eq_(res[0][3], '12')  # '12' == IToken.TYPE_IPYTHON_MAGIC
         assert len(res[0][1]) > 100, 'docstring for %cd should be a reasonably long string'
 
+@pytest.mark.skipif(not has_ipython, reason='IPython not available')
 class TestRunningCode(TestBase):
+    
     def test_print(self):
         self.redirect_stdout()
         try:
@@ -117,6 +140,7 @@ class TestRunningCode(TestBase):
         finally:
             self.restore_stdout()
 
+    
     def testQuestionMark_1(self):
         self.redirect_stdout()
         try:
@@ -125,6 +149,7 @@ class TestRunningCode(TestBase):
         finally:
             self.restore_stdout()
 
+    
     def testQuestionMark_2(self):
         self.redirect_stdout()
         try:
@@ -134,6 +159,7 @@ class TestRunningCode(TestBase):
             self.restore_stdout()
 
 
+    
     def test_gui(self):
         try:
             import Tkinter
@@ -149,6 +175,7 @@ class TestRunningCode(TestBase):
             self.add_exec('%gui none')
             assert get_inputhook() is None
 
+    
     def test_history(self):
         ''' Make sure commands are added to IPython's history '''
         self.redirect_stdout()
@@ -168,8 +195,15 @@ class TestRunningCode(TestBase):
         finally:
             self.restore_stdout()
 
+    
     def test_edit(self):
         ''' Make sure we can issue an edit command'''
+        if os.environ.get('TRAVIS') == 'true':
+            # This test is too flaky on travis.
+            return
+
+        from _pydev_bundle.pydev_ipython_console_011 import get_pydev_frontend
+
         called_RequestInput = [False]
         called_IPythonEditor = [False]
         def start_client_thread(client_port):
@@ -215,7 +249,7 @@ class TestRunningCode(TestBase):
 
         client_thread = start_client_thread(self.client_port)
         orig_stdin = sys.stdin
-        sys.stdin = StdIn(self, get_localhost(), self.client_port, orig_stdin)
+        sys.stdin = StdIn(self, get_localhost(), self.client_port)
         try:
             filename = 'made_up_file.py'
             self.add_exec('%edit ' + filename)
@@ -277,10 +311,3 @@ class TestRunningCode(TestBase):
             sys.stdin = orig_stdin
             client_thread.shutdown()
 
-if __name__ == '__main__':
-
-    #Just doing: unittest.main() was not working for me when run directly (not sure why)
-    #And doing it the way below the test with the import: from pydev_ipython.inputhook import get_inputhook, set_stdin_file
-    #is failing (but if I do a Ctrl+F9 in PyDev to run it, it works properly, so, I'm a bit puzzled here).
-    unittest.TextTestRunner(verbosity=1).run(unittest.makeSuite(TestRunningCode))
-    unittest.TextTestRunner(verbosity=1).run(unittest.makeSuite(TestPyDevFrontEnd))

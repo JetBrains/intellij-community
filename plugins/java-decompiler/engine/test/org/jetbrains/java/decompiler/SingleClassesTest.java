@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
@@ -37,7 +23,8 @@ public class SingleClassesTest {
   public void setUp() throws IOException {
     fixture = new DecompilerTestFixture();
     fixture.setUp(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
-                  IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1");
+                  IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
+                  IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1");
   }
 
   @After
@@ -46,6 +33,7 @@ public class SingleClassesTest {
     fixture = null;
   }
 
+  @Test public void testPrimitiveNarrowing() { doTest("pkg/TestPrimitiveNarrowing"); }
   @Test public void testClassFields() { doTest("pkg/TestClassFields"); }
   @Test public void testInterfaceFields() { doTest("pkg/TestInterfaceFields"); }
   @Test public void testClassLambda() { doTest("pkg/TestClassLambda"); }
@@ -58,6 +46,7 @@ public class SingleClassesTest {
   @Test public void testDeprecations() { doTest("pkg/TestDeprecations"); }
   @Test public void testExtendsList() { doTest("pkg/TestExtendsList"); }
   @Test public void testMethodParameters() { doTest("pkg/TestMethodParameters"); }
+  @Test public void testMethodParametersAttr() { doTest("pkg/TestMethodParametersAttr"); }
   @Test public void testCodeConstructs() { doTest("pkg/TestCodeConstructs"); }
   @Test public void testConstants() { doTest("pkg/TestConstants"); }
   @Test public void testEnum() { doTest("pkg/TestEnum"); }
@@ -111,6 +100,14 @@ public class SingleClassesTest {
   @Test public void testLambdaParams() { doTest("pkg/TestLambdaParams"); }
   @Test public void testInterfaceMethods() { doTest("pkg/TestInterfaceMethods"); }
   @Test public void testConstType() { doTest("pkg/TestConstType"); }
+  @Test public void testPop2OneDoublePop2() { doTest("pkg/TestPop2OneDoublePop2"); }
+  @Test public void testPop2OneLongPop2() { doTest("pkg/TestPop2OneLongPop2"); }
+  @Test public void testPop2TwoIntPop2() { doTest("pkg/TestPop2TwoIntPop2"); }
+  @Test public void testPop2TwoIntTwoPop() { doTest("pkg/TestPop2TwoIntTwoPop"); }
+  @Test public void testSuperInner() { doTest("pkg/TestSuperInner", "pkg/TestSuperInnerBase"); }
+  @Test public void testMissingConstructorCallGood() { doTest("pkg/TestMissingConstructorCallGood"); }
+  @Test public void testMissingConstructorCallBad() { doTest("pkg/TestMissingConstructorCallBad"); }
+
 
   // TODO: fix all below
   //@Test public void testPackageInfo() { doTest("pkg/package-info"); }
@@ -120,20 +117,24 @@ public class SingleClassesTest {
   //@Test public void testInUse() { doTest("pkg/TestInUse"); }
   //@Test public void testInterfaceSuper() { doTest("pkg/TestInterfaceSuper"); }
 
+  @Test public void testGroovyClass() { doTest("pkg/TestGroovyClass"); }
+  @Test public void testGroovyTrait() { doTest("pkg/TestGroovyTrait"); }
+  @Test public void testPrivateClasses() { doTest("pkg/PrivateClasses"); }
+
   private void doTest(String testFile, String... companionFiles) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();
 
     File classFile = new File(fixture.getTestDataDir(), "/classes/" + testFile + ".class");
     assertTrue(classFile.isFile());
     for (File file : collectClasses(classFile)) {
-      decompiler.addSpace(file, true);
+      decompiler.addSource(file);
     }
 
     for (String companionFile : companionFiles) {
       File companionClassFile = new File(fixture.getTestDataDir(), "/classes/" + companionFile + ".class");
       assertTrue(companionClassFile.isFile());
       for (File file : collectClasses(companionClassFile)) {
-        decompiler.addSpace(file, true);
+        decompiler.addSource(file);
       }
     }
 

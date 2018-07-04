@@ -19,7 +19,7 @@ import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
-import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
+import com.intellij.codeInspection.unusedImport.UnusedImportInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
@@ -38,12 +38,13 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     enableInspectionTool(new UnusedDeclarationInspection());
+    enableInspectionTool(new UnusedImportInspection());
   }
 
   @NotNull
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
-    return new LocalInspectionTool[]{new UncheckedWarningLocalInspection(), new UnusedImportLocalInspection()};
+    return new LocalInspectionTool[]{new UncheckedWarningLocalInspection()};
   }
 
   @Override
@@ -425,6 +426,12 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testUncheckedWarningWhenCastingFromCapturedWildcard() { doTest8Incompatibility(true); }
   public void testEnclosingRefInTopLevelClassExtendingInnerWhichExtendsItsOuter() { doTest8Incompatibility(true); }
   public void testGenericThrowTypes() { doTest5(false); }
+  public void testClassInWrongPackage() { doTest6(false); }
   public void testRecursiveParamBoundsWhenSuperSubstitution() { doTest6(false); }
   public void testCaptureForBoundCheck() { doTest6(false); }
+  public void testGetClassInAnonymous() { doTest6(false); }
+  public void testInheritFromDifferentParameterizations() { doTest6(false); }
+  public void testCheckAccessibilityBeforeSuperFieldReferenceInSuperCall() { doTest6(false); }
+  public void testIDEA128159() { doTest6(false); }
+  public void testIDEA139214() { doTest(LanguageLevel.JDK_1_6, JavaSdkVersion.JDK_1_8, false); }
 }

@@ -15,15 +15,11 @@
  */
 package com.intellij.internal.statistic.beans;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
-
+@Deprecated // to be removed in 2018.2
 public class GroupDescriptor {
   public static final double DEFAULT_PRIORITY = 0.0;
   public static final double HIGHER_PRIORITY = 100.0;
   public static final double LOWER_PRIORITY = -100.0;
-
-  private static final int MAX_ID_LENGTH = 30;
 
   private final String myId;
   private final double myPriority;
@@ -37,16 +33,9 @@ public class GroupDescriptor {
   }
 
   private GroupDescriptor(String id, double priority) {
-    if (StringUtil.isEmptyOrSpaces(id)) throw new IllegalArgumentException("Invalid ID: '" + id + "'");
-    if (id.length() > MAX_ID_LENGTH) {
-      Logger.getInstance(GroupDescriptor.class).error("ID too long: '" + id + "', truncated");
-      id = id.substring(0, MAX_ID_LENGTH);
-    }
-
     myId = ConvertUsagesUtil.ensureProperKey(id);
     myPriority = priority;
   }
-
   public String getId() {
     return myId;
   }

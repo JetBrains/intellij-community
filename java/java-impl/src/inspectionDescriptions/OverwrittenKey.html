@@ -1,0 +1,15 @@
+<html>
+<body>
+Warns if <code>Map</code> key or <code>Set</code> element was overwritten in the sequence of add/put calls or using a Java 9 factory method
+like <code>Set.of</code> (which will result in runtime exception). This usually occurs due to copy-paste error. Example:
+<pre>
+  map.put("A", 1);
+  map.put("B", 2);
+  map.put("C", 3);
+  map.put("D", 4);
+  map.put("A", 5); // duplicating key "A", overwrites previously written entry
+</pre>
+<!-- tooltip end -->
+<p><small>New in 2017.3</small></p>
+</body>
+</html>

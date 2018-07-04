@@ -35,7 +35,7 @@ public class SvnPhantomChangeDiffRequestProvider implements ChangeDiffRequestPro
   @Override
   public DiffRequest process(@NotNull ChangeDiffRequestProducer presentable,
                              @NotNull UserDataHolder context,
-                             @NotNull ProgressIndicator indicator) throws DiffRequestProducerException, ProcessCanceledException {
+                             @NotNull ProgressIndicator indicator) throws ProcessCanceledException {
     indicator.checkCanceled();
     return new SvnPhantomDiffRequest(presentable.getChange());
   }

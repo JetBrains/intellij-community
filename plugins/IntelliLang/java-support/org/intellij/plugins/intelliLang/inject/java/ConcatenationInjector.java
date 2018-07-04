@@ -16,21 +16,25 @@
 package org.intellij.plugins.intelliLang.inject.java;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.injection.ConcatenationAwareInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.injection.ReferenceInjector;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
@@ -42,11 +46,9 @@ import org.intellij.plugins.intelliLang.util.AnnotationUtilEx;
 import org.intellij.plugins.intelliLang.util.ContextComputationProcessor;
 import org.intellij.plugins.intelliLang.util.PsiUtilEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author cdr
@@ -67,7 +69,8 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
   }
 
-  public void getLanguagesToInject(@NotNull final MultiHostRegistrar registrar, @NotNull PsiElement... operands) {
+  @Override
+  public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement... operands) {
     if (operands.length == 0) return;
     boolean hasLiteral = false;
     InjectedLanguage tempInjectedLanguage = null;
@@ -84,17 +87,32 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       }
     }
     if (!hasLiteral) return;
-    final Language tempLanguage = tempInjectedLanguage == null ? null : tempInjectedLanguage.getLanguage();
-    final PsiFile finalContainingFile = containingFile;
-    InjectionProcessor injectionProcessor = new InjectionProcessor(myConfiguration, mySupport, operands) {
+    processOperandsInjection(registrar, containingFile, tempInjectedLanguage, operands);
+  }
+
+  private void processOperandsInjection(@NotNull MultiHostRegistrar registrar,
+                                        @NotNull PsiFile containingFile, @Nullable InjectedLanguage tempInjectedLanguage,
+                                        @NotNull PsiElement[] operands) {
+    Language tempLanguage = tempInjectedLanguage == null ? null : tempInjectedLanguage.getLanguage();
+    LanguageInjectionSupport injectionSupport = tempLanguage == null
+                                                ? mySupport
+                                                : TemporaryPlacesRegistry.getInstance(myProject).getLanguageInjectionSupport();
+    InjectionProcessor injectionProcessor = new InjectionProcessor(myConfiguration, injectionSupport, operands) {
       @Override
-      protected void processInjection(Language language,
-                                      List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
-                                      boolean settingsAvailable,
-                                      boolean unparsable) {
-        InjectorUtils.registerInjection(language, list, finalContainingFile, registrar);
-        InjectorUtils.registerSupport(mySupport, settingsAvailable, registrar);
-        InjectorUtils.putInjectedFileUserData(registrar, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, unparsable ? Boolean.TRUE : null);
+      protected Pair<PsiLanguageInjectionHost, Language> processInjection(Language language,
+                                                                          List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
+                                                                          boolean settingsAvailable,
+                                                                          boolean unparsable) {
+        InjectorUtils.registerInjection(language, list, containingFile, registrar);
+        InjectorUtils.registerSupport(getLanguageInjectionSupport(), settingsAvailable, list.get(0).getFirst(), language);
+        PsiLanguageInjectionHost host = list.get(0).getFirst();
+        if (tempLanguage != null) {
+          InjectorUtils
+            .putInjectedFileUserData(host, language, LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, tempInjectedLanguage);
+        }
+        InjectorUtils
+          .putInjectedFileUserData(host, language, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, unparsable ? Boolean.TRUE : null);
+        return Pair.create(host, language);
       }
 
       @Override
@@ -103,17 +121,18 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         if (getAnnotatedElementsValue().contains(methodName)) {
           return true;
         }
-        if (!annoOnly && getXmlAnnotatedElementsValue().contains(methodName)) {
-          return true;
-        }
-        return false;
+        return !annoOnly && getXmlAnnotatedElementsValue().contains(methodName);
       }
     };
     if (tempLanguage != null) {
       BaseInjection baseInjection = new BaseInjection(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID);
       baseInjection.setInjectedLanguageId(tempInjectedLanguage.getID());
-      injectionProcessor.processInjectionInner(baseInjection, false);
-      InjectorUtils.putInjectedFileUserData(registrar, LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, tempInjectedLanguage);
+      List<Pair<PsiLanguageInjectionHost, Language>> list = injectionProcessor.processInjectionWithContext(baseInjection, false);
+      for (Pair<PsiLanguageInjectionHost, Language> pair : list) {
+        PsiLanguageInjectionHost host = pair.getFirst();
+        Language language = pair.getSecond();
+        InjectorUtils.putInjectedFileUserData(host, language, LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, tempInjectedLanguage);
+      }
     }
     else {
       injectionProcessor.processInjections();
@@ -128,31 +147,32 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     private boolean myShouldStop;
     private boolean myUnparsable;
 
-    public InjectionProcessor(Configuration configuration, LanguageInjectionSupport support, PsiElement... operands) {
+    InjectionProcessor(Configuration configuration, LanguageInjectionSupport support, PsiElement... operands) {
       myConfiguration = configuration;
       mySupport = support;
       myOperands = operands;
     }
 
     public void processInjections() {
-      final PsiElement firstOperand = myOperands[0];
-      final PsiElement topBlock = PsiUtil.getTopLevelEnclosingCodeBlock(firstOperand, null);
-      final LocalSearchScope searchScope = new LocalSearchScope(new PsiElement[]{topBlock instanceof PsiCodeBlock
+      PsiElement firstOperand = myOperands[0];
+      PsiElement topBlock = PsiUtil.getTopLevelEnclosingCodeBlock(firstOperand, null);
+      LocalSearchScope searchScope = new LocalSearchScope(new PsiElement[]{topBlock instanceof PsiCodeBlock
                                                                                  ? topBlock : firstOperand.getContainingFile()}, "", true);
-      final THashSet<PsiModifierListOwner> visitedVars = new THashSet<>();
-      final ArrayList<PsiElement> places = new ArrayList<>(5);
+      List<PsiElement> places = new ArrayList<>(5);
       places.add(firstOperand);
+      Set<PsiModifierListOwner> visitedVars = new THashSet<>();
       class MyAnnoVisitor implements AnnotationUtilEx.AnnotatedElementVisitor {
+        @Override
         public boolean visitMethodParameter(PsiExpression expression, PsiCall psiCallExpression) {
-          final PsiExpressionList list = psiCallExpression.getArgumentList();
+          PsiExpressionList list = psiCallExpression.getArgumentList();
           assert list != null;
-          final int index = ArrayUtil.indexOf(list.getExpressions(), expression);
-          final String methodName;
+          int index = ArrayUtil.indexOf(list.getExpressions(), expression);
+          String methodName;
           if (psiCallExpression instanceof PsiMethodCallExpression) {
-            final String referenceName = ((PsiMethodCallExpression)psiCallExpression).getMethodExpression().getReferenceName();
+            String referenceName = ((PsiMethodCallExpression)psiCallExpression).getMethodExpression().getReferenceName();
             if ("super".equals(referenceName) || "this".equals(referenceName)) { // constructor call
-              final PsiClass psiClass = PsiTreeUtil.getParentOfType(psiCallExpression, PsiClass.class, true);
-              final PsiClass psiTargetClass = "super".equals(referenceName)? psiClass == null ? null : psiClass.getSuperClass() : psiClass;
+              PsiClass psiClass = PsiTreeUtil.getParentOfType(psiCallExpression, PsiClass.class, true);
+              PsiClass psiTargetClass = "super".equals(referenceName)? psiClass == null ? null : psiClass.getSuperClass() : psiClass;
               methodName = psiTargetClass == null? null : psiTargetClass.getName();
             }
             else {
@@ -160,7 +180,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
             }
           }
           else if (psiCallExpression instanceof PsiNewExpression) {
-            final PsiJavaCodeReferenceElement classRef = ((PsiNewExpression)psiCallExpression).getClassOrAnonymousClassReference();
+            PsiJavaCodeReferenceElement classRef = ((PsiNewExpression)psiCallExpression).getClassOrAnonymousClassReference();
             methodName = classRef == null ? null : classRef.getReferenceName();
           }
           else if (psiCallExpression instanceof PsiEnumConstant) {
@@ -171,9 +191,9 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
             methodName = null;
           }
           if (methodName != null && index >= 0 && areThereInjectionsWithName(methodName, false)) {
-            final PsiMethod method = psiCallExpression.resolveMethod();
+            PsiMethod method = psiCallExpression.resolveMethod();
             if (method != null) {
-              final PsiParameter[] parameters = method.getParameterList().getParameters();
+              PsiParameter[] parameters = method.getParameterList().getParameters();
               if (index < parameters.length) {
                 process(parameters[index], method, index);
               }
@@ -185,6 +205,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           return false;
         }
 
+        @Override
         public boolean visitMethodReturnStatement(PsiElement source, PsiMethod method) {
           if (areThereInjectionsWithName(method.getName(), false)) {
             process(method, method, -1);
@@ -196,9 +217,9 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           if (variable == null) return;
           if (myConfiguration.getAdvancedConfiguration().getDfaOption() != Configuration.DfaOption.OFF && visitedVars.add(variable)) {
             ReferencesSearch.search(variable, searchScope).forEach(psiReference -> {
-              final PsiElement element = psiReference.getElement();
+              PsiElement element = psiReference.getElement();
               if (element instanceof PsiExpression) {
-                final PsiExpression refExpression = (PsiExpression)element;
+                PsiExpression refExpression = (PsiExpression)element;
                 places.add(refExpression);
                 if (!myUnparsable) {
                   myUnparsable = checkUnparsableReference(refExpression);
@@ -209,6 +230,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           }
         }
 
+        @Override
         public boolean visitVariable(PsiVariable variable) {
           visitVariableUsages(variable);
           PsiElement anchor = !(variable.getFirstChild() instanceof PsiComment) ? variable :
@@ -224,12 +246,13 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           return false;
         }
 
+        @Override
         public boolean visitAnnotationParameter(PsiNameValuePair nameValuePair, PsiAnnotation psiAnnotation) {
-          final String paramName = nameValuePair.getName();
-          final String methodName = paramName != null ? paramName : PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME;
+          String paramName = nameValuePair.getName();
+          String methodName = paramName != null ? paramName : PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME;
           if (areThereInjectionsWithName(methodName, false)) {
-            final PsiReference reference = nameValuePair.getReference();
-            final PsiElement element = reference == null ? null : reference.resolve();
+            PsiReference reference = nameValuePair.getReference();
+            PsiElement element = reference == null ? null : reference.resolve();
             if (element instanceof PsiMethod) {
               process((PsiMethod)element, (PsiMethod)element, -1);
             }
@@ -237,19 +260,20 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           return false;
         }
 
+        @Override
         public boolean visitReference(PsiReferenceExpression expression) {
           if (myConfiguration.getAdvancedConfiguration().getDfaOption() == Configuration.DfaOption.OFF) return true;
-          final PsiElement e = expression.resolve();
+          PsiElement e = expression.resolve();
           if (e instanceof PsiVariable) {
             if (e instanceof PsiParameter) {
-              final PsiParameter p = (PsiParameter)e;
-              final PsiElement declarationScope = p.getDeclarationScope();
-              final PsiMethod method = declarationScope instanceof PsiMethod ? (PsiMethod)declarationScope : null;
-              final PsiParameterList parameterList = method == null ? null : method.getParameterList();
+              PsiParameter p = (PsiParameter)e;
+              PsiElement declarationScope = p.getDeclarationScope();
+              PsiMethod method = declarationScope instanceof PsiMethod ? (PsiMethod)declarationScope : null;
+              PsiParameterList parameterList = method == null ? null : method.getParameterList();
               // don't check catchblock parameters & etc.
               if (!(parameterList == null || parameterList != e.getParent()) &&
                   areThereInjectionsWithName(method.getName(), false)) {
-                final int parameterIndex = parameterList.getParameterIndex((PsiParameter)e);
+                int parameterIndex = parameterList.getParameterIndex((PsiParameter)e);
                 process((PsiModifierListOwner)e, method, parameterIndex);
               }
             }
@@ -268,13 +292,13 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           }
           return true;
         }
-      };
+      }
       MyAnnoVisitor visitor = new MyAnnoVisitor();
       if (!visitor.processCommentInjection(firstOperand)) {
         return;
       }
       while (!places.isEmpty() && !myShouldStop) {
-        final PsiElement curPlace = places.remove(0);
+        PsiElement curPlace = places.remove(0);
         AnnotationUtilEx.visitAnnotatedElements(curPlace, visitor);
       }
     }
@@ -284,7 +308,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       return false;
     }
 
-    private void process(final PsiModifierListOwner owner, PsiMethod method, int paramIndex) {
+    private void process(PsiModifierListOwner owner, PsiMethod method, int paramIndex) {
       if (!processAnnotationInjections(owner)) {
         myShouldStop = true;
       }
@@ -298,14 +322,14 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
       }
     }
 
-    private boolean processAnnotationInjections(final PsiModifierListOwner annoElement) {
+    private boolean processAnnotationInjections(PsiModifierListOwner annoElement) {
       if (annoElement instanceof PsiParameter) {
-        final PsiElement scope = ((PsiParameter)annoElement).getDeclarationScope();
+        PsiElement scope = ((PsiParameter)annoElement).getDeclarationScope();
         if (scope instanceof PsiMethod && !areThereInjectionsWithName(((PsiNamedElement)scope).getName(), true)) {
           return true;
         }
       }
-      final PsiAnnotation[] annotations =
+      PsiAnnotation[] annotations =
         AnnotationUtilEx.getAnnotationFrom(annoElement, myConfiguration.getAdvancedConfiguration().getLanguageAnnotationPair(), true);
       if (annotations.length > 0) {
         return processAnnotationInjectionInner(annoElement, annotations);
@@ -314,10 +338,10 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
     }
 
     protected boolean processAnnotationInjectionInner(PsiModifierListOwner owner, PsiAnnotation[] annotations) {
-      final String id = AnnotationUtilEx.calcAnnotationValue(annotations, "value");
-      final String prefix = AnnotationUtilEx.calcAnnotationValue(annotations, "prefix");
-      final String suffix = AnnotationUtilEx.calcAnnotationValue(annotations, "suffix");
-      final BaseInjection injection = new BaseInjection(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID);
+      String id = AnnotationUtilEx.calcAnnotationValue(annotations, "value");
+      String prefix = AnnotationUtilEx.calcAnnotationValue(annotations, "prefix");
+      String suffix = AnnotationUtilEx.calcAnnotationValue(annotations, "suffix");
+      BaseInjection injection = new BaseInjection(JavaLanguageInjectionSupport.JAVA_SUPPORT_ID);
       if (prefix != null) injection.setPrefix(prefix);
       if (suffix != null) injection.setSuffix(suffix);
       if (id != null) injection.setInjectedLanguageId(id);
@@ -327,34 +351,27 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
 
     protected boolean processXmlInjections(BaseInjection injection, PsiModifierListOwner owner, PsiMethod method, int paramIndex) {
       processInjectionWithContext(injection, true);
-      if (injection.isTerminal()) {
-        return false;
-      }
-      return true;
+      return !injection.isTerminal();
     }
 
-    protected void processInjectionInner(BaseInjection injection, boolean settingsAvailable) {
-      processInjectionWithContext(injection, settingsAvailable);
-    }
-
-    private void processInjectionWithContext(BaseInjection injection, boolean settingsAvailable) {
+    @NotNull
+    List<Pair<PsiLanguageInjectionHost, Language>> processInjectionWithContext(BaseInjection injection, boolean settingsAvailable) {
       Language language = InjectorUtils.getLanguage(injection);
-      if (language == null) return;
+      if (language == null) return Collections.emptyList();
 
-      final boolean separateFiles = !injection.isSingleFile() && StringUtil.isNotEmpty(injection.getValuePattern());
+      boolean separateFiles = !injection.isSingleFile() && StringUtil.isNotEmpty(injection.getValuePattern());
 
-      final Ref<Boolean> unparsableRef = Ref.create(myUnparsable);
-      final List<Object> objects = ContextComputationProcessor.collectOperands(injection.getPrefix(), injection.getSuffix(), unparsableRef, myOperands);
-      if (objects.isEmpty()) return;
-      final List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> result =
-        new ArrayList<>();
-      final int len = objects.size();
+      Ref<Boolean> unparsableRef = Ref.create(myUnparsable);
+      List<Object> objects = ContextComputationProcessor.collectOperands(injection.getPrefix(), injection.getSuffix(), unparsableRef, myOperands);
+      if (objects.isEmpty()) return Collections.emptyList();
+      List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> result = new ArrayList<>();
+      int len = objects.size();
       for (int i = 0; i < len; i++) {
         String curPrefix = null;
         Object o = objects.get(i);
         if (o instanceof String) {
           curPrefix = (String)o;
-          if (i == len - 1) return; // IDEADEV-26751
+          if (i == len - 1) return Collections.emptyList(); // IDEADEV-26751
           o = objects.get(++i);
         }
         String curSuffix = null;
@@ -362,7 +379,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
         if (o instanceof PsiLanguageInjectionHost) {
           curHost = (PsiLanguageInjectionHost)o;
           if (i == len - 2) {
-            final Object next = objects.get(i + 1);
+            Object next = objects.get(i + 1);
             if (next instanceof String) {
               i++;
               curSuffix = (String)next;
@@ -373,54 +390,74 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
           unparsableRef.set(Boolean.TRUE);
         }
         else {
-          if (!(curHost instanceof PsiLiteralExpression)) {
-            TextRange textRange = ElementManipulators.getManipulator(curHost).getRangeInElement(curHost);
-            TextRange.assertProperRange(textRange, injection);
-            result.add(Trinity.create(curHost, InjectedLanguage.create(injection.getInjectedLanguageId(), curPrefix, curSuffix, true),
-                                      textRange));
-          }
-          else {
-            final List<TextRange> injectedArea = injection.getInjectedArea(curHost);
+          if (curHost instanceof PsiLiteralExpression) {
+            List<TextRange> injectedArea = injection.getInjectedArea(curHost);
             for (int j = 0, injectedAreaSize = injectedArea.size(); j < injectedAreaSize; j++) {
               TextRange textRange = injectedArea.get(j);
               TextRange.assertProperRange(textRange, injection);
               result.add(Trinity.create(
                 curHost, InjectedLanguage.create(injection.getInjectedLanguageId(),
-                                                 (separateFiles || j == 0 ? curPrefix : ""),
-                                                 (separateFiles || j == injectedAreaSize - 1 ? curSuffix : ""),
+                                                 separateFiles || j == 0 ? curPrefix : "",
+                                                 separateFiles || j == injectedAreaSize - 1 ? curSuffix : "",
                                                  true), textRange));
             }
           }
+          else {
+            TextRange textRange = ElementManipulators.getManipulator(curHost).getRangeInElement(curHost);
+            TextRange.assertProperRange(textRange, injection);
+            result.add(Trinity.create(curHost, InjectedLanguage.create(injection.getInjectedLanguageId(), curPrefix, curSuffix, true),
+                                      textRange));
+          }
         }
       }
-      if (!result.isEmpty()) {
-        if (separateFiles) {
+      if (result.isEmpty()) {
+        return Collections.emptyList();
+      }
+      List<Pair<PsiLanguageInjectionHost, Language>> res = new ArrayList<>();
+      if (separateFiles) {
+        for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : result) {
+          ContainerUtil.addIfNotNull(res, processInjection(language, Collections.singletonList(trinity), settingsAvailable, false));
+        }
+      }
+      else {
+        if (isReferenceInject(language)) {
+          // OMG in case of reference inject they confused shreds (several places in the host file to form a single injection) with several injections
           for (Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange> trinity : result) {
-            processInjection(language, Collections.singletonList(trinity), settingsAvailable, false);
+            ContainerUtil.addIfNotNull(res, processInjection(language, Collections.singletonList(trinity), settingsAvailable, unparsableRef.get()));
           }
         }
         else {
-          processInjection(language, result, settingsAvailable, unparsableRef.get());
+          ContainerUtil.addIfNotNull(res, processInjection(language, result, settingsAvailable, unparsableRef.get()));
         }
       }
+      return res;
     }
 
-    protected void processInjection(Language language,
-                                    List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
-                                    boolean xmlInjection,
-                                    boolean unparsable) {
+    private static boolean isReferenceInject(Language language) {
+      return LanguageParserDefinitions.INSTANCE.forLanguage(language) == null && ReferenceInjector.findById(language.getID()) != null;
+    }
+
+    protected Pair<PsiLanguageInjectionHost, Language> processInjection(Language language,
+                                                                        List<Trinity<PsiLanguageInjectionHost, InjectedLanguage, TextRange>> list,
+                                                                        boolean xmlInjection,
+                                                                        boolean unparsable) {
+      return null;
     }
 
     protected boolean areThereInjectionsWithName(String methodName, boolean annoOnly) {
       return true;
     }
+
+    public LanguageInjectionSupport getLanguageInjectionSupport() {
+      return mySupport;
+    }
   }
 
-  private static boolean checkUnparsableReference(final PsiExpression refExpression) {
-    final PsiElement parent = refExpression.getParent();
+  private static boolean checkUnparsableReference(PsiExpression refExpression) {
+    PsiElement parent = refExpression.getParent();
     if (parent instanceof PsiAssignmentExpression) {
-      final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
-      final IElementType operation = assignmentExpression.getOperationTokenType();
+      PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
+      IElementType operation = assignmentExpression.getOperationTokenType();
       if (assignmentExpression.getLExpression() == refExpression && JavaTokenType.PLUSEQ.equals(operation)) {
         return true;
       }
@@ -434,7 +471,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
   }
 
 
-  public Collection<String> getAnnotatedElementsValue() {
+  private Collection<String> getAnnotatedElementsValue() {
     // note: external annotations not supported
     return InjectionCache.getInstance(myProject).getAnnoIndex();
   }

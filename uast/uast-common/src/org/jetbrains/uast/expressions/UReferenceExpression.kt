@@ -20,12 +20,12 @@ import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
 
 interface UReferenceExpression : UExpression, UResolvable {
-    /**
-     * Returns the resolved name for this reference, or null if the reference can't be resolved.
-     */
-    val resolvedName: String?
+  /**
+   * Returns the resolved name for this reference, or null if the reference can't be resolved.
+   */
+  val resolvedName: String?
 
-    override fun asLogString() = log()
+  override fun asLogString(): String = log()
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) = visitor.visitReferenceExpression(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitReferenceExpression(this, data)
 }

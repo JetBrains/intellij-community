@@ -1,6 +1,5 @@
-
 import sys
-from _pydevd_bundle.pydevd_constants import dict_contains
+import traceback
 from types import ModuleType
 
 
@@ -15,21 +14,26 @@ class ImportHookManager(ModuleType):
 
     def do_import(self, name, *args, **kwargs):
         activate_func = None
-        if dict_contains(self._modules_to_patch, name):
-            activate_func = self._modules_to_patch.pop(name)
+        if name in self._modules_to_patch:
+            activate_func = self._modules_to_patch[name]
 
         module = self._system_import(name, *args, **kwargs)
         try:
             if activate_func:
-                activate_func() #call activate function
+                succeeded = activate_func()
+                if succeeded and name in self._modules_to_patch:
+                    # Remove if only it was executed correctly
+                    self._modules_to_patch.pop(name)
         except:
             sys.stderr.write("Matplotlib support failed\n")
+            traceback.print_exc()
         return module
 
-try:
+
+if sys.version_info[0] >= 3:
+    import builtins  # py3
+else:
     import __builtin__ as builtins
-except ImportError:
-    import builtins
 
 import_hook_manager = ImportHookManager(__name__ + '.import_hook', builtins.__import__)
 builtins.__import__ = import_hook_manager.do_import

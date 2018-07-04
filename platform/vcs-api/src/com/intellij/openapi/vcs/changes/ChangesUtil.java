@@ -68,6 +68,10 @@ public class ChangesUtil {
     }
   };
 
+  public static final Comparator<LocalChangeList> CHANGELIST_COMPARATOR =
+    Comparator.<LocalChangeList>comparingInt(list -> list.isDefault() ? -1 : 0)
+      .thenComparing(list -> list.getName(), String::compareToIgnoreCase);
+
   private ChangesUtil() {}
 
   @NotNull
@@ -103,6 +107,11 @@ public class ChangesUtil {
   @NotNull
   public static Set<AbstractVcs> getAffectedVcses(@NotNull Collection<Change> changes, @NotNull Project project) {
     return ContainerUtil.map2SetNotNull(changes, change -> getVcsForChange(change, project));
+  }
+
+  @NotNull
+  public static Set<AbstractVcs> getAffectedVcsesForFiles(@NotNull Collection<VirtualFile> files, @NotNull Project project) {
+    return ContainerUtil.map2SetNotNull(files, file -> getVcsForFile(file, project));
   }
 
   @Nullable
@@ -149,6 +158,15 @@ public class ChangesUtil {
       .filter(Objects::nonNull);
   }
 
+  @NotNull
+  public static Stream<VirtualFile> getAfterRevisionsFiles(@NotNull Stream<Change> changes) {
+    return changes
+      .map(ChangesUtil::getAfterPath)
+      .filter(Objects::nonNull)
+      .map(FilePath::getVirtualFile)
+      .filter(Objects::nonNull);
+  }
+
   /**
    * @deprecated Use {@link ChangesUtil#getFiles(Stream)}.
    */
@@ -173,7 +191,7 @@ public class ChangesUtil {
   }
 
   @Nullable
-  public static ChangeList getChangeListIfOnlyOne(@NotNull Project project, @Nullable Change[] changes) {
+  public static LocalChangeList getChangeListIfOnlyOne(@NotNull Project project, @Nullable Change[] changes) {
     ChangeListManager manager = ChangeListManager.getInstance(project);
     String changeListName = manager.getChangeListNameIfOnlyOne(changes);
 

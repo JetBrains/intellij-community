@@ -32,4 +32,11 @@ public interface RunProfileWithCompileBeforeLaunchOption extends RunProfile {
   default Module[] getModules() {
     return Module.EMPTY_ARRAY;
   }
+
+  /**
+   * @return true if "Build" Before Launch task should be added automatically on run configuration creation
+   */
+  default boolean isBuildBeforeLaunchAddedByDefault() {
+    return true;
+  }
 }

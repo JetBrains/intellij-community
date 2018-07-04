@@ -17,25 +17,22 @@ package com.intellij.refactoring.memberPushDown;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.classMembers.*;
+import com.intellij.refactoring.classMembers.ANDCombinedMemberInfoModel;
+import com.intellij.refactoring.classMembers.DelegatingMemberInfoModel;
+import com.intellij.refactoring.classMembers.MemberInfoModel;
+import com.intellij.refactoring.classMembers.UsedByDependencyMemberInfoModel;
 import com.intellij.refactoring.ui.MemberSelectionPanel;
-import com.intellij.refactoring.util.classMembers.*;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.refactoring.util.classMembers.UsesDependencyMemberInfoModel;
 import org.jetbrains.annotations.Nullable;
 
 public class PushDownDialog extends AbstractPushDownDialog<MemberInfo, PsiMember, PsiClass> {
   public PushDownDialog(Project project, MemberInfo[] memberInfos, PsiClass aClass) {
     super(project, memberInfos, aClass);
-  }
-
-  protected String getDimensionServiceKey() {
-    return "#com.intellij.refactoring.memberPushDown.PushDownDialog";
   }
 
   protected MemberInfoModel<PsiMember, MemberInfo> createMemberInfoModel() {

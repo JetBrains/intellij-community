@@ -72,7 +72,6 @@ import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -183,9 +182,11 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     final Ref<Boolean> refProcessCanceled = new Ref<>();
     final Ref<Boolean> anyException = new Ref<>();
 
+    DumbService.getInstance(myProject).completeJustSubmittedTasks();
+
     final Runnable findUsagesRunnable = () -> {
       try {
-        refUsages.set(DumbService.getInstance(myProject).runReadActionInSmartMode(() -> findUsages()));
+        refUsages.set(ReadAction.compute(this::findUsages));
       }
       catch (UnknownReferenceTypeException e) {
         refErrorLanguage.set(e.getElementLanguage());
@@ -257,7 +258,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
   protected void previewRefactoring(@NotNull UsageInfo[] usages) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      if (!PREVIEW_IN_TESTS) throw new RuntimeException("Unexpected preview in tests: " + StringUtil.join(usages, info -> info.toString(), ", "));
+      if (!PREVIEW_IN_TESTS) throw new RuntimeException("Unexpected preview in tests: " + StringUtil.join(usages, UsageInfo::toString, ", "));
       ensureElementsWritable(usages, createUsageViewDescriptor(usages));
       execute(usages);
       return;
@@ -412,7 +413,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   protected void customizeUsagesView(@NotNull final UsageViewDescriptor viewDescriptor, @NotNull final UsageView usageView) {
     Runnable refactoringRunnable = () -> {
       Set<UsageInfo> usagesToRefactor = UsageViewUtil.getNotExcludedUsageInfos(usageView);
-      final UsageInfo[] infos = usagesToRefactor.toArray(new UsageInfo[usagesToRefactor.size()]);
+      final UsageInfo[] infos = usagesToRefactor.toArray(UsageInfo.EMPTY_ARRAY);
       TransactionGuard.getInstance().submitTransactionAndWait(() -> {
         if (ensureElementsWritable(infos, viewDescriptor)) {
           execute(infos);
@@ -439,9 +440,10 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       }
     }
 
-    LocalHistoryAction action = LocalHistory.getInstance().startAction(getCommandName());
+    String commandName = getCommandName();
+    LocalHistoryAction action = LocalHistory.getInstance().startAction(commandName);
 
-    final UsageInfo[] writableUsageInfos = usageInfoSet.toArray(new UsageInfo[usageInfoSet.size()]);
+    final UsageInfo[] writableUsageInfos = usageInfoSet.toArray(UsageInfo.EMPTY_ARRAY);
     try {
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
       RefactoringListenerManagerImpl listenerManager = (RefactoringListenerManagerImpl)RefactoringListenerManager.getInstance(myProject);
@@ -483,7 +485,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
       };
       ApplicationImpl app = (ApplicationImpl)ApplicationManagerEx.getApplicationEx();
       if (Registry.is("run.refactorings.under.progress")) {
-        app.runWriteActionWithProgressInDispatchThread(getCommandName(), myProject, null, null, indicator -> performRefactoringRunnable.run());
+        app.runWriteActionWithNonCancellableProgressInDispatchThread(commandName, myProject, null, indicator -> performRefactoringRunnable.run());
       }
       else {
         app.runWriteAction(performRefactoringRunnable);
@@ -496,7 +498,12 @@ public abstract class BaseRefactoringProcessor implements Runnable {
         e.getKey().performOperation(myProject, e.getValue());
       }
       myTransaction.commit();
-      app.runWriteAction(() -> performPsiSpoilingRefactoring());
+      if (Registry.is("run.refactorings.under.progress")) {
+        app.runWriteActionWithNonCancellableProgressInDispatchThread(commandName, myProject, null, indicator -> performPsiSpoilingRefactoring());
+      }
+      else {
+        app.runWriteAction(this::performPsiSpoilingRefactoring);
+      }
     }
     finally {
       action.finish();
@@ -540,18 +547,26 @@ public abstract class BaseRefactoringProcessor implements Runnable {
 
   @Override
   public final void run() {
+    Runnable runnable = this::doRun;
+    if (shouldDisableAccessChecks()) {
+      runnable = () -> NonProjectFileWritingAccessProvider.disableChecksDuring(this::doRun);
+    }
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ApplicationManager.getApplication().assertIsDispatchThread();
-      NonProjectFileWritingAccessProvider.disableChecksDuring(this::doRun);
+      runnable.run();
       return;
     }
     if (ApplicationManager.getApplication().isWriteAccessAllowed()) {
       LOG.error("Refactorings should not be started inside write action\n because they start progress inside and any read action from the progress task would cause the deadlock", new Exception());
-      DumbService.getInstance(myProject).smartInvokeLater(() -> NonProjectFileWritingAccessProvider.disableChecksDuring(this::doRun));
+      DumbService.getInstance(myProject).smartInvokeLater(runnable);
     }
     else {
-      NonProjectFileWritingAccessProvider.disableChecksDuring(this::doRun);
+      runnable.run();
     }
+  }
+
+  protected boolean shouldDisableAccessChecks() {
+    return false;
   }
 
   public static class ConflictsInTestsException extends RuntimeException {
@@ -670,7 +685,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     }
 
     @NotNull
-    public Language getElementLanguage() {
+    Language getElementLanguage() {
       return myElementLanguage;
     }
   }
@@ -679,7 +694,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     private final Project myProject;
     private final String myRefactoringId;
 
-    public UndoRefactoringAction(Project project, String refactoringId) {
+    UndoRefactoringAction(@NotNull Project project, @NotNull String refactoringId) {
       myProject = project;
       myRefactoringId = refactoringId;
     }

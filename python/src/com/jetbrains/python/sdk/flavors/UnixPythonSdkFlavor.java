@@ -15,13 +15,13 @@
  */
 package com.jetbrains.python.sdk.flavors;
 
-import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.util.containers.HashSet;
 
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -33,7 +33,7 @@ public class UnixPythonSdkFlavor extends CPythonSdkFlavor {
 
   private final static String[] NAMES = new String[]{"jython", "pypy"};
 
-  public static UnixPythonSdkFlavor INSTANCE = new UnixPythonSdkFlavor();
+  public static final UnixPythonSdkFlavor INSTANCE = new UnixPythonSdkFlavor();
 
   @Override
   public Collection<String> suggestHomePaths() {
@@ -52,15 +52,14 @@ public class UnixPythonSdkFlavor extends CPythonSdkFlavor {
       VirtualFile[] suspects = rootDir.getChildren();
       for (VirtualFile child : suspects) {
         if (!child.isDirectory()) {
-          final String childName = child.getName().toLowerCase();
+          final String childName = child.getName().toLowerCase(Locale.US);
           for (String name : NAMES) {
             if (childName.startsWith(name) || PYTHON_RE.matcher(childName).matches()) {
-              String childPath = child.getPath();
-              if (FileSystemUtil.isSymLink(childPath)) {
-                childPath = FileSystemUtil.resolveSymLink(childPath);
-              }
-              if (childPath != null && !childName.endsWith("-config") && !childName.startsWith("pythonw") && !childName.endsWith("m") &&
-                !candidates.contains(childPath)) {
+              final String childPath = child.getPath();
+              if (!childName.endsWith("-config") &&
+                  !childName.startsWith("pythonw") &&
+                  !childName.endsWith("m") &&
+                  !candidates.contains(childPath)) {
                 candidates.add(childPath);
               }
               break;

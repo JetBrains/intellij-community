@@ -41,6 +41,7 @@ public class GenerateToStringConfigurable implements Configurable {
       return "Settings";
   }
 
+  @Override
   public String getHelpTopic() {
       return "editing.altInsert.tostring.settings";
   }

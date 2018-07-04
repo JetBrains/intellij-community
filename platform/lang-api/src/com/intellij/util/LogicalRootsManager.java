@@ -48,18 +48,18 @@ public abstract class LogicalRootsManager {
 
   public abstract List<LogicalRoot> getLogicalRoots();
 
-  public abstract List<LogicalRoot> getLogicalRoots(@NotNull final Module module);
+  abstract List<LogicalRoot> getLogicalRoots(@NotNull final Module module);
 
-  public abstract List<LogicalRoot> getLogicalRootsOfType(@NotNull final Module module, @NotNull final LogicalRootType... types);
+  abstract List<LogicalRoot> getLogicalRootsOfType(@NotNull final Module module, @NotNull final LogicalRootType... types);
 
-  public abstract <T extends LogicalRoot> List<T> getLogicalRootsOfType(@NotNull final Module module, @NotNull final LogicalRootType<T> type);
+  abstract <T extends LogicalRoot> List<T> getLogicalRootsOfType(@NotNull final Module module, @NotNull final LogicalRootType<T> type);
 
   @NotNull
-  public abstract LogicalRootType[] getRootTypes(@NotNull final FileType type);
+  abstract LogicalRootType[] getRootTypes(@NotNull final FileType type);
 
-  public abstract void registerRootType(@NotNull final FileType fileType, @NotNull final LogicalRootType... rootTypes);
+  abstract void registerRootType(@NotNull final FileType fileType, @NotNull final LogicalRootType... rootTypes);
 
-  public abstract <T extends LogicalRoot> void registerLogicalRootProvider(@NotNull final LogicalRootType<T> rootType, @NotNull NotNullFunction<Module,List<T>> provider);
+  abstract <T extends LogicalRoot> void registerLogicalRootProvider(@NotNull final LogicalRootType<T> rootType, @NotNull NotNullFunction<Module,List<T>> provider);
 
   public interface LogicalRootListener extends EventListener {
     void logicalRootsChanged();

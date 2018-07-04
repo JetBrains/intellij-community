@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
@@ -50,16 +36,11 @@ public class ToolsImpl implements Tools {
   private List<ScopeToolState> myTools;
   private boolean myEnabled;
 
-  public ToolsImpl(@NotNull InspectionToolWrapper toolWrapper, @NotNull HighlightDisplayLevel level, boolean enabled, boolean enabledByDefault) {
+  ToolsImpl(@NotNull InspectionToolWrapper toolWrapper, @NotNull HighlightDisplayLevel level, boolean enabled, boolean enabledByDefault) {
     myShortName = toolWrapper.getShortName();
     myDefaultState = new ScopeToolState(CustomScopesProviderEx.getAllScope(), toolWrapper, enabledByDefault, level);
     myTools = null;
     myEnabled = enabled;
-  }
-
-  @TestOnly
-  public ToolsImpl(@NotNull InspectionToolWrapper toolWrapper, @NotNull HighlightDisplayLevel level, boolean enabled) {
-    this(toolWrapper, level, enabled, enabled);
   }
 
   @NotNull
@@ -158,20 +139,20 @@ public class ToolsImpl implements Tools {
     inspectionElement.setAttribute(ENABLED_BY_DEFAULT_ATTRIBUTE, Boolean.toString(myDefaultState.isEnabled()));
     InspectionToolWrapper toolWrapper = myDefaultState.getTool();
     if (toolWrapper.isInitialized()) {
-      toolWrapper.getTool().writeSettings(inspectionElement);
+      ScopeToolState.tryWriteSettings(toolWrapper.getTool(), inspectionElement);
     }
   }
 
   void readExternal(@NotNull Element toolElement, @NotNull InspectionProfileManager profileManager, Map<String, List<String>> dependencies) {
     final String levelName = toolElement.getAttributeValue(LEVEL_ATTRIBUTE);
-    final SeverityRegistrar registrar = profileManager.getOwnSeverityRegistrar();
+    final SeverityRegistrar registrar = profileManager.getSeverityRegistrar();
     HighlightDisplayLevel level = levelName != null ? HighlightDisplayLevel.find(registrar.getSeverity(levelName)) : null;
     if (level == null) {
       level = HighlightDisplayLevel.WARNING;
     }
     myDefaultState.setLevel(level);
     final String enabled = toolElement.getAttributeValue(ENABLED_ATTRIBUTE);
-    final boolean isEnabled = enabled != null && Boolean.parseBoolean(enabled);
+    final boolean isEnabled = Boolean.parseBoolean(enabled);
 
     final String enabledTool = toolElement.getAttributeValue(ENABLED_BY_DEFAULT_ATTRIBUTE);
     myDefaultState.setEnabled(enabledTool != null ? Boolean.parseBoolean(enabledTool) : isEnabled);
@@ -203,10 +184,10 @@ public class ToolsImpl implements Tools {
           scopeLevel = level;
         }
         if (namedScope != null) {
-          addTool(namedScope, copyToolWrapper, enabledInScope != null && Boolean.parseBoolean(enabledInScope), scopeLevel);
+          addTool(namedScope, copyToolWrapper, Boolean.parseBoolean(enabledInScope), scopeLevel);
         }
         else {
-          addTool(scopeName, copyToolWrapper, enabledInScope != null && Boolean.parseBoolean(enabledInScope), scopeLevel);
+          addTool(scopeName, copyToolWrapper, Boolean.parseBoolean(enabledInScope), scopeLevel);
         }
 
         scopeNames.add(scopeName);
@@ -214,11 +195,7 @@ public class ToolsImpl implements Tools {
 
       for (int i = 0; i < scopeNames.size(); i++) {
         String scopeName = scopeNames.get(i);
-        List<String> order = dependencies.get(scopeName);
-        if (order == null) {
-          order = new ArrayList<>();
-          dependencies.put(scopeName, order);
-        }
+        List<String> order = dependencies.computeIfAbsent(scopeName, __ -> new ArrayList<>());
         for (int j = i + 1; j < scopeNames.size(); j++) {
           order.add(scopeNames.get(j));
         }
@@ -227,12 +204,18 @@ public class ToolsImpl implements Tools {
 
     // check if unknown children exists
     if (toolElement.getAttributes().size() > 4 || toolElement.getChildren().size() > scopeElements.size()) {
-      toolWrapper.getTool().readSettings(toolElement);
+      ScopeToolState.tryReadSettings(toolWrapper.getTool(), toolElement);
     }
 
     myEnabled = isEnabled;
   }
 
+  /**
+   * Warning: Usage of this method is discouraged as if separate tool options are defined for different scopes, it just returns
+   * the options for the first scope which may lead to unexpected results. Consider using {@link #getInspectionTool(PsiElement)} instead.
+   *
+   * @return an InspectionToolWrapper associated with this tool.
+   */
   @NotNull
   @Override
   public InspectionToolWrapper getTool() {
@@ -458,20 +441,20 @@ public class ToolsImpl implements Tools {
     return myDefaultState.getLevel();
   }
 
-   @Override
-   public boolean equals(Object o) {
-     ToolsImpl tools = (ToolsImpl)o;
-      if (myEnabled != tools.myEnabled) return false;
-      if (getTools().size() != tools.getTools().size()) return false;
-      for (int i = 0; i < getTools().size(); i++) {
-        final ScopeToolState state = getTools().get(i);
-        final ScopeToolState toolState = tools.getTools().get(i);
-        if (!state.equalTo(toolState)){
-          return false;
-        }
+  @Override
+  public boolean equals(Object o) {
+    if (!(o instanceof ToolsImpl)) return false;
+    ToolsImpl tools = (ToolsImpl)o;
+    if (myEnabled != tools.myEnabled) return false;
+    if (getTools().size() != tools.getTools().size()) return false;
+    for (int i = 0; i < getTools().size(); i++) {
+      final ScopeToolState state = getTools().get(i);
+      final ScopeToolState toolState = tools.getTools().get(i);
+      if (!state.equalTo(toolState)) {
+        return false;
       }
-      return true;
-
+    }
+    return true;
   }
 
   public void setLevel(@NotNull HighlightDisplayLevel level, @Nullable String scopeName, Project project) {

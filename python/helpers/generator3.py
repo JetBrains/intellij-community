@@ -2,13 +2,11 @@
 import atexit
 import zipfile
 
-# TODO: Move all CLR-specific functions to clr_tools
-
+from pycharm_generator_utils.clr_tools import *
 from pycharm_generator_utils.module_redeclarator import *
 from pycharm_generator_utils.util_methods import *
-from pycharm_generator_utils.constants import *
-from pycharm_generator_utils.clr_tools import *
 
+# TODO: Move all CLR-specific functions to clr_tools
 
 debug_mode = False
 
@@ -40,6 +38,7 @@ def redo_module(module_name, outfile, module_file_name, doing_builtins):
     else:
         report("Failed to find imported module in sys.modules " + module_name)
 
+
 # find_binaries functionality
 def cut_binary_lib_suffix(path, f):
     """
@@ -48,7 +47,8 @@ def cut_binary_lib_suffix(path, f):
     @return f without a binary suffix (that is, an importable name) if path+f is indeed a binary lib, or None.
     Note: if for .pyc or .pyo file a .py is found, None is returned.
     """
-    if not f.endswith(".pyc") and not f.endswith(".typelib") and not f.endswith(".pyo") and not f.endswith(".so") and not f.endswith(".pyd"):
+    if not f.endswith(".pyc") and not f.endswith(".typelib") and not f.endswith(".pyo") and not f.endswith(".so") and not f.endswith(
+            ".pyd"):
         return None
     ret = None
     match = BIN_MODULE_FNAME_PAT.match(f)
@@ -56,10 +56,10 @@ def cut_binary_lib_suffix(path, f):
         ret = match.group(1)
         modlen = len('module')
         retlen = len(ret)
-        if ret.endswith('module') and retlen > modlen and f.endswith('.so'):   # what for?
+        if ret.endswith('module') and retlen > modlen and f.endswith('.so'):  # what for?
             ret = ret[:(retlen - modlen)]
     if f.endswith('.pyc') or f.endswith('.pyo'):
-        fullname = os.path.join(path, f[:-1]) # check for __pycache__ is made outside
+        fullname = os.path.join(path, f[:-1])  # check for __pycache__ is made outside
         if os.path.exists(fullname):
             ret = None
     pat_match = TYPELIB_MODULE_FNAME_PAT.match(f)
@@ -119,10 +119,10 @@ def list_binaries(paths):
     @return: dict[module_name, full_path]
     """
     SEP = os.path.sep
-    res = {} # {name.upper(): (name, full_path)} # b/c windows is case-oblivious
+    res = {}  # {name.upper(): (name, full_path)} # b/c windows is case-oblivious
     if not paths:
         return {}
-    if IS_JAVA: # jython can't have binary modules
+    if IS_JAVA:  # jython can't have binary modules
         return {}
     paths = sorted_no_case(paths)
     for path in paths:
@@ -145,7 +145,7 @@ def list_binaries(paths):
                         note("prefixes: %s %s", prefix, preprefix)
                         pre_name = (preprefix + prefix + name).upper()
                         if pre_name in res:
-                            res.pop(pre_name) # there might be a dupe, if paths got both a/b and a/b/c
+                            res.pop(pre_name)  # there might be a dupe, if paths got both a/b and a/b/c
                         note("done with %s", name)
                     the_name = prefix + name
                     file_path = os.path.join(root, f)
@@ -155,7 +155,7 @@ def list_binaries(paths):
 
 
 def list_sources(paths):
-    #noinspection PyBroadException
+    # noinspection PyBroadException
     try:
         for path in paths:
             if path == os.path.dirname(sys.argv[0]): continue
@@ -179,7 +179,7 @@ def list_sources(paths):
         sys.exit(1)
 
 
-#noinspection PyBroadException
+# noinspection PyBroadException
 def zip_sources(zip_path):
     if not os.path.exists(zip_path):
         os.makedirs(zip_path)
@@ -228,8 +228,58 @@ def zip_sources(zip_path):
         zip.close()
 
 
+def add_to_zip(zip, paths):
+    # noinspection PyBroadException
+    try:
+        for path in paths:
+            print("Walking root %s" % path)
+            if path == os.path.dirname(sys.argv[0]): continue
+
+            path = os.path.normpath(path)
+
+            if path.endswith('.egg') and os.path.isfile(path):
+                pass  # TODO: handle eggs
+
+            for root, files in walk_python_path(path):
+                for name in files:
+                    if name.endswith('.py') or name.endswith('-nspkg.pth'):
+                        file_path = os.path.join(root, name)
+                        arcpath = os.path.relpath(file_path, path)
+
+                        zip.write(file_path, os.path.join(str(hash(path)), arcpath))
+    except:
+        import traceback
+
+        traceback.print_exc()
+        sys.exit(1)
+
+
+def zip_stdlib(zip_path):
+    if not os.path.exists(zip_path):
+        os.makedirs(zip_path)
+
+    import platform
+
+    zip_filename = os.path.normpath(os.path.sep.join([zip_path, "%s-%s-stdlib-%s.zip" % (
+        'Anaconda' if sys.version.find('Anaconda') != -1 else 'Python',
+        '.'.join(map(str, sys.version_info)),
+        platform.platform())]))
+
+    print("Adding file to %s" % zip_filename)
+
+    try:
+        zip = zipfile.ZipFile(zip_filename, 'w', zipfile.ZIP_DEFLATED)
+    except:
+        zip = zipfile.ZipFile(zip_filename, 'w')
+
+    try:
+        add_to_zip(zip, sys.path)
+    finally:
+        zip.close()
+
+
 # command-line interface
-#noinspection PyBroadException
+# noinspection PyBroadException
 def process_one(name, mod_file_name, doing_builtins, subdir):
     """
     Processes a single module named name defined in file_name (autodetect if not given).
@@ -250,7 +300,7 @@ def process_one(name, mod_file_name, doing_builtins, subdir):
         imported_module_names = []
 
         class MyFinder:
-            #noinspection PyMethodMayBeStatic
+            # noinspection PyMethodMayBeStatic
             def find_module(self, fullname, path=None):
                 if fullname != name:
                     imported_module_names.append(fullname)
@@ -264,7 +314,7 @@ def process_one(name, mod_file_name, doing_builtins, subdir):
             imported_module_names = None
 
         action("importing")
-        __import__(name) # sys.modules will fill up with what we want
+        __import__(name)  # sys.modules will fill up with what we want
 
         if my_finder:
             sys.meta_path.remove(my_finder)
@@ -308,7 +358,7 @@ def process_one(name, mod_file_name, doing_builtins, subdir):
 
 def get_help_text():
     return (
-        #01234567890123456789012345678901234567890123456789012345678901234567890123456789
+        # 01234567890123456789012345678901234567890123456789012345678901234567890123456789
         'Generates interface skeletons for python modules.' '\n'
         'Usage: ' '\n'
         '  generator [options] [module_name [file_name]]' '\n'
@@ -344,7 +394,7 @@ if __name__ == "__main__":
     from getopt import getopt
 
     helptext = get_help_text()
-    opts, args = getopt(sys.argv[1:], "d:hbqxvc:ps:LiSz")
+    opts, args = getopt(sys.argv[1:], "d:hbqxvc:ps:LiSzu")
     opts = dict(opts)
 
     quiet = '-q' in opts
@@ -355,7 +405,7 @@ if __name__ == "__main__":
         say(helptext)
         sys.exit(0)
 
-    if '-L' not in opts and '-b' not in opts and '-S' not in opts and '-i' not in opts and not args:
+    if '-L' not in opts and '-b' not in opts and '-S' not in opts and '-i' not in opts and '-u' not in opts and not args:
         report("Neither -L nor -b nor -S nor any module name given")
         sys.exit(1)
 
@@ -368,7 +418,7 @@ if __name__ == "__main__":
         source_dirs = extra_path.split(os.path.pathsep)
         for p in source_dirs:
             if p and p not in sys.path:
-                sys.path.append(p) # we need this to make things in additional dirs importable
+                sys.path.append(p)  # we need this to make things in additional dirs importable
         note("Altered sys.path: %r", sys.path)
 
     # find binaries?
@@ -398,6 +448,13 @@ if __name__ == "__main__":
         zip_sources(args[0])
         sys.exit(0)
 
+    if "-u" in opts:
+        if len(args) != 1:
+            report("Expected 1 arg with -u, got %d args", len(args))
+            sys.exit(1)
+        zip_stdlib(args[0])
+        sys.exit(0)
+
     # build skeleton(s)
 
     timer = Timer()
@@ -410,7 +467,7 @@ if __name__ == "__main__":
         if not BUILTIN_MOD_NAME in names:
             names.append(BUILTIN_MOD_NAME)
         if '__main__' in names:
-            names.remove('__main__') # we don't want ourselves processed
+            names.remove('__main__')  # we don't want ourselves processed
         ok = True
         for name in names:
             ok = process_one(name, None, True, subdir) and ok
@@ -443,7 +500,7 @@ if __name__ == "__main__":
             refs = opts.get('-c', '')
 
         if sys.platform == 'cli':
-            #noinspection PyUnresolvedReferences
+            # noinspection PyUnresolvedReferences
             import clr
 
             if refs:

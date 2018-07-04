@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -31,10 +18,11 @@ public class ClassFiltersField extends TextFieldWithBrowseButton {
   private ClassFilter[] myClassFilters = ClassFilter.EMPTY_ARRAY;
   private ClassFilter[] myClassExclusionFilters = ClassFilter.EMPTY_ARRAY;
 
-  public ClassFiltersField(Project project) {
+  public ClassFiltersField(Project project, Disposable parent) {
+    super(null, parent);
     addActionListener(e -> {
                         reloadFilters();
-                        EditClassFiltersDialog dialog = new EditClassFiltersDialog(project);
+                        EditClassFiltersDialog dialog = createEditDialog(project);
                         dialog.setFilters(myClassFilters, myClassExclusionFilters);
                         dialog.show();
                         if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
@@ -44,6 +32,10 @@ public class ClassFiltersField extends TextFieldWithBrowseButton {
                         }
                       }
     );
+  }
+
+  protected EditClassFiltersDialog createEditDialog(Project project) {
+    return new EditClassFiltersDialog(project);
   }
 
   public void setClassFilters(ClassFilter[] includeFilters, ClassFilter[] excludeFilters) {
@@ -89,16 +81,13 @@ public class ClassFiltersField extends TextFieldWithBrowseButton {
     Arrays.stream(myClassFilters).filter(f -> !f.isEnabled()).forEach(classFilters::add);
     Arrays.stream(myClassExclusionFilters).filter(f -> !f.isEnabled()).forEach(classFilters::add);
 
-    myClassFilters = classFilters.toArray(new ClassFilter[classFilters.size()]);
-    myClassExclusionFilters = exclusionFilters.toArray(new ClassFilter[exclusionFilters.size()]);
+    myClassFilters = classFilters.toArray(ClassFilter.EMPTY_ARRAY);
+    myClassExclusionFilters = exclusionFilters.toArray(ClassFilter.EMPTY_ARRAY);
   }
 
   private void updateEditor() {
-    String enabledStr = StreamEx.of(myClassFilters).filter(ClassFilter::isEnabled).map(ClassFilter::getPattern).joining(" ");
-    String disabledStr = StreamEx.of(myClassExclusionFilters).filter(ClassFilter::isEnabled).map(f -> "-" + f.getPattern()).joining(" ");
-    if (!enabledStr.isEmpty() && !disabledStr.isEmpty()) {
-      enabledStr += " ";
-    }
-    setText(enabledStr + disabledStr);
+    setText(StreamEx.of(myClassExclusionFilters).filter(ClassFilter::isEnabled).map(f -> "-" + f.getPattern())
+                    .prepend(StreamEx.of(myClassFilters).filter(ClassFilter::isEnabled).map(ClassFilter::getPattern))
+                    .joining(" "));
   }
 }

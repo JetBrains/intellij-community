@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.runners;
 
@@ -52,7 +38,7 @@ import java.awt.*;
 import java.awt.geom.Ellipse2D;
 
 public class ExecutionUtil {
-  private static final Logger LOG = Logger.getInstance("com.intellij.execution.runners.ExecutionUtil");
+  static final Logger LOG = Logger.getInstance("com.intellij.execution.runners.ExecutionUtil");
 
   private static final NotificationGroup ourNotificationGroup = NotificationGroup.logOnlyGroup("Execution");
 
@@ -83,30 +69,45 @@ public class ExecutionUtil {
     LOG.debug(e);
 
     String description = e.getMessage();
+    HyperlinkListener listener = null;
+    if (isProcessNotCreated(e) && !PropertiesComponent.getInstance(project).isTrueValue("dynamic.classpath")) {
+      description = "Command line is too long. In order to reduce its length classpath file can be used.<br>" +
+                    "Would you like to enable classpath file mode for all run configurations of your project?<br>" +
+                    "<a href=\"\">Enable</a>";
+
+      listener = new HyperlinkListener() {
+        @Override
+        public void hyperlinkUpdate(HyperlinkEvent event) {
+          PropertiesComponent.getInstance(project).setValue("dynamic.classpath", "true");
+        }
+      };
+    }
+
+    handleExecutionError(project, toolWindowId, taskName, e, description, listener);
+  }
+
+  public static boolean isProcessNotCreated(@NotNull Throwable e) {
+    if (e instanceof ProcessNotCreatedException) {
+      String description = e.getMessage();
+      return (description.contains("87") || description.contains("111") || description.contains("206")) &&
+             ((ProcessNotCreatedException)e).getCommandLine().getCommandLineString().length() > 1024 * 32;
+    }
+    return false;
+  }
+
+  public static void handleExecutionError(@NotNull Project project,
+                                          @NotNull String toolWindowId,
+                                          @NotNull String taskName,
+                                          @NotNull Throwable e,
+                                          @Nullable String description,
+                                          @Nullable HyperlinkListener listener) {
+    final String title = ExecutionBundle.message("error.running.configuration.message", taskName);
+
     if (StringUtil.isEmptyOrSpaces(description)) {
       LOG.warn("Execution error without description", e);
       description = "Unknown error";
     }
 
-    HyperlinkListener listener = null;
-    if ((description.contains("87") || description.contains("111") || description.contains("206")) &&
-        e instanceof ProcessNotCreatedException &&
-        !PropertiesComponent.getInstance(project).isTrueValue("dynamic.classpath")) {
-      final String commandLineString = ((ProcessNotCreatedException)e).getCommandLine().getCommandLineString();
-      if (commandLineString.length() > 1024 * 32) {
-        description = "Command line is too long. In order to reduce its length classpath file can be used.<br>" +
-                      "Would you like to enable classpath file mode for all run configurations of your project?<br>" +
-                      "<a href=\"\">Enable</a>";
-
-        listener = new HyperlinkListener() {
-          @Override
-          public void hyperlinkUpdate(HyperlinkEvent event) {
-            PropertiesComponent.getInstance(project).setValue("dynamic.classpath", "true");
-          }
-        };
-      }
-    }
-    final String title = ExecutionBundle.message("error.running.configuration.message", taskName);
     final String fullMessage = title + ":<br>" + description;
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -175,11 +176,23 @@ public class ExecutionUtil {
   }
 
   public static void runConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor) {
+    doRunConfiguration(configuration, executor, null);
+  }
+
+  public static void runConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor, @NotNull ExecutionTarget target) {
+    doRunConfiguration(configuration, executor, target);
+  }
+  
+  private static void doRunConfiguration(@NotNull RunnerAndConfigurationSettings configuration, @NotNull Executor executor, @Nullable ExecutionTarget targetOrNullForDefault) {
     ExecutionEnvironmentBuilder builder = createEnvironment(executor, configuration);
     if (builder != null) {
-      ExecutionManager.getInstance(configuration.getConfiguration().getProject()).restartRunProfile(builder
-                                                                                                      .activeTarget()
-                                                                                                      .build());
+      if (targetOrNullForDefault != null) {
+        builder.target(targetOrNullForDefault);
+      }
+      else {
+        builder.activeTarget();
+      }
+      ExecutionManager.getInstance(configuration.getConfiguration().getProject()).restartRunProfile(builder.build());
     }
   }
 
@@ -201,6 +214,15 @@ public class ExecutionUtil {
   }
 
   public static Icon getLiveIndicator(@Nullable final Icon base) {
+    return getLiveIndicator(base, 13, 13);
+  }
+
+  @SuppressWarnings("UseJBColor")
+  public static Icon getLiveIndicator(@Nullable final Icon base, int emptyIconWidth, int emptyIconHeight) {
+    return getIndicator(base, emptyIconWidth, emptyIconHeight, Color.GREEN);
+  }
+
+  public static Icon getIndicator(@Nullable final Icon base, int emptyIconWidth, int emptyIconHeight, Color color) {
     return new LayeredIcon(base, new Icon() {
       @SuppressWarnings("UseJBColor")
       @Override
@@ -209,7 +231,7 @@ public class ExecutionUtil {
         Graphics2D g2d = (Graphics2D)g.create();
         try {
           GraphicsUtil.setupAAPainting(g2d);
-          g2d.setColor(Color.GREEN);
+          g2d.setColor(color);
           Ellipse2D.Double shape =
             new Ellipse2D.Double(x + getIconWidth() - iSize, y + getIconHeight() - iSize, iSize, iSize);
           g2d.fill(shape);
@@ -223,12 +245,12 @@ public class ExecutionUtil {
 
       @Override
       public int getIconWidth() {
-        return base != null ? base.getIconWidth() : 13;
+        return base != null ? base.getIconWidth() : emptyIconWidth;
       }
 
       @Override
       public int getIconHeight() {
-        return base != null ? base.getIconHeight() : 13;
+        return base != null ? base.getIconHeight() : emptyIconHeight;
       }
     });
   }

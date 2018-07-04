@@ -21,6 +21,6 @@ class Test {
   }
 
   public static void main(String[] args) {
-    testMethod(<warning descr="Passing 'null' argument to non annotated parameter">null</warning>, "I am not null", <warning descr="Passing 'null' argument to non annotated parameter">null</warning>, <warning descr="Passing 'null' argument to non annotated parameter">null</warning>, 10);
+    testMethod(<warning descr="Passing 'null' argument to non-annotated parameter">null</warning>, "I am not null", <warning descr="Passing 'null' argument to non-annotated parameter">null</warning>, <warning descr="Passing 'null' argument to non-annotated parameter">null</warning>, 10);
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2017 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,12 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLambdaExpression;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -42,6 +43,11 @@ public class LambdaBodyCanBeCodeBlockInspection extends BaseInspection {
   @Override
   protected String buildErrorString(Object... infos) {
     return getDisplayName();
+  }
+
+  @Override
+  public boolean shouldInspect(PsiFile file) {
+    return PsiUtil.isLanguageLevel8OrHigher(file);
   }
 
   @Override
@@ -70,10 +76,7 @@ public class LambdaBodyCanBeCodeBlockInspection extends BaseInspection {
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (element instanceof PsiLambdaExpression) {
-        final PsiElement body = ((PsiLambdaExpression)element).getBody();
-        if (body instanceof PsiExpression) {
-          RefactoringUtil.expandExpressionLambdaToCodeBlock(body);
-        }
+        RefactoringUtil.expandExpressionLambdaToCodeBlock((PsiLambdaExpression)element);
       }
     }
 

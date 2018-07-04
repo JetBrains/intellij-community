@@ -20,6 +20,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.testframework.ui.BaseTestProxyNodeDescriptor;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.actions.CopyReferenceAction;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -28,6 +29,7 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
+import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ui.GraphicsUtil;
@@ -43,8 +45,7 @@ import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
 
 public abstract class TestTreeView extends Tree implements DataProvider, CopyProvider {
@@ -110,7 +111,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
             }
           }
         }
-        return els.isEmpty() ? null : els.toArray(new PsiElement[els.size()]);
+        return els.isEmpty() ? null : els.toArray(PsiElement.EMPTY_ARRAY);
       }
     }
 
@@ -128,7 +129,17 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
             }
           }
         }
-        return locations.isEmpty() ? null : locations.toArray(new Location[locations.size()]);
+        return locations.isEmpty() ? null : locations.toArray(new Location[0]);
+      }
+    }
+
+    if (AbstractTestProxy.DATA_KEYS.is(dataId)) {
+      TreePath[] paths = getSelectionPaths();
+      if (paths != null) {
+        return Arrays.stream(paths)
+          .map(path -> getSelectedTest(path))
+          .filter(Objects::nonNull)
+          .toArray(AbstractTestProxy[]::new);
       }
     }
 
@@ -186,6 +197,18 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
     });
     TreeUtil.installActions(this);
     PopupHandler.installPopupHandler(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
+    HintUpdateSupply.installHintUpdateSupply(this, obj -> {
+      if (obj instanceof DefaultMutableTreeNode) {
+        Object userObject = ((DefaultMutableTreeNode)obj).getUserObject();
+        if (userObject instanceof NodeDescriptor) {
+          Object element = ((NodeDescriptor)userObject).getElement();
+          if (element instanceof AbstractTestProxy) {
+            return (PsiElement)TestsUIUtil.getData((AbstractTestProxy)element, CommonDataKeys.PSI_ELEMENT.getName(), myModel);
+          }
+        }
+      }
+      return null;
+    });
   }
 
   public boolean isExpandableHandlerVisibleForCurrentRow(int row) {

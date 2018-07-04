@@ -16,7 +16,6 @@
 package git4idea.rollback;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
@@ -30,9 +29,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
+import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitHandlerUtil;
-import git4idea.commands.GitSimpleHandler;
+import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitUntrackedFilesHolder;
@@ -143,8 +142,7 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
       }
     }
     // revert files from HEAD
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
-    try {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, getRollbackOperationName())) {
       for (Map.Entry<VirtualFile, List<FilePath>> entry : toRevert.entrySet()) {
         listener.accept(entry.getValue());
         try {
@@ -154,9 +152,6 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
           exceptions.add(e);
         }
       }
-    }
-    finally {
-      token.finish();
     }
     LocalFileSystem lfs = LocalFileSystem.getInstance();
     HashSet<File> filesToRefresh = new HashSet<>();
@@ -186,11 +181,11 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
    */
   public void revert(final VirtualFile root, final List<FilePath> files) throws VcsException {
     for (List<String> paths : VcsFileUtil.chunkPaths(root, files)) {
-      GitSimpleHandler handler = new GitSimpleHandler(myProject, root, GitCommand.CHECKOUT);
+      GitLineHandler handler = new GitLineHandler(myProject, root, GitCommand.CHECKOUT);
       handler.addParameters("HEAD");
       handler.endOptions();
       handler.addParameters(paths);
-      handler.run();
+      Git.getInstance().runCommand(handler).getOutputOrThrow();
     }
   }
 
@@ -242,20 +237,10 @@ public class GitRollbackEnvironment implements RollbackEnvironment {
     paths.add(file);
   }
 
-  /**
-   * Get instance of the service
-   *
-   * @param project a context project
-   * @return a project-specific instance of the service
-   */
-  public static GitRollbackEnvironment getInstance(final Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetService(project, GitRollbackEnvironment.class);
-  }
-
   public static void resetHardLocal(final Project project, final VirtualFile root) {
-    GitSimpleHandler handler = new GitSimpleHandler(project, root, GitCommand.RESET);
+    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RESET);
     handler.addParameters("--hard");
     handler.endOptions();
-    GitHandlerUtil.runInCurrentThread(handler, null);
+    Git.getInstance().runCommand(handler);
   }
 }

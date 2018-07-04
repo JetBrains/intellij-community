@@ -1,28 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
@@ -47,16 +35,13 @@ import com.intellij.util.containers.Queue;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Debugger;
+import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -66,6 +51,7 @@ import java.util.concurrent.locks.LockSupport;
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbServiceImpl");
   private final AtomicReference<State> myState = new AtomicReference<>(State.SMART);
+  private volatile Throwable myDumbEnterTrace;
   private volatile Throwable myDumbStart;
   private volatile TransactionId myDumbStartTransaction;
   private final DumbModeListener myPublisher;
@@ -83,11 +69,36 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private final Project myProject;
   private final ThreadLocal<Integer> myAlternativeResolution = new ThreadLocal<>();
   private final StartupManager myStartupManager;
+  private volatile ProgressSuspender myCurrentSuspender;
+  private final List<String> myRequestedSuspensions = ContainerUtil.createEmptyCOWList();
 
   public DumbServiceImpl(Project project, StartupManager startupManager) {
     myProject = project;
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
     myStartupManager = startupManager;
+
+    ApplicationManager.getApplication().getMessageBus().connect(project)
+                      .subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
+                        @SuppressWarnings("UnnecessaryFullyQualifiedName") // synchronized, can be accessed from different threads
+                        java.util.Stack<AccessToken> stack = new Stack<>(); 
+
+                        @Override
+                        public void batchChangeStarted(@NotNull Project project, @Nullable String activityName) {
+                          if (project == myProject) {
+                            stack.push(heavyActivityStarted(activityName != null ? UIUtil.removeMnemonic(activityName) : "file system changes"));
+                          }
+                        }
+
+                        @Override
+                        public void batchChangeCompleted(@NotNull Project project) {
+                          if (project != myProject) return;
+
+                          Stack<AccessToken> tokens = stack;
+                          if (!tokens.isEmpty()) { // just in case
+                            tokens.pop().finish();
+                          }
+                        }
+                      });
   }
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -127,6 +138,55 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   @Override
+  public void suspendIndexingAndRun(@NotNull String activityName, @NotNull Runnable activity) {
+    try (AccessToken ignore = heavyActivityStarted(activityName)) {
+      activity.run();
+    }
+  }
+
+  @NotNull
+  private AccessToken heavyActivityStarted(@NotNull String activityName) {
+    String reason = "Indexing paused due to " + activityName;
+    synchronized (myRequestedSuspensions) {
+      myRequestedSuspensions.add(reason);
+    }
+
+    suspendCurrentTask(reason);
+    return new AccessToken() {
+      @Override
+      public void finish() {
+        synchronized (myRequestedSuspensions) {
+          myRequestedSuspensions.remove(reason);
+        }
+        resumeAutoSuspendedTask(reason);
+      }
+    };
+  }
+
+  private void suspendCurrentTask(String reason) {
+    ProgressSuspender currentSuspender = myCurrentSuspender;
+    if (currentSuspender != null && !currentSuspender.isSuspended()) {
+      currentSuspender.suspendProcess(reason);
+    }
+  }
+
+  private void resumeAutoSuspendedTask(@NotNull String reason) {
+    ProgressSuspender currentSuspender = myCurrentSuspender;
+    if (currentSuspender != null && currentSuspender.isSuspended() && reason.equals(currentSuspender.getSuspendedText())) {
+      currentSuspender.resumeProcess();
+    }
+  }
+
+  private void suspendIfRequested(ProgressSuspender suspender) {
+    synchronized (myRequestedSuspensions) {
+      String suspendedReason = ContainerUtil.getLastItem(myRequestedSuspensions);
+      if (suspendedReason != null) {
+        suspender.suspendProcess(suspendedReason);
+      }
+    }
+  }
+
+  @Override
   public void setAlternativeResolveEnabled(boolean enabled) {
     Integer oldValue = myAlternativeResolution.get();
     int newValue = (oldValue == null ? 0 : oldValue) + (enabled ? 1 : -1);
@@ -157,7 +217,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   @Override
-  public void runWhenSmart(@NotNull Runnable runnable) {
+  public void runWhenSmart(@Async.Schedule @NotNull Runnable runnable) {
     myStartupManager.runWhenProjectIsInitialized(() -> {
       synchronized (myRunWhenSmartQueue) {
         if (isDumb()) {
@@ -242,6 +302,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         myState.set(State.SCHEDULED_TASKS);
       }
       myDumbStart = trace;
+      myDumbEnterTrace = new Throwable();
       myDumbStartTransaction = contextTransaction;
       myModificationCount++;
     });
@@ -268,12 +329,12 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         return false;
       }
     }
+    myDumbEnterTrace = null;
     myDumbStart = null;
     myModificationCount++;
     return !myProject.isDisposed();
   }
 
-  @Debugger.Insert(keyExpression = "runnable", group = "com.intellij.openapi.project.DumbService.runWhenSmart")
   private void updateFinished() {
     if (!WriteAction.compute(this::switchToSmartMode)) return;
 
@@ -294,16 +355,21 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
           }
           runnable = myRunWhenSmartQueue.pullFirst();
         }
-        try {
-          runnable.run();
-        }
-        catch (ProcessCanceledException e) {
-          LOG.error("Task canceled: " + runnable, new Attachment("pce", e));
-        }
-        catch (Throwable e) {
-          LOG.error("Error executing task " + runnable, e);
-        }
+        doRun(runnable);
       }
+    }
+  }
+
+  // Extracted to have a capture point
+  private static void doRun(@Async.Execute Runnable runnable) {
+    try {
+      runnable.run();
+    }
+    catch (ProcessCanceledException e) {
+      LOG.error("Task canceled: " + runnable, new Attachment("pce", e));
+    }
+    catch (Throwable e) {
+      LOG.error("Error executing task " + runnable, e);
     }
   }
 
@@ -387,9 +453,16 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
     finally {
       if (myState.get() != State.SMART) {
-        if (myState.get() != State.WAITING_FOR_FINISH) throw new AssertionError(myState.get());
+        assertWeAreWaitingToFinish();
         updateFinished();
       }
+    }
+  }
+
+  private void assertWeAreWaitingToFinish() {
+    if (myState.get() != State.WAITING_FOR_FINISH) {
+      Attachment[] attachments = myDumbEnterTrace != null ? new Attachment[]{new Attachment("indexingStart", myDumbEnterTrace)} : Attachment.EMPTY_ARRAY;
+      throw new RuntimeExceptionWithAttachments(myState.get().toString(), attachments);
     }
   }
 
@@ -411,7 +484,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private void runBackgroundProcess(@NotNull final ProgressIndicator visibleIndicator) {
     if (!myState.compareAndSet(State.SCHEDULED_TASKS, State.RUNNING_DUMB_TASKS)) return;
 
-    ProgressSuspender.markSuspendable(visibleIndicator);
+    ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, "Indexing paused");
+    myCurrentSuspender = suspender;
+    suspendIfRequested(suspender);
 
     final ShutDownTracker shutdownTracker = ShutDownTracker.getInstance();
     final Thread self = Thread.currentThread();
@@ -448,6 +523,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     }
     finally {
       shutdownTracker.unregisterStopperThread(self);
+      myCurrentSuspender = null;
     }
   }
 

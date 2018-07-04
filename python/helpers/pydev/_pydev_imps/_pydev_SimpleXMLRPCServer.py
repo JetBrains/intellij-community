@@ -101,15 +101,6 @@ server.handle_request()
 # Written by Brian Quinlan (brian@sweetapp.com).
 # Based on code written by Fredrik Lundh.
 
-try:
-    True
-    False
-except:
-    import __builtin__
-    setattr(__builtin__, 'True', 1) #Python 3.0 does not accept __builtin__.True = 1 in its syntax
-    setattr(__builtin__, 'False', 0)
-
-
 from _pydev_imps import _pydev_xmlrpclib as xmlrpclib
 from _pydev_imps._pydev_xmlrpclib import Fault
 from _pydev_imps import _pydev_SocketServer as SocketServer

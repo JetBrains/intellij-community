@@ -15,7 +15,7 @@
  */
 package com.intellij.testGuiFramework.recorder.ui
 
-import com.intellij.testGuiFramework.recorder.components.GuiRecorderComponent
+import com.intellij.testGuiFramework.recorder.GuiRecorderManager
 import javax.swing.SwingUtilities
 
 /**
@@ -23,12 +23,11 @@ import javax.swing.SwingUtilities
  */
 object Notifier {
 
-  val LONG_OPERATION_PREFIX = "<long>"
+  val LONG_OPERATION_PREFIX: String = "<long>"
 
   fun updateStatus(statusMessage: String) {
 
-    if (GuiRecorderComponent.getFrame() == null) return
-    val guiScriptEditorPanel = GuiRecorderComponent.getFrame()!!.getGuiScriptEditorPanel()
+    val guiScriptEditorPanel = GuiRecorderManager.frame.guiScriptEditorPanel
 
     val statusHandler: (String) -> Unit = { status ->
       if (status.startsWith(LONG_OPERATION_PREFIX)) {

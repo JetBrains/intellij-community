@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.lang.CodeDocumentationAwareCommenter;
@@ -32,6 +18,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.BitUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -210,9 +197,10 @@ abstract class LineLayout {
   private static String getLineCommentPrefix(IElementType token) {
     if (token == null) return null;
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(token.getLanguage());
-    return commenter instanceof CodeDocumentationAwareCommenter &&
-           token.equals(((CodeDocumentationAwareCommenter)commenter).getLineCommentTokenType()) ?
-           commenter.getLineCommentPrefix() : null;
+    if (!(commenter instanceof CodeDocumentationAwareCommenter) ||
+        !token.equals(((CodeDocumentationAwareCommenter)commenter).getLineCommentTokenType())) return null;
+    String prefix = commenter.getLineCommentPrefix();
+    return prefix == null ? null : StringUtil.trimTrailing(prefix); // some commenters (e.g. for Python) include space in comment prefix
   }
 
   private static boolean distinctTokens(@Nullable IElementType token1, @Nullable IElementType token2) {
@@ -335,7 +323,7 @@ abstract class LineLayout {
         if (run.startOffset >= endOffset) break;
         runList.add(run.subRun(view, line, startOffset, endOffset, quickEvaluationListener));
       }
-      runs = runList.toArray(new BidiRun[runList.size()]);
+      runs = runList.toArray(BidiRun.EMPTY_ARRAY);
       if (runs.length > 1) {
         reorderRunsVisually(runs);
       }
@@ -582,14 +570,14 @@ abstract class LineLayout {
       int start = Math.max(startOffset, targetStartOffset);
       int end = Math.min(endOffset, targetEndOffset);
       BidiRun subRun = new BidiRun(level, start, end);
-      List<Chunk> subChunks = new ArrayList<>();
+      List<Chunk> subChunks = new SmartList<>();
       Document document = view.getEditor().getDocument();
       for (Chunk chunk : getChunks(document.getImmutableCharSequence(), document.getLineStartOffset(line))) {
         if (chunk.endOffset <= start) continue;
         if (chunk.startOffset >= end) break;
         subChunks.add(chunk.subChunk(view, this, line, start, end, quickEvaluationListener));
       }
-      subRun.chunks = subChunks.toArray(new Chunk[subChunks.size()]);
+      subRun.chunks = subChunks.toArray(new Chunk[0]);
       subRun.visualStartLogicalColumn = (subRun.isRtl() ? end == endOffset : start == startOffset) ? visualStartLogicalColumn :
                                         view.getLogicalPositionCache().offsetToLogicalColumn(line, subRun.isRtl() ? end : start);
       return subRun;
@@ -873,6 +861,11 @@ abstract class LineLayout {
       return isRtl ? startLogicalColumn - relativeLogicalColumn : startLogicalColumn + relativeLogicalColumn;
     }
 
+    // returned offset is visual and relative (counted from fragment's start)
+    int visualColumnToOffset(int relativeVisualColumn) {
+      return delegate.visualColumnToOffset(startX, relativeVisualColumn);
+    }
+
     // offset is expected to be between minOffset and maxOffset for this fragment
     float offsetToX(int offset) {
       return delegate.offsetToX(startX, 0, getRelativeOffset(offset));
@@ -902,9 +895,9 @@ abstract class LineLayout {
       delegate.draw(g, x, y, 0, getLength());
     }
 
-    // columns are visual (relative to fragment's start)
-    void draw(Graphics2D g, float x, float y, int startRelativeColumn, int endRelativeColumn) {
-      delegate.draw(g, x, y, startRelativeColumn, endRelativeColumn);
+    // offsets are visual (relative to fragment's start)
+    void draw(Graphics2D g, float x, float y, int startRelativeOffset, int endRelativeOffset) {
+      delegate.draw(g, x, y, startRelativeOffset, endRelativeOffset);
     }
 
     private int getRelativeOffset(int offset) {

@@ -29,11 +29,8 @@ import java.util.*;
 
 /**
  * @author: db
- * Date: 01.02.11
  */
-public class ClassRepr extends Proto {
-  private final DependencyContext myContext;
-  private final int myFileName;
+public class ClassRepr extends ClassFileRepr {
   private final TypeRepr.ClassType mySuperClass;
   private final Set<TypeRepr.AbstractType> myInterfaces;
   private final Set<ElemType> myAnnotationTargets;
@@ -41,7 +38,6 @@ public class ClassRepr extends Proto {
 
   private final Set<FieldRepr> myFields;
   private final Set<MethodRepr> myMethods;
-  private final Set<UsageRepr.Usage> myUsages;
 
   private final int myOuterClassName;
   private final boolean myIsLocal;
@@ -75,19 +71,21 @@ public class ClassRepr extends Proto {
     return myRetentionPolicy;
   }
 
-  public Set<UsageRepr.Usage> getUsages() {
-    return myUsages;
-  }
-
-  public boolean addUsage(final UsageRepr.Usage usage) {
-    return myUsages.add(usage);
+  public Set<ElemType> getAnnotationTargets() {
+    final Set<ElemType> targets = myAnnotationTargets;
+    return targets != null ? Collections.unmodifiableSet(targets) : Collections.emptySet();
   }
 
   public boolean isInterface() {
     return (access & Opcodes.ACC_INTERFACE) != 0;
   }
 
-  public abstract static class Diff extends Difference {
+  public abstract static class Diff extends DifferenceImpl {
+
+    Diff(@NotNull Difference delegate) {
+      super(delegate);
+    }
+
     public abstract Specifier<TypeRepr.AbstractType, Difference> interfaces();
 
     public abstract Specifier<FieldRepr, Difference> fields();
@@ -99,6 +97,8 @@ public class ClassRepr extends Proto {
     public abstract boolean retentionChanged();
 
     public abstract boolean extendsAdded();
+
+    public abstract boolean targetAttributeCategoryMightChange();
 
     public boolean no() {
       return base() == NONE &&
@@ -119,12 +119,12 @@ public class ClassRepr extends Proto {
       base |= Difference.SUPERCLASS;
     }
 
-    if (!myUsages.equals(pastClass.myUsages)) {
+    if (!getUsages().equals(pastClass.getUsages())) {
       base |= Difference.USAGES;
     }
     final int d = base;
 
-    return new Diff() {
+    return new Diff(diff) {
       @Override
       public boolean extendsAdded() {
         if ((d & Difference.SUPERCLASS) <= 0) {
@@ -132,21 +132,6 @@ public class ClassRepr extends Proto {
         }
         final String pastSuperName = myContext.getValue(((ClassRepr)past).mySuperClass.className);
         return "java/lang/Object".equals(pastSuperName);
-      }
-
-      @Override
-      public boolean packageLocalOn() {
-        return diff.packageLocalOn();
-      }
-
-      @Override
-      public int addedModifiers() {
-        return diff.addedModifiers();
-      }
-
-      @Override
-      public int removedModifiers() {
-        return diff.removedModifiers();
       }
 
       @Override
@@ -169,15 +154,22 @@ public class ClassRepr extends Proto {
         return Difference.make(pastClass.myAnnotationTargets, myAnnotationTargets);
       }
 
-      public Specifier<TypeRepr.ClassType, Difference> annotations() {
-        return diff.annotations();
-      }
-
       @Override
       public boolean retentionChanged() {
         return !((myRetentionPolicy == null && pastClass.myRetentionPolicy == RetentionPolicy.CLASS) ||
                  (myRetentionPolicy == RetentionPolicy.CLASS && pastClass.myRetentionPolicy == null) ||
                  (myRetentionPolicy == pastClass.myRetentionPolicy));
+      }
+
+      @Override
+      public boolean targetAttributeCategoryMightChange() {
+        final Specifier<ElemType, Difference> targetsDiff = targets();
+        if (!targetsDiff.unchanged()) {
+          return targetsDiff.added().contains(ElemType.TYPE_USE) ||
+                 targetsDiff.removed().contains(ElemType.TYPE_USE) ||
+                 pastClass.getAnnotationTargets().contains(ElemType.TYPE_USE);
+        }
+        return false;
       }
 
       @Override
@@ -188,11 +180,6 @@ public class ClassRepr extends Proto {
       @Override
       public boolean hadValue() {
         return false;
-      }
-
-      @Override
-      public boolean weakedAccess() {
-        return diff.weakedAccess();
       }
     };
   }
@@ -211,7 +198,7 @@ public class ClassRepr extends Proto {
     return result;
   }
 
-  public void updateClassUsages(final DependencyContext context, final Set<UsageRepr.Usage> s) {
+  protected void updateClassUsages(final DependencyContext context, final Set<UsageRepr.Usage> s) {
     mySuperClass.updateClassUsages(context, name, s);
 
     for (TypeRepr.AbstractType t : myInterfaces) {
@@ -239,9 +226,7 @@ public class ClassRepr extends Proto {
                    final boolean localClassFlag,
                    final boolean anonymousClassFlag,
                    final Set<UsageRepr.Usage> usages) {
-    super(access, sig, name, annotations);
-    this.myContext = context;
-    myFileName = fileName;
+    super(access, sig, name, annotations, fileName, context, usages);
     mySuperClass = TypeRepr.createClassType(context, superClass);
     myInterfaces = (Set<TypeRepr.AbstractType>)TypeRepr.createClassType(context, interfaces, new THashSet<>(1));
     myFields = fields;
@@ -251,19 +236,17 @@ public class ClassRepr extends Proto {
     this.myOuterClassName = outerClassName;
     this.myIsLocal = localClassFlag;
     this.myIsAnonymous = anonymousClassFlag;
-    this.myUsages = usages;
+    updateClassUsages(context, usages);
   }
 
   public ClassRepr(final DependencyContext context, final DataInput in) {
     super(context, in);
     try {
-      this.myContext = context;
-      myFileName = DataInputOutputUtil.readINT(in);
       mySuperClass = (TypeRepr.ClassType)TypeRepr.externalizer(context).read(in);
-      myInterfaces = (Set<TypeRepr.AbstractType>)RW.read(TypeRepr.externalizer(context), new THashSet<>(1), in);
-      myFields = (Set<FieldRepr>)RW.read(FieldRepr.externalizer(context), new THashSet<>(), in);
-      myMethods = (Set<MethodRepr>)RW.read(MethodRepr.externalizer(context), new THashSet<>(), in);
-      myAnnotationTargets = (Set<ElemType>)RW.read(UsageRepr.AnnotationUsage.elementTypeExternalizer, EnumSet.noneOf(ElemType.class), in);
+      myInterfaces = RW.read(TypeRepr.externalizer(context), new THashSet<>(1), in);
+      myFields = RW.read(FieldRepr.externalizer(context), new THashSet<>(), in);
+      myMethods = RW.read(MethodRepr.externalizer(context), new THashSet<>(), in);
+      myAnnotationTargets = RW.read(UsageRepr.AnnotationUsage.elementTypeExternalizer, EnumSet.noneOf(ElemType.class), in);
 
       final String s = RW.readUTF(in);
 
@@ -273,7 +256,6 @@ public class ClassRepr extends Proto {
       int flags = DataInputOutputUtil.readINT(in);
       myIsLocal = (flags & LOCAL_MASK) != 0;
       myIsAnonymous = (flags & ANONYMOUS_MASK) != 0;
-      myUsages =(Set<UsageRepr.Usage>)RW.read(UsageRepr.externalizer(context), new THashSet<>(), in);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
@@ -287,7 +269,6 @@ public class ClassRepr extends Proto {
   public void save(final DataOutput out) {
     try {
       super.save(out);
-      DataInputOutputUtil.writeINT(out, myFileName);
       mySuperClass.save(out);
       RW.save(myInterfaces, out);
       RW.save(myFields, out);
@@ -296,30 +277,10 @@ public class ClassRepr extends Proto {
       RW.writeUTF(out, myRetentionPolicy == null ? "" : myRetentionPolicy.toString());
       DataInputOutputUtil.writeINT(out, myOuterClassName);
       DataInputOutputUtil.writeINT(out, (myIsLocal ? LOCAL_MASK:0) | (myIsAnonymous ? ANONYMOUS_MASK : 0));
-
-      RW.save(myUsages, UsageRepr.externalizer(myContext), out);
     }
     catch (IOException e) {
       throw new BuildDataCorruptedException(e);
     }
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    ClassRepr classRepr = (ClassRepr)o;
-
-    if (myFileName != classRepr.myFileName) return false;
-    if (name != classRepr.name) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    return 31 * myFileName + name;
   }
 
   public UsageRepr.Usage createUsage() {
@@ -400,14 +361,11 @@ public class ClassRepr extends Proto {
   public void toStream(final DependencyContext context, final PrintStream stream) {
     super.toStream(context, stream);
 
-    stream.print("      Filename   : ");
-    stream.println(context.getValue(myFileName));
-
     stream.print("      Superclass : ");
     stream.println(mySuperClass == null ? "<null>" : mySuperClass.getDescr(context));
 
     stream.print("      Interfaces : ");
-    final TypeRepr.AbstractType[] is = myInterfaces.toArray(new TypeRepr.AbstractType[myInterfaces.size()]);
+    final TypeRepr.AbstractType[] is = myInterfaces.toArray(TypeRepr.AbstractType.EMPTY_TYPE_ARRAY);
     Arrays.sort(is, Comparator.comparing(o -> o.getDescr(context)));
     for (final TypeRepr.AbstractType t : is) {
       stream.print(t.getDescr(context));
@@ -416,7 +374,7 @@ public class ClassRepr extends Proto {
     stream.println();
 
     stream.print("      Targets    : ");
-    final ElemType[] es = myAnnotationTargets.toArray(new ElemType[myAnnotationTargets.size()]);
+    final ElemType[] es = myAnnotationTargets.toArray(new ElemType[0]);
     Arrays.sort(es);
     for (final ElemType e : es) {
       stream.print(e);
@@ -436,7 +394,7 @@ public class ClassRepr extends Proto {
     stream.println(myIsAnonymous);
 
     stream.println("      Fields:");
-    final FieldRepr[] fs = myFields.toArray(new FieldRepr[myFields.size()]);
+    final FieldRepr[] fs = myFields.toArray(new FieldRepr[0]);
     Arrays.sort(fs, (o1, o2) -> {
       if (o1.name == o2.name) {
         return o1.myType.getDescr(context).compareTo(o2.myType.getDescr(context));
@@ -450,7 +408,7 @@ public class ClassRepr extends Proto {
     stream.println("      End Of Fields");
 
     stream.println("      Methods:");
-    final MethodRepr[] ms = myMethods.toArray(new MethodRepr[myMethods.size()]);
+    final MethodRepr[] ms = myMethods.toArray(new MethodRepr[0]);
     Arrays.sort(ms, (o1, o2) -> {
       if (o1.name == o2.name) {
         final String d1 = o1.myType.getDescr(context);
@@ -494,7 +452,7 @@ public class ClassRepr extends Proto {
 
     final List<String> usages = new LinkedList<>();
 
-    for (final UsageRepr.Usage u : myUsages) {
+    for (final UsageRepr.Usage u : getUsages()) {
       final ByteArrayOutputStream bas = new ByteArrayOutputStream();
 
       u.toStream(myContext, new PrintStream(bas));

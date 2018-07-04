@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.execution.configurations.RemoteRunProfile;
@@ -21,8 +7,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
@@ -65,7 +49,7 @@ import java.util.List;
  * @author nik
  */
 public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposable {
-  private final TransferToEDTQueue<Runnable> myLaterInvocator = TransferToEDTQueue.createRunnableMerger("XDebuggerTree later invocator", 100);
+  private final TransferToEDTQueue<Runnable> myLaterInvocator = TransferToEDTQueue.createRunnableMerger("XDebuggerTree later invocator");
 
   private final ComponentListener myMoveListener = new ComponentAdapter() {
     @Override
@@ -78,11 +62,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   private final SingleAlarm myAlarm = new SingleAlarm(new Runnable() {
     @Override
     public void run() {
-      final Editor editor = FileEditorManager.getInstance(myProject).getSelectedTextEditor();
-      if (editor != null) {
-        editor.getContentComponent().revalidate();
-        editor.getContentComponent().repaint();
-      }
+      DebuggerUIUtil.repaintCurrentEditor(myProject);
     }
   }, 100, this);
 
@@ -279,6 +259,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
       if (node.isEllipsis()) {
         TreeNode parent = node.getParent();
         if (parent instanceof XValueContainerNode) {
+          selectNodeOnLoad(n -> n.getParent() == parent, n -> ((XValueContainerNode)parent).isObsolete());
           ((XValueContainerNode)parent).startComputingChildren();
           return true;
         }
@@ -389,6 +370,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     UIUtil.dispose(this);
     setLeadSelectionPath(null);
     setAnchorSelectionPath(null);
+    accessibleContext = null;
     removeComponentListener(myMoveListener);
     removeTreeExpansionListener(myTreeExpansionListener);
     myListeners.clear();
@@ -421,10 +403,13 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     return myLaterInvocator;
   }
 
-  public void selectNodeOnLoad(final Condition<TreeNode> nodeFilter) {
+  public void selectNodeOnLoad(Condition<TreeNode> nodeFilter, Condition<TreeNode> obsoleteChecker) {
     addTreeListener(new XDebuggerTreeListener() {
       @Override
       public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
+        if (obsoleteChecker.value(node)) {
+          removeTreeListener(this);
+        }
         if (nodeFilter.value(node)) {
           setSelectionPath(node.getPath());
           removeTreeListener(this); // remove the listener on first match

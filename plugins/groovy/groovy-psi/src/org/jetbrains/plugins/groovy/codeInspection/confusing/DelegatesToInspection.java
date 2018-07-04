@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -20,7 +6,6 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotationMemberValue;
 import com.intellij.psi.PsiElement;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
@@ -56,7 +41,7 @@ public class DelegatesToInspection extends BaseInspection {
         final boolean isTargetDeclared = annotation.findDeclaredAttributeValue("value") != null;
         String targetName = GrAnnotationUtil.inferStringAttribute(annotation, "value");
 
-        final GrParameterList parameterList = DefaultGroovyMethods.asType(owner.getParent(), GrParameterList.class);
+        final GrParameterList parameterList = (GrParameterList)owner.getParent();
         for (GrParameter parameter : parameterList.getParameters()) {
           final PsiAnnotation delegatesTo = parameter.getModifierList().findAnnotation(GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO);
           if (delegatesTo != null) {
@@ -89,7 +74,7 @@ public class DelegatesToInspection extends BaseInspection {
 
         String targetName = GrAnnotationUtil.inferStringAttribute(annotation, "target");
 
-        final GrParameterList parameterList = DefaultGroovyMethods.asType(owner.getParent(), GrParameterList.class);
+        final GrParameterList parameterList = (GrParameterList)owner.getParent();
         for (GrParameter parameter : parameterList.getParameters()) {
           final PsiAnnotation target = parameter.getModifierList().findAnnotation(GroovyCommonClassNames.GROOVY_LANG_DELEGATES_TO_TARGET);
           if (target != null) {

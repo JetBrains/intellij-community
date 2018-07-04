@@ -1,3 +1,6 @@
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -52,11 +55,6 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
                          @NotNull PsiElement endElement) {
         runTypeMigrationOnVariable((PsiVariable)startElement, getReturnType(), editor, optimizeImports, true);
       }
-
-      @Override
-      public boolean startInWriteAction() {
-        return false;
-      }
     };
   }
 
@@ -69,7 +67,7 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
     if (!FileModificationService.getInstance().prepareFileForWrite(variable.getContainingFile())) return;
     try {
       WriteAction.run(() -> variable.normalizeDeclaration());
-      final TypeMigrationRules rules = new TypeMigrationRules();
+      final TypeMigrationRules rules = new TypeMigrationRules(project);
       rules.setBoundScope(GlobalSearchScope.projectScope(project));
       TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, variable, targetType, optimizeImports, allowDependentRoots);
       WriteAction.run(() -> JavaCodeStyleManager.getInstance(project).shortenClassReferences(variable));

@@ -4,10 +4,10 @@ class TryWithConflictingDeclaration {
 
   void m() throws Exception {
       {
-              /* important comment */
-        String s = "hello";
-        f();
-        // another comment
+          /* important comment */
+          String s = "hello";
+          f();
+          // another comment
       }
     String s = "bye";
     System.out.println(s);

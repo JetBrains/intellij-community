@@ -2,6 +2,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.*;
 import java.util.stream.*;
 
 public class StreamInlining {
@@ -36,7 +37,7 @@ public class StreamInlining {
     list.stream().filter(x -> x == null).distinct().limit(10).skip(1).filter(x -> <warning descr="Condition 'x != null' is always 'false'">x != null</warning>).forEach(System.out::println);
   }
 
-  class Holder {
+  static class Holder {
     Object obj;
   }
 
@@ -46,8 +47,49 @@ public class StreamInlining {
 
   void test2(int[] array) {
     IntStream.of(array).filter(x -> x < 5)
-      .filter(x -> x > 7) // TODO: find variable state for non-qualified value
+      .filter(x -> <warning descr="Condition 'x > 7' is always 'false'">x > 7</warning>)
       .forEach(value -> System.out.println(value));
+  }
+
+  void testInstanceof(List<?> objects) {
+    objects.stream()
+      .filter(x -> x instanceof String)
+      .filter(x -> <warning descr="Condition 'x instanceof Number' is always 'false'">x instanceof Number</warning>)
+      .forEach(System.out::println);
+  }
+
+  void testIsInstanceIncomplete(List<?> objects) {
+    IntStream is = objects.stream()
+      .filter(String.class::isInstance)
+      .mapToInt(x -> (<warning descr="Casting 'x' to 'Integer' may produce 'java.lang.ClassCastException'">Integer</warning>)x);
+
+    objects.stream()
+      .filter(String.class::isInstance)
+      .filter(<warning descr="Method reference result is always 'false'">Number.class::isInstance</warning>);
+
+    objects.stream()
+      .filter(x -> x instanceof String)
+      .filter(<warning descr="Method reference result is always 'false'">Number.class::isInstance</warning>);
+
+    objects.stream()
+      .filter(String.class::isInstance)
+      .filter(<warning descr="Method reference result is always 'true'">String.class::isInstance</warning>);
+  }
+
+  Stream<String> testInstanceOfMap(List<?> objects) {
+    return objects.stream().filter(it -> it instanceof String)
+      .map(entry -> {
+        if (<warning descr="Condition 'entry instanceof String' is always 'true'">entry instanceof String</warning>) {
+          return (String)entry;
+        }
+        return null;
+      })
+      .filter(<warning descr="Method reference result is always 'true'">Objects::nonNull</warning>);
+  }
+
+  void test(Stream<String> stream, Optional<String> opt) {
+    stream.filter(<warning descr="Condition 'String.class::isInstance' is redundant and can be replaced with a null check">String.class::isInstance</warning>).forEach(System.out::println);
+    opt.filter(<warning descr="Method reference result is always 'true'">String.class::isInstance</warning>).ifPresent(System.out::println);
   }
 
   // IDEA-152871
@@ -84,7 +126,8 @@ public class StreamInlining {
   boolean flatMap(List<String> list, List<List<String>> ll) {
     System.out.println(ll.stream().flatMap(l -> l.stream()).count());
     return list.stream().map(s -> s.isEmpty() ? null : s)
-      .flatMap(s -> Stream.of(s, s.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>()).filter(r -> r != null))
+               .flatMap(s -> Stream.of(s, s.<warning descr="Method invocation 'trim' may produce 'java.lang.NullPointerException'">trim</warning>())
+                    .filter(r -> <warning descr="Condition 'r != null' is always 'true'">r != null</warning>))
       .anyMatch(x -> <warning descr="Condition 'x == null' is always 'false'">x == null</warning>);
   }
 
@@ -98,7 +141,7 @@ public class StreamInlining {
   static class MyClass {
     @Nullable
     static String nullableFunction(String s) {
-      return s;
+      return s.isEmpty() ? null : s;
     }
 
     static String functionThatDoesNotAcceptNull(@NotNull String s) {
@@ -130,5 +173,69 @@ public class StreamInlining {
     List<String> list2 = Stream.generate(() -> "xyz").limit(20).filter(<warning descr="Method reference result is always 'false'">"bar"::equals</warning>).collect(Collectors.toList());
     Stream.generate(() -> Optional.of("xyz")).filter(<warning descr="Method reference result is always 'true'">Optional::isPresent</warning>).forEach(System.out::println);
     LongStream.generate(() -> 5).limit(10).filter(x -> <warning descr="Condition 'x > 6' is always 'false'">x > 6</warning>).forEach(s -> System.out.println(s));
+  }
+
+  // IDEA-183501
+  void testFlatMapIdentity(Stream<Integer> stream) {
+    Integer res = Stream.of(stream)
+      .flatMap(Function.identity())
+      .min(Comparator.naturalOrder())
+      .orElse(null);
+    if(res == null) { // not always null
+      System.out.println("possible");
+    }
+  }
+
+  // IDEA-190591
+  void testReduce() {
+    List<Double> input = new ArrayList<>();
+    input.add(0.0);
+    Optional<Double> result = input.stream().reduce((a, b) -> {
+      throw new IllegalStateException("Multiple entries found: " + a + " and " + b);
+    });
+    Double res = result.orElse(null);
+    if (res != null) {
+      System.out.println(res);
+    } else {
+      System.out.println("Huh?");
+    }
+  }
+
+  void testReduceNullability() {
+    Optional<String> res1 = Stream.of("foo", "bar", null).reduce((a, b) -> a); // a is never null - ok
+    Optional<String> res2 = Stream.of("foo", null, "bar").reduce((a, b) -> a); // wrong, but not supported yet
+    Optional<String> res3 = Stream.of("foo", "bar", null).reduce((a, b) -> <warning descr="Function may return null, but it's not allowed here">b</warning>);
+    Optional<String> res4 = Stream.of(null, "foo", "bar").reduce((a, b) -> b); // b is never null - ok
+  }
+
+  public void testStreamTryFinally() {
+    try {
+
+    } finally {
+      Stream.of("x").map(a -> {
+        if(<warning descr="Condition 'a.equals(\"baz\")' is always 'false'">a.equals("baz")</warning>) {
+          System.out.println("impossible");
+        }
+        testStreamTryFinally();
+        return "bar";
+      }).count();
+    }
+  }
+
+  void testTryFinally2() {
+    try {
+    } finally {
+      try {
+        List<String> list = Stream.of("xyz").map(a -> {
+          testTryFinally2();
+          return "foo";
+        }).collect(Collectors.toList());
+      } catch (Exception e) {
+      }
+    }
+  }
+
+  void testToArray(List<String> list) {
+    list.stream().toArray(size -> <warning descr="Function may return null, but it's not allowed here">null</warning>);
   }
 }

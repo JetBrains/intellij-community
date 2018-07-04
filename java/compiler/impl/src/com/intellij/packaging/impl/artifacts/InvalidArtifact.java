@@ -23,7 +23,7 @@ import org.jetbrains.jps.model.serialization.artifact.ArtifactState;
  * @author nik
  */
 public class InvalidArtifact extends ArtifactImpl {
-  private ArtifactState myState;
+  private final ArtifactState myState;
   private final String myErrorMessage;
 
   public InvalidArtifact(ArtifactState state, String errorMessage, ProjectModelExternalSource externalSource) {

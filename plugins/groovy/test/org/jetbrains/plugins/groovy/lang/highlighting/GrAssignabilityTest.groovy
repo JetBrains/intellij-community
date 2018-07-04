@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.intellij.codeInsight.intention.IntentionAction
@@ -249,7 +235,7 @@ class Bar {
   def foo(int i, int i2) {i2}
 }
 
-def cl = new Bar<error descr="'(' expected">.</error>&foo
+def cl = new Bar<error descr="'(' expected, got '.&'">.</error>&foo
 cl = cl.curry(1)
 String s = cl("2")
 int <warning descr="Cannot assign 'String' to 'int'">s2</warning> = cl("2")
@@ -292,10 +278,10 @@ class Ca {
 }
 
 use(Ca) {
-  1.<warning descr="Category method 'foo' cannot be applied to 'java.lang.Integer'">foo</warning>()
-  (1 as int).<warning descr="Category method 'foo' cannot be applied to 'int'">foo</warning>()
+  1.<warning descr="Cannot resolve symbol 'foo'">foo</warning>()
+  (1 as int).<warning descr="Cannot resolve symbol 'foo'">foo</warning>()
 }
-''')
+''', GrUnresolvedAccessInspection)
   }
 
   void testCompileStaticWithAssignabilityCheck() {
@@ -409,7 +395,7 @@ private int getObjects() {
 
   void testForInAssignability() {
     testHighlighting('''\
-for (int <warning descr="Cannot assign 'String' to 'int'">x</warning> in ['a']){}
+for (<warning descr="Cannot assign 'String' to 'int'">int x</warning> in ['a']){}
 ''')
   }
 
@@ -482,7 +468,7 @@ _Boolean(null)
   void testInnerWarning() {
     testHighlighting('''\
 public static void main(String[] args) {
-    bar <warning descr="'bar' in '_' cannot be applied to '(java.lang.Number)'">(foo(foo(foo<warning descr="'foo' in '_' cannot be applied to '(java.lang.String)'">('2')</warning>)))</warning>
+    bar <warning descr="'bar' in '_' cannot be applied to '(T)'">(foo(foo(foo<warning descr="'foo' in '_' cannot be applied to '(java.lang.String)'">('2')</warning>)))</warning>
 }
 
 static def <T extends Number> T foo(T abc) {
@@ -728,56 +714,15 @@ String xx = 5
 
 xx = 'abc'
 ''')
-
   }
 
+  void testInnerClassConstructorDefault() { doTest() }
 
-  void testInnerClassConstructor0() {
-    testHighlighting('''\
-class A {
-  class Inner {
-    def Inner() {}
-  }
+  void testInnerClassConstructorNoArg() { doTest() }
 
-  def foo() {
-    new Inner() //correct
-  }
+  void testInnerClassConstructorWithArg() { doTest() }
 
-  static def bar() {
-    new <error>Inner</error>() //semi-correct
-    new Inner(new A()) //correct
-  }
-}
-
-new A.Inner() //semi-correct
-new A.Inner(new A()) //correct
-''')
-  }
-
-  void testInnerClassConstructor1() {
-    testHighlighting('''\
-class A {
-  class Inner {
-    def Inner(A a) {}
-  }
-
-  def foo() {
-    new Inner(new A()) //correct
-    new Inner<warning>()</warning>
-    new Inner<warning>(new A(), new A())</warning>
-  }
-
-  static def bar() {
-    new Inner(new A(), new A()) //correct
-    new Inner<warning>(new A())</warning> //incorrect: first arg is recognized as an enclosing instance arg
-  }
-}
-
-new A.Inner<warning>()</warning> //incorrect
-new A.Inner<warning>(new A())</warning> //incorrect: first arg is recognized as an enclosing instance arg
-new A.Inner(new A(), new A()) //correct
-''')
-  }
+  void testInnerClassConstructorWithAnotherArg() { doTest() }
 
   void testClosureIsNotAssignableToSAMInGroovy2_1() {
     testHighlighting('''\
@@ -874,6 +819,61 @@ import groovy.transform.CompileStatic
 @CompileStatic
 List foo() {
     return [""]
+}
+'''
+  }
+
+  void 'test optional argument on CompileStatic'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class A {
+    A(String args) {}
+
+    def foo() {
+        new A<error>()</error>
+    }
+}
+'''
+  }
+
+  void 'test optional vararg argument on CompileStatic'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class A {
+    A(String... args) {}
+
+    def foo() {
+        new A()
+    }
+}
+'''
+  }
+
+  void 'test optional closure arg on CompileStatic'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+@CompileStatic
+def method() {
+    Closure<String> cl = {"str"}
+    cl()
+}
+'''
+  }
+
+  void 'test string tuple assignment'() {
+    testHighlighting '''\
+import groovy.transform.CompileStatic
+
+@CompileStatic
+class TestType {
+    static def bar(Object[] list) {
+        def (String name, Integer matcherEnd) = [list[0], list[2] as Integer]
+    }
 }
 '''
   }

@@ -1,4 +1,4 @@
-<scheme name="WarmNeon" version="142" parent_scheme="Default">
+<scheme name="WarmNeon" version="142" parent_scheme="Darcula">
   <colors>
     <option name="ADDED_LINES_COLOR" value="395439" />
     <option name="ANNOTATIONS_COLOR" value="8178af" />
@@ -18,7 +18,6 @@
     <option name="SELECTED_FOLDING_TREE_COLOR" value="32be33" />
     <option name="SELECTED_INDENT_GUIDE" value="6b5656" />
     <option name="SELECTION_BACKGROUND" value="348d34" />
-    <option name="TEARLINE_COLOR" value="404040" />
     <option name="WHITESPACES" value="656565" />
     <option name="WHITESPACES_MODIFIED_LINES_COLOR" value="6e5a5a" />
   </colors>
@@ -559,7 +558,7 @@
     </option>
     <option name="IDENTIFIER_UNDER_CARET_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="46464d" />
+        <option name="BACKGROUND" value="525259" />
         <option name="ERROR_STRIPE_COLOR" value="ccccff" />
       </value>
     </option>
@@ -1249,7 +1248,7 @@
     </option>
     <option name="WRITE_IDENTIFIER_UNDER_CARET_ATTRIBUTES">
       <value>
-        <option name="BACKGROUND" value="4d444d" />
+        <option name="BACKGROUND" value="594B52" />
         <option name="ERROR_STRIPE_COLOR" value="ffcdff" />
       </value>
     </option>
@@ -1327,6 +1326,30 @@
       <value>
         <option name="FOREGROUND" value="ffffff" />
         <option name="BACKGROUND" value="404040" />
+      </value>
+    </option>
+    <option name="OC.CONDITIONALLY_NOT_COMPILED">
+      <value>
+        <option name="FOREGROUND" value="686a4e" />
+      </value>
+    </option>
+    <option name="OC.MACRONAME">
+      <value>
+        <option name="FOREGROUND" value="908b25" />
+        <option name="FONT_TYPE" value="1" />
+      </value>
+    </option>
+    <option name="OC.MESSAGE_ARGUMENT" baseAttributes="DEFAULT_FUNCTION_CALL" />
+    <option name="OC.METHOD_DECLARATION" baseAttributes="DEFAULT_FUNCTION_DECLARATION" />
+    <option name="OC.STRUCT_FIELD">
+      <value>
+        <option name="FOREGROUND" value="b9b9b9" />
+        <option name="FONT_TYPE" value="1" />
+      </value>
+    </option>
+    <option name="OC.TYPEDEF">
+      <value>
+        <option name="FOREGROUND" value="50861a" />
       </value>
     </option>
   </attributes>

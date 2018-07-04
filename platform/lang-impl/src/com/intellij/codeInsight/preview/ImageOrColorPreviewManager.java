@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -238,6 +239,9 @@ public class ImageOrColorPreviewManager implements Disposable, EditorMouseMotion
 
           try {
             provider.show(element, editor, point, keyTriggered);
+          }
+          catch (ProcessCanceledException e) {
+            throw e;
           }
           catch (Exception e) {
             LOG.error(e);

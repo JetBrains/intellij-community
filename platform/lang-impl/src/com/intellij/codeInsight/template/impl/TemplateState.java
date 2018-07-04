@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -66,7 +52,6 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -193,8 +178,7 @@ public class TemplateState implements Disposable {
       }
     };
 
-    editor.getCaretModel().addCaretListener(listener);
-    Disposer.register(this, () -> editor.getCaretModel().removeCaretListener(listener));
+    editor.getCaretModel().addCaretListener(listener, this);
   }
 
   private boolean isCaretInsideNextVariable() {
@@ -283,14 +267,14 @@ public class TemplateState implements Disposable {
         return new TextResult(text);
       }
     }
-    CharSequence text = myDocument.getCharsSequence();
     int segmentNumber = myTemplate.getVariableSegmentNumber(variableName);
     if (segmentNumber < 0 || mySegments.getSegmentsCount() <= segmentNumber) {
       return null;
     }
+    CharSequence text = myDocument.getImmutableCharSequence();
     int start = mySegments.getSegmentStart(segmentNumber);
     int end = mySegments.getSegmentEnd(segmentNumber);
-    int length = myDocument.getTextLength();
+    int length = text.length();
     if (start > length || end > length) {
       return null;
     }
@@ -587,7 +571,7 @@ public class TemplateState implements Disposable {
     final int start = mySegments.getSegmentStart(currentSegmentNumber);
     final int end = mySegments.getSegmentEnd(currentSegmentNumber);
     if (end >= 0) {
-      myEditor.getCaretModel().moveToLogicalPosition(myEditor.offsetToLogicalPosition(end).leanForward(true)); // to the right of parameter hint, if any
+      myEditor.getCaretModel().moveToOffset(end);
       myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       myEditor.getSelectionModel().removeSelection();
       myEditor.getSelectionModel().setSelection(start, end);
@@ -664,7 +648,7 @@ public class TemplateState implements Disposable {
 
     final LookupManager lookupManager = LookupManager.getInstance(myProject);
 
-    final LookupImpl lookup = (LookupImpl)lookupManager.showLookup(myEditor, lookupItems.toArray(new LookupElement[lookupItems.size()]));
+    final LookupImpl lookup = (LookupImpl)lookupManager.showLookup(myEditor, lookupItems.toArray(LookupElement.EMPTY_ARRAY));
     if (lookup == null) return;
 
     if (CodeInsightSettings.getInstance().AUTO_POPUP_COMPLETION_LOOKUP && myEditor.getUserData(InplaceRefactoring.INPLACE_RENAMER) == null) {
@@ -702,8 +686,12 @@ public class TemplateState implements Disposable {
     PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(myDocument);
   }
 
-  // Hours spent fixing code : 3
+  // Hours spent fixing code : 3.5
   void calcResults(final boolean isQuick) {
+    if (mySegments.isInvalid()) {
+      gotoEnd(true);
+    }
+    
     if (myProcessor != null && myCurrentVariableNumber >= 0) {
       final String variableName = myTemplate.getVariableNameAt(myCurrentVariableNumber);
       final TextResult value = getVariableValue(variableName);
@@ -1034,7 +1022,9 @@ public class TemplateState implements Disposable {
   public void gotoEnd(boolean brokenOff) {
     if (isDisposed()) return;
     LookupManager.getInstance(myProject).hideActiveLookup();
-    calcResults(false);
+    if (!mySegments.isInvalid()) {
+      calcResults(false);
+    }
     if (!brokenOff) {
       doReformat();
     }
@@ -1044,15 +1034,6 @@ public class TemplateState implements Disposable {
 
   public void gotoEnd() {
     gotoEnd(true);
-  }
-
-  /**
-   * @deprecated use this#gotoEnd(true)
-   */
-  public void cancelTemplate() {
-    if (isDisposed()) return;
-    LookupManager.getInstance(myProject).hideActiveLookup();
-    cleanupTemplateState(true);
   }
 
   private void finishTemplateEditing() {

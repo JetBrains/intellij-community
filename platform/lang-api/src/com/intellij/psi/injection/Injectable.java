@@ -25,7 +25,6 @@ import javax.swing.*;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 01.08.13
  */
 public abstract class Injectable implements Comparable<Injectable> {
 

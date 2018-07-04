@@ -31,7 +31,7 @@ public class DeleteAction extends PatchAction {
   }
 
   @Override
-  public void doBuildPatchFile(File olderDir, File newerFile, ZipOutputStream patchOutput) throws IOException {
+  public void doBuildPatchFile(File olderDir, File newerFile, ZipOutputStream patchOutput) {
     // do nothing
   }
 

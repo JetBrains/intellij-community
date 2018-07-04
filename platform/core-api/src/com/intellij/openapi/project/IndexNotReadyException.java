@@ -53,11 +53,8 @@ import org.jetbrains.annotations.Nullable;
 public class IndexNotReadyException extends RuntimeException implements ExceptionWithAttachments {
   @Nullable private final Throwable myStartTrace;
 
-  public IndexNotReadyException() {
-    this(null);
-  }
-
-  public IndexNotReadyException(@Nullable Throwable startTrace) {
+  // constructor is private to not let ForkJoinTask.getThrowableException() clone this by reflection causing invalid nesting etc
+  private IndexNotReadyException(@Nullable Throwable startTrace) {
     super("Please change caller according to " + IndexNotReadyException.class.getName() + " documentation");
     myStartTrace = startTrace;
   }
@@ -68,5 +65,15 @@ public class IndexNotReadyException extends RuntimeException implements Exceptio
     return myStartTrace == null
            ? Attachment.EMPTY_ARRAY
            : new Attachment[]{new Attachment("indexingStart", myStartTrace)};
+  }
+
+  @NotNull
+  public static IndexNotReadyException create() {
+    return create(null);
+  }
+
+  @NotNull
+  public static IndexNotReadyException create(@Nullable Throwable startTrace) {
+    return new IndexNotReadyException(startTrace);
   }
 }

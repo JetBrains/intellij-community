@@ -19,7 +19,13 @@ package org.jetbrains.uast
  * Kinds of [UExpressionList].
  */
 open class UastSpecialExpressionKind(val name: String) {
-    override fun toString(): String{
-        return "UastSpecialExpressionKind(name='$name')"
-    }
+  override fun toString(): String {
+    return "UastSpecialExpressionKind(name='$name')"
+  }
+
+  companion object {
+    @JvmField
+    val VARARGS: UastSpecialExpressionKind = UastSpecialExpressionKind("varargs")
+  }
+
 }

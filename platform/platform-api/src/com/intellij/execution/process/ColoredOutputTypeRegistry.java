@@ -40,7 +40,8 @@ public class ColoredOutputTypeRegistry {
     return ServiceManager.getService(ColoredOutputTypeRegistry.class);
   }
 
-  private final Map<String, Key> myRegisteredKeys = ContainerUtil.newConcurrentMap();
+  private final Map<String, ProcessOutputType> myStdoutAttrsToKeyMap = ContainerUtil.newConcurrentMap();
+  private final Map<String, ProcessOutputType> myStderrAttrsToKeyMap = ContainerUtil.newConcurrentMap();
 
   private static final TextAttributesKey[] myAnsiColorKeys = new TextAttributesKey[]{
     ConsoleHighlighter.BLACK,
@@ -91,10 +92,12 @@ public class ColoredOutputTypeRegistry {
 
      see full doc at http://en.wikipedia.org/wiki/ANSI_escape_code
   */
-
   @NotNull
-  public Key getOutputKey(@NonNls String attribute) {
-    final Key key = myRegisteredKeys.get(attribute);
+  public ProcessOutputType getOutputType(@NonNls String attribute, @NotNull Key streamType) {
+    ProcessOutputType streamOutputType = streamType instanceof ProcessOutputType ? (ProcessOutputType)streamType
+                                                                                 : (ProcessOutputType)ProcessOutputTypes.STDOUT;
+    Map<String, ProcessOutputType> attrsToKeyMap = ProcessOutputType.isStdout(streamType) ? myStdoutAttrsToKeyMap : myStderrAttrsToKeyMap;
+    ProcessOutputType key = attrsToKeyMap.get(attribute);
     if (key != null) {
       return key;
     }
@@ -107,13 +110,22 @@ public class ColoredOutputTypeRegistry {
     }
     attribute = StringUtil.trimEnd(attribute, "m");
     if (attribute.equals("0")) {
-      return ProcessOutputTypes.STDOUT;
+      return streamOutputType;
     }
-    Key newKey = new Key(completeAttribute);
+    ProcessOutputType newKey = new ProcessOutputType(completeAttribute, streamOutputType);
     AnsiConsoleViewContentType contentType = createAnsiConsoleViewContentType(attribute);
     ConsoleViewContentType.registerNewConsoleViewType(newKey, contentType);
-    myRegisteredKeys.put(completeAttribute, newKey);
+    attrsToKeyMap.put(completeAttribute, newKey);
     return newKey;
+  }
+
+  /**
+   * @deprecated use {@link #getOutputType(String, Key)} instead
+   */
+  @Deprecated
+  @NotNull
+  public Key getOutputKey(@NonNls String attribute) {
+    return getOutputType(attribute, ProcessOutputTypes.STDOUT);
   }
 
   private static Color getAnsiColor(final int value) {

@@ -59,6 +59,8 @@ public interface ProjectResolverContext extends UserDataHolderEx {
 
   boolean isResolveModulePerSourceSet();
 
+  boolean isUseQualifiedModuleNames();
+
   @NotNull
   ProjectImportAction.AllModels getModels();
 
@@ -76,4 +78,9 @@ public interface ProjectResolverContext extends UserDataHolderEx {
   boolean hasModulesWithModel(@NotNull Class modelClazz);
 
   void checkCancelled() throws ProcessCanceledException;
+
+  String getProjectGradleVersion();
+
+  @Nullable
+  String getDefaultGroupId();
 }

@@ -26,7 +26,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -34,6 +33,7 @@ import com.intellij.vcs.log.Hash;
 import git4idea.GitUtil;
 import git4idea.branch.GitBranchUiHandlerImpl;
 import git4idea.branch.GitSmartOperationDialog;
+import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector;
@@ -47,9 +47,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import static git4idea.GitUtil.updateAndRefreshVfs;
 import static git4idea.commands.GitLocalChangesWouldBeOverwrittenDetector.Operation.RESET;
 
 public class GitResetOperation {
+
 
   @NotNull private final Project myProject;
   @NotNull private final Map<GitRepository, Hash> myCommits;
@@ -74,14 +76,15 @@ public class GitResetOperation {
 
   public void execute() {
     saveAllDocuments();
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
     Map<GitRepository, GitCommandResult> results = ContainerUtil.newHashMap();
-    try {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Git Reset")) {
       for (Map.Entry<GitRepository, Hash> entry : myCommits.entrySet()) {
         GitRepository repository = entry.getKey();
         VirtualFile root = repository.getRoot();
         String target = entry.getValue().asString();
         GitLocalChangesWouldBeOverwrittenDetector detector = new GitLocalChangesWouldBeOverwrittenDetector(root, RESET);
+
+        Collection<Change> changes = GitChangeUtils.getDiffWithWorkingTree(repository, target, false);
 
         GitCommandResult result = myGit.reset(repository, myMode, target, detector);
         if (!result.success() && detector.wasMessageDetected()) {
@@ -91,13 +94,10 @@ public class GitResetOperation {
           }
         }
         results.put(repository, result);
-        repository.update();
-        VfsUtil.markDirtyAndRefresh(false, true, false, root);
+
+        updateAndRefreshVfs(repository, changes);
         VcsDirtyScopeManager.getInstance(myProject).dirDirtyRecursively(root);
       }
-    }
-    finally {
-      token.finish();
     }
     notifyResult(results);
   }

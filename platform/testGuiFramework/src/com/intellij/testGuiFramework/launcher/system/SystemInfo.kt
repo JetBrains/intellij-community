@@ -13,10 +13,12 @@ object SystemInfo {
 
   fun getSystemType(): SystemType {
     val osName = System.getProperty("os.name").toLowerCase()
-    if (osName.contains("win")) return WINDOWS
-    else if (osName.contains("mac")) return MAC
-    else if (osName.contains("nix") || osName.contains("nux") || osName.contains("aix")) return UNIX
-    else throw Exception("Unknown operation system with name: \"$osName\"")
+    return when {
+      osName.contains("win") -> WINDOWS
+      osName.contains("mac") -> MAC
+      osName.contains("nix") || osName.contains("nux") || osName.contains("aix") -> UNIX
+      else -> throw Exception("Unknown operation system with name: \"$osName\"")
+    }
   }
 
   fun getExt(): String {
@@ -28,8 +30,8 @@ object SystemInfo {
     }
   }
 
-  fun isMac() = (SystemInfo.getSystemType() == SystemInfo.SystemType.MAC)
-  fun isWin() = (SystemInfo.getSystemType() == SystemInfo.SystemType.WINDOWS)
-  fun isUnix() = (SystemInfo.getSystemType() == SystemInfo.SystemType.UNIX)
+  fun isMac(): Boolean = (SystemInfo.getSystemType() == SystemInfo.SystemType.MAC)
+  fun isWin(): Boolean = (SystemInfo.getSystemType() == SystemInfo.SystemType.WINDOWS)
+  fun isUnix(): Boolean = (SystemInfo.getSystemType() == SystemInfo.SystemType.UNIX)
 
 }

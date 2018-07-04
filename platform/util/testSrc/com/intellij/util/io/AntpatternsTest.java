@@ -22,7 +22,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: May 2, 2007
  */
 public class AntpatternsTest extends TestCase {
   

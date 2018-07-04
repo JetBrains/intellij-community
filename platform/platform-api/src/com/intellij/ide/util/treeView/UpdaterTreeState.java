@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.openapi.util.ActionCallback;
@@ -54,10 +40,6 @@ public class UpdaterTreeState {
       putAll(addPaths(tree.getSelectionPaths()), myToSelect);
       putAll(addPaths(tree.getExpandedDescendants(new TreePath(tree.getModel().getRoot()))), myToExpand);
     }
-  }
-
-  public boolean isQueuedForSelection(Object element) {
-    return myToSelect.containsKey(element);
   }
 
   private static void putAll(final Set<Object> source, final Map<Object, Object> target) {
@@ -109,12 +91,12 @@ public class UpdaterTreeState {
 
   @NotNull
   public Object[] getToSelect() {
-    return myToSelect.keySet().toArray(new Object[myToSelect.size()]);
+    return ArrayUtil.toObjectArray(myToSelect.keySet());
   }
 
   @NotNull
   public Object[] getToExpand() {
-    return myToExpand.keySet().toArray(new Object[myToExpand.size()]);
+    return ArrayUtil.toObjectArray(myToExpand.keySet());
   }
 
   public boolean process(@NotNull Runnable runnable) {
@@ -164,8 +146,7 @@ public class UpdaterTreeState {
     final Object[] toExpand = getToExpand();
 
 
-    final Map<Object, Condition> adjusted = new WeakHashMap<>();
-    adjusted.putAll(myAdjustedSelection);
+    final Map<Object, Condition> adjusted = new WeakHashMap<>(myAdjustedSelection);
 
     clearSelection();
     clearExpansion();
@@ -182,7 +163,7 @@ public class UpdaterTreeState {
           return o;
         }, originallySelected);
 
-        processAjusted(adjusted, originallySelected).doWhenDone(new TreeRunnable("UpdaterTreeState.restore: on done") {
+        processAdjusted(adjusted, originallySelected).doWhenDone(new TreeRunnable("UpdaterTreeState.restore: on done") {
           @Override
           public void perform() {
             myUi.expand(toExpand, new TreeRunnable("UpdaterTreeState.restore: after on done") {
@@ -248,7 +229,7 @@ public class UpdaterTreeState {
     }
   }
 
-  private ActionCallback processAjusted(final Map<Object, Condition> adjusted, final Set<Object> originallySelected) {
+  private ActionCallback processAdjusted(final Map<Object, Condition> adjusted, final Set<Object> originallySelected) {
     final ActionCallback result = new ActionCallback();
 
     final Set<Object> allSelected = myUi.getSelectedElements();

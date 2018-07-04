@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -95,7 +94,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       element.delete();
     }
@@ -143,7 +142,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
       return false;
     }
     final PsiJavaCodeReferenceElement qualifier = (PsiJavaCodeReferenceElement)qualifierElement;
-    if (isGenericReference(referenceElement, qualifier)) {
+    if (GenericsUtil.isGenericReference(referenceElement, qualifier)) {
       return false;
     }
     final PsiElement target = referenceElement.resolve();
@@ -222,24 +221,6 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
         }
       }
       containingClass = ClassUtils.getContainingClass(containingClass);
-    }
-    return false;
-  }
-
-  static boolean isGenericReference(PsiJavaCodeReferenceElement referenceElement, PsiJavaCodeReferenceElement qualifierElement) {
-    final PsiReferenceParameterList qualifierParameterList = qualifierElement.getParameterList();
-    if (qualifierParameterList != null) {
-      final PsiTypeElement[] typeParameterElements = qualifierParameterList.getTypeParameterElements();
-      if (typeParameterElements.length > 0) {
-        return true;
-      }
-    }
-    final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
-    if (parameterList != null) {
-      final PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
-      if (typeParameterElements.length > 0) {
-        return true;
-      }
     }
     return false;
   }

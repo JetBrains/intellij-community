@@ -20,7 +20,9 @@ import com.intellij.facet.FacetModel;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -76,27 +78,22 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   private static final Logger LOG = Logger.getInstance(AbstractIdeModifiableModelsProvider.class);
 
   private ModifiableModuleModel myModifiableModuleModel;
-  private Map<Module, ModifiableRootModel> myModifiableRootModels = new THashMap<>();
-  private Map<Module, ModifiableFacetModel> myModifiableFacetModels = new THashMap<>();
-  private Map<Module, String> myProductionModulesForTestModules = new THashMap<>();
-  private Map<Library, Library.ModifiableModel> myModifiableLibraryModels = new IdentityHashMap<>();
+  private final Map<Module, ModifiableRootModel> myModifiableRootModels = new THashMap<>();
+  private final Map<Module, ModifiableFacetModel> myModifiableFacetModels = new THashMap<>();
+  private final Map<Module, String> myProductionModulesForTestModules = new THashMap<>();
+  private final Map<Library, Library.ModifiableModel> myModifiableLibraryModels = new IdentityHashMap<>();
   private ModifiableArtifactModel myModifiableArtifactModel;
   private AbstractIdeModifiableModelsProvider.MyPackagingElementResolvingContext myPackagingElementResolvingContext;
   private final ArtifactExternalDependenciesImporter myArtifactExternalDependenciesImporter;
   @Nullable
-  private final ModifiableWorkspace myModifiableWorkspace;
+  private ModifiableWorkspace myModifiableWorkspace;
   private final MyUserDataHolderBase myUserData;
+  private volatile boolean myDisposed;
 
   public AbstractIdeModifiableModelsProvider(@NotNull Project project) {
     super(project);
     myUserData = new MyUserDataHolderBase();
     myArtifactExternalDependenciesImporter = new ArtifactExternalDependenciesImporterImpl();
-    if (ExternalProjectsWorkspaceImpl.isDependencySubstitutionEnabled()) {
-      myModifiableWorkspace = ServiceManager.getService(project, ExternalProjectsWorkspaceImpl.class).createModifiableWorkspace(this);
-    }
-    else {
-      myModifiableWorkspace = null;
-    }
   }
 
   protected abstract ModifiableArtifactModel doGetModifiableArtifactModel();
@@ -159,16 +156,18 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   @NotNull
   @Override
   public Module newModule(@NotNull ModuleData moduleData) {
-    String filePath = moduleData.getModuleFilePath();
-    String moduleTypeId = moduleData.getModuleTypeId();
-    for (String candidate : suggestModuleNameCandidates(moduleData)) {
+    String imlName = null;
+    for (String candidate: suggestModuleNameCandidates(moduleData)) {
       Module module = findIdeModule(candidate);
       if (module == null) {
-        filePath = toCanonicalPath(moduleData.getModuleFileDirectoryPath() + "/" + candidate + ModuleFileType.DOT_DEFAULT_EXTENSION);
+        imlName = candidate;
         break;
       }
     }
-    return newModule(filePath, moduleTypeId);
+    assert imlName != null : "Too many duplicated module names";
+
+    String filePath = toCanonicalPath(moduleData.getModuleFileDirectoryPath() + "/" + imlName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+    return newModule(filePath, moduleData.getModuleTypeId());
   }
 
   @Nullable
@@ -182,7 +181,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   @Override
   public Library findIdeLibrary(@NotNull LibraryData libraryData) {
     final LibraryTable.ModifiableModel libraryTable = getModifiableProjectLibrariesModel();
-    for (Library ideLibrary : libraryTable.getLibraries()) {
+    for (Library ideLibrary: libraryTable.getLibraries()) {
       if (isRelated(ideLibrary, libraryData)) return ideLibrary;
     }
     return null;
@@ -273,6 +272,14 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
     return myModifiableLibraryModels.computeIfAbsent(library, k -> doGetModifiableLibraryModel(library));
   }
 
+  @Nullable
+  public ModifiableWorkspace getModifiableWorkspace() {
+    if (myModifiableWorkspace == null && ExternalProjectsWorkspaceImpl.isDependencySubstitutionEnabled()) {
+      myModifiableWorkspace = doGetModifiableWorkspace();
+    }
+    return myModifiableWorkspace;
+  }
+
   @NotNull
   @Override
   public String[] getLibraryUrls(@NotNull Library library, @NotNull OrderRootType type) {
@@ -298,10 +305,16 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   public List<Module> getAllDependentModules(@NotNull Module module) {
     final ArrayList<Module> list = new ArrayList<>();
     final Graph<Module> graph = getModuleGraph();
-    for (Iterator<Module> i = graph.getOut(module); i.hasNext();) {
+    for (Iterator<Module> i = graph.getOut(module); i.hasNext(); ) {
       list.add(i.next());
     }
     return list;
+  }
+
+  private ModifiableWorkspace doGetModifiableWorkspace() {
+    return ReadAction.compute(() ->
+                                ServiceManager.getService(myProject, ExternalProjectsWorkspaceImpl.class)
+                                              .createModifiableWorkspace(this));
   }
 
   private Graph<Module> getModuleGraph() {
@@ -407,30 +420,40 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
         updateSubstitutions();
       }
       processExternalArtifactDependencies();
-      for (Library.ModifiableModel each : myModifiableLibraryModels.values()) {
-        each.commit();
+      for (Map.Entry<Library, Library.ModifiableModel> entry: myModifiableLibraryModels.entrySet()) {
+        Library fromLibrary = entry.getKey();
+        Library.ModifiableModel modifiableModel = entry.getValue();
+        // removed and (previously) not committed library is being disposed by LibraryTableBase.LibraryModel.removeLibrary
+        // the modifiable model of such library shouldn't be committed
+        if (fromLibrary instanceof LibraryEx && ((LibraryEx)fromLibrary).isDisposed()) {
+          Disposer.dispose(modifiableModel);
+        }
+        else {
+          modifiableModel.commit();
+        }
       }
       getModifiableProjectLibrariesModel().commit();
 
       Collection<ModifiableRootModel> rootModels = myModifiableRootModels.values();
-      ModifiableRootModel[] rootModels1 = rootModels.toArray(new ModifiableRootModel[rootModels.size()]);
-      for (ModifiableRootModel model : rootModels1) {
+      ModifiableRootModel[] rootModels1 = rootModels.toArray(new ModifiableRootModel[0]);
+      for (ModifiableRootModel model: rootModels1) {
         assert !model.isDisposed() : "Already disposed: " + model;
       }
 
       if (myModifiableModuleModel != null) {
         ModifiableModelCommitter.multiCommit(rootModels1, myModifiableModuleModel);
-      } else {
-        for (ModifiableRootModel model : rootModels1) {
+      }
+      else {
+        for (ModifiableRootModel model: rootModels1) {
           model.commit();
         }
       }
-      for (Map.Entry<Module, String> entry : myProductionModulesForTestModules.entrySet()) {
+      for (Map.Entry<Module, String> entry: myProductionModulesForTestModules.entrySet()) {
         TestModuleProperties.getInstance(entry.getKey()).setProductionModuleName(entry.getValue());
       }
 
-      for (Map.Entry<Module, ModifiableFacetModel> each : myModifiableFacetModels.entrySet()) {
-        if(!each.getKey().isDisposed()) {
+      for (Map.Entry<Module, ModifiableFacetModel> each: myModifiableFacetModels.entrySet()) {
+        if (!each.getKey().isDisposed()) {
           each.getValue().commit();
         }
       }
@@ -443,18 +466,22 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
 
   @Override
   public void dispose() {
-    for (ModifiableRootModel each : myModifiableRootModels.values()) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    assert !myDisposed : "Already disposed!";
+    myDisposed = true;
+
+    for (ModifiableRootModel each: myModifiableRootModels.values()) {
       if (each.isDisposed()) continue;
       each.dispose();
     }
     Disposer.dispose(getModifiableProjectLibrariesModel());
 
-    for (Library.ModifiableModel each : myModifiableLibraryModels.values()) {
+    for (Library.ModifiableModel each: myModifiableLibraryModels.values()) {
       if (each instanceof LibraryEx && ((LibraryEx)each).isDisposed()) continue;
       Disposer.dispose(each);
     }
 
-    if(myModifiableModuleModel != null) {
+    if (myModifiableModuleModel != null && myModifiableModuleModel.isChanged()) {
       myModifiableModuleModel.dispose();
     }
     if (myModifiableArtifactModel != null) {
@@ -490,11 +517,12 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
       ModuleOrderEntry moduleOrderEntry = modifiableRootModel.addModuleOrderEntry(workspaceModule);
       moduleOrderEntry.setScope(libraryOrderEntry.getScope());
       moduleOrderEntry.setExported(libraryOrderEntry.isExported());
-      assert myModifiableWorkspace != null;
-      myModifiableWorkspace.addSubstitution(ownerModule.getName(),
-                                            workspaceModule.getName(),
-                                            libraryOrderEntry.getLibraryName(),
-                                            libraryOrderEntry.getScope());
+      ModifiableWorkspace workspace = getModifiableWorkspace();
+      assert workspace != null;
+      workspace.addSubstitution(ownerModule.getName(),
+                                workspaceModule.getName(),
+                                libraryOrderEntry.getLibraryName(),
+                                libraryOrderEntry.getScope());
       modifiableRootModel.removeOrderEntry(libraryOrderEntry);
       return moduleOrderEntry;
     }
@@ -502,15 +530,17 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
 
   @Override
   public void registerModulePublication(Module module, ProjectCoordinate modulePublication) {
-    if (myModifiableWorkspace != null) {
-      myModifiableWorkspace.register(modulePublication, module);
+    ModifiableWorkspace workspace = getModifiableWorkspace();
+    if (workspace != null) {
+      workspace.register(modulePublication, module);
     }
   }
 
   @Override
   public boolean isSubstituted(String libraryName) {
-    if (myModifiableWorkspace == null) return false;
-    return myModifiableWorkspace.isSubstituted(libraryName);
+    ModifiableWorkspace workspace = getModifiableWorkspace();
+    if (workspace == null) return false;
+    return workspace.isSubstituted(libraryName);
   }
 
   @Nullable
@@ -527,33 +557,35 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
   @Nullable
   @Override
   public String findModuleByPublication(ProjectCoordinate publicationId) {
-    return myModifiableWorkspace == null ? null : myModifiableWorkspace.findModule(publicationId);
+    ModifiableWorkspace workspace = getModifiableWorkspace();
+    return workspace == null ? null : workspace.findModule(publicationId);
   }
 
   private void updateSubstitutions() {
-    if (myModifiableWorkspace == null) return;
+    ModifiableWorkspace workspace = getModifiableWorkspace();
+    if (workspace == null) return;
 
     final List<String> oldModules = Arrays.stream(ModuleManager.getInstance(myProject).getModules())
-      .map(module -> module.getName()).collect(Collectors.toList());
+                                          .map(module -> module.getName()).collect(Collectors.toList());
     final List<String> newModules = Arrays.stream(myModifiableModuleModel.getModules())
-      .map(module -> module.getName()).collect(Collectors.toList());
+                                          .map(module -> module.getName()).collect(Collectors.toList());
 
     final Collection<String> removedModules = new THashSet<>(oldModules);
     removedModules.removeAll(newModules);
 
 
     Map<String, String> toSubstitute = ContainerUtil.newHashMap();
-    for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
+    for (ExternalSystemManager<?, ?, ?, ?, ?> manager: ExternalSystemApiUtil.getAllManagers()) {
       final Collection<ExternalProjectInfo> projectsData =
         ProjectDataManager.getInstance().getExternalProjectsData(myProject, manager.getSystemId());
-      for (ExternalProjectInfo projectInfo : projectsData) {
+      for (ExternalProjectInfo projectInfo: projectsData) {
         if (projectInfo.getExternalProjectStructure() == null) {
           continue;
         }
 
         Collection<DataNode<LibraryData>> libraryNodes =
           ExternalSystemApiUtil.findAll(projectInfo.getExternalProjectStructure(), ProjectKeys.LIBRARY);
-        for (DataNode<LibraryData> libraryNode : libraryNodes) {
+        for (DataNode<LibraryData> libraryNode: libraryNodes) {
           String substitutionModuleCandidate = findModuleByPublication(libraryNode.getData());
           if (substitutionModuleCandidate != null) {
             toSubstitute.put(libraryNode.getData().getInternalName(), substitutionModuleCandidate);
@@ -562,7 +594,7 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
       }
     }
 
-    for (Module module : getModules()) {
+    for (Module module: getModules()) {
       ModifiableRootModel modifiableRootModel = getModifiableRootModel(module);
       boolean changed = false;
       OrderEntry[] entries = modifiableRootModel.getOrderEntries();
@@ -572,15 +604,15 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
           String workspaceModule = ((ModuleOrderEntry)orderEntry).getModuleName();
           if (removedModules.contains(workspaceModule)) {
             DependencyScope scope = ((ModuleOrderEntry)orderEntry).getScope();
-            if (myModifiableWorkspace.isSubstitution(module.getName(), workspaceModule, scope)) {
-              String libraryName = myModifiableWorkspace.getSubstitutedLibrary(workspaceModule);
+            if (workspace.isSubstitution(module.getName(), workspaceModule, scope)) {
+              String libraryName = workspace.getSubstitutedLibrary(workspaceModule);
               if (libraryName != null) {
                 Library library = getLibraryByName(libraryName);
                 if (library != null) {
                   modifiableRootModel.removeOrderEntry(orderEntry);
                   entries[i] = modifiableRootModel.addLibraryEntry(library);
                   changed = true;
-                  myModifiableWorkspace.removeSubstitution(module.getName(), workspaceModule, libraryName, scope);
+                  workspace.removeSubstitution(module.getName(), workspaceModule, libraryName, scope);
                 }
               }
             }
@@ -599,9 +631,9 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
               modifiableRootModel.removeOrderEntry(orderEntry);
               entries[i] = moduleOrderEntry;
               changed = true;
-              myModifiableWorkspace.addSubstitution(module.getName(), workspaceModule,
-                                                    libraryOrderEntry.getLibraryName(),
-                                                    libraryOrderEntry.getScope());
+              workspace.addSubstitution(module.getName(), workspaceModule,
+                                        libraryOrderEntry.getLibraryName(),
+                                        libraryOrderEntry.getScope());
             }
           }
         }
@@ -611,6 +643,6 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
       }
     }
 
-    myModifiableWorkspace.commit();
+    workspace.commit();
   }
 }

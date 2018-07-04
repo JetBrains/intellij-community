@@ -30,6 +30,11 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
 
   public ModuleTypeManagerImpl() {
     registerModuleType(getDefaultModuleType(), true);
+    for (ModuleTypeEP ep : ModuleTypeEP.EP_NAME.getExtensions()) {
+      if (ep.id == null) {
+        LOG.error("'id' attribute isn't specified for <moduleType implementationClass='" + ep.implementationClass + "'> extension");
+      }
+    }
   }
 
   @Override
@@ -51,13 +56,12 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
 
   @Override
   public ModuleType[] getRegisteredTypes() {
-    List<ModuleType> result = new ArrayList<>();
-    result.addAll(myModuleTypes.keySet());
+    List<ModuleType> result = new ArrayList<>(myModuleTypes.keySet());
     for (ModuleTypeEP moduleTypeEP : Extensions.getExtensions(ModuleTypeEP.EP_NAME)) {
       result.add(moduleTypeEP.getModuleType());
     }
 
-    return result.toArray(new ModuleType[result.size()]);
+    return result.toArray(new ModuleType[0]);
   }
 
   @Override
@@ -69,7 +73,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
       }
     }
     for (ModuleTypeEP ep : Extensions.getExtensions(ModuleTypeEP.EP_NAME)) {
-      if (ep.id.equals(moduleTypeID)) {
+      if (moduleTypeID.equals(ep.id)) {
         return ep.getModuleType();
       }
     }
@@ -80,7 +84,7 @@ public class ModuleTypeManagerImpl extends ModuleTypeManager {
   @Override
   public boolean isClasspathProvider(final ModuleType moduleType) {
     for (ModuleTypeEP ep : Extensions.getExtensions(ModuleTypeEP.EP_NAME)) {
-      if (ep.id.equals(moduleType.getId())) {
+      if (moduleType.getId().equals(ep.id)) {
         return ep.classpathProvider;
       }
     }

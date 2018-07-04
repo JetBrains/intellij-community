@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.IconButton;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -30,11 +31,11 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -43,7 +44,7 @@ import java.awt.event.MouseEvent;
 
 public class InlineProgressIndicator extends ProgressIndicatorBase implements Disposable {
 
-  private final TextPanel myText = new TextPanel();
+  protected final TextPanel myText = new TextPanel();
   private final TextPanel myText2 = new TextPanel();
   private final JBIterable<ProgressButton> myEastButtons;
 
@@ -62,39 +63,25 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     myInfo = processInfo;
 
     myProgress = new JProgressBar(SwingConstants.HORIZONTAL);
-    myProgress.putClientProperty("JComponent.sizeVariant", "mini");
+    UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, myProgress);
 
     myComponent = new MyComponent(compact, myProcessName);
     myEastButtons = createEastButtons();
-    myEastButtons.forEach(b -> b.button.setOpaque(false));
     if (myCompact) {
-      myComponent.setOpaque(false);
       myComponent.setLayout(new BorderLayout(2, 0));
-      JPanel textAndProgress = new NonOpaquePanel(new BorderLayout());
-      textAndProgress.add(myText, BorderLayout.CENTER);
-
-      final NonOpaquePanel progressWrapper = new NonOpaquePanel(new GridBagLayout());
-      progressWrapper.setBorder(BorderFactory.createEmptyBorder(0, 4, 0, 0));
-      final GridBagConstraints c = new GridBagConstraints();
-      c.weightx = 1;
-      c.weighty = 1;
-      c.insets = new Insets(1, 0, 1, myInfo.isCancellable() ? 0 : 4);
-      c.fill = GridBagConstraints.HORIZONTAL;
-      progressWrapper.add(myProgress, c);
-
-      textAndProgress.add(progressWrapper, BorderLayout.EAST);
-      myComponent.add(textAndProgress, BorderLayout.CENTER);
+      createCompactTextAndProgress();
       myComponent.add(createButtonPanel(myEastButtons.map(b -> b.button)), BorderLayout.EAST);
       myComponent.setToolTipText(processInfo.getTitle() + ". " + IdeBundle.message("progress.text.clickToViewProgressWindow"));
-    } else {
+    } 
+    else {
       myComponent.setLayout(new BorderLayout());
       myProcessName.setText(processInfo.getTitle());
       myComponent.add(myProcessName, BorderLayout.NORTH);
       myProcessName.setForeground(UIUtil.getPanelBackground().brighter().brighter());
-      myProcessName.setBorder(new EmptyBorder(2, 2, 2, 2));
+      myProcessName.setBorder(JBUI.Borders.empty(2));
 
       final NonOpaquePanel content = new NonOpaquePanel(new BorderLayout());
-      content.setBorder(new EmptyBorder(2, 2, 2, myInfo.isCancellable() ? 2 : 4));
+      content.setBorder(JBUI.Borders.empty(2, 2, 2, myInfo.isCancellable() ? 2 : 4));
       myComponent.add(content, BorderLayout.CENTER);
 
       content.add(createButtonPanel(myEastButtons.map(b -> withBorder(b.button))), BorderLayout.EAST);
@@ -102,8 +89,9 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       content.add(myProgress, BorderLayout.CENTER);
       content.add(myText2, BorderLayout.SOUTH);
 
-      myComponent.setBorder(new EmptyBorder(2, 2, 2, 2));
+      myComponent.setBorder(JBUI.Borders.empty(2));
     }
+    UIUtil.uiTraverser(myComponent).forEach(o -> ((JComponent)o).setOpaque(false));
 
     if (!myCompact) {
       myProcessName.recomputeSize();
@@ -111,6 +99,18 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
       myText2.recomputeSize();
     }
 
+  }
+
+  protected void createCompactTextAndProgress() {
+    JPanel textAndProgress = new NonOpaquePanel(new BorderLayout());
+    textAndProgress.add(myText, BorderLayout.CENTER);
+
+    final NonOpaquePanel progressWrapper = new NonOpaquePanel(new BorderLayout());
+    progressWrapper.setBorder(JBUI.Borders.empty(0, 4));
+    progressWrapper.add(myProgress, BorderLayout.CENTER);
+
+    textAndProgress.add(progressWrapper, BorderLayout.EAST);
+    myComponent.add(textAndProgress, BorderLayout.CENTER);
   }
 
   static JPanel createButtonPanel(Iterable<JComponent> components) {
@@ -124,7 +124,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
   private static Wrapper withBorder(InplaceButton button) {
     Wrapper wrapper = new Wrapper(button);
-    wrapper.setBorder(new EmptyBorder(0, 3, 0, 2));
+    wrapper.setBorder(JBUI.Borders.empty(0, 3, 0, 2));
     return wrapper;
   }
 
@@ -166,8 +166,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
   }
 
   public void updateProgressNow() {
-    boolean indeterminate = isIndeterminate() || getFraction() == 0;
-    if (indeterminate) {
+    if (isPaintingIndeterminate()) {
       myProgress.setIndeterminate(true);
     }
     else {
@@ -182,7 +181,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     myText.setText(getText() != null ? getText() : "");
     myText2.setText(getText2() != null ? getText2() : "");
 
-    if (myCompact && myText.getText().isEmpty()) {
+    if (myCompact && StringUtil.isEmpty(myText.getText())) {
       myText.setText(myInfo.getTitle());
     }
 
@@ -202,6 +201,10 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     }
     
     myEastButtons.forEach(b -> b.updateAction.run());
+  }
+
+  protected boolean isPaintingIndeterminate() {
+    return isIndeterminate() || getFraction() == 0;
   }
 
   private boolean isStopping() {

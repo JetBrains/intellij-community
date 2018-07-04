@@ -19,6 +19,7 @@ package com.intellij.openapi.keymap.impl.ui;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.KeyStrokeAdapter;
+import com.intellij.util.ui.accessibility.ScreenReader;
 
 import javax.swing.*;
 import javax.swing.text.DefaultCaret;
@@ -51,15 +52,26 @@ public final class ShortcutTextField extends JTextField {
     if (e.getID() == KeyEvent.KEY_PRESSED) {
       int keyCode = e.getKeyCode();
 
-      if (keyCode == KeyEvent.VK_SHIFT ||
-          keyCode == KeyEvent.VK_ALT ||
-          keyCode == KeyEvent.VK_CONTROL ||
-          keyCode == KeyEvent.VK_ALT_GRAPH ||
-          keyCode == KeyEvent.VK_META ||
-          absolutelyUnknownKey(e)) {
-        return;
+      if (keyCode != KeyEvent.VK_SHIFT &&
+          keyCode != KeyEvent.VK_ALT &&
+          keyCode != KeyEvent.VK_CONTROL &&
+          keyCode != KeyEvent.VK_ALT_GRAPH &&
+          keyCode != KeyEvent.VK_META &&
+          !absolutelyUnknownKey(e))
+      {
+        setKeyStroke(KeyStrokeAdapter.getDefaultKeyStroke(e));
       }
-      setKeyStroke(KeyStrokeAdapter.getDefaultKeyStroke(e));
+    }
+    // Ensure TAB/Shift-TAB work as focus traversal keys, otherwise
+    // there is no proper way to move the focus outside the text field.
+    if (ScreenReader.isActive()) {
+      setFocusTraversalKeysEnabled(true);
+      try {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().processKeyEvent(this, e);
+      }
+      finally {
+        setFocusTraversalKeysEnabled(false);
+      }
     }
   }
 

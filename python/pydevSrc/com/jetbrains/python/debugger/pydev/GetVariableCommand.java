@@ -1,6 +1,7 @@
 package com.jetbrains.python.debugger.pydev;
 
 import com.jetbrains.python.debugger.PyDebugValue;
+import org.jetbrains.annotations.NotNull;
 
 
 public class GetVariableCommand extends GetFrameCommand {
@@ -15,6 +16,13 @@ public class GetVariableCommand extends GetFrameCommand {
     myParent = var;
   }
 
+  /**
+   * Return a full path in a variables tree from the top-level parent to the debug value
+   *
+   * @param var a debug variable
+   * @return A string of attributes in a path separated by \t
+   */
+  @NotNull
   public static String composeName(final PyDebugValue var) {
     final StringBuilder sb = new StringBuilder();
     PyDebugValue p = var;
@@ -26,7 +34,10 @@ public class GetVariableCommand extends GetFrameCommand {
         sb.insert(0, BY_ID).insert(0, '\t').insert(0, p.getId());
         break;
       } else {
-        sb.insert(0, p.getTempName().replaceAll("\t", TAB_CHAR));
+        final String tempName = p.getTempName();
+        if (tempName != null) {
+          sb.insert(0, tempName.replaceAll("\t", TAB_CHAR));
+        }
       }
       p = p.getParent();
     }
@@ -50,8 +61,9 @@ public class GetVariableCommand extends GetFrameCommand {
 
   @Override
   protected PyDebugValue extend(final PyDebugValue value) {
-    return new PyDebugValue(value.getName(), value.getType(), value.getTypeQualifier(), value.getValue(), value.isContainer(),
-                            value.isReturnedVal(), value.isIPythonHidden(), value.isErrorOnEval(), myParent,
-                            myDebugProcess);
+    PyDebugValue debugValue = new PyDebugValue(value);
+    debugValue.setParent(myParent);
+    debugValue.setFrameAccessor(myDebugProcess);
+    return debugValue;
   }
 }

@@ -1,0 +1,4 @@
+deprecated: newFolder.svg -> /nodes/folder.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Folder
+deprecated: ppFile.png -> /nodes/folder.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Folder
+deprecated: TreeClosed.png -> /nodes/folder.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Folder
+deprecated: TreeOpen.png -> /nodes/folder.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.Folder

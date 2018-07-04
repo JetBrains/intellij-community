@@ -17,9 +17,10 @@ from _pydevd_bundle.pydevd_comm import CMD_RUN, CMD_VERSION, CMD_LIST_THREADS, C
     CMD_REMOVE_EXCEPTION_BREAK, CMD_LOAD_SOURCE, CMD_ADD_DJANGO_EXCEPTION_BREAK, CMD_REMOVE_DJANGO_EXCEPTION_BREAK, \
     CMD_EVALUATE_CONSOLE_EXPRESSION, InternalEvaluateConsoleExpression, InternalConsoleGetCompletions, \
     CMD_RUN_CUSTOM_OPERATION, InternalRunCustomOperation, CMD_IGNORE_THROWN_EXCEPTION_AT, CMD_ENABLE_DONT_TRACE, \
-    CMD_SHOW_RETURN_VALUES, ID_TO_MEANING, CMD_GET_DESCRIPTION, InternalGetDescription
-from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_contains, dict_keys, \
-    STATE_RUN
+    CMD_SHOW_RETURN_VALUES, ID_TO_MEANING, CMD_GET_DESCRIPTION, InternalGetDescription, InternalLoadFullValue, \
+    CMD_LOAD_FULL_VALUE
+from _pydevd_bundle.pydevd_constants import get_thread_id, IS_PY3K, DebugInfoHolder, dict_keys, STATE_RUN, \
+    NEXT_VALUE_SEPARATOR
 
 
 def process_net_command(py_db, cmd_id, seq, text):
@@ -84,7 +85,7 @@ def process_net_command(py_db, cmd_id, seq, text):
             elif cmd_id == CMD_THREAD_SUSPEND:
                 # Yes, thread suspend is still done at this point, not through an internal command!
                 t = pydevd_find_thread_by_id(text)
-                if t and not hasattr(t, 'pydev_do_not_trace'):
+                if t and not getattr(t, 'pydev_do_not_trace', None):
                     additional_info = None
                     try:
                         additional_info = t.additional_info
@@ -127,9 +128,12 @@ def process_net_command(py_db, cmd_id, seq, text):
             elif cmd_id == CMD_RUN_TO_LINE or cmd_id == CMD_SET_NEXT_STATEMENT or cmd_id == CMD_SMART_STEP_INTO:
                 # we received some command to make a single step
                 thread_id, line, func_name = text.split('\t', 2)
+                if func_name == "None":
+                    # global context
+                    func_name = ''
                 t = pydevd_find_thread_by_id(thread_id)
                 if t:
-                    int_cmd = InternalSetNextStatementThread(thread_id, cmd_id, line, func_name)
+                    int_cmd = InternalSetNextStatementThread(thread_id, cmd_id, line, func_name, seq)
                     py_db.post_internal_command(int_cmd, thread_id)
                 elif thread_id.startswith('__frame__:'):
                     sys.stderr.write("Can't set next statement in tasklet: %s\n" % (thread_id,))
@@ -214,6 +218,16 @@ def process_net_command(py_db, cmd_id, seq, text):
                             py_db.remove_return_values_flag = True
                         py_db.show_return_values = False
                     pydev_log.debug("Show return values: %s\n" % py_db.show_return_values)
+                except:
+                    traceback.print_exc()
+
+            elif cmd_id == CMD_LOAD_FULL_VALUE:
+                try:
+                    thread_id, frame_id, scopeattrs = text.split('\t', 2)
+                    vars = scopeattrs.split(NEXT_VALUE_SEPARATOR)
+
+                    int_cmd = InternalLoadFullValue(seq, thread_id, frame_id, vars)
+                    py_db.post_internal_command(int_cmd, thread_id)
                 except:
                     traceback.print_exc()
 
@@ -316,7 +330,7 @@ def process_net_command(py_db, cmd_id, seq, text):
                     pydev_log.debug('Added breakpoint:%s - line:%s - func_name:%s\n' % (file, line, func_name.encode('utf-8')))
                     sys.stderr.flush()
 
-                if dict_contains(file_to_id_to_breakpoint, file):
+                if file in file_to_id_to_breakpoint:
                     id_to_pybreakpoint = file_to_id_to_breakpoint[file]
                 else:
                     id_to_pybreakpoint = file_to_id_to_breakpoint[file] = {}

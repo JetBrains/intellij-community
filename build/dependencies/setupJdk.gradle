@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 task setupJdks(dependsOn: ['setupJdk18', 'setupJdk16'])
 cleanSetupJdks.dependsOn('cleanSetupJdk18', 'cleanSetupJdk16', 'cleanDownloadJdk18')
 
@@ -37,7 +23,7 @@ task downloadJdk18 {
     download {
       src "$jdkRepo/intellij-jdk/${artifactName}"
       dest outputFile
-      onlyIfNewer true
+      tempAndMove true
     }
   }
 }
@@ -57,7 +43,9 @@ task setupJdk18(dependsOn: downloadJdk18) {
 
 def unpackJdk(jdkArchive, outputDir) {
   logger.info("Unpacking $jdkArchive to ${outputDir}")
-  file(outputDir).deleteDir()
+  if (file(outputDir).exists()) {
+    delete(outputDir)
+  }
   def currentOs = org.gradle.internal.os.OperatingSystem.current()
   if (currentOs.isWindows()) {
     copy {
@@ -68,11 +56,9 @@ def unpackJdk(jdkArchive, outputDir) {
   else {
     exec { commandLine 'mkdir', '-p', outputDir }
     exec { commandLine 'tar', 'xpf', "$jdkArchive.absolutePath", '--directory', outputDir }
-    def jdkContents = file("${outputDir}/jdk/Contents")
-    if (currentOs.isMacOsX() && jdkContents.exists()) {
-      jdkContents.listFiles().each { file ->
-        exec { commandLine 'mv', "$file.absolutePath", outputDir }
-      }
+    if (currentOs.isMacOsX() && file("${outputDir}/jdk/Contents").exists()) {
+      exec { commandLine 'mv', "${outputDir}/jdk/Contents", outputDir }
+      exec { commandLine 'rm', '-rf', "${outputDir}/jdk" }
     }
   }
 }
@@ -127,15 +113,29 @@ task setupJdk16(dependsOn: configurations.jdk16) {
     logger.info("Setting up JDK 1.6 to compile")
     unpackJdk(jdkArchive.call(), outputDir)
     deleteBrokenSymlink(outputDir)
+    createMissingLauncher(outputDir)
   }
 }
 
-// Gradle dies on tring to process broken links: https://issues.gradle.org/browse/GRADLE-1843
-private void deleteBrokenSymlink(def outputDir) {
+// Gradle dies on trying to process broken links: https://issues.gradle.org/browse/GRADLE-1843
+private void deleteBrokenSymlink(String outputDir) {
   if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
-    def pluginJar = file("$outputDir/Home/lib/plugin.jar")
+    def pluginJar = file("$outputDir/Contents/Home/lib/plugin.jar")
     if (!pluginJar.exists()) {
-      pluginJar.delete()
+      if (!pluginJar.delete()) {
+        logger.info("Couldn't remove plugin.jar from JDK 1.6")
+      }
+    }
+  }
+}
+
+// some JPS builders rely on a launcher presence in <JDK>/bin directory
+private void createMissingLauncher(String outputDir) {
+  if (!new File(outputDir, "bin").exists() && new File(outputDir, "jre/bin").exists()) {
+    copy {
+      from file(new File(outputDir, "jre/bin"))
+      into file(new File(outputDir, "bin"))
+      include 'java*'
     }
   }
 }
@@ -143,8 +143,14 @@ private void deleteBrokenSymlink(def outputDir) {
 setupJdk16.onlyIf { inJetBrainsNetwork }
 
 def intellijProjectDir() {
-  def communityDir = project.file("../..")
-  communityDir.name == 'community' ? communityDir.parent : communityDir
+  def projectDir = project.file("../..")
+  if (projectDir.name == 'community') {
+    while (new File(projectDir.parentFile, ".idea").exists() && !new File(projectDir.parentFile, '.idea/.notIdeaProject').exists()) {
+      projectDir = projectDir.parentFile
+    }
+    return projectDir
+  }
+  return projectDir
 }
 
 static def jdk16Version() {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.completion;
 
 
@@ -33,19 +19,15 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.or;
-import static java.util.Arrays.asList;
 
 public class PyStringFormatCompletionContributor extends CompletionContributor {
   private static final String DICT_NAME = "dict";
-  
+
   private static final PatternCondition<PyReferenceExpression> FORMAT_CALL_PATTERN_CONDITION =
     new PatternCondition<PyReferenceExpression>("isFormatFunction") {
 
@@ -167,7 +149,7 @@ public class PyStringFormatCompletionContributor extends CompletionContributor {
             }
           }
         }
-        else if (PyUtil.instanceOf(parent, PyKeywordArgument.class, PyReferenceExpression.class)) {
+        else if (PsiTreeUtil.instanceOf(parent, PyKeywordArgument.class, PyReferenceExpression.class)) {
           result.addAllElements(getElementsFromString(PsiTreeUtil.getParentOfType(original, PyArgumentList.class)));
         }
       }
@@ -267,7 +249,7 @@ public class PyStringFormatCompletionContributor extends CompletionContributor {
             final PyExpression callee = callExpression.getCallee();
             if (callee != null && callee.getName() != null && callee.getName().equals(DICT_NAME)) {
               final PyExpression[] arguments = callExpression.getArguments();
-              return asList(arguments).stream()
+              return Arrays.stream(arguments)
                 .filter(a -> a instanceof PyKeywordArgument)
                 .map(a -> getKeywordArgument((PyKeywordArgument)a))
                 .filter(e -> e != null)
@@ -314,13 +296,13 @@ public class PyStringFormatCompletionContributor extends CompletionContributor {
     private static List<LookupElement> getKeysFromStarArgument(@NotNull final PyStarArgument arg) {
       final PyDictLiteralExpression dict = ObjectUtils.chooseNotNull(PsiTreeUtil.getChildOfType(arg, PyDictLiteralExpression.class),
                                                                      getDictFromReference(arg));
-      
+
       return dict != null ? getElementsFromDict(dict) : Collections.emptyList();
     }
 
     @NotNull
     private static List<LookupElement> getElementsFromDict(@NotNull final PyDictLiteralExpression dict) {
-      return asList(dict.getElements()).stream()
+      return Arrays.stream(dict.getElements())
         .map(e -> PyUtil.as(e.getKey(), PyStringLiteralExpression.class))
         .filter(k-> k != null)
         .map(k -> createLookUpElement(k.getStringValue()))

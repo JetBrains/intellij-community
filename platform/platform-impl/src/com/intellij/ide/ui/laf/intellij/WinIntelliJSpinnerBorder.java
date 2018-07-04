@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerBorder;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -31,27 +32,36 @@ public class WinIntelliJSpinnerBorder extends DarculaSpinnerBorder {
     JSpinner spinner = (JSpinner)c;
     Graphics2D g2 = (Graphics2D)g.create();
     try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
       Rectangle r = new Rectangle(x, y, width, height);
-      JBInsets.removeFrom(r, JBUI.insets(1, 1, 1, WinIntelliJSpinnerUI.BUTTON_WIDTH - 1));
 
-      boolean hover = spinner.getClientProperty(WinIntelliJSpinnerUI.HOVER_PROPERTY) == Boolean.TRUE;
-      if (c.isEnabled()) {
+      int bw = 1;
+      Object op = spinner.getClientProperty("JComponent.outline");
 
+      if (op != null) {
+        DarculaUIUtil.Outline.valueOf(op.toString()).setGraphicsColor(g2, DarculaSpinnerBorder.isFocused(c));
+        bw = 2;
+      } else if (c.isEnabled()) {
+        boolean hover = spinner.getClientProperty(WinIntelliJSpinnerUI.HOVER_PROPERTY) == Boolean.TRUE;
         if (DarculaSpinnerBorder.isFocused(c)) {
           g2.setColor(UIManager.getColor("TextField.focusedBorderColor"));
         } else {
           g2.setColor(UIManager.getColor(hover ? "TextField.hoverBorderColor" : "TextField.borderColor"));
         }
+        JBInsets.removeFrom(r, JBUI.insets(1, 1, 1, WinIntelliJSpinnerUI.BUTTON_WIDTH));
       } else {
         g2.setColor(UIManager.getColor("Button.intellij.native.borderColor"));
         g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.35f));
+        JBInsets.removeFrom(r, JBUI.insets(1, 1, 1, WinIntelliJSpinnerUI.BUTTON_WIDTH));
       }
 
-      Path2D border = new Path2D.Double(Path2D.WIND_EVEN_ODD);
+      Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
       border.append(r, false);
 
       Rectangle innerRect = new Rectangle(r);
-      JBInsets.removeFrom(innerRect, JBUI.insets(1));
+      JBInsets.removeFrom(innerRect, JBUI.insets(bw));
       border.append(innerRect, false);
 
       g2.fill(border);
@@ -63,6 +73,6 @@ public class WinIntelliJSpinnerBorder extends DarculaSpinnerBorder {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return new JBInsets(2, 2, 2, 2).asUIResource();
+    return JBUI.insets(1).asUIResource();
   }
 }

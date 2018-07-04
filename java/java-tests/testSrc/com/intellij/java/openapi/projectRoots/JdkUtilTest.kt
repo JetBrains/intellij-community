@@ -145,7 +145,7 @@ class JdkUtilTest : BareTestFixtureTestCase() {
       path.matches("$tempDir/idea_vm_params\\d*".toRegex()) -> "#vm_params#"
       path.matches("$tempDir/idea_app_params\\d*".toRegex()) -> "#app_params#"
       path.matches("@$tempDir/idea_arg_file\\d*".toRegex()) -> "#arg_file#"
-      path.endsWith("/java-runtime") || path.endsWith("/idea_rt.jar") -> "#idea_rt#"
+      path.endsWith("/intellij.java.rt") || path.endsWith("/idea_rt.jar") -> "#idea_rt#"
       else -> path
     }
   }
@@ -154,5 +154,6 @@ class JdkUtilTest : BareTestFixtureTestCase() {
     parameters.modulePath.addAll(parameters.classPath.pathList)
     parameters.classPath.clear()
     parameters.moduleName = "hello"
+    parameters.isArgFile = true
   }
 }

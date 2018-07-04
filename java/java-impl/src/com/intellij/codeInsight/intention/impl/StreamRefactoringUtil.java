@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author Tagir Valeev
- */
 public class StreamRefactoringUtil {
   static boolean isRefactoringCandidate(PsiExpression expression, boolean requireExpressionLambda) {
     if(expression instanceof PsiLambdaExpression) {

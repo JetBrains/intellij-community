@@ -16,6 +16,7 @@
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
 /**
@@ -25,7 +26,7 @@ public class CreateClassFromNewTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    CodeStyleSettingsManager.getSettings(getProject()).SPACE_BEFORE_CLASS_LBRACE = true;
+    CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).SPACE_BEFORE_CLASS_LBRACE = true;
   }
 
   public void test() {

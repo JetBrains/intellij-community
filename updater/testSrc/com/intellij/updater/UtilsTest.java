@@ -66,20 +66,20 @@ public class UtilsTest {
     File f = tempDir.newFile("temp_file");
     assertTrue(f.exists());
 
-    long millis = 0;
+    long ts = 0;
     try (FileWriter fw = new FileWriter(f)) {
       // This locks the file on Windows, preventing it from being deleted.
       // Utils.delete() will retry for about 100 ms.
       fw.write("test");
-      millis = System.currentTimeMillis();
+      ts = System.nanoTime();
 
       Utils.delete(f);
       fail("Utils.delete did not fail with the expected IOException on Windows");
     }
     catch (IOException e) {
-      millis = System.currentTimeMillis() - millis;
+      ts = (System.nanoTime() - ts) / 1_000_000;
       assertEquals("Cannot delete: " + f.getAbsolutePath(), e.getMessage());
-      assertThat(millis).as("Utils.delete took " + millis + " ms, which is less than expected").isGreaterThanOrEqualTo(100);
+      assertThat(ts).as("Utils.delete took " + ts + " ms, which is less than expected").isGreaterThanOrEqualTo(95);
     }
   }
 

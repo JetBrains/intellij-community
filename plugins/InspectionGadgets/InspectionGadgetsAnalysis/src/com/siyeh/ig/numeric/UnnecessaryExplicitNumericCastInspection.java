@@ -88,7 +88,7 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
         return;
       }
       final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)parent;
-      if (isPrimitiveNumericCastNecessary(typeCastExpression)) {
+      if (!isUnnecessaryPrimitiveNumericCast(typeCastExpression)) {
         return;
       }
       PsiElement grandParent = parent.getParent();
@@ -116,38 +116,33 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
     @Override
     public void visitTypeCastExpression(PsiTypeCastExpression expression) {
       super.visitTypeCastExpression(expression);
-      final PsiType castType = expression.getType();
-      if (!ClassUtils.isPrimitiveNumericType(castType)) {
-        return;
-      }
-      final PsiExpression operand = expression.getOperand();
-      if (operand == null) {
-        return;
-      }
-      final PsiType operandType = operand.getType();
-      if (castType.equals(operandType) || isPrimitiveNumericCastNecessary(expression)) {
+      if (!isUnnecessaryPrimitiveNumericCast(expression)) {
         // equal types is caught by "Redundant type cast" inspection
         return;
       }
       final PsiTypeElement typeElement = expression.getCastType();
       if (typeElement != null) {
-        registerError(typeElement, ProblemHighlightType.LIKE_UNUSED_SYMBOL, operand);
+        registerError(typeElement, ProblemHighlightType.LIKE_UNUSED_SYMBOL, expression.getOperand());
       }
     }
   }
 
-  public static boolean isPrimitiveNumericCastNecessary(PsiTypeCastExpression expression) {
+  public static boolean isUnnecessaryPrimitiveNumericCast(PsiTypeCastExpression expression) {
     final PsiType castType = expression.getType();
-    if (castType == null) {
-      return true;
+    if (!ClassUtils.isPrimitiveNumericType(castType)) {
+      return false;
     }
     final PsiExpression operand = expression.getOperand();
     if (operand == null) {
-      return true;
+      return false;
     }
     final PsiType operandType = operand.getType();
-    if (!(operandType instanceof PsiPrimitiveType)) {
-      return true;
+    if (!ClassUtils.isPrimitiveNumericType(operandType)) {
+      return false;
+    }
+    if (castType.equals(operandType)) {
+      // cast to the same type is caught by "Redundant type cast" inspection
+      return false;
     }
     PsiElement parent = expression.getParent();
     while (parent instanceof PsiParenthesizedExpression) {
@@ -158,25 +153,25 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
       final IElementType tokenType = polyadicExpression.getOperationTokenType();
       if (binaryPromotionOperators.contains(tokenType)) {
         if (TypeUtils.isNarrowingConversion(operandType, castType)) {
-          return true;
+          return false;
         }
         if (PsiType.INT.equals(castType)) {
           if (PsiType.CHAR.equals(operandType) && TypeUtils.getStringType(polyadicExpression).equals(polyadicExpression.getType())) {
-            return true;
+            return false;
           }
-          return PsiType.LONG.equals(operandType) || PsiType.FLOAT.equals(operandType) || PsiType.DOUBLE.equals(operandType);
+          return !PsiType.LONG.equals(operandType) && !PsiType.FLOAT.equals(operandType) && !PsiType.DOUBLE.equals(operandType);
         }
         if (PsiType.LONG.equals(castType) || PsiType.FLOAT.equals(castType) || PsiType.DOUBLE.equals(castType)) {
           final PsiExpression[] operands = polyadicExpression.getOperands();
           int expressionIndex = -1;
           for (int i = 0; i < operands.length; i++) {
             if (expressionIndex == 0 && i > 1) {
-              return true;
+              return false;
             }
             final PsiExpression operand1 = operands[i];
             if (PsiTreeUtil.isAncestor(operand1, expression, false)) {
               if (i > 0) {
-                return true;
+                return false;
               }
               else {
                 expressionIndex = i;
@@ -185,7 +180,7 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
             }
             final PsiType type = operand1.getType();
             if (castType.equals(type)) {
-              return false;
+              return true;
             }
           }
         }
@@ -193,73 +188,67 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
       else if (JavaTokenType.GTGT.equals(tokenType) || JavaTokenType.GTGTGT.equals(tokenType) || JavaTokenType.LTLT.equals(tokenType)) {
         final PsiExpression firstOperand = polyadicExpression.getOperands()[0];
         if (!PsiTreeUtil.isAncestor(firstOperand, expression, false)) {
-          return false;
+          return true;
         }
-        return PsiType.LONG.equals(castType) || !isLegalWideningConversion(operand, PsiType.INT);
+        return !PsiType.LONG.equals(castType) && isLegalWideningConversion(operand, PsiType.INT);
       }
-      return true;
+      return false;
     }
     else if (parent instanceof PsiAssignmentExpression) {
       final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
       final PsiType lhsType = assignmentExpression.getType();
-      return !castType.equals(lhsType) || !isLegalAssignmentConversion(operand, lhsType);
+      if (castType.equals(lhsType) && (isLegalAssignmentConversion(operand, lhsType) || isLegalWideningConversion(operand, lhsType))) return true;
     }
     else if (parent instanceof PsiVariable) {
       final PsiVariable variable = (PsiVariable)parent;
+      final PsiTypeElement typeElement = variable.getTypeElement();
+      if (typeElement == null || typeElement.isInferredType()) {
+        return false;
+      }
       final PsiType lhsType = variable.getType();
-      return !castType.equals(lhsType) || !isLegalAssignmentConversion(operand, lhsType);
+      if (castType.equals(lhsType) && (isLegalAssignmentConversion(operand, lhsType) || isLegalWideningConversion(operand, lhsType))) return true;
     }
     else if (MethodCallUtils.isNecessaryForSurroundingMethodCall(expression, operand)) {
-      return true;
+      return false;
     }
-    final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false);
-    return !castType.equals(expectedType) || !isLegalWideningConversion(operand, castType);
+    final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false, true);
+    return operandType.equals(expectedType) && isLegalAssignmentConversion(operand, castType) ||
+           castType.equals(expectedType) && isLegalWideningConversion(operand, castType);
   }
 
   static boolean isLegalWideningConversion(PsiExpression expression, PsiType requiredType) {
     final PsiType operandType = expression.getType();
     if (PsiType.DOUBLE.equals(requiredType)) {
-      if (PsiType.FLOAT.equals(operandType) ||
-          PsiType.LONG.equals(operandType) ||
-          PsiType.INT.equals(operandType) ||
-          PsiType.CHAR.equals(operandType) ||
-          PsiType.SHORT.equals(operandType) ||
-          PsiType.BYTE.equals(operandType)) {
-        return true;
-      }
+      return PsiType.FLOAT.equals(operandType) ||
+             PsiType.LONG.equals(operandType) ||
+             PsiType.INT.equals(operandType) ||
+             PsiType.CHAR.equals(operandType) ||
+             PsiType.SHORT.equals(operandType) ||
+             PsiType.BYTE.equals(operandType);
     }
     else if (PsiType.FLOAT.equals(requiredType)) {
-      if (PsiType.LONG.equals(operandType) ||
-          PsiType.INT.equals(operandType) ||
-          PsiType.CHAR.equals(operandType) ||
-          PsiType.SHORT.equals(operandType) ||
-          PsiType.BYTE.equals(operandType)) {
-        return true;
-      }
+      return PsiType.LONG.equals(operandType) ||
+             PsiType.INT.equals(operandType) ||
+             PsiType.CHAR.equals(operandType) ||
+             PsiType.SHORT.equals(operandType) ||
+             PsiType.BYTE.equals(operandType);
     }
     else if (PsiType.LONG.equals(requiredType)) {
-      if (PsiType.INT.equals(operandType) ||
-          PsiType.CHAR.equals(operandType) ||
-          PsiType.SHORT.equals(operandType) ||
-          PsiType.BYTE.equals(operandType)) {
-        return true;
-      }
+      return PsiType.INT.equals(operandType) ||
+             PsiType.CHAR.equals(operandType) ||
+             PsiType.SHORT.equals(operandType) ||
+             PsiType.BYTE.equals(operandType);
     }
     else if (PsiType.INT.equals(requiredType)) {
-      if (PsiType.CHAR.equals(operandType) ||
-          PsiType.SHORT.equals(operandType) ||
-          PsiType.BYTE.equals(operandType)) {
-        return true;
-      }
+      return PsiType.CHAR.equals(operandType) ||
+             PsiType.SHORT.equals(operandType) ||
+             PsiType.BYTE.equals(operandType);
     }
     return false;
   }
 
   static boolean isLegalAssignmentConversion(PsiExpression expression, PsiType assignmentType) {
     // JLS 5.2 Assignment Conversion
-    if (isLegalWideningConversion(expression, assignmentType)) {
-      return true;
-    }
     if (PsiType.SHORT.equals(assignmentType)) {
       return canValueBeContained(expression, Short.MIN_VALUE, Short.MAX_VALUE);
     }

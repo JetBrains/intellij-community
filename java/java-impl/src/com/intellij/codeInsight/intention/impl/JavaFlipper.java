@@ -16,10 +16,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.openapi.editor.actions.FlipCommaIntention;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiVariable;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 
 /**
@@ -30,6 +27,8 @@ public class JavaFlipper implements FlipCommaIntention.Flipper {
   @Override
   public boolean flip(PsiElement left, PsiElement right) {
     if (left instanceof PsiVariable && right instanceof PsiVariable) {
+      if (left instanceof PsiParameter || right instanceof PsiParameter) return false;
+      // flips multiple variables in a single declaration
       final PsiVariable leftVariable = (PsiVariable)left;
       final PsiVariable rightVariable = (PsiVariable)right;
       final PsiIdentifier leftIdentifier = leftVariable.getNameIdentifier();

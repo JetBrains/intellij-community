@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInspection.*;
@@ -20,6 +6,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -41,10 +28,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Objects;
 
-/**
- * @author Tagir Valeev
- */
-public class Java8MapForEachInspection extends BaseJavaBatchLocalInspectionTool {
+public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final String JAVA_UTIL_MAP_ENTRY = CommonClassNames.JAVA_UTIL_MAP + ".Entry";
 
   private static final CallMatcher ITERABLE_FOREACH =
@@ -66,7 +50,7 @@ public class Java8MapForEachInspection extends BaseJavaBatchLocalInspectionTool 
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
+    if (!JavaFeature.ADVANCED_COLLECTIONS_API.isFeatureSupported(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
@@ -108,14 +92,17 @@ public class Java8MapForEachInspection extends BaseJavaBatchLocalInspectionTool 
           TextRange range;
           PsiJavaToken rParenth = loop.getRParenth();
           PsiElement firstChild = loop.getFirstChild();
+          PsiElement toHighlight;
           if (wholeStatement && rParenth != null) {
-            range = new TextRange(0, rParenth.getStartOffsetInParent() + 1);
+            toHighlight = loop;
+            range = new TextRange(firstChild.getStartOffsetInParent(), rParenth.getStartOffsetInParent() + 1);
           }
           else {
+            toHighlight = firstChild;
             range = new TextRange(0, firstChild.getTextLength());
           }
-          holder.registerProblem(new ProblemDescriptorBase(firstChild, firstChild, InspectionsBundle.message("inspection.map.foreach.message"),
-                                 new LocalQuickFix[]{new ReplaceWithMapForEachFix()}, type, false, range, type != ProblemHighlightType.INFORMATION, holder.isOnTheFly()));
+          holder.registerProblem(toHighlight, InspectionsBundle.message("inspection.map.foreach.message"),
+                                 type, range, new ReplaceWithMapForEachFix());
         }
       }
     };
@@ -132,8 +119,9 @@ public class Java8MapForEachInspection extends BaseJavaBatchLocalInspectionTool 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getStartElement();
-      if (element.getParent() instanceof PsiForeachStatement) {
-        fixInForeach((PsiForeachStatement)element.getParent());
+      PsiElement foreach = element instanceof PsiForeachStatement ? element : element.getParent();
+      if (foreach instanceof PsiForeachStatement) {
+        fixInForeach((PsiForeachStatement)foreach);
         return;
       }
       PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
@@ -212,7 +200,7 @@ public class Java8MapForEachInspection extends BaseJavaBatchLocalInspectionTool 
       final PsiType myType;
       String myName;
 
-      public ParameterCandidate(PsiType entryType, boolean isKey) {
+      ParameterCandidate(PsiType entryType, boolean isKey) {
         myName = isKey ? "key" : "value";
         myType = GenericsUtil
           .getVariableTypeByExpressionType(PsiUtil.substituteTypeParameter(entryType, JAVA_UTIL_MAP_ENTRY, isKey ? 0 : 1, true));

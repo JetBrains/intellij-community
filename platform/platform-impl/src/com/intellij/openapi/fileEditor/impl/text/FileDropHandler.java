@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.ide.dnd.FileCopyPasteUtil;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.editor.CustomFileDropHandler;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -82,7 +83,7 @@ public class FileDropHandler implements EditorDropHandler {
           fileEditorManager.openFileWithProviders(vFile, true, editorWindow);
         }
         else {
-          new OpenFileDescriptor(project, vFile).navigate(true);
+          PsiNavigationSupport.getInstance().createNavigatable(project, vFile, -1).navigate(true);
         }
       }
     }

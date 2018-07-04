@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -102,7 +88,7 @@ public class VMOptions {
   }
 
   public static void writeOption(@NotNull String option, @NotNull String separator, @NotNull String value) {
-    writeGeneralOption(Pattern.compile("-D" + option + separator + "(true|false)*([a-zA-Z]*)"), "-D" + option + separator + value);
+    writeGeneralOption(Pattern.compile("-D" + option + separator + "(true|false)*([a-zA-Z0-9]*)"), "-D" + option + separator + value);
   }
 
 
@@ -175,7 +161,7 @@ public class VMOptions {
     }
 
     vmOptionsFile = new File(vmOptionsFile).getAbsolutePath();
-    if (!FileUtil.isAncestor(PathManager.getHomePath(), vmOptionsFile, true)) {
+    if (!PathManager.isUnderHomeDirectory(vmOptionsFile)) {
       // a file is located outside the IDE installation - meaning it is safe to overwrite
       return new File(vmOptionsFile);
     }
@@ -194,33 +180,10 @@ public class VMOptions {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #readOption(MemoryKind, boolean)} (to be removed in IDEA 2018) */
+  @Deprecated
   public static int readXmx() {
     return readOption(MemoryKind.HEAP, true);
   }
 
-  /** @deprecated use {@link #readOption(MemoryKind, boolean)} (to be removed in IDEA 2018) */
-  public static int readMaxPermGen() {
-    return readOption(MemoryKind.PERM_GEN, true);
-  }
-
-  /** @deprecated use {@link #readOption(MemoryKind, boolean)} (to be removed in IDEA 2018) */
-  public static int readCodeCache() {
-    return readOption(MemoryKind.CODE_CACHE, true);
-  }
-
-  /** @deprecated use {@link #writeOption(MemoryKind, int)} (to be removed in IDEA 2018) */
-  public static void writeXmx(int value) {
-    writeOption(MemoryKind.HEAP, value);
-  }
-
-  /** @deprecated use {@link #writeOption(MemoryKind, int)} (to be removed in IDEA 2018) */
-  public static void writeMaxPermGen(int value) {
-    writeOption(MemoryKind.PERM_GEN, value);
-  }
-
-  /** @deprecated use {@link #writeOption(MemoryKind, int)} (to be removed in IDEA 2018) */
-  public static void writeCodeCache(int value) {
-    writeOption(MemoryKind.CODE_CACHE, value);
-  }
   //</editor-fold>
 }

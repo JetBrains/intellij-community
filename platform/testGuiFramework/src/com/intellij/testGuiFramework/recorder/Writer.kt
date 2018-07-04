@@ -16,47 +16,27 @@
 package com.intellij.testGuiFramework.recorder
 
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.testGuiFramework.recorder.components.GuiRecorderComponent
 
 object Writer {
 
-  private val scriptBuffer = StringBuilder()
-  val indent = 2
-  val withIndent = true
+  val indent: Int = 2
 
-  fun getScript(): String {
-    return scriptBuffer.toString()
-  }
-
-  fun clearScript() {
-    scriptBuffer.setLength(0)
-  }
-
-  fun writeln(str: String) {
+  private fun writeln(str: String) {
     write(str + "\n")
   }
 
   private fun write(str: String) {
     print(str)
-    if (GuiRecorderComponent.getFrame() != null && GuiRecorderComponent.getFrame()!!.isSyncToEditor())
-      writeToEditor(str)
-    else
-      scriptBuffer.append(str)
+    writeToEditor(str)
   }
 
   private fun writeToEditor(str: String) {
-    if (GuiRecorderComponent.getFrame() != null && GuiRecorderComponent.getFrame()!!.getEditor() != null) {
-      val editor = GuiRecorderComponent.getFrame()!!.getEditor()
-      val document = editor.document
-      WriteCommandAction.runWriteCommandAction(null, { document.insertString(document.textLength, str) })
-    }
+    val document = GuiRecorderManager.getEditor().document
+    WriteCommandAction.runWriteCommandAction(null, { document.insertString(document.textLength, str) })
   }
 
   fun writeWithIndent(code: String){
-    var indentedString = ""
-    if (withIndent) {
-      indentedString = (0..(indent * ContextChecker.getContextDepth() - 1)).map { i -> ' ' }.joinToString(separator = "")
-    }
+    val indentedString = (0..(indent * ContextChecker.getContextDepth() - 1)).map { ' ' }.joinToString(separator = "")
     Writer.writeln("$indentedString$code")
   }
 

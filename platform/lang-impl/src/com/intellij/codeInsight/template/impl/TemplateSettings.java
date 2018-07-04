@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.AbstractBundle;
@@ -62,7 +48,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   @NonNls public static final String USER_GROUP_NAME = "user";
   @NonNls private static final String TEMPLATE_SET = "templateSet";
   @NonNls private static final String GROUP = "group";
-  @NonNls static final String TEMPLATE = "template";
+  @NonNls public static final String TEMPLATE = "template";
 
   public static final char SPACE_CHAR = ' ';
   public static final char TAB_CHAR = '\t';
@@ -206,6 +192,25 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
         return group;
       }
 
+      @Override
+      public void beforeReloaded(@NotNull SchemeManager<TemplateGroup> schemeManager) {
+        for (TemplateGroup group : schemeManager.getAllSchemes()) {
+          schemeManager.removeScheme(group);
+        }
+        myTemplates.clear();
+        myDefaultTemplates.clear();
+      }
+
+      @Override
+      public void reloaded(@NotNull SchemeManager<TemplateGroup> schemeManager, @NotNull Collection<? extends TemplateGroup> groups) {
+        for (TemplateGroup group : groups) {
+          for (TemplateImpl template : group.getElements()) {
+            addTemplateImpl(template);
+          }
+        }
+        loadDefaultLiveTemplates();
+      }
+
       @NotNull
       @Override
       public SchemeState getState(@NotNull TemplateGroup template) {
@@ -299,7 +304,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   }
 
   @Override
-  public void loadState(State state) {
+  public void loadState(@NotNull State state) {
     myState = state;
 
     applyNewDeletedTemplates();
@@ -342,7 +347,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
   public TemplateImpl[] getTemplates() {
     final Collection<? extends TemplateImpl> all = myTemplates.values();
-    return all.toArray(new TemplateImpl[all.size()]);
+    return all.toArray(new TemplateImpl[0]);
   }
 
   public char getDefaultShortcutChar() {
@@ -560,14 +565,14 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     if (registerTemplate) {
       TemplateGroup existingScheme = mySchemeManager.findSchemeByName(result.getName());
       if (existingScheme == null && !result.isEmpty()) {
-        mySchemeManager.addNewScheme(result, false);
+        mySchemeManager.addScheme(result, false);
       }
     }
 
     return result.isEmpty() ? null : result;
   }
 
-  static TemplateImpl readTemplateFromElement(final String groupName, @NotNull Element element, @NotNull ClassLoader classLoader) {
+  public static TemplateImpl readTemplateFromElement(final String groupName, @NotNull Element element, @NotNull ClassLoader classLoader) {
     String name = element.getAttributeValue(NAME);
     String value = element.getAttributeValue(VALUE);
     String description;
@@ -611,7 +616,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   }
 
   @NotNull
-  static Element serializeTemplate(@NotNull TemplateImpl template, @Nullable TemplateImpl defaultTemplate, @NotNull Lazy<Map<String, TemplateContextType>> idToType) {
+  public static Element serializeTemplate(@NotNull TemplateImpl template, @Nullable TemplateImpl defaultTemplate, @NotNull Lazy<Map<String, TemplateContextType>> idToType) {
     Element element = new Element(TEMPLATE);
     final String id = template.getId();
     if (id != null) {

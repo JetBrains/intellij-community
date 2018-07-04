@@ -21,39 +21,39 @@ import java.util.*;
 
 public class SearchInitializer {
   private final ChainCompletionContext myContext;
-  private final LinkedList<MethodChain> myQueue;
-  private final LinkedHashMap<MethodIncompleteSignature, MethodChain> myChains;
+  private final LinkedList<OperationChain> myQueue;
+  private final LinkedHashMap<RefChainOperation, OperationChain> myChains;
 
-  public SearchInitializer(SortedSet<SignatureAndOccurrences> indexValues,
+  public SearchInitializer(SortedSet<ChainOpAndOccurrences<? extends RefChainOperation>> indexValues,
                            ChainCompletionContext context) {
     myContext = context;
     int size = indexValues.size();
-    List<MethodChain> chains = new ArrayList<>(size);
+    List<OperationChain> chains = new ArrayList<>(size);
     populateFrequentlyUsedMethod(indexValues, chains);
     myQueue = new LinkedList<>();
     myChains = new LinkedHashMap<>(chains.size());
-    for (MethodChain chain : chains) {
-      MethodIncompleteSignature signature = chain.getHeadSignature();
+    for (OperationChain chain : chains) {
+      RefChainOperation signature = chain.getHead();
       myQueue.add(chain);
       myChains.put(signature, chain);
     }
   }
 
-  public LinkedList<MethodChain> getChainQueue() {
+  public LinkedList<OperationChain> getChainQueue() {
     return myQueue;
   }
 
-  public LinkedHashMap<MethodIncompleteSignature, MethodChain> getChains() {
+  public LinkedHashMap<RefChainOperation, OperationChain> getChains() {
     return myChains;
   }
 
-  private void populateFrequentlyUsedMethod(SortedSet<SignatureAndOccurrences> signatures,
-                                            List<MethodChain> chains) {
+  private void populateFrequentlyUsedMethod(SortedSet<? extends ChainOpAndOccurrences> operations,
+                                            List<OperationChain> chains) {
     int bestOccurrences = -1;
-    for (SignatureAndOccurrences indexValue : signatures) {
-      MethodChain methodChain = MethodChain.create(indexValue.getSignature(), indexValue.getOccurrenceCount(), myContext);
-      if (methodChain != null) {
-        chains.add(methodChain);
+    for (ChainOpAndOccurrences indexValue : operations) {
+      OperationChain operationChain = OperationChain.create(indexValue.getOperation(), indexValue.getOccurrenceCount(), myContext);
+      if (operationChain != null) {
+        chains.add(operationChain);
         int occurrences = indexValue.getOccurrenceCount();
         if (bestOccurrences == -1) {
           bestOccurrences = occurrences;

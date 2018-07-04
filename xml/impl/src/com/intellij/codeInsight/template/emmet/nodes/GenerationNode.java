@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.template.emmet.nodes;
 
 import com.google.common.base.Strings;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.emmet.EmmetOptions;
 import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.LiveTemplateBuilder;
@@ -28,7 +29,7 @@ import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGeneratorI
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.injected.editor.DocumentWindowImpl;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -41,14 +42,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
@@ -156,12 +154,12 @@ public class GenerationNode extends UserDataHolderBase {
       }
     }
 
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(callback.getProject());
+    CodeStyleSettings settings = CodeStyle.getSettings(callback.getFile());
     String indentStr;
     if (callback.isInInjectedFragment()) {
       Editor editor = callback.getEditor();
       Document document = editor.getDocument();
-      if (document instanceof DocumentWindowImpl && ((DocumentWindowImpl)document).isOneLine()) {
+      if (document instanceof DocumentWindow && ((DocumentWindow)document).isOneLine()) {
         /* 
          * If document is one-line that in the moment of inserting text,
          * new line chars will be filtered (see DocumentWindowImpl#insertString).
@@ -441,18 +439,15 @@ public class GenerationNode extends UserDataHolderBase {
       // exclude user defined attributes
       final List<XmlAttribute> xmlAttributes = ContainerUtil.filter(tag.getAttributes(),
                                                                     attribute -> !attributes.containsKey(attribute.getLocalName()));
-      XmlAttribute defaultAttribute = findDefaultAttribute(xmlAttributes);
-      if (defaultAttribute == null) {
-        defaultAttribute = findImpliedAttribute(xmlAttributes);
-      }
+      XmlAttribute defaultAttribute = findImpliedAttribute(xmlAttributes);
       if (defaultAttribute == null) {
         defaultAttribute = findEmptyAttribute(xmlAttributes);
       }
       if (defaultAttribute != null) {
         String attributeName = defaultAttribute.getName();
         if (attributeName.length() > 1) {
-          if (isImpliedAttribute(attributeName) || isDefaultAttribute(attributeName)) {
-            defaultAttribute.setName(attributeName.substring(1));
+          if (isImpliedAttribute(attributeName)) {
+            defaultAttribute = (XmlAttribute)defaultAttribute.setName(attributeName.substring(1));
           }
           final String oldValue = defaultAttribute.getValue();
           if (oldValue != null && StringUtil.containsChar(oldValue, '|')) {
@@ -507,7 +502,7 @@ public class GenerationNode extends UserDataHolderBase {
     // remove all implicit and default attributes
     for (XmlAttribute xmlAttribute : tag.getAttributes()) {
       final String xmlAttributeLocalName = xmlAttribute.getLocalName();
-      if (xmlAttribute.getValue() != null && (isImpliedAttribute(xmlAttributeLocalName) || isDefaultAttribute(xmlAttributeLocalName))) {
+      if (xmlAttribute.getValue() != null && isImpliedAttribute(xmlAttributeLocalName)) {
         xmlAttribute.delete();
       }
     }
@@ -526,26 +521,12 @@ public class GenerationNode extends UserDataHolderBase {
     return false;
   }
 
-  private static boolean isDefaultAttribute(String xmlAttributeLocalName) {
-    return StringUtil.startsWithChar(xmlAttributeLocalName, '@');
-  }
-
   private static boolean isImpliedAttribute(String xmlAttributeLocalName) {
     return StringUtil.startsWithChar(xmlAttributeLocalName, '!');
   }
 
   private static boolean isEmptyValue(String attributeValue) {
     return attributeValue != null && (attributeValue.isEmpty() || ATTRIBUTE_VARIABLE_PATTERN.matcher(attributeValue).matches());
-  }
-
-  @Nullable
-  private static XmlAttribute findDefaultAttribute(@NotNull List<XmlAttribute> attributes) {
-    for (XmlAttribute attribute : attributes) {
-      if (attribute.getValueElement() != null && isDefaultAttribute(attribute.getLocalName())) {
-        return attribute;
-      }
-    }
-    return null;
   }
 
   @Nullable

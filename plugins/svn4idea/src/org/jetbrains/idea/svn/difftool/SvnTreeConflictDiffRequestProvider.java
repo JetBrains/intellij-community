@@ -50,7 +50,7 @@ public class SvnTreeConflictDiffRequestProvider implements ChangeDiffRequestProv
   @Override
   public DiffRequest process(@NotNull ChangeDiffRequestProducer presentable,
                              @NotNull UserDataHolder context,
-                             @NotNull ProgressIndicator indicator) throws DiffRequestProducerException, ProcessCanceledException {
+                             @NotNull ProgressIndicator indicator) throws ProcessCanceledException {
     return new SvnTreeConflictDiffRequest(((ConflictedSvnChange)presentable.getChange()));
   }
 

@@ -15,8 +15,8 @@
  */
 package org.testng;
 
-import com.intellij.rt.execution.testFrameworks.AbstractExpectedPatterns;
 import com.intellij.rt.execution.junit.ComparisonFailureData;
+import com.intellij.rt.execution.testFrameworks.AbstractExpectedPatterns;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,12 +25,12 @@ class TestNGExpectedPatterns extends AbstractExpectedPatterns {
   private static final List PATTERNS = new ArrayList();
 
   private static final String[] PATTERN_STRINGS = new String[]{
-    ".*expected same with:\\<(.*)\\> but was:\\<(.*)\\>",
-    ".*expected:\\<(.*)\\> but was:\\<(.*)\\>",
-    ".*expected \\[(.*)\\] but got \\[(.*)\\]",
-    ".*expected not same with:\\<(.*)\\> but was same:\\<(.*)\\>",
-    ".*expected \\[(.*)\\] but found \\[(.*)\\]",
-    ".*\nExpected: .*?\"(.*)\"\n\\s*but: .*?\"(.*)\""
+    "expected same with:\\<(.*)\\> but was:\\<(.*)\\>",
+    "expected:\\<(.*)\\> but was:\\<(.*)\\>",
+    "expected \\[(.*)\\] but got \\[(.*)\\]",
+    "expected not same with:\\<(.*)\\> but was same:\\<(.*)\\>",
+    "expected \\[(.*)\\] but found \\[(.*)\\]",
+    "\nexpected: .*?\"(.*)\"\n\\s*but: .*?\"(.*)\""
     };
 
   static {

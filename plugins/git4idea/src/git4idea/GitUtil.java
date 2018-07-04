@@ -25,6 +25,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
@@ -33,15 +34,18 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -70,7 +74,9 @@ import java.util.stream.Collectors;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
-import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY;
+import static com.intellij.util.ObjectUtils.chooseNotNull;
+import static java.util.Arrays.stream;
 
 /**
  * Git utility/helper methods
@@ -349,6 +355,7 @@ public class GitUtil {
    * @deprecated because uses the java.io.File.
    * @use GitRepositoryManager#getRepositoryForFile().
    */
+  @Deprecated
   public static VirtualFile getGitRoot(@NotNull FilePath filePath) throws VcsException {
     VirtualFile root = getGitRootOrNull(filePath);
     if (root != null) {
@@ -393,6 +400,7 @@ public class GitUtil {
    * @deprecated because uses the java.io.File.
    * @use GitRepositoryManager#getRepositoryForFile().
    */
+  @Deprecated
   public static VirtualFile getGitRoot(@NotNull final VirtualFile file) throws VcsException {
     final VirtualFile root = gitRootOrNull(file);
     if (root != null) {
@@ -412,6 +420,7 @@ public class GitUtil {
    * @deprecated because uses the java.io.File.
    * @use GitRepositoryManager#getRepositoryForFile().
    */
+  @Deprecated
   @Nullable
   public static VirtualFile gitRootOrNull(final VirtualFile file) {
     return getGitRootOrNull(VcsUtil.getFilePath(file.getPath()));
@@ -428,6 +437,7 @@ public class GitUtil {
    * @deprecated because uses the java.io.File.
    * @use GitRepositoryManager#getRepositoryForFile().
    */
+  @Deprecated
   @NotNull
   public static List<VirtualFile> getGitRoots(Project project, GitVcs vcs) throws VcsException {
     final VirtualFile[] contentRoots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
@@ -511,14 +521,14 @@ public class GitUtil {
 
   public static void getLocalCommittedChanges(final Project project,
                                               final VirtualFile root,
-                                              final Consumer<GitSimpleHandler> parametersSpecifier,
+                                              final Consumer<GitHandler> parametersSpecifier,
                                               final Consumer<GitCommittedChangeList> consumer, boolean skipDiffsForMerge) throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     h.setSilent(true);
     h.addParameters("--pretty=format:%x04%x01" + GitChangeUtils.COMMITTED_CHANGELIST_FORMAT, "--name-status");
     parametersSpecifier.consume(h);
 
-    String output = h.run();
+    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
     LOG.debug("getLocalCommittedChanges output: '" + output + "'");
     StringScanner s = new StringScanner(output);
     final StringBuilder sb = new StringBuilder();
@@ -546,7 +556,7 @@ public class GitUtil {
 
   public static List<GitCommittedChangeList> getLocalCommittedChanges(final Project project,
                                                                    final VirtualFile root,
-                                                                   final Consumer<GitSimpleHandler> parametersSpecifier)
+                                                                   final Consumer<GitHandler> parametersSpecifier)
     throws VcsException {
     final List<GitCommittedChangeList> rc = new ArrayList<>();
 
@@ -697,16 +707,6 @@ public class GitUtil {
     return ObjectUtils.notNull(remoteBranch, new GitStandardRemoteBranch(remote, branchName));
   }
 
-  @Nullable
-  public static GitRemote findOrigin(Collection<GitRemote> remotes) {
-    for (GitRemote remote : remotes) {
-      if (remote.getName().equals("origin")) {
-        return remote;
-      }
-    }
-    return null;
-  }
-
   @NotNull
   public static Collection<VirtualFile> getRootsFromRepositories(@NotNull Collection<GitRepository> repositories) {
     return ContainerUtil.map(repositories, REPOSITORY_TO_ROOT);
@@ -848,7 +848,7 @@ public class GitUtil {
    * @param root
    */
   public static boolean hasLocalChanges(boolean staged, Project project, VirtualFile root) throws VcsException {
-    final GitSimpleHandler diff = new GitSimpleHandler(project, root, GitCommand.DIFF);
+    GitLineHandler diff = new GitLineHandler(project, root, GitCommand.DIFF);
     diff.addParameters("--name-only");
     if (staged) {
       diff.addParameters("--cached");
@@ -856,7 +856,7 @@ public class GitUtil {
     diff.setStdoutSuppressed(true);
     diff.setStderrSuppressed(true);
     diff.setSilent(true);
-    final String output = diff.run();
+    final String output = Git.getInstance().runCommand(diff).getOutputOrThrow();
     return !output.trim().isEmpty();
   }
 
@@ -867,7 +867,7 @@ public class GitUtil {
       file = LocalFileSystem.getInstance().refreshAndFindFileByPath(absolutePath);
     }
     if (file == null) {
-      LOG.warn("VirtualFile not found for " + absolutePath);
+      LOG.debug("VirtualFile not found for " + absolutePath);
     }
     return file;
   }
@@ -905,11 +905,8 @@ public class GitUtil {
           String message = "Change is not found for " + file.getPath();
           if (changeListManager.isInUpdate()) {
             message += " because ChangeListManager is being updated.";
-            LOG.debug(message);
           }
-          else {
-            LOG.info(message);
-          }
+          LOG.debug(message);
         }
       }
     }
@@ -942,12 +939,12 @@ public class GitUtil {
 
   @Nullable
   public static GitRemote getDefaultRemote(@NotNull Collection<GitRemote> remotes) {
-    for (GitRemote remote : remotes) {
-      if (remote.getName().equals(GitRemote.ORIGIN)) {
-        return remote;
-      }
-    }
-    return null;
+    return ContainerUtil.find(remotes, r -> r.getName().equals(GitRemote.ORIGIN));
+  }
+
+  @Nullable
+  public static GitRemote getDefaultOrFirstRemote(@NotNull Collection<GitRemote> remotes) {
+    return chooseNotNull(getDefaultRemote(remotes), ContainerUtil.getFirstItem(remotes));
   }
 
   @NotNull
@@ -1002,21 +999,34 @@ public class GitUtil {
 
   @NotNull
   public static String getLogString(@NotNull String root, @NotNull Collection<Change> changes) {
+    return getLogString(root, changes, ChangesUtil::getBeforePath, ChangesUtil::getAfterPath);
+  }
+
+  @NotNull
+  public static <T> String getLogString(@NotNull String root, @NotNull Collection<T> changes,
+                                        @NotNull Convertor<? super T, ? extends FilePath> beforePathGetter,
+                                        @NotNull Convertor<? super T, ? extends FilePath> afterPathGetter) {
     return StringUtil.join(changes, change -> {
-      ContentRevision after = change.getAfterRevision();
-      ContentRevision before = change.getBeforeRevision();
-      switch (change.getType()) {
-        case NEW: return "A: " + getRelativePath(root, assertNotNull(after));
-        case DELETED: return "D: " + getRelativePath(root, assertNotNull(before));
-        case MOVED: return "M: " + getRelativePath(root, assertNotNull(before)) + " -> " + getRelativePath(root, assertNotNull(after));
-        default: return "M: " + getRelativePath(root, assertNotNull(after));
+      FilePath after = afterPathGetter.convert(change);
+      FilePath before = beforePathGetter.convert(change);
+      if (before == null) {
+        return "A: " + getRelativePath(root, after);
+      }
+      else if (after == null) {
+        return "D: " + getRelativePath(root, before);
+      }
+      else if (CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(before, after)) {
+        return "M: " + getRelativePath(root, after);
+      }
+      else {
+        return "R: " + getRelativePath(root, before) + " -> " + getRelativePath(root, after);
       }
     }, ", ");
   }
 
   @Nullable
-  public static String getRelativePath(@NotNull String root, @NotNull ContentRevision after) {
-    return FileUtil.getRelativePath(root, after.getFile().getPath(), File.separatorChar);
+  public static String getRelativePath(@NotNull String root, @NotNull FilePath after) {
+    return FileUtil.getRelativePath(root, after.getPath(), File.separatorChar);
   }
 
   /**
@@ -1032,5 +1042,34 @@ public class GitUtil {
                                                                  @NotNull Collection<? extends Change> originalChanges) {
     OpenTHashSet<Change> allChanges = new OpenTHashSet<>(changeListManager.getAllChanges());
     return ContainerUtil.mapNotNull(originalChanges, allChanges::get);
+  }
+
+  /**
+   * A convenience method to refresh either a part of the VFS modified by the given changes, or the whole root recursively.
+   *
+   * @param changes The changes which files were modified by a Git operation.
+   *                If null, the whole root is refreshed. Otherwise, only the files touched by these changes.
+   */
+  public static void refreshVfs(@NotNull VirtualFile root, @Nullable Collection<Change> changes) {
+    if (changes == null || Registry.is("git.refresh.vfs.total")) {
+      VfsUtil.markDirtyAndRefresh(false, true, false, root);
+    }
+    else {
+      RefreshVFsSynchronously.updateChanges(changes);
+    }
+  }
+
+  public static void updateAndRefreshVfs(@NotNull GitRepository repository, @Nullable Collection<Change> changes) {
+    repository.update();
+    refreshVfs(repository.getRoot(), changes);
+  }
+
+  public static void updateAndRefreshVfs(GitRepository... repositories) {
+    // repositories state will be auto-updated with the following VFS refresh => there is no need to call GitRepository#update()
+    // but we want repository state to be updated as soon as possible, without waiting for the whole VFS refresh to complete.
+    stream(repositories).forEach(GitRepository::update);
+    for (GitRepository repository : repositories) {
+      refreshVfs(repository.getRoot(), null);
+    }
   }
 }

@@ -41,7 +41,6 @@ import java.util.zip.ZipInputStream;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/1/12
  */
 public class LocalArchivedTemplate extends ArchivedProjectTemplate {
   public static final String DESCRIPTION_PATH = Project.DIRECTORY_STORE_FOLDER + "/description.html";

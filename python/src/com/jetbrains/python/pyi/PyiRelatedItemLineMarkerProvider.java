@@ -20,9 +20,9 @@ import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerProvider;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
@@ -83,7 +83,9 @@ public class PyiRelatedItemLineMarkerProvider extends RelatedItemLineMarkerProvi
         final int offset = restoredRelatedElement instanceof PsiFile ? -1 : restoredRelatedElement.getTextOffset();
         final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(restoredRelatedElement);
         if (virtualFile != null && virtualFile.isValid()) {
-          new OpenFileDescriptor(restoredRelatedElement.getProject(), virtualFile, offset).navigate(true);
+          PsiNavigationSupport.getInstance()
+                              .createNavigatable(restoredRelatedElement.getProject(), virtualFile, offset)
+                              .navigate(true);
         }
       }
     }, GutterIconRenderer.Alignment.RIGHT, GotoRelatedItem.createItems(Collections.singletonList(relatedElement)));

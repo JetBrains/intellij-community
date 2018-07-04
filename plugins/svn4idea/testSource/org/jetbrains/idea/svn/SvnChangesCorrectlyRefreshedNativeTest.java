@@ -46,7 +46,6 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
 
   @Override
   public void setUp() throws Exception {
-    setUseNativeAcceleration(true);
     super.setUp();
 
     clManager = ChangeListManager.getInstance(myProject);
@@ -82,7 +81,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
     final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
 
     final RollbackWorker worker = new RollbackWorker(myProject);
-    worker.doRollback(changes, false, null, null);
+    worker.doRollback(changes, false);
 
     final CharSequence text = LoadTextUtil.loadText(subTree.myS1File);
     Assert.assertEquals(SubTree.ourS1Contents, text.toString());
@@ -110,7 +109,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
     final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
 
     final RollbackWorker worker = new RollbackWorker(myProject);
-    worker.doRollback(changes, false, null, null);
+    worker.doRollback(changes, false);
 
     assertVF(subTree.mySourceDir, "s1.txt");
 
@@ -135,7 +134,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
     final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
 
     final RollbackWorker worker = new RollbackWorker(myProject);
-    worker.doRollback(changes, false, null, null);
+    worker.doRollback(changes, false);
 
     assertVF(subTree.mySourceDir, "s1.txt");
 
@@ -164,7 +163,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
     final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
 
     final RollbackWorker worker = new RollbackWorker(myProject);
-    worker.doRollback(changes, false, null, null);
+    worker.doRollback(changes, false);
 
     subTree.mySourceDir = assertVF(subTree.myRootDir, "source");
     Assert.assertTrue(subTree.mySourceDir.getPath().endsWith("/root/source"));
@@ -197,7 +196,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
     final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
 
     final RollbackWorker worker = new RollbackWorker(myProject);
-    worker.doRollback(changes, false, null, null);
+    worker.doRollback(changes, false);
 
     subTree.mySourceDir = assertVF(subTree.myRootDir, "source");
     Assert.assertTrue(subTree.mySourceDir.getPath().endsWith("/root/source"));
@@ -224,7 +223,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
     final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
 
     final RollbackWorker worker = new RollbackWorker(myProject);
-    worker.doRollback(changes, false, null, null);
+    worker.doRollback(changes, false);
 
     assertVF(subTree.myRootDir, "source");
     assertVF(subTree.mySourceDir, "s1.txt");
@@ -262,7 +261,7 @@ public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
     final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
 
     final RollbackWorker worker = new RollbackWorker(myProject);
-    worker.doRollback(changes, false, null, null);
+    worker.doRollback(changes, false);
 
     assertVF(subTree.myRootDir, "source");
     assertVF(subTree.mySourceDir, "s1.txt");

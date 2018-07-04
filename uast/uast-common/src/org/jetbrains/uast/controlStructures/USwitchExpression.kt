@@ -33,40 +33,40 @@ import org.jetbrains.uast.visitor.UastVisitor
  *   conditional expression.
  */
 interface USwitchExpression : UExpression {
-    /**
-        Returns the expression on which the `switch` expression is performed.
-     */
-    val expression: UExpression?
+  /**
+  Returns the expression on which the `switch` expression is performed.
+   */
+  val expression: UExpression?
 
-    /**
-        Returns the switch body.
-        The body should contain [USwitchClauseExpression] expressions.
-     */
-    val body: UExpressionList
+  /**
+  Returns the switch body.
+  The body should contain [USwitchClauseExpression] expressions.
+   */
+  val body: UExpressionList
 
-    /**
-     * Returns an identifier for the 'switch' ('case', 'when', ...) keyword.
-     */
-    val switchIdentifier: UIdentifier
+  /**
+   * Returns an identifier for the 'switch' ('case', 'when', ...) keyword.
+   */
+  val switchIdentifier: UIdentifier
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitSwitchExpression(this)) return
-        annotations.acceptList(visitor)
-        expression?.accept(visitor)
-        body.accept(visitor)
-        visitor.afterVisitSwitchExpression(this)
-    }
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitSwitchExpression(this)) return
+    annotations.acceptList(visitor)
+    expression?.accept(visitor)
+    body.accept(visitor)
+    visitor.afterVisitSwitchExpression(this)
+  }
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
-            visitor.visitSwitchExpression(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
+    visitor.visitSwitchExpression(this, data)
 
-    override fun asLogString() = log<USwitchExpression>()
-    
-    override fun asRenderString() = buildString {
-        val expr = expression?.let { "(" + it.asRenderString() + ") " } ?: ""
-        appendln("switch $expr")
-        appendln(body.asRenderString())
-    }
+  override fun asLogString(): String = log<USwitchExpression>()
+
+  override fun asRenderString(): String = buildString {
+    val expr = expression?.let { "(" + it.asRenderString() + ") " } ?: ""
+    appendln("switch $expr")
+    appendln(body.asRenderString())
+  }
 }
 
 /**
@@ -75,25 +75,25 @@ interface USwitchExpression : UExpression {
  *     and the actual body expression should be the next element in the parent expression list.
  */
 interface USwitchClauseExpression : UExpression {
-    /**
-     * Returns the list of values for this clause, or null if the are no values for this close
-     *     (for example, for the `else` clause).
-     */
-    val caseValues: List<UExpression>
+  /**
+   * Returns the list of values for this clause, or null if the are no values for this close
+   *     (for example, for the `else` clause).
+   */
+  val caseValues: List<UExpression>
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitSwitchClauseExpression(this)) return
-        annotations.acceptList(visitor)
-        caseValues.acceptList(visitor)
-        visitor.afterVisitSwitchClauseExpression(this)
-    }
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitSwitchClauseExpression(this)) return
+    annotations.acceptList(visitor)
+    caseValues.acceptList(visitor)
+    visitor.afterVisitSwitchClauseExpression(this)
+  }
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
-            visitor.visitSwitchClauseExpression(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
+    visitor.visitSwitchClauseExpression(this, data)
 
-    override fun asRenderString() = caseValues.joinToString { it.asRenderString() } + " -> "
+  override fun asRenderString(): String = caseValues.joinToString { it.asRenderString() } + " -> "
 
-    override fun asLogString() = "USwitchClauseExpression"
+  override fun asLogString(): String = "USwitchClauseExpression"
 }
 
 /**
@@ -103,20 +103,20 @@ interface USwitchClauseExpression : UExpression {
  * Implementing this interface *is the right way* to support `switch` clauses in your language.
  */
 interface USwitchClauseExpressionWithBody : USwitchClauseExpression {
-    /**
-     * Returns the body expression for this clause.
-     */
-    val body: UExpressionList
+  /**
+   * Returns the body expression for this clause.
+   */
+  val body: UExpressionList
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitSwitchClauseExpression(this)) return
-        annotations.acceptList(visitor)
-        caseValues.acceptList(visitor)
-        body.accept(visitor)
-        visitor.afterVisitSwitchClauseExpression(this)
-    }
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitSwitchClauseExpression(this)) return
+    annotations.acceptList(visitor)
+    caseValues.acceptList(visitor)
+    body.accept(visitor)
+    visitor.afterVisitSwitchClauseExpression(this)
+  }
 
-    override fun asRenderString() = caseValues.joinToString { it.asRenderString() }  + " -> " + body.asRenderString()
+  override fun asRenderString(): String = caseValues.joinToString { it.asRenderString() } + " -> " + body.asRenderString()
 
-    override fun asLogString() = log()
+  override fun asLogString(): String = log()
 }

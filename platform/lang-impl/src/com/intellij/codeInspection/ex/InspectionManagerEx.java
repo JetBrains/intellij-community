@@ -16,8 +16,6 @@
 
 /*
  * Author: max
- * Date: Oct 9, 2001
- * Time: 8:43:17 PM
  */
 
 package com.intellij.codeInspection.ex;

@@ -22,6 +22,7 @@ import com.intellij.openapi.diff.impl.patch.formove.PathMerger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.Change;
@@ -331,9 +332,7 @@ public abstract class AbstractFilePatchInProgress<T extends FilePatch> implement
 
       StripCapablePath that = (StripCapablePath)o;
 
-      if (!mySourcePath.equals(that.mySourcePath)) return false;
-
-      return true;
+      return StringUtil.equals(mySourcePath, that.mySourcePath);
     }
 
     @Override

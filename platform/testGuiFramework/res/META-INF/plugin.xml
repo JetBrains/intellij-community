@@ -20,15 +20,6 @@
             description="Perform Script Action" text="Perform Script Action"/>
     <action class="com.intellij.testGuiFramework.recorder.actions.ShowGuiEditorWindowAction" id="gui.recorder.ShowLightEditorWindowAction"
             description="Show GUI script editor" text="Show GUI script editor"/>
-    <action class="com.intellij.testGuiFramework.recorder.actions.UiDropperAction" id="gui.recorder.UiDropperAction"
-            description="UI Dropper may find classes for a UI debugging on the fly" text="UI Dropper"/>
   </actions>
-
-  <application-components>
-    <component>
-      <interface-class>com.intellij.testGuiFramework.recorder.components.GuiRecorderComponent</interface-class>
-      <implementation-class>com.intellij.testGuiFramework.recorder.components.GuiRecorderComponent</implementation-class>
-    </component>
-  </application-components>
 
 </idea-plugin>

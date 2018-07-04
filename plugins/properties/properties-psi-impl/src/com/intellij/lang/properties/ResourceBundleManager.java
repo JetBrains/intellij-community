@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties;
 
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
@@ -197,17 +183,13 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
 
   @NotNull
   public String getBaseName(@NotNull final PsiFile file) {
-    return getBaseName(file.getVirtualFile());
-  }
-
-  @NotNull
-  private String getBaseName(@NotNull final VirtualFile file) {
-    final CustomResourceBundleState customResourceBundle = getCustomResourceBundleState(file);
+    final VirtualFile vFile = file.getVirtualFile();
+    final CustomResourceBundleState customResourceBundle = getCustomResourceBundleState(vFile);
     if (customResourceBundle != null) {
       return customResourceBundle.getBaseName();
     }
-    if (isDefaultDissociated(file)) {
-      return file.getNameWithoutExtension();
+    if (isDefaultDissociated(vFile)) {
+      return vFile.getNameWithoutExtension();
     }
     return PropertiesUtil.getDefaultBaseName(file);
   }
@@ -232,6 +214,9 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
   }
 
   public void combineToResourceBundle(final @NotNull List<PropertiesFile> propertiesFiles, final String baseName) {
+    if (propertiesFiles.isEmpty()) {
+      throw new IllegalStateException();
+    }
     myState.getCustomResourceBundles()
       .add(new CustomResourceBundleState().addAll(ContainerUtil.map(propertiesFiles, file -> file.getVirtualFile().getUrl())).setBaseName(baseName));
   }
@@ -280,7 +265,7 @@ public class ResourceBundleManager implements PersistentStateComponent<ResourceB
   }
 
   @Override
-  public void loadState(ResourceBundleManagerState state) {
+  public void loadState(@NotNull ResourceBundleManagerState state) {
     myState = state.removeNonExistentFiles();
   }
 

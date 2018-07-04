@@ -1,29 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 
-public class PyDunderSlotsInspectionTest extends PyTestCase {
+public class PyDunderSlotsInspectionTest extends PyInspectionTestCase {
 
   // PY-12773
   public void testClassAttrAssignmentAndSlots() {
@@ -240,17 +227,84 @@ public class PyDunderSlotsInspectionTest extends PyTestCase {
     doTestPy3();
   }
 
+  // PY-26319
+  public void testWriteToProperty() {
+    doTestPy2();
+    doTestPy3();
+  }
+
+  // PY-26319
+  public void testWriteToInheritedProperty() {
+    doTestPy2();
+    doTestPy3();
+  }
+
+  // PY-29230
+  public void testWriteToOldStyleClass() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON26,
+      () -> doTestByText("class A:\n" +
+                         "    __slots__ = ['bar']\n" +
+                         "    \n" +
+                         "A().baz = 1\n" +
+                         "\n" +
+                         "\n" +
+                         "class B:\n" +
+                         "    __slots__ = ['bar']\n" +
+                         "    \n" +
+                         "class C(B):\n" +
+                         "    __slots__ = ['baz']\n" +
+                         "    \n" +
+                         "C().foo = 1")
+    );
+  }
+
+  // PY-29234
+  public void testSlotAndAnnotatedClassVar() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("class MyClass:\n" +
+                         "    __slots__ = ['a']\n" +
+                         "    a: int")
+    );
+  }
+
+  // PY-29268
+  public void testWriteToNewStyleInheritedFromOldStyle() {
+    doTestByText("class A:\n" +
+                 "    __slots__ = ['a']\n" +
+                 "\n" +
+                 "class B(A, object):\n" +
+                 "    __slots__ = ['b']\n" +
+                 "\n" +
+                 "B().c = 1");
+  }
+
+  // PY-29268
+  public void testWriteToNewStyleInheritedFromUnknown() {
+    doTestByText("class B(A, object):\n" +
+                 "    __slots__ = ['b']\n" +
+                 "\n" +
+                 "B().c = 1");
+  }
+
   private void doTestPy2() {
-    runWithLanguageLevel(LanguageLevel.PYTHON26, this::doTestPy);
+    runWithLanguageLevel(LanguageLevel.PYTHON26, this::doTest);
   }
 
   private void doTestPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTestPy);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
-  private void doTestPy() {
-    final String path = "inspections/PyDunderSlotsInspection/" + getTestName(true) + ".py";
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyDunderSlotsInspection.class;
+  }
 
+  @Override
+  protected void doTest() {
+    final String path = getTestFilePath();
     final VirtualFile file = myFixture.getTempDirFixture().getFile(path);
     if (file != null) {
       try {
@@ -260,9 +314,6 @@ public class PyDunderSlotsInspectionTest extends PyTestCase {
         throw new UncheckedIOException(e);
       }
     }
-
-    myFixture.configureByFile(path);
-    myFixture.enableInspections(PyDunderSlotsInspection.class);
-    myFixture.checkHighlighting(true, false, false);
+    super.doTest();
   }
 }

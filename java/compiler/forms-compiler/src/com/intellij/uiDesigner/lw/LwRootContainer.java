@@ -105,7 +105,7 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
   }
 
   public IButtonGroup[] getButtonGroups() {
-    return (LwButtonGroup[])myButtonGroups.toArray(new LwButtonGroup[myButtonGroups.size()]);
+    return (LwButtonGroup[])myButtonGroups.toArray(new LwButtonGroup[0]);
   }
 
   public String getButtonGroupName(IComponent component) {
@@ -143,6 +143,6 @@ public final class LwRootContainer extends LwContainer implements IRootContainer
   }
 
   public LwInspectionSuppression[] getInspectionSuppressions() {
-    return (LwInspectionSuppression[]) myInspectionSuppressions.toArray(new LwInspectionSuppression[myInspectionSuppressions.size()]);
+    return (LwInspectionSuppression[]) myInspectionSuppressions.toArray(LwInspectionSuppression.EMPTY_ARRAY);
   }
 }

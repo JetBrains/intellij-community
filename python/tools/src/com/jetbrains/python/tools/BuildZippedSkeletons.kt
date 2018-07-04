@@ -19,6 +19,7 @@ import com.intellij.idea.IdeaTestApplication
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.io.ZipUtil
 import com.jetbrains.python.sdk.PythonSdkType
+import com.jetbrains.python.sdk.skeletons.DefaultPregeneratedSkeletonsProvider
 import com.jetbrains.python.sdk.skeletons.PySkeletonRefresher
 import com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker
 import com.jetbrains.python.tools.sdkTools.PySdkTools
@@ -31,7 +32,7 @@ import java.util.zip.ZipOutputStream
  * @author traff
  */
 
-val PYCHARM_PYTHONS = "PYCHARM_PYTHONS"
+val PYCHARM_PYTHONS: String = "PYCHARM_PYTHONS"
 
 fun main(args: Array<String>) {
   val app = IdeaTestApplication.getInstance()
@@ -47,17 +48,18 @@ fun main(args: Array<String>) {
       val sdk = PySdkTools.createTempSdk(VfsUtil.findFileByIoFile(File(executable), true)!!,
                                          SdkCreationType.SDK_PACKAGES_AND_SKELETONS, null)
 
-      val skeletonsDir = File(System.getProperty("user.dir"), "skeletons-${sdk.versionString!!.replace(" ", "_")}_" + +Math.abs(sdk.homePath!!.hashCode()))
+      val skeletonsDir = File(System.getProperty("user.dir"),
+                              "skeletons-${sdk.versionString!!.replace(" ", "_")}_" + Math.abs(sdk.homePath!!.hashCode()))
 
       println("Generating skeletons in ${skeletonsDir.absolutePath}")
 
       val refresher = PySkeletonRefresher(null, null, sdk, skeletonsDir.absolutePath, null, null)
 
 
-      refresher.regenerateSkeletons(SkeletonVersionChecker(0))
+      refresher.regenerateSkeletons(SkeletonVersionChecker(SkeletonVersionChecker.PREGENERATED_VERSION))
 
 
-      val dirPacked = File(skeletonsDir.parent, refresher.pregeneratedSkeletonsName)
+      val dirPacked = File(skeletonsDir.parent, DefaultPregeneratedSkeletonsProvider.getPregeneratedSkeletonsName(sdk, refresher.generatorVersion, true, true))
       val zip = ZipOutputStream(FileOutputStream(dirPacked))
       ZipUtil.addDirToZipRecursively(zip, dirPacked, skeletonsDir, "", null, null)
       zip.close()

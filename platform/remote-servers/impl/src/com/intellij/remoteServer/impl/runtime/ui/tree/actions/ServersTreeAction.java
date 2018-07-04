@@ -1,6 +1,6 @@
 package com.intellij.remoteServer.impl.runtime.ui.tree.actions;
 
-import com.intellij.execution.dashboard.DashboardTreeAction;
+import com.intellij.execution.dashboard.RunDashboardTreeAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
-public abstract class ServersTreeAction<T extends ServersTreeNode> extends DashboardTreeAction<T, ServersToolWindowContent>
+public abstract class ServersTreeAction<T extends ServersTreeNode> extends RunDashboardTreeAction<T, ServersToolWindowContent>
   implements DumbAware {
   protected ServersTreeAction(String text, String description, Icon icon) {
     super(text, description, icon);

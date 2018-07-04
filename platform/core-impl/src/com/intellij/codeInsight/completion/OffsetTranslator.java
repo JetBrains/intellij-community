@@ -38,10 +38,11 @@ class OffsetTranslator implements Disposable {
   private final Document myCopyDocument;
   private final LinkedList<DocumentEvent> myTranslation = new LinkedList<>();
 
-  OffsetTranslator(final Document originalDocument, final PsiFile originalFile, Document copyDocument) {
+  OffsetTranslator(Document originalDocument, PsiFile originalFile, Document copyDocument, int start, int end, String replacement) {
     myOriginalFile = originalFile;
     myCopyDocument = copyDocument;
     myCopyDocument.putUserData(RANGE_TRANSLATION, this);
+    myTranslation.addFirst(new DocumentEventImpl(copyDocument, start, originalDocument.getImmutableCharSequence().subSequence(start, end), replacement, 0, false));
     Disposer.register(originalFile.getProject(), this);
 
     final LinkedList<DocumentEvent> sinceCommit = new LinkedList<>();
@@ -56,15 +57,6 @@ class OffsetTranslator implements Disposable {
       }
     }, this);
     
-    myCopyDocument.addDocumentListener(new DocumentListener() {
-      @Override
-      public void documentChanged(DocumentEvent e) {
-        if (isUpToDate()) {
-          myTranslation.addFirst(e);
-        }
-      }
-    }, this);
-
     originalFile.getProject().getMessageBus().connect(this).subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
       long lastModCount = originalFile.getViewProvider().getModificationStamp();
       @Override

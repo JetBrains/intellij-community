@@ -23,4 +23,4 @@ fun FileSystem.file(path: String, data: ByteArray): FileSystem {
   return this
 }
 
-fun FileSystem.file(path: String, data: String) = file(path, data.toByteArray())
+fun FileSystem.file(path: String, data: String): FileSystem = file(path, data.toByteArray())

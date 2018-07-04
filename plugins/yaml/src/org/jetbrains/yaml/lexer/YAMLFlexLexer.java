@@ -17,7 +17,29 @@ public class YAMLFlexLexer extends MergingLexerAdapter {
   private static final int DIRTY_STATE = 239;
 
   public YAMLFlexLexer() {
-    super(new MyFlexAdapter(new _YAMLLexer((Reader) null)), TOKENS_TO_MERGE);
+    super(new MyFlexAdapter(new LexerCustomisation(null)), TOKENS_TO_MERGE);
+  }
+
+  private static int calcOffsetFromLineStart(CharSequence buffer, int start) {
+    for (int i = start - 1; i >= 0; i--) {
+      if (buffer.charAt(i) == '\n') {
+        return start - i + 1;
+      }
+    }
+    return start;
+  }
+
+  /** This class is needed to reset lexer internal state */
+  private static class LexerCustomisation extends _YAMLLexer {
+    public LexerCustomisation(Reader in) {
+      super(in);
+    }
+
+    @Override
+    public void reset(CharSequence buffer, int start, int end, int initialState) {
+      super.reset(buffer, start, end, initialState);
+      yycolumn = calcOffsetFromLineStart(buffer, start);
+    }
   }
 
   private static class MyFlexAdapter extends FlexAdapter {

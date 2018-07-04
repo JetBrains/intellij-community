@@ -34,11 +34,11 @@ public class Endpoint {
 
     public static class DataIndex {
 
-        private JAXBDispatcher _jaxbDispatcher;
-        private DSDispatcher _dsDispatcher;
-        private UriBuilder _uriBuilder;
-        private JAXBContext _jc;
-        private HashMap<String, Object> _templateAndMatrixParameterValues;
+        private final JAXBDispatcher _jaxbDispatcher;
+        private final DSDispatcher _dsDispatcher;
+        private final UriBuilder _uriBuilder;
+        private final JAXBContext _jc;
+        private final HashMap<String, Object> _templateAndMatrixParameterValues;
 
         /**
          * Create new instance
@@ -127,11 +127,11 @@ public class Endpoint {
 
     public static class DataIndexRepository {
 
-        private JAXBDispatcher _jaxbDispatcher;
-        private DSDispatcher _dsDispatcher;
-        private UriBuilder _uriBuilder;
-        private JAXBContext _jc;
-        private HashMap<String, Object> _templateAndMatrixParameterValues;
+        private final JAXBDispatcher _jaxbDispatcher;
+        private final DSDispatcher _dsDispatcher;
+        private final UriBuilder _uriBuilder;
+        private final JAXBContext _jc;
+        private final HashMap<String, Object> _templateAndMatrixParameterValues;
 
         /**
          * Create new instance
@@ -235,11 +235,11 @@ public class Endpoint {
 
     public static class Repositories {
 
-        private JAXBDispatcher _jaxbDispatcher;
-        private DSDispatcher _dsDispatcher;
-        private UriBuilder _uriBuilder;
-        private JAXBContext _jc;
-        private HashMap<String, Object> _templateAndMatrixParameterValues;
+        private final JAXBDispatcher _jaxbDispatcher;
+        private final DSDispatcher _dsDispatcher;
+        private final UriBuilder _uriBuilder;
+        private final JAXBContext _jc;
+        private final HashMap<String, Object> _templateAndMatrixParameterValues;
 
         /**
          * Create new instance

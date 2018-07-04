@@ -35,6 +35,7 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
   private static final boolean TRACE_CREATION = LOG.isDebugEnabled() || ApplicationManager.getApplication().isUnitTestMode();
 
   volatile FilePointerPartNode myNode; // null means disposed
+  boolean recursive; // true if the validityChanged() event should be fired for any change under this directory. Used for library jar directories.
 
   VirtualFilePointerImpl(@Nullable VirtualFilePointerListener listener) {
     super(TRACE_CREATION);
@@ -115,9 +116,8 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
       kill("URL when die: "+ toString());
       VirtualFilePointerManager pointerManager = VirtualFilePointerManager.getInstance();
       if (pointerManager instanceof VirtualFilePointerManagerImpl) {
-        ((VirtualFilePointerManagerImpl)pointerManager).removeNode(myNode, myListener); // remove from the tree
+        ((VirtualFilePointerManagerImpl)pointerManager).removeNodeFrom(this);
       }
-      myNode = null;
     }
   }
 
@@ -131,5 +131,10 @@ class VirtualFilePointerImpl extends TraceableDisposable implements VirtualFileP
 
   int incrementUsageCount(int delta) {
     return myNode.incrementUsageCount(delta);
+  }
+
+  @Override
+  public boolean isRecursive() {
+    return recursive;
   }
 }

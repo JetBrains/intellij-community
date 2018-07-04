@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +33,7 @@ import java.util.Collection;
 public abstract class VcsDirtyScopeManager {
   @NotNull
   public static VcsDirtyScopeManager getInstance(@NotNull Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetComponent(project, VcsDirtyScopeManager.class);
+    return project.getComponent(VcsDirtyScopeManager.class);
   }
 
   /**
@@ -60,8 +59,9 @@ public abstract class VcsDirtyScopeManager {
    * Requests an asynchronous file status update for all files under the specified directory.
    *
    * @param dir the directory for which the file status update is requested.
-   * @deprecated Use single-parameter version instead.
+   * @deprecated Use {@link #dirDirtyRecursively(VirtualFile)} instead.
    */
+  @Deprecated
   public abstract void dirDirtyRecursively(VirtualFile dir, final boolean scheduleUpdate);
 
   /**

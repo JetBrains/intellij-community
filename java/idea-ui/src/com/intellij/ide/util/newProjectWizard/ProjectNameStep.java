@@ -31,7 +31,6 @@ import java.io.File;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 17, 2007
  */
 public class ProjectNameStep extends ModuleWizardStep {
   private final JPanel myPanel;

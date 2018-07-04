@@ -221,13 +221,10 @@ public class DomSimpleValuesTest extends DomTestCase {
     assertResultsAndClear();
 
     final XmlTag tag = element.getXmlTag();
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) {
-        tag.add(createTag("<indicator/>"));
-        tag.add(createTag("<indicator/>"));
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      tag.add(createTag("<indicator/>"));
+      tag.add(createTag("<indicator/>"));
+    });
 
     assertTrue(element.isValid());
     assertTrue(element.getIndicator().getValue());

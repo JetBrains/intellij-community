@@ -40,5 +40,5 @@ public class PyBinaryModuleCompletionTest extends PyTestCase {
     return ourDescriptor;
   }
 
-  private static PyLightProjectDescriptor ourDescriptor = new PyLightProjectDescriptor("WithBinaryModules");
+  private static final PyLightProjectDescriptor ourDescriptor = new PyLightProjectDescriptor("WithBinaryModules");
 }

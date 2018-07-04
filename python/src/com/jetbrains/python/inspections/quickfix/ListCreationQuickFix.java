@@ -18,6 +18,8 @@ package com.jetbrains.python.inspections.quickfix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -29,11 +31,11 @@ import java.util.List;
  * User : catherine
  */
 public class ListCreationQuickFix implements LocalQuickFix {
-  private final PyAssignmentStatement myStatement;
+  private final SmartPsiElementPointer<PyAssignmentStatement> myStatement;
   private final List<PyExpressionStatement> myStatements = new ArrayList<>();
 
   public ListCreationQuickFix(PyAssignmentStatement statement) {
-    myStatement = statement;
+    myStatement = SmartPointerManager.createPointer(statement);
   }
 
   public void addStatement(PyExpressionStatement statement) {
@@ -48,7 +50,9 @@ public class ListCreationQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     StringBuilder stringBuilder = new StringBuilder();
-    final PyExpression assignedValue = myStatement.getAssignedValue();
+    final PyAssignmentStatement assignmentStatement = myStatement.getElement();
+    if (assignmentStatement == null) return;
+    final PyExpression assignedValue = assignmentStatement.getAssignedValue();
     if (assignedValue == null) return;
 
     for (PyExpression expression : ((PyListLiteralExpression)assignedValue).getElements()) {

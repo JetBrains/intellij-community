@@ -1,0 +1,1 @@
+deprecated: Gear.png -> /general/gearPlain.svg; to be removed in IDEA 2020 - use AllIcons.General.GearPlain

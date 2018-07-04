@@ -86,6 +86,7 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testCallInFor() { doTest(); }
 
   public void testSCR20655() { doTest(); }
+  public void testGenericArrayCreation() { doTest(); }
 
 
   public void testFieldInitializer() { doTest(); }
@@ -254,7 +255,15 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   public void testInlineRunnableRun() {
     doTestInlineThisOnly();
   }
-  
+
+  public void testPreserveLeadingTailingComments() {
+    doTestInlineThisOnly();
+  }
+
+  public void testSkipEmptyMethod() {
+    doTestInlineThisOnly();
+  }
+
   public void testOneLineLambdaVoidCompatibleToBlock() {
     doTestInlineThisOnly();
   }
@@ -323,6 +332,10 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestConflict("Inlined method is used in method reference with side effects in qualifier");
   }
 
+  public void testUnableToInlineCodeBlockToSuper() {
+    doTestConflict("Inline cannot be applied to multiline method in constructor call");
+  }
+
   public void testRedundantCastOnMethodReferenceToLambda() {
     doTest();
   }
@@ -331,7 +344,27 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestConflict("Inlined method calls super.bar() which won't be accessed in class <b><code>B</code></b>");
   }
 
+  public void testInaccessibleSuperCallWhenQualifiedInInheritor() {
+    doTestConflict("Inlined method calls super.foo() which won't be accessible on qualifier c");
+  }
+
+  public void testInaccessibleConstructorInInlinedMethod() {
+    doTestConflict("Constructor <b><code>SomeClass.SomeClass()</code></b> that is used in inlined method is not accessible from call site(s) in method <b><code>InlineWithPrivateConstructorAccessMain.main(String...)</code></b>");
+  }
+
+  public void testPreserveResultedVariableIfInitializerIsNotSideEffectsFree() {
+    doTestInlineThisOnly();
+  }
+
+  public void testExprLambdaExpandToCodeBlock() {
+    doTestInlineThisOnly();
+  }
+
   public void testSuperCallWhenUnqualifiedInline() {
+    doTestInlineThisOnly();
+  }
+
+  public void testRemoveReturnForTailTypeSimpleWhenNoSideEffectsPossible() {
     doTestInlineThisOnly();
   }
 
@@ -375,20 +408,31 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     doTestInlineThisOnly();
   }
 
+  public void testTailCallInsideIf() {
+    doTest();
+  }
+
+  public void testTailCallInsideLambda() {
+    doTest();
+  }
+
+  public void testNotTailCallInsideIf() {
+    doTestAssertBadReturn();
+  }
+
   @Override
   protected Sdk getProjectJDK() {
     return getTestName(false).contains("Src") ? IdeaTestUtil.getMockJdk17() : super.getProjectJDK();
   }
 
   private void doTestInlineThisOnly() {
-    @NonNls String fileName = "/refactoring/inlineMethod/" + getTestName(false) + ".java";
-    configureByFile(fileName);
+    @NonNls String fileName = configure();
     performAction(new MockInlineMethodOptions(){
       @Override
       public boolean isInlineThisOnly() {
         return true;
       }
-    }, false);
+    }, false, false);
     checkResultByFile(fileName + ".after");
   }
 
@@ -397,18 +441,28 @@ public class InlineMethodTest extends LightRefactoringTestCase {
   }
 
   private void doTest(final boolean nonCode) {
-    String name = getTestName(false);
-    @NonNls String fileName = "/refactoring/inlineMethod/" + name + ".java";
-    configureByFile(fileName);
+    @NonNls String fileName = configure();
     performAction(nonCode);
     checkResultByFile(fileName + ".after");
   }
 
-  private void performAction(final boolean nonCode) {
-    performAction(new MockInlineMethodOptions(), nonCode);
+  private void doTestAssertBadReturn() {
+    @NonNls String fileName = configure();
+    performAction(new MockInlineMethodOptions(), false, true);
   }
 
-  private void performAction(final InlineOptions options, final boolean nonCode) {
+  @NotNull
+  private String configure() {
+    @NonNls String fileName = "/refactoring/inlineMethod/" + getTestName(false) + ".java";
+    configureByFile(fileName);
+    return fileName;
+  }
+
+  private static void performAction(final boolean nonCode) {
+    performAction(new MockInlineMethodOptions(), nonCode, false);
+  }
+
+  private static void performAction(final InlineOptions options, final boolean nonCode, final boolean assertBadReturn) {
     PsiElement element = TargetElementUtil
       .findTargetElement(myEditor, TargetElementUtil.ELEMENT_NAME_ACCEPTED | TargetElementUtil.REFERENCED_ELEMENT_ACCEPTED);
     final PsiReference ref = myFile.findReferenceAt(myEditor.getCaretModel().getOffset());
@@ -422,10 +476,14 @@ public class InlineMethodTest extends LightRefactoringTestCase {
     assertTrue(element instanceof PsiMethod);
     PsiMethod method = (PsiMethod)element.getNavigationElement();
     final boolean condition = InlineMethodProcessor.checkBadReturns(method) && !InlineUtil.allUsagesAreTailCalls(method);
-    assertFalse("Bad returns found", condition);
-    final InlineMethodProcessor processor =
-      new InlineMethodProcessor(getProject(), method, refExpr, myEditor, options.isInlineThisOnly(), nonCode, nonCode,
-                                !options.isKeepTheDeclaration());
-    processor.run();
+    if (assertBadReturn) {
+      assertTrue("Bad returns not found", condition);
+    } else {
+      assertFalse("Bad returns found", condition);
+      final InlineMethodProcessor processor =
+        new InlineMethodProcessor(getProject(), method, refExpr, myEditor, options.isInlineThisOnly(), nonCode, nonCode,
+                                  !options.isKeepTheDeclaration());
+      processor.run();
+    }
   }
 }

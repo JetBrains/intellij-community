@@ -27,7 +27,7 @@ import com.intellij.vcs.log.graph.parser.EdgeNodeCharConverter.toChar
 
 fun LinearGraph.asString(sorted: Boolean = false): String {
   val s = StringBuilder()
-  for (nodeIndex in 0..nodesCount() - 1) {
+  for (nodeIndex in 0 until nodesCount()) {
     if (nodeIndex > 0) s.append("\n")
     val node = getGraphNode(nodeIndex)
     s.append(node.asString()).append(CommitParser.SEPARATOR)
@@ -50,7 +50,7 @@ fun GraphEdge.asString(): String = "${upNodeIndex.asString()}:${downNodeIndex.as
 fun GraphElement.asString(): String = when (this) {
   is GraphNode -> asString()
   is GraphEdge -> asString()
-  else -> throw IllegalArgumentException("Uncown type of PrintElement: $this")
+  else -> throw IllegalArgumentException("Unknown type of PrintElement: $this")
 }
 
 fun PrintElementWithGraphElement.asString(): String {
@@ -81,17 +81,17 @@ fun PrintElementWithGraphElement.asString(): String {
 fun PrintElementGenerator.asString(size: Int): String {
   val s = StringBuilder()
 
-  for (row in 0..size - 1) {
+  for (row in 0 until size) {
     if (row > 0) s.append("\n")
     val elements = getPrintElements(row).sortedBy {
       val pos = it.positionInCurrentRow
-      if (it is NodePrintElement) {
-        1024 * pos
-      } else if (it is EdgePrintElement) {
-        1024 * pos + (it.type.ordinal + 1) * 64 + it.positionInOtherRow
-      } else 0
+      when (it) {
+        is NodePrintElement -> 1024 * pos
+        is EdgePrintElement -> 1024 * pos + (it.type.ordinal + 1) * 64 + it.positionInOtherRow
+        else -> 0
+      }
     }
-    elements.map { it.asString() }.joinTo(s, separator = "\n  ")
+    elements.joinTo(s, separator = "\n  ") { it.asString() }
   }
 
   return s.toString()

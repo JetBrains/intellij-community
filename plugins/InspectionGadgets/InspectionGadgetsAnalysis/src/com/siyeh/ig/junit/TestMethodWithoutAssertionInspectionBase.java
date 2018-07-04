@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.siyeh.ig.junit;
 
@@ -24,17 +12,18 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.MethodMatcher;
 import com.siyeh.ig.psiutils.TestUtils;
+import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
 
   protected final MethodMatcher methodMatcher;
   @SuppressWarnings("PublicField") public boolean assertKeywordIsAssertion;
+  @SuppressWarnings("PublicField") public boolean ignoreIfExceptionThrown;
 
   public TestMethodWithoutAssertionInspectionBase() {
-    methodMatcher = new MethodMatcher(true, "assertionMethods")
+    methodMatcher = new MethodMatcher(false, "assertionMethods")
       .add(JUnitCommonClassNames.ORG_JUNIT_ASSERT, "assert.*|fail.*")
       .add(JUnitCommonClassNames.JUNIT_FRAMEWORK_ASSERT, "assert.*|fail.*")
       .add(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, "assert.*|fail.*")
@@ -45,9 +34,11 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
       .add("org.mockito.InOrder", "verify")
       .add("org.junit.rules.ExpectedException", "expect.*")
       .add("org.hamcrest.MatcherAssert", "assertThat")
+      .add("mockit.Verifications", "Verifications")
       .finishDefault();
   }
 
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {
@@ -91,7 +82,10 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
       if (!TestUtils.isJUnitTestMethod(method)) {
         return;
       }
-      if (hasExpectedExceptionAnnotation(method)) {
+      if (TestUtils.hasExpectedExceptionAnnotation(method)) {
+        return;
+      }
+      if (ignoreIfExceptionThrown && method.getThrowsList().getReferenceElements().length > 0) {
         return;
       }
       if (containsAssertion(method)) {
@@ -132,23 +126,6 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
       element.accept(visitor);
       return visitor.containsAssertion();
     }
-
-    private boolean hasExpectedExceptionAnnotation(PsiMethod method) {
-      final PsiModifierList modifierList = method.getModifierList();
-      final PsiAnnotation testAnnotation = modifierList.findAnnotation("org.junit.Test");
-      if (testAnnotation == null) {
-        return false;
-      }
-      final PsiAnnotationParameterList parameterList = testAnnotation.getParameterList();
-      final PsiNameValuePair[] nameValuePairs = parameterList.getAttributes();
-      for (PsiNameValuePair nameValuePair : nameValuePairs) {
-        @NonNls final String parameterName = nameValuePair.getName();
-        if ("expected".equals(parameterName)) {
-          return true;
-        }
-      }
-      return false;
-    }
   }
 
   private class ContainsAssertionVisitor extends JavaRecursiveElementWalkingVisitor {
@@ -166,11 +143,11 @@ public class TestMethodWithoutAssertionInspectionBase extends BaseInspection {
     }
 
     @Override
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
+    public void visitCallExpression(@NotNull PsiCallExpression call) {
       if (containsAssertion) {
         return;
       }
-      super.visitMethodCallExpression(call);
+      super.visitCallExpression(call);
       if (methodMatcher.matches(call)) {
         containsAssertion = true;
       }

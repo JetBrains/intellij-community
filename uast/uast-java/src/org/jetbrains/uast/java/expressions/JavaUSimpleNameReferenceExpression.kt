@@ -21,39 +21,50 @@ import org.jetbrains.uast.USimpleNameReferenceExpression
 import org.jetbrains.uast.UTypeReferenceExpression
 
 class JavaUSimpleNameReferenceExpression(
-        override val psi: PsiElement?,
-        override val identifier: String,
-        override val uastParent: UElement?,
-        val reference: PsiReference? = null 
-) : JavaAbstractUExpression(), USimpleNameReferenceExpression {
-    override fun resolve() = (reference ?: psi as? PsiReference)?.resolve()
-    override val resolvedName: String?
-        get() = ((reference ?: psi as? PsiReference)?.resolve() as? PsiNamedElement)?.name
+  override val psi: PsiElement?,
+  override val identifier: String,
+  givenParent: UElement?,
+  val reference: PsiReference? = null
+) : JavaAbstractUExpression(givenParent), USimpleNameReferenceExpression {
+  override fun resolve(): PsiElement? = (reference ?: psi as? PsiReference)?.resolve()
+  override val resolvedName: String?
+    get() = ((reference ?: psi as? PsiReference)?.resolve() as? PsiNamedElement)?.name
+
+  override fun getPsiParentForLazyConversion(): PsiElement? {
+    val parent = super.getPsiParentForLazyConversion()
+    if (parent is PsiReferenceExpression && parent.parent is PsiMethodCallExpression) {
+      return parent.parent
+    }
+    return parent
+  }
+
+  override fun convertParent(): UElement? = super.convertParent().let(this::unwrapCompositeQualifiedReference)
+
 }
 
 class JavaUTypeReferenceExpression(
-        override val psi: PsiTypeElement,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UTypeReferenceExpression {
-    override val type: PsiType
-        get() = psi.type
+  override val psi: PsiTypeElement,
+  givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UTypeReferenceExpression {
+  override val type: PsiType
+    get() = psi.type
 }
 
 class LazyJavaUTypeReferenceExpression(
-        override val psi: PsiElement,
-        override val uastParent: UElement?,
-        private val typeSupplier: () -> PsiType
-) : JavaAbstractUExpression(), UTypeReferenceExpression {
-    override val type: PsiType by lz { typeSupplier() }
+  override val psi: PsiElement,
+  givenParent: UElement?,
+  private val typeSupplier: () -> PsiType
+) : JavaAbstractUExpression(givenParent), UTypeReferenceExpression {
+  override val type: PsiType by lz { typeSupplier() }
 }
 
 class JavaClassUSimpleNameReferenceExpression(
-        override val identifier: String,
-        val ref: PsiJavaReference,
-        override val psi: PsiElement,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), USimpleNameReferenceExpression {
-    override fun resolve() = ref.resolve()
-    override val resolvedName: String?
-        get() = (ref.resolve() as? PsiNamedElement)?.name
+  override val identifier: String,
+  val ref: PsiJavaReference,
+  override val psi: PsiElement,
+  givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), USimpleNameReferenceExpression {
+  override fun resolve(): PsiElement? = ref.resolve()
+  override val resolvedName: String?
+    get() = (ref.resolve() as? PsiNamedElement)?.name
 }

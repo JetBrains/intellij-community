@@ -52,20 +52,12 @@ public class DomTableView extends AbstractTableView<DomElement> {
     }
   }
 
-  @Deprecated
-  protected final void installPopup(final DefaultActionGroup group) {
-    installPopup(ActionPlaces.J2EE_ATTRIBUTES_VIEW_POPUP, group);
-  }
-
   @Override
   protected void wrapValueSetting(@NotNull final DomElement domElement, final Runnable valueSetter) {
     if (domElement.isValid()) {
-      new WriteCommandAction(getProject(), DomUtil.getFile(domElement)) {
-        @Override
-        protected void run(@NotNull final Result result) throws Throwable {
-          valueSetter.run();
-        }
-      }.execute();
+      WriteCommandAction.writeCommandAction(getProject(), DomUtil.getFile(domElement)).run(() -> {
+        valueSetter.run();
+      });
       fireChanged();
     }
   }

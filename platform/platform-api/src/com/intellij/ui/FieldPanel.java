@@ -1,22 +1,20 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.ui;
 
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.ui.components.JBTextField;
+import com.intellij.ui.components.fields.ExtendableTextField;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -26,7 +24,7 @@ public class FieldPanel extends AbstractFieldPanel implements TextAccessor {
   private final JTextField myTextField;
 
   public FieldPanel() {
-    this(new JBTextField(30));
+    this(new ExtendableTextField(30));
   }
 
   protected FieldPanel(JTextField textField) {
@@ -36,7 +34,7 @@ public class FieldPanel extends AbstractFieldPanel implements TextAccessor {
   }
 
   public FieldPanel(String labelText, final String viewerDialogTitle, ActionListener browseButtonActionListener, final Runnable documentListener) {
-    this(new JBTextField(30), labelText, viewerDialogTitle, browseButtonActionListener, documentListener);
+    this(new ExtendableTextField(30), labelText, viewerDialogTitle, browseButtonActionListener, documentListener);
   }
 
   public FieldPanel(JTextField textField, String labelText, final String viewerDialogTitle, ActionListener browseButtonActionListener, final Runnable documentListener) {

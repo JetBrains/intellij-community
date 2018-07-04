@@ -2,7 +2,6 @@ from unittest import TestCase
 
 
 class Spam(TestCase):
-
     def eggs(self):
         self.fail()
 

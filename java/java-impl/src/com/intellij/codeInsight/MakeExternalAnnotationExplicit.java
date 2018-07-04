@@ -101,8 +101,7 @@ public class MakeExternalAnnotationExplicit extends BaseIntentionAction {
                                               ExternalAnnotationsManager externalAnnotationsManager) {
     List<PsiFile> files = externalAnnotationsManager.findExternalAnnotationsFiles(owner);
     if (files != null) {
-      List<PsiFile> elements = new ArrayList<>();
-      elements.addAll(files);
+      List<PsiFile> elements = new ArrayList<>(files);
       elements.add(file);
       return elements;
     }
@@ -119,7 +118,9 @@ public class MakeExternalAnnotationExplicit extends BaseIntentionAction {
       JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
       return Arrays.stream(annotations).filter(anno -> {
         String qualifiedName = anno.getQualifiedName();
-        return qualifiedName != null && facade.findClass(qualifiedName, owner.getResolveScope()) != null;
+        return qualifiedName != null &&
+               facade.findClass(qualifiedName, owner.getResolveScope()) != null &&
+               !owner.hasAnnotation(qualifiedName);
       }).toArray(PsiAnnotation[]::new);
     }
   }

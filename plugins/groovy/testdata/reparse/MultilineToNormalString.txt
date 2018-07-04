@@ -36,20 +36,20 @@ Groovy script
               PsiElement(()('(')
               Literal
                 PsiElement(Gstring)('""')
-              PsiErrorElement:',' or ')' expected
+              PsiErrorElement:')' or ',' expected, got 'aaa'
                 <empty list>
               Reference expression
                 PsiElement(identifier)('aaa')
-              PsiErrorElement:',' or ')' expected
+              PsiErrorElement:')' or ',' expected, got '"'
                 <empty list>
               Compound Gstring
                 PsiElement(Gstring begin)('"')
-                GrStringContentImpl(GString content element)
+                GrStringContentImpl(STRING_CONTENT)
                   PsiElement(Gstring content)(')')
-                PsiErrorElement:String end expected
+                PsiErrorElement:Gstring end expected
                   <empty list>
               PsiElement(new line)('\n  ')
-              PsiErrorElement:',' or ')' expected
+              PsiErrorElement:')', ',' or <expression> expected, got '}'
                 <empty list>
           PsiElement(})('}')
       PsiElement(new line)('\n\n  ')

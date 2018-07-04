@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.options.colors;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author gregsh
  */
@@ -23,7 +25,7 @@ public abstract class AbstractKeyDescriptor<T> {
   private final String myDisplayName;
   private final T myKey;
 
-  protected AbstractKeyDescriptor(String displayName, T key) {
+  protected AbstractKeyDescriptor(@NotNull String displayName, @NotNull T key) {
     myKey = key;
     myDisplayName = displayName;
   }
@@ -33,6 +35,7 @@ public abstract class AbstractKeyDescriptor<T> {
    *
    * @return the name of the attribute.
    */
+  @NotNull
   public String getDisplayName() {
     return myDisplayName;
   }
@@ -42,6 +45,7 @@ public abstract class AbstractKeyDescriptor<T> {
    *
    * @return the attributes key.
    */
+  @NotNull
   public T getKey() {
     return myKey;
   }

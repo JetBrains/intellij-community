@@ -16,17 +16,12 @@
 
 package com.intellij.vcs.log.graph.api.printer;
 
-import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.graph.impl.print.elements.PrintElementWithGraphElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
 public interface PrintElementGenerator {
-
   @NotNull
   Collection<PrintElementWithGraphElement> getPrintElements(int visibleRow);
-
-  @NotNull
-  PrintElementWithGraphElement withGraphElement(@NotNull PrintElement printElement);
 }

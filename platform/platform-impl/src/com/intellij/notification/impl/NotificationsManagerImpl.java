@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
 import com.intellij.codeInsight.hint.TooltipController;
@@ -66,16 +52,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import javax.swing.plaf.ButtonUI;
 import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.UIResource;
-import javax.swing.text.*;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultCaret;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
-import javax.swing.text.html.ParagraphView;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
@@ -212,6 +198,11 @@ public class NotificationsManagerImpl extends NotificationsManager {
           }
         };
         assert toolWindowId != null;
+        assert notification.getActions().isEmpty() : "Actions are not shown for toolwindow notifications. " +
+                                                     "Toolwindow id " + toolWindowId +
+                                                     ", group id \'" + notification.getGroupId() + "\"" +
+                                                     ", title \'" + notification.getTitle() + "\"" +
+                                                     ", content \'" + notification.getContent() + "\"";
         String msg = notification.getTitle();
         if (StringUtil.isNotEmpty(notification.getContent())) {
           if (StringUtil.isNotEmpty(msg)) {
@@ -342,7 +333,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     }
 
     boolean actions = !notification.getActions().isEmpty();
-    boolean showFullContent = layoutData.showFullContent || notification instanceof NotificationActionProvider;
+    boolean showFullContent = layoutData.showFullContent || notification instanceof NotificationFullContent;
 
     Color foregroundR = Gray._0;
     Color foregroundD = Gray._191;
@@ -355,40 +346,16 @@ public class NotificationsManagerImpl extends NotificationsManager {
         if (layoutData.showMinSize) {
           Point location = getCollapsedTextEndLocation(this, layoutData);
           if (location != null) {
+            if (g instanceof Graphics2D) {
+              ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            }
             g.setColor(getForeground());
             g.drawString("...", location.x, location.y + g.getFontMetrics().getAscent());
           }
         }
       }
     };
-    text.setEditorKit(new UIUtil.JBHtmlEditorKit() {
-      final HTMLFactory factory = new HTMLFactory() {
-        public View create(Element e) {
-          View view = super.create(e);
-          if (view instanceof ParagraphView) {
-            // wrap too long words, for example: ATEST_TABLE_SIGNLE_ROW_UPDATE_AUTOCOMMIT_A_FIK
-            return new ParagraphView(e) {
-              protected SizeRequirements calculateMinorAxisRequirements(int axis, SizeRequirements r) {
-                if (r == null) {
-                  r = new SizeRequirements();
-                }
-                r.minimum = (int)layoutPool.getMinimumSpan(axis);
-                r.preferred = Math.max(r.minimum, (int)layoutPool.getPreferredSpan(axis));
-                r.maximum = Integer.MAX_VALUE;
-                r.alignment = 0.5f;
-                return r;
-              }
-            };
-          }
-          return view;
-        }
-      };
-
-      @Override
-      public ViewFactory getViewFactory() {
-        return factory;
-      }
-    });
+    text.setEditorKit(new UIUtil.JBWordWrapHtmlEditorKit());
     text.setForeground(foreground);
 
     final HyperlinkListener listener = NotificationsUtil.wrapListener(notification);
@@ -398,10 +365,10 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     String fontStyle = NotificationsUtil.getFontStyle();
     int prefSize = new JLabel(NotificationsUtil.buildHtml(notification, null, true, null, fontStyle)).getPreferredSize().width;
-    String style = prefSize > BalloonLayoutConfiguration.MaxWidth ? BalloonLayoutConfiguration.MaxWidthStyle : null;
+    String style = prefSize > BalloonLayoutConfiguration.MaxWidth() ? BalloonLayoutConfiguration.MaxWidthStyle() : null;
 
     if (layoutData.showFullContent) {
-      style = prefSize > BalloonLayoutConfiguration.MaxFullContentWidth ? BalloonLayoutConfiguration.MaxFullContentWidthStyle : null;
+      style = prefSize > BalloonLayoutConfiguration.MaxFullContentWidth() ? BalloonLayoutConfiguration.MaxFullContentWidthStyle() : null;
     }
 
     String textR = NotificationsUtil.buildHtml(notification, style, true, foregroundR, fontStyle);
@@ -411,10 +378,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
     text.setEditable(false);
     text.setOpaque(false);
-
-    if (UIUtil.isUnderNimbusLookAndFeel()) {
-      text.setBackground(UIUtil.TRANSPARENT_COLOR);
-    }
 
     text.setBorder(null);
 
@@ -476,7 +439,13 @@ public class NotificationsManagerImpl extends NotificationsManager {
     configureBalloonScrollPane(pane, layoutData.fillColor);
 
     if (showFullContent) {
-      pane.setPreferredSize(text.getPreferredSize());
+      if (windowComponent == null) {
+        pane.setPreferredSize(text.getPreferredSize());
+      }
+      else {
+        pane.setPreferredSize(
+          new Dimension(text.getPreferredSize().width, (int)Math.min(layoutData.fullHeight, windowComponent.getHeight() * 0.75)));
+      }
     }
     else if (layoutData.twoLineHeight < layoutData.fullHeight) {
       text.setPreferredSize(null);
@@ -563,9 +532,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
       JLabel title = new JLabel();
       lafHandler.setTitle(title, titleR, titleD);
       title.setOpaque(false);
-      if (UIUtil.isUnderNimbusLookAndFeel()) {
-        title.setBackground(UIUtil.TRANSPARENT_COLOR);
-      }
       title.setForeground(foreground);
       centerPanel.add(title, BorderLayout.NORTH);
     }
@@ -598,7 +564,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
     if (buttons != null) {
       layoutData.groupId = null;
       layoutData.mergeData = null;
-      buttons.setBorder(new EmptyBorder(0, 0, JBUI.scale(5), JBUI.scale(7)));
+      buttons.setBorder(JBUI.Borders.empty(0, 0, 5, 7));
     }
 
     HoverAdapter hoverAdapter = new HoverAdapter();
@@ -698,13 +664,13 @@ public class NotificationsManagerImpl extends NotificationsManager {
             if (isDarcula) {
               ui = new DarculaButtonUI() {
                 @Override
-                protected Color getButtonColor1() {
-                  return new ColorUIResource(0x464b4c);
+                protected Color getButtonColorStart() {
+                  return new ColorUIResource(0x5a5f61);
                 }
 
                 @Override
-                protected Color getButtonColor2() {
-                  return new ColorUIResource(0x383c3d);
+                protected Color getButtonColorEnd() {
+                  return new ColorUIResource(0x5a5f61);
                 }
               };
             }
@@ -712,8 +678,8 @@ public class NotificationsManagerImpl extends NotificationsManager {
             if (isDarcula) {
               setBorder(new DarculaButtonPainter() {
                 @Override
-                protected Color getBorderColor() {
-                  return new ColorUIResource(0x616263);
+                public Paint getBorderPaint(Component button) {
+                  return new ColorUIResource(0x717777);
                 }
               });
             }
@@ -805,6 +771,13 @@ public class NotificationsManagerImpl extends NotificationsManager {
             Notification.fire(notification, action, DataManager.getInstance().getDataContext(aSource));
           }
         }, action));
+    }
+    AnAction helpAction = notification.getContextHelpAction();
+    if (helpAction != null) {
+      Presentation presentation = helpAction.getTemplatePresentation();
+      ContextHelpLabel helpLabel = new ContextHelpLabel(presentation.getText(), presentation.getDescription());
+      helpLabel.setForeground(UIUtil.getLabelDisabledForeground());
+      actionPanel.add(HorizontalLayout.LEFT, helpLabel);
     }
 
     Insets hover = JBUI.insets(8, 5, 8, 7);
@@ -1207,9 +1180,9 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
       int width = Math.max(centerWidth, Math.max(titleWidth, actionWidth));
       if (!myLayoutData.showFullContent) {
-        width = Math.min(width, BalloonLayoutConfiguration.MaxWidth);
+        width = Math.min(width, BalloonLayoutConfiguration.MaxWidth());
       }
-      width = Math.max(width, BalloonLayoutConfiguration.MinWidth);
+      width = Math.max(width, BalloonLayoutConfiguration.MinWidth());
 
       return new Dimension(width, height);
     }
@@ -1265,7 +1238,8 @@ public class NotificationsManagerImpl extends NotificationsManager {
         width -= myLayoutData.configuration.actionGap + expandWidth;
 
         int components = myActionPanel.getComponentCount();
-        if (myActionPanel.getComponent(components - 1) instanceof DropDownAction) {
+        Component lastComponent = myActionPanel.getComponent(components - 1);
+        if (lastComponent instanceof DropDownAction || lastComponent instanceof ContextHelpLabel) {
           components--;
         }
         if (components > 2) {

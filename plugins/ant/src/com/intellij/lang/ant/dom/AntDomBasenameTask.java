@@ -22,7 +22,6 @@ import com.intellij.util.xml.GenericAttributeValue;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Aug 10, 2010
  */
 public abstract class AntDomBasenameTask extends AntDomPropertyDefiningTask {
   @Attribute("file")

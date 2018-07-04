@@ -91,7 +91,7 @@ public class PresentationSettingsPanel implements ConfigurableUi<SvnConfiguratio
   }
 
   @Override
-  public void apply(@NotNull SvnConfiguration configuration) throws ConfigurationException {
+  public void apply(@NotNull SvnConfiguration configuration) {
     configuration.setCheckNestedForQuickMerge(myCheckNestedInQuickMerge.isSelected());
     configuration.setIgnoreSpacesInAnnotate(myIgnoreWhitespaceDifferenciesInCheckBox.isSelected());
     configuration.setShowMergeSourcesInAnnotate(myShowMergeSourceInAnnotate.isSelected());

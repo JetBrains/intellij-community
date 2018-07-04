@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.lang.reflect.Method;
 
 public class CaughtExceptionImmediatelyRethrown {
 
@@ -13,7 +12,7 @@ public class CaughtExceptionImmediatelyRethrown {
             new FileInputStream(new File(""));
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
-        } catch (FileNotFoundException e) {
+        } catch (FileNotFoundException <warning descr="Caught exception 'e' is immediately rethrown">e</warning>) {
             throw e;
         } catch (RuntimeException e) {
             e.printStackTrace();
@@ -24,7 +23,7 @@ public class CaughtExceptionImmediatelyRethrown {
         try {
             int i = 0;
             new FileInputStream(new File(""));
-        } catch (FileNotFoundException e) {
+        } catch (FileNotFoundException <warning descr="Caught exception 'e' is immediately rethrown">e</warning>) {
             throw e;
         }
         int i = 10;
@@ -38,22 +37,19 @@ public class CaughtExceptionImmediatelyRethrown {
 		}
 	}
 
-	protected static Method getActionMethod(Class<?> actionClass, String methodName)
-			throws NoSuchMethodException {
-		Method method;
+	protected static void getActionMethod(Class<?> actionClass, String methodName)
+			throws IllegalArgumentException {
 		try {
-			method = actionClass.getMethod(methodName);
-		} catch (NoSuchMethodException e) {
-			// hmm -- OK, try doXxx instead
+			System.out.println();
+		} catch (IllegalArgumentException e) {
+			// hmm -- OK, try something else instead
 			try {
-				final String altMethodName = "do" + methodName.substring(0, 1).toUpperCase() + methodName.substring(1);
-				method = actionClass.getMethod(altMethodName);
-			} catch (NoSuchMethodException e1) {
+				System.out.println();
+			} catch (IllegalArgumentException e1) {
 				// throw the original one
 				throw e;
 			}
 		}
-		return method;
 	}
 
     public void test() throws IOException {

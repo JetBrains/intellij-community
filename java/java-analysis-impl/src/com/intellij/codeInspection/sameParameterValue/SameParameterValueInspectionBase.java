@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.sameParameterValue;
 
 import com.intellij.analysis.AnalysisScope;
@@ -22,16 +8,23 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+
+import static com.intellij.codeInspection.reference.RefParameter.VALUE_IS_NOT_CONST;
+import static com.intellij.codeInspection.reference.RefParameter.VALUE_UNDEFINED;
 
 /**
  * @author max
@@ -59,16 +52,16 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
 
       RefParameter[] parameters = refMethod.getParameters();
       for (RefParameter refParameter : parameters) {
-        String value = refParameter.getActualValueIfSame();
-        if (value != null) {
+        Object value = refParameter.getActualConstValue();
+        if (value != VALUE_IS_NOT_CONST && value != VALUE_UNDEFINED) {
           if (!globalContext.shouldCheck(refParameter, this)) continue;
           if (problems == null) problems = new ArrayList<>(1);
-          problems.add(registerProblem(manager, refParameter.getElement(), value));
+          problems.add(registerProblem(manager, refParameter.getElement(), value, refParameter.isUsedForWriting()));
         }
       }
     }
 
-    return problems == null ? null : problems.toArray(new CommonProblemDescriptor[problems.size()]);
+    return problems == null ? null : problems.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Override
@@ -140,9 +133,7 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
     return new LocalSameParameterValueInspection(this);
   }
 
-  private class LocalSameParameterValueInspection extends BaseJavaLocalInspectionTool {
-    private static final String NOT_CONST = "_NOT_CONST";
-
+  private class LocalSameParameterValueInspection extends AbstractBaseJavaLocalInspectionTool {
     private final SameParameterValueInspectionBase myGlobal;
 
     private LocalSameParameterValueInspection(SameParameterValueInspectionBase global) {
@@ -178,17 +169,14 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
                                           boolean isOnTheFly,
                                           @NotNull LocalInspectionToolSession session) {
       return new JavaElementVisitor() {
-        private final UnusedDeclarationInspectionBase myDeadCodeTool;
-
-        {
-          InspectionProfile profile = InspectionProjectProfileManager.getInstance(holder.getProject()).getCurrentProfile();
-          UnusedDeclarationInspectionBase deadCodeTool = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedDeclarationInspectionBase.SHORT_NAME, holder.getFile());
-          myDeadCodeTool = deadCodeTool == null ? new UnusedDeclarationInspectionBase() : deadCodeTool;
-        }
+        private final UnusedDeclarationInspectionBase myDeadCodeTool = UnusedDeclarationInspectionBase.findUnusedDeclarationInspection(holder.getFile());
 
         @Override
         public void visitMethod(PsiMethod method) {
           if (method.isConstructor() || VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(method.getModifierList()), highestModifier) < 0) return;
+
+          if (method.hasModifierProperty(PsiModifier.NATIVE)) return;
+
           PsiParameter[] parameters = method.getParameterList().getParameters();
           if (parameters.length == 0) return;
 
@@ -196,14 +184,15 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
           if (!method.getHierarchicalMethodSignature().getSuperSignatures().isEmpty()) return;
 
           PsiParameter lastParameter = parameters[parameters.length - 1];
-          final String[] paramValues;
+          final Object[] paramValues;
           final boolean hasVarArg = lastParameter.getType() instanceof PsiEllipsisType;
           if (hasVarArg) {
             if (parameters.length == 1) return;
-            paramValues = new String[parameters.length - 1];
+            paramValues = new Object[parameters.length - 1];
           } else {
-            paramValues = new String[parameters.length];
+            paramValues = new Object[parameters.length];
           }
+          Arrays.fill(paramValues, VALUE_UNDEFINED);
 
           if (UnusedSymbolUtil.processUsages(holder.getProject(), method.getContainingFile(), method, new EmptyProgressIndicator(), null, info -> {
             PsiElement element = info.getElement();
@@ -222,15 +211,15 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
             boolean needFurtherProcess = false;
             for (int i = 0; i < paramValues.length; i++) {
               Object value = paramValues[i];
-              final String currentArg = getArgValue(arguments[i]);
-              if (value == null) {
+              final Object currentArg = getArgValue(arguments[i], method);
+              if (value == VALUE_UNDEFINED) {
                 paramValues[i] = currentArg;
-                if (currentArg != NOT_CONST) {
+                if (currentArg != VALUE_IS_NOT_CONST) {
                   needFurtherProcess = true;
                 }
-              } else if (value != NOT_CONST) {
-                if (!paramValues[i].equals(currentArg)) {
-                  paramValues[i] = NOT_CONST;
+              } else if (value != VALUE_IS_NOT_CONST) {
+                if (!Comparing.equal(paramValues[i], currentArg)) {
+                  paramValues[i] = VALUE_IS_NOT_CONST;
                 } else {
                   needFurtherProcess = true;
                 }
@@ -240,9 +229,9 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
             return needFurtherProcess;
           })) {
             for (int i = 0, length = paramValues.length; i < length; i++) {
-              String value = paramValues[i];
-              if (value != null && value != NOT_CONST) {
-                holder.registerProblem(registerProblem(holder.getManager(), parameters[i], value));
+              Object value = paramValues[i];
+              if (value != VALUE_UNDEFINED && value != VALUE_IS_NOT_CONST) {
+                holder.registerProblem(registerProblem(holder.getManager(), parameters[i], value, false));
               }
             }
           }
@@ -250,20 +239,42 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
       };
     }
 
-    private String getArgValue(PsiExpression arg) {
-      return arg instanceof PsiLiteralExpression ? arg.getText() : NOT_CONST;
+    private Object getArgValue(PsiExpression arg, PsiMethod method) {
+      return RefParameterImpl.getAccessibleExpressionValue(arg, () -> method);
     }
   }
 
   private ProblemDescriptor registerProblem(@NotNull InspectionManager manager,
                                             PsiParameter parameter,
-                                            String value) {
+                                            Object value,
+                                            boolean usedForWriting) {
     final String name = parameter.getName();
+    String shortName;
+    String stringPresentation;
+    boolean accessible = true;
+    if (value instanceof PsiType) {
+      stringPresentation = ((PsiType)value).getCanonicalText() + ".class";
+      shortName = ((PsiType)value).getPresentableText() + ".class";
+    }
+    else {
+      if (value instanceof PsiField) {
+        accessible = PsiUtil.isMemberAccessibleAt((PsiMember)value, parameter);
+        stringPresentation = PsiFormatUtil.formatVariable((PsiVariable)value, 
+                                                          PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_FQ_NAME, 
+                                                          PsiSubstitutor.EMPTY);
+        shortName = PsiFormatUtil.formatVariable((PsiVariable)value, 
+                                                 PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS, 
+                                                 PsiSubstitutor.EMPTY);
+      }
+      else {
+        stringPresentation = shortName =  String.valueOf(value);
+      }
+    }
     return manager.createProblemDescriptor(ObjectUtils.notNull(parameter.getNameIdentifier(), parameter),
                                            InspectionsBundle.message("inspection.same.parameter.problem.descriptor",
-                                                                     "<code>" + name + "</code>",
-                                                                     "<code>" + StringUtil.unquoteString(value) + "</code>"),
-                                           createFix(name, value),
+                                                                     name,
+                                                                     StringUtil.unquoteString(shortName)),
+                                           usedForWriting || parameter.isVarArgs() || !accessible ? null : createFix(name, stringPresentation),
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
   }
 }

@@ -16,12 +16,13 @@
 package git4idea.util;
 
 import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.ui.FilePathChangesTreeList;
+import com.intellij.openapi.vcs.changes.ui.ChangesTree;
+import com.intellij.openapi.vcs.changes.ui.ChangesTreeImpl;
+import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -37,25 +38,21 @@ public class GitSimplePathsBrowser extends JPanel {
   public GitSimplePathsBrowser(@NotNull Project project, @NotNull Collection<String> absolutePaths) {
     super(new BorderLayout());
 
-    FilePathChangesTreeList browser = createBrowser(project, absolutePaths);
-    ActionToolbar toolbar = createToolbar(browser);
+    ChangesTree browser = createBrowser(project, absolutePaths);
 
-    add(toolbar.getComponent(), BorderLayout.NORTH);
+    DefaultActionGroup group = new DefaultActionGroup();
+    group.add(ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP));
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("GitPathBrowser", group, true);
+    TreeActionsToolbarPanel toolbarPanel = new TreeActionsToolbarPanel(toolbar, browser);
+
+    add(toolbarPanel, BorderLayout.NORTH);
     add(ScrollPaneFactory.createScrollPane(browser));
   }
 
   @NotNull
-  private static FilePathChangesTreeList createBrowser(@NotNull Project project, @NotNull Collection<String> absolutePaths) {
+  private static ChangesTree createBrowser(@NotNull Project project, @NotNull Collection<String> absolutePaths) {
     List<FilePath> filePaths = toFilePaths(absolutePaths);
-    FilePathChangesTreeList browser = new FilePathChangesTreeList(project, filePaths, false, false, null, null);
-    browser.setChangesToDisplay(filePaths);
-    return browser;
-  }
-
-  @NotNull
-  private static ActionToolbar createToolbar(@NotNull FilePathChangesTreeList browser) {
-    DefaultActionGroup actionGroup = new DefaultActionGroup(browser.getTreeActions());
-    return ActionManager.getInstance().createActionToolbar("GitPathBrowser", actionGroup, true);
+    return new ChangesTreeImpl.FilePaths(project, false, false, filePaths);
   }
 
   @NotNull

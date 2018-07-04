@@ -15,18 +15,20 @@
  */
 package git4idea.rebase
 
-import com.intellij.dvcs.repo.Repository
+import com.intellij.dvcs.repo.Repository.State.*
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.vcs.log.Hash
-import com.intellij.vcs.log.VcsLogDataKeys
+import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.VcsLogData
 import git4idea.GitUtil.HEAD
 import git4idea.GitUtil.getRepositoryManager
+import git4idea.findProtectedRemoteBranch
+import git4idea.repo.GitRepository
 
 /**
  * Base class for Git action which is going to edit existing commits,
@@ -34,6 +36,7 @@ import git4idea.GitUtil.getRepositoryManager
  */
 abstract class GitCommitEditingAction : DumbAwareAction() {
 
+  private val LOG = logger<GitCommitEditingAction>()
   private val COMMIT_NOT_IN_HEAD = "The commit is not in the current branch"
 
   override fun update(e: AnActionEvent) {
@@ -60,7 +63,7 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
       return
     }
 
-    // editing merge commit is not allowed
+    // editing merge commit or root commit is not allowed
     val parents = commit.parents.size
     if (parents != 1) {
       e.presentation.isEnabled = false
@@ -112,15 +115,15 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
     }
   }
 
-  protected fun getLog(e: AnActionEvent) = e.getRequiredData(VcsLogDataKeys.VCS_LOG)
+  protected fun getLog(e: AnActionEvent): VcsLog = e.getRequiredData(VcsLogDataKeys.VCS_LOG)
 
-  protected fun getLogData(e: AnActionEvent) = e.getRequiredData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData
+  protected fun getLogData(e: AnActionEvent): VcsLogData = e.getRequiredData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData
 
-  protected fun getUi(e: AnActionEvent) = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI)
+  protected fun getUi(e: AnActionEvent): VcsLogUi = e.getRequiredData(VcsLogDataKeys.VCS_LOG_UI)
 
-  protected fun getSelectedCommit(e: AnActionEvent) = getLog(e).selectedShortDetails[0]!!
+  protected fun getSelectedCommit(e: AnActionEvent): VcsShortCommitDetails = getLog(e).selectedShortDetails[0]!!
 
-  protected fun getRepository(e: AnActionEvent) = getRepositoryManager(e.project!!).getRepositoryForRoot(getSelectedCommit(e).root)!!
+  protected fun getRepository(e: AnActionEvent): GitRepository = getRepositoryManager(e.project!!).getRepositoryForRoot(getSelectedCommit(e).root)!!
 
   protected abstract fun getFailureTitle(): String
 
@@ -135,18 +138,25 @@ abstract class GitCommitEditingAction : DumbAwareAction() {
   private fun commitPushedToProtectedBranchError(protectedBranch: String)
     = "The commit is already pushed to protected branch '$protectedBranch'"
 
-  protected fun prohibitRebaseDuringRebase(e: AnActionEvent, operation: String) {
+  protected fun prohibitRebaseDuringRebase(e: AnActionEvent, operation: String, allowRebaseIfHeadCommit: Boolean = false) {
     if (e.presentation.isEnabledAndVisible) {
       val state = getRepository(e).state
-      if (state != Repository.State.NORMAL) {
-        e.presentation.isEnabled = false
-        e.presentation.description = when (state) {
-          Repository.State.REBASING -> "Can't $operation during rebase"
-          Repository.State.MERGING -> "Can't $operation during merge"
-          Repository.State.DETACHED -> "Can't $operation in detached HEAD state"
-          else -> throw IllegalStateException("Unexpected state: $state")
+      if (state == NORMAL || state == DETACHED) return
+      if (state == REBASING && allowRebaseIfHeadCommit && isHeadCommit(e)) return
+
+      e.presentation.isEnabled = false
+      e.presentation.description = when (state) {
+        REBASING -> "Can't $operation during rebase"
+        MERGING -> "Can't $operation during merge"
+        else -> {
+          LOG.error(IllegalStateException("Unexpected state: $state"))
+          "Can't $operation during $state"
         }
       }
     }
+  }
+
+  protected fun isHeadCommit(e: AnActionEvent): Boolean {
+    return getSelectedCommit(e).id.asString() == getRepository(e).currentRevision
   }
 }

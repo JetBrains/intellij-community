@@ -1,37 +1,15 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.status;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.api.BaseSvnClient;
-import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.commandLine.*;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 import org.xml.sax.SAXException;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -40,37 +18,46 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Supplier;
+
+import static com.intellij.openapi.util.io.FileUtil.isAncestor;
+import static com.intellij.openapi.util.io.FileUtil.toSystemIndependentName;
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.*;
+import static org.jetbrains.idea.svn.SvnUtil.append;
+import static org.jetbrains.idea.svn.SvnUtil.*;
+import static org.jetbrains.idea.svn.commandLine.CommandUtil.requireExistingParent;
 
 public class CmdStatusClient extends BaseSvnClient implements StatusClient {
 
   @Override
-  public long doStatus(@NotNull final File path,
-                       @Nullable final SVNRevision revision,
-                       @NotNull final Depth depth,
+  public long doStatus(@NotNull File path,
+                       @Nullable Revision revision,
+                       @NotNull Depth depth,
                        boolean remote,
                        boolean reportAll,
                        boolean includeIgnored,
                        boolean collectParentExternals,
-                       @NotNull final StatusConsumer handler,
-                       @Nullable final Collection changeLists) throws SvnBindException {
-    File base = CommandUtil.requireExistingParent(path);
-    final Info infoBase = myFactory.createInfoClient().doInfo(base, revision);
-    List<String> parameters = new ArrayList<>();
+                       @NotNull StatusConsumer handler) throws SvnBindException {
+    File base = requireExistingParent(path);
+    Info infoBase = myFactory.createInfoClient().doInfo(base, revision);
+    List<String> parameters = newArrayList();
 
-    putParameters(parameters, path, depth, remote, reportAll, includeIgnored, changeLists);
+    putParameters(parameters, path, depth, remote, reportAll, includeIgnored);
 
-    CommandExecutor command = execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.st, parameters, null);
+    CommandExecutor command = execute(myVcs, Target.on(path), SvnCommandName.st, parameters, null);
     parseResult(path, revision, handler, base, infoBase, command);
     return 0;
   }
 
-  private void parseResult(final File path,
-                           SVNRevision revision,
-                           StatusConsumer handler,
-                           File base,
-                           Info infoBase,
-                           CommandExecutor command) throws SvnBindException {
+  private void parseResult(@NotNull File path,
+                           @Nullable Revision revision,
+                           @NotNull StatusConsumer handler,
+                           @NotNull File base,
+                           @Nullable Info infoBase,
+                           @NotNull CommandExecutor command) throws SvnBindException {
     String result = command.getOutput();
 
     if (StringUtil.isEmptyOrSpaces(result)) {
@@ -78,13 +65,13 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
     }
 
     try {
-      final SvnStatusHandler[] svnHandl = new SvnStatusHandler[1];
-      svnHandl[0] = createStatusHandler(revision, handler, base, infoBase, svnHandl);
+      Ref<SvnStatusHandler> parsingHandler = Ref.create();
+      parsingHandler.set(createStatusHandler(revision, handler, base, infoBase, () -> parsingHandler.get().getPending()));
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
-      parser.parse(new ByteArrayInputStream(result.trim().getBytes(CharsetToolkit.UTF8_CHARSET)), svnHandl[0]);
-      if (!svnHandl[0].isAnythingReported()) {
-        if (!SvnUtil.isSvnVersioned(myVcs, path)) {
-          throw new SvnBindException(SVNErrorCode.WC_NOT_DIRECTORY, "Command - " + command.getCommandText() + ". Result - " + result);
+      parser.parse(new ByteArrayInputStream(result.trim().getBytes(CharsetToolkit.UTF8_CHARSET)), parsingHandler.get());
+      if (!parsingHandler.get().isAnythingReported()) {
+        if (!isSvnVersioned(myVcs, path)) {
+          throw new SvnBindException(ErrorCode.WC_NOT_WORKING_COPY, "Command - " + command.getCommandText() + ". Result - " + result);
         } else {
           // return status indicating "NORMAL" state
           // typical output would be like
@@ -98,12 +85,7 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
           status.setPath(path.getAbsolutePath());
           status.setContentsStatus(StatusType.STATUS_NORMAL);
           status.setInfoGetter(() -> createInfoGetter(null).convert(path));
-          try {
-            handler.consume(status);
-          }
-          catch (SVNException e) {
-            throw new SvnBindException(e);
-          }
+          handler.consume(status);
         }
       }
     }
@@ -126,31 +108,31 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
                                     @Nullable Depth depth,
                                     boolean remote,
                                     boolean reportAll,
-                                    boolean includeIgnored,
-                                    @Nullable Collection changeLists) {
+                                    boolean includeIgnored) {
     CommandUtil.put(parameters, path);
     CommandUtil.put(parameters, depth);
     CommandUtil.put(parameters, remote, "-u");
     CommandUtil.put(parameters, reportAll, "--verbose");
     CommandUtil.put(parameters, includeIgnored, "--no-ignore");
-    // TODO: Fix this check - update corresponding parameters in StatusClient
-    CommandUtil.putChangeLists(parameters, changeLists);
     parameters.add("--xml");
   }
 
-  public SvnStatusHandler createStatusHandler(final SVNRevision revision,
-                                               final StatusConsumer handler,
-                                               final File base,
-                                               final Info infoBase, final SvnStatusHandler[] svnHandl) {
-    final SvnStatusHandler.ExternalDataCallback callback = createStatusCallback(handler, base, infoBase, svnHandl);
+  @NotNull
+  public SvnStatusHandler createStatusHandler(@Nullable Revision revision,
+                                              @NotNull StatusConsumer handler,
+                                              @NotNull File base,
+                                              @Nullable Info infoBase,
+                                              @NotNull Supplier<PortableStatus> statusSupplier) {
+    SvnStatusHandler.ExternalDataCallback callback = createStatusCallback(handler, base, infoBase, statusSupplier);
 
     return new SvnStatusHandler(callback, base, createInfoGetter(revision));
   }
 
-  private Convertor<File, Info> createInfoGetter(final SVNRevision revision) {
-    return o -> {
+  @NotNull
+  private Convertor<File, Info> createInfoGetter(@Nullable Revision revision) {
+    return file -> {
       try {
-        return myFactory.createInfoClient().doInfo(o, revision);
+        return myFactory.createInfoClient().doInfo(file, revision);
       }
       catch (SvnBindException e) {
         throw new SvnExceptionWrapper(e);
@@ -158,66 +140,51 @@ public class CmdStatusClient extends BaseSvnClient implements StatusClient {
     };
   }
 
-  public static SvnStatusHandler.ExternalDataCallback createStatusCallback(final StatusConsumer handler,
-                                                                            final File base,
-                                                                            final Info infoBase,
-                                                                            final SvnStatusHandler[] svnHandl) {
-    final Map<File, Info> externalsMap = new HashMap<>();
-    final String[] changelistName = new String[1];
+  @NotNull
+  public static SvnStatusHandler.ExternalDataCallback createStatusCallback(@NotNull StatusConsumer handler,
+                                                                           @NotNull File base,
+                                                                           @Nullable Info infoBase,
+                                                                           @NotNull Supplier<PortableStatus> statusSupplier) {
+    Map<File, Info> externalsMap = newHashMap();
+    Ref<String> changelistName = Ref.create();
 
     return new SvnStatusHandler.ExternalDataCallback() {
       @Override
       public void switchPath() {
-        final PortableStatus pending = svnHandl[0].getPending();
-        pending.setChangelistName(changelistName[0]);
+        PortableStatus pending = statusSupplier.get();
+        pending.setChangelistName(changelistName.get());
         try {
-          //if (infoBase != null) {
-          Info baseInfo = infoBase;
-          File baseFile = base;
-          final File pendingFile = new File(pending.getPath());
-          if (! externalsMap.isEmpty()) {
-            for (File file : externalsMap.keySet()) {
-              if (FileUtil.isAncestor(file, pendingFile, false)) {
-                baseInfo = externalsMap.get(file);
-                baseFile = file;
-                break;
-              }
-            }
-          }
+          File pendingFile = new File(pending.getPath());
+          File externalsBase = find(externalsMap.keySet(), file -> isAncestor(file, pendingFile, false));
+          File baseFile = notNull(externalsBase, base);
+          Info baseInfo = externalsBase != null ? externalsMap.get(externalsBase) : infoBase;
+
           if (baseInfo != null) {
-            final String append;
-            final String systemIndependentPath = FileUtil.toSystemIndependentName(pending.getPath());
-            if (pendingFile.isAbsolute()) {
-              final String relativePath =
-                FileUtil.getRelativePath(FileUtil.toSystemIndependentName(baseFile.getPath()), systemIndependentPath, '/');
-              append = SVNPathUtil.append(baseInfo.getURL().toString(), FileUtil.toSystemIndependentName(relativePath));
-            }
-            else {
-              append = SVNPathUtil.append(baseInfo.getURL().toString(), systemIndependentPath);
-            }
-            pending.setURL(SVNURL.parseURIEncoded(append));
+            pending.setURL(pendingFile.isAbsolute()
+                           ? append(baseInfo.getURL(), getRelativePath(baseFile.getPath(), pending.getPath()))
+                           : append(baseInfo.getURL(), toSystemIndependentName(pending.getPath())));
           }
           if (StatusType.STATUS_EXTERNAL.equals(pending.getNodeStatus())) {
             externalsMap.put(pending.getFile(), pending.getInfo());
           }
           handler.consume(pending);
         }
-        catch (SVNException e) {
+        catch (SvnBindException e) {
           throw new SvnExceptionWrapper(e);
         }
       }
 
       @Override
       public void switchChangeList(String newList) {
-        changelistName[0] = newList;
+        changelistName.set(newList);
       }
     };
   }
 
   @Override
   public Status doStatus(@NotNull File path, boolean remote) throws SvnBindException {
-    final Status[] svnStatus = new Status[1];
-    doStatus(path, SVNRevision.UNDEFINED, Depth.EMPTY, remote, false, false, false, status -> svnStatus[0] = status, null);
-    return svnStatus[0];
+    Ref<Status> status = Ref.create();
+    doStatus(path, Revision.UNDEFINED, Depth.EMPTY, remote, false, false, false, status::set);
+    return status.get();
   }
 }

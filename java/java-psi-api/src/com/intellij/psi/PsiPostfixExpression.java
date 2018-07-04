@@ -16,17 +16,17 @@
 package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
-import com.intellij.psi.tree.IElementType;
 
 /**
  * Represents a Java postfix increment or decrement expression.
  */
-public interface PsiPostfixExpression extends PsiExpression {
+public interface PsiPostfixExpression extends PsiUnaryExpression {
   /**
    * Returns the expression representing the operand of the increment or decrement.
    *
    * @return the operand expression.
    */
+  @Override
   @NotNull
   PsiExpression getOperand();
 
@@ -36,14 +36,7 @@ public interface PsiPostfixExpression extends PsiExpression {
    *
    * @return the token for the operation performed.
    */
+  @Override
   @NotNull
   PsiJavaToken getOperationSign();
-
-  /**
-   * Returns the type of the token representing the operation performed.
-   *
-   * @return the token type.
-   */
-  @NotNull
-  IElementType getOperationTokenType();
 }

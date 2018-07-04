@@ -73,7 +73,7 @@ public class ConflictCreator {
     }
 
     if (! filePatchList.isEmpty()) {
-      PatchApplier<BinaryFilePatch> applier = new PatchApplier<>(myProject, myTheirsDir, filePatchList, (LocalChangeList)null, null, null);
+      PatchApplier<BinaryFilePatch> applier = new PatchApplier<>(myProject, myTheirsDir, filePatchList, (LocalChangeList)null, null);
       applier.setIgnoreContentRootsCheck();
       applier.execute();
       Assert.assertEquals(0, applier.getRemainingPatches().size());

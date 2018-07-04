@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.Patches;
@@ -23,10 +9,7 @@ import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
-import com.sun.jna.Memory;
-import com.sun.jna.Native;
-import com.sun.jna.Platform;
-import com.sun.jna.Pointer;
+import com.sun.jna.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -38,7 +21,9 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Locale;
+import java.util.Map;
 
 import static com.intellij.util.BitUtil.isSet;
 
@@ -92,7 +77,7 @@ public class FileSystemUtil {
       }
     }
 
-    if (!forceFallback && SystemInfo.isJavaVersionAtLeast("1.7") && !"1.7.0-ea".equals(SystemInfo.JAVA_VERSION)) {
+    if (!forceFallback && SystemInfo.isJavaVersionAtLeast(7, 0, 0) && !"1.7.0-ea".equals(SystemInfo.JAVA_VERSION)) {
       try {
         return check(new Nio2MediatorImpl());
       }
@@ -119,7 +104,17 @@ public class FileSystemUtil {
   @Nullable
   public static FileAttributes getAttributes(@NotNull String path) {
     try {
-      return ourMediator.getAttributes(path);
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("getAttributes(" + path + ")");
+        long t = System.nanoTime();
+        FileAttributes result = ourMediator.getAttributes(path);
+        t = (System.nanoTime() - t) / 1000;
+        LOG.trace("  " + t + " mks");
+        return result;
+      }
+      else {
+        return ourMediator.getAttributes(path);
+      }
     }
     catch (Exception e) {
       LOG.warn(e);
@@ -142,7 +137,7 @@ public class FileSystemUtil {
    */
   public static boolean isSymLink(@NotNull String path) {
     if (SystemInfo.areSymLinksSupported) {
-      final FileAttributes attributes = getAttributes(path);
+      FileAttributes attributes = getAttributes(path);
       return attributes != null && attributes.isSymLink();
     }
     return false;
@@ -158,7 +153,17 @@ public class FileSystemUtil {
   @Nullable
   public static String resolveSymLink(@NotNull String path) {
     try {
-      final String realPath = ourMediator.resolveSymLink(path);
+      String realPath;
+      if (LOG.isTraceEnabled()) {
+        LOG.trace("resolveSymLink(" + path + ")");
+        long t = System.nanoTime();
+        realPath = ourMediator.resolveSymLink(path);
+        t = (System.nanoTime() - t) / 1000;
+        LOG.trace("  " + t + " mks");
+      }
+      else {
+        realPath = ourMediator.resolveSymLink(path);
+      }
       if (realPath != null && new File(realPath).exists()) {
         return realPath;
       }
@@ -356,7 +361,7 @@ public class FileSystemUtil {
 
 
   private static class IdeaWin32MediatorImpl extends Mediator {
-    private IdeaWin32 myInstance = IdeaWin32.getInstance();
+    private final IdeaWin32 myInstance = IdeaWin32.getInstance();
 
     @Override
     protected FileAttributes getAttributes(@NotNull final String path) {
@@ -440,8 +445,10 @@ public class FileSystemUtil {
       else if ("sunos-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = SUN_OS_64;
       else throw new IllegalStateException("Unsupported OS/arch: " + SystemInfo.OS_NAME + "/" + SystemInfo.OS_ARCH);
 
-      Native.register(LibC.class, "c");
-      Native.register(SystemInfo.isLinux ? LinuxLibC.class : UnixLibC.class, "c");
+      Map<String, String> options = Collections.singletonMap(Library.OPTION_STRING_ENCODING, System.getProperty("sun.jnu.encoding"));
+      NativeLibrary lib = NativeLibrary.getInstance("c", options);
+      Native.register(LibC.class, lib);
+      Native.register(SystemInfo.isLinux ? LinuxLibC.class : UnixLibC.class, lib);
 
       myUid = LibC.getuid();
       myGid = LibC.getgid();
@@ -472,10 +479,6 @@ public class FileSystemUtil {
       boolean writable = ownFile(buffer) ? (mode & LibC.WRITE_MASK) != 0 : LibC.access(path, LibC.W_OK) == 0;
 
       return new FileAttributes(isDirectory, isSpecial, isSymlink, false, size, mTime, writable);
-    }
-
-    private static boolean loadFileStatus(String path, Memory buffer) {
-      return (SystemInfo.isLinux ? LinuxLibC.__xstat64(STAT_VER, path, buffer) : UnixLibC.stat(path, buffer)) == 0;
     }
 
     @Override
@@ -509,6 +512,10 @@ public class FileSystemUtil {
         permissions = sourcePermissions;
       }
       return LibC.chmod(target, permissions) == 0;
+    }
+
+    private static boolean loadFileStatus(String path, Memory buffer) {
+      return (SystemInfo.isLinux ? LinuxLibC.__xstat64(STAT_VER, path, buffer) : UnixLibC.stat(path, buffer)) == 0;
     }
 
     private int getModeFlags(Memory buffer) {

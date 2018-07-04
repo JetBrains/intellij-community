@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamToLoop;
 
 import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToLoopReplacementContext;
@@ -29,6 +15,7 @@ import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.FunctionalExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
@@ -48,7 +35,7 @@ import java.util.function.Consumer;
 abstract class FunctionHelper {
   private static final Logger LOG = Logger.getInstance(FunctionHelper.class);
 
-  private PsiType myResultType;
+  private final PsiType myResultType;
 
   FunctionHelper(PsiType resultType) {
     myResultType = resultType;
@@ -147,9 +134,7 @@ abstract class FunctionHelper {
   @Nullable
   static FunctionHelper create(PsiExpression expression, int paramCount, boolean allowReturns) {
     if(expression == null) return null;
-    PsiType type = expression instanceof PsiFunctionalExpression
-                   ? ((PsiFunctionalExpression)expression).getFunctionalInterfaceType()
-                   : expression.getType();
+    PsiType type = FunctionalExpressionUtils.getFunctionalExpressionType(expression);
     if(!(type instanceof PsiClassType)) return null;
     PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(type);
     if (interfaceMethod == null || interfaceMethod.getParameterList().getParametersCount() != paramCount) return null;
@@ -188,7 +173,7 @@ abstract class FunctionHelper {
       }
       return new MethodReferenceFunctionHelper(returnType, type, methodRef);
     }
-    if (expression instanceof PsiReferenceExpression && ExpressionUtils.isSimpleExpression(expression)) {
+    if (expression instanceof PsiReferenceExpression && ExpressionUtils.isSafelyRecomputableExpression(expression)) {
       return new SimpleReferenceFunctionHelper(returnType, expression, interfaceMethod.getName());
     }
     if (expression instanceof PsiMethodCallExpression) {
@@ -288,7 +273,7 @@ abstract class FunctionHelper {
    */
   @NotNull
   static <T extends PsiElement> T replaceVarReference(@NotNull T expressionOrCodeBlock,
-                                                      String name,
+                                                      @NotNull String name,
                                                       String replacement,
                                                       StreamToLoopReplacementContext context) {
     if (name.equals(replacement)) return expressionOrCodeBlock;
@@ -370,7 +355,7 @@ abstract class FunctionHelper {
       PsiExpression qualifier = methodRef.getQualifierExpression();
       if(qualifier != null) {
         String qualifierText = qualifier.getText();
-        if(!ExpressionUtils.isSimpleExpression(qualifier)) {
+        if(!ExpressionUtils.isSafelyRecomputableExpression(qualifier)) {
           if (myQualifierType != null) {
             String nameCandidate = "expr";
             SuggestedNameInfo info = JavaCodeStyleManager.getInstance(context.getProject())
@@ -396,7 +381,12 @@ abstract class FunctionHelper {
       myExpression = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
       LOG.assertTrue(myExpression != null);
       EntryStream.zip(lambda.getParameterList().getParameters(), argumentValues)
-        .forKeyValue((param, newName) -> myExpression = replaceVarReference(myExpression, param.getName(), newName, context));
+        .forKeyValue((param, newName) -> {
+          String oldName = param.getName();
+          if (oldName != null) {
+            myExpression = replaceVarReference(myExpression, oldName, newName, context);
+          }
+        });
     }
 
     @Override
@@ -628,7 +618,9 @@ abstract class FunctionHelper {
     String getStatementText() {
       PsiElement[] children = myBody.getChildren();
       // Keep everything except braces
-      return StreamEx.of(children, 1, children.length - 1).map(PsiElement::getText).joining().trim();
+      return StreamEx.of(children, 1, children.length - 1)
+                     .dropWhile(e -> e instanceof PsiWhiteSpace)
+                     .map(PsiElement::getText).joining();
     }
 
     void transform(StreamToLoopReplacementContext context, String... argumentValues) {

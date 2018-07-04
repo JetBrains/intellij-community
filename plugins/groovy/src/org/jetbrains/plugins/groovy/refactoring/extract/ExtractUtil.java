@@ -28,7 +28,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -134,7 +134,7 @@ public class ExtractUtil {
     else {
       final List<GrStatement> result = generateVarDeclarations(mustAdd, helper.getProject(), null);
       result.add(createAssignment(outputVars, callExpression, helper.getProject()));
-      return result.toArray(new GrStatement[result.size()]);
+      return result.toArray(GrStatement.EMPTY_ARRAY);
     }
   }
 

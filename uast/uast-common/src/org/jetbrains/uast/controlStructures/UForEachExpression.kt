@@ -30,40 +30,40 @@ import org.jetbrains.uast.visitor.UastVisitor
  *  loop expression.
  */
 interface UForEachExpression : ULoopExpression {
-    /**
-     * Returns the loop variable.
-     */
-    val variable: UParameter
+  /**
+   * Returns the loop variable.
+   */
+  val variable: UParameter
 
-    /**
-     * Returns the iterated value (collection, sequence, iterable etc.)
-     */
-    val iteratedValue: UExpression
+  /**
+   * Returns the iterated value (collection, sequence, iterable etc.)
+   */
+  val iteratedValue: UExpression
 
-    /**
-     * Returns the identifier for the 'for' ('foreach') keyword.
-     */
-    val forIdentifier: UIdentifier
+  /**
+   * Returns the identifier for the 'for' ('foreach') keyword.
+   */
+  val forIdentifier: UIdentifier
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitForEachExpression(this)) return
-        annotations.acceptList(visitor)
-        iteratedValue.accept(visitor)
-        body.accept(visitor)
-        visitor.afterVisitForEachExpression(this)
-    }
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitForEachExpression(this)) return
+    annotations.acceptList(visitor)
+    iteratedValue.accept(visitor)
+    body.accept(visitor)
+    visitor.afterVisitForEachExpression(this)
+  }
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
-            visitor.visitForEachExpression(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
+    visitor.visitForEachExpression(this, data)
 
-    override fun asRenderString() = buildString {
-        append("for (")
-        append(variable.name)
-        append(" : ")
-        append(iteratedValue.asRenderString())
-        append(") ")
-        append(body.asRenderString())
-    }
+  override fun asRenderString(): String = buildString {
+    append("for (")
+    append(variable.name)
+    append(" : ")
+    append(iteratedValue.asRenderString())
+    append(") ")
+    append(body.asRenderString())
+  }
 
-    override fun asLogString() = log()
+  override fun asLogString(): String = log()
 }

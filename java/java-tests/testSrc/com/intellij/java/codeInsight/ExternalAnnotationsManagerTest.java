@@ -37,9 +37,11 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.xml.util.XmlUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Range;
 import org.jetbrains.idea.eclipse.util.PathUtil;
 
 import java.util.Arrays;
@@ -60,7 +62,8 @@ public class ExternalAnnotationsManagerTest extends IdeaTestCase {
     Sdk plusTools = PsiTestUtil.addRootsToJdk(sdk, OrderRootType.CLASSES, toolsJar);
 
     Collection<String> utilClassPath = PathManager.getUtilClassPath();
-    VirtualFile[] files = utilClassPath.stream()
+    VirtualFile[] files = StreamEx.of(utilClassPath)
+      .append(PathManager.getJarPathForClass(Range.class))
       .map(path -> path.endsWith(".jar") ?
                    JarFileSystem.getInstance() .findFileByPath(FileUtil.toSystemIndependentName(path) + "!/") :
                    LocalFileSystem.getInstance() .findFileByPath(FileUtil.toSystemIndependentName(path)))

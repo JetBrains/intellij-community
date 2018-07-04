@@ -40,7 +40,7 @@ import java.util.NoSuchElementException;
  *
  * Implementors should provide nextImpl() method which can call stop()/skip().
  *
- * @see JBIterable#transform(Function)
+ * @see JBIterable#map(Function)
  * @see JBIterable#filter(Condition)
  * @see TreeTraversal.TracingIt
  *
@@ -164,7 +164,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
   }
 
   @NotNull
-  public final <T> JBIterator<T> transform(@NotNull Function<? super E, T> function) {
+  public final <T> JBIterator<T> map(@NotNull Function<? super E, T> function) {
     return addOp(true, new TransformOp<E, T>(function));
   }
 
@@ -228,7 +228,7 @@ public abstract class JBIterator<E> implements Iterator<E> {
 
   @NotNull
   public final JBIterable<Function<Object, Object>> getTransformations() {
-    return (JBIterable<Function<Object, Object>>)(JBIterable)operationsImpl().transform(new Function<Op, Object>() {
+    return (JBIterable<Function<Object, Object>>)(JBIterable)operationsImpl().map(new Function<Op, Object>() {
       @Override
       public Object fun(Op op) {
         return op.impl;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,16 +24,21 @@ import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.java.LanguageReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
-import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns;
 
+import static org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns.groovyLiteralExpression;
 
+/**
+ * @deprecated {@link org.intellij.plugins.intelliLang.inject.java.LanguageReferenceProvider} now serves Groovy.
+ * Will be removed in IDEA 2019.1
+ */
+@Deprecated
 public class GrLanguageReferenceProvider extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(@NotNull PsiReferenceRegistrar registrar) {
     final Configuration configuration = Configuration.getInstance();
-    registrar.registerReferenceProvider(
-      GroovyPatterns.groovyLiteralExpression().annotationParam(StandardPatterns.string().with(isLanguageAnnotation(configuration)), "value").and(
-        GroovyPatterns.groovyLiteralExpression().with(isStringLiteral())), new PsiReferenceProvider() {
+    registrar.registerReferenceProvider(groovyLiteralExpression().with(isStringLiteral()).annotationParam(
+      StandardPatterns.string().with(isLanguageAnnotation(configuration)), "value"
+    ), new PsiReferenceProvider() {
       @NotNull
       @Override
       public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {

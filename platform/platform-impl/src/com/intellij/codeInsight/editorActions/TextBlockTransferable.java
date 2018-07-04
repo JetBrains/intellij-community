@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -21,6 +7,7 @@ import com.intellij.openapi.editor.RawText;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,10 +16,7 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class TextBlockTransferable implements Transferable {
   private final Collection<TextBlockTransferableData> myExtraData;
@@ -45,19 +29,22 @@ public class TextBlockTransferable implements Transferable {
     myExtraData = extraData;
     myRawText = rawText;
 
-    List<DataFlavor> dataFlavors = new ArrayList<>();
-    Collections.addAll(dataFlavors, DataFlavor.stringFlavor, DataFlavor.plainTextFlavor);
+    List<DataFlavorWithPriority> dataFlavors = new ArrayList<>();
+    Collections.addAll(dataFlavors, 
+                       new DataFlavorWithPriority(DataFlavor.stringFlavor, TextBlockTransferableData.PLAIN_TEXT_PRIORITY), 
+                       new DataFlavorWithPriority(DataFlavor.plainTextFlavor, TextBlockTransferableData.PLAIN_TEXT_PRIORITY));
     final DataFlavor flavor = RawText.getDataFlavor();
     if (myRawText != null && flavor != null) {
-      dataFlavors.add(flavor);
+      dataFlavors.add(new DataFlavorWithPriority(flavor, TextBlockTransferableData.PLAIN_TEXT_PRIORITY));
     }
     for(TextBlockTransferableData data: extraData) {
       final DataFlavor blockFlavor = data.getFlavor();
       if (blockFlavor != null) {
-        dataFlavors.add(blockFlavor);
+        dataFlavors.add(new DataFlavorWithPriority(blockFlavor, data.getPriority()));
       }
     }
-    myTransferDataFlavors = dataFlavors.toArray(new DataFlavor[dataFlavors.size()]);
+    dataFlavors.sort(Comparator.comparingInt(value -> -value.priority));
+    myTransferDataFlavors = ContainerUtil.map2Array(dataFlavors, DataFlavor.class, value -> value.flavor);
   }
 
   @NotNull
@@ -144,6 +131,16 @@ public class TextBlockTransferable implements Transferable {
     }
     else{
       return StringUtil.convertLineSeparators(text, newSeparator);
+    }
+  }
+
+  private static class DataFlavorWithPriority {
+    private final DataFlavor flavor;
+    private final int priority;
+
+    private DataFlavorWithPriority(DataFlavor flavor, int priority) {
+      this.flavor = flavor;
+      this.priority = priority;
     }
   }
 }

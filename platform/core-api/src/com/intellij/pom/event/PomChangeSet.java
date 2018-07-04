@@ -22,4 +22,6 @@ public interface PomChangeSet {
   @NotNull
   PomModelAspect getAspect();
   void merge(@NotNull PomChangeSet blocked);
+
+  default void beforeNestedTransaction() {}
 }

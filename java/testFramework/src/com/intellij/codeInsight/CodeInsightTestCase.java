@@ -1,28 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -39,6 +21,7 @@ import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Comparing;
@@ -46,6 +29,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -62,7 +46,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Mike
@@ -81,25 +68,6 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     DaemonCodeAnalyzer.getInstance(getProject()).restart();
 
     return editor;
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    fixTemplates();
-  }
-
-  public static void fixTemplates() {
-    FileTemplateManager manager = FileTemplateManager.getDefaultInstance();
-    for (String tname : Arrays.asList("Class", "AnnotationType", "Enum", "Interface")) {
-      for (FileTemplate template : manager.getInternalTemplates()) {
-        if (tname.equals(template.getName())) {
-          String text = "package $PACKAGE_NAME$;\npublic " + manager.internalTemplateToSubject(tname) + " $NAME$ { }";
-          template.setText(FileTemplateManagerImpl.normalizeText(text));
-          break;
-        }
-      }
-    }
   }
 
   @Override
@@ -167,28 +135,22 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
   protected PsiFile configureByText(@NotNull final FileType fileType, @NotNull final String text, @Nullable String _extension) {
     try {
-      final String extension = _extension == null ? fileType.getDefaultExtension():_extension;
+      final String extension = _extension == null ? fileType.getDefaultExtension() : _extension;
 
       File dir = createTempDirectory();
       final File tempFile = FileUtil.createTempFile(dir, "tempFile", "." + extension, true);
       final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
       if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
-        new WriteCommandAction(getProject()) {
-          @Override
-          protected void run(@NotNull Result result) throws Exception {
-            fileTypeManager.associateExtension(fileType, extension);
-          }
-        }.execute();
+        WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+          fileTypeManager.associateExtension(fileType, extension);
+        });
       }
       final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
       assert vFile != null;
-      new WriteAction() {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          vFile.setCharset(CharsetToolkit.UTF8_CHARSET);
-          VfsUtil.saveText(vFile, text);
-        }
-      }.execute();
+      WriteAction.runAndWait(() -> {
+        vFile.setCharset(CharsetToolkit.UTF8_CHARSET);
+        VfsUtil.saveText(vFile, text);
+      });
 
       final VirtualFile vdir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
 
@@ -234,6 +196,10 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
 
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+  }
+
+  public VirtualFile doConfigureByFiles(@Nullable final File rawProjectRoot, @NotNull final VirtualFile... vFiles) throws IOException {
+    return configureByFiles(rawProjectRoot, vFiles);
   }
 
   protected VirtualFile configureByFiles(@Nullable final File rawProjectRoot, @NotNull final VirtualFile... vFiles) throws IOException {
@@ -447,54 +413,50 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
   }
 
   protected void checkResultByFile(@NotNull final String filePath, final boolean stripTrailingSpaces) throws Exception {
-    new WriteCommandAction<Document>(getProject()) {
-      @SuppressWarnings("ConstantConditions")
-      @Override
-      protected void run(@NotNull Result<Document> result) throws Throwable {
-        getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
-        if (stripTrailingSpaces) {
-          ((DocumentImpl)myEditor.getDocument()).stripTrailingSpaces(getProject());
-        }
-
-        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-
-        VirtualFile vFile = findVirtualFile(filePath);
-
-        VfsTestUtil.assertFilePathEndsWithCaseSensitivePath(vFile, filePath);
-        String expectedText;
-        try {
-          expectedText = VfsUtilCore.loadText(vFile);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-
-        expectedText = StringUtil.convertLineSeparators(expectedText);
-        Document document = EditorFactory.getInstance().createDocument(expectedText);
-
-        EditorTestUtil.CaretAndSelectionState caretState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
-
-        expectedText = document.getText();
-        if (stripTrailingSpaces) {
-          Document document1 = EditorFactory.getInstance().createDocument(expectedText);
-          ((DocumentImpl)document1).stripTrailingSpaces(getProject());
-          expectedText = document1.getText();
-        }
-
-        if (myEditor instanceof EditorWindow) {
-          myEditor = ((EditorWindow)myEditor).getDelegate();
-        }
-        myFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(myEditor.getDocument());
-
-        String actualText = StringUtil.convertLineSeparators(myFile.getText());
-
-        if (!Comparing.equal(expectedText, actualText)) {
-            throw new FileComparisonFailure("Text mismatch in file " + filePath, expectedText, actualText, vFile.getPath());
-        }
-
-        EditorTestUtil.verifyCaretAndSelectionState(myEditor, caretState);
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
+      if (stripTrailingSpaces) {
+        ((DocumentImpl)myEditor.getDocument()).stripTrailingSpaces(getProject());
       }
-    }.execute();
+
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+
+      VirtualFile vFile = findVirtualFile(filePath);
+
+      VfsTestUtil.assertFilePathEndsWithCaseSensitivePath(vFile, filePath);
+      String expectedText;
+      try {
+        expectedText = VfsUtilCore.loadText(vFile);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+
+      expectedText = StringUtil.convertLineSeparators(expectedText);
+      Document document = EditorFactory.getInstance().createDocument(expectedText);
+
+      EditorTestUtil.CaretAndSelectionState caretState = EditorTestUtil.extractCaretAndSelectionMarkers(document);
+
+      expectedText = document.getText();
+      if (stripTrailingSpaces) {
+        Document document1 = EditorFactory.getInstance().createDocument(expectedText);
+        ((DocumentImpl)document1).stripTrailingSpaces(getProject());
+        expectedText = document1.getText();
+      }
+
+      if (myEditor instanceof EditorWindow) {
+        myEditor = ((EditorWindow)myEditor).getDelegate();
+      }
+      myFile = PsiDocumentManager.getInstance(getProject()).getPsiFile(myEditor.getDocument());
+
+      String actualText = StringUtil.convertLineSeparators(myFile.getText());
+
+      if (!Comparing.equal(expectedText, actualText)) {
+        throw new FileComparisonFailure("Text mismatch in file " + filePath, expectedText, actualText, vFile.getPath());
+      }
+
+      EditorTestUtil.verifyCaretAndSelectionState(myEditor, caretState);
+    });
   }
 
   @Override
@@ -619,5 +581,9 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     final PsiPackage aPackage = myJavaFacade.findPackage(name);
     assertNotNull("Package " + name + " not found", aPackage);
     return aPackage;
+  }
+
+  protected void setLanguageLevel(LanguageLevel level) {
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level);
   }
 }

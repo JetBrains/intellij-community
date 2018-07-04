@@ -62,7 +62,9 @@ public class SafeDeleteReferenceJavaDeleteUsageInfo extends SafeDeleteReferenceS
         }
       }
       else {
-        if (element instanceof PsiExpressionStatement && RefactoringUtil.isLoopOrIf(element.getParent())) {
+        if (element instanceof PsiExpressionStatement &&
+            RefactoringUtil.isLoopOrIf(element.getParent()) &&
+            !RemoveUnusedVariableUtil.isForLoopUpdate(element)) {
           final PsiStatement emptyTest = JavaPsiFacade.getInstance(getProject()).getElementFactory().createStatementFromText(";", null);
           element.replace(emptyTest);
         } else {

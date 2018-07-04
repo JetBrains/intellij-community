@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -36,6 +21,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.OnePixelDivider;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -164,6 +150,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     editorSettings.setAdditionalColumnsCount(0);
     editorSettings.setAdditionalLinesCount(1);
     editorSettings.setUseSoftWraps(false);
+    editorSettings.setSoftMargins(Collections.emptyList());
   }
 
   protected void updatePreview(boolean useDefaultSample) {
@@ -177,6 +164,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       return;
     }
 
+    Project project = ProjectUtil.guessCurrentProject(getPanel());
+    if (myEditor.isDisposed()) return;
+
     if (myLastDocumentModificationStamp != myEditor.getDocument().getModificationStamp()) {
       myTextToReformat = myEditor.getDocument().getText();
     }
@@ -185,9 +175,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     }
 
     int currOffs = myEditor.getScrollingModel().getVerticalScrollOffset();
-
-    final Project finalProject = ProjectUtil.guessCurrentProject(getPanel());
-    CommandProcessor.getInstance().executeCommand(finalProject, () -> replaceText(finalProject), null, null);
+    CommandProcessor.getInstance().executeCommand(project, () -> replaceText(project), null, null);
 
     myEditor.getSettings().setRightMargin(getAdjustedRightMargin());
     myLastDocumentModificationStamp = myEditor.getDocument().getModificationStamp();
@@ -196,7 +184,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
 
   private int getAdjustedRightMargin() {
     int result = getRightMargin();
-    return result > 0 ? result : CodeStyleFacade.getInstance(ProjectUtil.guessCurrentProject(getPanel())).getRightMargin(getDefaultLanguage());
+    return result > 0 ? result : CodeStyle.getSettings(ProjectUtil.guessCurrentProject(getPanel())).getRightMargin(getDefaultLanguage());
   }
 
   protected abstract int getRightMargin();
@@ -210,24 +198,18 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
         }
 
         //important not mark as generated not to get the classes before setting language level
+        @SuppressWarnings("deprecation")
         PsiFile psiFile = createFileFromText(project, myTextToReformat);
         prepareForReformat(psiFile);
 
         applySettingsToModel();
         CodeStyleSettings clone = mySettings.clone();
         clone.setRightMargin(getDefaultLanguage(), getAdjustedRightMargin());
-        CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
-        PsiFile formatted;
-        try {
-          formatted = doReformat(project, psiFile);
-        }
-        finally {
-          CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-        }
-
+        final Ref<PsiFile> formatted = Ref.create();
+        CodeStyle.doWithTemporarySettings(project, clone, () -> formatted.set(doReformat(project, psiFile)));
         myEditor.getSettings().setTabSize(clone.getTabSize(getFileType()));
         Document document = myEditor.getDocument();
-        document.replaceString(0, document.getTextLength(), formatted.getText());
+        document.replaceString(0, document.getTextLength(), formatted.get().getText());
         if (beforeReformat != null) {
           highlightChanges(beforeReformat);
         }
@@ -239,6 +221,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   }
 
   private void applySettingsToModel() {
+    if (((CodeStyleSchemesModel.ModelSettings)mySettings).isLocked()) return;
     try {
       if (myModel != null && myModel.isUiEventsEnabled()) {
         apply(mySettings);
@@ -259,17 +242,12 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
    */
   @Nullable
   private Document collectChangesBeforeCurrentSettingsAppliance(Project project) {
+    @SuppressWarnings("deprecation")
     PsiFile psiFile = createFileFromText(project, myTextToReformat);
     prepareForReformat(psiFile);
     CodeStyleSettings clone = mySettings.clone();
     clone.setRightMargin(getDefaultLanguage(), getAdjustedRightMargin());
-    CodeStyleSettingsManager.getInstance(project).setTemporarySettings(clone);
-    try {
-      CodeStyleManager.getInstance(project).reformat(psiFile);
-    }
-    finally {
-      CodeStyleSettingsManager.getInstance(project).dropTemporarySettings();
-    }
+    CodeStyle.doWithTemporarySettings(project, clone, () -> CodeStyleManager.getInstance(project).reformat(psiFile));
     return getDocumentBeforeChanges(project, psiFile);
   }
 
@@ -295,7 +273,25 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     return getFileTypeExtension(getFileType());
   }
 
+  /**
+   * @deprecated Do not override this method. Use LanguageCodeStyleSettingsProvider.createFileFromText() instead.
+   * @see LanguageCodeStyleSettingsProvider#createFileFromText(Project, String)
+   */
+  @Deprecated
   protected PsiFile createFileFromText(Project project, String text) {
+    Language language = getDefaultLanguage();
+    if (language != null) {
+      LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(language);
+      if (provider != null) {
+        final PsiFile file = provider.createFileFromText(project, text);
+        if (file != null) {
+          if (file.isPhysical()) {
+            LOG.error(provider.getClass() + " creates a physical file with PSI events enabled");
+          }
+          return file;
+        }
+      }
+    }
     return PsiFileFactory.getInstance(project).createFileFromText(
       "a." + getFileExt(), getFileType(), text, LocalTimeCounter.currentTime(), false
     );
@@ -363,6 +359,9 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
     try {
       resetImpl(settings);
     }
+    catch (Exception e) {
+      LOG.error(e);
+    }
     finally {
       myShouldUpdatePreview = true;
     }
@@ -403,6 +402,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   public static String readFromFile(final Class resourceContainerClass, @NonNls final String fileName) {
     try {
       final InputStream stream = resourceContainerClass.getClassLoader().getResourceAsStream("codeStyle/preview/" + fileName);
+      if (stream == null) throw new IOException("Resource not found: " + "codeStyle/preview/" + fileName);
       final InputStreamReader reader = new InputStreamReader(stream);
       final StringBuffer result;
       final LineNumberReader lineNumberReader = new LineNumberReader(reader);
@@ -421,6 +421,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
       return result.toString();
     }
     catch (IOException e) {
+      LOG.error("Cannot load codestyle preview from" + fileName, e);
       return "";
     }
   }
@@ -575,7 +576,7 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   
   public final void applyPredefinedSettings(@NotNull PredefinedCodeStyle codeStyle) {
     codeStyle.apply(mySettings);
-    resetImpl(mySettings);
+    ((CodeStyleSchemesModel.ModelSettings) mySettings).doWithLockedSettings(()->resetImpl(mySettings));
     if (myModel != null) {
       myModel.fireAfterCurrentSettingsChanged();
     }

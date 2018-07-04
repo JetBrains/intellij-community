@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
@@ -23,11 +8,11 @@ import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
-import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +22,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrClosureSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignature;
 import org.jetbrains.plugins.groovy.lang.psi.api.signatures.GrSignatureVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
@@ -48,7 +31,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrClosureParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
@@ -69,8 +51,6 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.unwrapClassT
  */
 public class GdkMethodUtil {
 
-  private static final Logger LOG = Logger.getInstance(GdkMethodUtil.class);
-
   public static final Set<String> COLLECTION_METHOD_NAMES = ContainerUtil.newHashSet(
     "each", "eachWithIndex", "any", "every", "reverseEach", "collect", "collectAll", "find", "findAll", "retainAll", "removeAll", "split",
     "groupBy", "groupEntriesBy", "findLastIndexOf", "findIndexValues", "findIndexOf"
@@ -78,7 +58,6 @@ public class GdkMethodUtil {
   @NonNls private static final String WITH = "with";
   @NonNls private static final String IDENTITY = "identity";
 
-  @NonNls public static final String USE = "use";
   @NonNls public static final String EACH_WITH_INDEX = "eachWithIndex";
   @NonNls public static final String INJECT = "inject";
   @NonNls public static final String EACH_PERMUTATION = "eachPermutation";
@@ -89,69 +68,6 @@ public class GdkMethodUtil {
   @NonNls public static final String WITH_OBJECT_STREAMS = "withObjectStreams";
 
   private GdkMethodUtil() {
-  }
-
-  public static boolean categoryIteration(GrClosableBlock place, final PsiScopeProcessor processor, ResolveState state) {
-    if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY)) &&
-        !(processor instanceof GroovyResolverProcessor && ((GroovyResolverProcessor)processor).isPropertyResolve())) {
-      return true;
-    }
-
-    final GrMethodCall call = checkMethodCall(place, USE);
-    if (call == null) return true;
-
-    final GrClosableBlock[] closures = call.getClosureArguments();
-    GrExpression[] args = call.getExpressionArguments();
-    if (!(placeEqualsSingleClosureArg(place, closures) || placeEqualsLastArg(place, args))) return true;
-
-    if (!(call.resolveMethod() instanceof GrGdkMethod)) return true;
-
-    state = state.put(ClassHint.RESOLVE_CONTEXT, call);
-
-    if ((args.length == 1 || args.length == 2 && placeEqualsLastArg(place, args))) {
-      PsiType type = args[0].getType();
-      if (type instanceof GrTupleType) {
-        return processTypesFromTuple((GrTupleType)type, processor, state, place);
-      }
-    }
-    return processTypesFomArgs(args, processor, state, place);
-  }
-
-  private static boolean processTypesFromTuple(@NotNull GrTupleType type,
-                                               @NotNull PsiScopeProcessor processor,
-                                               @NotNull ResolveState state,
-                                               @NotNull GrClosableBlock place) {
-    for (PsiType component : type.getComponentTypes()) {
-      PsiType clazz = PsiUtil.substituteTypeParameter(component, CommonClassNames.JAVA_LANG_CLASS, 0, false);
-      PsiClass aClass = PsiTypesUtil.getPsiClass(clazz);
-      if (aClass != null) {
-        if (!processCategoryMethods(place, processor, state, aClass)) return false;
-      }
-    }
-    return true;
-  }
-
-  private static boolean processTypesFomArgs(@NotNull GrExpression[] args,
-                                             @NotNull PsiScopeProcessor processor,
-                                             @NotNull ResolveState state,
-                                             @NotNull GrClosableBlock place) {
-    for (GrExpression arg : args) {
-      if (arg instanceof GrReferenceExpression) {
-        final PsiElement resolved = ((GrReferenceExpression)arg).resolve();
-        if (resolved instanceof PsiClass) {
-          if (!processCategoryMethods(place, processor, state, (PsiClass)resolved)) return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  private static boolean placeEqualsLastArg(GrClosableBlock place, GrExpression[] args) {
-    return args.length > 0 && place.equals(args[args.length - 1]);
-  }
-
-  private static boolean placeEqualsSingleClosureArg(GrClosableBlock place, GrClosableBlock[] closures) {
-    return closures.length == 1 && place.equals(closures[0]);
   }
 
   /**
@@ -179,27 +95,6 @@ public class GdkMethodUtil {
       if (!categoryClass.processDeclarations(delegate, state, null, place)) return false;
     }
     return true;
-  }
-
-  @Nullable
-  private static GrMethodCall checkMethodCall(GrClosableBlock place, String methodName) {
-    final PsiElement context = place.getContext();
-    GrMethodCall call = null;
-    if (context instanceof GrMethodCall) {
-      call = (GrMethodCall)context;
-    }
-    else if (context instanceof GrArgumentList) {
-      final PsiElement ccontext = context.getContext();
-      if (ccontext instanceof GrMethodCall) {
-        call = (GrMethodCall)ccontext;
-      }
-    }
-    if (call == null) return null;
-    final GrExpression invoked = call.getInvokedExpression();
-    if (!(invoked instanceof GrReferenceExpression) || !methodName.equals(((GrReferenceExpression)invoked).getReferenceName())) {
-      return null;
-    }
-    return call;
   }
 
   /**
@@ -406,31 +301,31 @@ public class GdkMethodUtil {
     return null;
   }
 
-  private static boolean isSingleExpressionArg(GrMethodCall call) {
+  private static boolean isSingleExpressionArg(@NotNull GrMethodCall call) {
     return call.getExpressionArguments().length == 1 &&
            !PsiImplUtil.hasNamedArguments(call.getArgumentList()) &&
-           !PsiImplUtil.hasClosureArguments(call);
+           !call.hasClosureArguments();
   }
 
   @Nullable
   private static Pair<PsiClassType, GrReferenceExpression> getTypeToMixIn(GrMethodCall methodCall) {
     GrExpression invoked = methodCall.getInvokedExpression();
-    if (invoked instanceof GrReferenceExpression && GrImportUtil.acceptName((GrReferenceExpression)invoked, "mixin")) {
-      PsiElement resolved = ((GrReferenceExpression)invoked).resolve();
+    if (!(invoked instanceof GrReferenceExpression)) return null;
+    GrReferenceExpression referenceExpression = (GrReferenceExpression)invoked;
+    if (GrImportUtil.acceptName(referenceExpression, "mixin")) {
+
+      PsiElement resolved = referenceExpression.resolve();
       if (resolved instanceof PsiMethod && isMixinMethod((PsiMethod)resolved)) {
-        GrExpression qualifier = ((GrReferenceExpression)invoked).getQualifier();
+        GrExpression qualifier = referenceExpression.getQualifierExpression();
         Pair<PsiClassType, GrReferenceExpression> type = getPsiClassFromReference(qualifier);
         if (type != null) {
           return type;
-        }
-        if (qualifier == null) {
-          qualifier = PsiImplUtil.getRuntimeQualifier((GrReferenceExpression)invoked);
         }
         if (qualifier != null && isMetaClass(qualifier.getType())) {
           if (qualifier instanceof GrMethodCall) qualifier = ((GrMethodCall)qualifier).getInvokedExpression();
 
           if (qualifier instanceof GrReferenceExpression) {
-            GrExpression qqualifier = ((GrReferenceExpression)qualifier).getQualifier();
+            GrExpression qqualifier = ((GrReferenceExpression)qualifier).getQualifierExpression();
             if (qqualifier != null) {
               Pair<PsiClassType, GrReferenceExpression> type1 = getPsiClassFromMetaClassReference(qqualifier);
               if (type1 != null) {
@@ -463,7 +358,7 @@ public class GdkMethodUtil {
     String name = method.getName();
     return "getMetaClass".equals(name) &&
            containingClass != null &&
-           (method.getParameterList().getParametersCount() == 0 ^
+           (method.getParameterList().isEmpty() ^
             GroovyCommonClassNames.DEFAULT_GROOVY_METHODS.equals(containingClass.getQualifiedName()));
   }
 

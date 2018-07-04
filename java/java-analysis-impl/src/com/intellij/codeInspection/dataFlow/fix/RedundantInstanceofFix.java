@@ -19,10 +19,12 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiInstanceOfExpression;
+import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
+import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -37,11 +39,31 @@ public class RedundantInstanceofFix implements LocalQuickFix {
 
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    final PsiElement psiElement = descriptor.getPsiElement();
-    if (psiElement instanceof PsiInstanceOfExpression) {
-      PsiExpression compareToNull = JavaPsiFacade.getInstance(psiElement.getProject()).getElementFactory().
-        createExpressionFromText(((PsiInstanceOfExpression)psiElement).getOperand().getText() + " != null", psiElement.getParent());
-      psiElement.replace(compareToNull);
+    PsiElement psiElement = descriptor.getPsiElement();
+    CommentTracker ct = new CommentTracker();
+    if (psiElement instanceof PsiMethodReferenceExpression) {
+      String replacement = CommonClassNames.JAVA_UTIL_OBJECTS + "::nonNull";
+      JavaCodeStyleManager.getInstance(project).shortenClassReferences(ct.replaceAndRestoreComments(psiElement, replacement));
+      return;
     }
+    String nonNullExpression = null;
+    if (psiElement instanceof PsiInstanceOfExpression) {
+      nonNullExpression = ct.text(((PsiInstanceOfExpression)psiElement).getOperand());
+    }
+    else if (psiElement instanceof PsiMethodCallExpression) {
+      PsiExpression arg = ArrayUtil.getFirstElement(((PsiMethodCallExpression)psiElement).getArgumentList().getExpressions());
+      if (arg == null) return;
+      nonNullExpression = ct.text(arg);
+    }
+    if (nonNullExpression == null) return;
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(psiElement.getParent());
+    String replacement;
+    if (parent instanceof PsiExpression && BoolUtils.isNegation((PsiExpression)parent)) {
+      replacement = nonNullExpression + "==null";
+      psiElement = parent;
+    } else {
+      replacement = nonNullExpression + "!=null";
+    }
+    JavaCodeStyleManager.getInstance(project).shortenClassReferences(ct.replaceAndRestoreComments(psiElement, replacement));
   }
 }

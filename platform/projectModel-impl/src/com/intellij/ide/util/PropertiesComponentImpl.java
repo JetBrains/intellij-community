@@ -1,33 +1,25 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jdom.Verifier;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class PropertiesComponentImpl extends PropertiesComponent implements PersistentStateComponent<Element> {
-  private final Map<String, String> myMap = new LinkedHashMap<>();
+  private static final Logger LOG = Logger.getInstance(PropertiesComponentImpl.class);
+
+  private final Map<String, String> myMap = ContainerUtil.newConcurrentMap();
+
   @NonNls private static final String ELEMENT_PROPERTY = "property";
   @NonNls private static final String ATTRIBUTE_NAME = "name";
   @NonNls private static final String ATTRIBUTE_VALUE = "value";
@@ -40,16 +32,21 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
   PropertiesComponentImpl() {
   }
 
-  @TestOnly
-  @Deprecated
-  public static PropertiesComponentImpl create() {
-    return new PropertiesComponentImpl();
+  private void doPut(String key, String value) {
+    String reason = Verifier.checkCharacterData(key);
+    if (reason != null) {
+      LOG.error(reason);
+    }
+    myMap.put(key, value);
+    incModificationCount();
   }
 
   @Override
   public Element getState() {
     Element parentNode = new Element("state");
-    for (final String key : myMap.keySet()) {
+    List<String> keys = new ArrayList<>(myMap.keySet());
+    keys.sort(null);
+    for (final String key : keys) {
       String value = myMap.get(key);
       if (value != null) {
         Element element = new Element(ELEMENT_PROPERTY);
@@ -62,7 +59,7 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
   }
 
   @Override
-  public void loadState(final Element parentNode) {
+  public void loadState(@NotNull final Element parentNode) {
     myMap.clear();
     for (Element e : parentNode.getChildren(ELEMENT_PROPERTY)) {
       String name = e.getAttributeValue(ATTRIBUTE_NAME);
@@ -80,47 +77,47 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
   @Override
   public void setValue(@NotNull String name, @Nullable String value) {
     if (value == null) {
-      myMap.remove(name);
+      unsetValue(name);
     }
     else {
-      myMap.put(name, value);
+      doPut(name, value);
     }
   }
 
   @Override
   public void setValue(@NotNull String name, @Nullable String value, @Nullable String defaultValue) {
     if (value == null || value.equals(defaultValue)) {
-      myMap.remove(name);
+      unsetValue(name);
     }
     else {
-      myMap.put(name, value);
+      doPut(name, value);
     }
   }
 
   @Override
   public void setValue(@NotNull String name, float value, float defaultValue) {
     if (value == defaultValue) {
-      myMap.remove(name);
+      unsetValue(name);
     }
     else {
-      myMap.put(name, String.valueOf(value));
+      doPut(name, String.valueOf(value));
     }
   }
 
   @Override
   public void setValue(@NotNull String name, int value, int defaultValue) {
     if (value == defaultValue) {
-      myMap.remove(name);
+      unsetValue(name);
     }
     else {
-      myMap.put(name, String.valueOf(value));
+      doPut(name, String.valueOf(value));
     }
   }
 
   @Override
   public void setValue(@NotNull String name, boolean value, boolean defaultValue) {
     if (value == defaultValue) {
-      myMap.remove(name);
+      unsetValue(name);
     }
     else {
       setValue(name, String.valueOf(value));
@@ -130,6 +127,7 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
   @Override
   public void unsetValue(String name) {
     myMap.remove(name);
+    incModificationCount();
   }
 
   @Override

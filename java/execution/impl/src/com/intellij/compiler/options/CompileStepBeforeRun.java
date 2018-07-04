@@ -52,11 +52,11 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
   /**
    * @deprecated to be removed in IDEA 2017
    */
-  public static final Key<RunConfiguration> RUN_CONFIGURATION = CompilerManager.RUN_CONFIGURATION_KEY;
+  @Deprecated public static final Key<RunConfiguration> RUN_CONFIGURATION = CompilerManager.RUN_CONFIGURATION_KEY;
   /**
    * @deprecated to be removed in IDEA 2017
    */
-  public static final Key<String> RUN_CONFIGURATION_TYPE_ID = CompilerManager.RUN_CONFIGURATION_TYPE_ID_KEY;
+  @Deprecated public static final Key<String> RUN_CONFIGURATION_TYPE_ID = CompilerManager.RUN_CONFIGURATION_TYPE_ID_KEY;
 
   @NonNls protected static final String MAKE_PROJECT_ON_RUN_KEY = "makeProjectOnRun";
 
@@ -95,27 +95,25 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     MakeBeforeRunTask task = null;
     if (shouldCreateTask(configuration)) {
       task = new MakeBeforeRunTask();
-      if (configuration instanceof RunConfigurationBase) {
-        task.setEnabled(((RunConfigurationBase)configuration).isCompileBeforeLaunchAddedByDefault());
-      }
+      task.setEnabled(isEnabledByDefault(configuration));
     }
     return task;
+  }
+
+  private static boolean isEnabledByDefault(@NotNull RunConfiguration configuration) {
+    return (configuration instanceof RunProfileWithCompileBeforeLaunchOption &&
+            ((RunProfileWithCompileBeforeLaunchOption)configuration).isBuildBeforeLaunchAddedByDefault()
+           ) &&
+           (configuration instanceof RunConfigurationBase &&
+            ((RunConfigurationBase)configuration).isCompileBeforeLaunchAddedByDefault()
+           );
   }
 
   static boolean shouldCreateTask(RunConfiguration configuration) {
     return !(configuration instanceof RemoteConfiguration) && configuration instanceof RunProfileWithCompileBeforeLaunchOption;
   }
 
-  public boolean configureTask(RunConfiguration runConfiguration, MakeBeforeRunTask task) {
-    return false;
-  }
-
-  @Override
-  public boolean canExecuteTask(RunConfiguration configuration, MakeBeforeRunTask task) {
-    return true;
-  }
-
-  public boolean executeTask(DataContext context, final RunConfiguration configuration, final ExecutionEnvironment env, MakeBeforeRunTask task) {
+  public boolean executeTask(DataContext context, @NotNull final RunConfiguration configuration, @NotNull final ExecutionEnvironment env, @NotNull MakeBeforeRunTask task) {
     return doMake(myProject, configuration, env, false);
   }
 
@@ -185,10 +183,6 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
     }
 
     return result.get();
-  }
-
-  public boolean isConfigurable() {
-    return false;
   }
 
   @Nullable

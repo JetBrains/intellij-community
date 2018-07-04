@@ -16,8 +16,6 @@
 package com.intellij.notification.impl.actions;
 
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.internal.statistic.connect.StatisticsNotification;
-import com.intellij.internal.statistic.updater.StatisticsNotificationManager;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -182,9 +180,6 @@ public class NotificationTestAction extends AnAction implements DumbAware {
         if (!StringUtil.isEmpty(myGroupId)) {
           icon = IconLoader.findIcon(myGroupId);
         }
-        if ("!!!St!!!".equals(myTitle)) {
-          return myNotification = new StatisticsNotification(StatisticsNotificationManager.GROUP_DISPLAY_ID, getListener()).setIcon(icon);
-        }
         String displayId = mySticky ? TEST_STICKY_GROUP.getDisplayId() : TEST_GROUP_ID;
         if (myToolwindow) {
           displayId = TEST_TOOLWINDOW_GROUP.getDisplayId();
@@ -196,10 +191,10 @@ public class NotificationTestAction extends AnAction implements DumbAware {
         }
         else {
           myNotification = new Notification(displayId, icon, myTitle, mySubtitle, content, myType, getListener());
-          if (myActions != null) {
-            for (String action : myActions) {
-              myNotification.addAction(new MyAnAction(action));
-            }
+        }
+        if (myActions != null) {
+          for (String action : myActions) {
+            myNotification.addAction(new MyAnAction(action));
           }
         }
       }

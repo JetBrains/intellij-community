@@ -46,10 +46,6 @@ public class XmlFormattingModel extends PsiBasedFormattingModel {
   }
 
   @Override
-  public void commitChanges() {
-  }
-
-  @Override
   protected String replaceWithPsiInLeaf(final TextRange textRange, String whiteSpace, ASTNode leafElement) {
      if (!myCanModifyAllWhiteSpaces) {
        if (leafElement.getElementType() == TokenType.WHITE_SPACE) return null;

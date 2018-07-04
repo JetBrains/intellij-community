@@ -16,8 +16,8 @@
 package com.intellij.projectView;
 
 import com.intellij.ide.projectView.ProjectView;
-import com.intellij.ide.projectView.impl.AbstractProjectTreeStructure;
 import com.intellij.ide.projectView.impl.PackageViewPane;
+import com.intellij.ide.projectView.impl.ProjectAbstractTreeStructureBase;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.lang.properties.projectView.ResourceBundleGrouper;
 import com.intellij.openapi.application.ApplicationManager;
@@ -50,58 +50,59 @@ public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
       });
     }
 
-    doTest(true, true, "-Project\n" +
-                       " -Group: Group\n" +
-                       "  -Module\n" +
-                       "   -PsiPackage: com.package1\n" +
-                       "    Class1.java\n" +
-                       "    Class2.java\n" +
-                       "    Class4.java\n" +
-                       "    emptyClassFile.class\n" +
-                       "    Form1.form\n" +
-                       "    Form1.java\n" +
-                       "    Form2.form\n" +
-                       "   PsiPackage: empty\n" +
+    doTest(true, true,
+             "-Project\n" +
+                       " -Module\n" +
+                       "  -PsiPackage: com.package1\n" +
+                       "   Class1.java\n" +
+                       "   Class2.java\n" +
+                       "   Class4.java\n" +
+                       "   emptyClassFile.class\n" +
+                       "   Form1.form\n" +
+                       "   Form1.java\n" +
+                       "   Form2.form\n" +
+                       "  PsiPackage: empty\n" +
+                       "  -PsiPackage: java\n" +
+                       "   Class1.java\n" +
+                       "  -PsiPackage: javax.servlet\n" +
+                       "   Class1.java\n" +
+                       "  -Libraries\n" +
                        "   -PsiPackage: java\n" +
-                       "    Class1.java\n" +
-                       "   -PsiPackage: javax.servlet\n" +
-                       "    Class1.java\n" +
-                       "   -Libraries\n" +
-                       "    -PsiPackage: java\n" +
-                       "     +PsiPackage: awt\n" +
-                       "     +PsiPackage: beans.beancontext\n" +
-                       "     +PsiPackage: io\n" +
-                       "     +PsiPackage: lang\n" +
-                       "     +PsiPackage: net\n" +
-                       "     +PsiPackage: rmi\n" +
-                       "     +PsiPackage: security\n" +
-                       "     +PsiPackage: sql\n" +
-                       "     +PsiPackage: util\n" +
-                       "    -PsiPackage: javax.swing\n" +
-                       "     +PsiPackage: table\n" +
-                       "     AbstractButton.class\n" +
-                       "     Icon.class\n" +
-                       "     JButton.class\n" +
-                       "     JComponent.class\n" +
-                       "     JDialog.class\n" +
-                       "     JFrame.class\n" +
-                       "     JLabel.class\n" +
-                       "     JPanel.class\n" +
-                       "     JScrollPane.class\n" +
-                       "     JTable.class\n" +
-                       "     SwingConstants.class\n" +
-                       "     SwingUtilities.class\n" +
-                       "    -PsiPackage: META-INF\n" +
-                       "     MANIFEST.MF\n" +
-                       "     MANIFEST.MF\n" +
-                       "    -PsiPackage: org\n" +
-                       "     +PsiPackage: intellij.lang.annotations\n" +
-                       "     +PsiPackage: jetbrains.annotations\n" +
-                       "    LICENSE\n" +
+                       "    +PsiPackage: awt\n" +
+                       "    +PsiPackage: beans.beancontext\n" +
+                       "    +PsiPackage: io\n" +
+                       "    +PsiPackage: lang\n" +
+                       "    +PsiPackage: net\n" +
+                       "    +PsiPackage: rmi\n" +
+                       "    +PsiPackage: security\n" +
+                       "    +PsiPackage: sql\n" +
+                       "    +PsiPackage: util\n" +
+                       "   -PsiPackage: javax.swing\n" +
+                       "    +PsiPackage: table\n" +
+                       "    AbstractButton.class\n" +
+                       "    Icon.class\n" +
+                       "    JButton.class\n" +
+                       "    JComponent.class\n" +
+                       "    JDialog.class\n" +
+                       "    JFrame.class\n" +
+                       "    JLabel.class\n" +
+                       "    JPanel.class\n" +
+                       "    JScrollPane.class\n" +
+                       "    JTable.class\n" +
+                       "    SwingConstants.class\n" +
+                       "    SwingUtilities.class\n" +
+                       "   -PsiPackage: META-INF\n" +
+                       "    MANIFEST.MF\n" +
+                       "    MANIFEST.MF\n" +
+                       "   -PsiPackage: org\n" +
+                       "    +PsiPackage: intellij.lang.annotations\n" +
+                       "    +PsiPackage: jetbrains.annotations\n" +
+                       "   LICENSE\n" +
                        ""
-      , 5);
+      , 4);
 
-    doTest(false, true, "-Project\n" +
+    doTest(false, true,
+              "-Project\n" +
                         " -PsiPackage: com.package1\n" +
                         "  Class1.java\n" +
                         "  Class2.java\n" +
@@ -149,22 +150,22 @@ public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
                         "  LICENSE\n"
       , 3);
 
-    doTest(true, false, "-Project\n" +
-                    " -Group: Group\n" +
-                    "  -Module\n" +
-                    "   -PsiPackage: com.package1\n" +
-                    "    Class1.java\n" +
-                    "    Class2.java\n" +
-                    "    Class4.java\n" +
-                    "    emptyClassFile.class\n" +
-                    "    Form1.form\n" +
-                    "    Form1.java\n" +
-                    "    Form2.form\n" +
-                    "   PsiPackage: empty\n" +
-                    "   -PsiPackage: java\n" +
-                    "    Class1.java\n" +
-                    "   -PsiPackage: javax.servlet\n" +
-                    "    Class1.java\n", 4);
+    doTest(true, false,
+          "-Project\n" +
+                    " -Module\n" +
+                    "  -PsiPackage: com.package1\n" +
+                    "   Class1.java\n" +
+                    "   Class2.java\n" +
+                    "   Class4.java\n" +
+                    "   emptyClassFile.class\n" +
+                    "   Form1.form\n" +
+                    "   Form1.java\n" +
+                    "   Form2.form\n" +
+                    "  PsiPackage: empty\n" +
+                    "  -PsiPackage: java\n" +
+                    "   Class1.java\n" +
+                    "  -PsiPackage: javax.servlet\n" +
+                    "   Class1.java\n", 3);
 
     doTest(false, false, true, true, "-Project\n" +
                      " -PsiPackage: com.package1\n" +
@@ -212,12 +213,17 @@ public class PackagesTreeStructureTest extends TestSourceBasedTestCase {
     projectView.setAbbreviatePackageNames(abbreviatePackageNames, PackageViewPane.ID);
     projectView.setHideEmptyPackages(true, PackageViewPane.ID);
 
-    PackageViewPane packageViewPane = new PackageViewPane(myProject);
+    PackageViewPane packageViewPane = new PackageViewPane(myProject) {
+      @Override
+      protected ProjectAbstractTreeStructureBase createStructure() {
+        ProjectAbstractTreeStructureBase structure = super.createStructure();
+        structure.setProviders(new ResourceBundleGrouper(myProject));
+        return structure;
+      }
+    };
     packageViewPane.createComponent();
-    ((AbstractProjectTreeStructure) packageViewPane.getTreeStructure()).setProviders(new ResourceBundleGrouper(myProject));
-    packageViewPane.updateFromRoot(true);
     JTree tree = packageViewPane.getTree();
-    TreeUtil.expand(tree, levels);
+    PlatformTestUtil.waitForPromise(TreeUtil.promiseExpand(tree, levels));
     PlatformTestUtil.assertTreeEqual(tree, expected);
     BaseProjectViewTestCase.checkContainsMethod(packageViewPane.getTreeStructure().getRootElement(), packageViewPane.getTreeStructure());
     Disposer.dispose(packageViewPane);

@@ -1,0 +1,1 @@
+<warning descr="Required Javadoc is absent">package p1;</warning>

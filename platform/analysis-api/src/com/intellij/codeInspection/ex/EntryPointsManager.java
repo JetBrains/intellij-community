@@ -16,7 +16,6 @@
 
 /*
  * User: anna
-  * Date: 28-Feb-2007
   */
 package com.intellij.codeInspection.ex;
 
@@ -27,10 +26,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public abstract class EntryPointsManager implements Disposable {
   public static EntryPointsManager getInstance(Project project) {
@@ -44,7 +39,7 @@ public abstract class EntryPointsManager implements Disposable {
   public abstract void removeEntryPoint(@NotNull RefElement anEntryPoint);
 
   @NotNull
-  public abstract RefElement[] getEntryPoints();
+  public abstract RefElement[] getEntryPoints(RefManager refManager);
 
   public abstract void cleanup();
 
@@ -52,13 +47,10 @@ public abstract class EntryPointsManager implements Disposable {
 
   public abstract void configureAnnotations();
 
-  /**
-   * {@link com.intellij.codeInspection.ex.EntryPointsManagerImpl#createConfigureAnnotationsButton()} should be used instead
-   */
-  @Deprecated
-  public abstract JButton createConfigureAnnotationsBtn();
-
   public abstract boolean isEntryPoint(@NotNull PsiElement element);
 
+  /**
+   * Returns {@code true} for fields, annotated with "write" annotations
+   */
   public abstract boolean isImplicitWrite(PsiElement element);
 }

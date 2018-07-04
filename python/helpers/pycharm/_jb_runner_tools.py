@@ -248,13 +248,13 @@ class NewTeamcityServiceMessages(_old_service_messages):
         self.testStarted(".".join(TREE_MANAGER.current_branch + [name]))
         self._latest_subtest_result = subTestResult
 
-    def testStarted(self, testName, captureStandardOutput=None, flowId=None, is_suite=False):
+    def testStarted(self, testName, captureStandardOutput=None, flowId=None, is_suite=False, metainfo=None):
         test_name_as_list = self._test_to_list(testName)
         testName = ".".join(test_name_as_list)
 
         def _write_start_message():
             # testName, captureStandardOutput, flowId
-            args = {"name": testName, "captureStandardOutput": captureStandardOutput}
+            args = {"name": testName, "captureStandardOutput": captureStandardOutput, "metainfo":metainfo}
             if is_suite:
                 self.message("testSuiteStarted", **args)
             else:
@@ -263,13 +263,11 @@ class NewTeamcityServiceMessages(_old_service_messages):
         commands = TREE_MANAGER.level_opened(self._test_to_list(testName), _write_start_message)
         if commands:
             self.do_command(commands[0], commands[1])
-            self.testStarted(testName, captureStandardOutput)
+            self.testStarted(testName, captureStandardOutput, metainfo=metainfo)
 
-    def testFailed(self, testName, message='', details='', flowId=None):
+    def testFailed(self, testName, message='', details='', flowId=None, comparison_failure=None):
         testName = ".".join(self._test_to_list(testName))
-        args = {"name": testName, "message": str(message),
-                "details": details}
-        self.message("testFailed", **args)
+        _old_service_messages.testFailed(self, testName, message, details, comparison_failure=comparison_failure)
 
     def testFinished(self, testName, testDuration=None, flowId=None, is_suite=False):
         testName = ".".join(self._test_to_list(testName))

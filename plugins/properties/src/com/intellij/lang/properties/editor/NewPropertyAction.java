@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.icons.AllIcons;
@@ -35,8 +21,11 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
 * @author Dmitry Batkovich
@@ -130,7 +119,7 @@ class NewPropertyAction extends AnAction {
                                              PropertiesBundle.message("new.property.dialog.name.prompt.text"),
                                              PropertiesBundle.message("new.property.dialog.title"),
                                              Messages.getQuestionIcon(),
-                                             null,
+                                             selectedProperty == null ? getSelectedPrefixText(resourceBundleEditor) : null,
                                              nameValidator);
       anchor = null;
     } else {
@@ -166,11 +155,9 @@ class NewPropertyAction extends AnAction {
       });
 
       resourceBundleEditor.updateTreeRoot();
-      resourceBundleEditor
-        .getStructureViewComponent()
-        .getTreeBuilder()
-        .queueUpdate()
-        .doWhenDone(() -> finalResourceBundleEditor.selectProperty(keyToInsert));
+      resourceBundleEditor.getStructureViewComponent()
+        .select(keyToInsert, false)
+        .onProcessed(p -> finalResourceBundleEditor.selectProperty(keyToInsert));
     }
   }
 
@@ -180,6 +167,19 @@ class NewPropertyAction extends AnAction {
       final FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(e.getDataContext());
       e.getPresentation().setEnabledAndVisible(editor instanceof ResourceBundleEditor);
     }
+  }
+
+  @Nullable
+  private static String getSelectedPrefixText(@NotNull ResourceBundleEditor resourceBundleEditor) {
+    Collection<ResourceBundleEditorViewElement> elements = resourceBundleEditor.getSelectedElements();
+    if (elements.size() == 1) {
+      ResourceBundleEditorViewElement item = ContainerUtil.getFirstItem(elements);
+      if (item instanceof PropertiesPrefixGroup) {
+        PropertiesPrefixGroup prefixGroup = (PropertiesPrefixGroup)item;
+        return prefixGroup.getPrefix() + prefixGroup.getSeparator();
+      }
+    }
+    return null;
   }
 
   private static class NewPropertyNameValidator implements InputValidator {

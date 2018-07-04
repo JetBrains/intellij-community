@@ -6,8 +6,11 @@ use the results of integer subtraction as the result of a <b>compareTo()</b>
 method, this construct may cause subtle and difficult bugs in cases of integer overflow.
 Comparing the integer values directly and returning <b>-1</b>, <b>0</b>, or <b>1</b> is better practice in most cases.
 <p>
-However subtraction will never overflow when both operands are <b>byte</b> or <b>short</b> values,
-because the result will always fit inside an <b>int</b>.
+  The subtraction on floating point values which is immediately cast to integral type is also warned as precision loss is possible due to
+  rounding.
+</p>
+<p>
+The warning is not issued when it's statically determined that value ranges are limited, and overflow never occurs.
 Additionally subtraction on <b>int</b> numbers greater than or equal to <b>0</b> will never overflow.
 Therefore this inspection tries not to warn in those cases.
 Methods that always return zero or greater can be specified in this inspection's settings.
@@ -16,6 +19,7 @@ Methods that always return zero or greater can be specified in this inspection's
 <p>
 Use the table below to specify methods which are safe to use inside a subtraction.
 Methods are safe when they return an <b>int</b> value that is always greater than or equal to <b>0</b>.
+Alternatively you may use <b>javax.annotation.Nonnegative</b> annotation on such methods.
 <p>
 
 </body>

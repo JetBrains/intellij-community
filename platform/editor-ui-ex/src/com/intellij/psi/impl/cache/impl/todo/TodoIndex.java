@@ -23,9 +23,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
@@ -50,7 +47,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 20, 2008
  */
 public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> {
   @NonNls public static final ID<TodoIndexEntry, Integer> NAME = ID.create("TodoIndex");
@@ -102,7 +98,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
   private final DataIndexer<TodoIndexEntry, Integer, FileContent> myIndexer = new DataIndexer<TodoIndexEntry, Integer, FileContent>() {
     @Override
     @NotNull
-    public Map<TodoIndexEntry,Integer> map(@NotNull final FileContent inputData) {
+    public Map<TodoIndexEntry, Integer> map(@NotNull final FileContent inputData) {
       final VirtualFile file = inputData.getFile();
       final DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = PlatformIdTableBuilding
         .getTodoIndexer(inputData.getFileType(), file);
@@ -114,13 +110,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
   };
 
   protected final FileBasedIndex.InputFilter myInputFilter = file -> {
-    if (!file.isInLocalFileSystem()) {
-      return false; // do not index TODOs in library sources
-    }
-
-    if(!isInContentOfAnyProject(file)) {
-      return false;
-    }
+    if (!TodoIndexers.needsTodoIndex(file)) return false;
 
     final FileType fileType = file.getFileType();
 
@@ -135,22 +125,13 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
            fileType instanceof CustomSyntaxTableFileType;
   };
 
-  private static boolean isInContentOfAnyProject(@NotNull VirtualFile file) {
-    for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-      if (ProjectFileIndex.getInstance(project).isInContent(file)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   @Override
   public int getVersion() {
     int version = 10;
     FileType[] types = myFileTypeManager.getRegisteredFileTypes();
     Arrays.sort(types, (o1, o2) -> Comparing.compare(o1.getName(), o2.getName()));
 
-    for(FileType fileType:types) {
+    for (FileType fileType : types) {
       DataIndexer<TodoIndexEntry, Integer, FileContent> indexer = TodoIndexers.INSTANCE.forFileType(fileType);
       if (indexer == null) continue;
 

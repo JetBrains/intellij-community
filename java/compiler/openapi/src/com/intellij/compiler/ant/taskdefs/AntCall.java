@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Couple;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 19, 2004
  */
 @SuppressWarnings({"HardCodedStringLiteral"})
 public class AntCall extends Tag{

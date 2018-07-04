@@ -42,14 +42,6 @@ public class FileAttribute {
     this(id, UNDEFINED_VERSION, false);
   }
 
-  /**
-   * @deprecated
-   * @see #FileAttribute(String, int, boolean)
-   */
-  public FileAttribute(@NonNls @NotNull String id, int version) {
-    this(id, version, false);
-  }
-
   public FileAttribute(@NonNls @NotNull String id, int version, boolean fixedSize) {
     this(version, fixedSize, id);
     boolean added = ourRegisteredIds.add(id);
@@ -91,13 +83,9 @@ public class FileAttribute {
   }
 
   public void writeAttributeBytes(VirtualFile file, byte[] bytes, int offset, int len) throws IOException {
-    final DataOutputStream stream = writeAttribute(file);
-    try {
+    try (DataOutputStream stream = writeAttribute(file)) {
       stream.writeInt(len);
       stream.write(bytes, offset, len);
-    }
-    finally {
-      stream.close();
     }
   }
 

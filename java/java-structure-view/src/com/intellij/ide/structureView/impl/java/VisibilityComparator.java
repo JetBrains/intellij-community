@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.structureView.impl.java;
 
+import com.intellij.ide.structureView.customRegions.CustomRegionTreeElement;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +48,9 @@ public class VisibilityComparator implements Comparator {
       return ((AccessLevelProvider)element).getAccessLevel() * (GROUP_ACCESS_SUBLEVEL + 1) + ((AccessLevelProvider)element).getSubLevel();
     }
     else {
-      LOG.error(element.getClass().getName());
+      if (!(element instanceof CustomRegionTreeElement)) {
+        LOG.error(element.getClass().getName());
+      }
       return UNKNOWN_ACCESS_LEVEL;
     }    
   }

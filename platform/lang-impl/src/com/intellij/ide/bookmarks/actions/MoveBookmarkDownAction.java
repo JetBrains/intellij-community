@@ -29,9 +29,9 @@ import javax.swing.*;
 
 class MoveBookmarkDownAction extends DumbAwareAction {
   private final Project myProject;
-  private final JList myList;
+  private final JList<BookmarkItem> myList;
 
-  MoveBookmarkDownAction(Project project, JList list) {
+  MoveBookmarkDownAction(Project project, JList<BookmarkItem> list) {
     super("Down", "Move current bookmark down", AllIcons.Actions.NextOccurence);
     setEnabledInModalContext(true);
     myProject = project;
@@ -47,7 +47,7 @@ class MoveBookmarkDownAction extends DumbAwareAction {
     }
     else {
       int lastIndex = modelSize - 1;
-      if (!(myList.getModel().getElementAt(lastIndex) instanceof BookmarkItem)) lastIndex--;
+      if (myList.getModel().getElementAt(lastIndex) == null) lastIndex--;
       e.getPresentation().setEnabled(BookmarksAction.getSelectedBookmarks(myList).size() == 1 && myList.getSelectedIndex() < lastIndex);
     }
   }

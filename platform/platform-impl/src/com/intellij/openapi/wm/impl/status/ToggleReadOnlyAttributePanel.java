@@ -60,7 +60,7 @@ public class ToggleReadOnlyAttributePanel implements StatusBarWidget.Multiframe,
   @Override
   @NotNull
   public String ID() {
-    return "ReadOnlyAttribute";
+    return StatusBar.StandardWidgets.READONLY_ATTRIBUTE_PANEL;
   }
 
   @Override

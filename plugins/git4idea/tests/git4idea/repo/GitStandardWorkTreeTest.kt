@@ -23,10 +23,10 @@ import java.io.File
 class GitStandardWorkTreeTest : GitWorkTreeBaseTest() {
 
   override fun initMainRepo() : String {
-    val mainDir = File(myTestRoot, "main")
+    val mainDir = File(testRoot, "main")
     assertTrue(mainDir.mkdir())
     val path = mainDir.path
-    initRepo(path, true)
+    initRepo(project, path, true)
     return path
   }
 
@@ -85,10 +85,10 @@ class GitStandardWorkTreeTest : GitWorkTreeBaseTest() {
   }
 
   private fun setUpRemote(): String {
-    cd(myTestRoot)
+    cd(testRoot)
     git("clone --bare $myMainRoot parent.git")
     cd(myMainRoot)
-    val parentPath = File(myTestRoot, "parent.git").path
+    val parentPath = File(testRoot, "parent.git").path
     git("remote add origin $parentPath")
     git("push origin -u master")
     return parentPath

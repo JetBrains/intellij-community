@@ -30,7 +30,6 @@ import java.util.Properties;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 08-Jul-16
  */
 public class PropertiesEncryptionSupport {
   private final Key myKey;

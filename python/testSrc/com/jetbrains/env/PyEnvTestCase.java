@@ -1,28 +1,22 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
-import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.LoggingRule;
 import com.jetbrains.TestEnv;
-import com.jetbrains.python.packaging.PyPackage;
-import com.jetbrains.python.packaging.PyPackageManager;
-import com.jetbrains.python.packaging.PyPackageUtil;
-import org.hamcrest.Matchers;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.*;
@@ -34,31 +28,33 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 /**
  * @author traff
+ * <p>
+ * All inhertors must be in {@link com.jetbrains.env}.*
+ * <p>
+ * See "community/python/setup-test-environment/build.gradle"
  */
 public abstract class PyEnvTestCase {
   private static final Logger LOG = Logger.getInstance(PyEnvTestCase.class.getName());
 
   private static final String TAGS_FILE = "tags.txt";
+
+  @NotNull
+  protected static final PyEnvTestSettings SETTINGS = new PyEnvTestSettings();
+
+
   /**
-   * Platform-specific separated list of python interpreters
+   * Rule used to capture debug logging and display it if test failed.
+   * See also {@link PyExecutionFixtureTestTask#getClassesToEnableDebug()} and
+   * {@link PyEnvTaskRunner}
    */
-  private static final String PYCHARM_PYTHON_ENVS = "PYCHARM_PYTHON_ENVS";
-  /**
-   * Folder with virtual envs (python interpreters).
-   */
-  private static final String PYCHARM_PYTHON_VIRTUAL_ENVS = "PYCHARM_PYTHON_VIRTUAL_ENVS";
-
-  protected static final boolean IS_ENV_CONFIGURATION = System.getProperty("pycharm.env") != null;
-
-
-  public static final boolean RUN_REMOTE = SystemProperties.getBooleanProperty("pycharm.run_remote", false);
-
-  public static final boolean RUN_LOCAL = SystemProperties.getBooleanProperty("pycharm.run_local", true);
-
-  private static final boolean STAGING_ENV = SystemProperties.getBooleanProperty("pycharm.staging_env", false);
+  @Rule
+  public LoggingRule myLoggingRule = new LoggingRule();
 
 
   /**
@@ -88,6 +84,10 @@ public abstract class PyEnvTestCase {
     }
   };
 
+  static {
+    LOG.warn("Using following config\n" + SETTINGS.reportConfiguration());
+  }
+
   /**
    * Escape test output to prevent python test be processed as test result
    */
@@ -97,14 +97,15 @@ public abstract class PyEnvTestCase {
 
   protected boolean isStaging(Description description) {
     try {
+      if (description.getTestClass().isAnnotationPresent(Staging.class)) {
+        return true;
+      }
       if (description.getTestClass().getMethod(description.getMethodName()).isAnnotationPresent(Staging.class)) {
         return true;
       }
       else {
         for (StagingOn so : description.getTestClass().getMethod(description.getMethodName()).getAnnotationsByType(StagingOn.class)) {
-          if (so.os() == TestEnv.WINDOWS && SystemInfo.isWindows ||
-              so.os() == TestEnv.LINUX && SystemInfo.isLinux ||
-              so.os() == TestEnv.MAC && SystemInfo.isMac) {
+          if (so.os().isThisOs()) {
             return true;
           }
         }
@@ -128,11 +129,6 @@ public abstract class PyEnvTestCase {
     myRequiredTags = requiredTags.length > 0 ? requiredTags.clone() : null;
   }
 
-  @Nullable
-  public static PyPackage getInstalledDjango(@NotNull final Sdk sdk) throws ExecutionException {
-    return PyPackageUtil.findPackage(PyPackageManager.getInstance(sdk).refreshAndGetPackages(false), "django");
-  }
-
   public static String norm(String testDataPath) {
     return FileUtil.toSystemIndependentName(testDataPath);
   }
@@ -140,11 +136,9 @@ public abstract class PyEnvTestCase {
   @Before
   public void setUp() {
     if (myRequiredTags != null) { // Ensure all tags exist between available interpreters
-      Assume.assumeThat(
-        "Can't find some tags between all available interpreter, test (all methods) will be skipped",
-        getAvailableTags(),
-        Matchers.hasItems(myRequiredTags)
-      );
+      assertThat(getAvailableTags())
+        .describedAs("Can't find some tags between all available interpreter, test (all methods) will be skipped")
+        .contains(myRequiredTags);
     }
   }
 
@@ -179,23 +173,33 @@ public abstract class PyEnvTestCase {
     return false;
   }
 
+  /**
+   * Runs task on several envs. If you care about exception thrown from task use {@link #runPythonTestWithException(PyTestTask)}
+   */
   public void runPythonTest(final PyTestTask testTask) {
     runTest(testTask, getTestName(false));
+  }
+
+  /**
+   * Like {@link #runPythonTest(PyTestTask)} but for tasks that may throw exception
+   */
+  protected final void runPythonTestWithException(final PyTestTask testTask) throws Exception {
+    try {
+      runPythonTest(testTask);
+    }
+    catch (final PyEnvWrappingException ex) {
+      throw ex.getCauseException();
+    }
   }
 
   protected String getTestName(boolean lowercaseFirstLetter) {
     return UsefulTestCase.getTestName(myTestName.getMethodName(), lowercaseFirstLetter);
   }
 
-  public void runTest(@NotNull PyTestTask testTask, @NotNull String testName) {
-    if (notEnvConfiguration()) {
-      Assert.fail("Running under teamcity but not by Env configuration. Skipping.");
-      return;
-    }
-
-    if (UsefulTestCase.IS_UNDER_TEAMCITY && IS_ENV_CONFIGURATION) {
-      checkStaging();
-    }
+  private void runTest(@NotNull PyTestTask testTask, @NotNull String testName) {
+    Assume.assumeFalse("Running under teamcity but not by Env configuration. Test seems to be launched by accident, skip it.",
+                       UsefulTestCase.IS_UNDER_TEAMCITY && !SETTINGS.isEnvConfiguration());
+    checkStaging();
 
     List<String> roots = getPythonRoots();
 
@@ -217,38 +221,52 @@ public abstract class PyEnvTestCase {
      *</p>
      */
     Assume.assumeFalse(testName +
-                       ": environments are not defined. Skipping. \nSpecify either " +
-                       PYCHARM_PYTHON_ENVS +
-                       " or " +
-                       PYCHARM_PYTHON_VIRTUAL_ENVS +
-                       " environment variable.",
+                       ": environments are not defined. Skipping. \nChecks logs for settings that lead to this situation",
                        roots.isEmpty());
+
     doRunTests(testTask, testName, roots);
   }
 
-  protected void checkStaging() {
+  protected final void checkStaging() {
+    if (!SETTINGS.isUnderTeamCity()) {
+      return; // Its ok to run staging tests locally
+    }
     Assume.assumeTrue("Test is annotated as Staging and should only run on staging environment",
-                      myStaging == STAGING_ENV);
+                      myStaging == SETTINGS.isStagingMode());
   }
 
   protected void doRunTests(PyTestTask testTask, String testName, List<String> roots) {
-    if (RUN_LOCAL) {
-      PyEnvTaskRunner taskRunner = new PyEnvTaskRunner(roots);
+    Assume.assumeFalse("Tests launched in remote SDK mode, and this test is not remote", SETTINGS.useRemoteSdk());
 
-      final EnvTestTagsRequired classAnnotation = getClass().getAnnotation(EnvTestTagsRequired.class);
-      EnvTestTagsRequired methodAnnotation = null;
-      try {
-        final Method method = getClass().getMethod(myTestName.getMethodName());
-        methodAnnotation = method.getAnnotation(EnvTestTagsRequired.class);
-      }
-      catch (final NoSuchMethodException e) {
-        throw new AssertionError("No such method", e);
-      }
-      final String[] classTags = getTags(classAnnotation);
-      final String[] methodTags = getTags(methodAnnotation);
+    PyEnvTaskRunner taskRunner = new PyEnvTaskRunner(roots, myLoggingRule);
 
-      taskRunner.runTask(testTask, testName, ArrayUtil.mergeArrays(methodTags, classTags));
+    final EnvTestTagsRequired classAnnotation = getClass().getAnnotation(EnvTestTagsRequired.class);
+    EnvTestTagsRequired methodAnnotation = null;
+    try {
+      final Method method = getClass().getMethod(myTestName.getMethodName());
+      methodAnnotation = method.getAnnotation(EnvTestTagsRequired.class);
     }
+    catch (final NoSuchMethodException e) {
+      throw new AssertionError("No such method", e);
+    }
+    final Class<? extends PythonSdkFlavor>[] skipOnFlavors;
+
+
+    final EnvTestTagsRequired firstAnnotation = (methodAnnotation != null ? methodAnnotation : classAnnotation);
+
+
+    if (firstAnnotation != null) {
+      Assume.assumeFalse("Test skipped on this os", Arrays.stream(firstAnnotation.skipOnOSes()).anyMatch(TestEnv::isThisOs));
+      skipOnFlavors = firstAnnotation.skipOnFlavors();
+    }
+    else {
+      skipOnFlavors = null;
+    }
+
+    final String[] classTags = getTags(classAnnotation);
+    final String[] methodTags = getTags(methodAnnotation);
+
+    taskRunner.runTask(testTask, testName, skipOnFlavors, ArrayUtil.mergeArrays(methodTags, classTags));
   }
 
   @NotNull
@@ -261,44 +279,10 @@ public abstract class PyEnvTestCase {
     }
   }
 
-  public static boolean notEnvConfiguration() {
-    return UsefulTestCase.IS_UNDER_TEAMCITY && !IS_ENV_CONFIGURATION;
-  }
-
   public static List<String> getPythonRoots() {
-    List<String> roots = Lists.newArrayList();
-
-    String envs = System.getenv(PYCHARM_PYTHON_ENVS);
-    if (envs != null) {
-      roots.addAll(Lists.newArrayList(envs.split(File.pathSeparator)));
-    }
-
-    String virtualEnvs = System.getenv(PYCHARM_PYTHON_VIRTUAL_ENVS);
-
-    if (virtualEnvs != null) {
-      roots.addAll(readVirtualEnvRoots(virtualEnvs));
-    }
-    return roots;
+    return SETTINGS.getPythons().stream().map(File::getAbsolutePath).collect(Collectors.toList());
   }
 
-  protected static List<String> readVirtualEnvRoots(@NotNull String envs) {
-    List<String> result = Lists.newArrayList();
-    String[] roots = envs.split(File.pathSeparator);
-    for (String root : roots) {
-      File virtualEnvRoot = new File(root);
-      File[] virtualenvs = virtualEnvRoot.listFiles();
-      if (virtualenvs != null) {
-        for (File f : virtualenvs) {
-          result.add(f.getAbsolutePath());
-        }
-      }
-      else {
-        LOG.error(root + " is not a directory of doesn't exist");
-      }
-    }
-
-    return result;
-  }
 
   public static List<String> loadEnvTags(String env) {
     List<String> envTags;
@@ -314,10 +298,6 @@ public abstract class PyEnvTestCase {
       envTags = Lists.newArrayList();
     }
     return envTags;
-  }
-
-  public static String joinStrings(Collection<String> roots, String rootsName) {
-    return roots.size() > 0 ? rootsName + StringUtil.join(roots, ", ") + "\n" : "";
   }
 
   /**
@@ -349,7 +329,7 @@ public abstract class PyEnvTestCase {
     myLogger = null;
   }
 
-  private Disposable myDisposable = Disposer.newDisposable();
+  private final Disposable myDisposable = Disposer.newDisposable();
 
   public Disposable getTestRootDisposable() {
     return myDisposable;

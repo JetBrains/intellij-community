@@ -3,16 +3,18 @@ Entry point module (keep at root):
 
 This module starts the debugger.
 '''
-from __future__ import nested_scopes  # Jython 2.1 support
+import sys
+
+if sys.version_info[:2] < (2, 6):
+    raise RuntimeError('The PyDev.Debugger requires Python 2.6 onwards to be run. If you need to use an older Python version, use an older version of the debugger.')
 
 import atexit
 import os
-import sys
 import traceback
 
-from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY3K, IS_PY34_OR_GREATER, get_thread_id, dict_keys, dict_contains, \
-    dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
-    clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE
+from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PY3K, IS_PY34_OR_GREATER, IS_PYCHARM, get_thread_id, \
+    dict_keys, dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
+    clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV
 from _pydev_bundle import fix_getpass
 from _pydev_bundle import pydev_imports, pydev_log
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
@@ -41,9 +43,10 @@ from _pydevd_frame_eval.pydevd_frame_eval_main import frame_eval_func, stop_fram
 from _pydevd_bundle.pydevd_utils import save_main_module
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
+from pydevd_file_utils import get_fullname, rPath
 
 
-__version_info__ = (1, 0, 0)
+__version_info__ = (1, 1, 1)
 __version_info_str__ = []
 for v in __version_info__:
     __version_info_str__.append(str(v))
@@ -427,8 +430,8 @@ class PyDB:
         all_threads = threadingEnumerate()
         for t in all_threads:
             if getattr(t, 'is_pydev_daemon_thread', False):
-                pass # I.e.: skip the DummyThreads created from pydev daemon threads
-            elif hasattr(t, 'pydev_do_not_trace'):
+                pass  # I.e.: skip the DummyThreads created from pydev daemon threads
+            elif getattr(t, 'pydev_do_not_trace', None):
                 pass  # skip some other threads, i.e. ipython history saving thread from debug console
             else:
                 if t is thread_suspended_at_bp:
@@ -479,9 +482,11 @@ class PyDB:
                             # TODO: Investigate: should we do this for all threads in threading.enumerate()?
                             # (i.e.: if a fork happens on Linux, this seems likely).
                             old_thread_id = get_thread_id(t)
-
-                            clear_cached_thread_id(t)
-                            clear_cached_thread_id(threadingCurrentThread())
+                            if old_thread_id != 'console_main':
+                                # The console_main is a special thread id used in the console and its id should never be reset
+                                # (otherwise we may no longer be able to get its variables -- see: https://www.brainwy.com/tracker/PyDev/776).
+                                clear_cached_thread_id(t)
+                                clear_cached_thread_id(threadingCurrentThread())
 
                             thread_id = get_thread_id(t)
                             curr_thread_id = get_thread_id(threadingCurrentThread())
@@ -492,7 +497,7 @@ class PyDB:
                             thread_id = get_thread_id(t)
                         program_threads_alive[thread_id] = t
 
-                        if not dict_contains(self._running_thread_ids, thread_id):
+                        if thread_id not in self._running_thread_ids:
                             if not hasattr(t, 'additional_info'):
                                 # see http://sourceforge.net/tracker/index.php?func=detail&aid=1955428&group_id=85796&atid=577329
                                 # Let's create the additional info right away!
@@ -533,7 +538,7 @@ class PyDB:
 
                 thread_ids = list(self._running_thread_ids.keys())
                 for tId in thread_ids:
-                    if not dict_contains(program_threads_alive, tId):
+                    if tId not in program_threads_alive:
                         program_threads_dead.append(tId)
             finally:
                 self._lock_running_thread_ids.release()
@@ -728,18 +733,54 @@ class PyDB:
         cmd = self.cmd_factory.make_process_created_message()
         self.writer.add_command(cmd)
 
+    def set_next_statement(self, frame, event, func_name, next_line):
+        stop = False
+        response_msg = ""
+        old_line = frame.f_lineno
+        if event == 'line' or event == 'exception':
+            #If we're already in the correct context, we have to stop it now, because we can act only on
+            #line events -- if a return was the next statement it wouldn't work (so, we have this code
+            #repeated at pydevd_frame).
 
-    def do_wait_suspend(self, thread, frame, event, arg, suspend_type="trace"): #@UnusedVariable
+            curr_func_name = frame.f_code.co_name
+
+            #global context is set with an empty name
+            if curr_func_name in ('?', '<module>'):
+                curr_func_name = ''
+
+            if curr_func_name == func_name:
+                line = next_line
+                frame.f_trace = self.trace_dispatch
+                frame.f_lineno = line
+                stop = True
+            else:
+                response_msg = "jump is available only within the bottom frame"
+        return stop, old_line, response_msg
+
+    def cancel_async_evaluation(self, thread_id, frame_id):
+        self._main_lock.acquire()
+        try:
+            all_threads = threadingEnumerate()
+            for t in all_threads:
+                if getattr(t, 'is_pydev_daemon_thread', False) and hasattr(t, 'cancel_event') and t.thread_id == thread_id and \
+                        t.frame_id == frame_id:
+                    t.cancel_event.set()
+        except:
+            pass
+        finally:
+            self._main_lock.release()
+
+    def do_wait_suspend(self, thread, frame, event, arg, suspend_type="trace", send_suspend_message=True): #@UnusedVariable
         """ busy waits until the thread state changes to RUN
         it expects thread's state as attributes of the thread.
         Upon running, processes any outstanding Stepping commands.
         """
         self.process_internal_commands()
 
-        message = thread.additional_info.pydev_message
-
-        cmd = self.cmd_factory.make_thread_suspend_message(get_thread_id(thread), frame, thread.stop_reason, message, suspend_type)
-        self.writer.add_command(cmd)
+        if send_suspend_message:
+            message = thread.additional_info.pydev_message
+            cmd = self.cmd_factory.make_thread_suspend_message(get_thread_id(thread), frame, thread.stop_reason, message, suspend_type)
+            self.writer.add_command(cmd)
 
         CustomFramesContainer.custom_frames_lock.acquire()  # @UndefinedVariable
         try:
@@ -770,6 +811,8 @@ class PyDB:
             self.process_internal_commands()
             time.sleep(0.01)
 
+        self.cancel_async_evaluation(get_thread_id(thread), str(id(frame)))
+
         # process any stepping instructions
         if info.pydev_step_cmd == CMD_STEP_INTO or info.pydev_step_cmd == CMD_STEP_INTO_MY_CODE:
             info.pydev_step_stop = None
@@ -785,35 +828,45 @@ class PyDB:
             info.pydev_step_stop = None
             info.pydev_smart_step_stop = frame
 
-        elif info.pydev_step_cmd == CMD_RUN_TO_LINE or info.pydev_step_cmd == CMD_SET_NEXT_STATEMENT :
+        elif info.pydev_step_cmd == CMD_RUN_TO_LINE or info.pydev_step_cmd == CMD_SET_NEXT_STATEMENT:
             self.set_trace_for_frame_and_parents(frame)
-
-            if event == 'line' or event == 'exception':
-                #If we're already in the correct context, we have to stop it now, because we can act only on
-                #line events -- if a return was the next statement it wouldn't work (so, we have this code
-                #repeated at pydevd_frame).
-                stop = False
-                curr_func_name = frame.f_code.co_name
-
-                #global context is set with an empty name
-                if curr_func_name in ('?', '<module>'):
-                    curr_func_name = ''
-
-                if curr_func_name == info.pydev_func_name:
-                    line = info.pydev_next_line
-                    if frame.f_lineno == line:
-                        stop = True
-                    else :
-                        if frame.f_trace is None:
-                            frame.f_trace = self.trace_dispatch
-                        frame.f_lineno = line
-                        frame.f_trace = None
-                        stop = True
+            stop = False
+            response_msg = ""
+            old_line = frame.f_lineno
+            if not IS_PYCHARM:
+                stop, _, response_msg = self.set_next_statement(frame, event, info.pydev_func_name, info.pydev_next_line)
                 if stop:
                     info.pydev_state = STATE_SUSPEND
                     self.do_wait_suspend(thread, frame, event, arg, "trace")
                     return
+            else:
+                try:
+                    stop, old_line, response_msg = self.set_next_statement(frame, event, info.pydev_func_name, info.pydev_next_line)
+                except ValueError as e:
+                    response_msg = "%s" % e
+                finally:
+                    seq = info.pydev_message
+                    cmd = self.cmd_factory.make_set_next_stmnt_status_message(seq, stop, response_msg)
+                    self.writer.add_command(cmd)
+                    info.pydev_message = ''
 
+                if stop:
+                    cmd = self.cmd_factory.make_thread_run_message(get_thread_id(thread), info.pydev_step_cmd)
+                    self.writer.add_command(cmd)
+                    if suspend_type == "trace":
+                        info.pydev_state = STATE_SUSPEND
+                        thread.stop_reason= CMD_SET_NEXT_STATEMENT
+                        self.do_wait_suspend(thread, frame, event, arg, "trace")
+                    else:
+                        info.pydev_step_stop = frame
+                    return
+                else:
+                    info.pydev_step_cmd = -1
+                    info.pydev_state = STATE_SUSPEND
+                    thread.stop_reason = CMD_THREAD_SUSPEND
+                    # return to the suspend state and wait for other command
+                    self.do_wait_suspend(thread, frame, event, arg, suspend_type, send_suspend_message=False)
+                    return
 
         elif info.pydev_step_cmd == CMD_STEP_RETURN:
             back_frame = frame.f_back
@@ -929,27 +982,12 @@ class PyDB:
         from _pydev_bundle.pydev_monkey import patch_thread_modules
         patch_thread_modules()
 
-    def get_fullname(self, mod_name):
-        if IS_PY3K:
-            import pkgutil
-        else:
-            from _pydev_imps import _pydev_pkgutil_old as pkgutil
-        try:
-            loader = pkgutil.get_loader(mod_name)
-        except:
-            return None
-        if loader is not None:
-            for attr in ("get_filename", "_get_filename"):
-                meth = getattr(loader, attr, None)
-                if meth is not None:
-                    return meth(mod_name)
-        return None
-
     def run(self, file, globals=None, locals=None, is_module=False, set_trace=True):
         module_name = None
         if is_module:
+            file, _,  entry_point_fn = file.partition(':')
             module_name = file
-            filename = self.get_fullname(file)
+            filename = get_fullname(file)
             if filename is None:
                 sys.stderr.write("No module named %s\n" % file)
                 return
@@ -992,7 +1030,7 @@ class PyDB:
                 # sys.path.insert(0, os.getcwd())
                 # Changed: it's not the local directory, but the directory of the file launched
                 # The file being run must be in the pythonpath (even if it was not before)
-                sys.path.insert(0, os.path.split(file)[0])
+                sys.path.insert(0, os.path.split(rPath(file))[0])
 
             while not self.ready_to_run:
                 time.sleep(0.1)  # busy wait until we receive run command
@@ -1029,13 +1067,24 @@ class PyDB:
         if not is_module:
             pydev_imports.execfile(file, globals, locals)  # execute the script
         else:
-            # Run with the -m switch
-            import runpy
-            if hasattr(runpy, '_run_module_as_main'):
-                # Newer versions of Python actually use this when the -m switch is used.
-                runpy._run_module_as_main(module_name, alter_argv=False)
+            # treat ':' as a seperator between module and entry point function
+            # if there is no entry point we run we same as with -m switch. Otherwise we perform
+            # an import and execute the entry point
+            if entry_point_fn:
+                mod = __import__(module_name, level=0, fromlist=[entry_point_fn], globals=globals, locals=locals)
+                func = getattr(mod, entry_point_fn)
+                func()
             else:
-                runpy.run_module(module_name)
+                # Run with the -m switch
+                import runpy
+                if hasattr(runpy, '_run_module_as_main'):
+                    # Newer versions of Python actually use this when the -m switch is used.
+                    if sys.version_info[:2] <= (2, 6):
+                        runpy._run_module_as_main(module_name, set_argv0=False)
+                    else:
+                        runpy._run_module_as_main(module_name, alter_argv=False)
+                else:
+                    runpy.run_module(module_name)
         return globals
 
     def exiting(self):
@@ -1431,11 +1480,16 @@ def patch_stdin(debugger):
     orig_stdin = sys.stdin
     sys.stdin = DebugConsoleStdIn(debugger, orig_stdin)
 
+# Dispatch on_debugger_modules_loaded here, after all primary debugger modules are loaded
+from _pydevd_bundle.pydevd_extension_api import DebuggerEventHandler
+from _pydevd_bundle import pydevd_extension_utils
 
+for handler in pydevd_extension_utils.extensions_of_type(DebuggerEventHandler):
+    handler.on_debugger_modules_loaded(debugger_version=__version__)
 #=======================================================================================================================
 # main
 #=======================================================================================================================
-if __name__ == '__main__':
+def main():
 
     # parse the command line. --file is our last argument that is required
     try:
@@ -1461,7 +1515,7 @@ if __name__ == '__main__':
 
     pydevd_vm_type.setup_type(setup.get('vm_type', None))
 
-    if os.getenv('PYCHARM_DEBUG') == 'True' or os.getenv('PYDEV_DEBUG') == 'True':
+    if SHOW_DEBUG_INFO_ENV:
         set_debug(setup)
 
     DebugInfoHolder.DEBUG_RECORD_SOCKET_READS = setup.get('DEBUG_RECORD_SOCKET_READS', DebugInfoHolder.DEBUG_RECORD_SOCKET_READS)
@@ -1485,7 +1539,7 @@ if __name__ == '__main__':
 
         elif setup['multiproc']: # PyCharm
             pydev_log.debug("Started in multiproc mode\n")
-            # Note: we're not inside method, so, no need for 'global'
+            global DISPATCH_APPROACH
             DISPATCH_APPROACH = DISPATCH_APPROACH_EXISTING_CONNECTION
 
             dispatcher = Dispatcher()
@@ -1598,6 +1652,7 @@ if __name__ == '__main__':
             traceback.print_exc()
             sys.exit(1)
 
+        global connected
         connected = True  # Mark that we're connected when started from inside ide.
 
         globals = debugger.run(setup['file'], None, None, is_module)
@@ -1605,4 +1660,5 @@ if __name__ == '__main__':
         if setup['cmd-line']:
             debugger.wait_for_commands(globals)
 
-
+if __name__ == '__main__':
+    main()

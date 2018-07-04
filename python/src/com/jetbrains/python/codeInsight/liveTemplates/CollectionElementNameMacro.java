@@ -84,7 +84,7 @@ public class CollectionElementNameMacro extends Macro {
         String element = StringUtil.join(words, i, words.length, "_");
         lookup.add(LookupElementBuilder.create(element));
       }
-      return lookup.toArray(new LookupElement[lookup.size()]);
+      return lookup.toArray(LookupElement.EMPTY_ARRAY);
     }
     return null;
   }

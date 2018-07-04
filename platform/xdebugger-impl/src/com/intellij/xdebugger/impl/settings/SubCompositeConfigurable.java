@@ -72,11 +72,12 @@ abstract class SubCompositeConfigurable implements SearchableConfigurable.Parent
     return children != null && children.length == 1;
   }
 
+  @NotNull
   @Override
   public final Configurable[] getConfigurables() {
     if (children == null) {
       List<Configurable> configurables = DebuggerConfigurable.getConfigurables(getCategory());
-      children = configurables.toArray(new Configurable[configurables.size()]);
+      children = configurables.toArray(new Configurable[0]);
     }
     return isChildrenMerged() ? DebuggerConfigurable.EMPTY_CONFIGURABLES : children;
   }

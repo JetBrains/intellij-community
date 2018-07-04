@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author anna
- * Date: 27-Mar-2008
  */
 public class TypeMigrationUsageInfo extends UsageInfo {
   private boolean myExcluded;

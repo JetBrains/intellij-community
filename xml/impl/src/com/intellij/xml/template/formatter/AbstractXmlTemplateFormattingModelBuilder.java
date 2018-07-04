@@ -23,6 +23,7 @@ import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.DocumentBasedFormattingModel;
@@ -74,12 +75,22 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
         }
       }
       else if (element instanceof OuterLanguageElement && isOuterLanguageElement(element)) {
-        FormattingModel model =
-          createTemplateFormattingModel(psiFile, viewProvider, (OuterLanguageElement)element, settings, Indent.getNoneIndent());
-        if (model != null) return model;
+        try {
+          FormattingModel model =
+            createTemplateFormattingModel(psiFile, viewProvider, (OuterLanguageElement)element, settings, Indent.getNoneIndent());
+          if (model != null) return model;
+        }
+        catch (FragmentedTemplateException ie) {
+          return createDummyModel(new ReadOnlyBlock(element.getNode()), settings, psiFile);
+        }
       }
     }
     return super.createModel(element, settings);
+  }
+
+  @NotNull
+  protected DocumentBasedFormattingModel createDummyModel(Block rootBlock, CodeStyleSettings settings, @NotNull PsiFile psiFile) {
+    return new DocumentBasedFormattingModel(rootBlock, psiFile.getProject(), settings, psiFile.getFileType(), psiFile);
   }
 
   @Nullable
@@ -87,20 +98,42 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
                                                        @NotNull TemplateLanguageFileViewProvider viewProvider,
                                                        @NotNull OuterLanguageElement outerTemplateElement,
                                                        @NotNull CodeStyleSettings settings,
-                                                       @Nullable Indent indent) {
+                                                       @Nullable Indent indent) throws FragmentedTemplateException {
     List<PsiElement> templateElements = TemplateFormatUtil.findAllTemplateLanguageElementsInside(outerTemplateElement, viewProvider);
-    return createTemplateFormattingModel(psiFile, settings, getPolicy(settings, psiFile), templateElements, indent);
+    return createTemplateFormattingModelInternal(psiFile, settings, getPolicy(settings, psiFile), templateElements, indent);
   }
 
-  @Nullable
   public FormattingModel createTemplateFormattingModel(PsiFile file,
                                                        CodeStyleSettings settings,
                                                        XmlFormattingPolicy xmlFormattingPolicy,
                                                        List<PsiElement> elements,
                                                        Indent indent) {
+    try {
+      return createTemplateFormattingModelInternal(file, settings, xmlFormattingPolicy, elements, indent);
+    }
+    catch (FragmentedTemplateException fte) {
+      assert elements.size() > 0;
+      int start = Integer.MAX_VALUE;
+      int end = -1;
+      for (PsiElement element : elements) {
+        TextRange range = element.getTextRange();
+        if (range.getStartOffset() < start) start = range.getStartOffset();
+        if (range.getEndOffset() > end) end = range.getEndOffset();
+      }
+      return createDummyModel(new CompositeTemplateBlock(new TextRange(start, end)), settings, file);
+    }
+  }
+
+  @Nullable
+  private FormattingModel createTemplateFormattingModelInternal(@NotNull PsiFile file,
+                                                                CodeStyleSettings settings,
+                                                                XmlFormattingPolicy xmlFormattingPolicy,
+                                                                List<PsiElement> elements,
+                                                                Indent indent) throws FragmentedTemplateException {
     if (elements.size() == 0) return null;
     List<Block> templateBlocks = new ArrayList<>();
     for (PsiElement element : elements) {
+      if (element instanceof PsiErrorElement) throw new FragmentedTemplateException((PsiErrorElement)element);
       if (!isMarkupLanguageElement(element) && !FormatterUtil.containsWhiteSpacesOnly(element.getNode())) {
         templateBlocks.add(createTemplateLanguageBlock(element.getNode(), settings, xmlFormattingPolicy, indent, null, null));
       }
@@ -139,7 +172,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
   private FormattingModel createDataLanguageFormattingModel(PsiElement dataElement,
                                                            Language language,
                                                            CodeStyleSettings settings,
-                                                           PsiFile psiFile,
+                                                           @NotNull PsiFile psiFile,
                                                            @Nullable Indent indent) {
     Block block = createDataLanguageRootBlock(dataElement, language, settings, getPolicy(settings, psiFile), psiFile, indent);
     return new DocumentBasedFormattingModel(block, psiFile.getProject(), settings, psiFile.getFileType(), psiFile);
@@ -149,7 +182,7 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
                                             Language language,
                                             CodeStyleSettings settings,
                                             XmlFormattingPolicy xmlFormattingPolicy,
-                                            PsiFile psiFile,
+                                            @NotNull PsiFile psiFile,
                                             Indent indent) {
     Block block;
     if (dataElement instanceof XmlTag) {
@@ -289,13 +322,13 @@ public abstract class AbstractXmlTemplateFormattingModelBuilder extends SimpleTe
                                                         @NotNull TextRange range,
                                                         CodeStyleSettings settings,
                                                         XmlFormattingPolicy xmlFormattingPolicy,
-                                                        Indent childrenIndent) {
+                                                        Indent childrenIndent) throws FragmentedTemplateException {
     List<Block> templateBlocks = new ArrayList<>();
     TemplateLanguageFileViewProvider viewProvider = (TemplateLanguageFileViewProvider)templateFile.getViewProvider();
     List<PsiElement> templateElements = TemplateFormatUtil.findAllElementsInside(range,
                                                                                  viewProvider,
                                                                                  true);
-    FormattingModel localModel = createTemplateFormattingModel(templateFile, settings, xmlFormattingPolicy, templateElements, childrenIndent);
+    FormattingModel localModel = createTemplateFormattingModelInternal(templateFile, settings, xmlFormattingPolicy, templateElements, childrenIndent);
     if (localModel != null) {
       Block rootBlock = localModel.getRootBlock();
       if (rootBlock instanceof CompositeTemplateBlock) {

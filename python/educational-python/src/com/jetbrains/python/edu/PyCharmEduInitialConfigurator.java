@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.edu;
 
 import com.google.common.collect.Sets;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionActionBean;
 import com.intellij.codeInsight.intention.IntentionManager;
@@ -56,11 +43,9 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
@@ -70,8 +55,6 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
@@ -153,7 +136,6 @@ public class PyCharmEduInitialConfigurator {
     final UISettings uiSettings = UISettings.getInstance();
 
     if (!propertiesComponent.getBoolean(CONFIGURED_V4)) {
-      Registry.get("dumb.aware.run.configurations").setValue(true);
       propertiesComponent.setValue(CONFIGURED_V4, true);
     }
 
@@ -185,9 +167,7 @@ public class PyCharmEduInitialConfigurator {
 
       EditorSettingsExternalizable.getInstance().setVirtualSpace(false);
       EditorSettingsExternalizable.getInstance().getOptions().ARE_LINE_NUMBERS_SHOWN = true;
-      final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance().getCurrentSettings();
-      settings.ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
-      settings.getCommonSettings(PythonLanguage.getInstance()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+      CodeStyle.getDefaultSettings().getCommonSettings(PythonLanguage.getInstance()).ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
       uiSettings.setShowDirectoryForNonUniqueFilenames(true);
       uiSettings.setShowMemoryIndicator(false);
       final String ignoredFilesList = fileTypeManager.getIgnoredFilesList();
@@ -215,7 +195,6 @@ public class PyCharmEduInitialConfigurator {
       @Override
       public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
         if (!propertiesComponent.isValueSet(CONFIGURED_V3)) {
-          showInitialConfigurationDialog();
           propertiesComponent.setValue(CONFIGURED_V3, "true");
         }
       }
@@ -334,11 +313,7 @@ public class PyCharmEduInitialConfigurator {
       }
     }
 
-    for (DirectoryProjectConfigurator ep : Extensions.getExtensions(DirectoryProjectConfigurator.EP_NAME)) {
-      if (ep instanceof PlatformProjectViewOpener) {
-        rootArea.getExtensionPoint(DirectoryProjectConfigurator.EP_NAME).unregisterExtension(ep);
-      }
-    }
+    rootArea.getExtensionPoint(DirectoryProjectConfigurator.EP_NAME).unregisterExtension(PlatformProjectViewOpener.class);
 
     // unregister unrelated tips
     for (TipAndTrickBean tip : Extensions.getExtensions(TipAndTrickBean.EP_NAME)) {
@@ -386,7 +361,7 @@ public class PyCharmEduInitialConfigurator {
     AnAction action = actionManager.getAction(actionId);
     if (action != null) {
       AnAction actionGroup = actionManager.getAction(groupId);
-      if (actionGroup != null && actionGroup instanceof DefaultActionGroup) {
+      if (actionGroup instanceof DefaultActionGroup) {
         ((DefaultActionGroup)actionGroup).remove(action);
         actionManager.unregisterAction(actionId);
       }
@@ -412,13 +387,5 @@ public class PyCharmEduInitialConfigurator {
         if (droppedActions.contains(id)) keymapImpl.clearOwnActionsId(id);
       }
     }
-  }
-  private static void showInitialConfigurationDialog() {
-    DialogBuilder dialog = new DialogBuilder();
-    final CustomizeEduStepPanel panel = new CustomizeEduStepPanel();
-    dialog.setPreferredFocusComponent(panel.getStudentButton());
-    dialog.title("Are you Student or Teacher?").centerPanel(panel);
-    dialog.addOkAction().setText("Start using Pycharm Edu");
-    dialog.show();
   }
 }

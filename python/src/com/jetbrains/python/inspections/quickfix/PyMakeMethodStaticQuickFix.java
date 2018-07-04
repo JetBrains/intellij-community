@@ -23,12 +23,11 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class PyMakeMethodStaticQuickFix implements LocalQuickFix {
@@ -50,25 +49,8 @@ public class PyMakeMethodStaticQuickFix implements LocalQuickFix {
     if (parameters.length > 0) {
       parameters[0].delete();
     }
-    final PyDecoratorList problemDecoratorList = problemFunction.getDecoratorList();
-    List<String> decoTexts = new ArrayList<>();
-    decoTexts.add("@staticmethod");
-    if (problemDecoratorList != null) {
-      final PyDecorator[] decorators = problemDecoratorList.getDecorators();
-      for (PyDecorator deco : decorators) {
-        decoTexts.add(deco.getText());
-      }
-    }
 
-    PyElementGenerator generator = PyElementGenerator.getInstance(project);
-    final PyDecoratorList decoratorList = generator.createDecoratorList(decoTexts.toArray(new String[decoTexts.size()]));
-
-    if (problemDecoratorList != null) {
-      problemDecoratorList.replace(decoratorList);
-    }
-    else {
-      problemFunction.addBefore(decoratorList, problemFunction.getFirstChild());
-    }
+    PyUtil.addDecorator(problemFunction, "@" + PyNames.STATICMETHOD);
 
     for (UsageInfo usage : usages) {
       final PsiElement usageElement = usage.getElement();

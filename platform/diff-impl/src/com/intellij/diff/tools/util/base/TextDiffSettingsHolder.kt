@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util.base
 
 import com.intellij.diff.util.DiffPlaces
@@ -24,14 +10,12 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Key
 import com.intellij.util.EventDispatcher
-import com.intellij.util.xmlb.annotations.MapAnnotation
+import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Transient
+import com.intellij.util.xmlb.annotations.XMap
 import java.util.*
 
-@State(
-  name = "TextDiffSettings",
-  storages = arrayOf(Storage(value = DiffUtil.DIFF_CONFIG))
-)
+@State(name = "TextDiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))])
 class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.State> {
   companion object {
     @JvmField val CONTEXT_RANGE_MODES: IntArray = intArrayOf(1, 2, 4, 8, -1)
@@ -172,11 +156,14 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
   }
 
   private fun defaultPlaceSettings(place: String): PlaceSettings {
-    val settings = PlaceSettings();
+    val settings = PlaceSettings()
     if (place == DiffPlaces.CHANGES_VIEW) {
       settings.EXPAND_BY_DEFAULT = false
     }
     if (place == DiffPlaces.COMMIT_DIALOG) {
+      settings.EXPAND_BY_DEFAULT = false
+    }
+    if (place == DiffPlaces.VCS_LOG_VIEW) {
       settings.EXPAND_BY_DEFAULT = false
     }
     return settings
@@ -184,9 +171,10 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
 
 
   class State {
-    @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, surroundValueWithTag = false)
+    @OptionTag
+    @XMap
     @JvmField var PLACES_MAP: TreeMap<String, PlaceSettings> = TreeMap()
-    @JvmField var SHARED_SETTINGS = SharedSettings()
+    @JvmField var SHARED_SETTINGS: SharedSettings = SharedSettings()
   }
 
   private var myState: State = State()

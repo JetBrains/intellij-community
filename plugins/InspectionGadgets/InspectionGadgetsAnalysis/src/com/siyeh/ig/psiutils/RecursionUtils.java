@@ -255,13 +255,9 @@ public class RecursionUtils {
       return arrayAccessExpressionDefinitelyRecurses(
         (PsiArrayAccessExpression)exp, method);
     }
-    if (exp instanceof PsiPrefixExpression) {
-      return prefixExpressionDefinitelyRecurses(
-        (PsiPrefixExpression)exp, method);
-    }
-    if (exp instanceof PsiPostfixExpression) {
-      return postfixExpressionDefinitelyRecurses(
-        (PsiPostfixExpression)exp, method);
+    if (exp instanceof PsiUnaryExpression) {
+      return unaryExpressionDefinitelyRecurses(
+        (PsiUnaryExpression)exp, method);
     }
     if (exp instanceof PsiBinaryExpression) {
       return binaryExpressionDefinitelyRecurses(
@@ -338,14 +334,8 @@ public class RecursionUtils {
     return false;
   }
 
-  private static boolean prefixExpressionDefinitelyRecurses(
-    PsiPrefixExpression expression, PsiMethod method) {
-    final PsiExpression operand = expression.getOperand();
-    return expressionDefinitelyRecurses(operand, method);
-  }
-
-  private static boolean postfixExpressionDefinitelyRecurses(
-    PsiPostfixExpression expression, PsiMethod method) {
+  private static boolean unaryExpressionDefinitelyRecurses(
+    PsiUnaryExpression expression, PsiMethod method) {
     final PsiExpression operand = expression.getOperand();
     return expressionDefinitelyRecurses(operand, method);
   }

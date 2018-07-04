@@ -405,7 +405,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
   protected abstract IntervalNode<T> lookupNode(@NotNull T key);
   protected abstract void setNode(@NotNull T key, @Nullable IntervalNode<T> node);
 
-  private int compareNodes(@NotNull IntervalNode<T> i1, int delta1, @NotNull IntervalNode<T> i2, int delta2, @NotNull List<IntervalNode<T>> invalid) {
+  private int compareNodes(@NotNull IntervalNode<T> i1, int delta1, @NotNull IntervalNode<T> i2, int delta2, @NotNull List<? super IntervalNode<T>> invalid) {
     if (!i2.hasAliveKey(false)) {
       invalid.add(i2); //gced
     }
@@ -912,9 +912,10 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     return root;
   }
 
-  protected void checkBelongsToTheTree(@NotNull T interval, boolean assertInvalid) {
+  private void checkBelongsToTheTree(@NotNull T interval, boolean assertInvalid) {
     IntervalNode<T> root = lookupNode(interval);
     if (root == null) return;
+    //noinspection NumberEquality
     assert root.getTree() == this : root.getTree() +"; this: "+this;
     if (!VERIFY) return;
 
@@ -927,6 +928,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
         contains |= key == interval;
         IntervalNode<T> node = lookupNode(key);
         assert node == root : node;
+        //noinspection NumberEquality
         assert node.getTree() == this : node;
       }
 
@@ -1287,7 +1289,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     }
   }
 
-  private void collectGced(@Nullable IntervalNode<T> root, @NotNull List<IntervalNode<T>> gced) {
+  private void collectGced(@Nullable IntervalNode<T> root, @NotNull List<? super IntervalNode<T>> gced) {
     if (root == null) return;
     if (!root.hasAliveKey(true)) {
       gced.add(root);

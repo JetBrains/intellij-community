@@ -26,7 +26,6 @@ import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 10, 2007
  */
 @ApiStatus.Experimental
 public interface IndexStorage<Key, Value> extends Flushable {

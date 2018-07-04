@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.xdebugger.breakpoints;
 
@@ -30,6 +16,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -96,17 +83,19 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     return null;
   }
 
+  // Preserved for API compatibility
   public List<? extends AnAction> getAdditionalPopupMenuActions(@NotNull XLineBreakpoint<P> breakpoint, @Nullable XDebugSession currentSession) {
-    return Collections.emptyList();
+    return super.getAdditionalPopupMenuActions(breakpoint, currentSession);
   }
 
   public Icon getTemporaryIcon() {
-    return AllIcons.Debugger.Db_temporary_breakpoint;
+    return AllIcons.Debugger.Db_set_breakpoint;
   }
 
   /**
-   * Priority is considered when several breakpoint types can be set on the same code line,
+   * Priority is considered when several breakpoint types can be set inside a folded code block,
    * in this case we choose type with the highest priority
+   * Also it affects types sorting in various places
    */
   public int getPriority() {
     return 0;
@@ -136,7 +125,13 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     return Collections.emptyList();
   }
 
+  @NotNull
+  public Promise<List<? extends XLineBreakpointVariant>> computeVariantsAsync(@NotNull Project project, @NotNull XSourcePosition position) {
+    return Promise.resolve(computeVariants(project, position));
+  }
+
   public abstract class XLineBreakpointVariant {
+    @NotNull
     public abstract String getText();
 
     @Nullable
@@ -147,6 +142,10 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
 
     @Nullable
     public abstract P createProperties();
+
+    public final XLineBreakpointType<P> getType() {
+      return XLineBreakpointType.this;
+    }
   }
 
   public class XLineBreakpointAllVariant extends XLineBreakpointVariant {
@@ -156,6 +155,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
       mySourcePosition = position;
     }
 
+    @NotNull
     @Override
     public String getText() {
       return "All";
@@ -195,6 +195,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
       return myElement.getIcon(0);
     }
 
+    @NotNull
     @Override
     public String getText() {
       return StringUtil.shortenTextWithEllipsis(myElement.getText(), 100, 0);

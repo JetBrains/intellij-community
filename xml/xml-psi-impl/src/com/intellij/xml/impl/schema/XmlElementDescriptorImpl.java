@@ -280,7 +280,7 @@ public class XmlElementDescriptorImpl extends XsdEnumerationDescriptor<XmlTag>
               }
             }
           }
-          return result.toArray(new XmlElementDescriptor[result.size()]);
+          return result.toArray(XmlElementDescriptor.EMPTY_ARRAY);
         }
       }
       return elements;

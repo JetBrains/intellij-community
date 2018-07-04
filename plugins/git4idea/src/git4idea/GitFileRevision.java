@@ -17,6 +17,7 @@ package git4idea;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.RepositoryLocation;
 import com.intellij.openapi.vcs.VcsException;
@@ -29,7 +30,6 @@ import git4idea.util.GitFileUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -92,37 +92,25 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
 
   @Nullable
   public String getAuthor() {
-    if (myAuthorAndCommitter != null) {
-      return myAuthorAndCommitter.getFirst().getFirst();
-    }
-    return null;
+    return Pair.getFirst(Pair.getFirst(myAuthorAndCommitter));
   }
 
   @Nullable
   @Override
   public String getAuthorEmail() {
-    if (myAuthorAndCommitter != null) {
-      return myAuthorAndCommitter.getFirst().getSecond();
-    }
-    return null;
+    return Pair.getSecond(Pair.getFirst(myAuthorAndCommitter));
   }
 
   @Nullable
   @Override
   public String getCommitterName() {
-    if (myAuthorAndCommitter != null) {
-      return myAuthorAndCommitter.getSecond() == null ? null : myAuthorAndCommitter.getSecond().getFirst();
-    }
-    return null;
+    return Pair.getFirst(Pair.getSecond(myAuthorAndCommitter));
   }
 
   @Nullable
   @Override
   public String getCommitterEmail() {
-    if (myAuthorAndCommitter != null) {
-      return myAuthorAndCommitter.getSecond() == null ? null : myAuthorAndCommitter.getSecond().getSecond();
-    }
-    return null;
+    return Pair.getSecond(Pair.getSecond(myAuthorAndCommitter));
   }
 
   @Nullable
@@ -135,7 +123,7 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
     return myBranch;
   }
 
-  public synchronized byte[] loadContent() throws IOException, VcsException {
+  public synchronized byte[] loadContent() throws VcsException {
     VirtualFile root = getRoot();
     return GitFileUtils.getFileContent(myProject, root, myRevision.getRev(), VcsFileUtil.relativePath(root, myPath));
   }
@@ -144,7 +132,7 @@ public class GitFileRevision extends VcsFileRevisionEx implements Comparable<Vcs
     return myRoot != null ? myRoot : GitUtil.getGitRoot(myPath);
   }
 
-  public synchronized byte[] getContent() throws IOException, VcsException {
+  public synchronized byte[] getContent() throws VcsException {
     return loadContent();
   }
 

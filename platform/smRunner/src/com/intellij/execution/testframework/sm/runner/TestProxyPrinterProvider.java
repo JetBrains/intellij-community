@@ -31,7 +31,7 @@ import java.util.*;
 public final class TestProxyPrinterProvider {
 
   private final TestProxyFilterProvider myFilterProvider;
-  private BaseTestsOutputConsoleView myTestOutputConsoleView;
+  private final BaseTestsOutputConsoleView myTestOutputConsoleView;
 
   public TestProxyPrinterProvider(@NotNull BaseTestsOutputConsoleView testsOutputConsoleView,
                                   @NotNull TestProxyFilterProvider filterProvider) {

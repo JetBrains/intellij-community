@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.bytecodeAnalysis;
 
+import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.DFSTree;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.RichControlFlow;
@@ -198,12 +199,19 @@ final class State {
   final boolean taken;
   final boolean hasCompanions;
 
-  State(int index, Conf conf, List<Conf> history, boolean taken, boolean hasCompanions) {
+  /**
+   * Whether we are unsure that this state can be reached at all (e.g.
+   * it goes via exceptional path and we don't known whether this exception may actually happen).
+   */
+  final boolean unsure;
+
+  State(int index, Conf conf, List<Conf> history, boolean taken, boolean hasCompanions, boolean unsure) {
     this.index = index;
     this.conf = conf;
     this.history = history;
     this.taken = taken;
     this.hasCompanions = hasCompanions;
+    this.unsure = unsure;
   }
 }
 
@@ -216,7 +224,7 @@ abstract class Analysis<Res> {
   final Direction direction;
   final ControlFlowGraph controlFlow;
   final MethodNode methodNode;
-  final Method method;
+  final Member method;
   final DFSTree dfsTree;
 
   final protected List<State>[] computed;
@@ -229,18 +237,21 @@ abstract class Analysis<Res> {
     this.direction = direction;
     controlFlow = richControlFlow.controlFlow;
     methodNode = controlFlow.methodNode;
-    method = new Method(controlFlow.className, methodNode.name, methodNode.desc);
+    method = new Member(controlFlow.className, methodNode.name, methodNode.desc);
     dfsTree = richControlFlow.dfsTree;
     aKey = new EKey(method, direction, stable);
     computed = (List<State>[]) new List[controlFlow.transitions.length];
   }
 
   final State createStartState() {
-    return new State(0, new Conf(0, createStartFrame()), new ArrayList<>(), false, false);
+    return new State(0, new Conf(0, createStartFrame()), new ArrayList<>(), false, false, false);
   }
 
   static boolean stateEquiv(State curr, State prev) {
     if (curr.taken != prev.taken) {
+      return false;
+    }
+    if (curr.unsure != prev.unsure) {
       return false;
     }
     if (curr.conf.fastHashCode != prev.conf.fastHashCode) {
@@ -293,6 +304,14 @@ abstract class Analysis<Res> {
       frame.setLocal(local++, BasicValue.UNINITIALIZED_VALUE);
     }
     return frame;
+  }
+
+  @NotNull
+  static Frame<BasicValue> createCatchFrame(Frame<BasicValue> frame) {
+    Frame<BasicValue> catchFrame = new Frame<>(frame);
+    catchFrame.clearStack();
+    catchFrame.push(ASMUtils.THROWABLE_VALUE);
+    return catchFrame;
   }
 
   static BasicValue popValue(Frame<BasicValue> frame) {

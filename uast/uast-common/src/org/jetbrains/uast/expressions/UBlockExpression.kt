@@ -24,26 +24,26 @@ import org.jetbrains.uast.visitor.UastVisitor
  * Represents the code block expression: `{ /* code */ }`.
  */
 interface UBlockExpression : UExpression {
-    /**
-     * Returns the list of block expressions.
-     */
-    val expressions: List<UExpression>
+  /**
+   * Returns the list of block expressions.
+   */
+  val expressions: List<UExpression>
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitBlockExpression(this)) return
-        annotations.acceptList(visitor)
-        expressions.acceptList(visitor)
-        visitor.afterVisitBlockExpression(this)
-    }
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitBlockExpression(this)) return
+    annotations.acceptList(visitor)
+    expressions.acceptList(visitor)
+    visitor.afterVisitBlockExpression(this)
+  }
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
-            visitor.visitBlockExpression(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
+    visitor.visitBlockExpression(this, data)
 
-    override fun asLogString() = log()
+  override fun asLogString(): String = log()
 
-    override fun asRenderString() = buildString {
-        appendln("{")
-        expressions.forEach { appendln(it.asRenderString().withMargin) }
-        append("}")
-    }
+  override fun asRenderString(): String = buildString {
+    appendln("{")
+    expressions.forEach { appendln(it.asRenderString().withMargin) }
+    append("}")
+  }
 }

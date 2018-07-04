@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -30,9 +16,11 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.util.Producer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -50,19 +38,15 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
 
   @Override
   @NotNull
-  public FileEditorState readState(@NotNull final Element element, @NotNull final Project project, @NotNull final VirtualFile file) {
+  public FileEditorState readState(@NotNull Element element, @NotNull final Project project, @NotNull final VirtualFile file) {
     final TextEditorState state = (TextEditorState)super.readState(element, project, file);
 
     // Foldings
     Element child = element.getChild(FOLDING_ELEMENT);
-    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
     if (child != null) {
+      Document document = FileDocumentManager.getInstance().getCachedDocument(file);
       if (document == null) {
-        final Element detachedStateCopy = child.clone();
-        state.setDelayedFoldState(() -> {
-          Document document1 = FileDocumentManager.getInstance().getCachedDocument(file);
-          return document1 == null ? null : CodeFoldingManager.getInstance(project).readFoldingState(detachedStateCopy, document1);
-        });
+        state.setDelayedFoldState(new MyDelayedFoldingState(project, file, child));
       }
       else {
         //PsiDocumentManager.getInstance(project).commitDocument(document);
@@ -85,10 +69,17 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
       try {
         CodeFoldingManager.getInstance(project).writeFoldingState(foldingState, e);
       }
-      catch (WriteExternalException e1) {
-        //ignore
+      catch (WriteExternalException ignored) {
       }
-      element.addContent(e);
+      if (!JDOMUtil.isEmpty(e)) {
+        element.addContent(e);
+      }
+    }
+    else {
+      Producer<CodeFoldingState> delayedProducer = state.getDelayedFoldState();
+      if (delayedProducer instanceof MyDelayedFoldingState) {
+        element.addContent(((MyDelayedFoldingState)delayedProducer).getSerializedState());
+      }
     }
   }
 
@@ -112,8 +103,8 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
   }
 
   @Override
-  protected void setStateImpl(final Project project, final Editor editor, final TextEditorState state) {
-    super.setStateImpl(project, editor, state);
+  protected void setStateImpl(final Project project, final Editor editor, final TextEditorState state, boolean exactState) {
+    super.setStateImpl(project, editor, state, exactState);
     // Folding
     final CodeFoldingState foldState = state.getFoldingState();
     if (project != null && foldState != null && AsyncEditorLoader.isEditorLoaded(editor)) {
@@ -152,6 +143,28 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     @Override
     public boolean isValid() {
       return !getEditor().isDisposed();
+    }
+  }
+
+  private static class MyDelayedFoldingState implements Producer<CodeFoldingState> {
+    private final Project myProject;
+    private final VirtualFile myFile;
+    private final Element mySerializedState;
+
+    private MyDelayedFoldingState(Project project, VirtualFile file, Element state) {
+      myProject = project;
+      myFile = file;
+      mySerializedState = JDOMUtil.internElement(state);
+    }
+
+    @Override
+    public CodeFoldingState produce() {
+      Document document = FileDocumentManager.getInstance().getCachedDocument(myFile);
+      return document == null ? null : CodeFoldingManager.getInstance(myProject).readFoldingState(mySerializedState, document);
+    }
+
+    private Element getSerializedState() {
+      return mySerializedState.clone();
     }
   }
 }

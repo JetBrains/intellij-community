@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.ide.hierarchy.HierarchyBrowserBase;
 import com.intellij.ide.projectView.impl.AbstractUrl;
-import com.intellij.ide.scratch.ScratchFileServiceImpl;
+import com.intellij.ide.scratch.ScratchesSearchScope;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -27,6 +13,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
@@ -76,12 +63,16 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
       result.add(GlobalSearchScope.allScope(project));
     }
 
+    for (SearchScopeProvider each : Extensions.getExtensions(SearchScopeProvider.EP, project)) {
+      result.addAll(each.getGeneralProjectScopes());
+    }
+
     if (ModuleUtil.isSupportedRootType(project, JavaSourceRootType.TEST_SOURCE)) {
       result.add(GlobalSearchScopesCore.projectProductionScope(project));
       result.add(GlobalSearchScopesCore.projectTestScope(project));
     }
 
-    result.add(ScratchFileServiceImpl.buildScratchesSearchScope());
+    result.add(ScratchesSearchScope.getScratchesScope(project));
 
     final GlobalSearchScope openFilesScope = GlobalSearchScopes.openFilesScope(project);
     if (openFilesScope != GlobalSearchScope.EMPTY_SCOPE) {
@@ -108,7 +99,7 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
       }
 
       if (dataContextElement != null) {
-        if (!PlatformUtils.isCidr()) { // TODO: have an API to disable module scopes.
+        if (!PlatformUtils.isCidr() && !PlatformUtils.isRider()) { // TODO: have an API to disable module scopes.
           Module module = ModuleUtilCore.findModuleForPsiElement(dataContextElement);
           if (module == null) {
             module = LangDataKeys.MODULE.getData(dataContext);

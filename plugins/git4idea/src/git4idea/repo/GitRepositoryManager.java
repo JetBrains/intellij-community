@@ -16,6 +16,7 @@
 package git4idea.repo;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.MultiRootBranches;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
@@ -25,20 +26,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ui.VirtualFileHierarchicalComparator;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.config.GitVcsSettings;
 import git4idea.rebase.GitRebaseSpec;
-import git4idea.ui.branch.GitMultiRootBranchConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-
-import static com.intellij.util.ObjectUtils.assertNotNull;
 
 public class GitRepositoryManager extends AbstractRepositoryManager<GitRepository> {
   private static final Logger LOG = Logger.getInstance(GitRepositoryManager.class);
@@ -49,18 +46,8 @@ public class GitRepositoryManager extends AbstractRepositoryManager<GitRepositor
   @NotNull private final GitVcsSettings mySettings;
   @Nullable private volatile GitRebaseSpec myOngoingRebaseSpec;
 
-  /**
-   * @deprecated To remove in IDEA 2017. Use {@link #GitRepositoryManager(Project, VcsRepositoryManager)}.
-   */
-  @SuppressWarnings("UnusedParameters")
-  @Deprecated
-  public GitRepositoryManager(@NotNull Project project, @NotNull GitPlatformFacade platformFacade,
-                              @NotNull VcsRepositoryManager vcsRepositoryManager) {
-    this(project, vcsRepositoryManager);
-  }
-
   public GitRepositoryManager(@NotNull Project project, @NotNull VcsRepositoryManager vcsRepositoryManager) {
-    super(vcsRepositoryManager, assertNotNull(GitVcs.getInstance(project)), GitUtil.DOT_GIT);
+    super(vcsRepositoryManager, GitVcs.getInstance(project), GitUtil.DOT_GIT);
     mySettings = GitVcsSettings.getInstance(project);
   }
 
@@ -71,13 +58,22 @@ public class GitRepositoryManager extends AbstractRepositoryManager<GitRepositor
 
   @Override
   public boolean isSyncEnabled() {
-    return mySettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC && !new GitMultiRootBranchConfig(getRepositories()).diverged();
+    return mySettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC && !MultiRootBranches.diverged(getRepositories());
   }
 
   @NotNull
   @Override
   public List<GitRepository> getRepositories() {
     return getRepositories(GitRepository.class);
+  }
+
+  @Override
+  public boolean shouldProposeSyncControl() {
+    return !thereAreSubmodulesInProject() && super.shouldProposeSyncControl();
+  }
+
+  private boolean thereAreSubmodulesInProject() {
+    return getRepositories().stream().anyMatch(repo -> !repo.getSubmodules().isEmpty());
   }
 
   @Nullable

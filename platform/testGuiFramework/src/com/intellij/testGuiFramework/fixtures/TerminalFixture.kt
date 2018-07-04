@@ -15,20 +15,33 @@
  */
 package com.intellij.testGuiFramework.fixtures
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.JBTerminalPanel
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
+import com.intellij.ui.content.Content
 import com.jediterm.terminal.model.TerminalTextBuffer
 import org.fest.swing.core.Robot
+import org.fest.swing.exception.ComponentLookupException
+import org.fest.swing.exception.WaitTimedOutError
 
-class TerminalFixture(project: Project, robot: Robot): ToolWindowFixture("Terminal", project, robot) {
+class TerminalFixture(project: Project, robot: Robot, toolWindowId: String) : ToolWindowFixture(toolWindowId, project, robot) {
 
   private val myJBTerminalPanel: JBTerminalPanel
   private val terminalTextBuffer: TerminalTextBuffer
+  private val LOG: Logger = Logger.getInstance("#com.intellij.testGuiFramework.fixtures.TerminalFixture")
 
   init {
-    val content = this.getContent("") ?: throw Exception("Unable to get content of terminal tool window")
-    myJBTerminalPanel = myRobot.finder().find(content.component) { component -> component is JBTerminalPanel } as JBTerminalPanel
+    val content: Content = this.getContent(getActiveTabName()) ?: throw Exception("Unable to get content of terminal tool window")
+    try {
+      myJBTerminalPanel = GuiTestUtilKt.withPauseWhenNull {
+        getJBTerminalPanel(content)
+      }
+    }
+    catch (e: WaitTimedOutError) {
+      throw ComponentLookupException("Unable to find JBTerminalPanel")
+    }
     terminalTextBuffer = myJBTerminalPanel.terminalTextBuffer
   }
 
@@ -42,8 +55,37 @@ class TerminalFixture(project: Project, robot: Robot): ToolWindowFixture("Termin
   }
 
   fun waitUntilTextAppeared(text: String, timeoutInSeconds: Int = 60) {
-    waitUntil(condition = "'$text' appeared in terminal", timeoutInSeconds = timeoutInSeconds) {
-      terminalTextBuffer.screenLines.contains(text)
+    try {
+      waitUntil(condition = "'$text' appeared in terminal", timeoutInSeconds = timeoutInSeconds) {
+        terminalTextBuffer.screenLines.contains(text)
+      }
+    }
+    finally {
+      LOG.info("Text to find: $text")
+      LOG.info("Terminal text: ${terminalTextBuffer.historyBuffer.lines}")
+    }
+
+  }
+
+  fun waitUntilRegExAppeared(regex: Regex, timeoutInSeconds: Int = 60) {
+    waitUntil(condition = "'$regex' appeared in terminal", timeoutInSeconds = timeoutInSeconds) {
+      terminalTextBuffer.screenLines.contains(regex)
+    }
+  }
+
+  private fun getActiveTabName(): String {
+    for (c in this.contents) {
+      if (c.isSelected) return c.tabName
+    }
+    return ""
+  }
+
+  private fun getJBTerminalPanel(content: Content): JBTerminalPanel? {
+    return try {
+      myRobot.finder().find(content.component) { component -> component is JBTerminalPanel } as JBTerminalPanel
+    }
+    catch (e: ComponentLookupException) {
+      null
     }
   }
 

@@ -16,6 +16,7 @@
 
 package com.intellij.ide.ui.search;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
@@ -415,7 +416,7 @@ public class SearchableOptionsRegistrarImpl extends SearchableOptionsRegistrar {
   @Override
   public Map<String, Set<String>> findPossibleExtension(@NotNull String prefix, final Project project) {
     loadHugeFilesIfNecessary();
-    final boolean perProject = CodeStyleFacade.getInstance(project).projectUsesOwnSettings();
+    final boolean perProject = CodeStyle.usesOwnSettings(project);
     final Map<String, Set<String>> result = new THashMap<>();
     int count = 0;
     final Set<String> prefixes = getProcessedWordsWithoutStemming(prefix);

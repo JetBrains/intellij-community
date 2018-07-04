@@ -4,18 +4,14 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Holds object representation of icons used at the {@code Gradle} plugin.
- * 
- * @author Denis Zhdanov
- * @since 8/1/11 3:10 PM
- */
 public class GradleConstants {
 
   @NotNull @NonNls public static final ProjectSystemId SYSTEM_ID = new ProjectSystemId("GRADLE");
 
   @NotNull @NonNls public static final String EXTENSION           = "gradle";
   @NotNull @NonNls public static final String DEFAULT_SCRIPT_NAME = "build.gradle";
+  @NotNull @NonNls public static final String KOTLIN_DSL_SCRIPT_NAME = "build.gradle.kts";
+  @NotNull @NonNls public static final String KOTLIN_DSL_SCRIPT_EXTENSION = "gradle.kts";
   @NotNull @NonNls public static final String SETTINGS_FILE_NAME  = "settings.gradle";
 
   @NotNull @NonNls public static final String SYSTEM_DIRECTORY_PATH_KEY = "GRADLE_USER_HOME";

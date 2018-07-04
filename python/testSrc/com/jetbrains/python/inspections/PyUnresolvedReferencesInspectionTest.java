@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -26,7 +12,6 @@ import com.jetbrains.python.debugger.PyDebuggerEditorsProvider;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyExpressionCodeFragmentImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -56,11 +41,14 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  public void testSlotsAndUnlistedAttrAssign() {
+  // PY-10397
+  public void testOwnSlots() {
     doTest();
   }
 
-  public void testSlotsSuperclass() {
+  // PY-5939
+  // PY-29229
+  public void testSlotsAndInheritance() {
     doTest();
   }
 
@@ -68,17 +56,8 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  // PY-10397
-  public void testSlotsAndListedAttrAccess() {
-    doTest();
-  }
-
   // PY-18422
   public void testSlotsAndClassAttr() {
-    doTest();
-  }
-
-  public void testSlotsSubclass() {  // PY-5939
     doTest();
   }
 
@@ -237,7 +216,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-6745
   public void testQualNameAttribute() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-7389
@@ -247,7 +226,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-7389
   public void testComprehensionScope33() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-7516
@@ -424,8 +403,8 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   }
 
   protected VirtualFile prepareFile() {
-    myFixture.copyDirectoryToProject(getTestDirectory(false), "");
-    return myFixture.configureByFile(getTestDirectory(false) + "/" + getTestName(true) + ".py").getVirtualFile();
+    myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
+    return myFixture.configureByFile(getTestDirectoryPath() + "/" + getTestName(true) + ".py").getVirtualFile();
   }
 
   protected void doEvaluateExpressionTest(@NotNull VirtualFile mainFile, @NotNull String expression, int lineNumber) {
@@ -547,13 +526,11 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-18521
   public void testFunctionTypeCommentUsesImportsFromTyping() {
-    myFixture.copyDirectoryToProject("typing", "");
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-22620
   public void testTupleTypeCommentsUseImportsFromTyping() {
-    myFixture.copyDirectoryToProject("typing", "");
     doTest();
   }
 
@@ -585,7 +562,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     assertEquals("foo.py", fooVFile.getName());
 
     final PsiFile fooPsiFile = PsiManager.getInstance(myFixture.getProject()).findFile(fooVFile);
-    assertNotParsed((PyFile)fooPsiFile);
+    assertNotParsed(fooPsiFile);
   }
 
   // PY-23164
@@ -605,7 +582,7 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
 
   // PY-23540
   public void testMemberFromMetaclassWhenSuperclassMetaclassIsABCMeta() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-23623
@@ -616,6 +593,164 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   // PY-25118
   public void testInnerClassAsNamedTupleDefinitionMember() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-5500
+  public void testUnknownElementInDunderAll() {
+    doTest();
+  }
+
+  // PY-15071
+  public void testImportedPrivateNameListedInDunderAll() {
+    doMultiFileTest();
+  }
+
+  // PY-25695
+  public void testDynamicDunderAll() {
+    doMultiFileTest();
+  }
+
+  public void testDunderAll() {
+    doMultiFileTest();
+  }
+
+  // PY-25794
+  public void testStubOnlyReExportedModule() {
+    doMultiFileTest();
+  }
+
+  // PY-24637
+  public void testPy2TrueInDocTest() {
+    doTest();
+  }
+
+  // PY-20889
+  public void testTypeAssertionInBooleanOperations() {
+    doTest();
+  }
+
+  // PY-22312
+  public void testUnionContainingUnknownType() {
+    doTest();
+  }
+
+  // PY-26368
+  public void testForwardReferencesInClassBody() {
+    doTest();
+  }
+
+  // PY-26243
+  public void testNotImportedModuleInDunderAll() {
+    doMultiFileTest("pkg/__init__.py");
+  }
+
+  // PY-26243
+  public void testNotImportedPackageInDunderAll() {
+    doMultiFileTest("pkg/__init__.py");
+  }
+
+  // PY-27146
+  public void testPrivateMemberOwnerResolvedToStub() {
+    doMultiFileTest();
+  }
+
+  // PY-28017
+  public void testModuleWithGetAttr() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
+
+  // PY-22868
+  public void testStubWithGetAttr() {
+    doMultiFileTest();
+  }
+
+  // PY-27913
+  public void testDunderClassGetItem() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doTest);
+  }
+
+
+  // PY-28332
+  public void testIndirectFromImport() {
+    doMultiFileTest();
+  }
+
+  // PY-18629
+  public void testPreferImportedModuleOverNamespacePackage() {
+    doMultiFileTest();
+  }
+
+  // PY-22221
+  public void testFunctionInIgnoredIdentifiers() {
+    myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
+    final PsiFile currentFile = myFixture.configureFromTempProjectFile("a.py");
+
+    final PyUnresolvedReferencesInspection inspection = new PyUnresolvedReferencesInspection();
+    inspection.ignoredIdentifiers.add("mock.patch.*");
+
+    myFixture.enableInspections(inspection);
+    myFixture.checkHighlighting(isWarning(), isInfo(), isWeakWarning());
+
+    assertProjectFilesNotParsed(currentFile);
+    assertSdkRootsNotParsed(currentFile);
+  }
+
+  // PY-23632
+  public void testMockPatchObject() {
+    doMultiFileTest();
+  }
+
+  // PY-20197
+  public void testClassLevelImportUsedInsideMethod() {
+    doTestByText("class DateParser:\n" +
+                 "    from datetime import datetime\n" +
+                 "    def __init__(self):\n" +
+                 "        self.value = self.datetime(2016, 1, 1)");
+  }
+
+  // PY-19599
+  public void testDefinedInParameterDefaultAndBody() {
+    doTestByText("def f(p=(x for x in [])):\n" +
+                 "    x = 1\n" +
+                 "    return x");
+  }
+
+  // PY-20530
+  public void testSelfInAnnotationAndTypeComment() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("class A:\n" +
+                         "    def f1(self) -> <error descr=\"Unresolved reference 'self'\">self</error>.B:\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "    def f2(self):\n" +
+                         "        # type: () -> <warning descr=\"Unresolved reference 'self'\">self</warning>.B\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "    def f3(self):\n" +
+                         "        v3: self.B\n" +
+                         "        v4 = None  # type: self.B\n" +
+                         "\n" +
+                         "    v1: <error descr=\"Unresolved reference 'self'\">self</error>.B\n" +
+                         "    v2 = None  # type: <warning descr=\"Unresolved reference 'self'\">self</warning>.B\n" +
+                         "\n" +
+                         "    class B:\n" +
+                         "        pass")
+    );
+  }
+
+  // PY-30383
+  public void testLambdaMember() {
+    doTestByText("class SomeClass:\n" +
+                 "    def __init__(self):\n" +
+                 "        self.one = lambda x: True\n" +
+                 "        \n" +
+                 "    def some_method(self):\n" +
+                 "        self.one.<warning descr=\"Cannot find reference 'abc' in 'function'\">abc</warning>");
+  }
+
+  public void testNamedTupleFunction() {
+    doTest();
   }
 
   @NotNull

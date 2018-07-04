@@ -21,6 +21,7 @@ import com.intellij.java.codeInspection.bytecodeAnalysis.ExpectNotNull;
 /**
  * @author lambdamix
  */
+@SuppressWarnings("unused")
 public final class Test02 {
   @ExpectContract(pure = true)
   @ExpectNotNull
@@ -32,5 +33,14 @@ public final class Test02 {
   @ExpectNotNull
   public String notNullStringDelegate() {
     return notNullString();
+  }
+
+  public boolean getFlagVolatile(@ExpectNotNull Test01 test01) {
+    return test01.volatileFlag;
+  }
+
+  @ExpectContract(pure = true)
+  public boolean getFlagPlain(@ExpectNotNull Test01 test01) {
+    return test01.plainFlag;
   }
 }

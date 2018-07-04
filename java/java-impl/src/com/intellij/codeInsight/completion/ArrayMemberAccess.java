@@ -15,19 +15,17 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.createExpression;
-import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.getQualifierText;
-import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.getSpace;
+import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.*;
 
 /**
  * @author peter
@@ -45,7 +43,8 @@ class ArrayMemberAccess {
           FeatureUsageTracker.getInstance().triggerFeatureUsed(JavaCompletionFeatures.SECOND_SMART_COMPLETION_ARRAY_MEMBER);
 
           final int tailOffset = context.getTailOffset();
-          final String callSpace = getSpace(CodeStyleSettingsManager.getSettings(element.getProject()).SPACE_WITHIN_BRACKETS);
+          final String callSpace = getSpace(
+            CodeStyle.getLanguageSettings(context.getFile()).SPACE_WITHIN_BRACKETS);
           context.getDocument().insertString(tailOffset, "[" + callSpace + callSpace + "]");
           context.getEditor().getCaretModel().moveToOffset(tailOffset + 1 + callSpace.length());
         }

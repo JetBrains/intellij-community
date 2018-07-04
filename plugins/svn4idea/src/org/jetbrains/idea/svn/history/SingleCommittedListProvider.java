@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,18 +17,15 @@ import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.ErrorCategory;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
 public class SingleCommittedListProvider {
 
   private static final Logger LOG = Logger.getInstance(SingleCommittedListProvider.class);
@@ -52,9 +35,9 @@ public class SingleCommittedListProvider {
   @NotNull private final VirtualFile file;
   @NotNull private final VcsRevisionNumber number;
   private SvnChangeList[] changeList;
-  private SVNRevision revisionBefore;
-  private SVNURL repositoryUrl;
-  private SVNURL svnRootUrl;
+  private Revision revisionBefore;
+  private Url repositoryUrl;
+  private Url svnRootUrl;
   private SvnRepositoryLocation svnRootLocation;
   private String repositoryRelativeUrl;
   private FilePath filePath;
@@ -84,11 +67,11 @@ public class SingleCommittedListProvider {
     if (rootUrlInfo != null) {
       changeList = new SvnChangeList[1];
       revisionBefore = ((SvnRevisionNumber)number).getRevision();
-      repositoryUrl = rootUrlInfo.getRepositoryUrlUrl();
-      svnRootUrl = rootUrlInfo.getAbsoluteUrlAsUrl();
-      svnRootLocation = new SvnRepositoryLocation(rootUrlInfo.getAbsoluteUrl());
+      repositoryUrl = rootUrlInfo.getRepositoryUrl();
+      svnRootUrl = rootUrlInfo.getUrl();
+      svnRootLocation = new SvnRepositoryLocation(rootUrlInfo.getUrl());
       repositoryRelativeUrl = SvnUtil.ensureStartSlash(SvnUtil.join(
-        SvnUtil.getRelativeUrl(repositoryUrl.toDecodedString(), svnRootUrl.toDecodedString()),
+        SvnUtil.getRelativeUrl(repositoryUrl, svnRootUrl),
         SvnUtil.getRelativePath(rootUrlInfo.getPath(), file.getPath())));
 
       filePath = VcsUtil.getFilePath(file);
@@ -119,17 +102,17 @@ public class SingleCommittedListProvider {
     }
   }
 
-  private boolean hasAccess(@NotNull SVNURL url) {
+  private boolean hasAccess(@NotNull Url url) {
     return SvnAuthenticationNotifier.passiveValidation(myVcs, url);
   }
 
   // return changed path, if any
-  private FilePath searchFromHead(@NotNull SVNURL url) throws VcsException {
-    final SvnCopyPathTracker pathTracker = new SvnCopyPathTracker(repositoryUrl.toDecodedString(), repositoryRelativeUrl);
-    SvnTarget target = SvnTarget.fromURL(url);
+  private FilePath searchFromHead(@NotNull Url url) throws VcsException {
+    SvnCopyPathTracker pathTracker = new SvnCopyPathTracker(repositoryUrl, repositoryRelativeUrl);
+    Target target = Target.on(url);
 
     myVcs.getFactory(target).createHistoryClient()
-      .doLog(target, SVNRevision.HEAD, revisionBefore, false, true, false, 0, null, logEntry -> {
+      .doLog(target, Revision.HEAD, revisionBefore, false, true, false, 0, null, logEntry -> {
         checkDisposed();
         // date could be null for lists where there are paths that user has no rights to observe
         if (logEntry.getDate() != null) {
@@ -147,7 +130,7 @@ public class SingleCommittedListProvider {
 
   @NotNull
   private SvnChangeList createChangeList(@NotNull LogEntry logEntry) {
-    return new SvnChangeList(myVcs, svnRootLocation, logEntry, repositoryUrl.toDecodedString());
+    return new SvnChangeList(myVcs, svnRootLocation, logEntry, repositoryUrl);
   }
 
   private void checkDisposed() {
@@ -156,7 +139,7 @@ public class SingleCommittedListProvider {
     }
   }
 
-  private boolean searchForUrl(@NotNull SVNURL url) throws VcsException {
+  private boolean searchForUrl(@NotNull Url url) throws VcsException {
     LogEntryConsumer handler = logEntry -> {
       checkDisposed();
       // date could be null for lists where there are paths that user has no rights to observe
@@ -165,13 +148,13 @@ public class SingleCommittedListProvider {
       }
     };
 
-    SvnTarget target = SvnTarget.fromURL(url);
+    Target target = Target.on(url);
     try {
       myVcs.getFactory(target).createHistoryClient().doLog(target, revisionBefore, revisionBefore, false, true, false, 1, null, handler);
     }
     catch (SvnBindException e) {
       LOG.info(e);
-      if (!e.containsCategory(SVNErrorCode.FS_CATEGORY)) {
+      if (!e.containsCategory(ErrorCategory.FS)) {
         throw e;
       }
     }

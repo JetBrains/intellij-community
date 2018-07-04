@@ -22,7 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 
 /**
- * @author Hani Suleiman Date: Jul 21, 2005 Time: 12:56:02 PM
+ * @author Hani Suleiman
  */
 public class SuiteBrowser extends BrowseModuleValueActionListener
 {

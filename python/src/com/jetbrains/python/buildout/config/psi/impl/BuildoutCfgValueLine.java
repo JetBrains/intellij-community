@@ -48,7 +48,7 @@ public class BuildoutCfgValueLine extends BuildoutCfgPsiElement {
       for (Pair<String, Integer> name : names) {
         refs.add(new BuildoutPartReference(this, name.getFirst(), name.getSecond()));
       }
-      return  refs.toArray(new BuildoutPartReference[refs.size()]);
+      return  refs.toArray(new BuildoutPartReference[0]);
     }
 
     return PsiReference.EMPTY_ARRAY;

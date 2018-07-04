@@ -41,15 +41,30 @@ public class RegExpParserDefinition implements ParserDefinition {
                                                                              RegExpCapability.UNICODE_CATEGORY_SHORTHAND,
                                                                              RegExpCapability.EXTENDED_UNICODE_CHARACTER);
 
+    @NotNull
+    public EnumSet<RegExpCapability> getDefaultCapabilities() {
+        return CAPABILITIES;
+    }
+
     @Override
     @NotNull
     public Lexer createLexer(Project project) {
-        return new RegExpLexer(CAPABILITIES);
+        return createLexer(project, getDefaultCapabilities());
     }
 
     @Override
     public PsiParser createParser(Project project) {
-        return new RegExpParser(CAPABILITIES);
+        return createParser(project, getDefaultCapabilities());
+    }
+
+    @NotNull
+    public RegExpParser createParser(Project project, @NotNull EnumSet<RegExpCapability> capabilities) {
+        return new RegExpParser(capabilities);
+    }
+
+    @NotNull
+    public RegExpLexer createLexer(Project project, @NotNull EnumSet<RegExpCapability> capabilities) {
+        return new RegExpLexer(capabilities);
     }
 
     @Override
@@ -130,7 +145,7 @@ public class RegExpParserDefinition implements ParserDefinition {
     }
 
     @Override
-    public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+    public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
         return SpaceRequirements.MUST_NOT;
     }
 }

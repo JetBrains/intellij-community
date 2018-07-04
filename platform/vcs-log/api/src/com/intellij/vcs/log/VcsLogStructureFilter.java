@@ -20,6 +20,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
+import static com.intellij.vcs.log.VcsLogFilterCollection.STRUCTURE_FILTER;
+
 /**
  * Tells the log to filter by files and folders.
  */
@@ -33,4 +35,10 @@ public interface VcsLogStructureFilter extends VcsLogDetailsFilter {
    */
   @NotNull
   Collection<FilePath> getFiles();
+
+  @NotNull
+  @Override
+  default VcsLogFilterCollection.FilterKey<VcsLogStructureFilter> getKey() {
+    return STRUCTURE_FILTER;
+  }
 }

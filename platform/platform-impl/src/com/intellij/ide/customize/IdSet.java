@@ -32,7 +32,7 @@ class IdSet {
     int i = description.indexOf(":");
     if (i > 0) {
       myTitle = description.substring(0, i);
-      description = description.substring(i + 1, description.length());
+      description = description.substring(i + 1);
     }
     myIds = description.split(",");
     myIds = ContainerUtil.filter(myIds, id -> pluginGroups.findPlugin(id) != null).toArray(new String[]{});

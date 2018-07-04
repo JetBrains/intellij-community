@@ -7,7 +7,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.impl.TaskUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jdom.Element;
@@ -131,8 +130,8 @@ public class YouTrackIntellisense {
    */
   public static class Response {
 
-    private List<HighlightRange> myHighlightRanges;
-    private List<CompletionItem> myCompletionItems;
+    private final List<HighlightRange> myHighlightRanges;
+    private final List<CompletionItem> myCompletionItems;
 
     public Response(@NotNull InputStream stream) throws Exception {
       final Element root = new SAXBuilder().build(stream).getRootElement();
@@ -161,8 +160,9 @@ public class YouTrackIntellisense {
    * Wrapper around content of "highlight/range" element of YouTrack response
    */
   public static class HighlightRange {
-    private int myStart, myEnd;
-    private String myStyleClass;
+    private final int myStart;
+    private final int myEnd;
+    private final String myStyleClass;
 
     public HighlightRange(@NotNull Element rangeElement) {
       //assert "range".equals(rangeElement.getName());
@@ -204,13 +204,14 @@ public class YouTrackIntellisense {
    * Wrapper around content of "suggest/item" element in YouTrack response
    */
   public static class CompletionItem {
-    private TextRange myMatchRange, myCompletionRange;
-    private int myCaretPosition;
-    private String myDescription;
-    private String mySuffix;
-    private String myPrefix;
-    private String myOption;
-    private String myStyleClass;
+    private final TextRange myMatchRange;
+    private final TextRange myCompletionRange;
+    private final int myCaretPosition;
+    private final String myDescription;
+    private final String mySuffix;
+    private final String myPrefix;
+    private final String myOption;
+    private final String myStyleClass;
 
     public CompletionItem(@NotNull Element item) {
       //assert "item".equals(item.getName())

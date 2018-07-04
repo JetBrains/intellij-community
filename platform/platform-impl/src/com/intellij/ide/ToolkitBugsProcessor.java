@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -129,27 +115,6 @@ public class ToolkitBugsProcessor {
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  private static class Tricky_JEditorPane_registerEditorKitForContentType_NPE extends Handler {
-    public Tricky_JEditorPane_registerEditorKitForContentType_NPE() {
-      super("http://ea.jetbrains.com/browser/ea_problems/13587 - JEditorPane_registerEditorKitForContentType_NPE");
-    }
-
-    @Override
-    public boolean process(Throwable e, StackTraceElement[] stack) {
-      if (e instanceof NullPointerException && stack.length > 3) {
-        //bombed for possible future fix
-        if (SystemInfo.isJavaVersionAtLeast("1.7")) return false;
-        
-        return stack[0].getClassName().equals("java.util.Hashtable")
-          && stack[0].getMethodName().equals("put")
-          && stack[3].getClassName().equals("javax.swing.JEditorPane")
-          && stack[3].getMethodName().equals("loadDefaultKitsIfNecessary");
-      }
-      return false;
-    }
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
   private static class Apple_ExceptionOnChangingMonitors extends Handler {
     public Apple_ExceptionOnChangingMonitors() { }
 
@@ -189,6 +154,22 @@ public class ToolkitBugsProcessor {
     public boolean process(Throwable e, StackTraceElement[] stack) {
       if (e instanceof NullPointerException && stack.length > 1) {
         return SwingCleanuper.isCAccessible(stack[0].getClassName()) && stack[0].getMethodName().equals("getAccessibleContext");
+      }
+      return false;
+    }
+  }
+
+  @SuppressWarnings("UnusedDeclaration")
+  private static class HeadlessGraphicsEnvironmentUnderWindows extends Handler {
+    public HeadlessGraphicsEnvironmentUnderWindows() {
+      super("HeadlessGraphicsEnvironment cannot be cast to Win32GraphicsEnvironment");
+    }
+
+    @Override
+    public boolean process(Throwable e, StackTraceElement[] stack) {
+      // http://bugs.java.com/bugdatabase/view_bug.do?bug_id=6607186
+      if (e instanceof ClassCastException && stack.length > 1 && e.getMessage() != null) {
+        return e.getMessage().equals("sun.java2d.HeadlessGraphicsEnvironment cannot be cast to sun.awt.Win32GraphicsEnvironment");
       }
       return false;
     }

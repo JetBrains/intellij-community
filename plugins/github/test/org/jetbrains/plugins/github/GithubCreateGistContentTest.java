@@ -43,7 +43,7 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
     List<FileContent> expected = new ArrayList<>();
     expected.add(new FileContent("file.txt", "file.txt content"));
 
-    VirtualFile file = myProjectRoot.findFileByRelativePath("file.txt");
+    VirtualFile file = projectRoot.findFileByRelativePath("file.txt");
     assertNotNull(file);
 
     List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, null, file, null);
@@ -57,7 +57,7 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
     expected.add(new FileContent("folder_file2", "file2 content"));
     expected.add(new FileContent("folder_dir_file3", "file3 content"));
 
-    VirtualFile file = myProjectRoot.findFileByRelativePath("folder");
+    VirtualFile file = projectRoot.findFileByRelativePath("folder");
     assertNotNull(file);
 
     List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, null, file, null);
@@ -68,7 +68,7 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
   public void testCreateFromEmptyDirectory() {
     List<FileContent> expected = new ArrayList<>();
 
-    VirtualFile file = myProjectRoot.findFileByRelativePath("folder/empty_folder");
+    VirtualFile file = projectRoot.findFileByRelativePath("folder/empty_folder");
     assertNotNull(file);
 
     List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, null, file, null);
@@ -79,7 +79,7 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
   public void testCreateFromEmptyFile() {
     List<FileContent> expected = new ArrayList<>();
 
-    VirtualFile file = myProjectRoot.findFileByRelativePath("folder/empty_file");
+    VirtualFile file = projectRoot.findFileByRelativePath("folder/empty_file");
     assertNotNull(file);
 
     List<FileContent> actual = GithubCreateGistAction.collectContents(myProject, null, file, null);
@@ -94,9 +94,9 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
     expected.add(new FileContent("file3", "file3 content"));
 
     VirtualFile[] files = new VirtualFile[3];
-    files[0] = myProjectRoot.findFileByRelativePath("file.txt");
-    files[1] = myProjectRoot.findFileByRelativePath("folder/file2");
-    files[2] = myProjectRoot.findFileByRelativePath("folder/dir/file3");
+    files[0] = projectRoot.findFileByRelativePath("file.txt");
+    files[1] = projectRoot.findFileByRelativePath("folder/file2");
+    files[2] = projectRoot.findFileByRelativePath("folder/dir/file3");
     assertNotNull(files[0]);
     assertNotNull(files[1]);
     assertNotNull(files[2]);
@@ -117,7 +117,7 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
   }
 
   public void testCreateFromEditor() {
-    VirtualFile file = myProjectRoot.findFileByRelativePath("file.txt");
+    VirtualFile file = projectRoot.findFileByRelativePath("file.txt");
     assertNotNull(file);
 
     Document document = FileDocumentManager.getInstance().getDocument(file);
@@ -135,7 +135,7 @@ public class GithubCreateGistContentTest extends GithubCreateGistContentTestBase
   }
 
   public void testCreateFromEditorWithoutFile() {
-    VirtualFile file = myProjectRoot.findFileByRelativePath("file.txt");
+    VirtualFile file = projectRoot.findFileByRelativePath("file.txt");
     assertNotNull(file);
 
     Document document = FileDocumentManager.getInstance().getDocument(file);

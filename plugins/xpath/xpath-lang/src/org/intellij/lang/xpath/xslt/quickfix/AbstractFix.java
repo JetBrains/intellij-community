@@ -110,6 +110,6 @@ public abstract class AbstractFix implements IntentionAction {
 
   public static LocalQuickFix[] createFixes(LocalQuickFix... fixes) {
     final List<LocalQuickFix> result = ContainerUtil.findAll(fixes, localQuickFix -> localQuickFix != null);
-    return result.toArray(new LocalQuickFix[result.size()]);
+    return result.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 }

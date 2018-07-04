@@ -1,40 +1,35 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.java;
 
+import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * {@code com.intellij.pom.java.LanguageLevel} is an IDE-side counterpart of this enum.
+ *
  * @author nik
  */
 public enum LanguageLevel {
-  JDK_1_3("1.3"), JDK_1_4("1.4"), JDK_1_5("1.5"), JDK_1_6("1.6"), JDK_1_7("1.7"), JDK_1_8("1.8"), JDK_1_9("1.9"), JDK_X("valhalla");
+  JDK_1_3(3), JDK_1_4(4), JDK_1_5(5), JDK_1_6(6), JDK_1_7(7), JDK_1_8(8), JDK_1_9(9), JDK_10(10), JDK_11(11), JDK_X(12);
 
-  private final String myComplianceOption;
+  private final JavaVersion myVersion;
 
-  LanguageLevel(String complianceOption) {
-    myComplianceOption = complianceOption;
+  LanguageLevel(int major) {
+    myVersion = JavaVersion.compose(major);
   }
 
-  /**
-   * String representation of the level, suitable to pass as a value of compiler's "-source" and "-target" options.
-   * Should work for Javac and ECJ (including ECJ-based) compilers.
-   */
   @NotNull
+  public JavaVersion toJavaVersion() {
+    return myVersion;
+  }
+
+  public boolean isPreview() {
+    return name().endsWith("_PREVIEW");
+  }
+
+  /** @deprecated use {@link JpsJavaSdkType#complianceOption} (to be removed in IDEA 2019) */
+  @Deprecated
   public String getComplianceOption() {
-    return myComplianceOption;
+    return JpsJavaSdkType.complianceOption(toJavaVersion());
   }
 }

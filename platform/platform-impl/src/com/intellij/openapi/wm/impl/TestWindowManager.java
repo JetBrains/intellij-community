@@ -19,7 +19,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.project.Project;
@@ -57,16 +56,6 @@ public final class TestWindowManager extends WindowManagerEx {
 
   @Override
   public final void doNotSuggestAsParent(final Window window) { }
-
-  @Override
-  public StatusBar getStatusBar(@NotNull Component c, @Nullable Project project) {
-    return null;
-  }
-
-  @Override
-  public StatusBar getStatusBar(@NotNull Component c) {
-    return null;
-  }
 
   @Override
   public final Window suggestParentWindow(@Nullable final Project project) {
@@ -121,7 +110,7 @@ public final class TestWindowManager extends WindowManagerEx {
 
   @Override
   public final IdeFrameImpl allocateFrame(@NotNull Project project) {
-    return new IdeFrameImpl(ApplicationInfoEx.getInstanceEx(), ActionManagerEx.getInstanceEx(), DataManager.getInstance(), ApplicationManager.getApplication());
+    return new IdeFrameImpl(ActionManagerEx.getInstanceEx(), DataManager.getInstance(), ApplicationManager.getApplication());
   }
 
   @Override
@@ -177,11 +166,6 @@ public final class TestWindowManager extends WindowManagerEx {
 
   @Override
   public final boolean isInsideScreenBounds(final int x, final int y, final int width) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public final boolean isInsideScreenBounds(final int x, final int y) {
     throw new UnsupportedOperationException();
   }
 

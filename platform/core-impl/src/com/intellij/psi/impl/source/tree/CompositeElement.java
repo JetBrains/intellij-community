@@ -18,23 +18,20 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
-import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.pom.tree.events.ChangeInfo;
-import com.intellij.pom.tree.events.TreeChangeEvent;
-import com.intellij.pom.tree.events.impl.ChangeInfoImpl;
-import com.intellij.pom.tree.events.impl.ReplaceChangeInfoImpl;
+import com.intellij.pom.tree.events.impl.TreeChangeEventImpl;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.FreeThreadedFileViewProvider;
-import com.intellij.psi.impl.source.*;
+import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.impl.source.DummyHolderFactory;
+import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
@@ -91,6 +88,7 @@ public class CompositeElement extends TreeElement {
         }
         else if (psi instanceof PsiFile) {
           ((PsiFile)psi).subtreeChanged();
+          assertThreading((PsiFile)psi);
         }
       }
 
@@ -100,7 +98,6 @@ public class CompositeElement extends TreeElement {
 
   @Override
   public void clearCaches() {
-    assertThreading();
     myCachedLength = -1;
 
     myHC = -1;
@@ -108,43 +105,28 @@ public class CompositeElement extends TreeElement {
     clearRelativeOffsets(rawFirstChild());
   }
 
-  private void assertThreading() {
+  private static void assertThreading(@NotNull PsiFile file) {
     if (ASSERT_THREADING) {
-      boolean ok = ApplicationManager.getApplication().isWriteAccessAllowed() || isNonPhysicalOrInjected();
+      boolean ok = ApplicationManager.getApplication().isWriteAccessAllowed() || isNonPhysicalOrInjected(file);
       if (!ok) {
-        LOG.error("Threading assertion. " + getThreadingDiagnostics());
+        LOG.error("Threading assertion. " + getThreadingDiagnostics(file));
       }
     }
   }
 
-  private String getThreadingDiagnostics() {
-    FileElement fileElement;PsiFile psiFile;
-    return " Under write: " + ApplicationManager.getApplication().isWriteAccessAllowed() +
-           "; wrapper: " + myWrapper +
-           "; wrapper.isPhysical(): " + (myWrapper != null && myWrapper.isPhysical()) +
-           "; fileElement: " + (fileElement = TreeUtil.getFileElement(this)) +
-           "; psiFile: " + (psiFile = fileElement == null ? null : (PsiFile)fileElement.getPsi()) +
-           "; psiFile.getViewProvider(): " + (psiFile == null ? null : psiFile.getViewProvider()) +
-           "; psiFile.isPhysical(): " + (psiFile != null && psiFile.isPhysical()) +
-           "; nonPhysicalOrInjected: " + isNonPhysicalOrInjected();
+  private static String getThreadingDiagnostics(@NotNull PsiFile psiFile) {
+    return "psiFile: " + psiFile +
+           "; psiFile.getViewProvider(): " + psiFile.getViewProvider() +
+           "; psiFile.isPhysical(): " + psiFile.isPhysical() +
+           "; nonPhysicalOrInjected: " + isNonPhysicalOrInjected(psiFile);
   }
 
-  private boolean isNonPhysicalOrInjected() {
-    FileElement fileElement = TreeUtil.getFileElement(this);
-    if (fileElement == null || fileElement instanceof DummyHolderElement) return true;
-    if (fileElement.getTreeParent() != null) return true; // dummy holder
-    PsiElement wrapper = this instanceof PsiElement ? (PsiElement)this : myWrapper;
-    if (wrapper == null) return true;
-    PsiFile psiFile = wrapper.getContainingFile();
-    return
-      psiFile ==  null ||
-      psiFile instanceof DummyHolder ||
-      psiFile.getViewProvider() instanceof FreeThreadedFileViewProvider ||
-      !psiFile.isPhysical();
+  private static boolean isNonPhysicalOrInjected(@NotNull PsiFile psiFile) {
+    return psiFile instanceof DummyHolder || psiFile.getViewProvider() instanceof FreeThreadedFileViewProvider || !psiFile.isPhysical();
   }
 
   @Override
-  public void acceptTree(TreeElementVisitor visitor) {
+  public void acceptTree(@NotNull TreeElementVisitor visitor) {
     visitor.visitComposite(this);
   }
 
@@ -184,21 +166,21 @@ public class CompositeElement extends TreeElement {
   }
 
   @Nullable
-  public PsiElement findPsiChildByType(IElementType type) {
+  public PsiElement findPsiChildByType(@NotNull IElementType type) {
     final ASTNode node = findChildByType(type);
     return node == null ? null : node.getPsi();
   }
 
   @Nullable
-  public PsiElement findPsiChildByType(TokenSet types) {
+  public PsiElement findPsiChildByType(@NotNull TokenSet types) {
     final ASTNode node = findChildByType(types);
     return node == null ? null : node.getPsi();
   }
 
   @Override
-  public ASTNode findChildByType(IElementType type) {
+  public ASTNode findChildByType(@NotNull IElementType type) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
-      ApplicationManager.getApplication().assertReadAccessAllowed();
+      assertReadAccessAllowed();
     }
 
     for(ASTNode element = getFirstChildNode(); element != null; element = element.getTreeNext()){
@@ -208,9 +190,9 @@ public class CompositeElement extends TreeElement {
   }
 
   @Override
-  public ASTNode findChildByType(IElementType type, ASTNode anchor) {
+  public ASTNode findChildByType(@NotNull IElementType type, ASTNode anchor) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
-      ApplicationManager.getApplication().assertReadAccessAllowed();
+      assertReadAccessAllowed();
     }
 
     return TreeUtil.findSibling(anchor, type);
@@ -220,7 +202,7 @@ public class CompositeElement extends TreeElement {
   @Nullable
   public ASTNode findChildByType(@NotNull TokenSet types) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
-      ApplicationManager.getApplication().assertReadAccessAllowed();
+      assertReadAccessAllowed();
     }
     for(ASTNode element = getFirstChildNode(); element != null; element = element.getTreeNext()){
       if (types.contains(element.getElementType())) return element;
@@ -232,7 +214,7 @@ public class CompositeElement extends TreeElement {
   @Nullable
   public ASTNode findChildByType(@NotNull TokenSet typesSet, ASTNode anchor) {
     if (DebugUtil.CHECK_INSIDE_ATOMIC_ACTION_ENABLED){
-      ApplicationManager.getApplication().assertReadAccessAllowed();
+      assertReadAccessAllowed();
     }
     return TreeUtil.findSibling(anchor, typesSet);
   }
@@ -270,7 +252,7 @@ public class CompositeElement extends TreeElement {
   @Override
   @NotNull
   public char[] textToCharArray() {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    assertReadAccessAllowed();
 
     final int len = getTextLength();
     char[] buffer = new char[len];
@@ -299,7 +281,7 @@ public class CompositeElement extends TreeElement {
 
   private String diagnoseTextInconsistency(String text) {
     @NonNls String msg = "";
-    msg += ";\n nonPhysicalOrInjected=" + isNonPhysicalOrInjected();
+    msg += ";\n nonPhysicalOrInjected=" + isNonPhysicalOrInjected(SharedImplUtil.getContainingFile(this));
     msg += ";\n buffer=" + text;
     try {
       msg += ";\n this=" + this;
@@ -349,6 +331,7 @@ public class CompositeElement extends TreeElement {
     return false;
   }
 
+  @Override
   protected int textMatches(@NotNull final CharSequence buffer, final int start) {
     final int[] curOffset = {start};
     acceptTree(new RecursiveTreeElementWalkingVisitor() {
@@ -393,12 +376,12 @@ public class CompositeElement extends TreeElement {
     return null;
   }
 
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this, child);
     return 0; //ChildRole.NONE;
   }
 
-  protected final int getChildRole(ASTNode child, int roleCandidate) {
+  protected final int getChildRole(@NotNull ASTNode child, int roleCandidate) {
     if (findChildByRole(roleCandidate) == child) {
       return roleCandidate;
     }
@@ -423,8 +406,8 @@ public class CompositeElement extends TreeElement {
   }
 
   @NotNull
-  public <T extends PsiElement> T[] getChildrenAsPsiElements(@Nullable TokenSet filter, ArrayFactory<T> constructor) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+  public <T extends PsiElement> T[] getChildrenAsPsiElements(@Nullable TokenSet filter, @NotNull ArrayFactory<T> constructor) {
+    assertReadAccessAllowed();
     int count = countChildren(filter);
     T[] result = constructor.create(count);
     if (count == 0) {
@@ -442,8 +425,8 @@ public class CompositeElement extends TreeElement {
   }
 
   @NotNull
-  public <T extends PsiElement> T[] getChildrenAsPsiElements(@NotNull IElementType type, ArrayFactory<T> constructor) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+  public <T extends PsiElement> T[] getChildrenAsPsiElements(@NotNull IElementType type, @NotNull ArrayFactory<T> constructor) {
+    assertReadAccessAllowed();
     int count = countChildren(type);
     T[] result = constructor.create(count);
     if (count == 0) {
@@ -487,13 +470,13 @@ public class CompositeElement extends TreeElement {
   /**
    * @return First element that was appended (for example whitespaces could be skipped)
    */
-  public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
+  public TreeElement addInternal(TreeElement first, ASTNode last, @Nullable ASTNode anchor, @Nullable Boolean before) {
     ASTNode anchorBefore;
-    if (anchor != null) {
-      anchorBefore = before.booleanValue() ? anchor : anchor.getTreeNext();
+    if (anchor == null) {
+      anchorBefore = before == null || before.booleanValue() ? null : getFirstChildNode();
     }
     else {
-      anchorBefore = before == null || before.booleanValue() ? null : getFirstChildNode();
+      anchorBefore = before.booleanValue() ? anchor : anchor.getTreeNext();
     }
     return (TreeElement)CodeEditUtil.addChildren(this, first, last, anchorBefore);
   }
@@ -511,7 +494,7 @@ public class CompositeElement extends TreeElement {
     int cachedLength = myCachedLength;
     if (cachedLength >= 0) return cachedLength;
 
-    ApplicationManager.getApplication().assertReadAccessAllowed(); //otherwise a write action can modify the tree while we're walking it
+    assertReadAccessAllowed(); //otherwise a write action can modify the tree while we're walking it
     try {
       return walkCachingLength();
     }
@@ -627,15 +610,12 @@ public class CompositeElement extends TreeElement {
 
     removeChildrenInner(first, last);
 
-    ChangeUtil.prepareAndRunChangeAction(new ChangeUtil.ChangeAction(){
-      @Override
-      public void makeChange(TreeChangeEvent destinationTreeChange) {
-        if (anchorBefore != null) {
-          insertBefore(destinationTreeChange, (TreeElement)anchorBefore, first);
-        }
-        else {
-          add(destinationTreeChange, CompositeElement.this, first);
-        }
+    ChangeUtil.prepareAndRunChangeAction(destinationTreeChange -> {
+      if (anchorBefore != null) {
+        insertBefore((TreeChangeEventImpl)destinationTreeChange, (TreeElement)anchorBefore, first);
+      }
+      else {
+        add((TreeChangeEventImpl)destinationTreeChange, this, first);
       }
     }, this);
   }
@@ -676,45 +656,34 @@ public class CompositeElement extends TreeElement {
 
     removeChildrenInner(newChild1, newChildNext);
 
-    ChangeUtil.prepareAndRunChangeAction(new ChangeUtil.ChangeAction(){
-      @Override
-      public void makeChange(TreeChangeEvent destinationTreeChange) {
-        replace(destinationTreeChange, oldChild1, newChild1);
-        repairRemovedElement(CompositeElement.this, oldChild1);
-      }
+    ChangeUtil.prepareAndRunChangeAction(destinationTreeChange -> {
+      replace((TreeChangeEventImpl)destinationTreeChange, oldChild1, newChild1);
+      repairRemovedElement(this, oldChild1);
     }, this);
   }
 
   @Override
-  public void replaceAllChildrenToChildrenOf(final ASTNode anotherParent) {
+  public void replaceAllChildrenToChildrenOf(@NotNull final ASTNode anotherParent) {
     TreeUtil.ensureParsed(getFirstChildNode());
     TreeUtil.ensureParsed(anotherParent.getFirstChildNode());
     final ASTNode firstChild = anotherParent.getFirstChildNode();
-    ChangeUtil.prepareAndRunChangeAction(new ChangeUtil.ChangeAction(){
-      @Override
-      public void makeChange(TreeChangeEvent destinationTreeChange) {
-        destinationTreeChange.addElementaryChange(anotherParent, ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, anotherParent));
-        ((CompositeElement)anotherParent).rawRemoveAllChildren();
-      }
-    }, (TreeElement)anotherParent);
+    ChangeUtil.prepareAndRunChangeAction(
+      event -> remove((TreeChangeEventImpl)event, (TreeElement)anotherParent.getFirstChildNode(), null), 
+      (TreeElement)anotherParent);
 
     if (firstChild != null) {
-      ChangeUtil.prepareAndRunChangeAction(new ChangeUtil.ChangeAction(){
-        @Override
-        public void makeChange(TreeChangeEvent destinationTreeChange) {
-          if(getTreeParent() != null){
-            final ChangeInfoImpl changeInfo = ChangeInfoImpl.create(ChangeInfo.CONTENTS_CHANGED, CompositeElement.this);
-            changeInfo.setOldLength(getTextLength());
-            destinationTreeChange.addElementaryChange(CompositeElement.this, changeInfo);
-            rawRemoveAllChildren();
-            rawAddChildren((TreeElement)firstChild);
-          }
-          else{
-            final TreeElement first = getFirstChildNode();
-            remove(destinationTreeChange, first, null);
-            add(destinationTreeChange, CompositeElement.this, (TreeElement)firstChild);
-            repairRemovedElement(CompositeElement.this, first);
-          }
+      ChangeUtil.prepareAndRunChangeAction(destinationTreeChange -> {
+        TreeElement first = getFirstChildNode();
+        TreeChangeEventImpl event = (TreeChangeEventImpl)destinationTreeChange;
+        CompositeElement parent = getTreeParent();
+        if (parent != null) {
+          // treat all replacements as one big childrenChanged to simplify resulting PSI/document events
+          event.addElementaryChange(parent); 
+        }
+        remove(event, first, null);
+        add(event, this, (TreeElement)firstChild);
+        if(parent != null) {
+          repairRemovedElement(this, first);
         }
       }, this);
     }
@@ -731,11 +700,11 @@ public class CompositeElement extends TreeElement {
   }
 
   @Override
-  public void addChildren(ASTNode firstChild, ASTNode lastChild, ASTNode anchorBefore) {
+  public void addChildren(@NotNull ASTNode firstChild, ASTNode lastChild, ASTNode anchorBefore) {
     while (firstChild != lastChild) {
-      final ASTNode next1 = firstChild.getTreeNext();
+      final ASTNode next = firstChild.getTreeNext();
       addChild(firstChild, anchorBefore);
-      firstChild = next1;
+      firstChild = next;
     }
   }
 
@@ -754,19 +723,8 @@ public class CompositeElement extends TreeElement {
     PsiElement wrapper = myWrapper;
     if (wrapper != null) return wrapper;
 
-    wrapper = obtainStubBasedPsi();
-    if (wrapper == null) wrapper = createPsiNoLock();
+    wrapper = createPsiNoLock();
     return ourPsiUpdater.compareAndSet(this, null, wrapper) ? wrapper : ObjectUtils.assertNotNull(myWrapper);
-  }
-
-  /**
-   * If AST has been gced and recreated, but someone still holds a reference to a PSI, then {@link #getPsi()} should return the very same PSI object.
-   * So we try to find that PSI in file's {@link AstPathPsiMap}.
-   */
-  @Nullable
-  private PsiElement obtainStubBasedPsi() {
-    AstPath path = getElementType() instanceof IStubElementType ? AstPath.getNodePath(this) : null;
-    return path == null ? null : path.getContainingFile().obtainPsi(path, () -> (StubBasedPsiElementBase<?>)createPsiNoLock());
   }
 
   @Override
@@ -786,6 +744,10 @@ public class CompositeElement extends TreeElement {
   }
 
   public void setPsi(@NotNull PsiElement psi) {
+    PsiElement prev = myWrapper;
+    if (prev != null && prev != psi) {
+      DebugUtil.onInvalidated(prev);
+    }
     myWrapper = psi;
   }
 
@@ -800,31 +762,28 @@ public class CompositeElement extends TreeElement {
   }
 
   public void rawAddChildrenWithoutNotifications(@NotNull TreeElement first) {
-    if (DebugUtil.DO_EXPENSIVE_CHECKS && !(this instanceof LazyParseableElement)) {
-      PsiFileImpl file = getCachedFile(this);
-      if (file != null && !file.useStrongRefs()) {
-        throw new AssertionError("Attempt to modify PSI in a file with weakly-referenced AST. Possible cause: missing PomTransaction.");
-      }
-    }
-
     final TreeElement last = getLastChildNode();
     if (last == null){
-      first.rawRemoveUpToWithoutNotifications(null, false);
+      TreeElement chainLast = rawSetParents(first, this);
       setFirstChildNode(first);
-      while(true){
-        final TreeElement treeNext = first.getTreeNext();
-        first.setTreeParent(this);
-        if(treeNext == null) break;
-        first = treeNext;
-      }
-      setLastChildNode(first);
-      first.setTreeParent(this);
+      setLastChildNode(chainLast);
     }
     else {
       last.rawInsertAfterMeWithoutNotifications(first);
     }
 
     DebugUtil.checkTreeStructure(this);
+  }
+
+  @NotNull
+  static TreeElement rawSetParents(@NotNull TreeElement child, CompositeElement parent) {
+    child.rawRemoveUpToWithoutNotifications(null, false);
+    while (true) {
+      child.setTreeParent(parent);
+      TreeElement treeNext = child.getTreeNext();
+      if (treeNext == null) return child;
+      child = treeNext;
+    }
   }
 
   public void rawRemoveAllChildren() {
@@ -840,49 +799,26 @@ public class CompositeElement extends TreeElement {
     treeElement.rawAddChildren(oldChild);
   }
 
-  private static void add(final TreeChangeEvent destinationTreeChange,
-                          final CompositeElement parent,
-                          final TreeElement first) {
+  private static void add(TreeChangeEventImpl destinationTreeChange, CompositeElement parent, TreeElement first) {
+    destinationTreeChange.addElementaryChange(parent);
     parent.rawAddChildren(first);
-    TreeElement child = first;
-    while(child != null){
-      destinationTreeChange.addElementaryChange(child, ChangeInfoImpl.create(ChangeInfo.ADD, child));
-      child = child.getTreeNext();
-    }
   }
 
-  private static void remove(final TreeChangeEvent destinationTreeChange,
-                             final TreeElement first,
-                             final TreeElement last) {
+  private static void remove(TreeChangeEventImpl destinationTreeChange, TreeElement first, TreeElement last) {
     if (first != null) {
-      TreeElement child = first;
-      while(child != last && child != null){
-        destinationTreeChange.addElementaryChange(child, ChangeInfoImpl.create(ChangeInfo.REMOVED, child));
-        child = child.getTreeNext();
-      }
-
+      destinationTreeChange.addElementaryChange(first.getTreeParent());
       first.rawRemoveUpTo(last);
     }
   }
 
-  private static void insertBefore(final TreeChangeEvent destinationTreeChange,
-                                   final TreeElement anchorBefore,
-                                   final TreeElement first) {
+  private static void insertBefore(TreeChangeEventImpl destinationTreeChange, @NotNull TreeElement anchorBefore, TreeElement first) {
+    destinationTreeChange.addElementaryChange(anchorBefore.getTreeParent());
     anchorBefore.rawInsertBeforeMe(first);
-    TreeElement child = first;
-    while(child != anchorBefore){
-      destinationTreeChange.addElementaryChange(child, ChangeInfoImpl.create(ChangeInfo.ADD, child));
-      child = child.getTreeNext();
-    }
   }
 
-  private static void replace(final TreeChangeEvent sourceTreeChange,
-                              final TreeElement oldChild,
-                              final TreeElement newChild) {
+  private static void replace(TreeChangeEventImpl sourceTreeChange, TreeElement oldChild, TreeElement newChild) {
+    sourceTreeChange.addElementaryChange(oldChild.getTreeParent());
     oldChild.rawReplaceWithList(newChild);
-    final ReplaceChangeInfoImpl change = new ReplaceChangeInfoImpl(newChild);
-    sourceTreeChange.addElementaryChange(newChild, change);
-    change.setReplaced(oldChild);
   }
 
   private static void removeChildInner(final TreeElement child) {
@@ -892,12 +828,9 @@ public class CompositeElement extends TreeElement {
   private static void removeChildrenInner(final TreeElement first, final TreeElement last) {
     final FileElement fileElement = TreeUtil.getFileElement(first);
     if (fileElement != null) {
-      ChangeUtil.prepareAndRunChangeAction(new ChangeUtil.ChangeAction() {
-        @Override
-        public void makeChange(TreeChangeEvent destinationTreeChange) {
-          remove(destinationTreeChange, first, last);
-          repairRemovedElement(fileElement, first);
-        }
+      ChangeUtil.prepareAndRunChangeAction(destinationTreeChange -> {
+        remove((TreeChangeEventImpl)destinationTreeChange, first, last);
+        repairRemovedElement(fileElement, first);
       }, first.getTreeParent());
     }
     else {

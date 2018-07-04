@@ -2620,6 +2620,8 @@ Bacchus
 Bacchus's
 Bach
 Bach's
+backorder
+backorders
 Backus
 Backus's
 Bacon
@@ -34674,6 +34676,7 @@ anon
 anons
 anonymity
 anonymity's
+anonymize
 anonymous
 anonymously
 anopheles
@@ -36224,6 +36227,7 @@ assented
 assenting
 assents
 assert
+assertable
 asserted
 asserting
 assertion
@@ -37117,6 +37121,7 @@ awakes
 awaking
 award
 awarded
+awardee
 awarding
 awards
 aware
@@ -54092,6 +54097,8 @@ debouch
 debouched
 debouches
 debouching
+debounce
+debounced
 debrief
 debriefed
 debriefing
@@ -54398,6 +54405,9 @@ decompresses
 decompressing
 decompression
 decompression's
+decompressor
+decompressor's
+decompressors
 decongestant
 decongestants
 deconstruct
@@ -63888,6 +63898,8 @@ exports
 expos
 expose
 exposed
+exposer
+exposers
 exposes
 exposing
 exposition
@@ -79861,9 +79873,11 @@ invite
 invited
 invitee
 invitees
+inviter
 invites
 inviting
 invitingly
+invitor
 invocation
 invocation's
 invocations
@@ -86323,6 +86337,7 @@ matchboxes
 matched
 matcher
 matcher's
+matchers
 matches
 matching
 matchless
@@ -95989,6 +96004,8 @@ paramedicals
 paramedics
 parameter
 parameter's
+parameterised
+parameterized
 parameters
 parametric
 parametrically
@@ -112240,6 +112257,7 @@ scrutinizes
 scrutinizing
 scrutiny
 scrutiny's
+scss
 scuba
 scuba's
 scubaed
@@ -113652,6 +113670,7 @@ shapes
 shaping
 sharable
 shard
+sharded
 shard's
 shards
 share
@@ -128074,6 +128093,7 @@ unbiassedly
 unbid
 unbidden
 unbind
+unbindable
 unbinding
 unbinds
 unbleached
@@ -129731,7 +129751,10 @@ unrefreshed
 unrefrigerated
 unregarded
 unregenerate
+unregister
 unregistered
+unregistering
+unregisters
 unregulated
 unrehearsed
 unrelated
@@ -130018,6 +130041,8 @@ unstrung
 unstuck
 unstudied
 unsubdued
+unsubscribe
+unsubscribed
 unsubsidised
 unsubsidized
 unsubstantial

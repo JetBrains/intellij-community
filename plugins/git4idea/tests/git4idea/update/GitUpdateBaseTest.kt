@@ -25,13 +25,13 @@ abstract class GitUpdateBaseTest : GitPlatformTest() {
   override fun setUp() {
     super.setUp()
 
-    originalPreservingPolicy = myGitSettings.updateChangesPolicy()
-    myGitSettings.setUpdateChangesPolicy(GitVcsSettings.UpdateChangesPolicy.STASH)
+    originalPreservingPolicy = settings.updateChangesPolicy()
+    settings.setUpdateChangesPolicy(GitVcsSettings.UpdateChangesPolicy.STASH)
   }
 
   override fun tearDown() {
     try {
-      myGitSettings.setUpdateChangesPolicy(originalPreservingPolicy)
+      settings.setUpdateChangesPolicy(originalPreservingPolicy)
     }
     finally {
       super.tearDown()

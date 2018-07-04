@@ -35,7 +35,7 @@ public class MoveModuleToGroupTopLevel extends ActionGroup {
     final DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
-    boolean active = project != null && modules != null && modules.length != 0 && !ModuleGrouperKt.isQualifiedModuleNamesEnabled();
+    boolean active = project != null && modules != null && modules.length != 0 && !ModuleGrouperKt.isQualifiedModuleNamesEnabled(project);
     e.getPresentation().setVisible(active);
   }
 
@@ -59,7 +59,7 @@ public class MoveModuleToGroupTopLevel extends ActionGroup {
     for (String name : topLevelGroupNames) {
       result.add(new MoveModuleToGroup(new ModuleGroup(Collections.singletonList(name))));
     }
-    return result.toArray(new AnAction[result.size()]);
+    return result.toArray(AnAction.EMPTY_ARRAY);
   }
 
   private static Collection<String> getTopLevelGroupNames(ModuleGrouper grouper) {

@@ -49,7 +49,7 @@ class TemplateExpressionLookupElement extends LookupElementDecorator<LookupEleme
                                                          List<? extends LookupElement> elements,
                                                          Editor editor, final char completionChar) {
     final OffsetMap offsetMap = new OffsetMap(editor.getDocument());
-    final InsertionContext context = new InsertionContext(offsetMap, completionChar, elements.toArray(new LookupElement[elements.size()]), psiFile, editor, false);
+    final InsertionContext context = new InsertionContext(offsetMap, completionChar, elements.toArray(LookupElement.EMPTY_ARRAY), psiFile, editor, false);
     context.setTailOffset(editor.getCaretModel().getOffset());
     offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, context.getTailOffset() - item.getLookupString().length());
     offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, context.getTailOffset());

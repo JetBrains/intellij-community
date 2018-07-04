@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -22,6 +8,7 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageNamesValidation;
@@ -30,7 +17,6 @@ import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
@@ -47,7 +33,6 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.keymap.Keymap;
@@ -122,17 +107,25 @@ public abstract class InplaceRefactoring {
   protected String myTitle;
   protected RelativePoint myTarget;
 
-  public InplaceRefactoring(Editor editor, PsiNamedElement elementToRename, Project project) {
+  public InplaceRefactoring(@NotNull Editor editor,
+                            @Nullable PsiNamedElement elementToRename,
+                            @NotNull Project project) {
     this(editor, elementToRename, project, elementToRename != null ? elementToRename.getName() : null,
          elementToRename != null ? elementToRename.getName() : null);
   }
 
-  public InplaceRefactoring(Editor editor, PsiNamedElement elementToRename, Project project, final String oldName) {
+  public InplaceRefactoring(@NotNull Editor editor,
+                            @Nullable PsiNamedElement elementToRename,
+                            @NotNull Project project,
+                            @Nullable String oldName) {
     this(editor, elementToRename, project, elementToRename != null ? elementToRename.getName() : null, oldName);
   }
 
-  public InplaceRefactoring(
-    Editor editor, PsiNamedElement elementToRename, Project project, String initialName, final String oldName) {
+  public InplaceRefactoring(@NotNull Editor editor,
+                            @Nullable PsiNamedElement elementToRename,
+                            @NotNull Project project,
+                            @Nullable String initialName,
+                            @Nullable String oldName) {
     myEditor = /*(editor instanceof EditorWindow)? ((EditorWindow)editor).getDelegate() : */editor;
     myElementToRename = elementToRename;
     myProject = project;
@@ -144,7 +137,7 @@ public abstract class InplaceRefactoring {
           myElementToRename != null && myElementToRename.getTextRange() != null) {
         myRenameOffset = myEditor.getDocument().createRangeMarker(myElementToRename.getTextRange());
         myRenameOffset.setGreedyToRight(true);
-        myRenameOffset.setGreedyToLeft(true); // todo not sure if we need this
+        myRenameOffset.setGreedyToLeft(true);
       }
     }
   }
@@ -234,7 +227,7 @@ public abstract class InplaceRefactoring {
 
   @Nullable
   protected PsiElement checkLocalScope() {
-    final SearchScope searchScope = PsiSearchHelper.SERVICE.getInstance(myElementToRename.getProject()).getUseScope(myElementToRename);
+    final SearchScope searchScope = PsiSearchHelper.getInstance(myElementToRename.getProject()).getUseScope(myElementToRename);
     if (searchScope instanceof LocalSearchScope) {
       final PsiElement[] elements = ((LocalSearchScope)searchScope).getScope();
       return PsiTreeUtil.findCommonParent(elements);
@@ -285,7 +278,8 @@ public abstract class InplaceRefactoring {
     boolean hasReferenceOnNameIdentifier = false;
     for (PsiReference ref : refs) {
       if (isReferenceAtCaret(selectedElement, ref)) {
-        builder.replaceElement(ref.getElement(), getRangeToRename(ref), PRIMARY_VARIABLE_NAME, createLookupExpression(selectedElement), true);
+        builder
+          .replaceElement(ref.getElement(), getRangeToRename(ref), PRIMARY_VARIABLE_NAME, createLookupExpression(selectedElement), true);
         subrefOnPrimaryElement = true;
         continue;
       }
@@ -294,7 +288,7 @@ public abstract class InplaceRefactoring {
     }
     if (nameIdentifier != null) {
       hasReferenceOnNameIdentifier |= selectedElement.getTextRange().contains(nameIdentifier.getTextRange());
-      if (!subrefOnPrimaryElement || !hasReferenceOnNameIdentifier){
+      if (!subrefOnPrimaryElement || !hasReferenceOnNameIdentifier) {
         addVariable(nameIdentifier, selectedElement, builder);
       }
     }
@@ -302,12 +296,12 @@ public abstract class InplaceRefactoring {
       addVariable(usage.first, usage.second, selectedElement, builder);
     }
     addAdditionalVariables(builder);
-    
+
     int segmentsLimit = Registry.intValue("inplace.rename.segments.limit", -1);
     if (segmentsLimit != -1 && builder.getElementsCount() > segmentsLimit) {
       return false;
     }
-    
+
     try {
       myMarkAction = startRename();
     }
@@ -340,12 +334,9 @@ public abstract class InplaceRefactoring {
 
     beforeTemplateStart();
 
-    new WriteCommandAction(myProject, getCommandName()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        startTemplate(builder);
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(() -> {
+      startTemplate(builder);
+    });
 
     if (myBalloon == null) {
       showBalloon();
@@ -392,8 +383,7 @@ public abstract class InplaceRefactoring {
     template.setToShortenLongNames(false);
     template.setToReformat(false);
     myHighlighters = new ArrayList<>();
-    int targetOffset = rangeMarker.getStartOffset();
-    topLevelEditor.getCaretModel().moveToLogicalPosition(topLevelEditor.offsetToLogicalPosition(targetOffset).leanForward(true)); // to the right of parameter hint, if any
+    topLevelEditor.getCaretModel().moveToOffset(rangeMarker.getStartOffset());
 
     TemplateManager.getInstance(myProject).startTemplate(topLevelEditor, template, templateListener);
     restoreOldCaretPositionAndSelection(offset);
@@ -428,8 +418,7 @@ public abstract class InplaceRefactoring {
   private void restoreOldCaretPositionAndSelection(final int offset) {
     //move to old offset
     Runnable runnable = () -> {
-      int targetOffset = restoreCaretOffset(offset);
-      myEditor.getCaretModel().moveToLogicalPosition(myEditor.offsetToLogicalPosition(targetOffset).leanForward(true)); // to the right of parameter hint, if any
+      myEditor.getCaretModel().moveToOffset(restoreCaretOffset(offset));
       restoreSelection();
     };
 
@@ -468,7 +457,8 @@ public abstract class InplaceRefactoring {
               if (exitCode == Messages.YES) {
                 final TextRange range = templateState.getVariableRange(PRIMARY_VARIABLE_NAME);
                 if (range != null) {
-                  new OpenFileDescriptor(project, virtualFile, range.getStartOffset()).navigate(true);
+                  PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, range.getStartOffset())
+                                      .navigate(true);
                   return;
                 }
               }

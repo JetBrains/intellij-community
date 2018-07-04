@@ -29,7 +29,7 @@ import java.util.List;
  */
 public class ReformatCodeActionTest extends AbstractLayoutCodeProcessorTest {
 
-  private static String[] classNames = {"Vasya", "Main", "Oiie", "Ololo"};
+  private static final String[] classNames = {"Vasya", "Main", "Oiie", "Ololo"};
 
   public void testReformatAndOptimizeMultipleFiles() throws IOException {
     List<PsiFile> files = createTestFiles(getTempRootDirectory(), classNames);

@@ -60,6 +60,7 @@ public class IntToIntBtree {
   private static final boolean hasCachedMappings = false;
   private TIntIntHashMap myCachedMappings;
   private final int myCachedMappingsSize;
+  private static final int UNDEFINED_ADDRESS = -1;
 
   public IntToIntBtree(int pageSize, @NotNull File file, @NotNull PagedFileStorage.StorageLockContext storageLockContext, boolean initial) throws IOException {
     this.pageSize = pageSize;
@@ -69,12 +70,11 @@ public class IntToIntBtree {
     }
 
     storage = new ResizeableMappedFile(file, pageSize, storageLockContext, 1024 * 1024, true, IOUtil.ourByteBuffersUseNativeByteOrder);
+    storage.setRoundFactor(pageSize);
     root = new BtreeRootNode(this);
 
     if (initial) {
-      nextPage(); // allocate root
-      root.setAddress(0);
-      root.getNodeView().setIndexLeaf(true);
+      root.setAddress(UNDEFINED_ADDRESS);
     }
 
     int i = (this.pageSize - BtreePage.RESERVED_META_PAGE_LEN) / BtreeIndexNodeView.INTERIOR_SIZE - 1;
@@ -109,6 +109,12 @@ public class IntToIntBtree {
       myCachedMappings = null;
       myCachedMappingsSize = -1;
     }
+  }
+
+  protected void doAllocateRoot() {
+    nextPage(); // allocate root
+    root.setAddress(0);
+    root.getNodeView().setIndexLeaf(true);
   }
 
   // return total number of bytes needed for storing information
@@ -195,6 +201,7 @@ public class IntToIntBtree {
       }
     }
 
+    if (root.address == UNDEFINED_ADDRESS) return false;
     if (myAccessNodeView == null) myAccessNodeView = new BtreeIndexNodeView(this);
     myAccessNodeView.initTraversal(root.address);
     int index = myAccessNodeView.locate(key, false);
@@ -237,6 +244,7 @@ public class IntToIntBtree {
   }
 
   private void doPut(int key, int value) {
+    if (root.address == UNDEFINED_ADDRESS) doAllocateRoot();
     if (myAccessNodeView == null) myAccessNodeView = new BtreeIndexNodeView(this);
     myAccessNodeView.initTraversal(root.address);
     int index = myAccessNodeView.locate(key, true);
@@ -1151,11 +1159,14 @@ public class IntToIntBtree {
 
   public boolean processMappings(@NotNull KeyValueProcessor processor) throws IOException {
     doFlush();
-    root.syncWithStore();
-
+    
     if (hasZeroKey) {
       if (!processor.process(0, zeroKeyValue)) return false;
     }
+
+    if(root.address == UNDEFINED_ADDRESS) return true;
+    root.syncWithStore();
+    
     return processLeafPages(root.getNodeView(), processor);
   }
 

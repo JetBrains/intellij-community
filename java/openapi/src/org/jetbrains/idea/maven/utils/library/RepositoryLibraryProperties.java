@@ -1,26 +1,18 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils.library;
 
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Transient;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -32,12 +24,20 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
   public RepositoryLibraryProperties() {
   }
 
-  public RepositoryLibraryProperties(String mavenId) {
-    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(mavenId);
+  public RepositoryLibraryProperties(String mavenId, final boolean includeTransitiveDependencies) {
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(mavenId, includeTransitiveDependencies, Collections.emptyList());
   }
 
   public RepositoryLibraryProperties(@NotNull String groupId, @NotNull String artifactId, @NotNull String version) {
-    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version);
+    this(groupId, artifactId, version, true, ContainerUtil.emptyList());
+  }
+
+  public RepositoryLibraryProperties(@NotNull String groupId,
+                                     @NotNull String artifactId,
+                                     @NotNull String version,
+                                     boolean includeTransitiveDependencies, @NotNull List<String> excludedDependencies) {
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(groupId, artifactId, version, includeTransitiveDependencies,
+                                                           excludedDependencies);
   }
 
   @Override
@@ -56,7 +56,7 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
   }
 
   @Override
-  public void loadState(RepositoryLibraryProperties state) {
+  public void loadState(@NotNull RepositoryLibraryProperties state) {
     myDescriptor = state.myDescriptor;
   }
 
@@ -66,7 +66,16 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
   }
 
   public void setMavenId(String mavenId) {
-    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(mavenId);
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(mavenId, isIncludeTransitiveDependencies(), getExcludedDependencies());
+  }
+
+  @Attribute("include-transitive-deps")
+  public boolean isIncludeTransitiveDependencies() {
+    return myDescriptor == null || myDescriptor.isIncludeTransitiveDependencies();
+  }
+
+  public void setIncludeTransitiveDependencies(boolean value) {
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getMavenId(), value, getExcludedDependencies());
   }
 
   public String getGroupId() {
@@ -82,11 +91,39 @@ public class RepositoryLibraryProperties extends LibraryProperties<RepositoryLib
   }
 
   public void changeVersion(String version) {
-    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getGroupId(), getArtifactId(), version);
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getGroupId(), getArtifactId(), version, myDescriptor.isIncludeTransitiveDependencies(), myDescriptor.getExcludedDependencies());
   }
 
   private String call(Function<JpsMavenRepositoryLibraryDescriptor, String> method) {
     final JpsMavenRepositoryLibraryDescriptor descriptor = myDescriptor;
     return descriptor != null ? method.apply(descriptor) : null;
+  }
+
+  /**
+   * Returns list of excluded transitive dependencies in {@code "<groupId>:<artifactId>"} format.
+   */
+  @Transient
+  public List<String> getExcludedDependencies() {
+    return myDescriptor != null ? myDescriptor.getExcludedDependencies() : Collections.emptyList();
+  }
+
+  public void setExcludedDependencies(List<String> dependencyMavenIds) {
+    myDescriptor = new JpsMavenRepositoryLibraryDescriptor(getMavenId(), isIncludeTransitiveDependencies(), dependencyMavenIds);
+  }
+
+  @SuppressWarnings("unused") //we need to have a separate method here because XmlSerializer fails if the returned list is unmodifiable
+  @XCollection(propertyElementName = "exclude", elementName = "dependency", valueAttributeName = "maven-id")
+  public List<String> getExcludedDependenciesBean() {
+    return myDescriptor != null ? new ArrayList<>(myDescriptor.getExcludedDependencies()) : new ArrayList<>();
+  }
+
+  @SuppressWarnings("unused") //used by XmlSerializer
+  public void setExcludedDependenciesBean(List<String> dependencyMavenIds) {
+    setExcludedDependencies(dependencyMavenIds);
+  }
+
+  @NotNull
+  public JpsMavenRepositoryLibraryDescriptor getRepositoryLibraryDescriptor() {
+    return myDescriptor != null ? myDescriptor : new JpsMavenRepositoryLibraryDescriptor(null, true, Collections.emptyList());
   }
 }

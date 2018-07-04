@@ -16,7 +16,7 @@ public class RemoteAgentClassLoaderCache {
   public URLClassLoader getOrCreateClassLoader(Set<URL> libraryUrls) {
     URLClassLoader result = myUrls2ClassLoader.get(libraryUrls);
     if (result == null) {
-      result = new URLClassLoader(libraryUrls.toArray(new URL[libraryUrls.size()]), null);
+      result = new URLClassLoader(libraryUrls.toArray(new URL[0]), null);
       myUrls2ClassLoader.put(libraryUrls, result);
     }
     return result;

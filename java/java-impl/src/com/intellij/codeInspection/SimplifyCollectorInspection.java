@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.project.Project;
@@ -32,10 +18,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Tagir Valeev
- */
-public class SimplifyCollectorInspection extends BaseJavaBatchLocalInspectionTool {
+public class SimplifyCollectorInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -61,7 +44,7 @@ public class SimplifyCollectorInspection extends BaseJavaBatchLocalInspectionToo
           return;
         }
         if (isCollectorMethod(downstream, "maxBy", "minBy", "reducing") &&
-            downstream.getArgumentList().getExpressions().length == 1) {
+            downstream.getArgumentList().getExpressionCount() == 1) {
           String replacement = nameElement.getText().equals("groupingBy") ? "toMap" : "toConcurrentMap";
           holder.registerProblem(nameElement, InspectionsBundle.message("inspection.simplify.collector.message", replacement),
                                  new SimplifyCollectorFix(replacement));
@@ -79,7 +62,7 @@ public class SimplifyCollectorInspection extends BaseJavaBatchLocalInspectionToo
       if (method != null && method.hasModifierProperty(PsiModifier.STATIC)) {
         PsiClass aClass = method.getContainingClass();
         return aClass != null && CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS.equals(aClass.getQualifiedName())
-               && method.getParameterList().getParametersCount() == call.getArgumentList().getExpressions().length;
+               && method.getParameterList().getParametersCount() == call.getArgumentList().getExpressionCount();
       }
     }
     return false;
@@ -112,7 +95,7 @@ public class SimplifyCollectorInspection extends BaseJavaBatchLocalInspectionToo
   }
 
   private static class SimplifyCollectorFix implements LocalQuickFix {
-    private String myMethodName;
+    private final String myMethodName;
 
     public SimplifyCollectorFix(String methodName) {
       myMethodName = methodName;

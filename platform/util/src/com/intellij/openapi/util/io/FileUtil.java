@@ -59,7 +59,7 @@ public class FileUtil extends FileUtilRt {
   public static final TObjectHashingStrategy<String> PATH_HASHING_STRATEGY = FilePathHashingStrategy.create();
 
   public static final TObjectHashingStrategy<File> FILE_HASHING_STRATEGY =
-    SystemInfo.isFileSystemCaseSensitive ? ContainerUtil.<File>canonicalStrategy() : new TObjectHashingStrategy<File>() {
+    new TObjectHashingStrategy<File>() {
       @Override
       public int computeHashCode(File object) {
         return fileHashCode(object);
@@ -368,7 +368,7 @@ public class FileUtil extends FileUtilRt {
       }
     }
     if (!tempFiles.isEmpty()) {
-      return startDeletionThread(tempFiles.toArray(new File[tempFiles.size()]));
+      return startDeletionThread(tempFiles.toArray(new File[0]));
     }
     return new FixedFuture<Void>(null);
   }
@@ -537,10 +537,14 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static void copy(@NotNull InputStream inputStream, int maxSize, @NotNull OutputStream outputStream) throws IOException {
+    copy(inputStream, (long)maxSize, outputStream);
+  }
+
+  public static void copy(@NotNull InputStream inputStream, long maxSize, @NotNull OutputStream outputStream) throws IOException {
     final byte[] buffer = getThreadLocalBuffer();
-    int toRead = maxSize;
+    long toRead = maxSize;
     while (toRead > 0) {
-      int read = inputStream.read(buffer, 0, Math.min(buffer.length, toRead));
+      int read = inputStream.read(buffer, 0, (int)Math.min(buffer.length, toRead));
       if (read < 0) break;
       toRead -= read;
       outputStream.write(buffer, 0, read);
@@ -732,7 +736,7 @@ public class FileUtil extends FileUtilRt {
       if (removeLastSlash) {
         int start = processRoot(path, NullAppendable.INSTANCE);
         int slashIndex = path.lastIndexOf('/');
-        return slashIndex != -1 && slashIndex > start ? StringUtil.trimEnd(path, '/') : path;
+        return slashIndex != -1 && slashIndex > start ? StringUtil.trimTrailing(path, '/') : path;
       }
       return path;
     }
@@ -1019,6 +1023,7 @@ public class FileUtil extends FileUtilRt {
    *             Use {@link FileUtilRt#getExtension(String)} instead to get the unchanged extension.
    *             If you need to check whether a file has a specified extension use {@link FileUtilRt#extensionEquals(String, String)}
    */
+  @Deprecated
   @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
   @NotNull
   public static String getExtension(@NotNull String fileName) {
@@ -1195,6 +1200,11 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static String sanitizeFileName(@NotNull String name, boolean strict) {
+    return sanitizeFileName(name, strict, "_");
+  }
+  
+  @NotNull
+  public static String sanitizeFileName(@NotNull String name, boolean strict, String replacement) {
     StringBuilder result = null;
 
     int last = 0;
@@ -1220,7 +1230,7 @@ public class FileUtil extends FileUtilRt {
         result.append(name, last, i);
       }
       if (appendReplacement) {
-        result.append('_');
+        result.append(replacement);
       }
       last = i + 1;
     }
@@ -1289,15 +1299,15 @@ public class FileUtil extends FileUtilRt {
 
   @NotNull
   public static JBTreeTraverser<File> fileTraverser(@Nullable File root) {
-    return new JBTreeTraverser<File>(FILE_CHILDREN).withRoot(root);
+    return FILE_TRAVERSER.withRoot(root);
   }
 
-  private static final Function<File, Iterable<File>> FILE_CHILDREN = new Function<File, Iterable<File>>() {
+  private static final JBTreeTraverser<File> FILE_TRAVERSER = JBTreeTraverser.from(new Function<File, Iterable<File>>() {
     @Override
     public Iterable<File> fun(File file) {
       return file != null && file.isDirectory() ? JBIterable.of(file.listFiles()) : JBIterable.<File>empty();
     }
-  };
+  });
 
   public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<File> processor) {
     return fileTraverser(root).bfsTraversal().processEach(processor);
@@ -1420,8 +1430,13 @@ public class FileUtil extends FileUtilRt {
     return path.startsWith("/");
   }
 
-  public static boolean isWindowsAbsolutePath(@NotNull String pathString) {
-    return pathString.length() >= 2 && Character.isLetter(pathString.charAt(0)) && pathString.charAt(1) == ':';
+  public static boolean isWindowsAbsolutePath(@NotNull String path) {
+    boolean ok = path.length() >= 2 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':';
+    if (ok && path.length() > 2) {
+      char separatorChar = path.charAt(2);
+      ok = separatorChar == '/' || separatorChar == '\\';
+    }
+    return ok;
   }
 
   @Contract("null -> null; !null -> !null")
@@ -1638,7 +1653,7 @@ public class FileUtil extends FileUtilRt {
       list.add(path.substring(index, nextSeparator));
       index = nextSeparator + 1;
     }
-    list.add(path.substring(index, path.length()));
+    list.add(path.substring(index));
     return list;
   }
 

@@ -39,7 +39,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.regex.Pattern;
 
@@ -83,12 +82,6 @@ public class ConflictsDialog extends DialogWrapper{
     setOKButtonText(RefactoringBundle.message("continue.button"));
     setOKActionEnabled(alwaysShowOkButton || getDoRefactoringRunnable(null) != null);
     init();
-  }
-
-  @SuppressWarnings("deprecation")
-  @Deprecated
-  public ConflictsDialog(Project project, Collection<String> conflictDescriptions) {
-    this(project, ArrayUtil.toStringArray(conflictDescriptions));
   }
 
   @Deprecated
@@ -220,7 +213,7 @@ public class ConflictsDialog extends DialogWrapper{
         }
       }
       final UsageView usageView = UsageViewManager.getInstance(myProject)
-        .showUsages(UsageTarget.EMPTY_ARRAY, usages.toArray(new Usage[usages.size()]), presentation);
+        .showUsages(UsageTarget.EMPTY_ARRAY, usages.toArray(Usage.EMPTY_ARRAY), presentation);
       Runnable doRefactoringRunnable = getDoRefactoringRunnable(usageView);
       if (doRefactoringRunnable != null) {
         usageView.addPerformOperationAction(
@@ -232,7 +225,7 @@ public class ConflictsDialog extends DialogWrapper{
     }
 
     private class DescriptionOnlyUsage implements Usage {
-      private String myConflictDescription;
+      private final String myConflictDescription;
 
       public DescriptionOnlyUsage(String conflictDescription) {
         myConflictDescription = StringUtil.unescapeXml(conflictDescription)

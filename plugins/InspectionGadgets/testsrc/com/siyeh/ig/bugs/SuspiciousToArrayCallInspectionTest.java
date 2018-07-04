@@ -16,7 +16,9 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
@@ -26,13 +28,13 @@ public class SuspiciousToArrayCallInspectionTest extends LightInspectionTestCase
 
   public void testCast() {
     doMemberTest("public void testThis(java.util.List l) {" +
-                 "  final String[][] ss = (String[][]) l.toArray(/*Array of type 'java.lang.String[][]' expected*/new Number[l.size()]/**/);" +
+                 "  final String[][] ss = (String[][]) l.toArray(/*Array of type 'java.lang.String[][]' expected, 'java.lang.Number[]' found*/new Number[l.size()]/**/);" +
                  "}");
   }
 
   public void testParameterized() {
     doMemberTest("public void testThis(java.util.List<String> l) {" +
-                 "  l.toArray(/*Array of type 'java.lang.String[]' expected*/new Number[l.size()]/**/);" +
+                 "  l.toArray(/*Array of type 'java.lang.String[]' expected, 'java.lang.Number[]' found*/new Number[l.size()]/**/);" +
                  "}");
   }
 
@@ -42,9 +44,49 @@ public class SuspiciousToArrayCallInspectionTest extends LightInspectionTestCase
            "    List<T> list = new ArrayList<>();\n" +
            "\n" +
            "    String[] m() {\n" +
-           "        return list.toArray(/*Array of type 'java.lang.Integer[]' expected*/new String[list.size()]/**/);\n" +
+           "        return list.toArray(/*Array of type 'java.lang.Integer[]' expected, 'java.lang.String[]' found*/new String[list.size()]/**/);\n" +
            "    }\n" +
            "}");
+  }
+
+  public void testQuestionMark() {
+    doTest("import java.util.List;\n" +
+           "\n" +
+           "class Test {\n" +
+           "  Integer[] test(List<?> list) {\n" +
+           "    return list.toArray(/*Array of type 'java.lang.Object[]' expected, 'java.lang.Integer[]' found*/new Integer[0]/**/);\n" +
+           "  }\n" +
+           "}");
+  }
+
+  public void testWrongGeneric() {
+    doTest("import java.util.*;\n" +
+           "\n" +
+           "class Test {\n" +
+           "  static class X<T> extends ArrayList<Integer> {}\n" +
+           "  Integer[] test(X<Double> x) {\n" +
+           "    return x.toArray(new Integer[0]);\n" +
+           "  }\n" +
+           "\n" +
+           "  Double[] test2(X<Double> x) {\n" +
+           "    return x.toArray(/*Array of type 'java.lang.Integer[]' expected, 'java.lang.Double[]' found*/new Double[0]/**/);\n" +
+           "  }\n" +
+           "}");
+  }
+  
+  public void testStreams() {
+    doTest("import java.util.stream.Stream;\n" +
+           "class Test {\n" +
+           "    {\n" +
+           "        Stream.of(1.0, 2.0, 3.0).toArray(/*Array of type 'java.lang.Double[]' expected, 'java.lang.Integer[]' found*/Integer[]::new/**/);\n" +
+           "    }\n" +
+           "}");
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 
   @Override

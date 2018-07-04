@@ -15,11 +15,11 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
-public class PyUnusedLocalInspectionTest extends PyTestCase {
+public class PyUnusedLocalInspectionTest extends PyInspectionTestCase {
 
   public void testPy2() {
     final PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
@@ -29,7 +29,7 @@ public class PyUnusedLocalInspectionTest extends PyTestCase {
   }
 
   public void testNonlocal() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-1235
@@ -44,7 +44,7 @@ public class PyUnusedLocalInspectionTest extends PyTestCase {
 
   // PY-9778
   public void testUnusedCoroutine() {
-    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doMultiFileTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doMultiFileTest("b.py"));
   }
 
   // PY-19491
@@ -87,6 +87,7 @@ public class PyUnusedLocalInspectionTest extends PyTestCase {
   }
 
   // PY-3996
+  // PY-27435
   public void testUnderscorePrefixed() {
     doTest();
   }
@@ -96,28 +97,28 @@ public class PyUnusedLocalInspectionTest extends PyTestCase {
     doTest();
   }
 
-  private void doTest() {
-    final String path = "inspections/PyUnusedLocalInspection/" + getTestName(true) + ".py";
+  // PY-28017
+  public void testModuleGetAttr() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doTest);
+  }
 
-    myFixture.configureByFile(path);
-    myFixture.enableInspections(PyUnusedLocalInspection.class);
-    myFixture.checkHighlighting(true, false, true);
+  // PY-27435
+  public void testVariableStartingWithUnderscore() {
+    final PyUnusedLocalInspection inspection = new PyUnusedLocalInspection();
+    inspection.ignoreVariablesStartingWithUnderscore = false;
+    doTest(inspection);
+  }
+
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyUnusedLocalInspection.class;
   }
 
   private void doTest(@NotNull PyUnusedLocalInspection inspection) {
     final String path = "inspections/PyUnusedLocalInspection/" + getTestName(true) + ".py";
-
     myFixture.configureByFile(path);
     myFixture.enableInspections(inspection);
-    myFixture.checkHighlighting(true, false, true);
-  }
-
-  private void doMultiFileTest() {
-    final String folderPath = "inspections/PyUnusedLocalInspection/" + getTestName(false) + "/";
-
-    myFixture.copyDirectoryToProject(folderPath, "");
-    myFixture.configureFromTempProjectFile("b.py");
-    myFixture.enableInspections(PyUnusedLocalInspection.class);
     myFixture.checkHighlighting(true, false, true);
   }
 }

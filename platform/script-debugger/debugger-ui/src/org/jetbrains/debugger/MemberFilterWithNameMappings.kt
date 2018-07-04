@@ -16,7 +16,7 @@
 package org.jetbrains.debugger
 
 open class MemberFilterWithNameMappings(private val rawNameToSource: Map<String, String> = emptyMap()) : MemberFilter {
-  override fun hasNameMappings() = !rawNameToSource.isEmpty()
+  override fun hasNameMappings(): Boolean = !rawNameToSource.isEmpty()
 
   override fun rawNameToSource(variable: Variable): String {
     val name = variable.name
@@ -24,7 +24,7 @@ open class MemberFilterWithNameMappings(private val rawNameToSource: Map<String,
     return sourceName ?: normalizeMemberName(name)
   }
 
-  protected open fun normalizeMemberName(name: String) = name
+  protected open fun normalizeMemberName(name: String): String = name
 
   override fun sourceNameToRaw(name: String): String? {
     if (!hasNameMappings()) {

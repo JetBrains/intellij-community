@@ -1,43 +1,28 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.ToolExtensionPoints;
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.javadoc.*;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool {
+import static com.intellij.util.ObjectUtils.notNull;
+
+public class JavaDocLocalInspectionBase extends LocalInspectionTool {
   public static final String SHORT_NAME = "JavaDoc";
 
   protected static final String NONE = "none";
@@ -48,6 +33,7 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
 
   private static final String IGNORE_ACCESSORS_ATTR_NAME = "IGNORE_ACCESSORS";
   private static final String IGNORE_DUPLICATED_THROWS_TAGS_ATTR_NAME = "IGNORE_DUPLICATED_THROWS_TAGS";
+  private static final String MODULE_OPTIONS_TAG_NAME = "MODULE_OPTIONS";
 
   @SuppressWarnings("deprecation")
   public static class Options implements JDOMExternalizable {
@@ -70,9 +56,14 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
     public void writeExternal(Element element) throws WriteExternalException {
       DefaultJDOMExternalizer.writeExternal(this, element);
     }
+
+    private boolean isModified() {
+      return !(ACCESS_JAVADOC_REQUIRED_FOR.equals(NONE) && REQUIRED_TAGS.isEmpty());
+    }
   }
 
   protected final Options PACKAGE_OPTIONS = new Options("none", "");
+  protected final Options MODULE_OPTIONS = new Options("none", "");
 
   public Options TOP_LEVEL_CLASS_OPTIONS = new Options("none", "");
   public Options INNER_CLASS_OPTIONS = new Options("none", "");
@@ -132,13 +123,20 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
     super.writeSettings(node);
+
     if (myIgnoreSimpleAccessors) {
-      node.addContent(new Element(IGNORE_ACCESSORS_ATTR_NAME).setAttribute("value", String.valueOf(true)));
+      JDOMExternalizerUtil.writeCustomField(node, IGNORE_ACCESSORS_ATTR_NAME, String.valueOf(true));
     }
+
     if (!myIgnoreDuplicatedThrows) {
-      node.addContent(new Element(IGNORE_DUPLICATED_THROWS_TAGS_ATTR_NAME).setAttribute("value", String.valueOf(false)));
+      JDOMExternalizerUtil.writeCustomField(node, IGNORE_DUPLICATED_THROWS_TAGS_ATTR_NAME, String.valueOf(false));
     }
-    if (!PACKAGE_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR.equals("none") || !PACKAGE_OPTIONS.REQUIRED_TAGS.isEmpty()) {
+
+    if (MODULE_OPTIONS.isModified()) {
+      MODULE_OPTIONS.writeExternal(JDOMExternalizerUtil.writeOption(node, MODULE_OPTIONS_TAG_NAME));
+    }
+
+    if (PACKAGE_OPTIONS.isModified()) {
       PACKAGE_OPTIONS.writeExternal(node);
     }
   }
@@ -146,241 +144,214 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
   @Override
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     super.readSettings(node);
-    Element ignoreAccessorsTag = node.getChild(IGNORE_ACCESSORS_ATTR_NAME);
-    if (ignoreAccessorsTag != null) {
-      myIgnoreSimpleAccessors = Boolean.parseBoolean(ignoreAccessorsTag.getAttributeValue("value"));
+
+    String ignoreAccessors = JDOMExternalizerUtil.readCustomField(node, IGNORE_ACCESSORS_ATTR_NAME);
+    if (ignoreAccessors != null) {
+      myIgnoreSimpleAccessors = Boolean.parseBoolean(ignoreAccessors);
     }
-    Element ignoreDupThrowsTag = node.getChild(IGNORE_DUPLICATED_THROWS_TAGS_ATTR_NAME);
-    if (ignoreDupThrowsTag != null) {
-      myIgnoreDuplicatedThrows = Boolean.parseBoolean(ignoreDupThrowsTag.getAttributeValue("value"));
+
+    String ignoreDuplicatedThrows = JDOMExternalizerUtil.readCustomField(node, IGNORE_DUPLICATED_THROWS_TAGS_ATTR_NAME);
+    if (ignoreDuplicatedThrows != null) {
+      myIgnoreDuplicatedThrows = Boolean.parseBoolean(ignoreDuplicatedThrows);
     }
+
+    Element moduleOptions = JDOMExternalizerUtil.readOption(node, MODULE_OPTIONS_TAG_NAME);
+    if (moduleOptions != null) {
+      MODULE_OPTIONS.readExternal(moduleOptions);
+    }
+
     PACKAGE_OPTIONS.readExternal(node);
   }
 
-  @Nullable
+  @NotNull
   @Override
-  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (!PsiPackage.PACKAGE_INFO_FILE.equals(file.getName()) || !(file instanceof PsiJavaFile)) {
-      return null;
-    }
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    return new JavaElementVisitor() {
+      @Override
+      public void visitJavaFile(PsiJavaFile file) {
+        if (PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
+          checkFile(file, holder, isOnTheFly);
+        }
+      }
+
+      @Override
+      public void visitModule(PsiJavaModule module) {
+        checkModule(module, holder, isOnTheFly);
+      }
+
+      @Override
+      public void visitClass(PsiClass aClass) {
+        checkClass(aClass, holder, isOnTheFly);
+      }
+
+      @Override
+      public void visitField(PsiField field) {
+        checkField(field, holder, isOnTheFly);
+      }
+
+      @Override
+      public void visitMethod(PsiMethod method) {
+        checkMethod(method, holder, isOnTheFly);
+      }
+    };
+  }
+
+  private void checkFile(PsiJavaFile file, ProblemsHolder delegate, boolean isOnTheFly) {
+    PsiPackage pkg = JavaDirectoryService.getInstance().getPackage(file.getContainingDirectory());
+    if (pkg == null) return;
 
     PsiDocComment docComment = PsiTreeUtil.getChildOfType(file, PsiDocComment.class);
-    PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(file.getContainingDirectory());
-    boolean required = aPackage != null && JavadocHighlightUtil.isJavaDocRequired(this, aPackage);
-    ProblemHolderImpl holder = new ProblemHolderImpl(manager, isOnTheFly);
-
-    if (IGNORE_DEPRECATED &&
-        (AnnotationUtil.findAnnotation(aPackage, CommonClassNames.JAVA_LANG_DEPRECATED) != null ||
-         docComment != null && docComment.findTagByName("deprecated") != null)) {
-      return null;
+    if (IGNORE_DEPRECATED && isDeprecated(pkg, docComment)) {
+      return;
     }
 
-    if (docComment == null) {
-      if (required) {
-        PsiElement toHighlight = ObjectUtils.notNull(((PsiJavaFile)file).getPackageStatement(), file);
-        JavadocHighlightUtil.reportMissingTag(toHighlight, holder);
-      }
+    boolean required = JavadocHighlightUtil.isJavaDocRequired(this, pkg);
+    ProblemHolderImpl holder = new ProblemHolderImpl(delegate, isOnTheFly);
+    if (docComment != null) {
+      PsiDocTag[] tags = docComment.getTags();
+      checkBasics(docComment, tags, pkg, required, PACKAGE_OPTIONS, holder);
     }
-    else {
+    else if (required) {
+      PsiElement toHighlight = notNull(file.getPackageStatement(), file);
+      JavadocHighlightUtil.reportMissingTag(toHighlight, holder);
+    }
+  }
+
+  private void checkModule(PsiJavaModule module, ProblemsHolder delegate, boolean isOnTheFly) {
+    PsiDocComment docComment = module.getDocComment();
+    if (IGNORE_DEPRECATED && isDeprecated(module, docComment)) {
+      return;
+    }
+
+    boolean required = JavadocHighlightUtil.isJavaDocRequired(this, module);
+    ProblemHolderImpl holder = new ProblemHolderImpl(delegate, isOnTheFly);
+
+    if (docComment != null) {
+      checkBasics(docComment, docComment.getTags(), module, required, MODULE_OPTIONS, holder);
+    }
+    else if (required) {
+      JavadocHighlightUtil.reportMissingTag(module.getNameIdentifier(), holder);
+    }
+  }
+
+  private void checkClass(PsiClass aClass, ProblemsHolder delegate, boolean isOnTheFly) {
+    if (aClass instanceof PsiAnonymousClass || aClass instanceof PsiSyntheticClass || aClass instanceof PsiTypeParameter) {
+      return;
+    }
+    if (IGNORE_DEPRECATED && aClass.isDeprecated()) {
+      return;
+    }
+
+    PsiDocComment docComment = aClass.getDocComment();
+    boolean required = JavadocHighlightUtil.isJavaDocRequired(this, aClass);
+    ProblemHolderImpl holder = new ProblemHolderImpl(delegate, isOnTheFly);
+
+    if (docComment != null) {
       PsiDocTag[] tags = docComment.getTags();
 
-      if (required) {
-        Predicate<String> tagChecker = tag -> isTagRequired(aPackage, tag);
-        JavadocHighlightUtil.checkRequiredTags(tags, tagChecker, docComment.getFirstChild(), holder);
+      Options options = ClassUtil.isTopLevelClass(aClass) ? TOP_LEVEL_CLASS_OPTIONS : INNER_CLASS_OPTIONS;
+      checkBasics(docComment, tags, aClass, required, options, holder);
+
+      if (required && isTagRequired(options, "param")) {
+        JavadocHighlightUtil.checkMissingTypeParamTags(aClass, tags, docComment.getFirstChild(), holder);
       }
-
-      JavadocHighlightUtil.checkRequiredTagDescriptions(tags, holder);
-
-      JavadocHighlightUtil.checkTagValues(tags, aPackage, holder);
-
-      JavadocHighlightUtil.checkInlineTags(docComment.getDescriptionElements(), holder);
-
-      if (!IGNORE_JAVADOC_PERIOD) {
-        JavadocHighlightUtil.checkForPeriod(docComment, aPackage, holder);
-      }
-
-      JavadocHighlightUtil.checkForBadCharacters(docComment, holder);
     }
-
-    return holder.problems();
+    else if (required) {
+      PsiElement toHighlight = notNull(aClass.getNameIdentifier(), aClass);
+      JavadocHighlightUtil.reportMissingTag(toHighlight, holder);
+    }
   }
 
-  @Override
-  @Nullable
-  public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (psiClass instanceof PsiAnonymousClass || psiClass instanceof PsiSyntheticClass || psiClass instanceof PsiTypeParameter) {
-      return null;
-    }
-    if (IGNORE_DEPRECATED && psiClass.isDeprecated()) {
-      return null;
+  private void checkField(PsiField field, ProblemsHolder delegate, boolean isOnTheFly) {
+    if (IGNORE_DEPRECATED && isDeprecated(field)) {
+      return;
     }
 
-    PsiDocComment docComment = psiClass.getDocComment();
-    boolean required = JavadocHighlightUtil.isJavaDocRequired(this, psiClass);
-    ProblemHolderImpl holder = new ProblemHolderImpl(manager, isOnTheFly);
+    PsiDocComment docComment = field.getDocComment();
+    boolean required = JavadocHighlightUtil.isJavaDocRequired(this, field);
+    ProblemHolderImpl holder = new ProblemHolderImpl(delegate, isOnTheFly);
 
-    if (docComment == null) {
-      if (required) {
-        PsiElement toHighlight = ObjectUtils.notNull(psiClass.getNameIdentifier(), psiClass);
-        JavadocHighlightUtil.reportMissingTag(toHighlight, holder);
-      }
+    if (docComment != null) {
+      checkBasics(docComment, docComment.getTags(), field, required, FIELD_OPTIONS, holder);
     }
-    else {
-      PsiDocTag[] tags = docComment.getTags();
-
-      if (required) {
-        Predicate<String> tagChecker = tag -> isTagRequired(psiClass, tag);
-        JavadocHighlightUtil.checkRequiredTags(tags, tagChecker, docComment.getFirstChild(), holder);
-      }
-
-      JavadocHighlightUtil.checkRequiredTagDescriptions(tags, holder);
-
-      JavadocHighlightUtil.checkTagValues(tags, psiClass, holder);
-
-      if (!IGNORE_JAVADOC_PERIOD) {
-        JavadocHighlightUtil.checkForPeriod(docComment, psiClass, holder);
-      }
-
-      JavadocHighlightUtil.checkInlineTags(docComment.getDescriptionElements(), holder);
-
-      JavadocHighlightUtil.checkForBadCharacters(docComment, holder);
-
-      JavadocHighlightUtil.checkDuplicateTags(tags, holder);
-
-      if (required && isTagRequired(psiClass, "param")) {
-        JavadocHighlightUtil.checkMissingTypeParamTags(psiClass, tags, docComment.getFirstChild(), holder);
-      }
+    else if (required) {
+      JavadocHighlightUtil.reportMissingTag(field.getNameIdentifier(), holder);
     }
-
-    return holder.problems();
   }
 
-  @Override
-  @Nullable
-  public ProblemDescriptor[] checkField(@NotNull PsiField psiField, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (IGNORE_DEPRECATED && isDeprecated(psiField)) {
-      return null;
+  private void checkMethod(PsiMethod method, ProblemsHolder delegate, boolean isOnTheFly) {
+    if (method instanceof SyntheticElement) {
+      return;
+    }
+    if (IGNORE_DEPRECATED && isDeprecated(method)) {
+      return;
+    }
+    if (myIgnoreSimpleAccessors && PropertyUtilBase.isSimplePropertyAccessor(method)) {
+      return;
     }
 
-    PsiDocComment docComment = psiField.getDocComment();
-    boolean required = JavadocHighlightUtil.isJavaDocRequired(this, psiField);
-    ProblemHolderImpl holder = new ProblemHolderImpl(manager, isOnTheFly);
+    PsiDocComment docComment = method.getDocComment();
+    boolean hasSupers = method.findSuperMethods().length > 0;
+    boolean required = JavadocHighlightUtil.isJavaDocRequired(this, method);
+    ProblemHolderImpl holder = new ProblemHolderImpl(delegate, isOnTheFly);
 
-    if (docComment == null) {
-      if (required) {
-        JavadocHighlightUtil.reportMissingTag(psiField.getNameIdentifier(), holder);
-      }
-    }
-    else {
-      JavadocHighlightUtil.checkTagValues(docComment.getTags(), psiField, holder);
+    if (docComment != null) {
+      if (!isInherited(docComment, method)) {
+        PsiDocTag[] tags = docComment.getTags();
 
-      JavadocHighlightUtil.checkInlineTags(docComment.getDescriptionElements(), holder);
-
-      if (!IGNORE_JAVADOC_PERIOD) {
-        JavadocHighlightUtil.checkForPeriod(docComment, psiField, holder);
-      }
-
-      JavadocHighlightUtil.checkDuplicateTags(docComment.getTags(), holder);
-
-      JavadocHighlightUtil.checkForBadCharacters(docComment, holder);
-    }
-
-    return holder.problems();
-  }
-
-  @Override
-  @Nullable
-  public ProblemDescriptor[] checkMethod(@NotNull PsiMethod psiMethod, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (psiMethod instanceof SyntheticElement) {
-      return null;
-    }
-    if (IGNORE_DEPRECATED && isDeprecated(psiMethod)) {
-      return null;
-    }
-    if (myIgnoreSimpleAccessors && PropertyUtil.isSimplePropertyAccessor(psiMethod)) {
-      return null;
-    }
-
-    PsiDocComment docComment = psiMethod.getDocComment();
-    boolean hasSupers = psiMethod.findSuperMethods().length > 0;
-    boolean required = JavadocHighlightUtil.isJavaDocRequired(this, psiMethod);
-    ProblemHolderImpl holder = new ProblemHolderImpl(manager, isOnTheFly);
-
-    if (docComment == null) {
-      if (!required || hasSupers) {
-        return null;
-      }
-
-      PsiIdentifier nameIdentifier = psiMethod.getNameIdentifier();
-      if (nameIdentifier == null) {
-        return null;
-      }
-
-      ExtensionPoint<Condition<PsiMember>> ep = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.JAVADOC_LOCAL);
-      if (Stream.of(ep.getExtensions()).anyMatch(condition -> condition.value(psiMethod))) {
-        return null;
-      }
-
-      JavadocHighlightUtil.reportMissingTag(nameIdentifier, holder);
-    }
-    else {
-      PsiElement[] descriptionElements = docComment.getDescriptionElements();
-      if (isInherited(docComment, descriptionElements, psiMethod)) {
-        return null;
-      }
-
-      JavadocHighlightUtil.checkInlineTags(descriptionElements, holder);
-
-      PsiDocTag[] tags = docComment.getTags();
-      if (required && !hasSupers) {
-        if (isTagRequired(psiMethod, "return")) {
-          JavadocHighlightUtil.checkMissingReturnTag(tags, psiMethod, docComment.getFirstChild(), holder);
+        if (required && !hasSupers) {
+          if (isTagRequired(METHOD_OPTIONS, "return")) {
+            JavadocHighlightUtil.checkMissingReturnTag(tags, method, docComment.getFirstChild(), holder);
+          }
+          if (isTagRequired(METHOD_OPTIONS, "param")) {
+            JavadocHighlightUtil.checkMissingParamTags(tags, method, docComment.getFirstChild(), holder);
+            JavadocHighlightUtil.checkMissingTypeParamTags(method, tags, docComment.getFirstChild(), holder);
+          }
+          if (isTagRequired(METHOD_OPTIONS, "throws")) {
+            JavadocHighlightUtil.checkMissingThrowsTags(tags, method, docComment.getFirstChild(), holder);
+          }
         }
-        if (isTagRequired(psiMethod, "param")) {
-          JavadocHighlightUtil.checkMissingParamTags(tags, psiMethod, docComment.getFirstChild(), holder);
+
+        if (!myIgnoreEmptyDescriptions) {
+          JavadocHighlightUtil.checkEmptyMethodTagsDescription(tags, holder);
         }
-        if (isTagRequired(psiMethod, "throws")) {
-          JavadocHighlightUtil.checkMissingThrowsTags(tags, psiMethod, docComment.getFirstChild(), holder);
+
+        checkBasics(docComment, tags, method, false, METHOD_OPTIONS, holder);
+      }
+    }
+    else if (required && !hasSupers) {
+      PsiIdentifier nameIdentifier = method.getNameIdentifier();
+      if (nameIdentifier != null) {
+        ExtensionPoint<Condition<PsiMember>> ep = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.JAVADOC_LOCAL);
+        if (Stream.of(ep.getExtensions()).noneMatch(condition -> condition.value(method))) {
+          JavadocHighlightUtil.reportMissingTag(nameIdentifier, holder);
         }
       }
-
-      if (!myIgnoreEmptyDescriptions) {
-        JavadocHighlightUtil.checkEmptyMethodTagsDescription(tags, holder);
-      }
-
-      JavadocHighlightUtil.checkTagValues(tags, psiMethod, holder);
-
-      if (!IGNORE_JAVADOC_PERIOD) {
-        JavadocHighlightUtil.checkForPeriod(docComment, psiMethod, holder);
-      }
-
-      JavadocHighlightUtil.checkForBadCharacters(docComment, holder);
-
-      JavadocHighlightUtil.checkDuplicateTags(tags, holder);
     }
-
-    return holder.problems();
   }
 
-  private boolean isTagRequired(PsiElement context, String tag) {
-    if (context instanceof PsiPackage) {
-      return isTagRequired(PACKAGE_OPTIONS, tag);
+  private void checkBasics(PsiDocComment docComment, PsiDocTag[] tags, PsiElement context, boolean required, Options options, ProblemHolderImpl holder) {
+    if (required) {
+      JavadocHighlightUtil.checkRequiredTags(tags, options, docComment.getFirstChild(), holder);
     }
 
-    if (context instanceof PsiClass) {
-      boolean isInner = PsiTreeUtil.getParentOfType(context, PsiClass.class) != null;
-      return isTagRequired(isInner ? INNER_CLASS_OPTIONS : TOP_LEVEL_CLASS_OPTIONS, tag);
+    JavadocHighlightUtil.checkRequiredTagDescriptions(tags, holder);
+
+    JavadocHighlightUtil.checkTagValues(tags, context, holder);
+
+    if (!IGNORE_JAVADOC_PERIOD) {
+      JavadocHighlightUtil.checkForPeriod(docComment, context, holder);
     }
 
-    if (context instanceof PsiMethod) {
-      return isTagRequired(METHOD_OPTIONS, tag);
-    }
+    JavadocHighlightUtil.checkInlineTags(docComment.getDescriptionElements(), holder);
 
-    if (context instanceof PsiField) {
-      return isTagRequired(FIELD_OPTIONS, tag);
-    }
+    JavadocHighlightUtil.checkForBadCharacters(docComment, holder);
 
-    return false;
+    JavadocHighlightUtil.checkDuplicateTags(tags, holder);
+  }
+
+  private static boolean isDeprecated(PsiModifierListOwner element, PsiDocComment docComment) {
+    return PsiImplUtil.isDeprecatedByAnnotation(element) || docComment != null && docComment.findTagByName("deprecated") != null;
   }
 
   protected static boolean isTagRequired(Options options, String tag) {
@@ -391,8 +362,8 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
     return element.isDeprecated() || element.getContainingClass() != null && element.getContainingClass().isDeprecated();
   }
 
-  private static boolean isInherited(PsiDocComment docComment, PsiElement[] descriptionElements, PsiMethod psiMethod) {
-    for (PsiElement descriptionElement : descriptionElements) {
+  private static boolean isInherited(PsiDocComment docComment, PsiMethod psiMethod) {
+    for (PsiElement descriptionElement : docComment.getDescriptionElements()) {
       if (descriptionElement instanceof PsiInlineDocTag && "inheritDoc".equals(((PsiInlineDocTag)descriptionElement).getName())) {
         return true;
       }
@@ -449,22 +420,17 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
   }
 
   private class ProblemHolderImpl implements JavadocHighlightUtil.ProblemHolder {
-    private final InspectionManager myManager;
+    private final ProblemsHolder myHolder;
     private final boolean myOnTheFly;
-    private List<ProblemDescriptor> myProblems;
 
-    private ProblemHolderImpl(InspectionManager manager, boolean onTheFly) {
-      myManager = manager;
+    private ProblemHolderImpl(ProblemsHolder holder, boolean onTheFly) {
+      myHolder = holder;
       myOnTheFly = onTheFly;
-    }
-
-    public ProblemDescriptor[] problems() {
-      return myProblems == null || myProblems.isEmpty() ? null : myProblems.toArray(new ProblemDescriptor[myProblems.size()]);
     }
 
     @Override
     public Project project() {
-      return myManager.getProject();
+      return myHolder.getManager().getProject();
     }
 
     @Override
@@ -474,15 +440,15 @@ public class JavaDocLocalInspectionBase extends BaseJavaBatchLocalInspectionTool
 
     @Override
     public void problem(@NotNull PsiElement toHighlight, @NotNull @Nls String message, @Nullable LocalQuickFix fix) {
-      if (myProblems == null) myProblems = ContainerUtil.newSmartList();
-      myProblems.add(myManager.createProblemDescriptor(toHighlight, message, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly));
+      myHolder.registerProblem(myHolder.getManager().createProblemDescriptor(
+        toHighlight, message, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly));
     }
 
     @Override
     public void eolProblem(@NotNull PsiElement toHighlight, @NotNull @Nls String message, @Nullable LocalQuickFix fix) {
-      if (myProblems == null) myProblems = ContainerUtil.newSmartList();
       LocalQuickFix[] fixes = fix != null ? new LocalQuickFix[]{fix} : null;
-      myProblems.add(myManager.createProblemDescriptor(toHighlight, message, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly, true));
+      myHolder.registerProblem(myHolder.getManager().createProblemDescriptor(
+        toHighlight, message, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly, true));
     }
 
     @Override

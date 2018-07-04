@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class DebuggerTree
@@ -32,10 +18,7 @@ import com.intellij.debugger.engine.events.DebuggerContextCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.jdi.LocalVariableProxyImpl;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
-import com.intellij.debugger.jdi.ThreadGroupReferenceProxyImpl;
-import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
+import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.settings.ThreadsViewSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -343,7 +326,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     saveState();
     process.getManagerThread().schedule(new DebuggerCommandImpl() {
       @Override
-      protected void action() throws Exception {
+      protected void action() {
         getNodeFactory().setHistoryByContext(context);
       }
       @Override
@@ -517,7 +500,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
         notifyCancelled();
       }
       catch (InternalException e) {
-        if (e.errorCode() == 35) {
+        if (e.errorCode() == JvmtiError.INVALID_SLOT) {
           myChildren.add(
             myNodeManager.createMessageNode(new MessageDescriptor(DebuggerBundle.message("error.corrupt.debug.info", e.getMessage()))));
         }
@@ -619,11 +602,6 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
                            @NotNull SimpleTextAttributes attributes,
                            @Nullable XDebuggerTreeNodeHyperlink link) {
     }
-
-    @Override
-    public boolean isObsolete() {
-      return false;
-    }
   }
 
   private class BuildStaticNodeCommand extends BuildNodeCommand {
@@ -700,7 +678,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     }
 
     @Override
-    protected void action() throws Exception {
+    protected void action() {
       ThreadGroupDescriptorImpl groupDescriptor = (ThreadGroupDescriptorImpl)myNode.getDescriptor();
       ThreadGroupReferenceProxyImpl threadGroup = groupDescriptor.getThreadGroupReference();
 

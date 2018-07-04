@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -24,6 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
@@ -36,28 +23,37 @@ import java.io.File;
     super.setUp();
     myTempDirectory = FileUtil.createTempDirectory(getTestName(true), "test",false);
     myFilesToDelete.add(myTempDirectory);
-    final File testRoot = new File(getTestDataPath(), getTestPath());
-    assertTrue(testRoot.getAbsolutePath(), testRoot.isDirectory());
+    String testPath = getTestPath();
+    if (testPath != null) {
+      final File testRoot = new File(getTestDataPath(), testPath);
+      assertTrue(testRoot.getAbsolutePath(), testRoot.isDirectory());
 
-    final File currentTestRoot = new File(testRoot, getTestDirectoryName());
-    assertTrue(currentTestRoot.getAbsolutePath(), currentTestRoot.isDirectory());
+      final File currentTestRoot = new File(testRoot, getTestDirectoryName());
+      assertTrue(currentTestRoot.getAbsolutePath(), currentTestRoot.isDirectory());
 
-    FileUtil.copyDir(currentTestRoot, new File(myTempDirectory, getTestDirectoryName()));
+      FileUtil.copyDir(currentTestRoot, new File(myTempDirectory, getTestDirectoryName()));
 
-    ApplicationManager.getApplication().runWriteAction(this::setupContentRoot);
+      ApplicationManager.getApplication().runWriteAction(this::setupContentRoot);
+    }
+
     ProjectViewTestUtil.setupImpl(getProject(), true);
   }
 
   @Override
   protected void tearDown() throws Exception {
-    FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
-    super.tearDown();
+    try {
+      FileEditorManagerEx.getInstanceEx(getProject()).closeAllFiles();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   protected String getTestDataPath() {
     return PathManagerEx.getTestDataPath(getClass());
   }
 
+  @Nullable
   protected abstract String getTestPath();
 
   private File getTestContentFile() {

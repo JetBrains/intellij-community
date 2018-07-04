@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.ReferenceQueue;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Map;
+import java.util.HashSet;import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
@@ -149,12 +149,12 @@ abstract class ConcurrentRefValueHashMap<K, V> implements ConcurrentMap<K, V> {
 
   @Override
   public boolean containsKey(@NotNull Object key) {
-    return get(key) != null;
+    throw RefValueHashMap.pointlessContainsKey();
   }
 
   @Override
   public boolean containsValue(@NotNull Object value) {
-    throw new UnsupportedOperationException();
+    throw RefValueHashMap.pointlessContainsValue();
   }
 
   @NotNull

@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.RangeMarker;
@@ -119,20 +107,20 @@ abstract class FoldRegionsTree {
 
     Arrays.sort(visibleRegions, BY_END_OFFSET_REVERSE);
 
-    return updateCachedAndSortOffsets(visibleRegions);
+    return updateCachedAndSortOffsets(visibleRegions, true);
   }
 
   @NotNull
   private static FoldRegion[] toFoldArray(@NotNull List<FoldRegion> topLevels) {
-    return topLevels.isEmpty() ? FoldRegion.EMPTY_ARRAY : topLevels.toArray(new FoldRegion[topLevels.size()]);
+    return topLevels.isEmpty() ? FoldRegion.EMPTY_ARRAY : topLevels.toArray(FoldRegion.EMPTY_ARRAY);
   }
 
   void updateCachedOffsets() {
     CachedData cachedData = myCachedData;
-    updateCachedAndSortOffsets(cachedData.visibleRegions);
+    updateCachedAndSortOffsets(cachedData.visibleRegions, false);
   }
   
-  private CachedData updateCachedAndSortOffsets(FoldRegion[] visibleRegions) {
+  private CachedData updateCachedAndSortOffsets(FoldRegion[] visibleRegions, boolean fromRebuild) {
     if (!isFoldingEnabled()) {
       return null;
     }
@@ -146,13 +134,17 @@ abstract class FoldRegionsTree {
 
     for (FoldRegion region : visibleRegions) {
       if (!region.isValid() || !distinctRegions.add(region)) {
+        if (fromRebuild) {
+          throw new RuntimeExceptionWithAttachments("FoldRegionsTree.rebuild() failed", 
+                                                    new Attachment("visibleRegions.txt", Arrays.toString(visibleRegions)));
+        }
         return rebuild();
       }
       if (!region.isExpanded()) {
         topLevel.add(region);
       }
     }
-    FoldRegion[] topLevelRegions = topLevel.toArray(new FoldRegion[topLevel.size()]);
+    FoldRegion[] topLevelRegions = topLevel.toArray(FoldRegion.EMPTY_ARRAY);
     Arrays.sort(topLevelRegions, BY_END_OFFSET);
 
     int[] startOffsets = ArrayUtil.newIntArray(topLevelRegions.length);
@@ -239,6 +231,7 @@ abstract class FoldRegionsTree {
     return null;
   }
 
+  @Nullable
   FoldRegion[] fetchVisible() {
     if (!isFoldingEnabled()) return null;
     CachedData cachedData = ensureAvailableData();

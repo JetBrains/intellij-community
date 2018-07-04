@@ -23,7 +23,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UseScopeEnlarger;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
@@ -43,7 +43,7 @@ public class JavaFxScopeEnlarger extends UseScopeEnlarger {
     }
     else if (element instanceof PsiParameter) {
       final PsiElement declarationScope = ((PsiParameter)element).getDeclarationScope();
-      if (declarationScope instanceof PsiMethod && PropertyUtil.isSimplePropertySetter((PsiMethod)declarationScope)) {
+      if (declarationScope instanceof PsiMethod && PropertyUtilBase.isSimplePropertySetter((PsiMethod)declarationScope)) {
         containingClass = ((PsiMethod)declarationScope).getContainingClass();
       }
     }
@@ -65,7 +65,7 @@ public class JavaFxScopeEnlarger extends UseScopeEnlarger {
 
   private static boolean needToEnlargeFieldScope(PsiField field) {
     return !field.hasModifierProperty(PsiModifier.PUBLIC) &&
-           AnnotationUtil.isAnnotated(field, JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, false);
+           AnnotationUtil.isAnnotated(field, JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, 0);
   }
 
   private static boolean needToEnlargeMethodScope(PsiMethod method) {
@@ -73,7 +73,7 @@ public class JavaFxScopeEnlarger extends UseScopeEnlarger {
     return isStatic && method.getParameterList().getParametersCount() == 2 &&
            InheritanceUtil.isInheritor(method.getParameterList().getParameters()[0].getType(), JavaFxCommonNames.JAVAFX_SCENE_NODE) ||
            !isStatic && !method.hasModifierProperty(PsiModifier.PUBLIC) &&
-           AnnotationUtil.isAnnotated(method, JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, false);
+           AnnotationUtil.isAnnotated(method, JavaFxCommonNames.JAVAFX_FXML_ANNOTATION, 0);
   }
 
   public static class GlobalFxmlSearchScope extends DelegatingGlobalSearchScope {

@@ -67,17 +67,16 @@ def main():
                 test_framework = PY_TEST_FRAMEWORK
 
             else:
-                raise ImportError()
+                raise ImportError('Test framework: %s not supported.' % (found_other_test_framework_param,))
 
         else:
             raise ImportError()
 
     except ImportError:
         if found_other_test_framework_param:
-            sys.stderr.write('Warning: Could not import the test runner: %s. Running with the default pydev unittest runner instead.\n' % (
-                found_other_test_framework_param,))
+            raise
 
-        test_framework = 0
+        test_framework = None
 
     # Clear any exception that may be there so that clients don't see it.
     # See: https://sourceforge.net/tracker/?func=detail&aid=3408057&group_id=85796&atid=577329
@@ -159,6 +158,23 @@ def main():
             return not nose.run(argv=argv, addplugins=[PYDEV_NOSE_PLUGIN_SINGLETON])
 
         elif test_framework == PY_TEST_FRAMEWORK:
+
+            if '--coverage_output_dir' in pydev_params and '--coverage_include' in pydev_params:
+                coverage_output_dir = pydev_params[pydev_params.index('--coverage_output_dir') + 1]
+                coverage_include = pydev_params[pydev_params.index('--coverage_include') + 1]
+                try:
+                    import pytest_cov
+                except ImportError:
+                    sys.stderr.write('To do a coverage run with pytest the pytest-cov library is needed (i.e.: pip install pytest-cov).\n\n')
+                    raise
+
+                argv.insert(0, '--cov-append')
+                argv.insert(1, '--cov-report=')
+                argv.insert(2, '--cov=%s' % (coverage_include,))
+
+                import time
+                os.environ['COVERAGE_FILE'] = os.path.join(coverage_output_dir, '.coverage.%s' % (time.time(),))
+
             if DEBUG:
                 sys.stdout.write('Final test framework args: %s\n' % (argv,))
                 sys.stdout.write('py_test_accept_filter: %s\n' % (py_test_accept_filter,))
@@ -193,7 +209,7 @@ def main():
                 # Workaround bug in py.test: if we pass the full path it ends up importing conftest
                 # more than once (so, always work with relative paths).
                 if os.path.isfile(arg) or os.path.isdir(arg):
-                    from _pydev_bundle.pydev_imports import relpath
+                    from os.path import relpath
                     try:
                         # May fail if on different drives
                         arg = relpath(arg)

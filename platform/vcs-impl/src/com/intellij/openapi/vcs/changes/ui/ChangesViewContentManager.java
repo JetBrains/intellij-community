@@ -16,8 +16,8 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.content.*;
 import com.intellij.util.Alarm;
 import com.intellij.util.NotNullFunction;
@@ -53,7 +54,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   private final ProjectLevelVcsManager myVcsManager;
 
   public static ChangesViewContentI getInstance(Project project) {
-    return PeriodicalTasksCloser.getInstance().safeGetComponent(project, ChangesViewContentI.class);
+    return project.getComponent(ChangesViewContentI.class);
   }
 
   private ContentManager myContentManager;
@@ -61,6 +62,8 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   private final Alarm myVcsChangeAlarm;
   private final List<Content> myAddedContents = new ArrayList<>();
   @NotNull private final CountDownLatch myInitializationWaiter = new CountDownLatch(1);
+
+  private final List<AnAction> myToolWindowTitleActions = new ArrayList<>();
 
   public ChangesViewContentManager(@NotNull Project project, final ProjectLevelVcsManager vcsManager) {
     super(project);
@@ -92,6 +95,8 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
       contentManager.setSelectedContent(contentManager.getContent(0));
     }
     myInitializationWaiter.countDown();
+
+    ((ToolWindowEx)toolWindow).setTitleActions(myToolWindowTitleActions.toArray(AnAction.EMPTY_ARRAY));
   }
 
   private void loadExtensionTabs() {
@@ -158,12 +163,24 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   }
 
   public void projectClosed() {
+    for (Content content : myAddedContents) {
+      Disposer.dispose(content);
+    }
+    myAddedContents.clear();
+
     myVcsChangeAlarm.cancelAllRequests();
   }
 
   @NonNls @NotNull
   public String getComponentName() {
     return "ChangesViewContentManager";
+  }
+
+  public void addToolWindowTitleAction(@NotNull AnAction action) {
+    myToolWindowTitleActions.add(action);
+
+    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TOOLWINDOW_ID);
+    if (toolWindow != null) ((ToolWindowEx)toolWindow).setTitleActions(myToolWindowTitleActions.toArray(AnAction.EMPTY_ARRAY));
   }
 
   public void addContent(Content content) {
@@ -182,6 +199,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   }
 
   public void setSelectedContent(final Content content) {
+    if (myContentManager == null) return;
     myContentManager.setSelectedContent(content);
   }
 
@@ -197,6 +215,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   }
   
   public boolean isContentSelected(@NotNull String contentName) {
+    if (myContentManager == null) return false;
     Content selectedContent = myContentManager.getSelectedContent();
     if (selectedContent == null) return false;
     return Comparing.equal(contentName, selectedContent.getTabName());
@@ -207,6 +226,7 @@ public class ChangesViewContentManager extends AbstractProjectComponent implemen
   }
 
   public void selectContent(@NotNull String tabName, boolean requestFocus) {
+    if (myContentManager == null) return;
     for(Content content: myContentManager.getContents()) {
       if (content.getDisplayName().equals(tabName)) {
         myContentManager.setSelectedContent(content, requestFocus);

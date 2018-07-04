@@ -38,6 +38,7 @@ import static org.junit.Assert.assertEquals;
 public class PythonDataViewerTest extends PyEnvTestCase {
 
   @Test
+  @Staging
   public void testDataFrameChunkRetrieval() {
     runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", ImmutableSet.of(7, 15, 22)) {
       @Override
@@ -91,7 +92,7 @@ public class PythonDataViewerTest extends PyEnvTestCase {
 
   private static class PyDataFrameDebuggerTask extends PyDebuggerTask {
 
-    private Set<Integer> myLines;
+    private final Set<Integer> myLines;
 
     public PyDataFrameDebuggerTask(@Nullable String relativeTestDataPath, String scriptName, Set<Integer> lines) {
       super(relativeTestDataPath, scriptName);

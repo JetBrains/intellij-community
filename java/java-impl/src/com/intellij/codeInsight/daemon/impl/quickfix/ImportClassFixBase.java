@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -46,7 +32,6 @@ import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -136,12 +121,14 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       if (qName != null) { //filter local classes
         if (qName.indexOf('.') == -1 || !PsiNameHelper.getInstance(project).isQualifiedName(qName)) continue; //do not show classes from default or invalid package
         if (qName.endsWith(name) && (file == null || ImportFilter.shouldImport(file, qName))) {
-          if (isAccessible(aClass, myElement)) {
-            classList.add(aClass);
-          }
+          classList.add(aClass);
         }
       }
     }
+
+    boolean anyAccessibleFound = classList.stream().anyMatch(aClass -> isAccessible(aClass, myElement));
+    PsiManager manager = myElement.getManager();
+    classList.removeIf(aClass -> (anyAccessibleFound || !manager.isInProject(aClass)) && !isAccessible(aClass, myElement));
 
     if (acceptWrongNumberOfTypeParams && referenceHasTypeParameters) {
       final List<PsiClass> candidates = new ArrayList<>();
@@ -165,7 +152,6 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       classList = filtered;
     }
 
-    filterAlreadyImportedButUnresolved(classList);
     filerByPackageName(classList, file);
     return classList;
   }
@@ -261,7 +247,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       PsiElement granny = parent.getParent();
       if (granny instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)granny;
-        if (method.getModifierList().findAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE) != null) {
+        if (method.getModifierList().hasAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE)) {
           PsiClass aClass = method.getContainingClass();
           final Set<PsiClass> probableTypes = new HashSet<>();
           InheritanceUtil.processSupers(aClass, false, psiClass -> {
@@ -290,6 +276,8 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   public Result doFix(@NotNull final Editor editor, boolean allowPopup, final boolean allowCaretNearRef) {
     List<PsiClass> classesToImport = getClassesToImport();
+    //do not show popups for already imported classes when library is missing (show them for explicit action)
+    filterAlreadyImportedButUnresolved(classesToImport);
     if (classesToImport.isEmpty()) return Result.POPUP_NOT_SHOWN;
 
     try {
@@ -309,7 +297,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     if (classesToImport.size() > 1) {
       reduceSuggestedClassesBasedOnDependencyRuleViolation(psiFile, classesToImport);
     }
-    PsiClass[] classes = classesToImport.toArray(new PsiClass[classesToImport.size()]);
+    PsiClass[] classes = classesToImport.toArray(PsiClass.EMPTY_ARRAY);
     final Project project = myElement.getProject();
     CodeInsightUtil.sortIdenticalShortNamedMembers(classes, myRef);
 
@@ -427,7 +415,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     ApplicationManager.getApplication().runWriteAction(() -> {
       List<PsiClass> classesToImport = getClassesToImport(true);
-      PsiClass[] classes = classesToImport.toArray(new PsiClass[classesToImport.size()]);
+      PsiClass[] classes = classesToImport.toArray(PsiClass.EMPTY_ARRAY);
       if (classes.length == 0) return;
 
       AddImportAction action = createAddImportAction(classes, project, editor);

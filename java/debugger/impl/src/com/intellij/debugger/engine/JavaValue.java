@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -41,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.XExpression;
@@ -56,6 +43,7 @@ import com.intellij.xdebugger.impl.frame.XValueWithInlinePresentation;
 import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.XValueExtendedPresentation;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueTextRendererImpl;
 import com.sun.jdi.ArrayReference;
 import com.sun.jdi.ArrayType;
 import com.sun.jdi.Value;
@@ -155,7 +143,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       }
 
       @Override
-      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         if (node.isObsolete()) {
           return;
         }
@@ -342,7 +330,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     @NotNull
     @Override
     public String getSeparator() {
-      boolean emptyAfterSeparator = !myValueDescriptor.isShowIdLabel() && StringUtil.isEmpty(myValue);
+      boolean emptyAfterSeparator = !myValueDescriptor.isShowIdLabel() && isValueEmpty();
       String declaredType = myValueDescriptor.getDeclaredTypeLabel();
       if (!StringUtil.isEmpty(declaredType)) {
         return emptyAfterSeparator ? declaredType : declaredType + " " + DEFAULT_SEPARATOR;
@@ -353,6 +341,34 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
     @Override
     public boolean isModified() {
       return myValueDescriptor.isDirty();
+    }
+
+    private boolean isValueEmpty() {
+      final MyEmptyContainerChecker checker = new MyEmptyContainerChecker();
+      renderValue(new XValueTextRendererImpl(checker));
+      return checker.isEmpty;
+    }
+
+    private static class MyEmptyContainerChecker implements ColoredTextContainer {
+      boolean isEmpty = true;
+
+      @Override
+      public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes) {
+        if (!fragment.isEmpty()) isEmpty = false;
+      }
+
+      @Override
+      public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, Object tag) {
+        append(fragment, attributes);
+      }
+
+      @Override
+      public void setIcon(@Nullable Icon icon) {
+      }
+
+      @Override
+      public void setToolTipText(@Nullable String text) {
+      }
     }
   }
 
@@ -507,7 +523,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       }
 
       @Override
-      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         ApplicationManager.getApplication().runReadAction(() -> {
           SourcePosition position = SourcePositionProvider.getSourcePosition(myValueDescriptor, getProject(), getDebuggerContext(), false);
           if (position != null) {
@@ -586,7 +602,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
         }
 
         @Override
-        public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+        public void contextAction(@NotNull SuspendContextImpl suspendContext) {
           evaluationExpression = ReadAction.compute(() -> {
             try {
               PsiElement psiExpression = getDescriptor().getTreeEvaluation(JavaValue.this, getDebuggerContext());
@@ -643,7 +659,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
           }
 
           @Override
-          protected void action() throws Exception {
+          protected void action() {
             ValueDescriptorImpl inspectDescriptor = myValueDescriptor;
             if (myValueDescriptor instanceof WatchItemDescriptor) {
               Modifier modifier = ((WatchItemDescriptor)myValueDescriptor).getModifier();

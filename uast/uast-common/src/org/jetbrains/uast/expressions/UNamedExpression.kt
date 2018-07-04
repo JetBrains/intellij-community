@@ -19,20 +19,20 @@ import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastVisitor
 
-interface UNamedExpression: UExpression {
-    val name: String?
-    val expression: UExpression
+interface UNamedExpression : UExpression {
+  val name: String?
+  val expression: UExpression
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitElement(this)) return
-        annotations.acceptList(visitor)
-        expression.accept(visitor)
-        visitor.afterVisitElement(this)
-    }
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitElement(this)) return
+    annotations.acceptList(visitor)
+    expression.accept(visitor)
+    visitor.afterVisitElement(this)
+  }
 
-    override fun asLogString() = log("name = $name")
+  override fun asLogString(): String = log("name = $name")
 
-    override fun asRenderString() = name + " = " + expression.asRenderString()
+  override fun asRenderString(): String = name + " = " + expression.asRenderString()
 
-    override fun evaluate() = expression.evaluate()
+  override fun evaluate(): Any? = expression.evaluate()
 }

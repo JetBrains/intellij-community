@@ -19,29 +19,29 @@ package org.jetbrains.uast
  * Kinds of [UCallExpression].
  */
 open class UastCallKind(val name: String) {
-    companion object {
-        @JvmField
-        val METHOD_CALL = UastCallKind("method_call")
+  companion object {
+    @JvmField
+    val METHOD_CALL: UastCallKind = UastCallKind("method_call")
 
-        @JvmField
-        val CONSTRUCTOR_CALL = UastCallKind("constructor_call")
-        
-        @JvmField
-        val NEW_ARRAY_WITH_DIMENSIONS = UastCallKind("new_array_with_dimensions")
+    @JvmField
+    val CONSTRUCTOR_CALL: UastCallKind = UastCallKind("constructor_call")
 
-        /**
-         * Initializer parts are available in call expression as value arguments.
-         * [NEW_ARRAY_WITH_INITIALIZER] is a top-level initializer. In case of multi-dimensional arrays, inner initializers
-         *  have type of [NESTED_ARRAY_INITIALIZER].
-         */
-        @JvmField
-        val NEW_ARRAY_WITH_INITIALIZER = UastCallKind("new_array_with_initializer")
+    @JvmField
+    val NEW_ARRAY_WITH_DIMENSIONS: UastCallKind = UastCallKind("new_array_with_dimensions")
 
-        @JvmField
-        val NESTED_ARRAY_INITIALIZER = UastCallKind("array_initializer")
-    }
+    /**
+     * Initializer parts are available in call expression as value arguments.
+     * [NEW_ARRAY_WITH_INITIALIZER] is a top-level initializer. In case of multi-dimensional arrays, inner initializers
+     *  have type of [NESTED_ARRAY_INITIALIZER].
+     */
+    @JvmField
+    val NEW_ARRAY_WITH_INITIALIZER: UastCallKind = UastCallKind("new_array_with_initializer")
 
-    override fun toString(): String{
-        return "UastCallKind(name='$name')"
-    }
+    @JvmField
+    val NESTED_ARRAY_INITIALIZER: UastCallKind = UastCallKind("array_initializer")
+  }
+
+  override fun toString(): String {
+    return "UastCallKind(name='$name')"
+  }
 }

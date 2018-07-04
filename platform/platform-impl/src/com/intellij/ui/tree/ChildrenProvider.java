@@ -35,5 +35,5 @@ public interface ChildrenProvider<T> {
    * @param parent a tree node
    * @return all children of the specified parent node or {@code null} if they are not ready yet
    */
-  List<T> getChildren(Object parent);
+  List<? extends T> getChildren(Object parent);
 }

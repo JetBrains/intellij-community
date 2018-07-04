@@ -48,12 +48,12 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    * Creates a module of the specified type at the specified path and adds it to the project
    * to which the module manager is related.
    *
-   * @param filePath     the path at which the module is created.
+   * @param filePath     path to an *.iml file where module configuration will be saved; name of the module will be equal to the file name without extension.
    * @param moduleTypeId the ID of the module type to create.
    * @return the module instance.
    */
   @NotNull
-  public abstract Module newModule(@NotNull @NonNls String filePath, final String moduleTypeId);
+  public abstract Module newModule(@NotNull @NonNls String filePath, @NotNull String moduleTypeId);
 
   /**
    * Loads a module from an .iml file with the specified path and adds it to the project.
@@ -162,7 +162,7 @@ public abstract class ModuleManager extends SimpleModificationTracker {
   /**
    * Returns the path to the group to which the specified module belongs, as an array of group names starting from the project root.
    * <p>
-   * <strong>Use {@link com.intellij.openapi.module.ModuleGrouper#getGroupPath()} instead.</strong> Exlicit module groups will be replaced
+   * <strong>Use {@link ModuleGrouper#getGroupPath(Module)} instead.</strong> Explicit module groups will be replaced
    * by automatical module grouping accordingly to qualified names of modules, see https://youtrack.jetbrains.com/issue/IDEA-166061 for details.
    * </p>
    * @param module the module for which the path is requested.
@@ -177,14 +177,19 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    * @return description of all modules in the project including unloaded
    */
   @ApiStatus.Experimental
+  @NotNull
   public abstract Collection<ModuleDescription> getAllModuleDescriptions();
 
   @ApiStatus.Experimental
+  @NotNull
   public abstract Collection<UnloadedModuleDescription> getUnloadedModuleDescriptions();
 
   @ApiStatus.Experimental
   @Nullable
   public abstract UnloadedModuleDescription getUnloadedModuleDescription(@NotNull String moduleName);
+
+  @NotNull
+  public abstract ModuleGrouper getModuleGrouper(@Nullable ModifiableModuleModel model);
 
   /**
    * Specify list of modules which will be unloaded from the project.
@@ -192,4 +197,8 @@ public abstract class ModuleManager extends SimpleModificationTracker {
    */
   @ApiStatus.Experimental
   public abstract void setUnloadedModules(@NotNull List<String> unloadedModuleNames);
+
+  @ApiStatus.Experimental
+  public void removeUnloadedModules(@NotNull Collection<UnloadedModuleDescription> unloadedModules) {
+  }
 }

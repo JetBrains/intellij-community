@@ -57,7 +57,7 @@ Groovy script
         PsiElement(int)('int')
       Array declaration
         PsiElement([)('[')
-        PsiErrorElement:Expression expected
+        PsiErrorElement:<expression> expected, got ']'
           <empty list>
         PsiElement(])(']')
   PsiElement(new line)('\n')
@@ -74,7 +74,7 @@ Groovy script
         PsiElement(int)('int')
       Array declaration
         PsiElement([)('[')
-        PsiErrorElement:Expression expected
+        PsiErrorElement:<expression> expected, got ']'
           <empty list>
         PsiElement(])(']')
         PsiElement([)('[')

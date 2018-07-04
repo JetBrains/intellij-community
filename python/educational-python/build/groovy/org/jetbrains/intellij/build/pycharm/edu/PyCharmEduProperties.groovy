@@ -4,27 +4,29 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.pycharm.PyCharmMacDistributionCustomizer
 import org.jetbrains.intellij.build.pycharm.PyCharmPropertiesBase
 import org.jetbrains.intellij.build.pycharm.PyCharmWindowsDistributionCustomizer
-
 /**
  * @author nik
  */
 class PyCharmEduProperties extends PyCharmPropertiesBase {
   private final String pythonCommunityPath
+  private final String dependenciesPath
 
   PyCharmEduProperties(String home) {
     pythonCommunityPath = new File(home, "community/python").exists() ? "$home/community/python" : "$home/python"
+    dependenciesPath = new File(home, "community/edu/dependencies").exists() ? "$home/community/edu/dependencies" : "$home/edu/dependencies"
     productCode = "PE"
     platformPrefix = "PyCharmEdu"
-    applicationInfoModule = "educational-python"
+    applicationInfoModule = "intellij.pycharm.edu"
     brandingResourcePaths = ["$pythonCommunityPath/educational-python/resources"]
 
-    productLayout.mainModules = ["main_pycharm_edu"]
-    productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES + ["dom-openapi"]
+    productLayout.mainModules = ["intellij.pycharm.edu.main"]
+    productLayout.platformApiModules = CommunityRepositoryModules.PLATFORM_API_MODULES + ["intellij.xml.dom"]
     productLayout.platformImplementationModules = CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES + [
-      "dom-impl", "python-community", "python-community-ide-resources",
-      "python-community-ide", "python-community-configure", "educational-python", "python-openapi", "python-psi-api", "platform-main"
+      "intellij.xml.dom.impl", "intellij.python.community.impl", "intellij.pycharm.community.resources",
+      "intellij.pycharm.community", "intellij.python.configure", "intellij.pycharm.edu", "intellij.python.community", "intellij.python.psi", "intellij.platform.main"
     ]
     productLayout.bundledPluginModules = new File("$pythonCommunityPath/educational-python/build/plugin-list.txt").readLines()
+    additionalIDEPropertiesFilePaths = ["$pythonCommunityPath/educational-python/build/pycharm-edu.properties".toString()]
   }
 
   @Override
@@ -34,6 +36,8 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
       fileset(file: "$context.paths.communityHome/LICENSE.txt")
       fileset(file: "$context.paths.communityHome/NOTICE.txt")
     }
+
+    EduUtils.copyEduToolsPlugin(dependenciesPath, context, targetDirectory)
   }
 
   @Override
@@ -51,6 +55,8 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
     return new PyCharmWindowsDistributionCustomizer() {
       {
         installerImagesPath = "$pythonCommunityPath/educational-python/build/resources"
+        fileAssociations = ["py"]
+        silentInstallationConfig = "$pythonCommunityPath/educational-python/build/silent.config"
         customNsiConfigurationFiles = [
           "$pythonCommunityPath/educational-python/build/desktop.ini",
           "$pythonCommunityPath/educational-python/build/customInstallActions.nsi"
@@ -72,6 +78,10 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
     return new LinuxDistributionCustomizer() {
       {
         iconPngPath = "$pythonCommunityPath/educational-python/resources/PyCharmEdu128.png"
+        snapName = "pycharm-educational"
+        snapDescription =
+          "PyCharm Edu combines interactive learning with a powerful real-world professional development tool to provide " +
+          "a platform for the most effective learning and teaching experience."
       }
 
       @Override
@@ -88,7 +98,14 @@ class PyCharmEduProperties extends PyCharmPropertiesBase {
       {
         icnsPath = "$pythonCommunityPath/educational-python/resources/PyCharmEdu.icns"
         bundleIdentifier = "com.jetbrains.pycharm"
-        dmgImagePath = "$pythonCommunityPath/educational-python/build/DMG_background.png"
+        dmgImagePath = "$pythonCommunityPath/educational-python/build/dmg_background.tiff"
+        fileAssociations = ["py"]
+      }
+
+      @Override
+      String getRootDirectoryName(ApplicationInfoProperties applicationInfo, String buildNumber) {
+        String suffix = applicationInfo.isEAP ? " ${applicationInfo.majorVersion}.${applicationInfo.minorVersion} RC" : ""
+        "PyCharm Edu${suffix}.app"
       }
     }
   }

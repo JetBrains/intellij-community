@@ -46,6 +46,13 @@ public class ClassWithOnlyPrivateConstructorsInspectionTest extends LightInspect
            "  private X() {}" +
            "}");
   }
+  
+  public void testNoWarnOnAnonymInheritor() {
+    doTest("class X {" +
+           "  private X() {}" +
+           "  static {new X() {};} " +
+           "}");
+  }
 
   public void testEnum() {
     doTest("enum Currencies {\n" +

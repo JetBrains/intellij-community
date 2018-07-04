@@ -17,6 +17,7 @@ package git4idea.repo;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -209,9 +210,9 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
    * Queries Git to check the status of {@code myPossiblyUntrackedFiles} and moves them to {@code myDefinitelyUntrackedFiles}.
    */
   private void verifyPossiblyUntrackedFiles() throws VcsException {
-    Set<VirtualFile> suspiciousFiles = new HashSet<>();
+    Set<VirtualFile> suspiciousFiles;
     synchronized (LOCK) {
-      suspiciousFiles.addAll(myPossiblyUntrackedFiles);
+      suspiciousFiles = new HashSet<>(myPossiblyUntrackedFiles);
       myPossiblyUntrackedFiles.clear();
     }
 
@@ -295,13 +296,20 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
 
   @Nullable
   private static VirtualFile getAffectedFile(@NotNull VFileEvent event) {
-    if (event instanceof VFileCreateEvent || event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent || isRename(event)) {
-      return event.getFile();
-    } else if (event instanceof VFileCopyEvent) {
-      VFileCopyEvent copyEvent = (VFileCopyEvent) event;
-      return copyEvent.getNewParent().findChild(copyEvent.getNewChildName());
-    }
-    return null;
+    return ReadAction.compute(() -> {
+      if (event instanceof VFileCreateEvent) {
+        return ((VFileCreateEvent)event).getParent().isValid() ? event.getFile() : null;
+      }
+      else if (event instanceof VFileDeleteEvent || event instanceof VFileMoveEvent || isRename(event)) {
+        return event.getFile();
+      }
+      else if (event instanceof VFileCopyEvent) {
+        VFileCopyEvent copyEvent = (VFileCopyEvent) event;
+        VirtualFile newParent = copyEvent.getNewParent();
+        return newParent.isValid() ? newParent.findChild(copyEvent.getNewChildName()) : null;
+      }
+      return null;
+    });
   }
 
   private static boolean isRename(@NotNull VFileEvent event) {

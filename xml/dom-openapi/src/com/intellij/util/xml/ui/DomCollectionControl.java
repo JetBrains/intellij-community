@@ -30,7 +30,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.highlighting.DomCollectionProblemDescriptor;
@@ -210,16 +210,13 @@ public class DomCollectionControl<T extends DomElement> extends DomUIControl imp
       }
     }
 
-    new WriteCommandAction(getProject(), PsiUtilCore.toPsiFileArray(files)) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        for (final T t : toDelete) {
-          if (t.isValid()) {
-            t.undefine();
-          }
+    WriteCommandAction.writeCommandAction(getProject(), PsiUtilCore.toPsiFileArray(files)).run(() -> {
+      for (final T t : toDelete) {
+        if (t.isValid()) {
+          t.undefine();
         }
       }
-    }.execute();
+    });
   }
 
   protected final void doRemove() {

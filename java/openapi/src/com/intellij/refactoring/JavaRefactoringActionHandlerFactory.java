@@ -70,7 +70,7 @@ public abstract class JavaRefactoringActionHandlerFactory {
    * Creates handler for Introduce Parameter refactoring.<p>
    *
    * {@link RefactoringActionHandler#invoke(com.intellij.openapi.project.Project, com.intellij.psi.PsiElement[], com.intellij.openapi.actionSystem.DataContext)}
-   * accepts either 1 {@code PsiExpression}, that will be an initialzier for introduced parameter,
+   * accepts either 1 {@code PsiExpression}, that will be an initializer for introduced parameter,
    * or 1 {@code PsiLocalVariable}, that will be replaced with introduced parameter.
    */
   public abstract RefactoringActionHandler createIntroduceParameterHandler();
@@ -171,7 +171,7 @@ public abstract class JavaRefactoringActionHandlerFactory {
    * Creates handler for Introduce Field refactoring.<p>
    *
    * {@link RefactoringActionHandler#invoke(com.intellij.openapi.project.Project, com.intellij.psi.PsiElement[], com.intellij.openapi.actionSystem.DataContext)}
-   * accepts either 1 {@code PsiExpression}, that will be an initialzier for introduced field,
+   * accepts either 1 {@code PsiExpression}, that will be an initializer for introduced field,
    * or 1 {@code PsiLocalVariable}, that will be replaced with introduced field.
    */
   public abstract RefactoringActionHandler createIntroduceFieldHandler();
@@ -180,7 +180,7 @@ public abstract class JavaRefactoringActionHandlerFactory {
    * Creates handler for Introduce Variable refactoring.<p>
    *
    * {@link RefactoringActionHandler#invoke(com.intellij.openapi.project.Project, com.intellij.psi.PsiElement[], com.intellij.openapi.actionSystem.DataContext)}
-   * accepts 1 {@code PsiExpression}, that will be an initialzier for introduced variable.
+   * accepts 1 {@code PsiExpression}, that will be an initializer for introduced variable.
    */
   public abstract RefactoringActionHandler createIntroduceVariableHandler();
 
@@ -188,7 +188,7 @@ public abstract class JavaRefactoringActionHandlerFactory {
    * Creates handler for Introduce Constant refactoring.<p>
    *
    * {@link RefactoringActionHandler#invoke(com.intellij.openapi.project.Project, com.intellij.psi.PsiElement[], com.intellij.openapi.actionSystem.DataContext)}
-   * accepts either 1 {@code PsiExpression}, that will be an initialzier for introduced constant,
+   * accepts either 1 {@code PsiExpression}, that will be an initializer for introduced constant,
    * or 1 {@code PsiLocalVariable}, that will be replaced with introduced constant.
    */
   public abstract RefactoringActionHandler createIntroduceConstantHandler();

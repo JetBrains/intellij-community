@@ -49,16 +49,16 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Rustam Vishnyakov
  */
 
 public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPanel {
-  private static final Logger LOG = Logger.getInstance(TabbedLanguageCodeStylePanel.class);
-
   private CodeStyleAbstractPanel myActiveTab;
   private List<CodeStyleAbstractPanel> myTabs;
   private JPanel myPanel;
@@ -239,11 +239,6 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   }
 
   @Override
-  protected void somethingChanged() {
-    super.somethingChanged();
-  }
-
-  @Override
   public void apply(CodeStyleSettings settings) throws ConfigurationException {
     ensureTabs();
     for (CodeStyleAbstractPanel tab : myTabs) {
@@ -358,16 +353,14 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
         result.add(codeStyle);
       }
     }
-    return result.toArray(new PredefinedCodeStyle[result.size()]);
+    return result.toArray(PredefinedCodeStyle.EMPTY_ARRAY);
   }
 
 
   private void applyLanguageSettings(Language lang) {
     final Project currProject = ProjectUtil.guessCurrentProject(getPanel());
-    CodeStyleSettings rootSettings = CodeStyleSettingsManager.getSettings(currProject);
+    CodeStyleSettings rootSettings = CodeStyle.getSettings(currProject);
     CodeStyleSettings targetSettings = getSettings();
-    if (rootSettings.getCommonSettings(lang) == null || targetSettings.getCommonSettings(getDefaultLanguage()) == null) 
-      return;
 
     applyLanguageSettings(lang, rootSettings, targetSettings);
     reset(targetSettings);
@@ -377,16 +370,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
   protected void applyLanguageSettings(Language lang, CodeStyleSettings rootSettings, CodeStyleSettings targetSettings) {
     CommonCodeStyleSettings sourceCommonSettings = rootSettings.getCommonSettings(lang);
     CommonCodeStyleSettings targetCommonSettings = targetSettings.getCommonSettings(getDefaultLanguage());
-    if (!(targetCommonSettings instanceof CodeStyleSettings)) {
-      CommonCodeStyleSettingsManager.copy(sourceCommonSettings, targetCommonSettings);
-    }
-    else {
-      Language targetLang = getDefaultLanguage();
-      LOG.error((targetLang != null ? targetLang.getDisplayName() : "Unknown") +
-                " language plug-in either uses an outdated API or does not initialize" +
-                " its own code style settings in LanguageCodeStyleSettingsProvider.getDefaultSettings()." +
-                " The operation can not be applied in this case.");
-    }
+    targetCommonSettings.copyFrom(sourceCommonSettings);
   }
 
   private void applyPredefinedStyle(String styleName) {

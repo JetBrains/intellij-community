@@ -68,6 +68,13 @@ public abstract class ForkedByModuleSplitter {
     myForkedDebuggerHelper.setupDebugger(vmParameters);
     final ProcessBuilder builder = new ProcessBuilder();
     builder.add(vmParameters);
+
+    //copy encoding from first VM, as encoding is added into command line explicitly and vm options do not contain it
+    String encoding = System.getProperty("file.encoding");
+    if (encoding != null) {
+      builder.add("-Dfile.encoding=" + encoding);
+    }
+
     builder.add("-classpath");
     if (myDynamicClasspath.length() > 0) {
       try {
@@ -103,7 +110,14 @@ public abstract class ForkedByModuleSplitter {
       char[] buf = new char[8192];
 
       public void run() {
-        final InputStreamReader inputReader = new InputStreamReader(inputStream);
+        final InputStreamReader inputReader;
+        try {
+          inputReader = new InputStreamReader(inputStream, "UTF-8");
+        }
+        catch (UnsupportedEncodingException e) {
+          return;
+        }
+
         try {
           while (true) {
             if (stopped[0]) break;

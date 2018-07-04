@@ -24,10 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   private final EventDispatcher<DocumentListener> myDocumentMulticaster = EventDispatcher.create(DocumentListener.class);
@@ -164,8 +161,8 @@ public class EditorEventMulticasterImpl implements EditorEventMulticasterEx {
   }
 
   @TestOnly
-  public Map<Class, List> getListeners() {
-    Map<Class, List> myCopy = new LinkedHashMap<>();
+  public Map<Class<? extends EventListener>, List<? extends EventListener>> getListeners() {
+    Map<Class<? extends EventListener>, List<? extends EventListener>> myCopy = new LinkedHashMap<>();
     myCopy.put(DocumentListener.class, new ArrayList<>(myDocumentMulticaster.getListeners()));
     myCopy.put(EditReadOnlyListener.class, new ArrayList<>(myEditReadOnlyMulticaster.getListeners()));
 

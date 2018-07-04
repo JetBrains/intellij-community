@@ -15,8 +15,9 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBTreeTraverser;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -26,32 +27,48 @@ import java.util.*;
  */
 public class MatchResult {
   public final List<JsonSchemaObject> mySchemas;
-  public final List<Set<JsonSchemaObject>> myExcludingSchemas;
+  public final List<Collection<? extends JsonSchemaObject>> myExcludingSchemas;
 
-  private MatchResult(@NotNull final List<JsonSchemaObject> schemas, @NotNull final List<Set<JsonSchemaObject>> excludingSchemas) {
+  private MatchResult(@NotNull final List<JsonSchemaObject> schemas, @NotNull final List<Collection<? extends JsonSchemaObject>> excludingSchemas) {
     mySchemas = Collections.unmodifiableList(schemas);
     myExcludingSchemas = Collections.unmodifiableList(excludingSchemas);
   }
 
   public static MatchResult create(@NotNull JsonSchemaTreeNode root) {
-    final List<JsonSchemaObject> schemas = new ArrayList<>();
-    final Map<Integer, Set<JsonSchemaObject>> oneOfGroups = new HashMap<>();
-    ContainerUtil.process(new JBTreeTraverser<JsonSchemaTreeNode>(node -> node.getChildren()).withRoot(root).preOrderDfsTraversal(),
-                          node -> {
-                            if (node.getChildren().isEmpty() && !node.isAny() && !node.isNothing() &&
-                                SchemaResolveState.normal.equals(node.getResolveState())) {
-                              final int groupNumber = node.getExcludingGroupNumber();
-                              if (groupNumber < 0) {
-                                schemas.add(node.getSchema());
-                              }
-                              else {
-                                Set<JsonSchemaObject> set = oneOfGroups.get(groupNumber);
-                                if (set == null) oneOfGroups.put(groupNumber, (set = new HashSet<>()));
-                                set.add(node.getSchema());
-                              }
-                            }
-                            return true;
-                          });
-    return new MatchResult(schemas, new ArrayList<>(oneOfGroups.values()));
+    List<JsonSchemaObject> schemas = new ArrayList<>();
+    MultiMap<Integer, JsonSchemaObject> oneOfGroups = MultiMap.create();
+    iterateTree(root, node -> {
+      if (node.isAny()) return true;
+      int groupNumber = node.getExcludingGroupNumber();
+      if (groupNumber < 0) {
+        schemas.add(node.getSchema());
+      }
+      else {
+        oneOfGroups.putValue(groupNumber, node.getSchema());
+      }
+      return true;
+    });
+    List<Collection<? extends JsonSchemaObject>> result = oneOfGroups.isEmpty()
+                                                          ? ContainerUtil.emptyList()
+                                                          : ContainerUtil.newArrayListWithCapacity(oneOfGroups.keySet().size());
+    for (Map.Entry<Integer, Collection<JsonSchemaObject>> entry: oneOfGroups.entrySet()) {
+      result.add(entry.getValue());
+    }
+    return new MatchResult(schemas, result);
+  }
+
+  public static void iterateTree(@NotNull JsonSchemaTreeNode root,
+                                 @NotNull final Processor<? super JsonSchemaTreeNode> processor) {
+    final ArrayDeque<JsonSchemaTreeNode> queue = new ArrayDeque<>(root.getChildren());
+    while (!queue.isEmpty()) {
+      final JsonSchemaTreeNode node = queue.removeFirst();
+      if (node.getChildren().isEmpty()) {
+        if (!node.isNothing() && SchemaResolveState.normal.equals(node.getResolveState()) && !processor.process(node)) {
+          break;
+        }
+      } else {
+        queue.addAll(node.getChildren());
+      }
+    }
   }
 }

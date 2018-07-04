@@ -1,38 +1,43 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.DiffRequestChain;
-import com.intellij.diff.chains.DiffRequestProducer;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
-import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
+import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory;
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeSelectionModel;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain>
-  extends GoToChangePopupBuilder.BaseGoToChangePopupAction<Chain>{
-  public ChangeGoToChangePopupAction(@NotNull Chain chain, @NotNull Consumer<Integer> onSelected) {
-    super(chain, onSelected);
+  extends GoToChangePopupBuilder.BaseGoToChangePopupAction<Chain> {
+
+  @Nullable private final Object myDefaultSelection;
+
+  public ChangeGoToChangePopupAction(@NotNull Chain chain, @Nullable Object defaultSelection) {
+    super(chain);
+    myDefaultSelection = defaultSelection;
   }
+
+  @NotNull
+  protected abstract DefaultTreeModel buildTreeModel(@NotNull Project project, @NotNull ChangesGroupingPolicyFactory grouping);
+
+  protected abstract void onSelected(@Nullable Object object);
 
   @NotNull
   @Override
@@ -41,7 +46,7 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
     if (project == null) project = ProjectManager.getInstance().getDefaultProject();
 
     Ref<JBPopup> popup = new Ref<>();
-    ChangesBrowser cb = new MyChangesBrowser(project, getChanges(), getCurrentSelection(), popup);
+    MyChangesBrowser cb = new MyChangesBrowser(project, popup);
 
     popup.set(JBPopupFactory.getInstance()
                 .createComponentPopupBuilder(cb, cb.getPreferredFocusedComponent())
@@ -61,132 +66,51 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
   }
 
   //
-  // Abstract
-  //
-
-  protected abstract int findSelectedStep(@Nullable Change change);
-
-  @NotNull
-  protected abstract List<Change> getChanges();
-
-  @Nullable
-  protected abstract Change getCurrentSelection();
-
-  //
   // Helpers
   //
 
-  private class MyChangesBrowser extends ChangesBrowser implements Runnable {
-    @NotNull private final Ref<JBPopup> myPopup;
+  private class MyChangesBrowser extends ChangesBrowserBase {
+    @NotNull private final Ref<JBPopup> myRef;
 
-    public MyChangesBrowser(@NotNull Project project,
-                            @NotNull List<Change> changes,
-                            @Nullable final Change currentChange,
-                            @NotNull Ref<JBPopup> popup) {
-      super(project, null, changes, null, false, false, null, MyUseCase.LOCAL_CHANGES, null);
-      setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
-      setChangesToDisplay(changes);
+    public MyChangesBrowser(@NotNull Project project, @NotNull Ref<JBPopup> popupRef) {
+      super(project, false, false);
+      myRef = popupRef;
+      myViewer.setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+      init();
+
+      myViewer.rebuildTree();
 
       UiNotifyConnector.doWhenFirstShown(this, () -> {
-        if (currentChange != null) select(Collections.singletonList(currentChange));
-      });
-
-      myPopup = popup;
-    }
-
-    @Override
-    protected void buildToolBar(DefaultActionGroup toolBarGroup) {
-      // remove diff action
-    }
-
-    @NotNull
-    @Override
-    protected Runnable getDoubleClickHandler() {
-      return this;
-    }
-
-    @Override
-    public void run() {
-      Change change = getSelectedChanges().get(0);
-      final int index = findSelectedStep(change);
-      myPopup.get().cancel();
-      IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(() -> {
-        //noinspection unchecked
-        myOnSelected.consume(index);
+        if (myDefaultSelection != null) selectEntries(Collections.singletonList(myDefaultSelection));
       });
     }
-  }
-
-  public abstract static class Fake<Chain extends DiffRequestChain> extends ChangeGoToChangePopupAction<Chain> {
-    @NotNull private final List<Change> myChanges;
-    private final int mySelection;
-
-    @SuppressWarnings("AbstractMethodCallInConstructor")
-    public Fake(@NotNull Chain chain, int selection, @NotNull Consumer<Integer> onSelected) {
-      super(chain, onSelected);
-
-      mySelection = selection;
-
-      // we want to show ChangeBrowser-based popup, so have to create some fake changes
-      List<? extends DiffRequestProducer> requests = chain.getRequests();
-
-      myChanges = new ArrayList<>(requests.size());
-      for (int i = 0; i < requests.size(); i++) {
-        FilePath path = getFilePath(i);
-        FileStatus status = getFileStatus(i);
-        FakeContentRevision revision = new FakeContentRevision(path);
-        myChanges.add(new Change(revision, revision, status));
-      }
-    }
 
     @NotNull
-    protected abstract FilePath getFilePath(int index);
-
-    @NotNull
-    protected abstract FileStatus getFileStatus(int index);
-
     @Override
-    protected int findSelectedStep(@Nullable Change change) {
-      return myChanges.indexOf(change);
+    protected DefaultTreeModel buildTreeModel() {
+      return ChangeGoToChangePopupAction.this.buildTreeModel(myProject, getGrouping());
     }
 
     @NotNull
     @Override
-    protected List<Change> getChanges() {
-      return myChanges;
+    protected List<AnAction> createToolbarActions() {
+      return Collections.emptyList(); // remove diff action
     }
 
-    @Nullable
+    @NotNull
     @Override
-    protected Change getCurrentSelection() {
-      if (mySelection < 0 || mySelection >= myChanges.size()) return null;
-      return myChanges.get(mySelection);
+    protected List<AnAction> createPopupMenuActions() {
+      return Collections.emptyList(); // remove diff action
     }
 
-    private static class FakeContentRevision implements ContentRevision {
-      @NotNull private final FilePath myFilePath;
+    @Override
+    protected void onDoubleClick() {
+      myRef.get().cancel();
 
-      public FakeContentRevision(@NotNull FilePath filePath) {
-        myFilePath = filePath;
-      }
-
-      @Nullable
-      @Override
-      public String getContent() throws VcsException {
-        return null;
-      }
-
-      @NotNull
-      @Override
-      public FilePath getFile() {
-        return myFilePath;
-      }
-
-      @NotNull
-      @Override
-      public VcsRevisionNumber getRevisionNumber() {
-        return VcsRevisionNumber.NULL;
-      }
+      Object selection = ContainerUtil.getFirstItem(VcsTreeModelData.selected(myViewer).userObjects());
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+        onSelected(selection);
+      });
     }
   }
 }

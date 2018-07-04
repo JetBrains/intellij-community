@@ -15,14 +15,11 @@
  */
 package com.intellij.testGuiFramework.driver
 
-import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.computeOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.computeOnEdtWithTry
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
-import com.intellij.ui.LoadingNode
 import org.fest.assertions.Assertions
 import org.fest.reflect.core.Reflection
-import org.fest.swing.cell.JTreeCellReader
 import org.fest.swing.core.MouseButton
 import org.fest.swing.core.MouseClickInfo
 import org.fest.swing.core.Robot
@@ -44,8 +41,6 @@ import javax.annotation.Nonnull
 import javax.swing.JPopupMenu
 import javax.swing.JTree
 import javax.swing.plaf.basic.BasicTreeUI
-import javax.swing.tree.DefaultTreeModel
-import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
 
 /**
@@ -55,20 +50,51 @@ open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
 
   private val pathFinder = ExtendedJTreePathFinder()
   private val location = JTreeLocation()
+  private val DEFAULT_FIND_PATH_ATTEMPTS: Int = 3
 
 
-  fun clickPath(tree: JTree, pathStrings: List<String>, mouseClickInfo: MouseClickInfo)
-    = clickPath(tree, pathStrings, mouseClickInfo.button(), mouseClickInfo.times())
+  fun clickPath(tree: JTree, pathStrings: List<String>, mouseClickInfo: MouseClickInfo): Unit = clickPath(tree, pathStrings, mouseClickInfo.button(), mouseClickInfo.times())
 
-  fun clickPath(tree: JTree, pathStrings: List<String>, button: MouseButton = MouseButton.LEFT_BUTTON, times: Int = 1) {
+
+  fun clickPath(tree: JTree,
+                pathStrings: List<String>,
+                button: MouseButton = MouseButton.LEFT_BUTTON,
+                times: Int = 1,
+                attempts: Int = DEFAULT_FIND_PATH_ATTEMPTS) {
     val point = scrollToPath(tree, pathStrings)
     robot.click(tree, point, button, times)
+    //check that path is selected or click it again
+    if (!checkPathIsSelected(tree, pathStrings)) {
+      if (attempts == 0) throw Exception(
+        "Unable to click path in $DEFAULT_FIND_PATH_ATTEMPTS attempts due to it high mutability. Maybe this path is loading async.")
+      clickPath(tree, pathStrings, button, times, attempts - 1)
+    }
   }
 
   //XPath contains order number of similar nodes: clickXPath("test(1)", "Java") - here (1) means the first node
-  fun clickXPath(tree: JTree, xPathStrings: List<String>, button: MouseButton = MouseButton.LEFT_BUTTON, times: Int = 1) {
+  fun clickXPath(tree: JTree,
+                 xPathStrings: List<String>,
+                 button: MouseButton = MouseButton.LEFT_BUTTON,
+                 times: Int = 1,
+                 attempts: Int = 3) {
     val point = scrollToXPath(tree, xPathStrings)
     robot.click(tree, point, button, times)
+    //check that path is selected or click it again
+    if (!checkPathIsSelected(tree, xPathStrings, false)) {
+      if (attempts == 0) throw Exception(
+        "Unable to click path in $DEFAULT_FIND_PATH_ATTEMPTS attempts due to it high mutability. Maybe this path is loading async.")
+      clickXPath(tree, xPathStrings, button, times, attempts - 1)
+    }
+  }
+
+  fun doubleClickXPath(tree: JTree,
+                       xPathStrings: List<String>, attempts: Int = 3) {
+    clickXPath(tree, xPathStrings, button = MouseButton.LEFT_BUTTON, times = 2, attempts = attempts)
+  }
+
+  fun rightClickXPath(tree: JTree,
+                      xPathStrings: List<String>, attempts: Int = 3) {
+    clickXPath(tree, xPathStrings, button = MouseButton.RIGHT_BUTTON, times = 1, attempts = attempts)
   }
 
   fun checkPathExists(tree: JTree, pathStrings: List<String>) {
@@ -87,8 +113,23 @@ open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
     rightClick(tree, p)
   }
 
+  //works only if one item has been selected
+  private fun checkPathIsSelected(tree: JTree, pathStrings: List<String>, isUniquePath: Boolean = true): Boolean {
+    val selectedPaths = tree.selectionPaths
+    if (selectedPaths.size > 1) throw Exception("More than one row has been selected")
+    if (selectedPaths.isEmpty()) throw Exception("No one row has been selected at all")
+    val selectedPath = selectedPaths.first()
+    val matchedPath = findAndWaitForMatchingPath(tree = tree, pathStrings = pathStrings, isUniquePath = isUniquePath)
+    return matchedPath.lastPathComponent == selectedPath.lastPathComponent
+  }
+
   fun expandPath(tree: JTree, pathStrings: List<String>) {
     val info = scrollToMatchingPathAndGetToggleInfo(tree, pathStrings)
+    if (!info.first) toggleCell(tree, info.second!!, info.third)
+  }
+
+  fun expandXPath(tree: JTree, pathStrings: List<String>) {
+    val info: Triple<Boolean, Point, Int> = scrollToMatchingXPathAndGetToggleInfo(tree, pathStrings)
     if (!info.first) toggleCell(tree, info.second!!, info.third)
   }
 
@@ -97,8 +138,17 @@ open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
     if (info.first) toggleCell(tree, info.second!!, info.third)
   }
 
+  fun collapseXPath(tree: JTree, pathStrings: List<String>) {
+    val info = scrollToMatchingXPathAndGetToggleInfo(tree, pathStrings)
+    if (info.first) toggleCell(tree, info.second!!, info.third)
+  }
+
   fun selectPath(tree: JTree, pathStrings: List<String>) {
     selectMatchingPath(tree, pathStrings)
+  }
+
+  fun selectXPath(tree: JTree, pathStrings: List<String>) {
+    selectMatchingXPath(tree, pathStrings)
   }
 
   fun scrollToPath(tree: JTree, pathStrings: List<String>): Point {
@@ -128,24 +178,24 @@ open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
 
 
   ///OVERRIDDEN FUNCTIONS/////
-  override fun clickPath(tree: JTree, path: String) = clickPath(tree, listOf(path))
+  override fun clickPath(tree: JTree, path: String): Unit = clickPath(tree, listOf(path))
 
-  override fun clickPath(tree: JTree, path: String, button: MouseButton) = clickPath(tree, listOf(path), button)
-  override fun clickPath(tree: JTree, path: String, mouseClickInfo: MouseClickInfo) = clickPath(tree, listOf(path), mouseClickInfo)
+  override fun clickPath(tree: JTree, path: String, button: MouseButton): Unit = clickPath(tree, listOf(path), button)
+  override fun clickPath(tree: JTree, path: String, mouseClickInfo: MouseClickInfo): Unit = clickPath(tree, listOf(path), mouseClickInfo)
   override fun checkPathExists(tree: JTree, path: String) {
-    matchingPathFor(tree, listOf(path))
+    findAndWaitForMatchingPath(tree, listOf(path))
   }
 
   override fun nodeValue(tree: JTree, path: String): String? = nodeValue(tree, listOf(path))
   override fun nodeValue(tree: JTree, row: Int): String? = nodeText(tree, row, location)
-  override fun doubleClickPath(tree: JTree, path: String) = doubleClickPath(tree, listOf(path))
-  override fun rightClickPath(tree: JTree, path: String) = rightClickPath(tree, listOf(path))
-  override fun expandPath(tree: JTree, path: String) = expandPath(tree, listOf(path))
-  override fun collapsePath(tree: JTree, path: String) = collapsePath(tree, listOf(path))
-  override fun selectPath(tree: JTree, path: String) = selectPath(tree, listOf(path))
-  override fun showPopupMenu(tree: JTree, path: String) = showPopupMenu(tree, listOf(path))
-  override fun drag(tree: JTree, path: String) = drag(tree, listOf(path))
-  override fun drop(tree: JTree, path: String) = drop(tree, listOf(path))
+  override fun doubleClickPath(tree: JTree, path: String): Unit = doubleClickPath(tree, listOf(path))
+  override fun rightClickPath(tree: JTree, path: String): Unit = rightClickPath(tree, listOf(path))
+  override fun expandPath(tree: JTree, path: String): Unit = expandPath(tree, listOf(path))
+  override fun collapsePath(tree: JTree, path: String): Unit = collapsePath(tree, listOf(path))
+  override fun selectPath(tree: JTree, path: String): Unit = selectPath(tree, listOf(path))
+  override fun showPopupMenu(tree: JTree, path: String): JPopupMenu = showPopupMenu(tree, listOf(path))
+  override fun drag(tree: JTree, path: String): Unit = drag(tree, listOf(path))
+  override fun drop(tree: JTree, path: String): Unit = drop(tree, listOf(path))
   ///--------------------/////
 
 
@@ -190,9 +240,19 @@ open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
                                                    pathStrings: List<String>): Triple<Boolean, Point, Int> {
     return computeOnEdt {
       ComponentPreconditions.checkEnabledAndShowing(tree)
-      val matchingPath = matchingPathFor(tree, pathStrings)
+      val matchingPath = findAndWaitForMatchingPath(tree, pathStrings)
       val point = scrollToTreePath(tree, matchingPath, location)
       Triple.of(tree.isExpanded(matchingPath), point, tree.toggleClickCount)
+    }!!
+  }
+
+  private fun scrollToMatchingXPathAndGetToggleInfo(tree: JTree,
+                                                   pathStrings: List<String>): Triple<Boolean, Point, Int> {
+    return computeOnEdt {
+      ComponentPreconditions.checkEnabledAndShowing(tree)
+      val matchingTreePath = findAndWaitForMatchingPath(tree, pathStrings, isUniquePath = false)
+      val point = scrollToTreePath(tree, matchingTreePath, location)
+      Triple.of(tree.isExpanded(matchingTreePath), point, tree.toggleClickCount)
     }!!
   }
 
@@ -228,185 +288,6 @@ open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
     val changed = makeVisible(tree, Preconditions.checkNotNull(path.parentPath), true)
     if (changed) robot.waitForIdle()
     return changed
-  }
-
-  internal class ExtendedJTreePathFinder {
-
-    private var cellReader: JTreeCellReader? = null
-
-    init {
-      this.replaceCellReader(ExtendedJTreeCellReader())
-    }
-
-    fun findMatchingPath(tree: JTree, pathStrings: List<String>): TreePath {
-
-      val model = tree.model
-      val newPathValues = Lists.newArrayList<Any>()
-      var node: Any = model.root
-      val pathElementCount = pathStrings.size
-
-      for (stringIndex in 0..pathElementCount - 1) {
-        val pathString = pathStrings[stringIndex]
-        if (stringIndex == 0 && tree.isRootVisible) {
-          if (pathString != value(tree, node)) throw pathNotFound(pathStrings)
-          newPathValues.add(node)
-        }
-        else {
-          try {
-            node = traverseChildren(tree, node, pathString) ?: throw pathNotFound(pathStrings)
-          }
-          catch(e: LoadingNodeException) {      //if we met loading node let's tell it to caller and probably expand path to clarify this node
-            e.treePath = TreePath(newPathValues.toTypedArray())
-            throw e
-          }
-          newPathValues.add(node)
-        }
-      }
-      return TreePath(newPathValues.toTypedArray())
-    }
-
-    private fun traverseChildren(tree: JTree,
-                                 node: Any,
-                                 pathString: String): Any? {
-      var match: Any? = null
-      val model = tree.model
-      val childCount = model.getChildCount(node)
-
-      for (childIndex in 0..childCount - 1) {
-        val child = model.getChild(node, childIndex)
-        if (child is LoadingNode) throw LoadingNodeException(child, null)
-        if (pathString == value(tree, child)) {
-          if (match != null) throw multipleMatchingNodes(pathString, value(tree, node))
-          match = child
-        }
-      }
-
-      return match
-    }
-
-
-    fun findMatchingPath(tree: JTree, pathStrings: List<String>, isUniquePath: Boolean = true): TreePath {
-      if (isUniquePath) return findMatchingPath(tree, pathStrings)
-
-      val model = tree.model
-      if (tree.isRootVisible) {
-        if (pathStrings[0] != value(tree, model.root)) throw pathNotFound(pathStrings)
-        if (pathStrings.size == 1) return TreePath(arrayOf<Any>(model.root))
-        val result: TreePath = findMatchingPath(tree, model.root, pathStrings.subList(1, pathStrings.size)) ?: throw pathNotFound(
-          pathStrings)
-        return TreePath(arrayOf<Any>(model.root, *result.path))
-      }
-      else {
-        return findMatchingPath(tree, model.root, pathStrings) ?: throw pathNotFound(pathStrings)
-      }
-    }
-
-    /**
-     * this method tries to find any path. If tree contains multiple of searchable path it still accepts
-     */
-    private fun findMatchingPath(tree: JTree, node: Any, pathStrings: List<String>): TreePath? {
-      val model = tree.model
-      val childCount = model.getChildCount(node)
-
-      for (childIndex in 0..childCount - 1) {
-        val child = model.getChild(node, childIndex)
-        if (child is LoadingNode) throw LoadingNodeException(child, getPathToNode(tree, node))
-        if (pathStrings.size == 1 && value(tree, child) == pathStrings[0]) {
-
-          return TreePath(arrayOf<Any>(child))
-        }
-        else {
-          if (pathStrings[0] == value(tree, child)) {
-            val childResult = findMatchingPath(tree, child, pathStrings.subList(1, pathStrings.size))
-            if (childResult != null) return TreePath(arrayOf<Any>(child, *childResult.path))
-          }
-        }
-      }
-      return null
-    }
-
-    fun getPathToNode(tree: JTree, node: Any): TreePath {
-      val treeModel = tree.model as DefaultTreeModel
-      var path = treeModel.getPathToRoot(node as TreeNode)
-      if (!tree.isRootVisible) path = path.sliceArray(1..path.size - 1)
-      return TreePath(path)
-    }
-
-    fun findMatchingXPath(tree: JTree, xPathStrings: List<String>): TreePath {
-      val model = tree.model
-      if (tree.isRootVisible) {
-        if (xPathStrings[0] != value(tree, model.root)) throw pathNotFound(xPathStrings)
-        if (xPathStrings.size == 1) return TreePath(arrayOf<Any>(model.root))
-
-        val result: TreePath = findMatchingXPath(tree, model.root, xPathStrings.subList(1, xPathStrings.size)) ?: throw pathNotFound(
-          xPathStrings)
-        return TreePath(arrayOf<Any>(model.root, *result.path))
-      }
-      else {
-        return findMatchingXPath(tree, model.root, xPathStrings) ?: throw pathNotFound(xPathStrings)
-      }
-    }
-
-    private fun findMatchingXPath(tree: JTree, node: Any, xPathStrings: List<String>): TreePath? {
-      val model = tree.model
-      val childCount = model.getChildCount(node)
-
-      val order = xPathStrings[0].getOrder() ?: 0
-      val original = if (xPathStrings[0].hasOrder()) xPathStrings[0].subSequence(0,
-                                                                                 xPathStrings[0].length - 2 - (order.toString().length))
-      else xPathStrings[0]
-      var currentOrder = 0
-
-      for (childIndex in 0..childCount - 1) {
-        val child = model.getChild(node, childIndex)
-        if (original == value(tree, child)) {
-          if (currentOrder == order) {
-            if (xPathStrings.size == 1) {
-              return TreePath(arrayOf<Any>(child))
-            }
-            else {
-              val childResult = findMatchingXPath(tree, child, xPathStrings.subList(1, xPathStrings.size))
-              if (childResult != null) return TreePath(arrayOf<Any>(child, *childResult.path))
-            }
-          }
-          else {
-            currentOrder++
-          }
-        }
-      }
-      return null
-    }
-
-    private fun String.hasOrder(): Boolean =
-      Regex("\\(\\d\\)").find(this)?.value?.isNotEmpty() ?: false
-
-
-    private fun String.getOrder(): Int? {
-      val find: MatchResult = Regex("\\(\\d\\)").find(this) ?: return null
-      return find.value.removeSurrounding("(", ")").toInt()
-    }
-
-    private fun pathNotFound(path: List<String>): LocationUnavailableException {
-      throw LocationUnavailableException("Unable to find path \"$path\"")
-    }
-
-    private fun multipleMatchingNodes(pathString: String, parentText: Any): LocationUnavailableException {
-      throw LocationUnavailableException("There is more than one node with value '$pathString' under \"$parentText\"")
-    }
-
-    private fun value(tree: JTree, modelValue: Any): String {
-      return eraseZeroSpaceSymbols(cellReader!!.valueAt(tree, modelValue)!!)
-    }
-
-    private fun eraseZeroSpaceSymbols(string: String): String = string.replace("\u200B", "")
-
-    fun replaceCellReader(newCellReader: JTreeCellReader) {
-      cellReader = newCellReader
-    }
-
-    fun cellReader(): JTreeCellReader {
-      return cellReader!!
-    }
   }
 
   /**
@@ -451,59 +332,64 @@ open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
     }!!
   }
 
+  private fun waitMatchingPathFor(tree: JTree, pathStrings: List<String>, isUniquePath: Boolean = true){
+    try {
+      pause(5L){
+        val path = try {
+          matchingPathFor(
+            tree = tree,
+            pathStrings = pathStrings,
+            isUniquePath = isUniquePath
+          )
+        }
+        catch (e: LocationUnavailableException) {
+          null
+        }
+        path != null
+      }
+    }
+    catch (e: WaitTimedOutError) {
+      throw LocationUnavailableException(e.localizedMessage)
+    }
+  }
+
+  fun findAndWaitForMatchingPath(tree: JTree, pathStrings: List<String>, isUniquePath: Boolean = true): TreePath{
+    waitMatchingPathFor(tree, pathStrings, isUniquePath)
+    return matchingPathFor(tree, pathStrings, isUniquePath = isUniquePath)
+  }
 
   /**
    * we are trying to find TreePath for a tree, if we met loading node (LoadingTreeNode)
    */
-  protected fun matchingPathFor(tree: JTree, pathStrings: List<String>, countDownAttempts: Int = 30, isUniquePath: Boolean = true): TreePath {
+  private fun matchingPathFor(tree: JTree,
+                              pathStrings: List<String>,
+                              isUniquePath: Boolean = true,
+                              countDownAttempts: Int = 30): TreePath {
     if (countDownAttempts == 0) throw Exception("Unable to find path($pathStrings) for tree: $tree, attempts count exceeded")
-    try {
-      return computeOnEdtWithTry {
+    return try {
+      computeOnEdtWithTry {
         matchingPathWithRootIfInvisible(tree, pathStrings, isUniquePath)
       }!!
     }
     catch (e: LoadingNodeException) {
       if (e.treePath != null) expandTreePath(tree, e.treePath!!)
-      return matchingPathFor(tree, pathStrings, countDownAttempts - 1, isUniquePath)
+      matchingPathFor(tree, pathStrings, isUniquePath, countDownAttempts - 1)
     }
   }
 
   private fun matchingPathWithRootIfInvisible(tree: JTree, pathStrings: List<String>, isUniquePath: Boolean): TreePath {
     val matchingPath = pathFinder.findMatchingPath(tree, pathStrings, isUniquePath)
-    return addRootIfInvisible(tree, matchingPath)
+    return Companion.addRootIfInvisible(tree, matchingPath)
   }
 
   private fun matchingXPathWithRootIfInvisible(tree: JTree, xPathStrings: List<String>, isUniquePath: Boolean): TreePath {
     val matchingPath = pathFinder.findMatchingXPath(tree, xPathStrings)
-    return addRootIfInvisible(tree, matchingPath)
-  }
-
-  private fun addRootIfInvisible(@Nonnull tree: JTree, @Nonnull path: TreePath): TreePath {
-    val root = tree.model.root
-    if (!tree.isRootVisible && root != null) {
-      if (path.pathCount > 0 && root === path.getPathComponent(0)) {
-        return path
-      }
-      else {
-        val pathAsArray = path.path
-        if (pathAsArray == null) {
-          return TreePath(Lists.newArrayList(*arrayOf(root)))
-        }
-        else {
-          val newPath = Lists.newArrayList(*pathAsArray)
-          newPath.add(0, root)
-          return TreePath(newPath.toTypedArray())
-        }
-      }
-    }
-    else {
-      return path
-    }
+    return Companion.addRootIfInvisible(tree, matchingPath)
   }
 
   private fun expandTreePath(tree: JTree, path: TreePath) {
     runOnEdt {
-      val realPath = addRootIfInvisible(tree, path)
+      val realPath = Companion.addRootIfInvisible(tree, path)
       if (!tree.isExpanded(path)) tree.expandPath(realPath)
     }
   }
@@ -543,10 +429,43 @@ open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
     return where
   }
 
+  private fun selectMatchingXPath(tree: JTree, pathStrings: List<String>): Point {
+    val info = scrollToMatchingXPath(tree, pathStrings)
+    robot.waitForIdle()
+    val where = info.third!!
+    if (!info.second) robot.click(tree, where)
+    return where
+  }
+
   private fun pause(timeout: Long, condition: () -> Boolean) {
     Pause.pause(object : Condition("ExtendedJTreeDriver wait condition:") {
       override fun test() = condition()
     })
+  }
+
+  companion object {
+    fun addRootIfInvisible(@Nonnull tree: JTree, @Nonnull path: TreePath): TreePath {
+      val root = tree.model.root
+      if (!tree.isRootVisible && root != null) {
+        if (path.pathCount > 0 && root === path.getPathComponent(0)) {
+          return path
+        }
+        else {
+          val pathAsArray = path.path
+          if (pathAsArray == null) {
+            return TreePath(Lists.newArrayList(*arrayOf(root)))
+          }
+          else {
+            val newPath = Lists.newArrayList(*pathAsArray)
+            newPath.add(0, root)
+            return TreePath(newPath.toTypedArray())
+          }
+        }
+      }
+      else {
+        return path
+      }
+    }
   }
 
 }

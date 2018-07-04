@@ -26,28 +26,28 @@ import org.jetbrains.uast.visitor.UastVisitor
  */
 interface UPolyadicExpression : UExpression {
 
-    /**
-     * Returns a list of expression operands.
-     */
-    val operands: List<UExpression>
+  /**
+   * Returns a list of expression operands.
+   */
+  val operands: List<UExpression>
 
-    /**
-     * Returns the operator.
-     */
-    val operator: UastBinaryOperator
+  /**
+   * Returns the operator.
+   */
+  val operator: UastBinaryOperator
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitPolyadicExpression(this)) return
-        annotations.acceptList(visitor)
-        operands.acceptList(visitor)
-        visitor.afterVisitPolyadicExpression(this)
-    }
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitPolyadicExpression(this)) return
+    annotations.acceptList(visitor)
+    operands.acceptList(visitor)
+    visitor.afterVisitPolyadicExpression(this)
+  }
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
-            visitor.visitPolyadicExpression(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
+    visitor.visitPolyadicExpression(this, data)
 
-    override fun asLogString() = log("operator = $operator")
+  override fun asLogString(): String = log("operator = $operator")
 
-    override fun asRenderString() =
-            operands.joinToString(separator = " ${operator.text} ", transform = UExpression::asRenderString)
+  override fun asRenderString(): String =
+    operands.joinToString(separator = " ${operator.text} ", transform = UExpression::asRenderString)
 }

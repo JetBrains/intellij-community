@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints.settings
 
 import com.intellij.lang.Language
@@ -20,8 +6,8 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.util.getAttributeBooleanValue
 import org.jdom.Element
-
 
 private object XmlTagHelper {
   val BLACKLISTS = "blacklists"
@@ -32,9 +18,7 @@ private object XmlTagHelper {
   val PATTERN = "pattern"
 }
 
-
 class Diff(val added: Set<String>, val removed: Set<String>) {
-
   fun applyOn(base: Set<String>): Set<String> {
     val baseSet = base.toMutableSet()
     added.forEach { baseSet.add(it) }
@@ -53,11 +37,9 @@ class Diff(val added: Set<String>, val removed: Set<String>) {
       return Diff(added, removed)
     }
   }
-
 }
 
-
-@State(name = "ParameterNameHintsSettings", storages = arrayOf(Storage("parameter.hints.xml")))
+@State(name = "ParameterNameHintsSettings", storages = [(Storage("parameter.hints.xml"))])
 class ParameterNameHintsSettings : PersistentStateComponent<Element> {
   private val removedPatterns = hashMapOf<String, Set<String>>()
   private val addedPatterns = hashMapOf<String, Set<String>>()
@@ -133,8 +115,7 @@ class ParameterNameHintsSettings : PersistentStateComponent<Element> {
     
     state.getChildren("option").forEach { 
       val id = it.getAttributeValue("id")
-      val value = it.getAttributeValue("value").toBoolean()
-      options[id] = value
+      options[id] = it.getAttributeBooleanValue("value")
     }
   }
   

@@ -145,7 +145,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
 
   private static PsiReference[] mergeReferences(PsiElement element, List<PsiReference> references) {
     if (references.size() <= 1) {
-      return references.toArray(new PsiReference[references.size()]);
+      return references.toArray(PsiReference.EMPTY_ARRAY);
     }
     Collections.sort(references, START_OFFSET_COMPARATOR);
     final List<PsiReference> intersecting = new ArrayList<>();
@@ -180,7 +180,7 @@ public class PathReferenceManagerImpl extends PathReferenceManager {
     List<PsiReference> result = doMerge(element, intersecting);
     result.addAll(notIntersecting);
 
-    return result.toArray(new PsiReference[result.size()]);
+    return result.toArray(PsiReference.EMPTY_ARRAY);
   }
 
   private static List<PsiReference> doMerge(final PsiElement element, final List<PsiReference> references) {

@@ -15,47 +15,51 @@
  */
 package com.intellij.openapi.vfs.impl.jar;
 
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.impl.ZipHandler;
+import com.intellij.openapi.vfs.impl.ZipHandlerBase;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.io.ResourceHandle;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.zip.ZipFile;
 
-public class BasicJarHandler extends ZipHandler {
+// JarHandler that keeps limited LRU number of ZipFile references opened for a while after they were used
+// Once the inactivity time passed the ZipFile is closed.
+public class BasicJarHandler extends ZipHandlerBase {
   private static final Logger LOG = Logger.getInstance("com.intellij.openapi.vfs.impl.jar.BasicJarHandler");
   private static final boolean doTracing = LOG.isTraceEnabled();
-  private final Object myLock = new Object();
-  private ScheduledFuture<?> myCachedHandleInvalidationRequest;
-  private ResourceHandle<ZipFile> myCachedHandle;
+  private final ZipResourceHandle myHandle;
   private final JarFileSystemImpl myFileSystem;
   
   public BasicJarHandler(@NotNull String path) {
     super(path);
     myFileSystem = (JarFileSystemImpl)JarFileSystem.getInstance();
+    myHandle = new ZipResourceHandle();
   }
-
-  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection") 
-  private static final LinkedHashMap<BasicJarHandler, ScheduledFuture<?>> ourInvalidationCache;
+ 
+  private static final LinkedHashMap<BasicJarHandler, ScheduledFuture<?>> ourOpenFileLimitGuard;
   
   static {
     final int maxSize = 30;
-    ourInvalidationCache = new LinkedHashMap<BasicJarHandler, ScheduledFuture<?>>(maxSize, true) {
+    ourOpenFileLimitGuard = new LinkedHashMap<BasicJarHandler, ScheduledFuture<?>>(maxSize, true) {
       @Override
       protected boolean removeEldestEntry(Map.Entry<BasicJarHandler, ScheduledFuture<?>> eldest, BasicJarHandler key, ScheduledFuture<?> value) {
         if(size() > maxSize) {
-          if (doTracing) trace("Invalidation cache size exceeded");
-          key.invalidateCachedHandleIfNeeded();
+          key.myHandle.invalidateZipReference(value);
           return true;
         }
         return false;
@@ -67,108 +71,19 @@ public class BasicJarHandler extends ZipHandler {
   public void dispose() {
     super.dispose();
 
-    invalidateCachedHandleIfNeeded();
-  }
-
-  private void invalidateCachedHandleIfNeeded() {
-    synchronized (myLock){
-      if (myCachedHandle != null) invalidateCachedHandle();
-    }
+    myHandle.invalidateZipReference();
   }
 
   private static final AtomicLong ourOpenTime = new AtomicLong();
   private static final AtomicInteger ourOpenCount = new AtomicInteger();
   private static final AtomicInteger ourCloseCount = new AtomicInteger();
   private static final AtomicLong ourCloseTime = new AtomicLong();
+  
   @NotNull
   @Override
   protected ResourceHandle<ZipFile> acquireZipHandle() throws IOException {
-    synchronized (myLock) {
-      clearScheduledInvalidationRequest();
-
-      if (myCachedHandle == null) {
-        File fileToUse = getFileToUse();
-        if (doTracing) trace("To be opened:" + fileToUse);
-        int cacheInMs = myFileSystem.isMakeCopyOfJar(fileToUse) ? 2000 : 5 * 60 * 1000; /* 5 minute rule */
-        
-        long started = doTracing ? System.nanoTime() : 0;
-
-        setFileStampAndLength(this, fileToUse.getPath());
-        clearCaches();
-        ZipFile file = new ZipFile(fileToUse);
-        
-        if (doTracing) {
-          long openedFor = System.nanoTime() - started;
-          int opened = ourOpenCount.incrementAndGet();
-          long openTime = ourOpenTime.addAndGet(openedFor);
-
-          trace("Opened for " +
-                (openedFor / 1000000) +
-                "ms, cached for " +
-                cacheInMs +
-                "ms, times opened:" +
-                opened +
-                ", open time:" +
-                (openTime / 1000000) +
-                "ms");
-        }
-
-        myCachedHandle = new ResourceHandle<ZipFile>(file) {
-          @Override
-          protected void disposeResource() {
-            synchronized (myLock) {
-              clearScheduledInvalidationRequest();
-
-              myCachedHandleInvalidationRequest =
-                JobScheduler.getScheduler().schedule(() -> invalidateCachedHandle(), cacheInMs, TimeUnit.MILLISECONDS);
-              synchronized (ourInvalidationCache) {
-                ourInvalidationCache.put(BasicJarHandler.this, myCachedHandleInvalidationRequest);
-              }
-            }
-          }
-        };
-      } else {
-        myCachedHandle.allocate();
-      }
-      
-      return myCachedHandle;
-    }
-  }
-
-  private void clearScheduledInvalidationRequest() {
-    ScheduledFuture<?> invalidationRequest = myCachedHandleInvalidationRequest;
-    if (invalidationRequest != null) {
-      invalidationRequest.cancel(false);
-      myCachedHandleInvalidationRequest = null;
-      synchronized (ourInvalidationCache) {
-        ourInvalidationCache.remove(this);
-      }
-    }
-  }
-
-  private void invalidateCachedHandle() {
-    synchronized (myLock) {
-      if (myCachedHandle == null || myCachedHandle.getRefCount() != 0) {
-        return;
-      }
-      
-      long started = doTracing ? System.nanoTime() : 0;
-      try {
-        myCachedHandle.get().close();
-      } catch (IOException ex) {
-        LOG.info(ex);
-      }
-      
-      if (doTracing) {
-        long closeTime = System.nanoTime() - started;
-        int closed = ourCloseCount.incrementAndGet();
-        long totalCloseTime = ourCloseTime.addAndGet(closeTime);
-      
-        trace("Disposed:" + getFileToUse() + " " + (closeTime / 1000000) + "ms, times closed:" + closed +
-              ", closed time:" + (totalCloseTime / 1000000) + "ms");
-      }
-      myCachedHandle = null;
-    }
+    myHandle.attach();
+    return myHandle;
   }
   
   private static void trace(String msg) {
@@ -177,8 +92,144 @@ public class BasicJarHandler extends ZipHandler {
   }
   
   public static void closeOpenedZipReferences() {
-    synchronized (ourInvalidationCache) {
-      ourInvalidationCache.keySet().forEach(BasicJarHandler::dispose);
+    synchronized (ourOpenFileLimitGuard) {
+      ourOpenFileLimitGuard.keySet().forEach(BasicJarHandler::dispose);
     }
   }
+
+  @Override
+  protected long getEntryFileStamp() {
+    return myHandle.getFileStamp();
+  }
+
+  private static final ScheduledExecutorService
+    ourScheduledExecutorService = AppExecutorUtil.createBoundedScheduledExecutorService("Zip Handle Janitor", 1);
+  
+  private final class ZipResourceHandle extends ResourceHandle<ZipFile> {
+    private ZipFile myFile;
+    private long myFileStamp;
+    //private long myFileLength;
+    private final ReentrantLock myLock = new ReentrantLock();
+    private ScheduledFuture<?> myInvalidationRequest;
+    
+    void attach() throws IOException {
+      synchronized (ourOpenFileLimitGuard) {
+        ourOpenFileLimitGuard.remove(BasicJarHandler.this);
+      }
+      
+      myLock.lock();
+
+      try {
+        ScheduledFuture<?> invalidationRequest = myInvalidationRequest;
+        if (invalidationRequest != null) {
+          invalidationRequest.cancel(false);
+          myInvalidationRequest = null;
+        }
+
+        if (myFile == null) {
+          File fileToUse = getFile();
+          if (doTracing) trace("To be opened:" + fileToUse);
+  
+          long started = doTracing ? System.nanoTime() : 0;
+  
+          FileAttributes attributes = FileSystemUtil.getAttributes(fileToUse.getPath());
+  
+          myFileStamp = attributes != null ? attributes.lastModified : DEFAULT_TIMESTAMP;
+          //myFileLength = attributes != null ? attributes.length : DEFAULT_LENGTH;
+  
+          ZipFile file = new ZipFile(fileToUse);
+  
+          if (doTracing) {
+            long openedFor = System.nanoTime() - started;
+            int opened = ourOpenCount.incrementAndGet();
+            long openTime = ourOpenTime.addAndGet(openedFor);
+  
+            trace("Opened for " +
+                  (openedFor / 1000000) +
+                  "ms, times opened:" +
+                  opened +
+                  ", open time:" +
+                  (openTime / 1000000) +
+                  "ms, reference will be cached for " + cacheInvalidationTime() + "ms");
+          }
+  
+          myFile = file;
+        }
+      }
+      catch (Throwable e) {
+        myLock.unlock();
+        throw e;
+      }
+    }
+
+    @Override
+    public void close() {
+      assert myLock.isLocked();
+      ScheduledFuture<?> invalidationRequest;
+      try {
+        myInvalidationRequest = invalidationRequest =
+          ourScheduledExecutorService.schedule(() -> invalidateZipReference(), cacheInvalidationTime(), TimeUnit.MILLISECONDS);
+      }
+      finally {
+        myLock.unlock();
+      }
+
+      synchronized (ourOpenFileLimitGuard) {
+        ourOpenFileLimitGuard.put(BasicJarHandler.this, invalidationRequest);
+      }
+    }
+
+    private int cacheInvalidationTime() {
+      File file = getFile();
+      return myFileSystem.isMakeCopyOfJar(file) ? 2000 : 5 * 60 * 1000;
+    }
+
+    @Override
+    public ZipFile get() {
+      assert myLock.isLocked();
+      
+      return myFile;
+    }
+
+    private void invalidateZipReference() {
+      invalidateZipReference(null);
+    }
+    
+    private void invalidateZipReference(@Nullable ScheduledFuture<?> expectedInvalidationRequest) {
+      myLock.lock();
+      try {
+        if (myFile == null) return;
+        if (expectedInvalidationRequest != null) {
+          if (doTracing) trace("Invalidation cache size exceeded");
+          if(myInvalidationRequest != expectedInvalidationRequest) {
+            return;
+          }
+        }
+        myInvalidationRequest = null;
+        long started = doTracing ? System.nanoTime() : 0;
+        try {
+          myFile.close();
+        } catch (IOException ex) {
+          LOG.info(ex);
+        }
+
+        if (doTracing) {
+          long closeTime = System.nanoTime() - started;
+          int closed = ourCloseCount.incrementAndGet();
+          long totalCloseTime = ourCloseTime.addAndGet(closeTime);
+
+          trace("Disposed:" + getFile() + " " + (closeTime / 1000000) + "ms, times closed:" + closed +
+                ", closed time:" + (totalCloseTime / 1000000) + "ms");
+        }
+        myFile = null;
+      } finally {
+        myLock.unlock();
+      }
+    }
+
+    long getFileStamp() {
+      assert myLock.isLocked();
+      return myFileStamp;
+    }
+  } 
 }

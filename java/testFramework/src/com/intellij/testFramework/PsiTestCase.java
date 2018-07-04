@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.Document;
@@ -64,11 +49,15 @@ public abstract class PsiTestCase extends ModuleTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myPsiManager = null;
-    myFile = null;
-    myTestDataBefore = null;
-    myTestDataAfter = null;
-    super.tearDown();
+    try {
+      myPsiManager = null;
+      myFile = null;
+      myTestDataBefore = null;
+      myTestDataAfter = null;
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @NotNull
@@ -84,30 +73,34 @@ public abstract class PsiTestCase extends ModuleTestCase {
 
   @NotNull
   protected PsiFile createFile(@NotNull Module module, @NotNull String fileName, @NotNull String text) throws Exception {
-    File dir = createTempDirectory();
-    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
-
-    assert vDir != null : dir;
+    VirtualFile vDir = createTempVfsDirectory();
     return createFile(module, vDir, fileName, text);
   }
 
   @NotNull
-  protected PsiFile createFile(@NotNull final Module module, @NotNull final VirtualFile vDir, @NotNull final String fileName, @NotNull final String text) throws IOException {
-    return new WriteAction<PsiFile>() {
-      @Override
-      protected void run(@NotNull Result<PsiFile> result) throws Throwable {
-        if (!ModuleRootManager.getInstance(module).getFileIndex().isInSourceContent(vDir)) {
-          addSourceContentToRoots(module, vDir);
-        }
+  protected VirtualFile createTempVfsDirectory() throws IOException {
+    File dir = createTempDirectory();
+    VirtualFile vDir = LocalFileSystem.getInstance().refreshAndFindFileByPath(dir.getCanonicalPath().replace(File.separatorChar, '/'));
 
-        final VirtualFile vFile = vDir.createChildData(vDir, fileName);
-        VfsUtil.saveText(vFile, text);
-        assertNotNull(vFile);
-        final PsiFile file = myPsiManager.findFile(vFile);
-        assertNotNull(file);
-        result.setResult(file);
+    assert vDir != null : dir;
+    return vDir;
+  }
+
+  @NotNull
+  protected PsiFile createFile(@NotNull final Module module, @NotNull final VirtualFile vDir, @NotNull final String fileName, @NotNull final String text)
+    throws IOException {
+    return WriteAction.computeAndWait(() -> {
+      if (!ModuleRootManager.getInstance(module).getFileIndex().isInSourceContent(vDir)) {
+        addSourceContentToRoots(module, vDir);
       }
-    }.execute().getResultObject();
+
+      final VirtualFile vFile = vDir.createChildData(vDir, fileName);
+      VfsUtil.saveText(vFile, text);
+      assertNotNull(vFile);
+      final PsiFile file = myPsiManager.findFile(vFile);
+      assertNotNull(file);
+      return file;
+    });
   }
 
   protected void addSourceContentToRoots(final Module module, final VirtualFile vDir) {

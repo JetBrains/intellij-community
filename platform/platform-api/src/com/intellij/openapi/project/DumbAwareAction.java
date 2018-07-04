@@ -17,6 +17,9 @@
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -25,6 +28,27 @@ import javax.swing.*;
  * @author nik
  */
 public abstract class DumbAwareAction extends AnAction implements DumbAware {
+
+  @NotNull
+  public static DumbAwareAction create(@NotNull Consumer<AnActionEvent> actionPerformed) {
+    return new DumbAwareAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        actionPerformed.consume(e);
+      }
+    };
+  }
+
+  @NotNull
+  public static DumbAwareAction create(@Nullable String text, @NotNull Consumer<AnActionEvent> actionPerformed) {
+    return new DumbAwareAction(text) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        actionPerformed.consume(e);
+      }
+    };
+  }
+
   protected DumbAwareAction() {
   }
 

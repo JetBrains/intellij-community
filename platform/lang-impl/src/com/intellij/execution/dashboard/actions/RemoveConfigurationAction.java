@@ -17,12 +17,15 @@ package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
-import com.intellij.execution.dashboard.DashboardRunConfigurationNode;
 import com.intellij.execution.dashboard.RunDashboardContent;
+import com.intellij.execution.dashboard.RunDashboardManager;
+import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -38,8 +41,20 @@ public class RemoveConfigurationAction extends RunConfigurationTreeAction {
   }
 
   @Override
-  protected boolean isEnabled4(DashboardRunConfigurationNode node) {
-    return RunManager.getInstance(node.getProject()).hasSettings(node.getConfigurationSettings());
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    if (e.getPresentation().isEnabled()) {
+      RunDashboardContent content = getTreeContent(e);
+      e.getPresentation().setEnabled(content != null && Comparing.equal(content.getBuilder().getTree(),
+                                                                        e.getData(PlatformDataKeys.CONTEXT_COMPONENT)));
+    }
+  }
+
+  @Override
+  protected boolean isEnabled4(RunDashboardRunConfigurationNode node) {
+    Project project = node.getProject();
+    return !project.isDisposed() && RunDashboardManager.getInstance(project).isShowConfigurations() &&
+           RunManager.getInstance(node.getProject()).hasSettings(node.getConfigurationSettings());
   }
 
   @Override
@@ -48,7 +63,7 @@ public class RemoveConfigurationAction extends RunConfigurationTreeAction {
   }
 
   @Override
-  protected void doActionPerformed(@NotNull RunDashboardContent content, AnActionEvent e, List<DashboardRunConfigurationNode> nodes) {
+  protected void doActionPerformed(@NotNull RunDashboardContent content, AnActionEvent e, List<RunDashboardRunConfigurationNode> nodes) {
     if (Messages.showYesNoDialog((Project)null,
                                  ExecutionBundle.message("run.dashboard.remove.configuration.dialog.message"),
                                  ExecutionBundle.message("run.dashboard.remove.configuration.dialog.title"),
@@ -60,7 +75,7 @@ public class RemoveConfigurationAction extends RunConfigurationTreeAction {
   }
 
   @Override
-  protected void doActionPerformed(DashboardRunConfigurationNode node) {
+  protected void doActionPerformed(RunDashboardRunConfigurationNode node) {
     RunManager.getInstance(node.getProject()).removeConfiguration(node.getConfigurationSettings());
   }
 }

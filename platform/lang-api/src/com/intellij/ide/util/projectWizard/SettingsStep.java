@@ -22,7 +22,6 @@ import javax.swing.*;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/23/12
  */
 public interface SettingsStep {
 
@@ -35,6 +34,15 @@ public interface SettingsStep {
   void addExpertPanel(@NotNull JComponent panel);
   void addExpertField(@NotNull String label, @NotNull JComponent field);
 
+  /**
+   * @deprecated use {@link #getModuleNameLocationSettings()} instead
+   */
+  @Deprecated
   @Nullable
   JTextField getModuleNameField();
+
+  @Nullable
+  default ModuleNameLocationSettings getModuleNameLocationSettings() {
+    return null;
+  }
 }

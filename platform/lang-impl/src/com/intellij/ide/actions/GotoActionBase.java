@@ -16,6 +16,10 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
@@ -193,7 +197,18 @@ public abstract class GotoActionBase extends AnAction {
                                          boolean useSelectionFromEditor,
                                          final boolean allowMultipleSelection) {
     showNavigationPopup(e, model, callback, findUsagesTitle, useSelectionFromEditor, allowMultipleSelection,
-                        new DefaultChooseByNameItemProvider(getPsiContext(e)));
+                        ChooseByNameModelEx.getItemProvider(model, getPsiContext(e)));
+  }
+
+  @Deprecated
+  protected <T> void showNavigationPopup(AnActionEvent e,
+                                         ChooseByNameModel model,
+                                         final GotoActionCallback<T> callback,
+                                         @Nullable final String findUsagesTitle,
+                                         boolean useSelectionFromEditor,
+                                         final boolean allowMultipleSelection,
+                                         final DefaultChooseByNameItemProvider itemProvider) {
+    showNavigationPopup(e, model, callback, findUsagesTitle, useSelectionFromEditor, allowMultipleSelection, (ChooseByNameItemProvider)itemProvider);
   }
 
   protected <T> void showNavigationPopup(AnActionEvent e,
@@ -202,14 +217,16 @@ public abstract class GotoActionBase extends AnAction {
                                          @Nullable final String findUsagesTitle,
                                          boolean useSelectionFromEditor,
                                          final boolean allowMultipleSelection,
-                                         final DefaultChooseByNameItemProvider itemProvider) {
+                                         final ChooseByNameItemProvider itemProvider) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     boolean mayRequestOpenInCurrentWindow = model.willOpenEditor() && FileEditorManagerEx.getInstanceEx(project).hasSplitOrUndockedWindows();
     Pair<String, Integer> start = getInitialText(useSelectionFromEditor, e);
+    ChooseByNamePopup popup = ChooseByNamePopup.createPopup(project, model, itemProvider, start.first,
+                                                            mayRequestOpenInCurrentWindow,
+                                                            start.second);
+    //UIUtil.typeAheadUntilFocused(e.getInputEvent(), popup.getTextField());
     showNavigationPopup(callback, findUsagesTitle,
-                        ChooseByNamePopup.createPopup(project, model, itemProvider, start.first,
-                                                      mayRequestOpenInCurrentWindow,
-                                                      start.second), allowMultipleSelection);
+                        popup, allowMultipleSelection);
   }
 
   protected <T> void showNavigationPopup(final GotoActionCallback<T> callback,
@@ -231,10 +248,9 @@ public abstract class GotoActionBase extends AnAction {
     final ChooseByNameFilter<T> filter = callback.createFilter(popup);
 
     if (historyEnabled() && popup.getAdText() == null) {
-      popup.setAdText("Press " +
-                      KeymapUtil.getKeystrokeText(SearchTextField.ALT_SHOW_HISTORY_KEYSTROKE) + " or " +
-                      KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE) +
-                      " to navigate through the search history");
+      popup.setAdText(IdeBundle.message("searcheverywhere.history.shortcuts.hint",
+                                        KeymapUtil.getKeystrokeText(SearchTextField.ALT_SHOW_HISTORY_KEYSTROKE),
+                                        KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE)));
     }
 
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
@@ -317,6 +333,25 @@ public abstract class GotoActionBase extends AnAction {
         myHistoryIndex = myHistoryIndex <= 0 ? strings.size() - 1 : myHistoryIndex - 1;
       }
     }.registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, editor);
+  }
+
+  protected void showInSearchEverywherePopup(String searchProviderID, AnActionEvent evnt) {
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE + "." + searchProviderID);
+
+    SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(evnt.getProject());
+    if (seManager.isShown()) {
+      if (searchProviderID.equals(seManager.getShownContributorID())) {
+        seManager.setShowNonProjectItems(!seManager.isShowNonProjectItems());
+      }
+      else {
+        seManager.setShownContributor(searchProviderID);
+      }
+      return;
+    }
+
+    IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
+    seManager.show(searchProviderID, getInitialTextForNavigation(evnt.getData(CommonDataKeys.EDITOR)), evnt);
   }
 
   private static boolean historyEnabled() {

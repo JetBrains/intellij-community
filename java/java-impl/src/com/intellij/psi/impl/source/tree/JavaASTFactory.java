@@ -17,14 +17,15 @@ package com.intellij.psi.impl.source.tree;
 
 import com.intellij.psi.impl.source.javadoc.PsiDocTagValueImpl;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
 public class JavaASTFactory extends CoreJavaASTFactory {
   @Override
-  public CompositeElement createComposite(final IElementType type) {
-    if (type == DOC_TAG_VALUE_ELEMENT) {
+  public CompositeElement createComposite(@NotNull final IElementType type) {
+    if (type == JavaDocElementType.DOC_TAG_VALUE_ELEMENT) {
       return new PsiDocTagValueImpl();
     }
 

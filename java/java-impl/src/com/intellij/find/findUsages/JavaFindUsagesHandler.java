@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -147,7 +147,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       final PsiElement scope = parameter.getDeclarationScope();
       if (scope instanceof PsiMethod) {
         final PsiMethod method = (PsiMethod)scope;
-        if (PsiUtil.canBeOverriden(method)) {
+        if (PsiUtil.canBeOverridden(method)) {
           final PsiClass aClass = method.getContainingClass();
           LOG.assertTrue(aClass != null); //Otherwise can not be overriden
 
@@ -177,13 +177,14 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
         final String propertyName = JavaCodeStyleManager.getInstance(getProject()).variableNameToPropertyName(fieldName, VariableKind.FIELD);
         Set<PsiMethod> accessors = new THashSet<>();
         boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
-        PsiMethod getter = PropertyUtil.findPropertyGetterWithType(propertyName, isStatic, field.getType(),
-                                     ContainerUtil.iterate(containingClass.getMethods()));
+        PsiMethod getter = PropertyUtilBase.findPropertyGetterWithType(propertyName, isStatic, field.getType(),
+                                                                       ContainerUtil.iterate(containingClass.getMethods()));
         if (getter != null) accessors.add(getter);
-        PsiMethod setter = PropertyUtil.findPropertySetterWithType(propertyName, isStatic, field.getType(),
-                                     ContainerUtil.iterate(containingClass.getMethods()));
+        PsiMethod setter = PropertyUtilBase.findPropertySetterWithType(propertyName, isStatic, field.getType(),
+                                                                       ContainerUtil.iterate(containingClass.getMethods()));
         if (setter != null) accessors.add(setter);
-        accessors.addAll(PropertyUtil.getAccessors(containingClass, fieldName));
+        accessors.addAll(PropertyUtilBase.getAccessors(containingClass, fieldName));
+        accessors.removeIf(accessor -> field != PropertyUtilBase.findPropertyFieldByMember(accessor));
         if (!accessors.isEmpty()) {
           boolean containsPhysical = ContainerUtil.find(accessors, psiMethod -> psiMethod.isPhysical()) != null;
           final boolean doSearch = !containsPhysical || askShouldSearchAccessors(fieldName);
@@ -268,7 +269,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       }
       for (PsiMethod superMethod : superMethods) {
         if (resolveScope != null) {
-          superMethod = PsiSuperMethodUtil.correctMethodByScope(superMethod, resolveScope);
+          superMethod = PsiSuperMethodUtil.correctMethodByScope(superMethod, resolveScope).orElse(superMethod);
         }
         result.addAll(MethodReferencesSearch.search(superMethod, searchScope, true).findAll());
       }

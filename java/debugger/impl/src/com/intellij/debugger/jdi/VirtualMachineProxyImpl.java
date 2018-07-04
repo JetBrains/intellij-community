@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author Eugene Zhuravlev
@@ -30,13 +16,12 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.MultiMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.EventQueue;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.tools.jdi.JNITypeParser;
 import com.sun.tools.jdi.TargetVM;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,7 +47,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   private final Map<ThreadGroupReference, ThreadGroupReferenceProxyImpl> myThreadGroups = new HashMap<>();
   private boolean myAllThreadsDirty = true;
   private List<ReferenceType> myAllClasses;
-  private MultiMap<String, ReferenceType> myAllClassesByName;
   private Map<ReferenceType, List<ReferenceType>> myNestedClassesCache = new HashMap<>();
 
   public final Throwable mySuspendLogger = new Throwable();
@@ -128,18 +112,12 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
   }
 
+  public ClassesByNameProvider getClassesByNameProvider() {
+    return this::classesByName;
+  }
+
   public List<ReferenceType> classesByName(@NotNull String s) {
-    String signature = JNITypeParserReflect.typeNameToSignature(s);
-    if (signature != null) {
-      if (myAllClassesByName == null) {
-        myAllClassesByName = new MultiMap<>();
-        allClasses().forEach(t -> myAllClassesByName.putValue(t.signature(), t));
-      }
-      return (List<ReferenceType>)myAllClassesByName.get(signature);
-    }
-    else {
-      return myVirtualMachine.classesByName(s);
-    }
+    return myVirtualMachine.classesByName(s);
   }
 
   public List<ReferenceType> nestedTypes(ReferenceType refType) {
@@ -269,15 +247,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
    * @return a list of threadGroupProxies
    */
   public List<ThreadGroupReferenceProxyImpl> topLevelThreadGroups() {
-    List<ThreadGroupReference> list = getVirtualMachine().topLevelThreadGroups();
-
-    List<ThreadGroupReferenceProxyImpl> result = new ArrayList<>(list.size());
-
-    for (ThreadGroupReference threadGroup : list) {
-      result.add(getThreadGroupReferenceProxy(threadGroup));
-    }
-
-    return result;
+    return StreamEx.of(getVirtualMachine().topLevelThreadGroups()).map(this::getThreadGroupReferenceProxy).toList();
   }
 
   public void threadGroupCreated(ThreadGroupReference threadGroupReference){
@@ -431,6 +401,15 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   };
   public boolean canGetBytecodes() {
     return myGetBytecodes.isAvailable();
+  }
+
+  private final Capability myGetConstantPool = new Capability() {
+    protected boolean calcValue() {
+      return myVirtualMachine.canGetConstantPool();
+    }
+  };
+  public boolean canGetConstantPool() {
+    return myGetConstantPool.isAvailable();
   }
 
   private final Capability myGetSyntheticAttribute = new Capability() {
@@ -681,7 +660,6 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     LOG.debug("VM cleared");
 
     myAllClasses = null;
-    myAllClassesByName = null;
 
     if (!myNestedClassesCache.isEmpty()) {
       myNestedClassesCache = new HashMap<>(myNestedClassesCache.size());

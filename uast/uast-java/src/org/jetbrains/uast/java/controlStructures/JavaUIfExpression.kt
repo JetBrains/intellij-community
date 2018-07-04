@@ -18,23 +18,24 @@ package org.jetbrains.uast.java
 import com.intellij.psi.PsiIfStatement
 import com.intellij.psi.impl.source.tree.ChildRole
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.UIfExpression
 
 class JavaUIfExpression(
-        override val psi: PsiIfStatement,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UIfExpression {
-    override val condition by lz { JavaConverter.convertOrEmpty(psi.condition, this) }
-    override val thenExpression by lz { JavaConverter.convertOrEmpty(psi.thenBranch, this) }
-    override val elseExpression by lz { JavaConverter.convertOrEmpty(psi.elseBranch, this) }
+  override val psi: PsiIfStatement,
+  givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UIfExpression {
+  override val condition: UExpression by lz { JavaConverter.convertOrEmpty(psi.condition, this) }
+  override val thenExpression: UExpression by lz { JavaConverter.convertOrEmpty(psi.thenBranch, this) }
+  override val elseExpression: UExpression by lz { JavaConverter.convertOrEmpty(psi.elseBranch, this) }
 
-    override val isTernary: Boolean
-        get() = false
+  override val isTernary: Boolean
+    get() = false
 
-    override val ifIdentifier: UIdentifier
-        get() = UIdentifier(psi.getChildByRole(ChildRole.IF_KEYWORD), this)
+  override val ifIdentifier: UIdentifier
+    get() = UIdentifier(psi.getChildByRole(ChildRole.IF_KEYWORD), this)
 
-    override val elseIdentifier: UIdentifier?
-        get() = psi.getChildByRole(ChildRole.ELSE_KEYWORD)?.let { UIdentifier(it, this) }
+  override val elseIdentifier: UIdentifier?
+    get() = psi.getChildByRole(ChildRole.ELSE_KEYWORD)?.let { UIdentifier(it, this) }
 }

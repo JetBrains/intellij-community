@@ -33,7 +33,6 @@ import com.jetbrains.python.psi.PyTryExceptStatement;
 /**
  * Adjusts indentation after a final part keyword is inserted, e.g. an "else:".
  * User: dcheryasov
- * Date: Mar 2, 2010 6:48:40 PM
  */
 public class PyUnindentingInsertHandler implements InsertHandler<PythonLookupElement> {
   public final static PyUnindentingInsertHandler INSTANCE = new PyUnindentingInsertHandler();

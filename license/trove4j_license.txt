@@ -16,6 +16,4 @@ Two classes (HashFunctions and PrimeFinder) included in Trove are licensed under
     suitability of this software for any purpose. It is provided "as is" without expressed or implied warranty.
 
 The source code of modified GNU Trove library is available at
-    https://github.com/JetBrains/intellij-community/blob/master/lib/src/trove4j_src.jar (containing trove4j_changes.txt describing the changes)
-    or
-    https://github.com/JetBrains/trove4j (with trove4j_changes.txt describing the changes)
+    https://github.com/JetBrains/intellij-deps-trove4j (with trove4j_changes.txt describing the changes)

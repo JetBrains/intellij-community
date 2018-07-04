@@ -18,7 +18,7 @@ public class Symbols {
   // fullName -> PackageSymbol
   private final TIntObjectHashMap<PackageSymbol> myPackages = new TIntObjectHashMap<>();
   // nameId -> ClassSymbols (used by global resolve)
-  private TIntObjectHashMap<Object> myClassSymbolsByNameId = new TIntObjectHashMap<>();
+  private final TIntObjectHashMap<Object> myClassSymbolsByNameId = new TIntObjectHashMap<>();
 
   protected Symbols() {
     myPackages.put(0, myRootPackage);

@@ -16,11 +16,11 @@
 package com.intellij.coverage.view;
 
 import com.intellij.coverage.*;
+import com.intellij.execution.configurations.RunConfigurationBase;
+import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfiguration;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -47,9 +47,10 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     if (myCoverageDataManager.isSubCoverageActive()) {
       return showSubCoverageNotification();
     }
+    PsiPackage aPackage = (PsiPackage)node.getValue();
     final String coverageInformationString = myAnnotator
-      .getPackageCoverageInformationString((PsiPackage)node.getValue(), null, myCoverageDataManager, myStateBean.myFlattenPackages);
-    return getNotCoveredMessage(coverageInformationString) + " in package \'" + node.toString() + "\'";
+      .getPackageCoverageInformationString(aPackage, null, myCoverageDataManager, myStateBean.myFlattenPackages);
+    return getNotCoveredMessage(coverageInformationString) + " in package \'" + (aPackage != null ? aPackage.getQualifiedName() : node.getName()) + "\'";
   }
 
   private static String showSubCoverageNotification() {
@@ -92,11 +93,19 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
     if (columnIndex == 1) {
       return myAnnotator.getClassCoveredPercentage(info);
-    } else if (columnIndex == 2){
+    }
+    if (columnIndex == 2){
       return myAnnotator.getMethodCoveredPercentage(info);
     }
 
-    return myAnnotator.getLineCoveredPercentage(info);
+    if (columnIndex == 3) {
+      return myAnnotator.getLineCoveredPercentage(info);
+    }
+
+    if (columnIndex == 4) {
+      return myAnnotator.getBranchCoveredPercentage(info);
+    }
+    return "";
   }
 
   public PackageAnnotator.SummaryCoverageInfo getSummaryCoverageForNodeValue(Object value) {
@@ -155,7 +164,6 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
 
   @Override
   public List<AbstractTreeNode> createTopLevelNodes() {
-    final List<AbstractTreeNode> topLevelNodes = new ArrayList<>();
     final LinkedHashSet<PsiPackage> packages = new LinkedHashSet<>();
     final LinkedHashSet<PsiClass> classes = new LinkedHashSet<>();
     for (CoverageSuite suite : mySuitesBundle.getSuites()) {
@@ -175,6 +183,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
     }
     packages.removeAll(packs);
 
+    final List<AbstractTreeNode> topLevelNodes = new ArrayList<>();
     for (PsiPackage aPackage : packages) {
       final GlobalSearchScope searchScope = mySuitesBundle.getSearchScope(myProject);
       if (aPackage.getClasses(searchScope).length != 0) {
@@ -265,24 +274,43 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
       }
     }
   }
-
+       
   @Nullable
   private PackageAnnotator.ClassCoverageInfo getClassCoverageInfo(final PsiClass aClass) {
-    return myAnnotator.getClassCoverageInfo(ApplicationManager.getApplication().runReadAction(new NullableComputable<String>() {
-      public String compute() {
-        return aClass.isValid() ? aClass.getQualifiedName() : null;
-      }
-    }));
+    return myAnnotator.getClassCoverageInfo(ReadAction.compute(() -> aClass.isValid() ? aClass.getQualifiedName() : null));
   }
 
   @Override
   public ColumnInfo[] createColumnInfos() {
-    return new ColumnInfo[]{
-      new ElementColumnInfo(), 
-      new PercentageCoverageColumnInfo(1, "Class, %", mySuitesBundle, myStateBean), 
-      new PercentageCoverageColumnInfo(2, "Method, %", mySuitesBundle, myStateBean),
-      new PercentageCoverageColumnInfo(3, "Line, %", mySuitesBundle, myStateBean)
-    };
+    ArrayList<ColumnInfo> infos = new ArrayList<>();
+    infos.add(new ElementColumnInfo());
+    infos.add(new PercentageCoverageColumnInfo(1, "Class, %", mySuitesBundle, myStateBean)); 
+    infos.add(new PercentageCoverageColumnInfo(2, "Method, %", mySuitesBundle, myStateBean));
+    infos.add(new PercentageCoverageColumnInfo(3, "Line, %", mySuitesBundle, myStateBean));
+    RunConfigurationBase runConfiguration = mySuitesBundle.getRunConfiguration();
+    if (runConfiguration != null) {
+      JavaCoverageEnabledConfiguration coverageEnabledConfiguration = JavaCoverageEnabledConfiguration.getFrom(runConfiguration);
+      if (coverageEnabledConfiguration != null) {
+        isBranchColumnAvailable(infos, coverageEnabledConfiguration.getCoverageRunner(), coverageEnabledConfiguration.isSampling());
+      }
+    }
+    else {
+      for (CoverageSuite suite : mySuitesBundle.getSuites()) {
+        CoverageRunner runner = suite.getRunner();
+        if (isBranchColumnAvailable(infos, runner, true)) {
+          break;
+        }
+      }
+    }
+    return infos.toArray(ColumnInfo.EMPTY_ARRAY);
+  }
+
+  private boolean isBranchColumnAvailable(ArrayList<? super ColumnInfo> infos, CoverageRunner coverageRunner, boolean sampling) {
+    if (coverageRunner instanceof JavaCoverageRunner && ((JavaCoverageRunner)coverageRunner).isBranchInfoAvailable(sampling)) {
+      infos.add(new PercentageCoverageColumnInfo(4, "Branch, %", mySuitesBundle, myStateBean));
+      return true;
+    }
+    return false;
   }
 
   private boolean isInCoverageScope(PsiElement element) {

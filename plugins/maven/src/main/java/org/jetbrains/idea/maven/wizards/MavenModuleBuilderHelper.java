@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.wizards;
 
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -31,6 +30,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.xml.XmlElement;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomModule;
@@ -50,6 +50,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 public class MavenModuleBuilderHelper {
@@ -88,18 +89,15 @@ public class MavenModuleBuilderHelper {
     PsiFile[] psiFiles = myAggregatorProject != null
                          ? new PsiFile[]{getPsiFile(project, myAggregatorProject.getFile())}
                          : PsiFile.EMPTY_ARRAY;
-    final VirtualFile pom = new WriteCommandAction<VirtualFile>(project, myCommandName, psiFiles) {
-      @Override
-      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
-        VirtualFile file;
+    final VirtualFile pom = WriteCommandAction.writeCommandAction(project, psiFiles).withName(myCommandName).compute(() -> {
+        VirtualFile file = null;
         try {
           file = root.createChildData(this, MavenConstants.POM_XML);
           MavenUtil.runOrApplyMavenProjectFileTemplate(project, file, myProjectId, isInteractive);
-          result.setResult(file);
         }
         catch (IOException e) {
           showError(project, e);
-          return;
+          return file;
         }
 
         updateProjectPom(project, file);
@@ -112,8 +110,8 @@ public class MavenModuleBuilderHelper {
             module.setValue(getPsiFile(project, file));
           }
         }
-      }
-    }.execute().getResultObject();
+        return file;
+      });
 
     if (pom == null) return;
 
@@ -145,39 +143,47 @@ public class MavenModuleBuilderHelper {
   private void updateProjectPom(final Project project, final VirtualFile pom) {
     if (myParentProject == null) return;
 
-    new WriteCommandAction.Simple(project, myCommandName) {
-      protected void run() throws Throwable {
-        PsiDocumentManager.getInstance(project).commitAllDocuments();
+    WriteCommandAction.writeCommandAction(project).withName(myCommandName).run(() -> {
+      PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-        MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, pom);
-        if (model == null) return;
+      MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(project, pom);
+      if (model == null) return;
 
-        MavenDomUtil.updateMavenParent(model, myParentProject);
+      MavenDomUtil.updateMavenParent(model, myParentProject);
 
-        if (myInheritGroupId) {
-          XmlElement el = model.getGroupId().getXmlElement();
-          if (el != null) el.delete();
-        }
-        if (myInheritVersion) {
-          XmlElement el = model.getVersion().getXmlElement();
-          if (el != null) el.delete();
-        }
+      if (myInheritGroupId) {
+        XmlElement el = model.getGroupId().getXmlElement();
+        if (el != null) el.delete();
+      }
+      if (myInheritVersion) {
+        XmlElement el = model.getVersion().getXmlElement();
+        if (el != null) el.delete();
+      }
 
-        CodeStyleManager.getInstance(project).reformat(getPsiFile(project, pom));
+      CodeStyleManager.getInstance(project).reformat(getPsiFile(project, pom));
 
-        pom.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, Boolean.TRUE);
+      List<VirtualFile> pomFiles = ContainerUtil.newArrayListWithCapacity(2);
+      pomFiles.add(pom);
+
+      if (!FileUtil.namesEqual(MavenConstants.POM_XML, myParentProject.getFile().getName())) {
+        pomFiles.add(myParentProject.getFile());
+        MavenProjectsManager.getInstance(project).forceUpdateProjects(Collections.singleton(myParentProject));
+      }
+
+      for (VirtualFile v : pomFiles) {
+        v.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, Boolean.TRUE);
         try {
-          Document doc = FileDocumentManager.getInstance().getDocument(pom);
+          Document doc = FileDocumentManager.getInstance().getDocument(v);
           if (doc != null) {
             PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(doc);
             FileDocumentManager.getInstance().saveDocument(doc);
           }
         }
         finally {
-          pom.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, null);
+          v.putUserData(MavenProjectsManagerWatcher.FORCE_IMPORT_AND_RESOLVE_ON_REFRESH, null);
         }
       }
-    }.execute();
+    });
   }
 
   private static PsiFile getPsiFile(Project project, VirtualFile pom) {
@@ -196,7 +202,7 @@ public class MavenModuleBuilderHelper {
     }
 
     MavenRunnerParameters params = new MavenRunnerParameters(
-      false, workingDir.getPath(),
+      false, workingDir.getPath(), (String)null,
       Collections.singletonList("org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate"),
       Collections.emptyList());
 

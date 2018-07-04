@@ -23,7 +23,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/3/12
  */
 @Stubbed
 public interface Foo extends DomElement {

@@ -50,6 +50,4 @@ public interface RemoteCredentials {
   boolean isStorePassword();
 
   boolean isStorePassphrase();
-
-  String getKnownHostsFile();
 }

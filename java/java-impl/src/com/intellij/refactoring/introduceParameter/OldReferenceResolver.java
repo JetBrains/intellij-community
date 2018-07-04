@@ -28,15 +28,14 @@ import com.intellij.refactoring.IntroduceParameterRefactoring;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
- *         Date: Apr 29, 2009 2:03:38 PM
  */
 public class OldReferenceResolver {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.introduceParameter.OldReferenceResolver");
@@ -89,8 +88,8 @@ public class OldReferenceResolver {
     myInstanceRef = instanceRef;
   }
 
-  public void resolve() throws IncorrectOperationException {
-    resolveOldReferences(myExpr, myParameterInitializer);
+  public void resolve(boolean varargs) throws IncorrectOperationException {
+    resolveOldReferences(myExpr, myParameterInitializer, varargs);
 
     Set<Map.Entry<PsiExpression, String>> mappingsSet = myTempVars.entrySet();
 
@@ -108,7 +107,7 @@ public class OldReferenceResolver {
   }
 
 
-  private void resolveOldReferences(PsiElement expr, PsiElement oldExpr) throws IncorrectOperationException {
+  private void resolveOldReferences(PsiElement expr, PsiElement oldExpr, boolean varargs) throws IncorrectOperationException {
     if (expr == null || !expr.isValid() || oldExpr == null) return;
     PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
     PsiElement newExpr = expr;  // references continue being resolved in the children of newExpr
@@ -139,8 +138,14 @@ public class OldReferenceResolver {
             if (parameter.isVarArgs() && parameterType instanceof PsiEllipsisType) {
               final String varargsJoin = StringUtil.join(ContainerUtil.map2Array(myActualArgs, String.class,
                                                                                  expression -> expression != null ? expression.getText() : "null"), index + 1, myActualArgs.length, ",");
-              String newArrayInitializer = "new " + ((PsiEllipsisType)parameterType).toArrayType().getCanonicalText() + " {" + varargsJoin + "}";
-              final String tempVar = getTempVar((PsiExpression)JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(factory.createExpressionFromText(newArrayInitializer, myContext)));
+              final String tempVar;
+              if (varargs) {
+                String newArrayInitializer = "new " + ((PsiEllipsisType)parameterType).toArrayType().getCanonicalText() + " {" + varargsJoin + "}";
+                tempVar = getTempVar((PsiExpression)JavaCodeStyleManager.getInstance(myProject).shortenClassReferences(factory.createExpressionFromText(newArrayInitializer, myContext)));
+              }
+              else {
+                tempVar = myActualArgs[myActualArgs.length - 1].getText();
+              }
               final Map<PsiExpression, String> map = new HashMap<>();
               if (initializer instanceof PsiReferenceExpression && Comparing.strEqual(parameter.getName(), initializer.getText())) {
                 newExpr.replace(factory.createExpressionFromText(tempVar, myContext));
@@ -222,7 +227,7 @@ public class OldReferenceResolver {
 
     if (oldChildren.length == newChildren.length) {
       for (int i = 0; i < oldChildren.length; i++) {
-        resolveOldReferences(newChildren[i], oldChildren[i]);
+        resolveOldReferences(newChildren[i], oldChildren[i], varargs);
       }
     }
   }
@@ -243,14 +248,11 @@ public class OldReferenceResolver {
 
   private String getTempVar(PsiExpression expr, PsiExpression initializer) throws IncorrectOperationException {
     String id = myTempVars.get(expr);
-    if (id != null) {
-      return id;
-    }
-    else {
+    if (id == null) {
       id = RefactoringUtil.createTempVar(initializer, myContext, true);
       myTempVars.put(expr, id);
-      return id;
     }
+    return id;
   }
 
   private PsiElement replaceFieldWithGetter(PsiElement expr, PsiField psiField, boolean qualify) throws IncorrectOperationException {

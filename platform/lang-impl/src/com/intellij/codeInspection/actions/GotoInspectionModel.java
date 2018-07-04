@@ -24,6 +24,7 @@ import com.intellij.ide.util.gotoByName.SimpleChooseByNameModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -35,7 +36,6 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public class GotoInspectionModel extends SimpleChooseByNameModel {
-  private static final InspectionToolWrapper[] EMPTY_WRAPPERS_ARRAY = new InspectionToolWrapper[0];
   private final Map<String, InspectionToolWrapper> myToolNames = new HashMap<>();
   private final String[] myNames;
   private final InspectionListCellRenderer myListCellRenderer = new InspectionListCellRenderer();
@@ -48,11 +48,14 @@ public class GotoInspectionModel extends SimpleChooseByNameModel {
     for (ScopeToolState state : rootProfile.getAllTools()) {
       InspectionToolWrapper tool = LocalInspectionToolWrapper.findTool2RunInBatch(project, null, rootProfile, state.getTool());
       if (tool != null) {
-        String name = tool.getDisplayName() + " " + StringUtil.join(tool.getGroupPath(), " ");
-        myToolNames.put(name, tool);
+        myToolNames.put(getSearchString(tool), tool);
       }
     }
     myNames = ArrayUtil.toStringArray(myToolNames.keySet());
+  }
+
+  private static String getSearchString(InspectionToolWrapper tool) {
+    return tool.getDisplayName() + " " + StringUtil.join(tool.getGroupPath(), " ") + " " + tool.getShortName();
   }
 
   @Override
@@ -69,16 +72,15 @@ public class GotoInspectionModel extends SimpleChooseByNameModel {
   public Object[] getElementsByName(final String name, final String pattern) {
     final InspectionToolWrapper tool = myToolNames.get(name);
     if (tool == null) {
-      return EMPTY_WRAPPERS_ARRAY;
+      return InspectionElement.EMPTY_ARRAY;
     }
-    return new InspectionToolWrapper[] {tool};
+    return new InspectionElement[] {new InspectionElement(tool, PsiManager.getInstance(getProject()))};
   }
 
   @Override
   public String getElementName(final Object element) {
-    if (element instanceof InspectionToolWrapper) {
-      InspectionToolWrapper entry = (InspectionToolWrapper)element;
-      return entry.getDisplayName() + " " + StringUtil.join(entry.getGroupPath(), " ");
+    if (element instanceof InspectionElement) {
+      return getSearchString(((InspectionElement)element).getToolWrapper());
     }
     return null;
   }

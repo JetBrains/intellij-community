@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
@@ -30,15 +16,19 @@ import com.intellij.codeInsight.daemon.quickFix.CreateFieldOrPropertyFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInsight.intention.impl.CreateClassInPackageInModuleFix;
 import com.intellij.codeInsight.intention.impl.ReplaceAssignmentWithComparisonFix;
+import com.intellij.codeInsight.intention.impl.RunRefactoringAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.diagnostic.AttachmentFactory;
-import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.java.request.CreateConstructorFromUsage;
+import com.intellij.lang.java.request.CreateMethodFromUsage;
+import com.intellij.lang.jvm.actions.JvmElementActionFactories;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -56,16 +46,14 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyMemberType;
+import com.intellij.refactoring.memberPushDown.JavaPushDownHandler;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author cdr
@@ -127,7 +115,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public LocalQuickFixAndIntentionActionOnPsiElement createAssignmentToComparisonFix(PsiAssignmentExpression expr) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createAssignmentToComparisonFix(@NotNull PsiAssignmentExpression expr) {
     return new ReplaceAssignmentWithComparisonFix(expr);
   }
 
@@ -137,7 +125,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
                                                          @NotNull PsiClassType exceptionClass,
                                                          boolean shouldThrow,
                                                          boolean showContainingClass) {
-    return new MethodThrowsFix(method, exceptionClass, shouldThrow, showContainingClass);
+    return shouldThrow ? new MethodThrowsFix.Add(method, exceptionClass, showContainingClass) : new MethodThrowsFix.Remove(method, exceptionClass, showContainingClass);
   }
 
   @NotNull
@@ -238,6 +226,12 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createSurroundWithTryCatchFix(@NotNull PsiElement element) {
     return new SurroundWithTryCatchFix(element);
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createAddExceptionToExistingCatch(@NotNull PsiElement element) {
+    return new AddExceptionToExistingCatchFix(element);
   }
 
   @NotNull
@@ -495,13 +489,19 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
+  public List<IntentionAction> createCreateMethodFromUsageFixes(@NotNull PsiMethodCallExpression call) {
+    return CreateMethodFromUsage.generateActions(call);
+  }
+
+  @NotNull
+  @Override
   public IntentionAction createCreateMethodFromUsageFix(@NotNull PsiMethodCallExpression call) {
     return new CreateMethodFromUsageFix(call);
   }
 
   @NotNull
   @Override
-  public IntentionAction createCreateMethodFromUsageFix(PsiMethodReferenceExpression methodReferenceExpression) {
+  public IntentionAction createCreateMethodFromUsageFix(@NotNull PsiMethodReferenceExpression methodReferenceExpression) {
     return new CreateMethodFromMethodReferenceFix(methodReferenceExpression);
   }
 
@@ -527,6 +527,18 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createCreateConstructorFromThisFix(@NotNull PsiMethodCallExpression call) {
     return new CreateConstructorFromThisFix(call);
+  }
+
+  @NotNull
+  @Override
+  public List<IntentionAction> createCreateConstructorFromCallExpressionFixes(@NotNull PsiMethodCallExpression call) {
+    if (JvmElementActionFactories.useInterlaguageActions()) {
+      return CreateConstructorFromUsage.generateConstructorActions(call);
+    }
+    return Arrays.asList(
+      createCreateConstructorFromSuperFix(call),
+      createCreateConstructorFromThisFix(call)
+    );
   }
 
   @NotNull
@@ -557,6 +569,15 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createCreateConstructorFromCallFix(@NotNull PsiConstructorCall call) {
     return new CreateConstructorFromCallFix(call);
+  }
+
+  @NotNull
+  @Override
+  public List<IntentionAction> createCreateConstructorFromUsageFixes(@NotNull PsiConstructorCall call) {
+    if (JvmElementActionFactories.useInterlaguageActions()) {
+      return CreateConstructorFromUsage.generateConstructorActions(call);
+    }
+    return Collections.singletonList(createCreateConstructorFromCallFix(call));
   }
 
   @NotNull
@@ -684,9 +705,9 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
     UnusedDeclarationInspectionBase unusedParametersInspection =
       (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(UnusedSymbolLocalInspectionBase.SHORT_NAME, parameter);
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode() || unusedParametersInspection != null);
-    List<IntentionAction> options = new ArrayList<>();
     HighlightDisplayKey myUnusedSymbolKey = HighlightDisplayKey.find(UnusedSymbolLocalInspectionBase.SHORT_NAME);
-    options.addAll(IntentionManager.getInstance().getStandardIntentionOptions(myUnusedSymbolKey, parameter));
+    List<IntentionAction> options =
+      new ArrayList<>(IntentionManager.getInstance().getStandardIntentionOptions(myUnusedSymbolKey, parameter));
     if (unusedParametersInspection != null) {
       SuppressQuickFix[] batchSuppressActions = unusedParametersInspection.getBatchSuppressActions(parameter);
       Collections.addAll(options, SuppressIntentionActionFromFix.convertBatchToSuppressIntentionActions(batchSuppressActions));
@@ -699,18 +720,17 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project,
-                                                                      @NotNull String qualifiedName,
-                                                                      @NotNull String element) {
+                                                                      @NotNull String qualifiedName) {
     final EntryPointsManagerBase entryPointsManager = EntryPointsManagerBase.getInstance(project);
     return SpecialAnnotationsUtil.createAddToSpecialAnnotationsListIntentionAction(
-      QuickFixBundle.message("fix.unused.symbol.injection.text", element, qualifiedName),
+      QuickFixBundle.message("fix.unused.symbol.injection.text", qualifiedName),
       QuickFixBundle.message("fix.unused.symbol.injection.family"),
       entryPointsManager.ADDITIONAL_ANNOTATIONS, qualifiedName);
   }
 
   @NotNull
   @Override
-  public IntentionAction createAddToImplicitlyWrittenFieldsFix(Project project, @NotNull final String qualifiedName) {
+  public IntentionAction createAddToImplicitlyWrittenFieldsFix(@NotNull Project project, @NotNull final String qualifiedName) {
     EntryPointsManagerBase entryPointsManagerBase = EntryPointsManagerBase.getInstance(project);
     return entryPointsManagerBase.new AddImplicitlyWriteAnnotation(qualifiedName);
   }
@@ -774,9 +794,9 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
       if (oldStamp != document.getModificationStamp()) {
         String afterText = file.getText();
         if (Comparing.strEqual(beforeText, afterText)) {
-          LOG.error(
-            LogMessageEx.createEvent("Import optimizer  hasn't optimized any imports", file.getViewProvider().getVirtualFile().getPath(),
-                                     AttachmentFactory.createAttachment(file.getViewProvider().getVirtualFile())));
+          LOG.error("Import optimizer hasn't optimized any imports",
+                    new Throwable(file.getViewProvider().getVirtualFile().getPath()),
+                    AttachmentFactory.createAttachment(file.getViewProvider().getVirtualFile()));
         }
       }
     });
@@ -860,20 +880,22 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createCollectionToArrayFix(@NotNull PsiExpression collectionExpression, @NotNull PsiArrayType arrayType) {
-    return new ConvertCollectionToArrayFix(collectionExpression, arrayType);
+  public IntentionAction createCollectionToArrayFix(@NotNull PsiExpression collectionExpression,
+                                                    @NotNull PsiExpression expressionToReplace,
+                                                    @NotNull PsiArrayType arrayType) {
+    return new ConvertCollectionToArrayFix(collectionExpression, expressionToReplace, arrayType);
   }
 
   @NotNull
   @Override
-  public IntentionAction createInsertMethodCallFix(@NotNull PsiMethodCallExpression call, PsiMethod method) {
+  public IntentionAction createInsertMethodCallFix(@NotNull PsiMethodCallExpression call, @NotNull PsiMethod method) {
     return new InsertMethodCallFix(call, method);
   }
 
   @NotNull
   @Override
-  public LocalQuickFixAndIntentionActionOnPsiElement createAccessStaticViaInstanceFix(PsiReferenceExpression methodRef,
-                                                                                      JavaResolveResult result) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createAccessStaticViaInstanceFix(@NotNull PsiReferenceExpression methodRef,
+                                                                                      @NotNull JavaResolveResult result) {
     return new AccessStaticViaInstanceFix(methodRef, result, true);
   }
 
@@ -886,6 +908,24 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createDeleteSideEffectAwareFix(@NotNull PsiExpressionStatement statement) {
-    return new DeleteSideEffectsAwareFix(statement);
+    return new DeleteSideEffectsAwareFix(statement, statement.getExpression());
+  }
+
+  @Nullable
+  @Override
+  public IntentionAction createCreateClassInPackageInModuleFix(@NotNull Module module, @Nullable String packageName) {
+    return CreateClassInPackageInModuleFix.createFix(module, packageName);
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createPushDownMethodFix() {
+    return new RunRefactoringAction(new JavaPushDownHandler(), "Push method down...") {
+      @NotNull
+      @Override
+      public Priority getPriority() {
+        return Priority.NORMAL;
+      }
+    };
   }
 }

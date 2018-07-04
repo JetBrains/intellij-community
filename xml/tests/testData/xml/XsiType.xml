@@ -1,53 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ns1:ActivationRequest xmlns:ns1="http://www.synchronoss.com/activation/ActivationRequestV1.00.xsd"
-    xmlns:ns2="http://www.synchronoss.com/activation/GenericActivationRequestV1.00.xsd"
-    xmlns:ns3="http://www.synchronoss.com/common/TypesV1.00.xsd"
+<ns1:ActivationRequest xmlns:ns1="http://Request.xsd"
+    xmlns:ns2="http://Generic.xsd"
+    xmlns:ns3="http://Types.xsd"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://www.synchronoss.com/activation/ActivationRequestV1.00.xsd XsiType_GenericActivationRequestV1.00.xsd
-    http://www.synchronoss.com/common/TypesV1.00.xsd XsiType_TypesV1.00.xsd
-    http://www.synchronoss.com/activation/GenericActivationRequestV1.00.xsd XsiType_GenericActivationRequestV1.00.xsd"
-    orderNumber="orderNumber0" retailer="2" xsi:type="ns2:ct_GenericActivationRequest">
-    <ns1:Header timeStamp="2006-05-04T18:13:51.0Z">
-        <ns3:Notification notificationEmail="notificationEmail0"/>
+    xsi:schemaLocation="http://Request.xsd XsiType_Request.xsd
+    http://Types.xsd XsiType_Types.xsd
+    http://Generic.xsd XsiType_Generic.xsd"
+    xsi:type="ns2:ct_GenericRequest">
+    <ns1:Header>
+        <ns3:Notification/>
     </ns1:Header>
-    <ns1:Account accountType="2" accountSubType="2" serviceProvider="2"
-        liabilityIndicator="Individual">
-        <ns1:ExistingAccount>
-            <ns1:AccountIdentification>
-                <ns1:MobileNumber>0000000000</ns1:MobileNumber>
-            </ns1:AccountIdentification>
-            <ns1:ExistingFedTaxID>ExistingFedTaxID0</ns1:ExistingFedTaxID>
-        </ns1:ExistingAccount>
-    </ns1:Account>
-    <ns1:Subscriber subscriberReference="subscriberReference0" techType="2" customerType="NEW">
-        <ns1:Usage>
-            <ns1:Name>
-                <ns3:FirstName>FirstName0</ns3:FirstName>
-                <ns3:LastName>LastName0</ns3:LastName>
-                <ns3:HomePhone>0000000000</ns3:HomePhone>
-                <ns3:WorkPhone>
-                    <ns3:PhoneNumber>0000000000</ns3:PhoneNumber>
-                </ns3:WorkPhone>
-            </ns1:Name>
-            <ns1:Address>
-                <ns3:POBox>POBox0</ns3:POBox>
-                <ns3:City>City0</ns3:City>
-                <ns3:State>AA</ns3:State>
-                <ns3:PostalCode>33333</ns3:PostalCode>
-            </ns1:Address>
-        </ns1:Usage>
-        <ns1:Service>
-            <ns1:RatePlan billingCode="3333" price="39.99"/>
-            <ns1:IncludedFeature>
-                <ns1:Feature billingCode="21212" price="0.00"/>
-            </ns1:IncludedFeature>
-        </ns1:Service>
-        <ns1:ContractLength length="1" unit="years"/>
-        <ns1:Equipment>
-            <ns1:Device>
-                <ns1:SKU>33333</ns1:SKU>
-                <ns1:Make>Nokia</ns1:Make>
-            </ns1:Device>
-        </ns1:Equipment>
-    </ns1:Subscriber>
 </ns1:ActivationRequest>

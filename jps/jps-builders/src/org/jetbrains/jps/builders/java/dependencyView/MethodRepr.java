@@ -33,7 +33,6 @@ import java.util.Set;
 
 /**
  * @author: db
- * Date: 01.02.11
  */
 class MethodRepr extends ProtoMember {
 
@@ -45,7 +44,11 @@ class MethodRepr extends ProtoMember {
   public final TypeRepr.AbstractType[] myArgumentTypes;
   public final Set<TypeRepr.AbstractType> myExceptions;
 
-  public static abstract class Diff extends Difference {
+  public static abstract class Diff extends DifferenceImpl {
+
+    Diff(@NotNull Difference delegate) {
+      super(delegate);
+    }
 
     public abstract Specifier<ParamAnnotation, Difference> parameterAnnotations();
 
@@ -62,26 +65,12 @@ class MethodRepr extends ProtoMember {
     final Difference diff = super.difference(past);
     final Difference.Specifier<TypeRepr.AbstractType, Difference> excs = Difference.make(m.myExceptions, myExceptions);
     final Difference.Specifier<ParamAnnotation, Difference> paramAnnotations = Difference.make(m.myParameterAnnotations, myParameterAnnotations);
+    final int base = paramAnnotations.unchanged()? diff.base() : diff.base() | Difference.ANNOTATIONS;
 
-    return new Diff() {
-      @Override
-      public Specifier<TypeRepr.ClassType, Difference> annotations() {
-        return diff.annotations();
-      }
-
+    return new Diff(diff) {
       @Override
       public Specifier<ParamAnnotation, Difference> parameterAnnotations() {
         return paramAnnotations;
-      }
-
-      @Override
-      public int addedModifiers() {
-        return diff.addedModifiers();
-      }
-
-      @Override
-      public int removedModifiers() {
-        return diff.removedModifiers();
       }
 
       @Override
@@ -106,23 +95,12 @@ class MethodRepr extends ProtoMember {
 
       @Override
       public int base() {
-        final int base = diff.base();
-        return paramAnnotations.unchanged()? base : base | Difference.ANNOTATIONS;
-      }
-
-      @Override
-      public boolean packageLocalOn() {
-        return diff.packageLocalOn();
+        return base;
       }
 
       @Override
       public boolean hadValue() {
         return m.hasValue();
-      }
-
-      @Override
-      public boolean weakedAccess() {
-        return diff.weakedAccess();
       }
     };
   }
@@ -164,10 +142,10 @@ class MethodRepr extends ProtoMember {
       final int size = DataInputOutputUtil.readINT(in);
       myArgumentTypes = RW.read(externalizer, in, new TypeRepr.AbstractType[size]);
 
-      myExceptions = (Set<TypeRepr.AbstractType>)RW.read(externalizer, new THashSet<>(0), in);
+      myExceptions = RW.read(externalizer, new THashSet<>(0), in);
 
       final DataExternalizer<TypeRepr.ClassType> clsTypeExternalizer = TypeRepr.classTypeExternalizer(context);
-      myParameterAnnotations = (Set<ParamAnnotation>)RW.read(new DataExternalizer<ParamAnnotation>() {
+      myParameterAnnotations = RW.read(new DataExternalizer<ParamAnnotation>() {
         @Override
         public void save(@NotNull DataOutput out, ParamAnnotation value) throws IOException {
           value.save(out);
@@ -263,7 +241,7 @@ class MethodRepr extends ProtoMember {
     }
     stream.println();
 
-    final TypeRepr.AbstractType[] es = myExceptions.toArray(new TypeRepr.AbstractType[myExceptions.size()]);
+    final TypeRepr.AbstractType[] es = myExceptions.toArray(TypeRepr.AbstractType.EMPTY_TYPE_ARRAY);
     Arrays.sort(es, Comparator.comparing(o -> o.getDescr(context)));
     stream.print("          Exceptions : ");
     for (final TypeRepr.AbstractType e : es) {

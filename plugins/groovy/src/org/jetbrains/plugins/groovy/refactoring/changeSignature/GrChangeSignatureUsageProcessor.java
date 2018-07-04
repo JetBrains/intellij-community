@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.changeSignature;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,7 +23,6 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +54,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -77,6 +61,7 @@ import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidat
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -631,7 +616,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       }
 
       GrCall call = GroovyRefactoringUtil.getCallExpressionByMethodReference(element);
-      if (argumentList.getText().trim().isEmpty() && (call == null || !PsiImplUtil.hasClosureArguments(call))) {
+      if (argumentList.getText().trim().isEmpty() && (call == null || !call.hasClosureArguments())) {
         argumentList = argumentList.replaceWithArgumentList(factory.createArgumentList());
       }
       CodeStyleManager.getInstance(argumentList.getProject()).reformat(argumentList);
@@ -720,7 +705,7 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     else if (context instanceof GrMethod) {
       final PsiClassType[] handledExceptions = ((GrMethod)context).getThrowsList().getReferencedTypes();
       final List<PsiClassType> psiClassTypes = filterOutExceptions(exceptions, context, handledExceptions);
-      element = generateTryCatch(element, psiClassTypes.toArray(new PsiClassType[psiClassTypes.size()]));
+      element = generateTryCatch(element, psiClassTypes.toArray(PsiClassType.EMPTY_ARRAY));
     }
     else if (context instanceof GroovyFile) {
       element = generateTryCatch(element, exceptions);
@@ -740,9 +725,9 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
 
       referencedTypes = ContainerUtil.skipNulls(referencedTypes);
       final List<PsiClassType> psiClassTypes =
-        filterOutExceptions(exceptions, context, referencedTypes.toArray(new PsiClassType[referencedTypes.size()]));
+        filterOutExceptions(exceptions, context, referencedTypes.toArray(PsiClassType.EMPTY_ARRAY));
 
-      element = fixCatchBlock((GrTryCatchStatement)context, psiClassTypes.toArray(new PsiClassType[psiClassTypes.size()]));
+      element = fixCatchBlock((GrTryCatchStatement)context, psiClassTypes.toArray(PsiClassType.EMPTY_ARRAY));
     }
 
   //  CodeStyleManager.getInstance(element.getProject()).reformat(element);
@@ -754,7 +739,9 @@ public class GrChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
       (GrTryCatchStatement)GroovyPsiElementFactory.getInstance(element.getProject()).createStatementFromText("try{} catch (Exception e){}");
     final GrStatement statement = PsiTreeUtil.getParentOfType(element, GrStatement.class);
     assert statement != null;
-    tryCatch.getTryBlock().addStatementBefore(statement, null);
+    final GrOpenBlock block = tryCatch.getTryBlock();
+    assert block != null;
+    block.addStatementBefore(statement, null);
     tryCatch = (GrTryCatchStatement)statement.replace(tryCatch);
     tryCatch.getCatchClauses()[0].delete();
     fixCatchBlock(tryCatch, exceptions);

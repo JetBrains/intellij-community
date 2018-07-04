@@ -65,7 +65,7 @@ public class CompositeDescriptor extends RngElementDescriptor {
       final List<DElementPattern> list = ChildElementFinder.find(2, pattern);
       descriptors.addAll(Arrays.asList(myNsDescriptor.convertElementDescriptors(list)));
     }
-    return descriptors.toArray(new XmlElementDescriptor[descriptors.size()]);
+    return descriptors.toArray(XmlElementDescriptor.EMPTY_ARRAY);
   }
 
   @Override
@@ -83,7 +83,7 @@ public class CompositeDescriptor extends RngElementDescriptor {
       patterns = myPatterns;
     } else {
       final List<DElementPattern> p = ContainerUtil.findAll(myPatterns, pattern -> pattern.getName().contains(qName));
-      patterns = p.toArray(new DPattern[p.size()]);
+      patterns = p.toArray(new DPattern[0]);
     }
 
     return computeAttributeDescriptors(AttributeFinder.find(patterns));

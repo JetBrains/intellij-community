@@ -58,8 +58,8 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
     return myType.isValid() &&
-           PsiTypesUtil.isDenotableType(myType) &&
-           startElement.isValid() && 
+           PsiTypesUtil.isDenotableType(myType, startElement) &&
+           PsiTypesUtil.allTypeParametersResolved(startElement, myType) &&
            startElement.getManager().isInProject(startElement);
   }
 
@@ -117,10 +117,5 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
     assertNotNull(typeCast.getOperand()).replace(expression);
 
     return typeCast;
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return true;
   }
 }

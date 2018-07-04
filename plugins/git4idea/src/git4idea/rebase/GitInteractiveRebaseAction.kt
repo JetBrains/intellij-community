@@ -33,7 +33,7 @@ class GitInteractiveRebaseAction : GitCommitEditingAction() {
     val project = e.project!!
     val repository = getRepository(e)
 
-    object : Task.Backgroundable(project, "Preparing to rebase") {
+    object : Task.Backgroundable(project, "Rebasing") {
       override fun run(indicator: ProgressIndicator) {
         val params = GitRebaseParams.editCommits(commit.parents.first().asString(), null, false)
         GitRebaseUtils.rebase(project, listOf(repository), params, indicator);
@@ -41,5 +41,5 @@ class GitInteractiveRebaseAction : GitCommitEditingAction() {
     }.queue()
   }
 
-  override fun getFailureTitle() = "Couldn't Start Rebase"
+  override fun getFailureTitle(): String = "Couldn't Start Rebase"
 }

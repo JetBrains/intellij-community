@@ -24,8 +24,9 @@ import java.awt.geom.Area;
 /**
  * @author Konstantin Bulenkov
  */
-public class MacIntelliJSpinnerBorder extends MacComboBoxBorder {
-  @Override boolean isFocused(Component c) {
+public class MacIntelliJSpinnerBorder extends MacIntelliJComboBoxBorder {
+  @Override
+  protected boolean isFocused(Component c) {
     return DarculaSpinnerBorder.isFocused(c);
   }
 

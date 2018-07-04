@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
@@ -44,7 +30,11 @@ public interface Inlay extends Disposable, UserDataHolderEx {
   /**
    * Tells whether this element is associated with preceding or following text. This relation defines certain aspects of inlay's behaviour
    * with respect to changes in editor, e.g. when text is inserted at inlay's position, inlay will end up before the inserted text if the
-   * returned value is {@code false} and after the text, if the returned value is {@code true}. The value is determined at element's
+   * returned value is {@code false} and after the text, if the returned value is {@code true}.
+   * Also, when {@link Caret#moveToOffset(int)} or similar offset-based method is invoked, and an inlay exists at the given offset,
+   * caret will be positioned to the left of inlay if returned value is {@code true}, and vice versa.
+   * <p>
+   * The value is determined at element's
    * creation (see {@link InlayModel#addInlineElement(int, boolean, EditorCustomElementRenderer)}.
    */
   boolean isRelatedToPrecedingText();

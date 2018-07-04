@@ -13,6 +13,8 @@ public class ConstantNamingConventionInspectionTest extends LightInspectionTestC
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new ConstantNamingConventionInspection();
+    FieldNamingConventionInspection inspection = new FieldNamingConventionInspection();
+    inspection.setEnabled(true,new ConstantNamingConvention().getShortName());
+    return inspection;
   }
 }

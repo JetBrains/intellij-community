@@ -49,7 +49,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
                                    int endOffset,
                                    int maxPreferredOffset,
                                    boolean allowToBeyondMaxPreferredOffset,
-                                   boolean virtual)
+                                   boolean isSoftWrap)
   {
     if (endOffset <= startOffset) {
       return endOffset;
@@ -70,7 +70,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
         return i + 1;
       }
 
-      if (!canUseOffset(document, i, virtual)) {
+      if (!canUseOffset(document, i, isSoftWrap)) {
         continue;
       }
 
@@ -118,7 +118,7 @@ public class GenericLineWrapPositionStrategy implements LineWrapPositionStrategy
         return i + 1;
       }
 
-      if (!canUseOffset(document, i, virtual)) {
+      if (!canUseOffset(document, i, isSoftWrap)) {
         continue;
       }
       

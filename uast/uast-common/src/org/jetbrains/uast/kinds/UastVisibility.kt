@@ -20,21 +20,21 @@ import com.intellij.psi.PsiModifier
 import com.intellij.psi.PsiModifierListOwner
 
 enum class UastVisibility(val text: String) {
-    PUBLIC("public"),
-    PRIVATE("private"),
-    PROTECTED("protected"), 
-    PACKAGE_LOCAL("packageLocal"), 
-    LOCAL("local");
+  PUBLIC("public"),
+  PRIVATE("private"),
+  PROTECTED("protected"),
+  PACKAGE_LOCAL("packageLocal"),
+  LOCAL("local");
 
-    override fun toString() = text
-    
-    companion object {
-        operator fun get(declaration: PsiModifierListOwner): UastVisibility {
-            if (declaration.hasModifierProperty(PsiModifier.PUBLIC)) return UastVisibility.PUBLIC
-            if (declaration.hasModifierProperty(PsiModifier.PROTECTED)) return UastVisibility.PROTECTED
-            if (declaration.hasModifierProperty(PsiModifier.PRIVATE)) return UastVisibility.PRIVATE
-            if (declaration is PsiLocalVariable) return UastVisibility.LOCAL
-            return UastVisibility.PACKAGE_LOCAL
-        }
+  override fun toString(): String = text
+
+  companion object {
+    operator fun get(declaration: PsiModifierListOwner): UastVisibility {
+      if (declaration.hasModifierProperty(PsiModifier.PUBLIC)) return UastVisibility.PUBLIC
+      if (declaration.hasModifierProperty(PsiModifier.PROTECTED)) return UastVisibility.PROTECTED
+      if (declaration.hasModifierProperty(PsiModifier.PRIVATE)) return UastVisibility.PRIVATE
+      if (declaration is PsiLocalVariable) return UastVisibility.LOCAL
+      return UastVisibility.PACKAGE_LOCAL
     }
+  }
 }

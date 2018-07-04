@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -30,12 +31,12 @@ import java.util.List;
  */
 public abstract class AbstractWordSelectioner extends ExtendWordSelectionHandlerBase {
   @Override
-  public boolean canSelect(final PsiElement e) {
+  public boolean canSelect(@NotNull final PsiElement e) {
     return false;
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> ranges;
     if (canSelect(e)) {
       ranges = super.select(e, editorText, cursorOffset, editor);

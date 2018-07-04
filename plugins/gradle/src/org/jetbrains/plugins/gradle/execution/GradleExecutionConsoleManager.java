@@ -15,8 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.execution;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -25,12 +23,14 @@ import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask;
 import com.intellij.openapi.externalSystem.service.execution.DefaultExternalSystemExecutionConsoleManager;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
+import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.execution.filters.ReRunSyncFilter;
+import org.jetbrains.plugins.gradle.execution.filters.ReRunTaskFilter;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-
-import static org.jetbrains.plugins.gradle.execution.GradleRunnerUtil.attachTaskExecutionView;
 
 /**
  * @author Vladislav.Soroka
@@ -44,16 +44,25 @@ public class GradleExecutionConsoleManager extends DefaultExternalSystemExecutio
     return GradleConstants.SYSTEM_ID;
   }
 
-  @NotNull
+  @Nullable
   @Override
-  public ExecutionConsole attachExecutionConsole(@NotNull ExternalSystemTask task,
-                                                 @NotNull Project project,
-                                                 @NotNull ExternalSystemRunConfiguration configuration,
-                                                 @NotNull Executor executor,
-                                                 @NotNull ExecutionEnvironment env,
-                                                 @NotNull ProcessHandler processHandler) throws ExecutionException {
-    final ConsoleView textConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
-    textConsole.attachToProcess(processHandler);
-    return attachTaskExecutionView(project, textConsole, true, "gradle.runner.text.console", processHandler, task.getId());
+  public ExecutionConsole attachExecutionConsole(@NotNull Project project,
+                                                 @NotNull ExternalSystemTask task,
+                                                 @Nullable ExecutionEnvironment env,
+                                                 @Nullable ProcessHandler processHandler) {
+    ConsoleView executionConsole = TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole();
+    executionConsole.attachToProcess(processHandler);
+    if (task instanceof ExternalSystemExecuteTaskTask) {
+      executionConsole.addMessageFilter(new ReRunTaskFilter((ExternalSystemExecuteTaskTask)task, env));
+    }
+    else if (task instanceof ExternalSystemResolveProjectTask) {
+      executionConsole.addMessageFilter(new ReRunSyncFilter((ExternalSystemResolveProjectTask)task, project));
+    }
+    return executionConsole;
+  }
+
+  @Override
+  public boolean isApplicableFor(@NotNull ExternalSystemTask task) {
+    return GradleConstants.SYSTEM_ID.equals(task.getId().getProjectSystemId());
   }
 }

@@ -32,8 +32,8 @@ import java.util.Collections;
  * @author Vladislav.Soroka
  */
 public class MavenPatternFileFilter implements FileFilter {
-  private String[] myNormalizedIncludes;
-  private String[] myNormalizedExcludes;
+  private final String[] myNormalizedIncludes;
+  private final String[] myNormalizedExcludes;
 
   public MavenPatternFileFilter(@Nullable String includes, @Nullable String excludes) {
     this(includes == null ? Collections.emptyList() : StringUtil.split(includes, ","),

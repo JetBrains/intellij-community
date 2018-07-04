@@ -1,27 +1,13 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.Direction.ParamValueBasedDirection;
-import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.RichControlFlow;
 import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.Handle;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.*;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
@@ -48,6 +34,7 @@ abstract class ContractAnalysis extends Analysis<Result> {
   final Value inValue;
   private final int generalizeShift;
   Result internalResult;
+  boolean unsureOnly = true;
   private int id;
   private int pendingTop;
 
@@ -57,7 +44,7 @@ abstract class ContractAnalysis extends Analysis<Result> {
     interpreter = new InOutInterpreter(direction, richControlFlow.controlFlow.methodNode.instructions, resultOrigins);
     inValue = direction instanceof ParamValueBasedDirection ? ((ParamValueBasedDirection)direction).inValue : null;
     generalizeShift = (methodNode.access & ACC_STATIC) == 0 ? 1 : 0;
-    internalResult = new Final(Value.Bot);
+    internalResult = Value.Bot;
   }
 
   @NotNull
@@ -81,9 +68,7 @@ abstract class ContractAnalysis extends Analysis<Result> {
     int steps = 0;
     while (pendingTop > 0 && earlyResult == null) {
       steps ++;
-      if (steps >= STEPS_LIMIT) {
-        throw new AnalyzerException(null, "limit is reached, steps: " + steps + " in method " + method);
-      }
+      TooComplexException.check(method, steps);
       if (steps % 128 == 0) {
         ProgressManager.checkCanceled();
       }
@@ -122,6 +107,10 @@ abstract class ContractAnalysis extends Analysis<Result> {
     }
     if (earlyResult != null) {
       return mkEquation(earlyResult);
+    } else if (unsureOnly) {
+      // We are not sure whether exceptional paths were actually taken or not
+      // probably they handle exceptions which can never be thrown before dereference occurs
+      return mkEquation(Value.Bot);
     } else {
       return mkEquation(internalResult);
     }
@@ -142,46 +131,59 @@ abstract class ContractAnalysis extends Analysis<Result> {
     addComputed(insnIndex, state);
 
     int opcode = insnNode.getOpcode();
-    if (handleReturn(frame, opcode)) return;
+
+    if (interpreter.deReferenced && controlFlow.npeTransitions.containsKey(insnIndex)) {
+      interpreter.deReferenced = false;
+      int npeTarget = controlFlow.npeTransitions.get(insnIndex);
+      for (int nextInsnIndex : controlFlow.transitions[insnIndex]) {
+        if (!controlFlow.errorTransitions.contains(new Edge(insnIndex, nextInsnIndex))) continue;
+        Frame<BasicValue> nextFrame1 = createCatchFrame(frame);
+        boolean unsure = state.unsure || nextInsnIndex != npeTarget;
+        pendingPush(new State(++id, new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, false, unsure));
+      }
+      return;
+    }
+
+    if (handleReturn(frame, opcode, state.unsure)) return;
 
     if (opcode == IFNONNULL && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = inValue == Value.Null ? insnIndex + 1 : methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
-      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
+      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false, state.unsure);
       pendingPush(nextState);
       return;
     }
 
     if (opcode == IFNULL && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = inValue == Value.NotNull ? insnIndex + 1 : methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
-      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
+      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false, state.unsure);
       pendingPush(nextState);
       return;
     }
 
     if (opcode == IFEQ && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = inValue == Value.True ? insnIndex + 1 : methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
-      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
+      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false, state.unsure);
       pendingPush(nextState);
       return;
     }
 
     if (opcode == IFNE && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = inValue == Value.False ? insnIndex + 1 : methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
-      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
+      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false, state.unsure);
       pendingPush(nextState);
       return;
     }
 
     if (opcode == IFEQ && popValue(frame) == InstanceOfCheckValue && inValue == Value.Null) {
       int nextInsnIndex = methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
-      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
+      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false, state.unsure);
       pendingPush(nextState);
       return;
     }
 
     if (opcode == IFNE && popValue(frame) == InstanceOfCheckValue && inValue == Value.Null) {
       int nextInsnIndex = insnIndex + 1;
-      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false);
+      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false, state.unsure);
       pendingPush(nextState);
       return;
     }
@@ -189,21 +191,19 @@ abstract class ContractAnalysis extends Analysis<Result> {
     // general case
     for (int nextInsnIndex : controlFlow.transitions[insnIndex]) {
       Frame<BasicValue> nextFrame1 = nextFrame;
+      boolean unsure = state.unsure;
       if (controlFlow.errors[nextInsnIndex] && controlFlow.errorTransitions.contains(new Edge(insnIndex, nextInsnIndex))) {
-        nextFrame1 = new Frame<>(frame);
-        nextFrame1.clearStack();
-        nextFrame1.push(ASMUtils.THROWABLE_VALUE);
+        nextFrame1 = createCatchFrame(frame);
+        unsure = true;
       }
-      pendingPush(new State(++id, new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, false));
+      pendingPush(new State(++id, new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, false, unsure));
     }
   }
 
-  abstract boolean handleReturn(Frame<BasicValue> frame, int opcode) throws AnalyzerException;
+  abstract boolean handleReturn(Frame<BasicValue> frame, int opcode, boolean unsure) throws AnalyzerException;
 
-  private void pendingPush(State st) throws AnalyzerException {
-    if (pendingTop >= STEPS_LIMIT) {
-      throw new AnalyzerException(null, "limit is reached in method " + method);
-    }
+  private void pendingPush(State st) {
+    TooComplexException.check(method, pendingTop);
     pending[pendingTop++] = st;
   }
 
@@ -260,7 +260,7 @@ class InOutAnalysis extends ContractAnalysis {
     super(richControlFlow, direction, resultOrigins, stable, pending);
   }
 
-  boolean handleReturn(Frame<BasicValue> frame, int opcode) throws AnalyzerException {
+  boolean handleReturn(Frame<BasicValue> frame, int opcode, boolean unsure) throws AnalyzerException {
     if (interpreter.deReferenced) {
       return true;
     }
@@ -274,30 +274,31 @@ class InOutAnalysis extends ContractAnalysis {
         BasicValue stackTop = popValue(frame);
         Result subResult;
         if (FalseValue == stackTop) {
-          subResult = new Final(Value.False);
+          subResult = Value.False;
         }
         else if (TrueValue == stackTop) {
-          subResult = new Final(Value.True);
+          subResult = Value.True;
         }
         else if (NullValue == stackTop) {
-          subResult = new Final(Value.Null);
+          subResult = Value.Null;
         }
         else if (stackTop instanceof NotNullValue) {
-          subResult = new Final(Value.NotNull);
+          subResult = Value.NotNull;
         }
         else if (stackTop instanceof ParamValue) {
-          subResult = new Final(inValue);
+          subResult = inValue;
         }
         else if (stackTop instanceof CallResultValue) {
           Set<EKey> keys = ((CallResultValue) stackTop).inters;
           subResult = new Pending(new Component[] {new Component(Value.Top, keys)});
         }
         else {
-          earlyResult = new Final(Value.Top);
+          earlyResult = Value.Top;
           return true;
         }
         internalResult = checkLimit(resultUtil.join(internalResult, subResult));
-        if (internalResult instanceof Final && ((Final)internalResult).value == Value.Top) {
+        unsureOnly &= unsure;
+        if (!unsure && internalResult == Value.Top) {
           earlyResult = internalResult;
         }
         return true;
@@ -321,10 +322,10 @@ class InThrowAnalysis extends ContractAnalysis {
     super(richControlFlow, direction, resultOrigins, stable, pending);
   }
 
-  boolean handleReturn(Frame<BasicValue> frame, int opcode) throws AnalyzerException {
+  boolean handleReturn(Frame<BasicValue> frame, int opcode, boolean unsure) {
     Result subResult;
     if (interpreter.deReferenced) {
-      subResult = new Final(Value.Top);
+      subResult = Value.Top;
     } else {
       switch (opcode) {
         case ARETURN:
@@ -339,20 +340,21 @@ class InThrowAnalysis extends ContractAnalysis {
           } else {
             myReturnValue = value;
           }
-          subResult = new Final(Value.Top);
+          subResult = Value.Top;
           break;
         case RETURN:
-          subResult = new Final(Value.Top);
+          subResult = Value.Top;
           break;
         case ATHROW:
-          subResult = new Final(Value.Fail);
+          subResult = Value.Fail;
           break;
         default:
           return false;
       }
     }
     internalResult = resultUtil.join(internalResult, subResult);
-    if (internalResult instanceof Final && ((Final)internalResult).value == Value.Top && myHasNonTrivialReturn) {
+    unsureOnly &= unsure;
+    if (!unsure && internalResult == Value.Top && myHasNonTrivialReturn) {
       earlyResult = internalResult;
     }
     return true;
@@ -368,6 +370,7 @@ class InOutInterpreter extends BasicInterpreter {
   boolean deReferenced;
 
   InOutInterpreter(Direction direction, InsnList insns, boolean[] resultOrigins) {
+    super(Opcodes.API_VERSION);
     this.insns = insns;
     this.resultOrigins = resultOrigins;
     if(direction instanceof ParamValueBasedDirection) {
@@ -470,7 +473,7 @@ class InOutInterpreter extends BasicInterpreter {
   }
 
   @Override
-  public BasicValue ternaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2, BasicValue value3) throws AnalyzerException {
+  public BasicValue ternaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2, BasicValue value3) {
     switch (insn.getOpcode()) {
       case IASTORE:
       case LASTORE:
@@ -512,7 +515,7 @@ class InOutInterpreter extends BasicInterpreter {
         case INVOKEINTERFACE:
           boolean stable = opCode == INVOKESTATIC || opCode == INVOKESPECIAL;
           MethodInsnNode mNode = (MethodInsnNode)insn;
-          Method method = new Method(mNode.owner, mNode.name, mNode.desc);
+          Member method = new Member(mNode.owner, mNode.name, mNode.desc);
           Type retType = Type.getReturnType(mNode.desc);
           boolean isRefRetType = retType.getSort() == Type.OBJECT || retType.getSort() == Type.ARRAY;
           if (!Type.VOID_TYPE.equals(retType)) {
@@ -538,10 +541,10 @@ class InOutInterpreter extends BasicInterpreter {
           }
           break;
         case INVOKEDYNAMIC:
-          LambdaIndy lambda = LambdaIndy.from((InvokeDynamicInsnNode)insn);
-          if(lambda != null) {
-            // indy producing lambda is never null
-            return new NotNullValue(lambda.getFunctionalInterfaceType());
+          InvokeDynamicInsnNode indy = (InvokeDynamicInsnNode)insn;
+          if(LambdaIndy.from(indy) != null || ClassDataIndexer.STRING_CONCAT_FACTORY.equals(indy.bsm.getOwner())) {
+            // indy producing lambda or string concatenation is never null
+            return new NotNullValue(Type.getReturnType(indy.desc));
           }
           break;
         case MULTIANEWARRAY:

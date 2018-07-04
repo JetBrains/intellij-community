@@ -202,7 +202,7 @@ public abstract class AbstractLayoutCodeProcessorTest extends PsiTestCase {
 
   protected AnActionEvent createEventFor(AnAction action, final List<VirtualFile> files, final Project project, @NotNull final AdditionalEventInfo eventInfo) {
     return AnActionEvent.createFromAnAction(action, null, "", dataId -> {
-      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return files.toArray(new VirtualFile[files.size()]);
+      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return files.toArray(VirtualFile.EMPTY_ARRAY);
       if (CommonDataKeys.PROJECT.is(dataId)) return project;
       if (CommonDataKeys.EDITOR.is(dataId)) return eventInfo.getEditor();
       if (LangDataKeys.MODULE_CONTEXT.is(dataId)) return eventInfo.getModule();

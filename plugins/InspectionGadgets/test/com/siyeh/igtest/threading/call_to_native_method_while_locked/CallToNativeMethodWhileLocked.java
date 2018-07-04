@@ -15,4 +15,11 @@ public class CallToNativeMethodWhileLocked {
       Double.<warning descr="Call to native method 'doubleToRawLongBits()' in a synchronized context">doubleToRawLongBits</warning>(40.0);
     };
   }
+
+  void test(String[] src, String[] target) {
+    synchronized (this) {
+      System.arraycopy(src, 0, target, 1, 5);
+      System.out.println(System.identityHashCode(src));
+    }
+  }
 }

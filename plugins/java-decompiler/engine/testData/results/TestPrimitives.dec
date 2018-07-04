@@ -157,6 +157,10 @@ public class TestPrimitives {
       res = c > 255;// 166
       return res;// 167
    }
+
+   void testAutoBoxingCallRequired(boolean value) {
+      Boolean.valueOf(value).hashCode();// 171
+   }// 172
 }
 
 class 'pkg/TestPrimitives' {
@@ -530,6 +534,12 @@ class 'pkg/TestPrimitives' {
       98      156
       9a      157
    }
+
+   method 'testAutoBoxingCallRequired (Z)V' {
+      1      161
+      4      161
+      8      162
+   }
 }
 
 Lines mapping:
@@ -628,6 +638,8 @@ Lines mapping:
 165 <-> 156
 166 <-> 157
 167 <-> 158
+171 <-> 162
+172 <-> 163
 Not mapped:
 46
 50

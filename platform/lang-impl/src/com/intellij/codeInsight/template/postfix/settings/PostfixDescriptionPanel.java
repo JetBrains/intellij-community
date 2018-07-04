@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.settings;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.intention.impl.config.ActionUsagePanel;
+import com.intellij.codeInsight.intention.impl.config.BeforeAfterMetaData;
 import com.intellij.codeInsight.intention.impl.config.PlainTextDescriptor;
 import com.intellij.codeInsight.intention.impl.config.TextDescriptor;
 import com.intellij.openapi.Disposable;
@@ -25,13 +13,17 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.HintHint;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.io.StringReader;
 
 class PostfixDescriptionPanel implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.intention.impl.config.IntentionDescriptionPanel");
@@ -42,17 +34,14 @@ class PostfixDescriptionPanel implements Disposable {
   private JEditorPane myDescriptionBrowser;
 
   public PostfixDescriptionPanel() {
-    myDescriptionBrowser.setMargin(new Insets(5, 5, 5, 5));
+    myDescriptionBrowser.setMargin(JBUI.insets(5));
     initializeExamplePanel(myAfterPanel);
     initializeExamplePanel(myBeforePanel);
   }
 
-
-  public void reset(@NotNull PostfixTemplateMetaData actionMetaData) {
+  public void reset(@NotNull BeforeAfterMetaData actionMetaData) {
     boolean isEmpty = actionMetaData == PostfixTemplateMetaData.EMPTY_METADATA;
-    myDescriptionBrowser.setText(isEmpty ? CodeInsightBundle.message("templates.postfix.settings.category.text")
-                                         : getDescription(actionMetaData.getDescription()));
-
+    readHtml(actionMetaData, isEmpty);
     showUsages(myBeforePanel, isEmpty
                               ? new PlainTextDescriptor(CodeInsightBundle.message("templates.postfix.settings.category.before"),
                                                         "before.txt.template")
@@ -63,6 +52,17 @@ class PostfixDescriptionPanel implements Disposable {
                              : ArrayUtil.getFirstElement(actionMetaData.getExampleUsagesAfter()));
   }
 
+  private void readHtml(@NotNull BeforeAfterMetaData actionMetaData, boolean isEmpty) {
+    final HintHint hintHint = new HintHint(myDescriptionBrowser, new Point(0, 0));
+    hintHint.setFont(UIUtil.getLabelFont());
+    String description = isEmpty ? CodeInsightBundle.message("templates.postfix.settings.category.text")
+                                 : getDescription(actionMetaData.getDescription());
+    try {
+      myDescriptionBrowser.read(new StringReader(HintUtil.prepareHintText(description, hintHint)), null);
+    }
+    catch (IOException ignore) {
+    }
+  }
 
   @NotNull
   private static String getDescription(TextDescriptor url) {
@@ -108,5 +108,27 @@ class PostfixDescriptionPanel implements Disposable {
 
   @Override
   public void dispose() {
+  }
+
+  public void resetHeights(int preferredWidth) {
+    //adjust vertical dimension to be equal for all three panels
+    double height =
+      (myDescriptionBrowser.getSize().getHeight() + myBeforePanel.getSize().getHeight() + myAfterPanel.getSize().getHeight()) / 3;
+    if (height == 0) return;
+    final Dimension newd = new Dimension(preferredWidth, (int)height);
+    myDescriptionBrowser.setSize(newd);
+    myDescriptionBrowser.setPreferredSize(newd);
+    myDescriptionBrowser.setMaximumSize(newd);
+    myDescriptionBrowser.setMinimumSize(newd);
+
+    myBeforePanel.setSize(newd);
+    myBeforePanel.setPreferredSize(newd);
+    myBeforePanel.setMaximumSize(newd);
+    myBeforePanel.setMinimumSize(newd);
+
+    myAfterPanel.setSize(newd);
+    myAfterPanel.setPreferredSize(newd);
+    myAfterPanel.setMaximumSize(newd);
+    myAfterPanel.setMinimumSize(newd);
   }
 }

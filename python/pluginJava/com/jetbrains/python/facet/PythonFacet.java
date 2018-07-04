@@ -29,16 +29,18 @@ public class PythonFacet extends LibraryContributingFacet<PythonFacetConfigurati
 
   public PythonFacet(@NotNull final FacetType facetType,
                      @NotNull final Module module,
-                     final @NotNull String name,
+                     @NotNull final String name,
                      @NotNull final PythonFacetConfiguration configuration,
                      Facet underlyingFacet) {
     super(facetType, module, name, configuration, underlyingFacet);
   }
 
+  @Override
   public void updateLibrary() {
     PythonFacetUtil.updateLibrary(getModule(), getConfiguration());
   }
 
+  @Override
   public void removeLibrary() {
     PythonFacetUtil.removeLibrary(getModule());
   }
@@ -47,6 +49,7 @@ public class PythonFacet extends LibraryContributingFacet<PythonFacetConfigurati
     return sdkName + PYTHON_FACET_LIBRARY_NAME_SUFFIX;
   }
 
+  @Override
   public void initFacet() {
     updateLibrary();
   }

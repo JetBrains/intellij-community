@@ -15,9 +15,10 @@
  */
 package com.jetbrains.python.inspections;
 
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
-public class PyNoneFunctionAssignmentInspectionTest extends PyTestCase {
+public class PyNoneFunctionAssignmentInspectionTest extends PyInspectionTestCase {
 
   public void testPass() {
     doTest();
@@ -49,9 +50,9 @@ public class PyNoneFunctionAssignmentInspectionTest extends PyTestCase {
     doTest();
   }
 
-  private void doTest() {
-    myFixture.configureByFile("inspections/PyNoneFunctionAssignmentInspection/" + getTestName(true) + ".py");
-    myFixture.enableInspections(PyNoneFunctionAssignmentInspection.class);
-    myFixture.checkHighlighting(false, false, true);
+  @NotNull
+  @Override
+  protected Class<? extends PyInspection> getInspectionClass() {
+    return PyNoneFunctionAssignmentInspection.class;
   }
 }

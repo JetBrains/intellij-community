@@ -74,7 +74,9 @@ public class UnnecessaryInitCauseInspection extends UnnecessaryInitCauseInspecti
         return;
       }
       final PsiElement newElement = argumentList1.add(argument);
-      HighlightUtils.highlightElement(newElement);
+      if (isOnTheFly()) {
+        HighlightUtils.highlightElement(newElement);
+      }
       final PsiElement parent = methodCallExpression.getParent();
       if (parent instanceof PsiExpressionStatement) {
         parent.delete();

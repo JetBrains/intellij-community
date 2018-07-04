@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.lang.ASTFactory;
@@ -34,8 +20,8 @@ import java.util.function.Predicate;
  *
  * @author Tagir Valeev
  */
-public class CommentTracker {
-  private Set<PsiElement> ignoredParents = new HashSet<>();
+public final class CommentTracker {
+  private final Set<PsiElement> ignoredParents = new HashSet<>();
   private List<PsiComment> comments = new ArrayList<>();
 
   /**
@@ -52,11 +38,39 @@ public class CommentTracker {
   }
 
   /**
+   * Marks the expression as unchanged and returns its text, adding parentheses if necessary.
+   * The unchanged elements are assumed to be preserved in the resulting code as is,
+   * so the comments from them will not be extracted.
+   *
+   * @param element    expression to return the text
+   * @param precedence precedence of surrounding operation
+   * @return a text to be inserted into refactored code
+   * @see ParenthesesUtils#getText(PsiExpression, int)
+   */
+  public @NotNull String text(@NotNull PsiExpression element, int precedence) {
+    checkState();
+    addIgnored(element);
+    return ParenthesesUtils.getText(element, precedence + 1);
+  }
+
+  /**
+   * Marks the expression as unchanged and returns a single-parameter lambda text which parameter
+   * is the name of supplied variable and body is the supplied expression
+   *
+   * @param variable   a variable to use as lambda parameter
+   * @param expression an expression to use as lambda body
+   * @return a string representation of lambda
+   */
+  public @NotNull String lambdaText(@NotNull PsiVariable variable, @NotNull PsiExpression expression) {
+    return variable.getName() + " -> " + text(expression);
+  }
+
+  /**
    * Marks the element as unchanged and returns it. The unchanged elements are assumed to be preserved
    * in the resulting code as is, so the comments from them will not be extracted.
    *
    * @param element element to mark
-   * @param <T> the type of the element
+   * @param <T>     the type of the element
    * @return the passed argument
    */
   public @NotNull <T extends PsiElement> T markUnchanged(@NotNull T element) {
@@ -66,12 +80,57 @@ public class CommentTracker {
   }
 
   /**
+   * Marks the range of elements as unchanged and returns their text. The unchanged elements are assumed to be preserved
+   * in the resulting code as is, so the comments from them will not be extracted.
+   *
+   * @param firstElement first element to mark
+   * @param lastElement last element to mark (must be equal to firstElement or its sibling)
+   * @return a text to be inserted into refactored code
+   * @throws IllegalArgumentException if firstElement and lastElements are not siblings or firstElement goes after last element
+   */
+  public String rangeText(@NotNull PsiElement firstElement, @NotNull PsiElement lastElement) {
+    checkState();
+    PsiElement e;
+    StringBuilder result = new StringBuilder();
+    for (e = firstElement; e != null && e != lastElement; e = e.getNextSibling()) {
+      addIgnored(e);
+      result.append(e.getText());
+    }
+    if (e == null) {
+      throw new IllegalArgumentException("Elements must be siblings: " + firstElement + " and " + lastElement);
+    }
+    addIgnored(lastElement);
+    result.append(lastElement.getText());
+    return result.toString();
+  }
+
+  /**
+   * Marks the range of elements as unchanged. The unchanged elements are assumed to be preserved
+   * in the resulting code as is, so the comments from them will not be extracted.
+   *
+   * @param firstElement first element to mark
+   * @param lastElement last element to mark (must be equal to firstElement or its sibling)
+   * @throws IllegalArgumentException if firstElement and lastElements are not siblings or firstElement goes after last element
+   */
+  public void markRangeUnchanged(@NotNull PsiElement firstElement, @NotNull PsiElement lastElement) {
+    checkState();
+    PsiElement e;
+    for (e = firstElement; e != null && e != lastElement; e = e.getNextSibling()) {
+      addIgnored(e);
+    }
+    if (e == null) {
+      throw new IllegalArgumentException("Elements must be siblings: " + firstElement + " and " + lastElement);
+    }
+    addIgnored(lastElement);
+  }
+
+  /**
    * Deletes given PsiElement collecting all the comments inside it.
    *
    * @param element element to delete
    */
   public void delete(@NotNull PsiElement element) {
-    grabComments(element);
+    grabCommentsOnDelete(element);
     element.delete();
   }
 
@@ -81,7 +140,7 @@ public class CommentTracker {
    * @param elements elements to delete (all not null)
    */
   public void delete(@NotNull PsiElement... elements) {
-    for(PsiElement element : elements) {
+    for (PsiElement element : elements) {
       delete(element);
     }
   }
@@ -95,19 +154,24 @@ public class CommentTracker {
    * @param element element to delete
    */
   public void deleteAndRestoreComments(@NotNull PsiElement element) {
-    grabComments(element);
-    insertCommentsBefore(element instanceof PsiVariable ? element.getParent() : element);
+    grabCommentsOnDelete(element);
+    PsiElement anchor = element;
+    while (anchor.getParent() != null && !(anchor.getParent() instanceof PsiFile) && anchor.getParent().getFirstChild() == anchor) {
+      anchor = anchor.getParent();
+    }
+    insertCommentsBefore(anchor);
     element.delete();
   }
 
   /**
    * Replaces given PsiElement collecting all the comments inside it.
    *
-   * @param element element to replace
-   * @param replacement replacement element
+   * @param element     element to replace
+   * @param replacement replacement element. It's also marked as unchanged (see {@link #markUnchanged(PsiElement)})
    * @return the element which was actually inserted in the tree (either {@code replacement} or its copy)
    */
   public @NotNull PsiElement replace(@NotNull PsiElement element, @NotNull PsiElement replacement) {
+    markUnchanged(replacement);
     grabComments(element);
     return element.replace(replacement);
   }
@@ -117,13 +181,13 @@ public class CommentTracker {
    * collecting all the comments inside it.
    *
    * <p>
-   *   The type of the created replacement will mimic the type of supplied element.
-   *   Supported element types are: {@link PsiExpression}, {@link PsiStatement},
-   *   {@link PsiTypeElement}, {@link PsiIdentifier}, {@link PsiComment}.
+   * The type of the created replacement will mimic the type of supplied element.
+   * Supported element types are: {@link PsiExpression}, {@link PsiStatement},
+   * {@link PsiTypeElement}, {@link PsiIdentifier}, {@link PsiComment}.
    * </p>
    *
    * @param element element to replace
-   * @param text replacement text
+   * @param text    replacement text
    * @return the element which was actually inserted in the tree
    */
   public @NotNull PsiElement replace(@NotNull PsiElement element, @NotNull String text) {
@@ -137,20 +201,23 @@ public class CommentTracker {
    *
    * <p>After calling this method the tracker cannot be used anymore.</p>
    *
-   * @param element element to replace
-   * @param replacement replacement element
+   * @param element     element to replace
+   * @param replacement replacement element. It's also marked as unchanged (see {@link #markUnchanged(PsiElement)})
    * @return the element which was actually inserted in the tree (either {@code replacement} or its copy)
    */
   public @NotNull PsiElement replaceAndRestoreComments(@NotNull PsiElement element, @NotNull PsiElement replacement) {
     PsiElement result = replace(element, replacement);
     PsiElement anchor = PsiTreeUtil.getNonStrictParentOfType(result, PsiStatement.class, PsiLambdaExpression.class, PsiVariable.class);
-    if(anchor instanceof PsiLambdaExpression && anchor != result) {
+    if (anchor instanceof PsiLambdaExpression && anchor != result) {
       anchor = ((PsiLambdaExpression)anchor).getBody();
     }
-    if(anchor instanceof PsiVariable && anchor.getParent() instanceof PsiDeclarationStatement) {
+    if (anchor instanceof PsiVariable && anchor.getParent() instanceof PsiDeclarationStatement) {
       anchor = anchor.getParent();
     }
-    if(anchor == null) anchor = result;
+    if (anchor instanceof PsiStatement && (anchor.getParent() instanceof PsiIfStatement || anchor.getParent() instanceof PsiLoopStatement)) {
+      anchor = anchor.getParent();
+    }
+    if (anchor == null) anchor = result;
     insertCommentsBefore(anchor);
     return result;
   }
@@ -163,13 +230,13 @@ public class CommentTracker {
    * <p>After calling this method the tracker cannot be used anymore.</p>
    *
    * <p>
-   *   The type of the created replacement will mimic the type of supplied element.
-   *   Supported element types are: {@link PsiExpression}, {@link PsiStatement},
-   *   {@link PsiTypeElement}, {@link PsiIdentifier}, {@link PsiComment}.
+   * The type of the created replacement will mimic the type of supplied element.
+   * Supported element types are: {@link PsiExpression}, {@link PsiStatement},
+   * {@link PsiTypeElement}, {@link PsiIdentifier}, {@link PsiComment}.
    * </p>
    *
    * @param element element to replace
-   * @param text replacement text
+   * @param text    replacement text
    * @return the element which was actually inserted in the tree
    */
   public @NotNull PsiElement replaceAndRestoreComments(@NotNull PsiElement element, @NotNull String text) {
@@ -177,24 +244,26 @@ public class CommentTracker {
     return replaceAndRestoreComments(element, replacement);
   }
 
-  @NotNull
-  private static PsiElement createElement(@NotNull PsiElement element, @NotNull String text) {
+  private static @NotNull PsiElement createElement(@NotNull PsiElement element, @NotNull String text) {
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
-    PsiElement replacement;
-    if(element instanceof PsiExpression) {
-      replacement = factory.createExpressionFromText(text, element);
-    } else if(element instanceof PsiStatement) {
-      replacement = factory.createStatementFromText(text, element);
-    } else if(element instanceof PsiTypeElement) {
-      replacement = factory.createTypeElementFromText(text, element);
-    } else if(element instanceof PsiIdentifier) {
-      replacement = factory.createIdentifier(text);
-    } else if(element instanceof PsiComment) {
-      replacement = factory.createCommentFromText(text, element);
-    } else {
-      throw new IllegalArgumentException("Unsupported element type: "+element);
+    if (element instanceof PsiExpression) {
+      return factory.createExpressionFromText(text, element);
     }
-    return replacement;
+    else if (element instanceof PsiStatement) {
+      return factory.createStatementFromText(text, element);
+    }
+    else if (element instanceof PsiTypeElement) {
+      return factory.createTypeElementFromText(text, element);
+    }
+    else if (element instanceof PsiIdentifier) {
+      return factory.createIdentifier(text);
+    }
+    else if (element instanceof PsiComment) {
+      return factory.createCommentFromText(text, element);
+    }
+    else {
+      throw new IllegalArgumentException("Unsupported element type: " + element);
+    }
   }
 
   /**
@@ -206,16 +275,16 @@ public class CommentTracker {
    */
   public void insertCommentsBefore(@NotNull PsiElement anchor) {
     checkState();
-    if(!comments.isEmpty()) {
+    if (!comments.isEmpty()) {
       PsiElement parent = anchor.getParent();
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(anchor.getProject());
-      for(PsiComment comment : comments) {
+      for (PsiComment comment : comments) {
         if (shouldIgnore(comment)) continue;
         PsiElement added = parent.addBefore(factory.createCommentFromText(comment.getText(), anchor), anchor);
         PsiElement prevSibling = added.getPrevSibling();
         if (prevSibling instanceof PsiWhiteSpace) {
-          ASTNode whiteSpaceBefore = normalizeWhiteSpace((PsiWhiteSpace)prevSibling);
           PsiElement prev = anchor.getPrevSibling();
+          ASTNode whiteSpaceBefore = normalizeWhiteSpace((PsiWhiteSpace)prevSibling, prev);
           parent.getNode().addChild(whiteSpaceBefore, anchor.getNode());
           if (prev instanceof PsiWhiteSpace) {
             prev.delete();
@@ -226,13 +295,15 @@ public class CommentTracker {
     comments = null;
   }
 
-  @NotNull
-  private static ASTNode normalizeWhiteSpace(PsiWhiteSpace whiteSpace) {
+  private static @NotNull ASTNode normalizeWhiteSpace(PsiWhiteSpace whiteSpace, PsiElement nextElement) {
     String text = whiteSpace.getText();
     int endLPos = text.lastIndexOf('\n');
-    if(text.lastIndexOf('\n', endLPos-1) >= 0) {
+    if (text.lastIndexOf('\n', endLPos - 1) >= 0) {
       // has at least two line breaks
       return ASTFactory.whitespace(text.substring(endLPos));
+    }
+    if (nextElement instanceof PsiWhiteSpace && nextElement.getText().contains("\n") && !text.contains("\n")) {
+      text = '\n' + text;
     }
     return ASTFactory.whitespace(text);
   }
@@ -241,9 +312,23 @@ public class CommentTracker {
     return ignoredParents.stream().anyMatch(p -> PsiTreeUtil.isAncestor(p, comment, false));
   }
 
+  private void grabCommentsOnDelete(PsiElement element) {
+    if (element instanceof PsiExpression && element.getParent() instanceof PsiExpressionStatement ||
+        (element.getParent() instanceof PsiDeclarationStatement &&
+         ((PsiDeclarationStatement)element.getParent()).getDeclaredElements().length == 1) ||
+        element.getParent() instanceof PsiJavaCodeReferenceElement) {
+      element = element.getParent();
+    }
+    grabComments(element);
+    if (element instanceof PsiAnnotatedJavaCodeReferenceElement) {
+      // PsiJavaCodeReferenceElementImpl tries to keep comment after dot which may result in duplicating comments.
+      PsiTreeUtil.getChildrenOfTypeAsList(element, PsiComment.class).forEach(PsiElement::delete);
+    }
+  }
+
   private void grabComments(PsiElement element) {
     checkState();
-    for(PsiComment comment : PsiTreeUtil.collectElementsOfType(element, PsiComment.class)) {
+    for (PsiComment comment : PsiTreeUtil.collectElementsOfType(element, PsiComment.class)) {
       if (!shouldIgnore(comment)) {
         comments.add(comment);
       }
@@ -251,21 +336,22 @@ public class CommentTracker {
   }
 
   private void checkState() {
-    if(comments == null) {
-      throw new IllegalStateException(getClass().getSimpleName()+" has been already used");
+    if (comments == null) {
+      throw new IllegalStateException(getClass().getSimpleName() + " has been already used");
     }
   }
 
   private void addIgnored(PsiElement element) {
-    if(element instanceof LeafPsiElement && !(element instanceof PsiComment)) return;
-    ignoredParents.add(element);
+    if (!(element instanceof LeafPsiElement) || element instanceof PsiComment) {
+      ignoredParents.add(element);
+    }
   }
 
   public static String textWithSurroundingComments(PsiElement element) {
     Predicate<PsiElement> commentOrWhiteSpace = e -> e instanceof PsiComment || e instanceof PsiWhiteSpace;
     List<PsiElement> prev = StreamEx.iterate(element.getPrevSibling(), commentOrWhiteSpace, PsiElement::getPrevSibling).toList();
     List<PsiElement> next = StreamEx.iterate(element.getNextSibling(), commentOrWhiteSpace, PsiElement::getNextSibling).toList();
-    if(StreamEx.of(prev, next).flatCollection(Function.identity()).anyMatch(PsiComment.class::isInstance)) {
+    if (StreamEx.of(prev, next).flatCollection(Function.identity()).anyMatch(PsiComment.class::isInstance)) {
       return StreamEx.ofReversed(prev).append(element).append(next).map(PsiElement::getText).joining();
     }
     return element.getText();
@@ -281,8 +367,7 @@ public class CommentTracker {
    *              (though possibly on another hierarchy level)
    * @return a string containing all the comments between start and end.
    */
-  @NotNull
-  public static String commentsBetween(@NotNull PsiElement start, @NotNull PsiElement end) {
+  public static @NotNull String commentsBetween(@NotNull PsiElement start, @NotNull PsiElement end) {
     PsiElement parent = PsiTreeUtil.findCommonParent(start, end);
     if (parent == null) {
       throw new IllegalStateException("Common parent is not found: [" + start + ".." + end + "]");

@@ -21,6 +21,7 @@ import javax.swing.border.Border;
 import java.awt.*;
 
 /** @deprecated ancient HiDPI-unfriendly component, to be removed in IDEA 2018 */
+@Deprecated
 @SuppressWarnings({"UseDPIAwareInsets", "UseJBColor", "unused", "SpellCheckingInspection"})
 public class BlockBorder implements Border {
   private static final Insets DEFAULT_INSETS = new Insets(1, 1, 3, 3);
@@ -28,11 +29,11 @@ public class BlockBorder implements Border {
   private static final Color DEFAULT_SHADE2 = Gray._238;
   private static final Insets EMPTY = new Insets(0, 0, 0, 0);
 
-  private Insets myInsets;
-  private Insets myOuterMargin;
+  private final Insets myInsets;
+  private final Insets myOuterMargin;
   private Color myBoundsColor = Color.GRAY;
-  private Color myShade1;
-  private Color myShade2;
+  private final Color myShade1;
+  private final Color myShade2;
 
   public BlockBorder() {
     this(null, null, DEFAULT_SHADE1, DEFAULT_SHADE2);

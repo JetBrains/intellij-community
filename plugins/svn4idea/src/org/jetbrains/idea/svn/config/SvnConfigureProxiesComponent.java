@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.config;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -20,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.IconUtil;
@@ -33,6 +20,7 @@ import org.jetbrains.idea.svn.SvnServerFileManager;
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.*;
 
@@ -63,23 +51,16 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
     return myComponent;
   }
 
-  protected void processRemovedItems() {
-    // not used
-  }
-
-  protected boolean wasObjectStored(final Object editableObject) {
-    return false;
-  }
-
   public String getDisplayName() {
-    return "HTTP proxies configuration";
+    return "HTTP Proxies Configuration";
   }
 
+  @Override
   public String getHelpTopic() {
     return null;
   }
 
-  private String getNewName() {
+  private static String getNewName() {
     return "Unnamed";
   }
 
@@ -152,7 +133,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
 
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     ArrayList<AnAction> result = new ArrayList<>();
-    result.add(new AnAction("Add", "Add", IconUtil.getAddIcon()) {
+    result.add(new DumbAwareAction("Add", "Add", IconUtil.getAddIcon()) {
         {
             registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
         }
@@ -188,9 +169,9 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
       }
     });
 
-    result.add(new AnAction("Copy", "Copy", PlatformIcons.COPY_ICON) {
+    result.add(new DumbAwareAction("Copy", "Copy", PlatformIcons.COPY_ICON) {
         {
-            registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_MASK)), myTree);
+            registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
         }
         public void actionPerformed(AnActionEvent event) {
           // apply - for update of editable object

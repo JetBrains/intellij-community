@@ -15,13 +15,13 @@ Groovy script
     PsiElement(*.)('*.')
     Compound Gstring
       PsiElement(Gstring begin)('"')
-      GrStringContentImpl(GString content element)
+      GrStringContentImpl(STRING_CONTENT)
         PsiElement(Gstring content)('My ')
       GString injection
         PsiElement($)('$')
         PsiErrorElement:Identifier or code block expected
           PsiElement(import)('import')
-      GrStringContentImpl(GString content element)
+      GrStringContentImpl(STRING_CONTENT)
         PsiElement(Gstring content)('.bugaga aga')
-      PsiErrorElement:String end expected
+      PsiErrorElement:Gstring end expected
         <empty list>

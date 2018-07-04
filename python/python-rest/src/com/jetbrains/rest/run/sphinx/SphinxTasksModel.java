@@ -24,7 +24,7 @@ import java.util.List;
  * User : catherine
  */
 public class SphinxTasksModel extends CollectionComboBoxModel<String> {
-  private static List<String> targets = Lists.newArrayList();
+  private static final List<String> targets = Lists.newArrayList();
   static {
     targets.add("changes");
     targets.add("coverage");

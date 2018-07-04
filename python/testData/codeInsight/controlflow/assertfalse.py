@@ -1,4 +1,2 @@
-assert false
-print("Unreachable")
 assert False
-print("Unreachable2")
+print("Unreachable")

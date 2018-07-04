@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.plugins.groovy.ide
 
@@ -21,11 +9,17 @@ import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.execution.ui.actions.CloseAction
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.project.Project
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.search.GlobalSearchScope
 import groovy.lang.Binding
 import groovy.lang.GroovySystem
 import org.codehaus.groovy.tools.shell.Interpreter
@@ -54,13 +48,14 @@ object MyConsoleRootType : ConsoleRootType("groovy.scripting.shell", null)
 private val TITLE = "Groovy IDE Scripting Shell"
 
 private val defaultImports = listOf(
-    "com.intellij.openapi.application.*",
-    "com.intellij.openapi.project.*",
-    "com.intellij.openapi.module.*",
-    "com.intellij.openapi.vfs.*",
-    "com.intellij.psi.*",
-    "com.intellij.psi.stubs.*",
-    "com.intellij.util.indexing.*"
+  "com.intellij.openapi.application.*",
+  "com.intellij.openapi.project.*",
+  "com.intellij.openapi.module.*",
+  "com.intellij.openapi.vfs.*",
+  "com.intellij.psi.*",
+  "com.intellij.psi.search.*",
+  "com.intellij.psi.stubs.*",
+  "com.intellij.util.indexing.*"
 )
 
 private val defaultImportStatements = defaultImports.map {
@@ -95,16 +90,16 @@ private fun initConsole(project: Project) {
   val namesInfo = ApplicationNamesInfo.getInstance()
   val buildDate = SimpleDateFormat("dd MMM yy HH:ss", Locale.US).format(appInfo.buildDate.time)
   console.print(
-      "Welcome!\n${namesInfo.fullProductName} (build #${appInfo.build}, $buildDate); Groovy: ${GroovySystem.getVersion()}\n",
-      ConsoleViewContentType.SYSTEM_OUTPUT
+    "Welcome!\n${namesInfo.fullProductName} (build #${appInfo.build}, $buildDate); Groovy: ${GroovySystem.getVersion()}\n",
+    ConsoleViewContentType.SYSTEM_OUTPUT
   )
   console.print(
-      "'application' and 'project' variables are available at the top level. \n",
-      ConsoleViewContentType.SYSTEM_OUTPUT
+    "'application', 'project', 'facade' and 'allScope' variables are available at the top level. \n",
+    ConsoleViewContentType.SYSTEM_OUTPUT
   )
   console.print(
-      "Default imports:\n${defaultImports.map { "\t$it" }.joinToString(separator = ",\n")}\n\n",
-      ConsoleViewContentType.SYSTEM_OUTPUT
+    "Default imports:\n${defaultImports.joinToString(separator = ",\n") { "\t$it" }}\n\n",
+    ConsoleViewContentType.SYSTEM_OUTPUT
   )
 }
 
@@ -112,23 +107,27 @@ private fun createExecuteHandler(project: Project) = object : BaseConsoleExecute
 
   val interpreter: Interpreter by lazy {
     val binding = Binding(mapOf(
-        "application" to ApplicationManager.getApplication(),
-        "project" to project
+      "application" to ApplicationManager.getApplication(),
+      "project" to project,
+      "facade" to JavaPsiFacade.getInstance(project),
+      "allScope" to GlobalSearchScope.allScope(project)
     ))
     Interpreter(Interpreter::class.java.classLoader, binding)
   }
 
   override fun execute(text: String, console: LanguageConsoleView) {
     ApplicationManager.getApplication().executeOnPooledThread {
-      try {
-        val result: Any? = interpreter.evaluate(defaultImportStatements + "" + "" + text)
-        console.print("Returned: ", ConsoleViewContentType.SYSTEM_OUTPUT)
-        console.print("$result\n", ConsoleViewContentType.NORMAL_OUTPUT)
-      }
-      catch (e: Throwable) {
-        val errors = StringWriter()
-        e.printStackTrace(PrintWriter(errors))
-        console.print("Error: $errors", ConsoleViewContentType.ERROR_OUTPUT)
+      runReadAction {
+        try {
+          val result: Any? = interpreter.evaluate(defaultImportStatements + "" + "" + text)
+          console.print("Returned: ", ConsoleViewContentType.SYSTEM_OUTPUT)
+          console.print("$result\n", ConsoleViewContentType.NORMAL_OUTPUT)
+        }
+        catch (e: Throwable) {
+          val errors = StringWriter()
+          e.printStackTrace(PrintWriter(errors))
+          console.print("Error: $errors", ConsoleViewContentType.ERROR_OUTPUT)
+        }
       }
     }
   }

@@ -15,8 +15,14 @@
  */
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.html.HTMLLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomManager;
 import com.intellij.pom.PomModel;
@@ -31,9 +37,13 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
@@ -64,7 +74,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == XmlTokenType.XML_NAME) {
@@ -163,79 +173,27 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
     return valueElement != null ? valueElement.getValue() : null;
   }
 
-  private volatile String myDisplayText;
-  private volatile int[] myGapDisplayStarts;
-  private volatile int[] myGapPhysicalStarts;
-  private volatile TextRange myValueTextRange; // text inside quotes, if there are any
+  private volatile VolatileState myVolatileState;
 
   protected void appendChildToDisplayValue(StringBuilder buffer, ASTNode child) {
     buffer.append(child.getChars());
   }
 
   @Override
+  @Nullable
   public String getDisplayValue() {
-    String displayText = myDisplayText;
-    if (displayText != null) return displayText;
-    XmlAttributeValue value = getValueElement();
-    if (value == null) return null;
-    PsiElement firstChild = value.getFirstChild();
-    if (firstChild == null) return null;
-    ASTNode child = firstChild.getNode();
-    TextRange valueTextRange = new TextRange(0, value.getTextLength());
-    if (child != null && child.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {
-      valueTextRange = new TextRange(child.getTextLength(), valueTextRange.getEndOffset());
-      child = child.getTreeNext();
-    }
-    final TIntArrayList gapsStarts = new TIntArrayList();
-    final TIntArrayList gapsShifts = new TIntArrayList();
-    StringBuilder buffer = new StringBuilder(getTextLength());
-    while (child != null) {
-      final int start = buffer.length();
-      IElementType elementType = child.getElementType();
-      if (elementType == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER) {
-        valueTextRange =
-          new TextRange(valueTextRange.getStartOffset(), child.getTextRange().getStartOffset() - value.getTextRange().getStartOffset());
-        break;
-      }
-      if (elementType == XmlTokenType.XML_CHAR_ENTITY_REF) {
-        buffer.append(XmlUtil.getCharFromEntityRef(child.getText()));
-      }
-      else if (elementType == XmlElementType.XML_ENTITY_REF) {
-        buffer.append(XmlUtil.getEntityValue((XmlEntityRef)child));
-      }
-      else {
-        appendChildToDisplayValue(buffer, child);
-      }
-
-      int end = buffer.length();
-      int originalLength = child.getTextLength();
-      if (end - start != originalLength) {
-        gapsStarts.add(start);
-        gapsShifts.add(originalLength - (end - start));
-      }
-      child = child.getTreeNext();
-    }
-    int[] gapDisplayStarts = ArrayUtil.newIntArray(gapsShifts.size());
-    int[] gapPhysicalStarts = ArrayUtil.newIntArray(gapsShifts.size());
-    int currentGapsSum = 0;
-    for (int i = 0; i < gapDisplayStarts.length; i++) {
-      currentGapsSum += gapsShifts.get(i);
-      gapDisplayStarts[i] = gapsStarts.get(i);
-      gapPhysicalStarts[i] = gapDisplayStarts[i] + currentGapsSum;
-    }
-    myGapDisplayStarts = gapDisplayStarts;
-    myGapPhysicalStarts = gapPhysicalStarts;
-    myValueTextRange = valueTextRange;
-    return myDisplayText = buffer.toString();
+    final VolatileState state = getFreshState();
+    return state == null ? null : state.myDisplayText;
   }
 
   @Override
   public int physicalToDisplay(int physicalIndex) {
-    getDisplayValue();
-    if (physicalIndex < 0 || physicalIndex > myValueTextRange.getLength()) return -1;
-    if (myGapPhysicalStarts.length == 0) return physicalIndex;
+    final VolatileState state = getFreshState();
+    if (state == null) return -1;
+    if (physicalIndex < 0 || physicalIndex > state.myValueTextRange.getLength()) return -1;
+    if (state.myGapPhysicalStarts.length == 0) return physicalIndex;
 
-    final int bsResult = Arrays.binarySearch(myGapPhysicalStarts, physicalIndex);
+    final int bsResult = Arrays.binarySearch(state.myGapPhysicalStarts, physicalIndex);
 
     final int gapIndex;
     if (bsResult > 0) {
@@ -249,17 +207,21 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
     }
 
     if (gapIndex < 0) return physicalIndex;
-    final int shift = myGapPhysicalStarts[gapIndex] - myGapDisplayStarts[gapIndex];
-    return Math.max(myGapDisplayStarts[gapIndex], physicalIndex - shift);
+    final int shift = state.myGapPhysicalStarts[gapIndex] - state.myGapDisplayStarts[gapIndex];
+    return Math.max(state.myGapDisplayStarts[gapIndex], physicalIndex - shift);
   }
 
   @Override
   public int displayToPhysical(int displayIndex) {
-    String displayValue = getDisplayValue();
-    if (displayValue == null || displayIndex < 0 || displayIndex > displayValue.length()) return -1;
-    if (myGapDisplayStarts.length == 0) return displayIndex;
+    final VolatileState state = getFreshState();
+    if (state == null) return -1;
+    final String displayValue = state.myDisplayText;
+    if (displayIndex < 0 || displayIndex > displayValue.length()) return -1;
 
-    final int bsResult = Arrays.binarySearch(myGapDisplayStarts, displayIndex);
+    final int[] gapDisplayStarts = state.myGapDisplayStarts;
+    if (gapDisplayStarts.length == 0) return displayIndex;
+
+    final int bsResult = Arrays.binarySearch(gapDisplayStarts, displayIndex);
     final int gapIndex;
 
     if (bsResult > 0) {
@@ -273,24 +235,21 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
     }
 
     if (gapIndex < 0) return displayIndex;
-    final int shift = myGapPhysicalStarts[gapIndex] - myGapDisplayStarts[gapIndex];
+    final int shift = state.myGapPhysicalStarts[gapIndex] - gapDisplayStarts[gapIndex];
     return displayIndex + shift;
   }
 
   @NotNull
   @Override
   public TextRange getValueTextRange() {
-    getDisplayValue();
-    return myValueTextRange;
+    final VolatileState state = getFreshState();
+    return state == null ? new TextRange(0,0) : state.myValueTextRange;
   }
 
   @Override
   public void clearCaches() {
     super.clearCaches();
-    myDisplayText = null;
-    myGapDisplayStarts = null;
-    myGapPhysicalStarts = null;
-    myValueTextRange = null;
+    myVolatileState = null;
   }
 
   @Override
@@ -309,11 +268,13 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   @Override
   public PsiElement setName(@NotNull final String nameText) throws IncorrectOperationException {
     final ASTNode name = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(this);
-    final String oldName = name.getText();
+    final String oldName = name == null ? "" : name.getText();
+    final String oldValue = ObjectUtils.notNull(getValue(), "");
     final PomModel model = PomManager.getModel(getProject());
-    final XmlAttribute attribute = XmlElementFactory.getInstance(getProject()).createAttribute(nameText, "", this);
+    final XmlAttribute attribute = XmlElementFactory.getInstance(getProject()).createAttribute(nameText, oldValue, this);
     final ASTNode newName = XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild((ASTNode)attribute);
     final XmlAspect aspect = model.getModelAspect(XmlAspect.class);
+    final Ref<XmlAttribute> replaced = Ref.create(this);
     model.runTransaction(new PomTransactionBase(getParent(), aspect) {
       @Override
       public PomModelEvent runInner() {
@@ -321,13 +282,19 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
         PsiFile file = getContainingFile();
         XmlChangeSet xmlAspectChangeSet = new XmlAspectChangeSetImpl(model, file instanceof XmlFile ? (XmlFile)file : null);
         xmlAspectChangeSet.add(new XmlAttributeSetImpl(getParent(), oldName, null));
-        xmlAspectChangeSet.add(new XmlAttributeSetImpl(getParent(), nameText, getValue()));
+        xmlAspectChangeSet.add(new XmlAttributeSetImpl(getParent(), nameText, oldValue));
         event.registerChangeSet(model.getModelAspect(XmlAspect.class), xmlAspectChangeSet);
-        CodeEditUtil.replaceChild(XmlAttributeImpl.this, name, newName);
+        if (!oldValue.isEmpty() && getLanguage().isKindOf(HTMLLanguage.INSTANCE)) {
+          CodeEditUtil.replaceChild(getTreeParent(), XmlAttributeImpl.this, attribute.getNode());
+          replaced.set(attribute);
+        }
+        else if (name != null && newName != null) {
+          CodeEditUtil.replaceChild(XmlAttributeImpl.this, name, newName);
+        }
         return event;
       }
     });
-    return this;
+    return replaced.get();
   }
 
   @Override
@@ -391,9 +358,23 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   @Override
   @Nullable
   public XmlAttributeDescriptor getDescriptor() {
-    final PsiElement parentElement = getParent();
-    if (parentElement == null) return null; // e.g. XmlDecl or PI
-    final XmlTag tag = (XmlTag)parentElement;
+    return CachedValuesManager.getCachedValue(this,
+                                              () -> CachedValueProvider.Result.create(getDescriptorImpl(),
+                                                                                      PsiModificationTracker.MODIFICATION_COUNT,
+                                                                                      externalResourceModificationTracker()));
+  }
+
+  private ModificationTracker externalResourceModificationTracker() {
+    Project project = getProject();
+    ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
+    return () -> manager.getModificationCount(project);
+  }
+
+
+  @Nullable
+  private XmlAttributeDescriptor getDescriptorImpl() {
+    final XmlTag tag = getParent();
+    if (tag == null) return null; // e.g. XmlDecl or PI
     final XmlElementDescriptor descr = tag.getDescriptor();
     if (descr == null) return null;
     final XmlAttributeDescriptor attributeDescr = descr.getAttributeDescriptor(this);
@@ -403,5 +384,86 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   public String getRealLocalName() {
     final String name = getLocalName();
     return name.endsWith(DUMMY_IDENTIFIER_TRIMMED) ? name.substring(0, name.length() - DUMMY_IDENTIFIER_TRIMMED.length()) : name;
+  }
+
+  @Nullable
+  private VolatileState getFreshState() {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    VolatileState state = myVolatileState;
+    if (state == null) {
+      state = recalculate();
+    }
+    return state;
+  }
+
+  @Nullable
+  private VolatileState recalculate() {
+    XmlAttributeValue value = getValueElement();
+    if (value == null) return null;
+    PsiElement firstChild = value.getFirstChild();
+    if (firstChild == null) return null;
+    ASTNode child = firstChild.getNode();
+    TextRange valueTextRange = new TextRange(0, value.getTextLength());
+    if (child != null && child.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {
+      valueTextRange = new TextRange(child.getTextLength(), valueTextRange.getEndOffset());
+      child = child.getTreeNext();
+    }
+    final TIntArrayList gapsStarts = new TIntArrayList();
+    final TIntArrayList gapsShifts = new TIntArrayList();
+    StringBuilder buffer = new StringBuilder(getTextLength());
+    while (child != null) {
+      final int start = buffer.length();
+      IElementType elementType = child.getElementType();
+      if (elementType == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER) {
+        valueTextRange =
+          new TextRange(valueTextRange.getStartOffset(), child.getTextRange().getStartOffset() - value.getTextRange().getStartOffset());
+        break;
+      }
+      if (elementType == XmlTokenType.XML_CHAR_ENTITY_REF) {
+        buffer.append(XmlUtil.getCharFromEntityRef(child.getText()));
+      }
+      else if (elementType == XmlElementType.XML_ENTITY_REF) {
+        buffer.append(XmlUtil.getEntityValue((XmlEntityRef)child));
+      }
+      else {
+        appendChildToDisplayValue(buffer, child);
+      }
+
+      int end = buffer.length();
+      int originalLength = child.getTextLength();
+      if (end - start != originalLength) {
+        gapsStarts.add(start);
+        gapsShifts.add(originalLength - (end - start));
+      }
+      child = child.getTreeNext();
+    }
+    int[] gapDisplayStarts = ArrayUtil.newIntArray(gapsShifts.size());
+    int[] gapPhysicalStarts = ArrayUtil.newIntArray(gapsShifts.size());
+    int currentGapsSum = 0;
+    for (int i = 0; i < gapDisplayStarts.length; i++) {
+      currentGapsSum += gapsShifts.get(i);
+      gapDisplayStarts[i] = gapsStarts.get(i);
+      gapPhysicalStarts[i] = gapDisplayStarts[i] + currentGapsSum;
+    }
+    final VolatileState volatileState = new VolatileState(buffer.toString(), gapDisplayStarts, gapPhysicalStarts, valueTextRange);
+    myVolatileState = volatileState;
+    return volatileState;
+  }
+
+  private static class VolatileState {
+    @NotNull private final String myDisplayText;
+    @NotNull private final int[] myGapDisplayStarts;
+    @NotNull private final int[] myGapPhysicalStarts;
+    @NotNull private final TextRange myValueTextRange; // text inside quotes, if there are any
+
+    private VolatileState(@NotNull final String displayText,
+                          @NotNull int[] gapDisplayStarts,
+                          @NotNull int[] gapPhysicalStarts,
+                          @NotNull TextRange valueTextRange) {
+      myDisplayText = displayText;
+      myGapDisplayStarts = gapDisplayStarts;
+      myGapPhysicalStarts = gapPhysicalStarts;
+      myValueTextRange = valueTextRange;
+    }
   }
 }

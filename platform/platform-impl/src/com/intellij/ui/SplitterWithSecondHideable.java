@@ -51,6 +51,7 @@ public abstract class SplitterWithSecondHideable {
     myTitledSeparator = new MyTitledSeparator(separatorText, vertical);
     mySplitter = new MySplitter(vertical);
     mySplitter.setDoubleBuffered(true);
+    mySplitter.setHonorComponentsMinimumSize(false);
     mySplitter.setFirstComponent(firstComponent);
     mySplitter.setSecondComponent(myFictivePanel);
     mySplitter.setProportion(1.0f);

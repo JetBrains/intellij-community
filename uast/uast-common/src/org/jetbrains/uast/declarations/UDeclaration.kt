@@ -24,37 +24,58 @@ import org.jetbrains.uast.visitor.UastTypedVisitor
  * A [PsiElement] declaration wrapper.
  */
 interface UDeclaration : UElement, PsiModifierListOwner, UAnnotated {
-    /**
-     * Returns the original declaration (which is *always* unwrapped, never a [UDeclaration]).
-     */
-    override val psi: PsiModifierListOwner
-    
-    override fun getOriginalElement(): PsiElement? = psi.originalElement
+  /**
+   * Returns the original declaration (which is *always* unwrapped, never a [UDeclaration]).
+   */
+  override val psi: PsiModifierListOwner
 
-    /**
-     * Returns the declaration name identifier, or null if the declaration is anonymous.
-     */
-    val uastAnchor: UElement?
+  override fun getOriginalElement(): PsiElement? = psi.originalElement
 
-    /**
-     * Returns `true` if this declaration has a [PsiModifier.STATIC] modifier.
-     */
-    val isStatic: Boolean
-        get() = hasModifierProperty(PsiModifier.STATIC)
+  /**
+   * Returns the declaration name identifier. If declaration is anonymous other implementation dependant psi element will be returned.
+   * The main rule that returned element is "anchor": it is a single token which represents this declaration.
+   *
+   * It is useful for putting gutters and inspection reports.
+   */
+  val uastAnchor: UElement?
 
-    /**
-     * Returns `true` if this declaration has a [PsiModifier.FINAL] modifier.
-     */
-    val isFinal: Boolean
-        get() = hasModifierProperty(PsiModifier.FINAL)
+  /**
+   * Returns `true` if this declaration has a [PsiModifier.STATIC] modifier.
+   */
+  val isStatic: Boolean
+    get() = hasModifierProperty(PsiModifier.STATIC)
 
-    /**
-     * Returns a declaration visibility.
-     */
-    val visibility: UastVisibility
-        get() = UastVisibility[this]
+  /**
+   * Returns `true` if this declaration has a [PsiModifier.FINAL] modifier.
+   */
+  val isFinal: Boolean
+    get() = hasModifierProperty(PsiModifier.FINAL)
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) = visitor.visitDeclaration(this, data)
+  /**
+   * Returns a declaration visibility.
+   */
+  val visibility: UastVisibility
+    get() = UastVisibility[this]
+
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitDeclaration(this, data)
 }
 
-fun UElement.getContainingDeclaration() = withContainingElements.filterIsInstance<UDeclaration>().firstOrNull()
+/**
+ * @since 2018.2
+ */
+interface UDeclarationEx : UDeclaration {
+  override val javaPsi: PsiModifierListOwner
+}
+
+fun UElement.getContainingDeclaration(): UDeclaration? = withContainingElements.filterIsInstance<UDeclaration>().firstOrNull()
+
+/**
+ * A base interface for every [UElement] which have a name identifier. As analogy to [PsiNameIdentifierOwner]
+ *
+ * Note: [UDeclaration] and [UAnnotation] will extend this interface after all implementations will do
+ */
+interface UAnchorOwner : UElement {
+
+  val uastAnchor: UIdentifier?
+
+}

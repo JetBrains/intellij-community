@@ -93,7 +93,6 @@ public class PyOptimizeImportsTest extends PyTestCase {
 
   // PY-18521
   public void testImportsFromTypingUnusedInTypeComments() {
-    myFixture.copyDirectoryToProject("../typing", "");
     doTest();
   }
 
@@ -301,6 +300,18 @@ public class PyOptimizeImportsTest extends PyTestCase {
 
   // PY-23636
   public void testBlankLineBetweenEncodingDeclarationAndFirstImportPreserved() {
+    doTest();
+  }
+
+  // PY-25567
+  public void testExistingParenthesesInReorderedFromImport() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_SORT_NAMES_IN_FROM_IMPORTS = true;
+    doTest();
+  }
+
+  // PY-25567
+  public void testExistingParenthesesInCombinedFromImports() {
+    getPythonCodeStyleSettings().OPTIMIZE_IMPORTS_JOIN_FROM_IMPORTS_WITH_SAME_SOURCE = true;
     doTest();
   }
 

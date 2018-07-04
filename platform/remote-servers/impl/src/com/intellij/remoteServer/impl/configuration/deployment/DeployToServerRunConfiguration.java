@@ -1,27 +1,14 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.remoteServer.impl.configuration.deployment;
 
+import com.intellij.configurationStore.ComponentSerializationUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.components.ComponentSerializationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
@@ -32,10 +19,9 @@ import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
-import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
-import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator;
-import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
-import com.intellij.remoteServer.configuration.deployment.DeploymentSourceType;
+import com.intellij.remoteServer.configuration.deployment.*;
+import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerSettingsEditor.AnySource;
+import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerSettingsEditor.LockedSource;
 import com.intellij.remoteServer.impl.runtime.DeployToServerState;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -58,6 +44,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
   private final ServerType<S> myServerType;
   private final DeploymentConfigurator<D, S> myDeploymentConfigurator;
   private String myServerName;
+  private boolean myDeploymentSourceIsLocked;
   private DeploymentSource myDeploymentSource;
   private D myDeploymentConfiguration;
 
@@ -69,6 +56,11 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
     super(project, factory, name);
     myServerType = serverType;
     myDeploymentConfigurator = deploymentConfigurator;
+  }
+
+  void lockDeploymentSource(@NotNull SingletonDeploymentSourceType theOnlySourceType) {
+    myDeploymentSourceIsLocked = true;
+    myDeploymentSource = theOnlySourceType.getSingletonSource();
   }
 
   @NotNull
@@ -88,8 +80,11 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
   @NotNull
   @Override
   public SettingsEditor<DeployToServerRunConfiguration> getConfigurationEditor() {
-    SettingsEditor<DeployToServerRunConfiguration> commonEditor
-      = new DeployToServerSettingsEditor(myServerType, myDeploymentConfigurator, getProject());
+    //noinspection unchecked
+    SettingsEditor<DeployToServerRunConfiguration> commonEditor =
+      myDeploymentSourceIsLocked ? new LockedSource(myServerType, myDeploymentConfigurator, getProject(), myDeploymentSource)
+                                 : new AnySource(myServerType, myDeploymentConfigurator, getProject());
+
 
     SettingsEditorGroup<DeployToServerRunConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor("Deployment", commonEditor);
@@ -149,6 +144,10 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
   }
 
   public void setDeploymentSource(DeploymentSource deploymentSource) {
+    if (myDeploymentSourceIsLocked) {
+      assert deploymentSource != null && deploymentSource == myDeploymentSource
+        : "Can't replace locked " + myDeploymentSource + " with " + deploymentSource;
+    }
     myDeploymentSource = deploymentSource;
   }
 
@@ -176,7 +175,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
     ConfigurationState state = XmlSerializer.deserialize(element, ConfigurationState.class);
     myServerName = null;
@@ -187,12 +186,10 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
       String typeId = deploymentTag.getAttributeValue(DEPLOYMENT_SOURCE_TYPE_ATTRIBUTE);
       final DeploymentSourceType<?> type = findDeploymentSourceType(typeId);
       if (type != null) {
-        myDeploymentSource = new ReadAction<DeploymentSource>() {
-          @Override
-          protected void run(final @NotNull Result<DeploymentSource> result) {
-            result.setResult(type.load(deploymentTag, getProject()));
-          }
-        }.execute().getResultObject();
+        myDeploymentSource = ReadAction.compute(() -> {
+
+          return type.load(deploymentTag, getProject());
+        });
         myDeploymentConfiguration = myDeploymentConfigurator.createDefaultConfiguration(myDeploymentSource);
         ComponentSerializationUtil.loadComponentState(myDeploymentConfiguration.getSerializer(), deploymentTag.getChild(SETTINGS_ELEMENT));
       }
@@ -213,7 +210,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull Element element) throws WriteExternalException {
     ConfigurationState state = new ConfigurationState();
     state.myServerName = myServerName;
     if (myDeploymentSource != null) {
@@ -245,6 +242,9 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
     }
 
     DeployToServerRunConfiguration result = (DeployToServerRunConfiguration)super.clone();
+    if (myDeploymentSourceIsLocked) {
+      result.lockDeploymentSource((SingletonDeploymentSourceType)myDeploymentSource.getType());
+    }
 
     try {
       result.readExternal(element);

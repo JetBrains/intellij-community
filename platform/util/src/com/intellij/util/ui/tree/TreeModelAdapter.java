@@ -15,6 +15,9 @@
  */
 package com.intellij.util.ui.tree;
 
+import com.intellij.util.PairConsumer;
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 
@@ -23,7 +26,18 @@ import javax.swing.event.TreeModelListener;
  * @author Sergey.Malenkov
  */
 public abstract class TreeModelAdapter implements TreeModelListener {
+  
   public enum EventType {StructureChanged, NodesChanged, NodesInserted, NodesRemoved}
+  
+  @NotNull
+  public static TreeModelListener create(@NotNull final PairConsumer<TreeModelEvent, EventType> consumer) {
+    return new TreeModelAdapter() {
+      @Override
+      protected void process(TreeModelEvent event, EventType type) {
+        consumer.consume(event, type);
+      }
+    };
+  }
 
   /**
    * Invoked after a tree has changed.

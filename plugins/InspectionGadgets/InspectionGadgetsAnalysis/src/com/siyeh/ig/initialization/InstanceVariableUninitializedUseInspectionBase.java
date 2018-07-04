@@ -28,6 +28,7 @@ import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.AddToIgnoreIfAnnotatedByListQuickFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.UninitializedReadCollector;
+import org.intellij.lang.annotations.Pattern;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class InstanceVariableUninitializedUseInspectionBase extends BaseInspection {
-  protected final List<String> annotationNames = new ArrayList();
+  protected final List<String> annotationNames = new ArrayList<>();
   /**
    * @noinspection PublicField
    */
@@ -51,6 +52,7 @@ public class InstanceVariableUninitializedUseInspectionBase extends BaseInspecti
     parseString(annotationNamesString, annotationNames);
   }
 
+  @Pattern(VALID_ID_PATTERN)
   @Override
   @NotNull
   public String getID() {

@@ -91,8 +91,8 @@ public class GrStubIndexer extends StubHierarchyIndexer {
         processImport((GrImportStatementStub) el, importList, usedNames);
       }
     }
-    ClassDecl[] classes = classList.isEmpty() ? ClassDecl.EMPTY_ARRAY : classList.toArray(new ClassDecl[classList.size()]);
-    Import[] imports = importList.isEmpty() ? Import.EMPTY_ARRAY : importList.toArray(new Import[importList.size()]);
+    ClassDecl[] classes = classList.isEmpty() ? ClassDecl.EMPTY_ARRAY : classList.toArray(ClassDecl.EMPTY_ARRAY);
+    Import[] imports = importList.isEmpty() ? Import.EMPTY_ARRAY : importList.toArray(Import.EMPTY_ARRAY);
     return new Unit(pid, IndexTree.GROOVY, imports, classes);
   }
 
@@ -117,7 +117,7 @@ public class GrStubIndexer extends StubHierarchyIndexer {
         innerList.add(innerDef);
       }
     }
-    return innerList.isEmpty() ? null : new MemberDecl(innerList.toArray(new Decl[innerList.size()]));
+    return innerList.isEmpty() ? null : new MemberDecl(innerList.toArray(Decl.EMPTY_ARRAY));
   }
 
   @Nullable
@@ -150,8 +150,8 @@ public class GrStubIndexer extends StubHierarchyIndexer {
       flags |= IndexTree.SUPERS_UNRESOLVED; // 'extends' list resolves to classes from the current package first, and those can be in a language unknown to this hierarchy
     }
     String[] supers = superList.isEmpty() ? ArrayUtil.EMPTY_STRING_ARRAY : ArrayUtil.toStringArray(superList);
-    Decl[] inners = innerList.isEmpty() ? Decl.EMPTY_ARRAY : innerList.toArray(new Decl[innerList.size()]);
-    return new ClassDecl(classStub.id, flags, classStub.getName(), supers, inners);
+    Decl[] inners = innerList.isEmpty() ? Decl.EMPTY_ARRAY : innerList.toArray(Decl.EMPTY_ARRAY);
+    return new ClassDecl(classStub.getStubId(), flags, classStub.getName(), supers, inners);
   }
 
   private static int translateFlags(GrTypeDefinitionStub classStub) {

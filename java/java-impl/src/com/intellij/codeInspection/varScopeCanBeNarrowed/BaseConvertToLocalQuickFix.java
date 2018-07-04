@@ -32,15 +32,16 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NotNullFunction;
-import com.intellij.util.containers.HashSet;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
- * refactored from {@link com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection}
+ * refactored from {@link FieldCanBeLocalInspection}
  *
  * @author Danila Ponomarenko
  */
@@ -116,12 +117,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
         variable,
         refsSet,
         delete,
-        declaration -> {
-          if (!mayBeFinal(firstElement, references)) {
-            PsiUtil.setModifierProperty((PsiModifierListOwner)declaration.getDeclaredElements()[0], PsiModifier.FINAL, false);
-          }
-          return anchor.replace(declaration);
-        }
+        declaration -> anchor.replace(declaration)
       );
     }
 
@@ -132,7 +128,14 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
       variable,
       references,
       delete,
-      declaration -> anchorBlock.addBefore(declaration, anchor)
+      declaration -> {
+        PsiElement parent = anchorBlock.getParent();
+        if (parent instanceof PsiSwitchStatement) {
+          PsiElement switchContainer = parent.getParent();
+          return switchContainer.addBefore(declaration, parent);
+        }
+        return anchorBlock.addBefore(declaration, anchor);
+      }
     );
   }
 
@@ -147,12 +150,18 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     return WriteAction.compute(() -> {
       final PsiElement newDeclaration = moveDeclaration(elementFactory, localName, variable, initializer, action, references);
       if (delete) {
-        beforeDelete(project, variable, newDeclaration);
-        variable.normalizeDeclaration();
-        variable.delete();
+        deleteSourceVariable(project, variable, newDeclaration);
       }
       return newDeclaration;
     });
+  }
+
+  protected void deleteSourceVariable(@NotNull Project project, @NotNull V variable, PsiElement newDeclaration) {
+    CommentTracker tracker = new CommentTracker();
+    beforeDelete(project, variable, newDeclaration);
+    variable.normalizeDeclaration();
+    tracker.delete(variable);
+    tracker.insertCommentsBefore(newDeclaration);
   }
 
   protected PsiElement moveDeclaration(PsiElementFactory elementFactory,
@@ -162,6 +171,12 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
                                        NotNullFunction<PsiDeclarationStatement, PsiElement> action,
                                        Collection<PsiReference> references) {
     final PsiDeclarationStatement declaration = elementFactory.createVariableDeclarationStatement(localName, variable.getType(), initializer);
+    if (references.stream()
+                  .map(PsiReference::getElement)
+                  .anyMatch(element -> element instanceof PsiExpression && 
+                                       PsiUtil.isAccessedForWriting((PsiExpression)element))) { 
+      PsiUtil.setModifierProperty((PsiLocalVariable)declaration.getDeclaredElements()[0], PsiModifier.FINAL, false);
+    }
     final PsiElement newDeclaration = action.fun(declaration);
     retargetReferences(elementFactory, localName, references);
     return newDeclaration;
@@ -198,15 +213,6 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
 
   @NotNull
   protected abstract String suggestLocalName(@NotNull Project project, @NotNull V variable, @NotNull PsiCodeBlock scope);
-
-  private static boolean mayBeFinal(PsiElement firstElement, @NotNull Collection<PsiReference> references) {
-    for (PsiReference reference : references) {
-      final PsiElement element = reference.getElement();
-      if (element == firstElement) continue;
-      if (element instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)element)) return false;
-    }
-    return true;
-  }
 
   private static void retargetReferences(PsiElementFactory elementFactory, String localName, Collection<PsiReference> refs)
     throws IncorrectOperationException {

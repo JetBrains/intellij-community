@@ -15,8 +15,8 @@
  */
 package com.intellij.java.codeInspection;
 
-import com.intellij.codeInspection.dataFlow.NullityInference;
-import com.intellij.codeInspection.dataFlow.Nullness;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.PsiMethodImpl;
@@ -117,14 +117,46 @@ public class ParameterNullityInferenceFromSourceTest extends LightCodeInsightFix
                   "}");
   }
 
+  public void testTryNPECaught() {
+    assertNullity("-",
+                  "String test(String s) {" +
+                  "try {System.out.println(s.trim());}" +
+                  "catch(RuntimeException ex) {}" +
+                  "}");
+  }
+
+  public void testTryNPECaughtMultiCatch() {
+    assertNullity("-",
+                  "String test(String s) {" +
+                  "try {System.out.println(s.trim());}" +
+                  "catch(InternalError | NullPointerException ex) {}" +
+                  "}");
+  }
+
+  public void testTryNPENotCaught() {
+    assertNullity("+",
+                  "String test(String s) {" +
+                  "try {System.out.println(s.trim());}" +
+                  "catch(InternalError ex) {}" +
+                  "}");
+  }
+
+  public void testTryWithResources() {
+    assertNullity("+",
+                  "String test(String path) {" +
+                  "try(java.io.FileReader fr = new java.io.FileReader(path.trim())) {System.out.println(fr.read());}" +
+                  "catch(java.io.IOException ex) {}" +
+                  "}");
+  }
+
   // expected: + = notnull, - = unknown/nullable for each parameter
   private void assertNullity(String expected, String classBody) {
     PsiClass clazz = myFixture.addClass("final class Foo { " + classBody + " }");
     assertFalse(((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded());
     PsiMethodImpl method = (PsiMethodImpl)clazz.getMethods()[0];
     String actual = StreamEx.of(method.getParameterList().getParameters())
-      .map(NullityInference::inferNullity)
-      .map(n -> n == Nullness.NOT_NULL ? "+" : "-")
+      .map(JavaSourceInference::inferNullability)
+      .map(n -> n == Nullability.NOT_NULL ? "+" : "-")
       .joining();
     assertFalse(((PsiFileImpl)clazz.getContainingFile()).isContentsLoaded());
     assertEquals(expected, actual);

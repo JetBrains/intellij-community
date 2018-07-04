@@ -28,7 +28,6 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
-import com.intellij.util.Processor;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -132,19 +131,18 @@ public abstract class IntroduceFieldCentralPanel {
 
   private boolean initializedInSetUp(Set<PsiField> fields) {
     if (hasSetUpChoice()) {
+      nextField:
       for (PsiField field : fields) {
+        if (field.hasModifierProperty(PsiModifier.FINAL)) continue;
         final PsiMethod setUpMethod = TestFrameworks.getInstance().findSetUpMethod((field).getContainingClass());
         if (setUpMethod != null) {
-          final Processor<PsiReference> initializerSearcher = reference -> {
-            final PsiElement referenceElement = reference.getElement();
-            if (referenceElement instanceof PsiExpression) {
-              return !PsiUtil.isAccessedForWriting((PsiExpression)referenceElement);
+          for (PsiReference reference: ReferencesSearch.search(field, new LocalSearchScope(setUpMethod))) {
+            PsiElement element = reference.getElement();
+            if (element instanceof PsiExpression && !PsiUtil.isAccessedForWriting((PsiExpression)element)) {
+              continue nextField;
             }
-            return true;
-          };
-          if (ReferencesSearch.search(field, new LocalSearchScope(setUpMethod)).forEach(initializerSearcher)) {
-            return false;
           }
+          return false;
         }
       }
       return true;

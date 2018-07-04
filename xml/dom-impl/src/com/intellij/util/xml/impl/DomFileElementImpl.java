@@ -17,15 +17,16 @@ package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.*;
 import com.intellij.util.xml.stubs.FileStub;
@@ -47,12 +48,6 @@ import java.util.Map;
 public class DomFileElementImpl<T extends DomElement> implements DomFileElement<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomFileElementImpl");
   private static final DomGenericInfo EMPTY_DOM_GENERIC_INFO = new DomGenericInfo() {
-
-    @Override
-    @Nullable
-    public XmlElement getNameElement(DomElement element) {
-      return null;
-    }
 
     @Override
     @Nullable
@@ -286,7 +281,10 @@ public class DomFileElementImpl<T extends DomElement> implements DomFileElement<
 
   @Override
   public final <T extends DomElement> T createStableCopy() {
-    return myManager.createStableValue(() -> (T)myManager.getFileElement(myFile));
+    PsiManager psiManager = myFile.getManager();
+    VirtualFile vFile = myFile.getViewProvider().getVirtualFile();
+    //noinspection unchecked
+    return myManager.createStableValue(() -> (T)myManager.getFileElement(ObjectUtils.tryCast(psiManager.findFile(vFile), XmlFile.class)));
   }
 
   @Override

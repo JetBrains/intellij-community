@@ -49,7 +49,9 @@ public interface CommittedChangeList extends ChangeList {
    */
   AbstractVcs getVcs();
 
-  Collection<Change> getChangesWithMovedTrees();
+  default Collection<Change> getChangesWithMovedTrees() {
+    return getChanges();
+  }
 
   /**
    * @return true if this change list can be modified, for example, by reverting some of the changes.

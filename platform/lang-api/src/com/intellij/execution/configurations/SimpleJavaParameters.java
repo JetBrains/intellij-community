@@ -17,9 +17,9 @@ package com.intellij.execution.configurations;
 
 import com.intellij.execution.CantRunException;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ShortenCommandLine;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -34,7 +34,6 @@ import java.nio.charset.Charset;
  * @author Gregory.Shrago
  */
 public class SimpleJavaParameters extends SimpleProgramParameters {
-  private static final Logger LOG = Logger.getInstance(SimpleJavaParameters.class);
 
   private Sdk myJdk;
   private String myMainClass;
@@ -47,6 +46,8 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   private boolean myUseDynamicVMOptions;
   private boolean myUseDynamicParameters;
   private boolean myUseClasspathJar;
+  private boolean myArgFile;
+  private boolean myClasspathFile = true;
   private String myJarPath;
 
   @Nullable
@@ -100,11 +101,11 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
   }
 
   public void setUseDynamicClasspath(boolean useDynamicClasspath) {
-    myUseDynamicClasspath = useDynamicClasspath;
+    myUseDynamicClasspath = useDynamicClasspath && (myArgFile || myUseClasspathJar || myClasspathFile);
   }
 
   public void setUseDynamicClasspath(@Nullable Project project) {
-    myUseDynamicClasspath = JdkUtil.useDynamicClasspath(project);
+    setUseDynamicClasspath(JdkUtil.useDynamicClasspath(project));
   }
 
   public boolean isDynamicVMOptions() {
@@ -129,9 +130,42 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
     return myUseClasspathJar;
   }
 
-  /** Allows to use a specially crafted .jar file instead of a custom class loader to pass classpath/properties/parameters. */
+  public boolean isArgFile() {
+    return myArgFile;
+  }
+
+  /**
+   * Option to use java 9 @argFile
+   */
+  public void setArgFile(boolean argFile) {
+    myArgFile = argFile;
+  }
+
+  public boolean isClasspathFile() {
+    return myClasspathFile;
+  }
+
+  public void setClasspathFile(boolean classpathFile) {
+    myClasspathFile = classpathFile;
+  }
+
+  /**
+   * Allows to use a specially crafted .jar file instead of a custom class loader to pass classpath/properties/parameters.
+   * Would have no effect if user explicitly disabled idea.dynamic.classpath.jar
+   */
   public void setUseClasspathJar(boolean useClasspathJar) {
-    myUseClasspathJar = useClasspathJar;
+    myUseClasspathJar = useClasspathJar && JdkUtil.useClasspathJar();
+  }
+
+  public void setShortenCommandLine(@Nullable ShortenCommandLine mode, Project project) {
+    if (mode == null) {
+      Sdk jdk = getJdk();
+      mode = ShortenCommandLine.getDefaultMethod(project, jdk != null ? jdk.getHomePath() : null);
+    }
+    myUseDynamicClasspath = mode != ShortenCommandLine.NONE;
+    myUseClasspathJar = mode == ShortenCommandLine.MANIFEST;
+    setClasspathFile(mode == ShortenCommandLine.CLASSPATH_FILE);
+    setArgFile(mode == ShortenCommandLine.ARGS_FILE);
   }
 
   public String getJarPath() {
@@ -158,16 +192,4 @@ public class SimpleJavaParameters extends SimpleProgramParameters {
     return processHandler;
   }
 
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link #isDynamicParameters()} (to be removed in IDEA 2018) */
-  public boolean isPassProgramParametersViaClasspathJar() {
-    return isDynamicParameters();
-  }
-
-  /** @deprecated use {@link #setUseDynamicParameters(boolean)} (to be removed in IDEA 2018) */
-  public void setPassProgramParametersViaClasspathJar(@SuppressWarnings("SameParameterValue") boolean passProgramParametersViaClasspathJar) {
-    LOG.assertTrue(myUseClasspathJar);
-    setUseDynamicParameters(passProgramParametersViaClasspathJar);
-  }
-  //</editor-fold>
 }

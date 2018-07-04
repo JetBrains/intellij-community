@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -21,12 +7,14 @@ import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -36,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class AddVariableInitializerFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.AddReturnFix");
@@ -62,8 +51,7 @@ public class AddVariableInitializerFix implements IntentionAction {
     return myVariable.isValid() &&
            myVariable.getManager().isInProject(myVariable) &&
            !myVariable.hasInitializer() &&
-           !(myVariable instanceof PsiParameter)
-        ;
+           !(myVariable instanceof PsiParameter);
   }
 
   @NotNull
@@ -78,42 +66,35 @@ public class AddVariableInitializerFix implements IntentionAction {
     LOG.assertTrue(suggestedInitializers.length > 0);
     LOG.assertTrue(suggestedInitializers[0] instanceof ExpressionLookupItem);
     final PsiExpression initializer = (PsiExpression)suggestedInitializers[0].getObject();
-    if (myVariable instanceof PsiLocalVariable) {
-      ((PsiLocalVariable)myVariable).setInitializer(initializer);
-    }
-    else if (myVariable instanceof PsiField) {
-      ((PsiField)myVariable).setInitializer(initializer);
-    }
-    else {
-      LOG.error("Unknown variable type: " + myVariable);
-    }
+    myVariable.setInitializer(initializer);
+    Document document = Objects.requireNonNull(PsiDocumentManager.getInstance(project).getDocument(file));
+    PsiDocumentManager.getInstance(initializer.getProject()).doPostponedOperationsAndUnblockDocument(document);
     runAssignmentTemplate(Collections.singletonList(myVariable.getInitializer()), suggestedInitializers, editor);
   }
 
-  public static void runAssignmentTemplate(@NotNull final List<PsiExpression> initializers,
-                                           @NotNull final LookupElement[] suggestedInitializers,
-                                           @Nullable Editor editor) {
+  static void runAssignmentTemplate(@NotNull final List<? extends PsiExpression> initializers,
+                                    @NotNull final LookupElement[] suggestedInitializers,
+                                    @Nullable Editor editor) {
     if (editor == null) return;
     LOG.assertTrue(!initializers.isEmpty());
     final PsiExpression initializer = ObjectUtils.notNull(ContainerUtil.getFirstItem(initializers));
     PsiElement context = initializers.size() == 1 ? initializer : PsiTreeUtil.findCommonParent(initializers);
-    PsiDocumentManager.getInstance(initializer.getProject()).doPostponedOperationsAndUnblockDocument(editor.getDocument());
     final TemplateBuilderImpl builder = (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(context);
     for (PsiExpression e : initializers) {
       builder.replaceElement(e, new Expression() {
-        @Nullable
+        @NotNull
         @Override
         public Result calculateResult(ExpressionContext context1) {
           return calculateQuickResult(context1);
         }
 
-        @Nullable
+        @NotNull
         @Override
         public Result calculateQuickResult(ExpressionContext context1) {
           return new PsiElementResult(suggestedInitializers[0].getPsiElement());
         }
 
-        @Nullable
+        @NotNull
         @Override
         public LookupElement[] calculateLookupItems(ExpressionContext context1) {
           return suggestedInitializers;
@@ -124,7 +105,7 @@ public class AddVariableInitializerFix implements IntentionAction {
   }
 
   @NotNull
-  public static LookupElement[] suggestInitializer(final PsiVariable variable) {
+  static LookupElement[] suggestInitializer(final PsiVariable variable) {
     PsiType type = variable.getType();
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(variable.getProject());
 
@@ -133,14 +114,27 @@ public class AddVariableInitializerFix implements IntentionAction {
     final ExpressionLookupItem defaultExpression = new ExpressionLookupItem(elementFactory.createExpressionFromText(defaultValue, variable));
     result.add(defaultExpression);
     if (type instanceof PsiClassType) {
+      if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        result.add(new ExpressionLookupItem(elementFactory.createExpressionFromText("\"\"", variable)));
+      }
       final PsiClass aClass = PsiTypesUtil.getPsiClass(type);
-      if (aClass != null && PsiUtil.hasDefaultConstructor(aClass)) {
-        final String expressionText = PsiKeyword.NEW + " " + type.getCanonicalText(false) + "()";
-        ExpressionLookupItem newExpression = new ExpressionLookupItem(elementFactory.createExpressionFromText(expressionText, variable));
+      if (aClass != null && !aClass.hasModifierProperty(PsiModifier.ABSTRACT) && PsiUtil.hasDefaultConstructor(aClass)) {
+        String typeText = type.getCanonicalText(false);
+        if (aClass.getTypeParameters().length > 0 && PsiUtil.isLanguageLevel7OrHigher(variable)) {
+          if (!PsiDiamondTypeImpl.haveConstructorsGenericsParameters(aClass)) {
+            typeText = TypeConversionUtil.erasure(type).getCanonicalText(false) + "<>";
+          }
+        }
+        final String expressionText = PsiKeyword.NEW + " " + typeText + "()";
+        PsiExpression initializer = elementFactory.createExpressionFromText(expressionText, variable);
+        String variableName = variable.getName();
+        LOG.assertTrue(variableName != null);
+        PsiDeclarationStatement statement = elementFactory.createVariableDeclarationStatement(variableName, variable.getType(), initializer, variable);
+        ExpressionLookupItem newExpression = new ExpressionLookupItem(((PsiLocalVariable)statement.getDeclaredElements()[0]).getInitializer());
         result.add(newExpression);
       }
     }
-    return result.toArray(new LookupElement[result.size()]);
+    return result.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   @Override

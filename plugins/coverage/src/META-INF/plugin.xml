@@ -26,6 +26,8 @@
     <coverageRunner implementation="com.intellij.coverage.JaCoCoCoverageRunner"/>
     <coverageEngine implementation="com.intellij.coverage.JavaCoverageEngine" order = "last"/>
     <projectViewNodeDecorator implementation="com.intellij.coverage.CoverageProjectViewClassNodeDecorator"/>
+    <projectService serviceImplementation="com.intellij.coverage.JavaCoverageOptionsProvider"/>
+    <coverageOptions implementation="com.intellij.coverage.JavaCoverageOptions"/>
 
     <projectService serviceInterface="com.intellij.coverage.JavaCoverageAnnotator"
                     serviceImplementation="com.intellij.coverage.JavaCoverageAnnotator"/>
@@ -48,5 +50,6 @@
       <reference ref="CoverageMenu"/>
       <add-to-group group-id="AnalyzeMenu" anchor="before" relative-to-action="AnalyzeActions"/>
     </group>
+    <group overrides="true" class="com.intellij.openapi.actionSystem.EmptyActionGroup" id="CoveragePlatformMenu"/>
   </actions>
 </idea-plugin>

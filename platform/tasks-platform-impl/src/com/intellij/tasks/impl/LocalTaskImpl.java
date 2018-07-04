@@ -62,11 +62,11 @@ public class LocalTaskImpl extends LocalTask {
 
   private boolean myActive;
   private List<ChangeListInfo> myChangeLists = new ArrayList<>();
+  private String myShelfName;
   private boolean myRunning = false;
   private List<WorkItem> myWorkItems = new ArrayList<>();
   private Date myLastPost;
   private List<BranchInfo> myBranches = new ArrayList<>();
-
 
   /** for serialization */
   public LocalTaskImpl() {    
@@ -213,7 +213,7 @@ public class LocalTaskImpl extends LocalTask {
 
   @NotNull
   @Property(surroundWithTag = false)
-  @AbstractCollection(surroundWithTag = false, elementTag="changelist")
+  @XCollection(elementName="changelist")
   public List<ChangeListInfo> getChangeLists() {
     return myChangeLists;
   }
@@ -235,10 +235,11 @@ public class LocalTaskImpl extends LocalTask {
     myChangeLists.remove(info);
   }
 
+
   @NotNull
   @Override
   @Property(surroundWithTag = false)
-  @AbstractCollection(surroundWithTag = false, elementTag="branch")
+  @XCollection(elementName="branch")
   public List<BranchInfo> getBranches() {
     return myBranches;
   }
@@ -255,6 +256,16 @@ public class LocalTaskImpl extends LocalTask {
   @Override
   public void removeBranch(BranchInfo info) {
     myBranches.add(info);
+  }
+
+  @Override
+  public String getShelfName() {
+    return myShelfName;
+  }
+
+  @Override
+  public void setShelfName(String shelfName) {
+    myShelfName = shelfName;
   }
 
   public boolean isClosed() {
@@ -340,7 +351,7 @@ public class LocalTaskImpl extends LocalTask {
 
   @NotNull
   @Property(surroundWithTag = false)
-  @AbstractCollection(surroundWithTag = false, elementTag="workItem")
+  @XCollection(elementName = "workItem")
   @Override
   public List<WorkItem> getWorkItems() {
     return myWorkItems;

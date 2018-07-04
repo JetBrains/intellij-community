@@ -16,7 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
+import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import org.jetbrains.annotations.NotNull;
@@ -29,15 +29,38 @@ public interface DfaMemoryState {
   @NotNull
   DfaMemoryState createClosureState();
 
-  DfaValue pop();
-  DfaValue peek();
+  /**
+   * Pops single value from the top of the stack and returns it
+   * @return popped value
+   * @throws java.util.EmptyStackException if stack is empty
+   */
+  @NotNull DfaValue pop();
+
+  /**
+   * Reads a value from the top of the stack without popping it
+   * @return top of stack value
+   * @throws java.util.EmptyStackException if stack is empty
+   */
+  @NotNull DfaValue peek();
+
+  /**
+   * Pushes given value to the stack
+   * @param value to push
+   */
   void push(@NotNull DfaValue value);
 
   void emptyStack();
 
   void setVarValue(DfaVariableValue var, DfaValue value);
 
-  boolean applyInstanceofOrNull(@NotNull DfaRelationValue dfaCond);
+  /**
+   * Ensures that top-of-stack value is either null or belongs to the supplied type
+   *
+   * @param type the type to cast to
+   * @return true if cast is successful; false if top-of-stack value type is incompatible with supplied type
+   * @throws java.util.EmptyStackException if stack is empty
+   */
+  boolean castTopOfStack(@NotNull DfaPsiType type);
 
   boolean applyCondition(DfaValue dfaCond);
 
@@ -47,17 +70,52 @@ public interface DfaMemoryState {
    * Returns a value fact about supplied value within the context of current memory state.
    * Returns null if the fact of given type is not known or not applicable to a given value.
    *
-   * @param factType a type of the fact to get
-   * @param value a value to get the fact about
    * @param <T> a type of the fact value
+   * @param value a value to get the fact about
+   * @param factType a type of the fact to get
    * @return a fact about value, if known
    */
   @Nullable
-  <T> T getValueFact(@NotNull DfaFactType<T> factType, @NotNull DfaValue value);
+  <T> T getValueFact(@NotNull DfaValue value, @NotNull DfaFactType<T> factType);
+
+  /**
+   * Forgets given fact if it was known for the supplied value
+   * @param value a value to drop fact for
+   * @param factType a type of the fact to drop
+   */
+  void dropFact(@NotNull DfaValue value, @NotNull DfaFactType<?> factType);
+
+  /**
+   * Updates value fact if it's compatible with current value state. Depending on value passed and memory state implementation
+   * the new fact may or may not be memoized.
+   *
+   * @param <T> a type of the fact value
+   * @param var a value to update its state
+   * @param factType a type of the fact to set
+   * @param value a new fact value
+   * @return true if update was successful; false if current state contradicts with the wanted fact value
+   */
+  <T> boolean applyFact(@NotNull DfaValue var, @NotNull DfaFactType<T> factType, @Nullable T value);
+
+  /**
+   * Forces variable to have given fact (ignoring current value of this fact and flushing existing relations with this variable).
+   * This might be useful if state is proven to be invalid, but we want to continue analysis to discover subsequent
+   * problems under assumption that the state is still valid.
+   * <p>
+   *   E.g. if it's proven that nullable variable is dereferenced, for the sake of subsequent analysis one might call
+   *   {@code forceVariableFact(var, CAN_BE_NULL, false)}
+   * </p>
+   *
+   * @param var the variable to modify
+   * @param factType the type of the fact
+   * @param value the new variable value
+   * @param <T> type of fact value
+   */
+  <T> void forceVariableFact(@NotNull DfaVariableValue var, @NotNull DfaFactType<T> factType, @Nullable T value);
 
   void flushFields();
 
-  void flushVariable(DfaVariableValue variable);
+  void flushVariable(@NotNull DfaVariableValue variable);
 
   boolean isNull(DfaValue dfaVar);
 
@@ -76,4 +134,8 @@ public interface DfaMemoryState {
   void markEphemeral();
   
   boolean isEphemeral();
+
+  boolean isEmptyStack();
+
+  void cleanUpTempVariables();
 }

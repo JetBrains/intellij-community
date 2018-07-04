@@ -30,7 +30,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import com.intellij.util.xml.GenericDomValue;
@@ -135,7 +134,7 @@ public class AntResolveInspection extends AntInspection {
           ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
           antDomRef.getUnresolvedMessagePattern(),
           ref.getRangeInElement(),
-          quickFixList.toArray((new LocalQuickFix[quickFixList.size()]))
+          quickFixList.toArray(LocalQuickFix.EMPTY_ARRAY)
         );
 
         if (ref instanceof AntDomFileReference) {
@@ -163,7 +162,7 @@ public class AntResolveInspection extends AntInspection {
     if (antDomProject == null) {
       return Collections.emptyList();
     }
-    final Set<PropertiesFile> files = new java.util.HashSet<>();
+    final Set<PropertiesFile> files = new HashSet<>();
     final int stopOffset = stopElement.getTextOffset();
 
     for (Iterator<AntDomElement> iterator = antDomProject.getAntChildrenIterator(); iterator.hasNext(); ) {

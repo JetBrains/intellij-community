@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -384,8 +370,8 @@ class PassExecutorService implements Disposable {
     private final TextEditorHighlightingPass myPass;
     private final AtomicInteger myThreadsToStartCountdown;
     private final AtomicInteger myRunningPredecessorsCount = new AtomicInteger(0);
-    private final Collection<ScheduledPass> mySuccessorsOnCompletion = new ArrayList<>();
-    private final Collection<ScheduledPass> mySuccessorsOnSubmit = new ArrayList<>();
+    private final List<ScheduledPass> mySuccessorsOnCompletion = new ArrayList<>();
+    private final List<ScheduledPass> mySuccessorsOnSubmit = new ArrayList<>();
     @NotNull private final DaemonProgressIndicator myUpdateProgress;
 
     private ScheduledPass(@NotNull FileEditor fileEditor,
@@ -459,13 +445,14 @@ class PassExecutorService implements Disposable {
       log(myUpdateProgress, myPass, "Finished. ");
 
       if (!myUpdateProgress.isCanceled()) {
-        applyInformationToEditorsLater(myFileEditor, myPass, myUpdateProgress, myThreadsToStartCountdown);
-        for (ScheduledPass successor : mySuccessorsOnCompletion) {
-          int predecessorsToRun = successor.myRunningPredecessorsCount.decrementAndGet();
-          if (predecessorsToRun == 0) {
-            submit(successor);
+        applyInformationToEditorsLater(myFileEditor, myPass, myUpdateProgress, myThreadsToStartCountdown, ()->{
+          for (ScheduledPass successor : mySuccessorsOnCompletion) {
+            int predecessorsToRun = successor.myRunningPredecessorsCount.decrementAndGet();
+            if (predecessorsToRun == 0) {
+              submit(successor);
+            }
           }
-        }
+        });
       }
     }
 
@@ -489,9 +476,10 @@ class PassExecutorService implements Disposable {
   private void applyInformationToEditorsLater(@NotNull final FileEditor fileEditor,
                                               @NotNull final TextEditorHighlightingPass pass,
                                               @NotNull final DaemonProgressIndicator updateProgress,
-                                              @NotNull final AtomicInteger threadsToStartCountdown) {
+                                              @NotNull final AtomicInteger threadsToStartCountdown,
+                                              @NotNull Runnable callbackOnApplied) {
     ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
-      if (isDisposed() || myProject.isDisposed()) {
+      if (isDisposed() || myProject.isDisposed() || !fileEditor.isValid()) {
         updateProgress.cancel();
       }
       if (updateProgress.isCanceled()) {
@@ -500,7 +488,7 @@ class PassExecutorService implements Disposable {
       }
       Document document = pass.getDocument();
       try {
-        if (fileEditor.getComponent().isDisplayable() || ApplicationManager.getApplication().isUnitTestMode()) {
+        if (fileEditor.getComponent().isDisplayable() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
           pass.applyInformationToEditor();
           FileStatusMap fileStatusMap = DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap();
           if (document != null) {
@@ -528,6 +516,7 @@ class PassExecutorService implements Disposable {
       else {
         log(updateProgress, pass, "Finished but there are passes in the queue: " + threadsToStartCountdown.get());
       }
+      callbackOnApplied.run();
     }, updateProgress.getModalityState());
   }
 

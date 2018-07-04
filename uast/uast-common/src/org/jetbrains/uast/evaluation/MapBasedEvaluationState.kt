@@ -22,9 +22,9 @@ import org.jetbrains.uast.values.UValue
 import org.jetbrains.uast.values.UVariableValue
 
 class MapBasedEvaluationState(
-    // TODO: Use some immutable map?
-    private val map: Map<UVariable, UValue>,
-    override val boundElement: UElement? = null
+  // TODO: Use some immutable map?
+  private val map: Map<UVariable, UValue>,
+  override val boundElement: UElement? = null
 ) : UEvaluationState {
   override val variables: Set<UVariable>
     get() = map.keys
@@ -39,28 +39,28 @@ class MapBasedEvaluationState(
     }
     else {
       MapBasedEvaluationState(
-          previous = this,
-          variable = variable,
-          value = variableValue,
-          boundElement = at
+        previous = this,
+        variable = variable,
+        value = variableValue,
+        boundElement = at
       )
     }
   }
 
-  override fun merge(otherState: UEvaluationState) =
-      if (this == otherState) this else MapBasedEvaluationState(this, otherState)
+  override fun merge(otherState: UEvaluationState): MapBasedEvaluationState =
+    if (this == otherState) this else MapBasedEvaluationState(this, otherState)
 
   constructor(boundElement: UElement) : this(mapOf(), boundElement)
 
   constructor(previous: UEvaluationState, variable: UVariable, value: UValue, boundElement: UElement? = null) :
-      this(delegatingMap(previous, variable, value), boundElement)
+    this(delegatingMap(previous, variable, value), boundElement)
 
   constructor(first: UEvaluationState, second: UEvaluationState) :
-      this(mergingMap(first, second))
+    this(mergingMap(first, second))
 
-  override fun equals(other: Any?) = other is MapBasedEvaluationState && map == other.map
+  override fun equals(other: Any?): Boolean = other is MapBasedEvaluationState && map == other.map
 
-  override fun hashCode() = map.hashCode()
+  override fun hashCode(): Int = map.hashCode()
 
   override fun toString(): String = map.toString()
 

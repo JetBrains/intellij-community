@@ -16,15 +16,15 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.longLine.LongLineInspectionPolicy;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiImportStatementBase;
-import com.intellij.psi.PsiPackageStatement;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaLongLineInspectionPolicy implements LongLineInspectionPolicy {
   @Override
   public boolean ignoreLongLineFor(@NotNull PsiElement element) {
-    return PsiTreeUtil.getNonStrictParentOfType(element, PsiImportStatementBase.class, PsiPackageStatement.class) != null;
+    return SyntaxTraverser.psiApi()
+                          .parents(element)
+                          .takeWhile(e -> !(e instanceof PsiExpression))
+                          .find(e -> e instanceof PsiImportStatementBase || e instanceof PsiPackageStatement) != null;
   }
 }

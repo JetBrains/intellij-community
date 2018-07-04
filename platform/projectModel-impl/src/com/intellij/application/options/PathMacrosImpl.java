@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options;
 
 import com.intellij.openapi.application.PathMacros;
@@ -30,10 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @State(
@@ -63,72 +46,10 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     SYSTEM_MACROS.add(PathMacroUtil.APPLICATION_HOME_DIR);
     SYSTEM_MACROS.add(PathMacroUtil.APPLICATION_PLUGINS_DIR);
     SYSTEM_MACROS.add(PathMacroUtil.PROJECT_DIR_MACRO_NAME);
+    SYSTEM_MACROS.add(PathMacroUtil.MODULE_WORKING_DIR_NAME);
     SYSTEM_MACROS.add(PathMacroUtil.MODULE_DIR_MACRO_NAME);
     SYSTEM_MACROS.add(PathMacroUtil.USER_HOME_NAME);
   }
-
-  @SuppressWarnings("SpellCheckingInspection")
-  private static final Set<String> ourToolsMacros = ContainerUtil.immutableSet(
-    "ClasspathEntry",
-    "Classpath",
-    "ColumnNumber",
-    "ContentRoot",
-    "FileClass",
-    "FileDir",
-    "FileParentDir",
-    "FileDirName",
-    "FileDirPathFromParent",
-    "FileDirRelativeToProjectRoot",
-    "/FileDirRelativeToProjectRoot",
-    "FileDirRelativeToSourcepath",
-    "/FileDirRelativeToSourcepath",
-    "FileExt",
-    "FileFQPackage",
-    "FileName",
-    "FileNameWithoutExtension",
-    "FileNameWithoutAllExtensions",
-    "FilePackage",
-    "FilePath",
-    "UnixSeparators",
-    "FilePathRelativeToProjectRoot",
-    "/FilePathRelativeToProjectRoot",
-    "FilePathRelativeToSourcepath",
-    "/FilePathRelativeToSourcepath",
-    "FilePrompt",
-    "FileRelativeDir",
-    "/FileRelativeDir",
-    "FileRelativePath",
-    "/FileRelativePath",
-    "FileEncoding",
-    "JavaDocPath",
-    "JDKPath",
-    "LineNumber",
-    "ModuleFileDir",
-    "ModuleFilePath",
-    "ModuleName",
-    "AffectedModuleNames",
-    "IsMake",
-    "ModuleSourcePath",
-    "ModuleSdkPath",
-    "OutputPath",
-    "PhpExecutable",
-    "ProjectFileDir",
-    "ProjectFilePath",
-    "ProjectName",
-    "Projectpath",
-    "Prompt",
-    "SourcepathEntry",
-    "Sourcepath",
-    "SHOW_CHANGES",
-    "ClipboardContent",
-    "SelectedText",
-    "SelectionStartLine",
-    "SelectionEndLine",
-    "SelectionStartColumn",
-    "SelectionEndColumn",
-    "PyInterpreterDirectory",
-    "ExecutableByFileExt"
-  );
 
   public PathMacrosImpl() {
   }
@@ -148,8 +69,9 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     }
   }
 
-  public static Set<String> getToolMacroNames() {
-    return ourToolsMacros;
+  @NotNull
+  public Set<String> getToolMacroNames() {
+    return Collections.emptySet();
   }
 
   @Override
@@ -300,7 +222,7 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
   }
 
   @Override
-  public void loadState(Element element) {
+  public void loadState(@NotNull Element element) {
     try {
       myLock.writeLock().lock();
 

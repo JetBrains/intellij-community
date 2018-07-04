@@ -23,6 +23,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -32,18 +33,18 @@ import org.jetbrains.annotations.Nullable;
  * only the contents inside this element are reparsed instead of the whole file. This can speed up reparse dramatically.
  */
 public class IReparseableElementType extends ILazyParseableElementType {
-  public IReparseableElementType(@NonNls String debugName) {
+  public IReparseableElementType(@NotNull @NonNls String debugName) {
     super(debugName);
   }
 
-  public IReparseableElementType(@NonNls String debugName, Language language) {
+  public IReparseableElementType(@NotNull @NonNls String debugName, @NotNull Language language) {
     super(debugName, language);
   }
 
   /**
    * Allows to construct element types without registering them, as in {@link IElementType#IElementType(String, Language, boolean)}.
    */
-  public IReparseableElementType(@NonNls String debugName, Language language, boolean register) {
+  public IReparseableElementType(@NotNull @NonNls String debugName, @NotNull Language language, boolean register) {
     super(debugName, language, register);
   }
 
@@ -54,33 +55,38 @@ public class IReparseableElementType extends ILazyParseableElementType {
    *
    * @param buffer  the content to parse.
    * @param fileLanguage language of the file
-   * @param project the project containing the content.  
+   * @param project the project containing the content.
    * @return true if the content is valid, false if not
    */
 
-  public boolean isParsable(CharSequence buffer, Language fileLanguage, final Project project) {
+  public boolean isParsable(@NotNull CharSequence buffer,
+                            @NotNull Language fileLanguage,
+                            @NotNull Project project) {
     return false;
   }
 
   /**
    * The same as {@link this#isParsable(CharSequence, Language, Project)}
    * but with parent ASTNode of the old node.
-   * 
+   *
    * Override this method only if you really understand what are doing.
    * In other cases override {@link this#isParsable(CharSequence, Language, Project)}
-   * 
+   *
    * Known valid use-case:
    *  Indent-based languages. You should know about parent indent in order to decide if block is reparseable with given text.
    *  Because if indent of some line became equals to parent indent then the block should have another parent or block is not block anymore.
    *  So it cannot be reparsed and whole file or parent block should be reparsed.
-   * 
+   *
    * @param parent parent node of old (or collapsed) reparseable node.
    * @param buffer the content to parse.
    * @param fileLanguage language of the file
-   * @param project the project containing the content.  
+   * @param project the project containing the content.
    * @return true if the content is valid, false if not
    */
-  public boolean isParsable(@Nullable ASTNode parent, CharSequence buffer, Language fileLanguage, final Project project) {
+  public boolean isParsable(@Nullable ASTNode parent,
+                            @NotNull CharSequence buffer,
+                            @NotNull Language fileLanguage,
+                            @NotNull Project project) {
     return isParsable(buffer, fileLanguage, project);
   }
 }

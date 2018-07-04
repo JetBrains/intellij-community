@@ -40,8 +40,8 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +66,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     for (MemberInfo member : members) {
       member.setChecked(true);
     }
-    myMemberInfos = members.toArray(new MemberInfo[members.size()]);
+    myMemberInfos = members.toArray(new MemberInfo[0]);
   }
 
   public static List<MemberInfo> getClassMembersToPush(PsiClass superClass) {
@@ -94,7 +94,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     }
     else {
       Collection<PsiClass> inheritors = DirectClassInheritorsSearch.search(mySuperClass).findAll();
-      myTargetClasses = inheritors.toArray(new PsiClass[inheritors.size()]);
+      myTargetClasses = inheritors.toArray(PsiClass.EMPTY_ARRAY);
     }
 
     if (myCurrentInheritor != null) {
@@ -171,29 +171,18 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         final PsiMethod[] superConstructors = mySuperClass.getConstructors();
         for (PsiMethod constructor : targetClass.getConstructors()) {
           final PsiCodeBlock constrBody = constructor.getBody();
-          if (constrBody != null) {
-            final PsiStatement[] statements = constrBody.getStatements();
-            if (statements.length > 0) {
-              final PsiStatement firstConstrStatement = statements[0];
-              if (firstConstrStatement instanceof PsiExpressionStatement) {
-                final PsiExpression expression = ((PsiExpressionStatement)firstConstrStatement).getExpression();
-                if (expression instanceof PsiMethodCallExpression) {
-                  final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
-                  if (methodExpression.getText().equals(PsiKeyword.SUPER)) {
-                    final PsiMethod superConstructor = ((PsiMethodCallExpression)expression).resolveMethod();
-                    if (superConstructor != null && superConstructor.getBody() != null) {
-                      usages.add(new InlineSuperCallUsageInfo((PsiMethodCallExpression)expression));
-                      continue;
-                    }
-                  }
-                }
-              }
+          PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
+          if (JavaPsiConstructorUtil.isSuperConstructorCall(call)) {
+            final PsiMethod superConstructor = call.resolveMethod();
+            if (superConstructor != null && superConstructor.getBody() != null) {
+              usages.add(new InlineSuperCallUsageInfo(call));
+              continue;
             }
           }
 
           //insert implicit call to super
           for (PsiMethod superConstructor : superConstructors) {
-            if (superConstructor.getParameterList().getParametersCount() == 0) {
+            if (superConstructor.getParameterList().isEmpty()) {
               final PsiExpression expression = JavaPsiFacade.getElementFactory(myProject).createExpressionFromText("super()", constructor);
               usages.add(new InlineSuperCallUsageInfo((PsiMethodCallExpression)expression, constrBody));
             }
@@ -203,7 +192,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
         if (targetClass.getConstructors().length == 0) {
           //copy default constructor
           for (PsiMethod superConstructor : superConstructors) {
-            if (superConstructor.getParameterList().getParametersCount() == 0) {
+            if (superConstructor.getParameterList().isEmpty()) {
               usages.add(new CopyDefaultConstructorUsageInfo(targetClass, superConstructor));
               break;
             }
@@ -433,6 +422,7 @@ public class InlineSuperClassRefactoringProcessor extends FixableUsagesRefactori
     return subst;
   }
 
+  @NotNull
   protected String getCommandName() {
     return InlineSuperClassRefactoringHandler.REFACTORING_NAME;
   }

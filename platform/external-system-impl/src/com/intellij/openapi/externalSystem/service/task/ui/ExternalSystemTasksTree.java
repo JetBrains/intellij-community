@@ -70,14 +70,14 @@ public class ExternalSystemTasksTree extends Tree implements Producer<ExternalTa
 
     addTreeWillExpandListener(new TreeWillExpandListener() {
       @Override
-      public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
+      public void treeWillExpand(TreeExpansionEvent event) {
         if (!mySuppressCollapseTracking) {
           myExpandedStateHolder.put(getPath(event.getPath()), true);
         }
       }
 
       @Override
-      public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {
+      public void treeWillCollapse(TreeExpansionEvent event) {
         if (!mySuppressCollapseTracking) {
           myExpandedStateHolder.put(getPath(event.getPath()), false);
         }

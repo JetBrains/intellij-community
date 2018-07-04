@@ -5,7 +5,6 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.impl.light.LightElement;
@@ -73,10 +72,7 @@ public class ImplicitModeElement extends LightElement implements PsiNamedElement
         return "Mode: " + getName();
     }
 
-    public void accept(@NotNull PsiElementVisitor visitor) {
-    }
-
-    public PsiElement copy() {
+  public PsiElement copy() {
         return this;
     }
 

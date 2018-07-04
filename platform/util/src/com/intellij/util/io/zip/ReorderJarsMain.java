@@ -18,7 +18,7 @@ package com.intellij.util.io.zip;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.lang.JarMemoryLoader;
 
 import java.io.File;

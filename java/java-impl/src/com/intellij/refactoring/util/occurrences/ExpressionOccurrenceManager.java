@@ -70,7 +70,7 @@ public class ExpressionOccurrenceManager extends BaseOccurrenceManager {
           iterator.remove();
         }
       }
-      return expressions.toArray(new PsiExpression[expressions.size()]);
+      return expressions.toArray(PsiExpression.EMPTY_ARRAY);
     }
     else {
       return expressionOccurrences;
@@ -111,7 +111,7 @@ public class ExpressionOccurrenceManager extends BaseOccurrenceManager {
           }
           result = findManager.findString(text, endOffset, findModel);
         }
-        return results.toArray(new PsiExpression[results.size()]);
+        return results.toArray(PsiExpression.EMPTY_ARRAY);
       }
     }
     return CodeInsightUtil.findExpressionOccurrences(myScope, myMainOccurence);

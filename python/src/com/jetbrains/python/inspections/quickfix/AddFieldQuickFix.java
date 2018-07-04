@@ -46,13 +46,12 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Available on self.my_something when my_something is unresolved.
  * User: dcheryasov
- * Date: Apr 4, 2009 1:53:46 PM
  */
 public class AddFieldQuickFix implements LocalQuickFix {
 
   private final String myInitializer;
   private final String myClassName;
-  private String myIdentifier;
+  private final String myIdentifier;
   private boolean replaceInitializer = false;
 
   public AddFieldQuickFix(@NotNull final String identifier, @NotNull final String initializer, final String className, boolean replace) {
@@ -232,9 +231,9 @@ public class AddFieldQuickFix implements LocalQuickFix {
   }
 
   private static class CreateFieldCallback implements Function<String, PyStatement> {
-    private Project myProject;
-    private String myItemName;
-    private String myInitializer;
+    private final Project myProject;
+    private final String myItemName;
+    private final String myInitializer;
 
     private CreateFieldCallback(Project project, String itemName, String initializer) {
       myProject = project;

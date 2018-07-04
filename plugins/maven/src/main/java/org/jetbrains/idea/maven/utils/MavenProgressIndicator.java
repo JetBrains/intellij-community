@@ -38,7 +38,9 @@ public class MavenProgressIndicator {
   public synchronized void setIndicator(ProgressIndicator i) {
     i.setText(myIndicator.getText());
     i.setText2(myIndicator.getText2());
-    i.setFraction(myIndicator.getFraction());
+    if (!i.isIndeterminate()) {
+      i.setFraction(myIndicator.getFraction());
+    }
     if (i.isCanceled()) i.cancel();
     myIndicator = i;
   }

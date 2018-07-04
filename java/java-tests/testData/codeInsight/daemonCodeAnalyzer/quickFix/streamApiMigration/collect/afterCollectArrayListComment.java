@@ -10,7 +10,7 @@ public class Collect {
   }
 
   void collectNames(List<Person> persons){
-      List<String> names = persons.stream().map(Person::getName).collect(Collectors.toList());
+    List<String> names = persons.stream().map(Person::getName).collect(Collectors.toList());
       //some comment
   }
 }

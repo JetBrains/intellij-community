@@ -7,14 +7,13 @@ import gherkin.formatter.model.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
-import java.util.Date;
 import java.util.List;
 import java.util.Queue;
 
+import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.*;
+
 public class CucumberJvmSMFormatter implements Formatter, Reporter {
-  public static final String TEAMCITY_PREFIX = "##teamcity";
   public static final int MILLION = 1000000;
   private int scenarioCount;
   private int passedScenarioCount;
@@ -28,38 +27,11 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
   private int undefinedStepCount;
   private boolean endedByNewLine = true;
 
-  private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss.SSSZ");
-
-  private static final String TEMPLATE_TEST_STARTED =
-    TEAMCITY_PREFIX + "[testStarted timestamp = '%s' locationHint = 'file:///%s' captureStandardOutput = 'true' name = '%s']";
-  private static final String TEMPLATE_TEST_FAILED =
-    TEAMCITY_PREFIX + "[testFailed timestamp = '%s' details = '%s' message = '%s' name = '%s' %s]";
-  private static final String TEMPLATE_SCENARIO_FAILED = TEAMCITY_PREFIX + "[customProgressStatus timestamp='%s' type='testFailed']";
-  private static final String TEMPLATE_TEST_PENDING =
-    TEAMCITY_PREFIX + "[testIgnored name = '%s' message = 'Skipped step' timestamp = '%s']";
-
-  private static final String TEMPLATE_TEST_FINISHED =
-    TEAMCITY_PREFIX +
-    "[testFinished timestamp = '%s' duration = '%s' name = '%s']";
-
-  private static final String TEMPLATE_ENTER_THE_MATRIX = TEAMCITY_PREFIX + "[enteredTheMatrix timestamp = '%s']";
-
-  private static final String TEMPLATE_TEST_SUITE_STARTED =
-    TEAMCITY_PREFIX + "[testSuiteStarted timestamp = '%s' locationHint = 'file://%s' name = '%s']";
-  private static final String TEMPLATE_TEST_SUITE_FINISHED = TEAMCITY_PREFIX + "[testSuiteFinished timestamp = '%s' name = '%s']";
-
-  private static final String TEMPLATE_SCENARIO_COUNTING_STARTED =
-    TEAMCITY_PREFIX + "[customProgressStatus testsCategory = 'Scenarios' count = '%s' timestamp = '%s']";
-  private static final String TEMPLATE_SCENARIO_COUNTING_FINISHED =
-    TEAMCITY_PREFIX + "[customProgressStatus testsCategory = '' count = '0' timestamp = '%s']";
-  private static final String TEMPLATE_SCENARIO_STARTED = TEAMCITY_PREFIX + "[customProgressStatus type = 'testStarted' timestamp = '%s']";
-  private static final String TEMPLATE_SCENARIO_FINISHED = TEAMCITY_PREFIX + "[customProgressStatus type = 'testFinished' timestamp = '%s']";
-
   public static final String RESULT_STATUS_PENDING = "pending";
 
-  private Appendable appendable;
+  private final Appendable appendable;
 
-  private Queue<String> queue;
+  private final Queue<String> queue;
 
   private String uri;
   private String currentFeatureName;
@@ -70,7 +42,7 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
 
   private Scenario currentScenario;
 
-  private Queue<Step> currentSteps;
+  private final Queue<Step> currentSteps;
 
   @SuppressWarnings("UnusedDeclaration")
   public CucumberJvmSMFormatter(Appendable appendable) {
@@ -252,10 +224,10 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
   public void uri(String s) {
     String currentDir = System.getProperty("org.jetbrains.run.directory");
     if (currentDir != null) {
-      uri = currentDir + File.separator + s;
+      uri = FILE_RESOURCE_PREFIX + currentDir + File.separator + s;
     }
     else {
-      uri = s;
+      uri = FILE_RESOURCE_PREFIX + s;
     }
   }
 
@@ -298,14 +270,6 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
 
   @Override
   public void before(Match match, Result result) {
-  }
-
-  private static String getCurrentTime() {
-    return DATE_FORMAT.format(new Date());
-  }
-
-  private static String escape(String source) {
-    return source.replace("|", "||").replace("\n", "|n").replace("\r", "|r").replace("'", "|'").replace("[", "|[").replace("]", "|]");
   }
 
   private void outCommand(String s) {

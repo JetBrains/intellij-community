@@ -32,7 +32,7 @@ import java.util.Set;
 public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspection {
 
   @NonNls
-  private static final Set<String> loggingMethodNames = ContainerUtilRt.newHashSet("log", "trace", "debug", "info", "warn", "error", "fatal");
+  static final Set<String> loggingMethodNames = ContainerUtilRt.newHashSet("log", "trace", "debug", "info", "warn", "error", "fatal");
 
   @Nls
   @NotNull
@@ -46,14 +46,11 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
   protected String buildErrorString(Object... infos) {
     final Integer argumentCount = (Integer)infos[0];
     final Integer placeholderCount = (Integer)infos[1];
-    if (argumentCount.intValue() > placeholderCount.intValue()) {
-      return InspectionGadgetsBundle.message("placeholder.count.matches.argument.count.more.problem.descriptor",
+    return (argumentCount.intValue() > placeholderCount.intValue())
+           ? InspectionGadgetsBundle.message("placeholder.count.matches.argument.count.more.problem.descriptor",
+                                             argumentCount, placeholderCount)
+           : InspectionGadgetsBundle.message("placeholder.count.matches.argument.count.fewer.problem.descriptor",
                                              argumentCount, placeholderCount);
-    }
-    else {
-      return InspectionGadgetsBundle.message("placeholder.count.matches.argument.count.fewer.problem.descriptor",
-                                             argumentCount, placeholderCount);
-    }
   }
 
   @Override
@@ -85,28 +82,51 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
       if (arguments.length == 0) {
         return;
       }
-      PsiExpression logStringArgument = arguments[0];
-      final int argumentCount;
-      if (!ExpressionUtils.hasStringType(logStringArgument)) {
+      final int index;
+      if (!ExpressionUtils.hasStringType(arguments[0])) {
         if (arguments.length < 2) {
           return;
         }
-        logStringArgument = arguments[1];
-        argumentCount = countArguments(arguments, 2);
+        index = 2;
       }
       else {
-        argumentCount = countArguments(arguments, 1);
+        index = 1;
       }
+      int argumentCount = arguments.length - index;
+      boolean lastArgumentIsException = hasThrowableType(arguments[arguments.length - 1]);
+      if (argumentCount == 1) {
+        final PsiExpression argument = arguments[index];
+        final PsiType argumentType = argument.getType();
+        if (argumentType instanceof PsiArrayType) {
+          if (argumentType.equalsToText("java.lang.Object[]") && argument instanceof PsiNewExpression) {
+            final PsiNewExpression newExpression = (PsiNewExpression)argument;
+            final PsiArrayInitializerExpression arrayInitializerExpression = newExpression.getArrayInitializer();
+            if (arrayInitializerExpression != null) {
+              final PsiExpression[] initializers = arrayInitializerExpression.getInitializers();
+              argumentCount  = initializers.length;
+              lastArgumentIsException = initializers.length > 0 && hasThrowableType(initializers[initializers.length - 1]);
+            }
+            else {
+              return;
+            }
+          }
+          else {
+            return;
+          }
+        }
+      }
+      final PsiExpression logStringArgument = arguments[index - 1];
       final int placeholderCount = countPlaceholders(logStringArgument);
-      if (placeholderCount < 0 || argumentCount < 0 || placeholderCount == argumentCount) {
-        return;
-      }
-      if (placeholderCount > 1 && placeholderCount == argumentCount + 1 && hasThrowableType(arguments[arguments.length - 1])) {
+      if (placeholderCount < 0 ||
+          argumentCount < 0 ||
+          placeholderCount == argumentCount && (!lastArgumentIsException || argumentCount > 1) ||
+          placeholderCount == argumentCount - 1 && lastArgumentIsException) {
         // if there is more than one argument and the last argument is an exception, but there is a placeholder for
         // the exception, then the stack trace won't be logged.
         return;
       }
-      registerError(logStringArgument, Integer.valueOf(argumentCount), Integer.valueOf(placeholderCount));
+      registerError(logStringArgument, Integer.valueOf(lastArgumentIsException ? argumentCount - 1 : argumentCount),
+                    Integer.valueOf(placeholderCount));
     }
 
     private static boolean hasThrowableType(PsiExpression lastArgument) {
@@ -133,6 +153,9 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
     }
 
     private static boolean buildString(PsiExpression expression, StringBuilder builder) {
+      if (expression == null) {
+        return false;
+      }
       final PsiType type = expression.getType();
       if (expression instanceof PsiParenthesizedExpression) {
         final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
@@ -181,29 +204,6 @@ public class PlaceholderCountMatchesArgumentCountInspection extends BaseInspecti
         index = string.indexOf("{}", index + 1);
       }
       return count;
-    }
-
-    private static int countArguments(PsiExpression[] arguments, int countFrom) {
-      if (arguments.length <= countFrom) {
-        return 0;
-      }
-      final int count = arguments.length - countFrom;
-      if (count == 1) {
-        final PsiExpression argument = arguments[countFrom];
-        final PsiType argumentType = argument.getType();
-        if (argumentType instanceof PsiArrayType) {
-          if (argumentType.equalsToText("java.lang.Object[]") && argument instanceof PsiNewExpression) {
-            final PsiNewExpression newExpression = (PsiNewExpression)argument;
-            final PsiArrayInitializerExpression arrayInitializerExpression = newExpression.getArrayInitializer();
-            if (arrayInitializerExpression != null) {
-              return arrayInitializerExpression.getInitializers().length;
-            }
-          }
-          return -1;
-        }
-      }
-      final PsiExpression lastArgument = arguments[arguments.length - 1];
-      return hasThrowableType(lastArgument) ? count - 1 : count;
     }
   }
 }

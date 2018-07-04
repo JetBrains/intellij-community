@@ -21,6 +21,7 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
@@ -33,10 +34,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class ImportTestsFromHistoryAction extends AbstractImportTestsAction {
-  private String myFileName;
+  private final String myFileName;
   
   public ImportTestsFromHistoryAction(@Nullable SMTRunnerConsoleProperties properties, Project project, String name) {
-    super(properties, getPresentableText(project, name), getPresentableText(project, name), getIcon(project, name));
+    super(properties, StringUtil.escapeMnemonics(getPresentableText(project, name)), getPresentableText(project, name), getIcon(project, name));
     myFileName = name;
   }
 

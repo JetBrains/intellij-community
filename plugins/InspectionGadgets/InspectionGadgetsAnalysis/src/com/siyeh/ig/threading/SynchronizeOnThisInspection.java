@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -97,7 +98,7 @@ public class SynchronizeOnThisInspection extends BaseInspection {
         return false;
       }
       final PsiType parameterType = parameters[0];
-      if (isPrivateClassType(parameterType)) {
+      if (isNonPrivateClassType(parameterType)) {
         return true;
       }
       if (!(parameterType instanceof PsiCapturedWildcardType)) {
@@ -106,16 +107,12 @@ public class SynchronizeOnThisInspection extends BaseInspection {
       final PsiCapturedWildcardType capturedWildcardType = (PsiCapturedWildcardType)parameterType;
       final PsiWildcardType wildcardType = capturedWildcardType.getWildcard();
       final PsiType extendsBoundType = wildcardType.getExtendsBound();
-      return isPrivateClassType(extendsBoundType);
+      return isNonPrivateClassType(extendsBoundType);
     }
 
-    private static boolean isPrivateClassType(PsiType type) {
-      if (!(type instanceof PsiClassType)) {
-        return false;
-      }
-      final PsiClassType extendsBoundClassType = (PsiClassType)type;
-      final PsiClass aClass = extendsBoundClassType.resolve();
-      return aClass == null || !aClass.hasModifierProperty(PsiModifier.PRIVATE);
+    private static boolean isNonPrivateClassType(PsiType type) {
+      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
+      return aClass != null && !aClass.hasModifierProperty(PsiModifier.PRIVATE);
     }
   }
 }

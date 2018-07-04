@@ -60,7 +60,7 @@ public class OverridableMethodCallDuringObjectConstructionInspectionBase extends
         return;
       }
       final PsiMethod calledMethod = expression.resolveMethod();
-      if (calledMethod == null || !PsiUtil.canBeOverriden(calledMethod) || calledMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
+      if (calledMethod == null || !PsiUtil.canBeOverridden(calledMethod) || calledMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
         return;
       }
       registerMethodCallError(expression, expression);

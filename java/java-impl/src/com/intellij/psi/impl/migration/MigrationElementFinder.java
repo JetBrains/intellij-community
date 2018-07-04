@@ -63,7 +63,7 @@ public class MigrationElementFinder extends PsiElementFinder implements DumbAwar
     PsiMigrationImpl migration = PsiMigrationManager.getInstance(myProject).getCurrentMigration();
     if (migration != null) {
       List<PsiClass> classes = migration.getMigrationClasses(psiPackage.getQualifiedName());
-      return classes.toArray(new PsiClass[classes.size()]);
+      return classes.toArray(PsiClass.EMPTY_ARRAY);
     }
     return PsiClass.EMPTY_ARRAY;
   }
@@ -74,7 +74,7 @@ public class MigrationElementFinder extends PsiElementFinder implements DumbAwar
     PsiMigrationImpl migration = PsiMigrationManager.getInstance(myProject).getCurrentMigration();
     if (migration != null) {
       List<PsiPackage> packages = migration.getMigrationPackages(psiPackage.getQualifiedName());
-      return packages.toArray(new PsiPackage[packages.size()]);
+      return packages.toArray(PsiPackage.EMPTY_ARRAY);
     }
     return PsiPackage.EMPTY_ARRAY;
   }

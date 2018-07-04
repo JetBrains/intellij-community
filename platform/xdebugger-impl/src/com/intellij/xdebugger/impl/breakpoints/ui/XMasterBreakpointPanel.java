@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class XMasterBreakpointPanel extends XBreakpointPropertiesSubPanel {
@@ -52,7 +53,8 @@ public class XMasterBreakpointPanel extends XBreakpointPropertiesSubPanel {
         break;
       }
     }
-    items.add(new BreakpointNoneItem());
+    Collections.sort(items);
+    items.add(0, new BreakpointNoneItem());
     return items;
   }
 
@@ -89,7 +91,7 @@ public class XMasterBreakpointPanel extends XBreakpointPropertiesSubPanel {
   void loadProperties() {
     XBreakpoint<?> masterBreakpoint = myDependentBreakpointManager.getMasterBreakpoint(myBreakpoint);
     if (masterBreakpoint != null) {
-      myMasterBreakpointChooser.setSelectesBreakpoint(masterBreakpoint);
+      myMasterBreakpointChooser.setSelectedBreakpoint(masterBreakpoint);
       myLeaveEnabledRadioButton.setSelected(myDependentBreakpointManager.isLeaveEnabled(myBreakpoint));
     }
     updateAfterBreakpointHitPanel();

@@ -17,6 +17,7 @@ package com.intellij.patterns;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -53,6 +54,9 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
 
   @Override
   protected PsiElement getParent(@NotNull final PsiElement element) {
+    if (element instanceof PsiFile && InjectedLanguageManager.getInstance(element.getProject()).isInjectedFragment((PsiFile)element)) {
+      return element.getParent();
+    }
     return element.getContext();
   }
 

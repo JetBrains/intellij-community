@@ -1,29 +1,15 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -56,6 +42,30 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
   @NotNull
   public PsiStatement[] getStatements() {
     return PsiImplUtil.getChildStatements(this);
+  }
+
+  @Override
+  public int getStatementCount() {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    // no lock is needed because all chameleons are expanded already
+    int count = 0;
+    for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      if (child.getPsi() instanceof PsiStatement) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  @Override
+  public boolean isEmpty() {
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
+      if (child.getPsi() instanceof PsiStatement) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override
@@ -100,7 +110,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
       final Set<String> localsSet = new THashSet<>();
       final Set<String> classesSet = new THashSet<>();
       final Ref<Boolean> conflict = new Ref<>(Boolean.FALSE);
-      PsiScopesUtil.walkChildrenScopes(this, new BaseScopeProcessor() {
+      PsiScopesUtil.walkChildrenScopes(this, new PsiScopeProcessor() {
         @Override
         public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
           if (element instanceof PsiLocalVariable) {
@@ -146,13 +156,13 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
     }
 
     if (before == Boolean.TRUE) {
-      while (isNonJavaStatement(anchor)) {
+      while (anchor != null && isNonJavaStatement(anchor)) {
         anchor = anchor.getTreePrev();
         before = Boolean.FALSE;
       }
     }
     else if (before == Boolean.FALSE) {
-      while (isNonJavaStatement(anchor)) {
+      while (anchor != null && isNonJavaStatement(anchor)) {
         anchor = anchor.getTreeNext();
         before = Boolean.TRUE;
       }
@@ -182,7 +192,7 @@ public class PsiCodeBlockImpl extends LazyParseablePsiElement implements PsiCode
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JavaTokenType.LBRACE) {

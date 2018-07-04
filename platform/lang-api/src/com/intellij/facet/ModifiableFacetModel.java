@@ -41,8 +41,9 @@ public interface ModifiableFacetModel extends FacetModel {
 
   boolean isNewFacet(Facet facet);
 
-  void addListener(@NotNull Listener listener, @Nullable Disposable parentDisposable);
+  void addListener(@NotNull Listener listener, @NotNull Disposable parentDisposable);
 
+  @FunctionalInterface
   interface Listener {
     void onChanged();
   }

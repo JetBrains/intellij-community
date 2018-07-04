@@ -38,7 +38,6 @@ import static com.intellij.util.containers.ContainerUtil.skipNulls;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 14, 2004
  */
 public class PathUtilEx {
 

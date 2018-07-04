@@ -35,7 +35,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.NewInstanceFactory;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.config.*;
-import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -409,8 +408,8 @@ public class AntBuildFileImpl implements AntBuildFileBase {
             BuildFileProperty property = properties.next();
             try {
               String value = property.getPropertyValue();
-              value = macroManager.expandSilentMarcos(value, true, context);
-              value = macroManager.expandSilentMarcos(value, false, context);
+              value = macroManager.expandSilentMacros(value, true, context);
+              value = macroManager.expandSilentMacros(value, false, context);
               result.put(property.getPropertyName(), value);
             }
             catch (Macro.ExecutionCancelledException e) {

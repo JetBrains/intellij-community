@@ -18,29 +18,29 @@ package org.jetbrains.uast
 /**
  * [UPrefixExpression] operators.
  */
-class UastPrefixOperator(override val text: String): UastOperator {
-    companion object {
-        @JvmField
-        val INC = UastPrefixOperator("++")
+class UastPrefixOperator(override val text: String) : UastOperator {
+  companion object {
+    @JvmField
+    val INC: UastPrefixOperator = UastPrefixOperator("++")
 
-        @JvmField
-        val DEC = UastPrefixOperator("--")
+    @JvmField
+    val DEC: UastPrefixOperator = UastPrefixOperator("--")
 
-        @JvmField
-        val UNARY_MINUS = UastPrefixOperator("-")
+    @JvmField
+    val UNARY_MINUS: UastPrefixOperator = UastPrefixOperator("-")
 
-        @JvmField
-        val UNARY_PLUS = UastPrefixOperator("+")
+    @JvmField
+    val UNARY_PLUS: UastPrefixOperator = UastPrefixOperator("+")
 
-        @JvmField
-        val LOGICAL_NOT = UastPrefixOperator("!")
+    @JvmField
+    val LOGICAL_NOT: UastPrefixOperator = UastPrefixOperator("!")
 
-        @JvmField
-        val BITWISE_NOT = UastPrefixOperator("~")
+    @JvmField
+    val BITWISE_NOT: UastPrefixOperator = UastPrefixOperator("~")
 
-        @JvmField
-        val UNKNOWN = UastPrefixOperator("<unknown>")
-    }
+    @JvmField
+    val UNKNOWN: UastPrefixOperator = UastPrefixOperator("<unknown>")
+  }
 
-    override fun toString() = text
+  override fun toString(): String = text
 }

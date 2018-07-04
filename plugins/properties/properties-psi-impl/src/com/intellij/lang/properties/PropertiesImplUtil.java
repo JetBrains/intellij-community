@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.lang.properties;
 
@@ -35,6 +23,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.indexing.FileBasedIndex;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -82,7 +71,12 @@ public class PropertiesImplUtil extends PropertiesUtil {
   }
 
   @NotNull
-  public static ResourceBundle getResourceBundle(@NotNull final PropertiesFile representative) {
+  public static List<PropertiesFile> getResourceBundleFiles(@NotNull PropertiesFile representative) {
+    return getResourceBundleWithCachedFiles(representative).getFiles();
+  }
+
+  @NotNull
+  public static ResourceBundle getResourceBundle(@NotNull PropertiesFile representative) {
     return getResourceBundleWithCachedFiles(representative).getBundle();
   }
 
@@ -93,8 +87,8 @@ public class PropertiesImplUtil extends PropertiesUtil {
     final ResourceBundleManager bundleBaseNameManager = ResourceBundleManager.getInstance(baseDirectory.getProject());
     final List<PropertiesFile> bundleFiles = Stream
       .of(baseDirectory.isValid() ? baseDirectory.getFiles() : PsiFile.EMPTY_ARRAY)
-      .filter(f -> Comparing.strEqual(f.getVirtualFile().getExtension(), extension) &&
-                   isPropertiesFile(f) &&
+      .filter(f -> isPropertiesFile(f) &&
+                   Comparing.strEqual(f.getVirtualFile().getExtension(), extension) &&
                    Comparing.equal(bundleBaseNameManager.getBaseName(f), baseName))
       .map(PropertiesImplUtil::getPropertiesFile)
       .collect(Collectors.toList());
@@ -111,6 +105,7 @@ public class PropertiesImplUtil extends PropertiesUtil {
     return getPropertiesFile(PsiManager.getInstance(project).findFile(file));
   }
 
+  @Contract("null -> null")
   @Nullable
   public static PropertiesFile getPropertiesFile(@Nullable PsiFile file) {
     if (!canBePropertyFile(file)) return null;
@@ -190,7 +185,8 @@ public class PropertiesImplUtil extends PropertiesUtil {
     return true;
   }
 
-  public static IProperty getProperty(PsiElement element) {
+  @Nullable
+  public static IProperty getProperty(@Nullable PsiElement element) {
     if (element instanceof IProperty) {
       return (IProperty)element;
     }

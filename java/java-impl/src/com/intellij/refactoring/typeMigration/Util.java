@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,11 @@ import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
  * @author db
- * Date: Nov 4, 2004
  */
 public class Util {
   private Util() { }
@@ -93,12 +93,7 @@ public class Util {
   }
 
   public static boolean canBeMigrated(@NotNull final PsiElement[] es) {
-    for (PsiElement e : es) {
-      if (!canBeMigrated(e)) {
-        return false;
-      }
-    }
-    return true;
+    return Arrays.stream(es).allMatch(Util::canBeMigrated);
   }
 
   private static boolean canBeMigrated(@Nullable final PsiElement e) {
@@ -108,7 +103,7 @@ public class Util {
 
     final PsiElement element = normalizeElement(e);
 
-    if (element == null || !element.getManager().isInProject(element)) {
+    if (element == null || !element.isWritable()) {
       return false;
     }
 

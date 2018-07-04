@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service.execution;
 
-import com.google.common.collect.ImmutableList;
+import org.gradle.internal.impldep.com.google.common.collect.ImmutableList;
 import org.junit.Test;
 
 import java.util.List;

@@ -26,6 +26,7 @@ public interface ToolWindowId {
   String ANT_BUILD = UIBundle.message("tool.window.name.ant.build");
   String DEBUG = UIBundle.message("tool.window.name.debug");
   String RUN = UIBundle.message("tool.window.name.run");
+  String BUILD = UIBundle.message("tool.window.name.build");
   String FIND = UIBundle.message("tool.window.name.find");
   String CVS = UIBundle.message("tool.window.name.cvs");
   String HIERARCHY = UIBundle.message("tool.window.name.hierarchy");
@@ -35,6 +36,7 @@ public interface ToolWindowId {
   String VCS = UIBundle.message("tool.window.name.version.control");
   String MODULES_DEPENDENCIES = UIBundle.message("tool.window.name.module.dependencies");
   String DUPLICATES = UIBundle.message("tool.window.name.module.duplicates");
+  String EXTRACT_METHOD = UIBundle.message("tool.window.name.extract.method");
   String DOCUMENTATION = UIBundle.message("tool.window.name.documentation");
   String TASKS = UIBundle.message("tool.window.name.tasks");
   String DATABASE_VIEW = UIBundle.message("tool.window.name.database");

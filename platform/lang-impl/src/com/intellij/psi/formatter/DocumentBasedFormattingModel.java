@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.formatter;
 
@@ -51,7 +37,7 @@ public class DocumentBasedFormattingModel implements FormattingModelEx {
                                       final Project project,
                                       final CodeStyleSettings settings,
                                       final FileType fileType,
-                                      final PsiFile file) {
+                                      @NotNull final PsiFile file) {
     myRootBlock = rootBlock;
     myDocument = document;
     myProject = project;
@@ -62,11 +48,15 @@ public class DocumentBasedFormattingModel implements FormattingModelEx {
     myOriginalFormattingModel = null;
   }
 
+  public DocumentBasedFormattingModel(@NotNull Block rootBlock, @NotNull CodeStyleSettings settings, @NotNull PsiFile file) {
+    this(rootBlock, file.getProject(), settings, file.getFileType(), file);
+  }
+
   public DocumentBasedFormattingModel(final Block rootBlock,
                                       final Project project,
                                       final CodeStyleSettings settings,
                                       final FileType fileType,
-                                      final PsiFile file) {
+                                      @NotNull final PsiFile file) {
     myRootBlock = rootBlock;
     myProject = project;
     mySettings = settings;
@@ -82,7 +72,7 @@ public class DocumentBasedFormattingModel implements FormattingModelEx {
                                       final Project project,
                                       final CodeStyleSettings settings,
                                       final FileType fileType,
-                                      final PsiFile file) {
+                                      @NotNull final PsiFile file) {
     myOriginalFormattingModel = originalModel;
     myRootBlock = originalModel.getRootBlock();
     myDocument = document;

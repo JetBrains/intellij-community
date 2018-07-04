@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightServicesUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -25,13 +10,18 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author mike
@@ -53,17 +43,32 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
           .filter(prefixExpr -> PsiUtil.skipParenthesizedExprDown(prefixExpr.getOperand()) == null)
           .first() != null) return false;
     if (element instanceof PsiKeyword) {
-      PsiKeyword keyword = (PsiKeyword) element;
-      if ((keyword.getTokenType() == JavaTokenType.IF_KEYWORD || keyword.getTokenType() == JavaTokenType.ELSE_KEYWORD)
-          && keyword.getParent() == ifStatement) {
-        return true;
+      if (element.getParent() != ifStatement) {
+        return false;
+      }
+      final IElementType tokenType = ((PsiKeyword)element).getTokenType();
+      if (tokenType != JavaTokenType.IF_KEYWORD && tokenType != JavaTokenType.ELSE_KEYWORD) {
+        return false;
       }
     }
-    final TextRange condTextRange = condition.getTextRange();
-    if (condTextRange == null) return false;
-    if (!condTextRange.contains(offset)) return false;
+    else {
+      final TextRange condTextRange = condition.getTextRange();
+      if (condTextRange == null || !condTextRange.contains(offset)) {
+        return false;
+      }
+    }
     PsiElement block = findCodeBlock(ifStatement);
-    return block != null;
+    if (block == null) {
+      return false;
+    }
+    if (PsiUtil.skipParenthesizedExprDown(ifStatement.getCondition()) == null) {
+      return true;
+    }
+    // check that the code structure isn't broken completely
+    ControlFlow localFlow = buildControlFlow(block);
+    int startThenOffset = getThenOffset(localFlow, ifStatement);
+    int afterIfOffset = localFlow.getEndOffset(ifStatement);
+    return startThenOffset >= 0 && afterIfOffset >= 0;
   }
 
   @Override
@@ -84,14 +89,15 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
 
     LOG.assertTrue(ifStatement != null);
     PsiElement block = findCodeBlock(ifStatement);
-
+    LOG.assertTrue(block != null);
     ControlFlow controlFlow = buildControlFlow(block);
-
-    PsiExpression condition = (PsiExpression) ifStatement.getCondition().copy();
-
     ifStatement = setupBranches(ifStatement, controlFlow);
+
+    PsiExpression condition = Objects.requireNonNull(ifStatement.getCondition());
     if (condition != null) {
-      ifStatement.getCondition().replace(CodeInsightServicesUtil.invertCondition(condition));
+      final CommentTracker tracker = new CommentTracker();
+      final String negatedCondition = BoolUtils.getNegatedExpressionText(condition, tracker);
+      tracker.replaceAndRestoreComments(condition, negatedCondition);
     }
 
     formatIf(ifStatement);
@@ -101,9 +107,9 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
     final Project project = ifStatement.getProject();
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
 
-    PsiElement thenBranch = ifStatement.getThenBranch().copy();
+    PsiElement thenBranch = Objects.requireNonNull(ifStatement.getThenBranch()).copy();
     PsiElement elseBranch = ifStatement.getElseBranch() != null ? ifStatement.getElseBranch().copy() : null;
-    PsiElement condition = ifStatement.getCondition().copy();
+    PsiElement condition = Objects.requireNonNull(ifStatement.getCondition()).copy();
 
     final CodeStyleManager codeStyle = CodeStyleManager.getInstance(project);
 
@@ -118,22 +124,22 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
     ifStatement = (PsiIfStatement)codeStyle.reformat(ifStatement);
 
     if (!(thenBranch instanceof PsiBlockStatement)) {
-      PsiBlockStatement codeBlock1 = (PsiBlockStatement)ifStatement.getThenBranch().replace(codeBlock);
+      PsiBlockStatement codeBlock1 = (PsiBlockStatement)Objects.requireNonNull(ifStatement.getThenBranch()).replace(codeBlock);
       codeBlock1 = (PsiBlockStatement)codeStyle.reformat(codeBlock1);
       codeBlock1.getCodeBlock().add(thenBranch);
     }
     else {
-      ifStatement.getThenBranch().replace(thenBranch);
+      Objects.requireNonNull(ifStatement.getThenBranch()).replace(thenBranch);
     }
 
     if (elseBranch != null) {
       if (!(elseBranch instanceof PsiBlockStatement)) {
-        PsiBlockStatement codeBlock1 = (PsiBlockStatement)ifStatement.getElseBranch().replace(codeBlock);
+        PsiBlockStatement codeBlock1 = (PsiBlockStatement)Objects.requireNonNull(ifStatement.getElseBranch()).replace(codeBlock);
         codeBlock1 = (PsiBlockStatement)codeStyle.reformat(codeBlock1);
         codeBlock1.getCodeBlock().add(elseBranch);
       }
       else {
-        elseBranch = ifStatement.getElseBranch().replace(elseBranch);
+        elseBranch = Objects.requireNonNull(ifStatement.getElseBranch()).replace(elseBranch);
 
         if (emptyBlock(((PsiBlockStatement)elseBranch).getCodeBlock())) {
           ifStatement.getElseBranch().delete();
@@ -141,7 +147,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
       }
     }
 
-    ifStatement.getCondition().replace(condition);
+    Objects.requireNonNull(ifStatement.getCondition()).replace(condition);
   }
 
   private static boolean emptyBlock (PsiCodeBlock block) {
@@ -161,7 +167,11 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
     return null;
   }
 
-  private static ControlFlow buildControlFlow(PsiElement element) {
+  @NotNull
+  private static ControlFlow buildControlFlow(@Nullable PsiElement element) {
+    if (element == null) {
+      return ControlFlow.EMPTY;
+    }
     try {
       return ControlFlowFactory.getInstance(element.getProject()).getControlFlow(element, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
     }
@@ -174,13 +184,14 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
     PsiElementFactory factory = JavaPsiFacade.getInstance(ifStatement.getProject()).getElementFactory();
     Project project = ifStatement.getProject();
 
-    PsiStatement thenBranch = ifStatement.getThenBranch();
+    CommentTracker ct = new CommentTracker();
+    PsiStatement thenBranch = Objects.requireNonNull(ifStatement.getThenBranch());
     PsiStatement elseBranch = ifStatement.getElseBranch();
 
     if (elseBranch != null) {
       elseBranch = (PsiStatement) elseBranch.copy();
-      setElseBranch(ifStatement, thenBranch, flow);
-      ifStatement.getThenBranch().replace(elseBranch);
+      setElseBranch(ifStatement, thenBranch, flow, ct);
+      ct.replaceAndRestoreComments(ifStatement.getThenBranch(), elseBranch);
       return ifStatement;
     }
 
@@ -189,7 +200,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
       ifStatement.setElseBranch(thenBranch);
       PsiStatement statement = factory.createStatementFromText("{}", ifStatement);
       statement = (PsiStatement) codeStyle.reformat(statement);
-      statement = (PsiStatement) ifStatement.getThenBranch().replace(statement);
+      statement = (PsiStatement) ct.replaceAndRestoreComments(ifStatement.getThenBranch(), statement);
       codeStyle.reformat(statement);
       return ifStatement;
     }
@@ -202,20 +213,19 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
       PsiStatement statement = factory.createStatementFromText("return;", ifStatement);
       statement = (PsiStatement) codeStyle.reformat(statement);
       if (thenBranch instanceof PsiBlockStatement) {
-        PsiStatement[] statements = ((PsiBlockStatement) thenBranch).getCodeBlock().getStatements();
-        if (statements.length > 0) {
-          PsiElement firstElement = statements [0];
-          while (firstElement.getPrevSibling() instanceof PsiWhiteSpace || firstElement.getPrevSibling() instanceof PsiComment) {
-            firstElement = firstElement.getPrevSibling();
-          }
-          ifStatement.getParent().addRangeAfter(firstElement, statements[statements.length - 1], ifStatement);
+        PsiCodeBlock codeBlock = ((PsiBlockStatement)thenBranch).getCodeBlock();
+        PsiElement firstElement = codeBlock.getFirstBodyElement();
+        PsiElement lastElement = codeBlock.getLastBodyElement();
+        if (firstElement != null && lastElement != null) {
+          ifStatement.getParent().addRangeAfter(firstElement, lastElement, ifStatement);
+          ct.markRangeUnchanged(firstElement, lastElement);
         }
       } else {
         if (!(thenBranch instanceof PsiReturnStatement)) {
           ifStatement = addAfterWithinCodeBlock(ifStatement, thenBranch);
         }
       }
-      ifStatement.getThenBranch().replace(statement);
+      ct.replaceAndRestoreComments(Objects.requireNonNull(ifStatement.getThenBranch()), statement);
       return ifStatement;
     }
     PsiElement element = flow.getElement(endOffset);
@@ -227,14 +237,14 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
       PsiStatement statement = factory.createStatementFromText("continue;", ifStatement);
       statement = (PsiStatement)codeStyle.reformat(statement);
       ifStatement = addAfterWithinCodeBlock(ifStatement, thenBranch);
-      ifStatement.getThenBranch().replace(statement);
+      Objects.requireNonNull(ifStatement.getThenBranch()).replace(statement);
       return ifStatement;
     }
 
     if (element instanceof PsiReturnStatement) {
       PsiReturnStatement returnStatement = (PsiReturnStatement) element;
       ifStatement = addAfterWithinCodeBlock(ifStatement, thenBranch);
-      ifStatement.getThenBranch().replace(returnStatement.copy());
+      ct.replaceAndRestoreComments(Objects.requireNonNull(ifStatement.getThenBranch()), returnStatement.copy());
 
       ControlFlow flow2 = buildControlFlow(findCodeBlock(ifStatement));
       if (!ControlFlowUtil.isInstructionReachable(flow2, flow2.getStartOffset(returnStatement), 0)) returnStatement.delete();
@@ -257,7 +267,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
       }
     }
     if (nextUnreachable) {
-      setElseBranch(ifStatement, thenBranch, flow);
+      setElseBranch(ifStatement, thenBranch, flow, ct);
 
       PsiElement first = ifStatement.getNextSibling();
       if (first != null) {
@@ -273,22 +283,25 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
 
         PsiBlockStatement codeBlock = (PsiBlockStatement) factory.createStatementFromText("{}", ifStatement);
         codeBlock.getCodeBlock().addRange(first, last);
+        ct.replaceAndRestoreComments(ifStatement.getThenBranch(), codeBlock);
         first.getParent().deleteChildRange(first, last);
-        ifStatement.getThenBranch().replace(codeBlock);
       }
       codeStyle.reformat(ifStatement);
       return ifStatement;
     }
 
-    setElseBranch(ifStatement, thenBranch, flow);
+    setElseBranch(ifStatement, thenBranch, flow, ct);
     PsiStatement statement = factory.createStatementFromText("{}", ifStatement);
     statement = (PsiStatement) codeStyle.reformat(statement);
-    statement = (PsiStatement) ifStatement.getThenBranch().replace(statement);
+    statement = (PsiStatement)ct.replaceAndRestoreComments(Objects.requireNonNull(ifStatement.getThenBranch()), statement);
     codeStyle.reformat(statement);
     return ifStatement;
   }
 
-  private static void setElseBranch(PsiIfStatement ifStatement, PsiStatement thenBranch, ControlFlow flow)
+  private static void setElseBranch(PsiIfStatement ifStatement,
+                                    PsiStatement thenBranch,
+                                    ControlFlow flow,
+                                    CommentTracker ct)
     throws IncorrectOperationException {
     if (flow.getEndOffset(ifStatement) == flow.getEndOffset(thenBranch)) {
       final PsiLoopStatement loopStmt = PsiTreeUtil.getParentOfType(ifStatement, PsiLoopStatement.class);
@@ -298,7 +311,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
           final PsiStatement[] statements = ((PsiBlockStatement)body).getCodeBlock().getStatements();
           if (statements.length > 0 && !PsiTreeUtil.isAncestor(statements[statements.length - 1], ifStatement, false) &&
               ArrayUtilRt.find(statements, ifStatement) < 0) {
-            ifStatement.setElseBranch(thenBranch);
+            ifStatement.setElseBranch(ct.markUnchanged(thenBranch));
             return;
           }
         }
@@ -310,14 +323,14 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
         }
         return;
       }
-      else if (thenBranch instanceof PsiBlockStatement) {
+      if (thenBranch instanceof PsiBlockStatement) {
         PsiStatement[] statements = ((PsiBlockStatement) thenBranch).getCodeBlock().getStatements();
         if (statements.length > 0 && statements[statements.length - 1] instanceof PsiContinueStatement) {
-          statements[statements.length - 1].delete();
+          new CommentTracker().deleteAndRestoreComments(statements[statements.length - 1]);
         }
       }
     }
-    ifStatement.setElseBranch(thenBranch);
+    ifStatement.setElseBranch(ct.markUnchanged(thenBranch));
   }
 
   private static PsiStatement wrapWithCodeBlock(@NotNull PsiStatement statement) {
@@ -327,6 +340,7 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
     PsiIfStatement ifStatement = (PsiIfStatement)factory.createStatementFromText("if (true) {}", statement);
     ifStatement = (PsiIfStatement)codeStyle.reformat(ifStatement);
     PsiStatement thenBranch = ifStatement.getThenBranch();
+    assert thenBranch instanceof PsiBlockStatement;
     ((PsiBlockStatement)thenBranch).getCodeBlock().add(statement);
     PsiCodeBlock stmt = ((PsiBlockStatement)statement.replace(thenBranch)).getCodeBlock();
     return stmt.getStatements()[0];

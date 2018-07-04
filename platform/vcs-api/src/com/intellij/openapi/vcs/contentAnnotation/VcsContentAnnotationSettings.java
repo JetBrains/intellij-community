@@ -1,22 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.contentAnnotation;
 
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Irina.Chernushina
@@ -27,9 +16,8 @@ import com.intellij.openapi.project.Project;
   storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)}
 )
 public class VcsContentAnnotationSettings implements PersistentStateComponent<VcsContentAnnotationSettings.State> {
-  public static final long ourMillisecondsInDay = 24 * 60 * 60 * 1000L;
   public static final int ourMaxDays = 31; // approx
-  public static final long ourAbsoluteLimit = ourMillisecondsInDay * ourMaxDays;
+  public static final long ourAbsoluteLimit = TimeUnit.DAYS.toMillis(ourMaxDays);
 
   private State myState = new State();
   {
@@ -41,7 +29,7 @@ public class VcsContentAnnotationSettings implements PersistentStateComponent<Vc
   }
   
   public static class State {
-    public boolean myShow1 = false;
+    public boolean myShow1;
     public long myLimit;
   }
 
@@ -51,7 +39,7 @@ public class VcsContentAnnotationSettings implements PersistentStateComponent<Vc
   }
 
   @Override
-  public void loadState(State state) {
+  public void loadState(@NotNull State state) {
     myState = state;
   }
 
@@ -60,11 +48,11 @@ public class VcsContentAnnotationSettings implements PersistentStateComponent<Vc
   }
 
   public int getLimitDays() {
-    return (int) (myState.myLimit / ourMillisecondsInDay);
+    return (int)TimeUnit.MILLISECONDS.toDays(myState.myLimit);
   }
 
-  public void setLimit(int limit) {
-    myState.myLimit = ourMillisecondsInDay * limit;
+  public void setLimit(int days) {
+    myState.myLimit = TimeUnit.DAYS.toMillis(days);
   }
 
   public boolean isShow() {

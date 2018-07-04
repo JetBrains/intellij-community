@@ -172,11 +172,6 @@ public class RadGridBagLayoutManager extends RadAbstractGridLayoutManager {
   }
 
   @Override
-  public Property[] getContainerProperties(final Project project) {
-    return Property.EMPTY_ARRAY;
-  }
-
-  @Override
   public Property[] getComponentProperties(final Project project, final RadComponent component) {
     return new Property[]{
       new HorzAlignProperty(),

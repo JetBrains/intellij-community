@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.LogUtil;
@@ -20,12 +6,14 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.util.ListWithSelection;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.util.Collections;
+import java.util.EnumSet;
 
 public class ComboBoxTableCellRenderer extends JPanel implements TableCellRenderer {
   public static final TableCellRenderer INSTANCE = new ComboBoxTableCellRenderer();
@@ -55,17 +43,16 @@ public class ComboBoxTableCellRenderer extends JPanel implements TableCellRender
   }
 
   @Override
+  @SuppressWarnings("unchecked")
   public JComponent getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     if (value instanceof ListWithSelection) {
-      final ListWithSelection tags = (ListWithSelection)value;
-      if (tags.getSelection() == null) {
-        tags.selectFirst();
-      }
-      myCombo.removeAllItems();
-      for (Object tag : tags) {
-        myCombo.addItem(tag);
-      }
-      myCombo.setSelectedItem(tags.getSelection());
+      ListWithSelection tags = (ListWithSelection)value;
+      if (tags.getSelection() == null) tags.selectFirst();
+      updateCombobox(tags, tags.getSelection());
+    }
+    else if (value instanceof Enum) {
+      Enum selectedValue = (Enum)value;
+      updateCombobox(EnumSet.allOf(selectedValue.getDeclaringClass()), selectedValue);
     }
     else {
       if (value != null) {
@@ -75,6 +62,17 @@ public class ComboBoxTableCellRenderer extends JPanel implements TableCellRender
       myCombo.setSelectedIndex(-1);
     }
 
+    myCombo.setEnabled(table.isCellEditable(row, column));
+
     return this;
+  }
+
+  @SuppressWarnings("unchecked")
+  private void updateCombobox(@NotNull Iterable<?> options, @NotNull Object selectedOption) {
+    myCombo.removeAllItems();
+    for (Object option : options) {
+      myCombo.addItem(option);
+    }
+    myCombo.setSelectedItem(selectedOption);
   }
 }

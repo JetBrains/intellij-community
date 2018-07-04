@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
@@ -37,6 +23,7 @@ import com.intellij.openapi.wm.impl.status.ClockPanel;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -342,11 +329,11 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
       removeAll();
       final boolean enableMnemonics = !UISettings.getInstance().getDisableMnemonics();
+      final boolean isDarkMenu = SystemInfo.isMacSystemMenu ? NSDefaults.isDarkMenuBar() : false;
       for (final AnAction action : myVisibleActions) {
-        add(new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, true));
+        add(new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, true, isDarkMenu));
       }
 
-      fixMenuBackground();
       updateMnemonicsVisibility();
       if (myClockPanel != null) {
         add(myClockPanel);
@@ -362,12 +349,6 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
         }
       }
     }
-  }
-
-  @Override
-  public void updateUI() {
-    super.updateUI();
-    fixMenuBackground();
   }
 
   @Override
@@ -392,19 +373,6 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     }
     else if (getState() != State.COLLAPSED) {
       super.paintChildren(g);
-    }
-  }
-
-  /**
-   * Hacks a problem under Alloy LaF which draws menu bar in different background menu items are drawn in.
-   */
-  private void fixMenuBackground() {
-    if (UIUtil.isUnderAlloyLookAndFeel() && getMenuCount() > 0) {
-      final JMenu menu = getMenu(0);
-      if (menu != null) {  // hack for Substance LAF compatibility
-        menu.updateUI();
-        setBackground(menu.getBackground());
-      }
     }
   }
 

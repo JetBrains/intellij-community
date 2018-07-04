@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection.highlightTemplate;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -22,13 +8,10 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceDialog;
 import com.intellij.structuralsearch.plugin.ui.*;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
-import org.jdom.Element;
-import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -39,13 +22,13 @@ import java.util.List;
  * @author cdr
  */
 public class SSBasedInspectionOptions {
-  private final JBList myTemplatesList;
+  final JBList<Configuration> myTemplatesList;
   // for externalization
-  private final List<Configuration> myConfigurations;
+  final List<Configuration> myConfigurations;
 
   public SSBasedInspectionOptions(final List<Configuration> configurations) {
     myConfigurations = configurations;
-    myTemplatesList  = new JBList(new MyListModel());
+    myTemplatesList  = new JBList<>(new MyListModel());
     myTemplatesList.setCellRenderer(new DefaultListCellRenderer() {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         JLabel component = (JLabel)super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
@@ -56,17 +39,11 @@ public class SSBasedInspectionOptions {
     });
   }
 
-  private static void copyConfiguration(final Configuration configuration, final Configuration newConfiguration) {
-    @NonNls Element temp = new Element("temp");
-    configuration.writeExternal(temp);
-    newConfiguration.readExternal(temp);
-  }
-
   interface SearchDialogFactory {
     SearchDialog createDialog(SearchContext searchContext);
   }
 
-  private void addTemplate(SearchDialogFactory searchDialogFactory) {
+  void addTemplate(SearchDialogFactory searchDialogFactory) {
     SearchDialog dialog = createDialog(searchDialogFactory);
     if (!dialog.showAndGet()) {
       return;
@@ -76,7 +53,7 @@ public class SSBasedInspectionOptions {
       return;
     }
 
-    configurationsChanged(dialog.getSearchContext());
+    configurationsChanged(dialog.getProject());
   }
 
   private static SearchDialog createDialog(final SearchDialogFactory searchDialogFactory) {
@@ -84,15 +61,15 @@ public class SSBasedInspectionOptions {
     return searchDialogFactory.createDialog(searchContext);
   }
 
-  private static SearchContext createSearchContext() {
+  static SearchContext createSearchContext() {
     AnActionEvent event = new AnActionEvent(null, DataManager.getInstance().getDataContext(),
                                             "", new DefaultActionGroup().getTemplatePresentation(), ActionManager.getInstance(), 0);
     return SearchContext.buildFromDataContext(event.getDataContext());
   }
 
-  public void configurationsChanged(final SearchContext searchContext) {
+  public void configurationsChanged(Project project) {
     ((MyListModel)myTemplatesList.getModel()).fireContentsChanged();
-    DaemonCodeAnalyzer.getInstance(searchContext.getProject()).restart();
+    DaemonCodeAnalyzer.getInstance(project).restart();
   }
 
   public JPanel getComponent() {
@@ -108,6 +85,7 @@ public class SSBasedInspectionOptions {
                 @Override
                 public void actionPerformed(AnActionEvent e) {
                   addTemplate(new SearchDialogFactory() {
+                    @Override
                     public SearchDialog createDialog(SearchContext searchContext) {
                       return new SearchDialog(searchContext, false, false);
                     }
@@ -118,6 +96,7 @@ public class SSBasedInspectionOptions {
                 @Override
                 public void actionPerformed(AnActionEvent e) {
                   addTemplate(new SearchDialogFactory() {
+                    @Override
                     public SearchDialog createDialog(SearchContext searchContext) {
                       return new ReplaceDialog(searchContext, false, false);
                     }
@@ -126,15 +105,17 @@ public class SSBasedInspectionOptions {
               }
             };
             JBPopupFactory.getInstance().createActionGroupPopup(null, new DefaultActionGroup(children),
-                                                                DataManager.getInstance()
-                                                                  .getDataContext(button.getContextComponent()),
+                                                                DataManager.getInstance().getDataContext(button.getContextComponent()),
                                                                 JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true)
               .show(button.getPreferredPopupPoint());
           }
         }).setEditAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          performEditAction();
+          final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(panel));
+          if (project != null && !DumbService.isDumb(project)) {
+            performEditAction(project);
+          }
         }
       }).setEditActionUpdater(new AnActionButtonUpdater() {
         @Override
@@ -145,14 +126,13 @@ public class SSBasedInspectionOptions {
       }).setRemoveAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          final SearchContext context = createSearchContext();
-          final Object[] selected = myTemplatesList.getSelectedValues();
-          for (Object o : selected) {
-            final Configuration configuration = (Configuration)o;
+          final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(panel));
+          if (project == null) return;
+          for (Configuration configuration : myTemplatesList.getSelectedValuesList()) {
             myConfigurations.remove(configuration);
-            SSBasedInspectionCompiledPatternsCache.removeFromCache(configuration, context.getProject());
+            SSBasedInspectionCompiledPatternsCache.removeFromCache(configuration, project);
           }
-          configurationsChanged(context);
+          configurationsChanged(project);
         }
       }).setRemoveActionUpdater(new AnActionButtonUpdater() {
         @Override
@@ -180,7 +160,7 @@ public class SSBasedInspectionOptions {
       protected boolean onDoubleClick(MouseEvent e) {
         final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(panel));
         if (project != null && !DumbService.isDumb(project)) {
-          performEditAction();
+          performEditAction(project);
         }
         return true;
       }
@@ -188,14 +168,12 @@ public class SSBasedInspectionOptions {
     return panel;
   }
 
-  private void performMoveUpDown(boolean down) {
+  void performMoveUpDown(boolean down) {
     final int[] indices = myTemplatesList.getSelectedIndices();
     if (indices.length == 0) return;
     final int delta = down ? 1 : -1;
     myTemplatesList.removeSelectionInterval(0, myConfigurations.size() - 1);
-    for (int i = down ? indices[indices.length - 1] : 0;
-         down ? i >= 0 : i < indices.length;
-         i -= delta) {
+    for (int i = down ? indices.length - 1 : 0; down ? i >= 0 : i < indices.length; i -= delta) {
       final int index = indices[i];
       final Configuration temp = myConfigurations.get(index);
       myConfigurations.set(index, myConfigurations.get(index + delta));
@@ -209,8 +187,8 @@ public class SSBasedInspectionOptions {
     }
   }
 
-  private void performEditAction() {
-    final Configuration configuration = (Configuration)myTemplatesList.getSelectedValue();
+  void performEditAction(Project project) {
+    final Configuration configuration = myTemplatesList.getSelectedValue();
     if (configuration == null) return;
 
     SearchDialog dialog = createDialog(new SearchDialogFactory() {
@@ -219,20 +197,16 @@ public class SSBasedInspectionOptions {
         if (configuration instanceof SearchConfiguration) {
           return new SearchDialog(searchContext, false, false) {
             @Override
-            public Configuration createConfiguration() {
-              SearchConfiguration newConfiguration = new SearchConfiguration();
-              copyConfiguration(configuration, newConfiguration);
-              return newConfiguration;
+            public Configuration createConfiguration(Configuration c) {
+              return configuration.copy();
             }
           };
         }
         else {
           return new ReplaceDialog(searchContext, false, false) {
             @Override
-            public Configuration createConfiguration() {
-              ReplaceConfiguration newConfiguration = new ReplaceConfiguration();
-              copyConfiguration(configuration, newConfiguration);
-              return newConfiguration;
+            public Configuration createConfiguration(Configuration c) {
+              return configuration.copy();
             }
           };
         }
@@ -246,19 +220,18 @@ public class SSBasedInspectionOptions {
     final Configuration newConfiguration = dialog.getConfiguration();
     final int index = myConfigurations.indexOf(configuration);
     myConfigurations.set(index, newConfiguration);
-    final SearchContext context = dialog.getSearchContext();
-    SSBasedInspectionCompiledPatternsCache.removeFromCache(configuration, context.getProject());
-    configurationsChanged(context);
+    SSBasedInspectionCompiledPatternsCache.removeFromCache(configuration, project);
+    configurationsChanged(project);
   }
 
-  private class MyListModel extends AbstractListModel {
+  private class MyListModel extends AbstractListModel<Configuration> {
     @Override
     public int getSize() {
       return myConfigurations.size();
     }
 
     @Override
-    public Object getElementAt(int index) {
+    public Configuration getElementAt(int index) {
       return index < myConfigurations.size() ? myConfigurations.get(index) : null;
     }
 

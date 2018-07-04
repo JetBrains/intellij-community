@@ -22,28 +22,28 @@ import org.jetbrains.uast.UResolvable
 // that we cannot or do not want to evaluate
 class UCallResultValue(val resolvable: UResolvable, val arguments: List<UValue>) : UValueBase(), UDependency {
 
-    private val argumentsHashCode = arguments.hashCode()
+  private val argumentsHashCode = arguments.hashCode()
 
-    override fun merge(other: UValue): UValue = when (other) {
-        this -> this
-        is UCallResultValue -> {
-            if (resolvable == other.resolvable) {
-                UCallResultValue(resolvable, arguments.map { UUndeterminedValue })
-            }
-            else {
-                UPhiValue.create(this, other)
-            }
-        }
-        else -> UPhiValue.create(this, other)
+  override fun merge(other: UValue): UValue = when (other) {
+    this -> this
+    is UCallResultValue -> {
+      if (resolvable == other.resolvable) {
+        UCallResultValue(resolvable, arguments.map { UUndeterminedValue })
+      }
+      else {
+        UPhiValue.create(this, other)
+      }
     }
+    else -> UPhiValue.create(this, other)
+  }
 
-    override fun equals(other: Any?) =
-        other is UCallResultValue && resolvable == other.resolvable &&
-        argumentsHashCode == other.argumentsHashCode && arguments == other.arguments
+  override fun equals(other: Any?): Boolean =
+    other is UCallResultValue && resolvable == other.resolvable &&
+    argumentsHashCode == other.argumentsHashCode && arguments == other.arguments
 
-    override fun hashCode() = resolvable.hashCode() * 19 + argumentsHashCode
+  override fun hashCode(): Int = resolvable.hashCode() * 19 + argumentsHashCode
 
-    override fun toString(): String {
-        return "external ${(resolvable as? UElement)?.asRenderString() ?: "???"}(${arguments.joinToString()})"
-    }
+  override fun toString(): String {
+    return "external ${(resolvable as? UElement)?.asRenderString() ?: "???"}(${arguments.joinToString()})"
+  }
 }

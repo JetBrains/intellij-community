@@ -31,13 +31,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.ui.*;
@@ -46,6 +47,7 @@ import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -67,6 +69,8 @@ import java.util.regex.Pattern;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_PLAIN;
 import static com.intellij.ui.SimpleTextAttributes.STYLE_SEARCH_MATCH;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 
 public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, DumbAware {
   private static final Pattern INNER_GROUP_WITH_IDS = Pattern.compile("(.*) \\(\\d+\\)");
@@ -74,13 +78,12 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
   @Nullable private final Project myProject;
   private final Component myContextComponent;
   @Nullable private final Editor myEditor;
-  @Nullable private final PsiFile myFile;
 
   protected final ActionManager myActionManager = ActionManager.getInstance();
 
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
 
-  protected final Map<AnAction, String> myActionGroups = ContainerUtil.newHashMap();
+  private final Map<AnAction, GroupMapping> myActionGroups = new HashMap<>();
 
   private final NotNullLazyValue<Map<String, String>> myConfigurablesNames = VolatileNotNullLazyValue.createValue(() -> {
     Map<String, String> map = ContainerUtil.newTroveMap();
@@ -94,26 +97,26 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   private final ModalityState myModality;
 
-  public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor, @Nullable PsiFile file) {
-    this(project, component, editor, file, ModalityState.defaultModalityState());
+  public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor) {
+    this(project, component, editor, ModalityState.defaultModalityState());
   }
 
-  public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor, @Nullable PsiFile file, @Nullable ModalityState modalityState) {
+  public GotoActionModel(@Nullable Project project, Component component, @Nullable Editor editor, @Nullable ModalityState modalityState) {
     myProject = project;
     myContextComponent = component;
     myEditor = editor;
-    myFile = file;
     myModality = modalityState;
     ActionGroup mainMenu = (ActionGroup)myActionManager.getActionOrStub(IdeActions.GROUP_MAIN_MENU);
     assert mainMenu != null;
-    collectActions(myActionGroups, mainMenu, mainMenu.getTemplatePresentation().getText());
+    collectActions(mainMenu, emptyList());
   }
 
   @NotNull
   Map<String, ApplyIntentionAction> getAvailableIntentions() {
     Map<String, ApplyIntentionAction> map = new TreeMap<>();
-    if (myProject != null && myEditor != null && myFile != null) {
-      ApplyIntentionAction[] children = ApplyIntentionAction.getAvailableIntentions(myEditor, myFile);
+    if (myProject != null && !myProject.isDisposed() && myEditor != null && !myEditor.isDisposed()) {
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+      ApplyIntentionAction[] children = file == null ? null : ApplyIntentionAction.getAvailableIntentions(myEditor, file);
       if (children != null) {
         for (ApplyIntentionAction action : children) {
           map.put(action.getName(), action);
@@ -134,10 +137,6 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     return IdeBundle.message("checkbox.disabled.included");
   }
 
-  @Override
-  public char getCheckBoxMnemonic() {
-    return 'd';
-  }
 
   @Override
   public String getNotInMessage() {
@@ -240,6 +239,20 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       
       return o.hashCode() - hashCode(); 
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      MatchedValue value1 = (MatchedValue)o;
+      return Objects.equals(value, value1.value) &&
+             Objects.equals(pattern, value1.pattern);
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(value, pattern);
+    }
   }
 
   @Override
@@ -262,7 +275,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     int emptyIconWidth = EMPTY_ICON.getIconWidth();
     int emptyIconHeight = EMPTY_ICON.getIconHeight();
     if (width <= emptyIconWidth && height <= emptyIconHeight) {
-      layeredIcon.setIcon(disabled ? IconLoader.getDisabledIcon(icon) : icon, 1, 
+      layeredIcon.setIcon(disabled && IconLoader.isGoodSize(icon) ? IconLoader.getDisabledIcon(icon) : icon, 1, 
                           (emptyIconWidth - width) / 2, 
                           (emptyIconHeight - height) / 2);
     }
@@ -279,8 +292,10 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
   @NotNull
   public static AnActionEvent updateActionBeforeShow(@NotNull AnAction anAction, @NotNull DataContext dataContext) {
-    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, dataContext);
-    ActionUtil.performDumbAwareUpdate(anAction, event, false);
+    Presentation presentation = new Presentation();
+    presentation.copyFrom(anAction.getTemplatePresentation());
+    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, presentation, dataContext);
+    ActionUtil.performDumbAwareUpdate(false, anAction, event, false);
     return event;
   }
 
@@ -311,55 +326,36 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     return settings + " > " + name;
   }
 
+  @NotNull
   Map<String, String> getConfigurablesNames() {
     return myConfigurablesNames.getValue();
   }
 
-  private void collectActions(@NotNull Map<AnAction, String> result, @NotNull ActionGroup group, @Nullable String containingGroupName) {
+  private void collectActions(@NotNull ActionGroup group, @NotNull List<ActionGroup> path) {
     AnAction[] actions = group.getChildren(null);
-    includeGroup(result, group, actions, containingGroupName);
+
+    boolean hasMeaningfulChildren = ContainerUtil.exists(actions, action -> myActionManager.getId(action) != null);
+    if (!hasMeaningfulChildren) {
+      GroupMapping mapping = myActionGroups.computeIfAbsent(group, (key) -> new GroupMapping());
+      mapping.addPath(path);
+    }
+
+    List<ActionGroup> newPath = ContainerUtil.append(path, group);
     for (AnAction action : actions) {
       if (action == null || action instanceof Separator) continue;
       if (action instanceof ActionGroup) {
-        ActionGroup actionGroup = (ActionGroup)action;
-        String groupName = actionGroup.getTemplatePresentation().getText();
-        collectActions(result, actionGroup, getGroupName(StringUtil.isEmpty(groupName) || !actionGroup.isPopup() ? containingGroupName : groupName));
+        collectActions((ActionGroup)action, newPath);
       }
       else {
-        String groupName = group.getTemplatePresentation().getText();
-        if (result.containsKey(action)) {
-          result.put(action, null);
-        }
-        else {
-          result.put(action, getGroupName(StringUtil.isEmpty(groupName) ? containingGroupName : groupName));
-        }
+        GroupMapping mapping = myActionGroups.computeIfAbsent(action, (key) -> new GroupMapping());
+        mapping.addPath(newPath);
       }
     }
   }
 
   @Nullable
-  private static String getGroupName(@Nullable String groupName) {
-    if (groupName != null) {
-      Matcher matcher = INNER_GROUP_WITH_IDS.matcher(groupName);
-      if (matcher.matches()) return matcher.group(1);
-    }
-    return groupName;  
-  }
-
-  private void includeGroup(@NotNull Map<AnAction, String> result,
-                            @NotNull ActionGroup group,
-                            @NotNull AnAction[] actions,
-                            @Nullable String containingGroupName) {
-    boolean showGroup = true;
-    for (AnAction action : actions) {
-      if (myActionManager.getId(action) != null) {
-        showGroup = false;
-        break;
-      }
-    }
-    if (showGroup) {
-      result.put(group, getGroupName(containingGroupName));
-    }
+  GroupMapping getGroupMapping(@NotNull AnAction action) {
+    return myActionGroups.get(action);
   }
 
   @Override
@@ -390,7 +386,6 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     Presentation presentation = anAction.getTemplatePresentation();
     String text = presentation.getText();
     String description = presentation.getDescription();
-    String groupName = myActionGroups.get(anAction);
     if (text != null && matcher.matches(text)) {
       return MatchMode.NAME;
     }
@@ -400,10 +395,24 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     if (text == null) {
       return MatchMode.NONE;
     }
-    if (matcher.matches(groupName + " " + text)) {
-      return anAction instanceof ToggleAction ? MatchMode.NAME : MatchMode.GROUP;
+    GroupMapping groupMapping = myActionGroups.get(anAction);
+    if (groupMapping != null) {
+      for (String groupName: groupMapping.getAllGroupNames()) {
+        if (matcher.matches(groupName + " " + text)) {
+          return anAction instanceof ToggleAction ? MatchMode.NAME : MatchMode.GROUP;
+        }
+        if (matcher.matches(text + " " + groupName)) {
+          return MatchMode.GROUP;
+        }
+      }
     }
-    return matcher.matches(text + " " + groupName) ? MatchMode.GROUP : MatchMode.NONE;
+
+    for (GotoActionAliasMatcher m : GotoActionAliasMatcher.EP_NAME.getExtensions()) {
+      if (m.match(anAction, pattern)) {
+        return MatchMode.NAME;
+      }
+    }
+    return MatchMode.NONE;
   }
 
   @Nullable
@@ -422,22 +431,23 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     return objects;
   }
 
-  void updateActions(List<ActionWrapper> toUpdate) {
-    Semaphore semaphore = new Semaphore(toUpdate.size());
+  private void updateOnEdt(Runnable update) {
+    Semaphore semaphore = new Semaphore(1);
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    for (ActionWrapper wrapper : toUpdate) {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        try {
-          wrapper.getPresentation();
-        }
-        finally {
-          semaphore.up();
-        }
-      }, myModality, __ -> indicator != null && indicator.isCanceled());
-    }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      try {
+        update.run();
+      }
+      finally {
+        semaphore.up();
+      }
+    }, myModality, __ -> indicator != null && indicator.isCanceled());
 
     while (!semaphore.waitFor(10)) {
-      ProgressManager.checkCanceled();
+      if (indicator != null && indicator.isCanceled()) {
+        // don't use `checkCanceled` because some smart devs might suppress PCE and end up with a deadlock like IDEA-177788
+        throw new ProcessCanceledException();
+      }
     }
   }
 
@@ -455,18 +465,117 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     return true;
   }
 
+  public static class GroupMapping implements Comparable<GroupMapping> {
+    private final List<List<ActionGroup>> myPaths = new ArrayList<>();
+
+    @Nullable private String myBestGroupName;
+    private boolean myBestNameComputed;
+
+    @NotNull
+    public static GroupMapping createFromText(String text) {
+      GroupMapping mapping = new GroupMapping();
+      mapping.addPath(singletonList(new DefaultActionGroup(text, false)));
+      return mapping;
+    }
+
+    private void addPath(@NotNull List<ActionGroup> path) {
+      myPaths.add(path);
+    }
+
+
+    @Override
+    public int compareTo(@NotNull GroupMapping o) {
+      return Comparing.compare(getBestGroupName(), o.getBestGroupName());
+    }
+
+    @Nullable
+    public String getBestGroupName() {
+      if (myBestNameComputed) return myBestGroupName;
+      List<ActionGroup> path = ContainerUtil.getFirstItem(myPaths);
+      return path != null ? getPathName(path) : null;
+    }
+
+    private void updateBeforeShow(@NotNull DataContext context) {
+      if (myBestNameComputed) return;
+      myBestNameComputed = true;
+
+      for (List<ActionGroup> path : myPaths) {
+        String name = getActualPathName(path, context);
+        if (name != null) {
+          myBestGroupName = name;
+          return;
+        }
+      }
+    }
+
+    @NotNull
+    public List<String> getAllGroupNames() {
+      return ContainerUtil.map(myPaths, GroupMapping::getPathName);
+    }
+
+    @Nullable
+    private static String getPathName(@NotNull List<ActionGroup> path) {
+      String name = "";
+      for (ActionGroup group: path) {
+        name = appendGroupName(name, group, group.getTemplatePresentation());
+      }
+      return StringUtil.nullize(name);
+    }
+
+    @Nullable
+    private static String getActualPathName(@NotNull List<ActionGroup> path, @NotNull DataContext context) {
+      String name = "";
+      for (ActionGroup group : path) {
+        Presentation presentation = updateActionBeforeShow(group, context).getPresentation();
+        if (!presentation.isVisible()) return null;
+        name = appendGroupName(name, group, presentation);
+      }
+      return StringUtil.nullize(name);
+    }
+
+    @NotNull
+    private static String appendGroupName(@NotNull String prefix, @NotNull ActionGroup group, @NotNull Presentation presentation) {
+      if (group.isPopup()) {
+        String groupName = getActionGroupName(presentation);
+        if (!StringUtil.isEmptyOrSpaces(groupName)) {
+          return prefix.isEmpty()
+                 ? groupName
+                 : prefix + " | " + groupName;
+        }
+      }
+      return prefix;
+    }
+
+    @Nullable
+    private static String getActionGroupName(@NotNull Presentation presentation) {
+      String text = presentation.getText();
+      if (text == null) return null;
+
+      Matcher matcher = INNER_GROUP_WITH_IDS.matcher(text);
+      if (matcher.matches()) return matcher.group(1);
+
+      return text;
+    }
+  }
+
   public static class ActionWrapper implements Comparable<ActionWrapper> {
     @NotNull private final AnAction myAction;
     @NotNull private final MatchMode myMode;
-    @Nullable  private final String myGroupName;
+    @Nullable private final GroupMapping myGroupMapping;
     private final DataContext myDataContext;
+    private final GotoActionModel myModel;
     private volatile Presentation myPresentation;
 
-    public ActionWrapper(@NotNull AnAction action, @Nullable String groupName, @NotNull MatchMode mode, DataContext dataContext) {
+    public ActionWrapper(@NotNull AnAction action,
+                         @Nullable GroupMapping groupMapping,
+                         @NotNull MatchMode mode,
+                         DataContext dataContext,
+                         GotoActionModel model) {
       myAction = action;
       myMode = mode;
-      myGroupName = groupName;
+      myGroupMapping = groupMapping;
       myDataContext = dataContext;
+      myModel = model;
     }
 
     @NotNull
@@ -485,16 +594,20 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       if (compared != 0) return compared;
       Presentation myPresentation = myAction.getTemplatePresentation();
       Presentation oPresentation = o.getAction().getTemplatePresentation();
-      String myText = myPresentation.getText();
-      String oText = oPresentation.getText();
+      String myText = StringUtil.notNullize(myPresentation.getText());
+      String oText = StringUtil.notNullize(oPresentation.getText());
       int byText = StringUtil.compare(StringUtil.trimEnd(myText, "..."), StringUtil.trimEnd(oText, "..."), true);
       if (byText != 0) return byText;
       int byTextLength = StringUtil.notNullize(myText).length() - StringUtil.notNullize(oText).length();
       if (byTextLength != 0) return byTextLength;
-      int byGroup = Comparing.compare(myGroupName, o.myGroupName);
+      int byGroup = Comparing.compare(myGroupMapping, o.myGroupMapping);
       if (byGroup != 0) return byGroup;
       int byDesc = StringUtil.compare(myPresentation.getDescription(), oPresentation.getDescription(), true);
       if (byDesc != 0) return byDesc;
+      int byClassHashCode = Comparing.compare(myAction.getClass().hashCode(), o.myAction.getClass().hashCode());
+      if (byClassHashCode != 0) return byClassHashCode;
+      int byInstanceHashCode = Comparing.compare(myAction.hashCode(), o.myAction.hashCode());
+      if (byInstanceHashCode != 0) return byInstanceHashCode;
       return 0;
     }
 
@@ -502,9 +615,21 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       return getPresentation().isEnabledAndVisible();
     }
 
+    @NotNull
     public Presentation getPresentation() {
       if (myPresentation != null) return myPresentation;
-      return myPresentation = updateActionBeforeShow(myAction, myDataContext).getPresentation();
+      Runnable r = () -> {
+        myPresentation = updateActionBeforeShow(myAction, myDataContext).getPresentation();
+        if (myGroupMapping != null) myGroupMapping.updateBeforeShow(myDataContext);
+      };
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        r.run();
+      }
+      else {
+        myModel.updateOnEdt(r);
+      }
+
+      return ObjectUtils.notNull(myPresentation, myAction.getTemplatePresentation());
     }
 
     private boolean hasPresentation() {
@@ -513,8 +638,10 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
 
     @Nullable
     public String getGroupName() {
-      if (myAction instanceof ActionGroup && Comparing.equal(myAction.getTemplatePresentation().getText(), myGroupName)) return null;
-      return myGroupName;
+      if (myGroupMapping == null) return null;
+      String groupName = myGroupMapping.getBestGroupName();
+      if (myAction instanceof ActionGroup && Comparing.equal(myAction.getTemplatePresentation().getText(), groupName)) return null;
+      return groupName;
     }
     
     public boolean isGroupAction() {
@@ -578,12 +705,11 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       if (value instanceof ActionWrapper) {
         ActionWrapper actionWithParentGroup = (ActionWrapper)value;
         AnAction anAction = actionWithParentGroup.getAction();
-        Presentation presentation = anAction.getTemplatePresentation();
         boolean toggle = anAction instanceof ToggleAction;
         String groupName = actionWithParentGroup.getAction() instanceof ApplyIntentionAction ? null : actionWithParentGroup.getGroupName();
-        Presentation actionPresentation = actionWithParentGroup.getPresentation();
-        Color fg = defaultActionForeground(isSelected, actionPresentation);
-        boolean disabled = actionPresentation != null && (!actionPresentation.isEnabled() || !actionPresentation.isVisible());
+        Presentation presentation = actionWithParentGroup.getPresentation();
+        Color fg = defaultActionForeground(isSelected, presentation);
+        boolean disabled = !presentation.isEnabled() || !presentation.isVisible();
 
         if (disabled) {
           groupFg = UIUtil.getLabelDisabledForeground();

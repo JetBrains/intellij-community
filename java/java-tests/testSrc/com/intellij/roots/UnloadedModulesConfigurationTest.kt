@@ -16,7 +16,9 @@
 package com.intellij.roots
 
 import com.intellij.openapi.application.ex.PathManagerEx
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
 import com.intellij.openapi.roots.ModuleRootManager
@@ -70,6 +72,34 @@ class UnloadedModulesConfigurationTest : ModuleTestCase() {
     assertNotNull(newA)
     assertNull(moduleManager.findModuleByName("b"))
     assertEquals(VfsUtilCore.pathToUrl(contentRootPath), assertOneElement(ModuleRootManager.getInstance(newA!!).contentRootUrls))
+  }
+
+  fun `test add unloaded module back`() {
+    val a = createModule("a")
+    val aImlPath = a.moduleFilePath
+    val moduleManager = ModuleManager.getInstance(project)
+    moduleManager.setUnloadedModules(listOf("a"))
+    assertEquals("a", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
+
+    runWriteAction {
+      moduleManager.newModule(aImlPath, StdModuleTypes.JAVA.id)
+    }
+    assertEmpty(moduleManager.unloadedModuleDescriptions)
+  }
+
+  fun `test rename module to unloaded module`() {
+    createModule("a")
+    val b = createModule("b")
+    val moduleManager = ModuleManager.getInstance(project)
+    moduleManager.setUnloadedModules(listOf("a"))
+    assertEquals("a", assertOneElement(moduleManager.unloadedModuleDescriptions).name)
+
+    runWriteAction {
+      val model = moduleManager.modifiableModel
+      model.renameModule(b, "a")
+      model.commit()
+    }
+    assertEmpty(moduleManager.unloadedModuleDescriptions)
   }
 
   private fun getProjectManager() = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl

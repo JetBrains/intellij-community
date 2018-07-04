@@ -2,6 +2,7 @@ package com.intellij.json;
 
 import com.intellij.json.psi.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,5 +65,21 @@ public class JsonUtil {
     if (list != null) return list;
     final JsonStringLiteral literal = getPropertyValueOfType(object, name, JsonStringLiteral.class);
     return literal == null ? null : Collections.singletonList(StringUtil.unquoteString(literal.getText()));
+  }
+
+  public static boolean isArrayElement(@NotNull PsiElement element) {
+    return element instanceof JsonValue && element.getParent() instanceof JsonArray;
+  }
+
+  public static int getArrayIndexOfItem(@NotNull PsiElement e) {
+    PsiElement parent = e.getParent();
+    if (!(parent instanceof JsonArray)) return -1;
+    List<JsonValue> elements = ((JsonArray)parent).getValueList();
+    for (int i = 0; i < elements.size(); i++) {
+      if (e == elements.get(i)) {
+        return i;
+      }
+    }
+    return -1;
   }
 }

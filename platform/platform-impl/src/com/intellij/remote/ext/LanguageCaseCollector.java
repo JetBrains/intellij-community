@@ -41,7 +41,7 @@ public abstract class LanguageCaseCollector<T> {
       }
     }
 
-    return ArrayUtil.mergeArrays(cases, exCases.toArray(new CredentialsCase[exCases.size()]));
+    return ArrayUtil.mergeArrays(cases, exCases.toArray(new CredentialsCase[0]));
   }
 
   protected abstract void processLanguageContribution(T languageContribution, Object credentials);

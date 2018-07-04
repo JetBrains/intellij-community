@@ -61,7 +61,7 @@ public class SshSettingsPanel implements ConfigurableUi<SvnConfiguration> {
   private TextFieldWithBrowseButton myPrivateKeyPathField;
 
   private String mySshTunnelFromConfig;
-  private SvnConfiguration mySvnConfiguration;
+  private final SvnConfiguration mySvnConfiguration;
 
   public SshSettingsPanel(@NotNull Project project) {
     mySvnConfiguration = SvnConfiguration.getInstance(project);

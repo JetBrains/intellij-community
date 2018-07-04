@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.lang.ASTNode;
@@ -24,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -31,15 +18,20 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.stubs.ObjectStubSerializer;
 import com.intellij.psi.stubs.Stub;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
+import com.intellij.util.graph.InboundSemiGraph;
+import com.intellij.util.graph.OutboundSemiGraph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -124,7 +116,7 @@ public class DebugUtil {
 
     @Override
     protected void visitNode(TreeElement root) {
-      if (skipWhiteSpaces && root.getElementType() == TokenType.WHITE_SPACE) {
+      if (shouldSkipNode(root)) {
         indent += 2;
         return;
       }
@@ -152,7 +144,7 @@ public class DebugUtil {
         if (showRanges) buffer.append(root.getTextRange().toString());
         buffer.append("\n");
         indent += 2;
-        if (root instanceof CompositeElement && root.getFirstChildNode() == null) {
+        if (root instanceof CompositeElement && root.getFirstChildNode() == null && showEmptyChildren()) {
           StringUtil.repeatSymbol(buffer, ' ', indent);
           buffer.append("<empty list>\n");
         }
@@ -162,6 +154,14 @@ public class DebugUtil {
       }
 
       super.visitNode(root);
+    }
+
+    protected boolean showEmptyChildren() {
+      return true;
+    }
+
+    protected boolean shouldSkipNode(TreeElement node) {
+      return skipWhiteSpaces && node.getElementType() == TokenType.WHITE_SPACE;
     }
 
     @Override
@@ -397,6 +397,26 @@ public class DebugUtil {
     return buffer.toString();
   }
 
+  @NotNull
+  public static String psiToStringIgnoringNonCode(@NotNull PsiElement element) {
+    StringBuilder buffer = new StringBuilder();
+    ((TreeElement)element.getNode()).acceptTree(
+      new TreeToBuffer(buffer, 0, true, false, false, false, null) {
+        @Override
+        protected boolean shouldSkipNode(TreeElement node) {
+          return super.shouldSkipNode(node) || node instanceof PsiErrorElement || node instanceof PsiComment || 
+                 node instanceof LeafPsiElement && StringUtil.isEmptyOrSpaces(node.getText()) || 
+                 node instanceof OuterLanguageElement;
+        }
+
+        @Override
+        protected boolean showEmptyChildren() {
+          return false;
+        }
+      });
+    return buffer.toString();
+  }
+
   private static void psiToBuffer(final Appendable buffer,
                                   final PsiElement root,
                                   final boolean skipWhiteSpaces,
@@ -485,11 +505,13 @@ public class DebugUtil {
 
   /**
    * Marks a start of PSI modification action. Any PSI/AST elements invalidated inside such an action will contain a debug trace
-   * identifying this transaction, and so will {@link com.intellij.psi.PsiInvalidElementAccessException} thrown when accessing such invalid 
+   * identifying this transaction, and so will {@link PsiInvalidElementAccessException} thrown when accessing such invalid
    * elements. This should help finding out why a specific PSI element has become invalid.
-   * 
+   *
    * @param trace The debug trace that the invalidated elements should be identified by. May be null, then current stack trace is used.
+   * @deprecated use {@link #performPsiModification(String, ThrowableRunnable)} instead
    */
+  @Deprecated
   public static void startPsiModification(@Nullable String trace) {
     if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
       return;
@@ -506,8 +528,10 @@ public class DebugUtil {
 
   /**
    * Finished PSI modification action.
-   * @see #startPsiModification(String) 
+   * @see #startPsiModification(String)
+   * @deprecated use {@link #performPsiModification(String, ThrowableRunnable)} instead
    */
+  @Deprecated
   public static void finishPsiModification() {
     if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
       return;
@@ -522,6 +546,25 @@ public class DebugUtil {
     }
     if (depth == 0) {
       ourPsiModificationTrace.set(null);
+    }
+  }
+
+  public static <T extends Throwable> void performPsiModification(String trace, @NotNull ThrowableRunnable<T> runnable) throws T {
+    startPsiModification(trace);
+    try {
+      runnable.run();
+    }
+    finally {
+      finishPsiModification();
+    }
+  }
+  public static <T, E extends Throwable> T performPsiModification(String trace, @NotNull ThrowableComputable<T, E> runnable) throws E {
+    startPsiModification(trace);
+    try {
+      return runnable.compute();
+    }
+    finally {
+      finishPsiModification();
     }
   }
 
@@ -616,5 +659,32 @@ public class DebugUtil {
     }
 
     return "unknown inconsistency in " + fileDiagnostics;
+  }
+
+  public static <T> String graphToString(InboundSemiGraph<T> graph) {
+    StringBuilder buffer = new StringBuilder();
+    printNodes(graph.getNodes().iterator(), node -> graph.getIn(node), 0, new HashSet<>(), buffer);
+    return buffer.toString();
+  }
+
+  public static <T> String graphToString(OutboundSemiGraph<T> graph) {
+    StringBuilder buffer = new StringBuilder();
+    printNodes(graph.getNodes().iterator(), node -> graph.getOut(node), 0, new HashSet<>(), buffer);
+    return buffer.toString();
+  }
+
+  private static <T> void printNodes(Iterator<T> nodes, Function<T, Iterator<T>> getter, int indent, Set<T> visited, StringBuilder buffer) {
+    while (nodes.hasNext()) {
+      T node = nodes.next();
+      StringUtil.repeatSymbol(buffer, ' ', indent);
+      buffer.append(node);
+      if (visited.add(node)) {
+        buffer.append('\n');
+        printNodes(getter.fun(node), getter, indent + 2, visited, buffer);
+      }
+      else {
+        buffer.append(" [...]\n");
+      }
+    }
   }
 }

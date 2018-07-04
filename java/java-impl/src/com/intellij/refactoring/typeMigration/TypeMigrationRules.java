@@ -1,23 +1,14 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package com.intellij.refactoring.typeMigration;
 
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.rules.DisjunctionTypeConversionRule;
@@ -25,6 +16,7 @@ import com.intellij.refactoring.typeMigration.rules.RootTypeConversionRule;
 import com.intellij.refactoring.typeMigration.rules.TypeConversionRule;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -34,14 +26,15 @@ import java.util.Map;
 
 /**
  * @author db
- * Date: Oct 2, 2004
  */
 public class TypeMigrationRules {
   private final List<TypeConversionRule> myConversionRules;
   private final Map<Class, Object> myConversionCustomSettings = new HashMap<>();
+  private final Project myProject;
   private SearchScope mySearchScope;
 
-  public TypeMigrationRules() {
+  public TypeMigrationRules(@NotNull Project project) {
+    myProject = project;
     final TypeConversionRule[] extensions = Extensions.getExtensions(TypeConversionRule.EP_NAME);
     myConversionRules = new ArrayList<>(extensions.length + 2);
     myConversionRules.add(new RootTypeConversionRule());
@@ -89,8 +82,12 @@ public class TypeMigrationRules {
     return null;
   }
 
-  public void setBoundScope(final SearchScope searchScope) {
-    mySearchScope = searchScope;
+  public boolean shouldConvertNull(final PsiType from, final PsiType to, PsiExpression context) {
+    return myConversionRules.stream().anyMatch(rule -> rule.shouldConvertNullInitializer(from, to, context));
+  }
+
+  public void setBoundScope(@NotNull SearchScope searchScope) {
+    mySearchScope = searchScope.intersectWith(GlobalSearchScope.notScope(LibraryScopeCache.getInstance(myProject).getLibrariesOnlyScope()));
   }
 
   public SearchScope getSearchScope() {

@@ -20,6 +20,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -35,7 +36,7 @@ class EqClass extends SortedIntSet {
     myFactory = factory;
   }
 
-  EqClass(EqClass toCopy) {
+  EqClass(@NotNull EqClass toCopy) {
     super(toCopy.toNativeArray());
     myFactory = toCopy.myFactory;
   }

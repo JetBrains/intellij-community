@@ -17,11 +17,13 @@ package com.jetbrains.python.inspections;
 
 import com.google.common.collect.Sets;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
@@ -74,7 +76,7 @@ class PyTypeCheckerInspectionProblemRegistrar {
     }
     else {
       visitor.registerProblem(getMultiCalleeElementToHighlight(callSite),
-                              getMultiCalleeProblemMessage(argumentTypes, calleesResults, context),
+                              getMultiCalleeProblemMessage(argumentTypes, calleesResults, context, isOnTheFly(visitor)),
                               getMultiCalleeHighlightType(calleesResults));
     }
   }
@@ -111,6 +113,10 @@ class PyTypeCheckerInspectionProblemRegistrar {
                                                                                         argumentResult.getExpectedTypeAfterSubstitution(),
                                                                                         context);
 
+    if (PyProtocolsKt.matchingProtocolDefinitions(expectedType, actualType, context)) {
+      return "Only concrete class can be used where " + expectedTypeRepresentation + " protocol is expected";
+    }
+
     return String.format("Expected type %s, got '%s' instead", expectedTypeRepresentation, actualTypeName);
   }
 
@@ -138,9 +144,11 @@ class PyTypeCheckerInspectionProblemRegistrar {
       registerSingleCalleeProblem(visitor, preferredOperatorsResults.get(0), context);
     }
     else {
-      visitor.registerProblem(allCalleesAreRightOperators ? binaryExpression.getLeftExpression() : binaryExpression.getRightExpression(),
-                              getMultiCalleeProblemMessage(argumentTypes, preferredOperatorsResults, context),
-                              getMultiCalleeHighlightType(preferredOperatorsResults));
+      visitor.registerProblem(
+        allCalleesAreRightOperators ? binaryExpression.getLeftExpression() : binaryExpression.getRightExpression(),
+        getMultiCalleeProblemMessage(argumentTypes, preferredOperatorsResults, context, isOnTheFly(visitor)),
+        getMultiCalleeHighlightType(preferredOperatorsResults)
+      );
     }
   }
 
@@ -170,11 +178,26 @@ class PyTypeCheckerInspectionProblemRegistrar {
   @NotNull
   private static String getMultiCalleeProblemMessage(@NotNull List<PyType> argumentTypes,
                                                      @NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
-                                                     @NotNull TypeEvalContext context) {
-    return XmlStringUtil.wrapInHtml("Unexpected type(s):<br>" +
-                                    XmlStringUtil.escapeString(getMultiCalleeActualTypesRepresentation(argumentTypes, context)) + "<br>" +
-                                    "Possible types:<br>" +
-                                    XmlStringUtil.escapeString(getMultiCalleePossibleExpectedTypesRepresentation(calleesResults, context)));
+                                                     @NotNull TypeEvalContext context,
+                                                     boolean isOnTheFly) {
+    final String separator = isOnTheFly ? "<br>" : " ";
+    final String actualTypesRepresentation = getMultiCalleeActualTypesRepresentation(argumentTypes, context);
+    final String expectedTypesRepresentation = getMultiCalleePossibleExpectedTypesRepresentation(calleesResults, context, isOnTheFly);
+
+    if (isOnTheFly) {
+      return XmlStringUtil.wrapInHtml(
+        "Unexpected type(s):" + separator +
+        XmlStringUtil.escapeString(actualTypesRepresentation) + separator +
+        "Possible types:" + separator +
+        XmlStringUtil.escapeString(expectedTypesRepresentation)
+      );
+    }
+    else {
+      return "Unexpected type(s):" + separator +
+             actualTypesRepresentation + separator +
+             "Possible types:" + separator +
+             expectedTypesRepresentation;
+    }
   }
 
   /**
@@ -190,6 +213,11 @@ class PyTypeCheckerInspectionProblemRegistrar {
       .allMatch(argumentResult -> argumentResult.getExpectedTypeAfterSubstitution() != null);
 
     return allExpectedTypesWereSubstituted ? ProblemHighlightType.WEAK_WARNING : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
+  }
+
+  private static boolean isOnTheFly(@NotNull PyInspectionVisitor visitor) {
+    final ProblemsHolder holder = visitor.getHolder();
+    return holder != null && holder.isOnTheFly();
   }
 
   @Nullable
@@ -226,11 +254,12 @@ class PyTypeCheckerInspectionProblemRegistrar {
 
   @NotNull
   private static String getMultiCalleePossibleExpectedTypesRepresentation(@NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
-                                                                          @NotNull TypeEvalContext context) {
+                                                                          @NotNull TypeEvalContext context,
+                                                                          boolean isOnTheFly) {
     return calleesResults
       .stream()
       .map(calleeResult -> getMultiCalleeExpectedTypesRepresentation(calleeResult.getResults(), context))
-      .collect(Collectors.joining("<br>"));
+      .collect(Collectors.joining(isOnTheFly ? "<br>" : " "));
   }
 
   @NotNull

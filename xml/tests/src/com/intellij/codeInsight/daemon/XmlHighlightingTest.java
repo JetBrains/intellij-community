@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.application.options.XmlSettings;
@@ -40,7 +26,6 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -565,26 +550,19 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testExternalValidatorOnValidXmlWithNamespacesNotSetup() throws Exception {
-    final ExternalResourceManagerEx instanceEx = ExternalResourceManagerEx.getInstanceEx();
-    WriteCommandAction.runWriteCommandAction(null, () -> {
-      instanceEx.addIgnoredResource("http://xml.apache.org/axis/wsdd2/");
-      instanceEx.addIgnoredResource("http://xml.apache.org/axis/wsdd2/providers/java");
-      instanceEx.addIgnoredResource("http://soapinterop.org/xsd2");
-    });
+    List<String> list = new ArrayList<>();
+    list.add("http://xml.apache.org/axis/wsdd2/");
+    list.add("http://xml.apache.org/axis/wsdd2/providers/java");
+    list.add("http://soapinterop.org/xsd2");
+    ExternalResourceManagerEx.getInstanceEx().addIgnoredResources(list, getTestRootDisposable());
 
     doTest(getFullRelativeTestName(".xml"), true, false);
   }
 
   @HighlightingFlags(HighlightingFlag.SkipExternalValidation)
   public void testExternalValidatorOnValidXmlWithNamespacesNotSetup2() throws Exception {
-    final ExternalResourceManagerEx instanceEx = ExternalResourceManagerEx.getInstanceEx();
-    try {
-      WriteCommandAction.runWriteCommandAction(null, () -> instanceEx.addIgnoredResource(""));
-
-      doTest(getFullRelativeTestName(".xml"), true, false);
-    } finally {
-      WriteCommandAction.runWriteCommandAction(null, () -> instanceEx.removeIgnoredResource(""));
-    }
+    ExternalResourceManagerEx.getInstanceEx().addIgnoredResources(Collections.singletonList(""), getTestRootDisposable());
+    doTest(getFullRelativeTestName(".xml"), true, false);
   }
 
   public void testXercesMessagesBinding() throws Exception {
@@ -1041,10 +1019,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testIgnoredNamespaceHighlighting() throws Exception {
-    WriteCommandAction.runWriteCommandAction(null, () -> ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("http://ignored/uri"));
-
+    ExternalResourceManagerEx.getInstanceEx().addIgnoredResources(Collections.singletonList("http://ignored/uri"), getTestRootDisposable());
     doTest();
-    ApplicationManager.getApplication().runWriteAction(() -> ExternalResourceManagerEx.getInstanceEx().removeIgnoredResource("http://ignored/uri"));
   }
 
   public void testNonEnumeratedValuesHighlighting() throws Exception {
@@ -1614,18 +1590,11 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       BASE_PATH +testName +"TestSchema.xsd"
     );
 
-    ExternalResourceManagerEx externalResourceManager = ExternalResourceManagerEx.getInstanceEx();
-    try {
-      ApplicationManager.getApplication().runWriteAction(() -> externalResourceManager.addIgnoredResource("oxf:/apps/somefile.xml"));
+    ExternalResourceManagerEx.getInstanceEx().addIgnoredResources(Collections.singletonList("oxf:/apps/somefile.xml"), getTestRootDisposable());
+    doDoTest(true, false, true);
 
-      doDoTest(true, false, true);
-
-      VirtualFile[] includedFiles = FileIncludeManager.getManager(getProject()).getIncludedFiles(getFile().getVirtualFile(), true);
-      assertEquals(1, includedFiles.length);
-    }
-    finally {
-      ApplicationManager.getApplication().runWriteAction(() -> externalResourceManager.removeIgnoredResource("oxf:/apps/somefile.xml"));
-    }
+    VirtualFile[] includedFiles = FileIncludeManager.getManager(getProject()).getIncludedFiles(getFile().getVirtualFile(), true);
+    assertEquals(1, includedFiles.length);
   }
 
   public void testComplexRedefine() throws Exception {
@@ -1787,11 +1756,9 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   }
 
   public void testComplexRedefineFromJar() {
-    String[][] urls = null;
-
     configureByFiles(null,BASE_PATH + getTestName(false) + ".xml", BASE_PATH + "mylib.jar");
     String path = myFile.getVirtualFile().getParent().getPath() + "/";
-    urls = new String[][] {
+    String[][] urls = new String[][] {
       {"http://graphml.graphdrawing.org/xmlns",path + "mylib.jar!/graphml.xsd"},
       {"http://graphml.graphdrawing.org/xmlns/1.0/graphml-structure.xsd",path + "mylib.jar!/graphml-structure.xsd"},
       {"http://www.w3.org/1999/xlink",path + "mylib.jar!/xlink.xsd"}
@@ -1937,9 +1904,9 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(
       new VirtualFile[] {
         getVirtualFile(BASE_PATH + testName + ".xml"),
-        getVirtualFile(BASE_PATH + testName + "_TypesV1.00.xsd"),
-        getVirtualFile(BASE_PATH + testName + "_ActivationRequestV1.00.xsd"),
-        getVirtualFile(BASE_PATH + testName + "_GenericActivationRequestV1.00.xsd")
+        getVirtualFile(BASE_PATH + testName + "_Types.xsd"),
+        getVirtualFile(BASE_PATH + testName + "_Request.xsd"),
+        getVirtualFile(BASE_PATH + testName + "_Generic.xsd")
       },
       true,
       false
@@ -2074,7 +2041,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     List<WebReference> list = PlatformTestUtil.collectWebReferences(myFile);
     assertEquals(2, list.size());
 
-    Collections.sort(list, (o1, o2) -> o1.getCanonicalText().length() - o2.getCanonicalText().length());
+    Collections.sort(list, Comparator.comparingInt(o -> o.getCanonicalText().length()));
 
     assertEquals("https://www.jetbrains.com/ruby/download", list.get(0).getCanonicalText());
     assertTrue(list.get(0).getElement() instanceof  XmlAttributeValue);
@@ -2148,6 +2115,17 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
         getVirtualFile(BASE_PATH + "Redefine/sample.xml"),
         getVirtualFile(BASE_PATH + "Redefine/derived.xsd"),
         getVirtualFile(BASE_PATH + "Redefine/base.xsd"),
+      },
+      true, false
+    );
+  }
+
+  public void testMultipleImports() throws Exception {
+    doTest(
+      new VirtualFile[] {
+        getVirtualFile(BASE_PATH + "MultipleImports/agg.xsd"),
+        getVirtualFile(BASE_PATH + "MultipleImports/toimport1.xsd"),
+        getVirtualFile(BASE_PATH + "MultipleImports/toimport2.xsd"),
       },
       true, false
     );
@@ -2239,7 +2217,11 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    XmlSettings.getInstance().SHOW_XML_ADD_IMPORT_HINTS = old;
-    super.tearDown();
+    try {
+      XmlSettings.getInstance().SHOW_XML_ADD_IMPORT_HINTS = old;
+    }
+    finally {
+      super.tearDown();
+    }
   }
 }

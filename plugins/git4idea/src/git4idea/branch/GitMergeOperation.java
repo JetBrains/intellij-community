@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -28,6 +14,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
+import git4idea.changes.GitChangeUtils;
 import git4idea.commands.*;
 import git4idea.merge.GitMergeCommittingConflictResolver;
 import git4idea.merge.GitMerger;
@@ -40,6 +27,8 @@ import javax.swing.event.HyperlinkEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static git4idea.GitUtil.HEAD;
+import static git4idea.GitUtil.updateAndRefreshVfs;
 import static git4idea.config.GitVcsSettings.UpdateChangesPolicy.STASH;
 
 class GitMergeOperation extends GitBranchOperation {
@@ -70,13 +59,14 @@ class GitMergeOperation extends GitBranchOperation {
     saveAllDocuments();
     boolean fatalErrorHappened = false;
     int alreadyUpToDateRepositories = 0;
-    AccessToken token = DvcsUtil.workingTreeChangeStarted(myProject);
-    try {
+    try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, getOperationName())) {
       while (hasMoreRepositories() && !fatalErrorHappened) {
         final GitRepository repository = next();
         LOG.info("next repository: " + repository);
-
         VirtualFile root = repository.getRoot();
+
+        Collection<Change> changes = GitChangeUtils.getDiff(repository, HEAD, myBranchToMerge, false);
+
         GitLocalChangesWouldBeOverwrittenDetector localChangesDetector =
           new GitLocalChangesWouldBeOverwrittenDetector(root, GitLocalChangesWouldBeOverwrittenDetector.Operation.MERGE);
         GitSimpleEventDetector unmergedFiles = new GitSimpleEventDetector(GitSimpleEventDetector.Event.UNMERGED_PREVENTING_MERGE);
@@ -90,7 +80,7 @@ class GitMergeOperation extends GitBranchOperation {
                                             alreadyUpToDateDetector);
         if (result.success()) {
           LOG.info("Merged successfully");
-          refresh(repository);
+          updateAndRefreshVfs(repository, changes);
           markSuccessful(repository);
           if (alreadyUpToDateDetector.hasHappened()) {
             alreadyUpToDateRepositories += 1;
@@ -111,7 +101,7 @@ class GitMergeOperation extends GitBranchOperation {
         else if (mergeConflict.hasHappened()) {
           LOG.info("Merge conflict");
           myConflictedRepositories.put(repository, Boolean.FALSE);
-          refresh(repository);
+          updateAndRefreshVfs(repository);
           markSuccessful(repository);
         }
         else if (untrackedOverwrittenByMerge.wasMessageDetected()) {
@@ -142,9 +132,6 @@ class GitMergeOperation extends GitBranchOperation {
       }
 
       restoreLocalChanges();
-    }
-    finally {
-      token.finish();
     }
   }
 
@@ -233,7 +220,7 @@ class GitMergeOperation extends GitBranchOperation {
       if (!result.success()) {
         if (mergeConflict.hasHappened()) {
           myConflictedRepositories.put(repository, Boolean.TRUE);
-          refresh(repository);
+          updateAndRefreshVfs(repository);
           markSuccessful(repository);
         }
         else {
@@ -242,7 +229,7 @@ class GitMergeOperation extends GitBranchOperation {
         }
       }
       else {
-        refresh(repository);
+        updateAndRefreshVfs(repository);
         markSuccessful(repository);
       }
     }
@@ -251,7 +238,7 @@ class GitMergeOperation extends GitBranchOperation {
 
   @NotNull
   private String getCommonErrorTitle() {
-    return "Couldn't merge " + myBranchToMerge;
+    return "Could Not Merge " + myBranchToMerge;
   }
 
   @Override
@@ -313,7 +300,7 @@ class GitMergeOperation extends GitBranchOperation {
   @NotNull
   private GitCommandResult rollbackMerge(@NotNull GitRepository repository) {
     GitCommandResult result = myGit.resetMerge(repository, null);
-    refresh(repository);
+    updateAndRefreshVfs(repository);
     return result;
   }
 
@@ -342,24 +329,15 @@ class GitMergeOperation extends GitBranchOperation {
     return "merge";
   }
 
-  private void refresh(GitRepository... repositories) {
-    for (GitRepository repository : repositories) {
-      refreshRoot(repository);
-      repository.update();
-    }
-  }
-
   private class MyMergeConflictResolver extends GitMergeCommittingConflictResolver {
     public MyMergeConflictResolver() {
       super(GitMergeOperation.this.myProject, myGit, new GitMerger(GitMergeOperation.this.myProject),
-            GitUtil.getRootsFromRepositories(GitMergeOperation.this.myConflictedRepositories.keySet()), new Params(), true);
+            GitUtil.getRootsFromRepositories(GitMergeOperation.this.myConflictedRepositories.keySet()), new Params(GitMergeOperation.this.myProject), true);
     }
 
     @Override
     protected void notifyUnresolvedRemain() {
-      VcsNotifier.getInstance(myProject).notifyImportantWarning("Merged branch " + myBranchToMerge + " with conflicts",
-                                                                "Unresolved conflicts remain in the project. <a href='resolve'>Resolve now.</a>",
-                                                                getResolveLinkListener());
+      notifyWarning(myBranchToMerge + " Merged with Conflicts","");
     }
   }
 

@@ -19,6 +19,12 @@ import com.intellij.openapi.application.PathManager
 
 object GuiTestOptions {
 
+  const val RESUME_LABEL: String = "idea.gui.test.resume.label"
+  const val RESUME_TEST: String = "idea.gui.test.resume.testname"
+
+  const val FILTER_KEY = "idea.gui.test.filter"
+  private const val NO_NEED_TO_FILTER_TESTS: String = "NO_NEED_TO_FILTER_TESTS"
+
   fun getConfigPath(): String = getSystemProperty("idea.config.path", getConfigDefaultPath())
   fun getSystemPath(): String = getSystemProperty("idea.system.path", getSystemDefaultPath())
   fun isDebug(): Boolean = getSystemProperty("idea.debug.mode", false)
@@ -27,29 +33,37 @@ object GuiTestOptions {
   fun useAppleScreenMenuBar(): Boolean = getSystemProperty("apple.laf.useScreenMenuBar", false)
 
   fun getDebugPort(): Int = getSystemProperty("idea.gui.test.debug.port", 5009)
-  fun getBootClasspath(): String = getSystemProperty("idea.gui.test.bootclasspath", "../out/classes/production/boot")
+  fun getBootClasspath(): String = getSystemProperty("idea.gui.test.bootclasspath", "../out/classes/production/intellij.platform.boot")
   fun getEncoding(): String = getSystemProperty("idea.gui.test.encoding", "UTF-8")
   fun getXmxSize(): Int = getSystemProperty("idea.gui.test.xmx", 512)
+  //used for restarted and resumed test to qualify from what point to start
+  fun getResumeInfo(): String = getSystemProperty(RESUME_LABEL, "DEFAULT")
+  fun getResumeTestName(): String = getSystemProperty(RESUME_TEST, "undefined")
 
-  fun getConfigDefaultPath(): String {
-    try {
-      return "${PathManager.getHomePath()}/config"
+
+  fun shouldTestsBeFiltered(): Boolean = (getFilteredListOfTests() != NO_NEED_TO_FILTER_TESTS)
+  //system property to set what tests should be run. -Didea.gui.test.filter=ShortClassName1,ShortClassName2
+  fun getFilteredListOfTests(): String = getSystemProperty(FILTER_KEY, NO_NEED_TO_FILTER_TESTS)
+
+  private fun getConfigDefaultPath(): String {
+    return try {
+      "${PathManager.getHomePath()}/config"
     }
     catch(e: RuntimeException) {
-      return "../config"
+      "../config"
     }
   }
 
-  fun getSystemDefaultPath(): String {
-    try {
-      return "${PathManager.getHomePath()}/system"
+  private fun getSystemDefaultPath(): String {
+    return try {
+      "${PathManager.getHomePath()}/system"
     }
     catch(e: RuntimeException) {
-      return "../system"
+      "../system"
     }
   }
 
-  inline fun <reified ReturnType> getSystemProperty(key: String, defaultValue: ReturnType): ReturnType {
+  private inline fun <reified ReturnType> getSystemProperty(key: String, defaultValue: ReturnType): ReturnType {
     val value = System.getProperty(key) ?: return defaultValue
     return when (defaultValue) {
       is Int -> value.toInt() as ReturnType

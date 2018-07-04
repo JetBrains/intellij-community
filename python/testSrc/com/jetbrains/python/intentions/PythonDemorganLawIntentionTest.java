@@ -20,18 +20,27 @@ import com.jetbrains.python.PyBundle;
 
 public class PythonDemorganLawIntentionTest extends PyIntentionTestCase {
   public void testOr() {
-    doIntentionTest(PyBundle.message("INTN.demorgan.law"));
+    doTest();
   }
 
   public void testNotOr() {
-    doIntentionTest(PyBundle.message("INTN.demorgan.law"));
+    doTest();
   }
 
   public void testOrNot() {
-    doIntentionTest(PyBundle.message("INTN.demorgan.law"));
+    doTest();
   }
 
   public void testComplex() {
+    doTest();
+  }
+
+  // PY-25605
+  public void testMissingOperand() {
+    doTest();
+  }
+
+  private void doTest() {
     doIntentionTest(PyBundle.message("INTN.demorgan.law"));
   }
 }

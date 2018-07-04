@@ -78,14 +78,14 @@ public class TypeAssertionIntention extends PyBaseIntentionAction {
   @Override
   public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
-    PyExpression problemElement = PsiTreeUtil.getParentOfType(elementAt, PyReferenceExpression.class);
+    PyQualifiedExpression problemElement = PsiTreeUtil.getParentOfType(elementAt, PyReferenceExpression.class);
     if (problemElement != null) {
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
 
       String name = problemElement.getText();
-      final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
+      final PyExpression qualifier = problemElement.getQualifier();
       if (qualifier != null && !qualifier.getText().equals(PyNames.CANONICAL_SELF)) {
-        final String referencedName = ((PyQualifiedExpression)problemElement).getReferencedName();
+        final String referencedName = problemElement.getReferencedName();
         if (referencedName == null || PyNames.GETITEM.equals(referencedName))
           name = qualifier.getText();
       }

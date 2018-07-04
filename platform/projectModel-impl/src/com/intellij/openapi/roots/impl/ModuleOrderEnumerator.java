@@ -32,7 +32,7 @@ import java.util.List;
 public class ModuleOrderEnumerator extends OrderEnumeratorBase {
   private final ModuleRootModel myRootModel;
 
-  public ModuleOrderEnumerator(ModuleRootModel rootModel, final OrderRootsCache cache) {
+  ModuleOrderEnumerator(@NotNull ModuleRootModel rootModel, OrderRootsCache cache) {
     super(cache);
     myRootModel = rootModel;
   }

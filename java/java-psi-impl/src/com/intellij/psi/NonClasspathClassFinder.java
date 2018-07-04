@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.PackageDirectoryCache;
@@ -32,6 +33,7 @@ import com.intellij.psi.search.NonClasspathDirectoriesScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -47,6 +49,7 @@ import java.util.Set;
  * @author peter
  */
 public abstract class NonClasspathClassFinder extends PsiElementFinder {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.NonClasspathClassFinder");
   private static final EverythingGlobalScope ALL_SCOPE = new EverythingGlobalScope();
   protected final Project myProject;
   private volatile PackageDirectoryCache myCache;
@@ -71,7 +74,13 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
   protected PackageDirectoryCache getCache(@Nullable GlobalSearchScope scope) {
     PackageDirectoryCache cache = myCache;
     if (cache == null) {
-      myCache = cache = createCache(calcClassRoots());
+      List<VirtualFile> roots = calcClassRoots();
+      List<VirtualFile> invalidRoots = ContainerUtil.filter(roots, f -> !f.isValid());
+      if (!invalidRoots.isEmpty()) {
+        roots = ContainerUtil.filter(roots, VirtualFile::isValid);
+        LOG.error("Invalid roots returned by " + getClass() + ": " + invalidRoots);
+      }
+      myCache = cache = createCache(roots);
     }
     return cache;
   }
@@ -130,7 +139,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
       }
       return true;
     });
-    return result.toArray(new PsiClass[result.size()]);
+    return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
 
@@ -191,7 +200,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
     for (String name : names) {
       result.add(createPackage(pkgName.isEmpty() ? name : pkgName + "." + name));
     }
-    return result.toArray(new PsiPackage[result.size()]);
+    return result.toArray(PsiPackage.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -203,13 +212,16 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
 
   @NotNull
   public static GlobalSearchScope addNonClasspathScope(@NotNull Project project, @NotNull GlobalSearchScope base) {
-    GlobalSearchScope scope = base;
+    List<GlobalSearchScope> nonClasspathScopes = new SmartList<>();
     for (PsiElementFinder finder : Extensions.getExtensions(EP_NAME, project)) {
       if (finder instanceof NonClasspathClassFinder) {
-        scope = scope.uniteWith(NonClasspathDirectoriesScope.compose(((NonClasspathClassFinder)finder).getClassRoots()));
+        nonClasspathScopes.add(NonClasspathDirectoriesScope.compose(((NonClasspathClassFinder)finder).getClassRoots()));
       }
     }
-    return scope;
+    if (nonClasspathScopes.isEmpty()) {
+      return base;
+    }
+    return GlobalSearchScope.union(ArrayUtil.prepend(base, nonClasspathScopes.toArray(new GlobalSearchScope[0])));
   }
 
   public PsiManager getPsiManager() {

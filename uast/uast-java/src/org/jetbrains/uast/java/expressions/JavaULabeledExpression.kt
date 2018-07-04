@@ -17,20 +17,21 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiLabeledStatement
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.ULabeledExpression
 
 class JavaULabeledExpression(
-        override val psi: PsiLabeledStatement,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), ULabeledExpression {
-    override val label: String
-        get() = psi.labelIdentifier.text
+  override val psi: PsiLabeledStatement,
+  givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), ULabeledExpression {
+  override val label: String
+    get() = psi.labelIdentifier.text
 
-    override val labelIdentifier: UIdentifier?
-        get() = UIdentifier(psi.labelIdentifier, this)
+  override val labelIdentifier: UIdentifier?
+    get() = UIdentifier(psi.labelIdentifier, this)
 
-    override val expression by lz { JavaConverter.convertOrEmpty(psi.statement, this) }
+  override val expression: UExpression by lz { JavaConverter.convertOrEmpty(psi.statement, this) }
 
-    override fun evaluate() = expression.evaluate()
+  override fun evaluate(): Any? = expression.evaluate()
 }

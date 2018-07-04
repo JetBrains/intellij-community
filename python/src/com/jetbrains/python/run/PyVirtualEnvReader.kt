@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.run
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.EnvironmentUtil
-import com.intellij.util.LineSeparator
+import com.intellij.util.containers.ContainerUtil
 import com.jetbrains.python.sdk.PythonSdkType
 import java.io.File
 
@@ -32,8 +17,8 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
   private val LOG = Logger.getInstance("#com.jetbrains.python.run.PyVirtualEnvReader")
 
   companion object {
-    val virtualEnvVars = listOf("PATH", "PS1", "VIRTUAL_ENV", "PYTHONHOME", "PROMPT", "_OLD_VIRTUAL_PROMPT", "_OLD_VIRTUAL_PYTHONHOME",
-                                "_OLD_VIRTUAL_PATH")
+    val virtualEnvVars: List<String> = listOf("PATH", "PS1", "VIRTUAL_ENV", "PYTHONHOME", "PROMPT", "_OLD_VIRTUAL_PROMPT", "_OLD_VIRTUAL_PYTHONHOME",
+                                              "_OLD_VIRTUAL_PATH")
   }
 
   // in case of Conda we need to pass an argument to an activate script that tells which exactly environment to activate
@@ -41,54 +26,36 @@ class PyVirtualEnvReader(val virtualEnvSdkPath: String) : EnvironmentUtil.ShellE
 
   override fun getShell(): String? {
     if (File("/bin/bash").exists()) {
-      return "/bin/bash";
+      return "/bin/bash"
     }
     else
       if (File("/bin/sh").exists()) {
-        return "/bin/sh";
+        return "/bin/sh"
       }
       else {
-        return super.getShell();
+        return super.getShell()
       }
   }
 
-  override fun readShellEnv(): MutableMap<String, String> {
-    if (SystemInfo.isUnix) {
-      return super.readShellEnv()
-    }
-    else {
-      if (activate != null) {
-        return readVirtualEnvOnWindows(activate);
-      }
-      else {
-        LOG.error("Can't find activate script for $virtualEnvSdkPath")
-        return mutableMapOf();
-      }
-    }
-  }
-
-  override fun dumpProcessEnvToFile(command: MutableList<String>, envFile: File, lineSeparator: String?): MutableMap<String, String> {
-    // pass shell environment for correct virtualenv environment setup (virtualenv expects to be executed from the terminal)
-    return runProcessAndReadEnvs(command, null, EnvironmentUtil.getEnvironmentMap(), envFile, lineSeparator)
-  }
-
-  private fun readVirtualEnvOnWindows(activate: Pair<String, String?>): MutableMap<String, String> {
-    val activateFile = FileUtil.createTempFile("pycharm-virualenv-activate.", ".bat", false)
-    val envFile = FileUtil.createTempFile("pycharm-virualenv-envs.", ".tmp", false)
+  fun readPythonEnv(): MutableMap<String, String> {
     try {
-      FileUtil.copy(File(activate.first), activateFile);
-      FileUtil.appendToFile(activateFile, "\n\nset >" + envFile.absoluteFile)
-
-      val command = if (activate.second != null) listOf<String>(activateFile.path, activate.second!!)
-      else listOf<String>(activateFile.path)
-
-      return runProcessAndReadEnvs(command, envFile, LineSeparator.CRLF.separatorString)
+      if (SystemInfo.isUnix) {
+        // pass shell environment for correct virtualenv environment setup (virtualenv expects to be executed from the terminal)
+        return super.readShellEnv(EnvironmentUtil.getEnvironmentMap())
+      }
+      else {
+        if (activate != null) {
+          return readBatEnv(File(activate.first), ContainerUtil.createMaybeSingletonList(activate.second))
+        }
+        else {
+          LOG.error("Can't find activate script for $virtualEnvSdkPath")
+        }
+      }
+    } catch (e: Exception) {
+      LOG.warn("Couldn't read shell environment: ${e.message}")
     }
-    finally {
-      FileUtil.delete(activateFile)
-      FileUtil.delete(envFile)
-    }
 
+    return mutableMapOf()
   }
 
   override fun getShellProcessCommand(): MutableList<String> {

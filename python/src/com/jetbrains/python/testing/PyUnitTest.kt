@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.PythonHelper
+import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 
 /**
  * unittest
@@ -34,13 +35,13 @@ import com.jetbrains.python.PythonHelper
 class PyUnitTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
   PyAbstractTestSettingsEditor(
     PyTestSharedForm.create(configuration,
-                            PyTestSharedForm.CustomOption(PyUnitTestConfiguration::pattern.name, TestTargetType.PATH)
+                            PyTestSharedForm.CustomOption(PyUnitTestConfiguration::pattern.name, PyRunTargetVariant.PATH)
     ))
 
 class PyUnitTestExecutionEnvironment(configuration: PyUnitTestConfiguration, environment: ExecutionEnvironment) :
   PyTestExecutionEnvironment<PyUnitTestConfiguration>(configuration, environment) {
 
-  override fun getRunner() =
+  override fun getRunner(): PythonHelper =
     // different runner is used for setup.py
     if (configuration.isSetupPyBased()) {
       PythonHelper.SETUPPY
@@ -66,7 +67,7 @@ class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
 
   override fun getCustomRawArgumentsString(forRerun: Boolean): String {
     // Pattern can only be used with folders ("all in folder" in legacy terms)
-    if ((!pattern.isNullOrEmpty()) && target.targetType != TestTargetType.CUSTOM) {
+    if ((!pattern.isNullOrEmpty()) && target.targetType != PyRunTargetVariant.CUSTOM) {
       val path = LocalFileSystem.getInstance().findFileByPath(target.target) ?: return ""
       // "Pattern" works only for "discovery" mode and for "rerun" we are using "python" targets ("concrete" tests)
       return if (path.isDirectory && !forRerun) "-p $pattern" else ""
@@ -81,28 +82,28 @@ class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
    * @return configuration should use runner for setup.py
    */
   internal fun isSetupPyBased(): Boolean {
-    val setupPy = target.targetType == TestTargetType.PATH && target.target.endsWith(PyNames.SETUP_DOT_PY)
+    val setupPy = target.targetType == PyRunTargetVariant.PATH && target.target.endsWith(PyNames.SETUP_DOT_PY)
     return setupPy
   }
 
   // setup.py runner is not id-based
-  override fun isIdTestBased() = !isSetupPyBased()
+  override fun isIdTestBased(): Boolean = !isSetupPyBased()
 
   override fun checkConfiguration() {
     super.checkConfiguration()
-    if (target.targetType == TestTargetType.PATH && target.target.endsWith(".py") && !pattern.isNullOrEmpty()) {
+    if (target.targetType == PyRunTargetVariant.PATH && target.target.endsWith(".py") && !pattern.isNullOrEmpty()) {
       throw RuntimeConfigurationWarning("Pattern can only be used to match files in folder. Can't use pattern for file.")
     }
   }
 
-  override fun isFrameworkInstalled() = true //Unittest is always available
+  override fun isFrameworkInstalled(): Boolean = true //Unittest is always available
 
   // Unittest does not support filesystem path. It needs qname resolvable against root or working directory
   override fun shouldSeparateTargetPath() = false
 }
 
 object PyUnitTestFactory : PyAbstractTestFactory<PyUnitTestConfiguration>() {
-  override fun createTemplateConfiguration(project: Project) = PyUnitTestConfiguration(project, this)
+  override fun createTemplateConfiguration(project: Project): PyUnitTestConfiguration = PyUnitTestConfiguration(project, this)
 
   override fun getName(): String = PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME
 }

@@ -79,6 +79,7 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
     for (final PsiElement element : changedItems) {
       if (!(element instanceof PsiTypeCastExpression)) {
         usages[i++] = new UsageInfo(element) {
+          @Override
           public String getTooltipText() {
             return myResult.getCookedType(element).getCanonicalText();
           }
@@ -92,6 +93,7 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
     return usages;
   }
 
+  @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     myElements = elements;
   }
@@ -113,6 +115,7 @@ public class TypeCookProcessor extends BaseRefactoringProcessor {
     return true;
   }
 
+  @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("type.cook.command");
   }

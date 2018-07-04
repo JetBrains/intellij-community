@@ -227,7 +227,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         }
       }
     }
-    return result.toArray(new FilePath[result.size()]);
+    return result.toArray(new FilePath[0]);
   }
 
   protected abstract boolean filterRootsBeforeAction();
@@ -343,7 +343,9 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
       myBefore = LocalHistory.getInstance().putSystemLabel(myProject, "Before update");
       myLocalHistoryAction = LocalHistory.getInstance().startAction(LOCAL_HISTORY_ACTION);
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-
+      if (progressIndicator != null) {
+        progressIndicator.setIndeterminate(false);
+      }
       try {
         int toBeProcessed = myVcsToVirtualFiles.size();
         int processed = 0;
@@ -357,7 +359,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
           // actual update
           UpdateSession updateSession =
-            updateEnvironment.updateDirectories(files.toArray(new FilePath[files.size()]), myUpdatedFiles, progressIndicator, refContext);
+            updateEnvironment.updateDirectories(files.toArray(new FilePath[0]), myUpdatedFiles, progressIndicator, refContext);
 
           myContextInfo.put(vcs, refContext.get());
           processed++;
@@ -430,7 +432,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         type = NotificationType.WARNING;
       }
       else {
-        title = allFiles + " Project " + pluralize("File", allFiles) + " Updated";
+        title = allFiles + " " + pluralize("File", allFiles) + " Updated";
         content = notNullize(prepareScopeUpdatedText(tree));
         type = NotificationType.INFORMATION;
       }

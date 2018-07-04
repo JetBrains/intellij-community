@@ -18,41 +18,101 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.OptionGroup;
+import com.intellij.ui.components.fields.IntegerField;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class IndentOptionsEditor extends OptionGroup {
+import static com.intellij.psi.codeStyle.CodeStyleConstraints.*;
+import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_INDENT_SIZE;
+import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_TAB_SIZE;
+import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS;
+
+@SuppressWarnings({"Duplicates", "deprecation", "DeprecatedIsStillUsed"})
+public class IndentOptionsEditor extends OptionGroup implements CodeStyleSettingsCustomizable {
+  private static final String INDENT_LABEL = ApplicationBundle.message("editbox.indent.indent");
+  private static final String TAB_SIZE_LABEL = ApplicationBundle.message("editbox.indent.tab.size");
+
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
+  @Deprecated
   protected JTextField myIndentField;
+
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
+  @Deprecated
   protected JCheckBox myCbUseTab;
+
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
+  @Deprecated
   protected JTextField myTabSizeField;
+
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
+  @Deprecated
   protected JLabel myTabSizeLabel;
+
+  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
+  @Deprecated
   protected JLabel myIndentLabel;
+
+  private final @Nullable LanguageCodeStyleSettingsProvider myProvider;
+
+  public IndentOptionsEditor() {
+    this(null);
+  }
+
+  /**
+   * @param provider The provider which will be used to customize the indent options editor. If {@code null} is passed, no customization
+   *                 will be carried out and thus all the available options will be shown.
+   */
+  public IndentOptionsEditor(@Nullable LanguageCodeStyleSettingsProvider provider) {
+    myProvider = provider;
+  }
 
   @Override
   public JPanel createPanel() {
     addComponents();
-
-    final JPanel result = super.createPanel();
-    return result;
+    if (myProvider != null) {
+      myProvider.customizeSettings(this, INDENT_SETTINGS);
+    }
+    return super.createPanel();
   }
 
   protected void addComponents() {
     addTabOptions();
+    addTabSizeField();
+    addIndentField();
+  }
 
-    myTabSizeField = createIndentTextField();
-    myTabSizeLabel = new JLabel(ApplicationBundle.message("editbox.indent.tab.size"));
-    add(myTabSizeLabel, myTabSizeField);
-
-    myIndentField = createIndentTextField();
-    myIndentLabel = new JLabel(ApplicationBundle.message("editbox.indent.indent"));
+  protected void addIndentField() {
+    myIndentField = createIndentTextField(INDENT_LABEL, MIN_INDENT_SIZE, MAX_INDENT_SIZE, DEFAULT_INDENT_SIZE);
+    myIndentLabel = new JLabel(INDENT_LABEL);
     add(myIndentLabel, myIndentField);
   }
 
+  protected void addTabSizeField() {
+    myTabSizeField = createIndentTextField(TAB_SIZE_LABEL, MIN_TAB_SIZE, MAX_TAB_SIZE, DEFAULT_TAB_SIZE);
+    myTabSizeLabel = new JLabel(TAB_SIZE_LABEL);
+    add(myTabSizeLabel, myTabSizeField);
+  }
+
+  /**
+   * @deprecated Use {@link #createIndentTextField(String, int, int, int)}
+   */
+  @Deprecated
   protected JTextField createIndentTextField() {
-    JTextField field = new JTextField(4);
+    return createIndentTextField(null, Integer.MIN_VALUE, Integer.MAX_VALUE, 0);
+  }
+
+  protected IntegerField createIndentTextField(@Nullable String valueName, int minSize, int maxSize, int defaultValue) {
+    IntegerField field = new IntegerField(valueName, minSize, maxSize);
+    field.setDefaultValue(defaultValue);
+    field.setColumns(4);
+    if (defaultValue < 0) field.setCanBeEmpty(true);
     field.setMinimumSize(field.getPreferredSize());
     return field;
   }
@@ -62,26 +122,43 @@ public class IndentOptionsEditor extends OptionGroup {
     add(myCbUseTab);
   }
 
+  @Override
+  public void showAllStandardOptions() {
+    setVisible(true);
+  }
+
+  @Override
+  public void showStandardOptions(String... optionNames) {
+    setVisible(false);
+    for (String optionName : optionNames) {
+      if (IndentOption.INDENT_SIZE.toString().equals(optionName)) {
+        myIndentLabel.setVisible(true);
+        myIndentField.setVisible(true);
+      }
+      else if (IndentOption.TAB_SIZE.toString().equals(optionName)) {
+        myTabSizeField.setVisible(true);
+        myTabSizeLabel.setVisible(true);
+      }
+      else if (IndentOption.USE_TAB_CHARACTER.toString().equals(optionName)) {
+        myCbUseTab.setVisible(true);
+      }
+    }
+  }
+
+
+
   protected static boolean isFieldModified(JCheckBox checkBox, boolean value) {
     return checkBox.isSelected() != value;
   }
 
   protected static boolean isFieldModified(JTextField textField, int value) {
+    if (textField instanceof IntegerField) return ((IntegerField)textField).getValue() != value;
     try {
       int fieldValue = Integer.parseInt(textField.getText().trim());
       return fieldValue != value;
     }
     catch (NumberFormatException e) {
       return false;
-    }
-  }
-
-  protected int getFieldValue(JTextField field, int minValue, int defValue) {
-    try {
-      return Math.max(Integer.parseInt(field.getText()), minValue);
-    }
-    catch (NumberFormatException e) {
-      return defValue;
     }
   }
 
@@ -95,11 +172,13 @@ public class IndentOptionsEditor extends OptionGroup {
   }
 
   protected int getUIIndent() {
-    return getFieldValue(myIndentField, 0, 4);
+    assert myIndentField instanceof IntegerField;
+    return ((IntegerField)myIndentField).getValue();
   }
 
   protected int getUITabSize() {
-    return getFieldValue(myTabSizeField, 1, 4);
+    assert myTabSizeField instanceof IntegerField;
+    return ((IntegerField)myTabSizeField).getValue();
   }
 
   public void apply(final CodeStyleSettings settings, CommonCodeStyleSettings.IndentOptions options) {
@@ -109,10 +188,28 @@ public class IndentOptionsEditor extends OptionGroup {
   }
 
   public void reset(@NotNull CodeStyleSettings settings, @NotNull CommonCodeStyleSettings.IndentOptions options) {
-    myTabSizeField.setText(String.valueOf(options.TAB_SIZE));
+    ((IntegerField)myTabSizeField).setValue(options.TAB_SIZE);
     myCbUseTab.setSelected(options.USE_TAB_CHARACTER);
 
-    myIndentField.setText(String.valueOf(options.INDENT_SIZE));
+    ((IntegerField)myIndentField).setValue(options.INDENT_SIZE);
+  }
+
+  /**
+   * @deprecated Create {@link IntegerField} and use {@link IntegerField#getValue()} instead.
+   */
+  @Deprecated
+  protected int getFieldValue(JTextField field, int minValue, int defValue) {
+    if (field instanceof IntegerField) {
+      return ((IntegerField)field).getValue();
+    }
+    else {
+      try {
+        return Math.max(Integer.parseInt(field.getText()), minValue);
+      }
+      catch (NumberFormatException e) {
+        return defValue;
+      }
+    }
   }
 
   public void setEnabled(boolean enabled) {
@@ -122,4 +219,13 @@ public class IndentOptionsEditor extends OptionGroup {
     myTabSizeLabel.setEnabled(enabled);
     myCbUseTab.setEnabled(enabled);
   }
+
+  protected void setVisible(boolean visible) {
+    myIndentField.setVisible(visible);
+    myIndentLabel.setVisible(visible);
+    myTabSizeField.setVisible(visible);
+    myTabSizeLabel.setVisible(visible);
+    myCbUseTab.setVisible(visible);
+  }
+
 }

@@ -19,6 +19,7 @@ import com.intellij.codeInspection.streamToLoop.StreamToLoopInspection.StreamToL
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.StreamApiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -28,9 +29,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
-/**
- * @author Tagir Valeev
- */
 abstract class Operation {
   boolean changesVariable() {
     return false;
@@ -225,7 +223,7 @@ abstract class Operation {
   }
 
   static class FlatMapOperation extends Operation {
-    private String myVarName;
+    private final String myVarName;
     private final FunctionHelper myFn;
     private final List<StreamToLoopInspection.OperationRecord> myRecords;
     private PsiExpression myCondition;
@@ -357,6 +355,10 @@ abstract class Operation {
 
     @Override
     String wrap(StreamVariable inVar, StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
+      if (ExpressionUtils.isLiteral(myExpression, 1)) {
+        String first = context.declare("first", "boolean", "true");
+        return "if(" + first + ") {\n" + first + "=false;\ncontinue;\n}\n" + code;
+      }
       String toSkip = context.declare("toSkip", "long", myExpression.getText());
       return "if(" + toSkip + ">0) {\n" + toSkip + "--;\ncontinue;\n}\n" + code;
     }

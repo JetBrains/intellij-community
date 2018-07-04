@@ -44,7 +44,7 @@ class VirtualFileDirectoryImpl extends VirtualFileImpl {
 
   @Override
   public VirtualFile[] getChildren() {
-    return myChildren.size() == 0 ? EMPTY_ARRAY : myChildren.toArray(new VirtualFile[myChildren.size()]);
+    return myChildren.size() == 0 ? EMPTY_ARRAY : myChildren.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
   @Override

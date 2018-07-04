@@ -33,6 +33,18 @@ public class TrivialIfInspectionTest extends LightInspectionTestCase {
                  "}");
   }
 
+  public void testParenthesesReturnNestedIf() {
+    doMemberTest("\n" +
+                 "  boolean b(int[] array) {\n" +
+                 "    if (array != null) {\n" +
+                 "      int len = array.length;\n" +
+                 "      /*'if' statement can be simplified*/if/**/(len == 10) return true;\n" +
+                 "    }\n" +
+                 "    return false;\n" +
+                 "  }\n" +
+                 "");
+  }
+
   public void testParenthesesAssignment() {
     doMemberTest("void b(int[] array) {" +
                  "  boolean result;" +

@@ -1,32 +1,16 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.theoryinpractice.testng.configuration;
 
-import com.intellij.application.options.ModulesComboBox;
+import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.MethodBrowser;
+import com.intellij.execution.ShortenCommandLine;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
+import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
 import com.intellij.execution.testframework.TestSearchScope;
-import com.intellij.execution.ui.CommonJavaParametersPanel;
-import com.intellij.execution.ui.ConfigurationModuleSelector;
-import com.intellij.execution.ui.DefaultJreSelector;
-import com.intellij.execution.ui.JrePathEditor;
-import com.intellij.icons.AllIcons;
+import com.intellij.execution.ui.*;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -37,16 +21,18 @@ import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
+import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
-import com.intellij.ui.components.ExpandableTextField;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.IconUtil;
 import com.theoryinpractice.testng.MessageInfoException;
@@ -77,7 +63,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
   private JPanel panel;
 
   private LabeledComponent<EditorTextFieldWithBrowseButton> classField;
-  private LabeledComponent<ModulesComboBox> moduleClasspath;
+  private LabeledComponent<ModuleDescriptionsComboBox> moduleClasspath;
   private JrePathEditor alternateJDK;
   private final ConfigurationModuleSelector moduleSelector;
   private JComboBox<TestType> myTestKind;
@@ -102,6 +88,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
   private LabeledComponent<JPanel> myPattern;
   private JPanel myPropertiesPanel;
   private JPanel myListenersPanel;
+  private LabeledComponent<ShortenCommandLineModeCombo> myShortenCommandLineCombo;
   TextFieldWithBrowseButton myPatternTextField;
   private final CommonJavaParametersPanel commonJavaParameters = new CommonJavaParametersPanel();
   private final ArrayList<Map.Entry<String, String>> propertiesList = new ArrayList<>();
@@ -147,7 +134,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
 
     final CollectionComboBoxModel<TestType> testKindModel = new CollectionComboBoxModel<>();
     for (TestType type : TestType.values()) {
-      if (type != TestType.SOURCE || Registry.is("testDiscovery.enabled")) {
+      if (type != TestType.SOURCE || Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY)) {
         testKindModel.add(type);
       }
     }
@@ -203,9 +190,11 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
 
     commonJavaParameters.setProgramParametersLabel(ExecutionBundle.message("junit.configuration.test.runner.parameters.label"));
 
+    myShortenCommandLineCombo.setComponent(new ShortenCommandLineModeCombo(project, alternateJDK, getModulesComponent()));
     setAnchor(outputDirectory.getLabel());
     alternateJDK.setAnchor(moduleClasspath.getLabel());
     commonJavaParameters.setAnchor(moduleClasspath.getLabel());
+    myShortenCommandLineCombo.setAnchor(moduleClasspath.getLabel());
   }
 
   private void evaluateModuleClassPath() {
@@ -273,7 +262,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     return classField.getComponent().getText();
   }
 
-  public ModulesComboBox getModulesComponent() {
+  public ModuleDescriptionsComboBox getModulesComponent() {
     return moduleClasspath.getComponent();
   }
 
@@ -302,6 +291,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
 
     listenerModel.setListenerList(data.TEST_LISTENERS);
     myUseDefaultReportersCheckBox.setSelected(data.USE_DEFAULT_REPORTERS);
+    myShortenCommandLineCombo.getComponent().setSelectedItem(config.getShortenCommandLine());
   }
 
   @Override
@@ -335,6 +325,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     data.TEST_LISTENERS.addAll(listenerModel.getListenerList());
 
     data.USE_DEFAULT_REPORTERS = myUseDefaultReportersCheckBox.isSelected();
+    config.setShortenCommandLine((ShortenCommandLine)myShortenCommandLineCombo.getComponent().getSelectedItem());
   }
 
   public ConfigurationModuleSelector getModuleSelector() {
@@ -363,6 +354,10 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     classField.setAnchor(anchor);
     myPattern.setAnchor(anchor);
     myTestLabel.setAnchor(anchor);
+  }
+
+  private void createUIComponents() {
+    myShortenCommandLineCombo = new LabeledComponent<>();
   }
 
   private static void registerListener(JRadioButton[] buttons, ChangeListener changelistener) {
@@ -413,7 +408,6 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
     outputDirectoryButton.addBrowseFolderListener("TestNG", "Select test output directory", project,
                                                   FileChooserDescriptorFactory.createSingleFolderDescriptor());
     moduleClasspath.setEnabled(true);
-    moduleClasspath.setComponent(new ModulesComboBox());
 
     propertiesTableModel = new TestNGParametersTableModel();
     listenerModel = new TestNGListenersTableModel();

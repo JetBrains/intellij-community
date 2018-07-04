@@ -1,27 +1,13 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph;
 import com.intellij.util.SingletonSet;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Handle;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.*;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
@@ -29,10 +15,7 @@ import org.jetbrains.org.objectweb.asm.tree.analysis.BasicInterpreter;
 import org.jetbrains.org.objectweb.asm.tree.analysis.BasicValue;
 import org.jetbrains.org.objectweb.asm.tree.analysis.Frame;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.AbstractValues.*;
@@ -44,11 +27,11 @@ import static org.jetbrains.org.objectweb.asm.Opcodes.*;
 interface CombinedData {
 
   final class ParamKey {
-    final Method method;
+    final Member method;
     final int i;
     final boolean stable;
 
-    ParamKey(Method method, int i, boolean stable) {
+    ParamKey(Member method, int i, boolean stable) {
       this.method = method;
       this.i = i;
       this.stable = stable;
@@ -84,12 +67,12 @@ interface CombinedData {
 
   final class TrackableCallValue extends BasicValue implements Trackable {
     private final int originInsnIndex;
-    final Method method;
+    final Member method;
     final List<? extends BasicValue> args;
     final boolean stableCall;
     final boolean thisCall;
 
-    TrackableCallValue(int originInsnIndex, Type tp, Method method, List<? extends BasicValue> args, boolean stableCall, boolean thisCall) {
+    TrackableCallValue(int originInsnIndex, Type tp, Member method, List<? extends BasicValue> args, boolean stableCall, boolean thisCall) {
       super(tp);
       this.originInsnIndex = originInsnIndex;
       this.method = method;
@@ -154,13 +137,13 @@ interface CombinedData {
 final class CombinedAnalysis {
 
   private final ControlFlowGraph controlFlow;
-  private final Method method;
+  private final Member method;
   private final CombinedInterpreter interpreter;
   private BasicValue returnValue;
   private boolean exception;
   private final MethodNode methodNode;
 
-  CombinedAnalysis(Method method, ControlFlowGraph controlFlow) {
+  CombinedAnalysis(Member method, ControlFlowGraph controlFlow) {
     this.method = method;
     this.controlFlow = controlFlow;
     methodNode = controlFlow.methodNode;
@@ -206,12 +189,12 @@ final class CombinedAnalysis {
     final EKey key = new EKey(method, new In(i, false), stable);
     final Result result;
     if (interpreter.dereferencedParams[i]) {
-      result = new Final(Value.NotNull);
+      result = Value.NotNull;
     }
     else {
       Set<ParamKey> calls = interpreter.parameterFlow[i];
       if (calls == null || calls.isEmpty()) {
-        result = new Final(Value.Top);
+        result = Value.Top;
       }
       else {
         Set<EKey> keys = new HashSet<>();
@@ -228,12 +211,12 @@ final class CombinedAnalysis {
     final EKey key = new EKey(method, new In(i, true), stable);
     final Result result;
     if (interpreter.dereferencedParams[i] || interpreter.notNullableParams[i] || returnValue instanceof NthParamValue && ((NthParamValue)returnValue).n == i) {
-      result = new Final(Value.Top);
+      result = Value.Top;
     }
     else {
       Set<ParamKey> calls = interpreter.parameterFlow[i];
       if (calls == null || calls.isEmpty()) {
-        result = new Final(Value.Null);
+        result = Value.Null;
       }
       else {
         Set<Component> sum = new HashSet<>();
@@ -252,22 +235,22 @@ final class CombinedAnalysis {
     final EKey key = new EKey(method, direction, stable);
     final Result result;
     if (exception || (inValue == Value.Null && interpreter.dereferencedParams[i])) {
-      result = new Final(Value.Bot);
+      result = Value.Bot;
     }
     else if (FalseValue == returnValue) {
-      result = new Final(Value.False);
+      result = Value.False;
     }
     else if (TrueValue == returnValue) {
-      result = new Final(Value.True);
+      result = Value.True;
     }
     else if (returnValue instanceof TrackableNullValue) {
-      result = new Final(Value.Null);
+      result = Value.Null;
     }
     else if (returnValue instanceof NotNullValue || ThisValue == returnValue) {
-      result = new Final(Value.NotNull);
+      result = Value.NotNull;
     }
     else if (returnValue instanceof NthParamValue && ((NthParamValue)returnValue).n == i) {
-      result = new Final(inValue);
+      result = inValue;
     }
     else if (returnValue instanceof TrackableCallValue) {
       TrackableCallValue call = (TrackableCallValue)returnValue;
@@ -292,7 +275,7 @@ final class CombinedAnalysis {
     final EKey key = new EKey(method, Throw, stable);
     final Result result;
     if (exception) {
-      result = new Final(Value.Fail);
+      result = Value.Fail;
     }
     else if (!interpreter.calls.isEmpty()) {
       Set<EKey> keys =
@@ -311,7 +294,7 @@ final class CombinedAnalysis {
     final EKey key = new EKey(method, direction, stable);
     final Result result;
     if (exception) {
-      result = new Final(Value.Fail);
+      result = Value.Fail;
     }
     else if (!interpreter.calls.isEmpty()) {
       Set<EKey> keys = new HashSet<>();
@@ -332,19 +315,19 @@ final class CombinedAnalysis {
     final EKey key = new EKey(method, Out, stable);
     final Result result;
     if (exception) {
-      result = new Final(Value.Bot);
+      result = Value.Bot;
     }
     else if (FalseValue == returnValue) {
-      result = new Final(Value.False);
+      result = Value.False;
     }
     else if (TrueValue == returnValue) {
-      result = new Final(Value.True);
+      result = Value.True;
     }
     else if (returnValue instanceof TrackableNullValue) {
-      result = new Final(Value.Null);
+      result = Value.Null;
     }
     else if (returnValue instanceof NotNullValue || returnValue == ThisValue) {
-      result = new Final(Value.NotNull);
+      result = Value.NotNull;
     }
     else if (returnValue instanceof TrackableCallValue) {
       TrackableCallValue call = (TrackableCallValue)returnValue;
@@ -363,7 +346,7 @@ final class CombinedAnalysis {
     final Result result;
     if (exception ||
         returnValue instanceof Trackable && interpreter.dereferencedValues[((Trackable)returnValue).getOriginInsnIndex()]) {
-      result = new Final(Value.Bot);
+      result = Value.Bot;
     }
     else if (returnValue instanceof TrackableCallValue) {
       TrackableCallValue call = (TrackableCallValue)returnValue;
@@ -372,10 +355,10 @@ final class CombinedAnalysis {
       result = new Pending(new SingletonSet<>(new Component(Value.Null, keys)));
     }
     else if (returnValue instanceof TrackableNullValue) {
-      result = new Final(Value.Null);
+      result = Value.Null;
     }
     else {
-      result = new Final(Value.Bot);
+      result = Value.Bot;
     }
     return new Equation(key, result);
   }
@@ -425,6 +408,7 @@ final class CombinedInterpreter extends BasicInterpreter {
   private final InsnList insns;
 
   CombinedInterpreter(InsnList insns, int arity) {
+    super(Opcodes.API_VERSION);
     dereferencedParams = new boolean[arity];
     notNullableParams = new boolean[arity];
     parameterFlow = new Set[arity];
@@ -537,8 +521,7 @@ final class CombinedInterpreter extends BasicInterpreter {
   }
 
   @Override
-  public BasicValue ternaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2, BasicValue value3)
-    throws AnalyzerException {
+  public BasicValue ternaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2, BasicValue value3) {
     switch (insn.getOpcode()) {
       case IASTORE:
       case LASTORE:
@@ -581,13 +564,17 @@ final class CombinedInterpreter extends BasicInterpreter {
       case INVOKEVIRTUAL:
       case INVOKEINTERFACE: {
         MethodInsnNode mNode = (MethodInsnNode)insn;
-        Method method = new Method(mNode.owner, mNode.name, mNode.desc);
+        Member method = new Member(mNode.owner, mNode.name, mNode.desc);
         TrackableCallValue value = methodCall(opCode, origin, method, values);
         calls.add(value);
         return value;
       }
       case INVOKEDYNAMIC: {
-        LambdaIndy lambda = LambdaIndy.from((InvokeDynamicInsnNode)insn);
+        InvokeDynamicInsnNode indy = (InvokeDynamicInsnNode)insn;
+        if (ClassDataIndexer.STRING_CONCAT_FACTORY.equals(indy.bsm.getOwner())) {
+          return new NotNullValue(Type.getReturnType(indy.desc));
+        }
+        LambdaIndy lambda = LambdaIndy.from(indy);
         if (lambda == null) break;
         int targetOpCode = lambda.getAssociatedOpcode();
         if (targetOpCode == -1) break;
@@ -602,7 +589,7 @@ final class CombinedInterpreter extends BasicInterpreter {
   }
 
   @NotNull
-  private TrackableCallValue methodCall(int opCode, int origin, Method method, List<? extends BasicValue> values) {
+  private TrackableCallValue methodCall(int opCode, int origin, Member method, List<? extends BasicValue> values) {
     Type retType = Type.getReturnType(method.methodDesc);
     boolean stable = opCode == INVOKESTATIC || opCode == INVOKESPECIAL;
     boolean thisCall = false;
@@ -637,14 +624,14 @@ final class CombinedInterpreter extends BasicInterpreter {
   }
 }
 
-class NegationAnalysisFailure extends Exception {
+class NegationAnalysisFailedException extends Exception {
 
 }
 
 final class NegationAnalysis {
 
   private final ControlFlowGraph controlFlow;
-  private final Method method;
+  private final Member method;
   private final NegationInterpreter interpreter;
   private final MethodNode methodNode;
 
@@ -652,20 +639,20 @@ final class NegationAnalysis {
   private BasicValue trueBranchValue;
   private BasicValue falseBranchValue;
 
-  NegationAnalysis(Method method, ControlFlowGraph controlFlow) {
+  NegationAnalysis(Member method, ControlFlowGraph controlFlow) {
     this.method = method;
     this.controlFlow = controlFlow;
     methodNode = controlFlow.methodNode;
     interpreter = new NegationInterpreter(methodNode.instructions);
   }
 
-  private static void checkAssertion(boolean assertion) throws NegationAnalysisFailure {
+  private static void checkAssertion(boolean assertion) throws NegationAnalysisFailedException {
     if (!assertion) {
-      throw new NegationAnalysisFailure();
+      throw new NegationAnalysisFailedException();
     }
   }
 
-  final void analyze() throws AnalyzerException, NegationAnalysisFailure {
+  final void analyze() throws AnalyzerException, NegationAnalysisFailedException {
     Frame<BasicValue> frame = createStartFrame();
     int insnIndex = 0;
 
@@ -701,7 +688,7 @@ final class NegationAnalysis {
   }
 
   private void proceedBranch(Frame<BasicValue> startFrame, int startIndex, boolean branchValue)
-    throws NegationAnalysisFailure, AnalyzerException {
+    throws NegationAnalysisFailedException, AnalyzerException {
 
     Frame<BasicValue> frame = new Frame<>(startFrame);
     int insnIndex = startIndex;
@@ -748,7 +735,7 @@ final class NegationAnalysis {
       }
     }
     if (keys.isEmpty()) {
-      result = new Final(Value.Top);
+      result = Value.Top;
     } else {
       result = new Pending(new SingletonSet<>(new Component(Value.Top, keys)));
     }
@@ -788,6 +775,7 @@ final class NegationInterpreter extends BasicInterpreter {
   private final InsnList insns;
 
   NegationInterpreter(InsnList insns) {
+    super(Opcodes.API_VERSION);
     this.insns = insns;
   }
 
@@ -816,7 +804,7 @@ final class NegationInterpreter extends BasicInterpreter {
       case INVOKEINTERFACE:
         boolean stable = opCode == INVOKESTATIC || opCode == INVOKESPECIAL;
         MethodInsnNode mNode = (MethodInsnNode)insn;
-        Method method = new Method(mNode.owner, mNode.name, mNode.desc);
+        Member method = new Member(mNode.owner, mNode.name, mNode.desc);
         Type retType = Type.getReturnType(mNode.desc);
         BasicValue receiver = null;
         if (shift == 1) {

@@ -21,19 +21,19 @@ package com.intellij.notification;
 public enum NotificationDisplayType {
 
   NONE("No popup"),
+  /** Expires automatically after 10 seconds. */
   BALLOON("Balloon"),
+  /** Needs to be closed by user. */
   STICKY_BALLOON("Sticky balloon"),
-  TOOL_WINDOW("Tool window balloon"),
-  ;
+  TOOL_WINDOW("Tool window balloon");
 
   private final String myTitle;
 
-  private NotificationDisplayType(final String humanTitle) {
+  NotificationDisplayType(final String humanTitle) {
     myTitle = humanTitle;
   }
 
   public String getTitle() {
     return myTitle;
   }
-
 }

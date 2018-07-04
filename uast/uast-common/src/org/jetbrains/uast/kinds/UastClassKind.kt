@@ -20,24 +20,24 @@ package org.jetbrains.uast
  * Kinds of [UClass].
  */
 open class UastClassKind(val text: String) {
-    companion object {
-        @JvmField
-        val CLASS = UastClassKind("class")
+  companion object {
+    @JvmField
+    val CLASS: UastClassKind = UastClassKind("class")
 
-        @JvmField
-        val INTERFACE = UastClassKind("interface")
+    @JvmField
+    val INTERFACE: UastClassKind = UastClassKind("interface")
 
-        @JvmField
-        val ANNOTATION = UastClassKind("annotation")
+    @JvmField
+    val ANNOTATION: UastClassKind = UastClassKind("annotation")
 
-        @JvmField
-        val ENUM = UastClassKind("enum")
+    @JvmField
+    val ENUM: UastClassKind = UastClassKind("enum")
 
-        @JvmField
-        val OBJECT = UastClassKind("object")
-    }
+    @JvmField
+    val OBJECT: UastClassKind = UastClassKind("object")
+  }
 
-    override fun toString(): String{
-        return "UastClassKind(text='$text')"
-    }
+  override fun toString(): String {
+    return "UastClassKind(text='$text')"
+  }
 }

@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 
 /**
- * Describes a plugin (and optionally its versions range) which can be required for a project to operate normally.
+ * Describes a plugin (and optionally its versions range) which is required for a project to operate normally.
  *
  * @author nik
  */
@@ -31,13 +31,19 @@ public class DependencyOnPlugin implements ProjectExternalDependency, Comparable
   private final String myPluginId;
   private final String myMinVersion;
   private final String myMaxVersion;
-  private final String myChannel;
 
+  /**
+   * @deprecated use {@link #DependencyOnPlugin(String, String, String)} instead
+   */
+  @Deprecated
   public DependencyOnPlugin(@NotNull String pluginId, @Nullable String minVersion, @Nullable String maxVersion, @Nullable String channel) {
+    this(pluginId, minVersion, maxVersion);
+  }
+
+  public DependencyOnPlugin(@NotNull String pluginId, @Nullable String minVersion, @Nullable String maxVersion) {
     myPluginId = pluginId;
     myMinVersion = minVersion;
     myMaxVersion = maxVersion;
-    myChannel = channel;
   }
 
   public String getPluginId() {
@@ -52,10 +58,6 @@ public class DependencyOnPlugin implements ProjectExternalDependency, Comparable
     return myMaxVersion;
   }
 
-  public String getChannel() {
-    return myChannel;
-  }
-
 
   @Override
   public boolean equals(Object o) {
@@ -66,13 +68,12 @@ public class DependencyOnPlugin implements ProjectExternalDependency, Comparable
 
     return myPluginId.equals(plugin.myPluginId)
            && Comparing.equal(myMinVersion, plugin.myMinVersion)
-           && Comparing.equal(myMaxVersion, plugin.myMaxVersion)
-           && Comparing.equal(myChannel,    plugin.myChannel);
+           && Comparing.equal(myMaxVersion, plugin.myMaxVersion);
   }
 
   @Override
   public int hashCode() {
-    return 31 * (31 * (31 * myPluginId.hashCode() + Comparing.hashcode(myMinVersion)) + Comparing.hashcode(myMaxVersion)) + Comparing.hashcode(myChannel);
+    return 31 * (31 * myPluginId.hashCode() + Comparing.hashcode(myMinVersion)) + Comparing.hashcode(myMaxVersion);
   }
 
   @Override

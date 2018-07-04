@@ -63,6 +63,11 @@ public class I18nizeAction extends AnAction {
     PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     if (psiFile == null) return null;
 
+    return getHandler(editor, psiFile);
+  }
+
+  @Nullable
+  public static I18nQuickFixHandler getHandler(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     TextRange range = JavaI18nUtil.getSelectedRange(editor, psiFile);
     if (range == null) return null;
 

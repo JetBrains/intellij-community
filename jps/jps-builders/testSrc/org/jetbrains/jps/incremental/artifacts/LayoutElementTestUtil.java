@@ -40,9 +40,9 @@ public class LayoutElementTestUtil {
   }
 
   public static class LayoutElementCreator {
-    private JpsPackagingElementFactory myFactory;
-    private JpsCompositePackagingElement myElement;
-    private LayoutElementCreator myParent;
+    private final JpsPackagingElementFactory myFactory;
+    private final JpsCompositePackagingElement myElement;
+    private final LayoutElementCreator myParent;
     
     public LayoutElementCreator(JpsCompositePackagingElement element, LayoutElementCreator parent) {
       myElement = element;
@@ -80,6 +80,10 @@ public class LayoutElementTestUtil {
 
     public LayoutElementCreator module(JpsModule module) {
       return element(JpsJavaExtensionService.getInstance().createProductionModuleOutput(module.createReference()));
+    }
+
+    public LayoutElementCreator moduleSource(JpsModule module) {
+      return element(JpsJavaExtensionService.getInstance().createProductionModuleSource(module.createReference()));
     }
 
     public LayoutElementCreator element(JpsPackagingElement element) {

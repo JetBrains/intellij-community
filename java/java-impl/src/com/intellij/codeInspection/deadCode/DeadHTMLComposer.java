@@ -338,7 +338,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     }
   }
 
-  private void appendCallesList(RefElement element, StringBuffer buf, Set<RefElement> mentionedElements, boolean appendCallees){
+  private void appendCallesList(RefElement element, StringBuffer buf, Set<? super RefElement> mentionedElements, boolean appendCallees){
     final Set<RefElement> possibleChildren = getPossibleChildren(new RefElementNode(element, myToolPresentation), element);
     if (!possibleChildren.isEmpty()) {
       if (appendCallees){

@@ -22,7 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.impl.VcsLogManager;
-import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
@@ -52,7 +52,7 @@ public class RefreshLogAction extends RefreshAction {
         else {
           LOG.warn(message);
         }
-        refresher.setValid(true);
+        refresher.setValid(true, false);
       }
     }
 

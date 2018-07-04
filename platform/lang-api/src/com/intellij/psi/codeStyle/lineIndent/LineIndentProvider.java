@@ -22,9 +22,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * An interface for indentation calculation. Used in editor actions like Enter handling.
+ * An interface for fast indentation calculation as an alternative to formatter-based logic. Used in editor actions like Enter handling.
+ * Assumes that indent string is constructed using the editor document {@code editor.getDocument()} and the current offset without
+ * any document commits and PSI tree rebuilding which can be a time consuming operation. If there is no {@code LineIndentProvider} for the
+ * current editor and language context OR if a line indent provider can't calculate the indent (returns {@code null}), the document is
+ * committed and a formatter-based line indent calculation is performed.
  */
 public interface LineIndentProvider {
+  /**
+   * Marker object to indicate that no further formatter-based indent adjustment must be made.
+   */
+  String DO_NOT_ADJUST = new String();
   
   /**
    * Calculates the indent that should be used for the line at specified offset in the specified
@@ -34,8 +42,9 @@ public interface LineIndentProvider {
    * @param editor   The current editor.
    * @param language Context language to be used at the current offset.
    * @param offset   The caret offset in the editor.
-   * @return The indent string (possibly consisting of tabs and/or white spaces), or null if
-   * LineIndentProvider can't calculate the indent (in this case no indent adjustment will be made).
+   * @return The indent string (possibly consisting of tabs and/or white spaces), {@code null} if LineIndentProvider can't calculate the
+   * indent (in this case indent calculation is delegated to formatter if smart indent mode is used) or {@link #DO_NOT_ADJUST} constant to
+   * leave the current caret position as is without any further formatter-based adjustment.
    */
   @Nullable
   String getLineIndent(@NotNull Project project, @NotNull Editor editor, Language language, int offset);

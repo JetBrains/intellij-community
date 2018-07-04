@@ -28,8 +28,8 @@ import java.util.Set;
 public abstract class FileSetProcessor {
   private static final Logger LOG = Logger.getInstance(FileSetProcessor.class);
 
-  private Set<File> myTopEntries = ContainerUtil.newHashSet();
-  private Set<String> myFileMasks = ContainerUtil.newHashSet();
+  private final Set<File> myTopEntries = ContainerUtil.newHashSet();
+  private final Set<String> myFileMasks = ContainerUtil.newHashSet();
   private int myProcessedFiles;
   private boolean isRecursive;
 

@@ -45,7 +45,7 @@ public class UnSelectWordHandler extends EditorActionHandler {
 
   @Override
   public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
-    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }
@@ -63,7 +63,7 @@ public class UnSelectWordHandler extends EditorActionHandler {
     doAction(editor, file);
   }
 
-  private static void doAction(final Editor editor, PsiFile file) {
+  private static void doAction(@NotNull Editor editor, @NotNull PsiFile file) {
     if (!editor.getSelectionModel().hasSelection()) {
       return;
     }

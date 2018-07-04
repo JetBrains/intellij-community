@@ -8,7 +8,7 @@ if __name__ == '__main__':
         
     import pydevd
     print('before pydevd.settrace')
-    pydevd.settrace(port=8787)
+    pydevd.settrace(host='127.0.0.1', port=8787)
     print('after pydevd.settrace')
     print('TEST SUCEEDED!')
     

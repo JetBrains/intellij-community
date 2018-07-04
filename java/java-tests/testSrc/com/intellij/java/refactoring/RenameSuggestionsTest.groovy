@@ -94,7 +94,7 @@ class Foo {{
   Optional<Foo> <caret>o = Optional.of(typeValue);
 }}
 """)
-    assert suggestions == ["typeValue1", "value", "foo", "fooOptional", "optional", "o"]
+    assert suggestions == ["typeValue1", "value", "foo", "optionalFoo", "fooOptional", "optional", "o"]
   }
 
   void "test by Optional_ofNullable initializer"() {
@@ -105,7 +105,7 @@ class Foo {{
   Optional<Foo> <caret>o = Optional.ofNullable(typeValue);
 }}
 """)
-    assert suggestions == ["typeValue1", "value", "foo", "fooOptional", "optional", "o"]
+    assert suggestions == ["typeValue1", "value", "foo", "optionalFoo", "fooOptional", "optional", "o"]
   }
 
   void "test by Optional_of initializer with constructor"() {
@@ -115,7 +115,7 @@ class Foo {{
   Optional<Foo> <caret>o = Optional.ofNullable(new Foo());
 }}
 """)
-    assert suggestions == ["foo", "fooOptional", "optional", "o"]
+    assert suggestions == ["foo", "optionalFoo", "fooOptional", "optional", "o"]
   }
 
   void "test by Optional_flatMap"() {
@@ -129,7 +129,7 @@ class Person {
 }
 class Car {}
 """)
-    assert suggestions == ["car", "carOptional", "optional", "o"]
+    assert suggestions == ["car", "optionalCar", "carOptional", "optional", "o"]
   }
 
   private doTestSuggestionAvailable(String text, String... expectedSuggestions) {

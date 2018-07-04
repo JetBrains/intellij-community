@@ -39,24 +39,23 @@ import java.util.List;
  * User : catherine
  */
 public class SphinxConfigurationProducer extends RuntimeConfigurationProducer implements Cloneable {
-  private PsiDirectory mySourceFile = null;
-
   public SphinxConfigurationProducer() {
     super(RestRunConfigurationType.getInstance().SPHINX_FACTORY);
   }
 
   public PsiElement getSourceElement() {
-    return mySourceFile;
+    return restoreSourceElement();
   }
 
   protected RunnerAndConfigurationSettings createConfigurationByElement(final Location location, final ConfigurationContext context) {
     PsiElement element = location.getPsiElement();
     if (!(element instanceof PsiDirectory)) return null;
 
-    mySourceFile = (PsiDirectory)element;
+    storeSourceElement(element);
+    PsiDirectory directory = (PsiDirectory)element;
     boolean hasRstFile = false;
     boolean hasConf = false;
-    for (PsiFile file : mySourceFile.getFiles()) {
+    for (PsiFile file : directory.getFiles()) {
       if ("conf.py".equals(file.getName()))
         hasConf = true;
       if (file instanceof RestFile) {
@@ -64,10 +63,10 @@ public class SphinxConfigurationProducer extends RuntimeConfigurationProducer im
       }
     }
     if (!hasRstFile || !hasConf) return null;
-    final Project project = mySourceFile.getProject();
+    final Project project = directory.getProject();
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     SphinxRunConfiguration configuration = (SphinxRunConfiguration) settings.getConfiguration();
-    final VirtualFile vFile = mySourceFile.getVirtualFile();
+    final VirtualFile vFile = directory.getVirtualFile();
     configuration.setInputFile(vFile.getPath());
 
     configuration.setName(((PsiDirectory)element).getName());

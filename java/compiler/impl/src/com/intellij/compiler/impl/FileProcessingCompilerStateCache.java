@@ -16,8 +16,6 @@
 
 /*
  * @author: Eugene Zhuravlev
- * Date: Apr 1, 2003
- * Time: 1:17:50 PM
  */
 package com.intellij.compiler.impl;
 
@@ -62,11 +60,7 @@ public class FileProcessingCompilerStateCache {
   }
 
   public long getTimestamp(String url) throws IOException {
-    final Serializable savedState = myCache.getState(url);
-    if (savedState != null) {
-      LOG.assertTrue(savedState instanceof MyState);
-    }
-    MyState state = (MyState)savedState;
+    MyState state = myCache.getState(url);
     return (state != null)? state.getTimestamp() : -1L;
   }
 

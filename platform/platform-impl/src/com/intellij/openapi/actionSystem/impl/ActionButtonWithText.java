@@ -1,27 +1,17 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import sun.swing.SwingUtilities2;
@@ -45,7 +35,7 @@ public class ActionButtonWithText extends ActionButton {
                               final String place,
                               final Dimension minimumSize) {
     super(action, presentation, place, minimumSize);
-    setFont(UIUtil.getLabelFont());
+    setFont(action.useSmallerFontForTextInToolbar() ? JBUI.Fonts.toolbarSmallComboBoxFont() : UIUtil.getLabelFont());
     setForeground(UIUtil.getLabelForeground());
     myPresentation.addPropertyChangeListener(new PropertyChangeListener() {
       @Override
@@ -117,14 +107,22 @@ public class ActionButtonWithText extends ActionButton {
   }
 
   @Override
-  void updateToolTipText() {
-    setToolTipText(myPresentation.getDescription());
+  protected void updateToolTipText() {
+    String description = myPresentation.getDescription();
+    if (Registry.is("ide.helptooltip.enabled")) {
+      HelpTooltip.dispose(this);
+      if (StringUtil.isNotEmpty(description)) {
+        new HelpTooltip().setDescription(description).installOn(this);
+      }
+    } else {
+      setToolTipText(description);
+    }
   }
 
   public void paintComponent(Graphics g) {
     Icon icon = getIcon();
     FontMetrics fm = getFontMetrics(getFont());
-    Rectangle viewRect = new Rectangle(getSize());
+    Rectangle viewRect = getButtonRect();
     JBInsets.removeFrom(viewRect, getInsets());
 
     Rectangle iconRect = new Rectangle();
@@ -133,9 +131,9 @@ public class ActionButtonWithText extends ActionButton {
                                                      SwingConstants.CENTER, horizontalTextAlignment(),
                                                      SwingConstants.CENTER, horizontalTextPosition(),
                                                      viewRect, iconRect, textRect, iconTextSpace());
-    ActionButtonLook look = ActionButtonLook.DEFAULT_LOOK;
+    ActionButtonLook look = ActionButtonLook.SYSTEM_LOOK;
     look.paintBackground(g, this);
-    look.paintIconAt(g, this, icon, iconRect.x, iconRect.y);
+    look.paintIconAt(g, icon, iconRect.x, iconRect.y);
     look.paintBorder(g, this);
 
     UISettings.setupAntialiasing(g);
@@ -144,6 +142,10 @@ public class ActionButtonWithText extends ActionButton {
                                               getMnemonicCharIndex(text),
                                               textRect.x,
                                               textRect.y + fm.getAscent());
+  }
+
+  protected Rectangle getButtonRect() {
+    return new Rectangle(getSize());
   }
 
   @Override

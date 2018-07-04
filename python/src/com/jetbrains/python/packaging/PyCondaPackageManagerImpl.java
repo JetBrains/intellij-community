@@ -39,6 +39,8 @@ import java.util.List;
 import java.util.Set;
 
 public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
+  @Nullable private volatile List<PyPackage> mySideCache = null;
+
   public static final String PYTHON = "python";
   public boolean useConda = true;
 
@@ -55,20 +57,18 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   }
 
   @Override
-  public void install(@NotNull List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException {
+  public void install(@Nullable List<PyRequirement> requirements, @NotNull List<String> extraArgs) throws ExecutionException {
     if (useConda) {
+      if (requirements == null) return;
       final ArrayList<String> arguments = new ArrayList<>();
       for (PyRequirement requirement : requirements) {
-        arguments.add(requirement.toString());
+        arguments.add(requirement.getPresentableText());
       }
       arguments.add("-y");
-      if (extraArgs.contains("-U")) {
-        getCondaOutput("update", arguments);
-      }
-      else {
+      if (!extraArgs.contains("-U")) {
         arguments.addAll(extraArgs);
-        getCondaOutput("install", arguments);
       }
+      getCondaOutput("install", arguments);
     }
     else {
       super.install(requirements, extraArgs);
@@ -140,18 +140,22 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
   @NotNull
   @Override
   protected List<PyPackage> collectPackages() throws ExecutionException {
+    final List<PyPackage> pipPackages = super.collectPackages();
+    final ProcessOutput output = getCondaOutput("list", Lists.newArrayList("-e"));
+    final Set<PyPackage> condaPackages = Sets.newConcurrentHashSet(parseCondaToolOutput(output.getStdout()));
+
     if (useConda) {
-      final ProcessOutput output = getCondaOutput("list", Lists.newArrayList("-e"));
-      final Set<PyPackage> packages = Sets.newConcurrentHashSet(parseCondaToolOutput(output.getStdout()));
-      return Lists.newArrayList(packages);
+      mySideCache = pipPackages;
+      return Lists.newArrayList(condaPackages);
     }
     else {
+      mySideCache = Lists.newArrayList(condaPackages);
       return super.collectPackages();
     }
   }
 
   @NotNull
-  protected static List<PyPackage> parseCondaToolOutput(@NotNull String s) throws ExecutionException {
+  private List<PyPackage> parseCondaToolOutput(@NotNull String s) throws ExecutionException {
     final String[] lines = StringUtil.splitByLines(s);
     final List<PyPackage> packages = new ArrayList<>();
     for (String line : lines) {
@@ -166,7 +170,7 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
       if (fields.size() >= 4) {
         final String requiresLine = fields.get(3);
         final String requiresSpec = StringUtil.join(StringUtil.split(requiresLine, ":"), "\n");
-        requirements.addAll(PyRequirement.fromText(requiresSpec));
+        requirements.addAll(parseRequirements(requiresSpec));
       }
       if (!"Python".equals(name)) {
         packages.add(new PyPackage(name, version, "", requirements));
@@ -179,14 +183,27 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     final String condaName = "conda-meta";
     final VirtualFile homeDirectory = sdk.getHomeDirectory();
     if (homeDirectory == null) return false;
-    final VirtualFile condaMeta = SystemInfo.isWindows ? homeDirectory.getParent().findChild(condaName) :
-                                  homeDirectory.getParent().getParent().findChild(condaName);
+    final VirtualFile condaParent = SystemInfo.isWindows ? homeDirectory.getParent()
+                                                         : homeDirectory.getParent().getParent();
+    final VirtualFile condaMeta = condaParent.findChild(condaName);
+    final VirtualFile envs = condaParent.findChild("envs");
+    return condaMeta != null && envs == null;
+  }
+
+  // Conda virtual environment and system conda
+  public static boolean isConda(@NotNull final Sdk sdk) {
+    final String condaName = "conda-meta";
+    final VirtualFile homeDirectory = sdk.getHomeDirectory();
+    if (homeDirectory == null) return false;
+    final VirtualFile condaParent = SystemInfo.isWindows ? homeDirectory.getParent()
+                                                         : homeDirectory.getParent().getParent();
+    final VirtualFile condaMeta = condaParent.findChild(condaName);
     return condaMeta != null;
   }
 
   @NotNull
-  public static String createVirtualEnv(@NotNull String destinationDir, String version) throws ExecutionException {
-    final String condaExecutable = PyCondaPackageService.getSystemCondaExecutable();
+  public static String createVirtualEnv(@Nullable String condaExecutable, @NotNull String destinationDir,
+                                        @NotNull String version) throws ExecutionException {
     if (condaExecutable == null) throw new PyExecutionException("Cannot find conda", "Conda", Collections.emptyList(), new ProcessOutput());
 
     final ArrayList<String> parameters = Lists.newArrayList(condaExecutable, "create", "-p", destinationDir, "-y",
@@ -210,4 +227,15 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
     return (binary != null) ? binary : binaryFallback;
   }
 
+  @Nullable
+  @Override
+  public List<PyPackage> getPackages() {
+    final List<PyPackage> packagesCache = mySideCache;
+    if (packagesCache == null) return null;
+    final List<PyPackage> packages = Lists.newArrayList(packagesCache);
+    final List<PyPackage> condaPackages = super.getPackages();
+    if (condaPackages == null) return null;
+    packages.addAll(condaPackages);
+    return Collections.unmodifiableList(packages);
+  }
 }

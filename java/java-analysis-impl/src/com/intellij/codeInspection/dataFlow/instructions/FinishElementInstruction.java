@@ -43,12 +43,13 @@ public class FinishElementInstruction extends Instruction {
         state.flushVariable(value);
       }
     }
+    state.cleanUpTempVariables();
     return nextInstruction(runner, state);
   }
 
   @Override
   public String toString() {
-    return "Finish " + myElement + "; flushing " + myVarsToFlush;
+    return "FINISH " + myElement + (myVarsToFlush.isEmpty() ? "" : "; flushing " + myVarsToFlush);
   }
 
   public Set<DfaVariableValue> getVarsToFlush() {

@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfigurator;
+import com.intellij.remoteServer.configuration.deployment.SingletonDeploymentSourceType;
 import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerConnector;
 import com.intellij.remoteServer.runtime.ServerTaskExecutor;
@@ -14,7 +15,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author nik
@@ -33,6 +36,11 @@ public abstract class ServerType<C extends ServerConfiguration> {
 
   @NotNull
   public abstract String getPresentableName();
+
+  @NotNull
+  public String getDeploymentConfigurationTypePresentableName() {
+    return getPresentableName() + " Deployment";
+  }
 
   @NotNull
   public String getHelpTopic() {
@@ -65,6 +73,7 @@ public abstract class ServerType<C extends ServerConfiguration> {
   /**
    * @deprecated override {@link #createServerConfigurable(com.intellij.remoteServer.configuration.ServerConfiguration)} instead
    */
+  @Deprecated
   @NotNull
   public UnnamedConfigurable createConfigurable(@NotNull C configuration) {
     return createServerConfigurable(configuration);
@@ -72,6 +81,22 @@ public abstract class ServerType<C extends ServerConfiguration> {
 
   @NotNull
   public abstract DeploymentConfigurator<?, C> createDeploymentConfigurator(Project project);
+
+  /**
+   * Returns list of the singleton deployment sources types available in addition to the project-dependent deployment sources
+   * enumerated via {@link DeploymentConfigurator#getAvailableDeploymentSources()}.
+   */
+  public List<SingletonDeploymentSourceType> getSingletonDeploymentSourceTypes() {
+    return Collections.emptyList();
+  }
+
+  /**
+   * @return <code>false</code>, if all supported deployment sources are of {@link SingletonDeploymentSourceType} type, so
+   * {@link DeploymentConfigurator#getAvailableDeploymentSources()} <strong>now is and always will be</strong> empty.
+   */
+  public boolean mayHaveProjectSpecificDeploymentSources() {
+    return true;
+  }
 
   @NotNull
   public abstract ServerConnector<?> createConnector(@NotNull C configuration, @NotNull ServerTaskExecutor asyncTasksExecutor);

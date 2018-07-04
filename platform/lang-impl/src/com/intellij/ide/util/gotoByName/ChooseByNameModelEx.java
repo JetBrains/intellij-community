@@ -15,8 +15,25 @@
  */
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface ChooseByNameModelEx extends ChooseByNameModel {
   void processNames(Processor<String> processor, boolean inLibraries);
+
+  /**
+   * @return the item provider to be used by ChooseByName components with this model. By default it's {@link DefaultChooseByNameItemProvider}.
+   */
+  @NotNull
+  default ChooseByNameItemProvider getItemProvider(@Nullable PsiElement context) {
+    return new DefaultChooseByNameItemProvider(context);
+  }
+
+  @NotNull
+  static ChooseByNameItemProvider getItemProvider(@NotNull ChooseByNameModel model, @Nullable PsiElement context) {
+    return model instanceof ChooseByNameModelEx ? ((ChooseByNameModelEx)model).getItemProvider(context)
+                                                : new DefaultChooseByNameItemProvider(context);
+  }
 }

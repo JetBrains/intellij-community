@@ -161,6 +161,12 @@ public class NewLambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testConditionalExpressionInLambdaReturns() { doTest(); }
   public void testLambdaWithFormalTypeParameters() { doTest(); }
   public void testIDEA174924() { doTest(); }
+  public void testVoidValueCompatibilityWithBreakInSwitch() { doTest(); }
+  public void testLambdaChainWithCapturedWildcards() { doTest(); }
+  public void testExceptionInferenceForVarargMethods() { doTest(); }
+  public void testConditionalBooleanAsFunctionalInterfaceType() { doTest(); }
+  public void testUnhandledExceptionInLambdaChain() { doTest(); }
+  public void testFunctionalBound() { doTest(); }
 
   private void doTest() {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());

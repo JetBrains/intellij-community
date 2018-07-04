@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.analysis.AnalysisScope;
@@ -22,6 +8,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiNamedElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +62,7 @@ public abstract class RefManager {
    * @return the node for the module, or null if {@code module} is null.
    */
   @Nullable
-  public abstract RefModule getRefModule(Module module);
+  public abstract RefModule getRefModule(@Nullable Module module);
 
   /**
    * Creates (if necessary) and returns the reference graph node for the specified PSI element.
@@ -85,7 +72,7 @@ public abstract class RefManager {
    * a corresponding reference graph node type (is not a field, method, class or file).
    */
   @Nullable
-  public abstract RefElement getReference(PsiElement elem);
+  public abstract RefElement getReference(@Nullable PsiElement elem);
 
   /**
    * Creates (if necessary) and returns the reference graph node for the PSI element specified by its type and FQName.
@@ -103,7 +90,7 @@ public abstract class RefManager {
   public abstract <T> T getExtension(@NotNull Key<T> key);
 
   @Nullable
-  public abstract String getType(final RefEntity ref);
+  public abstract String getType(@NotNull RefEntity ref);
 
   @NotNull
   public abstract RefEntity getRefinedElement(@NotNull RefEntity ref);
@@ -111,11 +98,12 @@ public abstract class RefManager {
   public abstract Element export(@NotNull RefEntity entity, @NotNull Element element, final int actualLine);
 
   @Nullable
-  public abstract String getGroupName(final RefElement entity);
+  public abstract String getGroupName(@NotNull RefElement entity);
 
-  public abstract boolean belongsToScope(PsiElement psiElement);
+  public abstract boolean belongsToScope(@Nullable PsiElement psiElement);
 
-  public abstract String getQualifiedName(RefEntity refEntity);
+  @Nullable
+  public abstract String getQualifiedName(@Nullable RefEntity refEntity);
 
   public abstract void removeRefElement(@NotNull RefElement refElement, @NotNull List<RefElement> deletedRefs);
 
@@ -128,5 +116,10 @@ public abstract class RefManager {
    */
   public boolean isInGraph(VirtualFile file) {
     return true;
+  }
+
+  @Nullable
+  public PsiNamedElement getContainerElement(@NotNull PsiElement element) {
+    return null;
   }
 }

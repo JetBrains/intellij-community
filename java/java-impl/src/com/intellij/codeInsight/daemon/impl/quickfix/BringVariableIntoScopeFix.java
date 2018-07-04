@@ -91,7 +91,7 @@ public class BringVariableIntoScopeFix implements IntentionAction {
       }
     });
 
-    return myOutOfScopeVariable != null;
+    return myOutOfScopeVariable != null && !(myOutOfScopeVariable instanceof PsiResourceVariable);
   }
 
   @Override

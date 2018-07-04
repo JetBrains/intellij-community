@@ -8,7 +8,7 @@
         </element>
         <element id="module-output" name="launcher-generator" />
       </element>
-      <element id="library" level="project" name="sanselan-0.98-snapshot" />
+      <element id="library" level="project" name="commons-imaging" />
       <element id="library" level="project" name="jdom" />
     </root>
   </artifact>

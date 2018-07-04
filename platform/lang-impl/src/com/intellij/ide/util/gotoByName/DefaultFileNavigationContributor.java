@@ -63,7 +63,7 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
     Processor<NavigationItem> processor = Processors.cancelableCollectProcessor(result);
     processElementsWithName(name, processor, FindSymbolParameters.wrap(pattern, project, includeNonProjectItems));
 
-    return result.isEmpty() ? NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY : result.toArray(new NavigationItem[result.size()]);
+    return result.isEmpty() ? NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY : result.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
   }
 
   @Override
@@ -86,17 +86,20 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
       }
       return _processor.process(item);
     };
-    
-    String completePattern = parameters.getCompletePattern();
-    final boolean includeDirs = completePattern.endsWith("/") || completePattern.endsWith("\\") ||
-                                completePattern.startsWith("/") || completePattern.startsWith("\\");
-    boolean result = FilenameIndex.processFilesByName(
-      name, includeDirs, processor, parameters.getSearchScope(), parameters.getProject(), parameters.getIdFilter()
-    );
-    if (!result && includeDirs) {
+
+    if (!isDirectoryOnlyPattern(parameters)) {
       FilenameIndex.processFilesByName(
         name, false, processor, parameters.getSearchScope(), parameters.getProject(), parameters.getIdFilter()
       );
     }
+    
+    FilenameIndex.processFilesByName(
+      name, true, processor, parameters.getSearchScope(), parameters.getProject(), parameters.getIdFilter()
+    );
+  }
+
+  private static boolean isDirectoryOnlyPattern(@NotNull FindSymbolParameters parameters) {
+    String completePattern = parameters.getCompletePattern();
+    return completePattern.endsWith("/") || completePattern.endsWith("\\");
   }
 }

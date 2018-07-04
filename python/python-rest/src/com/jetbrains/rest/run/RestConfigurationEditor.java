@@ -48,7 +48,7 @@ public class RestConfigurationEditor extends SettingsEditor<RestRunConfiguration
   private JBLabel myCommandLabel;
   private JLabel myConfigurationName;
   private final AbstractPyCommonOptionsForm myCommonOptionsForm;
-  private Project myProject;
+  private final Project myProject;
   private JComponent anchor;
 
   public RestConfigurationEditor(final Project project,

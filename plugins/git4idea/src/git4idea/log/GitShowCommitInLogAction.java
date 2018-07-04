@@ -17,7 +17,6 @@ package git4idea.log;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -30,7 +29,6 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.vcs.log.impl.VcsLogContentUtil;
 import com.intellij.vcs.log.impl.VcsProjectLog;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
@@ -100,7 +98,6 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
         public void run(@NotNull ProgressIndicator indicator) {
           try {
             future.get();
-            ApplicationManager.getApplication().invokeLater(() -> ensureHasFocus(project, logUi));
           }
           catch (CancellationException | InterruptedException ignored) {
           }
@@ -109,15 +106,6 @@ public class GitShowCommitInLogAction extends DumbAwareAction {
           }
         }
       });
-    }
-    else {
-      ensureHasFocus(project, logUi);
-    }
-  }
-
-  private static void ensureHasFocus(@Nullable Project project, @NotNull VcsLogUiImpl logUi) {
-    if (!logUi.getTable().hasFocus()) {
-      IdeFocusManager.getInstance(project).requestFocus(logUi.getTable(), true);
     }
   }
 }

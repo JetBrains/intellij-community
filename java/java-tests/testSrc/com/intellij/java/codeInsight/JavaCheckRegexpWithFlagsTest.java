@@ -18,6 +18,7 @@ package com.intellij.java.codeInsight;
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.LanguageParserDefinitions;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
@@ -77,7 +78,7 @@ public class JavaCheckRegexpWithFlagsTest extends CodeInsightTestCase {
 
     final PsiLanguageInjectionHost elementWithInjection = ((PsiLanguageInjectionHost)stringLiteralLeaf.getParent());
 
-    InjectedLanguageUtil.enumerate(elementWithInjection, file, false, (injectedPsi, places) -> {
+    InjectedLanguageManager.getInstance(file.getProject()).enumerateEx(elementWithInjection, file, false, (injectedPsi, places) -> {
     });
 
     assertTrue(InjectedLanguageUtil.hasInjections(elementWithInjection));

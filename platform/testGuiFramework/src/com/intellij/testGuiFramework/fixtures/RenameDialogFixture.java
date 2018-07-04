@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.RenameDialog;
 import com.intellij.refactoring.rename.RenameHandler;
+import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.ui.EditorTextField;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.Robot;
@@ -32,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.waitUntilFound;
 import static org.fest.reflect.core.Reflection.field;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.junit.Assert.assertNotNull;
@@ -65,7 +65,7 @@ public class RenameDialogFixture extends IdeaDialogFixture<RenameDialog> {
     SwingUtilities.invokeLater(
       () -> handler.invoke(element.getProject(), new PsiElement[] { element }, SimpleDataContext.getProjectContext(element.getProject())));
     final Ref<RenameDialog> ref = new Ref<RenameDialog>();
-    JDialog dialog = waitUntilFound(robot, new GenericTypeMatcher<JDialog>(JDialog.class) {
+    JDialog dialog = GuiTestUtil.INSTANCE.waitUntilFound(robot, new GenericTypeMatcher<JDialog>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
         if (!RefactoringBundle.message("rename.title").equals(dialog.getTitle()) || !dialog.isShowing()) {

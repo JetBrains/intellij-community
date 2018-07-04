@@ -26,8 +26,8 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class ControlFlowCache {
-  private static Key<SoftReference<ControlFlow>> CONTROL_FLOW_KEY = Key.create("com.jetbrains.python.codeInsight.controlflow.ControlFlow");
-  private static Key<SoftReference<Scope>> SCOPE_KEY = Key.create("com.jetbrains.python.codeInsight.controlflow.Scope");
+  private static final Key<SoftReference<ControlFlow>> CONTROL_FLOW_KEY = Key.create("com.jetbrains.python.codeInsight.controlflow.ControlFlow");
+  private static final Key<SoftReference<Scope>> SCOPE_KEY = Key.create("com.jetbrains.python.codeInsight.controlflow.Scope");
 
   private ControlFlowCache() {
   }
@@ -37,14 +37,20 @@ public class ControlFlowCache {
     scopeOwner.putUserData(SCOPE_KEY, null);
   }
 
-  public static ControlFlow getControlFlow(@NotNull ScopeOwner element) {
+  @NotNull
+  public static ControlFlow getControlFlow(@NotNull ScopeOwner element,
+                                           @NotNull PyControlFlowBuilder controlFlowBuilder) {
     SoftReference<ControlFlow> ref = element.getUserData(CONTROL_FLOW_KEY);
     ControlFlow flow = SoftReference.dereference(ref);
     if (flow == null) {
-      flow = new PyControlFlowBuilder().buildControlFlow(element);
+      flow = controlFlowBuilder.buildControlFlow(element);
       element.putUserData(CONTROL_FLOW_KEY, new SoftReference<>(flow));
     }
     return flow;
+  }
+
+  public static ControlFlow getControlFlow(@NotNull ScopeOwner element) {
+    return getControlFlow(element, new PyControlFlowBuilder());
   }
 
   @NotNull

@@ -21,6 +21,8 @@ import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.TreeNodePresentation;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.treeStructure.CachingSimpleNode;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -29,7 +31,7 @@ public abstract class ArtifactsTreeNode extends CachingSimpleNode {
   private final TreeNodePresentation myPresentation;
   protected final ArtifactEditorContext myContext;
 
-  protected ArtifactsTreeNode(ArtifactEditorContext context, NodeDescriptor parentDescriptor, final TreeNodePresentation presentation) {
+  protected ArtifactsTreeNode(@NotNull ArtifactEditorContext context, @Nullable NodeDescriptor parentDescriptor, @NotNull TreeNodePresentation presentation) {
     super(context.getProject(), parentDescriptor);
     myContext = context;
     myPresentation = presentation;
@@ -41,6 +43,7 @@ public abstract class ArtifactsTreeNode extends CachingSimpleNode {
     presentation.setTooltip(myPresentation.getTooltipText());
   }
 
+  @NotNull
   public TreeNodePresentation getElementPresentation() {
     return myPresentation;
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,7 @@ import static java.util.Locale.ENGLISH;
 public class ColorPanel extends JComponent {
   private static final RelativeFont MONOSPACED_FONT = RelativeFont.SMALL.family(Font.MONOSPACED);
   private final List<ActionListener> myListeners = new CopyOnWriteArrayList<>();
-  private final JTextField myTextField = new JTextField(8);
+  private final JTextField myTextField = new JBTextField(8);
   private boolean myEditable;
   private ActionEvent myEvent;
   private Color myColor;
@@ -162,11 +163,6 @@ public class ColorPanel extends JComponent {
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
     updateSelectedColor();
-  }
-
-  @Override
-  public void repaint() {
-    super.repaint();
   }
 
   private static class Painter implements Highlighter.HighlightPainter, PropertyChangeListener {

@@ -55,7 +55,7 @@ public class GdkMethodDslProvider implements GdslMembersProvider {
       @NotNull
       @Override
       protected GdkMethodHolder compute() {
-        return GdkMethodHolder.getHolderForClass(categoryClass, isStatic, scope);
+        return GdkMethodHolder.getHolderForClass(categoryClass, isStatic);
       }
     };
 

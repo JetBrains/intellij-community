@@ -44,11 +44,10 @@ public class FilenameIndex {
   /**
    * @deprecated Not to be used.
    */
-  @Deprecated
-  public @NonNls static final ID<String, Void> NAME = ID.create("FilenameIndex");
+  @NonNls @Deprecated public static final ID<String, Void> NAME = ID.create("FilenameIndex");
 
   @NotNull
-  public static String[] getAllFilenames(Project project) {
+  public static String[] getAllFilenames(@Nullable Project project) {
     Set<String> names = new THashSet<>();
     getService().processAllFileNames((String s) -> {
       names.add(s);
@@ -57,38 +56,40 @@ public class FilenameIndex {
     return ArrayUtil.toStringArray(names);
   }
 
-  public static void processAllFileNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+  public static void processAllFileNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     getService().processAllFileNames(processor, scope, filter);
   }
 
-  public static Collection<VirtualFile> getVirtualFilesByName(final Project project, final String name, final GlobalSearchScope scope) {
+  @NotNull
+  public static Collection<VirtualFile> getVirtualFilesByName(final Project project, @NotNull String name, @NotNull GlobalSearchScope scope) {
     return getService().getVirtualFilesByName(project, name, scope, null);
   }
 
+  @NotNull
   public static Collection<VirtualFile> getVirtualFilesByName(final Project project,
-                                                              final String name,
+                                                              @NotNull String name,
                                                               boolean caseSensitively,
-                                                              final GlobalSearchScope scope) {
+                                                              @NotNull GlobalSearchScope scope) {
     if (caseSensitively) return getVirtualFilesByName(project, name, scope);
     return getVirtualFilesByNameIgnoringCase(name, scope, project, null);
   }
 
   @NotNull
-  public static PsiFile[] getFilesByName(final Project project, final String name, final GlobalSearchScope scope) {
+  public static PsiFile[] getFilesByName(@NotNull Project project, @NotNull String name, @NotNull GlobalSearchScope scope) {
     return (PsiFile[])getFilesByName(project, name, scope, false);
   }
 
   public static boolean processFilesByName(@NotNull final String name,
-                                           boolean includeDirs,
+                                           boolean directories,
                                            @NotNull Processor<? super PsiFileSystemItem> processor,
                                            @NotNull GlobalSearchScope scope,
                                            @NotNull Project project,
                                            @Nullable IdFilter idFilter) {
-    return processFilesByName(name, includeDirs, true, processor, scope, project, idFilter);
+    return processFilesByName(name, directories, true, processor, scope, project, idFilter);
   }
 
   public static boolean processFilesByName(@NotNull final String name,
-                                           boolean includeDirs,
+                                           boolean directories,
                                            boolean caseSensitively,
                                            @NotNull Processor<? super PsiFileSystemItem> processor,
                                            @NotNull final GlobalSearchScope scope,
@@ -109,13 +110,13 @@ public class FilenameIndex {
 
     for(VirtualFile file: files) {
       if (!file.isValid()) continue;
-      if (!includeDirs && !file.isDirectory()) {
+      if (!directories && !file.isDirectory()) {
         PsiFile psiFile = psiManager.findFile(file);
         if (psiFile != null) {
           if(!processor.process(psiFile)) return true;
           ++processedFiles;
         }
-      } else if (includeDirs && file.isDirectory()) {
+      } else if (directories && file.isDirectory()) {
         PsiDirectory dir = psiManager.findDirectory(file);
         if (dir != null) {
           if(!processor.process(dir)) return true;
@@ -149,19 +150,19 @@ public class FilenameIndex {
   }
 
   @NotNull
-  public static PsiFileSystemItem[] getFilesByName(final Project project,
-                                                   final String name,
+  public static PsiFileSystemItem[] getFilesByName(@NotNull Project project,
+                                                   @NotNull String name,
                                                    @NotNull final GlobalSearchScope scope,
-                                                   boolean includeDirs) {
+                                                   boolean directories) {
     SmartList<PsiFileSystemItem> result = new SmartList<>();
     Processor<PsiFileSystemItem> processor = Processors.cancelableCollectProcessor(result);
-    processFilesByName(name, includeDirs, processor, scope, project, null);
+    processFilesByName(name, directories, processor, scope, project, null);
 
-    if (includeDirs) {
+    if (directories) {
       return ArrayUtil.toObjectArray(result, PsiFileSystemItem.class);
     }
     //noinspection SuspiciousToArrayCall
-    return result.toArray(new PsiFile[result.size()]);
+    return result.toArray(PsiFile.EMPTY_ARRAY);
   }
 
   /**

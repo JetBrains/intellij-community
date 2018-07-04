@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -30,23 +31,51 @@ import java.util.Set;
  */
 public class BuildScriptDataBuilder {
   @NotNull private final VirtualFile myBuildScriptFile;
-  private final Set<String> plugins = ContainerUtil.newTreeSet();
-  private final Set<String> pluginsInGroup = ContainerUtil.newTreeSet();
-  private final Set<String> repositories = ContainerUtil.newTreeSet();
-  private final Set<String> dependencies = ContainerUtil.newTreeSet();
-  private final Set<String> properties = ContainerUtil.newTreeSet();
-  private final Set<String> buildScriptProperties = ContainerUtil.newTreeSet();
-  private final Set<String> buildScriptRepositories = ContainerUtil.newTreeSet();
-  private final Set<String> buildScriptDependencies = ContainerUtil.newTreeSet();
-  private final Set<String> other = ContainerUtil.newTreeSet();
+  protected final Set<String> imports = ContainerUtil.newTreeSet();
+  protected final Set<String> plugins = ContainerUtil.newTreeSet();
+  protected final Set<String> pluginsInGroup = ContainerUtil.newTreeSet();
+  protected final Set<String> repositories = ContainerUtil.newTreeSet();
+  protected final Set<String> dependencies = ContainerUtil.newTreeSet();
+  protected final Set<String> properties = ContainerUtil.newTreeSet();
+  protected final Set<String> buildScriptProperties = ContainerUtil.newTreeSet();
+  protected final Set<String> buildScriptRepositories = ContainerUtil.newTreeSet();
+  protected final Set<String> buildScriptDependencies = ContainerUtil.newTreeSet();
+  protected final Set<String> other = ContainerUtil.newTreeSet();
+  protected final GradleVersion myGradleVersion;
 
   public BuildScriptDataBuilder(@NotNull VirtualFile buildScriptFile) {
+    this(buildScriptFile, GradleVersion.current());
+  }
+
+  public BuildScriptDataBuilder(@NotNull VirtualFile buildScriptFile, @NotNull GradleVersion gradleVersion) {
     myBuildScriptFile = buildScriptFile;
+    myGradleVersion = gradleVersion;
   }
 
   @NotNull
   public VirtualFile getBuildScriptFile() {
     return myBuildScriptFile;
+  }
+
+  @NotNull
+  public GradleVersion getGradleVersion() {
+    return myGradleVersion;
+  }
+
+  /**
+   * @deprecated use {@link #buildMainPart()} and {@link #buildConfigurationPart()} instead
+   */
+  @Deprecated
+  public String build() {
+    return buildMainPart();
+  }
+
+  public String buildImports() {
+    if (!imports.isEmpty()) {
+      return StringUtil.join(imports, "\n") + "\n";
+    }
+
+    return "";
   }
 
   public String buildConfigurationPart() {
@@ -63,10 +92,7 @@ public class BuildScriptDataBuilder {
 
   public String buildMainPart() {
     List<String> lines = ContainerUtil.newArrayList();
-    if (!plugins.isEmpty()) {
-      lines.addAll(plugins);
-      lines.add("");
-    }
+    addPluginsLines(lines, BuildScriptDataBuilder::padding);
     if (!properties.isEmpty()) {
       lines.addAll(properties);
       lines.add("");
@@ -87,6 +113,13 @@ public class BuildScriptDataBuilder {
       lines.addAll(other);
     }
     return StringUtil.join(lines, "\n");
+  }
+
+  protected void addPluginsLines(@NotNull List<String> lines, @NotNull Function<String, String> padding) {
+    if (!plugins.isEmpty()) {
+      lines.addAll(plugins);
+      lines.add("");
+    }
   }
 
   private void addBuildscriptLines(@NotNull List<String> lines, @NotNull Function<String, String> padding) {
@@ -111,6 +144,11 @@ public class BuildScriptDataBuilder {
       lines.add("}");
       lines.add("");
     }
+  }
+
+  public BuildScriptDataBuilder addImport(@NotNull String importString) {
+    imports.add(importString);
+    return this;
   }
 
   public BuildScriptDataBuilder addBuildscriptPropertyDefinition(@NotNull String definition) {

@@ -47,7 +47,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testWarnAboutContract() {
     try {
-      doTest(null, new ParameterInfoImpl[]{new ParameterInfoImpl(1), new ParameterInfoImpl(0)}, false);
+      doTest(null, new ParameterInfoImpl[]{new ParameterInfoImpl(1)}, false);
       fail("Conflict expected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException ignored) { }
@@ -400,6 +400,19 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, true);
   }
 
+  public void testAddParenthesisForLambdaParameterList() {
+    GenParams genParams = method -> new ParameterInfoImpl[]{
+      new ParameterInfoImpl(0, "a", PsiType.INT),
+      new ParameterInfoImpl(-1, "b", PsiType.INT)
+    };
+    doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, true);
+  }
+
+  public void testAddParenthesisForLambdaParameterListDeleteTheOnlyOne() {
+    GenParams genParams = method -> new ParameterInfoImpl[0];
+    doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, true);
+  }
+
   public void testExpandMethodReferenceToDeleteParameter() {
     GenParams genParams = method -> new ParameterInfoImpl[0];
     doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, true);
@@ -451,7 +464,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     PsiMethod method = (PsiMethod)targetElement;
     final PsiClass containingClass = method.getContainingClass();
-    assertTrue(containingClass != null);
+    assertNotNull(containingClass);
     final PsiMethod[] callers = containingClass.findMethodsByName("caller", false);
     assertTrue(callers.length > 0);
     final PsiMethod caller = callers[0];
@@ -473,7 +486,7 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     assertTrue("<caret> is not on method name", targetElement instanceof PsiMethod);
     PsiMethod method = (PsiMethod)targetElement;
     final PsiClass containingClass = method.getContainingClass();
-    assertTrue(containingClass != null);
+    assertNotNull(containingClass);
     final PsiMethod[] callers = containingClass.findMethodsByName("caller", false);
     assertTrue(callers.length > 0);
     final PsiMethod caller = callers[0];
@@ -495,6 +508,18 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     String[] ps = {"@TA(2) int @TA(3) []", "@TA(4) List<@TA(5) Class<@TA(6) ?>>", "@TA(7) String @TA(8) ..."};
     String[] ex = {};
     doTest("@TA(0) List<@TA(1) Inner>", ps, ex, false);
+  }
+
+  public void testContractUpdate() {
+    GenParams genParams = method -> {
+      PsiClassType stringType = PsiType.getJavaLangString(method.getManager(), method.getResolveScope());
+      return new ParameterInfoImpl[]{
+        new ParameterInfoImpl(2, "a", stringType),
+        new ParameterInfoImpl(0, "b", stringType),
+        new ParameterInfoImpl(-1, "c", stringType)
+      };
+    };
+    doTest(null, null, null, genParams, new SimpleExceptionsGen(), false, false);
   }
 
   /* workers */

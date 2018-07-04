@@ -186,6 +186,7 @@ public abstract class ReorderableListController <T> {
         super(customActionDescription, text, description, icon, behaviour);
       }
 
+      @Override
       public boolean displayTextInToolbar() {
         return true;
       }

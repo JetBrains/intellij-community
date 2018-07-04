@@ -1,5 +1,5 @@
 /*
- * Copyright 2006 Bas Leijdekkers
+ * Copyright 2006-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.siyeh.ipp.imports;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -34,15 +34,11 @@ public class ReplaceOnDemandImportIntention extends Intention {
     return new OnDemandImportPredicate();
   }
 
-  protected void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
-    final PsiImportStatementBase importStatementBase =
-      (PsiImportStatementBase)element;
+  protected void processIntention(@NotNull PsiElement element) {
+    final PsiImportStatementBase importStatementBase = (PsiImportStatementBase)element;
     if (importStatementBase instanceof PsiImportStatement) {
-      final PsiImportStatement importStatement =
-        (PsiImportStatement)importStatementBase;
-      final PsiJavaFile javaFile =
-        (PsiJavaFile)importStatement.getContainingFile();
+      final PsiImportStatement importStatement = (PsiImportStatement)importStatementBase;
+      final PsiJavaFile javaFile = (PsiJavaFile)importStatement.getContainingFile();
       final PsiClass[] classes = javaFile.getClasses();
       final String qualifiedName = importStatement.getQualifiedName();
       final ClassCollector visitor = new ClassCollector(qualifiedName);
@@ -55,11 +51,10 @@ public class ReplaceOnDemandImportIntention extends Intention {
       final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
       final PsiElement importList = importStatement.getParent();
       for (PsiClass importedClass : importedClasses) {
-        final PsiImportStatement newImportStatement =
-          factory.createImportStatement(importedClass);
+        final PsiImportStatement newImportStatement = factory.createImportStatement(importedClass);
         importList.add(newImportStatement);
       }
-      importStatement.delete();
+      new CommentTracker().deleteAndRestoreComments(importStatement);
     }
     else if (importStatementBase instanceof PsiImportStaticStatement) {
       // do something else
@@ -97,7 +92,7 @@ public class ReplaceOnDemandImportIntention extends Intention {
     }
 
     public PsiClass[] getImportedClasses() {
-      return importedClasses.toArray(new PsiClass[importedClasses.size()]);
+      return importedClasses.toArray(PsiClass.EMPTY_ARRAY);
     }
   }
 

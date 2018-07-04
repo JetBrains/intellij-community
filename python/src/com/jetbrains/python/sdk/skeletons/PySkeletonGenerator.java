@@ -61,11 +61,17 @@ public class PySkeletonGenerator {
   private final String mySkeletonsPath;
   @NotNull protected final Map<String, String> myEnv;
 
+  private boolean myPrebuilt = false;
+
   public void finishSkeletonsGeneration() {
   }
 
   public boolean exists(String name) {
     return new File(name).exists();
+  }
+
+  public void setPrebuilt(boolean prebuilt) {
+    myPrebuilt = prebuilt;
   }
 
   public static class ListBinariesResult {
@@ -165,7 +171,11 @@ public class PySkeletonGenerator {
     }
 
     final Map<String, String> extraEnv = PythonSdkType.getVirtualEnvExtraEnv(binaryPath);
-    final Map<String, String> env = extraEnv != null ? PySdkUtil.mergeEnvVariables(myEnv, extraEnv) : myEnv;
+    final Map<String, String> env = new HashMap<>(extraEnv != null ? PySdkUtil.mergeEnvVariables(myEnv, extraEnv) : myEnv);
+
+    if (myPrebuilt) {
+      env.put("IS_PREGENERATED_SKELETONS", "1");
+    }
 
     return getProcessOutput(parent_dir, ArrayUtil.toStringArray(commandLine), env, MINUTE * 10);
   }

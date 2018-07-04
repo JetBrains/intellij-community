@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,11 @@
  */
 package org.jetbrains.idea.svn.api;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ThrowableConsumer;
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNException;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
-/**
- * @author Konstantin Kolosovsky.
- */
-public interface ProgressTracker extends ThrowableConsumer<ProgressEvent, SVNException> {
+public interface ProgressTracker extends ThrowableConsumer<ProgressEvent, SvnBindException> {
 
-  void checkCancelled() throws SVNCancelException;
+  void checkCancelled() throws ProcessCanceledException;
 }

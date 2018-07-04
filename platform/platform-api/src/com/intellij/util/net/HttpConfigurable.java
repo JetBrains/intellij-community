@@ -481,6 +481,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   /** @deprecated use {@link #getJvmProperties(boolean, URI)} (to be removed in IDEA 2018) */
+  @Deprecated
   @SuppressWarnings({"deprecation", "unused"})
   public static List<KeyValue<String, String>> getJvmPropertiesList(boolean withAutodetection, @Nullable URI uri) {
     List<Pair<String, String>> properties = getInstance().getJvmProperties(withAutodetection, uri);
@@ -548,6 +549,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   }
 
   /** @deprecated use {@link com.intellij.execution.configurations.ParametersList#addProperty(String, String)} (to be removed in IDEA 2018) */
+  @Deprecated
   @SuppressWarnings({"deprecation", "unused"})
   @NotNull
   public static List<String> convertArguments(@NotNull final List<KeyValue<String, String>> list) {

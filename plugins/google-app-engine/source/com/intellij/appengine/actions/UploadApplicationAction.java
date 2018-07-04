@@ -63,7 +63,8 @@ public class UploadApplicationAction extends AnAction {
 
   @Nullable
   private static RunnerAndConfigurationSettings getConfigurationToRun(@NotNull Project project) {
-    List<RunnerAndConfigurationSettings> configurations = DeploymentConfigurationManager.getInstance(project).getDeploymentConfigurations(AppEngineCloudType.getInstance());
+    List<RunnerAndConfigurationSettings> configurations =
+      DeploymentConfigurationManager.getInstance(project).getDeploymentConfigurations(AppEngineCloudType.getInstance());
     String lastName = PropertiesComponent.getInstance(project).getValue(LAST_RUN_CONFIGURATION_PROPERTY);
     if (lastName != null) {
       for (RunnerAndConfigurationSettings configuration : configurations) {
@@ -85,7 +86,9 @@ public class UploadApplicationAction extends AnAction {
     else {
       AppEngineCloudType serverType = AppEngineCloudType.getInstance();
       List<RemoteServer<AppEngineServerConfiguration>> servers = RemoteServersManager.getInstance().getServers(serverType);
-      DeploymentConfigurationManager.getInstance(project).createAndRunConfiguration(serverType, ContainerUtil.getFirstItem(servers));
+      DeploymentConfigurationManager.getInstance(project).createAndRunConfiguration(serverType,
+                                                                                    ContainerUtil.getFirstItem(servers),
+                                                                                    null);
     }
   }
 }

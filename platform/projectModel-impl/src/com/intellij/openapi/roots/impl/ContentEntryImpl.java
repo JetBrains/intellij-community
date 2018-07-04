@@ -63,7 +63,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
 
   ContentEntryImpl(@NotNull String url, @NotNull RootModelImpl m) {
     super(m);
-    myRoot = VirtualFilePointerManager.getInstance().create(url, this, null);
+    myRoot = VirtualFilePointerManager.getInstance().create(url, this, m.getRootsChangedListener());
   }
 
   ContentEntryImpl(@NotNull Element e, @NotNull RootModelImpl m) throws InvalidDataException {
@@ -115,7 +115,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   @NotNull
   @Override
   public SourceFolder[] getSourceFolders() {
-    return mySourceFolders.toArray(new SourceFolder[mySourceFolders.size()]);
+    return mySourceFolders.toArray(new SourceFolder[0]);
   }
 
   @NotNull
@@ -155,7 +155,7 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   @Override
   public ExcludeFolder[] getExcludeFolders() {
     //assert !isDisposed();
-    return myExcludeFolders.toArray(new ExcludeFolder[myExcludeFolders.size()]);
+    return myExcludeFolders.toArray(new ExcludeFolder[0]);
   }
 
   @NotNull

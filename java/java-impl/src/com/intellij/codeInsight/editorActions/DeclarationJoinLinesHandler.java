@@ -25,13 +25,16 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler");
 
   @Override
-  public int tryJoinLines(final Document document, final PsiFile file, final int start, final int end) {
+  public int tryJoinLines(@NotNull final Document document, @NotNull final PsiFile file, final int start, final int end) {
     PsiElement elementAtStartLineEnd = file.findElementAt(start);
     PsiElement elementAtNextLineStart = file.findElementAt(end);
     if (elementAtStartLineEnd == null || elementAtNextLineStart == null) return -1;
@@ -61,7 +64,10 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
     PsiAssignmentExpression assignment = (PsiAssignmentExpression)ref.getParent();
     if (!(assignment.getParent() instanceof PsiExpressionStatement)) return -1;
 
-    if (ReferencesSearch.search(var, new LocalSearchScope(assignment.getRExpression()), false).findFirst() != null) {
+    PsiExpression rExpression = assignment.getRExpression();
+    if (rExpression == null) return -1;
+
+    if (ReferencesSearch.search(var, new LocalSearchScope(rExpression), false).findFirst() != null) {
       return -1;
     }
 
@@ -102,17 +108,25 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
     }
   }
 
+  /**
+   * Returns an updated initializer after joining with given assignment
+   * @param var variable which initializer should be updated
+   * @param assignment assignment to merge into the initializer
+   * @return updated initializer or null if operation cannot be performed (e.g. code is incomplete)
+   */
+  @Nullable
   public static PsiExpression getInitializerExpression(PsiLocalVariable var,
                                                        PsiAssignmentExpression assignment) {
-    return getInitializerExpression(var.getInitializer(), 
-                                    assignment);
+    return getInitializerExpression(var.getInitializer(), assignment);
   }
 
+  @Nullable
   public static PsiExpression getInitializerExpression(PsiExpression initializer,
                                                        PsiAssignmentExpression assignment) {
     PsiExpression initializerExpression;
     final IElementType originalOpSign = assignment.getOperationTokenType();
     final PsiExpression rExpression = assignment.getRExpression();
+    if (rExpression == null) return null;
     if (originalOpSign == JavaTokenType.EQ) {
       initializerExpression = rExpression;
     }
@@ -162,6 +176,10 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
         }
         else {
           initializerText += rightText;
+        }
+        if ("+".equals(opSign) && ExpressionUtils.isZero(initializer) ||
+            "*".equals(opSign) && ExpressionUtils.isOne(initializer)) {
+          initializerText = rightText;
         }
         initializerExpression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(initializerText, assignment);
         initializerExpression = (PsiExpression)CodeStyleManager.getInstance(project).reformat(initializerExpression);

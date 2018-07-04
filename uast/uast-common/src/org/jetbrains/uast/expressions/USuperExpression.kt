@@ -15,9 +15,9 @@
  */
 package org.jetbrains.uast
 
-import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
+import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.visitor.UastVisitor
 
 /**
@@ -25,16 +25,16 @@ import org.jetbrains.uast.visitor.UastVisitor
  * Qualified `super` is not supported at the moment.
  */
 interface USuperExpression : UInstanceExpression {
-    override fun asLogString() = log("label = $label")
+  override fun asLogString(): String = log("label = $label")
 
-    override fun asRenderString() = "super"
+  override fun asRenderString(): String = "super"
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitSuperExpression(this)) return
-        annotations.acceptList(visitor)
-        visitor.afterVisitSuperExpression(this)
-    }
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitSuperExpression(this)) return
+    annotations.acceptList(visitor)
+    visitor.afterVisitSuperExpression(this)
+  }
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
-            visitor.visitSuperExpression(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
+    visitor.visitSuperExpression(this, data)
 }

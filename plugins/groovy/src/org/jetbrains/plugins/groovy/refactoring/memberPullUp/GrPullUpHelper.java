@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.memberPullUp;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -22,9 +8,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -46,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -61,6 +47,8 @@ import org.jetbrains.plugins.groovy.refactoring.classMembers.GrClassMemberRefere
 import org.jetbrains.plugins.groovy.util.GroovyChangeContextUtil;
 
 import java.util.*;
+
+import static org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil.getNewName;
 
 public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
   private static final Logger LOG = Logger.getInstance(GrPullUpHelper.class);
@@ -249,7 +237,7 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
 
       final GrMethod movedElement =
         anchor != null ? (GrMethod)myTargetSuperClass.addBefore(methodCopy, anchor) : (GrMethod)myTargetSuperClass.add(methodCopy);
-      CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(method.getProject());
+      JavaCodeStyleSettings styleSettings = JavaCodeStyleSettings.getInstance(method.getContainingFile());
       if (styleSettings.INSERT_OVERRIDE_ANNOTATION) {
         if (PsiUtil.isLanguageLevel5OrHigher(mySourceClass) && !myTargetSuperClass.isInterface() ||
             PsiUtil.isLanguageLevel6OrHigher(mySourceClass)) {
@@ -355,18 +343,15 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
   private void fixReferencesToStatic(GroovyPsiElement classMember) throws IncorrectOperationException {
     final StaticReferencesCollector collector = new StaticReferencesCollector(myMembersToMove);
     classMember.accept(collector);
-    ArrayList<GrReferenceElement> refs = collector.getReferences();
-    ArrayList<PsiElement> members = collector.getReferees();
-    ArrayList<PsiClass> classes = collector.getRefereeClasses();
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
 
-    for (int i = 0; i < refs.size(); i++) {
-      GrReferenceElement ref = refs.get(i);
-      PsiElement namedElement = members.get(i);
-      PsiClass aClass = classes.get(i);
-
+    for (StaticReferenceResult result : collector.results) {
+      GrReferenceElement ref = result.reference;
+      GrMember namedElement = result.referee;
+      PsiClass aClass = result.refereeClass;
       if (namedElement instanceof PsiNamedElement) {
-        GrReferenceExpression newRef = (GrReferenceExpression)factory.createExpressionFromText("a." + ((PsiNamedElement)namedElement).getName(), null);
+        String name = getNewName((PsiNamedElement)namedElement, result.invokedOnProperty);
+        GrReferenceExpression newRef = (GrReferenceExpression)factory.createExpressionFromText("a." + name, null);
         GrExpression qualifier = newRef.getQualifierExpression();
         assert qualifier != null;
         qualifier = (GrExpression)qualifier.replace(factory.createReferenceExpressionFromText(aClass.getQualifiedName()));
@@ -377,43 +362,43 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
     }
   }
 
+  private static class StaticReferenceResult {
+    final GrReferenceElement<?> reference;
+    final GrMember referee;
+    final PsiClass refereeClass;
+    final boolean invokedOnProperty;
+
+    private StaticReferenceResult(GrReferenceElement<?> reference, GrMember referee, PsiClass refereeClass, boolean invokedOnProperty) {
+      this.reference = reference;
+      this.referee = referee;
+      this.refereeClass = refereeClass;
+      this.invokedOnProperty = invokedOnProperty;
+    }
+  }
 
   private class StaticReferencesCollector extends GrClassMemberReferenceVisitor {
-    private final ArrayList<GrReferenceElement> myReferences = new ArrayList<>();
-    private final ArrayList<PsiElement> myReferees = new ArrayList<>();
-    private final ArrayList<PsiClass> myRefereeClasses = new ArrayList<>();
+
     private final Set<PsiMember> myMovedMembers;
+    final List<StaticReferenceResult> results = new ArrayList<>();
 
     private StaticReferencesCollector(Set<PsiMember> movedMembers) {
       super(mySourceClass);
       myMovedMembers = movedMembers;
     }
 
-    public ArrayList<PsiElement> getReferees() {
-      return myReferees;
-    }
-
-    public ArrayList<PsiClass> getRefereeClasses() {
-      return myRefereeClasses;
-    }
-
-    public ArrayList<GrReferenceElement> getReferences() {
-      return myReferences;
-    }
-
     @Override
-    protected void visitClassMemberReferenceElement(GrMember classMember, GrReferenceElement classMemberReference) {
+    protected void visitClassMemberReferenceElement(GrReferenceElement<?> ref, GrMember classMember, GroovyResolveResult resolveResult) {
       if (classMember.hasModifierProperty(PsiModifier.STATIC) /*&& classMemberReference.isQualified()*/) {
         if (!myMovedMembers.contains(classMember) &&
             RefactoringHierarchyUtil.isMemberBetween(myTargetSuperClass, mySourceClass, classMember)) {
-          myReferences.add(classMemberReference);
-          myReferees.add(classMember);
-          myRefereeClasses.add(classMember.getContainingClass());
+          results.add(new StaticReferenceResult(
+            ref, classMember, classMember.getContainingClass(), resolveResult.isInvokedOnProperty()
+          ));
         }
         else if (myMovedMembers.contains(classMember) || myMembersAfterMove.contains(classMember)) {
-          myReferences.add(classMemberReference);
-          myReferees.add(classMember);
-          myRefereeClasses.add(myTargetSuperClass);
+          results.add(new StaticReferenceResult(
+            ref, classMember, myTargetSuperClass, resolveResult.isInvokedOnProperty()
+          ));
         }
       }
     }

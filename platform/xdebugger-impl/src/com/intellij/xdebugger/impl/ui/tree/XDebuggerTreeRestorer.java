@@ -43,7 +43,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   private final Map<RestorableStateNode, XDebuggerTreeState.NodeInfo> myNode2ParentState = new HashMap<>();
   private boolean myStopRestoringSelection;
   private boolean myInsideRestoring;
-  private TreePath mySelectionPath;
+  private final TreePath mySelectionPath;
   private boolean myFinished;
 
   public XDebuggerTreeRestorer(final XDebuggerTree tree, Rectangle lastVisibleNodeRect) {

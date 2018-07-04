@@ -15,8 +15,8 @@
  */
 package com.intellij.execution.actions;
 
+import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.Filter;
-import com.intellij.execution.testframework.JavaAwareFilter;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
 import com.intellij.openapi.project.Project;
@@ -37,6 +37,11 @@ public class JavaRerunFailedTestsAction extends AbstractRerunFailedTestsAction {
   @NotNull
   @Override
   protected Filter getFilter(@NotNull Project project, @NotNull GlobalSearchScope searchScope) {
-    return super.getFilter(project, searchScope).and(JavaAwareFilter.METHOD(project, searchScope));
+    return super.getFilter(project, searchScope).and(new Filter() {
+      @Override
+      public boolean shouldAccept(AbstractTestProxy test) {
+        return test.isLeaf();
+      }
+    });
   }
 }

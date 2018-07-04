@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.Disposable;
@@ -22,6 +8,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -150,9 +137,18 @@ public interface Application extends ComponentManager {
   void saveAll();
 
   /**
-   * Saves all application settings.
+   * Saves application settings.
    */
   void saveSettings();
+
+  /**
+   * Saves application settings.
+   * If `isForce` is `false`, non-roamable component configuration will be saved only if more than 4 minutes have been passed after the last save.
+   * @param isForce Whether to force save non-roamable component configuration.
+   */
+  default void saveSettings(boolean isForce) {
+    saveSettings();
+  }
 
   /**
    * Exits the application, showing the exit confirmation prompt if it is enabled.
@@ -166,6 +162,7 @@ public interface Application extends ComponentManager {
    * @see #assertWriteAccessAllowed()
    * @see #runWriteAction(Runnable)
    */
+  @Contract(pure=true)
   boolean isWriteAccessAllowed();
 
   /**
@@ -175,6 +172,7 @@ public interface Application extends ComponentManager {
    * @see #assertReadAccessAllowed()
    * @see #runReadAction(Runnable)
    */
+  @Contract(pure=true)
   boolean isReadAccessAllowed();
 
   /**
@@ -182,6 +180,7 @@ public interface Application extends ComponentManager {
    *
    * @return true if the current thread is the Swing dispatch thread, false otherwise.
    */
+  @Contract(pure=true)
   boolean isDispatchThread();
 
   /**
@@ -407,9 +406,10 @@ public interface Application extends ComponentManager {
   boolean isActive();
 
   /**
-   * Returns lock used for read operations, should be closed in finally block
+   * Use {@link #runReadAction(Runnable)} instead
    */
   @NotNull
+  @Deprecated
   AccessToken acquireReadActionLock();
 
   /**
@@ -425,4 +425,5 @@ public interface Application extends ComponentManager {
   boolean isInternal();
 
   boolean isEAP();
+
 }

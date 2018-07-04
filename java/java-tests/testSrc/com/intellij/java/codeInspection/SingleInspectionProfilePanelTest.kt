@@ -25,6 +25,7 @@ import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel
 import com.intellij.testFramework.LightIdeaTestCase
 import com.intellij.testFramework.configureInspections
 import com.intellij.testFramework.createProfile
+import com.intellij.testFramework.runInInitMode
 import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 
@@ -33,23 +34,25 @@ class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
 
   // see IDEA-85700
   fun testSettingsModification() {
-    val project = ProjectManager.getInstance().defaultProject
-    val profile = configureInspections(arrayOf(myInspection), project, testRootDisposable)
+    runInInitMode {
+      val project = ProjectManager.getInstance().defaultProject
+      val profile = configureInspections(arrayOf(myInspection), project, testRootDisposable)
 
-    val model = profile.modifiableModel
-    val panel = SingleInspectionProfilePanel(ProjectInspectionProfileManager.getInstance(project), model)
-    panel.isVisible = true
-    panel.reset()
+      val model = profile.modifiableModel
+      val panel = SingleInspectionProfilePanel(ProjectInspectionProfileManager.getInstance(project), model)
+      panel.isVisible = true
+      panel.reset()
 
-    val tool = getInspection(model)
-    assertEquals("", tool.myAdditionalJavadocTags)
-    tool.myAdditionalJavadocTags = "foo"
-    model.setModified(true)
-    panel.apply()
-    assertThat(InspectionProfileTest.countInitializedTools(model)).isEqualTo(1)
+      val tool = getInspection(model)
+      assertEquals("", tool.myAdditionalJavadocTags)
+      tool.myAdditionalJavadocTags = "foo"
+      model.setModified(true)
+      panel.apply()
+      assertThat(InspectionProfileTest.countInitializedTools(model)).isEqualTo(1)
 
-    assertThat(getInspection(profile).myAdditionalJavadocTags).isEqualTo("foo")
-    panel.disposeUI()
+      assertThat(getInspection(profile).myAdditionalJavadocTags).isEqualTo("foo")
+      panel.disposeUI()
+    }
   }
 
   fun testModifyInstantiatedTool() {

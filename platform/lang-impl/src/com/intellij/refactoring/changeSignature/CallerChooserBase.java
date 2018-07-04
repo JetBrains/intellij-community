@@ -42,7 +42,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,17 +68,6 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
   private final String myFileName;
 
   protected MemberNodeBase<M> createTreeNodeFor(M method, HashSet<M> called, Runnable cancelCallback) {
-    return createTreeNode(method, called, cancelCallback);
-  }
-
-  /**
-   * @see CallerChooserBase#createTreeNodeFor(PsiElement, com.intellij.util.containers.HashSet, Runnable)
-   *
-   * @deprecated to be removed in IDEA 2019.1
-   */
-  @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
-  @Deprecated
-  protected MethodNodeBase<M> createTreeNode(M method, HashSet<M> called, Runnable cancelCallback) {
     throw new UnsupportedOperationException();
   }
 

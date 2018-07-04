@@ -33,31 +33,50 @@ public abstract class SmartPointerManager {
   }
 
   /**
+   * Creates a smart pointer to the specified PSI element
+   * using a manager that corresponds to the element's project.
+   *
+   * @param element the element to create a pointer to
+   * @param <E>     the specific type of the given element
+   * @return a pointer to the specified element which can survive PSI reparse
+   * @see #createSmartPsiElementPointer(PsiElement)
+   */
+  @NotNull
+  public static <E extends PsiElement> SmartPsiElementPointer<E> createPointer(@NotNull E element) {
+    return getInstance(element.getProject()).createSmartPsiElementPointer(element);
+  }
+
+  /**
    * Creates a smart pointer to the specified PSI element. If the element's containing file is known, it's more preferable to use
    * {@link #createSmartPsiElementPointer(PsiElement, PsiFile)}.
    *
    * @param element the element to create a pointer to.
    * @return the smart pointer instance.
    */
-  @NotNull public abstract <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element);
+  @NotNull
+  public abstract <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element);
 
   /**
    * Creates a smart pointer to the specified PSI element.
    *
-   * @param element the element to create a pointer to.
+   * @param element        the element to create a pointer to.
    * @param containingFile the result of {@code element.getContainingFile()}.
    * @return the smart pointer instance.
    */
-  @NotNull public abstract <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element, PsiFile containingFile);
+  @NotNull
+  public abstract <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element, PsiFile containingFile);
 
   /**
    * Creates a smart pointer to the specified PSI element which doesn't hold a strong reference to the PSI
    * element.
-   * @deprecated use {@link #createSmartPsiElementPointer(PsiElement)} instead
+   *
    * @param element the element to create a pointer to.
    * @return the smart pointer instance.
+   * @deprecated use {@link #createSmartPsiElementPointer(PsiElement)} instead
    */
-  @NotNull public <E extends PsiElement> SmartPsiElementPointer<E> createLazyPointer(@NotNull E element) {
+  @Deprecated
+  @NotNull
+  public <E extends PsiElement> SmartPsiElementPointer<E> createLazyPointer(@NotNull E element) {
     return createSmartPsiElementPointer(element);
   }
 

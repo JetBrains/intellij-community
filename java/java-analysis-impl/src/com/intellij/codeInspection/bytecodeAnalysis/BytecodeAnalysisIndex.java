@@ -30,45 +30,45 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.DifferentSerializableBytesImplyNonEqualityPolicy;
 import com.intellij.util.io.KeyDescriptor;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.org.objectweb.asm.ClassReader;
-import org.jetbrains.org.objectweb.asm.MethodVisitor;
-import org.jetbrains.org.objectweb.asm.tree.MethodNode;
+import org.jetbrains.org.objectweb.asm.*;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.*;
-import java.util.stream.Collectors;
+import java.util.function.BinaryOperator;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalysis.LOG;
 
 /**
  * @author lambdamix
  */
-public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
-  private static final ID<HMethod, Void> NAME = ID.create("bytecodeAnalysis");
+public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
+  private static final ID<HMember, Void> NAME = ID.create("bytecodeAnalysis");
   private static final HKeyDescriptor KEY_DESCRIPTOR = new HKeyDescriptor();
 
-  private static final int VERSION = 5; // change when inference algorithm changes
+  private static final int VERSION = 11; // change when inference algorithm changes
   private static final int VERSION_MODIFIER = HardCodedPurity.AGGRESSIVE_HARDCODED_PURITY ? 1 : 0;
   private static final int FINAL_VERSION = VERSION * 2 + VERSION_MODIFIER;
 
-  private static final VirtualFileGist<Map<HMethod, Equations>> ourGist = GistManager.getInstance().newVirtualFileGist(
+  private static final VirtualFileGist<Map<HMember, Equations>> ourGist = GistManager.getInstance().newVirtualFileGist(
     "BytecodeAnalysisIndex", FINAL_VERSION, new EquationsExternalizer(), new ClassDataIndexer());
+  // Hash collision is possible: resolve it just flushing all the equations for colliding methods (unless equations are the same)
+  static final BinaryOperator<Equations> MERGER =
+    (eq1, eq2) -> eq1.equals(eq2) ? eq1 : new Equations(Collections.emptyList(), false);
 
   @NotNull
   @Override
-  public ID<HMethod, Void> getName() {
+  public ID<HMember, Void> getName() {
     return NAME;
   }
 
   @NotNull
   @Override
-  public DataIndexer<HMethod, Void, FileContent> getIndexer() {
+  public DataIndexer<HMember, Void, FileContent> getIndexer() {
     return inputData -> {
       try {
         return collectKeys(inputData.getContent());
@@ -86,23 +86,32 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
   }
 
   @NotNull
-  private static Map<HMethod, Void> collectKeys(byte[] content) throws NoSuchAlgorithmException {
-    HashMap<HMethod, Void> map = new HashMap<>();
+  private static Map<HMember, Void> collectKeys(byte[] content) {
+    HashMap<HMember, Void> map = new HashMap<>();
     MessageDigest md = BytecodeAnalysisConverter.getMessageDigest();
-    new ClassReader(content).accept(new KeyedMethodVisitor() {
-      @Nullable
+    ClassReader reader = new ClassReader(content);
+    String className = reader.getClassName();
+    reader.accept(new ClassVisitor(Opcodes.API_VERSION) {
       @Override
-      MethodVisitor visitMethod(MethodNode node, Method method, EKey key) {
-        map.put(method.hashed(md), null);
+      public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+        if((access & Opcodes.ACC_PRIVATE) == 0) {
+          map.put(new Member(className, name, desc).hashed(md), null);
+        }
         return null;
       }
-    }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+
+      @Override
+      public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
+        map.put(new Member(className, name, desc).hashed(md), null);
+        return null;
+      }
+    }, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES | ClassReader.SKIP_CODE);
     return map;
   }
 
   @NotNull
   @Override
-  public KeyDescriptor<HMethod> getKeyDescriptor() {
+  public KeyDescriptor<HMember> getKeyDescriptor() {
     return KEY_DESCRIPTOR;
   }
 
@@ -128,7 +137,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
   }
 
   @NotNull
-  static List<Equations> getEquations(GlobalSearchScope scope, HMethod key) {
+  static List<Equations> getEquations(GlobalSearchScope scope, HMember key) {
     Project project = ProjectManager.getInstance().getDefaultProject(); // the data is project-independent
     return ContainerUtil.mapNotNull(FileBasedIndex.getInstance().getContainingFiles(NAME, key, scope),
                                     file -> ourGist.getFileData(project, file).get(key));
@@ -137,27 +146,27 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
   /**
    * Externalizer for primary method keys.
    */
-  private static class HKeyDescriptor implements KeyDescriptor<HMethod>, DifferentSerializableBytesImplyNonEqualityPolicy {
+  private static class HKeyDescriptor implements KeyDescriptor<HMember>, DifferentSerializableBytesImplyNonEqualityPolicy {
 
     @Override
-    public void save(@NotNull DataOutput out, HMethod value) throws IOException {
-      out.write(value.myBytes);
+    public void save(@NotNull DataOutput out, HMember value) throws IOException {
+      out.write(value.asBytes());
     }
 
     @Override
-    public HMethod read(@NotNull DataInput in) throws IOException {
-      byte[] bytes = new byte[HMethod.HASH_SIZE];
+    public HMember read(@NotNull DataInput in) throws IOException {
+      byte[] bytes = new byte[HMember.HASH_SIZE];
       in.readFully(bytes);
-      return new HMethod(bytes);
+      return new HMember(bytes);
     }
 
     @Override
-    public int getHashCode(HMethod value) {
+    public int getHashCode(HMember value) {
       return value.hashCode();
     }
 
     @Override
-    public boolean isEqual(HMethod val1, HMethod val2) {
+    public boolean isEqual(HMember val1, HMember val2) {
       return val1.equals(val2);
     }
   }
@@ -165,9 +174,9 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
   /**
    * Externalizer for compressed equations.
    */
-  public static class EquationsExternalizer implements DataExternalizer<Map<HMethod, Equations>> {
+  public static class EquationsExternalizer implements DataExternalizer<Map<HMember, Equations>> {
     @Override
-    public void save(@NotNull DataOutput out, Map<HMethod, Equations> value) throws IOException {
+    public void save(@NotNull DataOutput out, Map<HMember, Equations> value) throws IOException {
       DataInputOutputUtilRt.writeSeq(out, value.entrySet(), entry -> {
         KEY_DESCRIPTOR.save(out, entry.getKey());
         saveEquations(out, entry.getValue());
@@ -175,9 +184,9 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
     }
 
     @Override
-    public Map<HMethod, Equations> read(@NotNull DataInput in) throws IOException {
-      return DataInputOutputUtilRt.readSeq(in, () -> Pair.create(KEY_DESCRIPTOR.read(in), readEquations(in))).
-        stream().collect(Collectors.toMap(p -> p.getFirst(), p -> p.getSecond()));
+    public Map<HMember, Equations> read(@NotNull DataInput in) throws IOException {
+      return StreamEx.of(DataInputOutputUtilRt.readSeq(in, () -> Pair.create(KEY_DESCRIPTOR.read(in), readEquations(in)))).
+        toMap(p -> p.getFirst(), p -> p.getSecond(), MERGER);
     }
 
     private static void saveEquations(@NotNull DataOutput out, Equations eqs) throws IOException {
@@ -187,10 +196,10 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
       for (DirectionResultPair pair : eqs.results) {
         DataInputOutputUtil.writeINT(out, pair.directionKey);
         Result rhs = pair.result;
-        if (rhs instanceof Final) {
-          Final finalResult = (Final)rhs;
+        if (rhs instanceof Value) {
+          Value finalResult = (Value)rhs;
           out.writeBoolean(true); // final flag
-          DataInputOutputUtil.writeINT(out, finalResult.value.ordinal());
+          DataInputOutputUtil.writeINT(out, finalResult.ordinal());
         }
         else if (rhs instanceof Pending) {
           Pending pendResult = (Pending)rhs;
@@ -224,7 +233,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
       for (int k = 0; k < size; k++) {
         int directionKey = DataInputOutputUtil.readINT(in);
         Direction direction = Direction.fromInt(directionKey);
-        if (direction == Direction.Pure) {
+        if (direction == Direction.Pure || direction == Direction.Volatile) {
           Set<EffectQuantum> effects = new HashSet<>();
           int effectsSize = DataInputOutputUtil.readINT(in);
           for (int i = 0; i < effectsSize; i++) {
@@ -238,7 +247,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
           if (isFinal) {
             int ordinal = DataInputOutputUtil.readINT(in);
             Value value = Value.values()[ordinal];
-            results.add(new DirectionResultPair(directionKey, new Final(value)));
+            results.add(new DirectionResultPair(directionKey, value));
           }
           else {
             int sumLength = DataInputOutputUtil.readINT(in);
@@ -263,14 +272,14 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
 
     @NotNull
     private static EKey readKey(@NotNull DataInput in) throws IOException {
-      byte[] bytes = new byte[HMethod.HASH_SIZE];
+      byte[] bytes = new byte[HMember.HASH_SIZE];
       in.readFully(bytes);
       int rawDirKey = DataInputOutputUtil.readINT(in);
-      return new EKey(new HMethod(bytes), Direction.fromInt(Math.abs(rawDirKey)), in.readBoolean(), rawDirKey < 0);
+      return new EKey(new HMember(bytes), Direction.fromInt(Math.abs(rawDirKey)), in.readBoolean(), rawDirKey < 0);
     }
 
     private static void writeKey(@NotNull DataOutput out, EKey key, MessageDigest md) throws IOException {
-      out.write(key.method.hashed(md).myBytes);
+      out.write(key.member.hashed(md).asBytes());
       int rawDirKey = key.negated ? -key.dirKey : key.dirKey;
       DataInputOutputUtil.writeINT(out, rawDirKey);
       out.writeBoolean(key.stable);
@@ -297,6 +306,10 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
         DataInputOutputUtil.writeINT(out, -4);
         writeKey(out, ((EffectQuantum.ReturnChangeQuantum)effect).key, md);
       }
+      else if (effect instanceof EffectQuantum.FieldReadQuantum) {
+        DataInputOutputUtil.writeINT(out, -5);
+        writeKey(out, ((EffectQuantum.FieldReadQuantum)effect).key, md);
+      }
       else if (effect instanceof EffectQuantum.ParamChangeQuantum) {
         DataInputOutputUtil.writeINT(out, ((EffectQuantum.ParamChangeQuantum)effect).n);
       }
@@ -320,6 +333,8 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
           return new EffectQuantum.CallQuantum(key, data, isStatic);
         case -4:
           return new EffectQuantum.ReturnChangeQuantum(readKey(in));
+        case -5:
+          return new EffectQuantum.FieldReadQuantum(readKey(in));
         default:
           return new EffectQuantum.ParamChangeQuantum(effectMask);
       }
@@ -366,7 +381,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMethod> {
         case -6:
           return new DataValue.ReturnDataValue(readKey(in));
         default:
-          return new DataValue.ParameterDataValue(dataI);
+          return DataValue.ParameterDataValue.create(dataI);
       }
     }
   }

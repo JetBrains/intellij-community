@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+// Use of this source code is governed by the Apache 2.0 license that can be
+// found in the LICENSE file.
 package org.jetbrains.plugins.groovy.actions.generate.equals;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,7 +14,6 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.actions.generate.GroovyCodeInsightBundle;
@@ -61,6 +48,7 @@ public class GroovyGenerateEqualsHelper {
 
   private final Project myProject;
   private final boolean myCheckParameterWithInstanceof;
+  private final PsiFile myFile;
 
   public GroovyGenerateEqualsHelper(Project project,
                                     PsiClass aClass,
@@ -81,6 +69,7 @@ public class GroovyGenerateEqualsHelper {
 
     mySuperHasHashCode = superMethodExists(getHashCodeSignature());
 //    myCodeStyleManager = CodeStyleManager.getInstance(myProject);
+    myFile = aClass.getContainingFile();
   }
 
   private static String getUniqueLocalVarName(String base, PsiField[] fields) {
@@ -208,7 +197,7 @@ public class GroovyGenerateEqualsHelper {
   private void addClassInstance(@NonNls StringBuffer buffer) {
     buffer.append("\n");
     // A a = (A) object;
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
+    JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(myFile);
     if (settings.GENERATE_FINAL_LOCALS) {
       buffer.append("final ");
     }
@@ -283,7 +272,7 @@ public class GroovyGenerateEqualsHelper {
 
     GrMethod result = myFactory.createMethodFromText(buffer.toString());
     final PsiParameter parameter = result.getParameterList().getParameters()[0];
-    PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, CodeStyleSettingsManager.getSettings(myProject).GENERATE_FINAL_PARAMETERS);
+    PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL, JavaCodeStyleSettings.getInstance(myFile).GENERATE_FINAL_PARAMETERS);
 
     try {
       result = ((GrMethod) CodeStyleManager.getInstance(myProject).reformat(result));
@@ -311,7 +300,7 @@ public class GroovyGenerateEqualsHelper {
       }
       buffer.append("\n}");
     } else if (myHashCodeFields.length > 0) {
-      CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
+      JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(myFile);
       final String resultName = getUniqueLocalVarName(settings.LOCAL_VARIABLE_NAME_PREFIX + RESULT_VARIABLE, myHashCodeFields);
 
       buffer.append("int ");
@@ -392,7 +381,7 @@ public class GroovyGenerateEqualsHelper {
   private String addTempForOneField(PsiField field, StringBuilder buffer) {
     if (PsiType.DOUBLE.equals(field.getType())) {
       final String name = getUniqueLocalVarName(TEMP_VARIABLE, myHashCodeFields);
-      CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(myProject);
+      JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(myFile);
       if (settings.GENERATE_FINAL_LOCALS) {
         buffer.append("final ");
       }
@@ -480,7 +469,6 @@ public class GroovyGenerateEqualsHelper {
     PRIMITIVE_HASHCODE_FORMAT.put("double", new MessageFormat("(int) ({1} ^ ({1} >>> 32))"));
 
     PRIMITIVE_HASHCODE_FORMAT.put("char", new MessageFormat("(int) {0}"));
-    PRIMITIVE_HASHCODE_FORMAT.put("void", new MessageFormat("0"));
     PRIMITIVE_HASHCODE_FORMAT.put("void", new MessageFormat("({0} ? 1 : 0)"));
   }
 

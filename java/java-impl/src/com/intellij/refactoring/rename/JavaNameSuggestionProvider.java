@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
@@ -48,7 +49,7 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
       if (nameSuggestionContextParent instanceof PsiParameterList) {
         final PsiElement parentOfParent = nameSuggestionContextParent.getParent();
         if (parentOfParent instanceof PsiMethod) {
-          final String propName = PropertyUtil.getPropertyName((PsiMethod)parentOfParent);
+          final String propName = PropertyUtilBase.getPropertyName((PsiMethod)parentOfParent);
           if (propName != null) {
             parameterName = propName;
           }
@@ -68,14 +69,8 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
     if (superMethodName != null && !list.contains(superMethodName)) {
       list.add(0, superMethodName);
     }
-    if (!list.contains(initialName)) {
-      list.add(initialName);
-    }
-    else {
-      int i = list.indexOf(initialName);
-      list.remove(i);
-      list.add(initialName);
-    }
+    list.remove(initialName);
+    list.add(initialName);
     ContainerUtil.removeDuplicates(list);
     result.addAll(list);
     return info;

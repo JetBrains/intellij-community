@@ -20,7 +20,6 @@ import com.intellij.psi.stubs.StubElement;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/27/12
  */
 public interface PsiAnnotationParameterListStub extends StubElement<PsiAnnotationParameterList> {
 }

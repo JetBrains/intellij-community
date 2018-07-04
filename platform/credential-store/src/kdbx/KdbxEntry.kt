@@ -41,7 +41,7 @@ class KdbxEntry(private val element: Element, private val database: KeePassDatab
       }
     }
 
-  @Volatile var password =  element.removeProperty("Password")?.let(::SecureString)
+  @Volatile var password: SecureString? =  element.removeProperty("Password")?.let(::SecureString)
     set(value) {
       if (field != value) {
         field = value

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class ExternalSystemBeforeRunTask extends BeforeRunTask<ExternalSystemBef
   }
 
   @Override
-  public void writeExternal(Element element) {
+  public void writeExternal(@NotNull Element element) {
     super.writeExternal(element);
 
     element.setAttribute("tasks", StringUtil.join(myTaskExecutionSettings.getTaskNames(), " "));
@@ -58,7 +58,7 @@ public class ExternalSystemBeforeRunTask extends BeforeRunTask<ExternalSystemBef
   }
 
   @Override
-  public void readExternal(Element element) {
+  public void readExternal(@NotNull Element element) {
     super.readExternal(element);
     myTaskExecutionSettings.setTaskNames(StringUtil.split(StringUtil.notNullize(element.getAttributeValue("tasks")), " "));
     myTaskExecutionSettings.setExternalProjectPath(element.getAttributeValue("externalProjectPath"));

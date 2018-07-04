@@ -41,7 +41,7 @@ public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> 
 
   public DFAMap<ScopeVariable> fun(final DFAMap<ScopeVariable> map, final Instruction instruction) {
     final PsiElement element = instruction.getElement();
-    if (element == null || !((PyFile) element.getContainingFile()).getLanguageLevel().isPy3K()){
+    if (element == null || ((PyFile) element.getContainingFile()).getLanguageLevel().isPython2()){
       return processReducedMap(map, instruction, element);
     }
     // Scope reduction
@@ -106,9 +106,5 @@ public class PyReachingDefsDfaInstance implements DfaMapInstance<ScopeVariable> 
   @NotNull
   public DFAMap<ScopeVariable> initial() {
     return INITIAL_MAP;
-  }
-
-  public boolean isForward() {
-    return true;
   }
 }

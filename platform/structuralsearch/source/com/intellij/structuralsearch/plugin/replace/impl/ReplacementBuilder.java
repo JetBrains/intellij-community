@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.codeInsight.template.Template;
@@ -30,63 +16,58 @@ import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
+import com.intellij.structuralsearch.plugin.replace.ReplacementInfo;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author maxim
- * Date: 24.02.2004
- * Time: 15:34:57
  */
 public final class ReplacementBuilder {
   private final String replacement;
-  private final List<ParameterInfo> parameterizations = new ArrayList<>();
-  private final Map<String, ScriptSupport> replacementVarsMap;
+  private final List<ParameterInfo> parameterizations = new SmartList<>();
+  private final Map<String, ScriptSupport> replacementVarsMap = new HashMap<>();
   private final ReplaceOptions options;
   private final Project myProject;
 
-  ReplacementBuilder(final Project project,final ReplaceOptions options) {
+  ReplacementBuilder(Project project, ReplaceOptions options) {
     myProject = project;
-    replacementVarsMap = new HashMap<>();
     this.options = options;
-    String _replacement = options.getReplacement();
-    FileType fileType = options.getMatchOptions().getFileType();
 
-    final Template template = TemplateManager.getInstance(project).createTemplate("","",_replacement);
-
-    final int segmentsCount = template.getSegmentsCount();
+    final Template template = TemplateManager.getInstance(project).createTemplate("", "", options.getReplacement());
     replacement = template.getTemplateText();
 
-    for(int i=0;i<segmentsCount;++i) {
+    int prevOffset = 0;
+    for (int i = 0; i < template.getSegmentsCount(); i++) {
       final int offset = template.getSegmentOffset(i);
       final String name = template.getSegmentName(i);
-
-      final ParameterInfo info = new ParameterInfo();
-      info.setStartIndex(offset);
-      info.setName(name);
-      info.setReplacementVariable(options.getVariableDefinition(name) != null);
+      final ParameterInfo info = new ParameterInfo(name, offset, options.getVariableDefinition(name) != null);
 
       // find delimiter
-      int pos;
-      for(pos = offset-1; pos >=0 && pos < replacement.length() && Character.isWhitespace(replacement.charAt(pos));) {
-        --pos;
+      int pos = offset - 1;
+      while (pos >= prevOffset && pos < replacement.length() && StringUtil.isWhiteSpace(replacement.charAt(pos))) {
+        pos--;
       }
 
       if (pos >= 0) {
         if (replacement.charAt(pos) == ',') {
           info.setHasCommaBefore(true);
         }
+        while (pos > prevOffset && StringUtil.isWhiteSpace(replacement.charAt(pos - 1))) {
+          pos--;
+        }
         info.setBeforeDelimiterPos(pos);
       }
 
-      for(pos = offset; pos < replacement.length() && Character.isWhitespace(replacement.charAt(pos));) {
-        ++pos;
+      pos = offset;
+      while (pos < replacement.length() && StringUtil.isWhiteSpace(replacement.charAt(pos))) {
+        pos++;
       }
 
       if (pos < replacement.length()) {
@@ -101,15 +82,16 @@ public final class ReplacementBuilder {
         }
       }
       info.setAfterDelimiterPos(pos);
-
+      prevOffset = offset;
       parameterizations.add(info);
     }
 
-    final StructuralSearchProfile profile = parameterizations != null ? StructuralSearchUtil.getProfileByFileType(fileType) : null;
+    FileType fileType = options.getMatchOptions().getFileType();
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
     if (profile != null) {
       try {
         final PsiElement[] elements = MatcherImplUtil.createTreeFromText(
-          _replacement,
+          options.getReplacement(),
           PatternTreeContext.Block,
           fileType,
           options.getMatchOptions().getDialect(),
@@ -140,50 +122,30 @@ public final class ReplacementBuilder {
     }
   }
 
-  private static void fill(MatchResult r,Map<String,MatchResult> m) {
-    if (r.getName()!=null) {
-      m.putIfAbsent(r.getName(), r);
-    }
-
-    if (!r.isScopeMatch() || !r.isMultipleMatch()) {
-      for (final MatchResult matchResult : r.getAllSons()) {
-        fill(matchResult, m);
-      }
-    } else if (r.hasSons()) {
-      final List<MatchResult> allSons = r.getAllSons();
-      if (allSons.size() > 0) {
-        fill(allSons.get(0),m);
-      }
-    }
-  }
-
-  String process(MatchResult match, ReplacementInfoImpl replacementInfo, FileType type) {
-    if (parameterizations==null) {
+  String process(MatchResult match, ReplacementInfo replacementInfo, FileType type) {
+    if (parameterizations.isEmpty()) {
       return replacement;
     }
 
     final StringBuilder result = new StringBuilder(replacement);
-    final HashMap<String, MatchResult> matchMap = new HashMap<>();
-    fill(match, matchMap);
 
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(type);
     assert profile != null;
 
     int offset = 0;
     for (final ParameterInfo info : parameterizations) {
-      MatchResult r = matchMap.get(info.getName());
+      final MatchResult r = replacementInfo.getNamedMatchResult(info.getName());
       if (info.isReplacementVariable()) {
         offset = Replacer.insertSubstitution(result, offset, info, generateReplacement(info, match));
       }
       else if (r != null) {
-        offset = profile.handleSubstitution(info, r, result, offset, matchMap);
+        offset = profile.handleSubstitution(info, r, result, offset, replacementInfo);
       }
       else {
         offset = profile.handleNoSubstitution(info, offset, result);
       }
     }
 
-    replacementInfo.variableMap = matchMap;
     return result.toString();
   }
 
@@ -191,8 +153,10 @@ public final class ReplacementBuilder {
     ScriptSupport scriptSupport = replacementVarsMap.get(info.getName());
 
     if (scriptSupport == null) {
-      String constraint = options.getVariableDefinition(info.getName()).getScriptCodeConstraint();
-      scriptSupport = new ScriptSupport(myProject, StringUtil.stripQuotesAroundValue(constraint), info.getName());
+      final String constraint = options.getVariableDefinition(info.getName()).getScriptCodeConstraint();
+      final List<String> variableNames =
+        options.getVariableDefinitions().stream().map(o -> o.getName()).collect(Collectors.toList());
+      scriptSupport = new ScriptSupport(myProject, StringUtil.unquoteString(constraint), info.getName(), variableNames);
       replacementVarsMap.put(info.getName(), scriptSupport);
     }
     return scriptSupport.evaluate(match, null);
@@ -207,9 +171,5 @@ public final class ReplacementBuilder {
     }
 
     return null;
-  }
-
-  public void addParametrization(@NotNull ParameterInfo e) {
-    parameterizations.add(e);
   }
 }

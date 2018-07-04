@@ -23,7 +23,7 @@ import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperation;
 import com.intellij.cvsSupport2.cvsoperations.common.LocalPathIndifferentOperationHelper;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.netbeans.lib.cvsclient.command.Command;
 
 import java.io.File;
@@ -54,7 +54,7 @@ public class RTagOperation extends LocalPathIndifferentOperation {
       }
     }
 
-    return result.toArray(new RTagOperation[result.size()]);
+    return result.toArray(new RTagOperation[0]);
   }
 
   public RTagOperation(CvsEnvironment environment, String tagName, boolean overrideExisting) {

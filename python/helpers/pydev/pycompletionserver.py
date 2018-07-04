@@ -3,20 +3,13 @@ Entry-point module to start the code-completion server for PyDev.
 
 @author Fabio Zadrozny
 '''
-IS_PYTHON3K = 0
-try:
-    import __builtin__
-except ImportError:
-    import builtins as __builtin__  # Python 3.0
-    IS_PYTHON3K = 1
+import sys
+IS_PYTHON_3_ONWARDS = sys.version_info[0] >= 3
 
-try:
-    True
-    False
-except NameError:
-    # If it's not defined, let's define it now.
-    setattr(__builtin__, 'True', 1)  # Python 3.0 does not accept __builtin__.True = 1 in its syntax
-    setattr(__builtin__, 'False', 0)
+if not IS_PYTHON_3_ONWARDS:
+    import __builtin__
+else:
+    import builtins as __builtin__  # Python 3.0
 
 from _pydevd_bundle.pydevd_constants import IS_JYTHON
 
@@ -238,7 +231,7 @@ class CompletionServer:
             #Older versions (jython 2.1)
             self.emulated_sendall(msg)
         else:
-            if IS_PYTHON3K:
+            if IS_PYTHON_3_ONWARDS:
                 self.socket.sendall(bytearray(msg, 'utf-8'))
             else:
                 self.socket.sendall(msg)
@@ -264,7 +257,7 @@ class CompletionServer:
                     received = self.socket.recv(BUFFER_SIZE)
                     if len(received) == 0:
                         raise Exit()  # ok, connection ended
-                    if IS_PYTHON3K:
+                    if IS_PYTHON_3_ONWARDS:
                         data = data + received.decode('utf-8')
                     else:
                         data = data + received
@@ -357,8 +350,14 @@ class CompletionServer:
                             else:
                                 self.send(MSG_INVALID_REQUEST)
                     except Exit:
-                        self.send(self.get_completions_message(None, [('Exit:', 'SystemExit', '')]))
-                        raise
+                        e = sys.exc_info()[1]
+                        msg = self.get_completions_message(None, [('Exit:', 'SystemExit', '')])
+                        try:
+                            self.send(msg)
+                        except socket.error:
+                            pass # Ok, may be closed already
+
+                        raise e # raise original error.
 
                     except:
                         dbg(SERVER_NAME + ' exception occurred', ERROR)
@@ -367,7 +366,11 @@ class CompletionServer:
 
                         err = s.getvalue()
                         dbg(SERVER_NAME + ' received error: ' + str(err), ERROR)
-                        self.send(self.get_completions_message(None, [('ERROR:', '%s\nLog:%s' % (err, log.get_contents()), '')]))
+                        msg = self.get_completions_message(None, [('ERROR:', '%s\nLog:%s' % (err, log.get_contents()), '')])
+                        try:
+                            self.send(msg)
+                        except socket.error:
+                            pass # Ok, may be closed already
 
 
                 finally:

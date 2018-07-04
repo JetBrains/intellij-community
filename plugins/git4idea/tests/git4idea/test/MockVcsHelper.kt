@@ -64,11 +64,11 @@ class MockVcsHelper(project: Project) : AbstractVcsHelper(project) {
     throw UnsupportedOperationException()
   }
 
-  override fun showFileHistory(historyProvider: VcsHistoryProvider, path: FilePath, vcs: AbstractVcs<*>, repositoryPath: String?) {
+  override fun showFileHistory(historyProvider: VcsHistoryProvider, path: FilePath, vcs: AbstractVcs<*>) {
     throw UnsupportedOperationException()
   }
 
-  override fun showFileHistory(historyProvider: VcsHistoryProvider, annotationProvider: AnnotationProvider?, path: FilePath, repositoryPath: String?, vcs: AbstractVcs<*>) {
+  override fun showFileHistory(historyProvider: VcsHistoryProvider, annotationProvider: AnnotationProvider?, path: FilePath, vcs: AbstractVcs<*>) {
     throw UnsupportedOperationException()
   }
 

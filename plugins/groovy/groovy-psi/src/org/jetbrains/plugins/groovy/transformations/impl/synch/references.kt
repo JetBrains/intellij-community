@@ -43,5 +43,5 @@ class FieldReference(literal: GrLiteral) : PsiReferenceBase<GrLiteral>(literal) 
 
   override fun getVariants(): Array<out Any> = element.containingClass?.codeFields ?: emptyArray()
 
-  override fun resolve() = element.containingClass?.findCodeFieldByName(value, false)
+  override fun resolve(): PsiField? = element.containingClass?.findCodeFieldByName(value, false)
 }

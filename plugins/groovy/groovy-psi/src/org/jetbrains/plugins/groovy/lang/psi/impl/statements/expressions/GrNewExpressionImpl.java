@@ -1,31 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,13 +21,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrArrayD
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrBuiltInTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnonymousClassType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrCallExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrInnerClassConstructorUtil;
@@ -58,33 +38,6 @@ import java.util.List;
  * @author ilyas
  */
 public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewExpression {
-
-  private static final Function<GrNewExpressionImpl,PsiType> MY_TYPE_CALCULATOR =
-    (NullableFunction<GrNewExpressionImpl, PsiType>)newExpression -> {
-      final GrAnonymousClassDefinition anonymous = newExpression.getAnonymousClassDefinition();
-      if (anonymous != null) {
-        return new GrAnonymousClassType(LanguageLevel.JDK_1_5, anonymous.getResolveScope(),
-                                        JavaPsiFacade.getInstance(newExpression.getProject()), anonymous);
-      }
-      PsiType type = null;
-      GrCodeReferenceElement refElement = newExpression.getReferenceElement();
-      if (refElement != null) {
-        type = new GrClassReferenceType(refElement);
-      }
-      else {
-        GrBuiltInTypeElement builtin = newExpression.findChildByClass(GrBuiltInTypeElement.class);
-        if (builtin != null) type = builtin.getType();
-      }
-
-      if (type != null) {
-        for (int i = 0; i < newExpression.getArrayCount(); i++) {
-          type = type.createArrayType();
-        }
-        return type;
-      }
-
-      return null;
-    };
 
   private static final ResolveCache.PolyVariantResolver<MyFakeReference> RESOLVER = new ResolveCache.PolyVariantResolver<MyFakeReference>() {
     @NotNull
@@ -105,13 +58,8 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitNewExpression(this);
-  }
-
-  @Override
-  public PsiType getType() {
-    return TypeInferenceHelper.getCurrentContext().getExpressionType(this, MY_TYPE_CALCULATOR);
   }
 
   @Override
@@ -195,7 +143,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
       }
     }
 
-    return result.toArray(new GroovyResolveResult[result.size()]);
+    return result.toArray(GroovyResolveResult.EMPTY_ARRAY);
   }
 
   @Override
@@ -273,11 +221,13 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
       return GrNewExpressionImpl.this.multiResolve(incompleteCode);
     }
 
+    @NotNull
     @Override
     public GrNewExpressionImpl getElement() {
       return GrNewExpressionImpl.this;
     }
 
+    @NotNull
     @Override
     public TextRange getRangeInElement() {
       return TextRange.EMPTY_RANGE;

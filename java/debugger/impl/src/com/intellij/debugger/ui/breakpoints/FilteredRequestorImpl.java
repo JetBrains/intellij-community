@@ -147,7 +147,7 @@ public class FilteredRequestorImpl implements JDOMExternalizable, FilteredReques
       catch (Exception ignored) {
       }
     }
-    myInstanceFilters = iFilters.isEmpty() ? InstanceFilter.EMPTY_ARRAY : iFilters.toArray(new InstanceFilter[iFilters.size()]);
+    myInstanceFilters = iFilters.isEmpty() ? InstanceFilter.EMPTY_ARRAY : iFilters.toArray(InstanceFilter.EMPTY_ARRAY);
   }
 
   public void writeExternal(Element parentNode) throws WriteExternalException {

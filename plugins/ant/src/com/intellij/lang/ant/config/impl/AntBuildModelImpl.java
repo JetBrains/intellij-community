@@ -71,7 +71,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
 
   public AntBuildTarget[] getTargets() {
     final List<AntBuildTargetBase> list = getTargetsList();
-    return list.toArray(new AntBuildTargetBase[list.size()]);
+    return list.toArray(AntBuildTargetBase.EMPTY_ARRAY);
   }
 
   public AntBuildTarget[] getFilteredTargets() {
@@ -81,7 +81,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
         filtered.add(buildTarget);
       }
     }
-    return (filtered.size() == 0) ? AntBuildTargetBase.EMPTY_ARRAY : filtered.toArray(new AntBuildTargetBase[filtered.size()]);
+    return (filtered.size() == 0) ? AntBuildTargetBase.EMPTY_ARRAY : filtered.toArray(AntBuildTargetBase.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -161,7 +161,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
             final TargetResolver.Result result = project.getDefaultTarget().getValue();
             if (result != null) {
               final Pair<AntDomTarget,String> targetWithName = result.getResolvedTarget(project.getDefaultTarget().getRawText());
-              myDefaultTarget = targetWithName != null? targetWithName.getFirst() : null;
+              myDefaultTarget = Pair.getFirst(targetWithName);
             }
           }
           for (final AntDomTarget target : project.getDeclaredTargets()) {

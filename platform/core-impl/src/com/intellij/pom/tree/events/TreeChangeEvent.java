@@ -30,8 +30,4 @@ public interface TreeChangeEvent extends PomChangeSet {
   ASTNode[] getChangedElements();
 
   TreeChange getChangesByElement(@NotNull ASTNode element);
-
-  void addElementaryChange(@NotNull ASTNode child, @NotNull ChangeInfo change);
-
-  void clear();
 }

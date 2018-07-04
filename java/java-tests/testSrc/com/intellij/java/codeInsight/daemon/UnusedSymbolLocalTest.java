@@ -35,6 +35,7 @@ public class UnusedSymbolLocalTest extends DaemonAnalyzerTestCase {
   }
 
   public void testInnerClass() throws Exception { doTest(); }
+  public void testInnerClassWithMainMethod() throws Exception { doTest(); }
   public void testInnerUsesSelf() throws Exception { doTest(); }
   public void testLocalClass() throws Exception { doTest(); }
   public void testPrivateConstructor() throws Exception { doTest(); }

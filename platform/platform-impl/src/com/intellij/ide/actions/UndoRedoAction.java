@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.idea.ActionsBundle;
@@ -20,21 +6,27 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.command.undo.UndoableAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 
 public abstract class UndoRedoAction extends DumbAwareAction {
+  private static final Logger LOG = Logger.getInstance(UndoRedoAction.class);
+
+  private boolean myActionInProgress;
+
   public UndoRedoAction() {
     setEnabledInModalContext(true);
   }
@@ -43,7 +35,14 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     DataContext dataContext = e.getDataContext();
     FileEditor editor = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
     UndoManager undoManager = getUndoManager(editor, dataContext);
-    perform(editor, undoManager);
+
+    myActionInProgress = true;
+    try {
+      perform(editor, undoManager);
+    }
+    finally {
+      myActionInProgress = false;
+    }
   }
 
   public void update(AnActionEvent event) {
@@ -63,14 +62,27 @@ public abstract class UndoRedoAction extends DumbAwareAction {
     presentation.setDescription(pair.second);
   }
 
-  private static UndoManager getUndoManager(FileEditor editor, DataContext dataContext) {
-    if (editor == null && Registry.is("undo.use.for.swing.in.modal.context")) {
-      Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-      JRootPane rootPane = UIUtil.getRootPane(component);
-      JBPopup popup = rootPane != null ? (JBPopup)rootPane.getClientProperty(JBPopup.KEY) : null;
-      if (popup != null && popup.isModalContext()) {
+  private UndoManager getUndoManager(FileEditor editor, DataContext dataContext) {
+    Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+    Editor e = dataContext.getData(CommonDataKeys.EDITOR);
+    if (component instanceof JTextComponent && (e == null || component != e.getContentComponent())) {
+      return SwingUndoManagerWrapper.fromContext(dataContext);
+    }
+    JRootPane rootPane = null;
+    JBPopup popup = null;
+    if (editor == null) {
+      rootPane = UIUtil.getRootPane(component);
+      popup = rootPane != null ? (JBPopup)rootPane.getClientProperty(JBPopup.KEY) : null;
+      boolean modalPopup = popup != null && popup.isModalContext();
+      boolean modalContext = Boolean.TRUE.equals(PlatformDataKeys.IS_MODAL_CONTEXT.getData(dataContext));
+      if (modalPopup || modalContext) {
         return SwingUndoManagerWrapper.fromContext(dataContext);
       }
+    }
+    if (myActionInProgress) {
+      LOG.error("Recursive undo invocation attempt, component: " + component + ", fileEditor: " + editor + ", editor: " + e +
+                ", rootPane: " + rootPane + ", popup: " + popup);
+      return null;
     }
 
     Project project = getProject(editor, dataContext);

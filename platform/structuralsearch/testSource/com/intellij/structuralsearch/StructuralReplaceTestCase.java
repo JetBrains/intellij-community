@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
@@ -26,8 +12,7 @@ import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import java.io.File;
 import java.io.IOException;
 
-abstract class StructuralReplaceTestCase extends LightQuickFixTestCase {
-  protected Replacer replacer;
+public abstract class StructuralReplaceTestCase extends LightQuickFixTestCase {
   protected ReplaceOptions options;
 
   @Override
@@ -37,11 +22,21 @@ abstract class StructuralReplaceTestCase extends LightQuickFixTestCase {
     LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(LanguageLevel.JDK_1_4);
 
     options = new ReplaceOptions();
-    options.setMatchOptions(new MatchOptions());
-    replacer = new Replacer(getProject(), null);
   }
 
   protected String loadFile(String fileName) throws IOException {
     return FileUtilRt.loadFile(new File(getTestDataPath() + FileUtilRt.getExtension(fileName) + "/" + fileName), CharsetToolkit.UTF8, true);
+  }
+
+  protected String replace(String in, String what, String by) {
+    return replace(in, what, by, false);
+  }
+
+  protected String replace(String in, String what, String by, boolean sourceIsFile) {
+    final MatchOptions matchOptions = this.options.getMatchOptions();
+    matchOptions.fillSearchCriteria(what);
+    final String message = StructuralSearchTestCase.checkApplicableConstraints(matchOptions);
+    assertNull(message, message);
+    return Replacer.testReplace(in, what, by, this.options, getProject(), sourceIsFile);
   }
 }

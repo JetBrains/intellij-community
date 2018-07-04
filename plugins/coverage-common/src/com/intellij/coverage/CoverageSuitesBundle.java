@@ -29,7 +29,7 @@ import java.util.TreeMap;
 
 public class CoverageSuitesBundle {
   private final CoverageSuite[] mySuites;
-  private CoverageEngine myEngine;
+  private final CoverageEngine myEngine;
 
   private Set<Module> myProcessedModules;
 
@@ -60,6 +60,9 @@ public class CoverageSuitesBundle {
     return true;
   }
 
+  public Project getProject() {
+    return mySuites[0].getProject();
+  }
 
   public long getLastCoverageTimeStamp() {
     long max = 0;

@@ -1,4 +1,4 @@
-<warning descr="Package requirements 'factory-boy', 'python-magic', 'attrs', 'python-jenkins', 'python-dateutil', 'PyYAML', 'beautifulsoup4', 'scikit-learn', 'future', 'django-pipeline', 'django_jsonfield', 'django-simple-captcha', 'Pillow', 'pyzmq', 'robotframework', 'opencv-python' are not satisfied">import factory
+<warning descr="Package requirements 'factory-boy', 'python-magic', 'attrs', 'python-jenkins', 'python-dateutil', 'PyYAML', 'beautifulsoup4', 'scikit-learn', 'future', 'django-pipeline', 'django_jsonfield', 'django-simple-captcha', 'Pillow', 'pyzmq', 'robotframework', 'opencv-python', 'pyldap' are not satisfied">import factory
 import magic
 import attr
 import jenkins
@@ -13,4 +13,5 @@ import captcha
 import PIL
 import zmq
 import robot
-import cv2</warning>
+import cv2
+import ldap</warning>

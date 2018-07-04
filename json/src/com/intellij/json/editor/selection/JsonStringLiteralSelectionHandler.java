@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,7 +22,7 @@ import static com.intellij.json.JsonElementTypes.SINGLE_QUOTED_STRING;
  */
 public class JsonStringLiteralSelectionHandler extends ExtendWordSelectionHandlerBase {
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     if (!(e.getParent() instanceof JsonStringLiteral)) {
       return false;
     }
@@ -29,7 +30,7 @@ public class JsonStringLiteralSelectionHandler extends ExtendWordSelectionHandle
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     final IElementType type = e.getNode().getElementType();
     final StringLiteralLexer lexer = new StringLiteralLexer(type == SINGLE_QUOTED_STRING ? '\'' : '"', type, false, "/", false, false);
     final List<TextRange> result = new ArrayList<>();

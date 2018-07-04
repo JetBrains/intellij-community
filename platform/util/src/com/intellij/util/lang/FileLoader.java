@@ -29,13 +29,13 @@ import java.util.concurrent.atomic.AtomicLong;
 class FileLoader extends Loader {
   private final File myRootDir;
   private final String myRootDirAbsolutePath;
-  private final boolean myCanHavePersistentIndex;
+  private final ClassPath myConfiguration;
 
-  FileLoader(URL url, int index, boolean canHavePersistentIndex) throws IOException {
+  FileLoader(URL url, int index, ClassPath configuration) {
     super(url, index);
     myRootDir = new File(FileUtil.unquote(url.getFile()));
     myRootDirAbsolutePath = myRootDir.getAbsolutePath();
-    myCanHavePersistentIndex = canHavePersistentIndex;
+    myConfiguration = configuration;
   }
 
   private void buildPackageCache(final File dir, ClasspathCache.LoaderData loaderData) {
@@ -76,26 +76,16 @@ class FileLoader extends Loader {
 
   @Override
   @Nullable
-  Resource getResource(final String name, boolean check) {
-    URL url = null;
-    File file = null;
-
+  Resource getResource(final String name) {
     try {
-      url = new URL(getBaseURL(), name);
+      URL url = new URL(getBaseURL(), name);
       if (!url.getFile().startsWith(getBaseURL().getFile())) return null;
-
-      file = new File(myRootDir, name.replace('/', File.separatorChar));
-      if (!check || file.exists()) {     // check means we load or process resource so we check its existence via old way
-        return new MyResource(url, file, !check);
+      File file = new File(myRootDir, name.replace('/', File.separatorChar));
+      if (file.exists()) {
+        return new MyResource(url, file);
       }
     }
-    catch (Exception exception) {
-      if (!check && file != null && file.exists()) {
-        try {   // we can not open the file if it is directory, Resource still can be created
-          return new MyResource(url, file, false);
-        }
-        catch (IOException ex) {}
-      }
+    catch (Exception ignore) {
     }
     return null;
   }
@@ -108,7 +98,7 @@ class FileLoader extends Loader {
   private static final Boolean doFsActivityLogging = false;
 
   private ClasspathCache.LoaderData tryReadFromIndex() {
-    if (!myCanHavePersistentIndex) return null;
+    if (!myConfiguration.myCanHavePersistentIndex) return null;
     long started = System.nanoTime();
     ClasspathCache.LoaderData loaderData = new ClasspathCache.LoaderData();
     File index = getIndexFileFile();
@@ -142,7 +132,7 @@ class FileLoader extends Loader {
   }
 
   private void trySaveToIndex(ClasspathCache.LoaderData data) {
-    if (!myCanHavePersistentIndex) return;
+    if (!myConfiguration.myCanHavePersistentIndex) return;
     long started = System.nanoTime();
     File index = getIndexFileFile();
     BufferedWriter writer = null;
@@ -257,10 +247,9 @@ class FileLoader extends Loader {
     private final URL myUrl;
     private final File myFile;
 
-    public MyResource(URL url, File file, boolean willLoadBytes) throws IOException {
+    public MyResource(URL url, File file) {
       myUrl = url;
       myFile = file;
-      if (willLoadBytes) getInputStream().close(); // check file existence
     }
 
     @Override

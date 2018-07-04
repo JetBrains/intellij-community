@@ -21,19 +21,25 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.basic.ComboPopup;
 import java.awt.event.ActionEvent;
+import java.util.List;
 
 public class RunDialog extends DialogWrapper implements RunDialogBase {
   private final Project myProject;
@@ -125,6 +131,34 @@ public class RunDialog extends DialogWrapper implements RunDialogBase {
 
     dialog.setTitle(title);
     return dialog.showAndGet();
+  }
+
+  public static SingleConfigurableEditor editShortenClasspathSetting(final RunnerAndConfigurationSettings settings, final String title) {
+    SingleConfigurationConfigurable<RunConfiguration> configurable = SingleConfigurationConfigurable.editSettings(settings, null);
+    final SingleConfigurableEditor dialog = new SingleConfigurableEditor(settings.getConfiguration().getProject(), configurable, IdeModalityType.IDE) {
+      @Override
+      public JComponent getPreferredFocusedComponent() {
+        List<LabeledComponent> labeledComponents = UIUtil.findComponentsOfType(getContentPanel(), LabeledComponent.class);
+        String shortenLabelText = ExecutionBundle.message("application.configuration.shorten.command.line.label").replace("\u001B", "");
+        for (LabeledComponent component : labeledComponents) {
+          if (shortenLabelText.equals(component.getRawText())) {
+           JComponent cp = component.getComponent();
+            if (cp instanceof ComboBox) {
+              ApplicationManager.getApplication().invokeLater(() -> {
+                ComboPopup popup = ((ComboBox)cp).getPopup();
+                if (popup != null && cp.isShowing()) {
+                  popup.show();
+                }
+              });
+              return cp;
+            }
+          }
+        }
+        return super.getPreferredFocusedComponent();
+      }
+    };
+    dialog.setTitle(title);
+    return dialog;
   }
 
   private class ApplyAction extends AbstractAction {

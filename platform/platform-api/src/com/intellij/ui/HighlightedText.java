@@ -17,6 +17,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.text.StringUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,10 +51,8 @@ public class HighlightedText {
 
     HighlightedText highlightedText = (HighlightedText)o;
 
-    if (!myBuffer.equals(highlightedText.myBuffer)) return false;
-    if (!myHighlightedRegions.equals(highlightedText.myHighlightedRegions)) return false;
-
-    return true;
+    return StringUtil.equals(myBuffer, highlightedText.myBuffer) &&
+           myHighlightedRegions.equals(highlightedText.myHighlightedRegions);
   }
 
   public String getText() {

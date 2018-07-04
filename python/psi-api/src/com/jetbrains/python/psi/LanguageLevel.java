@@ -23,27 +23,65 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author yole
  */
 public enum LanguageLevel {
+
+  /**
+   * @deprecated This level is not supported since 2018.1.
+   */
+  @Deprecated
   PYTHON24(24, false, true, false, false),
+  /**
+   * @deprecated This level is not supported since 2018.1.
+   */
+  @Deprecated
   PYTHON25(25, false, true, false, false),
   PYTHON26(26, true, true, false, false),
   PYTHON27(27, true, true, true, false),
+  /**
+   * @deprecated This level is not supported since 2018.1.
+   * Use it only to distinguish Python 2 and Python 3.
+   * Consider using {@link LanguageLevel#isPython2()}.
+   * Replace {@code level.isOlderThan(PYTHON30)} with {@code level.isPython2()}
+   * and {@code level.isAtLeast(PYTHON30)} with {@code !level.isPython2()}.
+   */
+  @Deprecated
   PYTHON30(30, true, false, false, true),
+  /**
+   * @deprecated This level is not supported since 2018.1.
+   */
+  @Deprecated
   PYTHON31(31, true, false, true, true),
+  /**
+   * @deprecated This level is not supported since 2018.1.
+   */
+  @Deprecated
   PYTHON32(32, true, false, true, true),
+  /**
+   * @deprecated This level is not supported since 2018.1.
+   */
+  @Deprecated
   PYTHON33(33, true, false, true, true),
   PYTHON34(34, true, false, true, true),
   PYTHON35(35, true, false, true, true),
-  PYTHON36(36, true, false, true, true);
+  PYTHON36(36, true, false, true, true),
+  PYTHON37(37, true, false, true, true);
 
-  public static List<LanguageLevel> ALL_LEVELS = ImmutableList.copyOf(values());
+  public static final List<LanguageLevel> SUPPORTED_LEVELS =
+    ImmutableList.copyOf(
+      Stream
+        .of(values())
+        .filter(v -> v.myVersion > 33 || v.myVersion == 26 || v.myVersion == 27)
+        .collect(Collectors.toList())
+    );
 
   private static final LanguageLevel DEFAULT2 = PYTHON27;
-  private static final LanguageLevel DEFAULT3 = PYTHON36;
+  private static final LanguageLevel DEFAULT3 = PYTHON37;
 
   public static LanguageLevel FORCE_LANGUAGE_LEVEL = null;
 
@@ -84,6 +122,10 @@ public enum LanguageLevel {
 
   public boolean supportsSetLiterals() {
     return mySupportsSetLiterals;
+  }
+
+  public boolean isPython2() {
+    return !myIsPy3K;
   }
 
   public boolean isPy3K() {
@@ -136,6 +178,9 @@ public enum LanguageLevel {
       if (pythonVersion.startsWith("3.6")) {
         return PYTHON36;
       }
+      if (pythonVersion.startsWith("3.7")) {
+        return PYTHON37;
+      }
       return DEFAULT3;
     }
     return getDefault();
@@ -147,7 +192,7 @@ public enum LanguageLevel {
   public static LanguageLevel forElement(@NotNull PsiElement element) {
     final PsiFile containingFile = element.getContainingFile();
     if (containingFile instanceof PyFile) {
-      return ((PyFile) containingFile).getLanguageLevel();
+      return ((PyFile)containingFile).getLanguageLevel();
     }
     return getDefault();
   }

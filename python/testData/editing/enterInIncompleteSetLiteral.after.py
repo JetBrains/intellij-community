@@ -1,0 +1,2 @@
+xs = {'foo', 'bar',
+      'baz'

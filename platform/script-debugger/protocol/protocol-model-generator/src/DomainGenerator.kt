@@ -284,4 +284,4 @@ internal class DomainGenerator(val generator: Generator, val domain: ProtocolMet
   }
 }
 
-fun subMessageType(namePath: NamePath) = StandaloneType(namePath, "writeMessage", null)
+fun subMessageType(namePath: NamePath): StandaloneType = StandaloneType(namePath, "writeMessage", null)

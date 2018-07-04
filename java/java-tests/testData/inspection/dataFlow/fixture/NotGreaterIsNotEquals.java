@@ -23,7 +23,7 @@ class Zoo2 {
   void foo(Some me, Some other) {
     if (me.depth < other.depth) {
       System.out.println("less");
-    } else if (other.depth > me.depth) {
+    } else if (<warning descr="Condition 'other.depth > me.depth' is always 'false'">other.depth > me.depth</warning>) {
       System.out.println("more");
     }
   }

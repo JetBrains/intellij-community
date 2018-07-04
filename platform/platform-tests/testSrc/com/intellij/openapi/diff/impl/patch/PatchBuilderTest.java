@@ -26,6 +26,8 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.TestDataFile;
+import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
@@ -41,6 +43,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+@TestDataPath("$CONTENT_ROOT/testData/diff/patch/")
 public class PatchBuilderTest extends PlatformTestCase {
   public void testAddFile() throws Exception {
     doTest();
@@ -147,7 +150,7 @@ public class PatchBuilderTest extends PlatformTestCase {
   }
 
   private void doTest(@Nullable Project project, boolean relativePaths, @Nullable String forceLSeparator) throws IOException, VcsException {
-    String testDataPath = PlatformTestUtil.getPlatformTestDataPath() + "diff/patch/" + getTestName(true);
+    String testDataPath = getTestDir(getTestName(true));
     assertTrue(new File(testDataPath).isDirectory());
     String beforePath = testDataPath + "/before";
     String afterPath = testDataPath + "/after";
@@ -188,6 +191,11 @@ public class PatchBuilderTest extends PlatformTestCase {
       result = StringUtil.convertLineSeparators(result);
     }
     assertEquals(expected, result);
+  }
+
+  @NotNull
+  private static String getTestDir(@TestDataFile String dirName) {
+    return PlatformTestUtil.getPlatformTestDataPath() + "diff/patch/" + dirName;
   }
 
   @Nullable

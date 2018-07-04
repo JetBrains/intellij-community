@@ -78,7 +78,7 @@ public class ProjectFacetsConfigurator implements FacetsProvider {
 
     final List<Facet> removed = new ArrayList<>();
     List<FacetInfo> childrenList = treeModel.getChildren(facetInfo);
-    FacetInfo[] children = childrenList.toArray(new FacetInfo[childrenList.size()]);
+    FacetInfo[] children = childrenList.toArray(FacetInfo.EMPTY_ARRAY);
     for (FacetInfo child : children) {
       Facet childInfo = myInfo2Facet.get(child);
       if (childInfo != null) {

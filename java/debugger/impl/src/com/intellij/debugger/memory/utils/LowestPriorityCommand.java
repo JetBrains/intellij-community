@@ -25,10 +25,6 @@ public class LowestPriorityCommand extends SuspendContextCommandImpl {
   }
 
   @Override
-  protected void commandCancelled() {
-  }
-
-  @Override
   public Priority getPriority() {
     return Priority.LOWEST;
   }

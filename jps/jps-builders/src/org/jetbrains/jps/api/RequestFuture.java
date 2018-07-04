@@ -21,7 +21,6 @@ import java.util.UUID;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 9/13/11
 */
 public class RequestFuture<T> extends BasicFuture<T> {
   private final T myHandler;

@@ -27,90 +27,94 @@ import org.jetbrains.uast.visitor.UastVisitor
  * Represents a call expression (method/constructor call, array initializer).
  */
 interface UCallExpression : UExpression, UResolvable {
-    /**
-     * Returns the call kind.
-     */
-    val kind: UastCallKind
+  /**
+   * Returns the call kind.
+   */
+  val kind: UastCallKind
 
-    /**
-     * Returns the called method name, or null if the call is not a method call.
-     * This property should return the actual resolved function name.
-     */
-    val methodName: String?
+  /**
+   * Returns the called method name, or null if the call is not a method call.
+   * This property should return the actual resolved function name.
+   */
+  val methodName: String?
 
-    /**
-     * Returns the expression receiver.
-     * For example, for call `a.b.[c()]` the receiver is `a.b`.
-     */
-    val receiver: UExpression?
+  /**
+   * Returns the expression receiver.
+   * For example, for call `a.b.[c()]` the receiver is `a.b`.
+   */
+  val receiver: UExpression?
 
-    /**
-     * Returns the receiver type, or null if the call has not a receiver.
-     */
-    val receiverType: PsiType?
+  /**
+   * Returns the receiver type, or null if the call has not a receiver.
+   */
+  val receiverType: PsiType?
 
-    /**
-     * Returns the function reference expression if the call is a non-constructor method call, null otherwise.
-     */
-    val methodIdentifier: UIdentifier?
+  /**
+   * Returns the function reference expression if the call is a non-constructor method call, null otherwise.
+   */
+  val methodIdentifier: UIdentifier?
 
-    /**
-     * Returns the class reference if the call is a constructor call, null otherwise.
-     */
-    val classReference: UReferenceExpression?
+  /**
+   * Returns the class reference if the call is a constructor call, null otherwise.
+   */
+  val classReference: UReferenceExpression?
 
-    /**
-     * Returns the value argument count.
-     *
-     * Retrieving the argument count could be faster than getting the [valueArguments.size],
-     *    because there is no need to create actual [UExpression] instances.
-     */
-    val valueArgumentCount: Int
+  /**
+   * Returns the value argument count.
+   *
+   * Retrieving the argument count could be faster than getting the [valueArguments.size],
+   *    because there is no need to create actual [UExpression] instances.
+   */
+  val valueArgumentCount: Int
 
-    /**
-     * Returns the list of value arguments.
-     */
-    val valueArguments: List<UExpression>
+  /**
+   * Returns the list of value arguments.
+   */
+  val valueArguments: List<UExpression>
 
-    /**
-     * Returns the type argument count.
-     */
-    val typeArgumentCount: Int
+  /**
+   * Returns the type argument count.
+   */
+  val typeArgumentCount: Int
 
-    /**
-     * Returns the type arguments for the call.
-     */
-    val typeArguments: List<PsiType>
+  /**
+   * Returns the type arguments for the call.
+   */
+  val typeArguments: List<PsiType>
 
-    /**
-     * Returns the return type of the called function, or null if the call is not a function call.
-     */
-    val returnType: PsiType?
+  /**
+   * Returns the return type of the called function, or null if the call is not a function call.
+   */
+  val returnType: PsiType?
 
-    /**
-     * Resolve the called method.
-     * 
-     * @return the [PsiMethod], or null if the method was not resolved. 
-     * Note that the [PsiMethod] is an unwrapped [PsiMethod], not a [UMethod].
-     */
-    override fun resolve(): PsiMethod?
+  /**
+   * Resolve the called method.
+   *
+   * @return the [PsiMethod], or null if the method was not resolved.
+   * Note that the [PsiMethod] is an unwrapped [PsiMethod], not a [UMethod].
+   */
+  override fun resolve(): PsiMethod?
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitCallExpression(this)) return
-        annotations.acceptList(visitor)
-        methodIdentifier?.accept(visitor)
-        classReference?.accept(visitor)
-        valueArguments.acceptList(visitor)
-        visitor.afterVisitCallExpression(this)
-    }
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitCallExpression(this)) return
+    annotations.acceptList(visitor)
+    methodIdentifier?.accept(visitor)
+    classReference?.accept(visitor)
+    valueArguments.acceptList(visitor)
+    visitor.afterVisitCallExpression(this)
+  }
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
-            visitor.visitCallExpression(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
+    visitor.visitCallExpression(this, data)
 
-    override fun asLogString() = log("kind = $kind, argCount = $valueArgumentCount)")
+  override fun asLogString(): String = log("kind = $kind, argCount = $valueArgumentCount)")
 
-    override fun asRenderString(): String {
-        val ref = classReference?.asRenderString() ?: methodName ?: methodIdentifier?.asRenderString() ?: "<noref>"
-        return ref + "(" + valueArguments.joinToString { it.asRenderString() } + ")"
-    }
+  override fun asRenderString(): String {
+    val ref = classReference?.asRenderString() ?: methodName ?: methodIdentifier?.asRenderString() ?: "<noref>"
+    return ref + "(" + valueArguments.joinToString { it.asRenderString() } + ")"
+  }
+}
+
+interface UCallExpressionEx : UCallExpression {
+  fun getArgumentForParameter(i: Int): UExpression?
 }

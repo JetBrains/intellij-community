@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.lineMarker;
 
 import com.intellij.codeHighlighting.Pass;
@@ -25,6 +11,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.MarkupEditorFilter;
+import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
@@ -51,7 +39,7 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
   @Nullable
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
-    List<RunLineMarkerContributor> contributors = RunLineMarkerContributor.EXTENSION.allForLanguage(element.getLanguage());
+    List<RunLineMarkerContributor> contributors = RunLineMarkerContributor.EXTENSION.allForLanguageOrAny(element.getLanguage());
     Icon icon = null;
     List<Info> infos = null;
     for (RunLineMarkerContributor contributor : contributors) {
@@ -111,7 +99,6 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
     return new LineMarkerInfo<PsiElement>(element, element.getTextRange(), icon, Pass.LINE_MARKERS,
                                           tooltipProvider, null,
                                           GutterIconRenderer.Alignment.CENTER) {
-      @Nullable
       @Override
       public GutterIconRenderer createGutterRenderer() {
         return new LineMarkerGutterIconRenderer<PsiElement>(this) {
@@ -125,12 +112,17 @@ public class RunLineMarkerProvider extends LineMarkerProviderDescriptor {
             return true;
           }
 
-          @Nullable
           @Override
           public ActionGroup getPopupMenuActions() {
             return actionGroup;
           }
         };
+      }
+
+      @NotNull
+      @Override
+      public MarkupEditorFilter getEditorFilter() {
+        return MarkupEditorFilterFactory.createIsNotDiffFilter();
       }
     };
   }

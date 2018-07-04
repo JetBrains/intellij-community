@@ -83,7 +83,7 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
       }
     };
     DomUtil.acceptAvailableChildren(myElement, elementVisitor);
-    return result.toArray(new TreeElement[result.size()]);
+    return result.toArray(TreeElement.EMPTY_ARRAY);
   }
 
   protected StructureViewTreeElement createChildElement(final DomElement element) {
@@ -92,7 +92,7 @@ public class DomStructureTreeElement implements StructureViewTreeElement, ItemPr
 
   @Override
   public void navigate(boolean requestFocus) {
-    if (myNavigationProvider != null) myNavigationProvider.navigate(myElement, true);
+    if (myNavigationProvider != null) myNavigationProvider.navigate(myElement, requestFocus);
   }
 
   @Override

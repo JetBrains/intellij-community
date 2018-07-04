@@ -262,6 +262,10 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
     doTest(false, false);
   }
 
+  public void testInlineInExpressionLambda() {
+    doTest(false, false);
+  }
+
   public void testNoFinalForJava8() {
     setLanguageLevel(LanguageLevel.HIGHEST);
     doTest(true, false);

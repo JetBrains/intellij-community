@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.fileTemplates.impl;
 
@@ -32,7 +18,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -50,10 +35,7 @@ import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-@State(
-  name = "FileTemplateManagerImpl",
-  storages = @Storage(StoragePathMacros.WORKSPACE_FILE)
-)
+@State(name = "FileTemplateManagerImpl", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class FileTemplateManagerImpl extends FileTemplateManager implements PersistentStateComponent<FileTemplateManagerImpl.State> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FileTemplateManagerImpl");
 
@@ -71,12 +53,10 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
     return (FileTemplateManagerImpl)getInstance(project);
   }
 
-  public FileTemplateManagerImpl(@NotNull FileTypeManagerEx typeManager,
-                                 FileTemplateSettings projectSettings,
-                                 ExportableFileTemplateSettings defaultSettings,
-                                 /*need this to ensure disposal of the service _after_ project manager*/
-                                 @SuppressWarnings("UnusedParameters") ProjectManager pm,
-                                 final Project project) {
+  FileTemplateManagerImpl(@NotNull FileTypeManagerEx typeManager,
+                          FileTemplateSettings projectSettings,
+                          ExportableFileTemplateSettings defaultSettings,
+                          final Project project) {
     myTypeManager = typeManager;
     myProjectSettings = projectSettings;
     myDefaultSettings = defaultSettings;
@@ -148,7 +128,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   @NotNull
   public FileTemplate[] getAllTemplates() {
     final Collection<FileTemplateBase> templates = getSettings().getDefaultTemplatesManager().getAllTemplates(false);
-    return templates.toArray(new FileTemplate[templates.size()]);
+    return templates.toArray(FileTemplate.EMPTY_ARRAY);
   }
 
   @Override
@@ -301,12 +281,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
     return templateName.toLowerCase();
   }
 
-  @Override
-  @NotNull
-  public String localizeInternalTemplateName(@NotNull final FileTemplate template) {
-    return template.getName();
-  }
-
   @NonNls
   @NotNull
   private String getDefaultClassTemplateText(@NotNull @NonNls String templateName) {
@@ -373,7 +347,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   @NotNull
   public FileTemplate[] getAllPatterns() {
     final Collection<FileTemplateBase> allTemplates = getSettings().getPatternsManager().getAllTemplates(false);
-    return allTemplates.toArray(new FileTemplate[allTemplates.size()]);
+    return allTemplates.toArray(FileTemplate.EMPTY_ARRAY);
   }
 
   @Override
@@ -385,14 +359,14 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   @NotNull
   public FileTemplate[] getAllCodeTemplates() {
     final Collection<FileTemplateBase> templates = getSettings().getCodeTemplatesManager().getAllTemplates(false);
-    return templates.toArray(new FileTemplate[templates.size()]);
+    return templates.toArray(FileTemplate.EMPTY_ARRAY);
   }
 
   @Override
   @NotNull
   public FileTemplate[] getAllJ2eeTemplates() {
     final Collection<FileTemplateBase> templates = getSettings().getJ2eeTemplatesManager().getAllTemplates(false);
-    return templates.toArray(new FileTemplate[templates.size()]);
+    return templates.toArray(FileTemplate.EMPTY_ARRAY);
   }
 
   @Override
@@ -435,7 +409,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
   }
 
   @Override
-  public void loadState(State state) {
+  public void loadState(@NotNull State state) {
     XmlSerializerUtil.copyBean(state, myState);
     FileTemplatesScheme scheme = myProjectScheme != null && myProjectScheme.getName().equals(state.SCHEME) ? myProjectScheme : FileTemplatesScheme.DEFAULT;
     setScheme(scheme);
@@ -491,9 +465,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
         return text;
       }
     });
-    Disposer.register(parentDisposable, () -> {
-      templates.put(qName, oldTemplate);
-    });
+    Disposer.register(parentDisposable, () -> templates.put(qName, oldTemplate));
   }
 
   public static class State {

@@ -19,6 +19,7 @@ import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.LightProjectDescriptor
 import com.siyeh.ig.LightInspectionTestCase
+import org.jetbrains.annotations.NotNull
 
 @SuppressWarnings(["ResultOfMethodCallIgnored", "UnusedReturnValue"])
 class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
@@ -28,6 +29,7 @@ class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
     return new IgnoreResultOfCallInspection()
   }
 
+  @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return JAVA_8
@@ -62,6 +64,9 @@ class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
       "    When when() default When.ALWAYS;\n" +
       "}",
 
+      "package a;\n" +
+      " public @interface CheckReturnValue {}",
+
       "package com.google.errorprone.annotations;" +
       "import java.lang.annotation.ElementType;\n" +
       "import java.lang.annotation.Retention;\n" +
@@ -87,6 +92,19 @@ class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
            "  void run() {\n" +
            "    /*Result of 'Test.lookAtMe()' is ignored*/lookAtMe/**/(); // Bad!  This line should produce a warning.\n" +
            "    ignoreMe(); // OK.  This line should *not* produce a warning.\n" +
+           "  }\n" +
+           "}")
+  }
+
+  void testCustomCheckReturnValue() {
+    doTest("import a.CheckReturnValue;\n" +
+           "\n" +
+           "class Test {\n" +
+           "  @CheckReturnValue\n" +
+           "  int lookAtMe() { return 1; }\n" +
+           "\n" +
+           "  void run() {\n" +
+           "    /*Result of 'Test.lookAtMe()' is ignored*/lookAtMe/**/();\n" +
            "  }\n" +
            "}")
   }
@@ -213,6 +231,27 @@ class C {
 """
   }
 
+  void testPureMethodReturningThis() {
+    doTest """
+import org.jetbrains.annotations.Contract;
+
+class Test {
+  boolean closed;
+  
+  @Contract(pure=true, value="->this")
+  Test validate() {
+    if(closed) throw new IllegalStateException();
+    return this;
+  }
+  
+  void test() {
+    validate();
+    System.out.println("ok");
+  }
+}
+"""
+  }
+
   void testPureMethodInVoidFunctionalExpression() {
     doTest """
 import org.jetbrains.annotations.Contract;
@@ -245,6 +284,65 @@ class Test {
     // violates stream principles, but quite widely used (IDEA-164501);
     // this inspection should not warn here; probably some other inspection should suggest better option 
     Stream.of("a", "b", "c").collect(Collectors.toCollection(() -> result));
+  }
+}"""
+  }
+
+  void testPattern() {
+    doTest """
+import java.util.regex.Pattern;
+import java.util.Set;
+
+class Test {
+  void test(Set<String> names) {
+    names.forEach(Pattern::/*Result of 'Pattern.compile()' is ignored*/compile/**/);
+  }
+}
+"""
+  }
+
+  void testPatternCaught() {
+    doTest """
+import java.util.regex.*;
+import java.util.Set;
+
+class Test {
+  void test(Set<String> names) {
+    try {
+      names.forEach(Pattern::compile);
+    }
+    catch (PatternSyntaxException e) {
+      throw new RuntimeException("Pattern error", e);
+    }
+  }
+}
+"""
+  }
+
+  void testOptionalOrElseThrow() {
+    doTest """
+import java.util.Optional;
+
+@SuppressWarnings("OptionalUsedAsFieldOrParameterType")
+class Test {
+  void test(Optional<String> opt) {
+    opt.orElseThrow(RuntimeException::new);
+  }
+}"""
+  }
+
+  void testParamContract() {
+    doTest """class X{
+public static int atLeast(int min, int actual, String varName) {
+    if (actual < min) throw new IllegalArgumentException('\\'' + varName + " must be at least " + min + ": " + actual);
+    return actual;
+  }
+
+  public byte[] getMemory(int address, int length) {
+    atLeast(0, address, "address");
+    atLeast(1, length, "length");
+
+    return new byte[length];
   }
 }"""
   }

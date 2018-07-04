@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -24,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -39,23 +26,30 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import java.io.IOException;
 import java.util.Properties;
 
-public class AddMethodFix extends GroovyFix {
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyRangeTypeCheckInspection");
-  private final String myMethodName;
-  private final GrTypeDefinition myClass;
+import static com.intellij.psi.util.PointersKt.createSmartPointer;
 
-  public AddMethodFix(String methodName, GrTypeDefinition aClass) {
+public class AddMethodFix extends GroovyFix {
+  private static final Logger LOG = Logger.getInstance(AddMethodFix.class);
+  private final String myMethodName;
+  private final String myClassName;
+  private final SmartPsiElementPointer<GrTypeDefinition> myPsiClassPointer;
+
+  public AddMethodFix(@NotNull String methodName, @NotNull GrTypeDefinition aClass) {
     myMethodName = methodName;
-    myClass = aClass;
+    myClassName = aClass.getName();
+    myPsiClassPointer = createSmartPointer(aClass);
   }
 
   @Override
   protected void doFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) throws IncorrectOperationException {
+    GrTypeDefinition psiClass = myPsiClassPointer.getElement();
+    if (psiClass == null) return;
 
-    if (myClass.isInterface()) {
-      final GrMethod method = GroovyPsiElementFactory.getInstance(project)
-        .createMethodFromText("def " + myClass.getName() + " " + myMethodName + "();");
-      myClass.add(method);
+    if (psiClass.isInterface()) {
+      final GrMethod method = GroovyPsiElementFactory.getInstance(project).createMethodFromText(
+        "def " + psiClass.getName() + " " + myMethodName + "();"
+      );
+      psiClass.add(method);
     }
     else {
       String templName = JavaTemplateUtil.TEMPLATE_IMPLEMENTED_METHOD_BODY;
@@ -63,23 +57,24 @@ public class AddMethodFix extends GroovyFix {
 
       Properties properties = new Properties();
 
-      String returnType = generateTypeText(myClass);
+      String returnType = generateTypeText(psiClass);
       properties.setProperty(FileTemplate.ATTRIBUTE_RETURN_TYPE, returnType);
       properties.setProperty(FileTemplate.ATTRIBUTE_DEFAULT_RETURN_VALUE,
-                             PsiTypesUtil.getDefaultValueOfType(JavaPsiFacade.getElementFactory(project).createType(myClass)));
+                             PsiTypesUtil.getDefaultValueOfType(JavaPsiFacade.getElementFactory(project).createType(psiClass)));
       properties.setProperty(FileTemplate.ATTRIBUTE_CALL_SUPER, "");
-      properties.setProperty(FileTemplate.ATTRIBUTE_CLASS_NAME, myClass.getQualifiedName());
-      properties.setProperty(FileTemplate.ATTRIBUTE_SIMPLE_CLASS_NAME, myClass.getName());
+      properties.setProperty(FileTemplate.ATTRIBUTE_CLASS_NAME, psiClass.getQualifiedName());
+      properties.setProperty(FileTemplate.ATTRIBUTE_SIMPLE_CLASS_NAME, psiClass.getName());
       properties.setProperty(FileTemplate.ATTRIBUTE_METHOD_NAME, myMethodName);
 
       try {
         String bodyText = StringUtil.replace(template.getText(properties), ";", "");
         final GrCodeBlock newBody = GroovyPsiElementFactory.getInstance(project).createMethodBodyFromText("\n" + bodyText + "\n");
 
-        final GrMethod method = GroovyPsiElementFactory.getInstance(project)
-          .createMethodFromText("", myMethodName, returnType, ArrayUtil.EMPTY_STRING_ARRAY, myClass);
+        final GrMethod method = GroovyPsiElementFactory.getInstance(project).createMethodFromText(
+          "", myMethodName, returnType, ArrayUtil.EMPTY_STRING_ARRAY, psiClass
+        );
         method.setBlock(newBody);
-        myClass.add(method);
+        psiClass.add(method);
       }
       catch (IOException e) {
         LOG.error(e);
@@ -91,7 +86,7 @@ public class AddMethodFix extends GroovyFix {
   @NotNull
   @Override
   public String getName() {
-    return GroovyInspectionBundle.message("add.method", myMethodName, myClass.getName());
+    return GroovyInspectionBundle.message("add.method", myMethodName, myClassName);
   }
 
   @Nls
@@ -102,7 +97,9 @@ public class AddMethodFix extends GroovyFix {
   }
 
   static String generateTypeText(GrTypeDefinition aClass) {
-    StringBuilder returnType = new StringBuilder(aClass.getName());
+    String className = aClass.getName();
+    LOG.assertTrue(className != null, aClass);
+    StringBuilder returnType = new StringBuilder(className);
     final PsiTypeParameter[] typeParameters = aClass.getTypeParameters();
     if (typeParameters.length > 0) {
       returnType.append('<');

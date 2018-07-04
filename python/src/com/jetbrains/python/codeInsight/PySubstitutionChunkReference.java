@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight;
 
 import com.google.common.collect.Iterables;
@@ -23,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.inspections.PyStringFormatParser.NewStyleSubstitutionChunk;
 import com.jetbrains.python.psi.*;
@@ -36,16 +23,16 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiteralExpression> implements PsiReferenceEx {
-  private final int myPosition;
   @NotNull private final PyStringFormatParser.SubstitutionChunk myChunk;
   private final boolean myIsPercent;
+  private final int myPosition;
 
   public PySubstitutionChunkReference(@NotNull final PyStringLiteralExpression element,
-                                      @NotNull final PyStringFormatParser.SubstitutionChunk chunk, final int position) {
+                                      @NotNull final PyStringFormatParser.SubstitutionChunk chunk) {
     super(element, getKeywordRange(element, chunk));
     myChunk = chunk;
-    myPosition = position;
     myIsPercent = chunk instanceof PyStringFormatParser.PercentSubstitutionChunk;
+    myPosition = ObjectUtils.chooseNotNull(chunk.getPosition(), -1);
   }
 
   @Nullable
@@ -88,7 +75,6 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
 
   @Nullable
   private PsiElement resolvePositionalFormat(@NotNull PyArgumentList argumentList) {
-    final int position = myChunk.getPosition() == null ? myPosition : myChunk.getPosition();
     int n = 0;
     boolean notSureAboutStarArgs = false;
     PyStarArgument firstStarArg = null;
@@ -113,7 +99,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
         }
       }
       else if (!(arg instanceof PyKeywordArgument)) {
-        if (position == n) {
+        if (myPosition == n) {
           return arg;
         }
         n++;
@@ -184,7 +170,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
 
   @Nullable
   private Ref<PyExpression> resolveNumericIndex(@NotNull PyExpression valueExpr, @NotNull Integer index) {
-    if (PyUtil.instanceOf(valueExpr, PyListLiteralExpression.class, PyTupleExpression.class, PyStringLiteralExpression.class)) {
+    if (PsiTreeUtil.instanceOf(valueExpr, PyListLiteralExpression.class, PyTupleExpression.class, PyStringLiteralExpression.class)) {
       Ref<PyExpression> elementRef = getElementByIndex(valueExpr, index);
       if (elementRef != null) return elementRef;
     }
@@ -223,7 +209,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
       if (element instanceof PyStarExpression) {
         if (!LanguageLevel.forElement(element).isAtLeast(LanguageLevel.PYTHON35)) continue;
         final PyExpression underStarExpr = PyPsiUtils.flattenParens(((PyStarExpression)element).getExpression());
-        if (PyUtil.instanceOf(underStarExpr, PyListLiteralExpression.class, PyTupleExpression.class)) {
+        if (PsiTreeUtil.instanceOf(underStarExpr, PyListLiteralExpression.class, PyTupleExpression.class)) {
           PyExpression[] subsequenсeElements = getElementsFromListOrTuple(underStarExpr);
           int subsequenceElementIndex = index - seenElementsNumber;
           if (subsequenceElementIndex < subsequenсeElements.length) {
@@ -270,7 +256,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   }
 
   @NotNull
-  private static List<PyStarArgument> getStarArguments(@NotNull PyArgumentList argumentList, 
+  private static List<PyStarArgument> getStarArguments(@NotNull PyArgumentList argumentList,
                                                        @SuppressWarnings("SameParameterValue") boolean isKeyword) {
     return Arrays.stream(argumentList.getArguments())
       .map(expression -> PyUtil.as(expression, PyStarArgument.class))
@@ -294,12 +280,12 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
   @Nullable
   private PyExpression resolveKeywordPercent(@NotNull PyExpression expression, @NotNull String key) {
     final PyExpression containedExpr = PyPsiUtils.flattenParens(expression);
-    if (PyUtil.instanceOf(containedExpr, PyDictLiteralExpression.class)) {
+    if (PsiTreeUtil.instanceOf(containedExpr, PyDictLiteralExpression.class)) {
       final Ref<PyExpression> resolvedRef = getElementFromDictLiteral((PyDictLiteralExpression)containedExpr, key);
       return resolvedRef != null ? resolvedRef.get() : containedExpr;
     }
-    else if (PyUtil.instanceOf(containedExpr, PyLiteralExpression.class, PySetLiteralExpression.class,
-                               PyListLiteralExpression.class, PyTupleExpression.class)) {
+    else if (PsiTreeUtil.instanceOf(containedExpr, PyLiteralExpression.class, PySetLiteralExpression.class, PyListLiteralExpression.class,
+                                    PyTupleExpression.class)) {
       return null;
     }
     else if (containedExpr instanceof PyCallExpression) {
@@ -313,6 +299,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
 
   @Nullable
   private PsiElement resolvePositionalPercent(@NotNull PyExpression expression) {
+    assert myPosition >= 0;
     final PyExpression containedExpression = PyPsiUtils.flattenParens(expression);
     if (containedExpression instanceof PyTupleExpression) {
       final PyExpression[] elements = ((PyTupleExpression)containedExpression).getElements();
@@ -328,7 +315,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
       }
     }
     else if (myPosition != 0 && PsiTreeUtil.instanceOf(containedExpression, PyLiteralExpression.class, PySetLiteralExpression.class,
-                                                       PyListLiteralExpression.class, PyDictLiteralExpression.class)) {
+                                                                  PyListLiteralExpression.class, PyDictLiteralExpression.class)) {
       return null;
     }
     return containedExpression;
@@ -336,6 +323,7 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
 
   @Nullable
   private PsiElement resolveNotNestedBinaryExpression(@NotNull PyBinaryExpression containedExpression) {
+    assert myPosition >= 0;
     PyExpression left = containedExpression.getLeftExpression();
     PyExpression right = containedExpression.getRightExpression();
     if (left instanceof PyParenthesizedExpression) {
@@ -380,12 +368,13 @@ public class PySubstitutionChunkReference extends PsiReferenceBase<PyStringLiter
 
   @Nullable
   private Ref<PyExpression> resolvePositionalStarExpression(@NotNull PyStarArgument starArgument, int argumentPosition) {
+    assert myPosition >= 0;
     final PyExpression expr = PyPsiUtils.flattenParens(PsiTreeUtil.getChildOfAnyType(starArgument, PyListLiteralExpression.class, PyParenthesizedExpression.class,
                                                             PyStringLiteralExpression.class));
     if (expr == null) {
       return Ref.create(starArgument);
     }
-    final int position = (myChunk.getPosition() != null ? myChunk.getPosition() : myPosition) - argumentPosition;
+    final int position = myPosition - argumentPosition;
     return getElementByIndex(expr, position);
   }
 

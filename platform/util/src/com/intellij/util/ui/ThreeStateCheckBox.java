@@ -16,6 +16,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
@@ -78,12 +79,18 @@ public class ThreeStateCheckBox extends JCheckBox {
     setState(initial);
   }
 
-  private State nextState() {
-    switch (myState) {
+  @NotNull
+  protected State nextState() {
+    return nextState(myState, myThirdStateEnabled);
+  }
+
+  @NotNull
+  public static State nextState(@NotNull State state, boolean thirdStateEnabled) {
+    switch (state) {
       case SELECTED:
         return State.NOT_SELECTED;
       case NOT_SELECTED:
-        if (myThirdStateEnabled) {
+        if (thirdStateEnabled) {
           return State.DONT_CARE;
         }
         else {

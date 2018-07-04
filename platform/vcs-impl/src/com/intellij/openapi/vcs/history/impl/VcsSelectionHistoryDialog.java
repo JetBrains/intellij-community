@@ -20,10 +20,12 @@ import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.DiffRequestPanel;
 import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.requests.LoadingDiffRequest;
 import com.intellij.diff.requests.MessageDiffRequest;
 import com.intellij.diff.requests.NoDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.diff.util.DiffUserDataKeysEx;
 import com.intellij.diff.util.IntPair;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
@@ -31,6 +33,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -398,7 +401,9 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     Block block = data.getBlock(index);
     if (block == null) return null;
     if (block == EMPTY_BLOCK) return DiffContentFactory.getInstance().createEmpty();
-    return DiffContentFactory.getInstance().create(block.getBlockContent(), myFile.getFileType());
+    DocumentContent documentContent = DiffContentFactory.getInstance().create(block.getBlockContent(), myFile.getFileType());
+    documentContent.putUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR, value -> value + block.getStart());
+    return documentContent;
   }
 
   @Override
@@ -551,11 +556,11 @@ public class VcsSelectionHistoryDialog extends FrameWrapper implements DataProvi
     }
 
     public void start(@NotNull Disposable disposable) {
-      BackgroundTaskUtil.executeOnPooledThread(disposable, (indicator) -> {
+      BackgroundTaskUtil.executeOnPooledThread(disposable, () -> {
         try {
           // first block is loaded in constructor
           for (int index = 1; index < myRevisions.size(); index++) {
-            indicator.checkCanceled();
+            ProgressManager.checkCanceled();
 
             Block block = myBlocks.get(index - 1);
             VcsFileRevision revision = myRevisions.get(index);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -28,19 +14,21 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
@@ -118,9 +106,11 @@ public abstract class DebuggerUtils {
         if (toStringMethod == null) {
           throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.cannot.evaluate.tostring", objRef.referenceType().name()));
         }
+        Method finalToStringMethod = toStringMethod;
+        final Value result = evaluationContext.computeAndKeep(
+          () -> debugProcess.invokeInstanceMethod(evaluationContext, objRef, finalToStringMethod, Collections.emptyList(), 0));
         // while result must be of com.sun.jdi.StringReference type, it turns out that sometimes (jvm bugs?)
         // it is a plain com.sun.tools.jdi.ObjectReferenceImpl
-        final Value result = debugProcess.invokeInstanceMethod(evaluationContext, objRef, toStringMethod, Collections.emptyList(), 0);
         if (result == null) {
           return "null";
         }
@@ -189,12 +179,11 @@ public abstract class DebuggerUtils {
   }
 
   public static boolean isInteger(Value value) {
-    return value != null &&
-           (value instanceof ByteValue ||
+    return (value instanceof ByteValue ||
             value instanceof ShortValue ||
             value instanceof LongValue ||
             value instanceof IntegerValue
-           );
+    );
   }
 
   public static String translateStringValue(final String str) {
@@ -352,13 +341,31 @@ public abstract class DebuggerUtils {
     return null;
   }
 
+  // compilable version of array class for compiling evaluator
+  private static final String ARRAY_CLASS_NAME = "__Dummy_Array__";
+  private static final String ARRAY_CLASS_TEXT =
+    "public class " + ARRAY_CLASS_NAME + "<T> {" +
+    "  public final int length;" +
+    "  private " + ARRAY_CLASS_NAME + "(int l) {length = l;}" +
+    "  public T[] clone() {return null;}" +
+    "}";
+
+  // workaround to get an array class of needed language version for correct HL in array renderers expression
+  private static PsiClass createArrayClass(Project project, LanguageLevel level) {
+    PsiFile psiFile =
+      PsiFileFactory.getInstance(project).createFileFromText(ARRAY_CLASS_NAME + "." + StdFileTypes.JAVA.getDefaultExtension(),
+                                                             StdFileTypes.JAVA.getLanguage(),
+                                                             ARRAY_CLASS_TEXT);
+    PsiUtil.FILE_LANGUAGE_LEVEL_KEY.set(psiFile, level);
+    return ((PsiJavaFile)psiFile).getClasses()[0];
+  }
+
   @Nullable
   public static PsiClass findClass(@NotNull final String className, @NotNull Project project, final GlobalSearchScope scope) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     try {
       if (getArrayClass(className) != null) {
-        return JavaPsiFacade.getInstance(project).getElementFactory()
-          .getArrayClass(LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
+        return createArrayClass(project, LanguageLevelProjectExtension.getInstance(project).getLanguageLevel());
       }
       if (project.isDefault()) {
         return null;
@@ -396,8 +403,7 @@ public abstract class DebuggerUtils {
         return PsiTypesUtil.getClassType(aClass);
       }
     }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
+    catch (IncorrectOperationException ignored) {
     }
     return null;
   }
@@ -483,26 +489,14 @@ public abstract class DebuggerUtils {
 
   public abstract String findAvailableDebugAddress(boolean useSockets) throws ExecutionException;
 
-  public static boolean isSynthetic(TypeComponent typeComponent) {
+  public static boolean isSynthetic(@Nullable TypeComponent typeComponent) {
     if (typeComponent == null) {
       return false;
     }
     return Arrays.stream(SyntheticTypeComponentProvider.EP_NAME.getExtensions()).anyMatch(provider -> provider.isSynthetic(typeComponent));
   }
 
-  /**
-   * @deprecated use {@link #isInsideSimpleGetter(PsiElement)} instead
-   */
-  @Deprecated
-  public static boolean isSimpleGetter(PsiMethod method) {
-    return Arrays.stream(SimpleGetterProvider.EP_NAME.getExtensions()).anyMatch(provider -> provider.isSimpleGetter(method));
-  }
-
   public static boolean isInsideSimpleGetter(@NotNull PsiElement contextElement) {
-    for (SimpleGetterProvider provider : SimpleGetterProvider.EP_NAME.getExtensions()) {
-      PsiMethod psiMethod = PsiTreeUtil.getParentOfType(contextElement, PsiMethod.class);
-      if (psiMethod != null && provider.isSimpleGetter(psiMethod)) return true;
-    }
     return Arrays.stream(SimplePropertyGetterProvider.EP_NAME.getExtensions())
       .anyMatch(provider -> provider.isInsideSimpleGetter(contextElement));
   }
@@ -541,26 +535,17 @@ public abstract class DebuggerUtils {
 
   public abstract PsiClass chooseClassDialog(String title, Project project);
 
-  /**
-   * IDEA-122113
-   * Will be removed when Java debugger will be moved to XDebugger API
-   */
-  public static boolean isDebugActionAware(@NotNull PsiFile file) {
-    return isDebugAware(file, false);
-  }
-
   public static boolean isBreakpointAware(@NotNull PsiFile file) {
-    return isDebugAware(file, true);
-  }
-
-  private static boolean isDebugAware(@NotNull PsiFile file, boolean breakpointAware) {
     FileType fileType = file.getFileType();
     //noinspection deprecation
     if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).isJVMDebuggingSupported()) {
       return true;
     }
 
-    return Arrays.stream(JavaDebugAware.EP_NAME.getExtensions())
-      .anyMatch(provider -> breakpointAware ? provider.isBreakpointAware(file) : provider.isActionAware(file));
+    return Arrays.stream(JavaDebugAware.EP_NAME.getExtensions()).anyMatch(provider -> provider.isBreakpointAware(file));
+  }
+
+  public static boolean isAndroidVM(@NotNull VirtualMachine virtualMachine) {
+    return StringUtil.containsIgnoreCase(virtualMachine.name(), "dalvik");
   }
 }

@@ -149,7 +149,7 @@ public class AnnotateOverriddenMethodsIntention extends MutablyNamedIntention {
     if (modifierList == null) {
       return;
     }
-    if (modifierList.findAnnotation(annotationName) != null) return;
+    if (modifierList.hasAnnotation(annotationName)) return;
     final ExternalAnnotationsManager.AnnotationPlace annotationAnnotationPlace = annotationsManager.chooseAnnotationsPlace(modifierListOwner);
     if (annotationAnnotationPlace == ExternalAnnotationsManager.AnnotationPlace.NOWHERE) {
       return;
@@ -158,7 +158,10 @@ public class AnnotateOverriddenMethodsIntention extends MutablyNamedIntention {
       for (String annotationToRemove : annotationsToRemove) {
         annotationsManager.deannotate(modifierListOwner, annotationToRemove);
       }
-      annotationsManager.annotateExternally(modifierListOwner, annotationName, modifierListOwner.getContainingFile(), attributes);
+      try {
+        annotationsManager.annotateExternally(modifierListOwner, annotationName, modifierListOwner.getContainingFile(), attributes);
+      }
+      catch (ExternalAnnotationsManager.CanceledConfigurationException ignored) {}
     }
     else {
       WriteAction.run(() -> {

@@ -17,8 +17,8 @@ package git4idea.config;
 
 import com.intellij.execution.ExecutableValidator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.VcsException;
-import git4idea.commands.GitHandler;
+import git4idea.GitVcs;
+import git4idea.commands.GitImpl;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,8 +27,11 @@ import java.util.Collections;
 /**
  * Project service that is used to check whether currently set git executable is valid (just calls 'git version' and parses the output),
  * and to display notification to the user proposing to fix the project set up.
+ *
  * @author Kirill Likhodedov
+ * @deprecated in favor of {@link GitExecutableManager#identifyVersion(String)} and {@link GitExecutableProblemsNotifier}
  */
+@Deprecated
 public class GitExecutableValidator extends ExecutableValidator {
 
   public GitExecutableValidator(@NotNull Project project) {
@@ -37,30 +40,17 @@ public class GitExecutableValidator extends ExecutableValidator {
 
   @Override
   protected String getCurrentExecutable() {
-    return GitVcsApplicationSettings.getInstance().getPathToGit();
+    return GitExecutableManager.getInstance().getPathToGit(myProject);
   }
 
   @NotNull
   @Override
   protected String getConfigurableDisplayName() {
-    return GitVcsConfigurable.DISPLAY_NAME;
+    return GitVcs.NAME;
   }
 
   @Override
   public boolean isExecutableValid(@NotNull String executable) {
-    return doCheckExecutable(executable, Collections.singletonList("--version"), GitHandler.getCommonEnvironment());
-  }
-
-  /**
-   * Checks if git executable is valid. If not (which is a common case for low-level vcs exceptions), shows the
-   * notification. Otherwise throws the exception.
-   * This is to be used in catch-clauses
-   * @param e exception which was thrown.
-   * @throws VcsException if git executable is valid.
-   */
-   public void showNotificationOrThrow(VcsException e) throws VcsException {
-    if (checkExecutableAndNotifyIfNeeded()) {
-      throw e;
-    }
+    return doCheckExecutable(executable, Collections.singletonList("--version"), GitImpl.getGitTraceEnvironmentVariables(GitVersion.NULL));
   }
 }

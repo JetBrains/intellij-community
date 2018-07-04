@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.validation;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -22,6 +8,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.NotNull;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -35,10 +22,9 @@ import java.io.IOException;
 import java.util.*;
 
 public class UnsupportedFeaturesUtil {
-  public static Map<LanguageLevel, Set<String>> BUILTINS = new HashMap<>();
-  public static Map<LanguageLevel, Set<String>> MODULES = new HashMap<>();
-  public static Map<String, Map<LanguageLevel, Set<String>>> CLASS_METHODS = new HashMap<>();
-  public static final List<String> ALL_LANGUAGE_LEVELS = new ArrayList<>();
+  public static final Map<LanguageLevel, Set<String>> BUILTINS = new HashMap<>();
+  public static final Map<LanguageLevel, Set<String>> MODULES = new HashMap<>();
+  public static final Map<String, Map<LanguageLevel, Set<String>>> CLASS_METHODS = new HashMap<>();
 
   static {
     try {
@@ -48,9 +34,6 @@ public class UnsupportedFeaturesUtil {
     catch (IOException e) {
       Logger log = Logger.getInstance(UnsupportedFeaturesUtil.class.getName());
       log.error("Cannot find \"versions.xml\". " + e.getMessage());
-    }
-    for (LanguageLevel level : LanguageLevel.ALL_LEVELS) {
-      ALL_LANGUAGE_LEVELS.add(level.toString());
     }
   }
 
@@ -88,15 +71,10 @@ public class UnsupportedFeaturesUtil {
     }
   }
 
-  public static boolean raiseHasNoArgs(PyRaiseStatement node, LanguageLevel versionToProcess) {
-    final PyExpression[] expressions = node.getExpressions();
-    if (expressions.length == 0 && versionToProcess.isPy3K()) {
-      final PyExceptPart exceptPart = PsiTreeUtil.getParentOfType(node, PyExceptPart.class);
-      if (exceptPart == null) {
-        return true;
-      }
-    }
-    return false;
+  public static boolean raiseHasNoArgsUnderFinally(@NotNull PyRaiseStatement node, @NotNull LanguageLevel versionToProcess) {
+    return node.getExpressions().length == 0 &&
+           versionToProcess.isPython2() &&
+           PsiTreeUtil.getParentOfType(node, PyFinallyPart.class) != null;
   }
 
   public static boolean raiseHasMoreThenOneArg(PyRaiseStatement node, LanguageLevel versionToProcess) {
@@ -127,7 +105,7 @@ public class UnsupportedFeaturesUtil {
       if (expressions.length < 2) {
         return false;
       }
-      if (!versionToProcess.isPy3K()) {
+      if (versionToProcess.isPython2()) {
         PsiElement element = expressions[0].getNextSibling();
         while (element instanceof PsiWhiteSpace) {
           element = element.getNextSibling();
@@ -154,13 +132,14 @@ public class UnsupportedFeaturesUtil {
   }
 
   private static class VersionsParser extends DefaultHandler {
-    private CharArrayWriter myContent = new CharArrayWriter();
+    private final CharArrayWriter myContent = new CharArrayWriter();
     private LanguageLevel myCurrentLevel;
 
+    @Override
     public void startElement(String namespaceURI,
-                String localName,
-                String qName,
-                Attributes attr) throws SAXException {
+                             String localName,
+                             String qName,
+                             Attributes attr) throws SAXException {
       myContent.reset();
       if (localName.equals("python")) {
         BUILTINS.put(LanguageLevel.fromPythonVersion(attr.getValue("version")), new HashSet<>());
@@ -169,9 +148,10 @@ public class UnsupportedFeaturesUtil {
       }
      }
 
+    @Override
     public void endElement(String namespaceURI,
-              String localName,
-              String qName) throws SAXException {
+                           String localName,
+                           String qName) throws SAXException {
       if (localName.equals("func")) {
         BUILTINS.get(myCurrentLevel).add(myContent.toString());
       }
@@ -180,6 +160,7 @@ public class UnsupportedFeaturesUtil {
       }
     }
 
+    @Override
     public void characters(char[] ch, int start, int length)
                                           throws SAXException {
       myContent.write(ch, start, length);
@@ -187,10 +168,11 @@ public class UnsupportedFeaturesUtil {
   }
 
   static class ClassMethodsParser extends DefaultHandler {
-    private CharArrayWriter myContent = new CharArrayWriter();
+    private final CharArrayWriter myContent = new CharArrayWriter();
     private String myClassName = "";
     private LanguageLevel myCurrentLevel;
 
+    @Override
     public void startElement(String namespaceURI,
                              String localName,
                              String qName,
@@ -213,6 +195,7 @@ public class UnsupportedFeaturesUtil {
       }
     }
 
+    @Override
     public void endElement(String namespaceURI,
                            String localName,
                            String qName) throws SAXException {
@@ -226,6 +209,7 @@ public class UnsupportedFeaturesUtil {
       }
     }
 
+    @Override
     public void characters(char[] ch, int start, int length)
       throws SAXException {
       myContent.write(ch, start, length);

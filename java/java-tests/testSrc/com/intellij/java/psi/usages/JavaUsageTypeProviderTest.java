@@ -43,6 +43,16 @@ public class JavaUsageTypeProviderTest extends LightCodeInsightFixtureTestCase {
     assertUsageType(UsageType.CLASS_STATIC_MEMBER_ACCESS, myFixture.findClass("Foo"));
   }
 
+  public void testStaticFieldUsageInImport() {
+    myFixture.configureByFiles("StaticFieldUsageInImport.java", "Foo.java");
+    assertUsageType(UsageType.CLASS_IMPORT, myFixture.findClass("Foo"));
+  }
+
+  public void testStaticMethodUsageInImport() {
+    myFixture.configureByFiles("StaticMethodUsageInImport.java", "Foo.java");
+    assertUsageType(UsageType.CLASS_IMPORT, myFixture.findClass("Foo"));
+  }
+
   private void assertUsageType(UsageType expected, PsiClass target) {
     UsageTarget[] targets = {new PsiElement2UsageTargetAdapter(target)};
     PsiElement element = myFixture.getReferenceAtCaretPositionWithAssertion().getElement();

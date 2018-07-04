@@ -20,9 +20,13 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
@@ -60,6 +64,14 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
 
   public PyNamedParameterImpl(final PyNamedParameterStub stub, IStubElementType nodeType) {
     super(stub, nodeType);
+  }
+
+  @NotNull
+  @Override
+  public final PsiReference[] getReferences() {
+    return CachedValuesManager.getCachedValue(this, () -> CachedValueProvider.Result.create(
+      ReferenceProvidersRegistry.getReferencesFromProviders(this, PsiReferenceService.Hints.NO_HINTS),
+      PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @Nullable
@@ -155,10 +167,10 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   @Nullable
   public PyExpression getDefaultValue() {
     final PyNamedParameterStub stub = getStub();
-    if (stub != null && !stub.hasDefaultValue()) {
+    if (stub != null && stub.getDefaultValueText() == null) {
       return null;
     }
-    ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
+    final ASTNode[] nodes = getNode().getChildren(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens());
     if (nodes.length > 0) {
       return (PyExpression)nodes[0].getPsi();
     }
@@ -169,9 +181,19 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
   public boolean hasDefaultValue() {
     final PyNamedParameterStub stub = getStub();
     if (stub != null) {
-      return stub.hasDefaultValue();
+      return stub.getDefaultValueText() != null;
     }
     return getDefaultValue() != null;
+  }
+
+  @Nullable
+  @Override
+  public String getDefaultValueText() {
+    final PyNamedParameterStub stub = getStub();
+    if (stub != null) {
+      return stub.getDefaultValueText();
+    }
+    return ParamHelper.getDefaultValueText(getDefaultValue());
   }
 
   @NotNull

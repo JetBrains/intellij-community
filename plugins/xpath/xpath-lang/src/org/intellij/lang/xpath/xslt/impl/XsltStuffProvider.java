@@ -59,13 +59,15 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
       myUsageGroupingRules = new UsageGroupingRule[]{ new TemplateUsageGroupingRule() };
     }
 
+  @Override
   @NotNull
-    public UsageGroupingRule[] getActiveRules(Project project) {
+    public UsageGroupingRule[] getActiveRules(@NotNull Project project) {
         return myUsageGroupingRules;
     }
 
+    @Override
     @NotNull
-    public AnAction[] createGroupingActions(UsageView view) {
+    public AnAction[] createGroupingActions(@NotNull UsageView view) {
         return AnAction.EMPTY_ARRAY;
     }
 
@@ -95,6 +97,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
             return "Template (" + sb.toString() + ")";
         }
 
+        @Override
         @Nullable
         public FileStatus getFileStatus() {
             return null;
@@ -107,7 +110,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
         public void update() {
         }
 
-        public int compareTo(UsageGroup usageGroup) {
+        public int compareTo(@NotNull UsageGroup usageGroup) {
             final TemplateUsageGroup myUsageGroup = ((TemplateUsageGroup)usageGroup);
             return myTemplate.getTextOffset() - myUsageGroup.myTemplate.getTextOffset();
         }

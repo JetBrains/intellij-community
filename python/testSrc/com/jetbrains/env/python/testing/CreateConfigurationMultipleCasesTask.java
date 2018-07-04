@@ -18,12 +18,13 @@ package com.jetbrains.env.python.testing;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.jetbrains.extensions.TargetWithVariantExtKt;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.testing.ConfigurationTarget;
 import com.jetbrains.python.testing.PyAbstractTestConfiguration;
-import com.jetbrains.python.testing.TestTargetType;
+import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -52,6 +53,7 @@ class CreateConfigurationMultipleCasesTask<T extends PyAbstractTestConfiguration
 
     result.add(getDir("tests_package/package_test"));
     result.add(getFile("tests_package/package_test", "test_in_package.py"));
+    result.add(getFile("/", "test_foo.py"));
     result.add(getFile("tests_package/package_test", "test_in_package.py").findTopLevelClass("TestLogic"));
 
     result.add(getDir("tests_folder"));
@@ -88,11 +90,11 @@ class CreateConfigurationMultipleCasesTask<T extends PyAbstractTestConfiguration
       Assert.assertThat("Bad directory", configuration.getWorkingDirectorySafe(), Matchers.endsWith("test-test"));
     }
     else if (element instanceof PsiDirectory && elementName.endsWith("package_test")) {
-      Assert.assertEquals("Working directory for folder should be same as folder", target.asVirtualFile(), workingDirectory);
+      Assert.assertEquals("Working directory for folder should be same as folder", TargetWithVariantExtKt.asVirtualFile(target), workingDirectory);
       Assert.assertThat("Bad target", configuration.getTarget().getTarget(), Matchers.endsWith("package_test"));
     }
     else if (element instanceof PyFile && elementName.endsWith("test_in_package.py")) {
-      final VirtualFile targetFile = target.asVirtualFile();
+      final VirtualFile targetFile = TargetWithVariantExtKt.asVirtualFile(target);
       assert targetFile != null : "Failed to create virtual file for " + target;
       Assert.assertEquals("Working directory for file should be same as file's parent", targetFile.getParent(), workingDirectory);
       Assert.assertThat("Bad target", configuration.getTarget().getTarget(), Matchers.endsWith("test_in_package.py"));
@@ -103,11 +105,11 @@ class CreateConfigurationMultipleCasesTask<T extends PyAbstractTestConfiguration
       Assert.assertEquals("Bad configuration for class", "test_in_package.TestLogic", target.getTarget());
     }
     else if (element instanceof PsiDirectory && elementName.endsWith("tests_folder")) {
-      Assert.assertEquals("Bad configuration for no package folder", workingDirectory, target.asVirtualFile());
+      Assert.assertEquals("Bad configuration for no package folder", workingDirectory, TargetWithVariantExtKt.asVirtualFile(target));
       Assert.assertThat("Bad target", configuration.getTarget().getTarget(), Matchers.endsWith("tests_folder"));
     }
     else if (element instanceof PyFile && elementName.endsWith("test_lonely.py")) {
-      final VirtualFile targetFile = target.asVirtualFile();
+      final VirtualFile targetFile = TargetWithVariantExtKt.asVirtualFile(target);
       assert targetFile != null : "Failed to create virtual file for " + target;
       Assert.assertEquals("Bad configuration for no package file", targetFile.getParent(), workingDirectory);
       Assert.assertThat("Bad target", configuration.getTarget().getTarget(), Matchers.endsWith("test_lonely.py"));
@@ -121,7 +123,10 @@ class CreateConfigurationMultipleCasesTask<T extends PyAbstractTestConfiguration
       Assert.assertEquals("Bad configuration target", "test_functions.test_test", target.getTarget());
     }
     else if (element instanceof PyFunction && elementName.endsWith("foo")) {
-      Assert.assertEquals("non-test function should lead to level-based test", TestTargetType.PATH, target.getTargetType());
+      Assert.assertEquals("non-test function should lead to level-based test", PyRunTargetVariant.PATH, target.getTargetType());
+    }
+    else if (element instanceof PyFile && elementName.endsWith("test_foo.py")) {
+      Assert.assertEquals("Wrong path for file-based target", PyRunTargetVariant.PATH, target.getTargetType());
     }
     else {
       throw new AssertionError("Unexpected configuration " + configuration);
@@ -141,7 +146,7 @@ class CreateConfigurationMultipleCasesTask<T extends PyAbstractTestConfiguration
   @NotNull
   private PyFile getFile(@NotNull final String dirName, @NotNull final String fileName) {
     final PsiFile psiFile = getDir(dirName).findFile(fileName);
-    assert psiFile instanceof PyFile : "Bad file " + psiFile;
+    assert psiFile instanceof PyFile : "Bad file " + psiFile + "name: " + fileName;
     return (PyFile)psiFile;
   }
 }

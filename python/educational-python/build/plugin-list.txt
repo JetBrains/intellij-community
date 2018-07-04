@@ -1,8 +1,6 @@
-svn4idea
-git4idea
-remote-servers-git
-github
-educational-core
-Edu-Python
-hg4idea
-ipnb
+intellij.vcs.svn
+intellij.vcs.git
+intellij.platform.remoteServers.git
+intellij.vcs.github
+intellij.vcs.hg
+intellij.python.ipnb

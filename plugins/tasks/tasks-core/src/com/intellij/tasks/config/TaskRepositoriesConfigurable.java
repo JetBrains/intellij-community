@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.config;
 
 import com.intellij.ide.DataManager;
@@ -5,9 +6,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.Separator;
-import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
@@ -40,9 +40,11 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 @SuppressWarnings("unchecked")
-public class TaskRepositoriesConfigurable extends BaseConfigurable implements Configurable.NoScroll {
+public class TaskRepositoriesConfigurable implements Configurable.NoScroll, SearchableConfigurable {
 
+  public static final String ID = "tasks.servers";
   private static final String EMPTY_PANEL = "empty.panel";
+
   private JPanel myPanel;
   private JPanel myServersPanel;
   private final JBList myRepositoriesList;
@@ -75,6 +77,8 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
     myRepositoriesList.getEmptyText().setText("No servers");
 
     myServersLabel.setLabelFor(myRepositoriesList);
+
+    myServersPanel.setMinimumSize(new Dimension(-1, 100));
 
     TaskRepositoryType[] groups = TaskRepositoryType.getRepositoryTypes();
 
@@ -194,6 +198,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
     return "Servers";
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.settings.project.tasks.servers";
   }
@@ -211,7 +216,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
     return !myRepositories.equals(getReps());
   }
 
-  public void apply() throws ConfigurationException {
+  public void apply() {
     List<TaskRepository> newRepositories = ContainerUtil.map(myRepositories, taskRepository -> taskRepository.clone());
     myManager.setRepositories(newRepositories);
     myManager.updateIssues(null);
@@ -252,6 +257,20 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
     for (TaskRepositoryEditor editor : myEditors) {
       Disposer.dispose(editor);
     }
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return ID;
+  }
+
+  @Nullable
+  @Override
+  public Runnable enableSearch(String option) {
+    TaskRepository matched =
+      myRepositories.stream().filter(repository -> repository.getRepositoryType().getName().contains(option)).findFirst().orElse(null);
+    return matched == null ? null : () -> myRepositoriesList.setSelectedValue(matched, true);
   }
 
   private abstract class AddServerAction extends IconWithTextAction implements DumbAware {

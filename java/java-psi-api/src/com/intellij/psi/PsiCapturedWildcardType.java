@@ -16,7 +16,6 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -56,7 +55,7 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
     myUpperBound = PsiType.getJavaLangObject(myContext.getManager(), getResolveScope());
   }
 
-  public static RecursionGuard guard = RecursionManager.createGuard("captureGuard");
+  private static final RecursionGuard guard = RecursionManager.createGuard("captureGuard");
 
   public static boolean isCapture() {
     return guard.currentStack().isEmpty();
@@ -83,11 +82,15 @@ public class PsiCapturedWildcardType extends PsiType.Stub {
         glb = substitutedBoundType;
       }
       else {
-        glb = GenericsUtil.getGreatestLowerBound(glb, substitutedBoundType);
+        glb = getGreatestLowerBound(glb, substitutedBoundType, wildcardType);
       }
     }
 
     return glb;
+  }
+
+  private static PsiType getGreatestLowerBound(PsiType glb, PsiType bound, Object guardObject) {
+    return guard.doPreventingRecursion(guardObject, true, () -> GenericsUtil.getGreatestLowerBound(glb, bound));
   }
 
   @Override

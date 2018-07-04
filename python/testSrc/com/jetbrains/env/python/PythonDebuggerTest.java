@@ -3,6 +3,7 @@ package com.jetbrains.env.python;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
@@ -19,31 +20,29 @@ import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugValue;
-import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.PyExceptionBreakpointProperties;
 import com.jetbrains.python.debugger.PyExceptionBreakpointType;
-import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.debugger.settings.PySteppingFilter;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assume;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 /**
  * @author traff
  */
-
+@Staging //Thread leak breaks all other tests
 public class PythonDebuggerTest extends PyEnvTestCase {
-  private class BreakpointStopAndEvalTask extends PyDebuggerTask {
+  private static class BreakpointStopAndEvalTask extends PyDebuggerTask {
     public BreakpointStopAndEvalTask(String scriptName) {
       super("/debug", scriptName);
     }
@@ -82,10 +81,11 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   @Test
   @Staging
   public void testPydevTests_Debugger() {
-    unittests("tests_pydevd_python/test_debugger.py", null);
+    unittests("tests_pydevd_python/test_debugger.py", ImmutableSet.of("-iron"), true);
   }
 
   @Test
+  @Staging
   public void testPydevMonkey() {
     unittests("tests_pydevd_python/test_pydev_monkey.py", null);
   }
@@ -145,6 +145,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  @Staging // thread leak
   public void testConditionalBreakpoint() {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override
@@ -176,6 +177,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  @Staging
   public void testDebugConsole() {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override
@@ -207,19 +209,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForOutput("SyntaxError");
 
         resume();
-      }
-
-      private void consoleExec(String command) {
-        myDebugProcess.consoleExec(command, new PyDebugCallback<String>() {
-          @Override
-          public void ok(String value) {
-
-          }
-
-          @Override
-          public void error(PyDebuggerException exception) {
-          }
-        });
       }
     });
   }
@@ -363,7 +352,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @Override
       public void testing() throws Exception {
         waitForPause();
-        toggleBreakpoint(getFilePath(getScriptName()), 18);
+        removeBreakpoint(getFilePath(getScriptName()), 18);
         smartStepInto("foo");
         waitForPause();
         eval("a.z").hasValue("1");
@@ -395,6 +384,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
+  @Staging
   public void testRunToLine() {
     runPythonTest(new PyDebuggerTask("/debug", "test_runtoline.py") {
       @Override
@@ -589,7 +579,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-jython");
+        return ImmutableSet.of("-jython", "-iron");
       }
     });
   }
@@ -615,7 +605,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
       @NotNull
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-jython");
+        return ImmutableSet.of("-jython", "-iron");
       }
     });
   }
@@ -658,7 +648,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         toggleBreakpointInEgg(egg, "adder/adder.py", 2);
         PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(getRunConfiguration().getSdkHome());
         if (flavor != null) {
-          flavor.initPythonPath(Lists.newArrayList(egg), getRunConfiguration().getEnvs());
+          flavor.initPythonPath(Lists.newArrayList(egg), true, getRunConfiguration().getEnvs());
         }
         else {
           getRunConfiguration().getEnvs().put("PYTHONPATH", egg);
@@ -683,9 +673,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testWinEggDebug() {
-    if (UsefulTestCase.IS_UNDER_TEAMCITY && !SystemInfo.isWindows) {
-      return; // Only needs to run on windows
-    }
+    Assume.assumeFalse("Only needs to run on windows", UsefulTestCase.IS_UNDER_TEAMCITY && !SystemInfo.isWindows);
     runPythonTest(new PyDebuggerTask("/debug", "test_winegg.py") {
       @Override
       public void before() {
@@ -695,7 +683,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
         PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(getRunConfiguration().getSdkHome());
         if (flavor != null) {
-          flavor.initPythonPath(Lists.newArrayList(egg), getRunConfiguration().getEnvs());
+          flavor.initPythonPath(Lists.newArrayList(egg), true, getRunConfiguration().getEnvs());
         }
         else {
           getRunConfiguration().getEnvs().put("PYTHONPATH", egg);
@@ -834,9 +822,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testPyQtQThreadInheritor() {
-    if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
-      return; //Don't run under Windows
-    }
+    Assume.assumeFalse("Don't run under Windows",UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
     runPythonTest(new PyDebuggerTask("/debug", "test_pyqt1.py") {
       @Override
@@ -875,9 +861,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testPyQtMoveToThread() {
-    if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
-      return; //Don't run under Windows
-    }
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
     runPythonTest(new PyDebuggerTask("/debug", "test_pyqt2.py") {
       @Override
@@ -917,9 +901,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
   @Test
   public void testPyQtQRunnableInheritor() {
-    if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
-      return; //Don't run under Windows
-    }
+    Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
     runPythonTest(new PyDebuggerTask("/debug", "test_pyqt3.py") {
       @Override
@@ -1167,11 +1149,17 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         toggleBreakpoint(getFilePath(getScriptName()), 3);
       }
 
+      private String getRefWithWordInName(List<String> referrersNames, String word) {
+        return referrersNames.stream().filter(x -> x.contains(word)).findFirst().get();
+      }
+
       @Override
       public void testing() throws Exception {
         waitForPause();
-        int numberOfReferringObjects = getNumberOfReferringObjects("l");
-        assertEquals(3, numberOfReferringObjects);
+        List<String> referrersNames = getNumberOfReferringObjects("l");
+        assertNotNull(getRefWithWordInName(referrersNames, "frame"));
+        assertNotNull(getRefWithWordInName(referrersNames, "module"));
+        assertNotNull(getRefWithWordInName(referrersNames, "dict"));
       }
 
       @NotNull
@@ -1272,20 +1260,87 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForPause();
         eval("i").hasValue("0");
         // remove break on line 2
-        toggleBreakpoint(getScriptName(), 2);
+        removeBreakpoint(getScriptName(), 2);
         resume();
         // add break on line 2
         toggleBreakpoint(getScriptName(), 2);
         // check if break on line 2 works
         waitForPause();
         // remove break on line 2 again
-        toggleBreakpoint(getScriptName(), 2);
+        removeBreakpoint(getScriptName(), 2);
         // add break on line 3
         toggleBreakpoint(getScriptName(), 3);
         resume();
         // check if break on line 3 works
         waitForPause();
         resume();
+      }
+    });
+  }
+
+  @Test
+  public void testSetNextStatement() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_set_next_statement.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 1);
+        toggleBreakpoint(getFilePath(getScriptName()), 6);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("x").hasValue("0");
+        // jump on a top level
+        Pair<Boolean, String> pair = setNextStatement(7);
+        waitForPause();
+        assertTrue(pair.first);
+        eval("x").hasValue("0");
+        // try to jump into a loop
+        pair = setNextStatement(9);
+        // do not wait for pause here, because we don't refresh suspension for incorrect jumps
+        assertFalse(pair.first);
+        assertTrue(pair.second.startsWith("Error:"));
+        stepOver();
+        waitForPause();
+        eval("x").hasValue("2");
+        resume();
+        waitForPause();
+        eval("a").hasValue("2");
+        // jump inside a function
+        pair = setNextStatement(2);
+        waitForPause();
+        assertTrue(pair.first);
+        eval("a").hasValue("2");
+        resume();
+      }
+
+      @NotNull
+      @Override
+      public Set<String> getTags() {
+        return ImmutableSet.of("-iron");
+      }
+    });
+  }
+
+  @Test
+  public void testLoadValuesAsync() {
+    runPythonTest(new PyDebuggerTask("/debug", "test_async_eval.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 14);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        List<PyDebugValue> frameVariables = loadFrame();
+        String result = computeValueAsync(frameVariables, "f");
+        assertEquals("foo", result);
+
+        List<PyDebugValue> listChildren = loadChildren(frameVariables, "l");
+        result = computeValueAsync(listChildren, "0");
+        assertEquals("list", result);
       }
     });
   }
@@ -1325,7 +1380,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     });
   }
 
-  @Staging
   @Test
   public void testModuleInterpreterOption() {
     runPythonTest(new BreakpointStopAndEvalTask("test1") {
@@ -1335,7 +1389,66 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         setScriptName("test1");
         setWaitForTermination(false);
 
-        myRunConfiguration.setInterpreterOptions("-m");
+        myRunConfiguration.setModuleMode(true);
+      }
+    });
+  }
+
+  @Staging
+  @Test
+  public void testShowCommandline() {
+    runPythonTest(new PyDebuggerTask("/debug", "test2.py") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath(getScriptName()), 6);
+        setWaitForTermination(false);
+
+        myRunConfiguration.setShowCommandLineAfterwards(true);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("z").hasValue("1");
+        resume();
+        consoleExec("z");
+        waitForOutput("2");
+      }
+
+      @Override
+      public void doFinally() {
+        myRunConfiguration.setShowCommandLineAfterwards(false);
+      }
+    });
+  }
+
+  @Staging
+  @Test
+  public void testShowCommandlineModule() {
+    runPythonTest(new PyDebuggerTask("/debug", "test2") {
+      @Override
+      public void before() {
+        toggleBreakpoint(getFilePath("test2.py"), 6);
+        setScriptName("test2");
+        setWaitForTermination(false);
+
+        myRunConfiguration.setShowCommandLineAfterwards(true);
+        myRunConfiguration.setModuleMode(true);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        eval("z").hasValue("1");
+        resume();
+        consoleExec("foo(3)");
+        waitForOutput("5");
+      }
+
+      @Override
+      public void doFinally() {
+        myRunConfiguration.setShowCommandLineAfterwards(false);
+        myRunConfiguration.setModuleMode(false);
       }
     });
   }

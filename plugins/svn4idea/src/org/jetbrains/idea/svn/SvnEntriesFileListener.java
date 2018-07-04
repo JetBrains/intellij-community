@@ -32,13 +32,14 @@ import java.util.List;
 public class SvnEntriesFileListener implements VirtualFileListener {
   private final Project myProject;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnEntriesFileListener");
-  private VcsDirtyScopeManager myDirtyScopeManager;
+  private final VcsDirtyScopeManager myDirtyScopeManager;
 
   public SvnEntriesFileListener(final Project project) {
     myProject = project;
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
   }
 
+  @Override
   public void fileCreated(@NotNull VirtualFileEvent event) {
     if (! event.isFromRefresh()) {
       return;
@@ -58,6 +59,7 @@ public class SvnEntriesFileListener implements VirtualFileListener {
     BackgroundTaskUtil.syncPublisher(myProject, VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED).dirtyUnder(parent);
   }
 
+  @Override
   public void contentsChanged(@NotNull VirtualFileEvent event) {
     if (! event.isFromRefresh()) {
       return;
@@ -87,6 +89,7 @@ public class SvnEntriesFileListener implements VirtualFileListener {
     }
   }
 
+  @Override
   public void fileDeleted(@NotNull VirtualFileEvent event) {
     if (!event.isFromRefresh()) {
       return;

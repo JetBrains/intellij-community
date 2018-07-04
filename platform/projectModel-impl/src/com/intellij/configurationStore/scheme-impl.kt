@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.extensions.AbstractExtensionPointBean
@@ -35,17 +21,17 @@ interface SchemeNameToFileName {
   fun schemeNameToFileName(name: String): String
 }
 
-val OLD_NAME_CONVERTER = object : SchemeNameToFileName {
+val OLD_NAME_CONVERTER: SchemeNameToFileName = object : SchemeNameToFileName {
   override fun schemeNameToFileName(name: String) = FileUtil.sanitizeFileName(name, true)
 }
-val CURRENT_NAME_CONVERTER = object : SchemeNameToFileName {
+val CURRENT_NAME_CONVERTER: SchemeNameToFileName = object : SchemeNameToFileName {
   override fun schemeNameToFileName(name: String) = FileUtil.sanitizeFileName(name, false)
 }
-val MODERN_NAME_CONVERTER = object : SchemeNameToFileName {
+val MODERN_NAME_CONVERTER: SchemeNameToFileName = object : SchemeNameToFileName {
   override fun schemeNameToFileName(name: String) = sanitizeFileName(name)
 }
 
-interface SchemeDataHolder<in T : Scheme> {
+interface SchemeDataHolder<in T> {
   /**
    * You should call updateDigest() after read on init.
    */
@@ -53,7 +39,7 @@ interface SchemeDataHolder<in T : Scheme> {
 
   fun updateDigest(scheme: T)
 
-  fun updateDigest(data: Element)
+  fun updateDigest(data: Element?)
 }
 
 /**
@@ -68,33 +54,26 @@ interface SchemeExtensionProvider {
 }
 
 // applicable only for LazySchemeProcessor
-interface SchemeContentChangedHandler<MUTABLE_SCHEME : Scheme> {
+interface SchemeContentChangedHandler<MUTABLE_SCHEME> {
   fun schemeContentChanged(scheme: MUTABLE_SCHEME, name: String, dataHolder: SchemeDataHolder<MUTABLE_SCHEME>)
 }
 
-abstract class LazySchemeProcessor<SCHEME : Scheme, MUTABLE_SCHEME : SCHEME>(private val nameAttribute: String = "name") : SchemeProcessor<SCHEME, MUTABLE_SCHEME>() {
-  open fun getName(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String {
+abstract class LazySchemeProcessor<SCHEME, MUTABLE_SCHEME : SCHEME>(private val nameAttribute: String = "name") : SchemeProcessor<SCHEME, MUTABLE_SCHEME>() {
+  open fun getSchemeKey(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String? {
     return attributeProvider.apply(nameAttribute)
-           ?: throw IllegalStateException("name is missed in the scheme data")
   }
 
   abstract fun createScheme(dataHolder: SchemeDataHolder<MUTABLE_SCHEME>,
                             name: String,
                             attributeProvider: Function<String, String?>,
                             isBundled: Boolean = false): MUTABLE_SCHEME
-  override fun writeScheme(scheme: MUTABLE_SCHEME) = (scheme as SerializableScheme).writeScheme()
+  override fun writeScheme(scheme: MUTABLE_SCHEME): Element? = (scheme as SerializableScheme).writeScheme()
 
-  open fun isSchemeFile(name: CharSequence) = true
+  open fun isSchemeFile(name: CharSequence): Boolean = true
 
-  open fun isSchemeDefault(scheme: MUTABLE_SCHEME, digest: ByteArray) = false
+  open fun isSchemeDefault(scheme: MUTABLE_SCHEME, digest: ByteArray): Boolean = false
 
-  open fun isSchemeEqualToBundled(scheme: MUTABLE_SCHEME) = false
-
-  /**
-   * May be called from any thread - EDT is not guaranteed.
-   */
-  open fun reloaded(schemeManager: SchemeManager<SCHEME>) {
-  }
+  open fun isSchemeEqualToBundled(scheme: MUTABLE_SCHEME): Boolean = false
 }
 
 class DigestOutputStream(val digest: MessageDigest) : OutputStream() {
@@ -106,7 +85,7 @@ class DigestOutputStream(val digest: MessageDigest) : OutputStream() {
     digest.update(b, off, len)
   }
 
-  override fun toString() = "[Digest Output Stream] $digest"
+  override fun toString(): String = "[Digest Output Stream] $digest"
 }
 
 fun Element.digest(): ByteArray {
@@ -116,21 +95,21 @@ fun Element.digest(): ByteArray {
   return digest.digest()
 }
 
-abstract class SchemeWrapper<out T : Scheme>(name: String) : ExternalizableSchemeAdapter(), SerializableScheme {
+abstract class SchemeWrapper<out T>(name: String) : ExternalizableSchemeAdapter(), SerializableScheme {
   protected abstract val lazyScheme: Lazy<T>
 
   val scheme: T
     get() = lazyScheme.value
 
-  override fun getSchemeState() = if (lazyScheme.isInitialized()) SchemeState.POSSIBLY_CHANGED else SchemeState.UNCHANGED
+  override fun getSchemeState(): SchemeState = if (lazyScheme.isInitialized()) SchemeState.POSSIBLY_CHANGED else SchemeState.UNCHANGED
 
   init {
     this.name = name
   }
 }
 
-abstract class LazySchemeWrapper<T : Scheme>(name: String, dataHolder: SchemeDataHolder<SchemeWrapper<T>>, protected val writer: (scheme: T) -> Element) : SchemeWrapper<T>(name) {
-  protected val dataHolder = AtomicReference(dataHolder)
+abstract class LazySchemeWrapper<T>(name: String, dataHolder: SchemeDataHolder<SchemeWrapper<T>>, protected val writer: (scheme: T) -> Element) : SchemeWrapper<T>(name) {
+  protected val dataHolder: AtomicReference<SchemeDataHolder<SchemeWrapper<T>>> = AtomicReference(dataHolder)
 
   override final fun writeScheme(): Element {
     val dataHolder = dataHolder.get()
@@ -140,9 +119,9 @@ abstract class LazySchemeWrapper<T : Scheme>(name: String, dataHolder: SchemeDat
 }
 
 class InitializedSchemeWrapper<out T : Scheme>(scheme: T, private val writer: (scheme: T) -> Element) : SchemeWrapper<T>(scheme.name) {
-  override val lazyScheme = lazyOf(scheme)
+  override val lazyScheme: Lazy<T> = lazyOf(scheme)
 
-  override fun writeScheme() = writer(scheme)
+  override fun writeScheme(): Element = writer(scheme)
 }
 
 fun unwrapState(element: Element, project: Project, iprAdapter: SchemeManagerIprProvider?, schemeManager: SchemeManager<*>): Element? {

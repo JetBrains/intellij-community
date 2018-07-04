@@ -20,7 +20,7 @@ package com.intellij.remoteServer.agent.util;
  */
 public class DeploymentDataImpl implements DeploymentData {
 
-  private String myName;
+  private final String myName;
   private boolean myStarted;
 
   public DeploymentDataImpl(String name, boolean started) {

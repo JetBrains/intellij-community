@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.mvc.MvcModuleStructureUtil;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -61,14 +60,12 @@ public class MvcProjectNode extends AbstractProjectNode {
   }
 
   @Override
-  protected AbstractTreeNode createModuleGroup(final Module module)
-    throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+  protected AbstractTreeNode createModuleGroup(final Module module) throws InstantiationException {
     return createTreeNode(MvcProjectNode.class, getProject(), module, getSettings());
   }
 
   @Override
-  protected AbstractTreeNode createModuleGroupNode(final ModuleGroup moduleGroup)
-    throws InvocationTargetException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+  protected AbstractTreeNode createModuleGroupNode(final ModuleGroup moduleGroup) throws InstantiationException {
     return createTreeNode(MvcProjectNode.class, getProject(), moduleGroup, getSettings());
   }
 

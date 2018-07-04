@@ -1,29 +1,29 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInspection.bytecodeAnalysis.data;
 
 import com.intellij.java.codeInspection.bytecodeAnalysis.ExpectContract;
 import com.intellij.java.codeInspection.bytecodeAnalysis.ExpectNotNull;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.lang.reflect.Array;
+import java.nio.file.Files;
 
 /**
  * @author lambdamix
  */
+@SuppressWarnings({"unused", "IOResourceOpenedButNotSafelyClosed"})
 public class Test01 {
+  @ExpectNotNull
+  @ExpectContract(pure = true)
+  public static MySupplier methodReference(@ExpectNotNull String s) {
+    return s::trim;
+  }
+
+  boolean plainFlag;
+  volatile boolean volatileFlag;
+
   static void f(@ExpectNotNull Object o1, @ExpectNotNull Object o2) {
     if (o1 == null) throw new NullPointerException();
     else s(o2, o2);
@@ -69,18 +69,18 @@ public class Test01 {
     return "s";
   }
 
-  @ExpectContract(value = "!null->!null;null->null", pure = true)
+  @ExpectContract(value = "_->param1", pure = true)
   static String idString(String s) {
     return s;
   }
 
-  @ExpectContract(pure = true)
+  @ExpectContract(value = "->this", pure = true)
   @ExpectNotNull
   public Test01 getThis() {
     return this;
   }
 
-  @ExpectContract(pure = true)
+  @ExpectContract(value = "->new", pure = true)
   @ExpectNotNull
   protected Test01 createRoot() {
     return new Test01();
@@ -122,20 +122,14 @@ public class Test01 {
     return () -> s.trim();
   }
 
-  @ExpectNotNull
-  @ExpectContract(pure = true)
-  public static MySupplier methodReference(@ExpectNotNull String s) {
-    return s::trim;
-  }
-
-  @ExpectContract(pure = true, value="null,_->fail")
+  @ExpectContract(value="null,_->fail", pure = true)
   public static void assertNotNull(@ExpectNotNull Object obj, String message) {
     if(obj == null) {
       throw new IllegalArgumentException(message);
     }
   }
 
-  @ExpectContract(pure = true, value="false,_,_->fail;true,_,_->true")
+  @ExpectContract(value="false,_,_->fail;true,_,_->true", pure = true)
   public static boolean assertTrue(boolean val, String message, int data) {
     if(!val) {
       throw new IllegalArgumentException(message+":"+data);
@@ -143,7 +137,7 @@ public class Test01 {
     return val;
   }
 
-  @ExpectContract(pure = true, value="true,_->fail;_,_->false")
+  @ExpectContract(value="true,_->fail;_,_->false", pure = true)
   public static boolean assertFalse(boolean val, String message) {
     if(val) {
       throw new IllegalArgumentException(message);
@@ -152,7 +146,7 @@ public class Test01 {
   }
 
   @ExpectNotNull
-  @ExpectContract(pure = true)
+  @ExpectContract(value = "_,_,_->new", pure = true)
   public static long[] copyOfRange(@ExpectNotNull long[] arr, int from, int to) {
     int diff = to - from;
     if (diff < 0) {
@@ -164,7 +158,7 @@ public class Test01 {
   }
 
   @ExpectNotNull
-  @ExpectContract(pure = true)
+  @ExpectContract(value="_->new", pure = true)
   public static long[] copyAndModify(@ExpectNotNull long[] input) {
     long[] copy = copyOfRange(input, 0, input.length);
     copy[0] = 1;
@@ -176,7 +170,7 @@ public class Test01 {
     copy[1] = 2;
   }
 
-  @ExpectContract(pure = true)
+  @ExpectContract(value="_,_,_,_->new", pure = true)
   public static <I, O> O[] copyOfRangeObject(@ExpectNotNull I[] arr, int from, int to, @ExpectNotNull Class<? extends O[]> newType) {
     int diff = to - from;
     if (diff < 0) {
@@ -224,5 +218,77 @@ public class Test01 {
     if (a == null) return true;
     if (b) throw new RuntimeException();
     return b;
+  }
+
+  @ExpectNotNull
+  String getStringNoTry(@ExpectNotNull String s) throws IOException {
+    return String.valueOf(new FileReader(s.trim()).read());
+  }
+
+  String getStringTry(String s) {
+    try {
+      return String.valueOf(new FileReader(s.trim()).read());
+    }
+    catch (IOException ex) {
+      return null;
+    }
+  }
+
+  @ExpectContract("null->null")
+  String getStringTryNPECatched(String s) {
+    try {
+      return String.valueOf(new FileReader(s.trim()).read());
+    }
+    catch (Exception ex) {
+      return null;
+    }
+  }
+
+  @ExpectContract(pure = true)
+  void testThrow(@ExpectNotNull String s) {
+    if(s.isEmpty()) {
+      throw new IllegalArgumentException();
+    }
+  }
+
+  @ExpectContract("_->param1")
+  String testCatchReturn(String s) {
+    try {
+      Integer.parseInt(s);
+    }
+    catch (NumberFormatException ex) {
+      System.out.println("exception!");
+    }
+    return s;
+  }
+
+  boolean testCatchBool(File file) {
+    try {
+      Files.createDirectories(file.toPath());
+      return true;
+    }
+    catch (IOException ignored) {
+
+    }
+    return false;
+  }
+
+  @ExpectContract("null->false")
+  boolean testCatchBool2(File file) {
+    try {
+      Files.createDirectories(file.toPath());
+      return true;
+    }
+    catch (Throwable ignored) {
+
+    }
+    return false;
+  }
+
+  @ExpectContract(value = "_->new", pure = true)
+  String[] replaceFirstWithNull(@ExpectNotNull String[] arr) {
+    String[] res = arr.clone();
+    res[0] = null;
+    return res;
   }
 }

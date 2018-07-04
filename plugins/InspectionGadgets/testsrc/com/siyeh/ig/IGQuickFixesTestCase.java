@@ -19,6 +19,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.TestFrameworkUtil;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
@@ -57,6 +58,7 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
     return new BaseInspection[0];
   }
 
+  @SuppressWarnings("LanguageMismatch")
   @NonNls
   @Language("JAVA")
   protected String[] getEnvironmentClasses() {
@@ -112,14 +114,14 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
 
   protected void doExpressionTest(
     @NotNull String hint,
-    @Language(value = "JAVA", prefix = "class $X$ {{System.out.print(", suffix = ");}}") @NotNull @NonNls String before,
+    @Language(value = "JAVA", prefix = "/** @noinspection ALL*/class $X$ {{System.out.print(", suffix = ");}}") @NotNull @NonNls String before,
     @Language(value = "JAVA", prefix = "class $X$ {{System.out.print(", suffix = ");}}") @NotNull @NonNls String after) {
     doTest(hint, "class $X$ {{System.out.print(" + before + ");}}", "class $X$ {{System.out.print(" + after + ");}}");
   }
 
   protected void doMemberTest(
     @NotNull String hint,
-    @Language(value = "JAVA", prefix = "class $X$ {", suffix = "}") @NotNull @NonNls String before,
+    @Language(value = "JAVA", prefix = "/** @noinspection ALL*/class $X$ {", suffix = "}") @NotNull @NonNls String before,
     @Language(value = "JAVA", prefix = "class $X$ {", suffix = "}") @NotNull @NonNls String after) {
     doTest(hint, "class $X$ {" + before + "}", "class $X$ {" + after + "}");
   }
@@ -145,5 +147,12 @@ public abstract class IGQuickFixesTestCase extends JavaCodeInsightFixtureTestCas
   protected String getRelativePath() {
     assertNotNull(myRelativePath);
     return myRelativePath;
+  }
+
+  @Override
+  public boolean isPerformanceTest() {
+    String testName = getName();
+    String className = getClass().getName().replace("com.siyeh.ig.fixes.performance.", "");
+    return TestFrameworkUtil.isPerformanceTest(testName, className);
   }
 }

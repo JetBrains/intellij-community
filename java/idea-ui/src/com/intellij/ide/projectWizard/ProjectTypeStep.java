@@ -76,7 +76,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 04.09.13
  */
 @SuppressWarnings("unchecked")
 public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, Disposable {
@@ -94,7 +93,7 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
   private final AddSupportForFrameworksPanel myFrameworksPanel;
   private final ModuleBuilder.ModuleConfigurationUpdater myConfigurationUpdater;
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private final Map<ProjectTemplate, ModuleBuilder> myBuilders = FactoryMap.createMap(key -> (ModuleBuilder)key.createModuleBuilder());
+  private final Map<ProjectTemplate, ModuleBuilder> myBuilders = FactoryMap.create(key -> (ModuleBuilder)key.createModuleBuilder());
   private final Map<String, ModuleWizardStep> myCustomSteps = new THashMap<>();
   private final MultiMap<TemplatesGroup,ProjectTemplate> myTemplatesMap;
   private JPanel myPanel;
@@ -510,10 +509,6 @@ public class ProjectTypeStep extends ModuleWizardStep implements SettingsStep, D
       if (!ok) {
         throw new CommitStepException(null);
       }
-    }
-    TemplatesGroup group = getSelectedGroup();
-    if (group != null) {
-      ProjectCategoryUsagesCollector.projectTypeUsed(group.getId());
     }
   }
 

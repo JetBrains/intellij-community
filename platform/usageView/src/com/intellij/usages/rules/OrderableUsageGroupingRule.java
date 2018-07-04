@@ -22,6 +22,7 @@ package com.intellij.usages.rules;
 /**
  * @deprecated override {@link UsageGroupingRule#getRank()} instead
  */
+@Deprecated
 public interface OrderableUsageGroupingRule extends UsageGroupingRule {
   int getRank();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,15 +17,14 @@ package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
 import com.intellij.refactoring.util.duplicates.Match;
 import com.intellij.refactoring.util.duplicates.ReturnValue;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -64,7 +63,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
 
   @Override
   public boolean shouldInspect(PsiFile file) {
-    return PsiUtil.isLanguageLevel7OrHigher(file);
+    return JavaFeature.MULTI_CATCH.isFeatureSupported(file);
   }
 
   @Override
@@ -196,8 +195,8 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-      // smart psi pointer lost correct catch section when multiple catch section were collapsed in batch mode
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      // smart psi pointer lost correct catch section when multiple catch sections were collapsed in batch mode
       // so use index of catch section to retrieve it instead.
       final PsiTryStatement tryStatement = (PsiTryStatement)descriptor.getPsiElement().getParent();
       final PsiCatchSection[] catchSections = tryStatement.getCatchSections();

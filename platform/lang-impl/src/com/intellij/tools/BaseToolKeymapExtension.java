@@ -24,7 +24,7 @@ import com.intellij.openapi.keymap.KeymapGroup;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 
 import java.util.Arrays;
 

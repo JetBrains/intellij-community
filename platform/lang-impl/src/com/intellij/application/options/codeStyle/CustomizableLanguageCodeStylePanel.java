@@ -86,12 +86,6 @@ public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstra
   }
 
   @Override
-  protected PsiFile createFileFromText(final Project project, final String text) {
-    final PsiFile file = LanguageCodeStyleSettingsProvider.createFileFromText(getDefaultLanguage(), project, text);
-    return file != null ? file : super.createFileFromText(project, text);
-  }
-
-  @Override
   protected int getRightMargin() {
     if (getDefaultLanguage() == null) return -1;
     return LanguageCodeStyleSettingsProvider.getRightMargin(getDefaultLanguage(), getSettingsType());
@@ -196,8 +190,8 @@ public abstract class CustomizableLanguageCodeStylePanel extends CodeStyleAbstra
     @Nullable private final String anchorOptionName;
 
     protected OrderedOption(@NotNull String optionName,
-                            OptionAnchor anchor,
-                            String anchorOptionName) {
+                            @Nullable OptionAnchor anchor,
+                            @Nullable String anchorOptionName) {
       this.optionName = optionName;
       this.anchor = anchor;
       this.anchorOptionName = anchorOptionName;

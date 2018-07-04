@@ -17,13 +17,13 @@ package com.intellij.java.codeInsight.completion
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.lookup.LookupElementPresentation
+import com.intellij.psi.PsiClass
 import com.intellij.testFramework.LightProjectDescriptor
 /**
  * @author anna
  */
-class Normal8CompletionTest extends LightFixtureCompletionTestCase {
+class Normal8CompletionTest extends NormalCompletionTestCase {
   final LightProjectDescriptor projectDescriptor = JAVA_8
   final String basePath = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/lambda/completion/normal/"
 
@@ -106,8 +106,8 @@ class Test {
   void bar(int i) {}
 }"""
     def items = myFixture.completeBasic()
-    assert LookupElementPresentation.renderElement(items[0]).itemText == 'x -> {}'
-    assert items.find { LookupElementPresentation.renderElement(it).itemText.contains('this::bar') } != null
+    assert items.any { LookupElementPresentation.renderElement(it).itemText == 'x -> {}' }
+    assert items.any { LookupElementPresentation.renderElement(it).itemText.contains('this::bar') }
   }
 
   void "test suggest receiver method reference"() {
@@ -130,6 +130,21 @@ class MethodRef {
 """
     def items = myFixture.completeBasic()
     assert items.find {LookupElementPresentation.renderElement(it).itemText.contains('MethodRef::boo')}
+  }
+
+  void "test suggest receiver method reference for generic methods"() {
+    myFixture.configureByText "a.java", """
+import java.util.*;
+import java.util.stream.Stream;
+class MethodRef {
+
+    private void m(Stream<Map.Entry<String, Integer>> stream) {
+        stream.map(<caret>);
+    }
+}
+"""
+    def items = myFixture.completeBasic()
+    assert items.find {LookupElementPresentation.renderElement(it).itemText.contains('Entry::getKey')}
   }
 
   void "test constructor ref"() {
@@ -170,7 +185,14 @@ class Test88 {
 
   void testInheritorConstructorRef() {
     configureByTestName()
-    myFixture.assertPreferredCompletionItems 0, 'ArrayList::new', 'ArrayList'
+    myFixture.assertPreferredCompletionItems 0, 'ArrayList::new', 'ArrayList', 'CopyOnWriteArrayList::new'
+
+    def constructorRef = myFixture.lookupElements[0]
+    def p = LookupElementPresentation.renderElement(constructorRef)
+    assert p.tailText == ' (java.util)'
+    assert p.tailFragments[0].grayed
+
+    assert (constructorRef.psiElement as PsiClass).qualifiedName == ArrayList.name
   }
 
   void "test constructor ref without start"() {
@@ -228,11 +250,22 @@ class Test88 {
     checkResultByFileName()
   }
 
+  void testCollectorsJoining() { doTest() }
+
   void testCollectorsToSet() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('toSet') })
     checkResultByFileName()
   }
+
+  void testCollectorsInsideCollect() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'toCollection', 'toList', 'toSet'
+    selectItem(myItems[1])
+    checkResultByFileName()
+  }
+
+  void testCollectorsJoiningInsideCollect() { doTest() }
 
   void testNoExplicitTypeArgsInTernary() {
     configureByTestName()
@@ -248,6 +281,12 @@ class Test88 {
   void testLambdaInAmbiguousCall() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems(0, 'toString', 'wait')
+  }
+
+  void testLambdaInAmbiguousConstructorCall() {
+    configureByTestName()
+    selectItem(myItems.find { it.lookupString.contains('Empty') })
+    checkResultByFileName()
   }
 
   void testLambdaWithSuperWildcardInAmbiguousCall() {
@@ -301,7 +340,46 @@ class Test88 {
     checkResultByFileName()
   }
 
+  void testPreferVariableToLambda() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'output', 'out -> '
+  }
+
+  void testPreferLambdaToConstructorReference() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, '() -> ', 'Exception::new'
+  }
+
+  void testPreferLambdaToTooGenericLocalVariables() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, '(foo, foo2) -> '
+  }
+
+  void testPreferLambdaToRecentSelections() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'String'
+    myFixture.type('\n str;\n') // select 'String'
+    myFixture.type('s.reduce(')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, '(foo, foo2) -> ', 's', 'str', 'String'
+  }
+
   private checkResultByFileName() {
     checkResultByFile(getTestName(false) + "_after.java")
   }
+
+  void "test intersection type members"() {
+    myFixture.configureByText 'a.java',
+                              'import java.util.*; class F { { (true ? new LinkedList<>() : new ArrayList<>()).<caret> }}'
+    myFixture.completeBasic()
+    assert !('finalize' in myFixture.lookupElementStrings)
+  }
+
+  void "test do not suggest inaccessible methods"() {
+    myFixture.configureByText 'a.java',
+                              'import java.util.*; class F { { new ArrayList<String>().forEach(O<caret>) }}'
+    myFixture.completeBasic()
+    assert !('finalize' in myFixture.lookupElementStrings)
+  }
+
 }

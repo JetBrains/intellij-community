@@ -1,22 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
@@ -25,6 +14,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
@@ -69,121 +59,170 @@ public class DfaPsiUtil {
   }
 
   @NotNull
-  public static Nullness getElementNullability(@Nullable PsiType resultType, @Nullable PsiModifierListOwner owner) {
+  public static Nullability getElementNullability(@Nullable PsiType resultType, @Nullable PsiModifierListOwner owner) {
     return getElementNullability(resultType, owner, false);
   }
 
   @NotNull
-  public static Nullness getElementNullabilityIgnoringParameterInference(@Nullable PsiType resultType,
+  public static Nullability getElementNullabilityIgnoringParameterInference(@Nullable PsiType resultType,
                                                                          @Nullable PsiModifierListOwner owner) {
     return getElementNullability(resultType, owner, true);
   }
 
   @NotNull
-  private static Nullness getElementNullability(@Nullable PsiType resultType,
-                                        @Nullable PsiModifierListOwner owner,
-                                        boolean ignoreParameterNullabilityInference) {
+  private static Nullability getElementNullability(@Nullable PsiType resultType,
+                                                   @Nullable PsiModifierListOwner owner,
+                                                   boolean ignoreParameterNullabilityInference) {
     if (owner == null) return getTypeNullability(resultType);
 
     if (resultType instanceof PsiPrimitiveType) {
-      return Nullness.UNKNOWN;
+      return Nullability.UNKNOWN;
     }
 
     if (owner instanceof PsiEnumConstant || PsiUtil.isAnnotationMethod(owner)) {
-      return Nullness.NOT_NULL;
+      return Nullability.NOT_NULL;
     }
     if (owner instanceof PsiMethod && isEnumPredefinedMethod((PsiMethod)owner)) {
-      return Nullness.NOT_NULL;
+      return Nullability.NOT_NULL;
     }
 
-    if (NullableNotNullManager.isNullable(owner)) {
-      return Nullness.NULLABLE;
-    }
-    if (isNotNullLocally(owner, ignoreParameterNullabilityInference)) {
-      return Nullness.NOT_NULL;
+    Nullability fromAnnotation = getNullabilityFromAnnotation(owner, ignoreParameterNullabilityInference);
+    if (fromAnnotation != Nullability.UNKNOWN) {
+      return fromAnnotation;
     }
 
-    Nullness fromType = getTypeNullability(resultType);
-    if (fromType != Nullness.UNKNOWN) return fromType;
+    if (owner instanceof PsiMethod && isMapMethodWithUnknownNullity((PsiMethod)owner)) {
+      return Nullability.UNKNOWN;
+    }
+
+    Nullability fromType = getTypeNullability(resultType);
+    if (fromType != Nullability.UNKNOWN) return fromType;
 
     if (owner instanceof PsiParameter) {
       return inferParameterNullability((PsiParameter)owner);
     }
 
-    return Nullness.UNKNOWN;
-  }
-
-  @NotNull
-  public static Nullness inferParameterNullability(@NotNull PsiParameter parameter) {
-    PsiElement parent = parameter.getParent();
-    if (parent instanceof PsiParameterList && parent.getParent() instanceof PsiLambdaExpression) {
-      return getFunctionalParameterNullability((PsiLambdaExpression)parent.getParent(), ((PsiParameterList)parent).getParameterIndex(parameter));
-    }
-    if (parent instanceof PsiForeachStatement) {
-      PsiExpression iteratedValue = ((PsiForeachStatement)parent).getIteratedValue();
-      if (iteratedValue != null) {
-        return getTypeNullability(JavaGenericsUtil.getCollectionItemType(iteratedValue));
+    if (owner instanceof PsiMethod) {
+      PsiField field = PropertyUtil.getFieldOfGetter((PsiMethod)owner);
+      if (field != null && getElementNullability(resultType, field) == Nullability.NULLABLE) {
+        return Nullability.NULLABLE;
       }
     }
-    return Nullness.UNKNOWN;
+
+    return Nullability.UNKNOWN;
   }
 
   @NotNull
-  public static Nullness getTypeNullability(@Nullable PsiType type) {
-    if (type == null || type instanceof PsiPrimitiveType) return Nullness.UNKNOWN;
+  private static Nullability getNullabilityFromAnnotation(PsiModifierListOwner owner, boolean ignoreParameterNullabilityInference) {
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
+    NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(owner);
+    if (info == null ||
+        ignoreParameterNullabilityInference && owner instanceof PsiParameter && AnnotationUtil.isInferredAnnotation(info.getAnnotation())) {
+      return Nullability.UNKNOWN;
+    }
+    return info.getNullability();
+  }
 
-    Ref<Nullness> result = Ref.create(Nullness.UNKNOWN);
+  private static boolean isMapMethodWithUnknownNullity(@NotNull PsiMethod method) {
+    String name = method.getName();
+    if (!"get".equals(name) && !"remove".equals(name)) return false;
+    PsiMethod superMethod = DeepestSuperMethodsSearch.search(method).findFirst();
+    return ("java.util.Map." + name).equals(PsiUtil.getMemberQualifiedName(superMethod != null ? superMethod : method));
+  }
+
+  @NotNull
+  public static Nullability inferParameterNullability(@NotNull PsiParameter parameter) {
+    PsiElement parent = parameter.getParent();
+    if (parent instanceof PsiParameterList) {
+      PsiElement gParent = parent.getParent();
+      if (gParent instanceof PsiLambdaExpression) {
+        return getFunctionalParameterNullability((PsiLambdaExpression)gParent, ((PsiParameterList)parent).getParameterIndex(parameter));
+      } else if (gParent instanceof PsiMethod && DfaOptionalSupport.OPTIONAL_OF_NULLABLE.methodMatches((PsiMethod)gParent)) {
+        return Nullability.NULLABLE;
+      }
+    }
+    if (parent instanceof PsiForeachStatement) {
+      return getTypeNullability(inferLoopParameterTypeWithNullability((PsiForeachStatement)parent));
+    }
+    return Nullability.UNKNOWN;
+  }
+
+  @Nullable
+  private static PsiType inferLoopParameterTypeWithNullability(PsiForeachStatement loop) {
+    PsiExpression iteratedValue = PsiUtil.skipParenthesizedExprDown(loop.getIteratedValue());
+    if (iteratedValue == null) return null;
+
+    PsiType iteratedType = iteratedValue.getType();
+    if (iteratedValue instanceof PsiReferenceExpression) {
+      PsiElement target = ((PsiReferenceExpression)iteratedValue).resolve();
+      if (target instanceof PsiParameter && target.getParent() instanceof PsiForeachStatement) {
+        PsiForeachStatement targetLoop = (PsiForeachStatement)target.getParent();
+        if (PsiTreeUtil.isAncestor(targetLoop, loop, true) &&
+            !HighlightControlFlowUtil.isReassigned((PsiParameter)target, new HashMap<>())) {
+          iteratedType = inferLoopParameterTypeWithNullability(targetLoop);
+        }
+      }
+    }
+    return JavaGenericsUtil.getCollectionItemType(iteratedType, iteratedValue.getResolveScope());
+  }
+
+
+  @NotNull
+  public static Nullability getTypeNullability(@Nullable PsiType type) {
+    if (type == null || type instanceof PsiPrimitiveType) return Nullability.UNKNOWN;
+
+    Ref<Nullability> result = Ref.create(Nullability.UNKNOWN);
     InheritanceUtil.processSuperTypes(type, true, eachType -> {
-      result.set(getTypeOwnNullability(result, eachType));
-      return result.get() == Nullness.UNKNOWN;
+      result.set(getTypeOwnNullability(eachType));
+      return result.get() == Nullability.UNKNOWN;
     });
     return result.get();
   }
 
   @NotNull
-  private static Nullness getTypeOwnNullability(Ref<Nullness> result, PsiType eachType) {
+  private static Nullability getTypeOwnNullability(PsiType eachType) {
     for (PsiAnnotation annotation : eachType.getAnnotations()) {
       String qualifiedName = annotation.getQualifiedName();
       NullableNotNullManager nnn = NullableNotNullManager.getInstance(annotation.getProject());
       if (nnn.getNullables().contains(qualifiedName)) {
-        return Nullness.NULLABLE;
+        return Nullability.NULLABLE;
       }
       if (nnn.getNotNulls().contains(qualifiedName)) {
-        return Nullness.NOT_NULL;
+        return Nullability.NOT_NULL;
       }
     }
-    return Nullness.UNKNOWN;
+    return Nullability.UNKNOWN;
   }
 
   /**
-   * Returns the nullness of functional expression parameter
+   * Returns the nullability of functional expression parameter
    *
    * @param function functional expression
    * @param index parameter index
-   * @return nullness, defined by SAM parameter annotations or known otherwise
+   * @return nullability, defined by SAM parameter annotations or known otherwise
    */
   @NotNull
-  public static Nullness getFunctionalParameterNullability(PsiFunctionalExpression function, int index) {
-    Nullness nullness = inferLambdaParameterNullness(function, index);
-    if(nullness != Nullness.UNKNOWN) {
-      return nullness;
+  public static Nullability getFunctionalParameterNullability(PsiFunctionalExpression function, int index) {
+    Nullability nullability = inferLambdaParameterNullability(function, index);
+    if(nullability != Nullability.UNKNOWN) {
+      return nullability;
     }
     PsiClassType type = ObjectUtils.tryCast(LambdaUtil.getFunctionalInterfaceType(function, true), PsiClassType.class);
     PsiMethod sam = LambdaUtil.getFunctionalInterfaceMethod(type);
     if (sam != null && index < sam.getParameterList().getParametersCount()) {
       PsiParameter parameter = sam.getParameterList().getParameters()[index];
-      nullness = getElementNullability(null, parameter);
-      if(nullness != Nullness.UNKNOWN) {
-        return nullness;
+      nullability = getElementNullability(null, parameter);
+      if(nullability != Nullability.UNKNOWN) {
+        return nullability;
       }
       PsiType parameterType = type.resolveGenerics().getSubstitutor().substitute(parameter.getType());
       return getTypeNullability(GenericsUtil.eliminateWildcards(parameterType, false, true));
     }
-    return Nullness.UNKNOWN;
+    return Nullability.UNKNOWN;
   }
 
   @NotNull
-  private static Nullness inferLambdaParameterNullness(PsiFunctionalExpression lambda, int parameterIndex) {
+  private static Nullability inferLambdaParameterNullability(PsiFunctionalExpression lambda, int parameterIndex) {
     PsiElement expression = lambda;
     PsiElement expressionParent = lambda.getParent();
     while(expressionParent instanceof PsiConditionalExpression || expressionParent instanceof PsiParenthesizedExpression) {
@@ -197,45 +236,26 @@ public class DfaPsiUtil {
         PsiMethod method = ((PsiMethodCallExpression)listParent).resolveMethod();
         if(method != null) {
           int expressionIndex = ArrayUtil.find(list.getExpressions(), expression);
-          return getLambdaParameterNullness(method, expressionIndex, parameterIndex);
+          return getLambdaParameterNullability(method, expressionIndex, parameterIndex);
         }
       }
     }
-    return Nullness.UNKNOWN;
+    return Nullability.UNKNOWN;
   }
 
   @NotNull
-  private static Nullness getLambdaParameterNullness(@NotNull PsiMethod method, int parameterIndex, int lambdaParameterIndex) {
+  private static Nullability getLambdaParameterNullability(@NotNull PsiMethod method, int parameterIndex, int lambdaParameterIndex) {
     PsiClass type = method.getContainingClass();
     if(type != null) {
       if(CommonClassNames.JAVA_UTIL_OPTIONAL.equals(type.getQualifiedName())) {
         String methodName = method.getName();
         if((methodName.equals("map") || methodName.equals("filter") || methodName.equals("ifPresent") || methodName.equals("flatMap"))
           && parameterIndex == 0 && lambdaParameterIndex == 0) {
-          return Nullness.NOT_NULL;
+          return Nullability.NOT_NULL;
         }
       }
     }
-    return Nullness.UNKNOWN;
-  }
-
-  private static boolean isNotNullLocally(@NotNull PsiModifierListOwner owner, boolean ignoreParameterNullabilityInference) {
-    NullableNotNullManager nnnm = NullableNotNullManager.getInstance(owner.getProject());
-    PsiAnnotation notNullAnno = nnnm.getNotNullAnnotation(owner, true);
-    if (notNullAnno == null ||
-        ignoreParameterNullabilityInference && owner instanceof PsiParameter && AnnotationUtil.isInferredAnnotation(notNullAnno)) {
-      return false;
-    }
-
-    if (!(owner instanceof PsiParameter)) return true; // notnull on a super method requires all inheritors to return notnull as well
-
-    // @NotNull on a super parameter doesn't prohibit calling the inheritors with null args, if they're ready for that.
-    // so treat parameters as @NotNull only if they're annotated explicitly, or if they're in a scope of some nullity default annotation.
-    return isOwnAnnotation(owner, notNullAnno) || nnnm.isContainerAnnotation(notNullAnno);
-  }
-
-  private static boolean isOwnAnnotation(@NotNull PsiModifierListOwner owner, @NotNull PsiAnnotation anno) {
-    return AnnotationUtil.findAnnotation(owner, anno.getQualifiedName()) == anno;
+    return Nullability.UNKNOWN;
   }
 
   private static boolean isEnumPredefinedMethod(PsiMethod method) {
@@ -278,7 +298,7 @@ public class DfaPsiUtil {
       public Result<Set<PsiField>> compute() {
         final PsiCodeBlock body = constructor.getBody();
         final Map<PsiField, Boolean> map = ContainerUtil.newHashMap();
-        final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(false, false) {
+        final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(false, null) {
 
           private boolean isCallExposingNonInitializedFields(Instruction instruction) {
             if (!(instruction instanceof MethodCallInstruction) ||
@@ -324,7 +344,7 @@ public class DfaPsiUtil {
             if (isCallExposingNonInitializedFields(instruction) ||
                 instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException()) {
               for (PsiField field : containingClass.getFields()) {
-                if (!instructionState.getMemoryState().isNotNull(getFactory().getVarFactory().createVariableValue(field, false))) {
+                if (!instructionState.getMemoryState().isNotNull(getFactory().getVarFactory().createVariableValue(field))) {
                   map.put(field, false);
                 } else if (!map.containsKey(field)) {
                   map.put(field, true);
@@ -362,8 +382,7 @@ public class DfaPsiUtil {
 
   private static MultiMap<PsiField, PsiExpression> getAllConstructorFieldInitializers(final PsiClass psiClass) {
     if (psiClass instanceof PsiCompiledElement) {
-      //noinspection unchecked
-      return MultiMap.EMPTY;
+      return MultiMap.empty();
     }
 
     return CachedValuesManager.getCachedValue(psiClass, new CachedValueProvider<MultiMap<PsiField, PsiExpression>>() {
@@ -436,7 +455,7 @@ public class DfaPsiUtil {
               final PsiExpression rValue = assignmentExpression.getRExpression();
               if (!literalsOnly || allOperandsAreLiterals(rValue)) {
                 // if there's a codeBlock omit the values assigned later
-                if (codeBlock != null && PsiTreeUtil.isAncestor(codeBlock, parent, true)
+                if (PsiTreeUtil.isAncestor(codeBlock, parent, true)
                     && placeOffset < parent.getTextRange().getStartOffset()) {
                   return null;
                 }

@@ -33,9 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-/**
- * @author Tagir Valeev
- */
 public interface ChainCallExtractor {
   ExtensionPointName<ChainCallExtractor> KEY = ExtensionPointName.create("com.intellij.java.refactoring.chainCallExtractor");
 
@@ -96,7 +93,7 @@ public interface ChainCallExtractor {
     PsiParameterList parameters = lambda.getParameterList();
     if (parameters.getParametersCount() != 1) return null;
     PsiExpressionList args = tryCast(lambda.getParent(), PsiExpressionList.class);
-    if (args == null || args.getExpressions().length != 1) return null;
+    if (args == null || args.getExpressionCount() != 1) return null;
     PsiParameter parameter = parameters.getParameters()[0];
     if (ExpressionUtils.isReferenceTo(expression, parameter) && parameter.getType().equals(targetType)) {
       // No-op extraction is useless

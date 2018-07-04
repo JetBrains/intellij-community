@@ -4,7 +4,7 @@ def f():
 
 
 def f():
-    if 0:
+    if b:
         return
     a = 1 # pass
 
@@ -88,7 +88,7 @@ def f():
 # PY-4208
 def f(g):
     try:
-        raise
+        raise ValueError
     finally:
         g()
     <warning descr="This code is unreachable">g()</warning>

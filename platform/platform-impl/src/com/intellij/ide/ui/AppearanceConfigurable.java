@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.QuickChangeLookAndFeel;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,10 +13,11 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
-import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.FontComboBox;
@@ -40,18 +29,14 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.Dictionary;
 import java.util.Hashtable;
 
 /**
  * @author Eugene Belyaev
  */
-public class AppearanceConfigurable extends BaseConfigurable implements SearchableConfigurable {
+public class AppearanceConfigurable implements SearchableConfigurable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.AppearanceConfigurable");
 
   private MyComponent myComponent;
@@ -102,8 +87,8 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myAntialiasingInEditor.setRenderer(new AAListCellRenderer(true));
 
     @SuppressWarnings("UseOfObsoleteCollectionType") Dictionary<Integer, JComponent> delayDictionary = new Hashtable<>();
-    delayDictionary.put(new Integer(0), new JLabel("0"));
-    delayDictionary.put(new Integer(1200), new JLabel("1200"));
+    delayDictionary.put(0, new JLabel("0"));
+    delayDictionary.put(1200, new JLabel("1200"));
     //delayDictionary.put(new Integer(2400), new JLabel("2400"));
     myComponent.myInitialTooltipDelaySlider.setLabelTable(delayDictionary);
     UIUtil.setSliderIsFilled(myComponent.myInitialTooltipDelaySlider, Boolean.TRUE);
@@ -115,21 +100,18 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myInitialTooltipDelaySlider.setMajorTickSpacing(1200);
     myComponent.myInitialTooltipDelaySlider.setMinorTickSpacing(100);
 
-    myComponent.myEnableAlphaModeCheckBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        boolean state = myComponent.myEnableAlphaModeCheckBox.isSelected();
-        myComponent.myAlphaModeDelayTextField.setEnabled(state);
-        myComponent.myAlphaModeRatioSlider.setEnabled(state);
-      }
+    myComponent.myEnableAlphaModeCheckBox.addActionListener(__ -> {
+      boolean state = myComponent.myEnableAlphaModeCheckBox.isSelected();
+      myComponent.myAlphaModeDelayTextField.setEnabled(state);
+      myComponent.myAlphaModeRatioSlider.setEnabled(state);
     });
 
     myComponent.myAlphaModeRatioSlider.setSize(100, 50);
-    @SuppressWarnings({"UseOfObsoleteCollectionType"})
+    @SuppressWarnings("UseOfObsoleteCollectionType")
     Dictionary<Integer, JComponent> dictionary = new Hashtable<>();
-    dictionary.put(new Integer(0), new JLabel("0%"));
-    dictionary.put(new Integer(50), new JLabel("50%"));
-    dictionary.put(new Integer(100), new JLabel("100%"));
+    dictionary.put(0, new JLabel("0%"));
+    dictionary.put(50, new JLabel("50%"));
+    dictionary.put(100, new JLabel("100%"));
     myComponent.myAlphaModeRatioSlider.setLabelTable(dictionary);
     UIUtil.setSliderIsFilled(myComponent.myAlphaModeRatioSlider, Boolean.TRUE);
     myComponent.myAlphaModeRatioSlider.setPaintLabels(true);
@@ -137,16 +119,27 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myAlphaModeRatioSlider.setPaintTrack(true);
     myComponent.myAlphaModeRatioSlider.setMajorTickSpacing(50);
     myComponent.myAlphaModeRatioSlider.setMinorTickSpacing(10);
-    myComponent.myAlphaModeRatioSlider.addChangeListener(new ChangeListener() {
-      @Override
-      public void stateChanged(ChangeEvent e) {
-        myComponent.myAlphaModeRatioSlider.setToolTipText(myComponent.myAlphaModeRatioSlider.getValue() + "%");
-      }
-    });
+    myComponent.myAlphaModeRatioSlider.addChangeListener(
+      __ -> myComponent.myAlphaModeRatioSlider.setToolTipText(myComponent.myAlphaModeRatioSlider.getValue() + "%"));
 
     myComponent.myTransparencyPanel.setVisible(WindowManagerEx.getInstanceEx().isAlphaModeSupported());
 
+    myComponent.myBackgroundImageButton.setEnabled(ProjectManager.getInstance().getOpenProjects().length > 0);
+    myComponent.myBackgroundImageButton.addActionListener(ActionUtil.createActionListener(
+      "Images.SetBackgroundImage", myComponent.myPanel, ActionPlaces.UNKNOWN));
+
+    myComponent.myDarkWindowHeaders.setSelected(Registry.is("ide.mac.allowDarkWindowDecorations"));
+    updateDarkWindowHeaderVisibility();
+    myComponent.myLafComboBox.addItemListener(x -> updateDarkWindowHeaderVisibility());
+    myComponent.myDarkWindowHeaders.addItemListener(x -> {Registry.get("ide.mac.allowDarkWindowDecorations").setValue(myComponent.myDarkWindowHeaders.isSelected()); LafManager.getInstance().updateUI();});
+
     return myComponent.myPanel;
+  }
+
+  private void updateDarkWindowHeaderVisibility() {
+    Object item = myComponent.myLafComboBox.getSelectedItem();
+    boolean isDarkLaf = item instanceof UIManager.LookAndFeelInfo && ((UIManager.LookAndFeelInfo)item).getClassName().endsWith("DarculaLaf");
+    myComponent.myDarkWindowHeaders.setVisible(SystemInfo.isMac && isDarkLaf);
   }
 
   @Override
@@ -189,7 +182,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     settings.setAnimateWindows(myComponent.myAnimateWindowsCheckBox.isSelected());
     update |= settings.getShowToolWindowsNumbers() != myComponent.myWindowShortcutsCheckBox.isSelected();
     settings.setShowToolWindowsNumbers(myComponent.myWindowShortcutsCheckBox.isSelected());
-    update |= settings.getHideToolStripes() != !myComponent.myShowToolStripesCheckBox.isSelected();
+    update |= settings.getHideToolStripes() == myComponent.myShowToolStripesCheckBox.isSelected();
     settings.setHideToolStripes(!myComponent.myShowToolStripesCheckBox.isSelected());
     update |= settings.getShowIconsInMenus() != myComponent.myCbDisplayIconsInMenu.isSelected();
     settings.setShowIconsInMenus(myComponent.myCbDisplayIconsInMenu.isSelected());
@@ -248,8 +241,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
       UIManager.LookAndFeelInfo lafInfo = (UIManager.LookAndFeelInfo)myComponent.myLafComboBox.getSelectedItem();
       update = true;
       shouldUpdateUI = false;
-      //noinspection SSBasedInspection
-      SwingUtilities.invokeLater(() -> QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafInfo));
+      QuickChangeLookAndFeel.switchLafAndUpdateUI(lafManager, lafInfo, true);
     }
 
     if (shouldUpdateUI) {
@@ -305,7 +297,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
   private static int getIntValue(JComboBox combo, int defaultValue) {
     String temp = (String)combo.getEditor().getItem();
     int value = -1;
-    if (temp != null && temp.trim().length() > 0) {
+    if (temp != null && !temp.trim().isEmpty()) {
       try {
         value = Integer.parseInt(temp);
       }
@@ -505,20 +497,17 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     private ColorBlindnessPanel myColorBlindnessPanel;
     private JComboBox myAntialiasingInIDE;
     private JComboBox myAntialiasingInEditor;
+    private JButton myBackgroundImageButton;
+    private JBCheckBox myDarkWindowHeaders;
 
     public MyComponent() {
-      myOverrideLAFFonts.addActionListener( new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          updateCombo();
-        }
-      });
+      myOverrideLAFFonts.addActionListener(__ -> updateCombo());
       if (!Registry.is("ide.transparency.mode.for.windows")) {
         myTransparencyPanel.getParent().remove(myTransparencyPanel);
       }
     }
 
-    public void updateCombo() {
+    void updateCombo() {
       boolean enableChooser = myOverrideLAFFonts.isSelected();
 
       myFontCombo.setEnabled(enableChooser);
@@ -539,8 +528,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
 
     private final boolean useEditorAASettings;
 
-    public AAListCellRenderer(boolean useEditorAASettings) {
-      super();
+    AAListCellRenderer(boolean useEditorAASettings) {
       this.useEditorAASettings = useEditorAASettings;
     }
 

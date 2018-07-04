@@ -82,6 +82,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   private boolean myMayBeParent;
   private int myAdAlignment = SwingConstants.LEFT;
   private BooleanFunction<KeyEvent> myKeyEventHandler;
+  private Color myBorderColor;
 
   public ComponentPopupBuilderImpl(@NotNull JComponent component, JComponent preferredFocusedComponent) {
     myComponent = component;
@@ -237,7 +238,7 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
       myCancelButton, myCancelOnMouseOutCallback, myCancelOnWindow, myTitleIcon, myCancelKeyEnabled, myLocateByContent,
       myPlaceWithinScreen, myMinSize, myAlpha, myMaskProvider, myInStack, myModalContext, myFocusOwners, myAd, myAdAlignment,
       false, myKeyboardActions, mySettingsButtons, myPinCallback, myMayBeParent,
-      myShowShadow, myShowBorder, myCancelOnWindowDeactivation, myKeyEventHandler
+      myShowShadow, myShowBorder, myBorderColor, myCancelOnWindowDeactivation, myKeyEventHandler
     );
     if (myUserData != null) {
       popup.setUserData(myUserData);
@@ -358,6 +359,13 @@ public class ComponentPopupBuilderImpl implements ComponentPopupBuilder {
   @Override
   public ComponentPopupBuilder setShowBorder(boolean show) {
     myShowBorder = show;
+    return this;
+  }
+
+  @NotNull
+  @Override
+  public ComponentPopupBuilder setBorderColor(Color color) {
+    myBorderColor = color;
     return this;
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -25,29 +11,32 @@ import java.awt.event.ActionListener
 import javax.swing.ButtonGroup
 import javax.swing.JLabel
 
-class LayoutBuilder(val `$`: LayoutBuilderImpl, val buttonGroup: ButtonGroup? = null) {
-  inline fun row(label: String, init: Row.() -> Unit) = row(label = Label(label), init = init)
+class LayoutBuilder @PublishedApi internal constructor(@PublishedApi internal val builder: LayoutBuilderImpl, val buttonGroup: ButtonGroup? = null) {
+  inline fun row(label: String, init: Row.() -> Unit): Row = row(label = Label(label), init = init)
 
   inline fun row(label: JLabel? = null, separated: Boolean = false, init: Row.() -> Unit): Row {
-    val row = `$`.newRow(label, buttonGroup, separated)
+    val row = builder.newRow(label, buttonGroup, separated)
     row.init()
     return row
   }
 
+  // linkHandler is not an optional for backward compatibility
   /**
    * Hyperlinks are supported (`<a href=""></a>`), new lines and <br> are supported only if no links (file issue if need).
    */
-  fun noteRow(text: String) {
-    `$`.noteRow(text)
+  fun noteRow(text: String, linkHandler: ((url: String) -> Unit)?) {
+    builder.noteRow(text, linkHandler)
   }
 
+  fun noteRow(text: String): Unit = noteRow(text, null)
+
   inline fun buttonGroup(init: LayoutBuilder.() -> Unit) {
-    LayoutBuilder(`$`, ButtonGroup()).init()
+    LayoutBuilder(builder, ButtonGroup()).init()
   }
 
   inline fun buttonGroup(crossinline elementActionListener: () -> Unit, init: LayoutBuilder.() -> Unit): ButtonGroup {
     val group = ButtonGroup()
-    LayoutBuilder(`$`, group).init()
+    LayoutBuilder(builder, group).init()
 
     val listener = ActionListener { elementActionListener() }
     for (button in group.elements) {
@@ -56,7 +45,13 @@ class LayoutBuilder(val `$`: LayoutBuilderImpl, val buttonGroup: ButtonGroup? = 
     return group
   }
 
-  fun chooseFile(descriptor: FileChooserDescriptor, event: AnActionEvent, fileChoosen: (chosenFile: VirtualFile) -> Unit) {
-    FileChooser.chooseFile(descriptor, event.getData(PlatformDataKeys.PROJECT), event.getData(PlatformDataKeys.CONTEXT_COMPONENT), null, fileChoosen)
+  fun chooseFile(descriptor: FileChooserDescriptor, event: AnActionEvent, fileChosen: (chosenFile: VirtualFile) -> Unit) {
+    FileChooser.chooseFile(descriptor, event.getData(PlatformDataKeys.PROJECT), event.getData(PlatformDataKeys.CONTEXT_COMPONENT), null, fileChosen)
   }
+
+  @Suppress("PropertyName")
+  @PublishedApi
+  @Deprecated("", replaceWith = ReplaceWith("builder"), level = DeprecationLevel.ERROR)
+  internal val `$`: LayoutBuilderImpl
+    get() = builder
 }

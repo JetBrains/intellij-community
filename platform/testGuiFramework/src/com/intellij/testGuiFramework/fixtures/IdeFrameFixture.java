@@ -48,8 +48,9 @@ import org.fest.swing.core.matcher.JButtonMatcher;
 import org.fest.swing.core.matcher.JLabelMatcher;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
+import org.fest.swing.exception.ComponentLookupException;
+import org.fest.swing.exception.WaitTimedOutError;
 import org.fest.swing.timing.Condition;
-import org.fest.swing.timing.Pause;
 import org.fest.swing.timing.Timeout;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -64,6 +65,7 @@ import java.awt.event.MouseEvent;
 import java.io.File;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.util.io.FileUtil.getRelativePath;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
@@ -81,12 +83,16 @@ import static org.junit.Assert.assertNull;
 public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameImpl> {
   @NotNull private final File myProjectPath;
 
-  private EditorFixture myEditor;
   private MainToolbarFixture myToolbar;
   private NavigationBarFixture myNavBar;
+  private RunConfigurationListFixture myRCList;
+  private GutterFixture myGutter;
 
   @NotNull
-  public static IdeFrameFixture find(@NotNull final Robot robot, @Nullable final File projectPath, @Nullable final String projectName) {
+  public static IdeFrameFixture find(@NotNull final Robot robot,
+                                     @Nullable final File projectPath,
+                                     @Nullable final String projectName,
+                                     long timeoutInSeconds) {
     final GenericTypeMatcher<IdeFrameImpl> matcher = new GenericTypeMatcher<IdeFrameImpl>(IdeFrameImpl.class) {
       @Override
       protected boolean isMatching(@NotNull IdeFrameImpl frame) {
@@ -100,16 +106,27 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
       }
     };
 
-    pause(new Condition("IdeFrame " + (projectPath != null ? quote(projectPath.getPath()) : "") + " to show up") {
-      @Override
-      public boolean test() {
-        Collection<IdeFrameImpl> frames = robot.finder().findAll(matcher);
-        return !frames.isEmpty();
-      }
-    }, GuiTestUtil.LONG_TIMEOUT);
+    try {
 
-    IdeFrameImpl ideFrame = robot.finder().find(matcher);
-    return new IdeFrameFixture(robot, ideFrame, new File(ideFrame.getProject().getBasePath()));
+
+      pause(new Condition("IdeFrame " + (projectPath != null ? quote(projectPath.getPath()) : "") + " to show up") {
+        @Override
+        public boolean test() {
+          Collection<IdeFrameImpl> frames = robot.finder().findAll(matcher);
+          return !frames.isEmpty();
+        }
+      }, Timeout.timeout(timeoutInSeconds, TimeUnit.SECONDS));
+
+      IdeFrameImpl ideFrame = robot.finder().find(matcher);
+      return new IdeFrameFixture(robot, ideFrame, new File(ideFrame.getProject().getBasePath()));
+    }
+    catch (WaitTimedOutError timedOutError) {
+      throw new ComponentLookupException("Unable to find IdeFrame in " + timeoutInSeconds + " second(s)");
+    }
+  }
+
+  public static IdeFrameFixture find(@NotNull final Robot robot, @Nullable final File projectPath, @Nullable final String projectName) {
+    return find(robot, projectPath, projectName, 120L);
   }
 
   public IdeFrameFixture(@NotNull Robot robot, @NotNull IdeFrameImpl target, @NotNull File projectPath) {
@@ -204,12 +221,8 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   }
 
   @NotNull
-  public EditorFixture getEditor() {
-    if (myEditor == null) {
-      myEditor = new EditorFixture(robot(), this);
-    }
-
-    return myEditor;
+  public FileEditorFixture getEditor() {
+    return new FileEditorFixture(robot(), this);
   }
 
   @NotNull
@@ -228,6 +241,22 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     }
 
     return myNavBar;
+  }
+
+  @NotNull
+  public RunConfigurationListFixture getRunConfigurationList() {
+    if (myRCList == null) {
+      myRCList = new RunConfigurationListFixture(robot(), this);
+    }
+    return myRCList;
+  }
+
+  @NotNull
+  public GutterFixture getGutter() {
+    if (myGutter == null) {
+      myGutter = new GutterFixture(this);
+    }
+    return myGutter;
   }
 
   //@NotNull
@@ -318,6 +347,15 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   }
 
   /**
+   * Returns a JMenuItem for a corresponding path
+   *
+   * @param path the series of menu names, e.g. {@link invokeActionByMenuPath("Build", "Make Project")}
+   */
+  public MenuFixture.MenuItemFixture getMenuPath(@NotNull String... path) {
+    return getMenuFixture().getMenuItemFixture(path);
+  }
+
+  /**
    * Invokes an action from main menu
    *
    * @param mainMenuAction is the typical AnAction with ActionPlaces.MAIN_MENU
@@ -330,7 +368,8 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
       new MouseEvent(jMenuBar, MouseEvent.MOUSE_CLICKED, System.currentTimeMillis(), 0, MouseInfo.getPointerInfo().getLocation().x,
                      MouseInfo.getPointerInfo().getLocation().y, 1, false);
     ApplicationManager.getApplication()
-      .invokeLater(() -> actionManager.tryToExecute(mainMenuAction, fakeMainMenuMouseEvent, null, ActionPlaces.MAIN_MENU, true));
+                      .invokeLater(
+                        () -> actionManager.tryToExecute(mainMenuAction, fakeMainMenuMouseEvent, null, ActionPlaces.MAIN_MENU, true));
   }
 
   /**
@@ -426,7 +465,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
         RunConfigurationComboBoxFixture runConfigurationComboBox = RunConfigurationComboBoxFixture.find(IdeFrameFixture.this);
         return isNotEmpty(runConfigurationComboBox.getText());
       }
-    }, GuiTestUtil.SHORT_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
 
     waitForBackgroundTasksToFinish();
     findGradleSyncAction().waitUntilEnabledAndShowing();
@@ -511,7 +550,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
 
   @NotNull
   public IdeFrameFixture waitForBackgroundTasksToFinish() {
-    Pause.pause(new Condition("Background tasks to finish") {
+    pause(new Condition("Background tasks to finish") {
                   @Override
                   public boolean test() {
                     ProgressManager progressManager = ProgressManager.getInstance();
@@ -520,7 +559,31 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
                            !progressManager.hasUnsafeProgressIndicator();
                   }
                 }
-      , GuiTestUtil.LONG_TIMEOUT);
+      , GuiTestUtil.INSTANCE.getFIFTEEN_MIN_TIMEOUT());
+    robot().waitForIdle();
+    return this;
+  }
+
+  @NotNull
+  public IdeFrameFixture waitForStartingIndexing() {
+    return waitForStartingIndexing(20);
+  }
+
+  @NotNull
+  public IdeFrameFixture waitForStartingIndexing(int secondsToWait) {
+    try {
+      pause(new Condition("Indexing to start") {
+              @Override
+              public boolean test() {
+                ProgressManager progressManager = ProgressManager.getInstance();
+                return progressManager.hasModalProgressIndicator() ||
+                       progressManager.hasProgressIndicator() ||
+                       progressManager.hasUnsafeProgressIndicator();
+              }
+            }
+        , Timeout.timeout(secondsToWait, TimeUnit.SECONDS));
+    }
+    catch (WaitTimedOutError ignored){}
     robot().waitForIdle();
     return this;
   }
@@ -650,7 +713,7 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
     JButton button = robot().finder().find(dialog, JButtonMatcher.withText("OK").andShowing());
     robot().click(button);
 
-    final InspectionTree tree = GuiTestUtil.waitUntilFound(robot(), new GenericTypeMatcher<InspectionTree>(InspectionTree.class) {
+    final InspectionTree tree = GuiTestUtil.INSTANCE.waitUntilFound(robot(), new GenericTypeMatcher<InspectionTree>(InspectionTree.class) {
       @Override
       protected boolean isMatching(@NotNull InspectionTree component) {
         return true;
@@ -768,19 +831,19 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   /////////////////////////////////////////////////////////////////
 
   public void resumeProgram() {
-    GuiTestUtil.invokeMenuPathOnRobotIdle(this, "Run", "Resume Program");
+    GuiTestUtil.INSTANCE.invokeMenuPathOnRobotIdle(this, "Run", "Resume Program");
   }
 
   public void stepOver() {
-    GuiTestUtil.invokeMenuPathOnRobotIdle(this, "Run", "Step Over");
+    GuiTestUtil.INSTANCE.invokeMenuPathOnRobotIdle(this, "Run", "Step Over");
   }
 
   public void stepInto() {
-    GuiTestUtil.invokeMenuPathOnRobotIdle(this, "Run", "Step Into");
+    GuiTestUtil.INSTANCE.invokeMenuPathOnRobotIdle(this, "Run", "Step Into");
   }
 
   public void stepOut() {
-    GuiTestUtil.invokeMenuPathOnRobotIdle(this, "Run", "Step Out");
+    GuiTestUtil.INSTANCE.invokeMenuPathOnRobotIdle(this, "Run", "Step Out");
   }
 
   /**
@@ -790,11 +853,11 @@ public class IdeFrameFixture extends ComponentFixture<IdeFrameFixture, IdeFrameI
   public void toggleBreakPoints(String fileBasename, int[] lines) {
     // We open the file twice to bring the editor into focus. Idea 1.15 has this bug where opening a file doesn't automatically bring its
     // editor window into focus.
-    GuiTestUtil.openFile(this, fileBasename);
-    GuiTestUtil.openFile(this, fileBasename);
+    GuiTestUtil.INSTANCE.openFile(this, fileBasename);
+    GuiTestUtil.INSTANCE.openFile(this, fileBasename);
     for (int line : lines) {
-      GuiTestUtil.navigateToLine(this, line);
-      GuiTestUtil.invokeMenuPathOnRobotIdle(this, "Run", "Toggle Line Breakpoint");
+      GuiTestUtil.INSTANCE.navigateToLine(this, line);
+      GuiTestUtil.INSTANCE.invokeMenuPathOnRobotIdle(this, "Run", "Toggle Line Breakpoint");
     }
   }
 

@@ -1,87 +1,65 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
-import com.intellij.openapi.ui.GraphicsConfig;
-import com.intellij.ui.Gray;
-import com.intellij.ui.JBColor;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.openapi.ui.ErrorBorderCapable;
+import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.MacUIUtil;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
-import java.awt.geom.Area;
+import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
+
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*;
 
 /**
  * @author Konstantin Bulenkov
  */
-public class DarculaSpinnerBorder implements Border, UIResource {
+public class DarculaSpinnerBorder implements Border, UIResource, ErrorBorderCapable {
 
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-    final JSpinner spinner = (JSpinner)c;
-    final JFormattedTextField editor = UIUtil.findComponentOfType(spinner, JFormattedTextField.class);
-    final int x1 = x + 1;
-    final int y1 = y + 3;
-    final int width1 = width - 2;
-    final int height1 = height - 6;
-    final boolean focused = c.isEnabled() && c.isVisible() && editor != null && editor.hasFocus();
-    final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
+    Graphics2D g2 = (Graphics2D)g.create();
+    Rectangle r = new Rectangle(x, y, width, height);
+    JBInsets.removeFrom(r, JBUI.insets(1));
 
-    if (c.isOpaque()) {
-      g.setColor(UIUtil.getPanelBackground());
-      g.fillRect(x, y, width, height);
-    }
+    try {
+      g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+      g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
+                          MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-    g.setColor(UIUtil.getTextFieldBackground());
-    g.fillRoundRect(x1, y1, width1, height1, 5, 5);
-    g.setColor(UIManager.getColor(spinner.isEnabled() ? "Spinner.darcula.enabledButtonColor" : "Spinner.darcula.disabledButtonColor"));
-    if (editor != null) {
-      final int off = editor.getBounds().x + editor.getWidth() + ((JSpinner)c).getInsets().left + 1;
-      final Area rect = new Area(new RoundRectangle2D.Double(x1, y1, width1, height1, 5, 5));
-      final Area blueRect = new Area(new Rectangle(off, y1, 22, height1));
-      rect.intersect(blueRect);
-      ((Graphics2D)g).fill(rect);
-      if (UIUtil.isUnderDarcula()) {
-        g.setColor(Gray._100);
-        g.drawLine(off, y1, off, height1 + 2);
+      g2.translate(r.x, r.y);
+
+      float lw = LW.getFloat();
+      float bw = BW.getFloat();
+      float arc = COMPONENT_ARC.getFloat();
+
+      Object op = ((JComponent)c).getClientProperty("JComponent.outline");
+      if (op != null) {
+        paintOutlineBorder(g2, r.width, r.height, arc, true, isFocused(c), Outline.valueOf(op.toString()));
+      } else {
+        if (isFocused(c)) {
+          paintFocusBorder(g2, r.width, r.height, arc, true);
+        }
+
+        Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+        border.append(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc), false);
+        border.append(new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2, arc, arc), false);
+
+        g2.setColor(getOutlineColor(c.isEnabled(), isFocused(c)));
+        g2.fill(border);
       }
+    } finally {
+      g2.dispose();
     }
-
-    if (!c.isEnabled()) {
-      ((Graphics2D)g).setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.4f));
-    }
-
-    if (focused) {
-      DarculaUIUtil.paintFocusRing(g, new Rectangle(x1 + 2, y1, width1 - 3, height1));
-    } else {
-      g.setColor(new JBColor(Gray._149,Gray._100));
-      g.drawRoundRect(x1, y1, width1, height1, 5, 5);
-    }
-    config.restore();
   }
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return new InsetsUIResource(5, 7, 5, 7);
+    return JBUI.insets(3).asUIResource();
   }
 
   @Override

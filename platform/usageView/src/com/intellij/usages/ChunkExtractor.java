@@ -92,7 +92,7 @@ public class ChunkExtractor {
         @NotNull
         @Override
         protected Map<PsiFile, ChunkExtractor> create() {
-          return FactoryMap.createMap(psiFile -> new ChunkExtractor(psiFile));
+          return FactoryMap.create(psiFile -> new ChunkExtractor(psiFile));
         }
       };
     }
@@ -176,7 +176,7 @@ public class ChunkExtractor {
       for (TextRange range : editable) {
         createTextChunks(usageInfo2UsageAdapter, chars, range.getStartOffset(), range.getEndOffset(), true, result);
       }
-      return result.toArray(new TextChunk[result.size()]);
+      return result.toArray(TextChunk.EMPTY_ARRAY);
     }
     return createTextChunks(usageInfo2UsageAdapter, chars, fragmentToShowStart, fragmentToShowEnd, true, result);
   }
@@ -187,7 +187,7 @@ public class ChunkExtractor {
                                       int start,
                                       int end,
                                       boolean selectUsageWithBold,
-                                      @NotNull List<TextChunk> result) {
+                                      @NotNull List<? super TextChunk> result) {
     final Lexer lexer = myHighlighter.getHighlightingLexer();
     final SyntaxHighlighterOverEditorHighlighter highlighter = myHighlighter;
 
@@ -226,7 +226,7 @@ public class ChunkExtractor {
       processIntersectingRange(usageInfo2UsageAdapter, chars, hiStart, hiEnd, tokenHighlights, selectUsageWithBold, result);
     }
 
-    return result.toArray(new TextChunk[result.size()]);
+    return result.toArray(TextChunk.EMPTY_ARRAY);
   }
 
   private void processIntersectingRange(@NotNull UsageInfo2UsageAdapter usageInfo2UsageAdapter,
@@ -235,7 +235,7 @@ public class ChunkExtractor {
                                         final int hiEnd,
                                         @NotNull final TextAttributesKey[] tokenHighlights,
                                         final boolean selectUsageWithBold,
-                                        @NotNull final List<TextChunk> result) {
+                                        @NotNull final List<? super TextChunk> result) {
     final TextAttributes originalAttrs = convertAttributes(tokenHighlights);
     if (selectUsageWithBold) {
       originalAttrs.setFontType(Font.PLAIN);
@@ -301,7 +301,7 @@ public class ChunkExtractor {
                                @NotNull TextAttributes originalAttrs,
                                boolean bold,
                                @Nullable UsageType usageType,
-                               @NotNull List<TextChunk> result) {
+                               @NotNull List<? super TextChunk> result) {
     if (start >= end) return;
 
     TextAttributes attrs = bold
@@ -331,7 +331,7 @@ public class ChunkExtractor {
     return attrs;
   }
 
-  private void appendPrefix(@NotNull List<TextChunk> result, int lineNumber) {
+  private void appendPrefix(@NotNull List<? super TextChunk> result, int lineNumber) {
     result.add(new TextChunk(myColorsScheme.getAttributes(UsageTreeColors.USAGE_LOCATION), String.valueOf(lineNumber + 1)));
   }
 }

@@ -41,7 +41,6 @@ import java.util.Set;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 2/16/12
 */
 class OutputFilesSink implements OutputFileConsumer {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.java.OutputFilesSink");

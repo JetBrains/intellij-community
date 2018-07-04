@@ -1,27 +1,16 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package org.jetbrains.plugins.groovy.formatter.blocks;
 
-import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.ILazyParseableElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +34,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrComman
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -54,7 +42,6 @@ import java.util.List;
  * @author ilyas
  */
 public class GroovyBlock implements Block, ASTBlock {
-  private static final Logger LOG = Logger.getInstance(GroovyBlock.class);
 
   protected final ASTNode myNode;
   protected Alignment myAlignment = null;
@@ -92,16 +79,9 @@ public class GroovyBlock implements Block, ASTBlock {
   @Override
   public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
-      try {
-        mySubBlocks = new GroovyBlockGenerator(this).generateSubBlocks();
-      }
-      catch (AssertionError | RuntimeException e) {
-        final PsiFile file = myNode.getPsi().getContainingFile();
-        LogMessageEx.error(LOG, "Formatting failed for file " + file.getName(), e, file.getText(), myNode.getText());
-        mySubBlocks = new ArrayList<>();
-      }
+      mySubBlocks = new GroovyBlockGenerator(this).generateSubBlocks();
     }
-    return  mySubBlocks;
+    return mySubBlocks;
   }
 
   @Override

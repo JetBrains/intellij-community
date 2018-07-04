@@ -19,11 +19,13 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlText;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomManager;
@@ -35,6 +37,7 @@ import org.jetbrains.idea.maven.dom.model.MavenDomParent;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
+import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.util.List;
 
@@ -73,28 +76,35 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
       DomFileElement<MavenDomProjectModel> model = domManager.getFileElement((XmlFile)file, MavenDomProjectModel.class);
 
       if (model != null) {
+        boolean maven35 = StringUtil.compareVersionNumbers(MavenServerManager.getInstance().getCurrentMavenVersion(), "3.5") >= 0;
         List<ProblemDescriptor> problems = ContainerUtil.newArrayListWithCapacity(3);
 
         MavenDomParent mavenParent = model.getRootElement().getMavenParent();
-        validate(manager, isOnTheFly, problems, mavenParent.getGroupId());
-        validate(manager, isOnTheFly, problems, mavenParent.getArtifactId());
-        validate(manager, isOnTheFly, problems, mavenParent.getVersion());
+        validate(manager, isOnTheFly, maven35, problems, mavenParent.getGroupId());
+        validate(manager, isOnTheFly, maven35, problems, mavenParent.getArtifactId());
+        validate(manager, isOnTheFly, maven35, problems, mavenParent.getVersion());
 
         if (problems.isEmpty()) return ProblemDescriptor.EMPTY_ARRAY;
-        return problems.toArray(new ProblemDescriptor[problems.size()]);
+        return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
       }
     }
 
     return null;
   }
 
-  private static void validate(@NotNull InspectionManager manager, boolean isOnTheFly,
+  private static void validate(@NotNull InspectionManager manager, boolean isOnTheFly, boolean maven35,
                                @NotNull List<ProblemDescriptor> problems, @NotNull GenericDomValue<String> domValue) {
     String unresolvedValue = domValue.getRawText();
-    if (unresolvedValue != null && unresolvedValue.contains("${")) {
+    if (unresolvedValue == null) return;
+
+    String valueToCheck = maven35 ? unresolvedValue.replaceAll("\\$\\{(revision|sha1|changelist)}", "")
+                                  : unresolvedValue;
+    if (valueToCheck.contains("${")) {
       LocalQuickFix fix = null;
       String resolvedValue = domValue.getStringValue();
-      if (unresolvedValue.equals(resolvedValue)) {
+      if (resolvedValue == null) return;
+
+      if (unresolvedValue.equals(resolvedValue) || resolvedValue.contains("${")) {
         resolvedValue = resolveXmlElement(domValue.getXmlElement());
       }
 
@@ -103,12 +113,21 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
         fix = new LocalQuickFixBase(MavenDomBundle.message("refactoring.inline.property")) {
           @Override
           public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-            ((XmlTag)descriptor.getPsiElement()).getValue().setText(finalResolvedValue);
+            PsiElement psiElement = descriptor.getPsiElement();
+            if (psiElement instanceof XmlTag) {
+              ((XmlTag)psiElement).getValue().setText(finalResolvedValue);
+            }
+            else if (psiElement instanceof XmlText) {
+              ((XmlText)psiElement).setValue(finalResolvedValue);
+            }
           }
         };
       }
-      problems.add(manager.createProblemDescriptor(domValue.getXmlTag(), MavenDomBundle.message("inspection.property.in.parent.description"),
-                                                   fix, ProblemHighlightType.GENERIC_ERROR, isOnTheFly));
+      XmlText[] textElements = domValue.getXmlTag().getValue().getTextElements();
+      if (textElements.length > 0) {
+        problems.add(manager.createProblemDescriptor(textElements[0], MavenDomBundle.message("inspection.property.in.parent.description"),
+                                                     fix, ProblemHighlightType.GENERIC_ERROR, isOnTheFly));
+      }
     }
   }
 
@@ -120,7 +139,7 @@ public class MavenPropertyInParentInspection extends XmlSuppressableInspectionTo
     if (psiReference == null) return null;
 
     PsiElement resolvedElement = psiReference.resolve();
-    if (resolvedElement == null || !(resolvedElement instanceof MavenPsiElementWrapper)) return null;
+    if (!(resolvedElement instanceof MavenPsiElementWrapper)) return null;
 
     PsiElement xmlTag = ((MavenPsiElementWrapper)resolvedElement).getWrappee();
     if (!(xmlTag instanceof XmlTag)) return null;

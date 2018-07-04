@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
@@ -25,6 +26,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
+import com.intellij.vcs.log.VcsLogFileHistoryProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,18 +48,33 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent event) {
     Project project = event.getRequiredData(CommonDataKeys.PROJECT);
     AbstractVcs vcs = assertNotNull(getVcs(project, event.getData(VcsDataKeys.VCS)));
-    VcsHistoryProviderEx vcsHistoryProvider = assertNotNull((VcsHistoryProviderEx)vcs.getVcsHistoryProvider());
 
     Change change = event.getRequiredData(VcsDataKeys.SELECTED_CHANGES)[0];
     ContentRevision revision = assertNotNull(getContentRevision(change));
 
-    AbstractVcsHelperImpl helper = assertNotNull(getVcsHelper(project));
-    helper.showFileHistory(vcsHistoryProvider, revision.getFile(), vcs, revision.getRevisionNumber());
+    if (canShowNewFileHistory(project, revision.getFile())) {
+      showNewFileHistory(project, revision.getFile(), revision.getRevisionNumber().asString());
+    }
+    else {
+      VcsHistoryProviderEx vcsHistoryProvider = assertNotNull((VcsHistoryProviderEx)vcs.getVcsHistoryProvider());
+      AbstractVcsHelperImpl helper = assertNotNull(getVcsHelper(project));
+      helper.showFileHistory(vcsHistoryProvider, revision.getFile(), vcs, revision.getRevisionNumber());
+    }
+  }
+
+  private static void showNewFileHistory(@NotNull Project project, @NotNull FilePath path, @NotNull String revisionNumber) {
+    VcsLogFileHistoryProvider historyProvider = ServiceManager.getService(VcsLogFileHistoryProvider.class);
+    historyProvider.showFileHistory(project, path, revisionNumber);
+  }
+
+  private static boolean canShowNewFileHistory(@NotNull Project project, @NotNull FilePath path) {
+    VcsLogFileHistoryProvider historyProvider = ServiceManager.getService(VcsLogFileHistoryProvider.class);
+    return historyProvider != null && historyProvider.canShowFileHistory(project, path);
   }
 
   private static boolean isVisible(@NotNull AnActionEvent event) {
     Project project = event.getProject();
-    if (project == null) return false;
+    if (project == null || project.isDisposed()) return false;
     if (getVcsHelper(project) == null) return false;
     AbstractVcs vcs = getVcs(project, event.getData(VcsDataKeys.VCS));
     if (vcs == null) return false;

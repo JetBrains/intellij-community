@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.refactoring;
 
 import com.intellij.JavaTestUtil;
@@ -234,6 +220,14 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("i", true, true, false, "int"));
   }
 
+  public void testGenericTypeMismatch() {
+    doTest(new MockIntroduceVariableHandler("i", true, true, false, "java.lang.String"));
+  }
+
+  public void testGenericTypeMismatch1() {
+    doTest(new MockIntroduceVariableHandler("i", true, true, false, "java.util.List<java.lang.String>"));
+  }
+
   public void testThisQualifier() {
     doTest(new MockIntroduceVariableHandler("count", true, true, false, "int"));
   }
@@ -297,6 +291,17 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
    public void testNoArrayFromVarargs1() {
+    try {
+      doTest(new MockIntroduceVariableHandler("strs", false, false, false, "java.lang.String[]"));
+    }
+    catch (Exception e) {
+      assertEquals("Error message:Cannot perform refactoring.\nSelected block should represent an expression", e.getMessage());
+      return;
+    }
+    fail("Should not be able to perform refactoring");
+  }
+
+  public void testNoArrayFromVarargsUntilComma() {
     try {
       doTest(new MockIntroduceVariableHandler("strs", false, false, false, "java.lang.String[]"));
     }
@@ -375,7 +380,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
                                                    InputValidator validator,
                                                    PsiElement anchor, final JavaReplaceChoice replaceChoice) {
         final PsiType type = typeSelectorManager.getDefaultType();
-        assertTrue(type.getPresentableText(), type.getPresentableText().equals(expectedTypeName));
+        assertEquals(type.getPresentableText(), expectedTypeName, type.getPresentableText());
         assertEquals("path", getSuggestedName(type, expr).names[0]);
         return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS,
                                  validator, anchor, replaceChoice);
@@ -394,7 +399,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
                                                    InputValidator validator,
                                                    PsiElement anchor, final JavaReplaceChoice replaceChoice) {
         final PsiType type = typeSelectorManager.getDefaultType();
-        assertTrue(type.getPresentableText(), type.getPresentableText().equals("B"));
+        assertEquals(type.getPresentableText(), "B", type.getPresentableText());
         return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS,
                                  validator, anchor, replaceChoice);
       }
@@ -413,6 +418,17 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   public void testIncorrectExpressionSelected() {
     try {
       doTest(new MockIntroduceVariableHandler("toString", false, false, false, CommonClassNames.JAVA_LANG_STRING));
+    }
+    catch (Exception e) {
+      assertEquals("Error message:Cannot perform refactoring.\nSelected block should represent an expression", e.getMessage());
+      return;
+    }
+    fail("Should not be able to perform refactoring");
+  }
+
+  public void testIncompatibleTypesForSelectionSubExpression() {
+    try {
+      doTest(new MockIntroduceVariableHandler("s", false, false, false, CommonClassNames.JAVA_LANG_STRING));
     }
     catch (Exception e) {
       assertEquals("Error message:Cannot perform refactoring.\nSelected block should represent an expression", e.getMessage());
@@ -523,6 +539,10 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("m", false, false, false, "A<? extends A<? extends java.lang.Object>>"));
   }
 
+  public void testKeepComments() {
+    doTest(new MockIntroduceVariableHandler("m", false, false, false, CommonClassNames.JAVA_LANG_STRING));
+  }
+
   public void testDenotableType2() {
     doTest(new MockIntroduceVariableHandler("m", false, false, false, "I<? extends I<?>>"));
   }
@@ -555,8 +575,8 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
                                                    InputValidator validator,
                                                    PsiElement anchor, final JavaReplaceChoice replaceChoice) {
         final PsiType[] types = typeSelectorManager.getTypesForAll();
-        assertTrue(types[0].getPresentableText(), types[0].getPresentableText().equals("B"));
-        assertTrue(types[1].getPresentableText(), types[1].getPresentableText().equals("A"));
+        assertEquals(types[0].getPresentableText(), "B", types[0].getPresentableText());
+        assertEquals(types[1].getPresentableText(), "A", types[1].getPresentableText());
         return super.getSettings(project, editor, expr, occurrences, typeSelectorManager, declareFinalIfAll, anyAssignmentLHS,
                                  validator, anchor, replaceChoice);
       }
@@ -567,9 +587,12 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     doTest(new MockIntroduceVariableHandler("m", false, false, false, "IA"));
   }
 
-  public void testChooseTypeExpressionWhenNotDenotable() {
-    doTest(new MockIntroduceVariableHandler("m", false, false, false, "Foo"));
+  public void testTooPopularNameOfTheFollowingCall() {
+    doTest(new MockIntroduceVariableHandler("l", false, false, false, "java.util.List<java.lang.String>"));
   }
+
+  public void testChooseTypeExpressionWhenNotDenotable() { doTest(new MockIntroduceVariableHandler("m", false, false, false, "Foo")); }
+  public void testChooseTypeExpressionWhenNotDenotable1() { doTest(new MockIntroduceVariableHandler("m", false, false, false, "Foo<?>")); }
 
   private void doTest(IntroduceVariableBase testMe) {
     String baseName = "/refactoring/introduceVariable/" + getTestName(false);

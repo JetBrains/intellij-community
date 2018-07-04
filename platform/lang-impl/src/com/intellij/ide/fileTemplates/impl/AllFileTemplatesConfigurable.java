@@ -57,8 +57,6 @@ import java.util.List;
 
 /*
  * @author: MYakovlev
- * Date: Jul 26, 2002
- * Time: 12:44:56 PM
  */
 
 public class AllFileTemplatesConfigurable implements SearchableConfigurable, Configurable.NoMargin, Configurable.NoScroll,
@@ -241,7 +239,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
     myEditorComponent = myEditor.createComponent();
     myEditorComponent.setBorder(JBUI.Borders.empty(10, 0, 10, 10));
 
-    myTabs = allTabs.toArray(new FileTemplateTab[allTabs.size()]);
+    myTabs = allTabs.toArray(new FileTemplateTab[0]);
     myTabbedPane = new TabbedPaneWrapper(myUIDisposable);
     myTabbedPane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
     myLeftPanel = new JPanel(new CardLayout());
@@ -264,6 +262,10 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
       @Override
       public void update(AnActionEvent e) {
         super.update(e);
+        if (myCurrentTab == null) {
+          e.getPresentation().setEnabled(false);
+          return;
+        }
         FileTemplate selectedItem = myCurrentTab.getSelectedTemplate();
         e.getPresentation().setEnabled(selectedItem != null && !isInternalTemplate(selectedItem.getName(), myCurrentTab.getTitle()));
       }
@@ -294,7 +296,7 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
                                        && myCurrentTab.getSelectedTemplate() != null);
       }
     };
-    AnAction resetAction = new AnAction(IdeBundle.message("action.reset.to.default"), null, AllIcons.Actions.Reset) {
+    AnAction resetAction = new AnAction(IdeBundle.message("action.reset.to.default"), null, AllIcons.Actions.Rollback) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         onReset();
@@ -303,6 +305,10 @@ public class AllFileTemplatesConfigurable implements SearchableConfigurable, Con
       @Override
       public void update(AnActionEvent e) {
         super.update(e);
+        if (myCurrentTab == null) {
+          e.getPresentation().setEnabled(false);
+          return;
+        }
         final FileTemplate selectedItem = myCurrentTab.getSelectedTemplate();
         e.getPresentation().setEnabled(selectedItem instanceof BundledFileTemplate && !selectedItem.isDefault());
       }

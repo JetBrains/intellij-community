@@ -15,63 +15,45 @@
  */
 package org.jetbrains.plugins.github;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.DialogManager;
+import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.api.GithubServerPath;
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.ui.GithubCreatePullRequestDialog;
-import org.jetbrains.plugins.github.util.GithubUtil;
 
 /**
  * @author Aleksey Pivovarov
  */
-public class GithubCreatePullRequestAction extends DumbAwareAction {
+public class GithubCreatePullRequestAction extends LegacySingleAccountActionGroup {
   public GithubCreatePullRequestAction() {
     super("Create Pull Request", "Create pull request from current branch", GithubIcons.Github_icon);
   }
 
-  public void update(AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    if (project == null || project.isDefault()) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
-    }
-
-    final GitRepository gitRepository = GithubUtil.getGitRepository(project, file);
-    if (gitRepository == null) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
-    }
-
-    if (!GithubUtil.isRepositoryOnGitHub(gitRepository)) {
-      e.getPresentation().setEnabledAndVisible(false);
-      return;
-    }
-
-    e.getPresentation().setEnabledAndVisible(true);
-  }
-
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-
-    if (project == null || project.isDisposed() || !GithubUtil.testGitExecutable(project)) {
-      return;
-    }
-
-    createPullRequest(project, file);
+  public void actionPerformed(@NotNull Project project,
+                              @Nullable VirtualFile file,
+                              @NotNull GitRepository gitRepository,
+                              @NotNull GithubAccount account) {
+    createPullRequest(project, gitRepository, account);
   }
 
-  static void createPullRequest(@NotNull Project project, @Nullable VirtualFile file) {
-    GithubCreatePullRequestWorker worker = GithubCreatePullRequestWorker.create(project, file);
+  @Nullable
+  @Override
+  protected Pair<GitRemote, String> getRemote(@NotNull GithubServerPath server, @NotNull GitRepository repository) {
+    return GithubCreatePullRequestWorker.findGithubRemote(server, repository);
+  }
+
+  static void createPullRequest(@NotNull Project project,
+                                @NotNull GitRepository gitRepository,
+                                @NotNull GithubAccount account) {
+    GithubCreatePullRequestWorker worker = GithubCreatePullRequestWorker.create(project, gitRepository, account);
     if (worker == null) {
       return;
     }

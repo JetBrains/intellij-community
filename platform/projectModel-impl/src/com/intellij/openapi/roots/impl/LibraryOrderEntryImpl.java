@@ -63,8 +63,8 @@ class LibraryOrderEntryImpl extends LibraryOrderEntryBaseImpl implements Library
     myScope = DependencyScope.readExternal(element);
     String level = element.getAttributeValue(LEVEL_ATTR);
     String name = element.getAttributeValue(NAME_ATTR);
-    if (name == null) throw new InvalidDataException();
-    if (level == null) throw new InvalidDataException();
+    if (name == null) throw new InvalidDataException("Incorrect '" + ENTRY_TYPE + "' entry in '" + rootModel.getModule().getName() + "' module: '" + NAME_ATTR + "' isn't specified");
+    if (level == null) throw new InvalidDataException("Incorrect '" + ENTRY_TYPE + "' entry in '" + rootModel.getModule().getName() + "' module: '" + LEVEL_ATTR + "' isn't specified");
     searchForLibrary(name, level);
     addListeners();
     init();

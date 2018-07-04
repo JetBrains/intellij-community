@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
@@ -164,11 +163,6 @@ public class DynamicGenericInfo extends DomGenericInfoEx {
       }
     }
     return registrar;
-  }
-
-  @Override
-  public XmlElement getNameElement(DomElement element) {
-    return myStaticGenericInfo.getNameElement(element);
   }
 
   @Override

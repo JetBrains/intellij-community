@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.chainsSearch.completion;
 
 import com.intellij.codeInsight.completion.*;
@@ -22,14 +8,15 @@ import com.intellij.compiler.backwardRefs.CompilerReferenceServiceEx;
 import com.intellij.compiler.backwardRefs.ReferenceIndexUnavailableException;
 import com.intellij.compiler.chainsSearch.ChainSearchMagicConstants;
 import com.intellij.compiler.chainsSearch.ChainSearcher;
-import com.intellij.compiler.chainsSearch.MethodChain;
 import com.intellij.compiler.chainsSearch.MethodChainLookupRangingHelper;
+import com.intellij.compiler.chainsSearch.OperationChain;
 import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.chainsSearch.context.ChainSearchTarget;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.ElementPattern;
+import com.intellij.patterns.PatternCondition;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -39,12 +26,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.intellij.patterns.PsiJavaPatterns.or;
-import static com.intellij.patterns.PsiJavaPatterns.psiElement;
+import static com.intellij.patterns.PsiJavaPatterns.*;
 
 public class MethodChainCompletionContributor extends CompletionContributor {
   public static final String REGISTRY_KEY = "compiler.ref.chain.search";
@@ -90,15 +77,17 @@ public class MethodChainCompletionContributor extends CompletionContributor {
   }
 
   private static List<LookupElement> searchForLookups(ChainCompletionContext context) {
-    CompilerReferenceServiceEx methodsUsageIndexReader = (CompilerReferenceServiceEx)CompilerReferenceService.getInstance(context.getProject());
+    CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(context.getProject());
+    if (compilerReferenceService == null) return Collections.emptyList();
+    CompilerReferenceServiceEx compilerReferenceServiceEx = (CompilerReferenceServiceEx) compilerReferenceService;
     ChainSearchTarget target = context.getTarget();
-    List<MethodChain> searchResult =
+    List<OperationChain> searchResult =
       ChainSearcher.search(ChainSearchMagicConstants.MAX_CHAIN_SIZE,
                            target,
                            ChainSearchMagicConstants.MAX_SEARCH_RESULT_SIZE,
                            context,
-                           methodsUsageIndexReader);
-    int maxWeight = searchResult.stream().mapToInt(MethodChain::getChainWeight).max().orElse(0);
+                           compilerReferenceServiceEx);
+    int maxWeight = searchResult.stream().mapToInt(OperationChain::getChainWeight).max().orElse(0);
 
     return searchResult
       .stream()
@@ -184,11 +173,17 @@ public class MethodChainCompletionContributor extends CompletionContributor {
 
   @NotNull
   private static ElementPattern<PsiElement> patternForMethodCallArgument() {
-    return psiElement().withSuperParent(3, PsiMethodCallExpression.class);
+    return psiElement().withSuperParent(3, PsiMethodCallExpression.class).withParent(psiReferenceExpression().with(
+      new PatternCondition<PsiReferenceExpression>("QualifierIsNull") {
+        @Override
+        public boolean accepts(@NotNull PsiReferenceExpression referenceExpression, ProcessingContext context) {
+          return referenceExpression.getQualifierExpression() == null;
+        }
+      }));
   }
 
   private static ElementPattern<PsiElement> patternForReturnExpression() {
-    return psiElement().withSuperParent(2, PsiReturnStatement.class);
+    return psiElement().withParent(psiElement(PsiReferenceExpression.class).withText(CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED)).withSuperParent(2, PsiReturnStatement.class);
   }
 
   private static boolean suggestIterators(@NotNull CompletionParameters parameters) {

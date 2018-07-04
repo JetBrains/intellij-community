@@ -26,7 +26,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
@@ -56,7 +56,7 @@ public class VcsHandleType extends HandleType {
     try {
       EditFileProvider provider = myVcs.getEditFileProvider();
       assert provider != null;
-      provider.editFiles(VfsUtil.toVirtualFileArray(files));
+      provider.editFiles(VfsUtilCore.toVirtualFileArray(files));
     }
     catch (VcsException e) {
       Messages.showErrorDialog(VcsBundle.message("message.text.cannot.edit.file", e.getLocalizedMessage()),
@@ -72,7 +72,7 @@ public class VcsHandleType extends HandleType {
         LocalChangeList list = myChangeListManager.findChangeList(changelist);
         if (list != null) {
           List<Change> changes = ContainerUtil.mapNotNull(files, myChangeFunction);
-          myChangeListManager.moveChangesTo(list, changes.toArray(new Change[changes.size()]));
+          myChangeListManager.moveChangesTo(list, changes.toArray(new Change[0]));
         }
       }, InvokeAfterUpdateMode.SILENT, "", ModalityState.NON_MODAL);
     }

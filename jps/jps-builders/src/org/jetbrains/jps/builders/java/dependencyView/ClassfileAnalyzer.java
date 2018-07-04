@@ -16,7 +16,6 @@
 package org.jetbrains.jps.builders.java.dependencyView;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.SmartList;
 import gnu.trove.THashMap;
@@ -29,14 +28,10 @@ import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor;
 
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Array;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author: db
- * Date: 31.01.11
  */
 class ClassfileAnalyzer {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.jps.builders.java.dependencyView.ClassfileAnalyzer");
@@ -242,6 +237,51 @@ class ClassfileAnalyzer {
       }
     }
 
+    private class ModuleCrawler extends ModuleVisitor {
+      public ModuleCrawler() {
+        super(ASM_API_VERSION);
+      }
+
+      @Override
+      public void visitMainClass(String mainClass) {
+        myUsages.add(UsageRepr.createClassUsage(myContext, myContext.get(mainClass)));
+      }
+
+      @Override
+      public void visitRequire(String module, int access, String version) {
+        if (isExplicit(access)) {
+          // collect non-synthetic dependencies only
+          myModuleRequires.add(new ModuleRequiresRepr(myContext, access, myContext.get(module), version));
+        }
+      }
+
+      @Override
+      public void visitExport(String packaze, int access, String... modules) {
+        if (isExplicit(access)) {
+          // collect non-synthetic dependencies only
+          myModuleExports.add(new ModulePackageRepr(myContext, myContext.get(packaze), modules != null? Arrays.asList(modules) : Collections.emptyList()));
+        }
+      }
+
+      public void visitUse(String service) {
+        myUsages.add(UsageRepr.createClassUsage(myContext, myContext.get(service)));
+      }
+
+      @Override
+      public void visitProvide(String service, String... providers) {
+        myUsages.add(UsageRepr.createClassUsage(myContext, myContext.get(service)));
+        if (providers != null) {
+          for (String provider : providers) {
+            myUsages.add(UsageRepr.createClassUsage(myContext, myContext.get(provider)));
+          }
+        }
+      }
+
+      private boolean isExplicit(int access) {
+        return (access & (Opcodes.ACC_SYNTHETIC | Opcodes.ACC_MANDATED)) == 0;
+      }
+    }
+
     private void processSignature(final String sig) {
       if (sig != null) {
         try {
@@ -278,11 +318,12 @@ class ClassfileAnalyzer {
       }
     };
 
-    private Boolean myTakeIntoAccount = false;
-
+    private boolean myTakeIntoAccount = false;
+    private boolean myIsModule = false;
     private final int myFileName;
     private int myAccess;
     private int myName;
+    private int myVersion; // for class contains a class bytecode version, for module contains a module version
     private String mySuperClass;
     private String[] myInterfaces;
     private String mySignature;
@@ -302,6 +343,9 @@ class ClassfileAnalyzer {
     private final Map<TypeRepr.ClassType, Set<ElemType>> myAnnotationTargets = new THashMap<>();
     private final Set<TypeRepr.ClassType> myAnnotations = new THashSet<>();
 
+    private final Set<ModuleRequiresRepr> myModuleRequires = new THashSet<>();
+    private final Set<ModulePackageRepr> myModuleExports = new THashSet<>();
+
     public ClassCrawler(final int fn) {
       super(ASM_API_VERSION);
       myFileName = fn;
@@ -311,17 +355,18 @@ class ClassfileAnalyzer {
       return (access & Opcodes.ACC_PRIVATE) == 0;
     }
 
-    public Pair<ClassRepr, Set<UsageRepr.Usage>> getResult() {
-      ClassRepr repr = myTakeIntoAccount ? new ClassRepr(
+    public ClassFileRepr getResult() {
+      if (!myTakeIntoAccount) {
+        return null;
+      }
+      if (myIsModule) {
+        return new ModuleRepr(myContext, myAccess, myVersion, myFileName, myName, myModuleRequires, myModuleExports, myUsages);
+      }
+      return new ClassRepr(
         myContext, myAccess, myFileName, myName, myContext.get(mySignature), myContext.get(mySuperClass), myInterfaces,
         myFields, myMethods, myAnnotations, myTargets, myRetentionPolicy, myContext.get(myOuterClassName.get()), myLocalClassFlag.get(),
-        myAnonymousClassFlag.get(), myUsages) : null;
-
-      if (repr != null) {
-        repr.updateClassUsages(myContext, myUsages);
-      }
-
-      return Pair.create(repr, myUsages);
+        myAnonymousClassFlag.get(), myUsages
+      );
     }
 
     @Override
@@ -330,6 +375,7 @@ class ClassfileAnalyzer {
 
       myAccess = access;
       myName = myContext.get(name);
+      myVersion = version;
       mySignature = sig;
       mySuperClass = superName;
       myInterfaces = interfaces;
@@ -362,6 +408,15 @@ class ClassfileAnalyzer {
 
         myUsages.add(UsageRepr.createAnnotationUsage(myContext, type, usedArguments, targets));
       }
+    }
+
+    @Override
+    public ModuleVisitor visitModule(String name, int access, String version) {
+      myIsModule = true;
+      myAccess = access;
+      myName = myContext.get(name);
+      myVersion = myContext.get(version);
+      return new ModuleCrawler();
     }
 
     @Override
@@ -686,11 +741,16 @@ class ClassfileAnalyzer {
 
     @Override
     public void visitInnerClass(String name, String outerName, String innerName, int access) {
-      if (outerName != null) {
-        myOuterClassName.set(outerName);
-      }
-      if (innerName == null) {
-        myAnonymousClassFlag.set(true);
+      if (myContext.get(name) == myName) {
+        // set outer class name only if we are parsing the real inner class and 
+        // not the reference to inner class inside some top-level class
+        myAccess |= access; // information about some access flags for the inner class is missing from the mask passed to 'visit' method
+        if (outerName != null) {
+          myOuterClassName.set(outerName);
+        }
+        if (innerName == null) {
+          myAnonymousClassFlag.set(true);
+        }
       }
     }
 
@@ -779,7 +839,7 @@ class ClassfileAnalyzer {
     }
   }
 
-  public Pair<ClassRepr, Set<UsageRepr.Usage>> analyze(int fileName, ClassReader cr) {
+  public ClassFileRepr analyze(int fileName, ClassReader cr) {
     ClassCrawler visitor = new ClassCrawler(fileName);
 
     try {

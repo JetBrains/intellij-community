@@ -26,6 +26,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBLabel
 import com.intellij.xml.util.XmlStringUtil
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
+import java.awt.event.ActionEvent
+import javax.swing.Action
+import javax.swing.JComponent
 
 /**
  * @author nik
@@ -35,6 +38,9 @@ class LibraryJarsDiffDialog(libraryFile: VirtualFile,
                             private val mavenCoordinates: JpsMavenRepositoryLibraryDescriptor,
                             private val libraryName: String,
                             project: Project) : DialogWrapper(project) {
+  companion object {
+    val CHANGE_COORDINATES_CODE: Int = 2
+  }
 
   private val panel: DiffRequestPanel
 
@@ -43,14 +49,27 @@ class LibraryJarsDiffDialog(libraryFile: VirtualFile,
     setOKButtonText("Replace")
     val request: ContentDiffRequest = DiffRequestFactory.getInstance().createFromFiles(project, libraryFile, downloadedFile)
     panel = DiffManager.getInstance().createRequestPanel(project, disposable, window)
-    panel.putContextHints(DirDiffSettings.KEY, DirDiffSettings().apply { enableChoosers = false })
+    panel.putContextHints(DirDiffSettings.KEY, DirDiffSettings().apply {
+      enableChoosers = false
+      enableOperations = false
+    })
     panel.setRequest(request)
     init()
   }
 
-  override fun createNorthPanel() = JBLabel(XmlStringUtil.wrapInHtml("${mavenCoordinates.mavenId} JARs differ from '$libraryName' library JARs."))
+  override fun createNorthPanel(): JBLabel = JBLabel(XmlStringUtil.wrapInHtml("${mavenCoordinates.mavenId} JARs differ from '$libraryName' library JARs."))
 
-  override fun createCenterPanel() = panel.component
+  override fun createCenterPanel(): JComponent = panel.component
 
-  override fun getPreferredFocusedComponent() = panel.preferredFocusedComponent
+  override fun getPreferredFocusedComponent(): JComponent? = panel.preferredFocusedComponent
+
+  override fun createActions(): Array<Action> {
+    return arrayOf(okAction, ChangeCoordinatesAction(), cancelAction)
+  }
+
+  private inner class ChangeCoordinatesAction : DialogWrapperAction("Change Coordinates...") {
+    override fun doAction(e: ActionEvent?) {
+      close(CHANGE_COORDINATES_CODE)
+    }
+  }
 }

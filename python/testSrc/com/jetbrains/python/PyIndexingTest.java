@@ -103,6 +103,9 @@ public class PyIndexingTest extends PyTestCase {
       assertFalse(indexFiles.stream().anyMatch((x) -> "smtpd.py".equals(x.getName())));
 
       ModuleRootModificationUtil.addContentRoot(myFixture.getModule(), libsRoot);
+      // mock sdk doesn't fire events
+      FileBasedIndex.getInstance().requestRebuild(TodoIndex.NAME);
+      FileBasedIndex.getInstance().ensureUpToDate(TodoIndex.NAME, myFixture.getProject(), null);
 
       indexFiles = getTodoFiles(myFixture.getProject());
 

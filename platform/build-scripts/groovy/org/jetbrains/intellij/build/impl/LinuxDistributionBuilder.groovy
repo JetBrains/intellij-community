@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.intellij.build.impl
 
@@ -27,11 +15,13 @@ import org.jetbrains.intellij.build.LinuxDistributionCustomizer
 class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   private final LinuxDistributionCustomizer customizer
   private final File ideaProperties
+  private final String iconPngPath
 
   LinuxDistributionBuilder(BuildContext buildContext, LinuxDistributionCustomizer customizer, File ideaProperties) {
     super(BuildOptions.OS_LINUX, "Linux", buildContext)
     this.customizer = customizer
     this.ideaProperties = ideaProperties
+    iconPngPath = (buildContext.applicationInfo.isEAP ? customizer.iconPngPathForEAP : null) ?: customizer.iconPngPath
   }
 
   @Override
@@ -54,8 +44,8 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
     // for real installers we need to checkout all text files with 'lf' separators anyway
     buildContext.ant.fixcrlf(file: "$unixDistPath/bin/idea.properties", eol: "unix")
-    if (customizer.iconPngPath != null) {
-      buildContext.ant.copy(file: customizer.iconPngPath, tofile: "$unixDistPath/bin/${buildContext.productProperties.baseFileName}.png")
+    if (iconPngPath != null) {
+      buildContext.ant.copy(file: iconPngPath, tofile: "$unixDistPath/bin/${buildContext.productProperties.baseFileName}.png")
     }
     generateScripts(unixDistPath)
     generateVMOptions(unixDistPath)
@@ -99,7 +89,6 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         filter(token: "product_full", value: fullName)
         filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo))
         filter(token: "vm_options", value: vmOptionsFileName)
-        filter(token: "isEap", value: buildContext.applicationInfo.isEAP)
         filter(token: "system_selector", value: buildContext.systemSelector)
         filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments)
         filter(token: "class_path", value: classPath)
@@ -121,9 +110,9 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
   private void generateVMOptions(String unixDistPath) {
     JvmArchitecture.values().each {
+      def yourkitSessionName = buildContext.applicationInfo.isEAP && buildContext.productProperties.enableYourkitAgentInEAP ? buildContext.systemSelector : null
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.vmoptions"
-      //todo[nik] why we don't add yourkit agent on unix?
-      def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties, null) +
+      def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties, yourkitSessionName) +
                       " -Dawt.useSystemAAFontSettings=lcd -Dsun.java2d.renderer=sun.java2d.marlin.MarlinRenderingEngine"
       new File(unixDistPath, "bin/$fileName").text = vmOptions.replace(' ', '\n') + "\n"
     }
@@ -188,7 +177,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   private void buildSnapPackage(String jreDirectoryPath, String unixDistPath) {
     if (!buildContext.options.buildUnixSnaps || customizer.snapName == null) return
 
-    if (StringUtil.isEmpty(customizer.iconPngPath)) buildContext.messages.error("'iconPngPath' not set")
+    if (StringUtil.isEmpty(iconPngPath)) buildContext.messages.error("'iconPngPath' not set")
     if (StringUtil.isEmpty(customizer.snapDescription)) buildContext.messages.error("'snapDescription' not set")
 
     String snapDir = "${buildContext.paths.buildOutputRoot}/dist.snap"
@@ -198,31 +187,29 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
       def desktopTemplate = "${buildContext.paths.communityHome}/platform/platform-resources/src/entry.desktop"
       def productName = buildContext.applicationInfo.productNameWithEdition
-      buildContext.ant.copy(file: desktopTemplate, tofile: "${snapDir}/snap/gui/${customizer.snapName}.desktop") {
+      buildContext.ant.copy(file: desktopTemplate, tofile: "${snapDir}/${customizer.snapName}.desktop") {
         filterset(begintoken: '$', endtoken: '$') {
           filter(token: "NAME", value: productName)
-          filter(token: "ICON", value: "/bin/${buildContext.productProperties.baseFileName}.png")
-          filter(token: "SCRIPT", value: "/bin/${buildContext.productProperties.baseFileName}.sh")
+          filter(token: "ICON", value: "\${SNAP}/bin/${buildContext.productProperties.baseFileName}.png")
+          filter(token: "SCRIPT", value: customizer.snapName)
+          filter(token: "COMMENT", value: buildContext.applicationInfo.motto)
           filter(token: "WM_CLASS", value: getFrameClass())
         }
       }
 
-      buildContext.ant.copy(file: customizer.iconPngPath, tofile: "${snapDir}/${customizer.snapName}.png")
+      buildContext.ant.copy(file: iconPngPath, tofile: "${snapDir}/${customizer.snapName}.png")
 
       def snapcraftTemplate = "${buildContext.paths.communityHome}/platform/build-scripts/resources/linux/snap/snapcraft-template.yaml"
-      def version = "${buildContext.applicationInfo.majorVersion}.${buildContext.applicationInfo.minorVersion}"
+      def version = "${buildContext.applicationInfo.majorVersion}.${buildContext.applicationInfo.minorVersion}${buildContext.applicationInfo.isEAP ? "-EAP" : ""}"
       buildContext.ant.copy(file: snapcraftTemplate, tofile: "${snapDir}/snapcraft.yaml") {
         filterset(begintoken: '$', endtoken: '$') {
           filter(token: "NAME", value: customizer.snapName)
           filter(token: "VERSION", value: version)
           filter(token: "SUMMARY", value: productName)
           filter(token: "DESCRIPTION", value: customizer.snapDescription)
+          filter(token: "GRADE", value: buildContext.applicationInfo.isEAP ? "devel" : "stable")
           filter(token: "SCRIPT", value: "bin/${buildContext.productProperties.baseFileName}.sh")
         }
-      }
-
-      buildContext.ant.concat(destfile: "${unixDistPath}/bin/idea.properties", append: true) {
-        filelist(dir: "${buildContext.paths.communityHome}/platform/build-scripts/resources/linux/snap", files: "idea-snap.properties")
       }
 
       buildContext.ant.delete(quiet: true) {
@@ -245,22 +232,29 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         }
       }
 
+      buildContext.ant.mkdir(dir: "${snapDir}/result")
       buildContext.messages.progress("Building package")
 
+      def snapArtifact = "${customizer.snapName}_${version}_amd64.snap"
       buildContext.ant.exec(executable: "docker", dir: snapDir, failonerror: true) {
         arg(value: "run")
-        arg(value: "--volume=${snapDir}:/build")
+        arg(value: "--rm")
+        arg(value: "--volume=${snapDir}/snapcraft.yaml:/build/snapcraft.yaml:ro")
+        arg(value: "--volume=${snapDir}/${customizer.snapName}.desktop:/build/snap/gui/${customizer.snapName}.desktop:ro")
+        arg(value: "--volume=${snapDir}/${customizer.snapName}.png:/build/prime/meta/gui/icon.png:ro")
+        arg(value: "--volume=${snapDir}/result:/build/result")
         arg(value: "--volume=${buildContext.paths.distAll}:/build/dist.all:ro")
         arg(value: "--volume=${unixDistPath}:/build/dist.unix:ro")
         arg(value: "--volume=${jreDirectoryPath}:/build/jre:ro")
         arg(value: "--workdir=/build")
-        arg(value: "--env=SNAPCRAFT_SETUP_CORE=1")
-        arg(value: "snapcore/snapcraft")
+        arg(value: buildContext.options.snapDockerImage)
         arg(value: "snapcraft")
+        arg(value: "snap")
+        arg(value: "-o")
+        arg(value: "result/$snapArtifact")
       }
 
-      def snapArtifact = "${customizer.snapName}_${version}_amd64.snap"
-      buildContext.ant.move(file: "${snapDir}/${snapArtifact}", todir: buildContext.paths.artifacts)
+      buildContext.ant.move(file: "${snapDir}/result/${snapArtifact}", todir: buildContext.paths.artifacts)
       buildContext.notifyArtifactBuilt("${buildContext.paths.artifacts}/" + snapArtifact)
     }
   }
@@ -272,6 +266,6 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       .replace(' ', '-')
       .replace("intellij-idea", "idea").replace("android-studio", "studio")
       .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "")
-    "jetbrains-" + name
+    name.startsWith("jetbrains-") ? name : "jetbrains-" + name
   }
 }

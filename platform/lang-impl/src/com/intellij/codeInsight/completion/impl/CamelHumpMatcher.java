@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -62,7 +63,25 @@ public class CamelHumpMatcher extends PrefixMatcher {
 
   @Override
   public boolean prefixMatches(@NotNull final String name) {
+    if (name.startsWith("_") &&
+        CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE == CodeInsightSettings.FIRST_LETTER &&
+        firstLetterCaseDiffers(name)) {
+      return false;
+    }
+
     return myMatcher.matches(name);
+  }
+
+  private boolean firstLetterCaseDiffers(String name) {
+    int nameFirst = skipUnderscores(name);
+    int prefixFirst = skipUnderscores(myPrefix);
+    return nameFirst < name.length() &&
+           prefixFirst < myPrefix.length() &&
+           caseDiffers(name.charAt(nameFirst), myPrefix.charAt(prefixFirst));
+  }
+
+  private static boolean caseDiffers(char c1, char c2) {
+    return Character.isLowerCase(c1) != Character.isLowerCase(c2) || Character.isUpperCase(c1) != Character.isUpperCase(c2);
   }
 
   @Override
@@ -146,6 +165,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
     return matchingDegree(string, matchingFragments(string));
   }
 
+  @Nullable
   public FList<TextRange> matchingFragments(String string) {
     return myMatcher.matchingFragments(string);
   }

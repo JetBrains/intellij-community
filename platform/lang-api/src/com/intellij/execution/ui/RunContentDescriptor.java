@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,9 +42,11 @@ public class RunContentDescriptor implements Disposable {
   private final Icon myIcon;
   private final String myHelpId;
   private RunnerLayoutUi myRunnerLayoutUi = null;
+  private RunContentDescriptorReusePolicy myReusePolicy = RunContentDescriptorReusePolicy.DEFAULT;
 
   private boolean myActivateToolWindowWhenAdded = true;
   private boolean myReuseToolWindowActivation = false;
+  private boolean mySelectContentWhenAdded = true;
   private long myExecutionId = 0;
   private Computable<JComponent> myFocusComputable = null;
   private boolean myAutoFocusContent = false;
@@ -200,6 +203,14 @@ public class RunContentDescriptor implements Disposable {
     myActivateToolWindowWhenAdded = activateToolWindowWhenAdded;
   }
 
+  public boolean isSelectContentWhenAdded() {
+    return mySelectContentWhenAdded;
+  }
+
+  public void setSelectContentWhenAdded(boolean selectContentWhenAdded) {
+    mySelectContentWhenAdded = selectContentWhenAdded;
+  }
+
   public boolean isReuseToolWindowActivation() {
     return myReuseToolWindowActivation;
   }
@@ -259,5 +270,24 @@ public class RunContentDescriptor implements Disposable {
    */
   public void setRunnerLayoutUi(@Nullable RunnerLayoutUi runnerLayoutUi) {
     myRunnerLayoutUi = runnerLayoutUi;
+  }
+
+  /**
+   * return true if the content should not be shown by the {@link RunContentManager}
+   */
+  @ApiStatus.Experimental
+  public boolean isHiddenContent() {
+    return false;
+  }
+
+  @NotNull
+  @ApiStatus.Experimental
+  public RunContentDescriptorReusePolicy getReusePolicy() {
+    return myReusePolicy;
+  }
+
+  @ApiStatus.Experimental
+  public void setReusePolicy(@NotNull RunContentDescriptorReusePolicy reusePolicy) {
+    myReusePolicy = reusePolicy;
   }
 }

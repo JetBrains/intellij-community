@@ -166,6 +166,12 @@
   <action id="Git.Reword.Commit">
     <keyboard-shortcut first-keystroke="control R" second-keystroke="R"/>
   </action>
+  <action id="ShelvedChanges.Rename">
+    <keyboard-shortcut first-keystroke="control R" second-keystroke="R"/>
+  </action>
+  <action id="RunDashboard.ShowConfigurations">
+    <keyboard-shortcut first-keystroke="alt meta H"/>
+  </action>
 </keymap>
 
 

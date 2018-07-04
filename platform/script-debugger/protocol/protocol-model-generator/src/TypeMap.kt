@@ -21,7 +21,8 @@ internal class TypeMap {
       if (qName == "IO.StreamHandle" ||
           qName == "Security.SecurityState" ||
           qName == "Security.CertificateId" ||
-          qName == "Emulation.ScreenOrientation"
+          qName == "Emulation.ScreenOrientation" ||
+          qName == "Security.MixedContentType"
       ) {
         return BoxableType.ANY_STRING // ignore
       }

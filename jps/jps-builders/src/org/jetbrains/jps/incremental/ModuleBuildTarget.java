@@ -15,11 +15,10 @@
  */
 package org.jetbrains.jps.incremental;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ProjectPaths;
@@ -42,7 +41,6 @@ import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsTypedModuleSourceRoot;
 import org.jetbrains.jps.service.JpsServiceManager;
-import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.PrintWriter;
@@ -58,6 +56,8 @@ import java.util.Set;
  * @author nik
  */
 public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRootDescriptor> {
+  private static final Logger LOG = Logger.getInstance("org.jetbrains.jps.incremental.ModuleBuildTarget");
+  
   public static final Boolean REBUILD_ON_DEPENDENCY_CHANGE = Boolean.valueOf(
     System.getProperty(GlobalOptions.REBUILD_ON_DEPENDENCY_CHANGE_OPTION, "true")
   );
@@ -172,33 +172,52 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
   public void writeConfiguration(ProjectDescriptor pd, PrintWriter out) {
     final JpsModule module = getModule();
 
-    int fingerprint = getDependenciesFingerprint();
+    final StringBuilder logBuilder = LOG.isDebugEnabled()? new StringBuilder() : null;
+
+    int fingerprint = getDependenciesFingerprint(logBuilder);
 
     for (JavaSourceRootDescriptor root : pd.getBuildRootIndex().getTargetRoots(this, null)) {
-      fingerprint += FileUtil.fileHashCode(root.getRootFile());
+      final File file = root.getRootFile();
+      if (logBuilder != null) {
+        logBuilder.append(FileUtil.toCanonicalPath(file.getPath())).append("\n");
+      }
+      fingerprint += FileUtil.fileHashCode(file);
     }
     
     final LanguageLevel level = JpsJavaExtensionService.getInstance().getLanguageLevel(module);
     if (level != null) {
+      if (logBuilder != null) {
+        logBuilder.append(level.name()).append("\n");
+      }
       fingerprint += level.name().hashCode();
     }
 
     final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(module.getProject());
     final String bytecodeTarget = config.getByteCodeTargetLevel(module.getName());
     if (bytecodeTarget != null) {
+      if (logBuilder != null) {
+        logBuilder.append(bytecodeTarget).append("\n");
+      }
       fingerprint += bytecodeTarget.hashCode();
     }
 
     final CompilerEncodingConfiguration encodingConfig = pd.getEncodingConfiguration();
     final String encoding = encodingConfig.getPreferredModuleEncoding(module);
     if (encoding != null) {
+      if (logBuilder != null) {
+        logBuilder.append(encoding).append("\n");
+      }
       fingerprint += encoding.hashCode();
     }
 
     out.write(Integer.toHexString(fingerprint));
+    if (logBuilder != null) {
+      out.println();
+      out.write(logBuilder.toString());
+    }
   }
 
-  private int getDependenciesFingerprint() {
+  private int getDependenciesFingerprint(@Nullable StringBuilder logBuilder) {
     int fingerprint = 0;
 
     if (!REBUILD_ON_DEPENDENCY_CHANGE) {
@@ -206,12 +225,15 @@ public final class ModuleBuildTarget extends JVMModuleBuildTarget<JavaSourceRoot
     }
 
     final JpsModule module = getModule();
-    JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).compileOnly();
+    JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService.dependencies(module).compileOnly().recursively().exportedOnly();
     if (!isTests()) {
       enumerator = enumerator.productionOnly();
     }
 
     for (String url : enumerator.classes().getUrls()) {
+      if (logBuilder != null) {
+        logBuilder.append(url).append("\n");
+      }
       fingerprint = 31 * fingerprint + url.hashCode();
     }
     return fingerprint;

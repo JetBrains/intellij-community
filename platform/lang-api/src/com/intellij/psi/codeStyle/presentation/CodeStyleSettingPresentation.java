@@ -136,6 +136,7 @@ public class CodeStyleSettingPresentation {
       new CodeStyleSettingPresentation("BLANK_LINES_AROUND_CLASS", ApplicationBundle.message("editbox.blanklines.around.class")),
       new CodeStyleSettingPresentation("BLANK_LINES_AFTER_CLASS_HEADER",
                                        ApplicationBundle.message("editbox.blanklines.after.class.header")),
+      new CodeStyleSettingPresentation("BLANK_LINES_BEFORE_CLASS_END", ApplicationBundle.message("editbox.blanklines.before.class.end")),
       new CodeStyleSettingPresentation("BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER",
                                        ApplicationBundle.message("editbox.blanklines.after.anonymous.class.header")),
       new CodeStyleSettingPresentation("BLANK_LINES_AROUND_FIELD_IN_INTERFACE", "Around field in interface:"),
@@ -289,11 +290,11 @@ public class CodeStyleSettingPresentation {
     result.put(new SettingsGroup(null), ContainerUtil.immutableList(
       new CodeStyleBoundedIntegerSettingPresentation("RIGHT_MARGIN", ApplicationBundle.message("editbox.right.margin.columns"), 0, 999,
                                                      -1,
-                                                     ApplicationBundle.message("settings.code.style.default.general"))
+                                                     ApplicationBundle.message("settings.code.style.default.general")),
+      new CodeStyleSelectSettingPresentation("WRAP_ON_TYPING", ApplicationBundle.message("wrapping.wrap.on.typing"), WRAP_ON_TYPING_VALUES,
+                                             WRAP_ON_TYPING_OPTIONS),
+      new CodeStyleSoftMarginsPresentation()
     ));
-
-    putGroupTop(result, "WRAP_ON_TYPING", ApplicationBundle.message("wrapping.wrap.on.typing"), WRAP_ON_TYPING_VALUES,
-                WRAP_ON_TYPING_OPTIONS);
 
     result.put(new SettingsGroup(WRAPPING_KEEP), ContainerUtil.immutableList(
       new CodeStyleSettingPresentation("KEEP_LINE_BREAKS", ApplicationBundle.message("wrapping.keep.line.breaks")),

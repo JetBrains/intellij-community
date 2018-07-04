@@ -15,6 +15,7 @@
  */
 package com.intellij.util.text;
 
+import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import org.jetbrains.annotations.NotNull;
 
@@ -90,5 +91,13 @@ public class TextRangeUtil {
       upperBound = Math.max(upperBound, textRange.getEndOffset());
     }
     return new TextRange(lowerBound, upperBound);
+  }
+
+  public static int getDistance(@NotNull Segment r2, @NotNull Segment r1) {
+    int s1 = r1.getStartOffset();
+    int e1 = r1.getEndOffset();
+    int s2 = r2.getStartOffset();
+    int e2 = r2.getEndOffset();
+    return Math.max(s1, s2) <= Math.min(e1, e2) ? 0 : Math.min(Math.abs(s1 - e2), Math.abs(s2 - e1));
   }
 }

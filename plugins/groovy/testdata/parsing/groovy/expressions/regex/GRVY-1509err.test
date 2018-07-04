@@ -2,8 +2,8 @@
 -----
 Groovy script
   Literal
-    GroovyASTPsiElementImpl(regex literal)
+    GroovyASTPsiElementImpl(SLASHY_LITERAL)
       PsiElement(regex begin)('/')
       PsiElement(regex content)('$1\/')
-      PsiErrorElement:Regex ending expected
+      PsiErrorElement:regex end expected
         <empty list>

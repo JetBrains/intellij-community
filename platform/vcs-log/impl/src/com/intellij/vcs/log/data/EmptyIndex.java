@@ -41,7 +41,16 @@ public class EmptyIndex implements VcsLogIndex {
   }
 
   @Override
+  public boolean isIndexingEnabled(@NotNull VirtualFile root) {
+    return false;
+  }
+
+  @Override
   public void markForIndexing(int commit, @NotNull VirtualFile root) {
+  }
+
+  @Override
+  public void reindexWithRenames(int commit, @NotNull VirtualFile root) {
   }
 
   @Override

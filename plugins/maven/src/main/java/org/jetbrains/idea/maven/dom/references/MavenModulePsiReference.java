@@ -17,8 +17,8 @@ package org.jetbrains.idea.maven.dom.references;
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.codeInspection.LocalQuickFixProvider;
-import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
@@ -50,6 +50,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
 
   public PsiElement resolve() {
     VirtualFile baseDir = myPsiFile.getVirtualFile().getParent();
+    if (baseDir == null) return null;
 
     String path = FileUtil.toSystemIndependentName(myText);
     VirtualFile file =  baseDir.findFileByRelativePath(path);
@@ -101,18 +102,23 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
 
   public LocalQuickFix[] getQuickFixes() {
     if (myText.length() == 0 || resolve() != null) return LocalQuickFix.EMPTY_ARRAY;
-    return new LocalQuickFix[]{new CreateModuleFix(true), new CreateModuleFix(false)};
+    return new LocalQuickFix[]{new CreateModuleFix(true, myText, myPsiFile), new CreateModuleFix(false, myText, myPsiFile)};
   }
 
-  private class CreateModuleFix implements LocalQuickFix {
-    private final boolean myWithParent;
+  private static class CreateModuleFix extends LocalQuickFixOnPsiElement {
 
-    private CreateModuleFix(boolean withParent) {
+    private final boolean myWithParent;
+    private final String myModulePath;
+
+    private CreateModuleFix(boolean withParent, String modulePath, PsiFile psiFile) {
+      super(psiFile);
       myWithParent = withParent;
+      myModulePath = modulePath;
     }
 
     @NotNull
-    public String getName() {
+    @Override
+    public String getText() {
       return myWithParent ? MavenDomBundle.message("fix.create.module.with.parent") : MavenDomBundle.message("fix.create.module");
     }
 
@@ -121,10 +127,12 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
       return MavenDomBundle.message("inspection.group");
     }
 
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor d) {
+    @Override
+    public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
       try {
-        VirtualFile modulePom = createModulePom();
-        MavenId id = MavenDomUtil.describe(myPsiFile);
+        PsiFile psiFile = (PsiFile)startElement;
+        VirtualFile modulePom = createModulePom(psiFile.getVirtualFile());
+        MavenId id = MavenDomUtil.describe(psiFile);
 
         String groupId = id.getGroupId() == null ? "groupId" : id.getGroupId();
         String artifactId = modulePom.getParent().getName();
@@ -133,7 +141,7 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
                                                      modulePom,
                                                      new MavenId(groupId, artifactId, version),
                                                      myWithParent ? id : null,
-                                                     myPsiFile.getVirtualFile(),
+                                                     psiFile.getVirtualFile(),
                                                      true);
       }
       catch (IOException e) {
@@ -141,9 +149,9 @@ public class MavenModulePsiReference extends MavenPsiReference implements LocalQ
       }
     }
 
-    private VirtualFile createModulePom() throws IOException {
-      VirtualFile baseDir = myVirtualFile.getParent();
-      String modulePath = PathUtil.getCanonicalPath(baseDir.getPath() + "/" + myText);
+    private VirtualFile createModulePom(VirtualFile virtualFile) throws IOException {
+      VirtualFile baseDir = virtualFile.getParent();
+      String modulePath = PathUtil.getCanonicalPath(baseDir.getPath() + "/" + myModulePath);
       String pomFileName = MavenConstants.POM_XML;
 
       if (!new File(FileUtil.toSystemDependentName(modulePath)).isDirectory()) {

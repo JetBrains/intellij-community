@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.ToolExtensionPoints;
@@ -46,7 +32,6 @@ import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -186,7 +171,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     if (!method.isConstructor()) return false;
     if (!method.hasModifierProperty(PsiModifier.PUBLIC)) return false;
     final PsiParameterList parameterList = method.getParameterList();
-    if (parameterList.getParametersCount() != 0) return false;
+    if (!parameterList.isEmpty()) return false;
     final PsiClass aClass = method.getContainingClass();
     return aClass == null || isExternalizable(aClass, refClass);
   }
@@ -302,7 +287,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
         @Override
         public void run() {
           final RefManager refManager = globalContext.getRefManager();
-          final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(refManager.getProject());
+          final PsiSearchHelper helper = PsiSearchHelper.getInstance(refManager.getProject());
           refManager.iterate(new RefJavaVisitor() {
             @Override
             public void visitElement(@NotNull final RefEntity refEntity) {
@@ -400,7 +385,9 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
       if (isAddServletEnabled() && servlet != null && aClass.isInheritor(servlet, true)) {
         return true;
       }
-      if (isAddMainsEnabled() && PsiMethodUtil.hasMainMethod(aClass)) return true;
+      if (isAddMainsEnabled()) {
+        if (hasMainMethodDeep(aClass)) return true;
+      }
     }
     if (element instanceof PsiModifierListOwner) {
       final EntryPointsManager entryPointsManager = EntryPointsManager.getInstance(project);
@@ -414,6 +401,16 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return RefUtil.isImplicitUsage(element);
   }
 
+  private static boolean hasMainMethodDeep(PsiClass aClass) {
+    if (PsiMethodUtil.hasMainMethod(aClass)) return true;
+    for (PsiClass innerClass : aClass.getInnerClasses()) {
+      if (innerClass.hasModifierProperty(PsiModifier.STATIC) && PsiMethodUtil.hasMainMethod(innerClass)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public boolean isGlobalEnabledInEditor() {
     return myEnabledInEditor;
   }
@@ -423,6 +420,10 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(element.getProject()).getCurrentProfile();
     UnusedDeclarationInspectionBase tool = (UnusedDeclarationInspectionBase)profile.getUnwrappedTool(SHORT_NAME, element);
     return tool == null ? new UnusedDeclarationInspectionBase() : tool;
+  }
+
+  public static boolean isDeclaredAsEntryPoint(@NotNull PsiElement method) {
+    return findUnusedDeclarationInspection(method).isEntryPoint(method);
   }
 
   private static class StrictUnreferencedFilter extends UnreferencedFilter {
@@ -484,9 +485,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                   getEntryPointsManager(globalContext).addEntryPoint(refMethod, false);
                 }
                 else if (!refMethod.isExternalOverride() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
-                  for (final RefMethod derivedMethod : refMethod.getDerivedMethods()) {
-                    myProcessedSuspicious.add(derivedMethod);
-                  }
+                  myProcessedSuspicious.addAll(refMethod.getDerivedMethods());
 
                   enqueueMethodUsages(globalContext, refMethod);
                   requestAdded[0] = true;
@@ -558,7 +557,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     CodeScanner codeScanner = new CodeScanner();
 
     // Cleanup previous reachability information.
-    context.getRefManager().iterate(new RefJavaVisitor() {
+    RefManager refManager = context.getRefManager();
+    refManager.iterate(new RefJavaVisitor() {
       @Override
       public void visitElement(@NotNull RefEntity refEntity) {
         if (refEntity instanceof RefJavaElementImpl) {
@@ -570,7 +570,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     });
 
 
-    for (RefElement entry : getEntryPointsManager(context).getEntryPoints()) {
+    for (RefElement entry : getEntryPointsManager(context).getEntryPoints(refManager)) {
       entry.accept(codeScanner);
     }
 
@@ -690,12 +690,12 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     }
 
     private void processDelayedMethods() {
-      RefClass[] instClasses = myInstantiatedClasses.toArray(new RefClass[myInstantiatedClasses.size()]);
+      RefClass[] instClasses = myInstantiatedClasses.toArray(new RefClass[0]);
       for (RefClass refClass : instClasses) {
         if (isClassInstantiated(refClass)) {
           Set<RefMethod> methods = myClassIDtoMethods.get(refClass);
           if (methods != null) {
-            RefMethod[] arMethods = methods.toArray(new RefMethod[methods.size()]);
+            RefMethod[] arMethods = methods.toArray(new RefMethod[0]);
             for (RefMethod arMethod : arMethods) {
               arMethod.accept(this);
             }

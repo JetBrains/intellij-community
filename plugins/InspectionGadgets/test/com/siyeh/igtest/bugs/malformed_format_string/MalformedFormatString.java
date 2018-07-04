@@ -134,6 +134,16 @@ public class MalformedFormatString {
         Object[] array2 = {<warning descr="Argument type 'String' does not match the type of the format specifier '%#s'">"the void"</warning>};
         String.format("%#s", array2);
     }
+
+    void constrainedType(Object obj) {
+        if(obj instanceof Integer) {
+            String.format("%6d", obj);
+        } else if(obj instanceof Double) {
+            String.format("%6f", obj);
+        } else {
+            String.format("%d", <warning descr="Argument type 'Object' does not match the type of the format specifier '%d'">obj</warning>);
+        }
+    }
 }
 class A {
     void m(Formattable f) {

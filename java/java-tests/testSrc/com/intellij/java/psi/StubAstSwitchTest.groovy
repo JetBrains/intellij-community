@@ -40,8 +40,7 @@ import com.intellij.util.ref.GCUtil
 
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.Future
-
+import java.util.concurrent.Future 
 /**
  * @author peter
  */
@@ -68,7 +67,7 @@ class StubAstSwitchTest extends LightCodeInsightFixtureTestCase {
 
   void "test reachable psi classes remain valid when nothing changes"() {
     int count = 1000
-    List<SoftReference<PsiClass>> classList = (0..<count).collect { new SoftReference(myFixture.addClass("class Foo$it {}")) }
+    List<SoftReference<PsiClass>> classList = (0..<count).collect { new SoftReference<PsiClass>(myFixture.addClass("class Foo$it {}")) }
     System.gc()
     System.gc()
     System.gc()
@@ -235,7 +234,7 @@ class B {
     LeakHunter.checkLeak(file, StubTree) { candidate -> candidate.root.psi == file }
   }
 
-  void "test node is not deeply parsed when loaded in green stub presence"() {
+  void "test node has same PSI when loaded in green stub presence"() {
     PsiFileImpl file = (PsiFileImpl)myFixture.addFileToProject("a.java", "class A<T>{}")
     def stubTree = file.stubTree
     PsiClass psiClass = ((PsiJavaFile)file).classes[0]
@@ -243,7 +242,7 @@ class B {
     GCUtil.tryGcSoftlyReachableObjects()
 
     assert stubTree.is(file.greenStubTree)
-    assert !file.node.parsed
+    assert file.node.lastChildNode.psi.is(psiClass)
   }
 
   void "test load stub from non-file PSI after AST is unloaded"() {
@@ -257,26 +256,22 @@ class B {
     assert ((PsiClassImpl) cls).stub
   }
 
-  void "test load PSI via stub when AST is gc-ed but PSI exists that has never known stub"() {
+  void "test load PSI via stub when AST is gc-ed but PSI exists that was loaded via AST but knows its stub index"() {
     PsiJavaFileImpl file = (PsiJavaFileImpl)myFixture.addFileToProject("a.java", "class A{}")
     def cls = file.lastChild
     assert cls instanceof PsiClass
 
     GCUtil.tryGcSoftlyReachableObjects()
-    assert !file.treeElement
+    assert file.treeElement // we still hold a strong reference to AST
 
-    assert cls == myFixture.findClass('A')
-  }
-
-  void "test load PSI via stub when AST is gc-ed and PSI remains that never knew stub"() {
-    PsiJavaFileImpl file = (PsiJavaFileImpl)myFixture.addFileToProject("a.java", "class A{}")
-    def cls = file.lastChild
-    assert cls instanceof PsiClass
-
+    assert cls == myFixture.findClass('A') 
+    
+    // now we know stub index and can GC AST
     GCUtil.tryGcSoftlyReachableObjects()
     assert !file.treeElement
 
     assert cls == myFixture.findClass('A')
+    assert !file.treeElement
   }
 
   void "test bind stubs to AST after AST has been loaded and gc-ed"() {
@@ -292,11 +287,11 @@ class B {
   }
 
   void "test concurrent stub and AST reloading"() {
-    def fileNumbers = 0..<10
+    def fileNumbers = 0..<5
     List<PsiJavaFileImpl> files = fileNumbers.collect {
       (PsiJavaFileImpl)myFixture.addFileToProject("a${it}.java", "import foo.bar; class A{}")
     }
-    for (iteration in 0..10) {
+    for (iteration in 0..5) {
       GCUtil.tryGcSoftlyReachableObjects()
       files.each { assert !it.treeElement }
 
@@ -332,5 +327,29 @@ class B {
     def stubTree = assertInstanceOf(file, DummyHolder).calcStubTree()
 
     assert stubTree.plainList.find { it.stubType == JavaStubElementTypes.ANONYMOUS_CLASS }
+  }
+
+  void "test stub index is cleared on AST change"() {
+    def clazz = myFixture.addClass("class Foo { int a; }")
+    def field = clazz.fields[0]
+    def file = clazz.containingFile as PsiFileImpl
+    WriteCommandAction.runWriteCommandAction(project, {
+      file.viewProvider.document.insertString(0, ' ')
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+    })
+    
+    assert file.calcStubTree()
+
+    WriteCommandAction.runWriteCommandAction(project, {
+      file.viewProvider.document.insertString(file.text.indexOf('int'), 'void foo();')
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+    })
+    
+    GCUtil.tryGcSoftlyReachableObjects()
+
+    assert file.calcStubTree()
+    
+    assert field.valid
+    assert field.name == 'a'
   }
 }

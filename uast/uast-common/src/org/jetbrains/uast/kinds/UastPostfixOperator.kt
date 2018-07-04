@@ -18,17 +18,17 @@ package org.jetbrains.uast
 /**
  * [UPostfixExpression] operators.
  */
-open class UastPostfixOperator(override val text: String): UastOperator {
-    companion object {
-        @JvmField
-        val INC = UastPostfixOperator("++")
+open class UastPostfixOperator(override val text: String) : UastOperator {
+  companion object {
+    @JvmField
+    val INC: UastPostfixOperator = UastPostfixOperator("++")
 
-        @JvmField
-        val DEC = UastPostfixOperator("--")
+    @JvmField
+    val DEC: UastPostfixOperator = UastPostfixOperator("--")
 
-        @JvmField
-        val UNKNOWN = UastPostfixOperator("<unknown>")
-    }
+    @JvmField
+    val UNKNOWN: UastPostfixOperator = UastPostfixOperator("<unknown>")
+  }
 
-    override fun toString() = text
+  override fun toString(): String = text
 }

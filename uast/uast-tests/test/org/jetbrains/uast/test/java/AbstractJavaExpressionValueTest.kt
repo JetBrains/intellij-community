@@ -38,8 +38,8 @@ abstract class AbstractJavaExpressionValueTest : AbstractJavaUastTest() {
             "constant" -> {
               val expectedValue = parts[1]
               val actualValue =
-                  (node as? UExpression)?.uValueOf()?.toConstant()?.toString()
-                  ?: "cannot evaluate $node of ${node.javaClass}"
+                (node as? UExpression)?.uValueOf()?.toConstant()?.toString()
+                ?: "cannot evaluate $node of ${node.javaClass}"
               assertEquals(expectedValue, actualValue)
               valuesFound++
             }

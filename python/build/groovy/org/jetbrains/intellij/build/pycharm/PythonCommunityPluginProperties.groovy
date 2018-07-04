@@ -26,7 +26,7 @@ class PythonCommunityPluginProperties extends PythonPluginPropertiesBase {
     super()
     productCode = "PC"
     platformPrefix = "PyCharmCore"
-    applicationInfoModule = "python-community-ide-resources"
+    applicationInfoModule = "intellij.pycharm.community.resources"
     productLayout.pluginModulesToPublish = [PythonCommunityPluginModules.PYTHON_COMMUNITY_PLUGIN_MODULE]
 
     productLayout.allNonTrivialPlugins = CommunityRepositoryModules.COMMUNITY_REPOSITORY_PLUGINS + [

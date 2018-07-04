@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -43,22 +29,22 @@ public abstract class InspectionTreeTailRenderer {
   private final Map<HighlightSeverity, String> myPluralizedSeverityNames = ContainerUtil.createSoftMap();
   private final Map<HighlightSeverity, String> myUnpluralizedSeverityNames = ContainerUtil.createSoftMap();
 
-  private final SeverityRegistrar myRegistrar;
   private final GlobalInspectionContextImpl myContext;
 
   public InspectionTreeTailRenderer(GlobalInspectionContextImpl context) {
-    myRegistrar = SeverityRegistrar.getSeverityRegistrar(context.getProject());
     myContext = context;
   }
 
   public void appendTailText(InspectionTreeNode node) {
-    appendText("  ");
     final String customizedTailText = node.getTailText();
     if (customizedTailText != null) {
-      appendText("  ");
-      appendText(customizedTailText, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      if (!customizedTailText.isEmpty()) {
+        appendText("    ");
+        appendText(customizedTailText, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+      }
     }
     else {
+      appendText("  ");
       LevelAndCount[] problemLevels = node.getProblemLevels();
       if (problemLevels.length > MAX_LEVEL_TYPES) {
         int sum = Arrays.stream(problemLevels).mapToInt(LevelAndCount::getCount).sum();
@@ -86,7 +72,7 @@ public abstract class InspectionTreeTailRenderer {
       String name = myPluralizedSeverityNames.get(severity);
       if (name == null) {
         final String lowerCaseName = level.getName().toLowerCase(Locale.ENGLISH);
-        name = myRegistrar.isDefaultSeverity(severity) ? StringUtil.pluralize(lowerCaseName) : lowerCaseName;
+        name = SeverityRegistrar.isDefaultSeverity(severity) ? StringUtil.pluralize(lowerCaseName) : lowerCaseName;
         myPluralizedSeverityNames.put(severity, name);
       }
       return name;

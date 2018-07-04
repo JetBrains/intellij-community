@@ -24,20 +24,25 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Stream;
 
 import static com.intellij.util.containers.UtilKt.concat;
 import static com.intellij.util.containers.UtilKt.stream;
+import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toList;
 
 public class VcsContextWrapper implements VcsContext {
   @NotNull protected final DataContext myContext;
@@ -106,6 +111,14 @@ public class VcsContextWrapper implements VcsContext {
     return result != null ? result.filter(VirtualFile::isInLocalFileSystem) : VcsContext.super.getSelectedFilesStream();
   }
 
+  @NotNull
+  @Override
+  public List<VirtualFile> getSelectedUnversionedFiles() {
+    Stream<VirtualFile> result = ChangesListView.UNVERSIONED_FILES_DATA_KEY.getData(myContext);
+
+    return result != null ? result.collect(toList()) : emptyList();
+  }
+
   @Override
   public Editor getEditor() {
     return CommonDataKeys.EDITOR.getData(myContext);
@@ -156,7 +169,7 @@ public class VcsContextWrapper implements VcsContext {
     FilePath path = VcsDataKeys.FILE_PATH.getData(myContext);
 
     return concat(
-      path != null ? Stream.of(path) : Stream.empty(),
+      StreamEx.ofNullable(path),
       stream(VcsDataKeys.FILE_PATH_ARRAY.getData(myContext)),
       getSelectedFilesStream().map(VcsUtil::getFilePath),
       stream(getSelectedIOFiles()).map(VcsUtil::getFilePath)

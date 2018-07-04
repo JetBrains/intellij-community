@@ -35,7 +35,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +46,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 6, 2010
  */
 @SuppressWarnings({"AbstractClassNeverImplemented"})
 @DefinesXml
@@ -164,7 +162,7 @@ public abstract class AntDomProject extends AntDomNamedElement implements Proper
   }
 
   public AntInstallation getAntInstallation() {
-    final AntConfigurationBase configuration = AntConfigurationBase.getInstance(getXmlTag().getProject());
+    final AntConfigurationBase configuration = AntConfigurationBase.getInstance(getManager().getProject());
     AntInstallation antInstallation = null;
     if (configuration != null) {
       antInstallation = configuration.getProjectDefaultAnt();

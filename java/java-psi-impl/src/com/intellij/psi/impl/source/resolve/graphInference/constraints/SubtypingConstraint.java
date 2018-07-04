@@ -80,12 +80,12 @@ public class SubtypingConstraint implements ConstraintFormula {
         if (myS instanceof PsiWildcardType) {
           final PsiType sBound = ((PsiWildcardType)myS).getBound();
           if (sBound == null) {
-            constraints.add(new StrictSubtypingConstraint(tBound, ((PsiWildcardType)myS).getExtendsBound()));
+            constraints.add(new StrictSubtypingConstraint(tBound, ((PsiWildcardType)myS).getExtendsBound(), false));
             return true;
           }
 
           if (((PsiWildcardType)myS).isExtends()) {
-            constraints.add(new StrictSubtypingConstraint(tBound, sBound));
+            constraints.add(new StrictSubtypingConstraint(tBound, sBound, false));
             return true;
           }
           
@@ -97,7 +97,7 @@ public class SubtypingConstraint implements ConstraintFormula {
           assert false;
         } 
         else {
-          constraints.add(new StrictSubtypingConstraint(tBound, myS));
+          constraints.add(new StrictSubtypingConstraint(tBound, myS, false));
           return true;
         }
       } 
@@ -107,11 +107,11 @@ public class SubtypingConstraint implements ConstraintFormula {
         if (myS instanceof PsiWildcardType) {
           final PsiType sBound = ((PsiWildcardType)myS).getBound();
           if (sBound != null && ((PsiWildcardType)myS).isSuper()) {
-            constraints.add(new StrictSubtypingConstraint(sBound, tBound));
+            constraints.add(new StrictSubtypingConstraint(sBound, tBound, false));
             return true;
           }
         } else {
-          constraints.add(new StrictSubtypingConstraint(myS, tBound));
+          constraints.add(new StrictSubtypingConstraint(myS, tBound, false));
           return true;
         }
       }

@@ -72,11 +72,11 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
                                                               boolean searchInNonJavaFiles);
 
   @Override
-  public boolean isAvailableOnDataContext(final DataContext dataContext) {
-    PsiElement element = adjustForRename(dataContext, PsiElementRenameHandler.getElement(dataContext));
-    if (element instanceof PsiDirectory) {
-      final VirtualFile virtualFile = ((PsiDirectory)element).getVirtualFile();
-      final Project project = element.getProject();
+  public boolean isAvailableOnDataContext(@NotNull final DataContext dataContext) {
+    PsiDirectory directory = adjustForRename(dataContext, PsiElementRenameHandler.getElement(dataContext));
+    if (directory != null) {
+      final VirtualFile virtualFile = directory.getVirtualFile();
+      final Project project = directory.getProject();
       if (Comparing.equal(project.getBaseDir(), virtualFile)) return false;
       if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile)) {
         return true;
@@ -85,7 +85,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
     return false;
   }
 
-  private PsiElement adjustForRename(DataContext dataContext, PsiElement element) {
+  private PsiDirectory adjustForRename(DataContext dataContext, PsiElement element) {
     if (element instanceof PsiDirectoryContainer) {
       final Module module = LangDataKeys.MODULE.getData(dataContext);
       if (module != null) {
@@ -94,11 +94,11 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
         return directoryWithPackage.orElse(null);
       }
     }
-    return element;
+    return element instanceof PsiDirectory && getPackage((PsiDirectory)element) != null ? (PsiDirectory)element : null;
   }
 
   @Override
-  public boolean isRenaming(final DataContext dataContext) {
+  public boolean isRenaming(@NotNull final DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }
 

@@ -41,6 +41,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import com.intellij.xml.util.XmlTagUtilBase;
 import org.jetbrains.annotations.NotNull;
@@ -128,14 +129,7 @@ public class RenameDialog extends RefactoringDialog {
     super.dispose();
   }
 
-  @SuppressWarnings("deprecation")
   protected boolean isToSearchForTextOccurrencesForRename() {
-    return isToSearchForTextOccurencesForRename();
-  }
-
-  /** @deprecated use/override {@link #isToSearchForTextOccurrencesForRename()} instead (to be deleted in IDEA 2018) */
-  @SuppressWarnings({"SpellCheckingInspection", "DeprecatedIsStillUsed"})
-  protected boolean isToSearchForTextOccurencesForRename() {
     return RenamePsiElementProcessor.forElement(myPsiElement).isToSearchForTextOccurrences(myPsiElement);
   }
 
@@ -259,7 +253,7 @@ public class RenameDialog extends RefactoringDialog {
     myCbSearchInComments.setSelected(true);
     panel.add(myCbSearchInComments, gbConstraints);
 
-    gbConstraints.insets = JBUI.insetsBottom(4);
+    gbConstraints.insets = JBUI.insets(0, UIUtil.DEFAULT_HGAP, 4, 0);
     gbConstraints.gridwidth = GridBagConstraints.REMAINDER;
     gbConstraints.gridx = 1;
     gbConstraints.weightx = 1;
@@ -276,9 +270,9 @@ public class RenameDialog extends RefactoringDialog {
 
     for(AutomaticRenamerFactory factory: Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME)) {
       if (factory.isApplicable(myPsiElement) && factory.getOptionName() != null) {
-        gbConstraints.insets = JBUI.insetsBottom(4);
         gbConstraints.gridwidth = myAutoRenamerFactories.size() % 2 == 0 ? 1 : GridBagConstraints.REMAINDER;
         gbConstraints.gridx = myAutoRenamerFactories.size() % 2;
+        gbConstraints.insets = gbConstraints.gridx == 0 ? JBUI.insetsBottom(4) : JBUI.insets(0, UIUtil.DEFAULT_HGAP, 4, 0);
         gbConstraints.weightx = 1;
         gbConstraints.fill = GridBagConstraints.BOTH;
 

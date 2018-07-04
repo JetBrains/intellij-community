@@ -18,6 +18,7 @@ package com.intellij.slicer;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.DfaUtil;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.progress.ProgressManager;
@@ -149,6 +150,12 @@ class SliceUtil {
       }
     }
     if (expression instanceof PsiMethodCallExpression) { // ctr call can't return value or be container get, so don't use PsiCall here
+      PsiExpression returnedValue = JavaMethodContractUtil.findReturnedValue((PsiMethodCallExpression)expression);
+      if (returnedValue != null) {
+        if (!handToProcessor(returnedValue, processor, parent, parentSubstitutor, indexNesting, syntheticField)) {
+          return false;
+        }
+      }
       PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
       Flow anno = method == null ? null : isMethodFlowAnnotated(method);
       if (anno != null) {
@@ -219,13 +226,7 @@ class SliceUtil {
   }
 
   private static PsiElement simplify(@NotNull PsiElement expression) {
-    if (expression instanceof PsiParenthesizedExpression) {
-      return simplify(((PsiParenthesizedExpression)expression).getExpression());
-    }
-    if (expression instanceof PsiTypeCastExpression) {
-      return simplify(((PsiTypeCastExpression)expression).getOperand());
-    }
-    return expression;
+    return expression instanceof PsiExpression ? PsiUtil.deparenthesizeExpression((PsiExpression)expression) : expression;
   }
 
   private static boolean handToProcessor(@NotNull PsiElement expression,
@@ -395,13 +396,9 @@ class SliceUtil {
             return handToProcessor(rExpression, processor, parent, parentSubstitutor, parent.indexNesting, "");
           }
         }
-        if (parentExpr instanceof PsiPrefixExpression && ((PsiPrefixExpression)parentExpr).getOperand() == referenceExpression && ( ((PsiPrefixExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiPrefixExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
-          PsiPrefixExpression prefixExpression = (PsiPrefixExpression)parentExpr;
-          return handToProcessor(prefixExpression, processor, parent, parentSubstitutor, parent.indexNesting, "");
-        }
-        if (parentExpr instanceof PsiPostfixExpression && ((PsiPostfixExpression)parentExpr).getOperand() == referenceExpression && ( ((PsiPostfixExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiPostfixExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
-          PsiPostfixExpression postfixExpression = (PsiPostfixExpression)parentExpr;
-          return handToProcessor(postfixExpression, processor, parent, parentSubstitutor, parent.indexNesting, "");
+        if (parentExpr instanceof PsiUnaryExpression && ((PsiUnaryExpression)parentExpr).getOperand() == referenceExpression && ( ((PsiUnaryExpression)parentExpr).getOperationTokenType() == JavaTokenType.PLUSPLUS || ((PsiUnaryExpression)parentExpr).getOperationTokenType() == JavaTokenType.MINUSMINUS)) {
+          PsiUnaryExpression unaryExpression = (PsiUnaryExpression)parentExpr;
+          return handToProcessor(unaryExpression, processor, parent, parentSubstitutor, parent.indexNesting, "");
         }
       }
 

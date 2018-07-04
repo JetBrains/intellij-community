@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -36,6 +22,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.ExternalChangeAction;
+import com.intellij.testFramework.LightVirtualFile;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -168,7 +155,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   }
 
   @Override
-  public void loadState(RecentlyChangedFilesState state) {
+  public void loadState(@NotNull RecentlyChangedFilesState state) {
     myRecentlyChangedFiles = state;
   }
 
@@ -192,7 +179,8 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
   private void onDocumentChanged(DocumentEvent e) {
     Document document = e.getDocument();
     final VirtualFile file = getFileDocumentManager().getFile(document);
-    if (file != null && !ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class)) {
+    if (file != null && !(file instanceof LightVirtualFile) && !ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction.class)) {
+      if (!ApplicationManager.getApplication().isDispatchThread()) LOG.error("Document update for physical file not in EDT: " + file);
       myCurrentCommandHasChanges = true;
       myChangedFilesInCurrentCommand.add(file);
     }
@@ -323,12 +311,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     final PlaceInfo info = myBackPlaces.removeLast();
 
     PlaceInfo current = getCurrentPlaceInfo();
-    if (current != null) {
-      if (!isSame(current, info)) {
-        putLastOrMerge(myForwardPlaces, current, Integer.MAX_VALUE);
-      }
-    }
-    putLastOrMerge(myForwardPlaces, info, Integer.MAX_VALUE);
+    if (current != null) myForwardPlaces.add(current);
 
     myBackInProgress = true;
     try {
@@ -463,7 +446,9 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     return file != null ? myEditorManager.getSelectedEditorWithProvider(file) : null;
   }
 
-  private PlaceInfo createPlaceInfo(@NotNull final FileEditor fileEditor, final FileEditorProvider fileProvider) {
+  protected PlaceInfo createPlaceInfo(@NotNull final FileEditor fileEditor, final FileEditorProvider fileProvider) {
+    if (!fileEditor.isValid()) return null;
+
     final VirtualFile file = myEditorManager.getFile(fileEditor);
     LOG.assertTrue(file != null);
 
@@ -500,13 +485,13 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     return myFileDocumentManager;
   }
 
-  private static final class PlaceInfo {
+  protected static final class PlaceInfo {
     private final VirtualFile myFile;
     private final FileEditorState myNavigationState;
     private final String myEditorTypeId;
     private final Reference<EditorWindow> myWindow;
 
-    PlaceInfo(@NotNull VirtualFile file,
+    public PlaceInfo(@NotNull VirtualFile file,
               @NotNull FileEditorState navigationState,
               @NotNull String editorTypeId,
               @Nullable EditorWindow window) {

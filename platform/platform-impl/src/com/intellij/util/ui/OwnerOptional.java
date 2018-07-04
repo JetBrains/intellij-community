@@ -17,6 +17,7 @@ package com.intellij.util.ui;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdePopupManager;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Consumer;
@@ -52,14 +53,14 @@ public class OwnerOptional {
 
     if (manager.isPopupWindow(owner)) {
 
-      manager.closeAllPopups();
-
-      owner = owner.getOwner();
-
-      while (owner != null
-             && !(owner instanceof Dialog)
-             && !(owner instanceof Frame)) {
+      if (!owner.isFocused() || !SystemInfo.isJetBrainsJvm) {
         owner = owner.getOwner();
+
+        while (owner != null
+               && !(owner instanceof Dialog)
+               && !(owner instanceof Frame)) {
+          owner = owner.getOwner();
+        }
       }
     }
 

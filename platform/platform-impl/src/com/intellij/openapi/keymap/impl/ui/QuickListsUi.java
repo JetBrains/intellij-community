@@ -70,7 +70,7 @@ class QuickListsUi implements ConfigurableUi<List<QuickList>> {
 
   private final ListModelEditor<QuickList> editor = new ListModelEditor<>(itemEditor);
 
-  private JComponent component;
+  private final JComponent component;
   private final QuickListPanel itemPanel;
   private final JPanel itemPanelWrapper;
 
@@ -153,7 +153,7 @@ class QuickListsUi implements ConfigurableUi<List<QuickList>> {
 
     if (isModified(settings)) {
       java.util.List<QuickList> result = editor.apply();
-      keymapListener.processCurrentKeymapChanged(result.toArray(new QuickList[result.size()]));
+      keymapListener.processCurrentKeymapChanged(result.toArray(new QuickList[0]));
       QuickListsManager.getInstance().setQuickLists(result);
     }
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -31,7 +17,7 @@ import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class ComparatorResultComparisonInspection extends BaseJavaBatchLocalInspectionTool {
+public class ComparatorResultComparisonInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher COMPARE_METHOD = CallMatcher.anyOf(
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_COMPARATOR, "compare").parameterCount(2),
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_COMPARABLE, "compareTo").parameterCount(1)
@@ -51,8 +37,9 @@ public class ComparatorResultComparisonInspection extends BaseJavaBatchLocalInsp
         if (parent instanceof PsiLocalVariable) {
           PsiLocalVariable var = (PsiLocalVariable)parent;
           PsiCodeBlock block = PsiTreeUtil.getParentOfType(var, PsiCodeBlock.class);
-          if (block != null) {
-            for (PsiElement element : DefUseUtil.getRefs(block, var, var.getInitializer())) {
+          PsiExpression initializer = var.getInitializer();
+          if (block != null && initializer != null) {
+            for (PsiElement element : DefUseUtil.getRefs(block, var, initializer)) {
               checkComparison(element);
             }
           }

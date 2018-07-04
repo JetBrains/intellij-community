@@ -34,6 +34,7 @@ public final class SoftValueHashMap<K,V> extends RefValueHashMap<K,V>{
       this.key = key;
     }
 
+    @NotNull
     @Override
     public K getKey() {
       return key;

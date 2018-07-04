@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.openapi.application.ReadAction;
@@ -71,6 +57,7 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
   private String myNativeBundle = JavaFxPackagerConstants.NativeBundles.none.name();
   private List<JavaFxManifestAttribute> myCustomManifestAttributes = new ArrayList<>();
   private JavaFxApplicationIcons myIcons = new JavaFxApplicationIcons();
+  private String myMsgOutputLevel = JavaFxPackagerConstants.MsgOutputLevel.Default.name();
 
   @Override
   public void onBuildFinished(@NotNull final Artifact artifact, @NotNull final CompileContext compileContext) {
@@ -107,6 +94,11 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
       protected void registerJavaFxPackagerError(String message) {
         compileContext.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
       }
+
+      @Override
+      protected void registerJavaFxPackagerInfo(String message) {
+        compileContext.addMessage(CompilerMessageCategory.INFORMATION, message, null, -1, -1);
+      }
     };
     javaFxPackager.buildJavaFxArtifact(fxCompatibleSdk.getHomePath());
   }
@@ -123,7 +115,7 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
   }
 
   @Override
-  public void loadState(JavaFxArtifactProperties state) {
+  public void loadState(@NotNull JavaFxArtifactProperties state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 
@@ -335,6 +327,14 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     myIcons = icons;
   }
 
+  public String getMsgOutputLevel() {
+    return myMsgOutputLevel;
+  }
+
+  public void setMsgOutputLevel(String msgOutputLevel) {
+    myMsgOutputLevel = msgOutputLevel;
+  }
+
   public static abstract class JavaFxPackager extends AbstractJavaFxPackager {
     private final Artifact myArtifact;
     private final JavaFxArtifactProperties myProperties;
@@ -484,6 +484,11 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     @Override
     public List<JavaFxManifestAttribute> getCustomManifestAttributes() {
       return myProperties.getCustomManifestAttributes();
+    }
+
+    @Override
+    protected JavaFxPackagerConstants.MsgOutputLevel getMsgOutputLevel() {
+      return JavaFxPackagerConstants.MsgOutputLevel.valueOf(myProperties.getMsgOutputLevel());
     }
   }
 }

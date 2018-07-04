@@ -23,7 +23,6 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.help.HelpManager;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -313,6 +312,7 @@ public class UnscrambleDialog extends DialogWrapper {
     StringBuilder builder = new StringBuilder(text.length());
 
     text = text.replaceAll("(\\S[ \\t\\x0B\\f\\r]+)(at\\s+)", "$1\n$2");
+    text = text.replaceAll("(\\\\n|\\\\r|\\\\t)+(at\\s+)", "\n$2");
     String[] lines = text.split("\n");
 
     boolean first = true;
@@ -378,13 +378,7 @@ public class UnscrambleDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     if (myConfigurable != null && myConfigurable.isModified()) {
-      try {
-        myConfigurable.apply();
-      }
-      catch (ConfigurationException e) {
-        setText(e.getMessage());
-        return;
-      }
+      myConfigurable.apply();
     }
     DumbService.getInstance(myProject).withAlternativeResolveEnabled(() -> {
       if (performUnscramble()) {
@@ -464,6 +458,7 @@ public class UnscrambleDialog extends DialogWrapper {
 
   @Nullable
   private static String getExceptionAbbreviation(String line) {
+    line = StringUtil.trimStart(line.trim(), "Caused by: ");
     int lastDelimiter = 0;
     for (int j = 0; j < line.length(); j++) {
       char c = line.charAt(j);

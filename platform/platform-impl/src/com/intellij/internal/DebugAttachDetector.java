@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -23,7 +10,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.net.NetUtils;
+import sun.misc.VMSupport;
 
 import java.lang.management.ManagementFactory;
 import java.util.List;
@@ -82,7 +69,7 @@ public class DebugAttachDetector {
         || app.isUnitTestMode()
         || app.isHeadlessEnvironment()
         || Boolean.getBoolean("disable.attach.detector")
-        || Boolean.getBoolean("idea.debug.mode")) return;
+        || PluginManagerCore.isRunningFromSources()) return;
 
     Pair<String, Integer> attachAddress = getAttachAddress(ManagementFactory.getRuntimeMXBean().getInputArguments());
     if (attachAddress == null) return;
@@ -90,7 +77,12 @@ public class DebugAttachDetector {
     myPort = attachAddress.second;
 
     myTask = JobScheduler.getScheduler().scheduleWithFixedDelay(() -> {
-      boolean attached = !NetUtils.canConnectToRemoteSocket(myHost, myPort);
+      String property = VMSupport.getAgentProperties().getProperty("sun.jdwp.listenerAddress");
+
+      // leads to garbage in IDEA console, see IDEA-158940
+      // boolean attached = !NetUtils.canConnectToRemoteSocket(myHost, myPort);
+
+      boolean attached = property != null && property.isEmpty();
       if (!myReady) {
         myAttached = attached;
         myReady = true;

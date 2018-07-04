@@ -30,7 +30,7 @@ import com.intellij.refactoring.actions.RenameElementAction;
 import com.intellij.refactoring.rename.NameSuggestionProvider;
 import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -102,10 +102,5 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
     finally {
       editor.putUserData(RenameHandlerRegistry.SELECT_ALL, selectAll);
     }
-  }
-
-  @Override
-  public boolean startInWriteAction() {
-    return false;
   }
 }

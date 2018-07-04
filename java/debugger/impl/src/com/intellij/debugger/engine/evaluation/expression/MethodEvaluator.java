@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class MethodEvaluator
@@ -74,44 +60,40 @@ public class MethodEvaluator implements Evaluator {
 
   @Override
   public Object evaluate(EvaluationContextImpl context) throws EvaluateException {
-    if(!context.getDebugProcess().isAttached()) return null;
+    if (!context.getDebugProcess().isAttached()) {
+      return null;
+    }
     DebugProcessImpl debugProcess = context.getDebugProcess();
-    
-    final boolean requiresSuperObject = 
-      myObjectEvaluator instanceof SuperEvaluator || 
+
+    final boolean requiresSuperObject =
+      myObjectEvaluator instanceof SuperEvaluator ||
       (myObjectEvaluator instanceof DisableGC && ((DisableGC)myObjectEvaluator).getDelegate() instanceof SuperEvaluator);
-    
+
     final Object object = myObjectEvaluator.evaluate(context);
     if (LOG.isDebugEnabled()) {
       LOG.debug("MethodEvaluator: object = " + object);
     }
-    if(object == null) {
+    if (object == null) {
       throw EvaluateExceptionUtil.createEvaluateException(new NullPointerException());
     }
     if (!(object instanceof ObjectReference || isInvokableType(object))) {
       throw EvaluateExceptionUtil.createEvaluateException(DebuggerBundle.message("evaluation.error.evaluating.method", myMethodName));
     }
-    List args = new ArrayList(myArgumentEvaluators.length);
+    List<Value> args = new ArrayList<>(myArgumentEvaluators.length);
     for (Evaluator evaluator : myArgumentEvaluators) {
-      args.add(evaluator.evaluate(context));
+      args.add((Value)evaluator.evaluate(context));
     }
     try {
       ReferenceType referenceType = null;
 
-      if(object instanceof ObjectReference) {
+      if (object instanceof ObjectReference) {
         // it seems that if we have an object of the class, the class must be ready, so no need to use findClass here
         referenceType = ((ObjectReference)object).referenceType();
       }
       else if (isInvokableType(object)) {
         referenceType = (ReferenceType)object;
       }
-      else {
-        final String className = myClassName != null? myClassName.getName(debugProcess) : null;
-        if (className != null) {
-          referenceType = debugProcess.findClass(context, className, context.getClassLoader());
-        }
-      }
-      
+
       if (referenceType == null) {
         throw new EvaluateRuntimeException(EvaluateExceptionUtil.createEvaluateException(
           DebuggerBundle.message("evaluation.error.cannot.evaluate.qualifier", myMethodName))
@@ -138,6 +120,10 @@ public class MethodEvaluator implements Evaluator {
       ReferenceType _refType = referenceType;
       if (requiresSuperObject && (referenceType instanceof ClassType)) {
         _refType = ((ClassType)referenceType).superclass();
+        String className = myClassName != null ? myClassName.getName(debugProcess) : null;
+        if (_refType == null || (className != null && !className.equals(_refType.name()))) {
+          _refType = debugProcess.findClass(context, className, context.getClassLoader());
+        }
       }
       Method jdiMethod = DebuggerUtils.findMethod(_refType, myMethodName, signature);
       if (signature == null) {
@@ -159,7 +145,10 @@ public class MethodEvaluator implements Evaluator {
         if (retTypePos >= 0) {
           String signatureNoRetType = signature.substring(0, retTypePos + 1);
           for (Method method : _refType.visibleMethods()) {
-            if (method.name().equals(myMethodName) && method.signature().startsWith(signatureNoRetType) && !method.isBridge() && !method.isAbstract()) {
+            if (method.name().equals(myMethodName) &&
+                method.signature().startsWith(signatureNoRetType) &&
+                !method.isBridge() &&
+                !method.isAbstract()) {
               jdiMethod = method;
               break;
             }
@@ -176,7 +165,8 @@ public class MethodEvaluator implements Evaluator {
       if (Patches.JDK_BUG_ID_8042123 && myCheckDefaultInterfaceMethod && jdiMethod.declaringType() instanceof InterfaceType) {
         try {
           return invokeDefaultMethod(debugProcess, context, objRef, myMethodName);
-        } catch (EvaluateException e) {
+        }
+        catch (EvaluateException e) {
           LOG.info(e);
         }
       }
@@ -196,7 +186,7 @@ public class MethodEvaluator implements Evaluator {
   private static Value invokeDefaultMethod(DebugProcess debugProcess, EvaluationContext evaluationContext,
                                            Value obj, String name)
     throws EvaluateException {
-    ClassType invokerClass = ClassLoadingUtils.getHelperClass(DefaultMethodInvoker.class.getName(), evaluationContext, debugProcess);
+    ClassType invokerClass = ClassLoadingUtils.getHelperClass(DefaultMethodInvoker.class, evaluationContext);
 
     if (invokerClass != null) {
       List<Method> methods = invokerClass.methodsByName("invoke");

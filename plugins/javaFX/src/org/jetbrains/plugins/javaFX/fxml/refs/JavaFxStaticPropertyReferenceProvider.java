@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.openapi.util.TextRange;
@@ -38,7 +39,7 @@ public class JavaFxStaticPropertyReferenceProvider extends PsiReferenceProvider 
   }
 
   private static class JavaFxStaticPropertyClassReference extends PsiReferenceBase<XmlAttribute> {
-    private PsiClass myPsiClass;
+    private final PsiClass myPsiClass;
 
     public JavaFxStaticPropertyClassReference(@NotNull XmlAttribute xmlAttribute, @NotNull String className) {
       super(xmlAttribute);

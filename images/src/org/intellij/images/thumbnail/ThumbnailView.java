@@ -84,11 +84,16 @@ public interface ThumbnailView extends Disposable, ImageComponentDecorator {
   @Nullable
   ThemeFilter getFilter();
 
-  void setTagFilter(TagFilter filter);
+  void setTagFilters(TagFilter[] filter);
 
   /**
    * null means all files accepted
    */
   @Nullable
-  TagFilter getTagFilter();
+  TagFilter[] getTagFilters();
+
+  /**
+   * update UI: preview visibility, etc
+   */
+  void refresh();
 }

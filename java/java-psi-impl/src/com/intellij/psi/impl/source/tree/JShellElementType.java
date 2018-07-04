@@ -28,7 +28,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 21-Jun-17
  */
 public interface JShellElementType {
   IFileElementType FILE = new IFileElementType("JSHELL_FILE", JShellLanguage.INSTANCE);

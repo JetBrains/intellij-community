@@ -55,7 +55,7 @@ public class TransformationContextImpl implements TransformationContext {
   private final List<PsiClassType> myImplementsTypes = ContainerUtil.newArrayList();
   private final List<PsiClassType> myExtendsTypes = ContainerUtil.newArrayList();
   private final MemberBuilder myMemberBuilder = new MemberBuilder(this);
-  private final Map<String, Set<MethodSignature>> mySignaturesCache = FactoryMap.createMap(name -> {
+  private final Map<String, Set<MethodSignature>> mySignaturesCache = FactoryMap.create(name -> {
     THashSet<MethodSignature> result = new THashSet<>(METHOD_PARAMETERS_ERASURE_EQUALITY);
     for (PsiMethod existingMethod : myMethods) {
       if (existingMethod.getName().equals(name)) {
@@ -128,7 +128,7 @@ public class TransformationContextImpl implements TransformationContext {
     for (PsiClassType type: superTypes) {
       PsiClass psiClass = type.resolve();
       if (psiClass != null) {
-        fields.addAll(Arrays.asList(psiClass.getAllFields()));
+        ContainerUtil.addAll(fields, psiClass.getAllFields());
       }
     }
     return fields;

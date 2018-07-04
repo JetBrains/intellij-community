@@ -3,7 +3,7 @@ package com.intellij.openapi.externalSystem.model.project;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +34,7 @@ public class LibraryData extends AbstractNamedData implements Named, ProjectCoor
   }
 
   public LibraryData(@NotNull ProjectSystemId owner, @NotNull String name, boolean unresolved) {
-    super(owner, name, name.isEmpty() ? "" : String.format("%s: %s", owner.getReadableName(), name));
+    super(owner, name, name.isEmpty() ? "" : owner.getReadableName() + ": " + name);
     myUnresolved = unresolved;
   }
 

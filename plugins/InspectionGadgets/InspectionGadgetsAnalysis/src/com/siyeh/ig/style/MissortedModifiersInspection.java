@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -82,8 +83,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
 
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiModifierList modifierList =
-        (PsiModifierList)descriptor.getPsiElement();
+      final PsiModifierList modifierList = (PsiModifierList)descriptor.getPsiElement();
       final List<String> modifiers = new ArrayList<>();
       final List<String> typeAnnotations = new ArrayList<>();
       final PsiElement[] children = modifierList.getChildren();
@@ -103,7 +103,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
           modifiers.add(child.getText());
         }
         else if (child instanceof PsiAnnotation) {
-          if (PsiImplUtil.isTypeAnnotation(child)) {
+          if (PsiImplUtil.isTypeAnnotation(child) && !isMethodWithVoidReturnType(modifierList.getParent())) {
             typeAnnotations.add(child.getText());
           }
           else {
@@ -119,21 +119,17 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
       for (String annotation : typeAnnotations) {
         buffer.append(annotation).append(' ');
       }
-      final PsiManager manager = modifierList.getManager();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
       buffer.append("void x() {}");
       final String text = buffer.toString();
-      final PsiMethod method =
-        factory.createMethodFromText(text, modifierList);
+      final PsiMethod method = JavaPsiFacade.getElementFactory(project).createMethodFromText(text, modifierList);
       final PsiModifierList newModifierList = method.getModifierList();
-      modifierList.replace(newModifierList);
+      new CommentTracker().replaceAndRestoreComments(modifierList, newModifierList);
     }
   }
 
   private class MissortedModifiersVisitor extends BaseInspectionVisitor {
 
-    private final Comparator<String> modifierComparator =
-      new ModifierComparator();
+    private final Comparator<String> modifierComparator = new ModifierComparator();
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
@@ -172,8 +168,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
       checkForMissortedModifiers(field);
     }
 
-    private void checkForMissortedModifiers(
-      PsiModifierListOwner listOwner) {
+    private void checkForMissortedModifiers(PsiModifierListOwner listOwner) {
       final PsiModifierList modifierList = listOwner.getModifierList();
       if (modifierList == null) {
         return;
@@ -201,7 +196,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
           currentModifier = text;
         }
         if (child instanceof PsiAnnotation) {
-          if (PsiImplUtil.isTypeAnnotation(child)) {
+          if (PsiImplUtil.isTypeAnnotation(child) && !isMethodWithVoidReturnType(modifierList.getParent())) {
             // type annotations come next to type
             // see e.g. http://www.oracle.com/technetwork/articles/java/ma14-architect-annotations-2177655.html
             typeAnnotationSeen = true;
@@ -217,13 +212,20 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
     }
   }
 
+  static boolean isMethodWithVoidReturnType(PsiElement element) {
+    if (!(element instanceof PsiMethod)) {
+      return false;
+    }
+    final PsiMethod method = (PsiMethod)element;
+    return PsiType.VOID.equals(method.getReturnType());
+  }
+
   private static class ModifierComparator implements Comparator<String> {
 
     /**
      * @noinspection StaticCollection
      */
-    @NonNls private static final Map<String, Integer> s_modifierOrder =
-      new HashMap<>(11);
+    @NonNls private static final Map<String, Integer> s_modifierOrder = new HashMap<>(12);
 
     static {
       s_modifierOrder.put(PsiModifier.PUBLIC, Integer.valueOf(0));
@@ -243,14 +245,8 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
     @Override
     public int compare(String modifier1, String modifier2) {
       final Integer ordinal1 = s_modifierOrder.get(modifier1);
-      if (ordinal1 == null) {
-        return 0;
-      }
       final Integer ordinal2 = s_modifierOrder.get(modifier2);
-      if (ordinal2 == null) {
-        return 0;
-      }
-      return ordinal1.intValue() - ordinal2.intValue();
+      return (ordinal1 == null || ordinal2 == null) ? 0 : ordinal1.intValue() - ordinal2.intValue();
     }
   }
 }

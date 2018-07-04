@@ -11,6 +11,6 @@ abstract class A1{
     abstract <T> T baz(List<? super T> a);
 
     void bar(List<?> x){
-        <error descr="Incompatible types. Found: 'T', required: 'java.lang.String'">String o = baz(x);</error>
+        String o = <error descr="Type parameter T has incompatible upper bounds: capture of ? and String">baz(x);</error>
     }
 }

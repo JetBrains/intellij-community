@@ -45,8 +45,8 @@ public class XPathLocationPathImpl extends XPathElementImpl implements XPathLoca
     }
 
     public boolean isAbsolute() {
-        final XPathExpression pathExpression = getFirstStep();
-        return pathExpression instanceof XPathStep && ((XPathStep)pathExpression).isAbsolute();
+        final XPathStep pathExpression = getFirstStep();
+        return pathExpression != null && pathExpression.isAbsolute();
     }
 
   public void accept(XPathElementVisitor visitor) {

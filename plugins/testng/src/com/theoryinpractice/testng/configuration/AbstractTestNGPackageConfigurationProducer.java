@@ -58,4 +58,8 @@ public abstract class AbstractTestNGPackageConfigurationProducer extends TestNGC
     return true;
   }
 
+  @Override
+  protected boolean isApplicableTestType(String type, ConfigurationContext context) {
+    return TestType.PACKAGE.getType().equals(type);
+  }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.DataManager;
@@ -25,9 +11,10 @@ import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -56,7 +43,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
 
   public GotoActionItemProvider(GotoActionModel model) {
     myModel = model;
-    myIntentions = NotNullLazyValue.createValue(() -> myModel.getAvailableIntentions());
+    myIntentions = NotNullLazyValue.createValue(() -> ReadAction.compute(() -> myModel.getAvailableIntentions()));
   }
 
   @NotNull
@@ -95,10 +82,9 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
   private boolean processAbbreviations(final String pattern, Processor<MatchedValue> consumer, DataContext context) {
     List<String> actionIds = AbbreviationManager.getInstance().findActions(pattern);
     JBIterable<MatchedValue> wrappers = JBIterable.from(actionIds)
-      .transform(myActionManager::getAction)
-      .filter(Condition.NOT_NULL)
+      .filterMap(myActionManager::getAction)
       .transform(action -> {
-        ActionWrapper wrapper = new ActionWrapper(action, myModel.myActionGroups.get(action), MatchMode.NAME, context);
+        ActionWrapper wrapper = wrapAnAction(action, context);
         return new MatchedValue(wrapper, pattern) {
           @NotNull
           @Override
@@ -124,7 +110,10 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
       provider.consumeTopHits(pattern, collector, project);
     }
     Collection<Object> result = collector.getResult();
-    return processItems(pattern, JBIterable.from(result).filter(Comparable.class), consumer);
+    JBIterable<Comparable> wrappers = JBIterable.from(result)
+      .transform(object -> object instanceof AnAction ? wrapAnAction(((AnAction)object), dataContext) : object)
+      .filter(Comparable.class);
+    return processItems(pattern, wrappers, consumer);
   }
 
   private boolean processOptions(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
@@ -178,7 +167,7 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
       for (OptionDescription description : optionDescriptions) {
         for (ActionFromOptionDescriptorProvider converter : ActionFromOptionDescriptorProvider.EP.getExtensions()) {
           AnAction action = converter.provide(description);
-          if (action != null) options.add(new ActionWrapper(action, null, MatchMode.NAME, dataContext));
+          if (action != null) options.add(new ActionWrapper(action, null, MatchMode.NAME, dataContext, myModel));
           options.add(description);
         }
       }
@@ -188,41 +177,55 @@ public class GotoActionItemProvider implements ChooseByNameItemProvider {
 
   private boolean processActions(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
     Set<String> ids = ((ActionManagerImpl)myActionManager).getActionIds();
-    JBIterable<AnAction> actions = JBIterable.from(ids).transform(myActionManager::getAction).filter(Condition.NOT_NULL);
-    MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
+    JBIterable<AnAction> actions = JBIterable.from(ids).filterMap(myActionManager::getAction);
+    MinusculeMatcher matcher = buildMatcher(pattern);
 
     QuickActionProvider provider = dataContext.getData(QuickActionProvider.KEY);
     if (provider != null) {
       actions = actions.append(provider.getActions(true));
     }
 
-    JBIterable<ActionWrapper> actionWrappers = actions.unique().transform(action -> {
+    JBIterable<ActionWrapper> actionWrappers = actions.unique().filterMap(action -> {
       MatchMode mode = myModel.actionMatches(pattern, matcher, action);
       if (mode == MatchMode.NONE) return null;
-      return new ActionWrapper(action, myModel.myActionGroups.get(action), mode, dataContext);
-    }).filter(Condition.NOT_NULL);
+      return new ActionWrapper(action, myModel.getGroupMapping(action), mode, dataContext, myModel);
+    });
     return processItems(pattern, actionWrappers, consumer);
   }
 
+  @NotNull
+  static MinusculeMatcher buildMatcher(String pattern) {
+    return NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
+  }
+
   private boolean processIntentions(String pattern, Processor<MatchedValue> consumer, DataContext dataContext) {
-    MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
+    MinusculeMatcher matcher = buildMatcher(pattern);
     Map<String, ApplyIntentionAction> intentionMap = myIntentions.getValue();
     JBIterable<ActionWrapper> intentions = JBIterable.from(intentionMap.keySet())
-      .transform(intentionText -> {
+      .filterMap(intentionText -> {
         ApplyIntentionAction intentionAction = intentionMap.get(intentionText);
         if (myModel.actionMatches(pattern, matcher, intentionAction) == MatchMode.NONE) return null;
-        return new ActionWrapper(intentionAction, intentionText, MatchMode.INTENTION, dataContext);
-      })
-      .filter(Condition.NOT_NULL);
+        GroupMapping groupMapping = GroupMapping.createFromText(intentionText);
+        return new ActionWrapper(intentionAction, groupMapping, MatchMode.INTENTION, dataContext, myModel);
+      });
     return processItems(pattern, intentions, consumer);
   }
 
-  private boolean processItems(String pattern, JBIterable<? extends Comparable> items, Processor<MatchedValue> consumer) {
-    List<? extends Comparable> itemList = items.toList();
-    myModel.updateActions(ContainerUtil.findAll(itemList, ActionWrapper.class));
-    
-    List<MatchedValue> matched = ContainerUtil.map(itemList, o -> o instanceof MatchedValue ? (MatchedValue)o : new MatchedValue(o, pattern));
-    Collections.sort(matched);
+  @NotNull
+  private ActionWrapper wrapAnAction(@NotNull AnAction action, DataContext dataContext) {
+    return new ActionWrapper(action, myModel.getGroupMapping(action), MatchMode.NAME, dataContext, myModel);
+  }
+
+  private final static Logger LOG = Logger.getInstance(GotoActionItemProvider.class);
+  
+  private static boolean processItems(String pattern, JBIterable<? extends Comparable> items, Processor<MatchedValue> consumer) {
+    List<MatchedValue> matched = ContainerUtil.newArrayList(items.map(o -> o instanceof MatchedValue ? (MatchedValue)o : new MatchedValue(o, pattern)));
+    try {
+      Collections.sort(matched);
+    }
+    catch (IllegalArgumentException e) {
+      LOG.error("Comparison method violates its general contract with pattern '" + pattern + "'", e);
+    }
     return ContainerUtil.process(matched, consumer);
   }
 }

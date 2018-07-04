@@ -19,8 +19,8 @@ import javax.swing.*;
 
 public class ListSeparator {
 
-  private String myText;
-  private Icon myIcon;
+  private final String myText;
+  private final Icon myIcon;
 
   public ListSeparator() {
     this("");

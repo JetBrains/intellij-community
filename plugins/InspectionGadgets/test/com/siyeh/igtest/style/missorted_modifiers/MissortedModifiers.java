@@ -50,6 +50,15 @@ class MissortedModifiers {
   @NotNull</warning>
   int //@Temporal(TemporalType.DATE)
   x() {return -1;}
+
+
+  <warning descr="Missorted modifiers 'public static @MethodOrTypeAnnotation'">public static @MethodOrTypeAnnotation</warning> void runAwayTrain() {
+    // ...
+  }
 }
 @Target(ElementType.TYPE_USE)
 @interface ReadOnly {}
+@Target({ElementType.METHOD, ElementType.TYPE_USE})
+@interface MethodOrTypeAnnotation {
+  // empty
+}

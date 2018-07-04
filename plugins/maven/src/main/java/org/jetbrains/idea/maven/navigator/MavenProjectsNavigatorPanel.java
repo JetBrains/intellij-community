@@ -29,6 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
@@ -146,6 +147,9 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     if (MavenDataKeys.MAVEN_PROJECTS_TREE.is(dataId)) {
       return myTree;
     }
+    if (TouchbarDataKeys.ACTIONS_KEY.is(dataId)) {
+      return new DefaultActionGroup(ActionManager.getInstance().getAction("Maven.Reimport"));
+    }
 
     return super.getData(dataId);
   }
@@ -178,7 +182,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
       Navigatable navigatable = each.getNavigatable();
       if (navigatable != null) navigatables.add(navigatable);
     }
-    return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[navigatables.size()]);
+    return navigatables.isEmpty() ? null : navigatables.toArray(new Navigatable[0]);
   }
 
   private Object extractLocation() {

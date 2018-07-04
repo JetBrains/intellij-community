@@ -66,13 +66,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
 
   @Override
   public boolean startInWriteAction() {
-    return true;
-  }
-
-  @Nullable
-  @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
-    return null;
+    return false;
   }
 
   public static void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, Surrounder surrounder) {
@@ -118,9 +112,8 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     final Language baseLanguage = file.getViewProvider().getBaseLanguage();
     assert element1 != null;
     final Language l = element1.getParent().getLanguage();
-    List<SurroundDescriptor> surroundDescriptors = new ArrayList<>();
 
-    surroundDescriptors.addAll(LanguageSurrounders.INSTANCE.allForLanguage(l));
+    List<SurroundDescriptor> surroundDescriptors = new ArrayList<>(LanguageSurrounders.INSTANCE.allForLanguage(l));
     if (l != baseLanguage) surroundDescriptors.addAll(LanguageSurrounders.INSTANCE.allForLanguage(baseLanguage));
     surroundDescriptors.add(CustomFoldingSurroundDescriptor.INSTANCE);
 
@@ -189,7 +182,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
   private static void showPopup(Editor editor, List<AnAction> applicable) {
     DataContext context = DataManager.getInstance().getDataContext(editor.getContentComponent());
     JBPopupFactory.ActionSelectionAid mnemonics = JBPopupFactory.ActionSelectionAid.MNEMONICS;
-    DefaultActionGroup group = new DefaultActionGroup(applicable.toArray(new AnAction[applicable.size()]));
+    DefaultActionGroup group = new DefaultActionGroup(applicable.toArray(AnAction.EMPTY_ARRAY));
     JBPopupFactory.getInstance().createActionGroupPopup(CHOOSER_TITLE, group, context, mnemonics, true).showInBestPositionFor(editor);
   }
 

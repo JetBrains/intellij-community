@@ -1,24 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
-import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ControlFlowGraph.Edge;
 import com.intellij.codeInspection.bytecodeAnalysis.asm.RichControlFlow;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.*;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
@@ -191,10 +177,10 @@ class NonNullInAnalysis extends Analysis<PResult> {
   @NotNull
   Equation mkEquation(PResult result) {
     if (Identity == result || Return == result) {
-      return new Equation(aKey, new Final(Value.Top));
+      return new Equation(aKey, Value.Top);
     }
     else if (NPE == result) {
-      return new Equation(aKey, new Final(Value.NotNull));
+      return new Equation(aKey, Value.NotNull);
     }
     else {
       ConditionalNPE condNpe = (ConditionalNPE) result;
@@ -213,9 +199,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
     int steps = 0;
     while (pendingTop > 0 && earlyResult == null) {
       steps ++;
-      if (steps >= STEPS_LIMIT) {
-        throw new AnalyzerException(null, "limit is reached, steps: " + steps + " in method " + method);
-      }
+      TooComplexException.check(method, steps);
       PendingAction action = pendingActions[--pendingTop];
       if (action instanceof MakeResult) {
         MakeResult makeResult = (MakeResult) action;
@@ -325,7 +309,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
 
     if (opcode == IFNONNULL && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = insnIndex + 1;
-      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult);
+      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult, state.unsure);
       pendingPush(new MakeResult(state, subResult, new int[]{nextState.index}));
       pendingPush(new ProceedState(nextState));
       return;
@@ -333,7 +317,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
 
     if (opcode == IFNULL && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
-      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult);
+      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult, state.unsure);
       pendingPush(new MakeResult(state, subResult, new int[]{nextState.index}));
       pendingPush(new ProceedState(nextState));
       return;
@@ -341,7 +325,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
 
     if (opcode == IFEQ && popValue(frame) == InstanceOfCheckValue) {
       int nextInsnIndex = methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
-      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult);
+      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult, state.unsure);
       pendingPush(new MakeResult(state, subResult, new int[]{nextState.index}));
       pendingPush(new ProceedState(nextState));
       return;
@@ -349,7 +333,7 @@ class NonNullInAnalysis extends Analysis<PResult> {
 
     if (opcode == IFNE && popValue(frame) == InstanceOfCheckValue) {
       int nextInsnIndex = insnIndex + 1;
-      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult);
+      State nextState = new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, hasCompanions || notEmptySubResult, state.unsure);
       pendingPush(new MakeResult(state, subResult, new int[]{nextState.index}));
       pendingPush(new ProceedState(nextState));
       return;
@@ -365,22 +349,21 @@ class NonNullInAnalysis extends Analysis<PResult> {
     for (int i = 0; i < nextInsnIndices.length; i++) {
       int nextInsnIndex = nextInsnIndices[i];
       Frame<BasicValue> nextFrame1 = nextFrame;
+      boolean exceptional = state.unsure;
       if (controlFlow.errors[nextInsnIndex] && controlFlow.errorTransitions.contains(new Edge(insnIndex, nextInsnIndex))) {
-        nextFrame1 = new Frame<>(frame);
-        nextFrame1.clearStack();
-        nextFrame1.push(ASMUtils.THROWABLE_VALUE);
+        nextFrame1 = createCatchFrame(frame);
+        exceptional = true;
       }
-      pendingPush(new ProceedState(new State(subIndices[i], new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, hasCompanions || notEmptySubResult)));
+      pendingPush(new ProceedState(new State(subIndices[i], new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, hasCompanions || notEmptySubResult,
+                                             exceptional)));
     }
 
   }
 
   private int pendingTop;
 
-  private void pendingPush(PendingAction action) throws AnalyzerException {
-    if (pendingTop >= STEPS_LIMIT) {
-      throw new AnalyzerException(null, "limit is reached in method " + method);
-    }
+  private void pendingPush(PendingAction action) {
+    TooComplexException.check(method, pendingTop);
     pendingActions[pendingTop++] = action;
   }
 
@@ -414,10 +397,10 @@ class NullableInAnalysis extends Analysis<PResult> {
   @NotNull
   Equation mkEquation(PResult result) {
     if (NPE == result) {
-      return new Equation(aKey, new Final(Value.Top));
+      return new Equation(aKey, Value.Top);
     }
     if (Identity == result || Return == result) {
-      return new Equation(aKey, new Final(Value.Null));
+      return new Equation(aKey, Value.Null);
     }
     else {
       ConditionalNPE condNpe = (ConditionalNPE) result;
@@ -438,9 +421,7 @@ class NullableInAnalysis extends Analysis<PResult> {
     int steps = 0;
     while (pendingTop > 0 && earlyResult == null) {
       steps ++;
-      if (steps >= STEPS_LIMIT) {
-        throw new AnalyzerException(null, "limit is reached, steps: " + steps + " in method " + method);
-      }
+      TooComplexException.check(method, steps);
       State state = pending[--pendingTop];
       int insnIndex = state.conf.insnIndex;
       Conf conf = state.conf;
@@ -527,25 +508,25 @@ class NullableInAnalysis extends Analysis<PResult> {
 
     if (opcode == IFNONNULL && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = insnIndex + 1;
-      pendingPush(new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false));
+      pendingPush(new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false, false));
       return;
     }
 
     if (opcode == IFNULL && popValue(frame) instanceof ParamValue) {
       int nextInsnIndex = methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
-      pendingPush(new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false));
+      pendingPush(new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false, false));
       return;
     }
 
     if (opcode == IFEQ && popValue(frame) == InstanceOfCheckValue) {
       int nextInsnIndex = methodNode.instructions.indexOf(((JumpInsnNode)insnNode).label);
-      pendingPush(new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false));
+      pendingPush(new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false, false));
       return;
     }
 
     if (opcode == IFNE && popValue(frame) == InstanceOfCheckValue) {
       int nextInsnIndex = insnIndex + 1;
-      pendingPush(new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false));
+      pendingPush(new State(++id, new Conf(nextInsnIndex, nextFrame), nextHistory, true, false, false));
       return;
     }
 
@@ -553,21 +534,17 @@ class NullableInAnalysis extends Analysis<PResult> {
     for (int nextInsnIndex : controlFlow.transitions[insnIndex]) {
       Frame<BasicValue> nextFrame1 = nextFrame;
       if (controlFlow.errors[nextInsnIndex] && controlFlow.errorTransitions.contains(new Edge(insnIndex, nextInsnIndex))) {
-        nextFrame1 = new Frame<>(frame);
-        nextFrame1.clearStack();
-        nextFrame1.push(ASMUtils.THROWABLE_VALUE);
+        nextFrame1 = createCatchFrame(frame);
       }
-      pendingPush(new State(++id, new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, false));
+      pendingPush(new State(++id, new Conf(nextInsnIndex, nextFrame1), nextHistory, taken, false, false));
     }
 
   }
 
   private int pendingTop;
 
-  private void pendingPush(State state) throws AnalyzerException {
-    if (pendingTop >= STEPS_LIMIT) {
-      throw new AnalyzerException(null, "limit is reached in method " + method);
-    }
+  private void pendingPush(State state) {
+    TooComplexException.check(method, pendingTop);
     pending[pendingTop++] = state;
   }
 
@@ -598,6 +575,7 @@ abstract class NullityInterpreter extends BasicInterpreter {
   protected boolean taken;
 
   NullityInterpreter(boolean nullableAnalysis, boolean nullable) {
+    super(Opcodes.API_VERSION);
     this.nullableAnalysis = nullableAnalysis;
     this.nullable = nullable;
   }
@@ -668,7 +646,7 @@ abstract class NullityInterpreter extends BasicInterpreter {
   }
 
   @Override
-  public BasicValue ternaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2, BasicValue value3) throws AnalyzerException {
+  public BasicValue ternaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2, BasicValue value3) {
     switch (insn.getOpcode()) {
       case IASTORE:
       case LASTORE:
@@ -703,7 +681,7 @@ abstract class NullityInterpreter extends BasicInterpreter {
       case INVOKESTATIC:
       case INVOKEVIRTUAL:
         MethodInsnNode methodNode = (MethodInsnNode)insn;
-        methodCall(opcode, new Method(methodNode.owner, methodNode.name, methodNode.desc), values);
+        methodCall(opcode, new Member(methodNode.owner, methodNode.name, methodNode.desc), values);
         break;
       case INVOKEDYNAMIC:
         LambdaIndy lambda = LambdaIndy.from((InvokeDynamicInsnNode)insn);
@@ -718,7 +696,7 @@ abstract class NullityInterpreter extends BasicInterpreter {
     return super.naryOperation(insn, values);
   }
 
-  private void methodCall(int opcode, Method method, List<? extends BasicValue> values) throws AnalyzerException {
+  private void methodCall(int opcode, Member method, List<? extends BasicValue> values) throws AnalyzerException {
     if (opcode != INVOKESTATIC && values.remove(0) instanceof ParamValue) {
       subResult = NPE;
     }

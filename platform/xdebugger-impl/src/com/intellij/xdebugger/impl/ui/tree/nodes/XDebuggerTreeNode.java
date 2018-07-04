@@ -17,7 +17,6 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.SimpleColoredText;
-import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.enumeration.EmptyEnumeration;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
@@ -33,7 +32,7 @@ import java.util.*;
 /**
  * @author nik
  */
-public abstract class XDebuggerTreeNode implements TreeNode, TreeSpeedSearch.PathAwareTreeNode {
+public abstract class XDebuggerTreeNode implements TreeNode {
   protected final XDebuggerTree myTree;
   private final XDebuggerTreeNode myParent;
   private boolean myLeaf;
@@ -160,7 +159,6 @@ public abstract class XDebuggerTreeNode implements TreeNode, TreeSpeedSearch.Pat
     return myTree;
   }
 
-  @Override
   public TreePath getPath() {
     if (myPath == null) {
       TreePath path;

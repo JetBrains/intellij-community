@@ -19,12 +19,12 @@ import com.intellij.mock.MockProject
 import java.io.File
 
 abstract class AbstractCoreEnvironment {
-    abstract val project: MockProject
+  abstract val project: MockProject
 
-    open fun dispose() {
-        // Do nothing
-    }
+  open fun dispose() {
+    // Do nothing
+  }
 
-    abstract fun addJavaSourceRoot(root: File)
-    abstract fun addJar(root: File)
+  abstract fun addJavaSourceRoot(root: File)
+  abstract fun addJar(root: File)
 }

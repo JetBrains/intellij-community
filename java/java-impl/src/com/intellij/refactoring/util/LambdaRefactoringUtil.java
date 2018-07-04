@@ -20,14 +20,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
-import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
-import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -36,6 +34,7 @@ import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableHandler;
 import com.intellij.util.Function;
 import com.intellij.util.text.UniqueNameGenerator;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +59,7 @@ public class LambdaRefactoringUtil {
                                                                    final boolean simplifyToExpressionLambda) {
     PsiLambdaExpression lambdaExpression = createLambda(referenceExpression, ignoreCast);
     if (lambdaExpression == null) return null;
-    lambdaExpression = (PsiLambdaExpression)referenceExpression.replace(lambdaExpression);
+    lambdaExpression = (PsiLambdaExpression)new CommentTracker().replaceAndRestoreComments(referenceExpression, lambdaExpression);
 
     if (simplifyToExpressionLambda) {
       simplifyToExpressionLambda(lambdaExpression);
@@ -87,7 +86,7 @@ public class LambdaRefactoringUtil {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(referenceExpression.getProject());
     PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)elementFactory.createExpressionFromText(lambda, referenceExpression);
     final PsiType functionalInterfaceType = referenceExpression.getFunctionalInterfaceType();
-    boolean needToSpecifyFormalTypes = !doNotAddParameterTypes && !isInferredSameTypeAfterConversion(lambdaExpression, referenceExpression, functionalInterfaceType);
+    boolean needToSpecifyFormalTypes = !doNotAddParameterTypes && !isInferredSameTypeAfterConversion(lambdaExpression, referenceExpression);
     if (needToSpecifyFormalTypes) {
       PsiParameterList typedParamList = specifyLambdaParameterTypes(functionalInterfaceType, lambdaExpression);
       if (typedParamList == null) {
@@ -281,30 +280,20 @@ public class LambdaRefactoringUtil {
   }
 
   private static boolean isInferredSameTypeAfterConversion(PsiLambdaExpression lambdaExpression,
-                                                           PsiMethodReferenceExpression methodReferenceExpression,
-                                                           PsiType functionalInterfaceType) {
-    PsiElement parent = PsiUtil.skipParenthesizedExprUp(methodReferenceExpression.getParent());
-    if (!(parent instanceof PsiExpressionList)) {
+                                                           PsiMethodReferenceExpression methodReferenceExpression) {
+    PsiCall call = LambdaUtil.treeWalkUp(methodReferenceExpression);
+    if (call == null) {
       return true;
     }
-    PsiElement gParent = parent.getParent();
-    if (gParent instanceof PsiCall) {
-      if (gParent instanceof PsiCallExpression && ((PsiCallExpression)gParent).getTypeArguments().length > 0) {
-        return true;
-      }
-      JavaResolveResult result = ((PsiCall)gParent).resolveMethodGenerics();
-      if (result instanceof MethodCandidateInfo) {
-        PsiMethod method = ((MethodCandidateInfo)result).getElement();
-        if (!method.hasTypeParameters()) {
-          return true;
-        }
-        PsiExpression[] args = ((PsiExpressionList)parent).getExpressions();
-        int lambdaIdx = LambdaUtil.getLambdaIdx((PsiExpressionList)parent, methodReferenceExpression);
-        args[lambdaIdx] = lambdaExpression;
-        final PsiParameter[] methodParams = method.getParameterList().getParameters();
-        final PsiSubstitutor substitutor = ((MethodCandidateInfo)result).inferTypeArguments(DefaultParameterTypeInferencePolicy.INSTANCE, args, true);
-        PsiType formalTargetType = substitutor.substitute(PsiTypesUtil.getParameterType(methodParams, lambdaIdx, ((MethodCandidateInfo)result).isVarargs()));
-        return functionalInterfaceType.equals(FunctionalInterfaceParameterizationUtil.getGroundTargetType(formalTargetType));
+    Object marker = new Object();
+    PsiTreeUtil.mark(methodReferenceExpression, marker);
+    PsiCall copyTopLevelCall = LambdaUtil.copyTopLevelCall(call);
+    if (copyTopLevelCall != null) {
+      PsiMethodReferenceExpression methodReferenceInCopy = (PsiMethodReferenceExpression)PsiTreeUtil.releaseMark(copyTopLevelCall, marker);
+      if (methodReferenceInCopy != null) {
+        PsiType functionalInterfaceType = methodReferenceInCopy.getFunctionalInterfaceType();
+        PsiLambdaExpression lambdaCopy = (PsiLambdaExpression)methodReferenceInCopy.replace(lambdaExpression);
+        return Comparing.equal(functionalInterfaceType, lambdaCopy.getFunctionalInterfaceType());
       }
     }
     return false;
@@ -326,7 +315,7 @@ public class LambdaRefactoringUtil {
     for (int i = 0; i < parameters.length; i++) {
       PsiType psiType = substitutor.substitute(parameters[i].getType());
       if (psiType == null) return null;
-      if (!PsiTypesUtil.isDenotableType(psiType)) {
+      if (!PsiTypesUtil.isDenotableType(psiType, lambdaExpression)) {
         return null;
       }
 
@@ -407,14 +396,6 @@ public class LambdaRefactoringUtil {
    */
   public static boolean canConvertToLambdaWithoutSideEffects(PsiMethodReferenceExpression methodReferenceExpression) {
     final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
-    if (qualifierExpression == null) {
-      PsiElement resolved = methodReferenceExpression.resolve();
-      if (resolved == null) return false;
-      PsiClass arrayClass = JavaPsiFacade.getInstance(methodReferenceExpression.getProject())
-        .getElementFactory()
-        .getArrayClass(PsiUtil.getLanguageLevel(methodReferenceExpression));
-      return resolved == arrayClass;
-    }
-    return !SideEffectChecker.mayHaveSideEffects(qualifierExpression);
+    return qualifierExpression == null || !SideEffectChecker.mayHaveSideEffects(qualifierExpression);
   }
 }

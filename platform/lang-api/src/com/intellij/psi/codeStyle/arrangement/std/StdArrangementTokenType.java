@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
  * (see {@link com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher.StdMatcherBuilderImpl}).
  *
  * @author Roman.Shein
- * Date: 31.07.13
  */
 public class StdArrangementTokenType {
   @NotNull private final StdArrangementTokenUiRole myUiRole;
@@ -50,7 +49,7 @@ public class StdArrangementTokenType {
   @Override
   public boolean equals(Object o) {
     if (this == o) {return true;}
-    if (o == null || !(o instanceof StdArrangementTokenType)) {
+    if (!(o instanceof StdArrangementTokenType)) {
       return false;
     }
     StdArrangementTokenType oType = (StdArrangementTokenType) o;

@@ -18,6 +18,7 @@ package org.jetbrains.jps.incremental.artifacts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.io.DirectoryContentSpec;
 import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.jps.builders.BuildResult;
@@ -108,7 +109,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
 
   protected void buildAll() {
     Collection<JpsArtifact> artifacts = JpsArtifactService.getInstance().getArtifacts(myProject);
-    buildArtifacts(artifacts.toArray(new JpsArtifact[artifacts.size()]));
+    buildArtifacts(artifacts.toArray(new JpsArtifact[0]));
   }
 
   protected void buildArtifacts(JpsArtifact... artifacts) {
@@ -156,6 +157,10 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
   }
 
   protected static void assertOutput(JpsArtifact a, TestFileSystemBuilder expected) {
+    assertOutput(a.getOutputPath(), expected);
+  }
+
+  protected static void assertOutput(JpsArtifact a, DirectoryContentSpec expected) {
     assertOutput(a.getOutputPath(), expected);
   }
 

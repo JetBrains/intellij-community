@@ -16,6 +16,7 @@
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.visitor.UastVisitor
 
@@ -23,86 +24,119 @@ import org.jetbrains.uast.visitor.UastVisitor
  * The common interface for all Uast elements.
  */
 interface UElement {
-    /**
-     * Returns the element parent.
-     */
-    val uastParent: UElement?
+  /**
+   * Returns the element parent.
+   */
+  val uastParent: UElement?
 
-    /**
-     * Returns the PSI element underlying this element. Note that some UElements are synthetic and do not have
-     * an underlying PSI element; this doesn't mean that they are invalid.
-     */
-    val psi: PsiElement?
+  /**
+   * Returns the PSI element underlying this element. Note that some UElements are synthetic and do not have
+   * an underlying PSI element; this doesn't mean that they are invalid.
+   *
+   * **Node for implementors**: please implement both [sourcePsi] and [javaPsi] fields or make them return `null` explicitly
+   * if implementing is not possible. Redirect `psi` to one of them keeping existing behavior, use [sourcePsi] if nothing else is specified.
+   */
+  @Deprecated("ambiguous psi element, use `sourcePsi` or `javaPsi`", ReplaceWith("javaPsi"))
+  val psi: PsiElement?
 
-    /**
-     * Returns true if this element is valid, false otherwise.
-     */
-    val isPsiValid: Boolean
-        get() = psi?.isValid ?: true
 
-    /**
-     * Returns the list of comments for this element.
-     */
-    val comments: List<UComment>
-        get() = emptyList()
+  /**
+   * Returns the PSI element in original (physical) tree to which this UElement corresponds.
+   * **Note**: that some UElements are synthetic and do not have an underlying PSI element;
+   * this doesn't mean that they are invalid.
+   */
+  val sourcePsi: PsiElement?
+    get() = psi
 
-    /**
-     * Returns the log string (usually one line containing the class name and some additional information).
-     *
-     * Examples:
-     * UWhileExpression
-     * UBinaryExpression (>)
-     * UCallExpression (println)
-     * USimpleReferenceExpression (i)
-     * ULiteralExpression (5)
-     *
-     * @return the expression tree for this element.
-     * @see [UIfExpression] for example.
-     */
-    fun asLogString(): String
+  /**
+   * Returns the element which try to mimic Java-api psi element: [com.intellij.psi.PsiClass], [com.intellij.psi.PsiMethod] or [com.intellij.psi.PsiAnnotation] etc.
+   * Will return null if this UElement doesn't have Java representation or it is not implemented.
+   */
+  val javaPsi: PsiElement?
+    get() = psi
 
-    /**
-     * Returns the string in pseudo-code.
-     *
-     * Output example (should be something like this):
-     * while (i > 5) {
-     *     println("Hello, world")
-     *     i--
-     * }
-     *
-     * @return the rendered text.
-     * @see [UIfExpression] for example.
-     */
-    fun asRenderString(): String = asLogString()
+  /**
+   * Returns true if this element is valid, false otherwise.
+   */
+  val isPsiValid: Boolean
+    get() = psi?.isValid ?: true
 
-    /**
-     * Returns the string as written in the source file.
-     * Use this String only for logging and diagnostic text messages.
-     *
-     * @return the original text.
-     */
-    fun asSourceString(): String = asRenderString()
+  /**
+   * Returns the list of comments for this element.
+   */
+  val comments: List<UComment>
+    get() = emptyList()
 
-    /**
-     * Passes the element to the specified visitor.
-     *
-     * @param visitor the visitor to pass the element to.
-     */
-    fun accept(visitor: UastVisitor) {
-        visitor.visitElement(this)
-        visitor.afterVisitElement(this)
-    }
+  /**
+   * Returns the log string (usually one line containing the class name and some additional information).
+   *
+   * Examples:
+   * UWhileExpression
+   * UBinaryExpression (>)
+   * UCallExpression (println)
+   * USimpleReferenceExpression (i)
+   * ULiteralExpression (5)
+   *
+   * @return the expression tree for this element.
+   * @see [UIfExpression] for example.
+   */
+  fun asLogString(): String
 
-    /**
-     * Passes the element to the specified typed visitor.
-     *
-     * @param visitor the visitor to pass the element to.
-     */
-    fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitElement(this, data)
+  /**
+   * Returns the string in pseudo-code.
+   *
+   * Output example (should be something like this):
+   * while (i > 5) {
+   *     println("Hello, world")
+   *     i--
+   * }
+   *
+   * @return the rendered text.
+   * @see [UIfExpression] for example.
+   */
+  fun asRenderString(): String = asLogString()
+
+  /**
+   * Returns the string as written in the source file.
+   * Use this String only for logging and diagnostic text messages.
+   *
+   * @return the original text.
+   */
+  fun asSourceString(): String = asRenderString()
+
+  /**
+   * Passes the element to the specified visitor.
+   *
+   * @param visitor the visitor to pass the element to.
+   */
+  fun accept(visitor: UastVisitor) {
+    visitor.visitElement(this)
+    visitor.afterVisitElement(this)
+  }
+
+  /**
+   * Passes the element to the specified typed visitor.
+   *
+   * @param visitor the visitor to pass the element to.
+   */
+  fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitElement(this, data)
 }
+
+@Deprecated("No use anymore, all declarations were moved to UElement. To be removed in 2018.2")
+interface JvmDeclarationUElement : UElement
+
+@get:ApiStatus.Experimental
+val UElement?.sourcePsiElement: PsiElement?
+  get() = this?.sourcePsi
+
+
+@ApiStatus.Experimental
+@SuppressWarnings("unchecked")
+fun <T : PsiElement> UElement?.getAsJavaPsiElement(clazz: Class<T>): T? =
+  this?.javaPsi?.takeIf { clazz.isAssignableFrom(it.javaClass) } as? T
 
 /**
  * Returns a sequence including this element and its containing elements.
  */
 val UElement.withContainingElements: Sequence<UElement>
-    get() = generateSequence(this, UElement::uastParent)
+  get() = generateSequence(this, UElement::uastParent)

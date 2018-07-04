@@ -21,20 +21,21 @@ import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiType
 import org.jetbrains.uast.UCallableReferenceExpression
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UExpression
 
 class JavaUCallableReferenceExpression(
-        override val psi: PsiMethodReferenceExpression,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UCallableReferenceExpression {
-    override val qualifierExpression by lz { JavaConverter.convertOrNull(psi.qualifierExpression, this) }
-    
-    override val qualifierType: PsiType?
-        get() = psi.qualifierType?.type
-    
-    override val callableName: String
-        get() = psi.referenceName.orAnonymous()
+  override val psi: PsiMethodReferenceExpression,
+  givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UCallableReferenceExpression {
+  override val qualifierExpression: UExpression? by lz { JavaConverter.convertOrNull(psi.qualifierExpression, this) }
 
-    override fun resolve() = psi.resolve()
+  override val qualifierType: PsiType?
+    get() = psi.qualifierType?.type
 
-    override val resolvedName: String? = (psi.resolve() as? PsiNamedElement)?.name
+  override val callableName: String
+    get() = psi.referenceName.orAnonymous()
+
+  override fun resolve(): PsiElement? = psi.resolve()
+
+  override val resolvedName: String? = (psi.resolve() as? PsiNamedElement)?.name
 }

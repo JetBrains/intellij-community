@@ -52,11 +52,13 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.psi.PsiBundle;
 import com.intellij.psi.PsiDocumentManager;
@@ -156,14 +158,24 @@ public class FindDialog extends DialogWrapper implements FindUI {
     if (haveResultsPreview()) {
       ApplicationManager.getApplication().invokeLater(this::scheduleResultsUpdate, ModalityState.any());
     }
+    if (Registry.is("ide.find.as.popup") && !SystemInfo.isJetBrainsJvm) {
+      setErrorText("<font color=\"#"+ColorUtil.toHex(UIUtil.getInactiveTextColor())+"\">" +
+                   "There is another version of this dialog in a form of lightweight popup. To use it, run the IDE with the bundled JRE." +
+                   "</font>");
+    }
     show();
   }
 
   @Override
   public void doCancelAction() { // doCancel disposes fields and then calls dispose
+    saveSettings();
+    super.doCancelAction();
+  }
+
+  public void saveSettings() {
+    FindSettings.getInstance().setDefaultScopeName(myScopeCombo.getSelectedScopeName());
     applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
     rememberResultsPreviewWasOpen();
-    super.doCancelAction();
   }
 
   private void rememberResultsPreviewWasOpen() {
@@ -474,7 +486,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
             FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
           ThreadLocal<VirtualFile> lastUsageFileRef = new ThreadLocal<>();
 
-          FindInProjectUtil.findUsages(findModel, myProject, info -> {
+          FindInProjectUtil.findUsages(findModel, myProject, processPresentation, filesToScanInitially, info -> {
             if(isCancelled()) {
               return false;
             }
@@ -493,7 +505,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
               model.addRow(new Object[]{usage});
             }, state);
             return resultsCount.incrementAndGet() < ShowUsagesAction.getUsagesPageSize();
-          }, processPresentation, filesToScanInitially);
+          });
 
           boolean succeeded = !progressIndicatorWhenSearchStarted.isCanceled();
           if (succeeded) {
@@ -655,13 +667,10 @@ public class FindDialog extends DialogWrapper implements FindUI {
       pane.insertTab("Options", null, optionsPanel, null, 0);
       pane.insertTab(PREVIEW_TITLE, null, myPreviewSplitter, null, RESULTS_PREVIEW_TAB_INDEX);
       myContent = pane;
-      final AnAction anAction = new DumbAwareAction() {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          int selectedIndex = myContent.getSelectedIndex();
-          myContent.setSelectedIndex(1 - selectedIndex);
-        }
-      };
+      AnAction anAction = DumbAwareAction.create(e -> {
+        int selectedIndex = myContent.getSelectedIndex();
+        myContent.setSelectedIndex(1 - selectedIndex);
+      });
 
       final ShortcutSet shortcutSet = ActionManager.getInstance().getAction(IdeActions.ACTION_SWITCHER).getShortcutSet();
 
@@ -743,7 +752,6 @@ public class FindDialog extends DialogWrapper implements FindUI {
 
     if (validationInfo == null) {
       myHelper.getModel().copyFrom(validateModel);
-      myHelper.updateFindSettings();
 
       rememberResultsPreviewWasOpen();
       super.doOKAction();
@@ -1594,7 +1602,8 @@ public class FindDialog extends DialogWrapper implements FindUI {
       setBackground(myUsageRenderer.getBackground());
       if (!isSelected && value instanceof UsageInfo2UsageAdapter) {
         UsageInfo2UsageAdapter usageAdapter = (UsageInfo2UsageAdapter)value;
-        Color color = FileColorManager.getInstance(usageAdapter.getUsageInfo().getProject()).getFileColor(usageAdapter.getFile());
+        Project project = usageAdapter.getUsageInfo().getProject();
+        Color color = VfsPresentationUtil.getFileBackgroundColor(project, usageAdapter.getFile());
         setBackground(color);
         myUsageRenderer.setBackground(color);
         myFileAndLineNumber.setBackground(color);

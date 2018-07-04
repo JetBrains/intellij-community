@@ -172,6 +172,7 @@ public abstract class ArchiveHandler {
     synchronized (myLock) {
       myEntries.clear();
       myChildrenEntries.clear();
+      myCorrupted = false;
     }
   }
 

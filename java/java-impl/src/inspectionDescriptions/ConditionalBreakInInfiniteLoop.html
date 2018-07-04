@@ -1,0 +1,19 @@
+<html>
+<body>
+<p>This inspection detects conditional breaks at the end or beginning and suggests move condition to loop</p>
+<!-- tooltip end -->
+Example:
+<p><code>
+  while(true) {
+    if(i  == 23) break;
+    i++;
+  }
+</code></p>
+Will be replaced with:
+<p><code>
+  while(i != 23) {
+    i++;
+  }
+</code></p>
+</body>
+</html>

@@ -1,29 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.evaluate;
 
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.ui.JBUI;
@@ -112,23 +98,6 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     setOKButtonText(XDebuggerBundle.message("xdebugger.button.evaluate"));
     setCancelButtonText(XDebuggerBundle.message("xdebugger.evaluate.dialog.close"));
 
-    if (mySession != null) mySession.addSessionListener(new XDebugSessionListener() {
-      @Override
-      public void sessionStopped() {
-        ApplicationManager.getApplication().invokeLater(() -> close(CANCEL_EXIT_CODE));
-      }
-
-      @Override
-      public void stackFrameChanged() {
-        updateSourcePosition();
-      }
-
-      @Override
-      public void sessionPaused() {
-        updateSourcePosition();
-      }
-    }, myDisposable);
-
     myTreePanel = new XDebuggerTreePanel(project, editorsProvider, myDisposable, sourcePosition, XDebuggerActions.EVALUATE_DIALOG_TREE_POPUP_GROUP,
                                          session == null ? null : ((XDebugSessionImpl)session).getValueMarkers());
     myResultPanel = JBUI.Panels.simplePanel()
@@ -137,6 +106,12 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     myMainPanel = new EvaluationMainPanel();
 
     mySwitchModeAction = new SwitchModeAction();
+
+    // preserve old mode switch shortcut
+    DumbAwareAction.create(e -> mySwitchModeAction.actionPerformed(null))
+      .registerCustomShortcutSet(
+        new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_M, InputEvent.ALT_DOWN_MASK)),
+        getRootPane(), myDisposable);
 
     new AnAction(){
       @Override
@@ -160,9 +135,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, InputEvent.ALT_DOWN_MASK)), getRootPane(),
                                 myDisposable);
 
-    Condition<TreeNode> rootFilter = node -> node.getParent() instanceof EvaluatingExpressionRootNode;
-    myTreePanel.getTree().expandNodesOnLoad(rootFilter);
-    myTreePanel.getTree().selectNodeOnLoad(rootFilter);
+    myTreePanel.getTree().expandNodesOnLoad(XDebuggerEvaluationDialog::isFirstChild);
 
     EvaluationMode mode = XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().getEvaluationDialogMode();
     if (mode == EvaluationMode.CODE_FRAGMENT && !myIsCodeFragmentEvaluationSupported) {
@@ -171,8 +144,29 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     if (mode == EvaluationMode.EXPRESSION && text.getMode() == EvaluationMode.CODE_FRAGMENT && myIsCodeFragmentEvaluationSupported) {
       mode = EvaluationMode.CODE_FRAGMENT;
     }
+    setTitle(XDebuggerBundle.message("xdebugger.evaluate.dialog.title"));
     switchToMode(mode, text);
+    if (mode == EvaluationMode.EXPRESSION) {
+      myInputComponent.getInputEditor().selectAll();
+    }
     init();
+
+    if (mySession != null) mySession.addSessionListener(new XDebugSessionListener() {
+      @Override
+      public void sessionStopped() {
+        ApplicationManager.getApplication().invokeLater(() -> close(CANCEL_EXIT_CODE));
+      }
+
+      @Override
+      public void stackFrameChanged() {
+        updateSourcePosition();
+      }
+
+      @Override
+      public void sessionPaused() {
+        updateSourcePosition();
+      }
+    }, myDisposable);
   }
 
   @Override
@@ -221,15 +215,6 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     }
   }
 
-  @NotNull
-  @Override
-  protected Action[] createActions() {
-    if (myIsCodeFragmentEvaluationSupported) {
-      return new Action[]{getOKAction(), mySwitchModeAction, getCancelAction()};
-    }
-    return super.createActions();
-  }
-
   @Override
   protected String getHelpId() {
     return "debugging.debugMenu.evaluate";
@@ -263,15 +248,14 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
     myMode = mode;
 
-    if (mode == EvaluationMode.EXPRESSION) {
-      text = new XExpressionImpl(StringUtil.convertLineSeparators(text.getExpression(), " "), text.getLanguage(), text.getCustomInfo());
-    }
+    Editor oldEditor = (myInputComponent != null) ? myInputComponent.getInputEditor().getEditor() : null;
 
     myInputComponent = createInputComponent(mode, text);
     myMainPanel.removeAll();
     myInputComponent.addComponent(myMainPanel, myResultPanel);
 
-    setTitle(myInputComponent.getTitle());
+    XDebuggerEditorBase.copyCaretPosition(oldEditor, myInputComponent.getInputEditor().getEditor());
+
     mySwitchModeAction.putValue(Action.NAME, getSwitchButtonText(mode));
     getInputEditor().requestFocusInEditor();
   }
@@ -283,12 +267,17 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private EvaluationInputComponent createInputComponent(EvaluationMode mode, XExpression text) {
     text = XExpressionImpl.changeMode(text, mode);
     if (mode == EvaluationMode.EXPRESSION) {
-      return new ExpressionInputComponent(myProject, myEditorsProvider, "evaluateExpression", mySourcePosition, text, myDisposable,
-                                          mySession != null);
+      ExpressionInputComponent component =
+        new ExpressionInputComponent(myProject, myEditorsProvider, "evaluateExpression", mySourcePosition, text, myDisposable,
+                                     mySession != null);
+      component.getInputEditor().setExpandHandler(() -> mySwitchModeAction.actionPerformed(null));
+      return component;
     }
     else {
-      return new CodeFragmentInputComponent(myProject, myEditorsProvider, mySourcePosition, text,
-                                            getDimensionServiceKey() + ".splitter", myDisposable);
+      CodeFragmentInputComponent component = new CodeFragmentInputComponent(myProject, myEditorsProvider, mySourcePosition, text,
+                                                                            getDimensionServiceKey() + ".splitter", myDisposable);
+      component.getInputEditor().addCollapseButton(() -> mySwitchModeAction.actionPerformed(null));
+      return component;
     }
   }
 
@@ -305,6 +294,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     final XDebuggerTree tree = myTreePanel.getTree();
     tree.markNodesObsolete();
     tree.setRoot(new EvaluatingExpressionRootNode(this, tree), false);
+    tree.selectNodeOnLoad(XDebuggerEvaluationDialog::isFirstChild, Conditions.alwaysFalse());
 
     myResultPanel.invalidate();
 
@@ -319,6 +309,10 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
       editor.getCaretModel().moveToOffset(offset);
       editor.getSelectionModel().setSelection(offset, offset);
     }
+  }
+
+  private static boolean isFirstChild(TreeNode node) {
+    return node.getParent() instanceof EvaluatingExpressionRootNode;
   }
 
   @Override

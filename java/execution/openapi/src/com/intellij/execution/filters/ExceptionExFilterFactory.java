@@ -15,14 +15,12 @@
  */
 package com.intellij.execution.filters;
 
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -66,8 +64,8 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
                                  final int startOffset,
                                  int startLineNumber,
                                  @NotNull final Consumer<AdditionalHighlight> consumer) {
-      Map<String, Trinity<TextRange, TextRange, TextRange>> visited = new THashMap<>();
-      final Trinity<TextRange, TextRange, TextRange> emptyInfo = Trinity.create(null, null, null);
+      Map<String, ExceptionWorker.ParsedLine> visited = new THashMap<>();
+      ExceptionWorker.ParsedLine emptyInfo = new ExceptionWorker.ParsedLine(TextRange.EMPTY_RANGE, TextRange.EMPTY_RANGE, TextRange.EMPTY_RANGE, null, -1);
 
       final ExceptionWorker worker = new ExceptionWorker(myCache);
       for (int i = 0; i < copiedFragment.getLineCount(); i++) {
@@ -76,40 +74,19 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
 
         String lineText = copiedFragment.getText(new TextRange(lineStartOffset, lineEndOffset));
         if (!lineText.contains(".java:")) continue;
-        Trinity<TextRange, TextRange, TextRange> info = visited.get(lineText);
+        ExceptionWorker.ParsedLine info = visited.get(lineText);
         if (info == emptyInfo) continue;
 
         if (info == null) {
-          info = emptyInfo;
-          AccessToken token = ApplicationManager.getApplication().acquireReadActionLock();
-          try {
-            Result result = worker.execute(lineText, lineEndOffset);
-            if (result == null) continue;
-            HyperlinkInfo hyperlinkInfo = result.getHyperlinkInfo();
-            if (!(hyperlinkInfo instanceof FileHyperlinkInfo)) continue;
-
-            OpenFileDescriptor descriptor = ((FileHyperlinkInfo)hyperlinkInfo).getDescriptor();
-            if (descriptor == null) continue;
-
-            PsiFile psiFile = worker.getFile();
-            if (psiFile == null || psiFile instanceof PsiCompiledFile) continue;
-            int offset = descriptor.getOffset();
-            if (offset <= 0) continue;
-
-            PsiElement element = psiFile.findElementAt(offset);
-            PsiTryStatement parent = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class, true, PsiClass.class);
-            PsiCodeBlock tryBlock = parent != null? parent.getTryBlock() : null;
-            if (tryBlock == null || !tryBlock.getTextRange().contains(offset)) continue;
-            info = worker.getInfo();
-          }
-          finally {
-            token.finish();
-            visited.put(lineText, info);
+          info = ReadAction.compute(() -> doParse(worker, lineEndOffset, lineText));
+          visited.put(lineText, info == null ? emptyInfo : info);
+          if (info == null) {
+            continue;
           }
         }
         int off = startOffset + lineStartOffset;
         final Color color = UIUtil.getInactiveTextColor();
-        consumer.consume(new AdditionalHighlight(off + info.first.getStartOffset(), off + info.second.getEndOffset()) {
+        consumer.consume(new AdditionalHighlight(off + info.classFqnRange.getStartOffset(), off + info.methodNameRange.getEndOffset()) {
           @NotNull
           @Override
           public TextAttributes getTextAttributes(@Nullable TextAttributes source) {
@@ -117,6 +94,27 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
           }
         });
       }
+    }
+
+    private static ExceptionWorker.ParsedLine doParse(ExceptionWorker worker, int lineEndOffset, String lineText) {
+      Result result = worker.execute(lineText, lineEndOffset);
+      if (result == null) return null;
+      HyperlinkInfo hyperlinkInfo = result.getHyperlinkInfo();
+      if (!(hyperlinkInfo instanceof FileHyperlinkInfo)) return null;
+
+      OpenFileDescriptor descriptor = ((FileHyperlinkInfo)hyperlinkInfo).getDescriptor();
+      if (descriptor == null) return null;
+
+      PsiFile psiFile = worker.getFile();
+      if (psiFile == null || psiFile instanceof PsiCompiledFile) return null;
+      int offset = descriptor.getOffset();
+      if (offset <= 0) return null;
+
+      PsiElement element = psiFile.findElementAt(offset);
+      PsiTryStatement parent = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class, true, PsiClass.class);
+      PsiCodeBlock tryBlock = parent != null? parent.getTryBlock() : null;
+      if (tryBlock == null || !tryBlock.getTextRange().contains(offset)) return null;
+      return worker.getInfo();
     }
 
     @NotNull

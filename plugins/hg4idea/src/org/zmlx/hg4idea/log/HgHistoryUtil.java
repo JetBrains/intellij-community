@@ -37,15 +37,17 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.command.HgLogCommand;
+import org.zmlx.hg4idea.command.HgStatusCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgLineProcessListener;
-import org.zmlx.hg4idea.provider.HgChangeProvider;
 import org.zmlx.hg4idea.util.HgChangesetUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.util.HgVersion;
 
 import java.io.File;
 import java.util.*;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 public class HgHistoryUtil {
 
@@ -57,7 +59,7 @@ public class HgHistoryUtil {
   @NotNull
   public static List<VcsCommitMetadata> loadMetadata(@NotNull final Project project,
                                                      @NotNull final VirtualFile root, int limit,
-                                                     @NotNull List<String> parameters) throws VcsException {
+                                                     @NotNull List<String> parameters) {
 
     final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
@@ -159,34 +161,110 @@ public class HgHistoryUtil {
                                                    @NotNull HgFileRevision revision) {
     HgRevisionNumber vcsRevisionNumber = revision.getRevisionNumber();
     List<HgRevisionNumber> parents = vcsRevisionNumber.getParents();
-    HgRevisionNumber firstParent = parents.isEmpty() ? null : parents.get(0); // can have no parents if it is a root
-    List<Hash> parentsHash = new SmartList<>();
+    List<Hash> parentsHashes = new SmartList<>();
     for (HgRevisionNumber parent : parents) {
-      parentsHash.add(factory.createHash(parent.getChangeset()));
+      parentsHashes.add(factory.createHash(parent.getChangeset()));
     }
 
-    final Collection<Change> changes = new ArrayList<>();
+    List<HgCommit.HgFileStatusInfo> firstParentChanges = new ArrayList<>();
     for (String file : revision.getModifiedFiles()) {
-      changes.add(createChange(project, root, file, firstParent, file, vcsRevisionNumber, FileStatus.MODIFIED));
+      firstParentChanges.add(new HgCommit.HgFileStatusInfo(Change.Type.MODIFICATION, file, null));
     }
     for (String file : revision.getAddedFiles()) {
-      changes.add(createChange(project, root, null, null, file, vcsRevisionNumber, FileStatus.ADDED));
+      firstParentChanges.add(new HgCommit.HgFileStatusInfo(Change.Type.NEW, file, null));
     }
     for (String file : revision.getDeletedFiles()) {
-      changes.add(createChange(project, root, file, firstParent, null, vcsRevisionNumber, FileStatus.DELETED));
+      firstParentChanges.add(new HgCommit.HgFileStatusInfo(Change.Type.DELETED, file, null));
     }
     for (Map.Entry<String, String> copiedFile : revision.getMovedFiles().entrySet()) {
-      changes.add(createChange(project, root, copiedFile.getKey(), firstParent, copiedFile.getValue(), vcsRevisionNumber,
-                               HgChangeProvider.RENAMED));
+      firstParentChanges.add(new HgCommit.HgFileStatusInfo(Change.Type.MOVED, copiedFile.getKey(), copiedFile.getValue()));
     }
 
-    return factory.createFullDetails(factory.createHash(vcsRevisionNumber.getChangeset()), parentsHash,
-                                     revision.getRevisionDate().getTime(), root,
-                                     vcsRevisionNumber.getSubject(),
-                                     vcsRevisionNumber.getName(), vcsRevisionNumber.getEmail(),
-                                     vcsRevisionNumber.getCommitMessage(), vcsRevisionNumber.getName(),
-                                     vcsRevisionNumber.getEmail(), revision.getRevisionDate().getTime(),
-                                     () -> changes);
+    List<List<HgCommit.HgFileStatusInfo>> reportedChanges = ContainerUtil.newArrayList();
+    reportedChanges.add(firstParentChanges);
+
+    for (int index = 1; index < parents.size(); index++) {
+      HgRevisionNumber parent = parents.get(index);
+      HgStatusCommand status = new HgStatusCommand.Builder(true).ignored(false).unknown(false).copySource(true).baseRevision(parent)
+        .targetRevision(vcsRevisionNumber).build(project);
+      Set<HgChange> hgChanges = status.executeInCurrentThread(root);
+
+      reportedChanges.add(convertHgChanges(hgChanges));
+    }
+
+    return new HgCommit(project, root, factory.createHash(vcsRevisionNumber.getChangeset()), parentsHashes,
+                        vcsRevisionNumber,
+                        factory.createUser(vcsRevisionNumber.getName(), vcsRevisionNumber.getEmail()), revision.getRevisionDate().getTime(),
+                        reportedChanges);
+  }
+
+  @NotNull
+  private static List<HgCommit.HgFileStatusInfo> convertHgChanges(@NotNull Set<HgChange> changes) {
+    Set<String> deleted = ContainerUtil.newHashSet();
+    Set<String> copied = ContainerUtil.newHashSet();
+
+    for (HgChange change : changes) {
+      Change.Type type = getType(change.getStatus());
+      if (Change.Type.DELETED.equals(type)) {
+        deleted.add(change.beforeFile().getRelativePath());
+      }
+      else if (Change.Type.MOVED.equals(type)) {
+        copied.add(change.beforeFile().getRelativePath());
+      }
+    }
+
+    List<HgCommit.HgFileStatusInfo> result = ContainerUtil.newArrayList();
+    for (HgChange change : changes) {
+      Change.Type type = getType(change.getStatus());
+      LOG.assertTrue(type != null, "Unsupported status for change " + change);
+
+      String firstPath;
+      String secondPath;
+      switch (type) {
+        case DELETED:
+          firstPath = change.beforeFile().getRelativePath();
+          secondPath = null;
+          if (copied.contains(firstPath)) continue; // file was renamed
+          break;
+        case MOVED:
+          firstPath = change.beforeFile().getRelativePath();
+          secondPath = change.afterFile().getRelativePath();
+          if (!deleted.contains(firstPath)) {
+            type = Change.Type.NEW; // file was copied, treating it like an addition
+            firstPath = change.afterFile().getRelativePath();
+            secondPath = null;
+          }
+          break;
+        case MODIFICATION:
+        case NEW:
+        default:
+          firstPath = change.afterFile().getRelativePath();
+          secondPath = null;
+          break;
+      }
+      result.add(new HgCommit.HgFileStatusInfo(type, notNull(firstPath), secondPath));
+    }
+    return result;
+  }
+
+  @Nullable
+  private static Change.Type getType(@NotNull HgFileStatusEnum status) {
+    switch (status) {
+      case ADDED:
+        return Change.Type.NEW;
+      case MODIFIED:
+        return Change.Type.MODIFICATION;
+      case DELETED:
+        return Change.Type.DELETED;
+      case COPY:
+        return Change.Type.MOVED;
+      case UNVERSIONED:
+      case MISSING:
+      case UNMODIFIED:
+      case IGNORED:
+        return null;
+    }
+    return null;
   }
 
 
@@ -319,8 +397,7 @@ public class HgHistoryUtil {
 
   @NotNull
   public static List<TimedVcsCommit> readAllHashes(@NotNull Project project, @NotNull VirtualFile root,
-                                                   @NotNull final Consumer<VcsUser> userRegistry, @NotNull List<String> params)
-    throws VcsException {
+                                                   @NotNull final Consumer<VcsUser> userRegistry, @NotNull List<String> params) {
 
     final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
@@ -439,7 +516,7 @@ public class HgHistoryUtil {
     protected void processOutputLine(@NotNull String line) {
       int separatorIndex;
       while ((separatorIndex = line.indexOf(HgChangesetUtil.CHANGESET_SEPARATOR)) >= 0) {
-        myOutput.append(line.substring(0, separatorIndex));
+        myOutput.append(line, 0, separatorIndex);
         myConsumer.consume(myOutput);
         myOutput.setLength(0); // maybe also call myOutput.trimToSize() to free some memory ?
         line = line.substring(separatorIndex + 1);

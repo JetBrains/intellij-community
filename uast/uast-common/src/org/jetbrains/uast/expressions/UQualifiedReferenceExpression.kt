@@ -24,33 +24,33 @@ import org.jetbrains.uast.visitor.UastVisitor
  * Represents the qualified expression (receiver.selector).
  */
 interface UQualifiedReferenceExpression : UReferenceExpression {
-    /**
-     * Returns the expression receiver.
-     */
-    val receiver: UExpression
+  /**
+   * Returns the expression receiver.
+   */
+  val receiver: UExpression
 
-    /**
-     * Returns the expression selector.
-     */
-    val selector: UExpression
+  /**
+   * Returns the expression selector.
+   */
+  val selector: UExpression
 
-    /**
-     * Returns the access type (simple, safe access, etc.).
-     */
-    val accessType: UastQualifiedExpressionAccessType
+  /**
+   * Returns the access type (simple, safe access, etc.).
+   */
+  val accessType: UastQualifiedExpressionAccessType
 
-    override fun asRenderString() = receiver.asRenderString() + accessType.name + selector.asRenderString()
+  override fun asRenderString(): String = receiver.asRenderString() + accessType.name + selector.asRenderString()
 
-    override fun accept(visitor: UastVisitor) {
-        if (visitor.visitQualifiedReferenceExpression(this)) return
-        annotations.acceptList(visitor)
-        receiver.accept(visitor)
-        selector.accept(visitor)
-        visitor.afterVisitQualifiedReferenceExpression(this)
-    }
+  override fun accept(visitor: UastVisitor) {
+    if (visitor.visitQualifiedReferenceExpression(this)) return
+    annotations.acceptList(visitor)
+    receiver.accept(visitor)
+    selector.accept(visitor)
+    visitor.afterVisitQualifiedReferenceExpression(this)
+  }
 
-    override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
-            visitor.visitQualifiedReferenceExpression(this, data)
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
+    visitor.visitQualifiedReferenceExpression(this, data)
 
-    override fun asLogString() = log()
+  override fun asLogString(): String = log()
 }

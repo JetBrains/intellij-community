@@ -28,9 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class PyDebuggerEvaluator extends XDebuggerEvaluator {
 
-  private static final PyDebugValue NONE = new PyDebugValue("", "NoneType", null, "None", false, false, false, false, null, null);
-
-  private Project myProject;
+  private final Project myProject;
   private final PyFrameAccessor myDebugProcess;
 
   public PyDebuggerEvaluator(@NotNull Project project, @NotNull final PyFrameAccessor debugProcess) {
@@ -43,11 +41,15 @@ public class PyDebuggerEvaluator extends XDebuggerEvaluator {
     doEvaluate(expression, callback, true);
   }
 
+  private PyDebugValue getNone() {
+    return new PyDebugValue("", "NoneType", null, "None", false, false, false, false, null, myDebugProcess);
+  }
+
   private void doEvaluate(final String expr, final XEvaluationCallback callback, final boolean doTrunc) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       String expression = expr.trim();
       if (expression.isEmpty()) {
-        callback.evaluated(NONE);
+        callback.evaluated(getNone());
         return;
       }
 

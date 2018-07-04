@@ -22,6 +22,7 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ModuleRunProfile;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.testframework.ui.TestsConsoleBuilderImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.util.StoringPropertyContainer;
@@ -30,6 +31,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.config.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -194,6 +196,14 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
     return myConsole;
   }
 
+  @NotNull
+  public ConsoleView createConsole() {
+    return new TestsConsoleBuilderImpl(getProject(),
+                                       getScope(),
+                                       !isEditable(),
+                                       isUsePredefinedMessageFilter()).getConsole();
+  }
+
   public boolean isUsePredefinedMessageFilter() {
     return myUsePredefinedMessageFilter;
   }
@@ -230,5 +240,10 @@ public abstract class TestConsoleProperties extends StoringPropertyContainer imp
   @NotNull
   public ExecutionTarget getExecutionTarget() {
     return DefaultExecutionTarget.INSTANCE;
+  }
+
+  @NotNull
+  public String getWindowId() {
+    return isDebug() ? ToolWindowId.DEBUG : ToolWindowId.RUN;
   }
 }

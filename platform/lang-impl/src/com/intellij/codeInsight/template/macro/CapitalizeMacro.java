@@ -37,7 +37,7 @@ public class CapitalizeMacro extends MacroBase {
     String text = getTextResult(params, context);
     if (text != null) {
       if (text.length() > 0) {
-        text = StringUtil.toUpperCase(text.substring(0, 1)) + text.substring(1, text.length());
+        text = StringUtil.toUpperCase(text.substring(0, 1)) + text.substring(1);
       }
       return new TextResult(text);
     }

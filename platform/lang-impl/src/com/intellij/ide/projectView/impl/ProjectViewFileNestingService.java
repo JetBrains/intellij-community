@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.projectView.ProjectViewNestingRulesProvider;
@@ -24,9 +10,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.util.containers.SortedList;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
-import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -46,6 +31,9 @@ public class ProjectViewFileNestingService implements PersistentStateComponent<P
   private static final ExtensionPointName<ProjectViewNestingRulesProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.projectViewNestingRulesProvider");
 
+  public static final Comparator<NestingRule> RULE_COMPARATOR =
+    Comparator.comparing(o -> o.getParentFileSuffix() + " " + o.getChildFileSuffix());
+
   public static final NestingRule[] DEFAULT_NESTING_RULES = loadDefaultNestingRules();
 
   private MyState myState = new MyState();
@@ -58,7 +46,7 @@ public class ProjectViewFileNestingService implements PersistentStateComponent<P
 
   @NotNull
   private static NestingRule[] loadDefaultNestingRules() {
-    final List<NestingRule> result = new SortedList<>(Comparator.comparing(o -> o.getParentFileSuffix()));
+    final List<NestingRule> result = new SortedList<>(RULE_COMPARATOR);
 
     final ProjectViewNestingRulesProvider.Consumer consumer = new ProjectViewNestingRulesProvider.Consumer() {
       @Override
@@ -108,8 +96,7 @@ public class ProjectViewFileNestingService implements PersistentStateComponent<P
   }
 
   public static class MyState {
-    @Tag("nesting-rules")
-    @AbstractCollection(surroundWithTag = false)
+    @XCollection(propertyElementName = "nesting-rules")
     public List<NestingRule> myRules = new SortedList<>(Comparator.comparing(o -> o.getParentFileSuffix()));
 
     public MyState() {

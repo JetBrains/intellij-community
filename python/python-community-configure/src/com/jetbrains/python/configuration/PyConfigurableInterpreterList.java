@@ -17,18 +17,15 @@ package com.jetbrains.python.configuration;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.util.Comparing;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -44,8 +41,13 @@ import java.util.List;
 public class PyConfigurableInterpreterList {
   private ProjectSdksModel myModel;
 
-  public static PyConfigurableInterpreterList getInstance(Project project) {
-    return ServiceManager.getService(project, PyConfigurableInterpreterList.class);
+  public static PyConfigurableInterpreterList getInstance(@Nullable Project project) {
+    final Project effectiveProject = project != null ? project : ProjectManager.getInstance().getDefaultProject();
+    final PyConfigurableInterpreterList instance = ServiceManager.getService(effectiveProject, PyConfigurableInterpreterList.class);
+    if (effectiveProject != project) {
+      instance.disposeModel();
+    }
+    return instance;
   }
 
   public ProjectSdksModel getModel() {
@@ -71,22 +73,7 @@ public class PyConfigurableInterpreterList {
       }
     }
     Collections.sort(result, new PyInterpreterComparator(project));
-    addDetectedSdks(result);
-
     return result;
-  }
-
-  private void addDetectedSdks(@NotNull final List<Sdk> result) {
-    final List<String> sdkHomes = new ArrayList<>();
-    sdkHomes.addAll(VirtualEnvSdkFlavor.INSTANCE.suggestHomePaths());
-    for (PythonSdkFlavor flavor : PythonSdkFlavor.getApplicableFlavors()) {
-      if (flavor instanceof VirtualEnvSdkFlavor) continue;
-      sdkHomes.addAll(flavor.suggestHomePaths());
-    }
-    Collections.sort(sdkHomes);
-    for (String sdkHome : SdkConfigurationUtil.filterExistingPaths(PythonSdkType.getInstance(), sdkHomes, getModel().getSdks())) {
-      result.add(new PyDetectedSdk(sdkHome));
-    }
   }
 
   public List<Sdk> getAllPythonSdks() {
@@ -148,7 +135,7 @@ public class PyConfigurableInterpreterList {
     private static boolean associatedWithCurrent(Sdk o1, Project project) {
       final PythonSdkAdditionalData data = (PythonSdkAdditionalData)o1.getSdkAdditionalData();
       if (data != null) {
-        final String path = data.getAssociatedProjectPath();
+        final String path = data.getAssociatedModulePath();
         final String projectBasePath = project.getBasePath();
         if (path != null && path.equals(projectBasePath)) {
           return true;

@@ -16,16 +16,17 @@
 package org.jetbrains.uast.java
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.uast.JvmDeclarationUElement
 import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 
 class UnknownJavaExpression(
-        override val psi: PsiElement,
-        override val uastParent: UElement?
-) : UExpression {
-    override fun asLogString() = "[!] " + UnknownJavaExpression::class.java.simpleName + " ($psi)"
+  override val psi: PsiElement,
+  uastParent: UElement?
+) : JavaAbstractUElement(uastParent), UExpression, JvmDeclarationUElement {
+  override fun asLogString(): String = "[!] " + UnknownJavaExpression::class.java.simpleName + " ($psi)"
 
-    override val annotations: List<UAnnotation>
-        get() = emptyList()
+  override val annotations: List<UAnnotation>
+    get() = emptyList()
 }

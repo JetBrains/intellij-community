@@ -73,7 +73,7 @@ public class VcsBranchEditorListener extends LinkMouseListenerBase {
       final TreePath path = myRenderer.getTextRenderer().getTree().getPathForLocation(event.getX(), event.getY());
       if (path == null) return; //path could not be null if tag not null; see com.intellij.dvcs.push.ui.PushLogTreeUtil.getTagAtForRenderer
       Object node = path.getLastPathComponent();
-      if (node == null || (!(node instanceof DefaultMutableTreeNode))) {
+      if ((!(node instanceof DefaultMutableTreeNode))) {
         LOG.warn("Incorrect last path component: " + node);
         return;
       }

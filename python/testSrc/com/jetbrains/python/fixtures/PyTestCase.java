@@ -16,6 +16,7 @@
 package com.jetbrains.python.fixtures;
 
 import com.google.common.base.Joiner;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -34,20 +35,24 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectConfigurator;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.*;
@@ -70,6 +75,7 @@ import com.jetbrains.python.psi.impl.PyFileImpl;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -87,9 +93,32 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   protected static final PyLightProjectDescriptor ourPyDescriptor = new PyLightProjectDescriptor(PYTHON_2_MOCK_SDK);
   protected static final PyLightProjectDescriptor ourPy3Descriptor = new PyLightProjectDescriptor(PYTHON_3_MOCK_SDK);
-  private static final String PARSED_ERROR_MSG = "Operations should have been performed on stubs but caused file to be parsed";
 
   protected CodeInsightTestFixture myFixture;
+
+  protected void assertProjectFilesNotParsed(@NotNull PsiFile currentFile) {
+    assertRootNotParsed(currentFile, myFixture.getTempDirFixture().getFile("."), null);
+  }
+
+  protected void assertProjectFilesNotParsed(@NotNull TypeEvalContext context) {
+    assertRootNotParsed(context.getOrigin(), myFixture.getTempDirFixture().getFile("."), context);
+  }
+
+  protected void assertSdkRootsNotParsed(@NotNull PsiFile currentFile) {
+    final Sdk testSdk = PythonSdkType.findPythonSdk(currentFile);
+    for (VirtualFile root : testSdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
+      assertRootNotParsed(currentFile, root, null);
+    }
+  }
+
+  private void assertRootNotParsed(@NotNull PsiFile currentFile, @NotNull VirtualFile root, @Nullable TypeEvalContext context) {
+    for (VirtualFile file : VfsUtil.collectChildrenRecursively(root)) {
+      final PyFile pyFile = PyUtil.as(myFixture.getPsiManager().findFile(file), PyFile.class);
+      if (pyFile != null && !pyFile.equals(currentFile) && (context == null || !context.maySwitchToAST(pyFile))) {
+        assertNotParsed(pyFile);
+      }
+    }
+  }
 
   @Nullable
   protected static VirtualFile getVirtualFileByName(String fileName) {
@@ -159,11 +188,13 @@ public abstract class PyTestCase extends UsefulTestCase {
     return ourPyDescriptor;
   }
 
+  @Nullable
   protected PsiReference findReferenceBySignature(final String signature) {
     int pos = findPosBySignature(signature);
     return findReferenceAt(pos);
   }
 
+  @Nullable
   protected PsiReference findReferenceAt(int pos) {
     return myFixture.getFile().findReferenceAt(pos);
   }
@@ -176,10 +207,10 @@ public abstract class PyTestCase extends UsefulTestCase {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
   }
 
-  protected void runWithLanguageLevel(@NotNull LanguageLevel languageLevel, @NotNull Runnable action) {
+  protected void runWithLanguageLevel(@NotNull LanguageLevel languageLevel, @NotNull Runnable runnable) {
     setLanguageLevel(languageLevel);
     try {
-      action.run();
+      runnable.run();
     }
     finally {
       setLanguageLevel(null);
@@ -198,10 +229,20 @@ public abstract class PyTestCase extends UsefulTestCase {
     }
   }
 
+  protected void runWithSourceRoots(@NotNull List<VirtualFile> sourceRoots, @NotNull Runnable runnable) {
+    final Module module = myFixture.getModule();
+    sourceRoots.forEach(root -> PsiTestUtil.addSourceRoot(module, root));
+    try {
+      runnable.run();
+    } finally {
+      sourceRoots.forEach(root -> PsiTestUtil.removeSourceRoot(module, root));
+    }
+  }
 
-
-  protected static void assertNotParsed(PyFile file) {
-    assertNull(PARSED_ERROR_MSG, ((PyFileImpl)file).getTreeElement());
+  protected static void assertNotParsed(PsiFile file) {
+    assertInstanceOf(file, PyFileImpl.class);
+    assertNull("Operations should have been performed on stubs but caused file to be parsed: " + file.getVirtualFile().getPath(),
+               ((PyFileImpl)file).getTreeElement());
   }
 
   /**
@@ -394,7 +435,7 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   @NotNull
   protected CodeStyleSettings getCodeStyleSettings() {
-    return CodeStyleSettingsManager.getSettings(myFixture.getProject());
+    return CodeStyle.getSettings(myFixture.getProject());
   }
 
   @NotNull
@@ -446,6 +487,14 @@ public abstract class PyTestCase extends UsefulTestCase {
     final PyType actual = context.getType(element);
     final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
     assertEquals(message, expectedType, actualType);
+  }
+
+  public void addExcludedRoot(String rootPath) {
+    final VirtualFile dir = myFixture.findFileInTempDir(rootPath);
+    final Module module = myFixture.getModule();
+    assertNotNull(dir);
+    PsiTestUtil.addExcludedRoot(module, dir);
+    Disposer.register(myFixture.getProjectDisposable(), () -> PsiTestUtil.removeExcludedRoot(module, dir));
   }
   
 }

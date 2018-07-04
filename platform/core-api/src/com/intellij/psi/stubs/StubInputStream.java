@@ -43,14 +43,16 @@ public class StubInputStream extends DataInputStream {
 
   @Nullable 
   public StringRef readName() throws IOException {
-    return DataInputOutputUtil.readNAME(this, myNameStorage);
+    return StringRef.fromStream(this, myNameStorage);
+  }
+
+  @Nullable 
+  public String readNameString() throws IOException {
+    return StringRef.stringFromStream(this, myNameStorage);
   }
 
   public int readVarInt() throws IOException {
     return DataInputOutputUtil.readINT(this);
   }
 
-  public String stringFromId(int id) throws IOException {
-    return myNameStorage.valueOf(id);
-  }
 }

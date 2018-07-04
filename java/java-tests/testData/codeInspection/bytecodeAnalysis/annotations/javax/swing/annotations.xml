@@ -783,6 +783,9 @@
         </annotation>
     </item>
     <item name='javax.swing.JTable java.awt.Dimension getIntercellSpacing()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='javax.swing.JTable java.awt.Dimension getPreferredScrollableViewportSize()'>
@@ -800,6 +803,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='javax.swing.JTable javax.swing.JScrollPane createScrollPaneForTable(javax.swing.JTable)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='javax.swing.JTable javax.swing.JScrollPane createScrollPaneForTable(javax.swing.JTable) 0'>
@@ -956,17 +962,22 @@
     </item>
     <item name='javax.swing.JTable.AccessibleJTable.AccessibleTableHeader int[] getSelectedAccessibleColumns()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='javax.swing.JTable.AccessibleJTable.AccessibleTableHeader int[] getSelectedAccessibleRows()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='javax.swing.JTable.BooleanRenderer java.awt.Component getTableCellRendererComponent(javax.swing.JTable, java.lang.Object, boolean, boolean, int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_,_,_,_,_-&gt;this&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='javax.swing.JTable.BooleanRenderer java.awt.Component getTableCellRendererComponent(javax.swing.JTable, java.lang.Object, boolean, boolean, int, int) 0'>

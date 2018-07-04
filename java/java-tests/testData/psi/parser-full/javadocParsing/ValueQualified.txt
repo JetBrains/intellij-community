@@ -13,16 +13,13 @@ PsiJavaFile:ValueQualified.java
         PsiWhiteSpace(' ')
         PsiElement(DOC_METHOD_OR_FIELD_REF)
           PsiElement(DOC_REFERENCE_HOLDER)
-            PsiJavaCodeReferenceElement:some.
-              PsiJavaCodeReferenceElement:some
-                PsiIdentifier:some('some')
-                PsiReferenceParameterList
-                  <empty list>
-              PsiJavaToken:DOT('.')
-              PsiErrorElement:Identifier expected
-                <empty list>
+            PsiJavaCodeReferenceElement:some
+              PsiIdentifier:some('some')
               PsiReferenceParameterList
                 <empty list>
+            PsiJavaToken:DOT('.')
+            PsiErrorElement:Identifier expected
+              <empty list>
             PsiKeyword:class('class')
           PsiDocToken:DOC_TAG_VALUE_SHARP_TOKEN('#')
           PsiDocToken:DOC_TAG_VALUE_TOKEN('FIELD')

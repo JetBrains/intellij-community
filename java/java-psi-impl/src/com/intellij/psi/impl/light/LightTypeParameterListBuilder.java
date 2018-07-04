@@ -56,7 +56,7 @@ public class LightTypeParameterListBuilder extends LightElement implements PsiTy
         cached = PsiTypeParameter.EMPTY_ARRAY;
       }
       else {
-        cached = myParameters.toArray(new PsiTypeParameter[myParameters.size()]);
+        cached = myParameters.toArray(PsiTypeParameter.EMPTY_ARRAY);
       }
     }
     return cached;

@@ -23,48 +23,48 @@ import org.jetbrains.uast.values.UValue
 
 interface UEvaluatorExtension {
 
-    companion object {
-        val EXTENSION_POINT_NAME: ExtensionPointName<UEvaluatorExtension> =
-                ExtensionPointName.create<UEvaluatorExtension>("org.jetbrains.uast.evaluation.UEvaluatorExtension")
-    }
+  companion object {
+    val EXTENSION_POINT_NAME: ExtensionPointName<UEvaluatorExtension> =
+      ExtensionPointName.create<UEvaluatorExtension>("org.jetbrains.uast.evaluation.UEvaluatorExtension")
+  }
 
-    infix fun UValue.to(state: UEvaluationState) = UEvaluationInfo(this, state)
+  infix fun UValue.to(state: UEvaluationState): UEvaluationInfo = UEvaluationInfo(this, state)
 
-    val language: Language
+  val language: Language
 
-    fun evaluatePostfix(
-            operator: UastPostfixOperator,
-            operandValue: UValue,
-            state: UEvaluationState
-    ): UEvaluationInfo
+  fun evaluatePostfix(
+    operator: UastPostfixOperator,
+    operandValue: UValue,
+    state: UEvaluationState
+  ): UEvaluationInfo
 
-    fun evaluatePrefix(
-            operator: UastPrefixOperator,
-            operandValue: UValue,
-            state: UEvaluationState
-    ): UEvaluationInfo
+  fun evaluatePrefix(
+    operator: UastPrefixOperator,
+    operandValue: UValue,
+    state: UEvaluationState
+  ): UEvaluationInfo
 
-    fun evaluateBinary(
-            binaryExpression: UBinaryExpression,
-            leftValue: UValue,
-            rightValue: UValue,
-            state: UEvaluationState
-    ): UEvaluationInfo
+  fun evaluateBinary(
+    binaryExpression: UBinaryExpression,
+    leftValue: UValue,
+    rightValue: UValue,
+    state: UEvaluationState
+  ): UEvaluationInfo
 
-    fun evaluateQualified(
-            accessType: UastQualifiedExpressionAccessType,
-            receiverInfo: UEvaluationInfo,
-            selectorInfo: UEvaluationInfo
-    ): UEvaluationInfo
+  fun evaluateQualified(
+    accessType: UastQualifiedExpressionAccessType,
+    receiverInfo: UEvaluationInfo,
+    selectorInfo: UEvaluationInfo
+  ): UEvaluationInfo
 
-    fun evaluateMethodCall(
-            target: PsiMethod,
-            argumentValues: List<UValue>,
-            state: UEvaluationState
-    ): UEvaluationInfo
+  fun evaluateMethodCall(
+    target: PsiMethod,
+    argumentValues: List<UValue>,
+    state: UEvaluationState
+  ): UEvaluationInfo
 
-    fun evaluateVariable(
-            variable: UVariable,
-            state: UEvaluationState
-    ): UEvaluationInfo
+  fun evaluateVariable(
+    variable: UVariable,
+    state: UEvaluationState
+  ): UEvaluationInfo
 }

@@ -17,8 +17,10 @@ package com.intellij.psi.impl.smartPointers;
 
 import com.google.common.base.MoreObjects;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.AbstractFileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.tree.IElementType;
@@ -33,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public abstract class Identikit {
+  private static final Logger LOG = Logger.getInstance(Identikit.class);
   private static final WeakInterner<ByType> ourPlainInterner = new WeakInterner<>();
   private static final WeakInterner<ByAnchor> ourAnchorInterner = new WeakInterner<>();
 
@@ -73,7 +76,7 @@ public abstract class Identikit {
     private final IElementType myElementType;
     private final Language myFileLanguage;
 
-    private ByType(@NotNull Class elementClass, @Nullable IElementType elementType, Language fileLanguage) {
+    private ByType(@NotNull Class elementClass, @Nullable IElementType elementType, @NotNull Language fileLanguage) {
       myElementClass = elementClass;
       myElementType = elementType;
       myFileLanguage = fileLanguage;
@@ -83,9 +86,18 @@ public abstract class Identikit {
     @Override
     public PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset) {
       Language actualLanguage = myFileLanguage != Language.ANY ? myFileLanguage : file.getViewProvider().getBaseLanguage();
-      PsiElement anchor = file.getViewProvider().findElementAt(startOffset, actualLanguage);
-      if (anchor == null && startOffset == file.getTextLength()) {
-        PsiElement lastChild = file.getViewProvider().getPsi(actualLanguage).getLastChild();
+      PsiFile actualLanguagePsi = file.getViewProvider().getPsi(actualLanguage);
+      if (actualLanguagePsi == null) {
+        LOG.error("getPsi("+actualLanguage+")=null; file="+file+"; myLanguage="+myFileLanguage+"; baseLanguage="+file.getViewProvider().getBaseLanguage());
+        return null;
+      }
+      return findInside(actualLanguagePsi, startOffset, endOffset);
+    }
+
+    public PsiElement findInside(@NotNull PsiElement element, int startOffset, int endOffset) {
+      PsiElement anchor = AbstractFileViewProvider.findElementAt(element, startOffset); // finds child in this tree only, unlike PsiElement.findElementAt()
+      if (anchor == null && startOffset == element.getTextLength()) {
+        PsiElement lastChild = element.getLastChild();
         if (lastChild != null) {
           anchor = PsiTreeUtil.getDeepestLast(lastChild);
         }
@@ -94,7 +106,7 @@ public abstract class Identikit {
 
       PsiElement result = findParent(startOffset, endOffset, anchor);
       if (endOffset == startOffset) {
-        while (result == null && anchor.getTextRange().getStartOffset() == endOffset) {
+        while ((result == null || result.getTextRange().getStartOffset() != startOffset) && anchor.getTextRange().getStartOffset() == endOffset) {
           anchor = PsiTreeUtil.prevLeaf(anchor, false);
           if (anchor == null) break;
 
@@ -155,6 +167,7 @@ public abstract class Identikit {
         .toString();
     }
 
+    @Override
     @NotNull
     public Language getFileLanguage() {
       return myFileLanguage;
@@ -175,7 +188,7 @@ public abstract class Identikit {
     private final ByType myAnchorInfo;
     private final SmartPointerAnchorProvider myAnchorProvider;
 
-    ByAnchor(ByType elementInfo, ByType anchorInfo, SmartPointerAnchorProvider anchorProvider) {
+    ByAnchor(@NotNull ByType elementInfo, @NotNull ByType anchorInfo, @NotNull SmartPointerAnchorProvider anchorProvider) {
       myElementInfo = elementInfo;
       myAnchorInfo = anchorInfo;
       myAnchorProvider = anchorProvider;

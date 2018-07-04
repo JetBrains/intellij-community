@@ -2,7 +2,7 @@
     resolution/conversion to XML.
 """
 import pickle
-from _pydevd_bundle.pydevd_constants import dict_contains, get_frame, get_thread_id, xrange
+from _pydevd_bundle.pydevd_constants import get_frame, get_thread_id, xrange
 
 from _pydevd_bundle.pydevd_custom_frames import get_custom_frame
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate, get_type, var_to_xml
@@ -21,17 +21,6 @@ from _pydev_bundle.pydev_imports import Exec, quote, execfile
 from _pydevd_bundle.pydevd_utils import to_string
 
 SENTINEL_VALUE = []
-
-# -------------------------------------------------------------------------- defining true and false for earlier versions
-
-try:
-    __setFalse = False
-except:
-    import __builtin__
-
-    setattr(__builtin__, 'True', 1)
-    setattr(__builtin__, 'False', 0)
-
 
 # ------------------------------------------------------------------------------------------------------ class for errors
 
@@ -86,7 +75,7 @@ removeAdditionalFrameById = remove_additional_frame_by_id  # Backward compatibil
 
 
 def has_additional_frames_by_id(thread_id):
-    return dict_contains(AdditionalFramesContainer.additional_frames, thread_id)
+    return thread_id in AdditionalFramesContainer.additional_frames
 
 
 def get_additional_frames_by_id(thread_id):
@@ -108,7 +97,7 @@ def find_frame(thread_id, frame_id):
         lookingFor = int(frame_id)
 
         if AdditionalFramesContainer.additional_frames:
-            if dict_contains(AdditionalFramesContainer.additional_frames, thread_id):
+            if thread_id in AdditionalFramesContainer.additional_frames:
                 frame = AdditionalFramesContainer.additional_frames[thread_id].get(lookingFor)
 
                 if frame is not None:
@@ -240,8 +229,17 @@ def getVariable(thread_id, frame_id, scope, attrs):
     return var
 
 
-def resolve_compound_variable(thread_id, frame_id, scope, attrs):
-    """ returns the value of the compound variable as a dictionary"""
+def resolve_compound_variable_fields(thread_id, frame_id, scope, attrs):
+    """
+    Resolve compound variable in debugger scopes by its name and attributes
+
+    :param thread_id: id of the variable's thread
+    :param frame_id: id of the variable's frame
+    :param scope: can be BY_ID, EXPRESSION, GLOBAL, LOCAL, FRAME
+    :param attrs: after reaching the proper scope, we have to get the attributes until we find
+            the proper location (i.e.: obj\tattr1\tattr2)
+    :return: a dictionary of variables's fields
+    """
 
     var = getVariable(thread_id, frame_id, scope, attrs)
 
@@ -254,12 +252,36 @@ def resolve_compound_variable(thread_id, frame_id, scope, attrs):
         traceback.print_exc()
 
 
-def resolve_var(var, attrs):
-    attrList = attrs.split('\t')
+def resolve_var_object(var, attrs):
+    """
+    Resolve variable's attribute
 
-    for k in attrList:
+    :param var: an object of variable
+    :param attrs: a sequence of variable's attributes separated by \t (i.e.: obj\tattr1\tattr2)
+    :return: a value of resolved variable's attribute
+    """
+    if attrs is not None:
+        attr_list = attrs.split('\t')
+    else:
+        attr_list = []
+    for k in attr_list:
         type, _typeName, resolver = get_type(var)
+        var = resolver.resolve(var, k)
+    return var
 
+
+def resolve_compound_var_object_fields(var, attrs):
+    """
+    Resolve compound variable by its object and attributes
+
+    :param var: an object of variable
+    :param attrs: a sequence of variable's attributes separated by \t (i.e.: obj\tattr1\tattr2)
+    :return: a dictionary of variables's fields
+    """
+    attr_list = attrs.split('\t')
+
+    for k in attr_list:
+        type, _typeName, resolver = get_type(var)
         var = resolver.resolve(var, k)
 
     try:

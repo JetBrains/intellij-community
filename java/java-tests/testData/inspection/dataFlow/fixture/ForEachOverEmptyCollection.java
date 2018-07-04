@@ -16,6 +16,13 @@ public class ForEachOverEmptyCollection {
     }
   }
 
+  void testParens(Collection<?> c) {
+    if(!c.isEmpty()) return;
+    for (Object o : (<warning descr="Collection 'c' is always empty">c</warning>)) {
+      System.out.println(o);
+    }
+  }
+
   void testArrayAfter(String[] arr) {
     int count = 0;
     boolean hasItem = false;
@@ -46,7 +53,7 @@ public class ForEachOverEmptyCollection {
     }
     if(!hasItem) {
       System.out.println(
-        list.<warning descr="The call to 'get' always fails, according to its method contracts">get</warning>(<warning descr="Condition 'max == null' is always 'true'">max == null</warning> ? 0 : 1));
+        list.<warning descr="The call to 'get' always fails as index is out of bounds">get</warning>(<warning descr="Condition 'max == null' is always 'true'">max == null</warning> ? 0 : 1));
     }
   }
 }

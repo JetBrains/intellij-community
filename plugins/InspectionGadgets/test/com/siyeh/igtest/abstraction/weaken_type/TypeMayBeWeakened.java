@@ -3,6 +3,7 @@ package com.siyeh.igtest.abstraction.weaken_type;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.util.*;
+import java.io.*;
 
 public class TypeMayBeWeakened {
 
@@ -191,5 +192,41 @@ class MethodReference2 {
 
   private static String <warning descr="Return type of method 'myTransform()' may be weakened to 'java.lang.Object'">myTransform</warning>() {
     return "Integer.toString(in)";
+  }
+}
+
+class Lambda {
+  public static void main(String[] args) throws IOException {
+    final File file = new File("");
+    try (InputStream inputStream = new FileInputStream(file)) {
+      final ToInputStream toInputStream = name -> inputStream;
+    }
+  }
+
+  interface ToInputStream {
+    InputStream map(String name);
+  }
+}
+
+class LambdaWithBody {
+  public static void main(String[] args) throws IOException {
+    final File file = new File("");
+    try (InputStream inputStream = new FileInputStream(file)) {
+      final ToInputStream toInputStream = name -> {
+        return inputStream;
+      };
+    }
+  }
+
+  interface ToInputStream {
+    InputStream map(String name);
+  }
+}
+
+class ParensUsage {
+  public static void main(String[] args) {
+    SortedMap<String, String> s = new TreeMap<>();
+    System.out.println(s.keySet());
+    System.out.println((s).firstKey());
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots;
 
 import com.intellij.ProjectTopics;
@@ -31,8 +17,10 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -49,6 +37,8 @@ public class RootsChangedTest extends ModuleTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+
+    getOrCreateProjectBaseDir();
     MessageBusConnection connection = myProject.getMessageBus().connect(getTestRootDisposable());
     myModuleRootListener = new MyModuleRootListener();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, myModuleRootListener);
@@ -215,9 +205,7 @@ public class RootsChangedTest extends ModuleTestCase {
       rootModelA.inheritSdk();
       rootModelB.inheritSdk();
       ModifiableRootModel[] rootModels = {rootModelA, rootModelB};
-      if (rootModels.length > 0) {
-        ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
-      }
+      ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
       assertEventsCount(1);
 
       ProjectRootManager.getInstance(myProject).setProjectSdk(jdk);
@@ -248,10 +236,8 @@ public class RootsChangedTest extends ModuleTestCase {
       rootModelB.addLibraryEntry(libraryA);
       rootModelA.addInvalidLibrary("Q", libraryTable.getTableLevel());
       rootModelB.addInvalidLibrary("Q", libraryTable.getTableLevel());
-      ModifiableRootModel[] rootModels = new ModifiableRootModel[]{rootModelA, rootModelB};
-      if (rootModels.length > 0) {
-        ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
-      }
+      ModifiableRootModel[] rootModels = {rootModelA, rootModelB};
+      ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
       assertEventsCount(1);
 
       final Library.ModifiableModel libraryModifiableModel2 = libraryA.getModifiableModel();
@@ -317,10 +303,8 @@ public class RootsChangedTest extends ModuleTestCase {
       final Library libraryQ = libraryTable.createLibrary("Q");
       assertEventsCount(0);
 
-      ModifiableRootModel[] rootModels = new ModifiableRootModel[]{rootModelA, rootModelB};
-      if (rootModels.length > 0) {
-        ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
-      }
+      ModifiableRootModel[] rootModels = {rootModelA, rootModelB};
+      ModifiableModelCommitter.multiCommit(rootModels, ModuleManager.getInstance(rootModels[0].getProject()).getModifiableModel());
       assertEventsCount(1);
 
       libraryTable.removeLibrary(libraryQ);
@@ -337,8 +321,8 @@ public class RootsChangedTest extends ModuleTestCase {
   }
 
   private static class MyModuleRootListener implements ModuleRootListener {
-    private int beforeCount = 0;
-    private int afterCount = 0;
+    private int beforeCount;
+    private int afterCount;
 
     @Override
     public void beforeRootsChange(ModuleRootEvent event) {
@@ -354,5 +338,22 @@ public class RootsChangedTest extends ModuleTestCase {
       beforeCount = 0;
       afterCount = 0;
     }
+  }
+
+  public void testRootsChangedPerformanceInPresenceOfManyVirtualFilePointers() throws Exception {
+    VirtualFile temp = LocalFileSystem.getInstance().findFileByIoFile(createTempDirectory());
+    String dirName = "xxx";
+    for (int i = 0; i < 10_000; i++) {
+      VirtualFilePointerManager.getInstance().create(temp.getUrl() + "/" + dirName + "/" + i, getTestRootDisposable(), null);
+    }
+
+    VirtualFile xxx = createChildDirectory(temp, dirName);
+
+    PlatformTestUtil.startPerformanceTest("time wasted in ProjectRootManagerComponent.before/afterValidityChanged()", 10000, ()->{
+      for (int i = 0; i < 100; i++) {
+        rename(xxx, "yyy");
+        rename(xxx, dirName);
+      }
+    }).assertTiming();
   }
 }

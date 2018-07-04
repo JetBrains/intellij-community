@@ -24,6 +24,7 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author traff
  */
+@Staging //Thread leak
 public class IPythonConsoleTest extends PyEnvTestCase {
   @Test
   public void testQuestion() {
@@ -38,7 +39,6 @@ public class IPythonConsoleTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testParsing() {
     runPythonTest(new IPythonTask() {
       @Override

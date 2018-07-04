@@ -25,6 +25,7 @@ import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.ExpressionUtil;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -55,6 +56,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -98,7 +100,7 @@ public class CreateFromUsageUtils {
     return true;
   }
 
-  static boolean isValidMethodReference(PsiReference reference, PsiMethodCallExpression call) {
+  public static boolean isValidMethodReference(PsiReference reference, PsiMethodCallExpression call) {
     if (!(reference instanceof PsiJavaReference)) return false;
     try {
       JavaResolveResult candidate = ((PsiJavaReference) reference).advancedResolve(true);
@@ -115,7 +117,7 @@ public class CreateFromUsageUtils {
     if (argList == null) return false;
     if (candidate == null) {
       return targetClass != null && !targetClass.isInterface() && !(targetClass instanceof PsiTypeParameter) &&
-             !(argList.getExpressions().length == 0 && targetClass.getConstructors().length == 0);
+             !(argList.isEmpty() && targetClass.getConstructors().length == 0);
     }
     else {
       return !PsiUtil.isApplicable(candidate, PsiSubstitutor.EMPTY, argList);
@@ -247,17 +249,20 @@ public class CreateFromUsageUtils {
   static void setupMethodParameters(final PsiMethod method, final TemplateBuilder builder, final PsiElement contextElement,
                                     final PsiSubstitutor substitutor, final List<Pair<PsiExpression, PsiType>> arguments)
     throws IncorrectOperationException {
-    PsiManager psiManager = method.getManager();
-    JVMElementFactory factory = JVMElementFactories.getFactory(method.getLanguage(), method.getProject());
+
+    final PsiManager psiManager = method.getManager();
+    final Project project = psiManager.getProject();
+
+    JVMElementFactory factory = JVMElementFactories.getFactory(method.getLanguage(), project);
     if (factory == null) return;
 
     PsiParameterList parameterList = method.getParameterList();
 
     GlobalSearchScope resolveScope = method.getResolveScope();
 
-    GuessTypeParameters guesser = new GuessTypeParameters(JavaPsiFacade.getElementFactory(method.getProject()));
+    GuessTypeParameters guesser = new GuessTypeParameters(project, JavaPsiFacade.getElementFactory(project), builder, substitutor);
 
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(psiManager);
+    PostprocessReformattingAspect postprocessReformattingAspect = PostprocessReformattingAspect.getInstance(project);
     final PsiClass containingClass = method.getContainingClass();
     final boolean isInterface = containingClass != null && containingClass.isInterface();
     //255 is the maximum number of method parameters
@@ -266,7 +271,7 @@ public class CreateFromUsageUtils {
       PsiExpression exp = arg.first;
 
       PsiType argType = exp == null ? arg.second : RefactoringUtil.getTypeByExpression(exp);
-      SuggestedNameInfo suggestedInfo = JavaCodeStyleManager.getInstance(psiManager.getProject()).suggestVariableName(
+      SuggestedNameInfo suggestedInfo = JavaCodeStyleManager.getInstance(project).suggestVariableName(
         VariableKind.PARAMETER, null, exp, argType);
       @NonNls String[] names = suggestedInfo.names; //TODO: callback about used name
 
@@ -287,7 +292,7 @@ public class CreateFromUsageUtils {
         if (isInterface) {
           PsiUtil.setModifierProperty(param, PsiModifier.FINAL, false);
         }
-        parameter = codeStyleManager.performActionWithFormatterDisabled(() -> (PsiParameter) parameterList.add(param));
+        parameter = postprocessReformattingAspect.postponeFormattingInside(() -> (PsiParameter) parameterList.add(param));
       } else {
         parameter = parameterList.getParameters()[i];
       }
@@ -295,8 +300,7 @@ public class CreateFromUsageUtils {
       ExpectedTypeInfo info = ExpectedTypesProvider.createInfo(argType, ExpectedTypeInfo.TYPE_OR_SUPERTYPE, argType, TailType.NONE);
 
       PsiElement context = PsiTreeUtil.getParentOfType(contextElement, PsiClass.class, PsiMethod.class);
-      guesser.setupTypeElement(parameter.getTypeElement(), new ExpectedTypeInfo[]{info},
-                               substitutor, builder, context, containingClass);
+      guesser.setupTypeElement(parameter.getTypeElement(), new ExpectedTypeInfo[]{info}, context, containingClass);
 
       Expression expression = new ParameterNameExpression(names);
       builder.replaceElement(parameter.getNameIdentifier(), expression);
@@ -518,7 +522,7 @@ public class CreateFromUsageUtils {
     if (parent != null) {
       parent.accept(visitor);
     }
-    return result.toArray(new PsiReferenceExpression[result.size()]);
+    return result.toArray(new PsiReferenceExpression[0]);
   }
 
   @NotNull
@@ -576,7 +580,7 @@ public class CreateFromUsageUtils {
       }
     }
 
-    return result.toArray(new PsiVariable[result.size()]);
+    return result.toArray(new PsiVariable[0]);
   }
 
   private static void getExpectedInformation(final PsiExpression expression,
@@ -598,7 +602,7 @@ public class CreateFromUsageUtils {
         if (someExpectedTypes.length > 0) {
           Comparator<ExpectedTypeInfo> comparator = expectedTypesComparator;
           if (expressionList != null) {
-            int argCount = expressionList.getExpressions().length;
+            int argCount = expressionList.getExpressionCount();
             Comparator<ExpectedTypeInfo> mostSuitableMethodComparator =
               Comparator.comparingInt(typeInfo -> typeInfo.getCalledMethod().getParameterList().getParametersCount() == argCount ? 0 : 1);
             comparator = mostSuitableMethodComparator.thenComparing(comparator);
@@ -700,7 +704,7 @@ public class CreateFromUsageUtils {
       for (ExpectedTypeInfo[] aTypesList : typesList) {
         ContainerUtil.addAll(union, (ExpectedTypeInfo[])aTypesList);
       }
-      expectedTypes = union.toArray(new ExpectedTypeInfo[union.size()]);
+      expectedTypes = union.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
 
     if (expectedTypes.length == 0) {
@@ -752,7 +756,7 @@ public class CreateFromUsageUtils {
       for (ExpectedTypeInfo[] aTypesList : typesList) {
         ContainerUtil.addAll(union, (ExpectedTypeInfo[])aTypesList);
       }
-      expectedTypes = union.toArray(new ExpectedTypeInfo[union.size()]);
+      expectedTypes = union.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
 
     if (expectedTypes.length == 0) {
@@ -800,9 +804,7 @@ public class CreateFromUsageUtils {
 
       PsiType[] types = ExpectedTypesProvider.processExpectedTypes(expectedTypes, visitor, manager.getProject());
       if (types.length == 0) {
-        return allowVoidType
-               ? new PsiType[]{PsiType.VOID}
-               : new PsiType[]{PsiType.getJavaLangObject(manager, resolveScope)};
+        return Arrays.stream(expectedTypes).map(type -> type.getType()).toArray(PsiType[]::new);
       }
 
       return types;
@@ -844,7 +846,7 @@ public class CreateFromUsageUtils {
     }
 
     if (!l.isEmpty()) {
-      types.add(l.toArray(new ExpectedTypeInfo[l.size()]));
+      types.add(l.toArray(ExpectedTypeInfo.EMPTY_ARRAY));
     }
   }
 
@@ -983,10 +985,10 @@ public class CreateFromUsageUtils {
                                  member.hasModifierProperty(PsiModifier.STATIC) == staticAccess).booleanValue();
   }
 
-  private static class ParameterNameExpression extends Expression {
+  public static class ParameterNameExpression extends Expression {
     private final String[] myNames;
 
-    private ParameterNameExpression(String[] names) {
+    public ParameterNameExpression(String[] names) {
       myNames = names;
     }
 
@@ -1057,7 +1059,7 @@ public class CreateFromUsageUtils {
         }
       }
 
-      return set.toArray(new LookupElement[set.size()]);
+      return set.toArray(LookupElement.EMPTY_ARRAY);
     }
   }
 }

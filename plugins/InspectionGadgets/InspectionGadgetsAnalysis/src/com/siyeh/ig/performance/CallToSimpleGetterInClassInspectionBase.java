@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package com.siyeh.ig.performance;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -59,6 +61,13 @@ public class CallToSimpleGetterInClassInspectionBase extends BaseInspection {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
+
+      String referenceName = call.getMethodExpression().getReferenceName();
+      if (referenceName == null ||
+          PropertyUtilBase.getMethodNameGetterFlavour(referenceName) == PropertyUtilBase.GetterFlavour.NOT_A_GETTER) {
+        return;
+      }
+
       final PsiClass containingClass = ClassUtils.getContainingClass(call);
       if (containingClass == null) {
         return;
@@ -76,12 +85,7 @@ public class CallToSimpleGetterInClassInspectionBase extends BaseInspection {
         if (ignoreGetterCallsOnOtherObjects) {
           return;
         }
-        final PsiType type = qualifier.getType();
-        if (!(type instanceof PsiClassType)) {
-          return;
-        }
-        final PsiClassType classType = (PsiClassType)type;
-        final PsiClass qualifierClass = classType.resolve();
+        final PsiClass qualifierClass = PsiUtil.resolveClassInClassTypeOnly(qualifier.getType());
         if (!containingClass.equals(qualifierClass)) {
           return;
         }

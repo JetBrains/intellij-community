@@ -20,7 +20,6 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.injected.editor.InjectedCaret;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Caret;
@@ -32,6 +31,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedCaret;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
@@ -220,6 +220,6 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     if (psiFile != null) {
       addIfNotNull(set, psiFile.getViewProvider().getBaseLanguage());
     }
-    return set.toArray(new Language[set.size()]);
+    return set.toArray(new Language[0]);
   }
 }

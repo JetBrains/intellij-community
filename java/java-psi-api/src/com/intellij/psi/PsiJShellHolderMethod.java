@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 21-Jun-17
  */
 public interface PsiJShellHolderMethod extends PsiMethod, PsiJShellSyntheticElement{
   PsiJShellHolderMethod[] EMPTY_ARRAY = new PsiJShellHolderMethod[0];

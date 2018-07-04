@@ -52,7 +52,7 @@ public class ResolveAction extends BasicAction {
   }
 
   @Override
-  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) throws VcsException {
+  protected void batchPerform(@NotNull SvnVcs vcs, @NotNull VirtualFile[] files, @NotNull DataContext context) {
     boolean hasDirs = exists(files, VirtualFile::isDirectory);
     List<VirtualFile> fileList = newArrayList();
     if (!hasDirs) {

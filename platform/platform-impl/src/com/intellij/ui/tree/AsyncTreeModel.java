@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.openapi.Disposable;
@@ -36,27 +22,22 @@ import javax.swing.event.TreeModelEvent;
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import java.util.ArrayList;
-import java.util.ArrayDeque;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.function.ToIntFunction;
-import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
 import static org.jetbrains.concurrency.Promises.rejectedPromise;
 
 /**
  * @author Sergey.Malenkov
  */
-public final class AsyncTreeModel extends AbstractTreeModel implements Disposable, Identifiable, Searchable, Navigatable {
+public final class AsyncTreeModel extends AbstractTreeModel implements Identifiable, Searchable, Navigatable, TreeVisitor.Acceptor {
   private static final Logger LOG = Logger.getInstance(AsyncTreeModel.class);
   private final Command.Processor processor;
   private final Tree tree = new Tree();
@@ -82,12 +63,16 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
       }
       onValidThread(() -> {
         Node node = tree.map.get(object);
-        if (node == null || node.isLoadingRequired()) {
+        if (node == null) {
           LOG.debug("ignore updating of nonexistent node: ", object);
         }
         else if (type == EventType.NodesChanged) {
           // the object is already updated, so we should not start additional command to update
           AsyncTreeModel.this.treeNodesChanged(event.getTreePath(), event.getChildIndices(), event.getChildren());
+        }
+        else if (node.isLoadingRequired()) {
+          // update the object presentation only, if its children are not requested yet
+          AsyncTreeModel.this.treeNodesChanged(event.getTreePath(), null, null);
         }
         else if (type == EventType.NodesInserted) {
           processor.process(new CmdGetChildren("Insert children", node, false));
@@ -122,8 +107,14 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     this.showLoadingNode = showLoadingNode;
   }
 
+  public AsyncTreeModel(@NotNull TreeModel model, boolean showLoadingNode, @NotNull Disposable parent) {
+    this(model, showLoadingNode);
+    Disposer.register(parent, this);
+  }
+
   @Override
   public void dispose() {
+    super.dispose();
     model.removeTreeModelListener(listener);
   }
 
@@ -135,36 +126,47 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
   @NotNull
   @Override
   public Promise<TreePath> getTreePath(Object object) {
-    return model instanceof Searchable ? resolve(((Searchable)model).getTreePath(object)) : rejectedPromise();
+    if (disposed) return rejectedPromise();
+    return resolve(model instanceof Searchable ? ((Searchable)model).getTreePath(object) : null);
   }
 
   @NotNull
   @Override
   public Promise<TreePath> nextTreePath(@NotNull TreePath path, Object object) {
-    return model instanceof Navigatable ? resolve(((Navigatable)model).nextTreePath(path, object)) : rejectedPromise();
+    if (disposed) return rejectedPromise();
+    return resolve(model instanceof Navigatable ? ((Navigatable)model).nextTreePath(path, object) : null);
   }
 
   @NotNull
   @Override
   public Promise<TreePath> prevTreePath(@NotNull TreePath path, Object object) {
-    return model instanceof Navigatable ? resolve(((Navigatable)model).prevTreePath(path, object)) : rejectedPromise();
+    if (disposed) return rejectedPromise();
+    return resolve(model instanceof Navigatable ? ((Navigatable)model).prevTreePath(path, object) : null);
   }
 
   @NotNull
   public Promise<TreePath> resolve(TreePath path) {
     AsyncPromise<TreePath> async = new AsyncPromise<>();
-    onValidThread(() -> resolve(async, path, entry -> async.setResult(path)));
+    onValidThread(() -> resolve(async, path));
     return async;
   }
 
   private Promise<TreePath> resolve(Promise<TreePath> promise) {
+    if (promise == null && isValidThread()) {
+      return rejectedPromise();
+    }
     AsyncPromise<TreePath> async = new AsyncPromise<>();
-    promise.rejected(onValidThread(async::setError));
-    promise.done(onValidThread(path -> resolve(async, path, entry -> async.setResult(path))));
+    if (promise == null) {
+      onValidThread(() -> async.setError("rejected"));
+    }
+    else {
+      promise.onError(onValidThread(async::setError));
+      promise.onSuccess(onValidThread(path -> resolve(async, path)));
+    }
     return async;
   }
 
-  private void resolve(AsyncPromise<TreePath> async, TreePath path, Consumer<Node> consumer) {
+  private void resolve(AsyncPromise<TreePath> async, TreePath path) {
     LOG.debug("resolve path: ", path);
     if (path == null) {
       async.setError("path is null");
@@ -175,32 +177,19 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
       async.setError("path is wrong");
       return;
     }
-    if (!resolved(path, consumer)) {
-      TreePath parent = path.getParentPath();
-      if (parent == null) {
-        promiseRootEntry().rejected(async::setError).done(node -> {
-          if (!resolved(path, consumer)) async.setError("root not found");
-        });
-      }
-      else {
-        resolve(async, parent, resolved -> promiseChildren(resolved).rejected(async::setError).done(node -> {
-          if (!resolved(path, consumer)) async.setError("path not found");
-        }));
-      }
-    }
-  }
-
-  private boolean resolved(@NotNull TreePath path, @NotNull Consumer<Node> consumer) {
-    Node node = tree.map.get(path.getLastPathComponent());
-    if (node == null || !node.paths.contains(path)) return false;
-    LOG.debug("path resolved: ", path);
-    consumer.consume(node);
-    return true;
+    accept(new TreeVisitor.ByTreePath<>(path, o -> o))
+      .onProcessed(result -> {
+        if (result == null) {
+          async.setError("path not found");
+          return;
+        }
+        async.setResult(result);
+      });
   }
 
   @Override
   public Object getRoot() {
-    if (!isValidThread()) return null;
+    if (disposed || !isValidThread()) return null;
     promiseRootEntry();
     Node node = tree.root;
     return node == null ? null : node.object;
@@ -245,8 +234,9 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
    * @param visitor an object that controls visiting a tree structure
    * @return a promise that will be resolved when visiting is finished
    */
-  public Promise<TreePath> visit(@NotNull TreeVisitor visitor) {
-    return visit(visitor, true);
+  @NotNull
+  public Promise<TreePath> accept(@NotNull TreeVisitor visitor) {
+    return accept(visitor, true);
   }
 
   /**
@@ -256,23 +246,25 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
    * @param allowLoading load all needed children if {@code true}
    * @return a promise that will be resolved when visiting is finished
    */
-  public Promise<TreePath> visit(@NotNull TreeVisitor visitor, boolean allowLoading) {
+  @NotNull
+  public Promise<TreePath> accept(@NotNull TreeVisitor visitor, boolean allowLoading) {
     AbstractTreeWalker<Node> walker = new AbstractTreeWalker<Node>(visitor, node -> node.object) {
       @Override
       protected Collection<Node> getChildren(@NotNull Node node) {
         if (node.leaf || !allowLoading) return node.getChildren();
-        promiseChildren(node).done(parent -> setChildren(parent.getChildren())).rejected(this::setError);
+        promiseChildren(node)
+          .onSuccess(parent -> setChildren(parent.getChildren()))
+          .onError(this::setError);
         return null;
       }
     };
-    onValidThread(() -> {
-      if (allowLoading) {
-        promiseRootEntry().done(walker::start).rejected(walker::setError);
-      }
-      else {
-        walker.start(tree.root);
-      }
-    });
+    if (allowLoading) {
+      // start visiting on the background thread to ensure that root node is already invalidated
+      processor.background.invokeLater(() -> onValidThread(() -> promiseRootEntry().onSuccess(walker::start).onError(walker::setError)));
+    }
+    else {
+      onValidThread(() -> walker.start(tree.root));
+    }
     return walker.promise();
   }
 
@@ -280,31 +272,33 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
    * @return {@code true} if this model is updating its structure
    */
   public boolean isProcessing() {
-    return processor.getTaskCount() > 0;
+    return processor.getTaskCount() > 0 || tree.queue.get().isPending();
   }
 
   private boolean isValidThread() {
     if (processor.foreground.isValidThread()) return true;
-    LOG.warn("AsyncTreeModel is used from unexpected thread");
+    LOG.warn(new IllegalStateException("AsyncTreeModel is used from unexpected thread"));
     return false;
   }
 
-  private void onValidThread(Runnable runnable) {
+  public void onValidThread(Runnable runnable) {
     processor.foreground.invokeLaterIfNeeded(runnable);
   }
 
   @NotNull
-  private <T> Consumer<T> onValidThread(Consumer<T> consumer) {
+  private <T> java.util.function.Consumer<T> onValidThread(Consumer<T> consumer) {
     return value -> onValidThread(() -> consumer.consume(value));
   }
 
   @NotNull
   private Promise<Node> promiseRootEntry() {
+    if (disposed) return rejectedPromise();
     return tree.queue.promise(processor, () -> new CmdGetRoot("Load root", null));
   }
 
   @NotNull
   private Promise<Node> promiseChildren(@NotNull Node node) {
+    if (disposed) return rejectedPromise();
     return node.queue.promise(processor, () -> {
       node.setLoading(!showLoadingNode ? null : new Node(new LoadingNode(), true));
       return new CmdGetChildren("Load children", node, false);
@@ -312,14 +306,14 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
   }
 
   private Node getEntry(Object object) {
-    return object == null || !isValidThread() ? null : tree.map.get(object);
+    return disposed || object == null || !isValidThread() ? null : tree.map.get(object);
   }
 
   @NotNull
   private List<Node> getEntryChildren(Object object) {
     Node node = getEntry(object);
     if (node == null) return emptyList();
-    promiseChildren(node);
+    if (node.isLoadingRequired()) promiseChildren(node);
     return node.getChildren();
   }
 
@@ -411,7 +405,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     return emptyList();
   }
 
-  private abstract class ObsolescentCommand implements Obsolescent, Command<Reference<Node>> {
+  private abstract static class ObsolescentCommand implements Obsolescent, Command<Node> {
     final AsyncPromise<Node> promise = new AsyncPromise<>();
     final String name;
     final Object object;
@@ -437,27 +431,26 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     }
 
     @Override
-    public Reference<Node> get() {
+    public Node get() {
       started = true;
-      LOG.debug("background command: ", this);
-      return Reference.create(() -> getNode(object));
+      if (isObsolete()) {
+        LOG.debug("obsolete command: ", this);
+        return null;
+      }
+      else {
+        LOG.debug("background command: ", this);
+        return getNode(object);
+      }
     }
 
     @Override
-    public void accept(Reference<Node> reference) {
+    public void accept(Node node) {
       if (isObsolete()) {
         LOG.debug("obsolete command: ", this);
       }
-      else if (reference == null) {
-        LOG.debug("failed command: ", this);
-      }
-      else if (reference.isValid()) {
-        LOG.debug("foreground command: ", this);
-        setNode(reference.get());
-      }
       else {
-        LOG.debug("restart command: ", this);
-        processor.process(this); // restart command
+        LOG.debug("foreground command: ", this);
+        setNode(node);
       }
     }
   }
@@ -470,7 +463,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
 
     @Override
     public boolean isObsolete() {
-      return this != tree.queue.get();
+      return disposed || this != tree.queue.get();
     }
 
     @Override
@@ -490,15 +483,15 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
       }
 
       if (root != null && loaded != null && root.object.equals(loaded.object)) {
+        tree.fixEqualButNotSame(root, loaded.object);
         LOG.debug("same root: ", root.object);
+        if (!root.isLoadingRequired()) processor.process(new CmdGetChildren("Update root children", root, true));
         tree.queue.done(this, root);
-        if (root.isLoadingRequired()) return;
-        processor.process(new CmdGetChildren("Update root children", root, true));
         return;
       }
 
       if (root != null) {
-        tree.removeMapping(null, root);
+        root.removeMapping(null, tree);
       }
       if (!tree.map.isEmpty()) {
         tree.map.values().forEach(node -> {
@@ -541,18 +534,18 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
 
     @Override
     public boolean isObsolete() {
-      return this != node.queue.get();
+      return disposed || this != node.queue.get();
     }
 
     @Override
     Node getNode(Object object) {
       Node loaded = new Node(object, model.isLeaf(object));
-      if (loaded.leaf) return loaded;
+      if (loaded.leaf || isObsolete()) return loaded;
 
       if (model instanceof ChildrenProvider) {
         //noinspection unchecked
         ChildrenProvider<Object> provider = (ChildrenProvider)model;
-        List<Object> children = provider.getChildren(object);
+        List<?> children = provider.getChildren(object);
         if (children == null) throw new ProcessCanceledException(); // cancel this command
         loaded.children = load(children.size(), index -> children.get(index));
       }
@@ -575,7 +568,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
           LOG.warn("ignore null child at " + i);
         }
         else if (!set.add(child)) {
-          LOG.warn("ignore duplicated child at " + i);
+          LOG.warn("ignore duplicated child at " + i + ": " + child);
         }
         else {
           if (isObsolete()) return null;
@@ -608,7 +601,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
 
       LinkedHashMap<Object, Integer> removed = getIndices(oldChildren, null);
       if (newChildren.isEmpty()) {
-        for (Node child : oldChildren) tree.removeMapping(node, child);
+        oldChildren.forEach(child -> child.removeMapping(node, tree));
         node.setLeaf(loaded.leaf);
         treeNodesRemoved(node, removed);
         LOG.debug("children removed: ", node.object);
@@ -626,9 +619,16 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
           list.add(child);
         }
         else {
+          tree.fixEqualButNotSame(found, child.object);
           list.add(found);
-          if (!found.isLoadingRequired() && !removed.containsKey(found.object)) {
-            reload.add(found.object); // reload reused children if they are inserted
+          if (found.leaf) {
+            if (!child.leaf) {
+              found.setLeaf(false); // mark existing leaf node as not a leaf
+              reload.add(found.object); // and request to load its children
+            }
+          }
+          else if (child.leaf || !found.isLoadingRequired() && (deep || !removed.containsKey(found.object))) {
+            reload.add(found.object); // request to load children of existing node
           }
         }
         return list.size() - 1;
@@ -636,7 +636,7 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
       newChildren = list;
 
       if (oldChildren.isEmpty()) {
-        for (Node child : newChildren) child.insertPaths(node);
+        newChildren.forEach(child -> child.insertMapping(node));
         node.setChildren(newChildren);
         treeNodesInserted(node, inserted);
         LOG.debug("children inserted: ", node.object);
@@ -656,19 +656,18 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
         }
         else {
           contained.put(object, newIndex);
-          if (deep) reload.add(object);
-        }
-      }
-
-      for (Node child : oldChildren) {
-        if (removed.containsKey(child.object) && !inserted.containsKey(child.object)) {
-          tree.removeMapping(node, child);
         }
       }
 
       for (Node child : newChildren) {
         if (!removed.containsKey(child.object) && inserted.containsKey(child.object)) {
-          child.insertPaths(node);
+          child.insertMapping(node);
+        }
+      }
+
+      for (Node child : oldChildren) {
+        if (removed.containsKey(child.object) && !inserted.containsKey(child.object)) {
+          child.removeMapping(node, tree);
         }
       }
 
@@ -677,15 +676,15 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
       if (!inserted.isEmpty()) treeNodesInserted(node, inserted);
       if (!contained.isEmpty()) treeNodesChanged(node, contained);
       LOG.debug("children changed: ", node.object);
-      node.queue.done(this, node);
 
       if (!reload.isEmpty()) {
         for (Node child : newChildren) {
-          if (!child.isLoadingRequired() && reload.contains(child.object)) {
+          if (reload.contains(child.object)) {
             processor.process(new CmdGetChildren("Update children recursively", child, true));
           }
         }
       }
+      node.queue.done(this, node);
     }
   }
 
@@ -759,32 +758,33 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
     private final HashMap<Object, Node> map = new HashMap<>();
     private volatile Node root;
 
-    private void removeMapping(Node parent, Node child) {
-      if (parent != null && parent.loading == child) {
-        parent.loading = null;
-      }
-      else {
-        for (Node node : child.getChildren()) {
-          //TODO: remove only parent paths
-          removeMapping(child, node);
-        }
-        child.removePaths(parent);
-        if (child.paths.isEmpty()) {
-          child.queue.close();
-          Node node = map.remove(child.object);
-          if (node != child) {
-            LOG.warn("invalid node: " + child.object);
-            if (node != null) map.put(node.object, node);
-          }
+    private void removeEmpty(@NotNull Node child) {
+      child.forEachChildExceptLoading(this::removeEmpty);
+      if (child.paths.isEmpty()) {
+        child.queue.close();
+        Node node = map.remove(child.object);
+        if (node != child) {
+          LOG.warn("invalid node: " + child.object);
+          if (node != null) map.put(node.object, node);
         }
       }
+    }
+
+    private void fixEqualButNotSame(@NotNull Node node, @NotNull Object object) {
+      if (object == node.object) return;
+      // always use new instance of user's object, because
+      // some trees provide equal nodes with different behavior
+      map.remove(node.object);
+      node.updatePaths(node.object, object);
+      node.object = object;
+      map.put(object, node); // update key
     }
   }
 
   private static final class Node {
     private final CommandQueue<CmdGetChildren> queue = new CommandQueue<>();
-    private final SmartHashSet<TreePath> paths = new SmartHashSet<>();
-    private final Object object;
+    private final Set<TreePath> paths = new SmartHashSet<>();
+    private volatile Object object;
     private volatile boolean leaf;
     private volatile List<Node> children;
     private volatile Node loading;
@@ -822,25 +822,31 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
       return list != null ? list : emptyList();
     }
 
+    private void forEachChildExceptLoading(Consumer<Node> consumer) {
+      for (Node node : getChildren()) {
+        if (node != loading) consumer.consume(node);
+      }
+    }
+
     private void insertPath(TreePath path) {
       if (!paths.add(path)) {
         LOG.warn("node is already attached to " + path);
       }
+      forEachChildExceptLoading(child -> child.insertPath(path.pathByAddingChild(child.object)));
     }
 
-    private void insertPaths(Stream<TreePath> stream) {
-      stream.forEach(path -> insertPath(path.pathByAddingChild(object)));
-    }
-
-    private void insertPaths(Node parent) {
+    private void insertMapping(Node parent) {
       if (parent == null) {
         insertPath(new TreePath(object));
+      }
+      else if (parent.loading == this) {
+        LOG.warn("insert loading node unexpectedly");
       }
       else if (parent.paths.isEmpty()) {
         LOG.warn("insert to invalid parent");
       }
       else {
-        insertPaths(parent.paths.stream());
+        parent.paths.forEach(path -> insertPath(path.pathByAddingChild(object)));
       }
     }
 
@@ -848,22 +854,63 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Disposabl
       if (!paths.remove(path)) {
         LOG.warn("node is not attached to " + path);
       }
+      forEachChildExceptLoading(child -> child.removePath(path.pathByAddingChild(child.object)));
     }
 
-    private void removePaths(Stream<TreePath> stream) {
-      stream.forEach(path -> removePath(path.pathByAddingChild(object)));
-    }
-
-    private void removePaths(Node parent) {
+    private void removeMapping(Node parent, Tree tree) {
       if (parent == null) {
         removePath(new TreePath(object));
+        tree.removeEmpty(this);
+      }
+      else if (parent.loading == this) {
+        parent.loading = null;
       }
       else if (parent.paths.isEmpty()) {
         LOG.warn("remove from invalid parent");
       }
       else {
-        removePaths(parent.paths.stream());
+        parent.paths.forEach(path -> removePath(path.pathByAddingChild(object)));
+        tree.removeEmpty(this);
       }
     }
+
+    private void updatePaths(@NotNull Object oldObject, @NotNull Object newObject) {
+      if (paths.stream().anyMatch(path -> contains(path, oldObject))) {
+        // replace instance of user's object in all internal maps to avoid memory leaks
+        List<TreePath> updated = paths.stream().map(path -> update(path, oldObject, newObject)).collect(toList());
+        paths.clear();
+        paths.addAll(updated);
+        forEachChildExceptLoading(child -> child.updatePaths(oldObject, newObject));
+      }
+    }
+
+    private static TreePath update(@NotNull TreePath path, @NotNull Object oldObject, @NotNull Object newObject) {
+      if (!contains(path, oldObject)) return path;
+      LOG.debug("update path: ", path);
+      Object[] objects = TreePathUtil.convertTreePathToArray(path);
+      for (int i = 0; i < objects.length; i++) {
+        if (oldObject == objects[i]) objects[i] = newObject;
+      }
+      return TreePathUtil.convertArrayToTreePath(objects);
+    }
+
+    private static boolean contains(@NotNull TreePath path, @NotNull Object object) {
+      while (object != path.getLastPathComponent()) {
+        path = path.getParentPath();
+        if (path == null) return false;
+      }
+      return true;
+    }
+  }
+
+  /**
+   * @deprecated do not use
+   */
+  @Deprecated
+  public void setRootImmediately(@NotNull Object object) {
+    Node node = new Node(object, false);
+    node.insertPath(new TreePath(object));
+    tree.root = node;
+    tree.map.put(object, node);
   }
 }

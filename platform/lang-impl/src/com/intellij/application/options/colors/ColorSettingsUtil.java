@@ -19,7 +19,6 @@ package com.intellij.application.options.colors;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.OptionsBundle;
@@ -27,13 +26,9 @@ import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author lesya
@@ -52,7 +47,7 @@ public class ColorSettingsUtil {
     return displayText;
   }
 
-  public static List<AttributesDescriptor> getAllAttributeDescriptors(ColorAndFontDescriptorsProvider provider) {
+  public static List<AttributesDescriptor> getAllAttributeDescriptors(@NotNull ColorAndFontDescriptorsProvider provider) {
     List<AttributesDescriptor> result = new ArrayList<>();
     Collections.addAll(result, provider.getAttributeDescriptors());
     if (isInspectionColorsPage(provider)) {
@@ -75,12 +70,14 @@ public class ColorSettingsUtil {
   private static void addInspectionSeverityAttributes(List<AttributesDescriptor> descriptors) {
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.unknown.symbol"), CodeInsightColors.WRONG_REFERENCES_ATTRIBUTES));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.deprecated.symbol"), CodeInsightColors.DEPRECATED_ATTRIBUTES));
+    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.marked.for.removal.symbol"), CodeInsightColors.MARKED_FOR_REMOVAL_ATTRIBUTES));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.unused.symbol"), CodeInsightColors.NOT_USED_ELEMENT_ATTRIBUTES));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.error"), CodeInsightColors.ERRORS_ATTRIBUTES));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.warning"), CodeInsightColors.WARNINGS_ATTRIBUTES));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.weak.warning"), CodeInsightColors.WEAK_WARNING_ATTRIBUTES));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.server.problems"), CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.server.duplicate"), CodeInsightColors.DUPLICATE_FROM_SERVER));
+    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.runtime"), CodeInsightColors.RUNTIME_ERROR));
 
     for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
       for (HighlightInfoType highlightInfoType : provider.getSeveritiesHighlightInfoTypes()) {

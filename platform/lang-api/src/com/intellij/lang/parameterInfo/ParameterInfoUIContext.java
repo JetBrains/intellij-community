@@ -23,12 +23,14 @@ import java.awt.*;
 public interface ParameterInfoUIContext {
   String setupUIComponentPresentation(String text, int highlightStartOffset, int highlightEndOffset, boolean isDisabled, boolean strikeout,
                                       boolean isDisabledBeforeHighlight, Color background);
+  void setupRawUIComponentPresentation(String htmlText);
   boolean isUIComponentEnabled();
   void setUIComponentEnabled(boolean enabled);
 
   int getCurrentParameterIndex();
   PsiElement getParameterOwner();
 
+  boolean isSingleOverload();
   boolean isSingleParameterInfo();
   Color getDefaultParameterColor();
 }

@@ -18,72 +18,73 @@ package org.jetbrains.uast.test.common
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UFile
-import org.jetbrains.uast.evaluation.*
+import org.jetbrains.uast.evaluation.MapBasedEvaluationContext
+import org.jetbrains.uast.evaluation.UEvaluationContext
+import org.jetbrains.uast.evaluation.UEvaluatorExtension
+import org.jetbrains.uast.evaluation.analyzeAll
 import org.jetbrains.uast.java.JavaUFile
 import org.jetbrains.uast.test.env.assertEqualsToFile
-import org.jetbrains.uast.values.UUndeterminedValue
 import org.jetbrains.uast.visitor.UastVisitor
 import java.io.File
 
 interface ValuesTestBase {
-    fun getValuesFile(testName: String): File
-    fun getEvaluatorExtension(): UEvaluatorExtension? = null
+  fun getValuesFile(testName: String): File
+  fun getEvaluatorExtension(): UEvaluatorExtension? = null
 
-    private fun UFile.analyzeAll() = analyzeAll(extensions = getEvaluatorExtension()?.let { listOf(it) } ?: emptyList())
+  private fun UFile.analyzeAll() = analyzeAll(extensions = getEvaluatorExtension()?.let { listOf(it) } ?: emptyList())
 
-    private fun UFile.asLogValues(evaluationContext: UEvaluationContext, cachedOnly: Boolean) =
-        ValueLogger(evaluationContext, cachedOnly).apply {
-            this@asLogValues.accept(this)
-        }.toString()
+  private fun UFile.asLogValues(evaluationContext: UEvaluationContext, cachedOnly: Boolean) =
+    ValueLogger(evaluationContext, cachedOnly).apply {
+      this@asLogValues.accept(this)
+    }.toString()
 
-    fun check(testName: String, file: UFile) {
-        val valuesFile = getValuesFile(testName)
+  fun check(testName: String, file: UFile) {
+    val valuesFile = getValuesFile(testName)
 
-        val evaluationContext = file.analyzeAll()
-        assertEqualsToFile("Log values", valuesFile, file.asLogValues(evaluationContext, cachedOnly = false))
+    val evaluationContext = file.analyzeAll()
+    assertEqualsToFile("Log values", valuesFile, file.asLogValues(evaluationContext, cachedOnly = false))
 
-        if (file is JavaUFile) {
-            val copyFile = JavaUFile(file.psi, file.languagePlugin)
-            assertEqualsToFile("Log cached values", valuesFile, copyFile.asLogValues(evaluationContext, cachedOnly = true))
+    if (file is JavaUFile) {
+      val copyFile = JavaUFile(file.psi, file.languagePlugin)
+      assertEqualsToFile("Log cached values", valuesFile, copyFile.asLogValues(evaluationContext, cachedOnly = true))
+    }
+  }
+
+  class ValueLogger(val evaluationContext: UEvaluationContext, val cachedOnly: Boolean) : UastVisitor {
+    private val builder = StringBuilder()
+    private var level = 0
+
+    override fun visitElement(node: UElement): Boolean {
+      val initialLine = node.asLogString() + " [" + run {
+        val renderString = node.asRenderString().lines()
+        if (renderString.size == 1) {
+          renderString.single()
         }
+        else {
+          renderString.first() + "..." + renderString.last()
+        }
+      } + "]"
+
+      (1..level).forEach { builder.append("    ") }
+      builder.append(initialLine)
+      if (node is UExpression) {
+        val value = if (cachedOnly) {
+          (evaluationContext as? MapBasedEvaluationContext)?.cachedValueOf(node)
+        }
+        else {
+          evaluationContext.valueOfIfAny(node)
+        }
+        builder.append(" = ").append(value ?: "NON-EVALUATED")
+      }
+      builder.appendln()
+      level++
+      return false
     }
 
-    class ValueLogger(val evaluationContext: UEvaluationContext, val cachedOnly: Boolean) : UastVisitor {
-
-        val builder = StringBuilder()
-
-        var level = 0
-
-        override fun visitElement(node: UElement): Boolean {
-            val initialLine = node.asLogString() + " [" + run {
-                val renderString = node.asRenderString().lines()
-                if (renderString.size == 1) {
-                    renderString.single()
-                } else {
-                    renderString.first() + "..." + renderString.last()
-                }
-            } + "]"
-
-            (1..level).forEach { builder.append("    ") }
-            builder.append(initialLine)
-            if (node is UExpression) {
-                val value = if (cachedOnly) {
-                    (evaluationContext as? MapBasedEvaluationContext)?.cachedValueOf(node)
-                }
-                else {
-                    evaluationContext.valueOfIfAny(node)
-                }
-                builder.append(" = ").append(value ?: "NON-EVALUATED")
-            }
-            builder.appendln()
-            level++
-            return false
-        }
-
-        override fun afterVisitElement(node: UElement) {
-            level--
-        }
-
-        override fun toString() = builder.toString()
+    override fun afterVisitElement(node: UElement) {
+      level--
     }
+
+    override fun toString(): String = builder.toString()
+  }
 }

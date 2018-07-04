@@ -49,8 +49,9 @@ public class UsageInfo {
     int effectiveEnd;
     if (startOffset == -1 && endOffset == -1) {
       // calculate natural element range
-      effectiveStart = element.getTextOffset() - elementRange.getStartOffset();
-      effectiveEnd = elementRange.getLength();
+      // Cls element.getTextOffset() returns -1
+      effectiveStart = Math.max(0, element.getTextOffset() - elementRange.getStartOffset());
+      effectiveEnd = Math.max(effectiveStart, elementRange.getLength());
     }
     else {
       effectiveStart = startOffset;
@@ -163,14 +164,6 @@ public class UsageInfo {
   public PsiReference getReference() {
     PsiElement element = getElement();
     return element == null ? null : element.getReference();
-  }
-
-  /**
-   * @deprecated for the range in element use {@link #getRangeInElement} instead,
-   *             for the whole text range in the file covered by this usage info, use {@link #getSegment()}
-   */
-  public TextRange getRange() {
-    return getRangeInElement();
   }
 
   /**

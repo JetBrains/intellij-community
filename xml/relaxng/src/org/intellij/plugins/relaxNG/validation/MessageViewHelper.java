@@ -28,10 +28,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.*;
-import com.intellij.util.ui.ErrorTreeView;
 import com.intellij.util.ui.MessageCategory;
 import gnu.trove.THashSet;
-import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -106,23 +104,7 @@ public class MessageViewHelper {
   }
 
   public void close() {
-    removeOldContents(null);
-  }
-
-  private void removeOldContents(Content notToRemove) {
-    MessageView messageView = MessageView.SERVICE.getInstance(myProject);
-
-    for (Content content : messageView.getContentManager().getContents()) {
-      if (content.isPinned()) continue;
-      if (myContentName.equals(content.getDisplayName()) && content != notToRemove) {
-        ErrorTreeView listErrorView = (ErrorTreeView)content.getComponent();
-        if (listErrorView != null) {
-          if (messageView.getContentManager().removeContent(content, true)) {
-            content.release();
-          }
-        }
-      }
-    }
+    ContentManagerUtil.cleanupContents(null, myProject, myContentName);
   }
 
   private void openMessageViewImpl() {
@@ -134,7 +116,7 @@ public class MessageViewHelper {
       messageView.getContentManager().addContent(content);
       messageView.getContentManager().setSelectedContent(content);
       messageView.getContentManager().addContentManagerListener(new CloseListener(content, myContentName, myErrorsView));
-      removeOldContents(content);
+      ContentManagerUtil.cleanupContents(content, myProject, myContentName);
       messageView.getContentManager().addContentManagerListener(new MyContentDisposer(content, messageView, myKey));
     }, "Open Message View", null);
 
@@ -227,19 +209,19 @@ public class MessageViewHelper {
     private boolean myHadErrorOrWarning;
 
     @Override
-    public void warning(SAXParseException e) throws SAXException {
+    public void warning(SAXParseException e) {
       myHadErrorOrWarning = true;
       processError(e, true);
     }
 
     @Override
-    public void error(SAXParseException e) throws SAXException {
+    public void error(SAXParseException e) {
       myHadErrorOrWarning = true;
       processError(e, false);
     }
 
     @Override
-    public void fatalError(SAXParseException e) throws SAXException {
+    public void fatalError(SAXParseException e) {
       myHadErrorOrWarning = true;
       processError(e, false);
     }

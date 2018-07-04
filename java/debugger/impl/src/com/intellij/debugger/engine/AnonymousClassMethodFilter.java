@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
 import com.intellij.psi.PsiCodeBlock;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiStatement;
 import com.intellij.util.Range;
@@ -24,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/26/13
  */
 public class AnonymousClassMethodFilter extends BasicStepMethodFilter implements BreakpointStepMethodFilter{
   @Nullable
@@ -35,6 +35,10 @@ public class AnonymousClassMethodFilter extends BasicStepMethodFilter implements
     super(psiMethod, lines);
     SourcePosition firstStatementPosition = null;
     SourcePosition lastStatementPosition = null;
+    PsiElement navigationElement = psiMethod.getNavigationElement();
+    if (navigationElement instanceof PsiMethod) {
+      psiMethod = (PsiMethod)navigationElement;
+    }
     final PsiCodeBlock body = psiMethod.getBody();
     if (body != null) {
       final PsiStatement[] statements = body.getStatements();

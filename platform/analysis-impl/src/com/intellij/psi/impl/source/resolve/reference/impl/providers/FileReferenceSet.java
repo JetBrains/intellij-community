@@ -210,7 +210,7 @@ public class FileReferenceSet {
 
   protected void reparse() {
     List<FileReference> referencesList = reparse(myPathStringNonTrimmed, myStartInElement);
-    myReferences = referencesList.toArray(new FileReference[referencesList.size()]);
+    myReferences = referencesList.toArray(FileReference.EMPTY);
   }
 
   protected List<FileReference> reparse(String str, int startInElement) {
@@ -258,14 +258,17 @@ public class FileReferenceSet {
       int nextSep = findSeparatorOffset(decoded, curSep + sepLen);
       int start = curSep + sepLen;
       int endTrimmed = nextSep > 0 ? nextSep : Math.max(start, decoded.length() - wsTail);
-      int endInclusive = nextSep > 0 ? nextSep : Math.max(start, decoded.length() - 1 - wsTail);
       // todo move ${placeholder} support (the str usage below) to a reference implementation
       // todo reference-set should be bound to exact range & text in a file, consider: ${slash}path${slash}file&amp;.txt
       String refText = index == 0 && nextSep < 0 && !StringUtil.contains(decoded, str) ? str :
                                 decoded.subSequence(start, endTrimmed).toString();
-      TextRange r = new TextRange(offset(start, escaper, valueRange),
-                                  offset(endInclusive, escaper, valueRange) + (nextSep < 0 && refText.length() > 0 ? 1 : 0));
-      referencesList.add(createFileReference(r, index++, refText));
+      int refStart = offset(start, escaper, valueRange);
+      int refEnd = offset(endTrimmed, escaper, valueRange);
+      if (!(refStart <= refEnd && refStart >= 0)) {
+        LOG.error("Invalid range: (" + (refText + ", " + refEnd) + "), escaper=" + escaper + "\n" +
+                  "text=" + refText + ", start=" + startInElement);
+      }
+      referencesList.add(createFileReference(new TextRange(refStart, refEnd), index++, refText));
       curSep = nextSep;
       sepLen = curSep > 0 ? findSeparatorLength(decoded, curSep) : 0;
     }

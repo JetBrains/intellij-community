@@ -18,6 +18,7 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.html.HtmlTag;
@@ -111,14 +112,19 @@ public class XmlAttributeReferenceCompletionProvider extends CompletionProvider<
           }
           LookupElementBuilder element = LookupElementBuilder.create(name);
           if (descriptor instanceof PsiPresentableMetaData) {
-            element = element.withIcon(((PsiPresentableMetaData)descriptor).getIcon());
+            PsiPresentableMetaData presentableMetaData = (PsiPresentableMetaData)descriptor;
+            element = element.withIcon(presentableMetaData.getIcon());
+            String typeName = presentableMetaData.getTypeName();
+            if (!StringUtil.isEmpty(typeName)) {
+              element = element.withTypeText(typeName);
+            }
           }
           final int separator = name.indexOf(':');
           if (separator > 0) {
             element = element.withLookupString(name.substring(separator + 1));
           }
           element = element
-            .withCaseSensitivity(!(descriptor instanceof HtmlAttributeDescriptorImpl))
+            .withCaseSensitivity(!(descriptor instanceof HtmlAttributeDescriptorImpl) || ((HtmlAttributeDescriptorImpl)descriptor).isCaseSensitive())
             .withInsertHandler(insertHandler);
           result.addElement(
             descriptor.isRequired() ? PrioritizedLookupElement.withPriority(element.appendTailText("(required)", true), 100) :

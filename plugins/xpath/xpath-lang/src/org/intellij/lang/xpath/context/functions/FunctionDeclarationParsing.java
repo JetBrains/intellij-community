@@ -87,7 +87,7 @@ public class FunctionDeclarationParsing {
 
     final XPathType returnType = mapType(ret, indicator);
 
-    return Pair.create(prefix, new FunctionImpl(name, returnType, parameters.toArray(new Parameter[parameters.size()])));
+    return Pair.create(prefix, new FunctionImpl(name, returnType, parameters.toArray(new Parameter[0])));
   }
 
   public static XPathType mapType(String type, XPath2SequenceType.Cardinality c) {

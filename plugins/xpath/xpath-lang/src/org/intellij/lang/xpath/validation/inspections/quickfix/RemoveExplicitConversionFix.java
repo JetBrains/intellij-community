@@ -51,6 +51,7 @@ public class RemoveExplicitConversionFix extends ReplaceElementFix<XPathExpressi
         && ((XPathFunctionCall)startElement).getArgumentList().length == 1;
     }
 
+    @Override
     public void invokeImpl(Project project, PsiFile file) throws IncorrectOperationException {
       PsiElement myElement = getStartElement();
       final XPathExpression arg0 = ((XPathFunctionCall)myElement).getArgumentList()[0];

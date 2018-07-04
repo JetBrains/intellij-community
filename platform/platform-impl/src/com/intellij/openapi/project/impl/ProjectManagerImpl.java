@@ -1,28 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl;
 
 import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.conversion.ConversionResult;
 import com.intellij.conversion.ConversionService;
+import com.intellij.featureStatistics.fusCollectors.ProjectLifecycleUsageTriggerCollector;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
+import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FUSProjectUsageTrigger;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
@@ -30,6 +19,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -45,8 +35,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ZipHandler;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ArrayUtil;
@@ -60,7 +48,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -254,7 +241,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
     if (getLeakedProjectsCount() >= MAX_LEAKY_PROJECTS) {
       System.gc();
-      List<Project> copy = getLeakedProjects();
+      Collection<Project> copy = getLeakedProjects();
       myProjects.clear();
       if (ContainerUtil.collect(copy.iterator()).size() >= MAX_LEAKY_PROJECTS) {
         throw new TooManyProjectLeakedException(copy);
@@ -263,7 +250,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   }
 
   @TestOnly
-  private List<Project> getLeakedProjects() {
+  private Collection<Project> getLeakedProjects() {
     myProjects.remove(getDefaultProject()); // process queue
     return myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed()).collect(Collectors.toCollection(UnsafeWeakList::new));
   }
@@ -276,6 +263,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   private void initProject(@NotNull ProjectImpl project, @Nullable Project template) {
     ProgressIndicator indicator = myProgressManager.getProgressIndicator();
     if (indicator != null && !project.isDefault()) {
+      indicator.setIndeterminate(false);
       indicator.setText(ProjectBundle.message("loading.components.for", project.getName()));
     }
 
@@ -346,6 +334,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   public synchronized Project getDefaultProject() {
     LOG.assertTrue(!myDefaultProjectWasDisposed, "Default project has been already disposed!");
     if (myDefaultProject == null) {
+      LOG.assertTrue(!ApplicationManager.getApplication().isDisposeInProgress(), "Application being disposed!");
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
         try {
           myDefaultProject = createProject(null, "", true);
@@ -419,19 +408,15 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
             StorageUtilKt.checkUnknownMacros(project, true);
           }
         }
-        if (ApplicationManager.getApplication().isActive()) {
-          JFrame projectFrame = WindowManager.getInstance().getFrame(project);
-          if (projectFrame != null) {
-            IdeFocusManager.getInstance(project).requestFocus(projectFrame, true);
-          }
-        }
       }, ModalityState.NON_MODAL);
     };
 
     if (!loadProjectUnderProgress(project, process)) {
-      closeProject(project, false, false, false, true);
-      WriteAction.run(() -> Disposer.dispose(project));
-      notifyProjectOpenFailed();
+      GuiUtils.invokeLaterIfNeeded(() -> {
+        closeProject(project, false, false, false, true);
+        WriteAction.run(() -> Disposer.dispose(project));
+        notifyProjectOpenFailed();
+      }, ModalityState.defaultModalityState());
       return false;
     }
 
@@ -493,7 +478,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       project = null;
     }
     else {
-      project = createProject(null, toCanonicalName(filePath), false);
+      project = createProject(null, filePath, false);
       myProgressManager.run(new Task.WithResult<Project, IOException>(project, ProjectBundle.message("project.load.progress"), true) {
         @Override
         protected Project compute(@NotNull ProgressIndicator indicator) throws IOException {
@@ -634,7 +619,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
   // return true if successful
   public boolean closeAndDisposeAllProjects(boolean checkCanClose) {
-    ApplicationManager.getApplication().saveSettings();
     for (Project project : getOpenProjects()) {
       if (!closeProject(project, true, false, true, checkCanClose)) {
         return false;
@@ -673,6 +657,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return false;
     }
 
+    //Here could be false positives iff checkCanClose && !ensureCouldCloseIfUnableToSave(project)
+    //but this saving should be before saving project
+    FUSProjectUsageTrigger.getInstance(project).trigger(ProjectLifecycleUsageTriggerCollector.class, "project.closed");
+
     final ShutDownTracker shutDownTracker = ShutDownTracker.getInstance();
     shutDownTracker.registerStopperThread(Thread.currentThread());
     try {
@@ -680,9 +668,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
 
       if (saveProject) {
         FileDocumentManager.getInstance().saveAllDocuments();
-        project.save();
+        StoreUtil.saveProject(project, true);
         if (saveApp) {
-          app.saveSettings();
+          app.saveSettings(true);
         }
       }
 
@@ -778,6 +766,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       LOG.debug("projectOpened");
     }
 
+    FUSProjectUsageTrigger.getInstance(project).trigger(ProjectLifecycleUsageTriggerCollector.class, "project.opened");
+    FeatureUsageLogger.INSTANCE.log("lifecycle", "project.opened");
+
     myBusPublisher.projectOpened(project);
     // https://jetbrains.slack.com/archives/C5E8K7FL4/p1495015043685628
     // projectOpened in the project components is called _after_ message bus event projectOpened for ages
@@ -800,6 +791,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
     if (LOG.isDebugEnabled()) {
       LOG.debug("projectClosed");
     }
+
+    FeatureUsageLogger.INSTANCE.log("lifecycle", "project.closed");
 
     myBusPublisher.projectClosed(project);
     // see "why is called after message bus" in the fireProjectOpened

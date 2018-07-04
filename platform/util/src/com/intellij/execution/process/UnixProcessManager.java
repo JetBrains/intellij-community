@@ -1,29 +1,26 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.execution.process;
 
+import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
-import com.sun.jna.Platform;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -32,7 +29,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.*;
 
+import static com.intellij.util.ObjectUtils.assertNotNull;
+
 /**
+ * Use {@code com.intellij.execution.process.OSProcessUtil} wherever possible.
+ *
  * @author traff
  */
 public class UnixProcessManager {
@@ -41,33 +42,40 @@ public class UnixProcessManager {
   public static final int SIGINT = 2;
   public static final int SIGKILL = 9;
   public static final int SIGTERM = 15;
-  public static final int SIGCONT = 19;
 
-  private static CLib C_LIB;
+  @SuppressWarnings("SpellCheckingInspection")
+  private interface CLib extends Library {
+    int getpid();
+    int kill(int pid, int signal);
+  }
 
+  private static final CLib C_LIB;
   static {
+    CLib lib = null;
     try {
-      if (!Platform.isWindows()) {
-        C_LIB = ((CLib)Native.loadLibrary("c", CLib.class));
+      if (SystemInfo.isUnix && JnaLoader.isLoaded()) {
+        lib = Native.loadLibrary("c", CLib.class);
       }
     }
-    catch (Throwable e) {
-      Logger log = Logger.getInstance(UnixProcessManager.class);
-      log.warn("Can't load c library", e);
-      C_LIB = null;
+    catch (Throwable t) {
+      Logger.getInstance(UnixProcessManager.class).warn("Can't load standard library", t);
     }
+    C_LIB = lib;
   }
 
   private UnixProcessManager() { }
 
-  public static int getProcessPid(@NotNull Process process) {
+  public static int getProcessId(@NotNull Process process) {
     try {
-      Integer pid = ReflectionUtil.getField(process.getClass(), process, int.class, "pid");
-      return ObjectUtils.assertNotNull(pid);
+      if (SystemInfo.IS_AT_LEAST_JAVA9 && "java.lang.ProcessImpl".equals(process.getClass().getName())) {
+        //noinspection JavaReflectionMemberAccess
+        return ((Long)Process.class.getMethod("pid").invoke(process)).intValue();
+      }
+
+      return assertNotNull(ReflectionUtil.getField(process.getClass(), process, int.class, "pid"));
     }
-    catch (Exception e) {
-      throw new IllegalStateException("Cannot get PID from instance of " + process.getClass()
-                                      + ", OS: " + SystemInfo.OS_NAME, e);
+    catch (Throwable t) {
+      throw new IllegalStateException("Failed to get PID from instance of " + process.getClass() + ", OS: " + SystemInfo.OS_NAME, t);
     }
   }
 
@@ -82,92 +90,70 @@ public class UnixProcessManager {
 
   private static void checkCLib() {
     if (C_LIB == null) {
-      throw new IllegalStateException("Couldn't load c library, OS: " + SystemInfo.OS_NAME
-                                      + ", isUnix: " + SystemInfo.isUnix);
+      throw new IllegalStateException("Couldn't load c library, OS: " + SystemInfo.OS_NAME + ", isUnix: " + SystemInfo.isUnix);
     }
   }
 
-  public static boolean sendSigIntToProcessTree(Process process) {
+  public static boolean sendSigIntToProcessTree(@NotNull Process process) {
     return sendSignalToProcessTree(process, SIGINT);
   }
 
-  public static boolean sendSigIntToForeignProcessTree(int pid) {
-    return sendSignalToForeignProcessTree(pid, SIGINT);
-  }
-
-  public static boolean sendSigKillToForeignProcessTree(int pid) {
-    return sendSignalToForeignProcessTree(pid, SIGKILL);
-  }
-
-  public static boolean sendSigKillToProcessTree(Process process) {
+  public static boolean sendSigKillToProcessTree(@NotNull Process process) {
     return sendSignalToProcessTree(process, SIGKILL);
   }
 
-  private static boolean doSendSignalToProcessTree(int process_pid, int signal, boolean isInherited) {
+  public static boolean sendSignalToProcessTree(@NotNull Process process, int signal) {
+    try {
+      return sendSignalToProcessTree(getProcessId(process), signal);
+    }
+    catch (Exception e) {
+      LOG.warn("Error killing the process", e);
+      return false;
+    }
+  }
+
+  public static boolean sendSignalToProcessTree(int processId, int signal) {
     checkCLib();
 
-    final int our_pid = isInherited ? C_LIB.getpid() : -1;
+    final int ourPid = C_LIB.getpid();
+    return sendSignalToProcessTree(processId, signal, ourPid);
+  }
+
+  public static boolean sendSignalToProcessTree(int processId, int signal, int ourPid) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Sending signal " + signal + " to process tree with root PID " + process_pid);
+      LOG.debug("Sending signal " + signal + " to process tree with root PID " + processId);
     }
 
     final Ref<Integer> foundPid = new Ref<Integer>();
     final ProcessInfo processInfo = new ProcessInfo();
     final List<Integer> childrenPids = new ArrayList<Integer>();
 
-    findChildProcesses(our_pid, process_pid, foundPid, processInfo, childrenPids);
+    findChildProcesses(ourPid, processId, foundPid, processInfo, childrenPids);
 
     // result is true if signal was sent to at least one process
     final boolean result;
     if (!foundPid.isNull()) {
-      processInfo.killProcTree(foundPid.get(), signal, UNIX_KILLER);
+      processInfo.killProcTree(foundPid.get(), signal);
       result = true;
     }
     else {
       for (Integer pid : childrenPids) {
-        processInfo.killProcTree(pid, signal, UNIX_KILLER);
+        processInfo.killProcTree(pid, signal);
       }
       result = !childrenPids.isEmpty(); //we've tried to kill at least one process
     }
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Done sending signal " + signal + "; found: " + foundPid.get()
-        + ", children: " + childrenPids + ", result: " + result);
+      LOG.debug("Done sending signal " + signal + "; found: " + foundPid.get() + ", children: " + childrenPids + ", result: " + result);
     }
 
     return result;
   }
 
-  public static boolean sendSignalToForeignProcessTree(int pid, int signal) {
-    try {
-      return doSendSignalToProcessTree(pid, signal, false);
-    } catch (Exception e) {
-      //If we fail somehow just return false
-      LOG.warn("Error killing the process", e);
-      return false;
-    }
-  }
-
-  /**
-   * Sends signal to every child process of a tree root process
-   *
-   * @param process tree root process
-   */
-  public static boolean sendSignalToProcessTree(@NotNull Process process, int signal) {
-    try {
-      final int process_pid = getProcessPid(process);
-      return doSendSignalToProcessTree(process_pid, signal, true);
-    }
-    catch (Exception e) {
-      //If we fail somehow just return false
-      LOG.warn("Error killing the process", e);
-      return false;
-    }
-  }
-
   private static void findChildProcesses(final int our_pid,
                                          final int process_pid,
                                          final Ref<Integer> foundPid,
-                                         final ProcessInfo processInfo, final List<Integer> childrenPids) {
+                                         final ProcessInfo processInfo,
+                                         final List<Integer> childrenPids) {
     final Ref<Boolean> ourPidFound = Ref.create(false);
     processPSOutput(getPSCmd(false), new Processor<String>() {
       @Override
@@ -270,41 +256,26 @@ public class UnixProcessManager {
     }
   }
 
-  private interface CLib extends Library {
-    int getpid();
-    int kill(int pid, int signal);
-  }
-
-  public static class ProcessInfo {
-    private Map<Integer, List<Integer>> BY_PARENT = new TreeMap<Integer, List<Integer>>(); // pid -> list of children pids
+  private static class ProcessInfo {
+    private final Map<Integer, List<Integer>> BY_PARENT = new TreeMap<Integer, List<Integer>>(); // pid -> list of children pids
 
     public void register(Integer pid, Integer parentPid) {
       List<Integer> children = BY_PARENT.get(parentPid);
-      if (children == null) children = new LinkedList<Integer>();
+      if (children == null) BY_PARENT.put(parentPid, children = new LinkedList<Integer>());
       children.add(pid);
-      BY_PARENT.put(parentPid, children);
     }
 
-    public void killProcTree(int pid, int signal, ProcessKiller killer) {
+    public void killProcTree(int pid, int signal) {
       List<Integer> children = BY_PARENT.get(pid);
       if (children != null) {
-        for (int child : children) killProcTree(child, signal, killer);
+        for (int child : children) {
+          killProcTree(child, signal);
+        }
       }
       if (LOG.isDebugEnabled()) {
         LOG.debug("Sending signal " + signal + " to PID " + pid);
       }
-      killer.kill(pid, signal);
-    }
-  }
-
-  public interface ProcessKiller {
-    void kill(int pid, int signal);
-  }
-
-  private static final ProcessKiller UNIX_KILLER = new ProcessKiller() {
-    @Override
-    public void kill(int pid, int signal) {
       sendSignal(pid, signal);
     }
-  };
+  }
 }

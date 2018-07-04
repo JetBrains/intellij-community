@@ -183,22 +183,26 @@ public class ResolveClassTest extends ResolveTestCase {
   }
 
   public void testModuleSourceAsLibrarySource() throws Exception {
-    final PsiReference ref = configure();
+    VirtualFile dir = createTempVfsDirectory();
+    ModuleRootModificationUtil.addModuleLibrary(myModule, "lib", Collections.emptyList(), Collections.singletonList(dir.getUrl()));
+
+    final PsiReference ref = configureByFile("class/" + getTestName(false) + ".java", dir);
     final VirtualFile file = ref.getElement().getContainingFile().getVirtualFile();
     assertNotNull(file);
     createFile(myModule, file.getParent(), "ModuleSourceAsLibrarySourceDep.java", loadFile("class/ModuleSourceAsLibrarySourceDep.java"));
-    ModuleRootModificationUtil.addModuleLibrary(myModule, "lib", Collections.emptyList(), Collections.singletonList(file.getParent().getUrl()));
 
     assertInstanceOf(ref.resolve(), PsiClass.class);
   }
 
   public void testModuleSourceAsLibraryClasses() throws Exception {
-    final PsiReference ref = configure();
+    VirtualFile dir = createTempVfsDirectory();
+    ModuleRootModificationUtil.addModuleLibrary(myModule, "lib", Collections.singletonList(dir.getUrl()), Collections.emptyList());
+
+    PsiReference ref = configureByFile("class/" + getTestName(false) + ".java", dir);
     PsiFile psiFile = ref.getElement().getContainingFile();
     final VirtualFile file = psiFile.getVirtualFile();
     assertNotNull(file);
-    createFile(myModule, file.getParent(), "ModuleSourceAsLibraryClassesDep.java", loadFile("class/ModuleSourceAsLibraryClassesDep.java"));
-    ModuleRootModificationUtil.addModuleLibrary(myModule, "lib", Collections.singletonList(file.getParent().getUrl()), Collections.emptyList());
+    createFile(myModule, dir, "ModuleSourceAsLibraryClassesDep.java", loadFile("class/ModuleSourceAsLibraryClassesDep.java"));
     //need this to ensure that PsiJavaFileBaseImpl.myResolveCache is filled to reproduce IDEA-91309
     DependenciesBuilder.analyzeFileDependencies(psiFile, new DependenciesBuilder.DependencyProcessor() {
       @Override
@@ -231,7 +235,9 @@ public class ResolveClassTest extends ResolveTestCase {
   public void testStaticImportNetworkPerformance() throws Exception {
     warmUpResolve();
 
-    PsiReference ref = configure();
+    VirtualFile dir = createTempVfsDirectory();
+
+    PsiReference ref = configureByFile("class/" + getTestName(false) + ".java", dir);
     int count = 15;
 
     String imports = "";
@@ -240,7 +246,7 @@ public class ResolveClassTest extends ResolveTestCase {
     }
 
     for (int i = 0; i < count; i++) {
-      createFile(myModule, "Foo" + i + ".java", imports + "class Foo" + i + " extends Bar1, Bar2, Bar3 {}");
+      createFile(myModule, dir, "Foo" + i + ".java", imports + "class Foo" + i + " extends Bar1, Bar2, Bar3 {}");
     }
 
     ensureIndexUpToDate();

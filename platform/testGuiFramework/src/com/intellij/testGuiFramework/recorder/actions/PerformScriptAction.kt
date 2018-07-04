@@ -19,8 +19,8 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.testGuiFramework.recorder.GuiRecorderManager
 import com.intellij.testGuiFramework.recorder.compile.KotlinCompileUtil
-import com.intellij.testGuiFramework.recorder.components.GuiRecorderComponent
 import com.intellij.testGuiFramework.recorder.ui.Notifier
 
 /**
@@ -30,13 +30,13 @@ import com.intellij.testGuiFramework.recorder.ui.Notifier
 class PerformScriptAction : AnAction(null, "Run GUI Script", AllIcons.Actions.Execute) {
 
   companion object {
-    val LOG = Logger.getInstance(PerformScriptAction::class.java)
+    val LOG: Logger = Logger.getInstance(PerformScriptAction::class.java)
   }
 
   override fun actionPerformed(p0: AnActionEvent?) {
     LOG.info("Compile and evaluate current script buffer")
     Notifier.updateStatus("${Notifier.LONG_OPERATION_PREFIX}Compiling and performing current script")
-    val editor = GuiRecorderComponent.getEditor()
+    val editor = GuiRecorderManager.getEditor()
 
     KotlinCompileUtil.compileAndRun(editor.document.text)
   }

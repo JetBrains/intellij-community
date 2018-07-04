@@ -50,7 +50,7 @@ class DataFlowInspectionHeavyTest extends JavaCodeInsightFixtureTestCase {
     def testFile = myFixture.addFileToProject 'test.java', '''
       class Zoo {
         @annos.Nullable String a = null;
-        @annos.NotNull String f = foo.ObjectUtils.notNull(a);
+        @annos.NotNull String f = foo.ObjectUtils.notNull(<weak_warning descr="Value 'a' is always 'null'">a</weak_warning>);
         
         void bar(@annos.NotNull String param) { }
         void goo(@annos.Nullable String param) {
@@ -80,8 +80,16 @@ class DataFlowInspectionHeavyTest extends JavaCodeInsightFixtureTestCase {
   void "test no always failing calls in tests"() {
     PsiTestUtil.addSourceRoot(myModule, myFixture.tempDirFixture.findOrCreateDir("test"), true)
 
+    myFixture.addFileToProject("test/org/junit/Test.java", """
+package org.junit;
+
+public @interface Test {
+  Class<? extends Throwable> expected();
+}
+""")
     myFixture.configureFromExistingVirtualFile(myFixture.addFileToProject("test/Foo.java", """
 class Foo {
+  @org.junit.Test(expected=RuntimeException.class)
   void foo() {
     assertTrue(false);
   }

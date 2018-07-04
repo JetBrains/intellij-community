@@ -22,6 +22,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NamedRunnable;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -41,6 +43,7 @@ import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackChangeListener;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -52,6 +55,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   public static final ExtensionPointName<VcsLogHighlighterFactory> LOG_HIGHLIGHTER_FACTORY_EP =
     ExtensionPointName.create("com.intellij.logHighlighterFactory");
 
+  @NotNull private final String myId;
   @NotNull protected final Project myProject;
   @NotNull protected final VcsLogData myLogData;
   @NotNull protected final VcsLogColorManager myColorManager;
@@ -63,11 +67,12 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
 
   @NotNull protected VisiblePack myVisiblePack;
 
-  public AbstractVcsLogUi(@NotNull VcsLogData logData,
-                          @NotNull Project project,
+  public AbstractVcsLogUi(@NotNull String id,
+                          @NotNull VcsLogData logData,
                           @NotNull VcsLogColorManager manager,
                           @NotNull VisiblePackRefresher refresher) {
-    myProject = project;
+    myId = id;
+    myProject = logData.getProject();
     myLogData = logData;
     myRefresher = refresher;
     myColorManager = manager;
@@ -83,6 +88,12 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
       }
     });
     myRefresher.addVisiblePackChangeListener(myVisiblePackChangeListener);
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return myId;
   }
 
   public void requestFocus() {
@@ -114,17 +125,11 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @NotNull
   public abstract Component getMainComponent();
 
-  protected abstract VcsLogFilterCollection getFilters();
-
   @NotNull
   public abstract VcsLogUiProperties getProperties();
 
-  public abstract boolean isShowRootNames();
-
-  @Override
-  public boolean areGraphActionsEnabled() {
-    return getTable().getRowCount() > 0;
-  }
+  @Nullable
+  public abstract String getHelpId();
 
   @NotNull
   public VisiblePackRefresher getRefresher() {
@@ -137,11 +142,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   }
 
   @NotNull
-  public Project getProject() {
-    return myProject;
-  }
-
-  @NotNull
   public VcsLog getVcsLog() {
     return myLog;
   }
@@ -149,6 +149,11 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @NotNull
   public VcsLogData getLogData() {
     return myLogData;
+  }
+
+  public void requestMore(@NotNull Runnable onLoaded) {
+    myRefresher.moreCommitsNeeded(onLoaded);
+    getTable().setPaintBusy(true);
   }
 
   @Override
@@ -232,12 +237,18 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
     }
   }
 
-  public void invokeOnChange(@NotNull final Runnable runnable) {
+  public void invokeOnChange(@NotNull Runnable runnable) {
+    invokeOnChange(runnable, Conditions.alwaysTrue());
+  }
+
+  protected void invokeOnChange(@NotNull Runnable runnable, @NotNull Condition<VcsLogDataPack> condition) {
     addLogListener(new VcsLogListener() {
       @Override
       public void onChange(@NotNull VcsLogDataPack dataPack, boolean refreshHappened) {
-        runnable.run();
-        removeLogListener(this);
+        if (condition.value(dataPack)) {
+          runnable.run();
+          removeLogListener(this);
+        }
       }
     });
   }

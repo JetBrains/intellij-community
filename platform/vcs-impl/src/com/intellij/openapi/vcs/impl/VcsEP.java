@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.vcs.impl;
 
-import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
@@ -75,7 +74,7 @@ public class VcsEP extends AbstractExtensionPointBean {
       final Class<?>[] interfaces = foundClass.getInterfaces();
       for (Class<?> anInterface : interfaces) {
         if (BaseComponent.class.isAssignableFrom(anInterface)) {
-          return PeriodicalTasksCloser.getInstance().safeGetComponent(project, foundClass);
+          return project.getComponent(foundClass);
         }
       }
       return instantiate(vcsClass, project.getPicoContainer());

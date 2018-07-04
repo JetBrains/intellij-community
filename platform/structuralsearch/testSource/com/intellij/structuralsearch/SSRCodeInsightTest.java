@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -11,7 +12,7 @@ import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import java.util.Collections;
 
 public class SSRCodeInsightTest extends UsefulTestCase {
-   protected CodeInsightTestFixture myFixture;
+  protected CodeInsightTestFixture myFixture;
   private SSBasedInspection myInspection;
 
   @Override
@@ -20,8 +21,7 @@ public class SSRCodeInsightTest extends UsefulTestCase {
     IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
     TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createLightFixtureBuilder(new DefaultLightProjectDescriptor());
     final IdeaProjectTestFixture fixture = fixtureBuilder.getFixture();
-    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture,
-                                                                                    new LightTempDirTestFixtureImpl(true));
+    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixture, new LightTempDirTestFixtureImpl(true));
     myInspection = new SSBasedInspection();
     myFixture.setUp();
     myFixture.enableInspections(myInspection);
@@ -52,16 +52,19 @@ public class SSRCodeInsightTest extends UsefulTestCase {
            "silly null check");
   }
 
+  public void testBrokenPattern() {
+    // check broken pattern does not throw exceptions
+    doTest("int i(", "semicolon expected");
+  }
+
   private void doTest(final String searchPattern, final String patternName) {
     final SearchConfiguration configuration = new SearchConfiguration();
     //display name
     configuration.setName(patternName);
 
-    //search pattern
-    final MatchOptions options = new MatchOptions();
+    final MatchOptions options = configuration.getMatchOptions();
     options.setFileType(StdFileTypes.JAVA);
     options.setSearchPattern(searchPattern);
-    configuration.setMatchOptions(options);
 
     myInspection.setConfigurations(Collections.singletonList(configuration), myFixture.getProject());
     myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");

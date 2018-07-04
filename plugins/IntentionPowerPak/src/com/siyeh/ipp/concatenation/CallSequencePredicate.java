@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.siyeh.ipp.concatenation;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.Nullable;
@@ -59,12 +60,7 @@ class CallSequencePredicate implements PsiElementPredicate {
 }
  @Nullable
  private static PsiVariable getVariable(PsiMethodCallExpression methodCallExpression) {
-   final PsiType type = methodCallExpression.getType();
-   if (!(type instanceof PsiClassType)) {
-     return null;
-   }
-   final PsiClassType classType = (PsiClassType)type;
-   final PsiClass aClass = classType.resolve();
+   final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(methodCallExpression.getType());
    if (aClass == null) {
      return null;
    }

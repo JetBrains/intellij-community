@@ -221,7 +221,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
       if (orderType == null) {
         orderType = StdArrangementTokens.Order.KEEP;
       }
-      return Pair.create(ArrangementUtil.combine(conditions.toArray(new ArrangementMatchCondition[conditions.size()])), orderType);
+      return Pair.create(ArrangementUtil.combine(conditions.toArray(new ArrangementMatchCondition[0])), orderType);
     }
     else {
       return null;
@@ -317,7 +317,7 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
    */
   private void refreshConditions() {
     Pair<ArrangementMatchCondition, ArrangementSettingsToken> pair = buildCondition();
-    ArrangementMatchCondition condition = pair == null ? null : pair.first;
+    ArrangementMatchCondition condition = Pair.getFirst(pair);
     for (ArrangementUiComponent component : myComponents.values()) {
       ArrangementSettingsToken token = component.getToken();
       if (token == null) {

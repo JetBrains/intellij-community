@@ -208,11 +208,10 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
 
       VirtualFile virtualFile = findFileByPath(resPath, dtdUrl);
 
-      Set<String> linksToProcess = new HashSet<>();
       Set<String> processedLinks = new HashSet<>();
       Map<String, String> baseUrls = new HashMap<>();
       VirtualFile contextFile = virtualFile;
-      linksToProcess.addAll(extractEmbeddedFileReferences(virtualFile, null, psiManager, url));
+      Set<String> linksToProcess = new HashSet<>(extractEmbeddedFileReferences(virtualFile, null, psiManager, url));
 
       while (!linksToProcess.isEmpty()) {
         String s = linksToProcess.iterator().next();

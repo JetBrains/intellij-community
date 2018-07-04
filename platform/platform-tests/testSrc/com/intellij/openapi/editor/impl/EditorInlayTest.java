@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.command.WriteCommandAction;
@@ -140,12 +126,7 @@ public class EditorInlayTest extends AbstractEditorTest {
     configureSoftWraps(7);
     Inlay inlay = addInlay(1);
     assertNotNull(myEditor.getSoftWrapModel().getSoftWrap(5));
-    new WriteCommandAction.Simple<Void>(ourProject) {
-      @Override
-      protected void run() {
-        myEditor.getDocument().setText(" ");
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(ourProject).run(() -> myEditor.getDocument().setText(" "));
     assertFalse(inlay.isValid());
   }
 
@@ -325,6 +306,24 @@ public class EditorInlayTest extends AbstractEditorTest {
     });
     assertTrue(i1.isValid() && i1.getOffset() == 1);
     assertTrue(i2.isValid() && i2.getOffset() == 4);
+  }
+
+  public void testNoOpReplaceDoesntMoveCaret() {
+    initText("<caret>abc");
+    addInlay(2);
+    right();
+    right();
+    WriteCommandAction.runWriteCommandAction(ourProject, () -> {
+      myEditor.getDocument().replaceString(1, 2, "b");
+    });
+    checkCaretPosition(2, 2, 2);
+  }
+
+  public void testCaretMovingToInlayOffset() {
+    initText("<caret>abc");
+    addInlay(2);
+    myEditor.getCaretModel().moveToOffset(2);
+    checkCaretPosition(2, 2, 3);
   }
 
   private static void checkCaretPositionAndSelection(int offset, int logicalColumn, int visualColumn,

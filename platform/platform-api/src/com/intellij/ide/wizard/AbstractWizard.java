@@ -28,6 +28,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -58,6 +59,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   protected JPanel myContentPanel;
   protected TallImageComponent myIcon;
   private Component myCurrentStepComponent;
+  private JBCardLayout.SwipeDirection myTransitionDirection = JBCardLayout.SwipeDirection.AUTO;
   private final Map<Component, String> myComponentToIdMap = new HashMap<>();
   private final StepListener myStepListener = new StepListener() {
     public void stateChanged() {
@@ -129,19 +131,24 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
         myHelpButton.setText("");
       }
 
+      int index = 0;
       JPanel leftPanel = new JPanel();
       if (ApplicationInfo.contextHelpAvailable()) {
         leftPanel.add(myHelpButton);
+        TouchbarDataKeys.putClientPropertyDialogButton(myHelpButton, false, false, index++);
       }
       leftPanel.add(myCancelButton);
+      TouchbarDataKeys.putClientPropertyDialogButton(myCancelButton, true, false, index++);
       panel.add(leftPanel, BorderLayout.WEST);
 
       if (mySteps.size() > 1) {
         buttonPanel.add(Box.createHorizontalStrut(5));
         buttonPanel.add(myPreviousButton);
+        TouchbarDataKeys.putClientPropertyDialogButton(myPreviousButton, true, false, index++);
       }
       buttonPanel.add(Box.createHorizontalStrut(5));
       buttonPanel.add(myNextButton);
+      TouchbarDataKeys.putClientPropertyDialogButton(myNextButton, true, true, index++);
     }
     else {
       panel.add(buttonPanel, BorderLayout.CENTER);
@@ -168,7 +175,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
       layout.setHorizontalGroup(hGroup);
       layout.setVerticalGroup(vGroup);
-      layout.linkSize(buttons.toArray(new Component[buttons.size()]));
+      layout.linkSize(buttons.toArray(new Component[0]));
     }
 
     myPreviousButton.setEnabled(false);
@@ -343,7 +350,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       myContentPanel.revalidate();
       myContentPanel.repaint();
     }
-    ((JBCardLayout)myContentPanel.getLayout()).swipe(myContentPanel, id, JBCardLayout.SwipeDirection.AUTO);
+    ((JBCardLayout)myContentPanel.getLayout()).swipe(myContentPanel, id, myTransitionDirection);
   }
 
   protected void doPreviousAction() {
@@ -362,7 +369,19 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
 
     myCurrentStep = getPreviousStep(myCurrentStep);
-    updateStep();
+    updateStep(JBCardLayout.SwipeDirection.BACKWARD);
+  }
+
+  protected final void updateStep(JBCardLayout.SwipeDirection direction) {
+    //it would be better to pass 'direction' to 'updateStep' as a parameter, but since that method is used and overriden in plugins
+    // we cannot do it without breaking compatibility
+    try {
+      myTransitionDirection = direction;
+      updateStep();
+    }
+    finally {
+      myTransitionDirection = JBCardLayout.SwipeDirection.AUTO;
+    }
   }
 
   protected void doNextAction() {
@@ -382,7 +401,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     }
 
     myCurrentStep = getNextStep(myCurrentStep);
-    updateStep();
+    updateStep(JBCardLayout.SwipeDirection.FORWARD);
   }
 
   /**

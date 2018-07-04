@@ -47,7 +47,7 @@ public class UnsyncByteArrayOutputStream extends OutputStream {
   }
 
   @Override
-  public void write(byte b[], int off, int len) {
+  public void write(byte[] b, int off, int len) {
     if ((off < 0) || (off > b.length) || (len < 0) ||
         ((off + len) > b.length) || ((off + len) < 0)) {
       throw new IndexOutOfBoundsException();

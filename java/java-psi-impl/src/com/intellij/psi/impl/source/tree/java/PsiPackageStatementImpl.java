@@ -68,7 +68,7 @@ public class PsiPackageStatementImpl extends CompositePsiElement implements PsiP
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JavaTokenType.PACKAGE_KEYWORD) {

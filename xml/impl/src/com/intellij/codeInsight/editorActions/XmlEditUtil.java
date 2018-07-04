@@ -15,11 +15,11 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.xml.util.HtmlUtil.hasHtml;
@@ -31,19 +31,24 @@ public class XmlEditUtil {
    */
   public static CodeStyleSettings.QuoteStyle quoteStyle(@NotNull PsiFile file) {
     PsiElement context = file.getContext();
-    CodeStyleSettings.QuoteStyle style = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings().HTML_QUOTE_STYLE;
+    CodeStyleSettings.QuoteStyle style = getQuoteStyleForFile(file);
     if (context != null && !style.quote.isEmpty() && context.getText().startsWith(style.quote)) {
       return style == CodeStyleSettings.QuoteStyle.Double ? CodeStyleSettings.QuoteStyle.Single : CodeStyleSettings.QuoteStyle.Double;
     }
     return style;
   }
 
-  @NotNull
-  public static String getAttributeQuote(boolean html) {
-    return html ? CodeStyleSchemes.getInstance().getCurrentScheme().getCodeStyleSettings().HTML_QUOTE_STYLE.quote : "\"";
+  public static String getAttributeQuote(@NotNull PsiFile file) {
+    if (hasHtml(file) || supportsXmlTypedHandlers(file)) {
+      return getQuoteStyleForFile(file).quote;
+    }
+    return "\"";
   }
 
-  public static String getAttributeQuote(@NotNull PsiFile file) {
-    return getAttributeQuote(hasHtml(file) || supportsXmlTypedHandlers(file));
+  @NotNull
+  private static CodeStyleSettings.QuoteStyle getQuoteStyleForFile(@NotNull PsiFile file) {
+    return CodeStyle.getSettings(file)
+      .getCustomSettings(HtmlCodeStyleSettings.class)
+      .HTML_QUOTE_STYLE;
   }
 }

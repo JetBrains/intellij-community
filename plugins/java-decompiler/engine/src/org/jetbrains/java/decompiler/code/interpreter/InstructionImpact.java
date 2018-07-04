@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.code.interpreter;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -339,7 +325,6 @@ public class InstructionImpact {
 
 
   public static void stepTypes(DataPoint data, Instruction instr, ConstantPool pool) {
-
     ListStack<VarType> stack = data.getStack();
     int[][] arr = stack_impact[instr.opcode];
 
@@ -351,8 +336,7 @@ public class InstructionImpact {
 
       if (read != null) {
         int depth = 0;
-        for (int i = 0; i < read.length; i++) {
-          int type = read[i];
+        for (int type : read) {
           depth++;
           if (type == CodeConstants.TYPE_LONG ||
               type == CodeConstants.TYPE_DOUBLE) {
@@ -364,8 +348,7 @@ public class InstructionImpact {
       }
 
       if (write != null) {
-        for (int i = 0; i < write.length; i++) {
-          int type = write[i];
+        for (int type : write) {
           stack.push(new VarType(type));
           if (type == CodeConstants.TYPE_LONG ||
               type == CodeConstants.TYPE_DOUBLE) {
@@ -395,7 +378,7 @@ public class InstructionImpact {
       case CodeConstants.opc_ldc:
       case CodeConstants.opc_ldc_w:
       case CodeConstants.opc_ldc2_w:
-        PooledConstant constant = pool.getConstant(instr.getOperand(0));
+        PooledConstant constant = pool.getConstant(instr.operand(0));
         switch (constant.type) {
           case CodeConstants.CONSTANT_Integer:
             stack.push(new VarType(CodeConstants.TYPE_INT));
@@ -423,7 +406,7 @@ public class InstructionImpact {
         }
         break;
       case CodeConstants.opc_aload:
-        var1 = data.getVariable(instr.getOperand(0));
+        var1 = data.getVariable(instr.operand(0));
         if (var1 != null) {
           stack.push(var1);
         }
@@ -436,7 +419,7 @@ public class InstructionImpact {
         stack.push(new VarType(var1.type, var1.arrayDim - 1, var1.value));
         break;
       case CodeConstants.opc_astore:
-        data.setVariable(instr.getOperand(0), stack.pop());
+        data.setVariable(instr.operand(0), stack.pop());
         break;
       case CodeConstants.opc_dup:
       case CodeConstants.opc_dup_x1:
@@ -458,7 +441,7 @@ public class InstructionImpact {
       case CodeConstants.opc_getfield:
         stack.pop();
       case CodeConstants.opc_getstatic:
-        ck = pool.getLinkConstant(instr.getOperand(0));
+        ck = pool.getLinkConstant(instr.operand(0));
         var1 = new VarType(ck.descriptor);
         stack.push(var1);
         if (var1.stackSize == 2) {
@@ -468,7 +451,7 @@ public class InstructionImpact {
       case CodeConstants.opc_putfield:
         stack.pop();
       case CodeConstants.opc_putstatic:
-        ck = pool.getLinkConstant(instr.getOperand(0));
+        ck = pool.getLinkConstant(instr.operand(0));
         var1 = new VarType(ck.descriptor);
         stack.pop(var1.stackSize);
         break;
@@ -478,8 +461,8 @@ public class InstructionImpact {
         stack.pop();
       case CodeConstants.opc_invokestatic:
       case CodeConstants.opc_invokedynamic:
-        if (instr.opcode != CodeConstants.opc_invokedynamic || instr.bytecode_version >= CodeConstants.BYTECODE_JAVA_7) {
-          ck = pool.getLinkConstant(instr.getOperand(0));
+        if (instr.opcode != CodeConstants.opc_invokedynamic || instr.bytecodeVersion >= CodeConstants.BYTECODE_JAVA_7) {
+          ck = pool.getLinkConstant(instr.operand(0));
           MethodDescriptor md = MethodDescriptor.parseDescriptor(ck.descriptor);
           for (int i = 0; i < md.params.length; i++) {
             stack.pop(md.params[i].stackSize);
@@ -493,12 +476,12 @@ public class InstructionImpact {
         }
         break;
       case CodeConstants.opc_new:
-        cn = pool.getPrimitiveConstant(instr.getOperand(0));
+        cn = pool.getPrimitiveConstant(instr.operand(0));
         stack.push(new VarType(CodeConstants.TYPE_OBJECT, 0, cn.getString()));
         break;
       case CodeConstants.opc_newarray:
         stack.pop();
-        stack.push(new VarType(arr_type[instr.getOperand(0) - 4], 1).resizeArrayDim(1));
+        stack.push(new VarType(arr_type[instr.operand(0) - 4], 1).resizeArrayDim(1));
         break;
       case CodeConstants.opc_athrow:
         var1 = stack.pop();
@@ -508,14 +491,14 @@ public class InstructionImpact {
       case CodeConstants.opc_checkcast:
       case CodeConstants.opc_instanceof:
         stack.pop();
-        cn = pool.getPrimitiveConstant(instr.getOperand(0));
+        cn = pool.getPrimitiveConstant(instr.operand(0));
         stack.push(new VarType(CodeConstants.TYPE_OBJECT, 0, cn.getString()));
         break;
       case CodeConstants.opc_anewarray:
       case CodeConstants.opc_multianewarray:
-        int dimensions = (instr.opcode == CodeConstants.opc_anewarray) ? 1 : instr.getOperand(1);
+        int dimensions = (instr.opcode == CodeConstants.opc_anewarray) ? 1 : instr.operand(1);
         stack.pop(dimensions);
-        cn = pool.getPrimitiveConstant(instr.getOperand(0));
+        cn = pool.getPrimitiveConstant(instr.operand(0));
         if (cn.isArray) {
           var1 = new VarType(CodeConstants.TYPE_OBJECT, 0, cn.getString());
           var1 = var1.resizeArrayDim(var1.arrayDim + dimensions);

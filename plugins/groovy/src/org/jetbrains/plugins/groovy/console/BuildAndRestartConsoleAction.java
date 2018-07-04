@@ -32,11 +32,11 @@ import org.jetbrains.annotations.NotNull;
 
 public class BuildAndRestartConsoleAction extends AnAction {
 
-  private Module myModule;
-  private Project myProject;
-  private Executor myExecutor;
-  private RunContentDescriptor myContentDescriptor;
-  private Consumer<Module> myRestarter;
+  private final Module myModule;
+  private final Project myProject;
+  private final Executor myExecutor;
+  private final RunContentDescriptor myContentDescriptor;
+  private final Consumer<Module> myRestarter;
 
   public BuildAndRestartConsoleAction(@NotNull Module module,
                                       @NotNull Project project,

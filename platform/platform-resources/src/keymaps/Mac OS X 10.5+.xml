@@ -266,6 +266,12 @@
   <action id="CallHierarchy">
     <keyboard-shortcut first-keystroke="control alt H"/>
   </action>
+  <action id="Vcs.MoveChangedLinesToChangelist">
+    <keyboard-shortcut first-keystroke="meta shift M"/>
+  </action>
+  <action id="ChangesView.Move">
+    <keyboard-shortcut first-keystroke="meta shift M"/>
+  </action>
 
   <action id="CommentByBlockComment">
     <keyboard-shortcut first-keystroke="meta alt SLASH"/>
@@ -593,5 +599,28 @@
 
   <action id="EmojiAndSymbols">
     <keyboard-shortcut first-keystroke="control meta SPACE"/>
+  </action>
+
+  <action id="MethodOverloadSwitchUp">
+    <keyboard-shortcut first-keystroke="alt UP"/>
+  </action>
+  <action id="MethodOverloadSwitchDown">
+    <keyboard-shortcut first-keystroke="alt DOWN"/>
+  </action>
+
+  <action id="RunDashboard.ShowConfigurations">
+    <keyboard-shortcut first-keystroke="shift meta T"/>
+  </action>
+
+  <action id="GotoNextElementUnderCaretUsage">
+    <keyboard-shortcut first-keystroke="ctrl alt DOWN"/>
+  </action>
+
+  <action id="GotoPrevElementUnderCaretUsage">
+    <keyboard-shortcut first-keystroke="ctrl alt UP"/>
+  </action>
+
+  <action id="XDebugger.AttachToProcess">
+    <keyboard-shortcut first-keystroke="alt shift F5"/>
   </action>
 </keymap>

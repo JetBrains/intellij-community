@@ -89,6 +89,7 @@ public class ExternalModuleSettingsStep<S extends ExternalProjectSettings> exten
     if (contentPath != null) {
       myControl.getInitialSettings().setExternalProjectPath(contentPath);
     }
+    myControl.reset(true, myContext);
   }
 
   @Override

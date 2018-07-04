@@ -163,7 +163,7 @@ public class DualView extends JPanel {
       if (column.shouldBeShownIsTheTree()) result.add(column);
     }
 
-    return result.toArray(new ColumnInfo[result.size()]);
+    return result.toArray(ColumnInfo.EMPTY_ARRAY);
   }
 
   public void switchToTheFlatMode() {
@@ -232,7 +232,7 @@ public class DualView extends JPanel {
       }
     }
 
-    ListTableModel flatModel = new ListTableModel(shownColumns.toArray(new ColumnInfo[shownColumns.size()]));
+    ListTableModel flatModel = new ListTableModel(shownColumns.toArray(ColumnInfo.EMPTY_ARRAY));
     //noinspection unchecked
     myFlatView = new TableView(flatModel) {
       public TableCellRenderer getCellRenderer(int row, int column) {
@@ -281,7 +281,7 @@ public class DualView extends JPanel {
       return renderer;
     }
     else {
-      return new TableCellRendererWrapper(renderer);
+      return new MyTableCellRendererWrapper(renderer);
     }
   }
 
@@ -404,7 +404,7 @@ public class DualView extends JPanel {
 
     myTreeView.getTreeViewModel().setRoot(node);
 
-    if ((targetSelection != null) && (! targetSelection.isEmpty())) {
+    if ((targetSelection != null) && (!targetSelection.isEmpty())) {
       final List items = myFlatView.getItems();
       for (Object selElement : targetSelection) {
         if (items.contains(selElement)) {
@@ -420,14 +420,16 @@ public class DualView extends JPanel {
     ((AbstractTableModel)myTreeView.getModel()).fireTableDataChanged();
   }
 
-  public class TableCellRendererWrapper implements TableCellRenderer {
-    private final TableCellRenderer myRenderer;
+  private class MyTableCellRendererWrapper implements TableCellRendererWrapper {
+    @NotNull private final TableCellRenderer myRenderer;
 
-    public TableCellRendererWrapper(final TableCellRenderer renderer) {
+    public MyTableCellRendererWrapper(@NotNull TableCellRenderer renderer) {
       myRenderer = renderer;
     }
 
-    public TableCellRenderer getRenderer() {
+    @NotNull
+    @Override
+    public TableCellRenderer getBaseRenderer() {
       return myRenderer;
     }
 
@@ -460,9 +462,9 @@ public class DualView extends JPanel {
   @Override
   public Dimension getPreferredSize() {
     final Dimension was = super.getPreferredSize();
-    if (! myZipByHeight) return was;
+    if (!myZipByHeight) return was;
     final int tableHeight = myFlatView.getTableHeader().getHeight() + myFlatView.getTableViewModel().getRowCount() *
-                                                                 myFlatView.getRowHeight();
+                                                                      myFlatView.getRowHeight();
     return new Dimension(was.width, tableHeight);
   }
 

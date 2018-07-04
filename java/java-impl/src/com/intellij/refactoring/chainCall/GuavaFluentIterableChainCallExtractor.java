@@ -20,9 +20,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
 public class GuavaFluentIterableChainCallExtractor implements ChainCallExtractor {
   public static final String FLUENT_ITERABLE = "com.google.common.collect.FluentIterable";
   private static final CallMatcher NEXT_CALL =

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class DeclarationSearchUtils {
 
   private DeclarationSearchUtils() {}
@@ -44,60 +41,6 @@ public class DeclarationSearchUtils {
       resolveHelper.resolveAccessibleReferencedVariable(
         variableName, context);
     return target.equals(variable);
-  }
-
-  public static boolean containsConflictingDeclarations(PsiCodeBlock block, PsiCodeBlock parentBlock) {
-    final PsiStatement[] statements = block.getStatements();
-    if (statements.length == 0) {
-      return false;
-    }
-    final List<PsiCodeBlock> followingBlocks = new ArrayList<>();
-    collectFollowingBlocks(block.getParent().getNextSibling(), followingBlocks);
-    final Project project = block.getProject();
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
-    final PsiResolveHelper resolveHelper = facade.getResolveHelper();
-    for (final PsiStatement statement : statements) {
-      if (!(statement instanceof PsiDeclarationStatement)) {
-        continue;
-      }
-      final PsiDeclarationStatement declaration = (PsiDeclarationStatement)statement;
-      final PsiElement[] variables = declaration.getDeclaredElements();
-      for (PsiElement variable : variables) {
-        if (!(variable instanceof PsiLocalVariable)) {
-          continue;
-        }
-        final PsiLocalVariable localVariable = (PsiLocalVariable)variable;
-        final String variableName = localVariable.getName();
-        if (variableName == null) {
-          continue;
-        }
-        final PsiVariable target = resolveHelper.resolveAccessibleReferencedVariable(variableName, parentBlock);
-        if (target instanceof PsiLocalVariable) {
-          return true;
-        }
-        for (PsiCodeBlock codeBlock : followingBlocks) {
-          final PsiVariable target1 = resolveHelper.resolveAccessibleReferencedVariable(variableName, codeBlock);
-          if (target1 instanceof PsiLocalVariable) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
-
-  /**
-   * Depth first traversal to find all PsiCodeBlock children.
-   */
-  private static void collectFollowingBlocks(PsiElement element,
-                                             List<PsiCodeBlock> out) {
-    while (element != null) {
-      if (element instanceof PsiCodeBlock) {
-        out.add((PsiCodeBlock)element);
-      }
-      collectFollowingBlocks(element.getFirstChild(), out);
-      element = element.getNextSibling();
-    }
   }
 
   public static PsiExpression findDefinition(@NotNull PsiReferenceExpression referenceExpression,
@@ -143,10 +86,10 @@ public class DeclarationSearchUtils {
       return true;
     }
     final ProgressManager progressManager = ProgressManager.getInstance();
-    final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(element.getProject());
+    final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(element.getProject());
     final SearchScope useScope = element.getUseScope();
     if (!(useScope instanceof GlobalSearchScope)) {
-      return zeroResult;
+      return false;
     }
     final PsiSearchHelper.SearchCostResult cost =
       searchHelper.isCheapEnoughToSearch(name, (GlobalSearchScope)useScope, null, progressManager.getProgressIndicator());

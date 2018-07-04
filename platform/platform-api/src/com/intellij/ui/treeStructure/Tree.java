@@ -1,18 +1,16 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.*;
@@ -22,6 +20,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.*;
@@ -30,6 +29,8 @@ import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.accessibility.Accessible;
+import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.plaf.TreeUI;
@@ -55,12 +56,12 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   private Dimension myHoldSize;
   private final MySelectionModel mySelectionModel = new MySelectionModel();
-  private boolean myHorizontalAutoScrolling = true;
+  private Boolean myHorizontalAutoScrolling = null;
 
   private TreePath rollOverPath;
 
   public Tree() {
-    this(getDefaultTreeModel());
+    this(new DefaultMutableTreeNode());
   }
 
   public Tree(TreeNode root) {
@@ -137,12 +138,6 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       int childCount = model.getChildCount(model.getRoot());
       if (childCount == 0) {
         return true;
-      }
-      if (childCount == 1) {
-        Object node = model.getChild(model.getRoot(), 0);
-        if (node instanceof LoadingNode) {
-          return true;
-        }
       }
     }
     return false;
@@ -410,7 +405,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
                             true, MouseEvent.BUTTON3);
       }
     }
-    else if (UIUtil.isUnderNimbusLookAndFeel() || UIUtil.isUnderGTKLookAndFeel()) {
+    else if (UIUtil.isUnderGTKLookAndFeel()) {
       if (SwingUtilities.isLeftMouseButton(e) && (e.getID() == MouseEvent.MOUSE_PRESSED || e.getID() == MouseEvent.MOUSE_CLICKED)) {
         TreePath path = getClosestPathForLocation(e.getX(), e.getY());
         if (path != null) {
@@ -873,7 +868,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   public boolean isHorizontalAutoScrollingEnabled() {
-    return myHorizontalAutoScrolling;
+    return myHorizontalAutoScrolling != null ? myHorizontalAutoScrolling : Registry.is("ide.tree.horizontal.default.autoscrolling", false);
   }
 
   public void setHorizontalAutoScrollingEnabled(boolean enabled) {
@@ -910,5 +905,78 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
       }
     }
     return null;
+  }
+
+  /**
+   * Note: This is the same implementation as the base class, except we
+   * fire the "ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY" event *only when*
+   * the tree has the focus.
+   *
+   * This is required because some screen readers (e.g. nvda) hook up
+   * the "ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY" event and treat it
+   * as a "focus gained" event. This is incorrect in many cases.
+   * For example, the "Project Structure" tool window contains a tree
+   * that is updated asynchronously as the caret moves in side the
+   * the editor window. When that happens, screen readers (incorrectly)
+   * assume the "Project Structure" tree received the focus, and stop
+   * listening to caret events from the editor, because they think the
+   * editor has lost the focus.
+   *
+   * The workaround implemented here is justified by the fact it is
+   * unlikely that screen readers are interested in events from trees
+   * when trees don't have the focus.
+   */
+  @Override
+  public void setLeadSelectionPath(TreePath newPath) {
+    TreePath oldValue = getLeadSelectionPath();
+    AccessibleContext temp = accessibleContext;
+    try {
+      // Set to null so that the base class method does not invoke
+      // "fireActiveDescendantPropertyChange".
+      accessibleContext = null;
+      super.setLeadSelectionPath(newPath);
+    } finally {
+      accessibleContext = temp;
+    }
+
+    // Invoke our specialized version of "fireActiveDescendantPropertyChange"
+    if (accessibleContext instanceof AccessibleTree){
+      ((AccessibleTree)accessibleContext).fireActiveDescendantPropertyChange(oldValue, newPath);
+    }
+  }
+
+  @Override
+  public AccessibleContext getAccessibleContext() {
+    if (accessibleContext == null) {
+      accessibleContext = new AccessibleTree();
+    }
+    return accessibleContext;
+  }
+
+  protected class AccessibleTree extends AccessibleJTree {
+    /**
+     * See {@link #setLeadSelectionPath} comment: this method implements
+     * exactly the same behavior as the base class method, except for the
+     * {@link UIUtil#isFocusAncestor} check.
+     */
+    void fireActiveDescendantPropertyChange(TreePath oldPath, TreePath newPath) {
+      if (UIUtil.isFocusAncestor(Tree.this)) {
+        if (oldPath != newPath) {
+          Accessible oldLSA = (oldPath != null)
+                              ? new AccessibleJTreeNode(Tree.this,
+                                                        oldPath,
+                                                        null)
+                              : null;
+
+          Accessible newLSA = (newPath != null)
+                              ? new AccessibleJTreeNode(Tree.this,
+                                                        newPath,
+                                                        null)
+                              : null;
+          firePropertyChange(AccessibleContext.ACCESSIBLE_ACTIVE_DESCENDANT_PROPERTY,
+                             oldLSA, newLSA);
+        }
+      }
+    }
   }
 }

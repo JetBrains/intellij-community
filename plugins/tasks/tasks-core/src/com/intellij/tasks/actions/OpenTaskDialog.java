@@ -25,17 +25,21 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.tasks.*;
+import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskStateCombo;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.tasks.ui.TaskDialogPanel;
 import com.intellij.tasks.ui.TaskDialogPanelProvider;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBTextField;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
@@ -51,22 +55,25 @@ public class OpenTaskDialog extends DialogWrapper {
   private JPanel myPanel;
   @BindControl(value = "clearContext", instant = true)
   private JCheckBox myClearContext;
-  private JLabel myTaskNameLabel;
   private JBCheckBox myUpdateState;
   private TaskStateCombo myTaskStateCombo;
   private JPanel myAdditionalPanel;
+  private JBTextField myNameField;
 
   private final Project myProject;
-  private final Task myTask;
+  private final LocalTaskImpl myTask;
   private final List<TaskDialogPanel> myPanels;
 
   public OpenTaskDialog(@NotNull final Project project, @NotNull final Task task) {
     super(project, false);
     myProject = project;
-    myTask = task;
+    myTask = new LocalTaskImpl(task);
+    myTaskStateCombo.setProject(myProject);
+    myTaskStateCombo.setTask(myTask);
+
     setTitle("Open Task");
-    myTaskNameLabel.setText(TaskUtil.getTrimmedSummary(task));
-    myTaskNameLabel.setIcon(task.getIcon());
+    myNameField.setText(TaskUtil.getTrimmedSummary(task));
+    myNameField.setEnabled(!task.isIssue());
 
     TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(myProject);
     ControlBinder binder = new ControlBinder(taskManager.getState());
@@ -98,12 +105,22 @@ public class OpenTaskDialog extends DialogWrapper {
     if (myUpdateState.isSelected()) {
       myTaskStateCombo.scheduleUpdateOnce();
     }
-    
+
     myAdditionalPanel.setLayout(new BoxLayout(myAdditionalPanel, BoxLayout.Y_AXIS));
-    myPanels = TaskDialogPanelProvider.getOpenTaskPanels(project, task);
+    myPanels = TaskDialogPanelProvider.getOpenTaskPanels(project, myTask);
     for (TaskDialogPanel panel : myPanels) {
       myAdditionalPanel.add(panel.getPanel());
     }
+    myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        LocalTaskImpl oldTask = new LocalTaskImpl(myTask);
+        myTask.setSummary(myNameField.getText());
+        for (TaskDialogPanel panel : myPanels) {
+          panel.taskNameChanged(oldTask, myTask);
+        }
+      }
+    });
     init();
   }
 
@@ -182,7 +199,7 @@ public class OpenTaskDialog extends DialogWrapper {
   }
 
   private void createUIComponents() {
-    myTaskStateCombo = new TaskStateCombo(myProject, myTask) {
+    myTaskStateCombo = new TaskStateCombo() {
       @Nullable
       @Override
       protected CustomTaskState getPreferredState(@NotNull TaskRepository repository, @NotNull Collection<CustomTaskState> available) {

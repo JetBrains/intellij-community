@@ -17,6 +17,7 @@ package com.intellij.psi;
 
 import com.intellij.psi.util.ConstantEvaluationOverflowException;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ConcurrentMap;
@@ -51,12 +52,13 @@ public abstract class PsiConstantEvaluationHelper {
    */
   public abstract Object computeConstantExpression(@Nullable PsiElement expression, boolean throwExceptionOnOverflow);
 
-  public abstract Object computeExpression(@Nullable PsiExpression expression, boolean throwExceptionOnOverflow,
+  public abstract Object computeExpression(@NotNull PsiExpression expression, boolean throwExceptionOnOverflow,
                                            @Nullable final AuxEvaluator auxEvaluator);
 
   public interface AuxEvaluator {
-    Object computeExpression(final PsiExpression expression, final AuxEvaluator auxEvaluator);
+    Object computeExpression(@NotNull PsiExpression expression, @NotNull AuxEvaluator auxEvaluator);
 
+    @NotNull
     ConcurrentMap<PsiElement, Object> getCacheMap(final boolean overflow);
   }
 }

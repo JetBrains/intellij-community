@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.intellij.openapi.Disposable;
@@ -26,7 +12,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.*;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.Debugger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,7 +60,7 @@ public abstract class DumbService {
    * Note that it's not guaranteed that the dumb mode won't start again during this runnable execution, it should manage that situation explicitly.
    * @param runnable runnable to run
    */
-  public abstract void runWhenSmart(@Debugger.Capture @NotNull Runnable runnable);
+  public abstract void runWhenSmart(@NotNull Runnable runnable);
 
   /**
    * Pause the current thread until dumb mode ends and then continue execution.
@@ -223,7 +208,7 @@ public abstract class DumbService {
 
   /**
    * Cancels the given task. If it's in the queue, it won't be executed. If it's already running, its {@link com.intellij.openapi.progress.ProgressIndicator} is canceled, so the next {@link ProgressManager#checkCanceled()} call
-   * will throw {@link com.intellij.openapi.progress.ProcessCanceledException}.
+   * will throw {@link ProcessCanceledException}.
    */
   public abstract void cancelTask(@NotNull DumbModeTask task);
 
@@ -261,6 +246,7 @@ public abstract class DumbService {
     if (o instanceof PossiblyDumbAware) {
       return ((PossiblyDumbAware)o).isDumbAware();
     }
+    //noinspection SSBasedInspection
     return o instanceof DumbAware;
   }
 
@@ -339,6 +325,12 @@ public abstract class DumbService {
   public static void allowStartingDumbModeInside(@NotNull DumbModePermission permission, @NotNull Runnable runnable) {
     runnable.run();
   }
+
+  /**
+   * Runs a heavy activity and suspends indexing (if any) for this time. The user still has the possibility to manually pause and resume the indexing. In that case, indexing won't be resumed automatically after the activity finishes.
+   * @param activityName the text (a noun phrase) to display as a reason for the indexing being paused 
+   */
+  public abstract void suspendIndexingAndRun(@NotNull String activityName, @NotNull Runnable activity);
 
   /**
    * @see #DUMB_MODE

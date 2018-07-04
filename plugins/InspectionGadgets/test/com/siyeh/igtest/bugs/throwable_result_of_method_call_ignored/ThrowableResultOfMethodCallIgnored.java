@@ -127,3 +127,20 @@ class Throwables {
         System.out.println("message = " + message);
     }
 }
+
+class FailTest {
+    static RuntimeException fail() {
+        throw new RuntimeException();
+    }
+
+    void testThrow(int x) {
+        if(x < 0) {
+            throw fail();
+        }
+    }
+    void testNoThrow(int x) {
+        if(x < 0) {
+            fail();
+        }
+    }
+}

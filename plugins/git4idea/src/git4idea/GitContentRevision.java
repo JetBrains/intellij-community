@@ -16,7 +16,6 @@
 package git4idea;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
@@ -26,7 +25,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.ContentRevisionCache;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcsUtil.VcsFilePathUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.util.GitFileUtils;
@@ -120,9 +118,8 @@ public class GitContentRevision implements ByteBackedContentRevision {
                                                @NotNull String path,
                                                @Nullable VcsRevisionNumber revisionNumber,
                                                Project project,
-                                               boolean canBeDeleted,
                                                boolean unescapePath) throws VcsException {
-    FilePath file = createPath(vcsRoot, path, canBeDeleted, unescapePath);
+    FilePath file = createPath(vcsRoot, path, unescapePath);
     return createRevision(file, revisionNumber, project);
   }
 
@@ -150,7 +147,7 @@ public class GitContentRevision implements ByteBackedContentRevision {
       VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
       filePath = virtualFile == null ? VcsUtil.getFilePath(file, false) : VcsUtil.getFilePath(virtualFile);
     } else {
-      filePath = createPath(vcsRoot, path, false, unescapePath);
+      filePath = createPath(vcsRoot, path, unescapePath);
     }
     return createRevision(filePath, revisionNumber, project);
   }
@@ -158,15 +155,9 @@ public class GitContentRevision implements ByteBackedContentRevision {
   @NotNull
   public static FilePath createPath(@NotNull VirtualFile vcsRoot,
                                     @NotNull String path,
-                                    boolean canBeDeleted,
                                     boolean unescapePath) throws VcsException {
     String absolutePath = makeAbsolutePath(vcsRoot, path, unescapePath);
-    FilePath file = VcsUtil.getFilePath(absolutePath, false);
-    if (canBeDeleted && (! SystemInfo.isFileSystemCaseSensitive) && VcsFilePathUtil.caseDiffers(file.getPath(), absolutePath)) {
-      // as for deleted file
-      file = VcsUtil.getFilePath(absolutePath, false);
-    }
-    return file;
+    return VcsUtil.getFilePath(absolutePath, false);
   }
 
   @NotNull

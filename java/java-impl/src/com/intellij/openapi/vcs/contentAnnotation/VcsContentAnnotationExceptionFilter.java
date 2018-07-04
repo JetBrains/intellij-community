@@ -127,9 +127,9 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
           final Document document = getDocumentForFile(worker);
           if (document == null) return;
 
-          int startFileOffset = worker.getInfo().getThird().getStartOffset();
+          int startFileOffset = worker.getInfo().fileLineRange.getStartOffset();
           int idx = lineText.indexOf(':', startFileOffset);
-          int endIdx = idx == -1 ? worker.getInfo().getThird().getEndOffset() : idx;
+          int endIdx = idx == -1 ? worker.getInfo().fileLineRange.getEndOffset() : idx;
           consumer.consume(new MyAdditionalHighlight(startOffset + lineStartOffset + startFileOffset + 1, startOffset + lineStartOffset + endIdx));
 
           if (worker.getPsiClass() != null) {
@@ -149,8 +149,8 @@ public class VcsContentAnnotationExceptionFilter implements Filter, FilterMixin 
                 }
               }
               if (methodChanged) {
-                consumer.consume(new MyAdditionalHighlight(startOffset + lineStartOffset + worker.getInfo().getSecond().getStartOffset(),
-                                                           startOffset + lineStartOffset + worker.getInfo().getSecond().getEndOffset()));
+                consumer.consume(new MyAdditionalHighlight(startOffset + lineStartOffset + worker.getInfo().methodNameRange.getStartOffset(),
+                                                           startOffset + lineStartOffset + worker.getInfo().methodNameRange.getEndOffset()));
               }
             }
           }

@@ -22,7 +22,6 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettin
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -80,12 +79,6 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
   }
 
   @Override
-  public String getName() {
-    final ProjectData projectData = getData();
-    return projectData != null ? projectData.getExternalName() : "unspecified";
-  }
-
-  @Override
   protected void doUpdate() {
     String autoImportHint = null;
     final ProjectData projectData = getData();
@@ -98,11 +91,6 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
     }
 
     setNameAndTooltip(getName(), myTooltipCache, autoImportHint);
-  }
-
-  @Override
-  protected SimpleTextAttributes getPlainAttributes() {
-    return super.getPlainAttributes();
   }
 
   private String makeDescription() {
@@ -129,11 +117,6 @@ public class ProjectNode extends ExternalSystemNode<ProjectData> {
 
   private void appendProblems(StringBuilder desc) {
     // TBD
-  }
-
-  @Override
-  protected void setNameAndTooltip(String name, @Nullable String tooltip, SimpleTextAttributes attributes) {
-    super.setNameAndTooltip(name, tooltip, attributes);
   }
 
   @Override

@@ -1,30 +1,14 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac.ast;
 
 import com.intellij.util.Consumer;
 import com.sun.source.tree.*;
 import com.sun.source.util.*;
 import com.sun.tools.javac.util.ClientCodeException;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.javac.ast.api.JavacDef;
-import org.jetbrains.jps.javac.ast.api.JavacFileData;
-import org.jetbrains.jps.javac.ast.api.JavacNameTable;
-import org.jetbrains.jps.javac.ast.api.JavacRef;
+import org.jetbrains.jps.javac.ast.api.*;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -230,7 +214,9 @@ final class JavacReferenceCollectorListener implements TaskListener {
       myFileData = new JavacFileData(filePath,
                                      createReferenceHolder(),
                                      myDivideImportRefs ? createReferenceHolder() : EMPTY_T_OBJ_INT_MAP,
-                                     createDefinitionHolder());
+                                     new ArrayList<JavacTypeCast>(),
+                                     createDefinitionHolder(),
+                                     new THashSet<JavacRef>());
       myTreeHelper = new JavacTreeHelper(unitTree, myTreeUtility);
     }
 
@@ -240,6 +226,16 @@ final class JavacReferenceCollectorListener implements TaskListener {
 
     void sinkDeclaration(JavacDef def) {
      myFileData.getDefs().add(def);
+    }
+
+    void sinkImplicitToString(@Nullable JavacRef ref) {
+      if (ref != null) {
+        myFileData.getImplicitToStringRefs().add(ref);
+      }
+    }
+
+    public void sinkTypeCast(JavacTypeCast typeCast) {
+      myFileData.getCasts().add(typeCast);
     }
 
     @Nullable
@@ -336,7 +332,10 @@ final class JavacReferenceCollectorListener implements TaskListener {
 
   //TODO
   private static Element getElementIfJdkUnder8(Tree tree) {
-    if (tree == null) return null;
+    if (tree == null || tree instanceof PrimitiveTypeTree || tree instanceof ArrayTypeTree) return null;
+    if (tree instanceof ParameterizedTypeTree) {
+      return getElementIfJdkUnder8(((ParameterizedTypeTree)tree).getType());
+    }
     Field symField;
     try {
       //should be the same to com.sun.tools.javac.tree.TreeInfo.symbolForImpl() since com.sun.source.util.Trees.getElement() works improperly under jdk 6-7

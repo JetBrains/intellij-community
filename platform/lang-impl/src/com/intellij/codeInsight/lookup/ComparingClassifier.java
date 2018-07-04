@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.lookup;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Function;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -24,7 +23,10 @@ import com.intellij.util.containers.FlatteningIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.TreeMap;
 
 /**
  * @author peter
@@ -59,8 +61,7 @@ public abstract class ComparingClassifier<T> extends Classifier<T> {
       }
     }
 
-    final List<List<T>> values = new ArrayList<>();
-    values.addAll(myNegated ? map.descendingMap().values() : map.values());
+    final List<List<T>> values = new ArrayList<>(myNegated ? map.descendingMap().values() : map.values());
     ContainerUtil.addIfNotNull(values, nulls);
 
     return new Iterable<T>() {

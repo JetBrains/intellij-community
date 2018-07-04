@@ -115,4 +115,8 @@ public class HtmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
            ((XmlEnumerationDescriptor)delegate).getValueDeclaration(attributeValue, s) :
            super.getValueDeclaration(attributeValue, value);
   }
+
+  public boolean isCaseSensitive() {
+    return myCaseSensitive;
+  }
 }

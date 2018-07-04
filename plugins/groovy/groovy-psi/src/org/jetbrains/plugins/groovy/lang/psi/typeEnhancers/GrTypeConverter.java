@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,7 +69,6 @@ public abstract class GrTypeConverter {
     return false;
   }
 
-  @SuppressWarnings("deprecation")
   public boolean isApplicableTo(@NotNull ApplicableTo position) {
     switch (position) {
       case EXPLICIT_CAST:
@@ -79,6 +76,7 @@ public abstract class GrTypeConverter {
       case ASSIGNMENT:
         return true;
       case METHOD_PARAMETER:
+        //noinspection deprecation
         return isAllowedInMethodCall();
       case RETURN_VALUE:
         return true;
@@ -104,12 +102,12 @@ public abstract class GrTypeConverter {
    * @param context    context
    * @return {@link ConversionResult conversion result }
    */
-  @SuppressWarnings("deprecation")
   @Nullable
   public ConversionResult isConvertibleEx(@NotNull PsiType targetType,
                                           @NotNull PsiType actualType,
                                           @NotNull GroovyPsiElement context,
                                           @NotNull ApplicableTo currentPosition) {
+    //noinspection deprecation
     final Boolean result = isConvertible(targetType, actualType, context);
     return result == null ? null
                           : result ? ConversionResult.OK
@@ -120,6 +118,7 @@ public abstract class GrTypeConverter {
     EXPLICIT_CAST,
     ASSIGNMENT,
     METHOD_PARAMETER,
+    GENERIC_PARAMETER,
     RETURN_VALUE
   }
 }

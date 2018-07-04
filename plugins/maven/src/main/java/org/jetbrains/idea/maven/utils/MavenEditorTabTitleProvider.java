@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-public class MavenEditorTabTitleProvider implements EditorTabTitleProvider {
-  public String getEditorTabTitle(Project project, VirtualFile file) {
+public class MavenEditorTabTitleProvider implements EditorTabTitleProvider, DumbAware {
+  @Override
+  public String getEditorTabTitle(@NotNull Project project, @NotNull VirtualFile file) {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    if (!projectsManager.isMavenizedProject()) return null;
+    if (projectsManager.isMavenizedProject()) {
+      MavenProject mavenProject = projectsManager.findProject(file);
+      if (mavenProject != null) {
+        return mavenProject.getMavenId().getArtifactId();
+      }
+    }
 
-    MavenProject mavenProject = projectsManager.findProject(file);
-    if (mavenProject == null) return null;
-
-    return mavenProject.getMavenId().getArtifactId();
+    return null;
   }
 }

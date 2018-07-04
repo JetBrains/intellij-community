@@ -23,9 +23,10 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -42,6 +43,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
 import org.cyberneko.html.parsers.DOMParser;
@@ -76,7 +78,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
 
   public FindJarFix(T ref) {
     myRef = ref;
-    myModule = ModuleUtil.findModuleForPsiElement(ref);
+    myModule = ModuleUtilCore.findModuleForPsiElement(ref);
   }
 
   @NotNull
@@ -114,16 +116,12 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
     final List<String> fqns = getPossibleFqns(myRef);
     myEditorComponent = editor.getComponent();
     if (fqns.size() > 1) {
-      final JBList listOfFqns = new JBList(fqns);
       JBPopupFactory.getInstance()
-        .createListPopupBuilder(listOfFqns)
+        .createPopupChooserBuilder(fqns)
         .setTitle("Select Qualified Name")
-        .setItemChoosenCallback(() -> {
-          final Object value = listOfFqns.getSelectedValue();
-          if (value instanceof String) {
-            findJarsForFqn(((String)value), editor);
-          }
-        }).createPopup().showInBestPositionFor(editor);
+        .setItemChosenCallback((value) -> findJarsForFqn(value, editor))
+        .createPopup()
+        .showInBestPositionFor(editor);
     }
     else if (fqns.size() == 1) {
       findJarsForFqn(fqns.get(0), editor);
@@ -163,7 +161,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
       }
     };
 
-    final Task.Modal task = new Task.Modal(editor.getProject(), "Looking for libraries", true) {
+    Task.Modal task = new Task.Modal(editor.getProject(), "Looking for Libraries", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
@@ -176,9 +174,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
         if (libs.isEmpty()) {
           HintManager.getInstance().showInformationHint(editor, "No libraries found for '" + fqn + "'");
         } else {
-          final ArrayList<String> variants = new ArrayList<>(libs.keySet());
-          Collections.sort(variants, (o1, o2) -> o1.compareTo(o2));
-          final JBList libNames = new JBList(variants);
+          JBList<String> libNames = new JBList<>(ContainerUtil.sorted(libs.keySet()));
           libNames.installCellRenderer(o -> new JLabel(o.toString(), PlatformIcons.JAR_ICON, SwingConstants.LEFT));
           if (libs.size() == 1) {
             final String jarName = libs.keySet().iterator().next();
@@ -189,13 +185,10 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
             .createListPopupBuilder(libNames)
             .setTitle("Select a JAR file")
             .setItemChoosenCallback(() -> {
-              final Object value = libNames.getSelectedValue();
-              if (value instanceof String) {
-                final String jarName = (String)value;
-                final String url = libs.get(jarName);
-                if (url != null) {
-                  initiateDownload(url, jarName);
-                }
+              String jarName = libNames.getSelectedValue();
+              String url = libs.get(jarName);
+              if (url != null) {
+                initiateDownload(url, jarName);
               }
             })
             .createPopup().showInBestPositionFor(editor);
@@ -257,13 +250,15 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
     final Project project = myModule.getProject();
     final String dirPath = PropertiesComponent.getInstance(project).getValue("findjar.last.used.dir");
     VirtualFile toSelect = dirPath == null ? null : LocalFileSystem.getInstance().findFileByIoFile(new File(dirPath));
-    final VirtualFile file = FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), project, toSelect);
+    FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle("Select Path to Save Jar")
+      .withDescription("Choose where to save '" + jarName + "'");
+    final VirtualFile file = FileChooser.chooseFile(descriptor, project, toSelect);
     if (file != null) {
       PropertiesComponent.getInstance(project).setValue("findjar.last.used.dir", file.getPath());
       final DownloadableFileService downloader = DownloadableFileService.getInstance();
       final DownloadableFileDescription description = downloader.createFileDescription(jarUrl, jarName);
       final List<VirtualFile> jars =
-        downloader.createDownloader(Arrays.asList(description), jarName)
+        downloader.createDownloader(Collections.singletonList(description), jarName)
                   .downloadFilesWithProgress(file.getPath(), project, myEditorComponent);
       if (jars != null && jars.size() == 1) {
         WriteAction.run(() -> OrderEntryFix.addJarToRoots(jars.get(0).getPresentableUrl(), myModule, myRef));
@@ -272,10 +267,10 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
   }
 
   protected abstract Collection<String> getFqns(@NotNull T ref);
-  
+
   protected List<String> getPossibleFqns(T ref) {
     Collection<String> fqns = getFqns(ref);
-    
+
     List<String> res = new ArrayList<>(fqns.size());
 
     for (String fqn : fqns) {

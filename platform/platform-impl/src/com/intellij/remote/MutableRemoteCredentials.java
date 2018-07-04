@@ -38,8 +38,6 @@ public interface MutableRemoteCredentials extends RemoteCredentials {
 
   void setPrivateKeyFile(String privateKeyFile);
 
-  void setKnownHostsFile(String knownHostsFile);
-
   void setPassphrase(@Nullable String passphrase);
 
   void setAuthType(@NotNull AuthType authType);

@@ -16,7 +16,6 @@
 package com.intellij.ui.dualView;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.ui.HighlightableCellRenderer;
 import com.intellij.ui.table.ItemsProvider;
 import com.intellij.ui.table.SelectionProvider;
@@ -24,6 +23,7 @@ import com.intellij.ui.treeStructure.treetable.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.SortableColumnModel;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
@@ -39,12 +39,14 @@ import java.util.List;
 
 public class TreeTableView extends TreeTable implements ItemsProvider, SelectionProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.dualView.TreeTableView");
+
   public TreeTableView(ListTreeTableModelOnColumns treeTableModel) {
     super(treeTableModel);
     setRootVisible(false);
 
     setTreeCellRenderer(new TreeCellRenderer() {
       private final TreeCellRenderer myBaseRenderer = new HighlightableCellRenderer();
+
       public Component getTreeCellRendererComponent(JTree tree1,
                                                     Object value,
                                                     boolean selected,
@@ -126,7 +128,7 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
     return getTree().getPathForRow(row).getLastPathComponent();
   }
 
-  protected final ColumnInfo<Object,?> getColumnInfo(final int column) {
+  protected final ColumnInfo<Object, ?> getColumnInfo(final int column) {
     return getTreeViewModel().getColumnInfos()[convertColumnIndexToModel(column)];
   }
 
@@ -152,13 +154,15 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
     addSelectedPath(new TreePath(treeNode.getPath()));
   }
 
-  public static class CellRendererWrapper implements TableCellRenderer {
-    private final TableCellRenderer myBaseRenderer;
+  public static class CellRendererWrapper implements TableCellRendererWrapper {
+    @NotNull private final TableCellRenderer myBaseRenderer;
 
-    public CellRendererWrapper(final TableCellRenderer baseRenderer) {
+    public CellRendererWrapper(@NotNull TableCellRenderer baseRenderer) {
       myBaseRenderer = baseRenderer;
     }
 
+    @Override
+    @NotNull
     public TableCellRenderer getBaseRenderer() {
       return myBaseRenderer;
     }
@@ -169,8 +173,8 @@ public class TreeTableView extends TreeTable implements ItemsProvider, Selection
                                                    boolean hasFocus,
                                                    int row,
                                                    int column) {
-      final JComponent rendererComponent = (JComponent)myBaseRenderer.getTableCellRendererComponent(
-        table, value, isSelected, hasFocus, row, column);
+      JComponent rendererComponent = (JComponent)myBaseRenderer.getTableCellRendererComponent(table, value, isSelected, hasFocus,
+                                                                                              row, column);
       if (isSelected) {
         rendererComponent.setBackground(table.getSelectionBackground());
         rendererComponent.setForeground(table.getSelectionForeground());

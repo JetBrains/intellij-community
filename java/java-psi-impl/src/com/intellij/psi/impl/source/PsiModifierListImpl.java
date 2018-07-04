@@ -199,7 +199,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
 
     final CompositeElement tree = (CompositeElement)getNode();
     final IElementType type = NAME_TO_KEYWORD_TYPE_MAP.get(name);
-    return tree.findChildByType(type) != null;
+    return type != null && tree.findChildByType(type) != null;
   }
 
   @Override
@@ -287,7 +287,7 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
       return target != null && target != PsiAnnotation.TargetType.UNKNOWN;
     });
 
-    return filtered.toArray(new PsiAnnotation[filtered.size()]);
+    return filtered.toArray(PsiAnnotation.EMPTY_ARRAY);
   }
 
   @Override

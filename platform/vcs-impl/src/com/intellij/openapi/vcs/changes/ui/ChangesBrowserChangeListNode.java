@@ -1,32 +1,24 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.components.ServiceKt;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.openapi.util.text.StringUtil.nullize;
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
+import static one.util.streamex.StreamEx.of;
 
 /**
  * @author yole
@@ -44,11 +36,15 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
   }
 
   @Override
-  public void render(final ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
+  public void render(@NotNull ChangesBrowserNodeRenderer renderer, final boolean selected, final boolean expanded, final boolean hasFocus) {
     if (userObject instanceof LocalChangeList) {
       final LocalChangeList list = ((LocalChangeList)userObject);
       renderer.appendTextWithIssueLinks(list.getName(),
              list.isDefault() ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      if (list.getData() != null) {
+        renderer.append(" (i)", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        renderer.setToolTipText(getTooltipText());
+      }
       appendCount(renderer);
       for (ChangeListDecorator decorator: myDecorators) {
         decorator.decorateChangeList(list, renderer, selected, expanded, hasFocus);
@@ -69,6 +65,27 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
       renderer.append(getUserObject().getName(), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
       appendCount(renderer);
     }
+  }
+
+  @Nullable
+  private String getTooltipText() {
+    if (!(userObject instanceof LocalChangeList)) return null;
+    Object data = ((LocalChangeList)userObject).getData();
+    if (!(data instanceof ChangeListData)) return null;
+    String dataInfo = XmlStringUtil.escapeString(((ChangeListData)data).getPresentation());
+    String message = cropMessageIfNeeded(((LocalChangeList)userObject).getComment());
+    return nullize(of(dataInfo, message).nonNull().joining("\n"));
+  }
+
+  /**
+   * Get first 5 lines from the comment and add ellipsis if are smth else
+   */
+  @Nullable
+  private static String cropMessageIfNeeded(@Nullable String comment) {
+    if (comment == null) return null;
+    String[] lines = StringUtil.splitByLines(comment, false);
+    String croppedMessage = of(lines).limit(5).joining("\n");
+    return lines.length > 5 ? croppedMessage + "..." : croppedMessage;
   }
 
   @Override
@@ -118,10 +135,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
   }
 
   @Override
-  public int compareUserObjects(final Object o2) {
-    if (o2 instanceof ChangeList) {
-      return getUserObject().getName().compareToIgnoreCase(((ChangeList)o2).getName());
-    }
-    return 0;
+  public int compareUserObjects(final ChangeList o2) {
+    return getUserObject().getName().compareToIgnoreCase(o2.getName());
   }
 }

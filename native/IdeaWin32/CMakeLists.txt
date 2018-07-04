@@ -5,8 +5,14 @@ if(NOT WIN32)
   message(FATAL_ERROR "Windows only.")
 endif()
 
-set(BUILD_NUMBER $ENV{BUILD_NUMBER})
+if (DEFINED ENV{BUILD_NUMBER})
+  set(BUILD_NUMBER $ENV{BUILD_NUMBER})
+else()
+  set(BUILD_NUMBER 9999)
+endif()
+
 string(TIMESTAMP YEAR "%Y")
+
 if(CMAKE_GENERATOR_PLATFORM STREQUAL "x64")
   set(FILE_NAME "IdeaWin64")
   set(JAVA_HOME $ENV{JDK_18_x64})

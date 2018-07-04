@@ -4,6 +4,6 @@ class C{
  public <T> X<T> foo(T sdhg);'
  {
 
-  X<C> dsd = foo(<caret>)
+  X<C> dsd = foo(<caret>);
  }
 }

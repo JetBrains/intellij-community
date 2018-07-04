@@ -22,18 +22,19 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiForStatement;
 import com.intellij.psi.PsiForeachStatement;
 import com.intellij.psi.PsiJavaToken;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
 
 public class ForStatementHeaderSelectioner implements ExtendWordSelectionHandler {
   @Override
-  public boolean canSelect(PsiElement e) {
+  public boolean canSelect(@NotNull PsiElement e) {
     return e instanceof PsiForStatement || e instanceof PsiForeachStatement;
   }
 
   @Override
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(@NotNull PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     PsiJavaToken lParen = e instanceof PsiForStatement ? ((PsiForStatement)e).getLParenth() 
                                                        : e instanceof PsiForeachStatement ? ((PsiForeachStatement)e).getLParenth() : null;
     PsiJavaToken rParen = e instanceof PsiForStatement ? ((PsiForStatement)e).getRParenth() 

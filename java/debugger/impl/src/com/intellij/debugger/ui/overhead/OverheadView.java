@@ -16,10 +16,14 @@
 package com.intellij.debugger.ui.overhead;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.pom.Navigatable;
 import com.intellij.ui.*;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
@@ -27,12 +31,16 @@ import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.function.Function;
@@ -40,7 +48,7 @@ import java.util.function.Function;
 /**
  * @author egor
  */
-public class OverheadView extends BorderLayoutPanel implements Disposable {
+public class OverheadView extends BorderLayoutPanel implements Disposable, DataProvider {
   @NotNull private final DebugProcessImpl myProcess;
 
   static final EnabledColumnInfo ENABLED_COLUMN = new EnabledColumnInfo();
@@ -50,6 +58,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable {
   private final ListTableModel<OverheadProducer> myModel;
 
   private final MergingUpdateQueue myUpdateQueue;
+  private Runnable myBouncer;
 
   public OverheadView(@NotNull DebugProcessImpl process) {
     myProcess = process;
@@ -58,7 +67,7 @@ public class OverheadView extends BorderLayoutPanel implements Disposable {
       ENABLED_COLUMN,
       NAME_COLUMN,
       new TimingColumnInfo("Hits", s -> OverheadTimings.getHits(myProcess, s)),
-      new TimingColumnInfo("Time(ms)", s -> OverheadTimings.getTime(myProcess, s))},
+      new TimingColumnInfo("Time (ms)", s -> OverheadTimings.getTime(myProcess, s))},
                                    new ArrayList<>(OverheadTimings.getProducers(process)),
                                    3, SortOrder.DESCENDING);
     myModel.setSortable(true);
@@ -67,18 +76,32 @@ public class OverheadView extends BorderLayoutPanel implements Disposable {
     TableUtil.setupCheckboxColumn(myTable.getColumnModel().getColumn(0));
 
     myUpdateQueue = new MergingUpdateQueue("OverheadView", 500, true, null, this);
+    myUpdateQueue.setPassThrough(false); // disable passthrough in tests
 
-    OverheadTimings.addListener(o -> myUpdateQueue.queue(new Update(o) {
-      @Override
-      public void run() {
-        int idx = myModel.indexOf(o);
-        if (idx != -1) {
-          myModel.fireTableRowsUpdated(idx, idx);
-          return;
-        }
-        myModel.setItems(new ArrayList<>(OverheadTimings.getProducers(process)));
-      }
-    }), process);
+    OverheadTimings.addListener(new OverheadTimings.OverheadTimingsListener() {
+                                  @Override
+                                  public void timingAdded(OverheadProducer o) {
+                                    myUpdateQueue.queue(new Update(o) {
+                                      @Override
+                                      public void run() {
+                                        int idx = myModel.indexOf(o);
+                                        if (idx != -1) {
+                                          myModel.fireTableRowsUpdated(idx, idx);
+                                          return;
+                                        }
+                                        myModel.setItems(new ArrayList<>(OverheadTimings.getProducers(process)));
+                                      }
+                                    });
+                                  }
+
+                                  @Override
+                                  public void excessiveOverheadDetected() {
+                                    if (myBouncer != null) {
+                                      DebuggerUIUtil.invokeLater(myBouncer);
+                                    }
+                                  }
+                                }
+      , process);
 
     new DumbAwareAction("Toggle") {
       @Override
@@ -92,6 +115,34 @@ public class OverheadView extends BorderLayoutPanel implements Disposable {
         myTable.repaint();
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), myTable);
+
+    new DoubleClickListener() {
+      @Override
+      protected boolean onDoubleClick(MouseEvent e) {
+        getSelectedNavigatables().findFirst().ifPresent(b -> b.navigate(true));
+        return true;
+      }
+    }.installOn(myTable);
+  }
+
+
+  private StreamEx<Navigatable> getSelectedNavigatables() {
+    return StreamEx.of(myTable.getSelection())
+      .select(Breakpoint.class)
+      .map(Breakpoint::getXBreakpoint).nonNull()
+      .map(XBreakpoint::getNavigatable).nonNull();
+  }
+
+  @Nullable
+  @Override
+  public Object getData(String dataId) {
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+      Navigatable[] navigatables = getSelectedNavigatables().toArray(Navigatable.class);
+      if (navigatables.length > 0) {
+        return navigatables;
+      }
+    }
+    return null;
   }
 
   private static class EnabledColumnInfo extends ColumnInfo<OverheadProducer, Boolean> {
@@ -193,7 +244,8 @@ public class OverheadView extends BorderLayoutPanel implements Disposable {
                                              int column) {
           if (value instanceof OverheadProducer) {
             OverheadProducer overheadProducer = (OverheadProducer)value;
-            append(String.valueOf(myGetter.apply(overheadProducer)),
+            Long val = myGetter.apply(overheadProducer);
+            append(val != null ? String.valueOf(val) : "",
                    overheadProducer.isEnabled() ? SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
         }
@@ -212,5 +264,9 @@ public class OverheadView extends BorderLayoutPanel implements Disposable {
 
   @Override
   public void dispose() {
+  }
+
+  public void setBouncer(Runnable bouncer) {
+    myBouncer = bouncer;
   }
 }

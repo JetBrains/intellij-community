@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.google.common.collect.Lists;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -24,7 +9,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.codeInsight.PyCustomMember;
 import com.jetbrains.python.fixtures.PyMultiFileResolveTestCase;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
@@ -32,6 +16,7 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportResolver;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -39,6 +24,7 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -52,8 +38,8 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   private static void checkInitPyDir(PsiElement elt, String dirname) {
     assertTrue(elt instanceof PyFile);
     PyFile f = (PyFile)elt;
-    assertEquals(f.getName(), "__init__.py");
-    assertEquals(f.getContainingDirectory().getName(), dirname);
+    assertEquals("__init__.py", f.getName());
+    assertEquals(dirname, f.getContainingDirectory().getName());
   }
 
   public void testSimple() {
@@ -316,6 +302,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
       myTestFileName = null;
     }
   }
+
   // PY-2813
   public void testFromNamespacePackageImport() {
     assertResolvesTo(PyFunction.class, "foo");
@@ -361,24 +348,12 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
   // PY-7156
   public void testPython33NamespacePackage() {
-    setLanguageLevel(LanguageLevel.PYTHON33);
-    try {
-      assertResolvesTo(PsiDirectory.class, "p1");
-    }
-    finally {
-      setLanguageLevel(null);
-    }
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> assertResolvesTo(PsiDirectory.class, "p1"));
   }
 
   // PY-7156
   public void testFromPython33NamespacePackageImport() {
-    setLanguageLevel(LanguageLevel.PYTHON33);
-    try {
-      assertResolvesTo(PyFunction.class, "foo");
-    }
-    finally {
-      setLanguageLevel(null);
-    }
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> assertResolvesTo(PyFunction.class, "foo"));
   }
 
   // PY-7775
@@ -396,8 +371,8 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   public void testFromPackageModuleImportElementNamedAsModule() {
     assertResolvesTo(PyFunction.class, "foo");
     final PsiManager psiManager = myFixture.getPsiManager();
-    PyTestCase.assertNotParsed((PyFile)psiManager.findFile(myFixture.findFileInTempDir("p1/__init__.py")));
-    PyTestCase.assertNotParsed((PyFile)psiManager.findFile(myFixture.findFileInTempDir("p1/foo.py")));
+    PyTestCase.assertNotParsed(psiManager.findFile(myFixture.findFileInTempDir("p1/__init__.py")));
+    PyTestCase.assertNotParsed(psiManager.findFile(myFixture.findFileInTempDir("p1/foo.py")));
   }
 
   // PY-10819
@@ -417,7 +392,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
   // PY-7378
   public void testModuleInDeeplyNestedNamespacePackage() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> assertResolvesTo(PyFile.class, "m1.py"));
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> assertResolvesTo(PyFile.class, "m1.py"));
   }
 
   public void testKeywordArgument() {
@@ -462,7 +437,7 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
   // PY-18626
   public void testManySourceRoots() {
     myFixture.copyDirectoryToProject("manySourceRoots", "");
-    withSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
+    runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
       final PsiFile psiFile = myFixture.configureByFile("a.py");
       final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
       assertInstanceOf(ref, PsiPolyVariantReference.class);
@@ -475,41 +450,56 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     });
   }
 
+  // PY-28321
+  public void testImportManySourceRoots() {
+    myFixture.copyDirectoryToProject("importManySourceRoots", "");
+    runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root2"), myFixture.findFileInTempDir("root1")), () -> {
+      final PsiFile psiFile = myFixture.configureByFile("root1/pkg/a.py");
+      final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
+      assertInstanceOf(ref, PsiPolyVariantReference.class);
+      final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)ref);
+      assertEquals(1, elements.size());
+      final PsiElement element = elements.get(0);
+      assertInstanceOf(element, PyFile.class);
+      final VirtualFile file = ((PyFile)element).getVirtualFile();
+      assertEquals("m1.py", file.getName());
+    });
+  }
+
+  // PY-28321
+  // TODO: The test should be turned on as soon as PY-16688 and PY-23087 are implemented
+  public void ignoreTestImportManySourceRootsReverseRootOrder() {
+    myFixture.copyDirectoryToProject("importManySourceRoots", "");
+    runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root1"), myFixture.findFileInTempDir("root2")), () -> {
+      final PsiFile psiFile = myFixture.configureByFile("root1/pkg/a.py");
+      final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
+      assertInstanceOf(ref, PsiPolyVariantReference.class);
+      final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)ref);
+      assertEquals(0, elements.size());
+    });
+  }
+
   // PY-22522
   public void testBothForeignAndSourceRootImportResultsReturned() {
     myFixture.copyDirectoryToProject("bothForeignAndSourceRootImportResultsReturned", "");
 
     VirtualFile vf = myFixture.findFileInTempDir("ext/m1.py");
-    final PsiFile extSource = myFixture.getPsiManager().findFile(vf);
-    PyImportResolver foreignResolver = (name, context, withRoots) -> name.toString().equals("m1") ? extSource : null;
-    PlatformTestUtil.registerExtension(PyImportResolver.EP_NAME, foreignResolver, getTestRootDisposable());
 
-    withSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root")), () -> {
+    runWithSourceRoots(Lists.newArrayList(myFixture.findFileInTempDir("root")), () -> {
+      final PsiFile extSource = myFixture.getPsiManager().findFile(vf);
+      PyImportResolver foreignResolver = (name, context, withRoots) -> name.toString().equals("m1") ? extSource : null;
+      PlatformTestUtil.registerExtension(PyImportResolver.EP_NAME, foreignResolver, getTestRootDisposable());
+
       final PsiFile psiFile = myFixture.configureByFile("a.py");
       final PsiReference ref = PyResolveTestCase.findReferenceByMarker(psiFile);
       assertInstanceOf(ref, PsiPolyVariantReference.class);
       final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)ref);
       assertEquals(2, elements.size());
       final Set<String> parentNames = elements.stream()
-        .filter(e -> e instanceof PyFile)
-        .map(e -> ((PyFile)e).getVirtualFile().getParent().getName()).collect(Collectors.toSet());
+                                              .filter(e -> e instanceof PyFile)
+                                              .map(e -> ((PyFile)e).getVirtualFile().getParent().getName()).collect(Collectors.toSet());
       assertContainsElements(parentNames, "root", "ext");
     });
-  }
-
-  private void withSourceRoots(@NotNull List<VirtualFile> sourceRoots, @NotNull Runnable f) {
-    final Module module = myFixture.getModule();
-    for (VirtualFile root : sourceRoots) {
-      PsiTestUtil.addSourceRoot(module, root);
-    }
-    try {
-      f.run();
-    }
-    finally {
-      for (VirtualFile root : sourceRoots) {
-        PsiTestUtil.removeSourceRoot(module, root);
-      }
-    }
   }
 
   // PY-19989
@@ -539,17 +529,63 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
       fileSystemItems = Stream.of(PyPsiUtils.getFileSystemItem(reference.resolve()));
     }
     return fileSystemItems.map(f -> VfsUtilCore.getRelativeLocation(f.getVirtualFile(), root)).collect(Collectors.toList());
-    
   }
 
-  public void testCustomMemberTargetClass(){
+  public void testCustomMemberTargetClass() {
     prepareTestDirectory();
-    PyCustomMember customMember = new PyCustomMember("Clazz").resolvesToClass("pkg.mod1.Clazz");
-    PsiFile context = myFixture.configureByText("a.py", "");
-    PsiElement resolved = customMember.resolve(context);
+
+    final PyCustomMember customMember = new PyCustomMember("Clazz").resolvesToClass("pkg.mod1.Clazz");
+    final PsiFile context = myFixture.configureByText("a.py", "");
+
+    final TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(myFixture.getProject(), context);
+    final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext);
+
+    final PsiElement resolved = customMember.resolve(context, resolveContext);
     assertInstanceOf(resolved, PyTypedElement.class);
-    PyTypedElement pyTypedElement = (PyTypedElement) resolved;
-    PyType type = TypeEvalContext.codeAnalysis(myFixture.getProject(), context).getType(pyTypedElement);
+
+    final PyType type = typeEvalContext.getType((PyTypedElement)resolved);
     assertInstanceOf(type, PyClassType.class);
+  }
+
+  public void testImportAliasTargetReference() {
+    assertResolvesTo(PyTargetExpression.class, "bar");
+  }
+
+  //PY-28685
+  public void testImplicitImportSelf() {
+    prepareTestDirectory();
+    assertSameElements(doMultiResolveAndGetFileUrls("pkg1/pkg2/mod1.py"), "pkg1/pkg2/mod1.py");
+  }
+
+  public void testImportResolvesToPkgInit() {
+    prepareTestDirectory();
+    assertSameElements(doMultiResolveAndGetFileUrls("pkg1/pkg2/mod1.py"), "pkg1/pkg2/__init__.py");
+  }
+
+  // PY-28764
+  public void testOsAttributesFromPosixPathAndNTPath() {
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+
+    runWithSourceRoots(
+      Collections.singletonList(myFixture.findFileInTempDir("lib")),
+      () -> {
+        final PsiReference reference = PyResolveTestCase.findReferenceByMarker(myFixture.configureByFile("a.py"));
+        assertInstanceOf(reference, PsiPolyVariantReference.class);
+
+        final List<PsiElement> elements = PyUtil.multiResolveTopPriority((PsiPolyVariantReference)reference);
+        assertEquals(1, elements.size());
+
+        final PsiElement element = elements.get(0);
+        assertInstanceOf(element, PyFile.class);
+
+        final VirtualFile file = ((PyFile)element).getVirtualFile();
+        assertEquals("ntpath.py", file.getName());
+      }
+    );
+  }
+
+  // EA-121262
+  public void testIncompleteFromImport() {
+    assertUnresolved();
   }
 }

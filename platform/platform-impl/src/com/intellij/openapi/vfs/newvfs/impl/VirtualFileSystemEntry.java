@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
@@ -101,7 +102,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public VirtualDirectoryImpl getParent() {
-    VirtualDirectoryImpl changedParent = VfsData.getChangedParent(myId);
+    VirtualDirectoryImpl changedParent = mySegment.vfsData.getChangedParent(myId);
     return changedParent != null ? changedParent : myParent;
   }
 
@@ -241,6 +242,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     return ourPersistence.getLength(this);
   }
 
+  @NotNull
   @Override
   public VirtualFile copy(final Object requestor, @NotNull final VirtualFile newParent, @NotNull final String copyName) throws IOException {
     if (getFileSystem() != newParent.getFileSystem()) {
@@ -270,7 +272,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public int getId() {
-    return VfsData.isFileValid(myId) ? myId : -myId;
+    return mySegment.vfsData.isFileValid(myId) ? myId : -myId;
   }
 
   @Override
@@ -298,7 +300,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   @Override
   public boolean exists() {
-    return VfsData.isFileValid(myId);
+    return mySegment.vfsData.isFileValid(myId);
   }
 
   @Override
@@ -329,7 +331,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     parent.removeChild(this);
 
     VirtualDirectoryImpl directory = (VirtualDirectoryImpl)newParent;
-    VfsData.changeParent(myId, directory);
+    mySegment.vfsData.changeParent(myId, directory);
     directory.addChild(this);
     updateLinkStatus();
     ((PersistentFSImpl)PersistentFS.getInstance()).incStructuralModificationCount();
@@ -341,7 +343,7 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   }
 
   public void invalidate() {
-    VfsData.invalidateFile(myId);
+    mySegment.vfsData.invalidateFile(myId);
   }
 
   @NotNull
@@ -359,9 +361,14 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
       setCharset(charset);
     }
     else {
+      FileType fileType = getFileType();
+      if (isCharsetSet()) {
+        // file type detection may have cached the charset, no need to re-detect
+        return super.getCharset();
+      }
       try {
         final byte[] content = VfsUtilCore.loadBytes(this);
-        charset = LoadTextUtil.detectCharsetAndSetBOM(this, content, getFileType());
+        charset = LoadTextUtil.detectCharsetAndSetBOM(this, content, fileType);
       }
       catch (IOException e) {
         return super.getCharset();

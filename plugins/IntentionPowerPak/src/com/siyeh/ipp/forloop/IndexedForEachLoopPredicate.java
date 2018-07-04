@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import com.siyeh.ipp.psiutils.ErrorUtil;
 
@@ -38,30 +39,21 @@ class IndexedForEachLoopPredicate implements PsiElementPredicate {
     if (!(parent instanceof PsiForeachStatement)) {
       return false;
     }
-    final PsiForeachStatement foreachStatement =
-      (PsiForeachStatement)parent;
+    final PsiForeachStatement foreachStatement = (PsiForeachStatement)parent;
     final PsiExpression iteratedValue = foreachStatement.getIteratedValue();
     if (iteratedValue == null) {
       return false;
     }
     final PsiType type = iteratedValue.getType();
     if (!(type instanceof PsiArrayType)) {
-      if (!(type instanceof PsiClassType)) {
-        return false;
-      }
-      final PsiClassType classType = (PsiClassType)type;
-      final PsiClass aClass = classType.resolve();
+      final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(type);
       if (aClass == null) {
         return false;
       }
       final Project project = element.getProject();
       final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
-      final PsiClass listInterface =
-        psiFacade.findClass(CommonClassNames.JAVA_UTIL_LIST,
-                            GlobalSearchScope.allScope(project));
-      if (listInterface == null ||
-          !InheritanceUtil.isInheritorOrSelf(aClass,
-                                             listInterface, true)) {
+      final PsiClass listInterface = psiFacade.findClass(CommonClassNames.JAVA_UTIL_LIST, GlobalSearchScope.allScope(project));
+      if (listInterface == null || !InheritanceUtil.isInheritorOrSelf(aClass, listInterface, true)) {
         return false;
       }
     }

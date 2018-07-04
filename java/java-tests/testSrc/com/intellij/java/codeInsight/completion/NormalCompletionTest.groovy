@@ -15,13 +15,10 @@
  */
 package com.intellij.java.codeInsight.completion
 
-import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
-import com.intellij.codeInsight.completion.CompletionUtil
 import com.intellij.codeInsight.completion.JavaPsiClassReferenceElement
-import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
@@ -36,14 +33,17 @@ import com.intellij.psi.PsiTypeParameter
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
-import com.intellij.psi.impl.PsiDocumentManagerBase
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
+import org.jetbrains.annotations.NotNull
 
-class NormalCompletionTest extends LightFixtureCompletionTestCase {
+class NormalCompletionTest extends NormalCompletionTestCase {
+
+  @NotNull
   @Override
-  protected String getBasePath() {
-    return JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/normal/"
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_9
   }
 
   void testSimple() throws Exception {
@@ -174,18 +174,13 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
     LookupManager.getInstance(getProject()).hideActiveLookup()
 
-    CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).PREFER_LONGER_NAMES = false
-    try{
+    JavaCodeStyleSettings.getInstance(getProject()).PREFER_LONGER_NAMES = false
       configureByFile("PreferLongerNamesOption.java")
 
       assertEquals(3, myItems.length)
       assertEquals("ijk", myItems[0].getLookupString())
       assertEquals("efghIjk", myItems[1].getLookupString())
       assertEquals("abcdEfghIjk", myItems[2].getLookupString())
-    }
-    finally{
-      CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).PREFER_LONGER_NAMES = true
-    }
   }
 
   void testSCR7208() throws Exception {
@@ -408,7 +403,8 @@ class NormalCompletionTest extends LightFixtureCompletionTestCase {
 
   void testExcludeStringBuffer() throws Throwable {
     JavaProjectCodeInsightSettings.setExcludedNames(project, myFixture.testRootDisposable, StringBuffer.name)
-    doAntiTest()
+    configure()
+    assert !('StringBuffer' in myFixture.lookupElementStrings)
   }
 
   void testExcludeInstanceInnerClasses() throws Throwable {
@@ -669,7 +665,7 @@ public class ListUtils {
     assertStringItems("*")
   }
 
-  void testMembersInStaticImports() { doTest() }
+  void testMembersInStaticImports() { doTest('\n') }
 
   void testPackageNamedVariableBeforeAssignment() throws Throwable {
     doTest()
@@ -696,9 +692,7 @@ public class ListUtils {
     assert myFixture.lookupElementStrings == ['MyParam']
   }
 
-  void testMethodReturnType() throws Throwable {
-    doTest()
-  }
+  void testMethodReturnType() { doTest('\n') }
 
   void testMethodReturnTypeNoSpace() throws Throwable {
     configureByFile(getTestName(false) + ".java")
@@ -831,10 +825,6 @@ public class ListUtils {
     doTest()
   }
 
-  void testClassNameGenerics() throws Throwable {
-    doTest('\n')
-  }
-
   void testClassNameAnonymous() throws Throwable {
     doTest('\n')
   }
@@ -884,10 +874,6 @@ public class ListUtils {
     configure()
     checkResultByFile(getTestName(false) + ".java")
     assertTrue 'boolean' in myFixture.lookupElementStrings
-  }
-
-  private def configure() {
-    configureByTestName()
   }
 
   void testFinalInForLoop() throws Throwable {
@@ -957,27 +943,12 @@ public class ListUtils {
     doAntiTest()
   }
 
-  private void doTest() throws Exception {
-    configure()
-    checkResult()
-  }
-
-  private void doTest(String finishChar) throws Exception {
-    configure()
-    type finishChar
-    checkResult()
-  }
-
   void testSecondAnonymousClassParameter() { doTest() }
 
   void testSpaceAfterReturn() throws Throwable {
     configure()
     type '\n'
     checkResult()
-  }
-
-  private def checkResult() {
-    checkResultByFile(getTestName(false) + "_after.java")
   }
 
   void testIntersectionTypeMembers() throws Throwable {
@@ -1049,13 +1020,6 @@ public class ListUtils {
     assertStringItems('XFOO', 'XFOX')
   }
 
-  void testDoubleExpectedTypeFactoryMethod() throws Throwable {
-    configure()
-    assertStringItems('Key', 'create', 'create')
-    assert renderElement(myItems[1]).itemText == 'Key.<Boolean>create'
-    assert renderElement(myItems[2]).itemText == 'Key.create'
-  }
-
   void testSuggestExpectedTypeMembersNonImported() throws Throwable {
     myFixture.addClass("package foo; public class Super { public static final Super FOO = null; }")
     myFixture.addClass("package foo; public class Usage { public static void foo(Super s) {} }")
@@ -1075,8 +1039,6 @@ public class ListUtils {
   void testClassNameWithInnersTab() throws Throwable { doTest('\t') }
 
   void testClassNameWithGenericsTab() throws Throwable { doTest('\t') }
-
-  void testClassNameWithGenericsTab2() throws Throwable { doTest('\t') }
 
   void testLiveTemplatePrefixTab() throws Throwable { doTest('\t') }
 
@@ -1382,8 +1344,9 @@ class XInternalError {}
   void testNoClosingWhenChoosingWithParenBeforeIdentifier() { doTest '(' }
 
   void testPackageInMemberType() { doTest() }
+  void testPackageInMemberTypeGeneric() { doTest() }
 
-  void testConstantInAnno() { doTest() }
+  void testConstantInAnno() { doTest('\n') }
 
   void testCharsetName() {
     myFixture.addClass("package java.nio.charset; public class Charset { public static Charset forName(String s) {} }")
@@ -1473,15 +1436,6 @@ class XInternalError {}
     checkResult()
   }
 
-  void testMakeMultipleArgumentsFinalWhenInInner() {
-    configure()
-    def item = lookup.items.find { 'a, b' == it.lookupString }
-    assert item
-    lookup.currentItem = item
-    type '\n'
-    checkResult()
-  }
-
   void testNoFinalInAnonymousConstructor() { doTest() }
 
   void testListArrayListCast() { doTest('\n') }
@@ -1491,8 +1445,6 @@ class XInternalError {}
   void testStaticallyImportedMethodsBeforeExpression() { doTest() }
 
   void testInnerChainedReturnType() { doTest() }
-
-  void testOverwriteGenericsAfterNew() { doTest('\n') }
 
   private CommonCodeStyleSettings getCodeStyleSettings() {
     return CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE)
@@ -1699,25 +1651,6 @@ class Bar {
 
   void testIndentingForSwitchCase() { doTest() }
 
-  void testIncrementalCopyReparse() {
-    ((PsiDocumentManagerBase)PsiDocumentManager.getInstance(project)).disableBackgroundCommit(myFixture.testRootDisposable)
-    
-    myFixture.configureByText('a.java', 'class Fooxxxxxxxxxx { Fooxxxxx<caret>a f;\n' + 'public void foo() {}\n' * 10000 + '}')
-    def items = myFixture.completeBasic()
-    PsiClass c1 = items[0].object
-    assert !c1.physical
-    assert CompletionUtil.getOriginalElement(c1)
-    
-    getLookup().hide()
-    myFixture.type('x')
-    items = myFixture.completeBasic()
-    PsiClass c2 = items[0].object
-    assert !c2.physical
-    assert CompletionUtil.getOriginalElement(c2)
-
-    assert c1.is(c2)
-  }
-
   void testShowMostSpecificOverride() {
     configure()
     assert 'B' == LookupElementPresentation.renderElement(myFixture.lookup.items[0]).typeText
@@ -1819,6 +1752,112 @@ class Bar {
     assert !(myFixture.lookupElements[1].object instanceof PsiTypeParameter)
     selectItem(myFixture.lookupElements[1])
     checkResult()
+  }
+
+  void testLowercaseDoesNotMatchUnderscore() {
+    configure()
+    assert myFixture.lookupElementStrings == ['web']
+  }
+
+  void testLocalClassPresentation() {
+    def cls = myFixture.addFileToProject('foo/Bar.java', """package foo; 
+class Bar {{
+    class Local {}
+    Lo<caret>x
+}}""")
+    myFixture.configureFromExistingVirtualFile(cls.containingFile.virtualFile)
+    def item = myFixture.completeBasic()[0]
+    assert LookupElementPresentation.renderElement(item).tailText.contains('local class')
+  }
+
+  void testNoDuplicateInCast() {
+    configure()
+    assert myFixture.lookupElementStrings == null
+  }
+
+  void testNoNonAnnotationMethods() { doAntiTest() }
+
+  void testPreferBigDecimalToJavaUtilInner() {
+    configure()
+    myFixture.assertPreferredCompletionItems 0, 'BigDecimal', 'BigDecimalLayoutForm'
+  }
+
+  void testOnlyExceptionsInMultiCatch1() { doTest('\n') }
+
+  void testOnlyExceptionsInMultiCatch2() { doTest('\n') }
+
+  void testOnlyResourcesInResourceList1() { doTest('\n') }
+
+  void testOnlyResourcesInResourceList2() { doTest('\n') }
+
+  void testOnlyResourcesInResourceList3() { doTest('\n') }
+
+  void testOnlyResourcesInResourceList4() { doTest('\n') }
+
+  void testOnlyResourcesInResourceList5() { doTest('\n') }
+
+  void testMethodReferenceNoStatic() { doTest('\n') }
+
+  void testMethodReferenceCallContext() { doTest('\n') }
+
+  void testResourceParentInResourceList() {
+    configureByTestName()
+    assert 'MyOuterResource' == myFixture.lookupElementStrings[0]
+    assert 'MyClass' in myFixture.lookupElementStrings
+    myFixture.type('C\n')
+    checkResultByFile(getTestName(false) + "_after.java")
+  }
+
+  void testAfterTryWithResources() {
+    configureByTestName()
+    def strings = myFixture.lookupElementStrings
+    assert strings.containsAll(['final', 'finally', 'int', 'Util'])
+  }
+
+  void testNewObjectHashMapWithSmartEnter() {
+    configureByTestName()
+    myFixture.performEditorAction(IdeActions.ACTION_CHOOSE_LOOKUP_ITEM_COMPLETE_STATEMENT)
+    checkResultByFile(getTestName(false) + "_after.java")
+  }
+
+  void testCompletingClassWithSameNameAsPackage() {
+    myFixture.addClass("package Apple; public class Apple {}")
+    doTest('\n')
+  }
+
+  void testSuggestGetInstanceMethodName() { doTest() }
+
+  void testTabOnNewInnerClass() {
+    configureByTestName()
+    lookup.currentItem = myFixture.lookupElements.find { it.lookupString.contains('Inner') }
+    myFixture.type('\t')
+    checkResult()
+  }
+
+  void testRemoveUnusedImportOfSameName() {
+    myFixture.addClass("package foo; public class List {}")
+    configureByTestName()
+    lookup.currentItem = myFixture.lookupElements.find { it.object instanceof PsiClass && ((PsiClass)it.object).qualifiedName == 'java.util.List' }
+    myFixture.type('\n')
+    checkResult()
+  }
+
+  void "test no duplication after new with expected type parameter"() {
+    myFixture.configureByText 'a.java', 'class Foo<T> { T t = new <caret> }'
+    complete()
+    assert myFixture.lookupElements.findAll { it.allLookupStrings.contains('T') }.size() < 2
+  }
+
+  void "test no duplication for inner class on second invocation"() {
+    myFixture.configureByText 'a.java', '''
+class Abc {
+    class FooBar {}
+    void foo() {
+        FooBar<caret>x
+    }
+}'''
+    myFixture.complete(CompletionType.BASIC, 2)
+    assert myFixture.lookupElements.size() == 1
   }
 
 }

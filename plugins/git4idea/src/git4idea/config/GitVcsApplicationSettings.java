@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
 import com.intellij.openapi.components.*;
@@ -31,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 )
 public class GitVcsApplicationSettings implements PersistentStateComponent<GitVcsApplicationSettings.State> {
   private State myState = new State();
-  @Nullable private String myDetectedPathToGit;
 
   /**
    * Kinds of SSH executable to be used with the git
@@ -44,6 +29,9 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
   public static class State {
     public String myPathToGit = null;
     public SshExecutable SSH_EXECUTABLE = null;
+
+    public boolean ANNOTATE_IGNORE_SPACES = true;
+    public AnnotateDetectMovementsOption ANNOTATE_DETECT_INNER_MOVEMENTS = AnnotateDetectMovementsOption.NONE;
   }
 
   public static GitVcsApplicationSettings getInstance() {
@@ -56,19 +44,23 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
   }
 
   @Override
-  public void loadState(State state) {
+  public void loadState(@NotNull State state) {
     myState = state;
   }
 
+  /**
+   * @deprecated use {@link #getSavedPathToGit()} to get the path from settings if there's any
+   * or use {@link GitExecutableManager#getPathToGit()}/{@link GitExecutableManager#getPathToGit(Project)} to get git executable with
+   * auto-detection
+   */
   @NotNull
+  @Deprecated
   public String getPathToGit() {
-    if (myState.myPathToGit == null) {
-      if (myDetectedPathToGit == null) {
-        // detecting right away, this can be called from the default project without a call to GitVcs#activate()
-        myDetectedPathToGit = new GitExecutableDetector().detect();
-      }
-      return myDetectedPathToGit;
-    }
+    return GitExecutableManager.getInstance().getPathToGit();
+  }
+
+  @Nullable
+  public String getSavedPathToGit() {
     return myState.myPathToGit;
   }
 
@@ -83,5 +75,29 @@ public class GitVcsApplicationSettings implements PersistentStateComponent<GitVc
   @Nullable
   SshExecutable getIdeaSsh() {
     return myState.SSH_EXECUTABLE;
+  }
+
+
+  public boolean isIgnoreWhitespaces() {
+    return myState.ANNOTATE_IGNORE_SPACES;
+  }
+
+  public void setIgnoreWhitespaces(boolean value) {
+    myState.ANNOTATE_IGNORE_SPACES = value;
+  }
+
+  @NotNull
+  public AnnotateDetectMovementsOption getAnnotateDetectMovementsOption() {
+    return myState.ANNOTATE_DETECT_INNER_MOVEMENTS;
+  }
+
+  public void setAnnotateDetectMovementsOption(@NotNull AnnotateDetectMovementsOption value) {
+    myState.ANNOTATE_DETECT_INNER_MOVEMENTS = value;
+  }
+
+  public enum AnnotateDetectMovementsOption {
+    NONE,
+    INNER,
+    OUTER
   }
 }

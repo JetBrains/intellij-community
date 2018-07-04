@@ -20,18 +20,16 @@ import com.intellij.cvsSupport2.connections.CvsRootProvider;
 import com.intellij.cvsSupport2.cvsoperations.common.*;
 import com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.AdminReaderOnStoredRepositoryPath;
 import com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.AdminWriterStoringRepositoryPath;
-import com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls.ConstantLocalFileReader;
 import com.intellij.cvsSupport2.javacvsImpl.io.DeafLocalFileWriter;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.GlobalOptions;
 import org.netbeans.lib.cvsclient.command.checkout.CheckoutCommand;
-import org.netbeans.lib.cvsclient.file.ILocalFileReader;
 import org.netbeans.lib.cvsclient.file.ILocalFileWriter;
 
-import java.util.regex.Pattern;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * author: lesya
@@ -64,11 +62,6 @@ public class GetModuleContentOperation extends CompositeOperation implements Dir
           result.addModule(moduleName);
           result.setRecursive(true);
           return result;
-        }
-
-        @Override
-        protected ILocalFileReader createLocalFileReader() {
-          return ConstantLocalFileReader.FOR_EXISTING_FILE;
         }
 
         @Override

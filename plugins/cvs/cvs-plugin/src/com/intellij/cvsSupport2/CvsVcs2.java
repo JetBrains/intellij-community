@@ -149,6 +149,7 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
 
   /* ======================================== AbstractVcs*/
 
+  @NotNull
   public String getDisplayName() {
     return CvsBundle.getCvsDisplayName();
   }
@@ -162,7 +163,7 @@ public class CvsVcs2 extends AbstractVcs<CvsChangeList> implements TransactionPr
     return this;
   }
 
-  public void startTransaction(Object parameters) throws VcsException {
+  public void startTransaction(Object parameters) {
     myCvsStandardOperationsProvider.createTransaction();
   }
 

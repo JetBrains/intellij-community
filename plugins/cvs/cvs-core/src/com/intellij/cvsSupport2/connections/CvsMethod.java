@@ -34,10 +34,10 @@ public class CvsMethod {
   private final String myDescription;
   public static final CvsMethod[] AVAILABLE_METHODS = new CvsMethod[]{PSERVER_METHOD, EXT_METHOD, SSH_METHOD, LOCAL_METHOD};
 
-  private boolean myHasUserValue;
-  private boolean myHasHostValue;
-  private boolean myHasPortValue;
-  private boolean mySupportsProxyConnection;
+  private final boolean myHasUserValue;
+  private final boolean myHasHostValue;
+  private final boolean myHasPortValue;
+  private final boolean mySupportsProxyConnection;
 
 
   public CvsMethod(@NonNls String name,

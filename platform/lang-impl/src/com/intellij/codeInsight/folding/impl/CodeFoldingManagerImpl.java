@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -34,7 +20,10 @@ import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
@@ -43,15 +32,15 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.Collection;
 import java.util.List;
 
 public class CodeFoldingManagerImpl extends CodeFoldingManager implements ProjectComponent, Disposable {
   private final Project myProject;
 
-  private final List<Document> myDocumentsWithFoldingInfo = new WeakList<>();
+  private final Collection<Document> myDocumentsWithFoldingInfo = new WeakList<>();
 
   private final Key<DocumentFoldingInfo> myFoldingInfoInDocumentKey = Key.create("FOLDING_INFO_IN_DOCUMENT_KEY");
   private static final Key<Boolean> FOLDING_STATE_KEY = Key.create("FOLDING_STATE_KEY");
@@ -78,14 +67,15 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
       @Override
       public void mouseMoved(EditorMouseEvent e) {
         if (myProject.isDisposed()) return;
-        HintManager hintManager = HintManager.getInstance();
-        if (hintManager != null && hintManager.hasShownHintsThatWillHideByOtherHint(false)) {
-          return;
-        }
-
-        if (e.getArea() != EditorMouseEventArea.FOLDING_OUTLINE_AREA) return;
         LightweightHint hint = null;
         try {
+          HintManager hintManager = HintManager.getInstance();
+          if (hintManager != null && hintManager.hasShownHintsThatWillHideByOtherHint(false)) {
+            return;
+          }
+
+          if (e.getArea() != EditorMouseEventArea.FOLDING_OUTLINE_AREA) return;
+
           Editor editor = e.getEditor();
           if (PsiDocumentManager.getInstance(myProject).isUncommited(editor.getDocument())) return;
 
@@ -120,17 +110,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
             // editor content, hence, we show max(2; available visual lines number) instead.
             // P.S. '2' is used here in assumption that many java methods have javadocs which first line is just '/**'.
             // So, it's not too useful to show only it even when available vertical space is not big enough.
-            int availableVisualLines = 2;
-            JComponent editorComponent = editor.getComponent();
-            Container editorComponentParent = editorComponent.getParent();
-            if (editorComponentParent != null) {
-              Container contentPane = editorComponent.getRootPane().getContentPane();
-              if (contentPane != null) {
-                int y = SwingUtilities.convertPoint(editorComponentParent, editorComponent.getLocation(), contentPane).y;
-                int visualLines = y / editor.getLineHeight();
-                availableVisualLines = Math.max(availableVisualLines, visualLines);
-              }
-            }
+            int availableVisualLines = EditorFragmentComponent.getAvailableVisualLinesAboveEditor(editor);
             int startVisualLine = editor.offsetToVisualPosition(textOffset).line;
             int desiredEndVisualLine = Math.max(0, editor.xyToVisualPosition(new Point(0, visibleArea.y)).line - 1);
             int endVisualLine = startVisualLine + availableVisualLines;
@@ -337,12 +317,9 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   }
 
   @Override
-  public void writeFoldingState(@NotNull CodeFoldingState state, @NotNull Element element) throws WriteExternalException {
+  public void writeFoldingState(@NotNull CodeFoldingState state, @NotNull Element element) {
     if (state instanceof DocumentFoldingInfo) {
       ((DocumentFoldingInfo)state).writeExternal(element);
-    }
-    else {
-      throw new WriteExternalException();
     }
   }
 

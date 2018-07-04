@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.xml.XmlTagValueImpl;
 import com.intellij.psi.xml.*;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.util.ArrayUtil;
@@ -249,12 +250,9 @@ public class XmlTagTest extends LightCodeInsightTestCase {
 
     assertEquals(text, textRange.substring(file.getText()));
 
-    new WriteCommandAction(getProject(), file) {
-      @Override
-      protected void run(@NotNull final Result result) {
-        CodeStyleManager.getInstance(getProject()).adjustLineIndent(file, y.getTextOffset());
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(getProject(), file).run(() -> {
+      CodeStyleManager.getInstance(getProject()).adjustLineIndent(file, y.getTextOffset());
+    });
 
     text = y.getValue().getText();
     textRange = y.getValue().getTextRange();
@@ -289,12 +287,9 @@ public class XmlTagTest extends LightCodeInsightTestCase {
   public void testDeleteTagBetweenText() {
     final XmlTag tag = createTag("foo.xhtml", "<p>a<div/>b</p>");
     final XmlTag div = tag.getSubTags()[0];
-    new WriteCommandAction(getProject(), tag.getContainingFile()) {
-      @Override
-      protected void run(@NotNull final Result result) {
-        div.delete();
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(getProject(), tag.getContainingFile()).run(() -> {
+      div.delete();
+    });
     assertEquals("<p>ab</p>", tag.getText());
   }
 
@@ -407,25 +402,22 @@ public class XmlTagTest extends LightCodeInsightTestCase {
   }
 
   public void testXHTMLSetAttribute1() {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        final XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("test.xhtml", "<a/>");
-        final XmlTag tagB = file.getDocument().getRootTag();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      final XmlFile file = (XmlFile)PsiFileFactory.getInstance(getProject()).createFileFromText("test.xhtml", "<a/>");
+      final XmlTag tagB = file.getDocument().getRootTag();
 
-        tagB.setAttribute("a", "");
-        assertEquals("<a a=\"\"/>", tagB.getText());
+      tagB.setAttribute("a", "");
+      assertEquals("<a a=\"\"/>", tagB.getText());
 
-        tagB.setAttribute("b", "");
-        assertEquals("<a a=\"\" b=\"\"/>", tagB.getText());
+      tagB.setAttribute("b", "");
+      assertEquals("<a a=\"\" b=\"\"/>", tagB.getText());
 
-        tagB.setAttribute("c", "");
-        assertEquals("<a a=\"\" b=\"\" c=\"\"/>", tagB.getText());
+      tagB.setAttribute("c", "");
+      assertEquals("<a a=\"\" b=\"\" c=\"\"/>", tagB.getText());
 
-        tagB.getAttributes()[1].delete();
-        assertEquals("<a a=\"\"  c=\"\"/>", tagB.getText());
-      }
-    }.execute().throwException();
+      tagB.getAttributes()[1].delete();
+      assertEquals("<a a=\"\"  c=\"\"/>", tagB.getText());
+    });
   }
 
   public void testXHTMLNbsp1() {

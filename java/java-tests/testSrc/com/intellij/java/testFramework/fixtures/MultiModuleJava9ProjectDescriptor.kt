@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.java.testFramework.fixtures
 
@@ -32,7 +20,7 @@ import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor
 import org.jetbrains.jps.model.java.JavaSourceRootType
 
 /**
- * Dependencies: 'main' -> 'm2', 'main' -> 'm4', 'main' -> 'm5', 'main' -> 'm6' => 'm7'
+ * Dependencies: 'main' -> 'm2', 'main' -> 'm4', 'main' -> 'm5', 'main' -> 'm6' => 'm7', 'm6' -> 'm8'
  */
 object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
   enum class ModuleDescriptor(internal val moduleName: String, internal val rootName: String) {
@@ -42,7 +30,8 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
     M4("${TEST_MODULE_NAME}_m4", "src_m4"),
     M5("${TEST_MODULE_NAME}_m5", "src_m5"),
     M6("${TEST_MODULE_NAME}_m6", "src_m6"),
-    M7("${TEST_MODULE_NAME}_m7", "src_m7");
+    M7("${TEST_MODULE_NAME}_m7", "src_m7"),
+    M8("${TEST_MODULE_NAME}_m8", "src_m8");
 
     fun root(): VirtualFile =
       if (this == MAIN) LightPlatformTestCase.getSourceRoot() else TempFileSystem.getInstance().findFileByPath("/$rootName")!!
@@ -76,12 +65,16 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
       val m7 = makeModule(project, ModuleDescriptor.M7)
       ModuleRootModificationUtil.addDependency(m6, m7, DependencyScope.COMPILE, true)
 
+      val m8 = makeModule(project, ModuleDescriptor.M8)
+      ModuleRootModificationUtil.addDependency(m6, m8, DependencyScope.COMPILE, false)
+
       val libDir = "jar://${PathManagerEx.getTestDataPath()}/codeInsight/jigsaw"
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-named-1.0.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-with-claimed-name.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-auto-1.0.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-auto-2.0.jar!/")
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-multi-release.jar!/")
+      ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib_invalid_1_2.jar!/")
     }
   }
 

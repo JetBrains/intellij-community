@@ -15,8 +15,19 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
-import org.apache.batik.dom.svg.SAXSVGDocumentFactory;
+import com.intellij.util.LazyInitializer.NotNullValue;
+import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI.ScaleContext;
+import org.apache.batik.anim.dom.SAXSVGDocumentFactory;
+import org.apache.batik.anim.dom.SVGDOMImplementation;
+import org.apache.batik.anim.dom.SVGOMAnimatedLength;
+import org.apache.batik.anim.dom.SVGOMRectElement;
+import org.apache.batik.bridge.UserAgent;
+import org.apache.batik.dom.AbstractDocument;
+import org.apache.batik.transcoder.SVGAbstractTranscoder;
 import org.apache.batik.transcoder.TranscoderException;
 import org.apache.batik.transcoder.TranscoderInput;
 import org.apache.batik.transcoder.TranscoderOutput;
@@ -25,91 +36,146 @@ import org.apache.batik.util.XMLResourceDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.svg.SVGDocument;
 
 import java.awt.*;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
+
 /**
  * @author tav
  */
 public class SVGLoader {
-  private TranscoderInput input;
-  private BufferedImage img;
-  private float width;
-  private float height;
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.SVGLoader");
 
-  private enum SizeAttr {
-    width,
-    height;
-
-    static final int FALLBACK_VALUE = 16;
-
-    public float value(@NotNull Document document) {
-      String value = document.getDocumentElement().getAttribute(name());
-      if (value.endsWith("px")) {
-        try {
-          return Float.parseFloat(value.substring(0, value.length() - 2));
-        }
-        catch (NumberFormatException ex) {
-          ex.printStackTrace();
-        }
+  public static final NotNullValue<Double> MAX_SIZE = new NotNullValue<Double>() {
+    @NotNull
+    @Override
+    public Double initialize() {
+      double maxSize = Integer.MAX_VALUE;
+      if (!GraphicsEnvironment.isHeadless()) {
+        GraphicsDevice device = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
+        Rectangle bounds = device.getDefaultConfiguration().getBounds();
+        AffineTransform tx = device.getDefaultConfiguration().getDefaultTransform();
+        maxSize = (int)Math.max(bounds.width * tx.getScaleX(), bounds.height * tx.getScaleY());
       }
-      try {
-        ViewBox viewBox = ViewBox.fromString(document.getDocumentElement().getAttribute("viewBox"));
-        return this == width ? viewBox.width : viewBox.height;
-      }
-      catch (Exception e) {
-        e.printStackTrace();
-      }
-      return FALLBACK_VALUE;
+      return maxSize;
     }
-  }
+  };
 
-  private static class ViewBox {
-    private final float x;
-    private final float y;
-    private final float width;
-    private final float height;
+  private final TranscoderInput myInput;
+  private final Size mySize;
+  private BufferedImage myImage;
 
-    public ViewBox(float x, float y, float width, float height) {
-      this.x = x;
-      this.y = y;
+  private static class Size {
+    final double width;
+    final double height;
+
+    static final int FALLBACK_SIZE = 16;
+
+    Size(double width, double height) {
       this.width = width;
       this.height = height;
     }
 
-    public static ViewBox fromString(String s) {
+    Size scale(double scale) {
+      return new Size(width * scale, height * scale);
+    }
+
+    Size scaleToMaxSize() {
+      double w = width;
+      double h = height;
+      if (w > MAX_SIZE.get() || h > MAX_SIZE.get()) {
+        double k = w >= h ? w / MAX_SIZE.get() : h / MAX_SIZE.get();
+        w /= k;
+        h /= k;
+      }
+      return new Size(w, h);
+    }
+
+    @NotNull
+    public static Size parse(@NotNull Document document) {
+      Float width = parseSize(document, "width");
+      Float height = parseSize(document, "height");
+      if (width != null && height != null) {
+        return new Size(width, height);
+      }
+      Size viewBox = parseViewBox(document);
+      if (viewBox != null) {
+        return viewBox;
+      }
+      return new Size(FALLBACK_SIZE, FALLBACK_SIZE);
+    }
+
+    @Nullable
+    private static Float parseSize(@NotNull Document document, @NotNull String sizeName) {
+      String value = document.getDocumentElement().getAttribute(sizeName);
+      if (value.endsWith("px")) {
+        try {
+          return Float.parseFloat(value.substring(0, value.length() - 2));
+        }
+        catch (NumberFormatException ignored) {
+        }
+      }
+      return null;
+    }
+
+    @Nullable
+    private static Size parseViewBox(@NotNull Document document) {
+      String value = document.getDocumentElement().getAttribute("viewBox");
+      if (value == null || value.isEmpty()) {
+        return null;
+      }
       List<String> values = new ArrayList<String>(4);
-      for (String token : StringUtil.tokenize(s, ", ")) {
+      for (String token : StringUtil.tokenize(value, ", ")) {
         values.add(token);
       }
 
       if (values.size() == 4) {
-        return new ViewBox(Float.parseFloat(values.get(0)),
-                           Float.parseFloat(values.get(1)),
-                           Float.parseFloat(values.get(2)),
-                           Float.parseFloat(values.get(3)));
+        try {
+          return new Size(Float.parseFloat(values.get(2)),
+                          Float.parseFloat(values.get(3)));
+        }
+        catch (NumberFormatException ignored) {
+        }
       }
-
-      throw new IllegalArgumentException("String should be formatted like 'x y width height' or 'x, y, width, height'");
+      LOG.warn("SVG file " + ObjectUtils.notNull(document.getBaseURI(), "") +
+               " 'viewBox' expected in format: 'x y width height' or 'x, y, width, height'");
+      return null;
     }
   }
 
   private class MyTranscoder extends ImageTranscoder {
     @Override
     public BufferedImage createImage(int w, int h) {
+      //noinspection UndesirableClassUsage
       return new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
     }
 
     @Override
-    public void writeImage(BufferedImage img, TranscoderOutput output) throws TranscoderException {
-      SVGLoader.this.img = img;
+    public void writeImage(BufferedImage img, TranscoderOutput output) {
+      SVGLoader.this.myImage = img;
+    }
+
+    @Override
+    protected UserAgent createUserAgent() {
+      return new SVGAbstractTranscoderUserAgent() {
+        @Override
+        public SVGDocument getBrokenLinkDocument(Element e, String url, String message) {
+          LOG.warn(url + " " + message);
+          return createFallbackPlaceholder();
+        }
+      };
     }
   }
 
@@ -121,7 +187,7 @@ public class SVGLoader {
     return load(null, stream, scale);
   }
 
-  public static Image load(@Nullable URL url, @NotNull InputStream stream , float scale) throws IOException {
+  public static Image load(@Nullable URL url, @NotNull InputStream stream , double scale) throws IOException {
     try {
       return new SVGLoader(url, stream, scale).createImage();
     }
@@ -130,30 +196,95 @@ public class SVGLoader {
     }
   }
 
-  private SVGLoader(@Nullable URL url, InputStream stream, float scale) throws IOException {
-    Document document = null;
+  public static <T extends BufferedImage> T loadHiDPI(@Nullable URL url, @NotNull InputStream stream , ScaleContext ctx) throws IOException {
+    BufferedImage image = (BufferedImage)load(url, stream, ctx.getScale(PIX_SCALE));
+    //noinspection unchecked
+    return (T)ImageUtil.ensureHiDPI(image, ctx);
+  }
+
+  public static Couple<Integer> loadInfo(@Nullable URL url, @NotNull InputStream stream , double scale) throws IOException {
+    SVGLoader loader = new SVGLoader(url, stream, scale);
+    return Couple.of((int)loader.mySize.width, (int)loader.mySize.height);
+  }
+
+  public static double getMaxZoomFactor(@Nullable URL url, @NotNull InputStream stream, @NotNull ScaleContext ctx) throws IOException {
+    SVGLoader loader = new SVGLoader(url, stream, ctx.getScale(PIX_SCALE));
+    return Math.min(MAX_SIZE.get() / loader.mySize.width, MAX_SIZE.get() / loader.mySize.height);
+  }
+
+  private SVGLoader(@Nullable URL url, InputStream stream, double scale) throws IOException {
+    Document document;
     String uri = null;
     try {
+      if (url != null && "jar".equals(url.getProtocol()) && stream != null) {
+        // workaround for BATIK-1217
+        url = new URL(url.getPath());
+      }
       uri = url != null ? url.toURI().toString() : null;
     }
     catch (URISyntaxException ignore) {
     }
-    document = new SAXSVGDocumentFactory(XMLResourceDescriptor.getXMLParserClassName()).
+    document = new MySAXSVGDocumentFactory(XMLResourceDescriptor.getXMLParserClassName()).
       createDocument(uri, stream);
     if (document == null) {
       throw new IOException("document not created");
     }
-    input = new TranscoderInput(document);
-
-    width = SizeAttr.width.value(document) * scale;
-    height = SizeAttr.height.value(document) * scale;
+    myInput = new TranscoderInput(document);
+    mySize = Size.parse(document).scale(scale);
   }
 
   private BufferedImage createImage() throws TranscoderException {
+    Size size = mySize.scaleToMaxSize();
     MyTranscoder r = new MyTranscoder();
-    r.addTranscodingHint(ImageTranscoder.KEY_WIDTH, new Float(width));
-    r.addTranscodingHint(ImageTranscoder.KEY_HEIGHT, new Float(height));
-    r.transcode(input, null);
-    return img;
+    r.addTranscodingHint(SVGAbstractTranscoder.KEY_WIDTH, new Float(size.width));
+    r.addTranscodingHint(SVGAbstractTranscoder.KEY_HEIGHT, new Float(size.height));
+    r.transcode(myInput, null);
+    return myImage;
+  }
+
+  @NotNull
+  private static SVGDocument createFallbackPlaceholder() {
+    try {
+      String fallbackIcon = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 16 16\">\n" +
+                            "  <rect x=\"1\" y=\"1\" width=\"14\" height=\"14\" fill=\"none\" stroke=\"red\" stroke-width=\"2\"/>\n" +
+                            "  <line x1=\"1\" y1=\"1\" x2=\"15\" y2=\"15\" stroke=\"red\" stroke-width=\"2\"/>\n" +
+                            "  <line x1=\"1\" y1=\"15\" x2=\"15\" y2=\"1\" stroke=\"red\" stroke-width=\"2\"/>\n" +
+                            "</svg>\n";
+
+      SAXSVGDocumentFactory factory = new SAXSVGDocumentFactory(XMLResourceDescriptor.getXMLParserClassName());
+      return (SVGDocument)factory.createDocument(null, new StringReader(fallbackIcon));
+    }
+    catch (IOException e) {
+      throw new IllegalStateException(e);
+    }
+  }
+
+  /**
+   * A workaround for https://issues.apache.org/jira/browse/BATIK-1220
+   */
+  private static class MySAXSVGDocumentFactory extends SAXSVGDocumentFactory {
+    public MySAXSVGDocumentFactory(String parser) {
+      super(parser);
+      implementation = new MySVGDOMImplementation();
+    }
+  }
+
+  private static class MySVGDOMImplementation extends SVGDOMImplementation {
+    static {
+      svg11Factories.put("rect", new SVGDOMImplementation.RectElementFactory() {
+        @Override
+        public Element create(String prefix, Document doc) {
+          return new SVGOMRectElement(prefix, (AbstractDocument)doc) {
+            @Override
+            protected SVGOMAnimatedLength createLiveAnimatedLength(String ns, String ln, String def, short dir, boolean nonneg) {
+              if (def == null && ("width".equals(ln) || "height".equals(ln))) {
+                def = "0"; // used in case of missing width/height attr to avoid org.apache.batik.bridge.BridgeException
+              }
+              return super.createLiveAnimatedLength(ns, ln, def, dir, nonneg);
+            }
+          };
+        }
+      });
+    }
   }
 }

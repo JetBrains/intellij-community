@@ -31,6 +31,7 @@ import java.util.Collection;
  *
  * @author nik
  */
+@Deprecated
 public abstract class FacetDetector<T, C extends FacetConfiguration> {
   private final String myId;
 
@@ -44,6 +45,7 @@ public abstract class FacetDetector<T, C extends FacetConfiguration> {
   /**
    * @deprecated use {@link FacetDetector#FacetDetector(String)} instead
    */
+  @Deprecated
   protected FacetDetector() {
     myId = getClass().getName();
   }

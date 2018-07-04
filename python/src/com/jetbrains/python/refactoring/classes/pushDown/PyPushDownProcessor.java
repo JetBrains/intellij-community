@@ -45,7 +45,7 @@ public class PyPushDownProcessor extends PyMembersRefactoringBaseProcessor {
   @NotNull
   private static PyClass[] getChildren(@NotNull final PyClass from) {
     final Collection<PyClass> all = getInheritors(from);
-    return all.toArray(new PyClass[all.size()]);
+    return all.toArray(PyClass.EMPTY_ARRAY);
   }
 
   /**
@@ -71,6 +71,7 @@ public class PyPushDownProcessor extends PyMembersRefactoringBaseProcessor {
     return null;
   }
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return PyPushDownHandler.REFACTORING_NAME;

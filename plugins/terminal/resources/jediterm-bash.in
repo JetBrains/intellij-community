@@ -31,12 +31,30 @@ function load_interactive_configs {
   fi
 }
 
+function override_jb_variables {
+  for VARIABLE in $(env)
+  do
+    NAME=${VARIABLE%%=*}
+    if [[ $NAME = '_INTELLIJ_FORCE_SET_'* ]]
+    then
+      NEW_NAME=${NAME:20}
+      if [ -n "$NEW_NAME" ]
+      then
+        VALUE=${VARIABLE#*=}
+        export "$NEW_NAME"="$VALUE"
+      fi
+    fi
+  done
+}
+
 if [ -n $LOGIN_SHELL ]; then
   load_login_configs
   unset LOGIN_SHELL
 fi
 
 load_interactive_configs
+
+override_jb_variables
 
 # mappings for Ctrl-left-arrow and Ctrl-right-arrow for word moving
 bind '"\e\e[C":forward-word'
@@ -56,12 +74,12 @@ trap "generate_command_executed_sequence" DEBUG
 
 if [ -n "$JEDITERM_USER_RCFILE" ]
 then
-  source $JEDITERM_USER_RCFILE
+  source "$JEDITERM_USER_RCFILE"
   unset JEDITERM_USER_RCFILE
 fi
 
 if [ -n "$JEDITERM_SOURCE" ]
 then
-  source $JEDITERM_SOURCE
+  source "$JEDITERM_SOURCE"
   unset JEDITERM_SOURCE
 fi

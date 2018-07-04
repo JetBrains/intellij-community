@@ -30,7 +30,7 @@ import java.nio.file.Path;
 public class JpsModuleSerializationDataExtensionImpl extends JpsElementBase<JpsModuleSerializationDataExtensionImpl> implements
                                                                                                                      JpsModuleSerializationDataExtension {
   public static final JpsElementChildRole<JpsModuleSerializationDataExtension> ROLE = JpsElementChildRoleBase.create("module serialization data");
-  private Path myBaseDirectory;
+  private final Path myBaseDirectory;
 
   public JpsModuleSerializationDataExtensionImpl(@NotNull Path baseDirectory) {
     myBaseDirectory = baseDirectory;

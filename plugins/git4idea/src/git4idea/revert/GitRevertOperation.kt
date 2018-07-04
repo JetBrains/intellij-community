@@ -16,9 +16,6 @@
 package git4idea.revert
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.changes.Change
-import com.intellij.openapi.vcs.changes.ChangeListManager
-import com.intellij.util.containers.OpenTHashSet
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsFullCommitDetails
 import git4idea.GitApplyChangesProcess
@@ -37,19 +34,15 @@ class GitRevertOperation(private val project: Project,
 
   fun execute() {
     GitApplyChangesProcess(project, commits, autoCommit, "revert", "reverted",
-                           command = { repository, hash, autoCommit, listeners ->
-                             doRevert(autoCommit, repository, hash, listeners)
+                           command = { repository, commit, autoCommit, listeners ->
+                             doRevert(autoCommit, repository, commit, listeners)
                            },
                            emptyCommitDetector = { result -> result.outputAsJoinedString.contains("nothing to commit") },
-                           defaultCommitMessageGenerator = { commit ->
+                           defaultCommitMessageGenerator = { _, commit ->
                              """
                              Revert "${commit.subject}"
 
                              This reverts commit ${commit.id.toShortString()}""".trimIndent()
-                           },
-                           findLocalChanges = { changesInCommit ->
-                             val allChanges = OpenTHashSet(ChangeListManager.getInstance(project).allChanges)
-                             changesInCommit.mapNotNull { allChanges.get(reverseChange(it)) }
                            },
                            preserveCommitMetadata = false).execute()
   }
@@ -60,6 +53,4 @@ class GitRevertOperation(private val project: Project,
                        listeners: List<GitLineHandlerListener>): GitCommandResult {
     return git.revert(repository, hash.asString(), autoCommit, *listeners.toTypedArray())
   }
-
-  private fun reverseChange(change: Change) = Change(change.afterRevision, change.beforeRevision)
 }

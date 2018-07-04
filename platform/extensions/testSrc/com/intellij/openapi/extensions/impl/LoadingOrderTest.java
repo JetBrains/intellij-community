@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.LoadingOrder;
@@ -37,7 +23,7 @@ public class LoadingOrderTest {
     target.add(createElement(LoadingOrder.FIRST, null, "1"));
     target.add(createElement(LoadingOrder.LAST, null, "2"));
     target.add(createElement(LoadingOrder.ANY, null, "Any"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[target.size()]);
+    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
     assertSequence(array, "1AnyAny2");
   }
 
@@ -48,7 +34,7 @@ public class LoadingOrderTest {
     target.add(createElement(LoadingOrder.ANY, null, "2"));
     target.add(createElement(LoadingOrder.ANY, null, "3"));
     target.add(createElement(LoadingOrder.ANY, null, "4"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[target.size()]);
+    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
     assertSequence(array, "1234");
   }
 
@@ -63,7 +49,7 @@ public class LoadingOrderTest {
     target.add(createElement(LoadingOrder.after(idTwo), null, "4"));
     target.add(createElement(LoadingOrder.ANY, idTwo, "3"));
     target.add(createElement(LoadingOrder.before(idOne), null, "1"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[target.size()]);
+    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
     assertSequence(array, "012345");
   }
 
@@ -77,8 +63,19 @@ public class LoadingOrderTest {
     target.add(createElement(LoadingOrder.ANY, idOne, "3"));
     target.add(createElement(LoadingOrder.ANY, null, "5"));
     target.add(createElement(LoadingOrder.LAST, null, "6"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[target.size()]);
+    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
     assertSequence(array, "123456");
+  }
+
+  @Test
+  public void testComplexSortingBeforeLast() {
+    List<LoadingOrder.Orderable> target = new ArrayList<>();
+    target.add(createElement(LoadingOrder.LAST, "1", "1"));
+    target.add(createElement(LoadingOrder.readOrder("last,before 1"), null, "2"));
+    target.add(createElement(LoadingOrder.ANY, null, "3"));
+    target.add(createElement(LoadingOrder.before("1'"), null, "4"));
+    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
+    assertSequence(array, "3421");
   }
 
   private static void assertSequence(LoadingOrder.Orderable[] array, String expected) {
@@ -102,7 +99,7 @@ public class LoadingOrderTest {
     target.add(createElement(LoadingOrder.FIRST, "first", "bad"));
     target.add(createElement(LoadingOrder.LAST, null, "good"));
     target.add(createElement(LoadingOrder.before("first"), null, "bad"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[target.size()]);
+    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
     checkSortingFailure(array);
   }
 
@@ -113,7 +110,7 @@ public class LoadingOrderTest {
     target.add(createElement(LoadingOrder.FIRST, "first", "1"));
     target.add(createElement(LoadingOrder.LAST, null, "3"));
     target.add(createElement(LoadingOrder.FIRST, null, "1"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[target.size()]);
+    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
     assertSequence(array, "1123");
   }
 
@@ -137,7 +134,7 @@ public class LoadingOrderTest {
     target.add(createElement(LoadingOrder.FIRST, null, "good"));
     target.add(createElement(LoadingOrder.LAST, "last", "bad"));
     target.add(createElement(LoadingOrder.ANY, null, "good"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[target.size()]);
+    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
     checkSortingFailure(array);
   }
 
@@ -148,7 +145,7 @@ public class LoadingOrderTest {
     target.add(createElement(LoadingOrder.FIRST, null, "1"));
     target.add(createElement(LoadingOrder.LAST, "last", "3"));
     target.add(createElement(LoadingOrder.ANY, null, "2"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[target.size()]);
+    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
     assertSequence(array, "1233");
   }
 
@@ -158,7 +155,7 @@ public class LoadingOrderTest {
     target.add(createElement(LoadingOrder.after("2"), "1", "bad"));
     target.add(createElement(LoadingOrder.after("3"), "2", "bad"));
     target.add(createElement(LoadingOrder.after("1"), "3", "bad"));
-    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[target.size()]);
+    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
     checkSortingFailure(array);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +16,13 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.CloneUtils;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.*;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -37,10 +32,10 @@ public class RefusedBequestInspectionBase extends BaseInspection {
 
   @SuppressWarnings("PublicField") public boolean ignoreEmptySuperMethods;
 
-  @SuppressWarnings("PublicField") final ExternalizableStringSet annotations =
+  @SuppressWarnings("PublicField") public final ExternalizableStringSet annotations =
     new ExternalizableStringSet("javax.annotation.OverridingMethodsMustInvokeSuper");
 
-  @SuppressWarnings("PublicField") boolean onlyReportWhenAnnotated = true;
+  @SuppressWarnings("PublicField") public boolean onlyReportWhenAnnotated = true;
 
   @Override
   @NotNull
@@ -49,35 +44,16 @@ public class RefusedBequestInspectionBase extends BaseInspection {
   }
 
   @Override
-  public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    super.writeSettings(node);
-    if (onlyReportWhenAnnotated) {
-      node.addContent(new Element("option").setAttribute("name", "onlyReportWhenAnnotated").
-        setAttribute("value", String.valueOf(onlyReportWhenAnnotated)));
-    }
-    if (!annotations.hasDefaultValues()) {
-      final Element element = new Element("option").setAttribute("name", "annotations");
-      final Element valueElement = new Element("value");
-      annotations.writeExternal(valueElement);
-      node.addContent(element.addContent(valueElement));
-    }
+  public void writeSettings(@NotNull Element node) {
+    defaultWriteSettings(node, "onlyReportWhenAnnotated", "annotations");
+    writeBooleanOption(node, "onlyReportWhenAnnotated", false);
+    annotations.writeSettings(node, "annotations");
   }
 
   @Override
-  public void readSettings(@NotNull Element node) throws InvalidDataException {
-    super.readSettings(node);
+  public void readSettings(@NotNull Element node) {
     onlyReportWhenAnnotated = false;
-    for (Element option : node.getChildren("option")) {
-      if ("onlyReportWhenAnnotated".equals(option.getAttributeValue("name"))) {
-        onlyReportWhenAnnotated = Boolean.parseBoolean(option.getAttributeValue("value"));
-      }
-      else if ("annotations".equals(option.getAttributeValue("name"))) {
-        final Element value = option.getChild("value");
-        if (value != null) {
-          annotations.readExternal(value);
-        }
-      }
-    }
+    super.readSettings(node);
   }
 
   @Override
@@ -109,13 +85,13 @@ public class RefusedBequestInspectionBase extends BaseInspection {
       if (method.getNameIdentifier() == null) {
         return;
       }
-      final PsiMethod leastConcreteSuperMethod = getDirectSuperMethod(method);
-      if (leastConcreteSuperMethod == null) {
+      final PsiMethod superMethod = getDirectSuperMethod(method);
+      if (superMethod == null) {
         return;
       }
       final String methodName = method.getName();
       if (!HardcodedMethodConstants.CLONE.equals(methodName)) {
-        final PsiClass superClass = leastConcreteSuperMethod.getContainingClass();
+        final PsiClass superClass = superMethod.getContainingClass();
         if (superClass != null) {
           final String superClassName = superClass.getQualifiedName();
           if (CommonClassNames.JAVA_LANG_OBJECT.equals(superClassName)) {
@@ -123,17 +99,17 @@ public class RefusedBequestInspectionBase extends BaseInspection {
           }
         }
       }
-      if (ignoreEmptySuperMethods) {
-        final PsiElement element = leastConcreteSuperMethod.getNavigationElement();
-        final PsiMethod superMethod = element instanceof PsiMethod ? (PsiMethod)element : leastConcreteSuperMethod;
-        if (MethodUtils.isTrivial(superMethod, true)) {
+      if (ignoreEmptySuperMethods && isTrivial(superMethod)) {
+        return;
+      }
+      final boolean isClone = CloneUtils.isClone(method);
+      if (onlyReportWhenAnnotated && !AnnotationUtil.isAnnotated(superMethod, annotations, 0)) {
+        if (!isClone && !isJUnitSetUpOrTearDown(method) && !MethodUtils.isFinalize(method) || isTrivial(superMethod)) {
           return;
         }
       }
-      if (onlyReportWhenAnnotated && !CloneUtils.isClone(method) && !isJUnitSetUpOrTearDown(method) && !MethodUtils.isFinalize(method)) {
-        if (!AnnotationUtil.isAnnotated(leastConcreteSuperMethod, annotations)) {
-          return;
-        }
+      if (isClone && ClassUtils.isSingleton(method.getContainingClass())) {
+        return;
       }
       if (MethodCallUtils.containsSuperMethodCall(method) || ControlFlowUtils.methodAlwaysThrowsException(method)) {
         return;
@@ -141,12 +117,17 @@ public class RefusedBequestInspectionBase extends BaseInspection {
       registerMethodError(method);
     }
 
+    private boolean isTrivial(PsiMethod method) {
+      final PsiElement element = method.getNavigationElement();
+      return MethodUtils.isTrivial(element instanceof PsiMethod ? (PsiMethod)element : method, true);
+    }
+
     private boolean isJUnitSetUpOrTearDown(PsiMethod method) {
       final String name = method.getName();
       if (!"setUp".equals(name) && !"tearDown".equals(name)) {
         return false;
       }
-      if (method.getParameterList().getParametersCount() != 0) {
+      if (!method.getParameterList().isEmpty()) {
         return false;
       }
       final PsiClass aClass = method.getContainingClass();
@@ -156,14 +137,7 @@ public class RefusedBequestInspectionBase extends BaseInspection {
     @Nullable
     private PsiMethod getDirectSuperMethod(PsiMethod method) {
       final PsiMethod superMethod = MethodUtils.getSuper(method);
-      if (superMethod ==  null || superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        return null;
-      }
-      final PsiClass containingClass = superMethod.getContainingClass();
-      if (containingClass == null || containingClass.isInterface()) {
-        return null;
-      }
-      return superMethod;
+      return superMethod == null || superMethod.hasModifierProperty(PsiModifier.ABSTRACT) ? null : superMethod;
     }
   }
 }

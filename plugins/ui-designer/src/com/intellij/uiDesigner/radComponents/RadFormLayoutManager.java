@@ -424,11 +424,6 @@ public class RadFormLayoutManager extends RadAbstractGridLayoutManager implement
   }
 
   @Override
-  public Property[] getContainerProperties(final Project project) {
-    return Property.EMPTY_ARRAY;
-  }
-
-  @Override
   public Property[] getComponentProperties(final Project project, final RadComponent component) {
     return new Property[] {
       HorzAlignProperty.getInstance(project),

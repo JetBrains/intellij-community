@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.settings;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SimpleConfigurable;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.xdebugger.settings.DebuggerSettingsCategory;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
 import org.jdom.Element;
@@ -61,9 +46,7 @@ public class JavaDebuggerSettings extends XDebuggerSettings<Element> {
         return singletonList(SimpleConfigurable.create("reference.idesettings.debugger.hotswap", OptionsBundle.message("options.java.display.name"),
                                                        JavaHotSwapConfigurableUi.class, DebuggerSettings::getInstance));
       case ROOT:
-        if (Registry.is("debugger.capture.points")) {
-          return singletonList(new CaptureConfigurable());
-        }
+        return singletonList(new CaptureConfigurable());
     }
     return Collections.emptyList();
   }
@@ -73,7 +56,7 @@ public class JavaDebuggerSettings extends XDebuggerSettings<Element> {
   public static List<Configurable> createDataViewsConfigurable() {
     return Arrays.asList(new DebuggerDataViewsConfigurable(null),
                          SimpleConfigurable.create("reference.idesettings.debugger.typerenderers", DebuggerBundle.message("user.renderers.configurable.display.name"),
-                                                                 UserRenderersConfigurable.class, NodeRendererSettings::getInstance));
+                                                   UserRenderersConfigurable.class, NodeRendererSettings::getInstance));
   }
 
   @Override
@@ -90,6 +73,6 @@ public class JavaDebuggerSettings extends XDebuggerSettings<Element> {
   }
 
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
   }
 }

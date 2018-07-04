@@ -44,6 +44,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.IntroduceTargetChooser;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.extractMethod.preview.ExtractMethodPreviewManager;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.listeners.RefactoringEventListener;
@@ -55,6 +56,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Optional;
 
 public class ExtractMethodHandler implements RefactoringActionHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractMethod.ExtractMethodHandler");
@@ -142,10 +144,10 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     }
 
     final List<PsiExpression> expressions = IntroduceVariableBase.collectExpressions(file, editor, editor.getCaretModel().getOffset());
-    return expressions.toArray(new PsiElement[expressions.size()]);
+    return expressions.toArray(PsiElement.EMPTY_ARRAY);
   }
 
-  private static void invokeOnElements(final Project project, final Editor editor, PsiFile file, PsiElement[] elements) {
+  public static void invokeOnElements(final Project project, final Editor editor, PsiFile file, PsiElement[] elements) {
     getProcessor(elements, project, file, editor, true, new Pass<ExtractMethodProcessor>(){
       @Override
       public void pass(ExtractMethodProcessor processor) {
@@ -156,32 +158,48 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
 
   private static boolean invokeOnElements(final Project project, final Editor editor, @NotNull final ExtractMethodProcessor processor, final boolean directTypes) {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, processor.getTargetClass().getContainingFile())) return false;
+
+    processor.setPreviewSupported(true);
     if (processor.showDialog(directTypes)) {
-      run(project, editor, processor);
+      if (processor.isPreviewDuplicates()) {
+        previewExtractMethod(processor);
+        return true;
+      }
+      extractMethod(project, processor);
       DuplicatesImpl.processDuplicates(processor, project, editor);
       return true;
     }
     return false;
   }
 
-  public static void run(@NotNull final Project project, final Editor editor, final ExtractMethodProcessor processor) {
+  private static void previewExtractMethod(@NotNull ExtractMethodProcessor processor) {
+    processor.previewRefactoring();
+    ExtractMethodPreviewManager.getInstance(processor.getProject()).showPreview(processor);
+  }
+
+  public static void extractMethod(@NotNull final Project project, final ExtractMethodProcessor processor) {
     CommandProcessor.getInstance().executeCommand(project,
-                                                  () -> PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(() -> {
-                                                    try {
-                                                      final RefactoringEventData beforeData = new RefactoringEventData();
-                                                      beforeData.addElements(processor.myElements);
-                                                      project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted("refactoring.extract.method", beforeData);
+                                                  () -> PostprocessReformattingAspect.getInstance(project).postponeFormattingInside(
+                                                    () -> doRefactoring(project, processor)), REFACTORING_NAME, null);
+  }
 
-                                                      processor.doRefactoring();
+  private static void doRefactoring(@NotNull Project project, ExtractMethodProcessor processor) {
+    try {
+      final RefactoringEventData beforeData = new RefactoringEventData();
+      beforeData.addElements(processor.myElements);
+      project.getMessageBus().syncPublisher(
+        RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted("refactoring.extract.method", beforeData);
 
-                                                      final RefactoringEventData data = new RefactoringEventData();
-                                                      data.addElement(processor.getExtractedMethod());
-                                                      project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone("refactoring.extract.method", data);
-                                                    }
-                                                    catch (IncorrectOperationException e) {
-                                                      LOG.error(e);
-                                                    }
-                                                  }), REFACTORING_NAME, null);
+      processor.doRefactoring();
+
+      final RefactoringEventData data = new RefactoringEventData();
+      data.addElement(processor.getExtractedMethod());
+      project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
+        .refactoringDone("refactoring.extract.method", data);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
   }
 
   @Nullable
@@ -211,8 +229,9 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
       }
     }
 
+    String initialMethodName = Optional.ofNullable(ExtractMethodSnapshot.SNAPSHOT_KEY.get(file)).map(s -> s.myMethodName).orElse("");
     final ExtractMethodProcessor processor =
-      new ExtractMethodProcessor(project, editor, elements, null, REFACTORING_NAME, "", HelpID.EXTRACT_METHOD);
+      new ExtractMethodProcessor(project, editor, elements, null, REFACTORING_NAME, initialMethodName, HelpID.EXTRACT_METHOD);
     processor.setShowErrorDialogs(showErrorMessages);
     try {
       if (!processor.prepare(pass)) return null;
@@ -245,15 +264,16 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
                                                     final PsiElement[] elements,
                                                     final PsiFile file,
                                                     final boolean openEditor) {
-    return getProcessor(elements, project, file, openEditor ? openEditor(project, file) : null, false, null);
+    return getProcessor(elements, project, file, openEditor ? openEditor(file) : null, false, null);
   }
 
   public static boolean invokeOnElements(final Project project, @NotNull final ExtractMethodProcessor processor, final PsiFile file, final boolean directTypes) {
-    return invokeOnElements(project, openEditor(project, file), processor, directTypes);
+    return invokeOnElements(project, openEditor(file), processor, directTypes);
   }
 
   @Nullable
-  private static Editor openEditor(final Project project, final PsiFile file) {
+  public static Editor openEditor(@NotNull final PsiFile file) {
+    final Project project = file.getProject();
     final VirtualFile virtualFile = file.getVirtualFile();
     LOG.assertTrue(virtualFile != null);
     final OpenFileDescriptor fileDescriptor = new OpenFileDescriptor(project, virtualFile);

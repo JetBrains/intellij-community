@@ -25,8 +25,6 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
-import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -158,25 +156,18 @@ public class GroovyPositionManager implements PositionManager {
 
   @Nullable
   private static String findEnclosingName(@NotNull final SourcePosition position) {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-
-    try {
+    return ReadAction.compute(()->{
       PsiClass typeDefinition = findEnclosingTypeDefinition(position);
       if (typeDefinition != null) {
         return getClassNameForJvm(typeDefinition);
       }
       return getScriptQualifiedName(position);
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   @Nullable
   private static String getOuterClassName(final SourcePosition position) {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-
-    try {
+    return ReadAction.compute(()->{
       GroovyPsiElement sourceImage = findReferenceTypeSourceImage(position);
       if (sourceImage instanceof GrTypeDefinition) {
         return getClassNameForJvm((GrTypeDefinition)sourceImage);
@@ -185,10 +176,7 @@ public class GroovyPositionManager implements PositionManager {
         return getScriptQualifiedName(position);
       }
       return null;
-    }
-    finally {
-      accessToken.finish();
-    }
+    });
   }
 
   @Nullable
@@ -269,10 +257,11 @@ public class GroovyPositionManager implements PositionManager {
       if (classes.isEmpty()) {
         classes = cache.getClassesByFQName(qName, addModuleContent(searchScope), false);
       }
-      if (classes.isEmpty()) return null;
-      classes.sort(PsiClassUtil.createScopeComparator(searchScope));
-      PsiClass clazz = classes.get(0);
-      if (clazz != null) return clazz.getContainingFile();
+      if (!classes.isEmpty()) {
+        classes.sort(PsiClassUtil.createScopeComparator(searchScope));
+        PsiClass clazz = classes.get(0);
+        if (clazz != null) return clazz.getContainingFile();
+      }
     }
     catch (ProcessCanceledException | IndexNotReadyException e) {
       return null;

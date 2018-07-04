@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
@@ -35,6 +21,7 @@ public interface InlayModel {
   /**
    * Same as {@link #addInlineElement(int, boolean, EditorCustomElementRenderer)}, making created element associated with following text.
    */
+  @Nullable
   default Inlay addInlineElement(int offset, @NotNull EditorCustomElementRenderer renderer) {
     return addInlineElement(offset, false, renderer);
   }
@@ -57,6 +44,20 @@ public interface InlayModel {
   List<Inlay> getInlineElementsInRange(int startOffset, int endOffset);
 
   /**
+   * Tells whether given range of offsets (both sides inclusive) contains at least one inline element.
+   */
+  default boolean hasInlineElementsInRange(int startOffset, int endOffset) {
+    return !getInlineElementsInRange(startOffset, endOffset).isEmpty();
+  }
+
+  /**
+   * Tells whether there exists at least one inline element currently.
+   */
+  default boolean hasInlineElements() {
+    return hasInlineElementsInRange(0, Integer.MAX_VALUE);
+  }
+
+  /**
    * Tells whether there exists an inline visual element at a given offset.
    */
   boolean hasInlineElementAt(int offset);
@@ -65,7 +66,15 @@ public interface InlayModel {
    * Tells whether there exists an inline visual element at a given visual position.
    * Only visual position to the left of the element is recognized.
    */
-  boolean hasInlineElementAt(@NotNull VisualPosition visualPosition);
+  default boolean hasInlineElementAt(@NotNull VisualPosition visualPosition) {
+    return getInlineElementAt(visualPosition) != null;
+  }
+
+  /**
+   * Return a custom visual element at at a given visual position. Only visual position to the left of the element is recognized.
+   */
+  @Nullable
+  Inlay getInlineElementAt(@NotNull VisualPosition visualPosition);
 
   /**
    * Return a custom visual element at given coordinates in editor's coordinate space,

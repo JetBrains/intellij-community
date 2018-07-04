@@ -52,10 +52,10 @@ public class LowLevelSearchUtil {
   // TRUE/FALSE -> injected psi has been discovered and processor returned true/false;
   // null -> there were nothing injected found
   private static Boolean processInjectedFile(PsiElement element,
-                                             final TextOccurenceProcessor processor,
-                                             final StringSearcher searcher,
+                                             @NotNull StringSearcher searcher,
                                              @NotNull ProgressIndicator progress,
-                                             InjectedLanguageManager injectedLanguageManager) {
+                                             InjectedLanguageManager injectedLanguageManager,
+                                             @NotNull TextOccurenceProcessor processor) {
     if (!(element instanceof PsiLanguageInjectionHost)) return null;
     if (injectedLanguageManager == null) return null;
     List<Pair<PsiElement,TextRange>> list = injectedLanguageManager.getInjectedPsiFiles(element);
@@ -72,13 +72,12 @@ public class LowLevelSearchUtil {
    * to be reused via <code>lastElement<code/> param in subsequent calls to avoid full tree rescan (n^2->n).
    */
   private static TreeElement processTreeUp(@NotNull Project project,
-                                           @NotNull TextOccurenceProcessor processor,
                                            @NotNull PsiElement scope,
                                            @NotNull StringSearcher searcher,
                                            final int offset,
                                            final boolean processInjectedPsi,
                                            @NotNull ProgressIndicator progress,
-                                           TreeElement lastElement) {
+                                           TreeElement lastElement, @NotNull TextOccurenceProcessor processor) {
     if (scope instanceof PsiCompiledElement) {
       throw new IllegalArgumentException("Scope is compiled, can't scan: "+scope+"; containingFile: "+scope.getContainingFile());
     }
@@ -131,7 +130,7 @@ public class LowLevelSearchUtil {
       if (!contains) contains = run.getTextLength() - start >= patternLength;  //do not compute if already contains
       if (contains) {
         if (processInjectedPsi) {
-          Boolean result = processInjectedFile(run, processor, searcher, progress, injectedLanguageManager);
+          Boolean result = processInjectedFile(run, searcher, progress, injectedLanguageManager, processor);
           if (result != null) {
             return result.booleanValue() ? lastElement : null;
           }
@@ -223,7 +222,7 @@ public class LowLevelSearchUtil {
     TreeElement lastElement = null;
     for (int offset : offsetsInScope) {
       progress.checkCanceled();
-      lastElement = processTreeUp(project, processor, scope, searcher, offset, processInjectedPsi, progress, lastElement);
+      lastElement = processTreeUp(project, scope, searcher, offset, processInjectedPsi, progress, lastElement, processor);
       if (lastElement == null) return false;
     }
     return true;

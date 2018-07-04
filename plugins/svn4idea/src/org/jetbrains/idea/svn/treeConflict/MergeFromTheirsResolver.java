@@ -1,24 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.treeConflict;
 
 import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diff.impl.patch.BinaryFilePatch;
 import com.intellij.openapi.diff.impl.patch.FilePatch;
@@ -33,7 +17,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.actions.BackgroundTaskGroup;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchDifferentiatedDialog;
@@ -45,7 +28,6 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
@@ -53,21 +35,19 @@ import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.idea.svn.SvnConfiguration;
-import org.jetbrains.idea.svn.SvnContentRevision;
-import org.jetbrains.idea.svn.SvnRevisionNumber;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 import static com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder.buildPatch;
 import static com.intellij.openapi.util.io.FileUtil.getRelativePath;
@@ -170,7 +150,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
   }
 
   @CalledInAwt
-  private void selectPatchesInApplyPatchDialog(@NotNull Consumer<VcsException> callback) throws VcsException {
+  private void selectPatchesInApplyPatchDialog(@NotNull Consumer<VcsException> callback) {
     LocalChangeList changeList = ChangeListManager.getInstance(myVcs.getProject()).getChangeList(myChange);
     TreeConflictApplyTheirsPatchExecutor patchExecutor = new TreeConflictApplyTheirsPatchExecutor(myVcs, myBaseForPatch);
     ApplyPatchDifferentiatedDialog dialog = new ApplyPatchDifferentiatedDialog(
@@ -178,7 +158,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
       ApplyPatchMode.APPLY_PATCH_IN_MEMORY, myTextPatches, changeList);
 
     // dialog is not modal - so such async behavior is used
-    patchExecutor.myPromise.done(callback);
+    patchExecutor.myPromise.onSuccess(callback);
     dialog.show();
   }
 
@@ -214,7 +194,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
       }
 
       if (patches != null) {
-        new PatchApplier<BinaryFilePatch>(myVcs.getProject(), myBaseDir, patches, localList, null, null).execute(false, true);
+        new PatchApplier<BinaryFilePatch>(myVcs.getProject(), myBaseDir, patches, localList, null).execute(false, true);
         myThereAreCreations =
           patches.stream().anyMatch(patch -> patch.isNewFile() || !Comparing.equal(patch.getAfterName(), patch.getBeforeName()));
       }
@@ -254,9 +234,8 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
   private void applyBinaryChanges() throws VcsException {
     List<FilePath> dirtyPaths = newArrayList();
     for (Change change : myTheirsBinaryChanges) {
-      RunResult result = new WriteAction() {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
+      try {
+        WriteAction.runAndWait(() -> {
           dirtyPaths.add(getFilePath(change));
           try {
             applyBinaryChange(change);
@@ -264,11 +243,10 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
           catch (IOException e) {
             throw new VcsException(e);
           }
-        }
-      }.execute();
-
-      if (result.hasException()) {
-        processBinaryChangeError(result.getThrowable());
+        });
+      }
+      catch (Throwable e) {
+        processBinaryChangeError(e);
       }
     }
     VcsDirtyScopeManager.getInstance(myVcs.getProject()).filePathsDirty(dirtyPaths, null);
@@ -408,7 +386,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
   private void preloadForFile() throws VcsException {
     SvnContentRevision base = SvnContentRevision.createBaseRevision(myVcs, myNewFilePath, myCommittedRevision.getRevision());
     SvnContentRevision remote =
-      SvnContentRevision.createRemote(myVcs, myOldFilePath, SVNRevision.create(myDescription.getSourceRightVersion().getPegRevision()));
+      SvnContentRevision.createRemote(myVcs, myOldFilePath, Revision.of(myDescription.getSourceRightVersion().getPegRevision()));
     myTheirsChanges.add(new Change(toSimpleRevision(base, false), toSimpleRevision(remote, false)));
   }
 
@@ -438,7 +416,7 @@ public class MergeFromTheirsResolver extends BackgroundTaskGroup {
   private List<SvnChangeList> loadSvnChangeListsForPatch(@NotNull TreeConflictDescription description) throws VcsException {
     long max = description.getSourceRightVersion().getPegRevision();
     long min = description.getSourceLeftVersion().getPegRevision();
-    SvnRepositoryLocation location = new SvnRepositoryLocation(description.getSourceRightVersion().getRepositoryRoot().toString());
+    SvnRepositoryLocation location = new SvnRepositoryLocation(description.getSourceRightVersion().getRepositoryRoot());
     ChangeBrowserSettings settings = new ChangeBrowserSettings();
     settings.USE_CHANGE_BEFORE_FILTER = settings.USE_CHANGE_AFTER_FILTER = true;
     settings.CHANGE_BEFORE = String.valueOf(max);

@@ -24,17 +24,17 @@ import org.jetbrains.idea.maven.utils.library.propertiesEditor.RepositoryLibrary
 import javax.swing.*;
 
 public class RepositoryLibraryPropertiesDialog extends DialogWrapper {
-  private RepositoryLibraryPropertiesEditor propertiesEditor;
-  private RepositoryLibraryPropertiesModel model;
+  private final RepositoryLibraryPropertiesEditor propertiesEditor;
+  private final RepositoryLibraryPropertiesModel model;
 
   public RepositoryLibraryPropertiesDialog(@Nullable Project project,
                                            RepositoryLibraryPropertiesModel model,
                                            RepositoryLibraryDescription description,
-                                           final boolean changesRequired) {
+                                           final boolean changesRequired, final boolean allowExcludingTransitiveDependencies) {
     super(project);
     this.model = model;
     propertiesEditor =
-      new RepositoryLibraryPropertiesEditor(project, model, description, new RepositoryLibraryPropertiesEditor.ModelChangeListener() {
+      new RepositoryLibraryPropertiesEditor(project, model, description, allowExcludingTransitiveDependencies, new RepositoryLibraryPropertiesEditor.ModelChangeListener() {
         @Override
         public void onChange(RepositoryLibraryPropertiesEditor editor) {
           setOKActionEnabled(editor.isValid() && (!changesRequired || editor.hasChanges()));

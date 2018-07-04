@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow.inliner;
 
 import com.intellij.codeInspection.dataFlow.CFGBuilder;
+import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,4 +34,12 @@ public interface CallInliner {
    * If false is returned, inliner must not emit any instructions via builder.
    */
   boolean tryInlineCall(@NotNull CFGBuilder builder, @NotNull PsiMethodCallExpression call);
+
+  /**
+   * @param expression expression to test
+   * @return true if this inliner may add constraints on the precise type of given expression
+   */
+  default boolean mayInferPreciseType(@NotNull PsiExpression expression) {
+    return false;
+  }
 }

@@ -1,41 +1,19 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator;
 
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiElementProcessor;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
@@ -45,15 +23,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryE
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTraitTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.Set;
 
@@ -72,7 +45,7 @@ public class GrHighlightUtil {
     PsiTreeUtil.processElements(scope, new PsiElementProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element) {
-        if (!(element instanceof GrReferenceExpression) || !((GrReferenceExpression)element).isQualified()) {
+        if (!(element instanceof GrReferenceExpression) || ((GrReferenceExpression)element).isQualified()) {
           return true;
         }
 
@@ -98,123 +71,12 @@ public class GrHighlightUtil {
            element.getParent() instanceof GrUnaryExpression && ((GrUnaryExpression)element.getParent()).isPostfix();
   }
 
-  static boolean isReassigned(final GrVariable var) {
+  public static boolean isReassigned(final GrVariable var) {
     LOG.assertTrue(!DumbService.getInstance(var.getProject()).isDumb());
 
     PsiMethod method = PsiTreeUtil.getParentOfType(var, PsiMethod.class);
     PsiNamedElement scope = method == null ? var.getContainingFile() : method;
     return scope != null && getReassignedNames(scope).contains(var.getName());
-  }
-
-  /**
-   * @param resolved   declaration element
-   * @param refElement reference to highlight. if null, 'resolved' is highlighted and no resolve is allowed.
-   * @return
-   */
-  @Nullable
-  public static TextAttributesKey getDeclarationHighlightingAttribute(PsiElement resolved, @Nullable PsiElement refElement) {
-    if (refElement != null && isReferenceWithLiteralName(refElement)) return null; //don't highlight literal references
-
-    if (resolved instanceof PsiField || resolved instanceof GrVariable && ResolveUtil.isScriptField((GrVariable)resolved)) {
-      boolean isStatic = ((PsiVariable)resolved).hasModifierProperty(PsiModifier.STATIC);
-      return isStatic ? GroovySyntaxHighlighter.STATIC_FIELD : GroovySyntaxHighlighter.INSTANCE_FIELD;
-    }
-    else if (resolved instanceof GrAccessorMethod) {
-      boolean isStatic = ((GrAccessorMethod)resolved).hasModifierProperty(PsiModifier.STATIC);
-      return isStatic ? GroovySyntaxHighlighter.STATIC_PROPERTY_REFERENCE : GroovySyntaxHighlighter.INSTANCE_PROPERTY_REFERENCE;
-    }
-    else if (resolved instanceof PsiMethod) {
-      if (((PsiMethod)resolved).isConstructor()) {
-        if (refElement != null) {
-          if (refElement.getNode().getElementType() == GroovyTokenTypes.kTHIS || //don't highlight this() or super()
-              refElement.getNode().getElementType() == GroovyTokenTypes.kSUPER) {
-            return null;
-          }
-          else {
-            return GroovySyntaxHighlighter.CONSTRUCTOR_CALL;
-          }
-        }
-        else {
-          return GroovySyntaxHighlighter.CONSTRUCTOR_DECLARATION;
-        }
-      }
-      else {
-        if (refElement != null) {
-          boolean isStatic = ((PsiMethod)resolved).hasModifierProperty(PsiModifier.STATIC);
-          if (GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)resolved)) {
-            return isStatic ? GroovySyntaxHighlighter.STATIC_PROPERTY_REFERENCE : GroovySyntaxHighlighter.INSTANCE_PROPERTY_REFERENCE;
-          }
-          else {
-            return isStatic ? GroovySyntaxHighlighter.STATIC_METHOD_ACCESS : GroovySyntaxHighlighter.METHOD_CALL;
-          }
-        }
-        else {
-          if (isMethodWithLiteralName((PsiMethod)resolved)) return null; //don't highlight method with literal name
-          return GroovySyntaxHighlighter.METHOD_DECLARATION;
-        }
-      }
-    }
-    else if (resolved instanceof PsiTypeParameter) {
-      return GroovySyntaxHighlighter.TYPE_PARAMETER;
-    }
-    else if (resolved instanceof GrTraitTypeDefinition) {
-      return GroovySyntaxHighlighter.TRAIT_NAME;
-    }
-    else if (resolved instanceof PsiClass) {
-      PsiClass clazz = (PsiClass)resolved;
-      if (clazz.isAnnotationType()) {
-        return GroovySyntaxHighlighter.ANNOTATION;
-      }
-      else if (clazz.isInterface()) {
-        return GroovySyntaxHighlighter.INTERFACE_NAME;
-      }
-      else if (clazz.isEnum()) {
-        return GroovySyntaxHighlighter.ENUM_NAME;
-      }
-      else {
-        return GroovySyntaxHighlighter.CLASS_REFERENCE;
-      }
-    }
-    else if (resolved instanceof GrParameter) {
-      boolean reassigned = isReassigned((GrParameter)resolved);
-      return reassigned ? GroovySyntaxHighlighter.REASSIGNED_PARAMETER : GroovySyntaxHighlighter.PARAMETER;
-    }
-    else if (resolved instanceof GrVariable) {
-      boolean reassigned = isReassigned((GrVariable)resolved);
-      return reassigned ? GroovySyntaxHighlighter.REASSIGNED_LOCAL_VARIABLE : GroovySyntaxHighlighter.LOCAL_VARIABLE;
-    }
-    else if (resolved instanceof GrLabeledStatement) {
-      return GroovySyntaxHighlighter.LABEL;
-    }
-    return null;
-  }
-
-  private static boolean isMethodWithLiteralName(@Nullable PsiMethod method) {
-    if (method instanceof GrMethod) {
-      final PsiElement nameIdentifier = ((GrMethod)method).getNameIdentifierGroovy();
-      if (isStringNameElement(nameIdentifier)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static boolean isReferenceWithLiteralName(@Nullable PsiElement ref) {
-    if (ref instanceof GrReferenceExpression) {
-      final PsiElement nameIdentifier = ((GrReferenceExpression)ref).getReferenceNameElement();
-      if (nameIdentifier != null && isStringNameElement(nameIdentifier)) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private static boolean isStringNameElement(@NotNull PsiElement nameIdentifier) {
-    final ASTNode node = nameIdentifier.getNode();
-    if (node == null) return false;
-
-    final IElementType nameElementType = node.getElementType();
-    return TokenSets.STRING_LITERAL_SET.contains(nameElementType);
   }
 
   public static boolean isDeclarationAssignment(GrReferenceExpression refExpr) {
@@ -258,12 +120,6 @@ public class GrHighlightUtil {
     int endOffset = parameterList.getTextRange().getEndOffset() + 1;
 
     return new TextRange(startOffset, endOffset);
-  }
-
-  @NotNull
-  public static PsiElement getElementToHighlight(@NotNull GrReferenceElement refElement) {
-    final PsiElement refNameElement = refElement.getReferenceNameElement();
-    return refNameElement != null ? refNameElement : refElement;
   }
 
   public static TextRange getClassHeaderTextRange(GrTypeDefinition clazz) {

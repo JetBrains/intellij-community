@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
@@ -43,7 +29,6 @@ import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RES
  * @author ven
  */
 public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResult> implements GrMethodComparator.Context {
-  private final PsiType myThisType;
 
   @Nullable
   private final PsiType[] myArgumentTypes;
@@ -76,8 +61,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
                                  boolean allVariants) {
     super(name, RESOLVE_KINDS_METHOD_PROPERTY, place);
     myIsConstructor = isConstructor;
-    myThisType = thisType;
-    mySubstitutorComputer = new SubstitutorComputer(myThisType, argumentTypes, typeArguments, myPlace, myPlace.getParent());
+    mySubstitutorComputer = new SubstitutorComputer(thisType, argumentTypes, typeArguments, myPlace, myPlace.getParent());
     myArgumentTypes = argumentTypes == null ? null : Arrays.copyOf(argumentTypes, argumentTypes.length);
     if (myArgumentTypes != null) {
       for (int i = 0; i < myArgumentTypes.length; i++) {
@@ -166,7 +150,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
 
   private GroovyResolveResult[] filterCandidates() {
     List<GroovyMethodResult> array = getCandidatesInternal();
-    if (array.size() == 1) return array.toArray(new GroovyResolveResult[array.size()]);
+    if (array.size() == 1) return array.toArray(GroovyResolveResult.EMPTY_ARRAY);
 
     List<GroovyMethodResult> result = ContainerUtil.newArrayList();
 
@@ -191,7 +175,7 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
       result.add(resolveResult);
     }
 
-    return result.toArray(new GroovyResolveResult[result.size()]);
+    return result.toArray(GroovyResolveResult.EMPTY_ARRAY);
   }
 
   @Override
@@ -221,12 +205,6 @@ public class MethodResolverProcessor extends ResolverProcessor<GroovyMethodResul
     if (JavaScopeProcessorEvent.CHANGE_LEVEL == event && hasApplicableCandidates()) {
       myStopExecuting = true;
     }
-  }
-
-  @Nullable
-  @Override
-  public PsiType getThisType() {
-    return myThisType;
   }
 
   @NotNull

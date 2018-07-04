@@ -15,11 +15,13 @@
  */
 package com.jetbrains.python.codeInsight.userSkeletons;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,10 +30,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
@@ -53,6 +55,24 @@ public class PyUserSkeletonsUtil {
   public static final String USER_SKELETONS_DIR = "python-skeletons";
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil");
   public static final Key<Boolean> HAS_SKELETON = Key.create("PyUserSkeleton.hasSkeleton");
+
+  private static final ImmutableSet<String> STDLIB_SKELETONS = ImmutableSet.of(
+    "asyncio",
+    "multiprocessing",
+    "os",
+    "_csv.py",
+    "copy.py",
+    "cStringIO.py",
+    "decimal.py",
+    "io.py",
+    "itertools.py",
+    "logging.py",
+    "pathlib.py",
+    "pickle.py",
+    "StringIO.py",
+    "struct.py",
+    "sys.py"
+  );
 
   @Nullable private static VirtualFile ourUserSkeletonsDirectory;
   private static boolean ourNoSkeletonsErrorReported = false;
@@ -93,6 +113,20 @@ public class PyUserSkeletonsUtil {
   public static boolean isUnderUserSkeletonsDirectory(@NotNull final VirtualFile virtualFile) {
     final VirtualFile skeletonsDir = getUserSkeletonsDirectory();
     return skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, virtualFile, false);
+  }
+
+  public static boolean isStandardLibrarySkeleton(@NotNull VirtualFile virtualFile) {
+    final VirtualFile skeletonsDir = getUserSkeletonsDirectory();
+    if (skeletonsDir == null) {
+      return false;
+    }
+    final String relativePath = VfsUtilCore.getRelativePath(virtualFile, skeletonsDir, '/');
+    // not under skeletons directory
+    if (relativePath == null) {
+      return false;
+    }
+    final String firstComponent = ContainerUtil.getFirstItem(StringUtil.split(relativePath, "/"));
+    return STDLIB_SKELETONS.contains(firstComponent);
   }
 
   @Nullable
@@ -192,10 +226,6 @@ public class PyUserSkeletonsUtil {
     if (moduleVirtualFile != null) {
       String moduleName = QualifiedNameFinder.findShortestImportableName(file, moduleVirtualFile);
       if (moduleName != null) {
-        // TODO: Delete user-skeletons altogether, meanwhile disabled user-skeletons for modules already covered by PyTypeShed
-        if (PyTypeShed.INSTANCE.getWHITE_LIST().contains(moduleName)) {
-          return null;
-        }
         final QualifiedName qName = QualifiedName.fromDottedString(moduleName);
         final QualifiedName restored = QualifiedNameFinder.canonizeQualifiedName(qName, null);
         if (restored != null) {

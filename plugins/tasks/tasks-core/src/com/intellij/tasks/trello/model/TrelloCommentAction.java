@@ -32,7 +32,7 @@ public class TrelloCommentAction extends Comment {
 
 
   private static class Data {
-    private String text = "";
+    private final String text = "";
     private TrelloBoard board;
     private TrelloCard card;
   }

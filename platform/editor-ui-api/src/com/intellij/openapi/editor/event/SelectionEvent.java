@@ -23,8 +23,8 @@ import java.util.EventObject;
 
 public class SelectionEvent extends EventObject {
   private static final TextRange[] EMPTY_RANGES = new TextRange[0];
-  private Pair<TextRange[], TextRange> myOldRanges;
-  private Pair<TextRange[], TextRange> myNewRanges;
+  private final Pair<TextRange[], TextRange> myOldRanges;
+  private final Pair<TextRange[], TextRange> myNewRanges;
 
 
   public SelectionEvent(Editor editor,

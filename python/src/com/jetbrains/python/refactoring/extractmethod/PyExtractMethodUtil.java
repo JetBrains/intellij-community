@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring.extractmethod;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -90,7 +76,7 @@ public class PyExtractMethodUtil {
     final boolean isStaticMethod = flags != null && flags.isStaticMethod();
 
     // collect statements
-    final List<PsiElement> elementsRange = PyPsiUtils.collectElements(statement1, statement2);
+    final List<PsiElement> elementsRange = PsiTreeUtil.getElementsOfRange(statement1, statement2);
     if (elementsRange.isEmpty()) {
       CommonRefactoringUtil.showErrorHint(project, editor,
                                           PyBundle.message("refactoring.extract.method.error.empty.fragment"),
@@ -137,7 +123,7 @@ public class PyExtractMethodUtil {
       }
 
       // Generate method
-      final PyFunction generatedMethod = generateMethodFromElements(project, methodName, variableData, newMethodElements, flags, isAsync);
+      final PyFunction generatedMethod = generateMethodFromElements(methodName, variableData, newMethodElements, flags, isAsync);
       final PyFunction insertedMethod = WriteAction.compute(() -> insertGeneratedMethod(statement1, generatedMethod));
 
       // Process parameters
@@ -174,7 +160,7 @@ public class PyExtractMethodUtil {
       PyPsiUtils.assertValid(statement1);
       PyPsiUtils.assertValid(statement2);
       final List<SimpleMatch> duplicates = collectDuplicates(finder, statement1, insertedMethod);
-      
+
       // replace statements with call
       PsiElement insertedCallElement = WriteAction.compute(() -> replaceElements(elementsRange, callElement));
       insertedCallElement = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(insertedCallElement);
@@ -313,7 +299,7 @@ public class PyExtractMethodUtil {
       CommandProcessor.getInstance().executeCommand(project, () -> {
         // Generate method
         final boolean isAsync = fragment.isAsync();
-        final PyFunction generatedMethod = generateMethodFromExpression(project, methodName, variableData, expression, flags, isAsync);
+        final PyFunction generatedMethod = generateMethodFromExpression(methodName, variableData, expression, flags, isAsync);
         final PyFunction insertedMethod = WriteAction.compute(() -> insertGeneratedMethod(expression, generatedMethod));
 
         // Process parameters
@@ -357,7 +343,7 @@ public class PyExtractMethodUtil {
 
         PyPsiUtils.assertValid(expression);
         final List<SimpleMatch> duplicates = collectDuplicates(finder, expression, insertedMethod);
-        
+
         // replace statements with call
         PsiElement insertedCallElement = null;
         if (callElement != null) {
@@ -391,7 +377,7 @@ public class PyExtractMethodUtil {
 
   @NotNull
   private static PsiElement replaceElements(@NotNull final SimpleMatch match, @NotNull final PsiElement element) {
-    final List<PsiElement> elementsRange = PyPsiUtils.collectElements(match.getStartElement(), match.getEndElement());
+    final List<PsiElement> elementsRange = PsiTreeUtil.getElementsOfRange(match.getStartElement(), match.getEndElement());
     final Map<String, String> changedParameters = match.getChangedParameters();
     PsiElement callElement = element;
     final PyElementGenerator generator = PyElementGenerator.getInstance(callElement.getProject());
@@ -467,7 +453,7 @@ public class PyExtractMethodUtil {
         builder.parameter(data.getName());
       }
     }
-    final PyParameterList pyParameterList = builder.buildFunction(project, LanguageLevel.forElement(generatedMethod)).getParameterList();
+    final PyParameterList pyParameterList = builder.buildFunction().getParameterList();
     generatedMethod.getParameterList().replace(pyParameterList);
   }
 
@@ -512,8 +498,7 @@ public class PyExtractMethodUtil {
   }
 
   @NotNull
-  private static PyFunction generateMethodFromExpression(@NotNull final Project project,
-                                                         @NotNull final String methodName,
+  private static PyFunction generateMethodFromExpression(@NotNull final String methodName,
                                                          @NotNull final AbstractVariableData[] variableData,
                                                          @NotNull final PsiElement expression,
                                                          @Nullable final PyUtil.MethodFlags flags, boolean isAsync) {
@@ -531,12 +516,11 @@ public class PyExtractMethodUtil {
       text = expression.getText();
     }
     builder.statement("return " + text);
-    return builder.buildFunction(project, LanguageLevel.forElement(expression));
+    return builder.buildFunction();
   }
 
   @NotNull
-  private static PyFunction generateMethodFromElements(@NotNull final Project project,
-                                                       @NotNull final String methodName,
+  private static PyFunction generateMethodFromElements(@NotNull final String methodName,
                                                        @NotNull final AbstractVariableData[] variableData,
                                                        @NotNull final List<PsiElement> elementsRange,
                                                        @Nullable PyUtil.MethodFlags flags,
@@ -549,7 +533,7 @@ public class PyExtractMethodUtil {
     }
     addDecorators(builder, flags);
     addFakeParameters(builder, variableData);
-    final PyFunction method = builder.buildFunction(project, LanguageLevel.forElement(elementsRange.get(0)));
+    final PyFunction method = builder.buildFunction();
     final PyStatementList statementList = method.getStatementList();
     for (PsiElement element : elementsRange) {
       if (element instanceof PsiWhiteSpace) {
@@ -619,7 +603,7 @@ public class PyExtractMethodUtil {
         d.passAsParameter = true;
         data.add(d);
       }
-      return Pair.create(name, data.toArray(new AbstractVariableData[data.size()]));
+      return Pair.create(name, data.toArray(new AbstractVariableData[0]));
     }
 
     final boolean isMethod = PyPsiUtils.isMethodContext(element);

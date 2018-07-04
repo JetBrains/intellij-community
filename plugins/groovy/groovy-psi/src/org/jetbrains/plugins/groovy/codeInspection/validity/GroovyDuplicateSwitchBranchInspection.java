@@ -96,7 +96,7 @@ public class GroovyDuplicateSwitchBranchInspection extends BaseInspection {
       }
     };
     containingStatelent.accept(visitor);
-    return labels.toArray(new GrCaseLabel[labels.size()]);
+    return labels.toArray(new GrCaseLabel[0]);
   }
 
   @Nullable

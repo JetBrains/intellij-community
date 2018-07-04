@@ -1,7 +1,6 @@
 package com.intellij.json.formatter;
 
 import com.intellij.formatting.*;
-import com.intellij.json.JsonLanguage;
 import com.intellij.json.psi.JsonArray;
 import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
@@ -12,9 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.TokenSet;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,22 +91,22 @@ public class JsonBlock implements ASTBlock {
   @Override
   public List<Block> getSubBlocks() {
     if (mySubBlocks == null) {
-      mySubBlocks = ContainerUtil.mapNotNull(myNode.getChildren(null), node -> {
-        if (isWhitespaceOrEmpty(node)) {
-          return null;
-        }
-        return makeSubBlock(node);
-      });
+      int propertyAlignment = getCustomSettings().PROPERTY_ALIGNMENT;
+      ASTNode[] children = myNode.getChildren(null);
+      mySubBlocks = ContainerUtil.newArrayListWithCapacity(children.length);
+      for (ASTNode child: children) {
+        if (isWhitespaceOrEmpty(child)) continue;
+        mySubBlocks.add(makeSubBlock(child, propertyAlignment));
+      }
     }
     return mySubBlocks;
   }
 
-  private Block makeSubBlock(@NotNull ASTNode childNode) {
+  private Block makeSubBlock(@NotNull ASTNode childNode, int propertyAlignment) {
     Indent indent = Indent.getNoneIndent();
     Alignment alignment = null;
     Wrap wrap = null;
 
-    final JsonCodeStyleSettings customSettings = getCustomSettings();
     if (hasElementType(myNode, JSON_CONTAINERS)) {
       if (hasElementType(childNode, COMMA)) {
         wrap = Wrap.createWrap(WrapType.NONE, true);
@@ -120,7 +117,7 @@ public class JsonBlock implements ASTBlock {
         indent = Indent.getNormalIndent();
       }
       else if (hasElementType(childNode, JSON_OPEN_BRACES)) {
-        if (JsonPsiUtil.isPropertyValue(myPsiElement) && customSettings.PROPERTY_ALIGNMENT == ALIGN_PROPERTY_ON_VALUE) {
+        if (JsonPsiUtil.isPropertyValue(myPsiElement) && propertyAlignment == ALIGN_PROPERTY_ON_VALUE) {
           // WEB-13587 Align compound values on opening brace/bracket, not the whole block
           assert myParent != null && myParent.myParent != null && myParent.myParent.myPropertyValueAlignment != null;
           alignment = myParent.myParent.myPropertyValueAlignment;
@@ -130,10 +127,10 @@ public class JsonBlock implements ASTBlock {
     // Handle properties alignment
     else if (hasElementType(myNode, PROPERTY) ) {
       assert myParent != null && myParent.myPropertyValueAlignment != null;
-      if (hasElementType(childNode, COLON) && customSettings.PROPERTY_ALIGNMENT == ALIGN_PROPERTY_ON_COLON) {
+      if (hasElementType(childNode, COLON) && propertyAlignment == ALIGN_PROPERTY_ON_COLON) {
         alignment = myParent.myPropertyValueAlignment;
       }
-      else if (JsonPsiUtil.isPropertyValue(childNode.getPsi()) && customSettings.PROPERTY_ALIGNMENT == ALIGN_PROPERTY_ON_VALUE) {
+      else if (JsonPsiUtil.isPropertyValue(childNode.getPsi()) && propertyAlignment == ALIGN_PROPERTY_ON_VALUE) {
         if (!hasElementType(childNode, JSON_CONTAINERS)) {
           alignment = myParent.myPropertyValueAlignment;
         }
@@ -208,9 +205,5 @@ public class JsonBlock implements ASTBlock {
 
   private JsonCodeStyleSettings getCustomSettings() {
     return mySettings.getCustomSettings(JsonCodeStyleSettings.class);
-  }
-
-  private CommonCodeStyleSettings getCommonSettings() {
-    return mySettings.getCommonSettings(JsonLanguage.INSTANCE);
   }
 }

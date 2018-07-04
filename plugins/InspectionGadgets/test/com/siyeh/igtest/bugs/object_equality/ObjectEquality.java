@@ -67,3 +67,11 @@ public class ObjectEquality
   }
 
 }
+
+class TypeParameterWithEnumBound<E extends Enum<E>> {
+  public void checkEnums(E a, E b) {
+    if (a == b) {
+      return;
+    }
+  }
+}

@@ -35,19 +35,24 @@ public abstract class StatusText {
   public static final SimpleTextAttributes DEFAULT_ATTRIBUTES = SimpleTextAttributes.GRAYED_ATTRIBUTES;
   public static final String DEFAULT_EMPTY_TEXT = UIBundle.message("message.nothingToShow");
 
-  @Nullable
-  private Component myOwner;
+  private static final int Y_GAP = 2;
+
+  @Nullable private Component myOwner;
   private Component myMouseTarget;
-  private final MouseMotionListener myMouseMotionListener;
-  private final ClickListener myClickListener;
+  @NotNull private final MouseMotionListener myMouseMotionListener;
+  @NotNull private final ClickListener myClickListener;
 
   private boolean myIsDefaultText;
 
   private String myText = "";
-  protected final SimpleColoredComponent myComponent = new SimpleColoredComponent();
+  @NotNull protected final SimpleColoredComponent myComponent = new SimpleColoredComponent();
+  @NotNull private final SimpleColoredComponent mySecondaryComponent = new SimpleColoredComponent();
   private final List<ActionListener> myClickListeners = new ArrayList<>();
+  private final List<ActionListener> mySecondaryListeners = new ArrayList<>();
   private boolean myHasActiveClickListeners; // calculated field for performance optimization
   private boolean myShowAboveCenter = true;
+  private boolean myVerticalFlow = true;
+  private boolean myFontSet = false;
 
   protected StatusText(JComponent owner) {
     this();
@@ -70,7 +75,6 @@ public abstract class StatusText {
     };
 
     myMouseMotionListener = new MouseAdapter() {
-
       private Cursor myOriginalCursor;
 
       @Override
@@ -94,6 +98,19 @@ public abstract class StatusText {
     myComponent.setFont(UIUtil.getLabelFont());
     setText(DEFAULT_EMPTY_TEXT, DEFAULT_ATTRIBUTES);
     myIsDefaultText = true;
+
+    mySecondaryComponent.setOpaque(false);
+    mySecondaryComponent.setFont(UIUtil.getLabelFont());
+  }
+
+  protected boolean isFontSet() {
+    return myFontSet;
+  }
+
+  public void setFont(@NotNull Font font) {
+    myComponent.setFont(font);
+    mySecondaryComponent.setFont(font);
+    myFontSet = true;
   }
 
   public void attachTo(@Nullable Component owner) {
@@ -118,17 +135,31 @@ public abstract class StatusText {
   protected abstract boolean isStatusVisible();
 
   @Nullable
+  private static ActionListener findListener(@NotNull SimpleColoredComponent component,
+                                             @NotNull List<ActionListener> listeners,
+                                             int xCoord) {
+    int index = component.findFragmentAt(xCoord);
+    if (index >= 0 && index < listeners.size()) {
+      return listeners.get(index);
+    }
+    return null;
+  }
+
+  @Nullable
   private ActionListener findActionListenerAt(Point point) {
     if (!myHasActiveClickListeners || !isStatusVisible()) return null;
 
     point = SwingUtilities.convertPoint(myMouseTarget, point, myOwner);
 
-    Rectangle b = getTextComponentBound();
-    if (b.contains(point)) {
-      int index = myComponent.findFragmentAt(point.x - b.x);
-      if (index >= 0 && index < myClickListeners.size()) {
-        return myClickListeners.get(index);
+    Rectangle commonBounds = getTextComponentBound();
+    if (commonBounds.contains(point)) {
+      Rectangle bounds;
+      if (myComponent.getPreferredSize().height >= point.y - commonBounds.y) {
+        bounds = adjustComponentBounds(myComponent, commonBounds);
+        return findListener(myComponent, myClickListeners, point.x - bounds.x);
       }
+      bounds = adjustComponentBounds(mySecondaryComponent, commonBounds);
+      return findListener(mySecondaryComponent, mySecondaryListeners, point.x - bounds.x);
     }
     return null;
   }
@@ -136,9 +167,9 @@ public abstract class StatusText {
   protected Rectangle getTextComponentBound() {
     Rectangle ownerRec = myOwner == null ? new Rectangle(0, 0, 0, 0) : myOwner.getBounds();
 
-    Dimension size = myComponent.getPreferredSize();
+    Dimension size = getPreferredSize();
     int x = (ownerRec.width - size.width) / 2;
-    int y = (ownerRec.height - size.height) / (isShowAboveCenter() ? 3 : 2);
+    int y = (ownerRec.height - size.height) / (myShowAboveCenter ? 3 : 2);
     return new Rectangle(x, y, size.width, size.height);
   }
 
@@ -168,9 +199,15 @@ public abstract class StatusText {
     myText = "";
     myComponent.clear();
     myClickListeners.clear();
+    mySecondaryComponent.clear();
+    mySecondaryListeners.clear();
     myHasActiveClickListeners = false;
-    if (myOwner != null && isStatusVisible()) myOwner.repaint();
+    repaintOwner();
     return this;
+  }
+
+  private void repaintOwner() {
+    if (myOwner != null && isStatusVisible()) myOwner.repaint();
   }
 
   public StatusText appendText(String text) {
@@ -193,7 +230,22 @@ public abstract class StatusText {
     if (listener != null) {
       myHasActiveClickListeners = true;
     }
-    if (myOwner != null && isStatusVisible()) myOwner.repaint();
+    repaintOwner();
+    return this;
+  }
+
+  public void setIsVerticalFlow(boolean isVerticalFlow) {
+    myVerticalFlow = isVerticalFlow;
+  }
+
+  @NotNull
+  public StatusText appendSecondaryText(@NotNull String text, @NotNull SimpleTextAttributes attrs, @Nullable ActionListener listener) {
+    mySecondaryComponent.append(text, attrs);
+    mySecondaryListeners.add(listener);
+    if (listener != null) {
+      myHasActiveClickListeners = true;
+    }
+    repaintOwner();
     return this;
   }
 
@@ -226,10 +278,44 @@ public abstract class StatusText {
     viewport.repaint(textBoundsInViewport);
   }
 
-  private void doPaintStatusText(Graphics g, Rectangle textComponentBounds) {
-    myComponent.setBounds(0, 0, textComponentBounds.width, textComponentBounds.height);
-    Graphics2D g2 = (Graphics2D)g.create(textComponentBounds.x, textComponentBounds.y, textComponentBounds.width, textComponentBounds.height);
-    myComponent.paint(g2);
+  private void doPaintStatusText(@NotNull Graphics g, @NotNull Rectangle bounds) {
+    if (!hasSecondaryText()) {
+      paintComponentInBounds(myComponent, g, bounds);
+    }
+    else {
+      Rectangle primaryBounds = adjustComponentBounds(myComponent, bounds);
+      Rectangle secondaryBounds = adjustComponentBounds(mySecondaryComponent, bounds);
+      if (myVerticalFlow) {
+        secondaryBounds.y += primaryBounds.height + JBUI.scale(Y_GAP);
+      }
+
+      paintComponentInBounds(myComponent, g, primaryBounds);
+      paintComponentInBounds(mySecondaryComponent, g, secondaryBounds);
+    }
+  }
+
+  @NotNull
+  protected Rectangle adjustComponentBounds(@NotNull JComponent component, @NotNull Rectangle bounds) {
+    Dimension size = component.getPreferredSize();
+
+    if (myVerticalFlow) {
+      return new Rectangle(bounds.x + (bounds.width - size.width) / 2, bounds.y, size.width, size.height);
+    }
+    else {
+      return component == myComponent
+             ? new Rectangle(bounds.x, bounds.y, size.width, size.height)
+             : new Rectangle(bounds.x + bounds.width - size.width, bounds.y, size.width, size.height);
+    }
+  }
+
+  private boolean hasSecondaryText() {
+    return mySecondaryComponent.getCharSequence(false).length() > 0;
+  }
+
+  private static void paintComponentInBounds(@NotNull SimpleColoredComponent component, @NotNull Graphics g, @NotNull Rectangle bounds) {
+    Graphics2D g2 = (Graphics2D)g.create(bounds.x, bounds.y, bounds.width, bounds.height);
+    component.setBounds(0, 0, bounds.width, bounds.height);
+    component.paint(g2);
     g2.dispose();
   }
 
@@ -238,7 +324,27 @@ public abstract class StatusText {
     return myComponent;
   }
 
+  @NotNull
+  public SimpleColoredComponent getSecondaryComponent() {
+    return mySecondaryComponent;
+  }
+
   public Dimension getPreferredSize() {
-    return myComponent.getPreferredSize();
+    Dimension componentSize = myComponent.getPreferredSize();
+    if (!hasSecondaryText()) return componentSize;
+    Dimension secondaryComponentSize = mySecondaryComponent.getPreferredSize();
+
+    if (myVerticalFlow) {
+      return new Dimension(Math.max(componentSize.width, secondaryComponentSize.width),
+                           componentSize.height + secondaryComponentSize.height + JBUI.scale(Y_GAP));
+    }
+    else {
+      return new Dimension(componentSize.width + secondaryComponentSize.width,
+                           Math.max(componentSize.height, secondaryComponentSize.height));
+    }
+  }
+
+  public boolean isVerticalFlow() {
+    return myVerticalFlow;
   }
 }

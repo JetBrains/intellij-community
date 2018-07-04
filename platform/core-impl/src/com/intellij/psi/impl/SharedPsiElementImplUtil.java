@@ -58,7 +58,7 @@ public class SharedPsiElementImplUtil {
 
     if (referencesList.isEmpty()) return null;
     if (referencesList.size() == 1) return referencesList.get(0);
-    return new PsiMultiReference(referencesList.toArray(new PsiReference[referencesList.size()]),
+    return new PsiMultiReference(referencesList.toArray(PsiReference.EMPTY_ARRAY),
                                  referencesList.get(referencesList.size() - 1).getElement());
   }
 
@@ -67,7 +67,7 @@ public class SharedPsiElementImplUtil {
     return findReferenceAt(thisElement, offset, null);
   }
 
-  private static void addReferences(int offset, PsiElement element, final Collection<PsiReference> outReferences) {
+  private static void addReferences(int offset, PsiElement element, final Collection<? super PsiReference> outReferences) {
     PsiReference[] references;
     if (element instanceof HintedReferenceHost) {
       references = ((HintedReferenceHost)element).getReferences(new PsiReferenceService.Hints(null, offset));

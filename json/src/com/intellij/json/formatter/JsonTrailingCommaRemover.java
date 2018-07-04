@@ -15,6 +15,7 @@
  */
 package com.intellij.json.formatter;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.JsonLanguage;
 import com.intellij.json.psi.JsonArray;
@@ -24,14 +25,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Collection;
-import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 public class JsonTrailingCommaRemover implements PreFormatProcessor {
 
@@ -42,9 +41,7 @@ public class JsonTrailingCommaRemover implements PreFormatProcessor {
     if (rootPsi.getLanguage() != JsonLanguage.INSTANCE) {
       return range;
     }
-    JsonCodeStyleSettings settings = CodeStyleSettingsManager.getInstance(rootPsi.getProject())
-      .getCurrentSettings()
-      .getCustomSettings(JsonCodeStyleSettings.class);
+    JsonCodeStyleSettings settings = CodeStyle.getCustomSettings(rootPsi.getContainingFile(), JsonCodeStyleSettings.class);
     if (settings.KEEP_TRAILING_COMMA) {
       return range;
     }
@@ -73,30 +70,36 @@ public class JsonTrailingCommaRemover implements PreFormatProcessor {
     @Override
     public void visitArray(@NotNull JsonArray o) {
       super.visitArray(o);
-      collectTrailingCommas(o).forEach(this::deleteNode);
+      PsiElement lastChild = o.getLastChild();
+      if (lastChild == null || lastChild.getNode().getElementType() != JsonElementTypes.R_BRACKET) {
+        return;
+      }
+      deleteTrailingCommas(ObjectUtils.coalesce(ContainerUtil.getLastItem(o.getValueList()), o.getFirstChild()));
     }
 
     @Override
     public void visitObject(@NotNull JsonObject o) {
       super.visitObject(o);
-      collectTrailingCommas(o).forEach(this::deleteNode);
+      PsiElement lastChild = o.getLastChild();
+      if (lastChild == null || lastChild.getNode().getElementType() != JsonElementTypes.R_CURLY) {
+        return;
+      }
+      deleteTrailingCommas(ObjectUtils.coalesce(ContainerUtil.getLastItem(o.getPropertyList()), o.getFirstChild()));
     }
 
-    @NotNull
-    private static Collection<ASTNode> collectTrailingCommas(@NotNull PsiElement element) {
-      List<ASTNode> result = ContainerUtil.newArrayList();
-      element = element.getLastChild();
+    private void deleteTrailingCommas(@Nullable PsiElement lastElementOrOpeningBrace) {
+      PsiElement element = lastElementOrOpeningBrace != null ? lastElementOrOpeningBrace.getNextSibling() : null;
+
       while (element != null) {
-        element = element.getPrevSibling();
-        if (element != null && element.getNode().getElementType() == JsonElementTypes.COMMA
-            || (element instanceof PsiErrorElement && ",".equals(element.getText()))) {
-          result.add(element.getNode());
+        if (element.getNode().getElementType() == JsonElementTypes.COMMA ||
+            element instanceof PsiErrorElement && ",".equals(element.getText())) {
+          deleteNode(element.getNode());
         }
         else if (!(element instanceof PsiComment || element instanceof PsiWhiteSpace)) {
           break;
         }
+        element = element.getNextSibling();
       }
-      return ContainerUtil.reverse(result);
     }
 
     private void deleteNode(@NotNull ASTNode node) {

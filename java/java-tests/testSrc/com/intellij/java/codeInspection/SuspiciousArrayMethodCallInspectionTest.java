@@ -24,9 +24,6 @@ import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author Tagir Valeev
- */
 public class SuspiciousArrayMethodCallInspectionTest extends LightInspectionTestCase {
   @Override
   protected String getBasePath() {

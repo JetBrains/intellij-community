@@ -16,13 +16,14 @@
 package com.intellij.java.navigation;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
+import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
+import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
@@ -106,9 +107,11 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
   public void testToStringOnQualified() {
     final PsiFile file = myFixture.addFileToProject("Foo.java", "public class Fix {\n" +
                                                                 "    {\n" +
-                                                                "        Fix ff = new FixImpl1();\n" +
+                                                                "        Fix ff = getFix();\n" +
                                                                 "        ff.<caret>toString();\n" +
                                                                 "    }\n" +
+                                                                "    \n" +
+                                                                "    Fix getFix() {return new FixImpl1();}\n" +
                                                                 "}\n" +
                                                                 "class FixImpl1 extends Fix {\n" +
                                                                 "    @Override\n" +
@@ -310,6 +313,16 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertSize(2, getTargets(file));
   }
 
+  public void testScopeForPrivateMethod() {
+    PsiFile file = myFixture.configureByText(JavaFileType.INSTANCE, "class Foo {" +
+                                                                    " {f<caret>oo();}" +
+                                                                    " private void foo() {}" +
+                                                                    "}");
+    PsiClass inheritor = myFixture.addClass("class FooImpl extends Foo {}");
+    SearchScope scope = TargetElementUtil.getInstance().getSearchScope(myFixture.getEditor(), ((PsiJavaFile)file).getClasses()[0].getMethods()[0]);
+    assertFalse(scope.contains(PsiUtilCore.getVirtualFile(inheritor)));
+  }
+
   public void testAnonymousAndLocalClassesInLibrary() {
     ModuleRootModificationUtil.addModuleLibrary(
       myModule, 
@@ -334,6 +347,18 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
     assertSize(5, targets);
 
     List<String> names = ContainerUtil.map(targets, element -> ((PsiClass)element).getName());
+
+    for(PsiElement element:targets) {
+      PsiClass psiClass = (PsiClass)element;
+      String name = psiClass.getName();
+      if ("1".equals(name) || "2".equals(name)) {
+        assertNull(psiClass.getModifierList());
+        assertTrue(psiClass.hasModifierProperty(PsiModifier.FINAL));
+      }
+      else if (!"MyInterfaceImplementation".equals(name)) {
+        assertNotNull(psiClass.getModifierList());
+      }
+    }
 
     assertContainsElements(names, "1");
     assertContainsElements(names, "2");

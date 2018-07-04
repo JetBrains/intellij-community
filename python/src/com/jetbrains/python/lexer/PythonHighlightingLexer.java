@@ -70,22 +70,26 @@ public class PythonHighlightingLexer extends PythonLexer {
       final String tokenText = getTokenText();
 
       if (myLanguageLevel.hasWithStatement()) {
-        if (tokenText.equals("with")) return PyTokenTypes.WITH_KEYWORD;
-        if (tokenText.equals("as")) return PyTokenTypes.AS_KEYWORD;
+        if (tokenText.equals(PyNames.WITH)) return PyTokenTypes.WITH_KEYWORD;
+        if (tokenText.equals(PyNames.AS)) return PyTokenTypes.AS_KEYWORD;
       }
 
       if (myLanguageLevel.hasPrintStatement()) {
-        if (tokenText.equals("print")) return PyTokenTypes.PRINT_KEYWORD;
+        if (tokenText.equals(PyNames.PRINT)) return PyTokenTypes.PRINT_KEYWORD;
       }
 
       if (myLanguageLevel.isPy3K()) {
-        if (tokenText.equals("None")) return PyTokenTypes.NONE_KEYWORD;
-        if (tokenText.equals("True")) return PyTokenTypes.TRUE_KEYWORD;
-        if (tokenText.equals("False")) return PyTokenTypes.FALSE_KEYWORD;
-        if (tokenText.equals("nonlocal")) return PyTokenTypes.NONLOCAL_KEYWORD;
-        if (tokenText.equals("__debug__")) return PyTokenTypes.DEBUG_KEYWORD;
+        if (tokenText.equals(PyNames.NONE)) return PyTokenTypes.NONE_KEYWORD;
+        if (tokenText.equals(PyNames.TRUE)) return PyTokenTypes.TRUE_KEYWORD;
+        if (tokenText.equals(PyNames.FALSE)) return PyTokenTypes.FALSE_KEYWORD;
+        if (tokenText.equals(PyNames.NONLOCAL)) return PyTokenTypes.NONLOCAL_KEYWORD;
+        if (tokenText.equals(PyNames.DEBUG)) return PyTokenTypes.DEBUG_KEYWORD;
+        if (myLanguageLevel.isAtLeast(LanguageLevel.PYTHON37)) {
+          if (tokenText.equals(PyNames.ASYNC)) return PyTokenTypes.ASYNC_KEYWORD;
+          if (tokenText.equals(PyNames.AWAIT)) return PyTokenTypes.AWAIT_KEYWORD;
+        }
       }
-      else if (tokenText.equals("exec")) {
+      else if (tokenText.equals(PyNames.EXEC)) {
         return PyTokenTypes.EXEC_KEYWORD;
       }
     }

@@ -19,20 +19,29 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBPoint;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import git4idea.GitBranch;
+import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.commands.GitLineHandlerAdapter;
@@ -41,11 +50,13 @@ import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.Map;
 import java.util.Set;
 
 public class DeepComparator implements VcsLogHighlighter, Disposable {
   private static final Logger LOG = Logger.getInstance(DeepComparator.class);
+  private static final String HIGHLIGHTING_CANCELLED = "Highlighting of non-picked commits has been cancelled";
 
   @NotNull private final Project myProject;
   @NotNull private final GitRepositoryManager myRepositoryManager;
@@ -126,8 +137,9 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
   @Override
   public VcsLogHighlighter.VcsCommitStyle getStyle(@NotNull VcsShortCommitDetails commitDetails, boolean isSelected) {
     if (myNonPickedCommits == null) return VcsCommitStyle.DEFAULT;
-    boolean inNonPicked = myNonPickedCommits.contains(new CommitId(commitDetails.getId(), commitDetails.getRoot()));
-    return VcsCommitStyleFactory.foreground(inNonPicked ? null : EditorColorsUtil.getGlobalOrDefaultColor(VcsLogColors.MERGED_COMMIT));
+    return VcsCommitStyleFactory.foreground(!myNonPickedCommits.contains(new CommitId(commitDetails.getId(), commitDetails.getRoot()))
+                                            ? MergeCommitsHighlighter.MERGE_COMMIT_FOREGROUND
+                                            : null);
   }
 
   @Override
@@ -137,9 +149,9 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
     }
 
     String comparedBranch = myTask.myComparedBranch;
-    VcsLogBranchFilter branchFilter = dataPack.getFilters().getBranchFilter();
-    if (branchFilter == null || !myTask.myComparedBranch.equals(VcsLogUtil.getSingleFilteredBranch(branchFilter, dataPack.getRefs()))) {
+    if (!myTask.myComparedBranch.equals(VcsLogUtil.getSingleFilteredBranch(dataPack.getFilters(), dataPack.getRefs()))) {
       stopAndUnhighlight();
+      notifyHighlightingCancelled();
       return;
     }
 
@@ -158,6 +170,19 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
       else {
         removeHighlighting();
       }
+    }
+  }
+
+  private void notifyHighlightingCancelled() {
+    if (myUi instanceof AbstractVcsLogUi) {
+      Balloon balloon = JBPopupFactory.getInstance()
+                                      .createHtmlTextBalloonBuilder(HIGHLIGHTING_CANCELLED, null, MessageType.INFO.getPopupBackground(),
+                                                                    null)
+                                      .setFadeoutTime(5000)
+                                      .createBalloon();
+      Component component = ((AbstractVcsLogUi)myUi).getTable();
+      balloon.show(new RelativePoint(component, new JBPoint(component.getWidth() / 2, 0)), Balloon.Position.below);
+      Disposer.register(this, balloon);
     }
   }
 
@@ -196,6 +221,7 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
     @NotNull private final String myComparedBranch;
 
     @NotNull private final Set<CommitId> myCollectedNonPickedCommits = ContainerUtil.newHashSet();
+    @Nullable private VcsException myException;
     private boolean myCancelled;
 
     public MyTask(@NotNull Project project,
@@ -211,11 +237,17 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      for (Map.Entry<GitRepository, GitBranch> entry : myRepositoriesWithCurrentBranches.entrySet()) {
-        GitRepository repo = entry.getKey();
-        GitBranch currentBranch = entry.getValue();
-        myCollectedNonPickedCommits
-          .addAll(getNonPickedCommitsFromGit(myProject, repo.getRoot(), currentBranch.getName(), myComparedBranch));
+      try {
+        for (Map.Entry<GitRepository, GitBranch> entry : myRepositoriesWithCurrentBranches.entrySet()) {
+          GitRepository repo = entry.getKey();
+          GitBranch currentBranch = entry.getValue();
+          myCollectedNonPickedCommits
+            .addAll(getNonPickedCommitsFromGit(myProject, repo.getRoot(), currentBranch.getName(), myComparedBranch));
+        }
+      }
+      catch (VcsException e) {
+        LOG.warn(e);
+        myException = e;
       }
     }
 
@@ -227,6 +259,10 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
 
       removeHighlighting();
 
+      if (myException != null) {
+        VcsNotifier.getInstance(myProject).notifyError("Couldn't compare with branch " + myComparedBranch, myException.getMessage());
+        return;
+      }
       myNonPickedCommits = myCollectedNonPickedCommits;
     }
 
@@ -236,9 +272,9 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
 
     @NotNull
     private Set<CommitId> getNonPickedCommitsFromGit(@NotNull Project project,
-                                                     @NotNull VirtualFile root,
+                                                     @NotNull final VirtualFile root,
                                                      @NotNull String currentBranch,
-                                                     @NotNull String comparedBranch) {
+                                                     @NotNull String comparedBranch) throws VcsException {
       GitLineHandler handler = new GitLineHandler(project, root, GitCommand.CHERRY);
       handler.addParameters(currentBranch, comparedBranch); // upstream - current branch; head - compared branch
 
@@ -264,7 +300,7 @@ public class DeepComparator implements VcsLogHighlighter, Disposable {
           }
         }
       });
-      handler.runInCurrentThread(null);
+      Git.getInstance().runCommandWithoutCollectingOutput(handler);
       return pickedCommits;
     }
   }

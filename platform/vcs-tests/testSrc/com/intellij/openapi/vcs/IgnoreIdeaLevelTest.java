@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -32,7 +17,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 import org.junit.Test;
@@ -99,11 +83,14 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myVcsManager.unregisterVcs(myVcs);
+    try {
+      myVcsManager.unregisterVcs(myVcs);
 
-    UsefulTestCase.clearDeclaredFields(this, IgnoreIdeaLevelTest.class);
-
-    super.tearDown();
+      UsefulTestCase.clearDeclaredFields(this, IgnoreIdeaLevelTest.class);
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   // translates ignored path as if it was entered into a dialog
@@ -130,31 +117,28 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
     private VirtualFile myF4Outside;
 
     private FileStructure(final VirtualFile baseDir, final VirtualFile outsideDir) {
-      new WriteAction() {
-        @Override
-        protected void run(@NotNull Result result) {
-          try {
-            myABase = baseDir.createChildDirectory(this, "a");
-            myBBase = myABase.createChildDirectory(this, "b");
-            myCBase = myABase.createChildDirectory(this, "c");
-            myF1Base = myBBase.createChildData(this, "f1.txt");
-            myF2Base = myBBase.createChildData(this, "f2.txt");
-            myF3Base = myCBase.createChildData(this, "f3.txt");
-            myF4Base = myCBase.createChildData(this, "f4.txt");
+      WriteAction.runAndWait(() -> {
+        try {
+          myABase = baseDir.createChildDirectory(this, "a");
+          myBBase = myABase.createChildDirectory(this, "b");
+          myCBase = myABase.createChildDirectory(this, "c");
+          myF1Base = myBBase.createChildData(this, "f1.txt");
+          myF2Base = myBBase.createChildData(this, "f2.txt");
+          myF3Base = myCBase.createChildData(this, "f3.txt");
+          myF4Base = myCBase.createChildData(this, "f4.txt");
 
-            myAOutside = outsideDir.createChildDirectory(this, "a");
-            myBOutside = myAOutside.createChildDirectory(this, "b");
-            myCOutside = myAOutside.createChildDirectory(this, "c");
-            myF1Outside = myBOutside.createChildData(this, "f1.txt");
-            myF2Outside = myBOutside.createChildData(this, "f2.txt");
-            myF3Outside = myCOutside.createChildData(this, "f3.txt");
-            myF4Outside = myCOutside.createChildData(this, "f4.txt");
-          }
-          catch (IOException e) {
-            LOG.error(e);
-          }
+          myAOutside = outsideDir.createChildDirectory(this, "a");
+          myBOutside = myAOutside.createChildDirectory(this, "b");
+          myCOutside = myAOutside.createChildDirectory(this, "c");
+          myF1Outside = myBOutside.createChildData(this, "f1.txt");
+          myF2Outside = myBOutside.createChildData(this, "f2.txt");
+          myF3Outside = myCOutside.createChildData(this, "f3.txt");
+          myF4Outside = myCOutside.createChildData(this, "f4.txt");
         }
-      }.execute().throwException();
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      });
     }
   }
 
@@ -282,7 +266,7 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
   public void testTypedAbsolute() {
     final FileStructure fs = new FileStructure(myProject.getBaseDir(), myModuleRoot);
 
-    String baseUnder = myProject.getBaseDir().getPath();
+    String baseUnder = myProject.getBasePath();
     if (!baseUnder.endsWith("/")) {
       baseUnder += "/";
     }
@@ -305,7 +289,7 @@ public class IgnoreIdeaLevelTest extends PlatformTestCase {
   public void testTypedAbsoluteSeparator() {
     final FileStructure fs = new FileStructure(myProject.getBaseDir(), myModuleRoot);
 
-    String baseUnder = myProject.getBaseDir().getPath();
+    String baseUnder = myProject.getBasePath();
     if (!baseUnder.endsWith("/")) {
       baseUnder += "/";
     }

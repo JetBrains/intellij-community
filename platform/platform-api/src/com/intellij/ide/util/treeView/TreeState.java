@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.navigation.NavigationItem;
@@ -28,6 +14,7 @@ import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -36,7 +23,9 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -45,9 +34,9 @@ import javax.swing.tree.TreePath;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 import static java.util.stream.Collectors.toList;
 import static org.jetbrains.concurrency.Promises.collectResults;
@@ -55,7 +44,6 @@ import static org.jetbrains.concurrency.Promises.collectResults;
 /**
  * @see #createOn(JTree)
  * @see #createOn(JTree, DefaultMutableTreeNode)
- *
  * @see #applyTo(JTree)
  * @see #applyTo(JTree, Object)
  */
@@ -63,7 +51,7 @@ public class TreeState implements JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance(TreeState.class);
 
   public static final Key<WeakReference<ActionCallback>> CALLBACK = Key.create("Callback");
-  public static final Key<Function<TreeVisitor, Promise<TreePath>>> VISIT = Key.create("TreeVisit");
+  private static final Key<Promise<Void>> EXPANDING = Key.create("TreeExpanding");
 
   private static final String EXPAND_TAG = "expand";
   private static final String SELECT_TAG = "select";
@@ -118,7 +106,7 @@ public class TreeState implements JDOMExternalizable {
   private final List<List<PathElement>> mySelectedPaths;
   private boolean myScrollToSelection;
 
-  private TreeState(List<List<PathElement>> expandedPaths, final List<List<PathElement>> selectedPaths) {
+  private TreeState(List<List<PathElement>> expandedPaths, List<List<PathElement>> selectedPaths) {
     myExpandedPaths = expandedPaths;
     mySelectedPaths = selectedPaths;
     myScrollToSelection = true;
@@ -145,9 +133,14 @@ public class TreeState implements JDOMExternalizable {
   }
 
   @NotNull
-  public static TreeState createOn(JTree tree, final DefaultMutableTreeNode treeNode) {
-    return new TreeState(createPaths(tree, TreeUtil.collectExpandedPaths(tree, new TreePath(treeNode.getPath()))),
-                         createPaths(tree, TreeUtil.collectSelectedPaths(tree, new TreePath(treeNode.getPath()))));
+  public static TreeState createOn(@NotNull JTree tree, @NotNull DefaultMutableTreeNode treeNode) {
+    return createOn(tree, new TreePath(treeNode.getPath()));
+  }
+
+  @NotNull
+  public static TreeState createOn(@NotNull JTree tree, @NotNull TreePath rootPath) {
+    return new TreeState(createPaths(tree, TreeUtil.collectExpandedPaths(tree, rootPath)),
+                         createPaths(tree, TreeUtil.collectSelectedPaths(tree, rootPath)));
   }
 
   @NotNull
@@ -185,29 +178,27 @@ public class TreeState implements JDOMExternalizable {
     element.addContent(root);
   }
 
-  private static List<List<PathElement>> createPaths(JTree tree, List<TreePath> paths) {
-    ArrayList<List<PathElement>> result = new ArrayList<>();
-    for (TreePath path : paths) {
-      if (tree.isRootVisible() || path.getPathCount() > 1) {
-        ContainerUtil.addIfNotNull(result, createPath(tree.getModel(), path));
-      }
-    }
-    return result;
+  @NotNull
+  private static List<List<PathElement>> createPaths(@NotNull JTree tree, @NotNull List<TreePath> paths) {
+    return JBIterable.from(paths)
+      .filter(o -> o.getPathCount() > 1 || tree.isRootVisible())
+      .map(o -> createPath(tree.getModel(), o))
+      .toList();
   }
 
   @NotNull
   private static List<PathElement> createPath(@NotNull TreeModel model, @NotNull TreePath treePath) {
-    ArrayList<PathElement> result = new ArrayList<>();
     Object prev = null;
-    for (int i = 0; i < treePath.getPathCount(); i++) {
+    int count = treePath.getPathCount();
+    PathElement[] result = new PathElement[count];
+    for (int i = 0; i < count; i++) {
       Object cur = treePath.getPathComponent(i);
       Object userObject = TreeUtil.getUserObject(cur);
       int childIndex = prev == null ? 0 : model.getIndexOfChild(prev, cur);
-      PathElement pe = new PathElement(calcId(userObject), calcType(userObject), childIndex, userObject);
-      result.add(pe);
+      result[i] = new PathElement(calcId(userObject), calcType(userObject), childIndex, userObject);
       prev = cur;
     }
-    return result;
+    return Arrays.asList(result);
   }
 
   @NotNull
@@ -240,7 +231,8 @@ public class TreeState implements JDOMExternalizable {
   }
 
   public void applyTo(@NotNull JTree tree, @Nullable Object root) {
-    if (visit(tree)) return; // AsyncTreeModel#visit
+    LOG.debug(new IllegalStateException("restore paths"));
+    if (visit(tree)) return; // AsyncTreeModel#accept
     if (root == null) return;
     TreeFacade facade = TreeFacade.getFacade(tree);
     ActionCallback callback = facade.getInitialized().doWhenDone(new TreeRunnable("TreeState.applyTo: on done facade init") {
@@ -443,50 +435,70 @@ public class TreeState implements JDOMExternalizable {
     return "TreeState(" + myScrollToSelection + ")\n" + content;
   }
 
-  private Promise<List<TreePath>> expand(@NotNull Function<TreeVisitor, Promise<TreePath>> visit, @NotNull JTree tree) {
-    return collectResults(myExpandedPaths.stream().map(elements -> new Visitor(elements, tree::expandPath)).map(visit).collect(toList()));
+  /**
+   * Temporary solution to resolve simultaneous expansions with async tree model.
+   * Not that the specified consumer must resolve async promise at the end.
+   */
+  @Deprecated
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  public static void expand(@NotNull JTree tree, @NotNull Consumer<AsyncPromise<Void>> consumer) {
+    Promise<Void> expanding = UIUtil.getClientProperty(tree, EXPANDING);
+    LOG.debug("EXPANDING: ", expanding);
+    if (expanding == null) expanding = Promises.resolvedPromise();
+    expanding.onProcessed(value -> {
+      AsyncPromise<Void> promise = new AsyncPromise<>();
+      UIUtil.putClientProperty(tree, EXPANDING, promise);
+      consumer.accept(promise);
+    });
   }
 
-  private Promise<List<TreePath>> select(@NotNull Function<TreeVisitor, Promise<TreePath>> visit) {
-    return collectResults(mySelectedPaths.stream().map(elements -> new Visitor(elements, null)).map(visit).collect(toList()));
+  private static boolean isSelectionNeeded(List<TreePath> list, @NotNull JTree tree, AsyncPromise<Void> promise) {
+    if (list != null && tree.getSelectionCount() == 0) return true;
+    if (promise != null) promise.setResult(null);
+    return false;
+  }
+
+  private Promise<List<TreePath>> expand(@NotNull JTree tree) {
+    return collectResults(myExpandedPaths.stream().map(elements -> TreeUtil.promiseExpand(tree, new Visitor(elements))).collect(toList()));
+  }
+
+  private Promise<List<TreePath>> select(@NotNull JTree tree) {
+    return collectResults(mySelectedPaths.stream().map(elements -> TreeUtil.promiseVisit(tree, new Visitor(elements))).collect(toList()));
   }
 
   private boolean visit(@NotNull JTree tree) {
-    Function<TreeVisitor, Promise<TreePath>> visit = UIUtil.getClientProperty(tree, VISIT);
-    if (visit == null) return false;
+    TreeModel model = tree.getModel();
+    if (!(model instanceof TreeVisitor.Acceptor)) return false;
 
-    expand(visit, tree).done(expanded -> {
-      if (tree.getSelectionCount() == 0) {
-        select(visit).done(selected -> {
-          if (tree.getSelectionCount() == 0) {
+    expand(tree, promise -> expand(tree).onProcessed(expanded -> {
+      if (isSelectionNeeded(expanded, tree, promise)) {
+        select(tree).onProcessed(selected -> {
+          if (isSelectionNeeded(selected, tree, promise)) {
             for (TreePath path : selected) {
               tree.addSelectionPath(path);
             }
+            promise.setResult(null);
           }
         });
       }
-    });
+    }));
     return true;
   }
 
   private static final class Visitor implements TreeVisitor {
     private final List<PathElement> elements;
-    private final Consumer<TreePath> consumer;
 
-    private Visitor(List<PathElement> elements, Consumer<TreePath> consumer) {
+    Visitor(List<PathElement> elements) {
       this.elements = elements;
-      this.consumer = consumer;
     }
 
     @NotNull
     @Override
-    public Action accept(@NotNull TreePath path) {
+    public Action visit(@NotNull TreePath path) {
       int count = path.getPathCount();
       if (count > elements.size()) return Action.SKIP_CHILDREN;
       boolean matches = elements.get(count - 1).isMatchTo(path.getLastPathComponent());
-      if (!matches) return Action.SKIP_CHILDREN;
-      if (consumer != null) consumer.accept(path);
-      return count < elements.size() ? Action.CONTINUE : Action.INTERRUPT;
+      return !matches ? Action.SKIP_CHILDREN : count < elements.size() ? Action.CONTINUE : Action.INTERRUPT;
     }
   }
 }

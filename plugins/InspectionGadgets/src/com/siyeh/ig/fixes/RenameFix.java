@@ -16,12 +16,15 @@
 package com.siyeh.ig.fixes;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringFactory;
 import com.intellij.refactoring.RenameRefactoring;
+import com.intellij.refactoring.rename.RenameHandler;
+import com.intellij.refactoring.rename.RenameHandlerRegistry;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -72,6 +75,13 @@ public class RenameFix extends RefactoringInspectionGadgetsFix {
   @Override
   public RefactoringActionHandler getHandler() {
     return RefactoringActionHandlerFactory.getInstance().createRenameHandler();
+  }
+
+  @NotNull
+  @Override
+  public RefactoringActionHandler getHandler(DataContext context) {
+    RenameHandler renameHandler = RenameHandlerRegistry.getInstance().getRenameHandler(context);
+    return renameHandler != null ? renameHandler : getHandler();
   }
 
   @Override

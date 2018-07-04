@@ -42,8 +42,11 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
   public static final String DEBUG_CONSOLE_START_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))";
   private boolean myDebugConsoleInitialized = false;
 
-  public PythonDebugLanguageConsoleView(final Project project, Sdk sdk, ConsoleView consoleView) {
-    super(consoleView, new PythonConsoleView(project, "Python Console", sdk));
+  /**
+   * @param testMode this console will be used to display test output and should support TC messages
+   */
+  public PythonDebugLanguageConsoleView(final Project project, Sdk sdk, ConsoleView consoleView, final boolean testMode) {
+    super(consoleView, new PythonConsoleView(project, "Python Console", sdk, testMode));
 
     enableConsole(!PyConsoleOptions.getInstance(project).isShowDebugConsoleByDefault());
 
@@ -56,7 +59,7 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
   }
 
   public PythonDebugLanguageConsoleView(final Project project, Sdk sdk) {
-    this(project, sdk, TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole());
+    this(project, sdk, TextConsoleBuilderFactory.getInstance().createBuilder(project).getConsole(), false);
   }
 
   @Override
@@ -95,13 +98,13 @@ public class PythonDebugLanguageConsoleView extends DuplexConsoleView<ConsoleVie
       PythonConsoleView console = getPydevConsoleView();
       if (!myDebugConsoleInitialized && console.getExecuteActionHandler() != null) {
         if (!console.getExecuteActionHandler().getConsoleCommunication().isWaitingForInput()) {
-          console.addConsoleFolding(true);
+          console.addConsoleFolding(true, false);
           showStartMessageForFirstExecution(DEBUG_CONSOLE_START_COMMAND, console);
         }
         myDebugConsoleInitialized = true;
+        console.initialized();
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> console.requestFocus());
       }
-
-      IdeFocusManager.findInstance().requestFocus(console.getConsoleEditor().getContentComponent(), true);
     }
   }
 

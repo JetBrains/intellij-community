@@ -81,8 +81,6 @@ Function ${un}OMReadRegStr
   hkcr:	
     ReadRegStr $3 HKCR $1 $2
 done:
- IfErrors 0 +2
- DetailPrint "ERROR: $0, $1, $2"
 FunctionEnd
 
 ; -----------------------------------------------------------------------------

@@ -51,7 +51,7 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
 
   private JPanel myRoot;
   private JTextField myNameTextField;
-  private PatternCompiler<PsiElement> myHelper;
+  private final PatternCompiler<PsiElement> myHelper;
 
   public BaseInjectionPanel(BaseInjection injection, Project project) {
     super(injection, project);
@@ -118,7 +118,7 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
       places.add(new InjectionPlace(myHelper.compileElementPattern(text), enabled));
     }
     for (InjectionPlace place : places) {
-      ElementPattern<PsiElement> pattern = place.getElementPattern();
+      ElementPattern<? extends PsiElement> pattern = place.getElementPattern();
       if (pattern instanceof PatternCompilerImpl.LazyPresentablePattern) {
         try {
           ((PatternCompilerImpl.LazyPresentablePattern)pattern).compile();
@@ -128,7 +128,7 @@ public class BaseInjectionPanel extends AbstractInjectionPanel<BaseInjection> {
         }
       }
     }
-    other.setInjectionPlaces(places.toArray(new InjectionPlace[places.size()]));
+    other.setInjectionPlaces(places.toArray(InjectionPlace.EMPTY_ARRAY));
   }
 
   protected void resetImpl() {

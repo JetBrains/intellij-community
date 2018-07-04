@@ -16,8 +16,8 @@
 
 package com.intellij.openapi.util;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
@@ -35,6 +35,16 @@ public abstract class KeyWithDefaultValue<T> extends Key<T> {
       @Override
       public T getDefaultValue() {
         return defValue;
+      }
+    };
+  }
+
+  @NotNull
+  public static <T> KeyWithDefaultValue<T> create(@NotNull @NonNls String name, final Factory<T> factory) {
+    return new KeyWithDefaultValue<T>(name) {
+      @Override
+      public T getDefaultValue() {
+        return factory.create();
       }
     };
   }

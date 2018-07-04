@@ -1,5 +1,7 @@
 package com.intellij.dvcs.repo;
 
+import com.intellij.dvcs.MultiRootBranches;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -106,15 +108,29 @@ public abstract class AbstractRepositoryManager<T extends Repository>
   @Nullable
   private T validateAndGetRepository(@Nullable Repository repository) {
     if (repository == null || !myVcs.equals(repository.getVcs())) return null;
-    VirtualFile vcsDir = repository.getRoot().findChild(myRepoDirName);
-    //noinspection unchecked
-    return vcsDir != null && vcsDir.exists() ? (T)repository : null;
+    return ReadAction.compute(() -> {
+      VirtualFile root = repository.getRoot();
+      if (root.isValid()) {
+        VirtualFile vcsDir = root.findChild(myRepoDirName);
+        //noinspection unchecked
+        return vcsDir != null && vcsDir.exists() ? (T)repository : null;
+      }
+      return null;
+    });
   }
 
   @Override
   @NotNull
   public AbstractVcs getVcs() {
     return myVcs;
+  }
+
+  /**
+   * Returns true if the synchronous branch control should be proposed for this project,
+   * if the setting was not defined yet, and all repositories are on the same branch.
+   */
+  public boolean shouldProposeSyncControl() {
+    return !MultiRootBranches.diverged(getRepositories());
   }
 
 }

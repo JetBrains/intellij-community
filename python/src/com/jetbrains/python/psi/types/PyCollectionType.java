@@ -23,9 +23,9 @@ import java.util.List;
 /**
  * @author yole
  */
-public interface PyCollectionType extends PyType {
+public interface PyCollectionType extends PyClassType {
   @NotNull
-  List<PyType> getElementTypes(@NotNull TypeEvalContext context);
+  List<PyType> getElementTypes();
 
   @Nullable
   PyType getIteratedItemType();

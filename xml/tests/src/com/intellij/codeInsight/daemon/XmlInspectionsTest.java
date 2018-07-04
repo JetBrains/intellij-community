@@ -19,7 +19,10 @@ import com.intellij.codeInsight.daemon.impl.analysis.XmlDefaultAttributeValueIns
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
+
+import java.io.File;
 
 /**
  * @author Dmitry Avdeev
@@ -31,7 +34,7 @@ public class XmlInspectionsTest extends LightPlatformCodeInsightFixtureTestCase 
     myFixture.configureByText(XmlFileType.INSTANCE, "<schema xmlns=\"http://www.w3.org/2001/XMLSchema\" elementFormDefault=<warning descr=\"Redundant default attribute value assignment\">\"unqua<caret>lified\"</warning>>\n" +
                                                     "</schema>");
     myFixture.checkHighlighting();
-    IntentionAction action = myFixture.findSingleIntention(XmlErrorMessages.message("remove.attribute.quickfix.family"));
+    IntentionAction action = myFixture.findSingleIntention(XmlErrorMessages.message("remove.attribute.quickfix.family") + " e");
     myFixture.launchAction(action);
     myFixture.checkResult("<schema xmlns=\"http://www.w3.org/2001/XMLSchema\">\n" +
                           "</schema>");
@@ -62,5 +65,15 @@ public class XmlInspectionsTest extends LightPlatformCodeInsightFixtureTestCase 
     myFixture.enableInspections(new XmlDefaultAttributeValueInspection());
     myFixture.configureByText(HtmlFileType.INSTANCE, "<input type=\"text\"/>");
     myFixture.checkHighlighting();
+  }
+
+  public void testRequiredFixedAttribute() {
+    myFixture.enableInspections(new XmlDefaultAttributeValueInspection());
+    myFixture.testHighlighting("def.xml", "def.xsd");
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/xml/tests/testData/xml";
   }
 }

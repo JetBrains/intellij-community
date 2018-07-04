@@ -21,9 +21,9 @@ import org.jetbrains.uast.UBreakExpression
 import org.jetbrains.uast.UElement
 
 class JavaUBreakExpression(
-        override val psi: PsiBreakStatement,
-        override val uastParent: UElement?
-) : JavaAbstractUExpression(), UBreakExpression {
-    override val label: String?
-        get() = psi.labelIdentifier?.text
+  override val psi: PsiBreakStatement,
+  givenParent: UElement?
+) : JavaAbstractUExpression(givenParent), UBreakExpression {
+  override val label: String?
+    get() = psi.labelIdentifier?.text
 }

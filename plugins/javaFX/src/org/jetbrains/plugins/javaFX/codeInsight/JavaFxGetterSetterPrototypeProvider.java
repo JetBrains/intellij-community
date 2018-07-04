@@ -24,6 +24,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
@@ -44,7 +45,7 @@ public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypePr
 
     final PsiType wrappedType = JavaFxPsiUtil.getWrappedPropertyType(field, project, JavaFxCommonNames.ourReadOnlyMap);
     LOG.assertTrue(wrappedType != null, field.getType());
-    getter.setName(PropertyUtil.suggestGetterName(PropertyUtil.suggestPropertyName(field), wrappedType));
+    getter.setName(PropertyUtilBase.suggestGetterName(PropertyUtilBase.suggestPropertyName(field), wrappedType));
 
     final PsiTypeElement returnTypeElement = getter.getReturnTypeElement();
     LOG.assertTrue(returnTypeElement != null);
@@ -55,7 +56,7 @@ public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypePr
     final String fieldName = field.getName();
     getterBody.getStatements()[0].replace(factory.createStatementFromText("return " + fieldName + ".get();", field));
 
-    final PsiMethod propertyGetter = PropertyUtil.generateGetterPrototype(field);
+    final PsiMethod propertyGetter = PropertyUtilBase.generateGetterPrototype(field);
     if (propertyGetter != null && fieldName != null) {
       propertyGetter.setName(JavaCodeStyleManager.getInstance(project).variableNameToPropertyName(fieldName, VariableKind.FIELD) + JavaFxCommonNames.PROPERTY_METHOD_SUFFIX);
     }
@@ -90,7 +91,7 @@ public class JavaFxGetterSetterPrototypeProvider extends GetterSetterPrototypePr
     final PsiMethod specificGetter = psiClass
       .findMethodBySignature(JavaPsiFacade.getElementFactory(psiClass.getProject()).createMethod(getterName, PsiType.VOID), false);
     if (specificGetter != null) {
-      final PsiMethod getter = PropertyUtil.findPropertyGetter(psiClass, propertyName, false, false);
+      final PsiMethod getter = PropertyUtilBase.findPropertyGetter(psiClass, propertyName, false, false);
       return getter == null ? new PsiMethod[] {specificGetter} : new PsiMethod[] {getter, specificGetter};
     }
     return super.findGetters(psiClass, propertyName);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.lang.ASTNode;
@@ -265,7 +251,7 @@ public class PsiUtilCore {
       throw createException();
     }
 
-    protected PsiInvalidElementAccessException createException() {
+    PsiInvalidElementAccessException createException() {
       return new PsiInvalidElementAccessException(this, toString(), null);
     }
 
@@ -354,9 +340,7 @@ public class PsiUtilCore {
 
   @NotNull
   public static PsiElement[] toPsiElementArray(@NotNull Collection<? extends PsiElement> collection) {
-    if (collection.isEmpty()) return PsiElement.EMPTY_ARRAY;
-    //noinspection SSBasedInspection
-    return collection.toArray(new PsiElement[collection.size()]);
+    return collection.isEmpty() ? PsiElement.EMPTY_ARRAY : collection.toArray(PsiElement.EMPTY_ARRAY);
   }
 
   public static Language getNotAnyLanguage(ASTNode node) {
@@ -390,7 +374,7 @@ public class PsiUtilCore {
     return file;
   }
 
-  public static int compareElementsByPosition(final PsiElement element1, final PsiElement element2) {
+  public static int compareElementsByPosition(@Nullable PsiElement element1, @Nullable PsiElement element2) {
     if (element1 != null && element2 != null) {
       final PsiFile psiFile1 = element1.getContainingFile();
       final PsiFile psiFile2 = element2.getContainingFile();
@@ -422,13 +406,9 @@ public class PsiUtilCore {
     if (elt == null && offset > 0) {
       elt = file.findElementAt(offset - 1);
     }
-    if (elt == null) {
-      return file;
-    }
-    return elt;
+    return elt == null ? file : elt;
   }
 
-  @Nullable
   public static PsiFile getTemplateLanguageFile(@Nullable PsiElement element) {
     if (element == null) return null;
     final PsiFile containingFile = element.getContainingFile();
@@ -441,8 +421,7 @@ public class PsiUtilCore {
   @NotNull
   public static PsiFile[] toPsiFileArray(@NotNull Collection<? extends PsiFile> collection) {
     if (collection.isEmpty()) return PsiFile.EMPTY_ARRAY;
-    //noinspection SSBasedInspection
-    return collection.toArray(new PsiFile[collection.size()]);
+    return collection.toArray(PsiFile.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -457,7 +436,6 @@ public class PsiUtilCore {
   /**
    * @return name for element using element structure info
    */
-  @Nullable
   public static String getName(PsiElement element) {
     String name = null;
     if (element instanceof PsiMetaOwner) {
@@ -482,13 +460,13 @@ public class PsiUtilCore {
     return narrowLanguage(element.getLanguage(), element.getContainingFile().getLanguage());
   }
 
-  protected static Language narrowLanguage(final Language language, final Language candidate) {
+  static Language narrowLanguage(final Language language, @NotNull Language candidate) {
     if (candidate.isKindOf(language)) return candidate;
     return language;
   }
 
   /**
-   * Checks if the element is valid. If not, throws {@link com.intellij.psi.PsiInvalidElementAccessException} with
+   * Checks if the element is valid. If not, throws {@link PsiInvalidElementAccessException} with
    * a meaningful message that points to the reasons why the element is not valid and may contain the stack trace
    * when it was invalidated.
    */
@@ -550,8 +528,9 @@ public class PsiUtilCore {
   /**
    * @deprecated use CompletionUtil#getOriginalElement where appropriate instead
    */
+  @Deprecated
   @Nullable
-  public static <T extends PsiElement> T getOriginalElement(@NotNull T psiElement, final Class<? extends T> elementClass) {
+  public static <T extends PsiElement> T getOriginalElement(@NotNull T psiElement, @NotNull Class<? extends T> elementClass) {
     final PsiFile psiFile = psiElement.getContainingFile();
     final PsiFile originalFile = psiFile.getOriginalFile();
     if (originalFile == psiFile) return psiElement;
@@ -568,7 +547,7 @@ public class PsiUtilCore {
   }
 
   @NotNull
-  public static Language findLanguageFromElement(final PsiElement elt) {
+  public static Language findLanguageFromElement(@NotNull PsiElement elt) {
     if (!(elt instanceof PsiFile) && elt.getFirstChild() == null) { //is leaf
       final PsiElement parent = elt.getParent();
       if (parent != null) {
@@ -596,6 +575,7 @@ public class PsiUtilCore {
     return findLanguageFromElement(elt);
   }
 
+  @NotNull
   public static Project getProjectInReadAction(@NotNull final PsiElement element) {
     return ReadAction.compute(() -> element.getProject());
   }

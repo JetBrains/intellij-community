@@ -23,9 +23,6 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
 public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
   private static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
@@ -57,14 +54,14 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
   }
 
   public void testLongRangeKnownMethods() {
-    myFixture.addClass("package java.time;\n" +
-                       "\n" +
-                       "public interface LocalDateTime {\n" +
-                       "  int getHour();\n" +
-                       "  int getMinute();\n" +
-                       "  int getSecond();\n" +
-                       "}");
     doTest();
   }
 
+  public void testLongRangeMod() { doTest(); }
+  public void testLongRangeDivShift() { doTest(); }
+
+  public void testLongRangePlusMinus() { doTest(); }
+  public void testFebruary31() { doTest(); }
+
+  public void testManyAdditionsDoNotCauseExponentialBlowUp() { doTest(); }
 }

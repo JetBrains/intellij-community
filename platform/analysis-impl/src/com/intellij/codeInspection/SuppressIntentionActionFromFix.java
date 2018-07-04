@@ -50,7 +50,8 @@ public class SuppressIntentionActionFromFix extends SuppressIntentionAction {
 
   @NotNull
   public static SuppressIntentionAction[] convertBatchToSuppressIntentionActions(@NotNull SuppressQuickFix[] actions) {
-    return ContainerUtil.map2Array(actions, SuppressIntentionAction.class, fix -> convertBatchToSuppressIntentionAction(fix));
+    return ContainerUtil.map2Array(actions, SuppressIntentionAction.class,
+                                   SuppressIntentionActionFromFix::convertBatchToSuppressIntentionAction);
   }
 
   @Override
@@ -93,6 +94,7 @@ public class SuppressIntentionActionFromFix extends SuppressIntentionAction {
     return myFix.getFamilyName();
   }
 
+  @Override
   public boolean isSuppressAll() {
     return myFix.isSuppressAll();
   }

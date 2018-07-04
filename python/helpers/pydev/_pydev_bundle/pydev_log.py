@@ -1,5 +1,5 @@
 import sys
-from _pydevd_bundle.pydevd_constants import DebugInfoHolder, dict_contains
+from _pydevd_bundle.pydevd_constants import DebugInfoHolder
 from _pydev_imps._pydev_saved_modules import threading
 currentThread = threading.currentThread
 
@@ -34,7 +34,7 @@ def error(message, tb=False):
 
 
 def error_once(message):
-    if not dict_contains(WARN_ONCE_MAP, message):
+    if message not in WARN_ONCE_MAP:
         WARN_ONCE_MAP[message] = True
         error(message)
 
