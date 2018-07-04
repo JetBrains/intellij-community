@@ -467,7 +467,57 @@ public class Q {
     )
   }
 
+  void "test disbalanced diamond DAG"() {
+    doTest(
+      initial: '''
+    public class Q {
+      void a() {
+        b();
+        c();
+      }
 
+      void b() {
+        e();
+      }
+
+      void f() {} // should be last 
+
+      void c() {
+        d();
+      }
+
+      void d() {
+        e();
+      }
+
+      void e(){
+        f();
+      }
+    }''',
+      expected: '''
+    public class Q {
+      void a() {
+        b();
+        c();
+      }
+
+      void b() {
+        e();
+      }
+      void c() {
+        d();
+      }
+      void e(){
+        f();
+      }
+      void d() {
+        e();
+      }
+      void f() {} // should be last 
+    }''',
+      groups: [group(DEPENDENT_METHODS, BREADTH_FIRST)]
+    )
+  }
 
 
 }
