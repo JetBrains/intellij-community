@@ -33,14 +33,15 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
     holder.createErrorAnnotation(statement.doKeyword, message("unsupported.do.while.statement"))
   }
 
-  override fun visitTraditionalForClause(forClause: GrTraditionalForClause) {
-    super.visitTraditionalForClause(forClause)
-    val initialization = forClause.initialization as? GrVariableDeclaration ?: return
-    if (initialization.isTuple) {
-      holder.createErrorAnnotation(initialization, message("unsupported.tuple.declaration.in.for"))
-    }
-    else if (initialization.variables.size > 1) {
-      holder.createErrorAnnotation(initialization, message("unsupported.multiple.variables.in.for"))
+  override fun visitVariableDeclaration(variableDeclaration: GrVariableDeclaration) {
+    super.visitVariableDeclaration(variableDeclaration)
+    if (variableDeclaration.parent is GrTraditionalForClause) {
+      if (variableDeclaration.isTuple) {
+        holder.createErrorAnnotation(variableDeclaration, message("unsupported.tuple.declaration.in.for"))
+      }
+      else if (variableDeclaration.variables.size > 1) {
+        holder.createErrorAnnotation(variableDeclaration, message("unsupported.multiple.variables.in.for"))
+      }
     }
   }
 
