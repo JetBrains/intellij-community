@@ -391,7 +391,7 @@ object GuiTestLocalLauncher {
   }
 
   /**
-   * Returns a list containing all elements of the original collection and then the given [element].
+   * Returns a list containing all elements of the original collection including the given [element] if [condition] is true.
    */
   private fun <T> List<T>.plusIf(condition: Boolean, element: T): List<T> {
     if (!condition) return this
