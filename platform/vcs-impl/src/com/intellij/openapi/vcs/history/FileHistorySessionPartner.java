@@ -114,9 +114,8 @@ public class FileHistorySessionPartner implements VcsHistorySessionConsumer {
     }
 
     ApplicationManager.getApplication().invokeAndWait(() -> {
-      VcsHistorySession copy = mySession.copyWithCachedRevision();
-      if (session != null && !session.getRevisionList().isEmpty()) {
-        myFileHistoryPanel.getHistoryPanelRefresh().consume(copy);
+      if (mySession != null && !mySession.getRevisionList().isEmpty()) {
+        myFileHistoryPanel.getHistoryPanelRefresh().consume(mySession.copyWithCachedRevision());
       }
     });
   }
