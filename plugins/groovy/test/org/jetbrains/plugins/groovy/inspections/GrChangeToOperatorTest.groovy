@@ -60,8 +60,21 @@ class Operators {
     doTest "a.bitwiseNegate()", "~a"
     doTest "a.negative()", "-a"
     doTest "a.positive()", "+a"
-    doTest "a.next()", "++a"
-    doTest "a.previous()", "--a"
+  }
+
+  void testIncDecUnary() {
+    doTest 'a.next()'
+    doTest 'a.previous()'
+    doTest 'a = a.next(1)'
+    doTest 'a = a.previous(1)'
+    doTest 'b = a.next()'
+    doTest 'b = a.previous()'
+    doTest 'a = a.<caret>next()', '++a'
+    doTest 'a = a.<caret>previous()', '--a'
+    doTest 'b = a = a.<caret>next()', 'b = ++a'
+    doTest 'b = a = a.<caret>previous()', 'b = --a'
+    doTest 'while(a = a.<caret>next()) {}', 'while(++a) {}'
+    doTest 'while(a = a.<caret>previous()) {}', 'while(--a) {}'
   }
 
   void testAsBoolean() {
@@ -80,8 +93,6 @@ class Operators {
     doTest "a.bitwiseNegate(1)"
     doTest "a.negative(1)"
     doTest "a.positive(1)"
-    doTest "a.next(1)"
-    doTest "a.previous(1)"
     doTest "a.asBoolean(1)"
   }
 
