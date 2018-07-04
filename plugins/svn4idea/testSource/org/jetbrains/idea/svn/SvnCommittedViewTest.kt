@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn
 
+import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.Change
@@ -33,9 +34,9 @@ class SvnCommittedViewTest : SvnTestCase() {
 
     assertRevisions(
       r(1,
-        Data(absPath(f11), FileStatus.ADDED, null),
-        Data(absPath(f12), FileStatus.ADDED, null),
-        Data(absPath(d1), FileStatus.ADDED, null)
+        Data(f11, FileStatus.ADDED, null),
+        Data(f12, FileStatus.ADDED, null),
+        Data(d1, FileStatus.ADDED, null)
       )
     )
   }
@@ -59,8 +60,8 @@ class SvnCommittedViewTest : SvnTestCase() {
     checkin()
 
     assertRevisions(
-      r(2, Data(absPath(f11), FileStatus.DELETED, null)),
-      r(3, Data(absPath(d1), FileStatus.DELETED, null))
+      r(2, Data(f11, FileStatus.DELETED, null)),
+      r(3, Data(d1, FileStatus.DELETED, null))
     )
   }
 
@@ -82,7 +83,7 @@ class SvnCommittedViewTest : SvnTestCase() {
     checkin()
 
     assertRevisions(
-      r(2, Data(absPath(d1), FileStatus.MODIFIED, "- replaced"))
+      r(2, Data(d1, FileStatus.MODIFIED, "- replaced"))
     )
   }
 
@@ -101,7 +102,7 @@ class SvnCommittedViewTest : SvnTestCase() {
     checkin()
 
     assertRevisions(
-      r(2, Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar))
+      r(2, Data(d1, FileStatus.MODIFIED, "- moved from .." + File.separatorChar))
     )
   }
 
@@ -123,8 +124,8 @@ class SvnCommittedViewTest : SvnTestCase() {
 
     assertRevisions(
       r(2,
-        Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar),
-        Data(absPath(f11), FileStatus.MODIFIED, "- moved from $oldF11Path")
+        Data(d1, FileStatus.MODIFIED, "- moved from .." + File.separatorChar),
+        Data(f11, FileStatus.MODIFIED, "- moved from $oldF11Path")
       )
     )
   }
@@ -137,7 +138,7 @@ class SvnCommittedViewTest : SvnTestCase() {
 
     assertRevisionsInPath(
       "branch",
-      r(2, Data(File(myWorkingCopyDir.path, "branch").absolutePath, FileStatus.ADDED, "- copied from /trunk"))
+      r(2, Data(File(myWorkingCopyDir.path, "branch"), FileStatus.ADDED, "- copied from /trunk"))
     )
   }
 
@@ -155,8 +156,8 @@ class SvnCommittedViewTest : SvnTestCase() {
     assertRevisionsInPath(
       "branch",
       r(2,
-        Data(File(myWorkingCopyDir.path, "branch").absolutePath, FileStatus.ADDED, "- copied from /trunk"),
-        Data(File(myWorkingCopyDir.path, "branch/folder").absolutePath, FileStatus.MODIFIED, "- copied from /trunk/folder")
+        Data(File(myWorkingCopyDir.path, "branch"), FileStatus.ADDED, "- copied from /trunk"),
+        Data(File(myWorkingCopyDir.path, "branch/folder"), FileStatus.MODIFIED, "- copied from /trunk/folder")
       )
     )
   }
@@ -175,9 +176,10 @@ class SvnCommittedViewTest : SvnTestCase() {
     return path.resolve("trunk")
   }
 
-  private fun absPath(vf: VirtualFile) = virtualToIoFile(vf).absolutePath
-
   private class Data(val myLocalPath: String, val myStatus: FileStatus, val myOriginText: String?) {
+    constructor(file: VirtualFile, status: FileStatus, originText: String?) : this(file.path, status, originText)
+    constructor(file: File, status: FileStatus, originText: String?) : this(file.systemIndependentPath, status, originText)
+
     fun isFor(change: Change) = myLocalPath == if (myStatus == FileStatus.DELETED) getFilePath(change).path else getAfterPath(change)?.path
   }
 
