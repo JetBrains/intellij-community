@@ -46,6 +46,8 @@
     <lang.findUsagesProvider language="JSON" implementationClass="com.intellij.json.findUsages.JsonFindUsagesProvider"/>
     <statementUpDownMover implementation="com.intellij.json.editor.lineMover.JsonLineMover" id="JSON" order="before line"/>
     <liveTemplateContext implementation="com.intellij.json.liveTemplates.JsonContextType"/>
+    <liveTemplateContext implementation="com.intellij.json.liveTemplates.JsonInLiteralsContextType"/>
+    <liveTemplateContext implementation="com.intellij.json.liveTemplates.JsonInPropertyKeysContextType"/>
     <spellchecker.support language="JSON" implementationClass="com.intellij.json.JsonSpellcheckerStrategy"/>
     <extendWordSelectionHandler implementation="com.intellij.json.editor.selection.JsonStringLiteralSelectionHandler"/>
     <basicWordSelectionFilter implementation="com.intellij.json.editor.selection.JsonBasicWordSelectionFilter"/>
