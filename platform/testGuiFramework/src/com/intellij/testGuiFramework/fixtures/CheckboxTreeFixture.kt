@@ -34,15 +34,6 @@ class CheckboxTreeFixture(
     }
   }
 
-  /**
-   * Sometimes one click doesn't work - e.g. it can be swallowed by scrolling
-   * Then the second click might help.
-   * */
-  private fun ensureCheckboxValue(value: Boolean) {
-    setCheckboxValue(value)
-    setCheckboxValue(value)
-  }
-
   fun check() = setCheckboxValue(true)
 
   fun uncheck() = setCheckboxValue(false)
