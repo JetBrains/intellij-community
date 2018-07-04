@@ -4,6 +4,7 @@ package org.jetbrains.yaml.schema;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Predicate;
@@ -11,13 +12,14 @@ import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.yaml.YAMLLanguage;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
   @Override
   public String getTestDataPath() {
-    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/schema/data";
+    return PathManagerEx.getCommunityHomePath() + "/plugins/yaml/testSrc/org/jetbrains/yaml/schema/data/highlighting";
   }
 
   @Override
@@ -674,6 +676,17 @@ public class YamlByJsonSchemaHighlightingTest extends JsonSchemaHighlightingTest
     @Language("JSON") String schema = "{\"properties\": { \"platform\": { \"enum\": [\"x86\", \"x64\"] } }}";
     doTest(schema, "platform:\n  !!str x64");
     doTest(schema, "platform:\n  <warning>a x64</warning>");
+  }
+
+  public void testAmazonElasticSchema() throws Exception {
+    @Language("JSON") String schema = FileUtil.loadFile(new File(getTestDataPath() + "/cloudformation.schema.json"));
+    doTest(schema, "Resources:\n" +
+                   "  ElasticsearchCluster:\n" +
+                   "    Type: \"AWS::Elasticsearch::Domain\"\n" +
+                   "    Properties:\n" +
+                   "      ElasticsearchVersion: !FindInMap [ElasticSearchConfig, !Ref AccountType, Version]\n" +
+                   "Conditions:\n" +
+                   "  IsDev: !Equals [!Ref AccountType, dev]");
   }
 
   static String schema(final String s) {
