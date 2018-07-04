@@ -220,7 +220,7 @@ public class TabLabel extends JPanel implements Accessible {
   @Override
   public Insets getInsets() {
     Insets insets = super.getInsets();
-    if (myTabs.isEditorTabs() && UISettings.getShadowInstance().getShowCloseButton()) {
+    if (myTabs.isEditorTabs() && UISettings.getShadowInstance().getShowCloseButton() && hasIcons()) {
       if (Boolean.getBoolean(BUTTON_ON_THE_LEFT_KEY)) {
         insets.left = 3;
       }
