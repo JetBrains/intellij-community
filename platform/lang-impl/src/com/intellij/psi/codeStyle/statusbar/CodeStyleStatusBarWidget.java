@@ -42,7 +42,7 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
     PsiFile psiFile = getPsiFile();
     if (psiFile == null) return WidgetState.HIDDEN;
     IndentOptions indentOptions = CodeStyle.getIndentOptions(psiFile);
-    IndentOptions projectIndentOptions = CodeStyle.getIndentOptionsByFileType(psiFile);
+    IndentOptions projectIndentOptions = CodeStyle.getSettings(myProject).getLanguageIndentOptions(psiFile.getLanguage());
     FileIndentOptionsProvider provider = findProvider(file, indentOptions);
     if (projectIndentOptions.equals(indentOptions)) {
       if (provider == null || !provider.areActionsAvailable(file, indentOptions)) {
@@ -144,8 +144,8 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
 
   private static class MyWidgetState extends WidgetState {
 
-    private final IndentOptions myIndentOptions;
-    private final FileIndentOptionsProvider myProvider;
+    private final @NotNull IndentOptions myIndentOptions;
+    private final @Nullable FileIndentOptionsProvider myProvider;
     private final @NotNull PsiFile myPsiFile;
 
     protected MyWidgetState(String toolTip,
@@ -159,10 +159,12 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
       myPsiFile = psiFile;
     }
 
+    @Nullable
     public FileIndentOptionsProvider getProvider() {
       return myProvider;
     }
 
+    @NotNull
     public IndentOptions getIndentOptions() {
       return myIndentOptions;
     }
@@ -186,9 +188,11 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
     if (state instanceof MyWidgetState) {
       MyWidgetState codeStyleWidgetState = (MyWidgetState)state;
       FileIndentOptionsProvider provider = codeStyleWidgetState.getProvider();
-      String message = provider.getAdvertisementText(codeStyleWidgetState.getPsiFile(), codeStyleWidgetState.getIndentOptions());
-      if (message != null) {
-        advertise(message);
+      if (provider != null) {
+        String message = provider.getAdvertisementText(codeStyleWidgetState.getPsiFile(), codeStyleWidgetState.getIndentOptions());
+        if (message != null) {
+          advertise(message);
+        }
       }
     }
   }
