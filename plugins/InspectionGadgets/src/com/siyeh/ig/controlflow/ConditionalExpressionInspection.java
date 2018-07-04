@@ -280,26 +280,25 @@ public class ConditionalExpressionInspection extends BaseInspection {
           return;
         }
       }
-      
+
+      boolean quickFixOnly = false;
       if (ignoreSimpleAssignmentsAndReturns) {
         if (parent instanceof PsiAssignmentExpression ||
             parent instanceof PsiReturnStatement ||
             parent instanceof PsiLocalVariable ||
             parent instanceof PsiLambdaExpression) {
-          return;
+          quickFixOnly = true;
         }
-        if (!isOnTheFly()) return;
-        registerError(expression, ProblemHighlightType.INFORMATION, Boolean.TRUE);
       }
-      else {
-        final boolean expressionContext = isExpressionContext(expression);
-        if (expressionContext && (ignoreExpressionContext || isVisibleHighlight(expression))) {
-          return;
-        }
-        boolean nestedConditional = ParenthesesUtils.getParentSkipParentheses(expression) instanceof PsiConditionalExpression;
-        registerError(expression, nestedConditional ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                      !expressionContext, nestedConditional);
+      final boolean expressionContext = isExpressionContext(expression);
+      if (expressionContext && (ignoreExpressionContext || !isVisibleHighlight(expression))) {
+        // quick fix is not built in this case (it will break code) and there will be no warning, so just return
+        return;
       }
+      final boolean nestedConditional = ParenthesesUtils.getParentSkipParentheses(expression) instanceof PsiConditionalExpression;
+      quickFixOnly |= nestedConditional;
+      registerError(expression, quickFixOnly ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                    !expressionContext, nestedConditional);
     }
 
     private boolean isExpressionContext(PsiConditionalExpression expression) {
