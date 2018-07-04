@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn
 
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangesUtil.getAfterPath
 import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.vfs.VirtualFile
@@ -12,12 +12,13 @@ import com.intellij.util.io.directoryContent
 import com.intellij.util.io.exists
 import org.jetbrains.idea.svn.history.SvnChangeList
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
-import java.util.*
+import kotlin.test.fail
 
 class SvnCommittedViewTest : SvnTestCase() {
   @Test
@@ -30,12 +31,13 @@ class SvnCommittedViewTest : SvnTestCase() {
     val f12 = createFileInCommand(d1, "f12.txt", "----")
     checkin()
 
-    vcs.invokeRefreshSvnRoots()
-    val committedChangesProvider = vcs.committedChangesProvider
-    val changeListList = committedChangesProvider
-      .getCommittedChanges(committedChangesProvider.createDefaultSettings(), SvnRepositoryLocation(myRepositoryUrl), 0)
-    checkList(changeListList, 1, Data(absPath(f11), FileStatus.ADDED, null), Data(absPath(f12), FileStatus.ADDED, null),
-              Data(absPath(d1), FileStatus.ADDED, null))
+    assertRevisions(
+      r(1,
+        Data(absPath(f11), FileStatus.ADDED, null),
+        Data(absPath(f12), FileStatus.ADDED, null),
+        Data(absPath(d1), FileStatus.ADDED, null)
+      )
+    )
   }
 
   @Test
@@ -56,12 +58,10 @@ class SvnCommittedViewTest : SvnTestCase() {
     deleteFileInCommand(d1)
     checkin()
 
-    vcs.invokeRefreshSvnRoots()
-    val committedChangesProvider = vcs.committedChangesProvider
-    val changeListList = committedChangesProvider
-      .getCommittedChanges(committedChangesProvider.createDefaultSettings(), SvnRepositoryLocation(myRepositoryUrl), 0)
-    checkList(changeListList, 2, Data(absPath(f11), FileStatus.DELETED, null))
-    checkList(changeListList, 3, Data(absPath(d1), FileStatus.DELETED, null))
+    assertRevisions(
+      r(2, Data(absPath(f11), FileStatus.DELETED, null)),
+      r(3, Data(absPath(d1), FileStatus.DELETED, null))
+    )
   }
 
   @Test
@@ -81,11 +81,9 @@ class SvnCommittedViewTest : SvnTestCase() {
     runInAndVerifyIgnoreOutput("add", d1Path)
     checkin()
 
-    vcs.invokeRefreshSvnRoots()
-    val committedChangesProvider = vcs.committedChangesProvider
-    val changeListList = committedChangesProvider
-      .getCommittedChanges(committedChangesProvider.createDefaultSettings(), SvnRepositoryLocation(myRepositoryUrl), 0)
-    checkList(changeListList, 2, Data(absPath(d1), FileStatus.MODIFIED, "- replaced"))
+    assertRevisions(
+      r(2, Data(absPath(d1), FileStatus.MODIFIED, "- replaced"))
+    )
   }
 
   @Test
@@ -102,11 +100,9 @@ class SvnCommittedViewTest : SvnTestCase() {
     moveFileInCommand(d1, d2)
     checkin()
 
-    vcs.invokeRefreshSvnRoots()
-    val committedChangesProvider = vcs.committedChangesProvider
-    val changeListList = committedChangesProvider
-      .getCommittedChanges(committedChangesProvider.createDefaultSettings(), SvnRepositoryLocation(myRepositoryUrl), 0)
-    checkList(changeListList, 2, Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar))
+    assertRevisions(
+      r(2, Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar))
+    )
   }
 
   @Test
@@ -125,12 +121,12 @@ class SvnCommittedViewTest : SvnTestCase() {
     editFileInCommand(f11, "new")
     checkin()
 
-    vcs.invokeRefreshSvnRoots()
-    val committedChangesProvider = vcs.committedChangesProvider
-    val changeListList = committedChangesProvider
-      .getCommittedChanges(committedChangesProvider.createDefaultSettings(), SvnRepositoryLocation(myRepositoryUrl), 0)
-    checkList(changeListList, 2, Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar),
-              Data(absPath(f11), FileStatus.MODIFIED, "- moved from $oldF11Path"))
+    assertRevisions(
+      r(2,
+        Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar),
+        Data(absPath(f11), FileStatus.MODIFIED, "- moved from $oldF11Path")
+      )
+    )
   }
 
   @Test
@@ -139,13 +135,10 @@ class SvnCommittedViewTest : SvnTestCase() {
     runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.toString(), "$myRepoUrl/trunk")
     runInAndVerifyIgnoreOutput("copy", "-m", "test", "$myRepoUrl/trunk", "$myRepoUrl/branch")
 
-    vcs.invokeRefreshSvnRoots()
-    val committedChangesProvider = vcs.committedChangesProvider
-    val changeListList = committedChangesProvider
-      .getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                           SvnRepositoryLocation(myRepositoryUrl.appendPath("branch", false)), 0)
-    checkList(changeListList, 2,
-              Data(File(myWorkingCopyDir.path, "branch").absolutePath, FileStatus.ADDED, "- copied from /trunk"))
+    assertRevisionsInPath(
+      "branch",
+      r(2, Data(File(myWorkingCopyDir.path, "branch").absolutePath, FileStatus.ADDED, "- copied from /trunk"))
+    )
   }
 
   @Test
@@ -159,15 +152,13 @@ class SvnCommittedViewTest : SvnTestCase() {
     runInAndVerifyIgnoreOutput("propset", "testprop", "testval", myWorkingCopyDir.path + "/branch/folder")
     checkin()
 
-    vcs.invokeRefreshSvnRoots()
-    val committedChangesProvider = vcs.committedChangesProvider
-    val changeListList = committedChangesProvider
-      .getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                           SvnRepositoryLocation(myRepositoryUrl.appendPath("branch", false)), 0)
-    checkList(changeListList, 2,
-              Data(File(myWorkingCopyDir.path, "branch").absolutePath, FileStatus.ADDED, "- copied from /trunk"),
-              Data(File(myWorkingCopyDir.path, "branch/folder").absolutePath, FileStatus.MODIFIED,
-                   "- copied from /trunk/folder"))
+    assertRevisionsInPath(
+      "branch",
+      r(2,
+        Data(File(myWorkingCopyDir.path, "branch").absolutePath, FileStatus.ADDED, "- copied from /trunk"),
+        Data(File(myWorkingCopyDir.path, "branch/folder").absolutePath, FileStatus.MODIFIED, "- copied from /trunk/folder")
+      )
+    )
   }
 
   private fun createSubtree(): Path {
@@ -187,41 +178,33 @@ class SvnCommittedViewTest : SvnTestCase() {
   private fun absPath(vf: VirtualFile) = virtualToIoFile(vf).absolutePath
 
   private class Data(val myLocalPath: String, val myStatus: FileStatus, val myOriginText: String?) {
-    fun shouldBeComparedWithChange(change: Change): Boolean {
-      return if (FileStatus.DELETED == myStatus && change.afterRevision == null) {
-        // before path
-        change.beforeRevision != null && myLocalPath == change.beforeRevision!!.file.path
-      }
-      else {
-        change.afterRevision != null && myLocalPath == change.afterRevision!!.file.path
-      }
-    }
+    fun isFor(change: Change) = myLocalPath == if (myStatus == FileStatus.DELETED) getFilePath(change).path else getAfterPath(change)?.path
   }
 
-  private fun checkList(lists: List<SvnChangeList>, revision: Long, vararg content: Data) {
-    var list: SvnChangeList? = null
-    for (changeList in lists) {
-      if (changeList.number == revision) {
-        list = changeList
-      }
-    }
-    assertNotNull("Change list #$revision not found.", list)
+  private fun r(revision: Long, vararg changes: Data) = revision to changes.toList()
 
-    val changes = ArrayList(list!!.changes)
-    assertNotNull("Null changes list", changes)
-    assertEquals(changes.size.toLong(), content.size.toLong())
+  private fun assertRevisions(vararg revisions: Pair<Long, List<Data>>) = assertRevisionsInPath("", *revisions)
 
-    for (data in content) {
-      var found = false
-      for (change in changes) {
-        if (data.shouldBeComparedWithChange(change)) {
-          assertTrue(Comparing.equal(data.myOriginText, change.getOriginText(myProject)))
-          assertEquals(data.myStatus, change.fileStatus)
-          found = true
-          break
-        }
-      }
-      assertTrue(toString(data, changes), found)
+  private fun assertRevisionsInPath(path: String, vararg revisions: Pair<Long, List<Data>>) {
+    vcs.invokeRefreshSvnRoots()
+
+    val provider = vcs.committedChangesProvider
+    val changeLists = provider.getCommittedChanges(
+      provider.createDefaultSettings(), SvnRepositoryLocation(myRepositoryUrl.appendPath(path, false)), 0)
+
+    revisions.forEach { assertRevision(changeLists, it.first, it.second) }
+  }
+
+  private fun assertRevision(changeLists: List<SvnChangeList>, revision: Long, expectedChanges: List<Data>) {
+    val changeList = changeLists.find { it.number == revision } ?: fail("Change list #$revision not found")
+    val changes = changeList.changes.toList()
+    assertEquals(expectedChanges.size, changes.size)
+
+    for (expected in expectedChanges) {
+      val change = changes.find { expected.isFor(it) } ?: fail(toString(expected, changes))
+
+      assertEquals(expected.myOriginText, change.getOriginText(myProject))
+      assertEquals(expected.myStatus, change.fileStatus)
     }
   }
 
