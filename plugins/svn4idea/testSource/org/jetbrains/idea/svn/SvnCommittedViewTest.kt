@@ -4,21 +4,23 @@ package org.jetbrains.idea.svn
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vcs.VcsTestUtil
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangesUtil.getFilePath
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.io.directoryContent
+import com.intellij.util.io.exists
 import org.jetbrains.idea.svn.history.SvnChangeList
 import org.jetbrains.idea.svn.history.SvnRepositoryLocation
-import org.junit.Assert
+import org.junit.Assert.*
 import org.junit.Test
 import java.io.File
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.*
 
 class SvnCommittedViewTest : SvnTestCase() {
-
   @Test
-  @Throws(Exception::class)
   fun testAdd() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD)
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE)
@@ -26,8 +28,6 @@ class SvnCommittedViewTest : SvnTestCase() {
     val d1 = createDirInCommand(myWorkingCopyDir, "d1")
     val f11 = createFileInCommand(d1, "f11.txt", "123\n456")
     val f12 = createFileInCommand(d1, "f12.txt", "----")
-
-    // r1, addition without history
     checkin()
 
     vcs.invokeRefreshSvnRoots()
@@ -39,7 +39,6 @@ class SvnCommittedViewTest : SvnTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testDelete() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD)
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE)
@@ -47,17 +46,14 @@ class SvnCommittedViewTest : SvnTestCase() {
     val d1 = createDirInCommand(myWorkingCopyDir, "d1")
     val f11 = createFileInCommand(d1, "f11.txt", "123\n456")
     createFileInCommand(d1, "f12.txt", "----")
-
-    // r1, addition without history
     checkin()
 
     deleteFileInCommand(f11)
-
     checkin()
+
     update()
 
     deleteFileInCommand(d1)
-
     checkin()
 
     vcs.invokeRefreshSvnRoots()
@@ -69,7 +65,6 @@ class SvnCommittedViewTest : SvnTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testReplaced() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD)
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE)
@@ -77,17 +72,13 @@ class SvnCommittedViewTest : SvnTestCase() {
     val d1 = createDirInCommand(myWorkingCopyDir, "d1")
     createFileInCommand(d1, "f11.txt", "123\n456")
     createFileInCommand(d1, "f12.txt", "----")
-
-    // r1, addition without history
     checkin()
 
     val dir = virtualToIoFile(d1)
     val d1Path = dir.absolutePath
     runInAndVerifyIgnoreOutput("delete", d1Path)
-    val created = dir.mkdir()
-    Assert.assertTrue(created)
+    assertTrue(dir.mkdir())
     runInAndVerifyIgnoreOutput("add", d1Path)
-
     checkin()
 
     vcs.invokeRefreshSvnRoots()
@@ -98,7 +89,6 @@ class SvnCommittedViewTest : SvnTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testMoveDir() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD)
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE)
@@ -107,13 +97,9 @@ class SvnCommittedViewTest : SvnTestCase() {
     val d2 = createDirInCommand(myWorkingCopyDir, "d2")
     createFileInCommand(d1, "f11.txt", "123\n456")
     createFileInCommand(d1, "f12.txt", "----")
-
-    // r1, addition without history
     checkin()
 
     moveFileInCommand(d1, d2)
-    Thread.sleep(100)
-
     checkin()
 
     vcs.invokeRefreshSvnRoots()
@@ -124,7 +110,6 @@ class SvnCommittedViewTest : SvnTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testMoveDirChangeFile() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD)
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE)
@@ -133,16 +118,11 @@ class SvnCommittedViewTest : SvnTestCase() {
     val d2 = createDirInCommand(myWorkingCopyDir, "d2")
     val f11 = createFileInCommand(d1, "f11.txt", "123\n456")
     createFileInCommand(d1, "f12.txt", "----")
-
-    // r1, addition without history
     checkin()
 
     val oldF11Path = virtualToIoFile(f11).absolutePath
     moveFileInCommand(d1, d2)
-    VcsTestUtil.editFileInCommand(myProject, f11, "new")
-
-    Thread.sleep(100)
-
+    editFileInCommand(f11, "new")
     checkin()
 
     vcs.invokeRefreshSvnRoots()
@@ -154,19 +134,9 @@ class SvnCommittedViewTest : SvnTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testCopyDir() {
-    val trunk = File(myTempDirFixture.tempDirPath, "trunk")
-    trunk.mkdir()
-    Thread.sleep(100)
-    val folder = File(trunk, "folder")
-    folder.mkdir()
-    Thread.sleep(100)
-    File(folder, "f1.txt").createNewFile()
-    File(folder, "f2.txt").createNewFile()
-    Thread.sleep(100)
-
-    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.absolutePath, "$myRepoUrl/trunk")
+    val trunk = createSubtree()
+    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.toString(), "$myRepoUrl/trunk")
     runInAndVerifyIgnoreOutput("copy", "-m", "test", "$myRepoUrl/trunk", "$myRepoUrl/branch")
 
     vcs.invokeRefreshSvnRoots()
@@ -179,25 +149,14 @@ class SvnCommittedViewTest : SvnTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testCopyAndModify() {
-    val trunk = File(myTempDirFixture.tempDirPath, "trunk")
-    trunk.mkdir()
-    Thread.sleep(100)
-    val folder = File(trunk, "folder")
-    folder.mkdir()
-    Thread.sleep(100)
-    File(folder, "f1.txt").createNewFile()
-    File(folder, "f2.txt").createNewFile()
-    Thread.sleep(100)
-
-    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.absolutePath, "$myRepoUrl/trunk")
+    val trunk = createSubtree()
+    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.toString(), "$myRepoUrl/trunk")
 
     update()
 
     runInAndVerifyIgnoreOutput("copy", myWorkingCopyDir.path + "/trunk", myWorkingCopyDir.path + "/branch")
     runInAndVerifyIgnoreOutput("propset", "testprop", "testval", myWorkingCopyDir.path + "/branch/folder")
-
     checkin()
 
     vcs.invokeRefreshSvnRoots()
@@ -211,12 +170,23 @@ class SvnCommittedViewTest : SvnTestCase() {
                    "- copied from /trunk/folder"))
   }
 
-  protected fun absPath(vf: VirtualFile): String {
-    return virtualToIoFile(vf).absolutePath
+  private fun createSubtree(): Path {
+    val path = Paths.get(myTempDirFixture.tempDirPath)
+    directoryContent {
+      dir("trunk") {
+        dir("folder") {
+          file("f1.txt")
+          file("f2.txt")
+        }
+      }
+    }.generate(path.toFile())
+
+    return path.resolve("trunk")
   }
 
-  protected class Data(val myLocalPath: String, val myStatus: FileStatus, val myOriginText: String?) {
+  private fun absPath(vf: VirtualFile) = virtualToIoFile(vf).absolutePath
 
+  private class Data(val myLocalPath: String, val myStatus: FileStatus, val myOriginText: String?) {
     fun shouldBeComparedWithChange(change: Change): Boolean {
       return if (FileStatus.DELETED == myStatus && change.afterRevision == null) {
         // before path
@@ -228,41 +198,41 @@ class SvnCommittedViewTest : SvnTestCase() {
     }
   }
 
-  protected fun checkList(lists: List<SvnChangeList>, revision: Long, vararg content: Data) {
+  private fun checkList(lists: List<SvnChangeList>, revision: Long, vararg content: Data) {
     var list: SvnChangeList? = null
     for (changeList in lists) {
       if (changeList.number == revision) {
         list = changeList
       }
     }
-    Assert.assertNotNull("Change list #$revision not found.", list)
+    assertNotNull("Change list #$revision not found.", list)
 
     val changes = ArrayList(list!!.changes)
-    Assert.assertNotNull("Null changes list", changes)
-    Assert.assertEquals(changes.size.toLong(), content.size.toLong())
+    assertNotNull("Null changes list", changes)
+    assertEquals(changes.size.toLong(), content.size.toLong())
 
     for (data in content) {
       var found = false
       for (change in changes) {
         if (data.shouldBeComparedWithChange(change)) {
-          Assert.assertTrue(Comparing.equal(data.myOriginText, change.getOriginText(myProject)))
-          Assert.assertEquals(data.myStatus, change.fileStatus)
+          assertTrue(Comparing.equal(data.myOriginText, change.getOriginText(myProject)))
+          assertEquals(data.myStatus, change.fileStatus)
           found = true
           break
         }
       }
-      Assert.assertTrue(printChanges(data, changes), found)
+      assertTrue(toString(data, changes), found)
     }
   }
 
-  private fun printChanges(data: Data, changes: Collection<Change>): String {
-    val sb = StringBuilder("Data: ").append(data.myLocalPath).append(" exists: ").append(File(data.myLocalPath).exists()).append(
-      " Changes: ")
-    for (change in changes) {
-      val cr = if (change.afterRevision == null) change.beforeRevision else change.afterRevision
-      val ioFile = cr!!.file.ioFile
-      sb.append("'").append(ioFile.absolutePath).append("' exists: ").append(ioFile.exists()).append(" | ")
+  private fun toString(data: Data, changes: Collection<Change>): String {
+    val changesInfo = changes.joinToString("\n") {
+      val file = getFilePath(it).ioFile
+      "'${file.absolutePath}' exists: ${file.exists()}"
     }
-    return sb.toString()
+    return """
+      |Data: ${data.myLocalPath} exists: ${Paths.get(data.myLocalPath).exists()}
+      |Changes: $changesInfo
+      """.trimMargin()
   }
 }
