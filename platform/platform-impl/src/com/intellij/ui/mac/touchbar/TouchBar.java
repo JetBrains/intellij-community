@@ -104,7 +104,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
   }
 
   static void addActionGroup(TouchBar result, @NotNull ActionGroup actions) {
-    final ModalityState ms = LaterInvocator.getCurrentModalityState();
+    final ModalityState ms = Utils.getCurrentModalityState();
     final TouchbarDataKeys.ActionGroupDesc groupDesc = actions.getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
     final int defaultShowMode = groupDesc == null || !groupDesc.showText ? TBItemAnActionButton.SHOWMODE_IMAGE_ONLY_IF_PRESENTED : TBItemAnActionButton.SHOWMODE_IMAGE_TEXT;
     BuildUtils.addActionGroupButtons(result.myItems, actions, ms, defaultShowMode, null, null, false);

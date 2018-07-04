@@ -5,12 +5,16 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -61,4 +65,7 @@ public class Utils {
 
     return appId;
   }
+
+  static @Nullable
+  ModalityState getCurrentModalityState() { return ApplicationManager.getApplication() != null ? LaterInvocator.getCurrentModalityState() : null; }
 }
