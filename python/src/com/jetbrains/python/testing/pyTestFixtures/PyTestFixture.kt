@@ -8,10 +8,7 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ThreeState
 import com.jetbrains.python.PyNames
-import com.jetbrains.python.psi.PyDecorator
-import com.jetbrains.python.psi.PyElement
-import com.jetbrains.python.psi.PyFunction
-import com.jetbrains.python.psi.PyNamedParameter
+import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.stubs.PyDecoratorStubIndex
 import com.jetbrains.python.psi.types.TypeEvalContext
@@ -82,14 +79,23 @@ internal fun getFixtures(module: Module, forWhat: PyFunction, typeEvalContext: T
   return if (
     fixture ||
     (pyTestEnabled && isTestElement(forWhat, ThreeState.NO, typeEvalContext)) ||
-    (PyTestFixtureSubjectDetectorExtension.EP_NAME.extensions.find { it.isSubjectForFixture(forWhat) } != null)
+    forWhat.isSubjectForFixture()
   ) {
+    //Fixtures
     StubIndex.getElements(PyDecoratorStubIndex.KEY, decoratorName, module.project,
                           GlobalSearchScope.union(
                             arrayOf(module.moduleContentScope, GlobalSearchScope.moduleRuntimeScope(module, true))),
                           PyDecorator::class.java)
       .mapNotNull { createFixture(it) }
-      .filterNot { fixture && it.name == forWhat.name } // Do not suggest fixture for itself
+      .filterNot { fixture && it.name == forWhat.name }.toList() +  // Do not suggest fixture for itself
+    //Other steps
+    ((forWhat.containingFile as? PyFile)
+       ?.topLevelFunctions
+       ?.filterNot { it == forWhat }
+       ?.filter { function -> pyTestEnabled && function.isInjectableLikeFixture() }
+       ?.mapNotNull { function -> function.name?.let { name -> PyTestFixture(function, function, name) } }
+       ?.toList() ?: emptyList())
+
   }
   else emptyList()
 }
