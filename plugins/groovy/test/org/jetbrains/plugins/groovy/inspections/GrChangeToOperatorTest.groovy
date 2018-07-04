@@ -1,10 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.inspections
 
 import com.intellij.testFramework.LightProjectDescriptor
-import com.intellij.testFramework.PsiTestUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
@@ -174,16 +171,14 @@ class Operators {
   }
 
   void testSamePrioritiesExpression() {
-    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable())
-    
-    doTest "a.eq<caret>uals(b) == 1", "(a == b) == 1"
+    doTest "a.eq<caret>uals(b) == 1", "a == b == 1"
     doTest "(a == b).eq<caret>uals(1)", "(a == b) == 1"
     doTest "1 == a.eq<caret>uals(b)", "1 == (a == b)"
-    doTest "!a.eq<caret>uals(b) == 1", "(a != b) == 1"
+    doTest "!a.eq<caret>uals(b) == 1", "a != b == 1"
     doTest "1 == !a.eq<caret>uals(b)", "1 == (a != b)"
 
-    doTest "1 + a.p<caret>lus(b)", "1 + a + b"
-    doTest "1 + a.m<caret>inus(b)", "1 + a - b"
+    doTest "1 + a.p<caret>lus(b)", "1 + (a + b)"
+    doTest "1 + a.m<caret>inus(b)", "1 + (a - b)"
     doTest "1 - a.m<caret>inus(b)", "1 - (a - b)"
     doTest "a.m<caret>inus(1 - b)", "a - (1 - b)"
     doTest "1 - a.p<caret>lus(b)", "1 - (a + b)"
@@ -203,7 +198,7 @@ class Operators {
   }
 
   void testComplex() {
-    doTest "a.eq<caret>uals(b * c) == 1", "(a == b * c) == 1"
+    doTest "a.eq<caret>uals(b * c) == 1", "a == b * c == 1"
 
     doTest "a.eq<caret>uals(b * c)", "a == b * c"
     doTest "(Boolean) a.eq<caret>uals(b)", "(Boolean) (a == b)"
@@ -258,7 +253,7 @@ class Operators {
 
   void testWithoutAdditionalParenthesesOption() {
     inspection.withoutAdditionalParentheses = true
-    doTest "a.eq<caret>uals(b) == 1"
+    doTest "a.eq<caret>uals(b) == 1", 'a == b == 1'
     doTest "1 == !a.eq<caret>uals(b)"
     doTest "a.eq<caret>uals(b) && c", "a == b && c"
 
