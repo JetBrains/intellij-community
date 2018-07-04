@@ -7,7 +7,8 @@
   </extensions>
   <extensions defaultExtensionNs="com.intellij">
     <patterns.patternClass className="com.jetbrains.python.patterns.PythonPatterns" alias="py"/>
-    <multiHostInjector implementation="com.jetbrains.python.intelliLang.PyConfigurationInjector"/>
-    <multiHostInjector implementation="com.jetbrains.python.intelliLang.PyTemporaryInjector"/>
+    <!-- These must be registered before PyFStringsInjector, otherwise it won't allow to inject anything else inside f-strings -->
+    <multiHostInjector implementation="com.jetbrains.python.intelliLang.PyConfigurationInjector" order="before f-strings"/>
+    <multiHostInjector implementation="com.jetbrains.python.intelliLang.PyTemporaryInjector" order="before f-strings"/>
   </extensions>
 </idea-plugin>

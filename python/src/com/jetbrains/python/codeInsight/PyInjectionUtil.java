@@ -16,6 +16,7 @@
 package com.jetbrains.python.codeInsight;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
@@ -23,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.fstrings.FStringParser;
+import com.jetbrains.python.codeInsight.fstrings.PyFStringsInjector;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator;
 import one.util.streamex.StreamEx;
@@ -30,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static com.jetbrains.python.inspections.PyStringFormatParser.*;
@@ -40,14 +43,18 @@ import static com.jetbrains.python.inspections.PyStringFormatParser.*;
 public class PyInjectionUtil {
 
   public static class InjectionResult {
-    public static InjectionResult EMPTY = new InjectionResult(false, true);
+    public static final InjectionResult EMPTY = new InjectionResult(false, true, Collections.emptyList());
 
     private final boolean myInjected;
     private final boolean myStrict;
+    private final List<PyStringLiteralExpression> myCollectedFStrings;
 
-    public InjectionResult(boolean injected, boolean strict) {
+    public InjectionResult(boolean injected, boolean strict) {this(injected, strict, Collections.emptyList());}
+
+    private InjectionResult(boolean injected, boolean strict, @NotNull List<PyStringLiteralExpression> nodes) {
       myInjected = injected;
       myStrict = strict;
+      myCollectedFStrings = nodes;
     }
 
     public boolean isInjected() {
@@ -59,7 +66,9 @@ public class PyInjectionUtil {
     }
 
     public InjectionResult append(@NotNull InjectionResult result) {
-      return new InjectionResult(myInjected || result.isInjected(), myStrict && result.isStrict());
+      return new InjectionResult(myInjected || result.isInjected(),
+                                 myStrict && result.isStrict(),
+                                 ContainerUtil.concat(myCollectedFStrings, result.myCollectedFStrings));
     }
   }
 
@@ -87,8 +96,21 @@ public class PyInjectionUtil {
    * string concatenations or formatting.
    */
   @NotNull
-  public static InjectionResult registerStringLiteralInjection(@NotNull PsiElement element, @NotNull MultiHostRegistrar registrar) {
-    return processStringLiteral(element, registrar, "", "", Formatting.NONE);
+  public static InjectionResult registerStringLiteralInjection(@NotNull PsiElement element,
+                                                               @NotNull MultiHostRegistrar registrar,
+                                                               @NotNull Language language) {
+    registrar.startInjecting(language);
+    final InjectionResult result = processStringLiteral(element, registrar, "", "", Formatting.NONE);
+    if (result.isInjected()) {
+      registrar.doneInjecting();
+    }
+
+    // Only one injector can process the given element, thus we should additionally
+    // take care of f-string here instead of PyFStringsInjector
+    for (PyStringLiteralExpression literal: result.myCollectedFStrings) {
+      PyFStringsInjector.injectFStringFragments(registrar, literal);
+    }
+    return result;
   }
 
   private static boolean isStringLiteralPart(@NotNull PsiElement element, @Nullable PsiElement context) {
@@ -143,6 +165,7 @@ public class PyInjectionUtil {
       boolean injected = false;
       boolean strict = true;
       final PyStringLiteralExpression expr = (PyStringLiteralExpression)element;
+      boolean hasFormattedNodes = false;
       for (ASTNode node : expr.getStringNodes()) {
         final int nodeOffsetInParent = node.getStartOffset() - expr.getTextRange().getStartOffset();
         final PyUtil.StringNodeInfo nodeInfo = new PyUtil.StringNodeInfo(node);
@@ -159,6 +182,7 @@ public class PyInjectionUtil {
                                  .toList();
           }
           else {
+            hasFormattedNodes = true;
             // f-string fragment parser handles string literal prefix and opening quotes itself
             subsRanges = StreamEx.of(FStringParser.parse(node.getText()).getFragments())
                                  .filter(f -> f.getDepth() == 1) // don't consider nested fragments like {foo:{bar}}
@@ -214,7 +238,7 @@ public class PyInjectionUtil {
           injected = true;
         }
       }
-      return new InjectionResult(injected, strict);
+      return new InjectionResult(injected, strict, hasFormattedNodes ? Collections.singletonList(expr) : Collections.emptyList());
     }
     else if (element instanceof PyParenthesizedExpression) {
       final PyExpression contained = ((PyParenthesizedExpression)element).getContainedExpression();

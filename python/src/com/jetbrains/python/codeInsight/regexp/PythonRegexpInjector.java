@@ -25,7 +25,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.codeInsight.PyInjectionUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.codeInsight.fstrings.PyFStringsInjector;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -97,19 +96,12 @@ public class PythonRegexpInjector implements MultiHostInjector {
 
   private static void injectRegexpLanguage(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context, boolean verbose) {
     final Language language = verbose ? PythonVerboseRegexpLanguage.INSTANCE : PythonRegexpLanguage.INSTANCE;
-    registrar.startInjecting(language);
-    final PyInjectionUtil.InjectionResult result = PyInjectionUtil.registerStringLiteralInjection(context, registrar);
-    if (result.isInjected()) {
-      registrar.doneInjecting();
-      if (!result.isStrict()) {
-        final PsiFile file = InjectedLanguageUtil.getCachedInjectedFileWithLanguage(context, language);
-        if (file != null) {
-          file.putUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
-        }
+    final PyInjectionUtil.InjectionResult result = PyInjectionUtil.registerStringLiteralInjection(context, registrar, language);
+    if (result.isInjected() && !result.isStrict()) {
+      final PsiFile file = InjectedLanguageUtil.getCachedInjectedFileWithLanguage(context, language);
+      if (file != null) {
+        file.putUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
       }
-    }
-    if (context instanceof PyStringLiteralExpression) {
-      PyFStringsInjector.injectFStringFragments(registrar, (PyStringLiteralExpression)context);
     }
   }
 
