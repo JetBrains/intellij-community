@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorListener;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
@@ -202,6 +203,8 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   }
 
   private ValidationResult createValidationResult(RunnerAndConfigurationSettings snapshot, ConfigurationException e) {
+    if (!e.shouldShowInDumbMode() && DumbService.isDumb(getConfiguration().getProject())) return null;
+
     return new ValidationResult(
       e.getLocalizedMessage(),
       e instanceof RuntimeConfigurationException ? e.getTitle() : ExecutionBundle.message("invalid.data.dialog.title"),
