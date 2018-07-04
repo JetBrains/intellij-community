@@ -170,25 +170,23 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     override fun toString() = title
   }
 
-  data class LibraryOrFramework(val mainPath: Array<out String>, val reservePath: Array<out String> = emptyArray()) {
-    constructor(mainLibrary: String, reserveLibrary: String = "") : this(arrayOf(mainLibrary), arrayOf(reserveLibrary))
+  class LibraryOrFramework(vararg val mainPath: String) {
 
     override fun equals(other: Any?): Boolean {
       if (other == null) return false
       if (other !is LibraryOrFramework) return false
-      return this.mainPath.contentEquals(other.mainPath) && this.reservePath.contentEquals(other.reservePath)
+      return this.mainPath.contentEquals(other.mainPath)
     }
 
     override fun hashCode(): Int {
       val hashCodePrime = 31
-      return mainPath.fold(1) { acc, s -> s.hashCode() * hashCodePrime + acc } * hashCodePrime +
-             reservePath.fold(1) { acc, s -> s.hashCode() * hashCodePrime + acc }
+      return mainPath.fold(1) { acc, s -> s.hashCode() * hashCodePrime + acc } * hashCodePrime
     }
 
     override fun toString(): String {
       fun Array<out String>.toFormattedString() = if (this.isEmpty()) ""
         else this.joinToString(separator = "-") { it.replace(",", "").replace(" ", "") }
-      return "${mainPath.toFormattedString()}(${reservePath.toFormattedString()})"
+      return mainPath.toFormattedString()
     }
 
     fun isEmpty() = mainPath.isEmpty() || mainPath.first().isEmpty()
