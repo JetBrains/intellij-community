@@ -70,7 +70,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
   }
 
   @Override
-  protected boolean canDoAction(@NotNull Editor editor, @NotNull List<? extends Range> ranges, MouseEvent e) {
+  protected boolean canDoAction(@NotNull Editor editor, @NotNull List<? extends Range> ranges, @NotNull MouseEvent e) {
     return isInsideMarkerArea(e);
   }
 

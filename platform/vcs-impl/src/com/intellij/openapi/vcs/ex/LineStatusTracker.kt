@@ -101,7 +101,7 @@ abstract class LineStatusTracker<R : Range> constructor(override val project: Pr
     : LineStatusMarkerPopupRenderer(tracker) {
     override fun getEditorFilter(): MarkupEditorFilter? = MarkupEditorFilterFactory.createIsNotDiffFilter()
 
-    override fun canDoAction(editor: Editor, ranges: List<Range>, e: MouseEvent?): Boolean {
+    override fun canDoAction(editor: Editor, ranges: List<Range>, e: MouseEvent): Boolean {
       if (tracker.mode == Mode.SILENT) return false
       return super.canDoAction(editor, ranges, e)
     }

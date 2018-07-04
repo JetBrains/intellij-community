@@ -142,12 +142,12 @@ public abstract class LineStatusMarkerRenderer {
     }
   }
 
-  private boolean canDoAction(@NotNull Editor editor, MouseEvent e) {
+  private boolean canDoAction(@NotNull Editor editor, @NotNull MouseEvent e) {
     List<? extends Range> ranges = getSelectedRanges(editor, e.getY());
     return !ranges.isEmpty() && canDoAction(editor, ranges, e);
   }
 
-  private void doAction(@NotNull Editor editor, MouseEvent e) {
+  private void doAction(@NotNull Editor editor, @NotNull MouseEvent e) {
     List<? extends Range> ranges = getSelectedRanges(editor, e.getY());
     if (!ranges.isEmpty()) {
       doAction(editor, ranges, e);
@@ -173,11 +173,11 @@ public abstract class LineStatusMarkerRenderer {
     return Collections.emptyList();
   }
 
-  protected boolean canDoAction(@NotNull Editor editor, @NotNull List<? extends Range> ranges, MouseEvent e) {
+  protected boolean canDoAction(@NotNull Editor editor, @NotNull List<? extends Range> ranges, @NotNull MouseEvent e) {
     return false;
   }
 
-  protected void doAction(@NotNull Editor editor, @NotNull List<? extends Range> ranges, MouseEvent e) {
+  protected void doAction(@NotNull Editor editor, @NotNull List<? extends Range> ranges, @NotNull MouseEvent e) {
   }
 
   @NotNull
@@ -637,12 +637,12 @@ public abstract class LineStatusMarkerRenderer {
     }
 
     @Override
-    public boolean canDoAction(Editor editor, MouseEvent e) {
+    public boolean canDoAction(@NotNull Editor editor, @NotNull MouseEvent e) {
       return LineStatusMarkerRenderer.this.canDoAction(editor, e);
     }
 
     @Override
-    public void doAction(Editor editor, MouseEvent e) {
+    public void doAction(@NotNull Editor editor, @NotNull MouseEvent e) {
       LineStatusMarkerRenderer.this.doAction(editor, e);
     }
   }
