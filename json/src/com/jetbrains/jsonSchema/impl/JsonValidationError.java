@@ -6,6 +6,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.impl.fixes.AddMissingPropertyFix;
 import com.jetbrains.jsonSchema.impl.fixes.RemoveProhibitedPropertyFix;
 import com.jetbrains.jsonSchema.impl.fixes.SuggestEnumValuesFix;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -16,6 +17,11 @@ public class JsonValidationError {
 
   public IssueData getIssueData() {
     return myIssueData;
+  }
+
+  @MagicConstant(flagsFromClass = JsonValidationError.class)
+  public int getPriority() {
+    return myPriority;
   }
 
   public enum FixableIssueKind {
@@ -89,14 +95,21 @@ public class JsonValidationError {
     }
   }
 
+  public static final int LOW_PRIORITY = 3;
+  public static final int MEDIUM_PRIORITY = 2;
+  public static final int HIGH_PRIORITY = 1;
+
   private final String myMessage;
   private final FixableIssueKind myFixableIssueKind;
   private final IssueData myIssueData;
+  private final int myPriority;
 
-  public JsonValidationError(String message, FixableIssueKind fixableIssueKind, IssueData issueData) {
+  public JsonValidationError(String message, FixableIssueKind fixableIssueKind, IssueData issueData,
+                             @MagicConstant(flagsFromClass = JsonValidationError.class) int priority) {
     myMessage = message;
     myFixableIssueKind = fixableIssueKind;
     myIssueData = issueData;
+    myPriority = priority;
   }
 
   public String getMessage() {
