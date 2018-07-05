@@ -312,6 +312,7 @@ jaxb
 jaxen
 jetbrains
 jibx
+jira
 jndi
 jnilib
 jooq
@@ -326,6 +327,7 @@ json
 jsonb
 junit
 keepduplicates
+kerberos
 keychain
 keychains
 keyframe
