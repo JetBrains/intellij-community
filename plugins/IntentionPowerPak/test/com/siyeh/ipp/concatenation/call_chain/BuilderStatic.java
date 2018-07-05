@@ -5,6 +5,6 @@ class Test {
   }
 
   void test() {
-    StringBuilder sb = Test.create().ap<caret>pend(/*comment*/"x")/*comment2*/.append(/*comment3*/"y")/*comment4*/.append(/*comment5*/"z");
+    StringBuilder sb = (Test.create().ap<caret>pend(/*comment*/"x")/*comment2*/.append(/*comment3*/"y")/*comment4*/.append(/*comment5*/"z"));
   }
 }

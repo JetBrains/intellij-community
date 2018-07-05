@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -58,7 +59,7 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
     @NonNls final String firstStatement;
     final String variableDeclaration;
     final boolean showRenameTemplate;
-    final PsiElement parent = element.getParent();
+    final PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
     if (parent instanceof PsiExpressionStatement) {
       targetText = root.getText();
       appendStatement = (PsiStatement)parent;
