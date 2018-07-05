@@ -495,11 +495,11 @@ public abstract class DialogWrapper {
         actions.add(getOKAction());
       }
 
-      // move cancel action to the left
+      // move cancel action to the left of OK action, if present, and to the leftmost position otherwise
       int cancelNdx = actions.indexOf(getCancelAction());
       if (cancelNdx > 0) {
         actions.remove(getCancelAction());
-        actions.add(0, getCancelAction());
+        actions.add(okNdx < 0 ? 0 : actions.size() - 1, getCancelAction());
       }
     }
     else if (UIUtil.isUnderGTKLookAndFeel() && actions.contains(getHelpAction())) {
