@@ -76,12 +76,10 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
       final NoveltyImpl novelty = new NoveltyImpl(FileUtil.createTempFile("novelty-", ".here"));
       if (revision != null && !revision.trim().isEmpty()) {
         indexHeads = downloadIndexData(revision);
-        List addr = (List)(indexHeads.get("forward-indices")); // one table to rule them all
 
-        Address forwardHead = new Address(Long.parseLong((String)addr.get(1)),
-                                          Long.parseLong((String)addr.get(0)));
-
-        forwardStorage = BTree.load(storage, FORWARD_STORAGE_KEY_SIZE, forwardHead);
+        @SuppressWarnings("unchecked") List<String> addr = (List<String>)(indexHeads.get("forward-indices"));
+        // one table to rule them all
+        forwardStorage = BTree.load(storage, FORWARD_STORAGE_KEY_SIZE, Address.fromStrings(addr));
       }
       else {
         indexHeads = null;
