@@ -637,18 +637,24 @@ public class ContainerUtil extends ContainerUtilRt {
         T element1 = list1.get(index1);
         T element2 = list2.get(index2);
         int c = comparator.compare(element1, element2);
-        if (c <= 0) {
+        if (c == 0) {
+          index1++;
+          index2++;
+          if (mergeEqualItems) {
+            e = element1;
+          }
+          else {
+            processor.consume(element1);
+            e = element2;
+          }
+        }
+        else if (c < 0) {
           e = element1;
           index1++;
         }
         else {
           e = element2;
           index2++;
-        }
-        if (c == 0 && !mergeEqualItems) {
-          processor.consume(e);
-          index2++;
-          e = element2;
         }
       }
       processor.consume(e);

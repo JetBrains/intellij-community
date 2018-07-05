@@ -25,6 +25,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import gnu.trove.TIntArrayList;
@@ -135,55 +136,11 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
   }
 
   private static void mergeCommentLists(List<CommentRange> target, List<CommentRange> source) {
-    if (target.isEmpty()) {
-      target.addAll(source);
-      return;
-    }
-
-    mergeSortedArrays(target, source);
-  }
-
-  /**
-   * Merge sorted points, which are sorted by x and with equal x by y.
-   * Result is put to x1 y1.
-   */
-  static void mergeSortedArrays(@NotNull List<CommentRange> target, @NotNull List<CommentRange> source) {
-    List<CommentRange> result = new ArrayList<>();
-
-    int i = 0;
-    int j = 0;
-
-    while (i < target.size() && j < source.size()) {
-      CommentRange targetRange = target.get(i);
-      CommentRange sourceRange = source.get(j);
-      if (targetRange.startOffset < sourceRange.startOffset ||
-          targetRange.startOffset == sourceRange.startOffset && targetRange.endOffset < sourceRange.endOffset) {
-        result.add(targetRange);
-        i++;
-      }
-      else if (targetRange.startOffset > sourceRange.startOffset || targetRange.endOffset > sourceRange.endOffset) {
-        result.add(sourceRange);
-        j++;
-      }
-      else { //equals
-        result.add(targetRange);
-        i++;
-        j++;
-      }
-    }
-
-    while (i < target.size()) {
-      result.add(target.get(i));
-      i++;
-    }
-
-    while (j < source.size()) {
-      result.add(source.get(j));
-      j++;
-    }
-
+    List<CommentRange> merged = target.isEmpty()
+                                ? source
+                                : ContainerUtil.mergeSortedLists(target, source, CommentRange.BY_START_OFFSET_THEN_BY_END_OFFSET, true);
     target.clear();
-    target.addAll(result);
+    target.addAll(merged);
   }
 
   private static List<CommentRange> findComments(final Lexer lexer,
@@ -345,12 +302,15 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
     return result.isEmpty() ? Collections.emptyList() : result;
   }
 
-  static class CommentRange {
+  private static class CommentRange {
+    private static final Comparator<CommentRange> BY_START_OFFSET_THEN_BY_END_OFFSET =
+      Comparator.comparingInt((CommentRange o) -> o.startOffset).thenComparingInt((CommentRange o) -> o.endOffset);
+
     private final int startOffset;
     private final int endOffset;
     private final String allowedContinuationPrefixChars;
 
-    CommentRange(int startOffset, int endOffset) {
+    private CommentRange(int startOffset, int endOffset) {
       this(startOffset, endOffset, "");
     }
 
@@ -358,21 +318,6 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
       this.startOffset = startOffset;
       this.endOffset = endOffset;
       allowedContinuationPrefixChars = chars;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      CommentRange that = (CommentRange)o;
-      return startOffset == that.startOffset &&
-             endOffset == that.endOffset &&
-             Objects.equals(allowedContinuationPrefixChars, that.allowedContinuationPrefixChars);
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(startOffset, endOffset, allowedContinuationPrefixChars);
     }
   }
 }
