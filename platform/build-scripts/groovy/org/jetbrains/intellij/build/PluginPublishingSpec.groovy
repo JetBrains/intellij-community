@@ -4,17 +4,14 @@ package org.jetbrains.intellij.build
 import groovy.transform.CompileStatic
 
 /**
- * @see org.jetbrains.intellij.build.ProductModulesLayout#setPluginModulesToPublish(java.util.List)
- * @see org.jetbrains.intellij.build.ProductModulesLayout#pluginsToPublish
+ * @see org.jetbrains.intellij.build.ProductModulesLayout#setPluginModulesToPublish
+ * @see org.jetbrains.intellij.build.ProductModulesLayout#setPluginPublishingSpec
  */
 @CompileStatic
 class PluginPublishingSpec {
-  // The main module (containing META-INF/plugin.xml) of the plugin 
-  String mainModule
-
   /**
    * Whether since-build/until-build range should be restricted.
-   * NULL means, the compatibility build range will be automatically determined depending on the other parameters. 
+   * {@code null} means, the compatibility build range will be automatically determined depending on the other parameters. 
    */
   CompatibleBuildRange compatibleBuildRange
 
@@ -24,10 +21,8 @@ class PluginPublishingSpec {
    */
   boolean includeInCustomPluginRepository
 
-  PluginPublishingSpec(String mainModule,
-                       CompatibleBuildRange compatibleBuildRangeOrNullForDefault = null,
+  PluginPublishingSpec(CompatibleBuildRange compatibleBuildRangeOrNullForDefault = null,
                        boolean includeInCustomPluginRepository = true) {
-    this.mainModule = mainModule
     this.compatibleBuildRange = compatibleBuildRangeOrNullForDefault
     this.includeInCustomPluginRepository = includeInCustomPluginRepository
   }
