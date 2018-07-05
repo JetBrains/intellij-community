@@ -85,7 +85,7 @@ class ComponentStyle<T : JComponent>(val default: Properties) {
     return false
   }
 
-  internal fun applyStyleSnapshot(component: T): RemoveStyleListener? {
+  internal fun applyStyleSnapshot(component: T): RemoveStyleListener {
     val base = StyleProperty.getPropertiesSnapshot(component)
     val baseClone = base.clone().updateBy(default)
     baseClone.applyTo(component)
@@ -117,7 +117,7 @@ class ComponentStyle<T : JComponent>(val default: Properties) {
     mouseListener: MouseAdapter
   ) {
     if (component.isEnabled) {
-      if (styleMap.containsKey(ComponentStyleState.HOVERED) || styleMap.containsKey(ComponentStyleState.PRESSED)) {
+      if (ComponentStyleState.HOVERED in styleMap || ComponentStyleState.PRESSED in styleMap) {
         componentState.hovered = isMouseOver(component)
         componentState.pressed = false
         component.addMouseListener(mouseListener)
@@ -132,12 +132,12 @@ class ComponentStyle<T : JComponent>(val default: Properties) {
   private fun updateStyle(component: T, componentState: ComponentState) {
     val properties = componentState.base.clone()
     if (!component.isEnabled) {
-      if (styleMap.containsKey(ComponentStyleState.DISABLED)) properties.updateBy(styleMap[ComponentStyleState.DISABLED]!!)
+      if (ComponentStyleState.DISABLED in styleMap) properties.updateBy(styleMap[ComponentStyleState.DISABLED]!!)
       properties.applyTo(component)
       return
     }
-    if (componentState.hovered && styleMap.containsKey(ComponentStyleState.HOVERED)) properties.updateBy(styleMap[ComponentStyleState.HOVERED]!!)
-    if (componentState.pressed && styleMap.containsKey(ComponentStyleState.PRESSED)) properties.updateBy(styleMap[ComponentStyleState.PRESSED]!!)
+    if (componentState.hovered && ComponentStyleState.HOVERED in styleMap) properties.updateBy(styleMap[ComponentStyleState.HOVERED]!!)
+    if (componentState.pressed && ComponentStyleState.PRESSED in styleMap) properties.updateBy(styleMap[ComponentStyleState.PRESSED]!!)
     properties.applyTo(component)
   }
 }
