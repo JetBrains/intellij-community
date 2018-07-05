@@ -2,7 +2,6 @@
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.execution.CommandLineWrapperUtil
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileDynamic
@@ -393,8 +392,8 @@ class TestingTasksImpl extends TestingTasks {
         formatter(classname: "org.jetbrains.intellij.build.JUnitLiveTestProgressFormatter", usefile: false)
       }
 
-      //if it is Windows OS, test classpath may exceed the maximum command line, so we need to wrap a classpath in a jar
-      if (SystemInfo.isWindows && !isBootstrapSuiteDefault()) {
+      //test classpath may exceed the maximum command line, so we need to wrap a classpath in a jar
+      if (!isBootstrapSuiteDefault()) {
         def classpathJarFile = CommandLineWrapperUtil.createClasspathJarFile(new Manifest(), bootstrapClasspath)
         classpath {
           pathelement(location: classpathJarFile.path)
