@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.formatter.blocks;
 
 import com.intellij.formatting.*;
@@ -33,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
@@ -620,7 +620,8 @@ public class GroovyBlockGenerator {
            blockPsi instanceof GrExtendsClause && myContext.getSettings().ALIGN_MULTILINE_EXTENDS_LIST ||
            blockPsi instanceof GrThrowsClause && myContext.getSettings().ALIGN_MULTILINE_THROWS_LIST ||
            blockPsi instanceof GrListOrMap && myContext.getGroovySettings().ALIGN_MULTILINE_LIST_OR_MAP ||
-           blockPsi instanceof GrTryResourceList && myContext.getSettings().ALIGN_MULTILINE_RESOURCES;
+           blockPsi instanceof GrTryResourceList && myContext.getSettings().ALIGN_MULTILINE_RESOURCES ||
+           blockPsi instanceof GrArrayInitializer && myContext.getSettings().ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION;
   }
 
   private static boolean isListLikeClause(PsiElement blockPsi) {
@@ -630,7 +631,8 @@ public class GroovyBlockGenerator {
            blockPsi instanceof GrExtendsClause ||
            blockPsi instanceof GrThrowsClause ||
            blockPsi instanceof GrListOrMap ||
-           blockPsi instanceof GrTryResourceList;
+           blockPsi instanceof GrTryResourceList ||
+           blockPsi instanceof GrArrayInitializer;
   }
 
   private static boolean isKeyword(ASTNode node) {

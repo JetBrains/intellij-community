@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.ChildAttributes;
@@ -23,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
@@ -53,8 +53,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
 import static com.intellij.formatting.Indent.*;
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.NEXT_LINE_SHIFTED2;
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LPAREN;
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RPAREN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
 /**
  * @author ilyas
@@ -481,6 +480,13 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   @Override
   public void visitTypeParameterList(@NotNull GrTypeParameterList list) {
     myResult = getContinuationWithoutFirstIndent();
+  }
+
+  @Override
+  public void visitArrayInitializer(@NotNull GrArrayInitializer arrayInitializer) {
+    if (myChildType != T_LBRACE && myChildType != T_RBRACE) {
+      myResult = getContinuationWithoutFirstIndent();
+    }
   }
 
   @NotNull
