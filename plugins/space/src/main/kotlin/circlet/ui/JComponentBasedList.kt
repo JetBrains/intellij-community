@@ -56,9 +56,7 @@ class JComponentBasedList<T : JComponentBasedList.Item>(parentLifetime: Lifetime
     var selectedItem: T?
         get() = _selectedItem?.item
         set(value) {
-            if (value != null) {
-                select(panel.components.firstOrNull { it.item?.item === value })
-            }
+            select(value)
         }
 
     private var _selectedItem: MyItem<T>? = null
@@ -119,11 +117,21 @@ class JComponentBasedList<T : JComponentBasedList.Item>(parentLifetime: Lifetime
         panel.revalidate()
     }
 
-    private fun select(newSelectedComponent: Component?, onSelectNew: (Component) -> Unit = {}) {
+    fun select(newSelectedItem: T?, newSelectionState: Item.SelectionState? = null) {
+        if (newSelectedItem != null) {
+            select(panel.components.firstOrNull { it.item?.item === newSelectedItem }, newSelectionState)
+        }
+    }
+
+    private fun select(
+        newSelectedComponent: Component?,
+        newSelectionState: Item.SelectionState? = null,
+        onSelectNew: (Component) -> Unit = {}
+    ) {
         newSelectedComponent?.item?.let { newSelectedItem ->
             if (newSelectedItem !== _selectedItem) {
                 _selectedItem?.selectionState = Item.SelectionState.Unselected
-                newSelectedItem.selectionState = Item.SelectionState.SelectedFocused
+                newSelectedItem.selectionState = newSelectionState ?: Item.SelectionState.SelectedFocused
                 _selectedItem = newSelectedItem
 
                 val bounds = newSelectedItem.component.bounds
@@ -142,7 +150,7 @@ class JComponentBasedList<T : JComponentBasedList.Item>(parentLifetime: Lifetime
     }
 
     private fun selectAndFocus(newSelectedComponent: Component?) {
-        select(newSelectedComponent, ::requestFocus)
+        select(newSelectedComponent, onSelectNew = ::requestFocus)
     }
 
     private fun getPrevious(): Component? = getAdjacent(-1)
@@ -216,12 +224,12 @@ class JComponentBasedList<T : JComponentBasedList.Item>(parentLifetime: Lifetime
         override fun focusGained(e: FocusEvent) {
             select(e.component)
 
-            selectedItem?.selectionState = Item.SelectionState.SelectedFocused
+            _selectedItem?.selectionState = Item.SelectionState.SelectedFocused
         }
 
         override fun focusLost(e: FocusEvent) {
             if (e.oppositeComponent?.item == null) {
-                selectedItem?.selectionState = Item.SelectionState.SelectedUnfocused
+                _selectedItem?.selectionState = Item.SelectionState.SelectedUnfocused
             }
         }
     }
@@ -273,7 +281,7 @@ fun <T : JComponentBasedList.Item, U: Any> JComponentBasedList<T>.reload(
 
     revalidate()
 
-    selectedItem = newSelectedItem
+    select(newSelectedItem, oldSelectedItem?.selectionState)
 }
 
 fun <T : Any> isSameBy(selector: (T) -> Any): (T, T) -> Boolean = { t1, t2 -> selector(t1) == selector(t2) }
