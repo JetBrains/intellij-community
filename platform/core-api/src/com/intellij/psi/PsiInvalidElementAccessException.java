@@ -121,7 +121,7 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
                                              @Nullable Object trace) {
     String reason = "Element: " + element.getClass();
     if (!recursiveInvocation) {
-      reason += " #" + element.getLanguage() + " ";
+      reason += " #" + element.getLanguage().getID() + " ";
       String traceText = !isTrackingInvalidation() ? "disabled" :
                          trace != null ? "see attachment" :
                          "no info";
