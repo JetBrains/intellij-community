@@ -2,9 +2,12 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl
 
 import com.intellij.lang.ASTNode
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer
 
 class GrArrayInitializerImpl(node: ASTNode) : GroovyPsiElementImpl(node), GrArrayInitializer {
 
   override fun toString(): String = "Array initializer"
+
+  override fun accept(visitor: GroovyElementVisitor): Unit = visitor.visitArrayInitializer(this)
 }
