@@ -3,6 +3,7 @@ package circlet.reviews
 import circlet.client.api.*
 import circlet.platform.api.*
 import circlet.ui.*
+import circlet.utils.*
 import com.intellij.ui.components.*
 import com.intellij.uiDesigner.core.*
 import com.intellij.util.ui.*
@@ -21,7 +22,7 @@ class ReviewListItem(val review: Review, preferredLanguage: TID?) : JComponentBa
     private val panel = JPanel(GridLayoutManager(1, 4))
     private val id = JBLabel("#${review.id}")
     private val title = JBLabelWithSizeCheckingToolTip(review.title)
-    private val timestamp = JBLabel(review.timestamp.toString())
+    private val createdAt = JBLabel(review.createdAt.toString())
     private val createdBy = JBLabelWithSizeCheckingToolTip(review.createdBy.fullname(preferredLanguage))
 
     init {
@@ -44,9 +45,9 @@ class ReviewListItem(val review: Review, preferredLanguage: TID?) : JComponentBa
             }
         )
 
-        timestamp.toolTipText = timestamp.text // TODO
+        createdAt.toolTipText = review.createdAt.formatAbsolute()
         panel.add(
-            timestamp,
+            createdAt,
             createFixedSizeGridConstraints(2, JBUI.size(160, -1))
         )
 
@@ -70,7 +71,7 @@ class ReviewListItem(val review: Review, preferredLanguage: TID?) : JComponentBa
 
         id.foreground = foreground
         title.foreground = foreground
-        timestamp.foreground = foreground
+        createdAt.foreground = foreground
         createdBy.foreground = foreground
     }
 
