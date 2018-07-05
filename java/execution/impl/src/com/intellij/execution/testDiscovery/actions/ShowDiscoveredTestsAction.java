@@ -224,7 +224,9 @@ public class ShowDiscoveredTestsAction extends AnAction {
         .setSettingButton(new CompositeActiveComponent(runButton).getComponent())
         .setItemChoosenCallback(() -> PsiNavigateUtil.navigate(tree.getSelectedElement()))
         .registerKeyboardAction(findUsageKeyStroke, __ -> pinActionListener.run())
-        .setMinSize(new JBDimension(500, 300));
+        .setMinSize(new JBDimension(500, 300))
+        .setDimensionServiceKey(ShowDiscoveredTestsAction.class.getSimpleName())
+      ;
 
     JBPopup popup = builder.createPopup();
     ref.set(popup);
@@ -249,14 +251,10 @@ public class ShowDiscoveredTestsAction extends AnAction {
 
     popup.showInBestPositionFor(dataContext);
 
-    Runnable whenDone = () -> {
-      popup.pack(true, true);
-      tree.setPaintBusy(false);
-    };
     processMethods(project, methods, (clazz, method, parameter) -> {
       tree.addTest(clazz, method, parameter);
       return true;
-    }, whenDone);
+    }, () -> tree.setPaintBusy(false));
   }
 
   public static void processMethods(@NotNull Project project,
