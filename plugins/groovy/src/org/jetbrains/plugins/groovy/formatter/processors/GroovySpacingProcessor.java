@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.formatter.processors;
 
 import com.intellij.formatting.Block;
@@ -33,6 +32,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrDoWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -291,6 +291,9 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     }
     else if (myType2 == GroovyElementTypes.ARRAY_DECLARATOR) {
       createSpaceInCode(false);
+    }
+    else if (myType2 == ARRAY_INITIALIZER) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_ARRAY_INITIALIZER_LBRACE);
     }
   }
 
@@ -1020,6 +1023,16 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
         null,
         mySettings.FOR_STATEMENT_LPAREN_ON_NEXT_LINE,
         mySettings.FOR_STATEMENT_RPAREN_ON_NEXT_LINE
+      );
+    }
+  }
+
+  @Override
+  public void visitArrayInitializer(@NotNull GrArrayInitializer arrayInitializer) {
+    if (isWithinBraces()) {
+      createSpaceInCode(
+        arrayInitializer.isEmpty() ? mySettings.SPACE_WITHIN_EMPTY_ARRAY_INITIALIZER_BRACES
+                                   : mySettings.SPACE_WITHIN_ARRAY_INITIALIZER_BRACES
       );
     }
   }
