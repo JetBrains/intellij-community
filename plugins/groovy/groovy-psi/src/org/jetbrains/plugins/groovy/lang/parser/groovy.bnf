@@ -918,18 +918,26 @@ private p_parenthesized_expression_inner ::= '(' expression ')' { pin = 1}
 
 private priority1_1 ::= new_anonymous_expression | new_expression
 
-new_expression ::= 'new' type_argument_list? new_expression_tail { pin = 1 }
-private new_expression_tail ::= new_expression_type (call_argument_list_start call_argument_list | array_declaration) { pin = 1 }
-private new_expression_type ::= primitive_type_element | <<allowDiamond code_reference>>
-
-new_anonymous_expression ::= 'new' type_argument_list? anonymous_type_definition
-{
-  elementType = new_expression
-}
+new_anonymous_expression ::= 'new' type_argument_list? anonymous_type_definition { elementType = new_expression }
 anonymous_type_definition ::= code_reference call_argument_list class_body
 {
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnonymousElementType'
 }
+
+new_expression ::= 'new' type_argument_list? new_expression_creator { pin = 1 }
+private new_expression_creator ::= new_expression_type (l_paren_variant | new_expression_tail) { pin = 1 }
+private new_expression_type ::= primitive_type_element | <<allowDiamond code_reference>>
+private l_paren_variant ::= &'(' fail // adds a variant, to achieve "'(' expected" generated message
+private new_expression_tail ::= array_initializer_tail | array_declaration | call_argument_list
+
+private array_initializer_tail ::= array_initializer_declaration array_initializer
+array_initializer_declaration ::= array_dimensions+ { elementType = array_declaration }
+private array_dimensions ::= '['(']') { consumeTokenMethod = 'consumeTokenFast' }
+array_initializer ::= '{' mb_nl '}' | array_initializer_pin
+private array_initializer_pin ::=  '{' <<a_b_a array_initializer_item array_initializer_separator>> array_initializer_separator? mb_nl '}' { pin = 1 }
+private array_initializer_item ::= mb_nl expression
+private array_initializer_separator ::= mb_nl ','
+
 array_declaration ::= mandatory_expression optional_expression* { consumeTokenMethod = 'consumeTokenFast' }
 private mandatory_expression ::= '[' expression ']' { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
 private optional_expression ::= '[' expression? ']' { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
@@ -1116,7 +1124,6 @@ fake argument_list ::=
 
 empty_argument_list ::= { elementType = argument_list }
 
-private call_argument_list_start ::= &'(' // adds a variant, to achieve "'(' expected" generated message
 call_argument_list ::= empty_parens | '(' paren_argument_list_inner ')'
 {
   elementType = argument_list
