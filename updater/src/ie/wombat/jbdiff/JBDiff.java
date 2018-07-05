@@ -171,6 +171,9 @@ public class JBDiff {
    * Larsson and Sadakane's qsufsort algorithm.
    * See http://www.cs.lth.se/Research/Algorithms/Papers/jesper5.ps
    *
+   * Detailed description of the algorithm can be found here:
+   * http://www.larsson.dogma.net/ssrev-tr.pdf
+   *
    * @param I
    * @param oldBuf
    */
