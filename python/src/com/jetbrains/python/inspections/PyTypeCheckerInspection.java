@@ -138,6 +138,52 @@ public class PyTypeCheckerInspection extends PyInspection {
       }
     }
 
+    @Override
+    public void visitPyAugAssignmentStatement(PyAugAssignmentStatement node) {
+      super.visitPyAugAssignmentStatement(node);
+
+      final PyExpression lhs = node.getTarget();
+      final PyExpression rhs = node.getValue();
+      if (rhs == null) return;
+
+      final List<AnalyzeCalleeResults> calleesResults = StreamEx
+        .of(PyUtil.multiResolveTopPriority(node, getResolveContext()))
+        .select(PyCallable.class)
+        .map(
+          callable -> {
+            final String callableName = callable.getName();
+            if (callableName == null) return null;
+
+            final PyCallableType type = PyUtil.as(myTypeEvalContext.getType(callable), PyCallableType.class);
+            if (type == null) return null;
+
+            final List<PyCallableParameter> parameters = type.getParameters(myTypeEvalContext);
+            if (parameters == null || parameters.size() != 2) return null;
+
+            final boolean isLeftOperator = !node.isRightOperator(callable);
+            final PyExpression receiver = isLeftOperator ? lhs : rhs;
+            final PyExpression argument = isLeftOperator ? rhs : lhs;
+
+            final Map<PyGenericType, PyType> substitutions = PyTypeChecker.unifyReceiver(receiver, myTypeEvalContext);
+            final PyType expectedType = parameters.get(1).getType(myTypeEvalContext);
+            final PyType actualType = myTypeEvalContext.getType(argument);
+
+            final boolean matched = matchParameterAndArgument(expectedType, actualType, substitutions);
+            final AnalyzeArgumentResult argumentResult =
+              new AnalyzeArgumentResult(argument, expectedType, substituteGenerics(expectedType, substitutions), actualType, matched);
+
+            return new AnalyzeCalleeResults(type, callable, Collections.singletonList(argumentResult));
+          }
+        )
+        .nonNull()
+        .toList();
+
+      if (!matchedCalleeResultsExist(calleesResults)) {
+        PyTypeCheckerInspectionProblemRegistrar
+          .registerProblem(this, node, getArgumentTypes(calleesResults), calleesResults, myTypeEvalContext);
+      }
+    }
+
     private static class ReturnVisitor extends PyRecursiveElementVisitor {
       private final PyFunction myFunction;
       private boolean myHasReturns = false;

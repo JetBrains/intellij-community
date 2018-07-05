@@ -579,6 +579,49 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-6426
+  public void testAugAssignment() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTestByText("a = \"hello\"\n" +
+                         "a += <warning descr=\"Expected type 'AnyStr', got 'int' instead\">123</warning>\n" +
+                         "\n" +
+                         "b = 1\n" +
+                         "b += <warning descr=\"Expected type 'int', got 'str' instead\">\"str\"</warning>\n" +
+                         "\n" +
+                         "class A:\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "class E:\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "class B:\n" +
+                         "    def __iadd__(self, other: A):\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "b = B()\n" +
+                         "b += A()\n" +
+                         "b += <warning descr=\"Expected type 'A', got 'B' instead\">B()</warning>\n" +
+                         "\n" +
+                         "class C:\n" +
+                         "    def __add__(self, other: A):\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "c = C()\n" +
+                         "c += A()\n" +
+                         "c += <warning descr=\"Expected type 'A', got 'B' instead\">B()</warning>\n" +
+                         "\n" +
+                         "class D:\n" +
+                         "    def __radd__(self, other: A):\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "a = A()\n" +
+                         "e = E()\n" +
+                         "a += D()\n" +
+                         "<warning descr=\"Expected type 'A', got 'E' instead\">e</warning> += D()")
+    );
+  }
+
   // PY-27231
   public void testStructuralAndNone() {
     doTestByText("def func11(value):\n" +

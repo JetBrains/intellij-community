@@ -54,6 +54,19 @@ class PyTypeCheckerInspectionProblemRegistrar {
     }
   }
 
+  static void registerProblem(@NotNull PyInspectionVisitor visitor,
+                              @NotNull PyAugAssignmentStatement callSite,
+                              @NotNull List<PyType> argumentTypes,
+                              @NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
+                              @NotNull TypeEvalContext context) {
+    if (calleesResults.size() == 1) {
+      registerSingleCalleeProblem(visitor, calleesResults.get(0), context);
+    }
+    else if (!calleesResults.isEmpty()) {
+      registerMultiCalleeProblem(visitor, callSite, argumentTypes, calleesResults, context);
+    }
+  }
+
   private static void registerSingleCalleeProblem(@NotNull PyInspectionVisitor visitor,
                                                   @NotNull PyTypeCheckerInspection.AnalyzeCalleeResults calleeResults,
                                                   @NotNull TypeEvalContext context) {
@@ -67,15 +80,19 @@ class PyTypeCheckerInspectionProblemRegistrar {
   }
 
   private static void registerMultiCalleeProblem(@NotNull PyInspectionVisitor visitor,
-                                                 @NotNull PyCallSiteExpression callSite,
+                                                 @NotNull PyElement callSite,
                                                  @NotNull List<PyType> argumentTypes,
                                                  @NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
                                                  @NotNull TypeEvalContext context) {
     if (callSite instanceof PyBinaryExpression) {
       registerMultiCalleeProblemForBinaryExpression(visitor, (PyBinaryExpression)callSite, argumentTypes, calleesResults, context);
     }
-    else {
-      visitor.registerProblem(getMultiCalleeElementToHighlight(callSite),
+    else if (callSite instanceof PyAugAssignmentStatement) {
+      final PyAugAssignmentStatement augAssignmentStatement = (PyAugAssignmentStatement)callSite;
+      registerMultiCalleeProblemForAugAssignmentStatement(visitor, augAssignmentStatement, argumentTypes, calleesResults, context);
+    }
+    else if (callSite instanceof PyCallSiteExpression) {
+      visitor.registerProblem(getMultiCalleeElementToHighlight((PyCallSiteExpression)callSite),
                               getMultiCalleeProblemMessage(argumentTypes, calleesResults, context, isOnTheFly(visitor)),
                               getMultiCalleeHighlightType(calleesResults));
     }
@@ -130,9 +147,40 @@ class PyTypeCheckerInspectionProblemRegistrar {
                                                                     @NotNull List<PyType> argumentTypes,
                                                                     @NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
                                                                     @NotNull TypeEvalContext context) {
-    final Predicate<PyTypeCheckerInspection.AnalyzeCalleeResults> isRightOperatorResults =
-      calleeResults -> binaryExpression.isRightOperator(calleeResults.getCallable());
+    registerMultiCalleeProblemForLeftOrRight(
+      visitor,
+      calleeResults -> binaryExpression.isRightOperator(calleeResults.getCallable()),
+      binaryExpression.getLeftExpression(),
+      binaryExpression.getRightExpression(),
+      argumentTypes,
+      calleesResults,
+      context
+    );
+  }
 
+  private static void registerMultiCalleeProblemForAugAssignmentStatement(@NotNull PyInspectionVisitor visitor,
+                                                                          @NotNull PyAugAssignmentStatement augAssignmentStatement,
+                                                                          @NotNull List<PyType> argumentTypes,
+                                                                          @NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
+                                                                          @NotNull TypeEvalContext context) {
+    registerMultiCalleeProblemForLeftOrRight(
+      visitor,
+      calleeResults -> augAssignmentStatement.isRightOperator(calleeResults.getCallable()),
+      augAssignmentStatement.getTarget(),
+      augAssignmentStatement.getValue(),
+      argumentTypes,
+      calleesResults,
+      context
+    );
+  }
+
+  private static void registerMultiCalleeProblemForLeftOrRight(@NotNull PyInspectionVisitor visitor,
+                                                               @NotNull Predicate<PyTypeCheckerInspection.AnalyzeCalleeResults> isRightOperatorResults,
+                                                               @Nullable PyExpression lhs,
+                                                               @Nullable PyExpression rhs,
+                                                               @NotNull List<PyType> argumentTypes,
+                                                               @NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
+                                                               @NotNull TypeEvalContext context) {
     final boolean allCalleesAreRightOperators = calleesResults.stream().allMatch(isRightOperatorResults);
 
     final List<PyTypeCheckerInspection.AnalyzeCalleeResults> preferredOperatorsResults =
@@ -145,7 +193,7 @@ class PyTypeCheckerInspectionProblemRegistrar {
     }
     else {
       visitor.registerProblem(
-        allCalleesAreRightOperators ? binaryExpression.getLeftExpression() : binaryExpression.getRightExpression(),
+        allCalleesAreRightOperators ? lhs : rhs,
         getMultiCalleeProblemMessage(argumentTypes, preferredOperatorsResults, context, isOnTheFly(visitor)),
         getMultiCalleeHighlightType(preferredOperatorsResults)
       );

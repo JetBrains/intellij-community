@@ -50,4 +50,12 @@ public interface PyAugAssignmentStatement extends PyStatement, PyQualifiedElemen
   default PsiElement getPsiOperator() {
     return getOperation();
   }
+
+  /**
+   * @apiNote This method will be marked as abstract in 2019.1.
+   */
+  default boolean isRightOperator(@Nullable PyCallable resolvedCallee) {
+    final String calleeName = resolvedCallee == null ? null : resolvedCallee.getName();
+    return calleeName != null && calleeName.startsWith("__r");
+  }
 }
