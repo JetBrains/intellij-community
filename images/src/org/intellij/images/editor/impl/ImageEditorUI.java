@@ -268,16 +268,13 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       Options options = OptionsManager.getInstance().getOptions();
       ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
 
-      if (zoomOptions.isSmartZooming()) {
-        updateZoomFactor();
-      }
-      else {
+      if (!(zoomOptions.isSmartZooming() && updateZoomFactor())) {
         zoomModel.setZoomFactor(1.0);
       }
     }
   }
 
-  private void updateZoomFactor() {
+  private boolean updateZoomFactor() {
     Options options = OptionsManager.getInstance().getOptions();
     ZoomOptions zoomOptions = options.getEditorOptions().getZoomOptions();
 
@@ -285,8 +282,10 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       Double smartZoomFactor = getSmartZoomFactor(zoomOptions);
       if (smartZoomFactor != null) {
         zoomModel.setZoomFactor(smartZoomFactor);
+        return true;
       }
     }
+    return false;
   }
 
   private final class ImageContainerPane extends JBLayeredPane {
