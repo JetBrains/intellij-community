@@ -109,6 +109,8 @@ public class UITheme {
     if ("null".equals(value)) {
       return null;
     }
+    if ("true".equals(value)) return Boolean.TRUE;
+    if ("false".equals(value)) return Boolean.FALSE;
 
     if (key.endsWith("Insets") || key.endsWith("padding")) {
       return parseInsets(value);
@@ -131,7 +133,6 @@ public class UITheme {
     } else {
       final Color color = parseColor(value);
       final Integer invVal = getInteger(value);
-      final Boolean boolVal = "true".equals(value) ? Boolean.TRUE : "false".equals(value) ? Boolean.FALSE : null;
       Icon icon = value.startsWith("AllIcons.") ? IconLoader.getIcon(value) : null;
       if (color != null) {
         return  new ColorUIResource(color);
@@ -139,8 +140,6 @@ public class UITheme {
         return invVal;
       } else if (icon != null) {
         return new IconUIResource(icon);
-      } else if (boolVal != null) {
-        return boolVal;
       }
     }
     return value;
