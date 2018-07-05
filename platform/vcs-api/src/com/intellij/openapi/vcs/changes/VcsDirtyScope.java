@@ -114,7 +114,4 @@ public abstract class VcsDirtyScope {
   public boolean wasEveryThingDirty() {
     return false;
   }
-
-  public void setWasEverythingDirty(boolean wasEverythingDirty) {
-  }
 }

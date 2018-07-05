@@ -217,19 +217,20 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   private VcsInvalidated calculateInvalidated(@NotNull DirtBuilder dirt) {
     MultiMap<AbstractVcs, FilePath> files = dirt.getFilesForVcs();
     MultiMap<AbstractVcs, FilePath> dirs = dirt.getDirsForVcs();
-    if (dirt.isEverythingDirty()) {
+    boolean isEverythingDirty = dirt.isEverythingDirty();
+    if (isEverythingDirty) {
       dirs.putAllValues(getEverythingDirtyRoots());
     }
     Set<AbstractVcs> keys = ContainerUtil.union(files.keySet(), dirs.keySet());
 
     Map<AbstractVcs, VcsDirtyScopeImpl> scopes = ContainerUtil.newHashMap();
     for (AbstractVcs key : keys) {
-      VcsDirtyScopeImpl scope = new VcsDirtyScopeImpl(key, myProject);
+      VcsDirtyScopeImpl scope = new VcsDirtyScopeImpl(key, myProject, isEverythingDirty);
       scopes.put(key, scope);
       scope.addDirtyData(dirs.get(key), files.get(key));
     }
 
-    return new VcsInvalidated(new ArrayList<>(scopes.values()), dirt.isEverythingDirty());
+    return new VcsInvalidated(new ArrayList<>(scopes.values()), isEverythingDirty);
   }
 
   @NotNull

@@ -67,13 +67,17 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   private final ProjectLevelVcsManager myVcsManager;
   private final AbstractVcs myVcs;
   private final VcsDirtyScopeModifier myVcsDirtyScopeModifier;
-  private boolean myWasEverythingDirty;
+  private final boolean myWasEverythingDirty;
 
   public VcsDirtyScopeImpl(final AbstractVcs vcs, final Project project) {
+    this(vcs, project, false);
+  }
+
+  public VcsDirtyScopeImpl(final AbstractVcs vcs, final Project project, boolean wasEverythingDirty) {
     myProject = project;
     myVcs = vcs;
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
-    myWasEverythingDirty = false;
+    myWasEverythingDirty = wasEverythingDirty;
     myVcsDirtyScopeModifier = new VcsDirtyScopeModifier() {
       @Override
       public Collection<VirtualFile> getAffectedVcsRoots() {
@@ -542,10 +546,5 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   @Override
   public boolean wasEveryThingDirty() {
     return myWasEverythingDirty;
-  }
-
-  @Override
-  public void setWasEverythingDirty(boolean wasEverythingDirty) {
-    myWasEverythingDirty = wasEverythingDirty;
   }
 }

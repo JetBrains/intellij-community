@@ -559,7 +559,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
       myChangesViewManager.scheduleRefresh();
 
       ProgressManager.getInstance().runProcess(() -> {
-        iterateScopes(dataHolder, scopes, wasEverythingDirty, indicator);
+        iterateScopes(dataHolder, scopes, indicator);
       }, indicator);
 
       boolean takeChanges;
@@ -648,7 +648,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private void iterateScopes(DataHolder dataHolder,
                              List<VcsDirtyScope> scopes,
-                             boolean wasEverythingDirty,
                              @NotNull ProgressIndicator indicator) {
     final ChangeListUpdater updater = dataHolder.getChangeListUpdater();
     // do actual requests about file statuses
@@ -661,7 +660,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
       final AbstractVcs vcs = scope.getVcs();
       if (vcs == null) continue;
-      scope.setWasEverythingDirty(wasEverythingDirty);
 
       myChangesViewManager.setBusy(true);
 
