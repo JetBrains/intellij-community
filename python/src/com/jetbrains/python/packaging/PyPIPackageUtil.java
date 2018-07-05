@@ -5,6 +5,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.annotations.SerializedName;
@@ -71,7 +72,7 @@ public class PyPIPackageUtil {
         for (String repository : repositories) {
           final List<String> versions = parsePackageVersionsFromArchives(composeSimpleUrl(key, repository));
           if (!versions.isEmpty()) {
-            LOG.debug("Found versions " + versions + " in " + repository);
+            LOG.debug("Found versions " + versions + "of " + key + " at " + repository);
             return Collections.unmodifiableList(versions);
           }
         }
@@ -255,9 +256,9 @@ public class PyPIPackageUtil {
     try {
       return cache.get(key);
     }
-    catch (ExecutionException e) {
+    catch (ExecutionException|UncheckedExecutionException e) {
       final Throwable cause = e.getCause();
-      throw (cause instanceof IOException ? (IOException)cause: new IOException("Unexpected non-IO error", cause));
+      throw (cause instanceof IOException ? (IOException)cause : new IOException("Unexpected non-IO error", cause));
     }
   }
 
@@ -299,11 +300,17 @@ public class PyPIPackageUtil {
         @Override
         public void handleText(@NotNull char[] data, int pos) {
           if (myTag != null && "a".equals(myTag.toString())) {
-            String packageVersion = String.valueOf(data);
+            String artifactName = String.valueOf(data);
             final String suffix = ".tar.gz";
-            if (!packageVersion.endsWith(suffix)) return;
-            packageVersion = StringUtil.trimEnd(packageVersion, suffix);
-            versions.add(splitNameVersion(packageVersion).second);
+            if (artifactName.endsWith(suffix)) {
+              artifactName = StringUtil.trimEnd(artifactName, suffix);
+              final String version = splitNameVersion(artifactName).second;
+              if (version != null) {
+                versions.add(version);
+                return;
+              }
+            }
+            LOG.debug("Could not extract version from " + artifactName + " at " + archivesUrl);
           }
         }
       }, true);
