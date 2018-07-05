@@ -24,4 +24,8 @@ class ReviewsToolWindowPanel(project: Project) :
     fun reload() {
         form.reload()
     }
+
+    fun reloadAndFocus() {
+        form.reload(true)
+    }
 }

@@ -25,7 +25,7 @@ class CircletToolWindowFactory : ToolWindowFactory, DumbAware {
                 val visible = project.toolWindow?.isVisible ?: return
 
                 if (visible && !previouslyVisible) {
-                    panel.reload()
+                    panel.reloadAndFocus()
                 }
 
                 previouslyVisible = visible

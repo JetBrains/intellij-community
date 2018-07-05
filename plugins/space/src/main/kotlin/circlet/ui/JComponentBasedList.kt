@@ -3,7 +3,6 @@ package circlet.ui
 import circlet.utils.*
 import com.intellij.ide.ui.*
 import com.intellij.openapi.ui.*
-import com.intellij.openapi.wm.*
 import com.intellij.ui.*
 import com.intellij.util.ui.*
 import runtime.reactive.*
@@ -126,7 +125,7 @@ class JComponentBasedList<T : JComponentBasedList.Item>(parentLifetime: Lifetime
     private fun select(
         newSelectedComponent: Component?,
         newSelectionState: Item.SelectionState? = null,
-        onSelectNew: (Component) -> Unit = {}
+        onSelectNew: () -> Unit = {}
     ) {
         newSelectedComponent?.item?.let { newSelectedItem ->
             if (newSelectedItem !== _selectedItem) {
@@ -140,7 +139,7 @@ class JComponentBasedList<T : JComponentBasedList.Item>(parentLifetime: Lifetime
                     panel.scrollRectToVisible(bounds)
                 }
 
-                onSelectNew(newSelectedComponent)
+                onSelectNew()
             }
         }
     }
@@ -150,7 +149,9 @@ class JComponentBasedList<T : JComponentBasedList.Item>(parentLifetime: Lifetime
     }
 
     private fun selectAndFocus(newSelectedComponent: Component?) {
-        select(newSelectedComponent, onSelectNew = ::requestFocus)
+        select(newSelectedComponent) {
+            requestFocus(newSelectedComponent)
+        }
     }
 
     private fun getPrevious(): Component? = getAdjacent(-1)
@@ -215,7 +216,7 @@ class JComponentBasedList<T : JComponentBasedList.Item>(parentLifetime: Lifetime
                 val component = e.component
 
                 select(component)
-                component?.let { requestFocus(it) }
+                requestFocus(component)
             }
         }
     }
@@ -282,12 +283,4 @@ fun <T : JComponentBasedList.Item, U: Any> JComponentBasedList<T>.reload(
     revalidate()
 
     select(newSelectedItem, oldSelectedItem?.selectionState)
-}
-
-fun <T : Any> isSameBy(selector: (T) -> Any): (T, T) -> Boolean = { t1, t2 -> selector(t1) == selector(t2) }
-
-private fun requestFocus(component: Component) {
-    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown {
-        IdeFocusManager.getGlobalInstance().requestFocus(component, true)
-    }
 }

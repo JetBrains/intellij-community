@@ -7,6 +7,7 @@ import circlet.platform.api.*
 import circlet.runtime.*
 import circlet.settings.*
 import circlet.ui.*
+import circlet.utils.*
 import com.intellij.openapi.project.*
 import com.intellij.uiDesigner.core.*
 import klogging.*
@@ -25,8 +26,8 @@ class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
 
     private val list = JComponentBasedList<ReviewListItem>(lifetime)
 
-    private val reloader = updater<Unit>("Reviews Reloader") {
-        reloadImpl()
+    private val reloader = updater<Boolean>("Reviews Reloader") {
+        reloadImpl(it)
     }
 
     init {
@@ -40,11 +41,11 @@ class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
         )
     }
 
-    fun reload() {
-        reloader.offer()
+    fun reload(askFocus: Boolean = false) {
+        reloader.offer(askFocus)
     }
 
-    private suspend fun reloadImpl() {
+    private suspend fun reloadImpl(askFocus: Boolean) {
         project.clientOrNull?.let { client ->
             val reviews = client.codeReview.listReviews(
                 BatchInfo(null, 30), ProjectKey(project.settings.projectKey.value), null,
@@ -52,6 +53,10 @@ class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
             ).data.map(CodeReviewWithCount::toReview)
 
             reload(reviews)
+        }
+
+        if (askFocus) {
+            requestFocus(list.selectedItem?.component)
         }
     }
 
@@ -77,8 +82,4 @@ private fun <T> Lifetimed.updater(name: String, update: suspend (T) -> Unit): Ch
     }
 
     return channel
-}
-
-private fun Channel<Unit>.offer() {
-    offer(Unit)
 }

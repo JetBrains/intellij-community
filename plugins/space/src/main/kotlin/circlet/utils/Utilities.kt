@@ -66,3 +66,5 @@ inline fun <T : Any, C : ComponentManager> C.computeSafe(crossinline compute: C.
     application.runReadAction(Computable {
         if (isDisposed) null else compute()
     })
+
+fun <T : Any> isSameBy(selector: (T) -> Any): (T, T) -> Boolean = { t1, t2 -> selector(t1) == selector(t2) }
