@@ -65,7 +65,7 @@ class MethodCallChainPredicate implements PsiElementPredicate {
     while (true) {
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-      final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+      final PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
       PsiClassType expressionType = getQualifierExpressionType(qualifierExpression);
       if (!first) {
         if (expressionType == null) {
