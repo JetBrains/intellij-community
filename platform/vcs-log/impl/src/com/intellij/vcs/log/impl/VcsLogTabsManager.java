@@ -14,12 +14,15 @@ import java.util.List;
 
 public class VcsLogTabsManager {
   @NotNull private final Project myProject;
+  @NotNull private final VcsLogProjectTabsProperties myUiProperties;
   private boolean myIsLogDisposing = false;
 
   public VcsLogTabsManager(@NotNull Project project,
                            @NotNull MessageBus messageBus,
+                           @NotNull VcsLogProjectTabsProperties uiProperties,
                            @NotNull Disposable parent) {
     myProject = project;
+    myUiProperties = uiProperties;
 
     messageBus.connect(parent).subscribe(VcsProjectLog.VCS_PROJECT_LOG_CHANGED, new VcsProjectLog.ProjectLogListener() {
       @Override
@@ -37,7 +40,7 @@ public class VcsLogTabsManager {
 
   @CalledInAwt
   private void createLogTabs(@NotNull VcsLogManager manager) {
-    List<String> tabIds = manager.getUiProperties().getTabs();
+    List<String> tabIds = myUiProperties.getTabs();
     for (String tabId : tabIds) {
       openLogTab(manager, tabId, false);
     }
@@ -48,19 +51,15 @@ public class VcsLogTabsManager {
   }
 
   private void openLogTab(@NotNull VcsLogManager manager, @NotNull String tabId, boolean focus) {
-    VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> factory =
-      new PersistentVcsLogUiFactory(manager.getMainLogUiFactory(tabId), manager.getUiProperties());
+    VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> factory = new PersistentVcsLogUiFactory(manager.getMainLogUiFactory(tabId));
     VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME, tabId, factory, focus);
   }
 
   private class PersistentVcsLogUiFactory implements VcsLogManager.VcsLogUiFactory<VcsLogUiImpl> {
     private final VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> myFactory;
-    @NotNull private final VcsLogTabsProperties myUiProperties;
 
-    public PersistentVcsLogUiFactory(@NotNull VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> factory,
-                                     @NotNull VcsLogTabsProperties properties) {
+    public PersistentVcsLogUiFactory(@NotNull VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> factory) {
       myFactory = factory;
-      myUiProperties = properties;
     }
 
     @Override

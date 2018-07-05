@@ -236,9 +236,9 @@ public class BraceHighlightingHandler {
   void updateBraces() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
-    if (myPsiFile == null || !myPsiFile.isValid()) return;
-
     clearBraceHighlighters();
+
+    if (myPsiFile == null || !myPsiFile.isValid()) return;
 
     if (!myCodeInsightSettings.HIGHLIGHT_BRACES) return;
 
@@ -271,7 +271,6 @@ public class BraceHighlightingHandler {
     }
 
     if (offset < 0) {
-      removeLineMarkers();
       return;
     }
 
@@ -323,13 +322,9 @@ public class BraceHighlightingHandler {
       }
     }
 
-    //highlight scope
-    if (!myCodeInsightSettings.HIGHLIGHT_SCOPE) {
-      removeLineMarkers();
-      return;
+    if (myCodeInsightSettings.HIGHLIGHT_SCOPE) {
+      highlightScope(offset, fileType);
     }
-
-    highlightScope(offset, fileType);
   }
 
   @NotNull
@@ -361,18 +356,12 @@ public class BraceHighlightingHandler {
     HighlighterIterator iterator = getEditorHighlighter().createIterator(offset);
     final CharSequence chars = myDocument.getCharsSequence();
 
-    if (BraceMatchingUtil.isStructuralBraceToken(fileType, iterator, chars) &&
-        (BraceMatchingUtil.isRBraceToken(iterator, chars, fileType) ||
-         BraceMatchingUtil.isLBraceToken(iterator, chars, fileType))) {
-      return;
+    if (!(BraceMatchingUtil.isStructuralBraceToken(fileType, iterator, chars) &&
+          (BraceMatchingUtil.isRBraceToken(iterator, chars, fileType) ||
+           BraceMatchingUtil.isLBraceToken(iterator, chars, fileType))) &&
+        BraceMatchingUtil.findStructuralLeftBrace(fileType, iterator, chars)) {
+      highlightLeftBrace(iterator, true, fileType);
     }
-
-    if (!BraceMatchingUtil.findStructuralLeftBrace(fileType, iterator, chars)) {
-      removeLineMarkers();
-      return;
-    }
-
-    highlightLeftBrace(iterator, true, fileType);
   }
 
   private void doHighlight(int offset, int originalOffset, @NotNull FileType fileType) {
@@ -448,17 +437,9 @@ public class BraceHighlightingHandler {
       if (endLine - startLine > 0) {
         lineMarkFragment(startLine, endLine, matched);
       }
-      else {
-        removeLineMarkers();
-      }
 
       if (!scopeHighlighting) {
         showScopeHint(lBrace.getStartOffset(), lBrace.getEndOffset());
-      }
-    }
-    else {
-      if (!myCodeInsightSettings.HIGHLIGHT_SCOPE) {
-        removeLineMarkers();
       }
     }
   }

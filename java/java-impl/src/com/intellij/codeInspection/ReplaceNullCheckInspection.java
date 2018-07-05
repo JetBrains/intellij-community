@@ -296,7 +296,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
       PsiBinaryExpression binOp = tryCast(ternary.getCondition(), PsiBinaryExpression.class);
       if(binOp == null) return null;
       PsiExpression value = ExpressionUtils.getValueComparedWithNull(binOp);
-      PsiReferenceExpression referenceExpression = tryCast(value, PsiReferenceExpression.class);
+      PsiReferenceExpression referenceExpression = tryCast(PsiUtil.skipParenthesizedExprDown(value), PsiReferenceExpression.class);
       if(referenceExpression == null) return null;
       PsiVariable variable = tryCast(referenceExpression.resolve(), PsiVariable.class);
       if(variable == null) return null;

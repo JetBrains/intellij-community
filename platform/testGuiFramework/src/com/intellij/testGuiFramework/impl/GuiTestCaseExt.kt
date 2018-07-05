@@ -3,7 +3,7 @@ package com.intellij.testGuiFramework.impl
 
 import com.intellij.testGuiFramework.fixtures.GutterFixture
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
-import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
+import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.util.*
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.timing.Pause
@@ -108,8 +108,7 @@ fun GuiTestCase.testTreeItemExist(name: String, vararg expectedItem: String) {
   }
 }
 
-
-fun ExtendedTreeFixture.selectWithKeyboard(testCase: GuiTestCase, vararg path: String) {
+fun ExtendedJTreePathFixture.selectWithKeyboard(testCase: GuiTestCase, vararg path: String) {
   fun currentValue(): String {
     val selectedRow = target().selectionRows.first()
     return valueAt(selectedRow) ?: throw IllegalStateException("Nothing is selected in the tree")
@@ -185,7 +184,7 @@ fun GuiTestCase.checkRunConfiguration(expectedValues: Map<String, String>, varar
     }
     dialog(runDebugConfigurations) {
       assert(exists { jTree(*configuration) })
-      jTree(*configuration).clickPath(*configuration)
+      jTree(*configuration).clickPath()
       for ((field, expectedValue) in expectedValues) {
         logTestStep("Field `$field`has a value = `$expectedValue`")
         checkOneValue(this@checkRunConfiguration, field, expectedValue)

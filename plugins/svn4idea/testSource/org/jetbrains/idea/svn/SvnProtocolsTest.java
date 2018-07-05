@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -21,7 +21,6 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import junit.framework.Assert;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
@@ -41,8 +40,9 @@ import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
+import static org.junit.Assert.*;
 
-public class SvnProtocolsTest extends Svn17TestCase {
+public class SvnProtocolsTest extends SvnTestCase {
   // todo correct URL
   private final static String ourSSH_URL = "svn+ssh://unit-069:222/home/irina/svnrepo";
 
@@ -57,17 +57,14 @@ public class SvnProtocolsTest extends Svn17TestCase {
   public static final String SSH_USER_NAME = "user";
   public static final String SSH_PASSWORD = "qwerty4321";
   public static final int SSH_PORT_NUMBER = 222;
-  private SvnVcs myVcs;
-
 
   @Override
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    myVcs = SvnVcs.getInstance(myProject);
     // replace authentication provider so that pass credentials without dialogs
     final SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
-    final SvnAuthenticationManager interactiveManager = configuration.getInteractiveManager(myVcs);
+    final SvnAuthenticationManager interactiveManager = configuration.getInteractiveManager(vcs);
     final SvnTestInteractiveAuthentication authentication = new SvnTestInteractiveAuthentication() {
       @Override
       public AcceptResult acceptServerAuthentication(Url url, String realm, Object certificate, boolean canCache) {
@@ -76,7 +73,7 @@ public class SvnProtocolsTest extends Svn17TestCase {
     };
     interactiveManager.setAuthenticationProvider(authentication);
 
-    final SvnAuthenticationManager manager = configuration.getAuthenticationManager(myVcs);
+    final SvnAuthenticationManager manager = configuration.getAuthenticationManager(vcs);
     // will be the same as in interactive -> authentication notifier is not used
     manager.setAuthenticationProvider(authentication);
 
@@ -94,9 +91,9 @@ public class SvnProtocolsTest extends Svn17TestCase {
 
   private void testBrowseRepositoryImpl(Url url) throws VcsException {
     List<DirectoryEntry> list = newArrayList();
-    myVcs.getFactoryFromSettings().createBrowseClient().list(Target.on(url), null, null, list::add);
+    vcs.getFactoryFromSettings().createBrowseClient().list(Target.on(url), null, null, list::add);
 
-    Assert.assertTrue(!list.isEmpty());
+    assertTrue(!list.isEmpty());
   }
 
   @Test
@@ -116,7 +113,7 @@ public class SvnProtocolsTest extends Svn17TestCase {
   }
 
   private void testHistoryImpl(Url s) throws VcsException {
-    final VcsHistoryProvider provider = myVcs.getVcsHistoryProvider();
+    final VcsHistoryProvider provider = vcs.getVcsHistoryProvider();
     final VcsAppendableHistoryPartnerAdapter partner = new VcsAppendableHistoryPartnerAdapter() {
       @Override
       public void acceptRevision(VcsFileRevision revision) {
@@ -133,7 +130,7 @@ public class SvnProtocolsTest extends Svn17TestCase {
       //ok
     }
     final List<VcsFileRevision> list = partner.getSession().getRevisionList();
-    Assert.assertTrue(! list.isEmpty());
+    assertTrue(!list.isEmpty());
   }
 
   // todo this test writes to repository - so it's disabled for now - while admins are preparing a server
@@ -151,40 +148,40 @@ public class SvnProtocolsTest extends Svn17TestCase {
   }*/
 
   private void testUpdateImpl(File wc1, final File created) {
-    Assert.assertTrue(wc1.isDirectory());
+    assertTrue(wc1.isDirectory());
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(wc1);
     final UpdatedFiles files = UpdatedFiles.create();
     final UpdateSession session =
-      myVcs.getUpdateEnvironment().updateDirectories(new FilePath[]{VcsUtil.getFilePath(vf)}, files, new EmptyProgressIndicator(),
-                                                     new Ref<>());
-    Assert.assertTrue(session.getExceptions() == null || session.getExceptions().isEmpty());
-    Assert.assertTrue(! session.isCanceled());
-    Assert.assertTrue(! files.getGroupById(FileGroup.CREATED_ID).getFiles().isEmpty());
+      vcs.getUpdateEnvironment().updateDirectories(new FilePath[]{VcsUtil.getFilePath(vf)}, files, new EmptyProgressIndicator(),
+                                                   new Ref<>());
+    assertTrue(session.getExceptions() == null || session.getExceptions().isEmpty());
+    assertTrue(!session.isCanceled());
+    assertTrue(!files.getGroupById(FileGroup.CREATED_ID).getFiles().isEmpty());
     final String path = files.getGroupById(FileGroup.CREATED_ID).getFiles().iterator().next();
     final String name = path.substring(path.lastIndexOf(File.separator) + 1);
-    Assert.assertEquals(created.getName(), name);
+    assertEquals(created.getName(), name);
   }
 
   private File testCommitImpl(File wc1) throws IOException {
-    Assert.assertTrue(wc1.isDirectory());
+    assertTrue(wc1.isDirectory());
     final File file = FileUtil.createTempFile(wc1, "file", ".txt");
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-    Assert.assertNotNull(vf);
+    assertNotNull(vf);
     final ArrayList<VirtualFile> files = new ArrayList<>();
     files.add(vf);
-    final List<VcsException> exceptions = myVcs.getCheckinEnvironment().scheduleUnversionedFilesForAddition(files);
-    Assert.assertTrue(exceptions.isEmpty());
+    final List<VcsException> exceptions = vcs.getCheckinEnvironment().scheduleUnversionedFilesForAddition(files);
+    assertTrue(exceptions.isEmpty());
 
     final Change change = new Change(null, new CurrentContentRevision(VcsUtil.getFilePath(vf)));
-    final List<VcsException> commit = myVcs.getCheckinEnvironment().commit(Collections.singletonList(change), "commit");
-    Assert.assertTrue(commit.isEmpty());
+    final List<VcsException> commit = vcs.getCheckinEnvironment().commit(Collections.singletonList(change), "commit");
+    assertTrue(commit.isEmpty());
     return file;
   }
 
   private File testCheckoutImpl(Url url) throws IOException {
     final File root = FileUtil.createTempDirectory("checkoutRoot", "");
     root.deleteOnExit();
-    Assert.assertTrue(root.exists());
+    assertTrue(root.exists());
     SvnCheckoutProvider
       .checkout(myProject, root, url, Revision.HEAD, Depth.INFINITY, false, new CheckoutProvider.Listener() {
         @Override
@@ -201,7 +198,7 @@ public class SvnProtocolsTest extends Svn17TestCase {
       ++ cnt[0];
       return ! (cnt[0] > 1);
     });
-    Assert.assertTrue(cnt[0] > 1);
+    assertTrue(cnt[0] > 1);
     return root;
   }
 

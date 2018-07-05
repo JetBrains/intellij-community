@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -89,6 +90,10 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
   @NotNull
   List<IntentionAction> getOptionInspectionFixes() {
     return myOptionInspectionFixes;
+  }
+
+  public List<IntentionAction> getOptionActions() {
+    return ContainerUtil.concat(myOptionIntentions, myOptionErrorFixes, myOptionInspectionFixes);
   }
 
   String getToolName() {

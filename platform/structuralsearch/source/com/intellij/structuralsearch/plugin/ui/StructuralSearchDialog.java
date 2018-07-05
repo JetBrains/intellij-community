@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -66,8 +65,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -244,42 +241,29 @@ public class StructuralSearchDialog extends DialogWrapper {
     }
   }
 
-  private void detectFileTypeAndDialect() {
+  private void detectFileType() {
     final PsiFile file = mySearchContext.getFile();
-    if (file != null) {
-      PsiElement context = null;
+    PsiElement context = file;
 
-      if (mySearchContext.getEditor() != null) {
-        context = file.findElementAt(mySearchContext.getEditor().getCaretModel().getOffset());
-        if (context != null) {
-          context = context.getParent();
-        }
+    final Editor editor = mySearchContext.getEditor();
+    if (editor != null) {
+      context = file.findElementAt(editor.getCaretModel().getOffset());
+      if (context != null) {
+        context = context.getParent();
       }
-      if (context == null) {
-        context = file;
-      }
-
-      FileType detectedFileType = null;
-
+    }
+    if (context != null) {
       final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(context);
       if (profile != null) {
         final FileType fileType = profile.detectFileType(context);
         if (fileType != null) {
-          detectedFileType = fileType;
+          myFileType = fileType;
+          return;
         }
       }
-
-      if (detectedFileType == null) {
-        for (FileType fileType : StructuralSearchUtil.getSuitableFileTypes()) {
-          if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage().equals(context.getLanguage())) {
-            detectedFileType = fileType;
-            break;
-          }
-        }
-      }
-
-      myFileType = (detectedFileType != null) ? detectedFileType : StructuralSearchUtil.getDefaultFileType();
     }
+
+    myFileType = StructuralSearchUtil.getDefaultFileType();
   }
 
   protected boolean isRecursiveSearchEnabled() {
@@ -390,7 +374,14 @@ public class StructuralSearchDialog extends DialogWrapper {
     myScopePanel = new ScopePanel(getProject());
     if (myShowScopePanel) {
       myScopePanel.setRecentDirectories(FindInProjectSettings.getInstance(getProject()).getRecentDirectories());
-      myScopePanel.setScopeCallback(s -> initiateValidation());
+      myScopePanel.setScopeCallback(() -> {
+        if (myScopePanel.getScope() == null) {
+          getOKAction().setEnabled(false);
+        }
+        else {
+          initiateValidation();
+        }
+      });
     }
     else {
       myScopePanel.setEnabled(false);
@@ -477,6 +468,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       }
     }
     Collections.sort(types, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
+    detectFileType();
     myFileTypesComboBox = new FileTypeSelector(types);
     myFileTypesComboBox.setMinimumAndPreferredWidth(200);
     myFileTypesComboBox.setSelectedItem(myFileType, myDialect, myContext);
@@ -575,7 +567,6 @@ public class StructuralSearchDialog extends DialogWrapper {
             .addComponent(optionsToolbar)
     );
 
-    detectFileTypeAndDialect();
     return northPanel;
   }
 
@@ -681,7 +672,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       startSearching();
     }
     catch (MalformedPatternException ex) {
-      reportMessage(SSRBundle.message("this.pattern.is.malformed.message", ex.getMessage()), mySearchCriteriaEdit);
+      reportMessage(SSRBundle.message("this.pattern.is.malformed.message", ex.getMessage()), true, mySearchCriteriaEdit);
     }
   }
 
@@ -706,28 +697,30 @@ public class StructuralSearchDialog extends DialogWrapper {
       final String message = StringUtil.isEmpty(matchOptions.getSearchPattern())
                              ? null
                              : SSRBundle.message("this.pattern.is.malformed.message", (e.getMessage() != null) ? e.getMessage() : "");
-      reportMessage(message, mySearchCriteriaEdit);
+      reportMessage(message, true, mySearchCriteriaEdit);
       return false;
     }
     catch (UnsupportedPatternException e) {
-      reportMessage(SSRBundle.message("this.pattern.is.unsupported.message", e.getMessage()), mySearchCriteriaEdit);
+      reportMessage(SSRBundle.message("this.pattern.is.unsupported.message", e.getMessage()), true, mySearchCriteriaEdit);
       return false;
     }
     catch (NoMatchFoundException e) {
-      reportMessage(e.getMessage(), mySearchCriteriaEdit);
+      reportMessage(e.getMessage(), false, myScopePanel);
       return false;
     }
-    reportMessage(null, mySearchCriteriaEdit);
+    reportMessage(null, false, mySearchCriteriaEdit);
     return myScopePanel.getScope() != null;
   }
 
-  protected void reportMessage(String message, JComponent component) {
+  protected void reportMessage(String message, boolean error, JComponent component) {
     com.intellij.util.ui.UIUtil.invokeLaterIfNeeded(() -> {
-      component.putClientProperty("JComponent.outline", message == null ? null : "error");
+      component.putClientProperty("JComponent.outline", (!error || message == null) ? null : "error");
       component.repaint();
 
       if (message == null) return;
-      final Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, MessageType.ERROR, null).createBalloon();
+      final Balloon balloon = JBPopupFactory.getInstance()
+                                            .createHtmlTextBalloonBuilder(message, error ? MessageType.ERROR : MessageType.WARNING, null)
+                                            .createBalloon();
       if (component == mySearchCriteriaEdit) {
         balloon.show(new RelativePoint(component, new Point(component.getWidth() / 2, component.getHeight())), Balloon.Position.below);
       }

@@ -441,9 +441,10 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       final CodeStyleSettings styleSettings = CodeStyle.getSettings(context.getFile());
       PsiDocTag tag = PsiTreeUtil.getParentOfType(element, PsiDocTag.class);
       if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR && tag != null) {
-        final PsiDocTagValue valueElement = tag.getValueElement();
-        if (valueElement != null) {
-          endOffset = valueElement.getTextRange().getEndOffset();
+        PsiDocTagValue valueElement = tag.getValueElement();
+        int valueEnd = valueElement != null ? valueElement.getTextRange().getEndOffset() : -1;
+        if (valueEnd >= afterSharp) {
+          endOffset = valueEnd;
           context.setTailOffset(endOffset);
         }
       }

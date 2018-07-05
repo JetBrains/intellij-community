@@ -26,9 +26,11 @@ import com.intellij.openapi.util.text.StringUtil.isNotEmpty
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.IdeFrameImpl
+import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
+import com.intellij.testGuiFramework.driver.FinderPredicate
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.fixtures.RadioButtonFixture
-import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
+import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText
@@ -41,7 +43,6 @@ import com.intellij.testGuiFramework.util.Shortcut
 import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.util.JdkBundle
 import com.intellij.util.PathUtil
-import com.intellij.util.Producer
 import com.intellij.util.containers.ContainerUtil.getFirstItem
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.util.ui.EdtInvocationManager
@@ -717,14 +718,10 @@ object GuiTestUtil {
     GuiRobotHolder.robot.pressAndReleaseKey(keyStroke.keyCode, *intArrayOf(keyStroke.modifiers))
   }
 
-  fun pause(conditionString: String, producer: Producer<Boolean>, timeout: Timeout) {
-    Pause.pause(object : Condition(conditionString) {
-      override fun test(): Boolean {
-        val produce = producer.produce()
-        assertNotNull(produce)
-        return produce!!
-      }
-    }, timeout)
+  fun pause(condition: String = "Unspecified condition", timeoutSeconds: Long = 120, testFunction: () -> Boolean) {
+    Pause.pause(object : Condition(condition) {
+      override fun test() = testFunction()
+    }, Timeout.timeout(timeoutSeconds, TimeUnit.SECONDS))
   }
 
   fun getListCellRendererComponent(list: JList<*>, value: Any, index: Int): Component {
@@ -745,23 +742,28 @@ object GuiTestUtil {
     return JTextComponentFixture(GuiRobotHolder.robot, jTextComponent)
   }
 
-  fun jTreePath(container: Container, timeout: Long, vararg pathStrings: String): ExtendedTreeFixture {
+  fun jTreePath(container: Container,
+                   timeout: Long,
+                   vararg pathStrings: String,
+                   predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality): ExtendedJTreePathFixture {
     val myTree: JTree?
-    val pathList = pathStrings.toList()
     try {
-      myTree = if (pathList.isEmpty()) {
+      myTree = if (pathStrings.isEmpty()) {
         waitUntilFound(GuiRobotHolder.robot, container, GuiTestUtilKt.typeMatcher(JTree::class.java) { true }, timeout.toFestTimeout())
       }
       else {
         waitUntilFound(GuiRobotHolder.robot, container,
-                       GuiTestUtilKt.typeMatcher(JTree::class.java) { ExtendedTreeFixture(GuiRobotHolder.robot, it).hasPath(pathList) },
+                       GuiTestUtilKt.typeMatcher(JTree::class.java) {
+                         ExtendedJTreePathFinder(it).existsByPredicate(pathStrings = *pathStrings, predicate = predicate)
+                       },
                        timeout.toFestTimeout())
       }
     }
-    catch (e: WaitTimedOutError){
-      throw ComponentLookupException("""JTree "${if (pathStrings.isNotEmpty()) "by path $pathStrings" else ""}"""")
+    catch (e: WaitTimedOutError) {
+      throw ComponentLookupException("""JTree "${if (pathStrings.isNotEmpty()) "by path ${pathStrings.joinToString()}" else ""}"""")
     }
-    return ExtendedTreeFixture(GuiRobotHolder.robot, myTree)
+    return ExtendedJTreePathFixture(myTree, ExtendedJTreePathFinder(myTree)
+      .findMatchingPathByPredicate(pathStrings = *pathStrings, predicate = predicate))
   }
 
   //*********COMMON FUNCTIONS WITHOUT CONTEXT

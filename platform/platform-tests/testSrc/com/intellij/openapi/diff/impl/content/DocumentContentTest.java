@@ -26,7 +26,6 @@ public class DocumentContentTest extends BaseDiffTestCase {
   public void testInitialSync() {
     Document baseDocument = EditorFactory.getInstance().createDocument("123");
     DocumentContent content = new DocumentContent(myProject, baseDocument);
-    content.addListener(SHOULD_NOT_INVALIDATE);
     Document workingDocument = content.getDocument();
     replaceString(baseDocument, 0, 3, "xyz");
     //assertEquals("123", workingDocument.getText());

@@ -57,14 +57,10 @@ public class SimpleContent extends DiffContent {
     this(text, null);
   }
 
-  public SimpleContent(@NotNull String text, @Nullable FileType type) {
-    this(text, type, EditorFactory.getInstance());
-  }
-
-  public SimpleContent(@NotNull String text, FileType type, EditorFactory f) {
+  public SimpleContent(@NotNull String text, FileType type) {
     myOriginalBytes = text.getBytes();
     myOriginalText = myLineSeparators.correctText(text);
-    myDocument = f.createDocument(myOriginalText);
+    myDocument = EditorFactory.getInstance().createDocument(myOriginalText);
     setReadOnly(true);
     myType = type;
   }
@@ -153,21 +149,6 @@ public class SimpleContent extends DiffContent {
 
   public void setCharset(final Charset charset) {
     myCharset = charset;
-  }
-
-  /**
-   * @param text     text of content
-   * @param fileName used to determine content type
-   */
-  public static SimpleContent forFileContent(String text, String fileName) {
-    FileType fileType;
-    if (fileName != null) {
-      fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
-    }
-    else {
-      fileType = null;
-    }
-    return new SimpleContent(text, fileType);
   }
 
   /**

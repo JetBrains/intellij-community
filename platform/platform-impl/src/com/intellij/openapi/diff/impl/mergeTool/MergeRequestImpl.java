@@ -58,24 +58,6 @@ public class MergeRequestImpl extends MergeRequest {
          cancelButtonPresentation);
   }
 
-  public MergeRequestImpl(@NotNull DiffContent left,
-                          @NotNull MergeVersion base,
-                          @NotNull DiffContent right,
-                          @Nullable Project project,
-                          @Nullable final ActionButtonPresentation okButtonPresentation,
-                          @Nullable final ActionButtonPresentation cancelButtonPresentation) {
-    this(left, new MergeContent(base, project), right, project, okButtonPresentation, cancelButtonPresentation);
-  }
-
-  public MergeRequestImpl(@NotNull String left,
-                          @NotNull String base,
-                          @NotNull String right,
-                          @Nullable Project project,
-                          @Nullable final ActionButtonPresentation okButtonPresentation,
-                          @Nullable final ActionButtonPresentation cancelButtonPresentation) {
-    this(left, base, right, null, project, okButtonPresentation, cancelButtonPresentation);
-  }
-
   public MergeRequestImpl(@NotNull String left,
                           @NotNull String base,
                           @NotNull String right,
@@ -161,7 +143,6 @@ public class MergeRequestImpl extends MergeRequest {
     return null;
   }
 
-  @Override
   @Nullable
   public DiffContent getResultContent() {
     return getMergeContent();
