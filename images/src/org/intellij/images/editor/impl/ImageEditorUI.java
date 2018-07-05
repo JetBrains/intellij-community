@@ -373,11 +373,11 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
   private class ImageZoomModelImpl implements ImageZoomModel {
     private boolean myZoomLevelChanged;
-    private final NotNullValue<Double> MAX_ZOOM_FACTOR = new NotNullValue<Double>() {
+    private final NotNullValue<Double> IMAGE_MAX_ZOOM_FACTOR = new NotNullValue<Double>() {
       @NotNull
       @Override
       public Double initialize() {
-        if (editor == null) return (double)ImageZoomModel.MACRO_ZOOM_LIMIT;
+        if (editor == null) return Double.MAX_VALUE;
         VirtualFile file = editor.getFile();
 
         if (IfsUtil.isSVG(file)) {
@@ -389,7 +389,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
             Logger.getInstance("#org.intellij.images.editor.impl.ImageEditorUI").warn(t);
           }
         }
-        return (double)ImageZoomModel.MACRO_ZOOM_LIMIT;
+        return Double.MAX_VALUE;
       }
     };
     private double zoomFactor = 0.0d;
@@ -414,9 +414,15 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       imageComponent.firePropertyChange(ZOOM_FACTOR_PROP, oldZoomFactor, zoomFactor);
     }
 
+    private double getMaximumZoomFactor() {
+      double factor = IMAGE_MAX_ZOOM_FACTOR.get();
+      return Math.min(factor, MACRO_ZOOM_LIMIT);
+    }
+
     private double getMinimumZoomFactor() {
       BufferedImage image = imageComponent.getDocument().getValue();
-      return image != null ? 1.0d / image.getWidth() : 0.0d;
+      double factor = image != null ? 1.0d / image.getWidth() : 0.0d;
+      return Math.max(factor, MICRO_ZOOM_LIMIT);
     }
 
     public void fitZoomToWindow() {
@@ -434,18 +440,7 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     }
 
     public void zoomOut() {
-      double factor = getZoomFactor();
-      if (factor > 1.0d) {
-        // Macro
-        setZoomFactor(factor / 2.0d);
-      } else {
-        // Micro
-        double minFactor = getMinimumZoomFactor();
-        double stepSize = (1.0d - minFactor) / MICRO_ZOOM_LIMIT;
-        int step = (int)Math.ceil((1.0d - factor) / stepSize);
-
-        setZoomFactor(1.0d - stepSize * (step + 1));
-      }
+      setZoomFactor(getNextZoomOut());
       myZoomLevelChanged = true;
     }
 
@@ -454,33 +449,41 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       myZoomLevelChanged = true;
     }
 
+    private double getNextZoomOut() {
+      double factor = getZoomFactor();
+      if (factor > 1.0d) {
+        // Macro
+        factor /= MACRO_ZOOM_RATIO;
+        factor = Math.max(factor, 1.0d);
+      }
+      else {
+        // Micro
+        factor /= MICRO_ZOOM_RATIO;
+      }
+      return Math.max(factor, getMinimumZoomFactor());
+    }
+
     private double getNextZoomIn() {
       double factor = getZoomFactor();
       if (factor >= 1.0d) {
         // Macro
-        factor *= 2.0d;
-      } else {
-        // Micro
-        double minFactor = getMinimumZoomFactor();
-        double stepSize = (1.0d - minFactor) / MICRO_ZOOM_LIMIT;
-        double step = (1.0d - factor) / stepSize;
-
-        factor = 1.0d - stepSize * (step - 1);
+        factor *= MACRO_ZOOM_RATIO;
       }
-      return Math.min(factor, MAX_ZOOM_FACTOR.get());
+      else {
+        // Micro
+        factor *= MICRO_ZOOM_RATIO;
+        factor = Math.min(factor, 1.0d);
+      }
+      return Math.min(factor, getMaximumZoomFactor());
     }
 
     public boolean canZoomOut() {
-      double factor = getZoomFactor();
-      double minFactor = getMinimumZoomFactor();
-      double stepSize = (1.0 - minFactor) / MICRO_ZOOM_LIMIT;
-      double step = Math.ceil((1.0 - factor) / stepSize);
-
-      return step < MICRO_ZOOM_LIMIT;
+      // Ignore small differences caused by floating-point arithmetic.
+      return getZoomFactor() - 1.0e-14 > getMinimumZoomFactor();
     }
 
     public boolean canZoomIn() {
-      return getZoomFactor() < MAX_ZOOM_FACTOR.get();
+      return getZoomFactor() < getMaximumZoomFactor();
     }
 
     @Override
