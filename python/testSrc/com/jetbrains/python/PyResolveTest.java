@@ -1338,6 +1338,21 @@ public class PyResolveTest extends PyResolveTestCase {
     assertResolvesTo(PyNamedParameter.class, "foo");
   }
 
+  // PY-6563
+  public void testAugAssignment() {
+    assertResolvesTo(PyFunction.class, "__iadd__");
+  }
+
+  // PY-6563
+  public void testAugAssignmentLeft() {
+    assertResolvesTo(PyFunction.class, "__add__");
+  }
+
+  // PY-6563
+  public void testAugAssignmentRight() {
+    assertResolvesTo(PyFunction.class, "__radd__");
+  }
+
   // PY-30512
   public void testDunderBuiltins() {
     final PsiElement element = doResolve();

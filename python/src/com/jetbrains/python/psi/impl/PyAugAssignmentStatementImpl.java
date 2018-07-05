@@ -17,12 +17,13 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiPolyVariantReference;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
-import com.jetbrains.python.psi.PyAugAssignmentStatement;
-import com.jetbrains.python.psi.PyElementType;
-import com.jetbrains.python.psi.PyElementVisitor;
-import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.references.PyAugOperatorReference;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,5 +70,45 @@ public class PyAugAssignmentStatementImpl extends PyElementImpl implements PyAug
   @Override
   public PsiElement getPsiOperator() {
     return PyPsiUtils.getChildByFilter(this, PyTokenTypes.AUG_ASSIGN_OPERATIONS, 0);
+  }
+
+  @Nullable
+  @Override
+  public PyExpression getQualifier() {
+    return getTarget();
+  }
+
+  @Override
+  public boolean isQualified() {
+    return true;
+  }
+
+  @Nullable
+  @Override
+  public QualifiedName asQualifiedName() {
+    return PyPsiUtils.asQualifiedName(this);
+  }
+
+  @Nullable
+  @Override
+  public String getReferencedName() {
+    final PyElementType operator = getOperator();
+    if (operator == PyTokenTypes.DIVEQ && PyUtil.isTrueDivEnabled(this)) {
+      return "__itruediv__";
+    }
+    return operator == null ? null : operator.getSpecialMethodName();
+  }
+
+  @Nullable
+  @Override
+  public ASTNode getNameElement() {
+    final PsiElement op = getPsiOperator();
+    return op == null ? null : op.getNode();
+  }
+
+  @NotNull
+  @Override
+  public PsiPolyVariantReference getReference(@NotNull PyResolveContext context) {
+    return new PyAugOperatorReference(this, context);
   }
 }

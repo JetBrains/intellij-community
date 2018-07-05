@@ -38,6 +38,7 @@ public interface PyQualifiedElement extends PyReferenceOwner {
    * <li>{@code -foo -> foo.__neg__}</li>
    * <li>{@code foo + bar -> foo.__add__}</li>
    * <li>{@code foo + bar + baz -> null}</li>
+   * <li>{@code foo += bar -> foo.__iadd__}</li>
    * </ul>
    *
    * @see #getReferencedName()

@@ -18,6 +18,7 @@ package com.jetbrains.python;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.jetbrains.python.psi.LanguageLevel;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -631,6 +632,7 @@ public class PyNames {
   }
 
   @Nullable
+  @Contract("null -> null; !null -> !null")
   public static String leftToRightOperatorName(@Nullable String name) {
     if (name == null) return null;
 

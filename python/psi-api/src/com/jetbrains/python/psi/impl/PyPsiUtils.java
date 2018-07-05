@@ -71,7 +71,7 @@ public class PyPsiUtils {
    */
   @Nullable
   public static ASTNode getPrevNonWhitespaceSibling(@NotNull ASTNode node) {
-    return skipSiblingsBackward(node, TokenSet.create(TokenType.WHITE_SPACE));
+    return skipSiblingsBackward(node, TokenSet.WHITE_SPACE);
   }
 
   /**
@@ -126,7 +126,7 @@ public class PyPsiUtils {
    */
   @Nullable
   public static ASTNode getNextNonWhitespaceSibling(@NotNull ASTNode after) {
-    return skipSiblingsForward(after, TokenSet.create(TokenType.WHITE_SPACE));
+    return skipSiblingsForward(after, TokenSet.WHITE_SPACE);
   }
 
   /**
@@ -508,8 +508,8 @@ public class PyPsiUtils {
   }
 
   @Nullable
-  public static QualifiedName asQualifiedName(@Nullable PyExpression expr) {
-    return expr instanceof PyQualifiedExpression ? ((PyQualifiedExpression)expr).asQualifiedName() : null;
+  public static QualifiedName asQualifiedName(@Nullable PyElement element) {
+    return element instanceof PyQualifiedElement ? ((PyQualifiedElement)element).asQualifiedName() : null;
   }
 
   @NotNull
@@ -522,13 +522,13 @@ public class PyPsiUtils {
   }
 
   @NotNull
-  public static String toPath(@Nullable PyQualifiedExpression expr) {
-    if (expr != null) {
-      final QualifiedName qName = expr.asQualifiedName();
+  public static String toPath(@Nullable PyQualifiedElement element) {
+    if (element != null) {
+      final QualifiedName qName = element.asQualifiedName();
       if (qName != null) {
         return qName.toString();
       }
-      final String name = expr.getName();
+      final String name = element.getName();
       if (name != null) {
         return name;
       }
@@ -537,14 +537,14 @@ public class PyPsiUtils {
   }
 
   @Nullable
-  protected static QualifiedName asQualifiedName(@NotNull PyQualifiedExpression expr) {
+  protected static QualifiedName asQualifiedName(@NotNull PyQualifiedElement element) {
     final List<String> path = new LinkedList<>();
-    final String firstName = expr.getReferencedName();
+    final String firstName = element.getReferencedName();
     if (firstName == null) {
       return null;
     }
     path.add(firstName);
-    PyExpression qualifier = expr.getQualifier();
+    PyExpression qualifier = element.getQualifier();
     while (qualifier != null) {
       final PyReferenceExpression qualifierReference = ObjectUtils.tryCast(qualifier, PyReferenceExpression.class);
       if (qualifierReference == null) {

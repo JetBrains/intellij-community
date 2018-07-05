@@ -22,7 +22,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public interface PyAugAssignmentStatement extends PyStatement {
+public interface PyAugAssignmentStatement extends PyStatement, PyQualifiedElement {
   @NotNull
   PyExpression getTarget();
   @Nullable

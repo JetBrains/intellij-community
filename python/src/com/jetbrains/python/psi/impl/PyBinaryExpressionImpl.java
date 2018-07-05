@@ -17,7 +17,6 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -33,7 +32,10 @@ import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
@@ -202,7 +204,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
   @Override
   public String getReferencedName() {
     final PyElementType t = getOperator();
-    if (t == PyTokenTypes.DIV && isTrueDivEnabled(this)) {
+    if (t == PyTokenTypes.DIV && PyUtil.isTrueDivEnabled(this)) {
       return PyNames.TRUEDIV;
     }
     return t != null ? t.getSpecialMethodName() : null;
@@ -226,6 +228,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     return Collections.singletonList(isRightOperator(resolvedCallee) ? getChainedComparisonAwareLeftExpression() : getRightExpression());
   }
 
+  @Override
   public boolean isRightOperator(@Nullable PyCallable resolvedCallee) {
     return resolvedCallee != null && PyNames.isRightOperatorName(getReferencedName(), resolvedCallee.getName());
   }
@@ -249,14 +252,5 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
     if (operandType instanceof PyStructuralType || PyTypeChecker.isUnknown(operandType, context)) return false;
 
     return true;
-  }
-
-  private static boolean isTrueDivEnabled(@NotNull PyElement anchor) {
-    final PsiFile file = anchor.getContainingFile();
-    if (file instanceof PyFile) {
-      final PyFile pyFile = (PyFile)file;
-      return FutureFeature.DIVISION.requiredAt(pyFile.getLanguageLevel()) || pyFile.hasImportFromFuture(FutureFeature.DIVISION);
-    }
-    return false;
   }
 }

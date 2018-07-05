@@ -1905,6 +1905,15 @@ public class PyUtil {
     }
   }
 
+  public static boolean isTrueDivEnabled(@NotNull PsiElement anchor) {
+    final PsiFile file = anchor.getContainingFile();
+    if (file instanceof PyFile) {
+      final PyFile pyFile = (PyFile)file;
+      return FutureFeature.DIVISION.requiredAt(pyFile.getLanguageLevel()) || pyFile.hasImportFromFuture(FutureFeature.DIVISION);
+    }
+    return false;
+  }
+
   /**
    * This helper class allows to collect various information about AST nodes composing {@link PyStringLiteralExpression}.
    */
