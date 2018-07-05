@@ -59,7 +59,7 @@ public class FileUtilRt {
 
   private static String ourCanonicalTempPathCache;
 
-  protected static final class NIOReflect {
+  static final class NIOReflect {
     // NIO-reflection initialization placed in a separate class for lazy loading
     static final boolean IS_AVAILABLE;
 
@@ -425,13 +425,14 @@ public class FileUtilRt {
         exception = e;
       }
       attempts++;
-      if (attempts > maxFileNumber / 2 || attempts > 100) {
+      int MAX_ATTEMPTS = 100;
+      if (attempts > maxFileNumber / 2 || attempts > MAX_ATTEMPTS) {
         String[] children = dir.list();
-        List<String> list = children == null ? Collections.<String>emptyList() : Arrays.asList(children);
-        maxFileNumber = Math.max(10, list.size() * 10); // if too many files are in tmp dir, we need a bigger random range than meager 10
-        if (attempts > 100) {
+        int size = children == null ? 0 : children.length;
+        maxFileNumber = Math.max(10, size * 10); // if too many files are in tmp dir, we need a bigger random range than meager 10
+        if (attempts > MAX_ATTEMPTS) {
           throw exception != null ? exception: new IOException("Unable to create temporary file " + f + "\nDirectory '" + dir +
-                                "' list ("+list.size()+" children): " + list);
+                                "' list ("+size+" children): " + Arrays.toString(children));
         }
       }
 
@@ -484,7 +485,7 @@ public class FileUtilRt {
   }
 
   @TestOnly
-  public static void resetCanonicalTempPathCache(final String tempPath) {
+  static void resetCanonicalTempPathCache(final String tempPath) {
     ourCanonicalTempPathCache = tempPath;
   }
 
@@ -702,7 +703,7 @@ public class FileUtilRt {
     return deleteRecursively(file);
   }
 
-  protected static boolean deleteRecursivelyNIO(File file) {
+  static boolean deleteRecursivelyNIO(File file) {
     try {
       /*
       Files.walkFileTree(file.toPath(), new SimpleFileVisitor<Path>() {
