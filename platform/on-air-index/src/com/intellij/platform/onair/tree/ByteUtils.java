@@ -56,6 +56,7 @@ public class ByteUtils {
     result[offset + 2] = (byte)(val >>> 8);
     result[offset + 3] = (byte)val;
   }
+
   public static long normalizeLowBytes(long address) {
     if (address < 0) {
       return address;
@@ -68,7 +69,7 @@ public class ByteUtils {
 
   public static byte[] toBytes(int x) {
     byte[] bytes = new byte[4];
-    writeUnsignedInt(x, bytes, 0);
+    writeUnsignedInt(x ^ 0x80000000, bytes, 0);
     return bytes;
   }
 }

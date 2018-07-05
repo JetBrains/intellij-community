@@ -163,7 +163,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
     if (myKeyDescriptor instanceof InlineKeyDescriptor<?>) {
       int key = ((InlineKeyDescriptor<Key>)myKeyDescriptor).toInt(k);
       byte[] res = new byte[4 + 4];
-      ByteUtils.writeUnsignedInt(key, res, 4);
+      ByteUtils.writeUnsignedInt(key ^ 0x80000000, res, 4);
       return res;
     }
     else {
@@ -181,7 +181,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
   }
 
   void setR(byte[] key, int R) {
-    ByteUtils.writeUnsignedInt(R, key, 0);
+    ByteUtils.writeUnsignedInt(R ^ 0x80000000, key, 0);
   }
 
   public BTreeIndexStorage(@NotNull KeyDescriptor<Key> keyDescriptor,
@@ -235,7 +235,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
             if (myKeyDescriptor instanceof InlineKeyDescriptor<?>) {
               int keyInt = ((InlineKeyDescriptor<Key>)myKeyDescriptor).toInt(key);
               byte[] resKey = new byte[4 + 4];
-              ByteUtils.writeUnsignedInt(keyInt, resKey, 4);
+              ByteUtils.writeUnsignedInt(keyInt ^ 0x80000000, resKey, 4);
               setR(resKey, R);
               myTree.put(novelty, resKey, valueBytes.toByteArray(), true);
             }
