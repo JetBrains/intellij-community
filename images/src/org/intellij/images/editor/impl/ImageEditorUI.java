@@ -35,7 +35,6 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.Magnificator;
-import com.intellij.util.LazyInitializer.MutableNotNullValue;
 import com.intellij.util.LazyInitializer.NotNullValue;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBUI;
@@ -393,25 +392,17 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
         return (double)ImageZoomModel.MACRO_ZOOM_LIMIT;
       }
     };
-    private final MutableNotNullValue<Double> zoomFactor = new MutableNotNullValue<Double>() {
-      @NotNull
-      @Override
-      public Double initialize() {
-        Dimension size = imageComponent.getCanvasSize();
-        BufferedImage image = imageComponent.getDocument().getValue();
-        return image != null ? size.getWidth() / (double)image.getWidth() : 1.0d;
-      }
-    };
+    private double zoomFactor = 0.0d;
 
     public double getZoomFactor() {
-      return zoomFactor.get();
+      return zoomFactor;
     }
 
     public void setZoomFactor(double zoomFactor) {
       double oldZoomFactor = getZoomFactor();
 
       if (Double.compare(oldZoomFactor, zoomFactor) == 0) return;
-      this.zoomFactor.set(zoomFactor);
+      this.zoomFactor = zoomFactor;
 
       // Change current size
       updateImageComponentSize();
