@@ -1,7 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.onair.storage.api;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Base64;
+import java.util.List;
 import java.util.Objects;
 
 // 128 bit key
@@ -56,14 +59,18 @@ public class Address {
     byte[] bytes = new byte[16];
     long processed = highBytes;
     for (int i = 0; i < 8; i++) {
-      bytes[i] = (byte) (processed & 0xff);
+      bytes[i] = (byte)(processed & 0xff);
       processed >>= 8;
     }
     processed = lowBytes;
     for (int i = 8; i < 16; i++) {
-      bytes[i] = (byte) (processed & 0xff);
+      bytes[i] = (byte)(processed & 0xff);
       processed >>= 8;
     }
     return Base64.getEncoder().encodeToString(bytes);
+  }
+
+  public static Address fromStrings(@NotNull final List<String> list) {
+    return new Address(Long.parseLong(list.get(1)), Long.parseLong(list.get(0)));
   }
 }

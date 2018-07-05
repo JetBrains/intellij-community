@@ -42,153 +42,15 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
   private final Novelty myNovelty;
   public final LoadingCache<Key, CompositeValueContainer<Value>> myCache;
   public final BTree myTree;
+  // public final BTree myHashToVirtualFile;
   public final BTree myKeysInternary; // TODO: internary is not properly shared
   private final Object lockObject = new Object();
-
-  public static class AddressPair {
-    public final Address internary;
-    public final @NotNull Address data;
-
-    public AddressPair(@Nullable Address internary, @NotNull Address data) {
-      this.internary = internary;
-      this.data = data;
-    }
-  }
-
-  public static class CompositeValueContainer<V> extends UpdatableValueContainer<V> {
-
-    final Computable<ValueContainerImpl<V>> myBaseLoader;
-    final DeltaValueContainer<V> myDelta;
-    ValueContainerImpl<V> myMerged;
-
-    public ValueContainerImpl<V> getMerged() {
-      if (myMerged != null) {
-        return myMerged;
-      }
-      ValueContainerImpl<V> base = myBaseLoader.compute();
-      InvertedIndexValueIterator<V> valueIterator = myDelta.getValueIterator();
-      while (valueIterator.hasNext()) {
-        V value = valueIterator.next();
-        IntIterator inputIdsIterator = valueIterator.getInputIdsIterator();
-        while (inputIdsIterator.hasNext()) {
-          int input = inputIdsIterator.next();
-          base.addValue(input, value);
-        }
-      }
-      myDelta.removed.forEach(input -> {
-        base.removeAssociatedValue(input);
-        return true;
-      });
-      myMerged = base;
-      return myMerged;
-    }
-
-    CompositeValueContainer(Computable<ValueContainerImpl<V>> base, DeltaValueContainer<V> delta) {
-      myBaseLoader = base;
-      myDelta = delta;
-    }
-
-    @Override
-    public void addValue(int inputId, V value) {
-      if (myMerged != null) {
-        myMerged.addValue(inputId, value);
-      }
-      myDelta.addValue(inputId, value);
-    }
-
-    @Override
-    public void removeAssociatedValue(int inputId) {
-      if (myMerged != null) {
-        myMerged.removeAssociatedValue(inputId);
-      }
-      myDelta.removeAssociatedValue(inputId);
-    }
-
-    @Override
-    public void saveTo(DataOutput out, DataExternalizer<V> externalizer) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public ValueContainerImpl<V> getModifiableCopy() {
-      return getMerged().getModifiableCopy();
-    }
-
-    @NotNull
-    @Override
-    public ValueIterator<V> getValueIterator() {
-      return getMerged().getValueIterator();
-    }
-
-    @Override
-    public int size() {
-      return getMerged().size();
-    }
-  }
-
-  static class DeltaValueContainer<V> extends ValueContainerImpl<V> {
-    final TIntHashSet removed = new TIntHashSet();
-    boolean dirty = false;
-
-    @Override
-    public void addValue(int inputId, V value) {
-      super.addValue(inputId, value);
-      removed.remove(inputId);
-      dirty = true;
-    }
-
-    @Override
-    public void removeAssociatedValue(int inputId) {
-      super.removeAssociatedValue(inputId);
-      removed.add(inputId);
-      dirty = true;
-    }
-
-    @Override
-    public void saveTo(DataOutput out, DataExternalizer<V> externalizer) throws IOException {
-      removed.forEach(value -> {
-        try {
-          DataInputOutputUtil.writeINT(out, -value);
-          return true;
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      });
-      super.saveTo(out, externalizer);
-    }
-  }
-
-  byte[] toTreeKey(Key k) {
-    if (myKeyDescriptor instanceof InlineKeyDescriptor<?>) {
-      int key = ((InlineKeyDescriptor<Key>)myKeyDescriptor).toInt(k);
-      byte[] res = new byte[4 + 4];
-      ByteUtils.writeUnsignedInt(key ^ 0x80000000, res, 4);
-      return res;
-    }
-    else {
-      BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
-      try {
-        myKeyDescriptor.save(new DataOutputStream(stream), k);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-      byte[] res = new byte[16 + 4];
-      HASH.hashBytes(stream.getInternalBuffer(), 0, stream.size()).writeBytesTo(res, 4, 16);
-      return res;
-    }
-  }
-
-  void setR(byte[] key, int R) {
-    ByteUtils.writeUnsignedInt(R ^ 0x80000000, key, 0);
-  }
 
   public BTreeIndexStorage(@NotNull KeyDescriptor<Key> keyDescriptor,
                            @NotNull DataExternalizer<Value> valueExternalizer,
                            @NotNull Storage storage,
                            @NotNull Novelty novelty,
-                           @Nullable AddressPair head,
+                           @Nullable BTreeIndexStorage.AddressDescriptor head,
                            int cacheSize,
                            int R,
                            int baseR) {
@@ -199,9 +61,11 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
 
     if (head != null) {
       myTree = BTree.load(storage, keySize, head.data);
+      // myHashToVirtualFile = BTree.load(storage, 4, head.hashToVirtualFile);
     }
     else {
       myTree = BTree.create(novelty, storage, keySize);
+      // myHashToVirtualFile = BTree.create(novelty, storage, 4);
     }
     if (!(keyDescriptor instanceof InlineKeyDescriptor)) {
       if (head != null) {
@@ -303,12 +167,12 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
     return myTree.forEach(myNovelty, (key, value) -> processor.process(extractKey(key)));
   }
 
-  private Key extractKey(byte[] key) {
+  private Key extractKey(byte[] keyHash) {
     if (myKeyDescriptor instanceof InlineKeyDescriptor) {
-      return ((InlineKeyDescriptor<Key>)myKeyDescriptor).fromInt((int)(ByteUtils.readUnsignedInt(key, 4) ^ 0x80000000));
+      return ((InlineKeyDescriptor<Key>)myKeyDescriptor).fromInt((int)(ByteUtils.readUnsignedInt(keyHash, 4) ^ 0x80000000));
     }
     else {
-      byte[] keyBytes = myKeysInternary.get(myNovelty, Arrays.copyOfRange(key, 4, 20));
+      byte[] keyBytes = myKeysInternary.get(myNovelty, Arrays.copyOfRange(keyHash, 4, 20));
       try {
         assert keyBytes != null;
         return myKeyDescriptor.read(new DataInputStream(new ByteArrayInputStream(keyBytes)));
@@ -321,6 +185,9 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
 
   @Override
   public void addValue(Key key, int inputId, Value value) {
+    /* synchronized (lockObject) {
+      myHashToVirtualFile.put(myNovelty, myKeyDescriptor.getHashCode(key), inputId);
+    }*/
     CompositeValueContainer<Value> container;
     try {
       container = myCache.get(key);
@@ -372,5 +239,148 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
   @Override
   public void flush() {
 
+  }
+
+  private byte[] toTreeKey(Key k) {
+    if (myKeyDescriptor instanceof InlineKeyDescriptor<?>) {
+      int key = ((InlineKeyDescriptor<Key>)myKeyDescriptor).toInt(k);
+      byte[] res = new byte[4 + 4];
+      ByteUtils.writeUnsignedInt(key ^ 0x80000000, res, 4);
+      return res;
+    }
+    else {
+      BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
+      try {
+        myKeyDescriptor.save(new DataOutputStream(stream), k);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+      byte[] res = new byte[16 + 4];
+      HASH.hashBytes(stream.getInternalBuffer(), 0, stream.size()).writeBytesTo(res, 4, 16);
+      return res;
+    }
+  }
+
+  private void setR(byte[] key, int R) {
+    ByteUtils.writeUnsignedInt(R ^ 0x80000000, key, 0);
+  }
+
+  public static final class AddressDescriptor {
+    public final Address internary;
+    @NotNull
+    public final Address data;
+    /*@NotNull
+    public final Address hashToVirtualFile;*/
+
+    public AddressDescriptor(@Nullable Address internary, @NotNull Address data/*, @NotNull Address hashToVirtualFile*/) {
+      this.internary = internary;
+      this.data = data;
+      // this.hashToVirtualFile = hashToVirtualFile;
+    }
+  }
+
+  public static final class CompositeValueContainer<V> extends UpdatableValueContainer<V> {
+
+    final Computable<ValueContainerImpl<V>> myBaseLoader;
+    final DeltaValueContainer<V> myDelta;
+    ValueContainerImpl<V> myMerged;
+
+    public ValueContainerImpl<V> getMerged() {
+      if (myMerged != null) {
+        return myMerged;
+      }
+      ValueContainerImpl<V> base = myBaseLoader.compute();
+      InvertedIndexValueIterator<V> valueIterator = myDelta.getValueIterator();
+      while (valueIterator.hasNext()) {
+        V value = valueIterator.next();
+        IntIterator inputIdsIterator = valueIterator.getInputIdsIterator();
+        while (inputIdsIterator.hasNext()) {
+          int input = inputIdsIterator.next();
+          base.addValue(input, value);
+        }
+      }
+      myDelta.removed.forEach(input -> {
+        base.removeAssociatedValue(input);
+        return true;
+      });
+      myMerged = base;
+      return myMerged;
+    }
+
+    CompositeValueContainer(Computable<ValueContainerImpl<V>> base, DeltaValueContainer<V> delta) {
+      myBaseLoader = base;
+      myDelta = delta;
+    }
+
+    @Override
+    public void addValue(int inputId, V value) {
+      if (myMerged != null) {
+        myMerged.addValue(inputId, value);
+      }
+      myDelta.addValue(inputId, value);
+    }
+
+    @Override
+    public void removeAssociatedValue(int inputId) {
+      if (myMerged != null) {
+        myMerged.removeAssociatedValue(inputId);
+      }
+      myDelta.removeAssociatedValue(inputId);
+    }
+
+    @Override
+    public void saveTo(DataOutput out, DataExternalizer<V> externalizer) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public ValueContainerImpl<V> getModifiableCopy() {
+      return getMerged().getModifiableCopy();
+    }
+
+    @NotNull
+    @Override
+    public ValueIterator<V> getValueIterator() {
+      return getMerged().getValueIterator();
+    }
+
+    @Override
+    public int size() {
+      return getMerged().size();
+    }
+  }
+
+  static class DeltaValueContainer<V> extends ValueContainerImpl<V> {
+    final TIntHashSet removed = new TIntHashSet();
+    boolean dirty = false;
+
+    @Override
+    public void addValue(int inputId, V value) {
+      super.addValue(inputId, value);
+      removed.remove(inputId);
+      dirty = true;
+    }
+
+    @Override
+    public void removeAssociatedValue(int inputId) {
+      super.removeAssociatedValue(inputId);
+      removed.add(inputId);
+      dirty = true;
+    }
+
+    @Override
+    public void saveTo(DataOutput out, DataExternalizer<V> externalizer) throws IOException {
+      removed.forEach(value -> {
+        try {
+          DataInputOutputUtil.writeINT(out, -value);
+          return true;
+        }
+        catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      });
+      super.saveTo(out, externalizer);
+    }
   }
 }

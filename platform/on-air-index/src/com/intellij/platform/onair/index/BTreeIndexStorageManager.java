@@ -137,6 +137,7 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
     return new BTreeIntPersistentMap<>(indexId.getUniqueId(), valueExternalizer, indexNovelty, forwardStorage);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <K, V> VfsAwareIndexStorage<K, V> createIndexStorage(ID<?, ?> indexId,
                                                               KeyDescriptor<K> keyDescriptor,
@@ -144,17 +145,20 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
                                                               int cacheSize,
                                                               boolean keyIsUniqueForIndexedFile,
                                                               boolean buildKeyHashToVirtualFileMapping) {
-    BTreeIndexStorage.AddressPair address;
-    int newRevision = 17;
+    final BTreeIndexStorage.AddressDescriptor address;
+    final int newRevision = 17;
     int baseRevision = -1;
     if (indexHeads != null) {
       Map m = (Map)(((Map)indexHeads.get("inverted-indices")).get(indexId.getName()));
-      List invertedAddr = (List)m.get("inverted");
-      List internaryAddr = (List)m.get("internary");
-      Address internary = internaryAddr != null ? new Address(Long.parseLong((String)internaryAddr.get(1)),
-                                                              Long.parseLong((String)internaryAddr.get(0))) : null;
-      address = new BTreeIndexStorage.AddressPair(internary, new Address(Long.parseLong((String)invertedAddr.get(1)),
-                                                                         Long.parseLong((String)invertedAddr.get(0))));
+      final List<String> invertedAddr = (List<String>)m.get("inverted");
+      final List<String> internaryAddr = (List<String>)m.get("internary");
+      // final List<String> hashToVirtualFile = (List<String>)m.get("hash-to-file");
+      Address internary = internaryAddr != null ? Address.fromStrings(internaryAddr) : null;
+      address = new BTreeIndexStorage.AddressDescriptor(
+        internary,
+        Address.fromStrings(invertedAddr)/*,
+        Address.fromStrings(hashToVirtualFile)*/
+      );
       baseRevision = Integer.parseInt((String)indexHeads.get("revision-int"));
     }
     else {
