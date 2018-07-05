@@ -39,6 +39,7 @@ public final class AnalysisUastUtil {
 
   @Nullable
   public static PsiClass getTypePsiClass(@Nullable PsiType type) {
+    type = GenericsUtil.eliminateWildcards(type);
     if (!(type instanceof PsiClassType)) return null;
     return ((PsiClassType)type).rawType().resolve();
   }
