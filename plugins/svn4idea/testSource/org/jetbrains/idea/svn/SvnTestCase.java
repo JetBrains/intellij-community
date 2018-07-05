@@ -350,15 +350,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     runInAndVerifyIgnoreOutput("mkdir", "-m", "mkdir", myRepoUrl + "/tags");
 
     changeListManager.stopEveryThingIfInTestMode();
-    sleep(100);
-    boolean deleted = false;
-    for (int i = 0; i < 5; i++) {
-      deleted = FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
-      if (deleted) break;
-      sleep(200);
-    }
-    assertTrue(deleted);
-    sleep(200);
+    assertTrue(FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn")));
     myWorkingCopyDir.refresh(false, true);
 
     runInAndVerifyIgnoreOutput("co", mainUrl, myWorkingCopyDir.getPath());
