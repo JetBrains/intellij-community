@@ -186,7 +186,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
     PsiTypeElement newInnerTypeElement = pf.createTypeElement(isExtends ? PsiWildcardType
       .createExtends(psiManager, type) : PsiWildcardType.createSuper(psiManager, type));
 
-    PsiClassReferenceType methodParamType = (PsiClassReferenceType)candidate.methodParameter.getType();
+    PsiClassReferenceType methodParamType = candidate.methodParameterType;
     PsiClassReferenceType clone = new PsiClassReferenceType((PsiJavaCodeReferenceElement)methodParamType.getReference().copy(), methodParamType.getLanguageLevel());
     PsiAnnotation[] annotations = methodParamType.getApplicableAnnotations();
 
