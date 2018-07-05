@@ -11,11 +11,11 @@ import javax.swing.*
 class ReviewListItem(val review: Review, preferredLanguage: TID?) : JComponentBasedList.Item {
     override val component: JComponent get() = panel
 
-    override var selected: Boolean = false
+    override var selectionState: JComponentBasedList.Item.SelectionState = JComponentBasedList.Item.SelectionState.Unselected
         set(value) {
             field = value
 
-            updateSelected(value)
+            updateSelection(value)
         }
 
     private val panel = JPanel(GridLayoutManager(1, 4))
@@ -56,17 +56,17 @@ class ReviewListItem(val review: Review, preferredLanguage: TID?) : JComponentBa
             createFixedSizeGridConstraints(3, JBUI.size(320, -1))
         )
 
-        updateSelected()
+        updateSelection()
     }
 
-    private fun updateSelected() {
-        updateSelected(selected)
+    private fun updateSelection() {
+        updateSelection(selectionState)
     }
 
-    private fun updateSelected(newSelected: Boolean) {
-        panel.background = UIUtil.getListBackground(newSelected)
+    private fun updateSelection(newSelectionState: JComponentBasedList.Item.SelectionState) {
+        panel.background = newSelectionState.background
 
-        val foreground = UIUtil.getListForeground(newSelected)
+        val foreground = newSelectionState.foreground
 
         id.foreground = foreground
         title.foreground = foreground
@@ -75,7 +75,7 @@ class ReviewListItem(val review: Review, preferredLanguage: TID?) : JComponentBa
     }
 
     override fun onLookAndFeelChanged() {
-        updateSelected()
+        updateSelection()
     }
 }
 

@@ -17,9 +17,30 @@ class JComponentBasedList<T : JComponentBasedList.Item>(parentLifetime: Lifetime
     Lifetimed by NestedLifetimed(parentLifetime) {
 
     interface Item {
+        sealed class SelectionState {
+            abstract val background: Color
+            abstract val foreground: Color
+
+            object Unselected : SelectionState() {
+                override val background: Color get() = UIUtil.getListBackground()
+                override val foreground: Color get() = UIUtil.getListForeground()
+            }
+
+            object SelectedUnfocused : SelectionState() {
+                override val background: Color get() = UIUtil.getListUnfocusedSelectionBackground()
+                override val foreground: Color get() = UIUtil.getListSelectionForeground()
+
+            }
+
+            object SelectedFocused : SelectionState() {
+                override val background: Color get() = UIUtil.getListSelectionBackground()
+                override val foreground: Color get() = UIUtil.getListSelectionForeground()
+            }
+        }
+
         val component: JComponent
 
-        var selected: Boolean
+        var selectionState: SelectionState
 
         fun onLookAndFeelChanged()
     }
@@ -29,6 +50,8 @@ class JComponentBasedList<T : JComponentBasedList.Item>(parentLifetime: Lifetime
     val component: Component = ScrollPaneFactory.createScrollPane(
         panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
     )
+
+    private val itemKey = "${JComponentBasedList::class.qualifiedName}.ITEM_KEY-$ourIndex"
 
     var selectedItem: T?
         get() = _selectedItem?.item
@@ -45,6 +68,8 @@ class JComponentBasedList<T : JComponentBasedList.Item>(parentLifetime: Lifetime
     private val keyAdapter = MyKeyAdapter()
 
     init {
+        ourIndex++
+
         LafManager.getInstance().addLafManagerListener(
             LafManagerListener { onLookAndFeelChanged() }, DisposableOnLifetime(lifetime)
         )
@@ -54,7 +79,7 @@ class JComponentBasedList<T : JComponentBasedList.Item>(parentLifetime: Lifetime
 
     private val Component.item: MyItem<T>? get() {
         @Suppress("UNCHECKED_CAST")
-        return ((this as? JComponent)?.getClientProperty(ITEM_KEY) as MyItem<T>?) ?: parent?.item
+        return ((this as? JComponent)?.getClientProperty(itemKey) as MyItem<T>?) ?: parent?.item
     }
 
     private fun onLookAndFeelChanged() {
@@ -70,7 +95,7 @@ class JComponentBasedList<T : JComponentBasedList.Item>(parentLifetime: Lifetime
     fun add(item: T) {
         val itemComponent = item.component
 
-        itemComponent.putClientProperty(ITEM_KEY, MyItem(item, panel.components.size))
+        itemComponent.putClientProperty(itemKey, MyItem(item, panel.components.size))
         itemComponent.addListeners()
 
         panel.add(itemComponent)
@@ -97,8 +122,8 @@ class JComponentBasedList<T : JComponentBasedList.Item>(parentLifetime: Lifetime
     private fun select(newSelectedComponent: Component?, onSelectNew: (Component) -> Unit = {}) {
         newSelectedComponent?.item?.let { newSelectedItem ->
             if (newSelectedItem !== _selectedItem) {
-                _selectedItem?.selected = false
-                newSelectedItem.selected = true
+                _selectedItem?.selectionState = Item.SelectionState.Unselected
+                newSelectedItem.selectionState = Item.SelectionState.SelectedFocused
                 _selectedItem = newSelectedItem
 
                 val bounds = newSelectedItem.component.bounds
@@ -190,6 +215,14 @@ class JComponentBasedList<T : JComponentBasedList.Item>(parentLifetime: Lifetime
     private inner class MyFocusAdapter : FocusAdapter() {
         override fun focusGained(e: FocusEvent) {
             select(e.component)
+
+            selectedItem?.selectionState = Item.SelectionState.SelectedFocused
+        }
+
+        override fun focusLost(e: FocusEvent) {
+            if (e.oppositeComponent?.item == null) {
+                selectedItem?.selectionState = Item.SelectionState.SelectedUnfocused
+            }
         }
     }
 
@@ -213,7 +246,7 @@ class JComponentBasedList<T : JComponentBasedList.Item>(parentLifetime: Lifetime
     }
 
     private companion object {
-        private val ITEM_KEY = "${JComponentBasedList::class.qualifiedName}.ITEM_KEY"
+        private var ourIndex = 0
     }
 }
 
