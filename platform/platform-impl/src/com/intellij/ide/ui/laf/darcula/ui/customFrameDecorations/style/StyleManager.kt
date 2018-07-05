@@ -11,7 +11,7 @@ class StyleManager {
     private const val STYLE_PROPERTY = "STYLE_PROPERTY"
     fun <T : JComponent> applyStyle(component: T, style: ComponentStyle<T>) {
       removeStyle(component)
-      val removeStyleListener = style.applyStyle(component)
+      val removeStyleListener = style.applyStyleSnapshot(component)
       component.putClientProperty(STYLE_PROPERTY, removeStyleListener)
     }
 

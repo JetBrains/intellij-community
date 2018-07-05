@@ -85,7 +85,7 @@ class ComponentStyle<T : JComponent>(val default: Properties) {
     return false
   }
 
-  internal fun applyStyle(component: T): RemoveStyleListener? {
+  internal fun applyStyleSnapshot(component: T): RemoveStyleListener? {
     val base = StyleProperty.getPropertiesSnapshot(component)
     val baseClone = base.clone().updateBy(default)
     baseClone.applyTo(component)
