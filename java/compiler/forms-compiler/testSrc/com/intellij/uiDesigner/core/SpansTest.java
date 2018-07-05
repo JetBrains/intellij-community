@@ -49,7 +49,7 @@ public final class SpansTest extends TestCase {
 
     panel.doLayout();
 
-    assertEquals(130, panel.getPreferredSize().width);
+    assertEquals("b=" + button.getWidth() + ", f1=" + field1.getWidth() + ", f2=" + field2.getWidth(), 130, panel.getPreferredSize().width);
 
     panel.setSize(new Dimension(500, panel.getHeight()));
     panel.doLayout();
