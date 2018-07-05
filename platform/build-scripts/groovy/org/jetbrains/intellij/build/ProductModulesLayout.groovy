@@ -54,31 +54,44 @@ class ProductModulesLayout {
    */
   List<String> bundledPluginModules = []
 
+
+  private LinkedHashMap<String, PluginPublishingSpec> pluginsToPublish = []
+
   /**
    * Names of the main modules (containing META-INF/plugin.xml) of the plugins which aren't bundled with the product but may be installed
    * into it. Zip archives of these plugins will be built and placed under 'plugins' directory in the build artifacts.
    * 
-   * @see org.jetbrains.intellij.build.ProductModulesLayout#pluginsToPublish
-   */
-  List<String> getPluginModulesToPublish() {
-    return pluginsToPublish.collect { it.mainModule }
-  }
-
-  /**
-   * @see org.jetbrains.intellij.build.ProductModulesLayout#getPluginModulesToPublish()
-   * @see org.jetbrains.intellij.build.ProductModulesLayout#pluginsToPublish
+   * @see #setPluginPublishingSpec
    */
   void setPluginModulesToPublish(List<String> plugins) {
-    pluginsToPublish = plugins.collect { new PluginPublishingSpec(it) }
+    pluginsToPublish = new LinkedHashMap<>()
+    for (String each : plugins) {
+      pluginsToPublish[each] = new PluginPublishingSpec()
+    }
   }
 
   /**
-   * Specification ({@link PluginPublishingSpec}) for the plugins which aren't bundled with the product but may be installed
-   * into it. Zip archives of these plugins will be built and placed under 'plugins' directory in the build artifacts.
-   * 
-   * @see org.jetbrains.intellij.build.ProductModulesLayout#pluginsToPublish
+   * @see #setPluginModulesToPublish 
    */
-  List<PluginPublishingSpec> pluginsToPublish = []
+  List<String> getPluginModulesToPublish() {
+    return pluginsToPublish.keySet().toList()
+  }
+
+  /**
+   * Specification ({@link PluginPublishingSpec}) for the published plugin. 
+   * @see #setPluginModulesToPublish
+   */
+  void setPluginPublishingSpec(String mainModule, PluginPublishingSpec spec) {
+    pluginsToPublish[mainModule] = spec
+  }
+
+  /**
+   * @see #setPluginPublishingSpec
+   * @see #setPluginModulesToPublish 
+   */
+  PluginPublishingSpec getPluginPublishingSpec(String mainModule) {
+    return pluginsToPublish[mainModule]
+  }
 
   /**
    * Describes non-trivial layout of all plugins which may be included into the product. The actual list of the plugins need to be bundled
@@ -122,16 +135,40 @@ class ProductModulesLayout {
   String searchableOptionsModule = "intellij.platform.resources"
 
   /**
-   * If {@code true} a special xml descriptor in custom plugin repository format will be generated for {@link #pluginsToPublish} plugins.
+   * If {@code true} a special xml descriptor in custom plugin repository format will be generated for {@link #setPluginModulesToPublish} plugins.
    * This descriptor and the plugin *.zip files need to be uploaded to the URL specified in 'plugins@builtin-url' attribute in *ApplicationInfo.xml file.
    *
+   * @see #setPluginModulesToPublish
+   * @see #setPluginPublishingSpec
    * @see org.jetbrains.intellij.build.PluginPublishingSpec#includeInCustomPluginRepository
    */
   boolean prepareCustomPluginRepositoryForPublishedPlugins = false
+  
+
+  /**
+   * @deprecated use {@link #setPluginPublishingSpec} instead 
+   */
+  @Deprecated
+  List<String> getPluginModulesWithRestrictedCompatibleBuildRange() {
+    def error = "`ProductModulesLayout.pluginModulesWithRestrictedCompatibleBuildRange` property has been replaced with `ProductModulesLayout.setPluginPublishingSpec`"
+    System.err.println(error)
+    throw new UnsupportedOperationException(error)
+  }
+
+  /**
+   * @deprecated use {@link #setPluginPublishingSpec} instead 
+   */
+  @Deprecated
+  void setPluginModulesWithRestrictedCompatibleBuildRange(List<String> __) {
+    //noinspection GrDeprecatedAPIUsage
+    getPluginModulesWithRestrictedCompatibleBuildRange() // to rethrow
+  }
 
   /**
    * If {@code true} then all plugins that compatible with an IDE will be built.
-   * Otherwise only plugins from {@link #pluginsToPublish} will be considered.
+   * Otherwise only plugins from {@link #setPluginModulesToPublish} will be considered.
+   * 
+   * @see #setPluginPublishingSpec
    */
   boolean buildAllCompatiblePlugins = false
 

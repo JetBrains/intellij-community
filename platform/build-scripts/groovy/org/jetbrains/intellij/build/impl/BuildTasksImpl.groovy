@@ -274,7 +274,7 @@ idea.fatal.error.notification=disabled
 
     def pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>();
     for (PluginLayout plugin  : DistributionJARsBuilder.getPluginsByModules(buildContext, buildContext.productProperties.productLayout.pluginModulesToPublish)) {
-      def publishingSpec = buildContext.productProperties.productLayout.pluginsToPublish.find { spec -> spec.mainModule == plugin.mainModule }
+      def publishingSpec = buildContext.productProperties.productLayout.getPluginPublishingSpec(plugin.mainModule)
       if (publishingSpec == null) {
         buildContext.messages.error("buildContext.productProperties.productLayout.pluginModulesToPublish doesn't have info for $plugin.mainModule")
       }
@@ -289,7 +289,8 @@ idea.fatal.error.notification=disabled
         if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
           pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>() 
           for (PluginLayout plugin : new PluginsCollector(buildContext, providedModulesFilePath).collectCompatiblePluginsToPublish()) {
-            pluginsToPublish.put(plugin, new PluginPublishingSpec(plugin.mainModule))
+            def spec = buildContext.productProperties.productLayout.getPluginPublishingSpec(plugin.mainModule)
+            pluginsToPublish.put(plugin, spec ?: new PluginPublishingSpec())
           }
         }
         else {
@@ -615,7 +616,7 @@ idea.fatal.error.notification=disabled
   @Override
   void buildUnpackedDistribution(String targetDirectory) {
     buildContext.paths.distAll = targetDirectory
-    def jarsBuilder = new DistributionJARsBuilder(buildContext, patchApplicationInfo(), [:])
+    def jarsBuilder = new DistributionJARsBuilder(buildContext, patchApplicationInfo())
     CompilationTasks.create(buildContext).buildProjectArtifacts(jarsBuilder.includedProjectArtifacts)
     jarsBuilder.buildJARs()
     layoutShared()
