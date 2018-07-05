@@ -18,6 +18,7 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -121,14 +122,11 @@ public class LiteralAsArgToStringEqualsInspection
       if (args.length != 1) {
         return;
       }
-      final PsiExpression argument = args[0];
-      final PsiType argumentType = argument.getType();
-      if (argumentType == null) {
-        return;
-      }
+      final PsiExpression argument = PsiUtil.skipParenthesizedExprDown(args[0]);
       if (!(argument instanceof PsiLiteralExpression)) {
         return;
       }
+      final PsiType argumentType = argument.getType();
       if (!TypeUtils.isJavaLangString(argumentType)) {
         return;
       }
