@@ -841,4 +841,28 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
                    "  }\n" +
                    "}");
   }
+
+  public void testOneOfBestChoiceSchema() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/oneOfBestChoiceSchema.json"));
+    doTest(schemaText, "{\n" +
+                       "  \"results\": [\n" +
+                       "    <warning descr=\"Missing required properties 'name', 'dateOfBirth'\">{\n" +
+                       "      \"type\": \"person\"\n" +
+                       "    }</warning>\n" +
+                       "  ]\n" +
+                       "}");
+  }
+
+  public void testAnyOfBestChoiceSchema() throws Exception {
+    @Language("JSON") String schemaText = FileUtil.loadFile(new File(getTestDataPath() + "/anyOfBestChoiceSchema.json"));
+    doTest(schemaText, "[\n" +
+                       "  {\n" +
+                       "    \"directory\": \"/test\",\n" +
+                       "    \"arguments\": [\n" +
+                       "      \"a\"\n" +
+                       "    ],\n" +
+                       "    \"file\": <warning>\"\"</warning>\n" +
+                       "  }\n" +
+                       "] ");
+  }
 }
