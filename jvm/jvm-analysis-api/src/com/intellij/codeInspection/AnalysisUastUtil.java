@@ -2,10 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +39,7 @@ public final class AnalysisUastUtil {
 
   @Nullable
   public static PsiClass getTypePsiClass(@Nullable PsiType type) {
+    type = GenericsUtil.eliminateWildcards(type);
     if (!(type instanceof PsiClassType)) return null;
     return ((PsiClassType)type).rawType().resolve();
   }
