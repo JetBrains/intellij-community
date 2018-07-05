@@ -127,6 +127,7 @@
 
 
     <group id="Internal1" text="IDEA Internal Actions" internal="true">
+      <action id="RetypeFile" text="Retype Current File" class="com.intellij.internal.RetypeFileAction"/>
       <separator/>
       <action id="Merge3Files" internal="true" class="com.intellij.openapi.diff.actions.MergeFilesAction"/>
       <separator/>
@@ -134,7 +135,7 @@
       <group id="Internal.Dump" text="Dump" internal="true" popup="true">
         <action id="DumpExtensions" internal="true" text="Dump Extensions" class="com.intellij.internal.DumpExtensionsAction"/>
         <action id="DumpInspectionDescriptions" internal="true" class="com.intellij.internal.DumpInspectionDescriptionsAction"/>
-        <action id="DumpIntentionsDescriptions" internal="true" class="com.intellij.internal.DumpIntentionsAction"/>
+        <action id="DumpIntentionz  sDescriptions" internal="true" class="com.intellij.internal.DumpIntentionsAction"/>
         <action id="DumpConfigurationTypes" internal="true" class="com.intellij.internal.DumpConfigurationTypesAction"/>
         <action id="DumpDirectoryIndex" internal="true" class="com.intellij.internal.DumpDirectoryInfoAction"/>
         <action id="ScanSourceCommentsAction" internal="true" class="com.intellij.tools.ScanSourceCommentsAction"

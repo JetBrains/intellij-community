@@ -25,8 +25,8 @@ import javax.swing.tree.DefaultTreeModel
  */
 
 class LatencyRecorderImpl : LatencyRecorder {
-  override fun recordLatencyAwareAction(editor: Editor, actionId: String, event: AnActionEvent) {
-    (editor as? EditorImpl)?.recordLatencyAwareAction(actionId, event)
+  override fun recordLatencyAwareAction(editor: Editor, actionId: String, timestampMs: Long) {
+    (editor as? EditorImpl)?.recordLatencyAwareAction(actionId, timestampMs)
   }
 }
 
@@ -56,7 +56,7 @@ class FileTypeLatencyRecord(val fileType: FileType) {
   }
 }
 
-val latencyMap: MutableMap<FileType, FileTypeLatencyRecord> = mutableMapOf<FileType, FileTypeLatencyRecord>()
+val latencyMap: MutableMap<FileType, FileTypeLatencyRecord> = mutableMapOf()
 
 fun recordTypingLatency(editor: Editor, action: String, latencyInMS: Long) {
   val fileType = FileDocumentManager.getInstance().getFile(editor.document)?.fileType ?: return
@@ -71,6 +71,7 @@ fun getActionKey(action: String): String =
     when(action[0]) {
       in 'A'..'Z', in 'a'..'z', in '0'..'9' -> "Letter"
       ' ' -> "Space"
+      '\n' -> "Enter"
       else -> action
     }
   }
