@@ -143,6 +143,7 @@ public class ImplicitNumericConversionInspection extends BaseInspection {
     @Nullable
     @NonNls
     private static String convertExpression(PsiExpression expression, PsiType expectedType) {
+      expression = PsiUtil.skipParenthesizedExprDown(expression);
       if (!(expression instanceof PsiLiteralExpression) && !isNegatedLiteral(expression)) {
         return null;
       }
