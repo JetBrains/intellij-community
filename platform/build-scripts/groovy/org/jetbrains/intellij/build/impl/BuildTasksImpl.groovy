@@ -616,7 +616,7 @@ idea.fatal.error.notification=disabled
   @Override
   void buildUnpackedDistribution(String targetDirectory) {
     buildContext.paths.distAll = targetDirectory
-    def jarsBuilder = new DistributionJARsBuilder(buildContext, patchApplicationInfo(), [:])
+    def jarsBuilder = new DistributionJARsBuilder(buildContext, patchApplicationInfo())
     CompilationTasks.create(buildContext).buildProjectArtifacts(jarsBuilder.includedProjectArtifacts)
     jarsBuilder.buildJARs()
     layoutShared()

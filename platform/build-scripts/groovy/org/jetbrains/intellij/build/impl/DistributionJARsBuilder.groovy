@@ -38,7 +38,7 @@ class DistributionJARsBuilder {
   private final LinkedHashMap<PluginLayout, PluginPublishingSpec> pluginsToPublish
 
   DistributionJARsBuilder(BuildContext buildContext, File patchedApplicationInfo, 
-                          LinkedHashMap<PluginLayout, PluginPublishingSpec> pluginsToPublish) {
+                          LinkedHashMap<PluginLayout, PluginPublishingSpec> pluginsToPublish = [:]) {
     this.patchedApplicationInfo = patchedApplicationInfo
     this.buildContext = buildContext
     this.pluginsToPublish = pluginsToPublish
