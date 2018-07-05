@@ -18,7 +18,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 
-import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.TRY_RESOURCE_LIST;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*;
 
 /**
  * @author Max Medvedev
@@ -95,6 +95,12 @@ public class GroovyWrappingProcessor {
 
     if (myParentType == GroovyElementTypes.ARGUMENTS || myParentType == TRY_RESOURCE_LIST) {
       if (childType == GroovyTokenTypes.mLPAREN || childType == GroovyTokenTypes.mRPAREN) {
+        return createNoneWrap();
+      }
+    }
+
+    if (myParentType == ARRAY_INITIALIZER) {
+      if (childType == T_LBRACE || childType == T_RBRACE) {
         return createNoneWrap();
       }
     }
@@ -218,6 +224,11 @@ public class GroovyWrappingProcessor {
 
     if (myParentType == GroovyElementTypes.ASSERT_STATEMENT) {
       return Wrap.createWrap(mySettings.ASSERT_STATEMENT_WRAP, false);
+    }
+
+    if (myParentType == ARRAY_INITIALIZER) {
+      myUsedDefaultWrap = true;
+      return Wrap.createWrap(mySettings.ARRAY_INITIALIZER_WRAP, false);
     }
 
     if (TokenSets.BLOCK_SET.contains(myParentType)) {
