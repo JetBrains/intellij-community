@@ -59,15 +59,6 @@ public abstract class VcsDirtyScopeManager {
    * Requests an asynchronous file status update for all files under the specified directory.
    *
    * @param dir the directory for which the file status update is requested.
-   * @deprecated Use {@link #dirDirtyRecursively(VirtualFile)} instead.
-   */
-  @Deprecated
-  public abstract void dirDirtyRecursively(VirtualFile dir, final boolean scheduleUpdate);
-
-  /**
-   * Requests an asynchronous file status update for all files under the specified directory.
-   *
-   * @param dir the directory for which the file status update is requested.
    */
   public abstract void dirDirtyRecursively(VirtualFile dir);
 
