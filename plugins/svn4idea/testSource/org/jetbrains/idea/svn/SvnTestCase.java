@@ -270,19 +270,16 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     final SubTree subTree = new SubTree(myWorkingCopyDir);
     checkin();
     changeListManager.stopEveryThingIfInTestMode();
-    sleep(100);
     final File rootFile = virtualToIoFile(subTree.myRootDir);
     FileUtil.delete(rootFile);
     FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
     assertTrue(!rootFile.exists());
-    sleep(200);
     myWorkingCopyDir.refresh(false, true);
 
     runInAndVerifyIgnoreOutput("co", mainUrl);
     final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
     final File innerDir = new File(sourceDir, "inner1/inner2/inner");
     runInAndVerifyIgnoreOutput("co", externalURL, innerDir.getPath());
-    sleep(100);
     myWorkingCopyDir.refresh(false, true);
     // above is preparation
 
@@ -386,18 +383,15 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     final SubTree subTree = new SubTree(myWorkingCopyDir);
     checkin();
     changeListManager.stopEveryThingIfInTestMode();
-    sleep(100);
     final File rootFile = virtualToIoFile(subTree.myRootDir);
     FileUtil.delete(rootFile);
     FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
     assertTrue(!rootFile.exists());
-    sleep(200);
     myWorkingCopyDir.refresh(false, true);
 
     final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
     runInAndVerifyIgnoreOutput("co", mainUrl, sourceDir.getPath());
     CreateExternalAction.addToExternalProperty(vcs, sourceDir, "external", externalURL);
-    sleep(100);
 
     if (updateExternal) {
       runInAndVerifyIgnoreOutput("up", sourceDir.getPath());
@@ -405,7 +399,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     if (commitExternalDefinition) {
       runInAndVerifyIgnoreOutput("ci", "-m", "test", sourceDir.getPath());
     }
-    sleep(100);
 
     if (updateExternal) {
       myWorkingCopyDir.refresh(false, true);
