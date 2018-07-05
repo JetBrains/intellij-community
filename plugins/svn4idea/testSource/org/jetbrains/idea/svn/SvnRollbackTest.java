@@ -49,10 +49,10 @@ public class SvnRollbackTest extends SvnTestCase {
     final Change change = changeListManager.getChange(a);
     Assert.assertNotNull(change);
 
-    rollbackIMpl(Collections.singletonList(change), Collections.emptyList());
+    assertRollback(Collections.singletonList(change), Collections.emptyList());
   }
 
-  private void rollbackIMpl(List<Change> changes, final List<Change> allowedAfter) throws VcsException {
+  private void assertRollback(List<Change> changes, final List<Change> allowedAfter) throws VcsException {
     final List<VcsException> exceptions = new ArrayList<>();
     vcs.createRollbackEnvironment().rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
     if (! exceptions.isEmpty()) {
@@ -84,11 +84,11 @@ public class SvnRollbackTest extends SvnTestCase {
 
     refreshChanges();
 
-    final Change change = assertMovedChange(tree.mySourceDir);
-    final Change s1Change = assertMovedChange(tree.myS1File);
-    final Change s2Change = assertMovedChange(tree.myS2File);
+    final Change change = assertMove(tree.mySourceDir);
+    final Change s1Change = assertMove(tree.myS1File);
+    final Change s2Change = assertMove(tree.myS2File);
 
-    rollbackIMpl(Collections.singletonList(change), Collections.emptyList());
+    assertRollback(Collections.singletonList(change), Collections.emptyList());
   }
 
   @Test
@@ -103,16 +103,16 @@ public class SvnRollbackTest extends SvnTestCase {
 
     refreshChanges();
 
-    final Change change = assertMovedChange(tree.mySourceDir);
-    final Change s1Change = assertMovedChange(tree.myS1File);
-    final Change s2Change = assertMovedChange(tree.myS2File);
+    final Change change = assertMove(tree.mySourceDir);
+    final Change s1Change = assertMove(tree.myS1File);
+    final Change s2Change = assertMove(tree.myS2File);
 
     Assert.assertTrue(unv != null);
     Assert.assertTrue(unv.isValid());
     Assert.assertTrue(!FileUtil.filesEqual(virtualToIoFile(unv), wasUnversioned));
     Assert.assertTrue(! wasUnversioned.exists());
 
-    rollbackIMpl(Arrays.asList(change, s2Change), Collections.emptyList());
+    assertRollback(Arrays.asList(change, s2Change), Collections.emptyList());
     Assert.assertTrue(wasUnversioned.exists());
   }
 
@@ -134,16 +134,16 @@ public class SvnRollbackTest extends SvnTestCase {
 
     refreshChanges();
 
-    final Change change = assertRenamedChange(tree.mySourceDir);
-    final Change s1Change = assertMovedChange(tree.myS1File);
-    final Change s2Change = assertMovedChange(tree.myS2File);
-    assertMovedChange(inner);
-    assertMovedChange(innerFile);
+    final Change change = assertRename(tree.mySourceDir);
+    final Change s1Change = assertMove(tree.myS1File);
+    final Change s2Change = assertMove(tree.myS2File);
+    assertMove(inner);
+    assertMove(innerFile);
 
     Assert.assertTrue(!FileUtil.filesEqual(virtualToIoFile(deepUnverioned), was));
     Assert.assertTrue(! was.exists());
 
-    rollbackIMpl(Arrays.asList(change), Collections.emptyList());
+    assertRollback(Arrays.asList(change), Collections.emptyList());
     Assert.assertTrue(was.exists());
   }
 
@@ -162,14 +162,14 @@ public class SvnRollbackTest extends SvnTestCase {
 
     refreshChanges();
 
-    final Change change = assertRenamedChange(tree.mySourceDir);
-    final Change s1Change = assertMovedChange(tree.myS1File);
-    final Change s2Change = assertMovedChange(tree.myS2File);
-    assertMovedChange(inner);
-    final Change innerChange = assertMovedChange(innerFile);
+    final Change change = assertRename(tree.mySourceDir);
+    final Change s1Change = assertMove(tree.myS1File);
+    final Change s2Change = assertMove(tree.myS2File);
+    assertMove(inner);
+    final Change innerChange = assertMove(innerFile);
 
-    rollbackIMpl(Arrays.asList(change),
-                 Arrays.asList(new Change(innerChange.getBeforeRevision(), innerChange.getBeforeRevision(), FileStatus.MODIFIED)));
+    assertRollback(Arrays.asList(change),
+                   Arrays.asList(new Change(innerChange.getBeforeRevision(), innerChange.getBeforeRevision(), FileStatus.MODIFIED)));
   }
 
   @Test
@@ -211,12 +211,12 @@ public class SvnRollbackTest extends SvnTestCase {
 
     refreshChanges();
 
-    final Change change = assertRenamedChange(tree.mySourceDir);
-    final Change s1Change = assertMovedChange(tree.myS1File);
-    final Change s2Change = assertMovedChange(tree.myS2File);
-    final Change inner2Change = assertMovedChange(inner2);
-    assertMovedChange(inner);
-    final Change innerChange = assertMovedChange(innerFile);
+    final Change change = assertRename(tree.mySourceDir);
+    final Change s1Change = assertMove(tree.myS1File);
+    final Change s2Change = assertMove(tree.myS2File);
+    final Change inner2Change = assertMove(inner2);
+    assertMove(inner);
+    final Change innerChange = assertMove(innerFile);
 
     final Change fantomDelete1 = new Change(new SimpleContentRevision("1", VcsUtil.getFilePath(wasLowestDir, true), "2"),
                                             new SimpleContentRevision("1", VcsUtil.getFilePath(wasLowestDirAfter, true), "2"));
@@ -224,8 +224,8 @@ public class SvnRollbackTest extends SvnTestCase {
                                             new SimpleContentRevision("1", VcsUtil.getFilePath(wasInnerFile1After, false),
                                                                       WORKING.toString()));
 
-    rollbackIMpl(Arrays.asList(change),
-                 Arrays.asList(new Change(new SimpleContentRevision("1", VcsUtil.getFilePath(wasInnerFile, false), "2"),
+    assertRollback(Arrays.asList(change),
+                   Arrays.asList(new Change(new SimpleContentRevision("1", VcsUtil.getFilePath(wasInnerFile, false), "2"),
                                           new SimpleContentRevision("1", VcsUtil.getFilePath(wasInnerFileAfter, false),
                                                                     WORKING.toString())),
                                new Change(new SimpleContentRevision("1", VcsUtil.getFilePath(inner2Before, true), "2"),
@@ -256,15 +256,15 @@ public class SvnRollbackTest extends SvnTestCase {
 
     refreshChanges();
 
-    final Change change = assertRenamedChange(tree.mySourceDir);
-    final Change s1Change = assertMovedChange(tree.myS1File);
-    final Change s2Change = assertMovedChange(tree.myS2File);
-    assertMovedChange(inner);
-    final Change innerChange = assertMovedChange(innerFile);
+    final Change change = assertRename(tree.mySourceDir);
+    final Change s1Change = assertMove(tree.myS1File);
+    final Change s2Change = assertMove(tree.myS2File);
+    assertMove(inner);
+    final Change innerChange = assertMove(innerFile);
     Assert.assertEquals("cde", getProperty(virtualToIoFile(innerFile), "abc"));
 
-    rollbackIMpl(Arrays.asList(change),
-                 Arrays.asList(new Change(new SimpleContentRevision("1", VcsUtil.getFilePath(innerBefore, true), "2"),
+    assertRollback(Arrays.asList(change),
+                   Arrays.asList(new Change(new SimpleContentRevision("1", VcsUtil.getFilePath(innerBefore, true), "2"),
                                           new SimpleContentRevision("1", VcsUtil.getFilePath(innerAfter, true),
                                                                     WORKING.toString())),
                                new Change(new SimpleContentRevision("1", VcsUtil.getFilePath(fileBefore, false), "2"),
@@ -295,13 +295,13 @@ public class SvnRollbackTest extends SvnTestCase {
 
     refreshChanges();
 
-    final Change change = assertDeletedChange(fpSource);
-    final Change t11Change = assertDeletedChange(fpT11);
+    final Change change = assertDelete(fpSource);
+    final Change t11Change = assertDelete(fpT11);
 
-    rollbackIMpl(Arrays.asList(change, t11Change), Collections.emptyList());
+    assertRollback(Arrays.asList(change, t11Change), Collections.emptyList());
   }
 
-  private Change assertDeletedChange(FilePath fpSource) {
+  private Change assertDelete(FilePath fpSource) {
     final Change change = changeListManager.getChange(fpSource);
     Assert.assertNotNull(change);
     Assert.assertNull(change.getAfterRevision());
@@ -320,14 +320,14 @@ public class SvnRollbackTest extends SvnTestCase {
     Assert.assertTrue(newDir != null && inNewDir != null && inSource != null);
     refreshChanges();
 
-    final Change change = assertCreatedChange(newDir);
-    final Change inNewDirChange = assertCreatedChange(inNewDir);
-    final Change inSourceChange = assertCreatedChange(inSource);
+    final Change change = assertAdd(newDir);
+    final Change inNewDirChange = assertAdd(inNewDir);
+    final Change inSourceChange = assertAdd(inSource);
 
-    rollbackIMpl(Arrays.asList(change, inSourceChange), Collections.emptyList());
+    assertRollback(Arrays.asList(change, inSourceChange), Collections.emptyList());
   }
 
-  private Change assertCreatedChange(VirtualFile newDir) {
+  private Change assertAdd(VirtualFile newDir) {
     final Change change = changeListManager.getChange(newDir);
     Assert.assertNotNull(change);
     Assert.assertNull(change.getBeforeRevision());
@@ -353,8 +353,8 @@ public class SvnRollbackTest extends SvnTestCase {
 
     refreshChanges();
 
-    final Change dirChange = assertRenamedChange(tree.mySourceDir);
-    final Change s1Change = assertMovedChange(tree.myS1File);
+    final Change dirChange = assertRename(tree.mySourceDir);
+    final Change s1Change = assertMove(tree.myS1File);
 
     FileStatus status = changeListManager.getStatus(unverionedDir);
     Assert.assertEquals(FileStatus.UNKNOWN, status);
@@ -364,8 +364,9 @@ public class SvnRollbackTest extends SvnTestCase {
     Assert.assertEquals(FileStatus.UNKNOWN, fileStatus);
     Assert.assertTrue(! wasUnvFile.exists());
 
-    rollbackIMpl(Collections.singletonList(dirChange), Collections.singletonList(new Change(s1Change.getBeforeRevision(),
-                                                                                            s1Change.getBeforeRevision(), FileStatus.MODIFIED)));
+    assertRollback(Collections.singletonList(dirChange), Collections.singletonList(new Change(s1Change.getBeforeRevision(),
+                                                                                              s1Change.getBeforeRevision(),
+                                                                                              FileStatus.MODIFIED)));
     Assert.assertTrue(wasUnvDir.exists());
     Assert.assertTrue(wasUnvFile.exists());
   }
@@ -388,13 +389,13 @@ public class SvnRollbackTest extends SvnTestCase {
 
     refreshChanges();
 
-    final Change dirChange = assertRenamedChange(tree.mySourceDir);
-    final Change s1Change = assertMovedChange(tree.myS1File);
-    final Change s2Change = assertMovedChange(tree.myS2File);
+    final Change dirChange = assertRename(tree.mySourceDir);
+    final Change s1Change = assertMove(tree.myS1File);
+    final Change s2Change = assertMove(tree.myS2File);
     Assert.assertTrue(! wasIgnored.exists());
     Assert.assertTrue(FileStatus.IGNORED.equals(changeListManager.getStatus(ignored)));
 
-    rollbackIMpl(Collections.singletonList(dirChange), Collections.emptyList());
+    assertRollback(Collections.singletonList(dirChange), Collections.emptyList());
     ignored = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(wasIgnored);
     // ignored property was not committed
     Assert.assertTrue(FileStatus.UNKNOWN.equals(changeListManager.getStatus(ignored)));
@@ -420,13 +421,13 @@ public class SvnRollbackTest extends SvnTestCase {
 
     refreshChanges();
 
-    final Change dirChange = assertRenamedChange(tree.mySourceDir);
-    final Change s1Change = assertMovedChange(tree.myS1File);
-    final Change s2Change = assertMovedChange(tree.myS2File);
+    final Change dirChange = assertRename(tree.mySourceDir);
+    final Change s1Change = assertMove(tree.myS1File);
+    final Change s2Change = assertMove(tree.myS2File);
     Assert.assertTrue(! wasIgnored.exists());
     Assert.assertTrue(FileStatus.IGNORED.equals(changeListManager.getStatus(ignored)));
 
-    rollbackIMpl(Collections.singletonList(dirChange), Collections.emptyList());
+    assertRollback(Collections.singletonList(dirChange), Collections.emptyList());
     ignored = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(wasIgnored);
     // ignored property was not committed
     Assert.assertTrue(FileStatus.IGNORED.equals(changeListManager.getStatus(ignored)));
@@ -445,11 +446,11 @@ public class SvnRollbackTest extends SvnTestCase {
 
     refreshChanges();
 
-    final Change dirChange = assertRenamedChange(tree.mySourceDir);
-    final Change s1Change = assertMovedChange(tree.myS1File);
-    final Change s2Change = assertMovedChange(tree.myS2File);
+    final Change dirChange = assertRename(tree.mySourceDir);
+    final Change s1Change = assertMove(tree.myS1File);
+    final Change s2Change = assertMove(tree.myS2File);
 
-    rollbackIMpl(Arrays.asList(dirChange, s1Change, s2Change), Collections.emptyList());
+    assertRollback(Arrays.asList(dirChange, s1Change, s2Change), Collections.emptyList());
   }
 
   @Test
@@ -466,12 +467,12 @@ public class SvnRollbackTest extends SvnTestCase {
 
     refreshChanges();
 
-    final Change dirChange = assertRenamedChange(tree.mySourceDir);
-    final Change s1Change = assertMovedChange(tree.myS1File);
-    final Change s2Change = assertMovedChange(tree.myS2File);
+    final Change dirChange = assertRename(tree.mySourceDir);
+    final Change s1Change = assertMove(tree.myS1File);
+    final Change s2Change = assertMove(tree.myS2File);
 
     final FilePath fp = VcsUtil.getFilePath(was2, false);
-    rollbackIMpl(Arrays.asList(dirChange, s1Change), Arrays.asList(new Change(
+    assertRollback(Arrays.asList(dirChange, s1Change), Arrays.asList(new Change(
       new SimpleContentRevision("1", fp, "1"), new SimpleContentRevision("1", fp, WORKING.toString()))));
   }
 
@@ -490,7 +491,7 @@ public class SvnRollbackTest extends SvnTestCase {
     Assert.assertTrue(deletedFiles.size() == 1);
     Assert.assertEquals(wasFile, deletedFiles.get(0).getPath().getIOFile());
 
-    rollbackLocallyDeleted(Collections.singletonList(deletedFiles.get(0).getPath()), Collections.emptyList());
+    assertRollbackLocallyDeleted(Collections.singletonList(deletedFiles.get(0).getPath()), Collections.emptyList());
   }
 
   @Test
@@ -519,7 +520,7 @@ public class SvnRollbackTest extends SvnTestCase {
     }
     Assert.assertTrue(files.isEmpty());
 
-    rollbackLocallyDeleted(Collections.singletonList(VcsUtil.getFilePath(wasFile, true)), Collections.emptyList());
+    assertRollbackLocallyDeleted(Collections.singletonList(VcsUtil.getFilePath(wasFile, true)), Collections.emptyList());
   }
 
   @Test
@@ -532,9 +533,9 @@ public class SvnRollbackTest extends SvnTestCase {
 
     refreshChanges();
 
-    assertCreatedChange(f1);
-    assertCreatedChange(dir);
-    assertCreatedChange(f2);
+    assertAdd(f1);
+    assertAdd(dir);
+    assertAdd(f2);
 
     disableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
     final File wasFile1 = virtualToIoFile(f1);
@@ -558,7 +559,8 @@ public class SvnRollbackTest extends SvnTestCase {
     Assert.assertTrue(files.contains(deletedFiles.get(1).getPath().getIOFile()));
     Assert.assertTrue(files.contains(deletedFiles.get(2).getPath().getIOFile()));
 
-    rollbackLocallyDeleted(Arrays.asList(VcsUtil.getFilePath(wasFile2, true), VcsUtil.getFilePath(wasFile1, false)), Collections.emptyList());
+    assertRollbackLocallyDeleted(Arrays.asList(VcsUtil.getFilePath(wasFile2, true), VcsUtil.getFilePath(wasFile1, false)),
+                                 Collections.emptyList());
   }
 
   @Test
@@ -573,7 +575,7 @@ public class SvnRollbackTest extends SvnTestCase {
 
     refreshChanges();
 
-    final Change movedChange = assertMovedChange(tree.mySourceDir);
+    final Change movedChange = assertMove(tree.mySourceDir);
     final File was = virtualToIoFile(tree.mySourceDir);
     Assert.assertNotSame(wasInitially, was);
     disableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
@@ -588,13 +590,13 @@ public class SvnRollbackTest extends SvnTestCase {
            "D root" + File.separator + "source" + File.separator + "s2.txt"
     );
 
-    rollbackLocallyDeleted(Collections.singletonList(VcsUtil.getFilePath(was, true)), Collections.emptyList());
+    assertRollbackLocallyDeleted(Collections.singletonList(VcsUtil.getFilePath(was, true)), Collections.emptyList());
     runAndVerifyStatusSorted("D root" + File.separator + "source",
                "D root" + File.separator + "source" + File.separator + "s1.txt",
                "D root" + File.separator + "source" + File.separator + "s2.txt");
   }
 
-  private void rollbackLocallyDeleted(final List<FilePath> locally, final List<FilePath> allowed) {
+  private void assertRollbackLocallyDeleted(final List<FilePath> locally, final List<FilePath> allowed) {
     final List<VcsException> exceptions = new ArrayList<>();
     vcs.createRollbackEnvironment().rollbackMissingFileDeletion(locally, exceptions, RollbackProgressListener.EMPTY);
     Assert.assertTrue(exceptions.isEmpty());
@@ -612,14 +614,14 @@ public class SvnRollbackTest extends SvnTestCase {
     Assert.assertTrue(copy.isEmpty());
   }
 
-  private Change assertMovedChange(final VirtualFile file) {
+  private Change assertMove(final VirtualFile file) {
     final Change change = changeListManager.getChange(file);
     Assert.assertNotNull(change);
     Assert.assertTrue(change.isMoved());
     return change;
   }
 
-  private Change assertRenamedChange(final VirtualFile file) {
+  private Change assertRename(final VirtualFile file) {
     final Change change = changeListManager.getChange(file);
     Assert.assertNotNull(change);
     Assert.assertTrue(change.isRenamed());
