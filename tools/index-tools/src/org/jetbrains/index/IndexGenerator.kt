@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.psi.stubs.FileContentHashing
+import com.intellij.util.SystemProperties
 import com.intellij.util.indexing.FileContentImpl
 import com.intellij.util.io.PersistentHashMap
 import junit.framework.TestCase
@@ -16,10 +17,10 @@ import java.util.concurrent.atomic.AtomicInteger
 /**
  * @author traff
  */
-
 abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
   companion object {
-    val CHECK_HASH_COLLISIONS: Boolean = System.getenv("INDEX_GENERATOR_CHECK_HASH_COLLISIONS")?.toBoolean() ?: false
+    const val CHECK_HASH_COLLISIONS_PROPERTY = "idea.index.generator.check.hash.collisions"
+    val CHECK_HASH_COLLISIONS: Boolean = SystemProperties.`is`(CHECK_HASH_COLLISIONS_PROPERTY)
   }
 
   open val fileFilter: VirtualFileFilter
