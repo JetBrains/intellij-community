@@ -32,7 +32,8 @@ public class BTreeIntPersistentMap<V> implements PersistentMap<Integer, V> {
     this.novelty = novelty;
     if (head == null) {
       tree = BTree.create(novelty, storage, 4);
-    } else {
+    }
+    else {
       tree = BTree.load(storage, 4, head);
     }
   }
@@ -42,7 +43,8 @@ public class BTreeIntPersistentMap<V> implements PersistentMap<Integer, V> {
     @Nullable byte[] value = tree.get(novelty, ByteUtils.toBytes(key));
     if (value == null) {
       return null;
-    } else {
+    }
+    else {
       return valueExternalizer.read(new DataInputStream(new ByteArrayInputStream(value)));
     }
   }
@@ -62,7 +64,7 @@ public class BTreeIntPersistentMap<V> implements PersistentMap<Integer, V> {
 
   @Override
   public boolean processKeys(Processor<Integer> processor) throws IOException {
-    return tree.forEach(novelty, (key, value) -> processor.process((int)ByteUtils.readUnsignedInt(key, 0)));
+    return tree.forEach(novelty, (key, value) -> processor.process((int)(ByteUtils.readUnsignedInt(key, 0) ^ 0x80000000)));
   }
 
   @Override

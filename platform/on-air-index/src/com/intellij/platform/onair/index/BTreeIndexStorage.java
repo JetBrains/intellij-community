@@ -11,7 +11,6 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.IdFilter;
-import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.VfsAwareIndexStorage;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
@@ -42,8 +41,9 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
   private final DataExternalizer<Value> myValueExternalizer;
   private final Novelty myNovelty;
   public final LoadingCache<Key, CompositeValueContainer<Value>> myCache;
-  public BTree myTree;
-  public BTree myKeysInternary;
+  public final BTree myTree;
+  public final BTree myKeysInternary; // TODO: internary is not properly shared
+  private final Object lockObject = new Object();
 
   public static class AddressPair {
     public final Address internary;
@@ -67,17 +67,17 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
       }
       ValueContainerImpl<V> base = myBaseLoader.compute();
       InvertedIndexValueIterator<V> valueIterator = myDelta.getValueIterator();
-      while(valueIterator.hasNext()){
+      while (valueIterator.hasNext()) {
         V value = valueIterator.next();
         IntIterator inputIdsIterator = valueIterator.getInputIdsIterator();
-        while (inputIdsIterator.hasNext()){
+        while (inputIdsIterator.hasNext()) {
           int input = inputIdsIterator.next();
           base.addValue(input, value);
         }
       }
       myDelta.removed.forEach(input -> {
-         base.removeAssociatedValue(input);
-         return true;
+        base.removeAssociatedValue(input);
+        return true;
       });
       myMerged = base;
       return myMerged;
@@ -90,7 +90,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
 
     @Override
     public void addValue(int inputId, V value) {
-      if (myMerged != null){
+      if (myMerged != null) {
         myMerged.addValue(inputId, value);
       }
       myDelta.addValue(inputId, value);
@@ -105,7 +105,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
     }
 
     @Override
-    public void saveTo(DataOutput out, DataExternalizer<V> externalizer) throws IOException {
+    public void saveTo(DataOutput out, DataExternalizer<V> externalizer) {
       throw new UnsupportedOperationException();
     }
 
@@ -196,6 +196,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
     myKeyDescriptor = keyDescriptor;
     myValueExternalizer = valueExternalizer;
     int keySize = (keyDescriptor instanceof InlineKeyDescriptor ? 4 : 16) + 4;
+
     if (head != null) {
       myTree = BTree.load(storage, keySize, head.data);
     }
@@ -210,14 +211,16 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
         myKeysInternary = BTree.create(novelty, storage, 16);
       }
     }
-    Object lockObject = new Object();
+    else {
+      myKeysInternary = null;
+    }
 
     myCache = CacheBuilder
       .newBuilder()
       .maximumSize(cacheSize * 10)
-      .removalListener(notification -> {
-        Key key = (Key)notification.getKey();
-        CompositeValueContainer<Value> valueContainer = (CompositeValueContainer<Value>)notification.getValue();
+      .<Key, CompositeValueContainer<Value>>removalListener(notification -> {
+        final Key key = notification.getKey();
+        final CompositeValueContainer<Value> valueContainer = notification.getValue();
         if (valueContainer.myDelta.dirty) {
           synchronized (lockObject) {
             BufferExposingByteArrayOutputStream valueBytes = new BufferExposingByteArrayOutputStream();
@@ -258,12 +261,12 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
       })
       .build(new CacheLoader<Key, CompositeValueContainer<Value>>() {
         @Override
-        public CompositeValueContainer<Value> load(@NotNull Key key) throws Exception {
+        public CompositeValueContainer<Value> load(@NotNull Key key) {
           final byte[] keyBytes = toTreeKey(key);
           DeltaValueContainer<Value> delta = new DeltaValueContainer<>();
           synchronized (lockObject) {
             setR(keyBytes, R);
-            byte[] valueBytes = myTree.get(novelty, keyBytes);
+            final byte[] valueBytes = myTree.get(novelty, keyBytes);
             if (valueBytes != null) {
               try {
                 delta.readFrom(new DataInputStream(new ByteArrayInputStream(valueBytes)), myValueExternalizer);
@@ -276,14 +279,16 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
 
           return new CompositeValueContainer<>(() -> {
             ValueContainerImpl<Value> container = new ValueContainerImpl<>();
-            setR(keyBytes, baseR);
-            byte[] baseValueBytes = myTree.get(novelty, keyBytes);
-            if (baseValueBytes != null) {
-              try {
-                container.readFrom(new DataInputStream(new ByteArrayInputStream(baseValueBytes)), myValueExternalizer);
-              }
-              catch (IOException e) {
-                throw new RuntimeException(e);
+            synchronized (lockObject) {
+              setR(keyBytes, baseR);
+              final byte[] baseValueBytes = myTree.get(novelty, keyBytes);
+              if (baseValueBytes != null) {
+                try {
+                  container.readFrom(new DataInputStream(new ByteArrayInputStream(baseValueBytes)), myValueExternalizer);
+                }
+                catch (IOException e) {
+                  throw new RuntimeException(e);
+                }
               }
             }
             return container;
@@ -293,15 +298,16 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
   }
 
   @Override
-  public boolean processKeys(@NotNull Processor<Key> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter)
-    throws StorageException {
+  public boolean processKeys(@NotNull Processor<Key> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter) {
+    // TODO: pass by StorageException instead of assert
     return myTree.forEach(myNovelty, (key, value) -> processor.process(extractKey(key)));
   }
 
   private Key extractKey(byte[] key) {
     if (myKeyDescriptor instanceof InlineKeyDescriptor) {
-      return ((InlineKeyDescriptor<Key>)myKeyDescriptor).fromInt((int)ByteUtils.readUnsignedInt(key, 4));
-    } else {
+      return ((InlineKeyDescriptor<Key>)myKeyDescriptor).fromInt((int)(ByteUtils.readUnsignedInt(key, 4) ^ 0x80000000));
+    }
+    else {
       byte[] keyBytes = myKeysInternary.get(myNovelty, Arrays.copyOfRange(key, 4, 20));
       try {
         assert keyBytes != null;
@@ -314,7 +320,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
   }
 
   @Override
-  public void addValue(Key key, int inputId, Value value) throws StorageException {
+  public void addValue(Key key, int inputId, Value value) {
     CompositeValueContainer<Value> container;
     try {
       container = myCache.get(key);
@@ -326,7 +332,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
   }
 
   @Override
-  public void removeAllValues(@NotNull Key key, int inputId) throws StorageException {
+  public void removeAllValues(@NotNull Key key, int inputId) {
     CompositeValueContainer<Value> container;
     try {
       container = myCache.get(key);
@@ -338,13 +344,13 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
   }
 
   @Override
-  public void clear() throws StorageException {
+  public void clear() {
     throw new UnsupportedOperationException("clear");
   }
 
   @NotNull
   @Override
-  public ValueContainer<Value> read(Key key) throws StorageException {
+  public ValueContainer<Value> read(Key key) {
     try {
       return myCache.get(key);
     }
@@ -359,12 +365,12 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
   }
 
   @Override
-  public void close() throws StorageException {
+  public void close() {
 
   }
 
   @Override
-  public void flush() throws IOException {
+  public void flush() {
 
   }
 }
