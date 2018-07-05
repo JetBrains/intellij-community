@@ -169,4 +169,6 @@ class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
   void testBracesNextLineShifted2() { doTest() }
 
   void testBracesEndLine() { doTest() }
+
+  void testArrayInitializerSpaces() { doTest() }
 }

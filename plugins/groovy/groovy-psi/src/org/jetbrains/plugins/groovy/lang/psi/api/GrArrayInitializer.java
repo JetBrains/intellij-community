@@ -11,6 +11,8 @@ public interface GrArrayInitializer extends GroovyPsiElement {
   @NotNull
   PsiElement getLBrace();
 
+  boolean isEmpty();
+
   @Nullable
   PsiElement getRBrace();
 }
