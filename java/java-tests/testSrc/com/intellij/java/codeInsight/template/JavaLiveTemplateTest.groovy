@@ -2,8 +2,14 @@
 package com.intellij.java.codeInsight.template
 
 import com.intellij.JavaTestUtil
+import com.intellij.codeInsight.completion.InsertHandler
+import com.intellij.codeInsight.completion.InsertionContext
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression
 import com.intellij.codeInsight.lookup.Lookup
+import com.intellij.codeInsight.lookup.LookupElement
+import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.codeInsight.template.Expression
+import com.intellij.codeInsight.template.ExpressionContext
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.ConstantNode
@@ -30,6 +36,40 @@ import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMP
 class JavaLiveTemplateTest extends LiveTemplateTestCase {
   final String basePath = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/template/"
   
+  void "test next tab is not is evaluated if template is finished or broken-off"() {
+    myFixture.configureByText 'a.java', '''
+<caret>
+'''
+    final TemplateManager manager = TemplateManager.getInstance(getProject())
+    final Template template = manager.createTemplate("imp", "user", 'import $PKG$')
+    Expression expr = new EmptyExpression() {
+      @Override
+      LookupElement[] calculateLookupItems(ExpressionContext context) {
+        LookupElement[] res = new LookupElement[1]
+        def finishTemplateHandler = new InsertHandler<LookupElement>() {
+          @Override
+          void handleInsert(InsertionContext insertCtx, LookupElement item) {
+            def stateRef = TemplateManagerImpl.getTemplateState(insertCtx.editor)
+            assertFalse(stateRef.isFinished())
+            stateRef.nextTab()
+            assertTrue(stateRef.isFinished())
+            stateRef.considerNextTabOnLookupItemSelected(item)
+          }
+        }
+        res[0] = LookupElementBuilder.create("com").withInsertHandler(finishTemplateHandler)
+        return res
+      }
+    }
+    template.addVariable('PKG', expr, true)
+    startTemplate(template)
+    assertNotNull(myFixture.lookup)
+    myFixture.type('\n')
+    myFixture.checkResult '''
+import com<caret>
+'''
+    assertNull(state)
+  }
+
   void "test not to go to next tab after insert if element is a psi package"() {
     myFixture.configureByText 'a.java', '''
 <caret>
