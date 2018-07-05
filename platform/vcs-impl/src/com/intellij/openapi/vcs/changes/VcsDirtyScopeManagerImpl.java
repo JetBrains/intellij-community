@@ -191,12 +191,12 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   @Override
-  public void dirDirtyRecursively(final VirtualFile dir) {
+  public void dirDirtyRecursively(@NotNull final VirtualFile dir) {
     dirDirtyRecursively(VcsUtil.getFilePath(dir));
   }
 
   @Override
-  public void dirDirtyRecursively(final FilePath path) {
+  public void dirDirtyRecursively(@NotNull final FilePath path) {
     filePathsDirty(null, Collections.singleton(path));
   }
 
