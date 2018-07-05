@@ -61,7 +61,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     myVcsManager = (ProjectLevelVcsManagerImpl)vcsManager;
 
     myGuess = new VcsGuess(myProject);
-    myDirtBuilder = new DirtBuilder(myGuess);
+    myDirtBuilder = new DirtBuilder();
 
     ((ChangeListManagerImpl) myChangeListManager).setDirtyScopeManager(this);
   }
@@ -264,7 +264,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     synchronized (LOCK) {
       if (!myReady) return Collections.emptyList();
       dirtBuilder = new DirtBuilder(myDirtBuilder);
-      dirtBuilderInProgress = myDirtInProgress != null ? new DirtBuilder(myDirtInProgress) : new DirtBuilder(myGuess);
+      dirtBuilderInProgress = myDirtInProgress != null ? new DirtBuilder(myDirtInProgress) : new DirtBuilder();
     }
 
     VcsInvalidated invalidated = calculateInvalidated(dirtBuilder);
