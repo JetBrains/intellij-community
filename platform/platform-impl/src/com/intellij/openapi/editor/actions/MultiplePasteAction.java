@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.ide.CopyPasteManagerEx;
 import com.intellij.ide.DataManager;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -173,7 +174,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
 
     class PasteSimpleAction extends DialogWrapperAction {
       private PasteSimpleAction() {
-        super(UIBundle.message("choose.content.to.paste.dialog.simple.button"));
+        super(ActionsBundle.actionText(IdeActions.ACTION_EDITOR_PASTE_SIMPLE));
       }
 
       @Override
