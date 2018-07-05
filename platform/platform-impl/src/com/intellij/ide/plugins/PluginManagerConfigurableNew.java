@@ -677,12 +677,40 @@ public class PluginManagerConfigurableNew
       }
     }
 
-    List<IdeaPluginDescriptor> list = RepositoryHelper.loadPlugins(null);
+    List<IdeaPluginDescriptor> list = new ArrayList<>();
     Map<String, IdeaPluginDescriptor> map = new HashMap<>();
+    IOException exception = null;
 
-    for (IdeaPluginDescriptor plugin : list) {
-      map.put(plugin.getPluginId().getIdString(), plugin);
+    for (String host : RepositoryHelper.getPluginHosts()) {
+      try {
+        for (IdeaPluginDescriptor plugin : RepositoryHelper.loadPlugins(host, null)) {
+          String id = plugin.getPluginId().getIdString();
+          if (!map.containsKey(id)) {
+            list.add(plugin);
+            map.put(id, plugin);
+          }
+        }
+      }
+      catch (IOException e) {
+        if (host == null) {
+          exception = e;
+        }
+        else {
+          PluginManagerMain.LOG.info(host, e);
+        }
+      }
     }
+
+    if (exception != null) {
+      throw exception;
+    }
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      InstalledPluginsState state = InstalledPluginsState.getInstance();
+      for (IdeaPluginDescriptor descriptor : list) {
+        state.onDescriptorDownload(descriptor);
+      }
+    });
 
     synchronized (myJBRepositoryLock) {
       if (myJBRepositoryList == null) {
