@@ -941,6 +941,9 @@ public class TemplateState implements Disposable {
   }
 
   public void considerNextTabOnLookupItemSelected(LookupElement item) {
+    if (isFinished()) {
+      return;
+    }
     if (item != null) {
       ExpressionContext context = getCurrentExpressionContext();
       for (TemplateCompletionProcessor processor : Extensions.getExtensions(TemplateCompletionProcessor.EP_NAME)) {
