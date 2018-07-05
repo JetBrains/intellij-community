@@ -33,12 +33,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public class BTreeIndexStorageManager implements IndexStorageManager {
+  private static final int FORWARD_STORAGE_KEY_SIZE = 6;
 
   public final Storage storage;
   public final ConcurrentHashMap<String, BTreeIndexStorage> indexStorages = new ConcurrentHashMap<>();
-  public final ConcurrentHashMap<String, BTreeIntPersistentMap> forwardStorages = new ConcurrentHashMap<>();
   public final Novelty indexNovelty;
   public final Map indexHeads;
+  public final BTree forwardStorage;
 
   public BTreeIndexStorageManager() {
     try {
@@ -47,7 +48,8 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
       String cachePort = System.getProperty("onair.index.cache.port", "11211");
       if (cacheHost != null) {
         storage = new StorageImpl(new InetSocketAddress(cacheHost, Integer.parseInt(cachePort)));
-      } else {
+      }
+      else {
         storage = new Storage() {
           @Override
           public @NotNull byte[] lookup(@NotNull Address address) {
@@ -71,12 +73,21 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
         };
       }
 
+      final NoveltyImpl novelty = new NoveltyImpl(FileUtil.createTempFile("novelty-", ".here"));
       if (revision != null && !revision.trim().isEmpty()) {
         indexHeads = downloadIndexData(revision);
-      } else {
-        indexHeads = null;
+        List addr = (List)(indexHeads.get("forward-indices")); // one table to rule them all
+
+        Address forwardHead = new Address(Long.parseLong((String)addr.get(1)),
+                                          Long.parseLong((String)addr.get(0)));
+
+        forwardStorage = BTree.load(storage, FORWARD_STORAGE_KEY_SIZE, forwardHead);
       }
-      indexNovelty = new NoveltyImpl(FileUtil.createTempFile("novelty-", ".here"));
+      else {
+        indexHeads = null;
+        forwardStorage = BTree.create(novelty, storage, FORWARD_STORAGE_KEY_SIZE);
+      }
+      indexNovelty = novelty;
     }
     catch (IOException e) {
       throw new RuntimeException();
@@ -123,16 +134,7 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
 
   @Override
   public <V> PersistentMap<Integer, V> createForwardIndexStorage(ID<?, ?> indexId, DataExternalizer<V> valueExternalizer) {
-    Address head = null;
-    if (indexHeads != null) {
-      List addr = (List)((Map)(indexHeads.get("forward-indices"))).get(indexId.getName());
-
-      head = new Address(Long.parseLong((String)addr.get(1)),
-                         Long.parseLong((String)addr.get(0)));
-    }
-    BTreeIntPersistentMap<V> map = new BTreeIntPersistentMap<>(valueExternalizer, storage, indexNovelty, head);
-    forwardStorages.put(indexId.getName(), map);
-    return map;
+    return new BTreeIntPersistentMap<>(indexId.getUniqueId(), valueExternalizer, indexNovelty, forwardStorage);
   }
 
   @Override

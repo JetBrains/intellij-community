@@ -40,7 +40,7 @@ public class ByteUtils {
 
 
   public static long readUnsignedInt(@NotNull final byte[] key, int offset) {
-    final long c1 = key[offset + 0] & 0xff;
+    final long c1 = key[offset] & 0xff;
     final long c2 = key[offset + 1] & 0xff;
     final long c3 = key[offset + 2] & 0xff;
     final long c4 = key[offset + 3] & 0xff;
@@ -51,10 +51,24 @@ public class ByteUtils {
   }
 
   public static void writeUnsignedInt(long val, byte[] result, int offset) {
-    result[offset + 0] = (byte)(val >>> 24);
+    result[offset] = (byte)(val >>> 24);
     result[offset + 1] = (byte)(val >>> 16);
     result[offset + 2] = (byte)(val >>> 8);
     result[offset + 3] = (byte)val;
+  }
+
+  public static void writeUnsignedShort(int val, byte[] result, int offset) {
+    result[offset] = (byte)(val >>> 8);
+    result[offset] = (byte)val;
+  }
+
+  public static int readUnsignedShort(@NotNull final byte[] key, int offset) {
+    final int c1 = key[offset] & 0xff;
+    final int c2 = key[offset + 1] & 0xff;
+    if ((c1 | c2) < 0) {
+      throw new IndexOutOfBoundsException();
+    }
+    return ((c1 << 8) | c2);
   }
 
   public static long normalizeLowBytes(long address) {

@@ -145,7 +145,7 @@ public class ID<K, V> extends IndexId<K,V> {
     return getName();
   }
 
-  public int getUniqueId() {
+  public short getUniqueId() {
     return myUniqueId;
   }
 
