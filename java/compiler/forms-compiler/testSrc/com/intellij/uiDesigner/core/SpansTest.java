@@ -47,6 +47,8 @@ public final class SpansTest extends TestCase {
     panel.add(field2, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                           GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
 
+    panel.doLayout();
+
     assertEquals(130, panel.getPreferredSize().width);
 
     panel.setSize(new Dimension(500, panel.getHeight()));
@@ -82,6 +84,8 @@ public final class SpansTest extends TestCase {
     panel.add(field2, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                           GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
 
+    panel.doLayout();
+
     assertEquals(160, panel.getPreferredSize().width);
 
     panel.setSize(new Dimension(500, panel.getHeight()));
@@ -109,6 +113,8 @@ public final class SpansTest extends TestCase {
 
     panel.add(field1, new GridConstraints(0, 1, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                           GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
+
+    panel.doLayout();
 
     assertEquals(190, panel.getPreferredSize().width);
 
@@ -144,6 +150,8 @@ public final class SpansTest extends TestCase {
 
     panel.add(field2, new GridConstraints(1, 0, 1, 2, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                           GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
+
+    panel.doLayout();
 
     final Dimension preferredSize = panel.getPreferredSize();
 

@@ -45,6 +45,8 @@ public final class TextAreasTest extends TestCase {
       GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
       GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0));
 
+    panel.doLayout();
+
     assertFalse(UIManager.getLookAndFeel().getName().equals("Windows"));
     // This check fails for Windows LaF due to its default TextArea settings, so it's not expected here. By default it's Metal on Windows.
     assertEquals(100, textArea.getPreferredSize().width);
@@ -83,6 +85,8 @@ public final class TextAreasTest extends TestCase {
 
     panel.add(field3, new GridConstraints(1,0,1,2,GridConstraints.ANCHOR_CENTER,GridConstraints.FILL_BOTH,
       GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
+
+    panel.doLayout();
 
     assertEquals(100, panel.getPreferredSize().width);
   }

@@ -35,6 +35,8 @@ public final class GapsTest extends TestCase {
     panel.add(field2, new GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                           GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
 
+    panel.doLayout();
+
     final Dimension preferredSize = panel.getPreferredSize();
     assertEquals(210, preferredSize.width);
   }
@@ -55,6 +57,8 @@ public final class GapsTest extends TestCase {
 
     panel.add(field2, new GridConstraints(0, 2, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                           GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_FIXED, null, null, null, 0));
+
+    panel.doLayout();
 
     final Dimension preferredSize = panel.getPreferredSize();
     assertEquals(207, preferredSize.width);
