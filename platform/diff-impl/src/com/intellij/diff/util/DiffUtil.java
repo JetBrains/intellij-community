@@ -809,6 +809,15 @@ public class DiffUtil {
   // Document modification
   //
 
+  public static boolean isSomeRangeSelected(@NotNull Editor editor, @NotNull Condition<? super BitSet> condition) {
+    List<Caret> carets = editor.getCaretModel().getAllCarets();
+    if (carets.size() != 1) return true;
+    Caret caret = carets.get(0);
+    if (caret.hasSelection()) return true;
+
+    return condition.value(getSelectedLines(editor));
+  }
+
   @NotNull
   public static BitSet getSelectedLines(@NotNull Editor editor) {
     Document document = editor.getDocument();

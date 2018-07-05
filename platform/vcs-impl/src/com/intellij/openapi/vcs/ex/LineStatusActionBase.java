@@ -18,16 +18,12 @@ package com.intellij.openapi.vcs.ex;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.BitSet;
-import java.util.List;
 
 public abstract class LineStatusActionBase extends DumbAwareAction {
   @Override
@@ -62,13 +58,9 @@ public abstract class LineStatusActionBase extends DumbAwareAction {
   }
 
   private static boolean isSomeChangeSelected(@NotNull Editor editor, @NotNull LineStatusTrackerBase<?> tracker) {
-    List<Caret> carets = editor.getCaretModel().getAllCarets();
-    if (carets.size() != 1) return true;
-    Caret caret = carets.get(0);
-    if (caret.hasSelection()) return true;
-
-    BitSet lines = DiffUtil.getSelectedLines(editor);
-    return !ContainerUtil.isEmpty(tracker.getRangesForLines(lines));
+    return DiffUtil.isSomeRangeSelected(editor, lines -> {
+      return !ContainerUtil.isEmpty(tracker.getRangesForLines(lines));
+    });
   }
 
   protected boolean isEnabled(@NotNull LineStatusTrackerBase<?> tracker, @NotNull Editor editor) {
