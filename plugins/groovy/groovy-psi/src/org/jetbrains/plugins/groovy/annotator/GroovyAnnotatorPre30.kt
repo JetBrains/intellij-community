@@ -8,10 +8,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle.message
 import org.jetbrains.plugins.groovy.annotator.intentions.ReplaceDotFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
-import org.jetbrains.plugins.groovy.lang.psi.api.GrDoWhileStatement
-import org.jetbrains.plugins.groovy.lang.psi.api.GrExpressionList
-import org.jetbrains.plugins.groovy.lang.psi.api.GrInExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList
+import org.jetbrains.plugins.groovy.lang.psi.api.*
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause
@@ -109,5 +106,10 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
         registerFix(fix, descriptor)
       }
     }
+  }
+
+  override fun visitArrayInitializer(arrayInitializer: GrArrayInitializer) {
+    super.visitArrayInitializer(arrayInitializer)
+    holder.createErrorAnnotation(arrayInitializer, message("unsupported.array.initializers"))
   }
 }
