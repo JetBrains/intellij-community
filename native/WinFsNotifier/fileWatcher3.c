@@ -38,6 +38,9 @@ static UINT32 _calls_ = 0, _max_events_ = 0;
 
 // -- Utilities ---------------------------------------------------
 
+#define IS_SET(flags, flag) (((flags) & (flag)) == (flag))
+#define FILE_SHARE_ALL (FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE)
+
 typedef DWORD (WINAPI *GetFinalPathNameByHandlePtr)(HANDLE, LPCWSTR, DWORD, DWORD);
 static GetFinalPathNameByHandlePtr __GetFinalPathNameByHandle = NULL;
 
@@ -91,9 +94,9 @@ static bool IsPathWatchable(const char *pathToWatch) {
     wchar_t *pSlash;
     while ((pSlash = wcsrchr(path, L'\\')) != NULL) {
         DWORD attributes = GetFileAttributesW(path);
-        if (attributes != INVALID_FILE_ATTRIBUTES && (attributes & FILE_ATTRIBUTE_REPARSE_POINT) != 0) {
+        if (attributes != INVALID_FILE_ATTRIBUTES && IS_SET(attributes, FILE_ATTRIBUTE_REPARSE_POINT)) {
             if (__GetFinalPathNameByHandle != NULL) {
-                HANDLE h = CreateFileW(path, 0, 0, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+                HANDLE h = CreateFileW(path, 0, FILE_SHARE_ALL, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
                 if (h != NULL) {
                     DWORD result = __GetFinalPathNameByHandle(h, buffer, bufferSize, 0);
                     CloseHandle(h);
@@ -122,7 +125,7 @@ static bool IsPathWatchable(const char *pathToWatch) {
 
 static void PrintUnwatchableDrives(PrintBuffer *buffer, UINT32 unwatchable) {
     for (int i = 0; i < ROOT_COUNT; i++) {
-        if ((unwatchable & (1 << i)) != 0) {
+        if (IS_SET(unwatchable, 1 << i)) {
             AppendString(buffer, watchDrive[i].rootPath);
             AppendString(buffer, "\n");
         }
@@ -132,19 +135,9 @@ static void PrintUnwatchableDrives(PrintBuffer *buffer, UINT32 unwatchable) {
 static void PrintUnwatchablePaths(PrintBuffer *buffer, UINT32 unwatchable) {
     for (WatchRoot *root = firstWatchRoot; root; root = root->next) {
         const char *path = root->path;
-        boolean watchable = true;
-
-        int driveLetter = toupper(*path);
-        if (driveLetter < 'A' || driveLetter > 'Z') {
-            watchable = false;
-        } else {
-            int drive = driveLetter - 'A';
-            if ((unwatchable & (1 << drive)) == 0 && !IsPathWatchable(path)) {
-                watchable = false;
-            }
-        }
-
-        if (!watchable) {
+        int drive = toupper(*path);
+        if (drive < 'A' || drive > 'Z' ||
+            !IS_SET(unwatchable, 1 << (drive - 'A')) && !IsPathWatchable(path)) {
             AppendString(buffer, path);
             AppendString(buffer, "\n");
         }
