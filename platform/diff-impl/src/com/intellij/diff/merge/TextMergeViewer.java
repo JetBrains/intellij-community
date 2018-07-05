@@ -35,7 +35,10 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.MarkupEditorFilter;
@@ -965,41 +968,24 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       private boolean isSomeChangeSelected(@NotNull ThreeSide side) {
         EditorEx editor = getEditor(side);
-        List<Caret> carets = editor.getCaretModel().getAllCarets();
-        if (carets.size() != 1) return true;
-        Caret caret = carets.get(0);
-        if (caret.hasSelection()) return true;
-
-        int line = editor.getDocument().getLineNumber(editor.getExpectedCaretOffset());
-
-        List<TextMergeChange> changes = getAllChanges();
-        for (TextMergeChange change : changes) {
-          if (!isEnabled(change)) continue;
-          int line1 = change.getStartLine(side);
-          int line2 = change.getEndLine(side);
-
-          if (DiffUtil.isSelectedByLine(line, line1, line2)) return true;
-        }
-        return false;
+        return DiffUtil.isSomeRangeSelected(editor, lines -> {
+          return ContainerUtil.exists(getAllChanges(), change -> isChangeSelected(change, lines, side));
+        });
       }
 
       @NotNull
       @CalledInAwt
       private List<TextMergeChange> getSelectedChanges(@NotNull ThreeSide side) {
-        final BitSet lines = DiffUtil.getSelectedLines(getEditor(side));
-        List<TextMergeChange> changes = getChanges();
+        EditorEx editor = getEditor(side);
+        BitSet lines = DiffUtil.getSelectedLines(editor);
+        return ContainerUtil.filter(getChanges(), change -> isChangeSelected(change, lines, side));
+      }
 
-        List<TextMergeChange> affectedChanges = new ArrayList<>();
-        for (TextMergeChange change : changes) {
-          if (!isEnabled(change)) continue;
-          int line1 = change.getStartLine(side);
-          int line2 = change.getEndLine(side);
-
-          if (DiffUtil.isSelectedByLine(lines, line1, line2)) {
-            affectedChanges.add(change);
-          }
-        }
-        return affectedChanges;
+      private boolean isChangeSelected(@NotNull TextMergeChange change, @NotNull BitSet lines, @NotNull ThreeSide side) {
+        if (!isEnabled(change)) return false;
+        int line1 = change.getStartLine(side);
+        int line2 = change.getEndLine(side);
+        return DiffUtil.isSelectedByLine(lines, line1, line2);
       }
 
       protected abstract String getText(@NotNull ThreeSide side);

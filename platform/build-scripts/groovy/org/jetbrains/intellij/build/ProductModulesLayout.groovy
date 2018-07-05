@@ -143,6 +143,26 @@ class ProductModulesLayout {
    * @see org.jetbrains.intellij.build.PluginPublishingSpec#includeInCustomPluginRepository
    */
   boolean prepareCustomPluginRepositoryForPublishedPlugins = false
+  
+
+  /**
+   * @deprecated use {@link #setPluginPublishingSpec} instead 
+   */
+  @Deprecated
+  List<String> getPluginModulesWithRestrictedCompatibleBuildRange() {
+    def error = "`ProductModulesLayout.pluginModulesWithRestrictedCompatibleBuildRange` property has been replaced with `ProductModulesLayout.setPluginPublishingSpec`"
+    System.err.println(error)
+    throw new UnsupportedOperationException(error)
+  }
+
+  /**
+   * @deprecated use {@link #setPluginPublishingSpec} instead 
+   */
+  @Deprecated
+  void setPluginModulesWithRestrictedCompatibleBuildRange(List<String> __) {
+    //noinspection GrDeprecatedAPIUsage
+    getPluginModulesWithRestrictedCompatibleBuildRange() // to rethrow
+  }
 
   /**
    * If {@code true} then all plugins that compatible with an IDE will be built.

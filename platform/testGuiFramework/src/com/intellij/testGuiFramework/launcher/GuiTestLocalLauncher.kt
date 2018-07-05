@@ -116,7 +116,8 @@ object GuiTestLocalLauncher {
         }
         else {
           System.err.println("${ide.ideType} process execution error:")
-          val collectedError = BufferedReader(InputStreamReader(IdeProcessControlManager.getErrorStream())).lines().collect(Collectors.joining("\n"))
+          val collectedError = BufferedReader(InputStreamReader(IdeProcessControlManager.getErrorStream())).lines().collect(
+            Collectors.joining("\n"))
           System.err.println(collectedError)
           LOG.error("${ide.ideType} process execution error:")
           LOG.error(collectedError)
@@ -131,24 +132,25 @@ object GuiTestLocalLauncher {
 
   }
 
-  private fun startIdeAndWait(ide: Ide, args: List<String>)
-    = startIde(ide = ide, needToWait = true, timeOut = 180, args = args)
+  private fun startIdeAndWait(ide: Ide, args: List<String>) = startIde(ide = ide, needToWait = true, timeOut = 180, args = args)
 
 
-  private fun createArgs(ide: Ide, mainClass: String = "com.intellij.idea.Main", port: Int = 0, testClassNames: List<String>): List<String>
-    = createArgsBase(ide = ide,
-                     mainClass = mainClass,
-                     commandName = GuiTestStarter.COMMAND_NAME,
-                     port = port,
-                     testClassNames = testClassNames)
+  private fun createArgs(ide: Ide,
+                         mainClass: String = "com.intellij.idea.Main",
+                         port: Int = 0,
+                         testClassNames: List<String>): List<String> = createArgsBase(ide = ide,
+                                                                                      mainClass = mainClass,
+                                                                                      commandName = GuiTestStarter.COMMAND_NAME,
+                                                                                      port = port,
+                                                                                      testClassNames = testClassNames)
 
-  private fun createArgsForFirstStart(ide: Ide, firstStartClassName: String = "undefined", port: Int = 0): List<String>
-    = createArgsBase(ide = ide,
-                     mainClass = "com.intellij.testGuiFramework.impl.FirstStarterKt",
-                     firstStartClassName = firstStartClassName,
-                     commandName = null,
-                     port = port,
-                     testClassNames = emptyList())
+  private fun createArgsForFirstStart(ide: Ide, firstStartClassName: String = "undefined", port: Int = 0): List<String> = createArgsBase(
+    ide = ide,
+    mainClass = "com.intellij.testGuiFramework.impl.FirstStarterKt",
+    firstStartClassName = firstStartClassName,
+    commandName = null,
+    port = port,
+    testClassNames = emptyList())
 
   /**
    * customVmOptions should contain a full VM options formatted items like: customVmOptions = listOf("-Dapple.laf.useScreenMenuBar=true", "-Dide.mac.file.chooser.native=false").
@@ -171,7 +173,7 @@ object GuiTestLocalLauncher {
 
     if (commandName != null) resultingArgs = resultingArgs.plus(commandName)
     if (port != 0) resultingArgs = resultingArgs.plus("port=$port")
-//    LOG.info("Running with args: ${resultingArgs.joinToString(" ")}")
+    //    LOG.info("Running with args: ${resultingArgs.joinToString(" ")}")
 
     return resultingArgs
   }
@@ -184,7 +186,7 @@ object GuiTestLocalLauncher {
     )
     if (SystemInfo.isMac()) resultingArgs.add(0, "open")
     if (port != 0) resultingArgs.add("port=$port")
-//    LOG.info("Running with args: ${resultingArgs.joinToString(" ")}")
+    //    LOG.info("Running with args: ${resultingArgs.joinToString(" ")}")
     return resultingArgs
   }
 
@@ -272,15 +274,16 @@ object GuiTestLocalLauncher {
   private fun substituteAllMacro(classpath: MutableSet<File>): MutableSet<File> {
     val macroList = listOf("\$MAVEN_REPOSITORY\$", "\$KOTLIN_BUNDLED\$")
     val macroMap = mutableMapOf<String, String>()
-    macroList.forEach { macroMap.put(it, resolveMacro(classpath, it)) }
+    macroList.forEach { macroMap[it] = resolveMacro(classpath, it) }
     val mutableClasspath = mutableListOf<File>()
     classpath.forEach { file ->
       val macro = file.path.findStartsWith(macroList)
       if (macro != null) {
-        val resolvedMacro = macroMap.get(macro)
+        val resolvedMacro = macroMap[macro]
         val newPath = resolvedMacro + file.path.substring(macro.length + 1)
         mutableClasspath.add(File(newPath))
-      } else mutableClasspath.add(file)
+      }
+      else mutableClasspath.add(file)
     }
     return mutableClasspath.toMutableSet()
   }
@@ -296,13 +299,11 @@ object GuiTestLocalLauncher {
     @Suppress("UNCHECKED_CAST")
     val urlsListOrArray = getUrlsMethod.invoke(classLoader)
     var urls = (urlsListOrArray as? List<*> ?: (urlsListOrArray as Array<*>).toList()).filterIsInstance(URL::class.java)
-    if (SystemInfo.isWin()) {
-      val classPathUrl = urls.find { it.toString().contains(Regex("classpath[\\d]*.jar")) }
-      if (classPathUrl != null) {
-        val jarStream = JarInputStream(File(classPathUrl.path).inputStream())
-        val mf = jarStream.manifest
-        urls = mf.mainAttributes.getValue("Class-Path").split(" ").map { URL(it) }
-      }
+    val classPathUrl = urls.find { it.toString().contains(Regex("classpath[\\d]*.jar")) }
+    if (classPathUrl != null) {
+      val jarStream = JarInputStream(File(classPathUrl.path).inputStream())
+      val mf = jarStream.manifest
+      urls = mf.mainAttributes.getValue("Class-Path").split(" ").map { URL(it) }
     }
     return urls.map { Paths.get(it.toURI()).toFile().path }
   }
