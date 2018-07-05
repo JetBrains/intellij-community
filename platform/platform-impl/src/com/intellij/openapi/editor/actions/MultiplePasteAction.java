@@ -24,7 +24,6 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.OptionAction;
 import com.intellij.ui.UIBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,7 +124,14 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
 
     public ClipboardContentChooser(Project project) {
       super(project, UIBundle.message("choose.content.to.paste.dialog.title"), true, true);
-      setOKButtonText(UIBundle.message("choose.content.to.paste.dialog.ok.button"));
+      setOKButtonText(ActionsBundle.actionText(IdeActions.ACTION_EDITOR_PASTE));
+      setOKButtonMnemonic('P');
+    }
+
+    @NotNull
+    @Override
+    protected Action[] createActions() {
+      return new Action[]{getHelpAction(), getOKAction(), new PasteSimpleAction(), getCancelAction()};
     }
 
     @Nullable
@@ -154,22 +160,6 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
     @Override
     protected void removeContentAt(final Transferable content) {
       CopyPasteManagerEx.getInstanceEx().removeContent(content);
-    }
-
-    @Override
-    protected void createDefaultActions() {
-      super.createDefaultActions();
-      myOKAction = new PasteAction();
-    }
-
-    class PasteAction extends OkAction implements OptionAction {
-      private final Action[] myActions = new Action[] {new PasteSimpleAction()};
-        
-      @NotNull
-      @Override
-      public Action[] getOptions() {
-        return myActions;
-      }
     }
 
     class PasteSimpleAction extends DialogWrapperAction {
