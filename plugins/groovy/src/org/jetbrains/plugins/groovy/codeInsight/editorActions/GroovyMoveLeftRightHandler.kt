@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.codeInsight.editorActions
 import com.intellij.codeInsight.editorActions.moveLeftRight.MoveElementLeftRightHandler
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil.getChildrenOfAnyType
+import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer
 import org.jetbrains.plugins.groovy.lang.psi.api.GrExpressionList
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
@@ -34,6 +35,7 @@ class GroovyMoveLeftRightHandler : MoveElementLeftRightHandler() {
     is GrTypeParameterList -> element.typeParameters
     is GrVariableDeclaration -> element.variables
     is GrExpressionList -> element.expressions.toTypedArray()
+    is GrArrayInitializer -> element.expressions.toTypedArray()
     else -> PsiElement.EMPTY_ARRAY
   }
 }

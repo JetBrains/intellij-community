@@ -9,6 +9,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LBRACE
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GrArrayInitializer
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.util.childrenOfType
 
 class GrArrayInitializerImpl(node: ASTNode) : GroovyPsiElementImpl(node), GrArrayInitializer {
 
@@ -19,6 +20,8 @@ class GrArrayInitializerImpl(node: ASTNode) : GroovyPsiElementImpl(node), GrArra
   override fun getLBrace(): PsiElement = findNotNullChildByType(T_LBRACE)
 
   override fun isEmpty(): Boolean = node.getChildren(TokenSet.ANY).none { it.psi is GrExpression }
+
+  override fun getExpressions(): List<GrExpression> = childrenOfType()
 
   override fun getRBrace(): PsiElement? = findChildByType(GroovyElementTypes.T_RBRACE)
 }
