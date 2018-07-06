@@ -27,6 +27,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.IncorrectOperationException;
@@ -208,7 +209,7 @@ public class InlineUtil {
   }
 
   public static void inlineArrayCreationForVarargs(final PsiNewExpression arrayCreation) {
-    PsiExpressionList argumentList = (PsiExpressionList)arrayCreation.getParent();
+    PsiExpressionList argumentList = (PsiExpressionList)PsiUtil.skipParenthesizedExprUp(arrayCreation.getParent());
     if (argumentList == null) return;
     PsiExpression[] args = argumentList.getExpressions();
     PsiArrayInitializerExpression arrayInitializer = arrayCreation.getArrayInitializer();
