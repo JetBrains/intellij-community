@@ -68,12 +68,8 @@ public class TestSources {
   @Nullable
   public PsiClass createClass(String className, String code) throws FileNotFoundException {
     File file = new File(mySrc, className + ".java");
-    PrintStream stream = new PrintStream(new FileOutputStream(file));
-    try {
+    try (PrintStream stream = new PrintStream(new FileOutputStream(file))) {
       stream.println(code);
-    }
-    finally {
-      stream.close();
     }
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     return JavaPsiFacade.getInstance(myProject).findClass(className, GlobalSearchScope.allScope(myProject));

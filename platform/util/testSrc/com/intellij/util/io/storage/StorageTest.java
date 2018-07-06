@@ -73,12 +73,11 @@ public class StorageTest extends StorageTestBase {
     out.close();
 
 
-    DataInputStream in = new DataInputStream(myStorage.readStream(r));
-    for (int i = 0; i < 10000; i++) {
-      assertEquals(i, in.readInt());
+    try (DataInputStream in = new DataInputStream(myStorage.readStream(r))) {
+      for (int i = 0; i < 10000; i++) {
+        assertEquals(i, in.readInt());
+      }
     }
-
-    in.close();
   }
   
   public void testAppender2() throws Exception {

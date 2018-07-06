@@ -285,8 +285,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
 
     try {
       final File tempFile = FileUtil.createTempFile("command.line", "", true);
-      final PrintWriter writer = new PrintWriter(tempFile, CharsetToolkit.UTF8);
-      try {
+      try (PrintWriter writer = new PrintWriter(tempFile, CharsetToolkit.UTF8)) {
         ShortenCommandLine shortenCommandLine = getConfiguration().getShortenCommandLine();
         boolean useDynamicClasspathForForkMode = shortenCommandLine == null
                                                  ? JdkUtil.useDynamicClasspath(getConfiguration().getProject())
@@ -302,9 +301,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
         for (String vmParameter : javaParameters.getVMParametersList().getList()) {
           writer.println(vmParameter);
         }
-      }
-      finally {
-        writer.close();
       }
 
       passForkMode(getForkMode(), tempFile, javaParameters);
@@ -415,8 +411,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       final String classpath = getScope() == TestSearchScope.WHOLE_PROJECT
                                ? null : javaParameters.getClassPath().getPathsString();
 
-      final PrintWriter wWriter = new PrintWriter(myWorkingDirsFile, CharsetToolkit.UTF8);
-      try {
+      try (PrintWriter wWriter = new PrintWriter(myWorkingDirsFile, CharsetToolkit.UTF8)) {
         wWriter.println(packageName);
         for (Module module : perModule.keySet()) {
           wWriter.println(PathMacroUtil.getModuleDir(module.getModuleFilePath()));
@@ -441,9 +436,6 @@ public abstract class JavaTestFrameworkRunnableState<T extends
             wWriter.println(className);
           }
         }
-      }
-      finally {
-        wWriter.close();
       }
     }
   }

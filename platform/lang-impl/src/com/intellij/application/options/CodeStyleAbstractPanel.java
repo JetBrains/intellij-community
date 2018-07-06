@@ -400,22 +400,14 @@ public abstract class CodeStyleAbstractPanel implements Disposable {
   }
 
   public static String readFromFile(final Class resourceContainerClass, @NonNls final String fileName) {
-    try {
-      final InputStream stream = resourceContainerClass.getClassLoader().getResourceAsStream("codeStyle/preview/" + fileName);
+    try (InputStream stream = resourceContainerClass.getClassLoader().getResourceAsStream("codeStyle/preview/" + fileName);
+         LineNumberReader lineNumberReader = stream == null ? null : new LineNumberReader(new InputStreamReader(stream))) {
       if (stream == null) throw new IOException("Resource not found: " + "codeStyle/preview/" + fileName);
-      final InputStreamReader reader = new InputStreamReader(stream);
-      final StringBuffer result;
-      final LineNumberReader lineNumberReader = new LineNumberReader(reader);
-      try {
-        result = new StringBuffer();
-        String line;
-        while ((line = lineNumberReader.readLine()) != null) {
-          result.append(line);
-          result.append("\n");
-        }
-      }
-      finally {
-        lineNumberReader.close();
+      final StringBuilder result = new StringBuilder();
+      String line;
+      while ((line = lineNumberReader.readLine()) != null) {
+        result.append(line);
+        result.append("\n");
       }
 
       return result.toString();

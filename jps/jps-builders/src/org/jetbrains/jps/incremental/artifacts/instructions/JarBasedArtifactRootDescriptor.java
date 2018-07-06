@@ -114,14 +114,9 @@ public class JarBasedArtifactRootDescriptor extends ArtifactRootDescriptor {
         }
         else {
           if (outSrcMapping.getState(fullOutputPath) == null) {
-            final BufferedInputStream from = new BufferedInputStream(inputStream);
-            final BufferedOutputStream to = new BufferedOutputStream(new FileOutputStream(outputFile));
-            try {
+            try (BufferedInputStream from = new BufferedInputStream(inputStream);
+                 BufferedOutputStream to = new BufferedOutputStream(new FileOutputStream(outputFile))) {
               FileUtil.copy(from, to);
-            }
-            finally {
-              from.close();
-              to.close();
             }
             outputConsumer.registerOutputFile(outputFile, Collections.singletonList(filePath));
           }

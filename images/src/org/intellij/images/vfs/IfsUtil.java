@@ -140,8 +140,7 @@ public final class IfsUtil {
         }
 
         InputStream inputStream = new ByteArrayInputStream(content, 0, content.length);
-        ImageInputStream imageInputStream = ImageIO.createImageInputStream(inputStream);
-        try {
+        try (ImageInputStream imageInputStream = ImageIO.createImageInputStream(inputStream)) {
           Iterator<ImageReader> imageReaders = ImageIO.getImageReaders(imageInputStream);
           if (imageReaders.hasNext()) {
             ImageReader imageReader = imageReaders.next();
@@ -153,12 +152,11 @@ public final class IfsUtil {
               BufferedImage image = imageReader.read(minIndex, param);
               file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>((zoom, ancestor) -> image));
               return true;
-            } finally {
+            }
+            finally {
               imageReader.dispose();
             }
           }
-        } finally {
-          imageInputStream.close();
         }
       } finally {
         // We perform loading no more needed

@@ -368,8 +368,7 @@ public abstract class AbstractExternalFilter {
                 byte[] bytes = request.readBytes(null);
                 String contentEncoding = null;
                 ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
-                BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-                try {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
                   for (String htmlLine = reader.readLine(); htmlLine != null; htmlLine = reader.readLine()) {
                     contentEncoding = parseContentEncoding(htmlLine);
                     if (contentEncoding != null) {
@@ -378,7 +377,6 @@ public abstract class AbstractExternalFilter {
                   }
                 }
                 finally {
-                  reader.close();
                   stream.reset();
                 }
 

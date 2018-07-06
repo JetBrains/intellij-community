@@ -574,14 +574,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + name);
       } else {
 
-        try {
-          InputStream is = url.openStream();
-          try {
-            return Font.createFont(Font.TRUETYPE_FONT, is);
-          }
-          finally {
-            is.close();
-          }
+        try (InputStream is = url.openStream()) {
+          return Font.createFont(Font.TRUETYPE_FONT, is);
         }
         catch (Throwable t) {
           Logger.getInstance(AppUIUtil.class).warn("Cannot load font: " + url, t);

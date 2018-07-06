@@ -173,15 +173,11 @@ public class SimpleContent extends DiffContent {
   public static DiffContent fromIoFile(File file, String charset, FileType fileType) throws IOException {
     if (file.isDirectory()) throw new IllegalArgumentException(file.toString());
     if (fileType == null) fileType = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
-    BufferedInputStream stream = new BufferedInputStream(new FileInputStream(file));
-    try {
+    try (BufferedInputStream stream = new BufferedInputStream(new FileInputStream(file))) {
       byte[] bytes = new byte[(int)file.length()];
       int bytesRead = stream.read(bytes, 0, bytes.length);
       LOG.assertTrue(file.length() == bytesRead);
       return fromBytes(bytes, charset, fileType);
-    }
-    finally {
-      stream.close();
     }
   }
 
