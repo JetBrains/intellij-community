@@ -1472,6 +1472,11 @@ public class JBUI {
 
       @NotNull
       public static Color titlePaneBackground() {
+        return JBColor.namedColor("TitlePane.background", paneBackground());
+      }
+
+      @NotNull
+      public static Color paneBackground() {
         return JBColor.namedColor("Panel.background", 0xcdcdcd);
       }
     }
