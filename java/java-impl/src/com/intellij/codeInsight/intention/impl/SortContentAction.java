@@ -807,11 +807,25 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       if (!aClass.isEnum()) return null;
       PsiEnumConstant[] constants = PsiTreeUtil.getChildrenOfType(aClass, PsiEnumConstant.class);
       if (constants == null || constants.length < MIN_ELEMENTS_COUNT) return null;
+      PsiEnumConstant last = constants[constants.length - 1];
+      PsiElement lastEnumRelatedElement = getLastEnumDeclarationRelatedElement(last);
+      if (lastEnumRelatedElement.getTextRange().getEndOffset() <= origin.getTextOffset()) return null;
       PsiElement lBrace = aClass.getLBrace();
       if (lBrace == null) return null;
       PsiElement nextAfterLbrace = lBrace.getNextSibling();
       if (nextAfterLbrace == null) return null;
       return new EnumContext(Arrays.asList(constants), nextAfterLbrace);
+    }
+
+    private static @NotNull PsiElement getLastEnumDeclarationRelatedElement(@NotNull PsiEnumConstant last) {
+      PsiElement current = last.getNextSibling();
+      while (current instanceof PsiWhiteSpace
+             || current instanceof PsiComment
+             || (current instanceof PsiJavaToken && (((PsiJavaToken)current).getTokenType() == JavaTokenType.COMMA))
+      ) {
+        current = current.getNextSibling();
+      }
+      return current;
     }
 
     @NotNull
