@@ -72,7 +72,7 @@ public class LiteralAsArgToStringEqualsInspection
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiExpression argument = (PsiExpression)descriptor.getPsiElement();
-      final PsiElement argumentList = argument.getParent();
+      final PsiElement argumentList = PsiUtil.skipParenthesizedExprUp(argument.getParent());
       final PsiMethodCallExpression expression = (PsiMethodCallExpression)argumentList.getParent();
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final PsiExpression target = methodExpression.getQualifierExpression();

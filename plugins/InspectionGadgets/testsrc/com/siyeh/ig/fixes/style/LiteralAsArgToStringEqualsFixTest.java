@@ -8,7 +8,7 @@ import com.siyeh.ig.style.LiteralAsArgToStringEqualsInspection;
 public class LiteralAsArgToStringEqualsFixTest extends IGQuickFixesTestCase {
 
   public void testSimple() {
-    doTest("Flip '.equals()'",
+    doTest("Flip 'equals()'",
       "class X {\n" +
       "  void test(String s) {\n" +
       "    System.out.println(s.equals(\"<caret>foo\"));\n" +
@@ -24,7 +24,7 @@ public class LiteralAsArgToStringEqualsFixTest extends IGQuickFixesTestCase {
   }
 
   public void testParentheses() {
-    doTest("Flip '.equals()'",
+    doTest("Flip 'equals()'",
       "class X {\n" +
       "  void test(String s) {\n" +
       "    System.out.println(s.equals((\"<caret>foo\")));\n" +
