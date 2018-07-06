@@ -523,8 +523,7 @@ public abstract class DialogWrapper {
       if (button instanceof JBOptionButton) {
         myOptionsButtons.add((JBOptionButton)button);
       }
-      final boolean isLeft = index < leftSideButtons.size();
-      TouchbarDataKeys.putClientPropertyDialogButton(button, !isLeft, false, index++);
+      TouchbarDataKeys.putDialogButtonDescriptor(button, index++).setMainGroup(index >= leftSideButtons.size());
     }
 
     return createSouthPanel(leftSideButtons, rightSideButtons, hasHelpToMoveToLeftSide);
