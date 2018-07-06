@@ -414,11 +414,10 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   }
 
   protected void createAnotherRepo() throws Exception {
-    final File repo = FileUtil.createTempDirectory("anotherRepo", "");
-    FileUtil.delete(repo);
+    File repo = virtualToIoFile(myTempDirFixture.findOrCreateDir("anotherRepo"));
     FileUtil.copyDir(myRepoRoot, repo);
     myAnotherRepoUrl = (SystemInfo.isWindows ? "file:///" : "file://") + FileUtil.toSystemIndependentName(repo.getPath());
-    final File tmpWc = FileUtil.createTempDirectory("hhh", "");
+    File tmpWc = virtualToIoFile(myTempDirFixture.findOrCreateDir("anotherRepoWc"));
     runInAndVerifyIgnoreOutput("co", myAnotherRepoUrl, tmpWc.getPath());
     final VirtualFile tmpWcVf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tmpWc);
     assertNotNull(tmpWcVf);
