@@ -364,7 +364,7 @@ public class GitUpdateProcess {
   }
 
   private static void notifyDetachedHeadError(@NotNull GitRepository repository) {
-    notifyImportantError(repository.getProject(), "Can't update: no current branch", getDetachedHeadErrorNotificationContent(repository));
+    notifyImportantError(repository.getProject(), "Can't Update: No Current Branch", getDetachedHeadErrorNotificationContent(repository));
   }
 
   @VisibleForTesting
