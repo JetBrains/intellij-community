@@ -1,11 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
-import com.intellij.model.ModelElement;
-import com.intellij.model.ModelReference;
-import com.intellij.model.ModelResolveResult;
-import com.intellij.model.ModelService;
-import com.intellij.model.psi.PsiModelResolveResult;
+import com.intellij.model.Symbol;
+import com.intellij.model.SymbolReference;
+import com.intellij.model.SymbolResolveResult;
+import com.intellij.model.SymbolService;
+import com.intellij.model.psi.PsiSymbolResolveResult;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
@@ -27,7 +27,7 @@ import java.util.Collections;
  * @see PsiReferenceBase
  * @see PsiReferenceContributor
  */
-public interface PsiReference extends ModelReference {
+public interface PsiReference extends SymbolReference {
   PsiReference[] EMPTY_ARRAY = new PsiReference[0];
 
   ArrayFactory<PsiReference> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiReference[count];
@@ -121,14 +121,14 @@ public interface PsiReference extends ModelReference {
 
   @NotNull
   @Override
-  default Iterable<? extends ModelResolveResult> resolve(boolean incomplete) {
+  default Iterable<? extends SymbolResolveResult> resolve(boolean incomplete) {
     PsiElement resolved = resolve();
-    return resolved == null ? Collections.emptyList() : Collections.singletonList(new PsiModelResolveResult(resolved));
+    return resolved == null ? Collections.emptyList() : Collections.singletonList(new PsiSymbolResolveResult(resolved));
   }
 
   @Override
-  default boolean references(@NotNull ModelElement target) {
-    PsiElement psi = ModelService.getPsiElement(target);
-    return psi == null ? ModelReference.super.references(target) : isReferenceTo(psi);
+  default boolean references(@NotNull Symbol target) {
+    PsiElement psi = SymbolService.getPsiElement(target);
+    return psi == null ? SymbolReference.super.references(target) : isReferenceTo(psi);
   }
 }

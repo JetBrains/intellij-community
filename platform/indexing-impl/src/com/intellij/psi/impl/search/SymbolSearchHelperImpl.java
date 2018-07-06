@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
-import com.intellij.model.ModelReference;
-import com.intellij.model.search.ModelReferenceSearchParameters;
-import com.intellij.model.search.ModelSearchHelper;
+import com.intellij.model.SymbolReference;
+import com.intellij.model.search.SymbolReferenceSearchParameters;
+import com.intellij.model.search.SymbolSearchHelper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.DumbService;
@@ -39,37 +39,37 @@ import static com.intellij.util.Processors.cancelableCollectProcessor;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.stream.Collectors.groupingBy;
 
-public class ModelSearchHelperImpl implements ModelSearchHelper {
+public class SymbolSearchHelperImpl implements SymbolSearchHelper {
 
-  private static final Logger LOG = Logger.getInstance(ModelSearchHelper.class);
+  private static final Logger LOG = Logger.getInstance(SymbolSearchHelper.class);
 
   private final Project myProject;
   private final DumbService myDumbService;
   private final PsiSearchHelperImpl myHelper;
 
-  public ModelSearchHelperImpl(@NotNull Project project, @NotNull DumbService dumbService, @NotNull PsiSearchHelper helper) {
+  public SymbolSearchHelperImpl(@NotNull Project project, @NotNull DumbService dumbService, @NotNull PsiSearchHelper helper) {
     myProject = project;
     myDumbService = dumbService;
     myHelper = (PsiSearchHelperImpl)helper;
   }
 
   @Override
-  public boolean runSearch(@NotNull ModelReferenceSearchParameters parameters, @NotNull Processor<? super ModelReference> processor) {
+  public boolean runSearch(@NotNull SymbolReferenceSearchParameters parameters, @NotNull Processor<? super SymbolReference> processor) {
     final List<SearchRequestCollectorImpl> collectors = new LinkedList<>();
     collectors.add(initCollector(parameters, Preprocessor.id()));
     return runCollectors(collectors, processor);
   }
 
   @NotNull
-  private static SearchRequestCollectorImpl initCollector(@NotNull ModelReferenceSearchParameters parameters,
-                                                          @NotNull Preprocessor<ModelReference, ModelReference> preprocessor) {
+  private static SearchRequestCollectorImpl initCollector(@NotNull SymbolReferenceSearchParameters parameters,
+                                                          @NotNull Preprocessor<SymbolReference, SymbolReference> preprocessor) {
     SearchRequestCollectorImpl childCollector = new SearchRequestCollectorImpl(parameters, preprocessor);
     SearchRequestors.collectSearchRequests(childCollector);
     return childCollector;
   }
 
   private boolean runCollectors(@NotNull Collection<SearchRequestCollectorImpl> collectors,
-                                @NotNull Processor<? super ModelReference> processor) {
+                                @NotNull Processor<? super SymbolReference> processor) {
     final ProgressIndicator progress = getIndicatorOrEmpty();
 
     while (!collectors.isEmpty()) {
@@ -92,7 +92,7 @@ public class ModelSearchHelperImpl implements ModelSearchHelper {
 
   private static boolean processQueryRequests(@NotNull ProgressIndicator progress,
                                               @NotNull Collection<SearchRequestCollectorImpl> collectors,
-                                              @NotNull Processor<? super ModelReference> processor) {
+                                              @NotNull Processor<? super SymbolReference> processor) {
     for (SearchRequestCollectorImpl collector : collectors) {
       progress.checkCanceled();
       for (SearchQueryRequest<?> request : collector.takeQueryRequests()) {
@@ -104,7 +104,7 @@ public class ModelSearchHelperImpl implements ModelSearchHelper {
   }
 
   private static <T> boolean processQueryRequest(@NotNull SearchQueryRequest<T> request,
-                                                 @NotNull Processor<? super ModelReference> processor) {
+                                                 @NotNull Processor<? super SymbolReference> processor) {
     Processor<? super T> preprocessed = request.preprocessor.apply(processor);
     return request.query.forEach(preprocessed);
   }
@@ -114,7 +114,7 @@ public class ModelSearchHelperImpl implements ModelSearchHelper {
    */
   private boolean processWordRequests(@NotNull ProgressIndicator progress,
                                       @NotNull Collection<SearchRequestCollectorImpl> collectors,
-                                      @NotNull Processor<? super ModelReference> processor) {
+                                      @NotNull Processor<? super SymbolReference> processor) {
     if (collectors.isEmpty()) return true;
 
     final Map<SearchWordRequest, Set<TextOccurenceProcessor>> locals = new LinkedHashMap<>();

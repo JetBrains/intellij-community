@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
-import com.intellij.model.ModelResolveResult;
+import com.intellij.model.SymbolResolveResult;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -28,7 +28,7 @@ public interface PsiPolyVariantReference extends PsiReference {
 
   @NotNull
   @Override
-  default Iterable<? extends ModelResolveResult> resolve(boolean incomplete) {
+  default Iterable<? extends SymbolResolveResult> resolve(boolean incomplete) {
     ResolveResult[] results = multiResolve(incomplete);
     return ContainerUtil.filter(results, it -> it.getElement() != null);
   }

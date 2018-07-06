@@ -6,8 +6,8 @@
 
     <preloadingActivity implementation="com.intellij.codeInsight.completion.CompletionPreloader"/>
 
-    <referencesSearch implementation="com.intellij.model.search.impl.ModelToPsiReferenceSearcher" order="first"/>
-    <searchRequestor implementation="com.intellij.model.search.impl.PsiToModelSearchRequestor" order="last"/>
+    <referencesSearch implementation="com.intellij.model.search.impl.SymbolToPsiReferenceSearcher" order="first"/>
+    <searchRequestor implementation="com.intellij.model.search.impl.PsiToSymbolSearchRequestor" order="last"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.CachesBasedRefSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.NonPhysicalReferenceSearcher"/>
 
@@ -95,8 +95,8 @@
 
     <projectService serviceInterface="com.intellij.psi.search.PsiSearchHelper"
                     serviceImplementation="com.intellij.psi.impl.search.PsiSearchHelperImpl"/>
-    <projectService serviceInterface="com.intellij.model.search.ModelSearchHelper"
-                    serviceImplementation="com.intellij.psi.impl.search.ModelSearchHelperImpl"/>
+    <projectService serviceInterface="com.intellij.model.search.SymbolSearchHelper"
+                    serviceImplementation="com.intellij.psi.impl.search.SymbolSearchHelperImpl"/>
 
     <projectService serviceInterface="com.intellij.psi.search.PsiTodoSearchHelper"
                     serviceImplementation="com.intellij.psi.impl.search.PsiTodoSearchHelperImpl"/>

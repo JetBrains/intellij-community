@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
-import com.intellij.model.ModelElement;
-import com.intellij.model.ModelResolveResult;
-import com.intellij.model.ModelService;
+import com.intellij.model.Symbol;
+import com.intellij.model.SymbolResolveResult;
+import com.intellij.model.SymbolService;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +14,7 @@ import java.util.Objects;
  *
  * @see com.intellij.psi.PsiElementResolveResult
  */
-public interface ResolveResult extends ModelResolveResult {
+public interface ResolveResult extends SymbolResolveResult {
   /**
    * The empty array of PSI resolve results which can be reused to avoid unnecessary allocations.
    */
@@ -37,8 +37,8 @@ public interface ResolveResult extends ModelResolveResult {
 
   @NotNull
   @Override
-  default ModelElement getResolvedElement() {
+  default Symbol getTarget() {
     PsiElement element = Objects.requireNonNull(getElement(), "Don't access this property on empty results");
-    return ModelService.adaptPsiElement(element);
+    return SymbolService.adaptPsiElement(element);
   }
 }

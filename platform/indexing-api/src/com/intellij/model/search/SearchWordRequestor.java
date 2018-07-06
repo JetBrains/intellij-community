@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.search;
 
-import com.intellij.model.ModelElement;
+import com.intellij.model.Symbol;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
@@ -40,12 +40,12 @@ public interface SearchWordRequestor {
 
   /**
    * Sets target hint which is used for optimizing search requests.
-   * Target is automatically set when using {@link #search(ModelElement)}.
+   * Target is automatically set when using {@link #search(Symbol)}.
    *
    * @return this object
    */
   @NotNull
-  SearchWordRequestor setTargetHint(@NotNull ModelElement target);
+  SearchWordRequestor setTargetHint(@NotNull Symbol target);
 
   /**
    * Orders to search for word occurrences and process them with passed requestor. <br/>
@@ -58,5 +58,5 @@ public interface SearchWordRequestor {
    *
    * @param target
    */
-  void search(@NotNull ModelElement target);
+  void search(@NotNull Symbol target);
 }

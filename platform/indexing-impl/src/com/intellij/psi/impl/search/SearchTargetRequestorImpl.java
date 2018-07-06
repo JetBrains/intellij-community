@@ -1,12 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
-import com.intellij.model.ModelElement;
-import com.intellij.model.ModelReference;
-import com.intellij.model.search.DefaultModelReferenceSearchParameters;
-import com.intellij.model.search.ModelReferenceSearch;
-import com.intellij.model.search.ModelReferenceSearchParameters;
+import com.intellij.model.Symbol;
+import com.intellij.model.SymbolReference;
+import com.intellij.model.search.DefaultSymbolReferenceSearchParameters;
 import com.intellij.model.search.SearchTargetRequestor;
+import com.intellij.model.search.SymbolReferenceSearch;
+import com.intellij.model.search.SymbolReferenceSearchParameters;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.util.Preprocessor;
@@ -17,12 +17,12 @@ import static com.intellij.psi.search.PsiSearchScopeUtil.restrictScopeTo;
 public class SearchTargetRequestorImpl implements SearchTargetRequestor {
 
   private final @NotNull SearchRequestCollectorImpl myCollector;
-  private final @NotNull ModelElement myTarget;
+  private final @NotNull Symbol myTarget;
 
   private SearchScope mySearchScope;
   private FileType[] myFileTypes;
 
-  public SearchTargetRequestorImpl(@NotNull SearchRequestCollectorImpl collector, @NotNull ModelElement target) {
+  public SearchTargetRequestorImpl(@NotNull SearchRequestCollectorImpl collector, @NotNull Symbol target) {
     myCollector = collector;
     myTarget = target;
   }
@@ -47,8 +47,8 @@ public class SearchTargetRequestorImpl implements SearchTargetRequestor {
   }
 
   @Override
-  public void search(@NotNull Preprocessor<ModelReference, ModelReference> preprocessor) {
-    myCollector.searchSubQuery(ModelReferenceSearch.search(createParameters()), preprocessor);
+  public void search(@NotNull Preprocessor<SymbolReference, SymbolReference> preprocessor) {
+    myCollector.searchSubQuery(SymbolReferenceSearch.search(createParameters()), preprocessor);
   }
 
   @NotNull
@@ -62,10 +62,10 @@ public class SearchTargetRequestorImpl implements SearchTargetRequestor {
     }
   }
 
-  private ModelReferenceSearchParameters createParameters() {
-    ModelReferenceSearchParameters parameters = myCollector.getParameters();
+  private SymbolReferenceSearchParameters createParameters() {
+    SymbolReferenceSearchParameters parameters = myCollector.getParameters();
     SearchScope searchScope = getSearchScope();
-    return new DefaultModelReferenceSearchParameters(
+    return new DefaultSymbolReferenceSearchParameters(
       parameters.getProject(),
       myTarget,
       searchScope,

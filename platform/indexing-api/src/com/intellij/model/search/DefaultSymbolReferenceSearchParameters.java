@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.model.search;
 
-import com.intellij.model.ModelElement;
+import com.intellij.model.Symbol;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
@@ -11,19 +11,19 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
-public class DefaultModelReferenceSearchParameters implements ModelReferenceSearchParameters {
+public class DefaultSymbolReferenceSearchParameters implements SymbolReferenceSearchParameters {
 
   private final Project myProject;
-  private final ModelElement myTarget;
+  private final Symbol myTarget;
   private final SearchScope myScope;
   private final boolean myIgnoreAccessScope;
 
   private final NotNullLazyValue<SearchScope> myEffectiveScope;
 
-  public DefaultModelReferenceSearchParameters(@NotNull Project project,
-                                               @NotNull ModelElement target,
-                                               @NotNull SearchScope scope,
-                                               boolean ignoreAccessScope) {
+  public DefaultSymbolReferenceSearchParameters(@NotNull Project project,
+                                                @NotNull Symbol target,
+                                                @NotNull SearchScope scope,
+                                                boolean ignoreAccessScope) {
     myProject = project;
     myTarget = target;
     myScope = scope;
@@ -44,7 +44,7 @@ public class DefaultModelReferenceSearchParameters implements ModelReferenceSear
 
   @NotNull
   @Override
-  public ModelElement getTarget() {
+  public Symbol getTarget() {
     return myTarget;
   }
 

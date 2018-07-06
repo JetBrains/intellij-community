@@ -1,9 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
-import com.intellij.model.ModelElement;
-import com.intellij.model.ModelReference;
-import com.intellij.model.ModelService;
+import com.intellij.model.Symbol;
+import com.intellij.model.SymbolReference;
+import com.intellij.model.SymbolService;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
@@ -19,10 +19,10 @@ import java.util.List;
 final class SingleTargetOccurenceProcessor implements TextOccurenceProcessor {
 
   private static final PsiReferenceService ourReferenceService = PsiReferenceService.getService();
-  private final ModelElement myTarget;
-  private final Processor<? super ModelReference> myProcessor;
+  private final Symbol myTarget;
+  private final Processor<? super SymbolReference> myProcessor;
 
-  SingleTargetOccurenceProcessor(@NotNull ModelElement target, @NotNull Processor<? super ModelReference> processor) {
+  SingleTargetOccurenceProcessor(@NotNull Symbol target, @NotNull Processor<? super SymbolReference> processor) {
     myTarget = target;
     myProcessor = processor;
   }
@@ -30,7 +30,7 @@ final class SingleTargetOccurenceProcessor implements TextOccurenceProcessor {
   @Override
   public boolean execute(@NotNull PsiElement element, int offsetInElement) {
     if (!myTarget.isValid()) return false;
-    final Hints hints = new Hints(ModelService.getPsiElement(myTarget), offsetInElement);
+    final Hints hints = new Hints(SymbolService.getPsiElement(myTarget), offsetInElement);
     final List<PsiReference> references = ourReferenceService.getReferences(element, hints);
     for (PsiReference reference : references) {
       ProgressManager.checkCanceled();

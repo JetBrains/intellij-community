@@ -263,7 +263,7 @@
     </extensionPoint>
 
     <extensionPoint name="referencesSearch" interface="com.intellij.util.QueryExecutor"/>
-    <extensionPoint name="modelReferenceSearch" interface="com.intellij.util.QueryExecutor"/>
+    <extensionPoint name="symbolReferenceSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="searchRequestor" interface="com.intellij.model.search.SearchRequestor"/>
     <extensionPoint name="definitionsSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="definitionsScopedSearch" interface="com.intellij.util.QueryExecutor"/>

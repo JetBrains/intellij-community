@@ -4,12 +4,12 @@ package com.intellij.model;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-public interface ModelReference {
+public interface SymbolReference {
 
   @NotNull
-  Iterable<? extends ModelResolveResult> resolve(boolean incomplete);
+  Iterable<? extends SymbolResolveResult> resolve(boolean incomplete);
 
-  default boolean references(@NotNull ModelElement target) {
-    return ContainerUtil.or(resolve(false), it -> it.getResolvedElement().equals(target));
+  default boolean references(@NotNull Symbol target) {
+    return ContainerUtil.or(resolve(false), it -> it.getTarget().equals(target));
   }
 }

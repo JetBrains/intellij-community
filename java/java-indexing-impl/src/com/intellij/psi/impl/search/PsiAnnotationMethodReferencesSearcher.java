@@ -5,11 +5,11 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.jvm.JvmClass;
 import com.intellij.lang.jvm.JvmClassKind;
 import com.intellij.lang.jvm.JvmMethod;
-import com.intellij.model.ModelElement;
-import com.intellij.model.ModelReference;
-import com.intellij.model.search.ModelReferenceSearchParameters;
+import com.intellij.model.Symbol;
+import com.intellij.model.SymbolReference;
 import com.intellij.model.search.SearchRequestCollector;
 import com.intellij.model.search.SearchRequestor;
+import com.intellij.model.search.SymbolReferenceSearchParameters;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.psi.PsiAnnotation;
@@ -25,9 +25,9 @@ public class PsiAnnotationMethodReferencesSearcher implements SearchRequestor {
 
   @Override
   public void collectSearchRequests(@NotNull SearchRequestCollector collector) {
-    ModelReferenceSearchParameters parameters = collector.getParameters();
+    SymbolReferenceSearchParameters parameters = collector.getParameters();
 
-    ModelElement refElement = parameters.getTarget();
+    Symbol refElement = parameters.getTarget();
     if (!(refElement instanceof JvmMethod)) return;
 
     JvmMethod method = (JvmMethod)refElement;
@@ -46,7 +46,7 @@ public class PsiAnnotationMethodReferencesSearcher implements SearchRequestor {
   }
 
   @NotNull
-  static Processor<ModelReference> createImplicitDefaultAnnotationMethodConsumer(@NotNull Processor<? super PsiReference> consumer) {
+  static Processor<SymbolReference> createImplicitDefaultAnnotationMethodConsumer(@NotNull Processor<? super PsiReference> consumer) {
     return ReadActionProcessor.wrapInReadAction(reference -> {
       if (reference instanceof PsiJavaCodeReferenceElement) {
         PsiJavaCodeReferenceElement javaReference = (PsiJavaCodeReferenceElement)reference;

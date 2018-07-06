@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
-import com.intellij.model.ModelReference;
+import com.intellij.model.SymbolReference;
 import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.text.StringUtil;
@@ -61,7 +61,7 @@ public class MethodUsagesSearcher extends QueryExecutorBase<PsiReference, Method
     }
 
     if (isValueAnnotation[0]) {
-      Processor<ModelReference> refProcessor = PsiAnnotationMethodReferencesSearcher.createImplicitDefaultAnnotationMethodConsumer(consumer);
+      Processor<SymbolReference> refProcessor = PsiAnnotationMethodReferencesSearcher.createImplicitDefaultAnnotationMethodConsumer(consumer);
       ReferencesSearch.search(aClass, searchScope).forEach((Processor<PsiReference>)refProcessor::process);
     }
 

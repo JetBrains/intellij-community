@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
-import com.intellij.model.ModelElement;
-import com.intellij.model.ModelReference;
+import com.intellij.model.Symbol;
+import com.intellij.model.SymbolReference;
 import com.intellij.model.search.*;
 import com.intellij.psi.search.TextOccurenceProcessor;
 import com.intellij.util.Preprocessor;
@@ -35,35 +35,35 @@ final class SearchRequestCollectorImpl implements SearchRequestCollector {
    */
   private final Map<SearchWordRequest, List<TextOccurenceProcessorProvider>> myDeferredWordRequests = new LinkedHashMap<>();
 
-  private final ModelReferenceSearchParameters myParameters;
-  private final Preprocessor<ModelReference, ModelReference> myPreprocessor;
+  private final SymbolReferenceSearchParameters myParameters;
+  private final Preprocessor<SymbolReference, SymbolReference> myPreprocessor;
 
-  SearchRequestCollectorImpl(@NotNull ModelReferenceSearchParameters parameters,
-                             @NotNull Preprocessor<ModelReference, ModelReference> preprocessor) {
+  SearchRequestCollectorImpl(@NotNull SymbolReferenceSearchParameters parameters,
+                             @NotNull Preprocessor<SymbolReference, SymbolReference> preprocessor) {
     myParameters = parameters;
     myPreprocessor = preprocessor;
   }
 
   @NotNull
   @Override
-  public ModelReferenceSearchParameters getParameters() {
+  public SymbolReferenceSearchParameters getParameters() {
     return myParameters;
   }
 
   @Override
-  public void searchSubQuery(@NotNull Query<? extends ModelReference> subQuery) {
+  public void searchSubQuery(@NotNull Query<? extends SymbolReference> subQuery) {
     searchSubQuery(subQuery, Preprocessor.id());
   }
 
   @Override
-  public <T> void searchSubQuery(@NotNull Query<T> subQuery, @NotNull Preprocessor<ModelReference, T> preprocessor) {
+  public <T> void searchSubQuery(@NotNull Query<T> subQuery, @NotNull Preprocessor<SymbolReference, T> preprocessor) {
     synchronized (lock) {
-      if (subQuery instanceof ModelReferenceSearchQuery) {
+      if (subQuery instanceof SymbolReferenceSearchQuery) {
         // unwrap subQuery into current session
-        ModelReferenceSearchQuery referenceSearchQuery = (ModelReferenceSearchQuery)subQuery;
-        // T is ModelReference, but java can't infer that
+        SymbolReferenceSearchQuery referenceSearchQuery = (SymbolReferenceSearchQuery)subQuery;
+        // T is SymbolReference, but java can't infer that
         //noinspection unchecked
-        Preprocessor<ModelReference, ModelReference> referencePreprocessor = (Preprocessor<ModelReference, ModelReference>)preprocessor;
+        Preprocessor<SymbolReference, SymbolReference> referencePreprocessor = (Preprocessor<SymbolReference, SymbolReference>)preprocessor;
         searchSubQuery(referenceSearchQuery.getBaseQuery(), referencePreprocessor);
         searchParams(referenceSearchQuery.getParameters(), referencePreprocessor);
       }
@@ -75,12 +75,12 @@ final class SearchRequestCollectorImpl implements SearchRequestCollector {
 
   @NotNull
   @Override
-  public SearchTargetRequestor searchTarget(@NotNull ModelElement target) {
+  public SearchTargetRequestor searchTarget(@NotNull Symbol target) {
     return new SearchTargetRequestorImpl(this, target);
   }
 
-  void searchParams(@NotNull ModelReferenceSearchParameters parameters,
-                    @NotNull Preprocessor<ModelReference, ModelReference> preprocessor) {
+  void searchParams(@NotNull SymbolReferenceSearchParameters parameters,
+                    @NotNull Preprocessor<SymbolReference, SymbolReference> preprocessor) {
     synchronized (lock) {
       myParamsRequests.add(new SearchParamsRequest(parameters, Preprocessor.andThen(myPreprocessor, preprocessor)));
     }

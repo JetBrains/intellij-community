@@ -3,7 +3,7 @@ package org.jetbrains.plugins.groovy.findUsages
 
 import com.intellij.lang.jvm.JvmMember
 import com.intellij.lang.jvm.JvmMethod
-import com.intellij.model.ModelElement
+import com.intellij.model.Symbol
 import com.intellij.model.search.OccurenceSearchRequestor
 import com.intellij.model.search.SearchRequestCollector
 import com.intellij.model.search.SearchRequestor
@@ -35,7 +35,7 @@ class GrAliasedImportedElementSearchRequestor : SearchRequestor {
     }
   }
 
-  private class MyProcessor(private val myTarget: ModelElement, private val prefix: String?) : OccurenceSearchRequestor {
+  private class MyProcessor(private val myTarget: Symbol, private val prefix: String?) : OccurenceSearchRequestor {
 
     override fun collectRequests(collector: SearchRequestCollector, element: PsiElement, offsetInElement: Int) {
       if (offsetInElement != 0) return

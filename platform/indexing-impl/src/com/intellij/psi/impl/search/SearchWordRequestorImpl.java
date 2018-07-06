@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
-import com.intellij.model.ModelElement;
+import com.intellij.model.Symbol;
 import com.intellij.model.search.OccurenceSearchRequestor;
 import com.intellij.model.search.SearchWordRequestor;
 import com.intellij.openapi.fileTypes.FileType;
@@ -24,7 +24,7 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
   private FileType[] myFileTypes;
   private boolean myCaseSensitive = true;
   private Short mySearchContext;
-  private ModelElement myTargetHint;
+  private Symbol myTargetHint;
 
   SearchWordRequestorImpl(@NotNull SearchRequestCollectorImpl collector, @NotNull String word) {
     myCollector = collector;
@@ -82,7 +82,7 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
 
   @NotNull
   @Override
-  public SearchWordRequestor setTargetHint(@NotNull ModelElement target) {
+  public SearchWordRequestor setTargetHint(@NotNull Symbol target) {
     myTargetHint = target;
     return this;
   }
@@ -100,7 +100,7 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
   }
 
   @Override
-  public void search(@NotNull ModelElement target) {
+  public void search(@NotNull Symbol target) {
     setTargetHint(target);
     search(processor -> new SingleTargetOccurenceProcessor(target, processor));
   }
@@ -117,7 +117,7 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
     }
 
     String word = requestor.myWord;
-    ModelElement targetHint = requestor.myTargetHint;
+    Symbol targetHint = requestor.myTargetHint;
     short searchContext = requestor.getSearchContext();
     boolean caseSensitive = requestor.myCaseSensitive;
 
