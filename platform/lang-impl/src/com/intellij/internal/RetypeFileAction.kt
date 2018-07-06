@@ -88,7 +88,21 @@ class RetypeSession(private val project: Project, private val editor: Editor, pr
       }
     }
     if (!lookupSelected) {
-      (editor as EditorImpl).type(text[pos++].toString())
+      val c = text[pos]
+      if (c == '\n') {
+        // catch up with previously triggered typed handlers
+        if (syncPositionWithEditor()) {
+          queueNext()
+          return
+        }
+        pos++
+        executeEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+        syncPositionWithEditor()
+      }
+      else {
+        pos++
+        (editor as EditorImpl).type(c.toString())
+      }
     }
     if (pos < text.length) {
       queueNext()
@@ -104,8 +118,10 @@ class RetypeSession(private val project: Project, private val editor: Editor, pr
     }
   }
 
-  private fun syncPositionWithEditor() {
-    while (pos < editor.document.text.length && editor.document.charsSequence[pos] == text[pos]) {
+  private fun syncPositionWithEditor(): Boolean {
+    var result = false
+    while (pos < editor.document.text.length && pos < text.length && editor.document.charsSequence[pos] == text[pos]) {
+      result = true
       completedChars++
       pos++
     }
@@ -114,12 +130,14 @@ class RetypeSession(private val project: Project, private val editor: Editor, pr
     }
     else {
       // unwanted completion, backtrack
+      println("Text has diverged, backtracking. Editor text:\n${editor.document.text}\nBuffer text:\n${text.substring(0, pos)}")
       WriteCommandAction.runWriteCommandAction(project) {
         while (editor.caretModel.offset > pos) {
           executeEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE)
         }
       }
     }
+    return result
   }
 
   private fun executeEditorAction(actionId: String) {
