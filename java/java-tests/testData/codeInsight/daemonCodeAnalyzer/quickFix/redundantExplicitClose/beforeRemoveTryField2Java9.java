@@ -1,4 +1,4 @@
-// "Remove redundant close" "true"
+// "Remove redundant close" "false"
 
 class MyAutoCloseable implements AutoCloseable {
   @Override
@@ -8,9 +8,12 @@ class MyAutoCloseable implements AutoCloseable {
 }
 
 class RemoveTry {
-  public static void main(String[] args) {
-    try(MyAutoCloseable ac = new MyAutoCloseable()) {
+  final MyAutoCloseable ac;
+
+  public void main(RemoveTry other) {
+    try(other.ac) {
       System.out.println("asdasd");
+      this.ac.clo<caret>se();
     }
   }
 }

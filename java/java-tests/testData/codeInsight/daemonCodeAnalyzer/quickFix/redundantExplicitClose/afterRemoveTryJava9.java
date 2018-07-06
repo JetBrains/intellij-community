@@ -8,8 +8,8 @@ class MyAutoCloseable implements AutoCloseable {
 }
 
 class RemoveTry {
-  public static void main(String[] args) {
-    try(MyAutoCloseable ac = new MyAutoCloseable()) {
+  public static void main(MyAutoCloseable ac) {
+    try(ac) {
       System.out.println("asdasd");
     }
   }
