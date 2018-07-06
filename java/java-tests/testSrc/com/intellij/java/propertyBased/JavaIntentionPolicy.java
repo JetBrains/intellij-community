@@ -64,7 +64,8 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.matches("Make .* default") || // can make interface non-functional and its lambdas incorrect
            actionText.startsWith("Unimplement") || // e.g. leaves red references to the former superclass methods
            actionText.equals("Make 'static'") || // from Non-'static' initializer inspection; it does not care if initializer refers instance members
-           actionText.equals("Split into declaration and initialization"); // constant field will not be compile-time constant anymore, so if used in annotation or switch label, a new error will appear
+           actionText.equals("Split into declaration and initialization") || // constant field will not be compile-time constant anymore, so if used in annotation or switch label, a new error will appear
+           actionText.equals("Replace with 'while'"); // TODO: remove when IDEA-195157 is fixed
   }
 
 }
@@ -128,7 +129,7 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
     return actionText.equals("Add clarifying parentheses") ||
            actionText.equals("Remove unnecessary parentheses") ||
            // TODO: fix and remove exception after merging dfa_refactoring branch
-           actionText.equals("Replace with 'null'") ||
+           actionText.equals("Replace with '(true|false|null)'") ||
            // TODO: Remove when IDEA-195015 is fixed
            actionText.equals("Sort content") ||
            actionText.matches("Simplify '\\(+(true|false)\\)+' to \\1") ||
