@@ -16,9 +16,6 @@
 package com.intellij.java.propertyBased;
 
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.intention.IntentionActionDelegate;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -63,8 +60,8 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.startsWith("Create missing 'switch' branches") || // if all existing branches do 'return something', we don't automatically generate compilable code for new branches
            actionText.matches("Make .* default") || // can make interface non-functional and its lambdas incorrect
            actionText.startsWith("Unimplement") || // e.g. leaves red references to the former superclass methods
-           actionText.equals("Make 'static'") || // from Non-'static' initializer inspection; it does not care if initializer refers instance members
-           actionText.equals("Split into declaration and initialization") || // constant field will not be compile-time constant anymore, so if used in annotation or switch label, a new error will appear
+           actionText.equals("Make 'static'") || // from Non-'static' initializer inspection; it does not care if initializer refers instance members, see IDEA-195165
+           actionText.equals("Split into declaration and initialization") || // TODO: remove when IDEA-179081 is fixed
            actionText.equals("Replace with 'while'"); // TODO: remove when IDEA-195157 is fixed
   }
 
@@ -139,30 +136,12 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
            super.shouldSkipIntention(actionText);
   }
 
-  private static boolean shouldSkipByFamilyName(String familyName) {
-    return // int[] x = (new int[] {0}) -- correctly becomes not available
-      familyName.equals("Replace with array initializer expression") ||
-      // if((a && b)) -- extract "a" doesn't work, seems legit, remove parentheses first
+  @Override
+  protected boolean shouldSkipByFamilyName(@NotNull String familyName) {
+    return // if((a && b)) -- extract "a" doesn't work, seems legit, remove parentheses first
       familyName.equals("Extract If Condition") ||
       // TODO: sometimes DFA warning issued for parenthesized expression: fix and remove exception after merging dfa_refactoring branch
       familyName.equals("Simplify boolean expression");
-  }
-
-  @Override
-  public boolean mayInvokeIntention(@NotNull IntentionAction action) {
-    IntentionAction original = action;
-    while (original instanceof IntentionActionDelegate) {
-      original = ((IntentionActionDelegate)original).getDelegate();
-    }
-    String familyName;
-    if (original instanceof QuickFixWrapper) {
-      LocalQuickFix fix = ((QuickFixWrapper)original).getFix();
-      familyName = fix.getFamilyName();
-    }
-    else {
-      familyName = original.getFamilyName();
-    }
-    return !shouldSkipByFamilyName(familyName) && super.mayInvokeIntention(action);
   }
 
   @NotNull

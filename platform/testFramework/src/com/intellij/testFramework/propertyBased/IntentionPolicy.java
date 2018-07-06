@@ -16,6 +16,9 @@
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
@@ -41,13 +44,32 @@ public class IntentionPolicy {
    * </li> 
    */
   public boolean mayInvokeIntention(@NotNull IntentionAction action) {
-    return action.startInWriteAction() && !shouldSkipIntention(action.getText());
+    if (!action.startInWriteAction() || shouldSkipIntention(action.getText())) {
+      return false;
+    }
+    IntentionAction original = action;
+    while (original instanceof IntentionActionDelegate) {
+      original = ((IntentionActionDelegate)original).getDelegate();
+    }
+    String familyName;
+    if (original instanceof QuickFixWrapper) {
+      LocalQuickFix fix = ((QuickFixWrapper)original).getFix();
+      familyName = fix.getFamilyName();
+    }
+    else {
+      familyName = original.getFamilyName();
+    }
+    return shouldSkipByFamilyName(familyName);
   }
 
   protected boolean shouldSkipIntention(@NotNull String actionText) {
     return actionText.startsWith("Typo: Change to...") || // doesn't change file text (starts live template);
            actionText.startsWith("Optimize imports") || // https://youtrack.jetbrains.com/issue/IDEA-173801
            actionText.startsWith("Convert to project line separators"); // changes VFS, not document
+  }
+
+  protected boolean shouldSkipByFamilyName(@NotNull String familyName) {
+    return false;
   }
 
   /**

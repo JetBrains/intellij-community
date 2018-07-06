@@ -169,6 +169,12 @@ public class InvokeIntention extends ActionOnFile {
                                              List<IntentionAction> intentions) {
     if (currentElement == null) return intentions;
     int offset = editor.getCaretModel().getOffset();
+    /*
+     * When start offset of the element exactly equals to offset in the editor, we have a dubious situation
+     * which we'd like to avoid: sometimes intention looks what's on the left of caret, but we add a parenthesis there and things changed.
+     * E.g. "a" + <caret>"b" allows to join plus, but "a" + (<caret>"b") does not, and this looks legit as the intention reacts on plus,
+     * not on literal.
+     */
     List<PsiElement> elementsToWrap = ContainerUtil.filter(myPolicy.getElementsToWrap(currentElement),
                                                            e -> e.getTextRange().getStartOffset() != offset);
     if (elementsToWrap.isEmpty()) return intentions;
