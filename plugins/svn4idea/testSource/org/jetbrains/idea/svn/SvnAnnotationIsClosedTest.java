@@ -87,7 +87,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
 
     refreshChanges();
 
-    imitUpdate(myProject);
+    imitUpdate();
     assertTrue(myIsClosed);
   }
 
@@ -113,7 +113,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     refreshChanges();
     assertFalse(myIsClosed);
 
-    imitUpdate(myProject);
+    imitUpdate();
     assertTrue(myIsClosed);
   }
 
