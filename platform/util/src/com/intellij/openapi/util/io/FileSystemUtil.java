@@ -15,7 +15,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -371,7 +370,7 @@ public class FileSystemUtil {
     }
 
     @Override
-    protected String resolveSymLink(@NotNull String path) throws FileNotFoundException {
+    protected String resolveSymLink(@NotNull String path) {
       path = new File(path).getAbsolutePath();
 
       char drive = Character.toUpperCase(path.charAt(0));
