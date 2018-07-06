@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #include "IdeaWin32.h"
 #include <windows.h>
@@ -26,9 +12,9 @@ static jfieldID timestampID = NULL;
 static jfieldID lengthID = NULL;
 
 #define FILE_INFO_CLASS "com/intellij/openapi/util/io/win32/FileInfo"
-#define BROKEN_SYMLINK_ATTR -1
-#define IS_SET(flags, flag) ((flags & flag) == flag)
-#define FILE_SHARE_ATTRIBUTES (FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE)
+#define BROKEN_SYMLINK_ATTR ((DWORD)-1)
+#define IS_SET(flags, flag) (((flags) & (flag)) == (flag))
+#define FILE_SHARE_ALL (FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE)
 
 static wchar_t* ToWinPath(JNIEnv* env, jstring path, bool dirSuffix);
 static jobject CreateFileInfo(JNIEnv* env, wchar_t* path, bool isDirectory, LPWIN32_FIND_DATAW lpData, jclass aClass);
@@ -101,35 +87,39 @@ JNIEXPORT jstring JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_reso
   }
 
   wchar_t* winPath = ToWinPath(env, path, false);
+  if (winPath == NULL) {
+    return NULL;
+  }
+
+  if (wcsncmp(winPath, L"\\\\?\\UNC\\", 8) == 0) {
+    free(winPath);
+    return path;
+  }
+
   jstring result = path;
 
-  WIN32_FIND_DATAW data;
-  HANDLE h = FindFirstFileW(winPath, &data);
+  HANDLE h = CreateFileW(winPath, 0, FILE_SHARE_ALL, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
   if (h != INVALID_HANDLE_VALUE) {
-    FindClose(h);
-
-    if (IS_SET(data.dwFileAttributes, FILE_ATTRIBUTE_REPARSE_POINT) &&
-        (IS_SET(data.dwReserved0, IO_REPARSE_TAG_SYMLINK) || IS_SET(data.dwReserved0, IO_REPARSE_TAG_MOUNT_POINT))) {
-      HANDLE th = CreateFileW(winPath, 0, FILE_SHARE_ATTRIBUTES, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
-      if (th != INVALID_HANDLE_VALUE) {
-        wchar_t buff[MAX_PATH], * finalPath = buff;
-        DWORD len = __GetFinalPathNameByHandle(th, buff, MAX_PATH, 0);
-        if (len >= MAX_PATH) {
-          finalPath = (wchar_t*)malloc((len + 1) * sizeof(wchar_t));
-          len = finalPath != NULL ? __GetFinalPathNameByHandle(th, finalPath, len, 0) : 0;
-        }
-        if (len > 0) {
-          int prefix = (len > 4 && finalPath[0] == L'\\' && finalPath[1] == L'\\' && finalPath[2] == L'?' && finalPath[3] == L'\\') ? 4 : 0;
-          result = env->NewString((jchar*)finalPath + prefix, len - prefix);
-          if (finalPath != buff) {
-            free(finalPath);
-          }
-        }
-        CloseHandle(th);
-      } else {
-        result = NULL;
+    wchar_t buff[MAX_PATH], *finalPath = buff;
+    DWORD len = __GetFinalPathNameByHandle(h, buff, MAX_PATH, 0);
+    if (len >= MAX_PATH) {
+      finalPath = (wchar_t*)calloc(len + 1, sizeof(wchar_t));
+      len = finalPath != NULL ? __GetFinalPathNameByHandle(h, finalPath, len, 0) : 0;
+    }
+    if (len > 0 && finalPath != NULL) {
+      int prefix = 0;
+      if (len > 8 && wcsncmp(finalPath, L"\\\\?\\UNC\\", 8) == 0) {
+        prefix = 6;
+        finalPath[6] = L'\\';
+      } else if (len > 4 && finalPath[0] == L'\\' && finalPath[1] == L'\\' && finalPath[2] == L'?' && finalPath[3] == L'\\') {
+        prefix = 4;
+      }
+      result = env->NewString((jchar*)finalPath + prefix, len - prefix);
+      if (finalPath != buff) {
+        free(finalPath);
       }
     }
+    CloseHandle(h);
   } else {
     result = NULL;
   }
@@ -167,7 +157,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32
       if (len == maxLen) {
         result = CopyObjectArray(env, result, fileInfoClass, len, maxLen <<= 1);
         if (result == NULL) {
-          goto exit;
+          break;
         }
       }
 
@@ -182,7 +172,6 @@ JNIEXPORT jobjectArray JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32
     }
   }
 
-exit:
   free(winPath);
   FindClose(h);
   return result;
@@ -198,23 +187,48 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 static inline LONGLONG pairToInt64(DWORD lowPart, DWORD highPart);
 
 static wchar_t* ToWinPath(JNIEnv* env, jstring path, bool dirSuffix) {
-  jsize len = env->GetStringLength(path), prefix = 0, suffix = 0;
+  size_t len = (size_t)(env->GetStringLength(path));
   const jchar* jstr = env->GetStringChars(path, NULL);
   while (len > 0 && jstr[len - 1] == L'\\') --len;  // trim trailing separators
-  if (len == 0) return NULL;
-  if (len >= (MAX_PATH - 12)) prefix = 4;  // prefix long paths by UNC marker
-  if (dirSuffix) suffix = 2;
 
-  wchar_t* pathBuf = (wchar_t*)malloc((prefix + len + suffix + 1) * sizeof(wchar_t));
+  if (len == 0) {
+    env->ReleaseStringChars(path, jstr);
+    return NULL;
+  }
+
+  const wchar_t *prefix = L"\\\\?\\";
+  size_t prefixLen = 4, skip = 0, suffixLen = dirSuffix ? 2 : 0;
+  if (len == 2 && jstr[1] == L':') {
+    prefix = L"";
+    prefixLen = skip = 0;
+  } else if (len > 2 && jstr[0] == L'\\' && jstr[1] == L'\\') {
+    prefix = L"\\\\?\\UNC\\";
+    prefixLen = 8;
+    skip = 2;
+  }
+
+  wchar_t* pathBuf = (wchar_t*)calloc(prefixLen + len - skip + suffixLen + 1, sizeof(wchar_t));
   if (pathBuf != NULL) {
-    if (prefix > 0) {
-      wcsncpy_s(pathBuf, prefix + 1, L"\\\\?\\", prefix);
+    if (prefixLen > 0) {
+      wcsncpy_s(pathBuf, prefixLen + 1, prefix, prefixLen);
     }
-    wcsncpy_s(pathBuf + prefix, len + 1, (wchar_t*)jstr, len);
-    if (suffix > 0) {
-      wcsncpy_s(pathBuf + prefix + len, suffix + 1, L"\\*", suffix);
+    wcsncpy_s(pathBuf + prefixLen, len - skip + 1, (wchar_t*)jstr + skip, len - skip);
+    if (suffixLen > 0) {
+      wcsncpy_s(pathBuf + prefixLen + len - skip, suffixLen + 1, L"\\*", suffixLen);
     }
-    pathBuf[prefix + len + suffix] = L'\0';
+    pathBuf[prefixLen + len - skip + suffixLen] = L'\0';
+
+    if (prefixLen > 0) {
+      DWORD normLen = GetFullPathNameW(pathBuf, 0, NULL, NULL);
+      if (normLen > 0) {
+        wchar_t* normPathBuf = (wchar_t*)calloc(normLen, sizeof(wchar_t));
+        if (normPathBuf != NULL) {
+          GetFullPathNameW(pathBuf, normLen, normPathBuf, NULL);
+          free(pathBuf);
+          pathBuf = normPathBuf;
+        }
+      }
+    }
   }
 
   env->ReleaseStringChars(path, jstr);
@@ -237,7 +251,7 @@ static jobject CreateFileInfo(JNIEnv* env, wchar_t* path, bool isDirectory, LPWI
       if (isDirectory) {
         // trim '*' and append file name
         size_t dirLen = wcslen(path) - 1, nameLen = wcslen(lpData->cFileName), fullLen = dirLen + nameLen + 1;
-        fullPath = (wchar_t*)malloc(fullLen * sizeof(wchar_t));
+        fullPath = (wchar_t*)calloc(fullLen, sizeof(wchar_t));
         if (fullPath == NULL) {
           return NULL;
         }
@@ -246,7 +260,7 @@ static jobject CreateFileInfo(JNIEnv* env, wchar_t* path, bool isDirectory, LPWI
       }
 
       // read reparse point target attributes
-      HANDLE h = CreateFileW(fullPath, 0, FILE_SHARE_ATTRIBUTES, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+      HANDLE h = CreateFileW(fullPath, 0, FILE_SHARE_ALL, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
       if (h != INVALID_HANDLE_VALUE) {
         BY_HANDLE_FILE_INFORMATION targetData;
         if (GetFileInformationByHandle(h, &targetData)) {
