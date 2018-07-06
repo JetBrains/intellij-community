@@ -502,6 +502,8 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     finally {
       LOG.info("START INDEX SHUTDOWN");
       try {
+        PersistentIndicesConfiguration.saveConfiguration();
+        
         for(VirtualFile file:myChangedFilesCollector.getAllFilesToUpdate()) {
           if (!file.isValid()) {
             removeDataFromIndicesForFile(Math.abs(getIdMaskingNonIdBasedFile(file)), file);
@@ -2381,6 +2383,9 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
     protected void prepare() {
       mySerializationManagerEx = SerializationManagerEx.getInstanceEx();
       File indexRoot = PathManager.getIndexRoot();
+
+      PersistentIndicesConfiguration.loadConfiguration();
+      
       final File corruptionMarker = new File(indexRoot, CORRUPTION_MARKER_NAME);
       currentVersionCorrupted = IndexInfrastructure.hasIndices() && corruptionMarker.exists();
       if (currentVersionCorrupted) {
@@ -2389,6 +2394,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
         // serialization manager is initialized before and use removed index root so we need to reinitialize it
         mySerializationManagerEx.reinitializeNameStorage();
         ID.reinitializeDiskStorage();
+        PersistentIndicesConfiguration.saveConfiguration();
         FileUtil.delete(corruptionMarker);
       }
     }
