@@ -469,6 +469,10 @@
     <keyboard-shortcut first-keystroke="meta E"/>
   </action>
 
+  <action id="ChangesView.SetDefault">
+    <keyboard-shortcut first-keystroke="control SPACE" />
+  </action>
+
   <action id="ShowNavBar">
     <keyboard-shortcut first-keystroke="meta UP"/>
     <keyboard-shortcut first-keystroke="alt HOME"/>
