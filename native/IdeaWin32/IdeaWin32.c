@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 #include "IdeaWin32.h"
+#include <stdbool.h>
 #include <windows.h>
 
 typedef DWORD (WINAPI *GetFinalPathNameByHandlePtr)(HANDLE, LPCWSTR, DWORD, DWORD);
@@ -16,8 +17,8 @@ static jfieldID lengthID = NULL;
 #define IS_SET(flags, flag) (((flags) & (flag)) == (flag))
 #define FILE_SHARE_ALL (FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE)
 
-static wchar_t* ToWinPath(JNIEnv* env, jstring path, bool dirSuffix);
-static jobject CreateFileInfo(JNIEnv* env, wchar_t* path, bool isDirectory, LPWIN32_FIND_DATAW lpData, jclass aClass);
+static wchar_t* ToWinPath(JNIEnv* env, jstring path, boolean dirSuffix);
+static jobject CreateFileInfo(JNIEnv* env, wchar_t* path, boolean isDirectory, LPWIN32_FIND_DATAW lpData, jclass aClass);
 static jobjectArray CopyObjectArray(JNIEnv* env, jobjectArray src, jclass aClass, jsize count, jsize newSize);
 
 
@@ -26,15 +27,15 @@ static jobjectArray CopyObjectArray(JNIEnv* env, jobjectArray src, jclass aClass
 JNIEXPORT void JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_initIDs(JNIEnv* env, jclass cls) {
   __GetFinalPathNameByHandle = (GetFinalPathNameByHandlePtr)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "GetFinalPathNameByHandleW");
 
-  jclass fileInfoClass = env->FindClass(FILE_INFO_CLASS);
+  jclass fileInfoClass = (*env)->FindClass(env, FILE_INFO_CLASS);
   if (fileInfoClass == NULL) {
     return;
   }
 
-  nameID = env->GetFieldID(fileInfoClass, "name", "Ljava/lang/String;");
-  attributesID = env->GetFieldID(fileInfoClass, "attributes", "I");
-  timestampID = env->GetFieldID(fileInfoClass, "timestamp", "J");
-  lengthID = env->GetFieldID(fileInfoClass, "length", "J");
+  nameID = (*env)->GetFieldID(env, fileInfoClass, "name", "Ljava/lang/String;");
+  attributesID = (*env)->GetFieldID(env, fileInfoClass, "attributes", "I");
+  timestampID = (*env)->GetFieldID(env, fileInfoClass, "timestamp", "J");
+  lengthID = (*env)->GetFieldID(env, fileInfoClass, "length", "J");
 }
 
 JNIEXPORT jobject JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_getInfo0(JNIEnv* env, jobject method, jstring path) {
@@ -50,7 +51,7 @@ JNIEXPORT jobject JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_getI
     return NULL;
   }
 
-  jclass fileInfoClass = env->FindClass(FILE_INFO_CLASS);
+  jclass fileInfoClass = (*env)->FindClass(env, FILE_INFO_CLASS);
   if (fileInfoClass == NULL) {
     return NULL;
   }
@@ -114,7 +115,7 @@ JNIEXPORT jstring JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_reso
       } else if (len > 4 && finalPath[0] == L'\\' && finalPath[1] == L'\\' && finalPath[2] == L'?' && finalPath[3] == L'\\') {
         prefix = 4;
       }
-      result = env->NewString((jchar*)finalPath + prefix, len - prefix);
+      result = (*env)->NewString(env, (jchar*)finalPath + prefix, len - prefix);
       if (finalPath != buff) {
         free(finalPath);
       }
@@ -129,7 +130,7 @@ JNIEXPORT jstring JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_reso
 }
 
 JNIEXPORT jobjectArray JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_listChildren0(JNIEnv* env, jobject method, jstring path) {
-  jclass fileInfoClass = env->FindClass(FILE_INFO_CLASS);
+  jclass fileInfoClass = (*env)->FindClass(env, FILE_INFO_CLASS);
   if (fileInfoClass == NULL) {
     return NULL;
   }
@@ -147,7 +148,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32
   }
 
   jsize len = 0, maxLen = 16;
-  jobjectArray result = env->NewObjectArray(maxLen, fileInfoClass, NULL);
+  jobjectArray result = (*env)->NewObjectArray(env, maxLen, fileInfoClass, NULL);
   if (result != NULL) {
     do {
       if (wcscmp(data.cFileName, L".") == 0 || wcscmp(data.cFileName, L"..") == 0) {
@@ -162,8 +163,8 @@ JNIEXPORT jobjectArray JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32
       }
 
       jobject o = CreateFileInfo(env, winPath, true, &data, fileInfoClass);
-      env->SetObjectArrayElement(result, len++, o);
-      env->DeleteLocalRef(o);
+      (*env)->SetObjectArrayElement(env, result, len++, o);
+      (*env)->DeleteLocalRef(env, o);
     }
     while (FindNextFileW(h, &data));
 
@@ -186,13 +187,13 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 
 static inline LONGLONG pairToInt64(DWORD lowPart, DWORD highPart);
 
-static wchar_t* ToWinPath(JNIEnv* env, jstring path, bool dirSuffix) {
-  size_t len = (size_t)(env->GetStringLength(path));
-  const jchar* jstr = env->GetStringChars(path, NULL);
+static wchar_t* ToWinPath(JNIEnv* env, jstring path, boolean dirSuffix) {
+  size_t len = (size_t)((*env)->GetStringLength(env, path));
+  const jchar* jstr = (*env)->GetStringChars(env, path, NULL);
   while (len > 0 && jstr[len - 1] == L'\\') --len;  // trim trailing separators
 
   if (len == 0) {
-    env->ReleaseStringChars(path, jstr);
+    (*env)->ReleaseStringChars(env, path, jstr);
     return NULL;
   }
 
@@ -231,12 +232,12 @@ static wchar_t* ToWinPath(JNIEnv* env, jstring path, bool dirSuffix) {
     }
   }
 
-  env->ReleaseStringChars(path, jstr);
+  (*env)->ReleaseStringChars(env, path, jstr);
 
   return pathBuf;
 }
 
-static jobject CreateFileInfo(JNIEnv* env, wchar_t* path, bool isDirectory, LPWIN32_FIND_DATAW lpData, jclass aClass) {
+static jobject CreateFileInfo(JNIEnv* env, wchar_t* path, boolean isDirectory, LPWIN32_FIND_DATAW lpData, jclass aClass) {
   DWORD attributes = lpData->dwFileAttributes;
   LONGLONG timestamp = pairToInt64(lpData->ftLastWriteTime.dwLowDateTime, lpData->ftLastWriteTime.dwHighDateTime);
   LONGLONG length = pairToInt64(lpData->nFileSizeLow, lpData->nFileSizeHigh);
@@ -279,34 +280,34 @@ static jobject CreateFileInfo(JNIEnv* env, wchar_t* path, bool isDirectory, LPWI
     }
   }
 
-  jobject o = env->AllocObject(aClass);
+  jobject o = (*env)->AllocObject(env, aClass);
   if (o == NULL) {
     return NULL;
   }
 
-  jstring fileName = env->NewString((jchar*)lpData->cFileName, (jsize)wcslen(lpData->cFileName));
+  jstring fileName = (*env)->NewString(env, (jchar*)lpData->cFileName, (jsize)wcslen(lpData->cFileName));
   if (fileName == NULL) {
     return NULL;
   }
 
-  env->SetObjectField(o, nameID, fileName);
-  env->SetIntField(o, attributesID, attributes);
-  env->SetLongField(o, timestampID, timestamp);
-  env->SetLongField(o, lengthID, length);
+  (*env)->SetObjectField(env, o, nameID, fileName);
+  (*env)->SetIntField(env, o, attributesID, attributes);
+  (*env)->SetLongField(env, o, timestampID, timestamp);
+  (*env)->SetLongField(env, o, lengthID, length);
 
   return o;
 }
 
 static jobjectArray CopyObjectArray(JNIEnv* env, jobjectArray src, jclass aClass, jsize count, jsize newSize) {
-  jobjectArray dst = env->NewObjectArray(newSize, aClass, NULL);
+  jobjectArray dst = (*env)->NewObjectArray(env, newSize, aClass, NULL);
   if (dst != NULL) {
     for (jsize i = 0; i < count; i++) {
-      jobject o = env->GetObjectArrayElement(src, i);
-      env->SetObjectArrayElement(dst, i, o);
-      env->DeleteLocalRef(o);
+      jobject o = (*env)->GetObjectArrayElement(env, src, i);
+      (*env)->SetObjectArrayElement(env, dst, i, o);
+      (*env)->DeleteLocalRef(env, o);
     }
   }
-  env->DeleteLocalRef(src);
+  (*env)->DeleteLocalRef(env, src);
   return dst;
 }
 
