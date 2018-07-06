@@ -4,10 +4,13 @@ package com.intellij.platform.onair.index;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.platform.onair.storage.api.Address;
+import com.intellij.platform.onair.storage.api.Novelty;
+import com.intellij.platform.onair.storage.api.Storage;
+import com.intellij.platform.onair.tree.BTree;
+import com.intellij.platform.onair.tree.ByteUtils;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.IdFilter;
@@ -21,11 +24,6 @@ import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.InlineKeyDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import gnu.trove.TIntHashSet;
-import com.intellij.platform.onair.storage.api.Address;
-import com.intellij.platform.onair.storage.api.Novelty;
-import com.intellij.platform.onair.storage.api.Storage;
-import com.intellij.platform.onair.tree.BTree;
-import com.intellij.platform.onair.tree.ByteUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,15 +33,15 @@ import java.util.concurrent.ExecutionException;
 
 public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
 
-  private final static HashFunction HASH = Hashing.goodFastHash(128);
-
   private final KeyDescriptor<Key> myKeyDescriptor;
+  private final boolean myInlineKeys;
+
   private final DataExternalizer<Value> myValueExternalizer;
   private final Novelty myNovelty;
   public final LoadingCache<Key, CompositeValueContainer<Value>> myCache;
   public final BTree myTree;
   // public final BTree myHashToVirtualFile;
-  public final BTree myKeysInternary; // TODO: internary is not properly shared
+  public final BTree myKeysInternary;
   private final Object lockObject = new Object();
 
   public BTreeIndexStorage(@NotNull KeyDescriptor<Key> keyDescriptor,
@@ -57,22 +55,22 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
     myNovelty = novelty;
     myKeyDescriptor = keyDescriptor;
     myValueExternalizer = valueExternalizer;
-    int keySize = (keyDescriptor instanceof InlineKeyDescriptor ? 4 : 16) + 4;
+    myInlineKeys = keyDescriptor instanceof InlineKeyDescriptor;
 
     if (head != null) {
-      myTree = BTree.load(storage, keySize, head.data);
+      myTree = BTree.load(storage, 8, head.data);
       // myHashToVirtualFile = BTree.load(storage, 4, head.hashToVirtualFile);
     }
     else {
-      myTree = BTree.create(novelty, storage, keySize);
+      myTree = BTree.create(novelty, storage, 8);
       // myHashToVirtualFile = BTree.create(novelty, storage, 4);
     }
-    if (!(keyDescriptor instanceof InlineKeyDescriptor)) {
+    if (!myInlineKeys) {
       if (head != null) {
-        myKeysInternary = BTree.load(storage, 16, head.internary);
+        myKeysInternary = BTree.load(storage, 4, head.internary);
       }
       else {
-        myKeysInternary = BTree.create(novelty, storage, 16);
+        myKeysInternary = BTree.create(novelty, storage, 4);
       }
     }
     else {
@@ -96,12 +94,12 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
               throw new RuntimeException(e);
             }
 
-            if (myKeyDescriptor instanceof InlineKeyDescriptor<?>) {
+            if (myInlineKeys) {
               int keyInt = ((InlineKeyDescriptor<Key>)myKeyDescriptor).toInt(key);
-              byte[] resKey = new byte[4 + 4];
-              ByteUtils.writeUnsignedInt(keyInt ^ 0x80000000, resKey, 4);
-              setR(resKey, R);
-              myTree.put(novelty, resKey, valueBytes.toByteArray(), true);
+              byte[] serializedKey = new byte[4 + 4];
+              ByteUtils.writeUnsignedInt(keyInt ^ 0x80000000, serializedKey, 4);
+              setR(serializedKey, R);
+              myTree.put(novelty, serializedKey, valueBytes.toByteArray(), true);
             }
             else {
               BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
@@ -112,13 +110,18 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
                 throw new RuntimeException(e);
               }
               byte[] keyBytes = stream.toByteArray();
-              byte[] res = new byte[16 + 4];
-              byte[] keyHashBytes = HASH.hashBytes(keyBytes).asBytes();
-              System.arraycopy(keyHashBytes, 0, res, 4, 16);
-              setR(res, R);
 
-              myTree.put(novelty, res, valueBytes.toByteArray(), true);
-              myKeysInternary.put(novelty, keyHashBytes, keyBytes, false);
+              final byte[] serializedKey = new byte[4 + 4];
+              int keyInt = myKeyDescriptor.getHashCode(key);
+              ByteUtils.writeUnsignedInt(keyInt ^ 0x80000000, serializedKey, 4);
+              setR(serializedKey, R);
+
+              myTree.put(novelty, serializedKey, valueBytes.toByteArray(), true);
+
+              final byte[] hashKey = Arrays.copyOfRange(serializedKey, 4, 8);
+              // intern based on 128 bit hash happens on BTree value level
+              // TODO: consider incorporating it into the novelty (to save space on indexing)
+              myKeysInternary.put(novelty, hashKey, keyBytes, false);
             }
           }
         }
@@ -126,7 +129,13 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
       .build(new CacheLoader<Key, CompositeValueContainer<Value>>() {
         @Override
         public CompositeValueContainer<Value> load(@NotNull Key key) {
-          final byte[] keyBytes = toTreeKey(key);
+          final byte[] keyBytes;
+          if (myInlineKeys) {
+            keyBytes = toIntKey(key);
+          }
+          else {
+            keyBytes = toHashIntKey(key);
+          }
           DeltaValueContainer<Value> delta = new DeltaValueContainer<>();
           synchronized (lockObject) {
             setR(keyBytes, R);
@@ -163,22 +172,15 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
 
   @Override
   public boolean processKeys(@NotNull Processor<Key> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter) {
-    // TODO: pass by StorageException instead of assert
-    return myTree.forEach(myNovelty, (key, value) -> processor.process(extractKey(key)));
-  }
-
-  private Key extractKey(byte[] keyHash) {
-    if (myKeyDescriptor instanceof InlineKeyDescriptor) {
-      return ((InlineKeyDescriptor<Key>)myKeyDescriptor).fromInt((int)(ByteUtils.readUnsignedInt(keyHash, 4) ^ 0x80000000));
-    }
-    else {
-      byte[] keyBytes = myKeysInternary.get(myNovelty, Arrays.copyOfRange(keyHash, 4, 20));
-      try {
-        assert keyBytes != null;
-        return myKeyDescriptor.read(new DataInputStream(new ByteArrayInputStream(keyBytes)));
+    synchronized (lockObject) {
+      myCache.invalidateAll(); // force all data from cache to the BTree like in VfsAwareMapIndexStorage
+      // TODO: pass by StorageException instead of assert
+      if (myInlineKeys) {
+        return myTree.forEach(myNovelty, (key, value) -> processor.process(extractIntKey(key)));
       }
-      catch (IOException e) {
-        throw new RuntimeException(e);
+      else {
+        // TODO: merge this in a more efficient way
+        return myTree.forEach(myNovelty, (key, value) -> processor.process(extractKey(key)));
       }
     }
   }
@@ -241,28 +243,36 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
 
   }
 
-  private byte[] toTreeKey(Key k) {
-    if (myKeyDescriptor instanceof InlineKeyDescriptor<?>) {
-      int key = ((InlineKeyDescriptor<Key>)myKeyDescriptor).toInt(k);
-      byte[] res = new byte[4 + 4];
-      ByteUtils.writeUnsignedInt(key ^ 0x80000000, res, 4);
-      return res;
+  private Key extractIntKey(byte[] keyHash) {
+    return ((InlineKeyDescriptor<Key>)myKeyDescriptor).fromInt((int)(ByteUtils.readUnsignedInt(keyHash, 4) ^ 0x80000000));
+  }
+
+  private Key extractKey(byte[] keyHash) {
+    byte[] keyBytes = myKeysInternary.get(myNovelty, Arrays.copyOfRange(keyHash, 4, 8));
+    try {
+      assert keyBytes != null;
+      return myKeyDescriptor.read(new DataInputStream(new ByteArrayInputStream(keyBytes)));
     }
-    else {
-      BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
-      try {
-        myKeyDescriptor.save(new DataOutputStream(stream), k);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-      byte[] res = new byte[16 + 4];
-      HASH.hashBytes(stream.getInternalBuffer(), 0, stream.size()).writeBytesTo(res, 4, 16);
-      return res;
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
   }
 
-  private void setR(byte[] key, int R) {
+  private byte[] toIntKey(Key key) {
+    int intKey = ((InlineKeyDescriptor<Key>)myKeyDescriptor).toInt(key);
+    byte[] res = new byte[4 + 4];
+    ByteUtils.writeUnsignedInt(intKey ^ 0x80000000, res, 4);
+    return res;
+  }
+
+  private byte[] toHashIntKey(Key key) {
+    int intKey = myKeyDescriptor.getHashCode(key);
+    byte[] res = new byte[4 + 4];
+    ByteUtils.writeUnsignedInt(intKey ^ 0x80000000, res, 4);
+    return res;
+  }
+
+  private static void setR(byte[] key, int R) {
     ByteUtils.writeUnsignedInt(R ^ 0x80000000, key, 0);
   }
 
