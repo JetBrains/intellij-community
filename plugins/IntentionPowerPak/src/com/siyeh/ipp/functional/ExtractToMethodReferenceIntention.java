@@ -28,6 +28,7 @@ import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
@@ -93,7 +94,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
     if (lambdaExpression != null) {
       PsiCodeBlock body = RefactoringUtil.expandExpressionLambdaToCodeBlock(lambdaExpression);
 
-      PsiClass targetClass = PsiTreeUtil.getParentOfType(lambdaExpression, PsiClass.class);
+      PsiClass targetClass = ClassUtils.getContainingClass(lambdaExpression);
       if (targetClass == null) return;
       PsiElement[] elements = body.getStatements();
 
