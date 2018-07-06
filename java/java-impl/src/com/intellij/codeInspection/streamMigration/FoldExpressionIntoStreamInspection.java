@@ -79,8 +79,8 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
         if (!StreamApiUtil.isSupportedStreamElement(left.getType()) || !ExpressionUtils.isSafelyRecomputableExpression(left)) {
           return Collections.emptyList();
         }
-        if (operands[0] instanceof PsiBinaryExpression) {
-          PsiBinaryExpression binOp = (PsiBinaryExpression)operands[0];
+        PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(operands[0]), PsiBinaryExpression.class);
+        if (binOp != null) {
           if (ComparisonUtils.isComparison(binOp) &&
               (left == binOp.getLOperand() && ExpressionUtils.isSafelyRecomputableExpression(binOp.getROperand())) ||
               (left == binOp.getROperand() && ExpressionUtils.isSafelyRecomputableExpression(binOp.getLOperand()))) {
