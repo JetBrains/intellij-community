@@ -306,6 +306,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
                                           HashSet<PsiElement> reportedAnchors,
                                           DataFlowInstructionVisitor visitor) {
     visitor.sameValueAssignments().forEach(expr -> {
+      expr = PsiUtil.skipParenthesizedExprDown(expr);
       if(!reportedAnchors.add(expr)) return;
       PsiAssignmentExpression assignment = PsiTreeUtil.getParentOfType(expr, PsiAssignmentExpression.class);
       PsiElement context = PsiTreeUtil.getParentOfType(expr, PsiForStatement.class, PsiClassInitializer.class);
