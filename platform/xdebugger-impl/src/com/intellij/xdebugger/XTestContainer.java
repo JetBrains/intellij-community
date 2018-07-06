@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger;
 
 import com.intellij.openapi.util.Pair;
@@ -42,7 +40,7 @@ public class XTestContainer<T> {
   }
 
   public Pair<List<T>, String> waitFor(long timeoutMs) {
-    return waitFor(timeoutMs, (semaphore, timeout) -> XDebuggerTestUtil.waitFor(myFinished, timeout));
+    return waitFor(timeoutMs, (semaphore, timeout) -> XDebuggerTestHelper.waitFor(myFinished, timeout));
   }
 
   public Pair<List<T>, String> waitFor(long timeoutMs, BiFunction<Semaphore, Long, Boolean> waitFunction) {
