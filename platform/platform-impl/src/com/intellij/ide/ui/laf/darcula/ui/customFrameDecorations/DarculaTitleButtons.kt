@@ -24,7 +24,7 @@ open class DarculaTitleButtons constructor(myCloseAction: Action,
     }
   }
 
-  private val baseStyle = ComponentStyle<JComponent> {
+  private val baseStyle = ComponentStyle.ComponentStyleBuilder<JComponent> {
     isOpaque = false
     border = JBUI.Borders.empty()
   }.apply {
@@ -38,7 +38,7 @@ open class DarculaTitleButtons constructor(myCloseAction: Action,
     }
   }
 
-  private val activeCloseStyle = ComponentStyle<JButton> {
+  val closeStyleBuilder = ComponentStyle.ComponentStyleBuilder<JButton> {
     isOpaque = false
     border = JBUI.Borders.empty()
     icon = AllIcons.Windows.CloseActive
@@ -54,12 +54,12 @@ open class DarculaTitleButtons constructor(myCloseAction: Action,
       icon = AllIcons.Windows.CloseHover
     }
   }
+  private val activeCloseStyle = closeStyleBuilder.build()
 
-  private val inactiveCloseStyle = activeCloseStyle.clone().apply {
-    updateDefault(){
+  private val inactiveCloseStyle = closeStyleBuilder
+    .updateDefault() {
       icon = AllIcons.Windows.CloseInactive
-    }
-  }
+    }.build()
 
   protected val panel = JPanel(MigLayout("filly, ins 0, gap 0, hidemode 3, novisualpadding"))
 
@@ -117,7 +117,7 @@ open class DarculaTitleButtons constructor(myCloseAction: Action,
     clone.updateState(ComponentStyleState.PRESSED) {
       this.icon = hoverIcon
     }
-    return clone
+    return clone.build()
   }
 
   protected fun createButton(accessibleName: String, action: Action): JButton {

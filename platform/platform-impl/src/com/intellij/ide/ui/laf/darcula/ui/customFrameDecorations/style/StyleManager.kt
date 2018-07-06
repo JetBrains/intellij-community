@@ -10,7 +10,7 @@ class StyleManager {
   companion object {
     fun <T : JComponent> applyStyle(component: T, style: ComponentStyle<T>) {
       removeStyle(component)
-      style.applyStyleSnapshot(component)
+      style.applyStyle(component)
     }
 
     fun <T : JComponent> removeStyle(component: T) {

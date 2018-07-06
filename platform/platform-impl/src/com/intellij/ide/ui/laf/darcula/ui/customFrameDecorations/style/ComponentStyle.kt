@@ -10,47 +10,12 @@ import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
-class ComponentStyle<T : JComponent>(val default: Properties) {
-  constructor(init: Properties.() -> Unit) : this(Properties().apply { init() })
-
+class ComponentStyle<T : JComponent>private constructor(private val default: Properties, private val styleMap: HashMap<ComponentStyleState, Properties>) {
   companion object {
     const val ENABLED_PROPERTY = "enabled"
   }
 
-  private val styleMap: HashMap<ComponentStyleState, Properties> = HashMap()
-
-  fun style(state: ComponentStyleState, init: Properties.() -> Unit) {
-    val prop = Properties()
-    prop.init()
-    styleMap[state] = prop
-  }
-
-  fun updateDefault(init: Properties.() -> Unit) {
-    val prop = Properties()
-    prop.init()
-    default.updateBy(prop)
-  }
-
-  fun updateState(state: ComponentStyleState, init: Properties.() -> Unit) {
-    val prop = Properties()
-    prop.init()
-    styleMap[state]?.updateBy(prop)
-    if (styleMap[state] == null) {
-      styleMap[state] = prop
-    }
-  }
-
-  fun clone(): ComponentStyle<T> {
-    val style = ComponentStyle<T>(default.clone())
-
-    for ((k, v) in styleMap) {
-      style.styleMap[k] = v.clone()
-    }
-
-    return style
-  }
-
-  internal fun applyStyleSnapshot(component: T) {
+  internal fun applyStyle(component: T) {
     val base = StyleProperty.getPropertiesSnapshot(component)
 
     val componentState = ComponentState(base).apply {
@@ -102,6 +67,53 @@ class ComponentStyle<T : JComponent>(val default: Properties) {
       component.removeMouseListener(mouseListener)
     }
     updateStyle(component, componentState)
+  }
+
+  class ComponentStyleBuilder<T : JComponent>(val default: Properties) {
+    constructor(init: Properties.() -> Unit) : this(Properties().apply { init() })
+
+    private val styleMap: HashMap<ComponentStyleState, Properties> = HashMap()
+
+    fun style(state: ComponentStyleState, init: Properties.() -> Unit): ComponentStyleBuilder<T> {
+      val prop = Properties()
+      prop.init()
+      styleMap[state] = prop
+      return this
+    }
+
+    fun updateDefault(init: Properties.() -> Unit): ComponentStyleBuilder<T> {
+      val prop = Properties()
+      prop.init()
+      default.updateBy(prop)
+      return this
+    }
+
+    fun updateState(state: ComponentStyleState, init: Properties.() -> Unit): ComponentStyleBuilder<T> {
+      val prop = Properties()
+      prop.init()
+      styleMap[state]?.updateBy(prop)
+      if (styleMap[state] == null) {
+        styleMap[state] = prop
+      }
+      return this
+    }
+
+    fun clone(): ComponentStyleBuilder<T> {
+      val csb = ComponentStyleBuilder<T>(default.clone())
+      for ((k, v) in styleMap) {
+        csb.styleMap[k] = v.clone()
+      }
+      return csb
+    }
+
+    fun build(): ComponentStyle<T> {
+      val stm = HashMap<ComponentStyleState, Properties>()
+      for ((k, v) in styleMap) {
+        stm[k] = v.clone()
+      }
+
+      return ComponentStyle<T>(default.clone(), stm)
+    }
   }
 
   class ComponentState(val base: Properties) {
