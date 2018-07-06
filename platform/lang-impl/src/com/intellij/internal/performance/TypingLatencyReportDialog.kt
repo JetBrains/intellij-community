@@ -8,9 +8,12 @@ import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.fileChooser.FileChooserFactory
+import com.intellij.openapi.fileChooser.FileSaverDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.JBSplitter
 import com.intellij.ui.components.JBBox
@@ -19,6 +22,7 @@ import com.intellij.ui.treeStructure.Tree
 import com.intellij.unscramble.AnalyzeStacktraceUtil
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.tree.TreeUtil
+import java.awt.event.ActionEvent
 import javax.swing.*
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
@@ -77,27 +81,22 @@ class TypingLatencyReportDialog(
         if (value == null) return
         val obj = (value as DefaultMutableTreeNode).userObject
         if (obj is FileTypeLatencyRecord) {
-          append(obj.fileType.name)
           icon = obj.fileType.icon
-          appendLatencyRecord(obj.totalLatency)
+          append(formatLatency(obj.fileType.name, obj.totalLatency))
         }
         else if (obj is Pair<*, *>) {
           val pair = obj as Pair<String, LatencyRecord>
-          append(pair.first)
-          appendLatencyRecord(pair.second)
+          append(formatLatency(pair.first, pair.second))
         }
       }
 
-      private fun appendLatencyRecord(latencyRecord: LatencyRecord) {
-        append(" - avg ")
-        append(latencyRecord.averageLatency.toString())
-        append("ms, max ")
-        append(latencyRecord.maxLatency.toString())
-        append("ms")
-      }
     }
     TreeUtil.expandAll(reportList)
     return JBScrollPane(reportList)
+  }
+
+  private fun formatLatency(action: String, latencyRecord: LatencyRecord): String {
+    return "$action - avg ${latencyRecord.averageLatency} ms, max ${latencyRecord.maxLatency} ms"
   }
 
   private fun createThreadDumpBrowser(): JComponent {
@@ -136,7 +135,36 @@ class TypingLatencyReportDialog(
     nextThreadDumpButton.isEnabled = currentThreadDump < threadDumps.size - 1
   }
 
+  private fun formatReportAsText(): String {
+    return buildString {
+      for (row in latencyMap.values.sortedBy { it.fileType.name }) {
+        appendln(formatLatency(row.fileType.name, row.totalLatency))
+        appendln("Actions:")
+        for (actionLatencyRecord in row.actionLatencyRecords.entries.sortedByDescending { it.value.averageLatency }) {
+          appendln("  ${formatLatency(actionLatencyRecord.key, actionLatencyRecord.value)}")
+        }
+        appendln()
+        if (threadDumps.isNotEmpty()) {
+          appendln("Thread dumps:")
+          for (threadDump in threadDumps) {
+            appendln(threadDump)
+            appendln("-".repeat(40))
+          }
+        }
+      }
+    }
+  }
+
   override fun createActions(): Array<Action> {
-    return arrayOf(okAction)
+    return arrayOf(ExportToFileAction(), okAction)
+  }
+
+  private inner class ExportToFileAction : AbstractAction("Export to File") {
+    override fun actionPerformed(e: ActionEvent) {
+      val descriptor = FileSaverDescriptor("Export Typing Latency Report", "File name:", "txt")
+      val dialog = FileChooserFactory.getInstance().createSaveFileDialog(descriptor, contentPane)
+      val virtualFileWrapper = dialog.save(null, "typing-latency.txt") ?: return
+      FileUtil.writeToFile(virtualFileWrapper.file, formatReportAsText())
+    }
   }
 }
