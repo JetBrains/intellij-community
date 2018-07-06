@@ -348,7 +348,7 @@ public class GitBranchUtil {
   }
 
   @NotNull
-  public static <T extends GitReference> List<T> sortBranchesByName(Collection<T> branches) {
+  public static <T extends GitReference> List<T> sortBranchesByName(@NotNull Collection<T> branches) {
     return branches.stream()
                    .sorted(Comparator.comparing(GitReference::getFullName, NaturalComparator.INSTANCE))
                    .collect(Collectors.toList());
