@@ -230,7 +230,7 @@ public class PluginManagerConfigurableNew
   @Override
   public JComponent createComponent() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setMinimumSize(new Dimension(JBUI.scale(580), -1));
+    panel.setMinimumSize(new JBDimension(580, 380));
 
     DefaultActionGroup actions = new DefaultActionGroup();
     actions.add(new DumbAwareAction("Manage Plugin Repositories...") {
