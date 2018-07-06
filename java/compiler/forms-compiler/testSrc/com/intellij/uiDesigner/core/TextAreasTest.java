@@ -20,6 +20,8 @@ import junit.framework.TestCase;
 import javax.swing.*;
 import java.awt.*;
 
+import static com.intellij.uiDesigner.core.SpansTest.setDefaults;
+
 public final class TextAreasTest extends TestCase {
   /**
    * label   |    label
@@ -71,10 +73,13 @@ public final class TextAreasTest extends TestCase {
     final JPanel panel = new JPanel(new GridLayoutManager(2,2, new Insets(0,0,0,0), 11, 0));
 
     final JTextField field1 = new JTextField();
+    setDefaults(field1);
     field1.setPreferredSize(new Dimension(15,20));
     final JTextField field2 = new JTextField();
+    setDefaults(field2);
     field2.setPreferredSize(new Dimension(15,20));
     final JTextField field3 = new JTextField();
+    setDefaults(field3);
     field3.setPreferredSize(new Dimension(100,20));
 
     panel.add(field1, new GridConstraints(0,0,1,1,GridConstraints.ANCHOR_CENTER,GridConstraints.FILL_HORIZONTAL,
@@ -90,5 +95,5 @@ public final class TextAreasTest extends TestCase {
 
     assertEquals(100, panel.getPreferredSize().width);
   }
-  
+
 }
