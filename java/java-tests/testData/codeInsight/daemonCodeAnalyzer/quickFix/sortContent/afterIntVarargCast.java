@@ -7,6 +7,6 @@ public class Main {
   }
 
   void test() {
-    foo(1, 4, 3,<caret> (int) 1);
+    foo(1, (int) 1, 3, 4);
   }
 }

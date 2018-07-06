@@ -4,6 +4,6 @@ import java.util.*;
 
 public class Main {
   private void test() {
-    new String[]{("aaa"), "bbb", (String) "ccc"};
+    new int[]{-1, 1, ((2)), 3, 4, -(-12)};
   }
 }

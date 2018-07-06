@@ -91,7 +91,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
 
     @Override
     public boolean isSuitableEntryElement(@NotNull PsiElement element) {
-      PsiLiteralExpression expression = tryCast(element, PsiLiteralExpression.class);
+      PsiExpression expression = tryCast(element, PsiExpression.class);
       if (expression == null) return false;
       return ExpressionUtils.computeConstantExpression(expression) instanceof String;
     }
@@ -106,7 +106,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
   private static class IntLiteralSortingStrategy implements SortingStrategy {
     @Override
     public boolean isSuitableEntryElement(@NotNull PsiElement element) {
-      PsiLiteralExpression expression = tryCast(element, PsiLiteralExpression.class);
+      PsiExpression expression = tryCast(element, PsiExpression.class);
       if (expression == null) return false;
       return ExpressionUtils.computeConstantExpression(expression) instanceof Integer;
     }
