@@ -155,14 +155,6 @@ public class GitBranchUtil {
     return tags;
   }
 
-  /**
-   * Get tracked branch of the given branch
-   */
-  @Nullable
-  public static String getTrackedBranchName(Project project, VirtualFile root, String branchName) throws VcsException {
-    return GitConfigUtil.getValue(project, root, trackedBranchKey(branchName));
-  }
-
   @NotNull
   private static String trackedBranchKey(String branchName) {
     return "branch." + branchName + ".merge";
