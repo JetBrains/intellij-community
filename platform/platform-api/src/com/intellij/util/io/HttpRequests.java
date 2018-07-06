@@ -216,6 +216,7 @@ public final class HttpRequests {
     private ConnectionTuner myTuner;
     private final ConnectionTuner myInternalTuner;
     private UntrustedCertificateStrategy myUntrustedCertificateStrategy = null;
+    public boolean myThrowStatusCodeException = true;
 
     private RequestBuilderImpl(@NotNull String url, @Nullable ConnectionTuner internalTuner) {
       myUrl = url;
@@ -305,6 +306,13 @@ public final class HttpRequests {
     @Override
     public RequestBuilder untrustedCertificateStrategy(@NotNull UntrustedCertificateStrategy strategy) {
       myUntrustedCertificateStrategy = strategy;
+      return this;
+    }
+
+    @NotNull
+    @Override
+    public RequestBuilder throwStatusCodeException(boolean shouldThrow) {
+      myThrowStatusCodeException = shouldThrow;
       return this;
     }
 
@@ -485,13 +493,15 @@ public final class HttpRequests {
         result = processor.process(request);
       }
 
-      URLConnection connection = request.myConnection;
-      if (connection instanceof HttpURLConnection && ((HttpURLConnection)connection).getRequestMethod().equals("POST")) {
-        // getResponseCode is not checked on connect for POST, because write must be performed before read
-        HttpURLConnection urlConnection = (HttpURLConnection)connection;
-        int responseCode = urlConnection.getResponseCode();
-        if (responseCode >= 400) {
-          throwHttpStatusError(urlConnection, request, builder, responseCode);
+      if (builder.myThrowStatusCodeException) {
+        URLConnection connection = request.myConnection;
+        if (connection instanceof HttpURLConnection && ((HttpURLConnection)connection).getRequestMethod().equals("POST")) {
+          // getResponseCode is not checked on connect for POST, because write must be performed before read
+          HttpURLConnection urlConnection = (HttpURLConnection)connection;
+          int responseCode = urlConnection.getResponseCode();
+          if (responseCode >= 400) {
+            throwHttpStatusError(urlConnection, request, builder, responseCode);
+          }
         }
       }
       return result;
@@ -579,7 +589,9 @@ public final class HttpRequests {
           }
         }
 
-        return throwHttpStatusError(httpURLConnection, request, builder, responseCode);
+        if(builder.myThrowStatusCodeException) {
+          throwHttpStatusError(httpURLConnection, request, builder, responseCode);
+        }
       }
 
       return connection;
@@ -588,7 +600,7 @@ public final class HttpRequests {
     throw new IOException(IdeBundle.message("error.connection.failed.redirects"));
   }
 
-  private static URLConnection throwHttpStatusError(HttpURLConnection connection, RequestImpl request, RequestBuilderImpl builder, int responseCode) throws IOException {
+  private static void throwHttpStatusError(HttpURLConnection connection, RequestImpl request, RequestBuilderImpl builder, int responseCode) throws IOException {
     String message = null;
     if (builder.myIsReadResponseOnError) {
       message = HttpUrlConnectionUtil.readString(connection.getErrorStream(), connection);
