@@ -38,7 +38,7 @@ abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
     println("Writing indices to ${storage.baseFile.absolutePath}")
 
     storage.use {
-      val map = HashMap<HashCode, Pair<String, Value>>()
+      val map = HashMap<HashCode, String>()
 
       for (file in roots) {
         println("Processing files in root ${file.path}")
@@ -57,7 +57,7 @@ abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
 
   private fun indexFile(file: VirtualFile,
                         hashing: FileContentHashing,
-                        map: HashMap<HashCode, Pair<String, Value>>,
+                        map: MutableMap<HashCode, String>,
                         storage: PersistentHashMap<HashCode, Value>,
                         stats: Stats): Boolean {
     try {
@@ -77,13 +77,12 @@ abstract class IndexGenerator<Value>(private val indexStorageFilePath: String) {
             stats.indexed.incrementAndGet()
 
             if (CHECK_HASH_COLLISIONS) {
-              map[hashCode] = Pair(fileContent.contentAsText.toString(), value)
+              map[hashCode] = fileContent.contentAsText.toString()
             }
           }
           else {
-            TestCase.assertEquals(item.first,
-                                  fileContent.contentAsText.toString())
-            TestCase.assertTrue(value == item.second)
+            TestCase.assertEquals(item, fileContent.contentAsText.toString())
+            TestCase.assertTrue(storage.get(hashCode) == value)
           }
         }
         else {
