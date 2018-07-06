@@ -14,7 +14,7 @@ import javax.accessibility.AccessibleContext
 import javax.security.auth.Destroyable
 import javax.swing.*
 
-open class DarculaTitleButtons constructor(private val myCloseAction: Action,
+open class DarculaTitleButtons constructor(myCloseAction: Action,
                                            private val myHelpAction: HelpAction) : Destroyable {
   companion object {
     fun create(myCloseAction: Action, myHelpAction: HelpAction): DarculaTitleButtons {
@@ -104,7 +104,6 @@ open class DarculaTitleButtons constructor(private val myCloseAction: Action,
     panel.add(component, "growy, wmin ${JBUI.scale(38)}, hmin ${JBUI.scale(28)}")
   }
 
-
   protected fun getStyle(icon: Icon, hoverIcon : Icon): ComponentStyle<JComponent> {
     val clone = baseStyle.clone()
     clone.updateDefault {
@@ -120,7 +119,6 @@ open class DarculaTitleButtons constructor(private val myCloseAction: Action,
     }
     return clone
   }
-
 
   protected fun createButton(accessibleName: String, action: Action): JButton {
     val button = StyleProperty.BasicButton()

@@ -4,56 +4,20 @@ package com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.style
 import java.awt.MouseInfo
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
+import java.awt.event.MouseListener
 import java.beans.PropertyChangeEvent
+import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
 class ComponentStyle<T : JComponent>(val default: Properties) {
   constructor(init: Properties.() -> Unit) : this(Properties().apply { init() })
 
+  companion object {
+    const val ENABLED_PROPERTY = "enabled"
+  }
+
   private val styleMap: HashMap<ComponentStyleState, Properties> = HashMap()
-
-  private class ComponentState(val base: Properties) {
-    var hovered = false
-    var pressed = false
-  }
-
-  private fun createListener(component: T, componentState: ComponentState) = object : MouseAdapter() {
-    override fun mouseReleased(e: MouseEvent) {
-      componentState.pressed = false
-      updateStyle()
-    }
-
-    override fun mouseEntered(e: MouseEvent) {
-      componentState.hovered = true
-      updateStyle()
-    }
-
-    override fun mouseExited(e: MouseEvent) {
-      componentState.hovered = false
-      updateStyle()
-    }
-
-    override fun mousePressed(e: MouseEvent) {
-      componentState.pressed = true
-      updateStyle()
-    }
-
-    private fun updateStyle() {
-      updateStyle(component, componentState)
-    }
-  }
-
-  fun clone(): ComponentStyle<T> {
-    val style = ComponentStyle<T>(default.clone())
-
-    for ((k, v) in styleMap) {
-      style.styleMap[k] = v.clone()
-    }
-
-    return style
-  }
-
 
   fun style(state: ComponentStyleState, init: Properties.() -> Unit) {
     val prop = Properties()
@@ -76,6 +40,30 @@ class ComponentStyle<T : JComponent>(val default: Properties) {
     }
   }
 
+  fun clone(): ComponentStyle<T> {
+    val style = ComponentStyle<T>(default.clone())
+
+    for ((k, v) in styleMap) {
+      style.styleMap[k] = v.clone()
+    }
+
+    return style
+  }
+
+  internal fun applyStyleSnapshot(component: T) {
+    val base = StyleProperty.getPropertiesSnapshot(component)
+
+    val componentState = ComponentState(base).apply {
+      hovered = isMouseOver(component)
+      pressed = false
+    }
+
+    val styleListener = StyleComponentListener(component, this, componentState)
+    component.addPropertyChangeListener(ENABLED_PROPERTY, styleListener)
+
+    checkState(component, componentState, styleListener)
+  }
+
   private fun isMouseOver(component: T): Boolean {
     val location = MouseInfo.getPointerInfo()?.location
     if (location != null) {
@@ -85,42 +73,29 @@ class ComponentStyle<T : JComponent>(val default: Properties) {
     return false
   }
 
-  internal fun applyStyleSnapshot(component: T): RemoveStyleListener {
-    val base = StyleProperty.getPropertiesSnapshot(component)
-    val baseClone = base.clone().updateBy(default)
-    baseClone.applyTo(component)
+  fun updateStyle(component: T, componentState: ComponentState) {
+    val properties = componentState.base.clone()
+    properties.updateBy(default)
 
-    val componentState = ComponentState(baseClone).apply {
-      hovered = isMouseOver(component)
-      pressed = false
+    if (!component.isEnabled) {
+      if (ComponentStyleState.DISABLED in styleMap) properties.updateBy(styleMap[ComponentStyleState.DISABLED]!!)
+      properties.applyTo(component)
+      return
     }
-    val mouseListener = createListener(component, componentState)
-    val enabledListener: (PropertyChangeEvent) -> Unit = {
-      checkState(component, componentState, mouseListener)
-    }
-    component.addPropertyChangeListener("enabled", enabledListener)
+    if (componentState.hovered && ComponentStyleState.HOVERED in styleMap) properties.updateBy(styleMap[ComponentStyleState.HOVERED]!!)
+    if (componentState.pressed && ComponentStyleState.PRESSED in styleMap) properties.updateBy(styleMap[ComponentStyleState.PRESSED]!!)
 
-    checkState(component, componentState, mouseListener)
-
-    return object : RemoveStyleListener {
-      override fun remove() {
-        base.applyTo(component)
-        component.removeMouseListener(mouseListener)
-        component.removePropertyChangeListener(enabledListener)
-      }
-    }
+    properties.applyTo(component)
   }
 
-  private fun checkState(
-    component: T,
-    componentState: ComponentState,
-    mouseListener: MouseAdapter
-  ) {
+  private fun checkState(component: T, componentState: ComponentState, mouseListener: MouseListener) {
     if (component.isEnabled) {
       if (ComponentStyleState.HOVERED in styleMap || ComponentStyleState.PRESSED in styleMap) {
         componentState.hovered = isMouseOver(component)
         componentState.pressed = false
-        component.addMouseListener(mouseListener)
+
+        if (mouseListener !in component.mouseListeners)
+          component.addMouseListener(mouseListener)
       }
     }
     else {
@@ -129,21 +104,49 @@ class ComponentStyle<T : JComponent>(val default: Properties) {
     updateStyle(component, componentState)
   }
 
-  private fun updateStyle(component: T, componentState: ComponentState) {
-    val properties = componentState.base.clone()
-    if (!component.isEnabled) {
-      if (ComponentStyleState.DISABLED in styleMap) properties.updateBy(styleMap[ComponentStyleState.DISABLED]!!)
-      properties.applyTo(component)
-      return
-    }
-    if (componentState.hovered && ComponentStyleState.HOVERED in styleMap) properties.updateBy(styleMap[ComponentStyleState.HOVERED]!!)
-    if (componentState.pressed && ComponentStyleState.PRESSED in styleMap) properties.updateBy(styleMap[ComponentStyleState.PRESSED]!!)
-    properties.applyTo(component)
+  class ComponentState(val base: Properties) {
+    var hovered = false
+    var pressed = false
   }
-}
 
-interface RemoveStyleListener {
-    fun remove()
+  class StyleComponentListener<T : JComponent>(val component: T,
+                                               val style: ComponentStyle<T>,
+                                               private val componentState: ComponentState) : PropertyChangeListener, MouseAdapter() {
+    override fun mouseReleased(e: MouseEvent) {
+      componentState.pressed = false
+      updateStyle()
+    }
+
+    override fun mouseEntered(e: MouseEvent) {
+      componentState.hovered = true
+      updateStyle()
+    }
+
+    override fun mouseExited(e: MouseEvent) {
+      componentState.hovered = false
+      updateStyle()
+    }
+
+    override fun mousePressed(e: MouseEvent) {
+      componentState.pressed = true
+      updateStyle()
+    }
+
+    private fun updateStyle() {
+      style.updateStyle(component, componentState)
+    }
+
+    override fun propertyChange(evt: PropertyChangeEvent?) {
+      style.checkState(component, componentState, this)
+    }
+
+    fun destroy() {
+      component.removePropertyChangeListener(this)
+      component.removeMouseListener(this)
+
+      componentState.base.applyTo(component)
+    }
+  }
 }
 
 enum class ComponentStyleState {

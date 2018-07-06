@@ -8,17 +8,18 @@ import javax.swing.JComponent
  */
 class StyleManager {
   companion object {
-    private const val STYLE_PROPERTY = "STYLE_PROPERTY"
     fun <T : JComponent> applyStyle(component: T, style: ComponentStyle<T>) {
       removeStyle(component)
-      val removeStyleListener = style.applyStyleSnapshot(component)
-      component.putClientProperty(STYLE_PROPERTY, removeStyleListener)
+      style.applyStyleSnapshot(component)
     }
 
     fun <T : JComponent> removeStyle(component: T) {
-      val removeStyleListener = component.getClientProperty(STYLE_PROPERTY)
-      if (removeStyleListener != null && removeStyleListener is RemoveStyleListener) {
-        removeStyleListener.remove()
+      val propertyChangeListeners = component.getPropertyChangeListeners(ComponentStyle.ENABLED_PROPERTY)
+
+      for (styleComponentListener in propertyChangeListeners) {
+        if(styleComponentListener is ComponentStyle.StyleComponentListener<*>) {
+          styleComponentListener.destroy()
+        }
       }
     }
   }
