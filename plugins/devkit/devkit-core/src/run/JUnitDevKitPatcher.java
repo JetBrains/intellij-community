@@ -25,6 +25,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -38,6 +39,7 @@ import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author anna
@@ -75,9 +77,11 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
     }
 
     if (!vm.hasProperty("idea.load.plugins.id") && module != null && PluginModuleType.isOfType(module)) {
-      String id = DescriptorUtil.getPluginId(module);
-      if (id != null) {
-        vm.defineProperty("idea.load.plugins.id", id);
+      //non-optional dependencies of 'idea.load.plugin.id' are automatically enabled (see com.intellij.ide.plugins.PluginManagerCore.detectReasonToNotLoad)
+      //we need to explicitly add optional dependencies to properly test them
+      List<String> ids = DescriptorUtil.getPluginAndOptionalDependenciesIds(module);
+      if (!ids.isEmpty()) {
+        vm.defineProperty("idea.load.plugins.id", StringUtil.join(ids, ","));
       }
     }
 
