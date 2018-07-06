@@ -118,4 +118,38 @@ public final class AnalysisUastUtil {
 
     return false;
   }
+
+  public static PsiType getContainingMethodOrLambdaReturnType(UCallExpression expression) {
+    UElement parent = expression.getUastParent();
+    while (parent != null) {
+      if (parent instanceof UMethod) {
+        return ((UMethod)parent).getReturnType();
+      }
+      if (parent instanceof ULambdaExpression) {
+        PsiType lambdaType = ((ULambdaExpression)parent).getBody().getExpressionType();
+        if (lambdaType != null) return lambdaType;
+
+        PsiType functionalInterfaceType = ((ULambdaExpression)parent).getFunctionalInterfaceType();
+        if (functionalInterfaceType != null) {
+          return LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
+        }
+
+        // if `functionalInterfaceType` will return proper type for Kotlin (after KT-25297 is fixed) then this part could be dropped
+        UElement lambdaParent = parent.getUastParent();
+        if (lambdaParent instanceof UCallExpression) {
+          PsiParameter lambdaParameter = UastUtils.getParameterForArgument(((UCallExpression)lambdaParent), ((ULambdaExpression)parent));
+          if (lambdaParameter == null) return null;
+          return LambdaUtil.getFunctionalInterfaceReturnType(lambdaParameter.getType());
+        }
+
+        return null;
+      }
+      if (parent instanceof UClass) {
+        return null;
+      }
+      parent = parent.getUastParent();
+    }
+    return null;
+  }
+
 }
