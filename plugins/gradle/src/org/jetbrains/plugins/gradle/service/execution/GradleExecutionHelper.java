@@ -81,7 +81,8 @@ public class GradleExecutionHelper {
   public static BuildEnvironment getBuildEnvironment(ProjectResolverContext projectResolverContext) {
     return getBuildEnvironment(projectResolverContext.getConnection(),
                                projectResolverContext.getExternalSystemTaskId(),
-                               projectResolverContext.getListener());
+                               projectResolverContext.getListener(),
+                               projectResolverContext.getCancellationTokenSource());
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
@@ -297,9 +298,10 @@ public class GradleExecutionHelper {
     Map<String, String> mergedArgs = new LinkedHashMap<>();
     for (String jvmArg : ContainerUtil.concat(jvmArgs, jvmArgsFromIdeSettings)) {
       int i = jvmArg.indexOf('=');
-      if(i <= 0) {
+      if (i <= 0) {
         mergedArgs.put(jvmArg, "");
-      } else {
+      }
+      else {
         mergedArgs.put(jvmArg.substring(0, i), jvmArg.substring(i));
       }
     }
@@ -433,11 +435,20 @@ public class GradleExecutionHelper {
     }
   }
 
+  @Deprecated // use the method with the cancellationTokenSource provided
   @Nullable
   public static GradleVersion getGradleVersion(@NotNull ProjectConnection connection,
                                                @NotNull ExternalSystemTaskId taskId,
                                                @NotNull ExternalSystemTaskNotificationListener listener) {
-    final BuildEnvironment buildEnvironment = getBuildEnvironment(connection, taskId, listener);
+    return getGradleVersion(connection, taskId, listener, null);
+  }
+
+  @Nullable
+  public static GradleVersion getGradleVersion(@NotNull ProjectConnection connection,
+                                               @NotNull ExternalSystemTaskId taskId,
+                                               @NotNull ExternalSystemTaskNotificationListener listener,
+                                               @Nullable CancellationTokenSource cancellationTokenSource) {
+    final BuildEnvironment buildEnvironment = getBuildEnvironment(connection, taskId, listener, cancellationTokenSource);
 
     GradleVersion gradleVersion = null;
     if (buildEnvironment != null) {
@@ -446,11 +457,23 @@ public class GradleExecutionHelper {
     return gradleVersion;
   }
 
+  @Deprecated // use the method with the cancellationTokenSource provided
   @Nullable
   public static BuildEnvironment getBuildEnvironment(@NotNull ProjectConnection connection,
                                                      @NotNull ExternalSystemTaskId taskId,
                                                      @NotNull ExternalSystemTaskNotificationListener listener) {
+    return getBuildEnvironment(connection, taskId, listener, null);
+  }
+
+  @Nullable
+  public static BuildEnvironment getBuildEnvironment(@NotNull ProjectConnection connection,
+                                                     @NotNull ExternalSystemTaskId taskId,
+                                                     @NotNull ExternalSystemTaskNotificationListener listener,
+                                                     @Nullable CancellationTokenSource cancellationTokenSource) {
     ModelBuilder<BuildEnvironment> modelBuilder = connection.model(BuildEnvironment.class);
+    if (cancellationTokenSource != null) {
+      modelBuilder.withCancellationToken(cancellationTokenSource.token());
+    }
     // do not use connection.getModel methods since it doesn't allow to handle progress events
     // and we can miss gradle tooling client side events like distribution download.
     GradleProgressListener gradleProgressListener = new GradleProgressListener(listener, taskId);
