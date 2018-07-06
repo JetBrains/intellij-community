@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.testFramework.LeakHunter;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
@@ -343,6 +344,8 @@ public abstract class PyEnvTestCase {
     // We can stop message capturing even if it was not started as cleanup process.
     stopMessageCapture();
     Disposer.dispose(myDisposable);
+    LeakHunter.checkProjectLeak();
+    LeakHunter.checkNonDefaultProjectLeak();
   }
 
   /**
