@@ -17,14 +17,14 @@ static jfieldID lengthID = NULL;
 #define IS_SET(flags, flag) (((flags) & (flag)) == (flag))
 #define FILE_SHARE_ALL (FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE)
 
-static wchar_t* ToWinPath(JNIEnv* env, jstring path, boolean dirSuffix);
-static jobject CreateFileInfo(JNIEnv* env, wchar_t* path, boolean isDirectory, LPWIN32_FIND_DATAW lpData, jclass aClass);
-static jobjectArray CopyObjectArray(JNIEnv* env, jobjectArray src, jclass aClass, jsize count, jsize newSize);
+static wchar_t *ToWinPath(JNIEnv *env, jstring path, boolean dirSuffix);
+static jobject CreateFileInfo(JNIEnv *env, wchar_t *path, boolean isDirectory, LPWIN32_FIND_DATAW lpData, jclass aClass);
+static jobjectArray CopyObjectArray(JNIEnv *env, jobjectArray src, jclass aClass, jsize count, jsize newSize);
 
 
 // interface methods
 
-JNIEXPORT void JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_initIDs(JNIEnv* env, jclass cls) {
+JNIEXPORT void JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_initIDs(JNIEnv *env, jclass cls) {
   __GetFinalPathNameByHandle = (GetFinalPathNameByHandlePtr)GetProcAddress(GetModuleHandleW(L"kernel32.dll"), "GetFinalPathNameByHandleW");
 
   jclass fileInfoClass = (*env)->FindClass(env, FILE_INFO_CLASS);
@@ -38,8 +38,8 @@ JNIEXPORT void JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_initIDs
   lengthID = (*env)->GetFieldID(env, fileInfoClass, "length", "J");
 }
 
-JNIEXPORT jobject JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_getInfo0(JNIEnv* env, jobject method, jstring path) {
-  wchar_t* winPath = ToWinPath(env, path, false);
+JNIEXPORT jobject JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_getInfo0(JNIEnv *env, jobject method, jstring path) {
+  wchar_t *winPath = ToWinPath(env, path, false);
   if (winPath == NULL) {
     return NULL;
   }
@@ -82,12 +82,12 @@ JNIEXPORT jobject JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_getI
   return result;
 }
 
-JNIEXPORT jstring JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_resolveSymLink0(JNIEnv* env, jobject method, jstring path) {
+JNIEXPORT jstring JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_resolveSymLink0(JNIEnv *env, jobject method, jstring path) {
   if (__GetFinalPathNameByHandle == NULL) {
     return path;  // links not supported
   }
 
-  wchar_t* winPath = ToWinPath(env, path, false);
+  wchar_t *winPath = ToWinPath(env, path, false);
   if (winPath == NULL) {
     return NULL;
   }
@@ -129,13 +129,13 @@ JNIEXPORT jstring JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_reso
   return result;
 }
 
-JNIEXPORT jobjectArray JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_listChildren0(JNIEnv* env, jobject method, jstring path) {
+JNIEXPORT jobjectArray JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32_listChildren0(JNIEnv *env, jobject method, jstring path) {
   jclass fileInfoClass = (*env)->FindClass(env, FILE_INFO_CLASS);
   if (fileInfoClass == NULL) {
     return NULL;
   }
 
-  wchar_t* winPath = ToWinPath(env, path, true);
+  wchar_t *winPath = ToWinPath(env, path, true);
   if (winPath == NULL) {
     return NULL;
   }
@@ -183,9 +183,9 @@ JNIEXPORT jobjectArray JNICALL Java_com_intellij_openapi_util_io_win32_IdeaWin32
 
 static inline LONGLONG pairToInt64(DWORD lowPart, DWORD highPart);
 
-static wchar_t* ToWinPath(JNIEnv* env, jstring path, boolean dirSuffix) {
+static wchar_t *ToWinPath(JNIEnv *env, jstring path, boolean dirSuffix) {
   size_t len = (size_t)((*env)->GetStringLength(env, path));
-  const jchar* jstr = (*env)->GetStringChars(env, path, NULL);
+  const jchar *jstr = (*env)->GetStringChars(env, path, NULL);
   while (len > 0 && jstr[len - 1] == L'\\') --len;  // trim trailing separators
 
   if (len == 0) {
@@ -204,7 +204,7 @@ static wchar_t* ToWinPath(JNIEnv* env, jstring path, boolean dirSuffix) {
     skip = 2;
   }
 
-  wchar_t* pathBuf = (wchar_t*)calloc(prefixLen + len - skip + suffixLen + 1, sizeof(wchar_t));
+  wchar_t *pathBuf = (wchar_t*)calloc(prefixLen + len - skip + suffixLen + 1, sizeof(wchar_t));
   if (pathBuf != NULL) {
     if (prefixLen > 0) {
       wcsncpy_s(pathBuf, prefixLen + 1, prefix, prefixLen);
@@ -218,7 +218,7 @@ static wchar_t* ToWinPath(JNIEnv* env, jstring path, boolean dirSuffix) {
     if (prefixLen > 0) {
       DWORD normLen = GetFullPathNameW(pathBuf, 0, NULL, NULL);
       if (normLen > 0) {
-        wchar_t* normPathBuf = (wchar_t*)calloc(normLen, sizeof(wchar_t));
+        wchar_t *normPathBuf = (wchar_t*)calloc(normLen, sizeof(wchar_t));
         if (normPathBuf != NULL) {
           GetFullPathNameW(pathBuf, normLen, normPathBuf, NULL);
           free(pathBuf);
@@ -233,7 +233,7 @@ static wchar_t* ToWinPath(JNIEnv* env, jstring path, boolean dirSuffix) {
   return pathBuf;
 }
 
-static jobject CreateFileInfo(JNIEnv* env, wchar_t* path, boolean isDirectory, LPWIN32_FIND_DATAW lpData, jclass aClass) {
+static jobject CreateFileInfo(JNIEnv *env, wchar_t *path, boolean isDirectory, LPWIN32_FIND_DATAW lpData, jclass aClass) {
   DWORD attributes = lpData->dwFileAttributes;
   LONGLONG timestamp = pairToInt64(lpData->ftLastWriteTime.dwLowDateTime, lpData->ftLastWriteTime.dwHighDateTime);
   LONGLONG length = pairToInt64(lpData->nFileSizeLow, lpData->nFileSizeHigh);
@@ -244,7 +244,7 @@ static jobject CreateFileInfo(JNIEnv* env, wchar_t* path, boolean isDirectory, L
       timestamp = 0;
       length = 0;
 
-      wchar_t* fullPath = path;
+      wchar_t *fullPath = path;
       if (isDirectory) {
         // trim '*' and append file name
         size_t dirLen = wcslen(path) - 1, nameLen = wcslen(lpData->cFileName), fullLen = dirLen + nameLen + 1;
@@ -294,7 +294,7 @@ static jobject CreateFileInfo(JNIEnv* env, wchar_t* path, boolean isDirectory, L
   return o;
 }
 
-static jobjectArray CopyObjectArray(JNIEnv* env, jobjectArray src, jclass aClass, jsize count, jsize newSize) {
+static jobjectArray CopyObjectArray(JNIEnv *env, jobjectArray src, jclass aClass, jsize count, jsize newSize) {
   jobjectArray dst = (*env)->NewObjectArray(env, newSize, aClass, NULL);
   if (dst != NULL) {
     for (jsize i = 0; i < count; i++) {
