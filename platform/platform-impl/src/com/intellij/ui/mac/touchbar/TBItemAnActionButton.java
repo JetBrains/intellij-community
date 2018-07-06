@@ -27,22 +27,21 @@ class TBItemAnActionButton extends TBItemButton {
 
   private static final Logger LOG = Logger.getInstance(TBItemAnActionButton.class);
 
-  private final AnAction myAnAction;
-  private final String myActionId;
-  private final int myShowMode;
+  private @NotNull AnAction myAnAction;
+  private @Nullable String myActionId;
 
+  private int myShowMode = SHOWMODE_IMAGE_ONLY_IF_PRESENTED;
   private boolean myAutoVisibility = true;
   private boolean myHiddenWhenDisabled = false;
 
   private Component myComponent;
 
-  TBItemAnActionButton(@NotNull String uid, @Nullable ItemListener listener, @NotNull AnAction action, int showMode, ModalityState modality) {
+  TBItemAnActionButton(@NotNull String uid, @Nullable ItemListener listener, @NotNull AnAction action) {
     super(uid, listener);
     myAnAction = action;
-    myShowMode = showMode;
     myActionId = ActionManager.getInstance().getId(myAnAction);
 
-    setAction(this::_performAction, true, modality);
+    setModality(null);
 
     if (action instanceof Toggleable) {
       myFlags |= NSTLibrary.BUTTON_FLAG_TOGGLE;
@@ -53,6 +52,8 @@ class TBItemAnActionButton extends TBItemButton {
   public String toString() { return String.format("%s [%s]", myActionId, myUid); }
 
   TBItemAnActionButton setComponent(Component component/*for DataCtx*/) { myComponent = component; return this; }
+  TBItemAnActionButton setModality(ModalityState modality) { setAction(this::_performAction, true, modality); return this; }
+  TBItemAnActionButton setShowMode(int showMode) { myShowMode = showMode; return this; }
 
   void updateAnAction(Presentation presentation) {
     final DataContext dctx = DataManager.getInstance().getDataContext(_getComponent());
@@ -72,7 +73,8 @@ class TBItemAnActionButton extends TBItemButton {
 
   void setHiddenWhenDisabled(boolean hiddenWhenDisabled) { myHiddenWhenDisabled = hiddenWhenDisabled; }
 
-  AnAction getAnAction() { return myAnAction; }
+  @NotNull AnAction getAnAction() { return myAnAction; }
+  void setAnAction(@NotNull AnAction newAction) { myAnAction = newAction; } // can be safely replaced without setAction (because _performAction will use updated reference to AnAction)
 
   // returns true when visibility changed
   boolean updateVisibility(Presentation presentation) { // called from EDT

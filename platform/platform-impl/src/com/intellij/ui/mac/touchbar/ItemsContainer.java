@@ -3,7 +3,6 @@ package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,9 +36,9 @@ class ItemsContainer {
     return butt;
   }
 
-  @NotNull TBItemAnActionButton addAnActionButton(@NotNull AnAction act, int showMode, ModalityState modality, @Nullable TBItem positionAnchor) {
+  @NotNull TBItemAnActionButton addAnActionButton(@NotNull AnAction act, @Nullable TBItem positionAnchor) {
     final String uid = String.format("%s.anActionButton.%d.%s", myName, myCounter++, ActionManager.getInstance().getId(act));
-    final TBItemAnActionButton butt = new TBItemAnActionButton(uid, myListener, act, showMode, modality);
+    final TBItemAnActionButton butt = new TBItemAnActionButton(uid, myListener, act);
 
     if (positionAnchor != null) {
       final int index = myItems.indexOf(positionAnchor);
@@ -53,8 +52,8 @@ class ItemsContainer {
     return butt;
   }
 
-  @NotNull TBItemAnActionButton addAnActionButton(@NotNull AnAction act, int showMode, ModalityState modality) {
-    return addAnActionButton(act, showMode, modality, null);
+  @NotNull TBItemAnActionButton addAnActionButton(@NotNull AnAction act) {
+    return addAnActionButton(act, null);
   }
 
   @NotNull TBItemGroup addGroup() {
@@ -91,6 +90,29 @@ class ItemsContainer {
     myItems.clear();
   }
 
+  void remove(@Nullable Predicate<TBItem> filter) {
+    if (filter == null) {
+      releaseAll();
+      return;
+    }
+
+    final Iterator<TBItem> i = myItems.iterator();
+    while (i.hasNext()) {
+      @NotNull final TBItem item = i.next();
+      boolean removeGroup = false;
+      if (item instanceof TBItemGroup) {
+        final ItemsContainer group = ((TBItemGroup)item).getContainer();
+        group.remove(filter);
+        if (group.isEmpty())
+          removeGroup = true;
+      }
+      if (removeGroup || filter.test(item)) {
+        item.releaseNativePeer();
+        i.remove();
+      }
+    }
+  }
+
   @NotNull String[] getVisibleIds() {
     final String[] ids = new String[myItems.size()];
     int c = 0;
@@ -105,7 +127,7 @@ class ItemsContainer {
     final ID[] ids = new ID[myItems.size()];
     int c = 0;
     for (TBItem item : myItems) {
-      if (item.myIsVisible)
+      if (item.myIsVisible && !ID.NIL.equals(item.getNativePeer()))
         ids[c++] = item.getNativePeer();
     }
     return c == myItems.size() ? ids : Arrays.copyOf(ids, c);
