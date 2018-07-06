@@ -148,14 +148,13 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
     int baseRevision = -1;
     if (indexHeads != null) {
       Map m = (Map)(((Map)indexHeads.get("inverted-indices")).get(indexId.getName()));
-      final List<String> invertedAddr = (List<String>)m.get("inverted");
-      final List<String> internaryAddr = (List<String>)m.get("internary");
+      final List<String> invertedAddress = (List<String>)m.get("inverted");
+      final List<String> internaryAddress = (List<String>)m.get("internary");
       // final List<String> hashToVirtualFile = (List<String>)m.get("hash-to-file");
-      Address internary = internaryAddr != null ? Address.fromStrings(internaryAddr) : null;
+      Address internary = internaryAddress != null ? Address.fromStrings(internaryAddress) : null;
       address = new BTreeIndexStorage.AddressDescriptor(
         internary,
-        Address.fromStrings(invertedAddr)/*,
-        Address.fromStrings(hashToVirtualFile)*/
+        Address.fromStrings(invertedAddress)/*, Address.fromStrings(hashToVirtualFile)*/
       );
       baseRevision = Integer.parseInt((String)indexHeads.get("revision-int"));
     }
