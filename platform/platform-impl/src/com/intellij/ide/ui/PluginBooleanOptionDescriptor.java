@@ -69,11 +69,12 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
       Collection<PluginId> switchedPlugins = new ArrayList<>(autoSwitchedIds);
       switchedPlugins.add(myId);
       switchPlugins(switchedPlugins, enabled);
-      ourRestartNeededNotifier.showNotification();
 
       if (!autoSwitchedIds.isEmpty()) {
         showAutoSwitchNotification(autoSwitchedIds, enabled);
       }
+
+      ourRestartNeededNotifier.showNotification();
     }
     catch (IOException e) {
       LOG.error("Cannot save plugins state");
