@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector
+import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.project.isDirectoryBased
@@ -30,6 +31,7 @@ import gnu.trove.THashMap
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.util.*
+import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -132,12 +134,14 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
 
   private val isFirstLoadState = AtomicBoolean(true)
 
-  private val stringIdToBeforeRunProvider by lazy {
-    val result = ContainerUtil.newConcurrentMap<String, BeforeRunTaskProvider<*>>()
-    for (provider in BeforeRunTaskProvider.EXTENSION_POINT_NAME.getExtensions(project)) {
-      result.put(provider.id.toString(), provider)
+  private val stringIdToBeforeRunProvider = object : ClearableLazyValue<ConcurrentMap<String, BeforeRunTaskProvider<*>>>() {
+    override fun compute(): ConcurrentMap<String, BeforeRunTaskProvider<*>> {
+      val result = ContainerUtil.newConcurrentMap<String, BeforeRunTaskProvider<*>>()
+      for (provider in BeforeRunTaskProvider.EXTENSION_POINT_NAME.getExtensions(project)) {
+        result.put(provider.id.toString(), provider)
+      }
+      return result
     }
-    result
   }
 
   internal val eventPublisher: RunManagerListener
@@ -501,6 +505,8 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
       templateIdToConfiguration.clear()
       listManager.idToSettings.clear()
       recentlyUsedTemporaries.clear()
+
+      stringIdToBeforeRunProvider.drop()
     }
     workspaceSchemeManager.reload()
     projectSchemeManager.reload()
@@ -718,7 +724,7 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
     if (element != null) {
       for (methodElement in element.getChildren(OPTION)) {
         val key = methodElement.getAttributeValue(NAME_ATTR)
-        val provider = stringIdToBeforeRunProvider.getOrPut(key) { UnknownBeforeRunTaskProvider(key) }
+        val provider = stringIdToBeforeRunProvider.value.getOrPut(key) { UnknownBeforeRunTaskProvider(key) }
         val beforeRunTask = provider.createTask(configuration) ?: continue
         if (beforeRunTask is PersistentStateComponent<*>) {
           // for PersistentStateComponent we don't write default value for enabled, so, set it to true explicitly
