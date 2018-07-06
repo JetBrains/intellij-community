@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
+import com.intellij.testFramework.ApplicationRule;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
@@ -49,6 +50,7 @@ import org.jetbrains.idea.svn.api.Url;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 
 import java.io.File;
 import java.io.IOException;
@@ -64,6 +66,8 @@ import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
 public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
+  @ClassRule
+  public static final ApplicationRule appRule = new ApplicationRule();
 
   protected TempDirTestFixture myTempDirFixture;
   protected Url myRepositoryUrl;
