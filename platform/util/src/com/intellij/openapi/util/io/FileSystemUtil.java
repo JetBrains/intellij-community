@@ -385,7 +385,7 @@ public class FileSystemUtil {
         String subPath = next > 0 ? path.substring(0, next) : path;
         FileAttributes attributes = getAttributes(subPath);
         if (attributes == null) {
-          throw new FileNotFoundException(subPath);
+          return null;
         }
         if (attributes.isSymLink()) {
           return myInstance.resolveSymLink(path);
