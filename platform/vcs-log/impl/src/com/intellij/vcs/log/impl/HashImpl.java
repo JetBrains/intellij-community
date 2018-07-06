@@ -17,6 +17,7 @@ package com.intellij.vcs.log.impl;
 
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -30,8 +31,6 @@ import java.util.Arrays;
 public class HashImpl implements Hash {
 
   private static final int BASE = 16;
-  private static final int SHORT_HASH_LENGTH = 7;
-  public static final int FULL_HASH_LENGTH = 40;
 
   @NotNull
   private final byte[] myData;
@@ -131,11 +130,6 @@ public class HashImpl implements Hash {
   @NotNull
   @Override
   public String toShortString() {
-    return toShortString(asString());
-  }
-
-  @NotNull
-  public static String toShortString(@NotNull String hashString) {
-    return hashString.substring(0, Math.min(hashString.length(), SHORT_HASH_LENGTH));
+    return VcsLogUtil.getShortHash(asString());
   }
 }

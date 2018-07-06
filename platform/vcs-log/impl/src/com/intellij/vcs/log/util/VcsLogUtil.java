@@ -33,6 +33,8 @@ import static java.util.Collections.singletonList;
 
 public class VcsLogUtil {
   public static final int MAX_SELECTED_COMMITS = 1000;
+  public static final int FULL_HASH_LENGTH = 40;
+  private static final int SHORT_HASH_LENGTH = 7;
 
   @NotNull
   public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
@@ -257,5 +259,10 @@ public class VcsLogUtil {
   public static void registerWithParentAndProject(@NotNull Disposable parent, @NotNull Project project, @NotNull Disposable disposable) {
     Disposer.register(parent, () -> Disposer.dispose(disposable));
     Disposer.register(project, disposable);
+  }
+
+  @NotNull
+  public static String getShortHash(@NotNull String hashString) {
+    return hashString.substring(0, Math.min(hashString.length(), SHORT_HASH_LENGTH));
   }
 }
