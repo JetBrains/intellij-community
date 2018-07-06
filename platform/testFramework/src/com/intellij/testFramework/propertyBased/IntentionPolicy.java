@@ -59,7 +59,7 @@ public class IntentionPolicy {
     else {
       familyName = original.getFamilyName();
     }
-    return shouldSkipByFamilyName(familyName);
+    return !shouldSkipByFamilyName(familyName);
   }
 
   protected boolean shouldSkipIntention(@NotNull String actionText) {
