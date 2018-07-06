@@ -50,7 +50,7 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
   }
 
   private void clearWc(final boolean withSvn) throws Exception {
-    myWorkingCopyDir.refresh(false, true);
+    refreshVfs();
     /*VfsUtil.processFilesRecursively(myWorkingCopyDir, new Processor<VirtualFile>() {
       @Override
       public boolean process(VirtualFile file) {
@@ -65,7 +65,7 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
                                       }
                                     });*/
     clearDirInCommand(myWorkingCopyDir, file -> withSvn || ! SvnUtil.isAdminDirectory(file));
-    myWorkingCopyDir.refresh(false, true);
+    refreshVfs();
   }
 
   @Test
@@ -114,7 +114,7 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
       resolver.resolveSelectMineFull();
 
       myTheirs.refresh(false, true);
-      myWorkingCopyDir.refresh(false, true);
+      refreshVfs();
       checkStatusesAfterMineFullResolve(data, conflictIoFile);
       checkFileContents(data, conflictIoFile);
 
@@ -236,7 +236,7 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
       resolver.resolveSelectTheirsFull();
 
     myTheirs.refresh(false, true);
-    myWorkingCopyDir.refresh(false, true);
+      refreshVfs();
       VfsUtil.processFileRecursivelyWithoutIgnored(myTheirs, file -> {
         final String relative = VfsUtil.getRelativePath(file, myTheirs, File.separatorChar);
         File workingFile = new File(myWorkingCopyDir.getPath(), relative);

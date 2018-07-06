@@ -264,13 +264,13 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
       delete(rootFile);
       delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
       assertTrue(!rootFile.exists());
-      myWorkingCopyDir.refresh(false, true);
+      refreshVfs();
 
       runInAndVerifyIgnoreOutput("co", mainUrl);
       final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
       final File innerDir = new File(sourceDir, "inner1/inner2/inner");
       runInAndVerifyIgnoreOutput("co", externalURL, innerDir.getPath());
-      myWorkingCopyDir.refresh(false, true);
+      refreshVfs();
     });
   }
 
@@ -330,7 +330,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
     withDisabledChangeListManager(() -> {
       assertTrue(delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn")));
-      myWorkingCopyDir.refresh(false, true);
+      refreshVfs();
 
       runInAndVerifyIgnoreOutput("co", mainUrl, myWorkingCopyDir.getPath());
       enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
@@ -361,7 +361,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
       delete(rootFile);
       delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
       assertTrue(!rootFile.exists());
-      myWorkingCopyDir.refresh(false, true);
+      refreshVfs();
 
       final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
       runInAndVerifyIgnoreOutput("co", mainUrl, sourceDir.getPath());
@@ -375,7 +375,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
       }
 
       if (updateExternal) {
-        myWorkingCopyDir.refresh(false, true);
+        refreshVfs();
         assertTrue(new File(sourceDir, "external").exists());
       }
     });
