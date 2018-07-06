@@ -374,15 +374,17 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     res.setOpaque(false);
 
     res.add(myNonProjectCB);
-    res.add(Box.createHorizontalStrut(JBUI.scale(19)));
 
     DefaultActionGroup actionGroup = new DefaultActionGroup();
     actionGroup.addAction(new ShowInFindToolWindowAction());
     actionGroup.addAction(new ShowFilterAction());
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("search.everywhere.toolbar", actionGroup, true);
+    toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
+    toolbar.updateActionsImmediately();
     JComponent toolbarComponent = toolbar.getComponent();
     toolbarComponent.setOpaque(false);
+    toolbarComponent.setBorder(JBUI.Borders.empty(2, 18, 2, 9));
     res.add(toolbarComponent);
     return res;
   }
