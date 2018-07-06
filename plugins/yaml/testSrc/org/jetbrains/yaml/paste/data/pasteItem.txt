@@ -1,0 +1,7 @@
+top:
+  someKey:
+  # use double list for clear indent
+  - - key1:
+        subKey: val1
+
+      key2: val2
