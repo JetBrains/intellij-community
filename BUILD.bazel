@@ -106,6 +106,7 @@ iml_project(
         "//tools/adt/idea/build-common:intellij.android.buildCommon",
         "//tools/adt/idea/connection-assistant",
         "//tools/adt/idea/connection-assistant:connection-assistant-test",
+        "//tools/adt/idea/deploy:intellij.android.deploy",
         "//tools/adt/idea/designer:intellij.android.designer",
         "//tools/adt/idea/designer:intellij.android.designer.tests",
         "//tools/adt/idea/jps-plugin:intellij.android.jps",
