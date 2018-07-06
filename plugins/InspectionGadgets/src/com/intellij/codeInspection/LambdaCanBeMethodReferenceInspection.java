@@ -239,7 +239,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
 
   @Nullable
   static MethodReferenceCandidate extractMethodReferenceCandidateExpression(PsiElement body) {
-    final PsiExpression expression = LambdaUtil.extractSingleExpressionFromBody(body);
+    final PsiExpression expression = PsiUtil.skipParenthesizedExprDown(LambdaUtil.extractSingleExpressionFromBody(body));
     if (expression == null) {
       return null;
     }
