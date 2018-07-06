@@ -18,8 +18,12 @@ package com.intellij.testFramework.propertyBased;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author peter
@@ -62,4 +66,28 @@ public class IntentionPolicy {
   public boolean trackComment(PsiComment comment) {
     return true;
   }
+
+  /**
+   * Return list of elements which could be wrapped with {@linkplain #getWrapPrefix() wrap prefix} and
+   * {@linkplain #getWrapSuffix()} wrap suffix} without changing the available intentions.
+   *
+   * @param currentElement an element caret is positioned at
+   * @return list of elements which could be wrapped. One of them will be selected and wrapped and it will be checked that no intentions
+   * changed. Returns an empty list by default which means that no wrapping should be performed
+   */
+  @NotNull
+  public List<PsiElement> getElementsToWrap(@NotNull PsiElement currentElement) {
+    return Collections.emptyList();
+  }
+
+  /**
+   * @return a wrap prefix for {@link #getElementsToWrap(PsiElement)}.
+   */
+  @NotNull
+  public String getWrapPrefix() { return "";}
+
+  /**
+   * @return a wrap suffix for {@link #getElementsToWrap(PsiElement)}.
+   */
+  public String getWrapSuffix() { return "";}
 }

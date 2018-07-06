@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -28,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
@@ -39,13 +41,13 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jetCheck.Generator;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class InvokeIntention extends ActionOnFile {
@@ -86,7 +88,11 @@ public class InvokeIntention extends ActionOnFile {
 
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, getProject());
     assert file != null;
-    IntentionAction intention = chooseIntention(env, getAvailableIntentions(editor, file));
+    List<IntentionAction> intentions = getAvailableIntentions(editor, file);
+    // Do not reuse originally passed offset here, sometimes it's adjusted by Editor
+    PsiElement currentElement = file.findElementAt(editor.getCaretModel().getOffset());
+    intentions = wrapAndCheck(env, editor, currentElement, containsErrorElements, hasErrors, intentions);
+    IntentionAction intention = chooseIntention(env, intentions);
     if (intention == null) return;
 
     String intentionString = intention.toString();
@@ -152,6 +158,74 @@ public class InvokeIntention extends ActionOnFile {
     finally {
       Disposer.dispose(disposable);
     }
+  }
+
+  @NotNull
+  private List<IntentionAction> wrapAndCheck(Environment env,
+                                             Editor editor,
+                                             PsiElement currentElement,
+                                             boolean containsErrorElements,
+                                             boolean hasErrors,
+                                             List<IntentionAction> intentions) {
+    if (currentElement == null) return intentions;
+    int offset = editor.getCaretModel().getOffset();
+    List<PsiElement> elementsToWrap = ContainerUtil.filter(myPolicy.getElementsToWrap(currentElement),
+                                                           e -> e.getTextRange().getStartOffset() != offset);
+    if (elementsToWrap.isEmpty()) return intentions;
+
+    Project project = getProject();
+    Set<String> names = StreamEx.of(intentions).map(IntentionAction::getText).toSet();
+    PsiElement elementToWrap = env.generateValue(Generator.sampledFrom(elementsToWrap).noShrink(), null);
+    String text = elementToWrap.getText();
+    String prefix = myPolicy.getWrapPrefix();
+    String suffix = myPolicy.getWrapSuffix();
+    env.logMessage("Wrap '" + StringUtil.shortenTextWithEllipsis(text.replace('\n', ' '), 50, 10) +
+                   "' with '" + prefix + "..." + suffix + "' and rerun daemon");
+    TextRange range = elementToWrap.getTextRange();
+    PsiFile file = currentElement.getContainingFile();
+    WriteCommandAction.runWriteCommandAction(project, () -> {
+      getDocument().insertString(range.getEndOffset(), suffix);
+      getDocument().insertString(range.getStartOffset(), prefix);
+      editor.getCaretModel().moveToOffset(offset + prefix.length());
+    });
+    List<String> messages = new ArrayList<>();
+
+    boolean newContainsErrorElements = MadTestingUtil.containsErrorElements(getFile().getViewProvider());
+    if (newContainsErrorElements != containsErrorElements) {
+      messages.add(newContainsErrorElements ? "File contains parse errors after wrapping" : "File parse errors were fixed after wrapping");
+    }
+    else {
+      boolean newHasErrors = !highlightErrors(project, editor).isEmpty() || containsErrorElements;
+      if (newHasErrors != hasErrors) {
+        messages
+          .add(newHasErrors ? "File contains errors after wrapping" : "File errors were fixed after wrapping");
+      }
+    }
+    intentions = getAvailableIntentions(editor, file);
+    Set<String> namesWithParentheses = StreamEx.of(intentions).map(IntentionAction::getText).toSet();
+    Set<String> added = new HashSet<>(namesWithParentheses);
+    added.removeAll(names);
+    Set<String> removed = new HashSet<>(names);
+    removed.removeAll(namesWithParentheses);
+    Function<String, String> cleaner = name -> name.replace(prefix, "").replace(suffix, "");
+    // Exclude pairs like "Extract if (!foo)" and "Extract if (!(foo))"
+    for (Iterator<String> iterator = added.iterator(); iterator.hasNext(); ) {
+      String newName = iterator.next();
+      String stripped = cleaner.apply(newName);
+      if (removed.removeIf(n -> cleaner.apply(n).equals(stripped))) {
+        iterator.remove();
+      }
+    }
+    if (!added.isEmpty()) {
+      messages.add("Intentions added after parenthesizing:\n" + StreamEx.of(added).map("\t"::concat).joining("\n"));
+    }
+    if (!removed.isEmpty()) {
+      messages.add("Intentions removed after parenthesizing:\n" + StreamEx.of(removed).map("\t"::concat).joining("\n"));
+    }
+    if (!messages.isEmpty()) {
+      throw new AssertionError(String.join("\n", messages));
+    }
+    return intentions;
   }
 
   private void restoreAfterPotentialPsiTextInconsistency() {

@@ -80,6 +80,14 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
+  public void testParenthesesDontChangeIntention() {
+    MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable());
+    Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
+      file -> Generator.sampledFrom(new InvokeIntention(file, new JavaParenthesesPolicy()), new StripTestDataMarkup(file));
+    PropertyChecker
+      .checkScenarios(actionsOnJavaFiles(fileActions));
+  }
+
   @NotNull
   private Supplier<MadTestingAction> actionsOnJavaFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
     return MadTestingUtil.actionsOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"), fileActions);
