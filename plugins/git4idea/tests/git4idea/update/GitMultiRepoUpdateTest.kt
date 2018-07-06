@@ -133,7 +133,7 @@ class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
     val updateProcess = GitUpdateProcess(project, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), false, true)
     val result = updateProcess.update(UpdateMethod.MERGE)
     assertEquals("Update result is incorrect", GitUpdateResult.NOT_READY, result)
-    assertErrorNotification("Can't update: no current branch", GitUpdateProcess.getDetachedHeadErrorNotificationContent(community))
+    assertErrorNotification("Can't Update: No Current Branch", GitUpdateProcess.getDetachedHeadErrorNotificationContent(community))
   }
 
   private fun updateWithMerge(): GitUpdateResult {
