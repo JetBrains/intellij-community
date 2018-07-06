@@ -253,15 +253,14 @@ mGSTRING_LITERAL = {mDOUBLE_QUOTED_LITERAL} | {mTRIPLE_DOUBLE_QUOTED_LITERAL}
   {mSTRING_ESC}         { return storeToken(GSTRING_CONTENT); }
   \\. | \\              { return storeToken(GSTRING_CONTENT); }
 
-  {mNLS} {
-    resetState();
-    yybeginstate(NLS_AFTER_NLS);
-    return storeToken(NL);
-  }
-
   "$" {
     yybeginstate(IN_GSTRING_DOLLAR);
     return storeToken(T_DOLLAR);
+  }
+
+  [^] {
+    yypushback(1);
+    yyendstate(IN_SINGLE_GSTRING);
   }
 }
 
