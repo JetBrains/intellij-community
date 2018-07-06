@@ -41,8 +41,13 @@ public class NoArgsConstructorProcessor extends AbstractConstructorClassProcesso
   @NotNull
   public Collection<PsiMethod> createNoArgsConstructor(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation) {
     final boolean forceConstructorWithJavaDefaults = isForceConstructor(psiAnnotation);
-    final Collection<PsiField> params = getConstructorFields(psiClass, forceConstructorWithJavaDefaults);
-    return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, forceConstructorWithJavaDefaults, params);
+    return createNoArgsConstructor(psiClass, methodVisibility, psiAnnotation, forceConstructorWithJavaDefaults);
+  }
+
+  @NotNull
+  public Collection<PsiMethod> createNoArgsConstructor(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation, boolean withJavaDefaults) {
+    final Collection<PsiField> params = getConstructorFields(psiClass, withJavaDefaults);
+    return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, withJavaDefaults, params);
   }
 
   private boolean isForceConstructor(@NotNull PsiAnnotation psiAnnotation) {

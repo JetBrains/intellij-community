@@ -90,13 +90,18 @@ public class DataProcessor extends AbstractClassProcessor {
       target.addAll(toStringProcessor.createToStringMethod(psiClass, psiAnnotation));
     }
 
+    final boolean hasConstructorWithoutParamaters;
     final String staticName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor");
     if (shouldGenerateRequiredArgsConstructor(psiClass, staticName)) {
       target.addAll(requiredArgsConstructorProcessor.createRequiredArgsConstructor(psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName));
+      // if there are no required field, it will alredy have a default constructor without parameters
+      hasConstructorWithoutParamaters = requiredArgsConstructorProcessor.getRequiredFields(psiClass).isEmpty();
+    } else {
+      hasConstructorWithoutParamaters = false;
     }
 
-    if (shouldGenerateNoArgsConstructor(psiClass, requiredArgsConstructorProcessor)) {
-      target.addAll(noArgsConstructorProcessor.createNoArgsConstructor(psiClass, PsiModifier.PRIVATE, psiAnnotation));
+    if (!hasConstructorWithoutParamaters && shouldGenerateNoArgsConstructor(psiClass, requiredArgsConstructorProcessor)) {
+      target.addAll(noArgsConstructorProcessor.createNoArgsConstructor(psiClass, PsiModifier.PRIVATE, psiAnnotation, true));
     }
   }
 

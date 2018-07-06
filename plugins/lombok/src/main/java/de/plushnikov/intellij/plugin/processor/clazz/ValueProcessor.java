@@ -97,7 +97,7 @@ public class ValueProcessor extends AbstractClassProcessor {
     }
 
     if (shouldGenerateNoArgsConstructor(psiClass, allArgsConstructorProcessor)) {
-      target.addAll(noArgsConstructorProcessor.createNoArgsConstructor(psiClass, PsiModifier.PRIVATE, psiAnnotation));
+      target.addAll(noArgsConstructorProcessor.createNoArgsConstructor(psiClass, PsiModifier.PRIVATE, psiAnnotation, true));
     }
   }
 

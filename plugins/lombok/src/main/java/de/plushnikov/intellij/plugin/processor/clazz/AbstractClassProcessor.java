@@ -216,6 +216,9 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
   protected boolean shouldGenerateNoArgsConstructor(@NotNull PsiClass psiClass, @NotNull AbstractConstructorClassProcessor argsConstructorProcessor) {
     boolean result = ConfigDiscovery.getInstance().getBooleanLombokConfigProperty(ConfigKey.NO_ARGS_CONSTRUCTOR_EXTRA_PRIVATE, psiClass);
     if (result) {
+      result = !PsiClassUtil.hasSuperClass(psiClass);
+    }
+    if (result) {
       result = PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, NoArgsConstructor.class);
     }
     if (result && PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, AllArgsConstructor.class)) {
@@ -223,9 +226,6 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     }
     if (result && PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, RequiredArgsConstructor.class)) {
       result = argsConstructorProcessor.getRequiredFields(psiClass).isEmpty();
-    }
-    if (result) {
-      result = !PsiClassUtil.hasSuperClass(psiClass);
     }
     return result;
   }
