@@ -149,7 +149,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final EditorComponentImpl myEditorComponent;
   @NotNull private final EditorGutterComponentImpl myGutterComponent;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(true);
-  private long myLastTypedActionTimestamp = -1;
+  private volatile long myLastTypedActionTimestamp = -1;
   private String myLastTypedAction;
 
   private static final Cursor EMPTY_CURSOR;
@@ -3255,6 +3255,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       LatenciometerKt.recordTypingLatency(this, myLastTypedAction, System.currentTimeMillis() - myLastTypedActionTimestamp);
       myLastTypedActionTimestamp = -1;
     }
+  }
+
+  public boolean isProcessingTypedAction() {
+    return myLastTypedActionTimestamp != -1;
   }
 
   void beforeModalityStateChanged() {

@@ -127,6 +127,7 @@
 
 
     <group id="Internal1" text="IDEA Internal Actions" internal="true">
+      <action class="com.intellij.internal.performance.TypingLatencyReportAction" id="TypingLatencyReport" internal="true" text="Typing Latency Report"/>
       <action id="RetypeFile" text="Retype Current File" class="com.intellij.internal.RetypeFileAction"/>
       <separator/>
       <action id="Merge3Files" internal="true" class="com.intellij.openapi.diff.actions.MergeFilesAction"/>

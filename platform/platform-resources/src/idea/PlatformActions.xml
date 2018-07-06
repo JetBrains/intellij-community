@@ -841,7 +841,6 @@
 
       <action internal="true" id="ShowEditorHighlighterTokens" class="com.intellij.openapi.editor.actions.ShowEditorHighlighterTokensAction"
               text="Show Editor Highlighter Tokens"/>
-      <action class="com.intellij.internal.performance.TypingLatencyReportAction" id="TypingLatencyReport" internal="true" text="Typing Latency Report"/>
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
