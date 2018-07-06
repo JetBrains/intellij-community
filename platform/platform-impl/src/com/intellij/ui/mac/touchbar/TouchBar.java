@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.ui.mac.TouchbarDataKeys;
@@ -89,14 +88,22 @@ class TouchBar implements NSTLibrary.ItemCreator {
 
     final String filterPrefix = groupId + "_";
     result.myDefaultOptionalContextName = groupId + "OptionalGroup";
-    BuildUtils.addActionGroupButtons(result.myItems, customizedGroup, null, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY_IF_PRESENTED, filterPrefix, result.myDefaultOptionalContextName, false);
+    final BuildUtils.Customizer customizer = new BuildUtils.Customizer() {
+      @Override
+      public void process(@NotNull BuildUtils.INodeInfo ni, @NotNull TBItemAnActionButton butt) {
+        super.process(ni, butt);
+        if (result.myDefaultOptionalContextName.equals(ni.getParentGroupID()))
+          butt.myOptionalContextName = result.myDefaultOptionalContextName;
+      }
+    };
+    BuildUtils.addActionGroupButtons(result, customizedGroup, filterPrefix, customizer);
     result.selectVisibleItemsToShow();
     return result;
   }
 
   static TouchBar buildFromGroup(@NotNull String touchbarName, @NotNull ActionGroup actions, boolean replaceEsc, boolean emulateESC) {
-    final TouchbarDataKeys.ActionGroupDesc groupDesc = actions.getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
-    if (groupDesc != null && !groupDesc.replaceEsc)
+    final TouchbarDataKeys.ActionDesc groupDesc = actions.getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
+    if (groupDesc != null && !groupDesc.isReplaceEsc())
       replaceEsc = false;
     final TouchBar result = new TouchBar(touchbarName, replaceEsc, false, emulateESC);
     addActionGroup(result, actions);
@@ -104,10 +111,14 @@ class TouchBar implements NSTLibrary.ItemCreator {
   }
 
   static void addActionGroup(TouchBar result, @NotNull ActionGroup actions) {
-    final ModalityState ms = Utils.getCurrentModalityState();
-    final TouchbarDataKeys.ActionGroupDesc groupDesc = actions.getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
-    final int defaultShowMode = groupDesc == null || !groupDesc.showText ? TBItemAnActionButton.SHOWMODE_IMAGE_ONLY_IF_PRESENTED : TBItemAnActionButton.SHOWMODE_IMAGE_TEXT;
-    BuildUtils.addActionGroupButtons(result.myItems, actions, ms, defaultShowMode, null, null, false);
+    final @Nullable ModalityState ms = Utils.getCurrentModalityState();
+    final @Nullable TouchbarDataKeys.ActionDesc groupDesc = actions.getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
+    final BuildUtils.Customizer customizer = new BuildUtils.Customizer(groupDesc, ms);
+    addActionGroup(result, actions, customizer);
+  }
+
+  static void addActionGroup(TouchBar result, @NotNull ActionGroup actions, @NotNull BuildUtils.Customizer customizer) {
+    BuildUtils.addActionGroupButtons(result, actions, null, customizer);
     result.selectVisibleItemsToShow();
   }
 
@@ -124,7 +135,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
 
     TBItem item = myItems.findItem(uid);
     if (item == null) {
-      LOG.error("can't find TBItem with uid '%s'", uid);
+      LOG.error("can't find TBItem with uid '" + uid + "'");
       return ID.NIL;
     }
     // System.out.println("create native peer for item '" + uid + "'");
@@ -132,6 +143,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
   }
 
   ID getNativePeer() { return myNativePeer; }
+  ItemsContainer getItemsContainer() { return myItems; }
 
   void release() {
     myItems.releaseAll();
@@ -148,8 +160,8 @@ class TouchBar implements NSTLibrary.ItemCreator {
   // NOTE: must call 'selectVisibleItemsToShow' after touchbar filling
   //
   @NotNull TBItemButton addButton() { return myItems.addButton(); }
-  @NotNull TBItemAnActionButton addAnActionButton(@NotNull AnAction act, int showMode, ModalityState modality) { return myItems.addAnActionButton(act, showMode, modality); }
-  @NotNull TBItemAnActionButton addAnActionButton(@NotNull AnAction act, int showMode, ModalityState modality, @Nullable TBItem positionAnchor) { return myItems.addAnActionButton(act, showMode, modality, positionAnchor); }
+  @NotNull TBItemAnActionButton addAnActionButton(@NotNull AnAction act) { return myItems.addAnActionButton(act); }
+  @NotNull TBItemAnActionButton addAnActionButton(@NotNull AnAction act, @Nullable TBItem positionAnchor) { return myItems.addAnActionButton(act, positionAnchor); }
   @NotNull TBItemGroup addGroup() { return myItems.addGroup(); }
   @NotNull TBItemScrubber addScrubber() { return myItems.addScrubber(); }
   @NotNull TBItemPopover addPopover(Icon icon, String text, int width, TouchBar expandTB, TouchBar tapAndHoldTB) {
@@ -164,7 +176,15 @@ class TouchBar implements NSTLibrary.ItemCreator {
 
   void setOptionalContextItems(@NotNull ActionGroup actions, @NotNull String contextName) {
     myItems.releaseItems(tbi -> contextName.equals(tbi.myOptionalContextName));
-    BuildUtils.addActionGroupButtons(myItems, actions, null, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY_IF_PRESENTED, null, contextName, true);
+    BuildUtils.addActionGroupButtons(
+      this, actions, null,
+      new BuildUtils.Customizer() {
+        @Override
+        public void process(@NotNull BuildUtils.INodeInfo ni, @NotNull TBItemAnActionButton butt) {
+          super.process(ni, butt);
+          butt.myOptionalContextName = contextName;
+        }
+    });
     selectVisibleItemsToShow();
   }
 
@@ -277,5 +297,5 @@ class SpacingItem extends TBItem {
   @Override
   protected void _updateNativePeer() {} // mustn't be called
   @Override
-  protected ID _createNativePeer() { return null; } // mustn't be called
+  protected ID _createNativePeer() { return ID.NIL; } // mustn't be called
 }
