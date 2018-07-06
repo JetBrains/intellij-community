@@ -34,7 +34,7 @@ import static java.util.Collections.singletonList;
 public class VcsLogUtil {
   public static final int MAX_SELECTED_COMMITS = 1000;
   public static final int FULL_HASH_LENGTH = 40;
-  private static final int SHORT_HASH_LENGTH = 7;
+  private static final int SHORT_HASH_LENGTH = 8;
 
   @NotNull
   public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<VcsRef> refs) {
