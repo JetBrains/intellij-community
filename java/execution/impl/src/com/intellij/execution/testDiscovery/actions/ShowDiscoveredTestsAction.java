@@ -286,13 +286,13 @@ public class ShowDiscoveredTestsAction extends AnAction {
         TestDiscoveryProducer.consumeDiscoveredTests(project, fqn, methodName, frameworkId, (testClass, testMethod, parameter) -> {
           PsiClass[] testClassPsi = {null};
           PsiMethod[] testMethodPsi = {null};
-          ReadAction.run(() -> {
+          ReadAction.run(() -> DumbService.getInstance(project).runWithAlternativeResolveEnabled(() -> {
             testClassPsi[0] = ClassUtil.findPsiClass(PsiManager.getInstance(project), testClass, null, true, scope);
             boolean checkBases = parameter != null; // check bases for parameterized tests
             if (testClassPsi[0] != null) {
               testMethodPsi[0] = ArrayUtil.getFirstElement(testClassPsi[0].findMethodsByName(testMethod, checkBases));
             }
-          });
+          }));
           if (testMethodPsi[0] != null) {
             if (!processor.process(testClassPsi[0], testMethodPsi[0], parameter)) return false;
           }
