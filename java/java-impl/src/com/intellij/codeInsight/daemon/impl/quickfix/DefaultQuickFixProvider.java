@@ -49,8 +49,12 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       PsiReferenceExpression refExpr = (PsiReferenceExpression)ref;
 
       registrar.register(new RenameWrongRefFix(refExpr));
-      if (!ref.isQualified()) {
+      PsiExpression qualifier = ((PsiReferenceExpression)ref).getQualifierExpression();
+      if (qualifier == null) {
         registrar.register(fixRange, new BringVariableIntoScopeFix(refExpr), null);
+      }
+      else {
+        AddTypeCastFix.registerFix(registrar, qualifier, ref, fixRange);
       }
 
       for (IntentionAction action : createVariableActions(refExpr)) {
