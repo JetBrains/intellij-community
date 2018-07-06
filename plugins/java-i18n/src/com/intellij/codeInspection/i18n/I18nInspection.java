@@ -45,7 +45,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -754,7 +753,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
         return isNonNlsCall((PsiMethodCallExpression)grParent, nonNlsTargets);
       }
       else if (grParent instanceof PsiNewExpression) {
-        final PsiElement parentOfNew = grParent.getParent();
+        final PsiElement parentOfNew = PsiUtil.skipParenthesizedExprUp(grParent.getParent());
         if (parentOfNew instanceof PsiLocalVariable) {
           final PsiLocalVariable newVariable = (PsiLocalVariable)parentOfNew;
           if (annotatedAsNonNls(newVariable)) {
