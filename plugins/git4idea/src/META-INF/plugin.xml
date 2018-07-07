@@ -77,7 +77,10 @@
     </group>
 
     <group id="GitRepositoryActions">
-      <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" text="_Branches..." icon="VcsLogIcons.Branch"/>
+      <action id="Git.Branches" class="git4idea.ui.branch.GitBranchesAction" text="_Branches..." icon="VcsLogIcons.Branch">
+        <keyboard-shortcut first-keystroke="alt shift BACK_QUOTE" keymap="$default" />
+        <keyboard-shortcut first-keystroke="control B" keymap="Mac OS X 10.5+"/>
+      </action>
       <action id="Git.Tag" class="git4idea.actions.GitTag" text="Tag..."/>
       <action id="Git.Merge" class="git4idea.actions.GitMerge" text="Merge Changes..." icon="AllIcons.Actions.ShowAsTree"/>
       <action id="Git.Stash" class="git4idea.actions.GitStash" text="Stash Changes..."/>
