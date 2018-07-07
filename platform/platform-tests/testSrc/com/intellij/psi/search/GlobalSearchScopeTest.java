@@ -102,7 +102,23 @@ public class GlobalSearchScopeTest extends PlatformTestCase {
     PsiTestUtil.addContentRoot(getModule(), contentRoot);
     PsiTestUtil.addLibrary(getModule(), libRoot.getPath());
 
-    assertTrue(GlobalSearchScopes.directoryScope(myProject, libRoot, true).isSearchInLibraries());
-    assertTrue(GlobalSearchScopes.directoriesScope(myProject, true, libRoot, contentRoot).isSearchInLibraries());
+    assertTrue(GlobalSearchScopesCore.directoryScope(myProject, libRoot, true).isSearchInLibraries());
+    assertTrue(GlobalSearchScopesCore.directoriesScope(myProject, true, libRoot, contentRoot).isSearchInLibraries());
+  }
+
+  public void testUnionWithEmptyScopeMustNotAffectCompare() {
+    VirtualFile moduleRoot = getTempDir().createTempVDir();
+    PsiTestUtil.addSourceRoot(getModule(), moduleRoot);
+    VirtualFile moduleRoot2 = getTempDir().createTempVDir();
+    PsiTestUtil.addSourceRoot(getModule(), moduleRoot2);
+
+    GlobalSearchScope modScope = getModule().getModuleContentScope();
+    int compare = modScope.compare(moduleRoot, moduleRoot2);
+    assertTrue(compare != 0);
+    GlobalSearchScope union = modScope.uniteWith(GlobalSearchScope.EMPTY_SCOPE);
+    int compare2 = union.compare(moduleRoot, moduleRoot2);
+    assertEquals(compare, compare2);
+
+    assertEquals(modScope.compare(moduleRoot2, moduleRoot), union.compare(moduleRoot2, moduleRoot));
   }
 }
