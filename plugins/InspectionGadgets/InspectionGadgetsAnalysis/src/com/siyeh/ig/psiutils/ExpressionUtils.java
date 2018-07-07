@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2017 Bas Leijdekkers
+ * Copyright 2005-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -486,27 +486,23 @@ public class ExpressionUtils {
     if (!(parent instanceof PsiPolyadicExpression)) {
       return false;
     }
-    final PsiPolyadicExpression polyadicExpression =
-      (PsiPolyadicExpression)parent;
-    if (!JavaTokenType.PLUS.equals(
-      polyadicExpression.getOperationTokenType())) {
+    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)parent;
+    if (!JavaTokenType.PLUS.equals(polyadicExpression.getOperationTokenType())) {
       return false;
     }
     final PsiExpression[] operands = polyadicExpression.getOperands();
     if (operands.length < 2) {
       return false;
     }
-    final int index = ArrayUtil.indexOf(operands, expression, (operand, e) ->
-      operand == e || PsiTreeUtil.isAncestor(operand, e, false));
-    for (int i = 0; i < index; i++) {
-      final PsiType type = operands[i].getType();
+    for (int i = 0; i < operands.length; i++) {
+      final PsiExpression operand = operands[i];
+      if (operand == expression || PsiTreeUtil.isAncestor(operand, expression, false)) {
+        return i == 0 && TypeUtils.isJavaLangString(operands[1].getType());
+      }
+      final PsiType type = operand.getType();
       if (TypeUtils.isJavaLangString(type)) {
         return true;
       }
-    }
-    if (index == 0) {
-      final PsiType type = operands[index + 1].getType();
-      return TypeUtils.isJavaLangString(type);
     }
     return false;
   }
