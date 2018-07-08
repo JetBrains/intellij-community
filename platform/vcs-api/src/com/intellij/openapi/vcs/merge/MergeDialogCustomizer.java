@@ -26,60 +26,70 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 /**
- * Provides custom titles and messages used in MultipleFileMergeDialog and DiffTool invoked from it.
+ * Provides custom titles and messages used in the MultipleFileMergeDialog and DiffTools invoked from it.
  */
 public class MergeDialogCustomizer {
 
   /**
-   * @param files files that have conflicted changes and are shown in the dialog.
-   * @return description that is shows above the list of conflicted files. Null (which is equivalent to empty) by default.
+   * Returns the description that is shown above the list of conflicted files.
+   *
+   * @param files the files that have conflicted changes and are shown in the dialog.
    */
-  @Nullable public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
-    return null;
+  @NotNull
+  public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
+    return "";
   }
 
   /**
-   * @param file file that is merged.
-   * @return title of the merge dialog invoked for a 3-way merge of a file.
+   * Returns the title of the merge dialog invoked for a 3-way merge of a file (after pressing the "Merge" button).
+   *
+   * @param file the file that is being merged.
    */
-  @Nullable public String getMergeWindowTitle(@NotNull VirtualFile file) {
+  @NotNull
+  public String getMergeWindowTitle(@NotNull VirtualFile file) {
     return VcsBundle.message("multiple.file.merge.request.title", FileUtil.toSystemDependentName(file.getPresentableUrl()));
   }
 
   /**
-   * @param file file that is merged.
-   * @return title that is shown above the left panel in the 3-way merge dialog. "Local changes" by default.
+   * Returns the title that is shown above the left panel in the 3-way merge dialog.
+   *
+   * @param file the file that is being merged.
    */
-  @Nullable public String getLeftPanelTitle(@NotNull VirtualFile file) {
+  @NotNull
+  public String getLeftPanelTitle(@NotNull VirtualFile file) {
     return DiffBundle.message("merge.version.title.our");
   }
 
   /**
-   * @param file file that is merged.
-   * @return title that is shown above the center panel in the 3-way merge dialog. "Merge result" by default.
+   * Returns the title that is shown above the center panel in the 3-way merge dialog.
+   *
+   * @param file the file that is being merged.
    */
-  @Nullable public String getCenterPanelTitle(@NotNull VirtualFile file) {
+  @NotNull
+  public String getCenterPanelTitle(@NotNull VirtualFile file) {
     return DiffBundle.message("merge.version.title.base");
   }
 
   /**
-   * @param file           file that is being merged.
-   * @param revisionNumber revision number of the file at the right, can be null if unknown.
-   * @return title that is shown above the right panel in the 3-way merge dialog. "Changes from server" with the revision number by default.
+   * Returns the title that is shown above the right panel in the 3-way merge dialog.
+   *
+   * @param file           the file that is being merged.
+   * @param revisionNumber the revision number of the file at the right. Can be null if unknown.
    */
-  @Nullable public String getRightPanelTitle(@NotNull VirtualFile file, @Nullable VcsRevisionNumber revisionNumber) {
-    if (revisionNumber != null) {
-      return DiffBundle.message("merge.version.title.their.with.revision", revisionNumber.asString());
-    } else {
-      return DiffBundle.message("merge.version.title.their");
-    }
+  @NotNull
+  public String getRightPanelTitle(@NotNull VirtualFile file, @Nullable VcsRevisionNumber revisionNumber) {
+    return revisionNumber != null
+           ? DiffBundle.message("merge.version.title.their.with.revision", revisionNumber.asString())
+           : DiffBundle.message("merge.version.title.their");
   }
 
   /**
-   * @return The title of multiple files merge dialog.
-   * Don't mix with {@link #getMergeWindowTitle(VirtualFile)} which is the title of a 3-way merge dialog displayed for a single file.
+   * Returns the title of the multiple files merge dialog.
+   * <br/><br/>
+   * Don't mix with {@link #getMergeWindowTitle(VirtualFile)} which is the title of the 3-way merge dialog displayed for a single file.
    */
-  @NotNull public String getMultipleFileDialogTitle() {
+  @NotNull
+  public String getMultipleFileDialogTitle() {
     return VcsBundle.message("multiple.file.merge.title");
   }
 }

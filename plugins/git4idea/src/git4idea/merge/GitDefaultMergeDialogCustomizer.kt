@@ -22,7 +22,7 @@ open class GitDefaultMergeDialogCustomizer(
 ) : MergeDialogCustomizer() {
   private val project = gitMergeProvider.project
 
-  override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>): String? {
+  override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>): String {
     val filesByRoot = GitUtil.sortFilesByGitRoot(files)
 
     val mergeBranches = filesByRoot.keys.map { gitMergeProvider.resolveMergeBranch(it) }
@@ -67,7 +67,7 @@ open class GitDefaultMergeDialogCustomizer(
     return super.getMultipleFileMergeDescription(files)
   }
 
-  override fun getLeftPanelTitle(file: VirtualFile): String? {
+  override fun getLeftPanelTitle(file: VirtualFile): String {
     val repo = GitRepositoryManager.getInstance(project).getRepositoryForFile(file)
     if (repo != null) {
       return "<html>" + XmlStringUtil.escapeString(super.getLeftPanelTitle(file)) +
@@ -76,7 +76,7 @@ open class GitDefaultMergeDialogCustomizer(
     return super.getLeftPanelTitle(file)
   }
 
-  override fun getRightPanelTitle(file: VirtualFile, revisionNumber: VcsRevisionNumber?): String? {
+  override fun getRightPanelTitle(file: VirtualFile, revisionNumber: VcsRevisionNumber?): String {
     val repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file)
                      ?: return super.getRightPanelTitle(file, revisionNumber)
 

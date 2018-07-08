@@ -168,16 +168,19 @@ public class GitStashChangesSaver extends GitChangesSaver {
 
   private static class UnstashMergeDialogCustomizer extends MergeDialogCustomizer {
 
+    @NotNull
     @Override
     public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
       return "Uncommitted changes that were stashed before update have conflicts with updated files.";
     }
 
+    @NotNull
     @Override
     public String getLeftPanelTitle(@NotNull VirtualFile file) {
       return getConflictLeftPanelTitle();
     }
 
+    @NotNull
     @Override
     public String getRightPanelTitle(@NotNull VirtualFile file, VcsRevisionNumber revisionNumber) {
       return getConflictRightPanelTitle();

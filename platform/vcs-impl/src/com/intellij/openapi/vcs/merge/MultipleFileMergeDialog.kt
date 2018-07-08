@@ -108,9 +108,9 @@ open class MultipleFileMergeDialog(
   override fun createCenterPanel(): JComponent {
     return panel(LCFlags.disableMagic) {
       val description = mergeDialogCustomizer.getMultipleFileMergeDescription(unresolvedFiles)
-      if (!description.isNullOrBlank()) {
+      if (!description.isBlank()) {
         row {
-          label(description!!)
+          label(description)
         }
       }
 
