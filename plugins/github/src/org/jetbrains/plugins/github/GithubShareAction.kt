@@ -57,7 +57,6 @@ import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.util.GitFileUtils
-import icons.GithubIcons
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.api.GithubApiTaskExecutor
@@ -82,7 +81,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily share project on GitHub", GithubIcons.Github_icon) {
+class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily share project on GitHub", AllIcons.Vcs.Vendors.Github) {
   override fun update(e: AnActionEvent) {
     val project = e.getData(CommonDataKeys.PROJECT)
     e.presentation.isEnabledAndVisible = project != null && !project.isDefault
