@@ -118,6 +118,7 @@ public class SvnRollbackTest extends SvnTestCase {
 
     checkin();
     runAndVerifyStatus("? root" + File.separator + "source" + File.separator + "inner" + File.separator + deepUnverioned.getName());
+    update();
 
     renameFileInCommand(tree.mySourceDir, "newName");
     refreshChanges();
@@ -145,6 +146,7 @@ public class SvnRollbackTest extends SvnTestCase {
     final VirtualFile innerFile = createFileInCommand(inner, "inInner.txt", "kdfjsdisdjiuewjfew wefn w");
     checkin();
     runAndVerifyStatus();
+    update();
 
     editFileInCommand(innerFile, "some content");
     renameFileInCommand(tree.mySourceDir, "newName");
@@ -184,6 +186,7 @@ public class SvnRollbackTest extends SvnTestCase {
     runAndVerifyStatus("? root" + File.separator + "source" + File.separator + "inner" +
                       File.separator + "inner1" + File.separator + "inner2" + File.separator +
                       "inner3" + File.separator + "deep.txt");
+    update();
 
     editFileInCommand(innerFile, "some content");
     final File inner2Before = virtualToIoFile(inner2);
@@ -231,6 +234,7 @@ public class SvnRollbackTest extends SvnTestCase {
     final VirtualFile innerFile = createFileInCommand(inner, "inInner.txt", "kdfjsdisdjiuewjfew wefn w");
     checkin();
     runAndVerifyStatus();
+    update();
 
     final File fileBefore = virtualToIoFile(innerFile);
     setProperty(fileBefore, "abc", "cde");
@@ -385,6 +389,7 @@ public class SvnRollbackTest extends SvnTestCase {
     SvnPropertyService.doAddToIgnoreProperty(vcs, false, new VirtualFile[]{ignored}, groupInfo);
     checkin();
     refreshChanges();
+    update();
 
     assertEquals(FileStatus.IGNORED, changeListManager.getStatus(ignored));
 
