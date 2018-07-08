@@ -544,13 +544,14 @@ public class SvnRollbackTest extends SvnTestCase {
     disableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
 
     deleteFileInCommand(tree.mySourceDir);
-    runAndVerifyStatusSorted(
+    runAndVerifyStatus(
+      "D root" + File.separator + "source",
+      "> moved to root" + File.separator + "target" + File.separator + "source",
+      "D root" + File.separator + "source" + File.separator + "s1.txt",
+      "D root" + File.separator + "source" + File.separator + "s2.txt",
       "! root" + File.separator + "target" + File.separator + "source",
       "! root" + File.separator + "target" + File.separator + "source" + File.separator + "s1.txt",
-      "! root" + File.separator + "target" + File.separator + "source" + File.separator + "s2.txt",
-           "D root" + File.separator + "source",
-           "D root" + File.separator + "source" + File.separator + "s1.txt",
-           "D root" + File.separator + "source" + File.separator + "s2.txt"
+      "! root" + File.separator + "target" + File.separator + "source" + File.separator + "s2.txt"
     );
 
     assertRollbackLocallyDeleted(singletonList(getFilePath(was, true)), emptyList());
