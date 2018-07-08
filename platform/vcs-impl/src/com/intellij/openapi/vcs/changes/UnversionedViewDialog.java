@@ -25,7 +25,7 @@ public class UnversionedViewDialog extends SpecificFilesViewDialog {
     ActionGroup toolbarGroup = getUnversionedToolbarGroup();
 
     ActionUtil.recursiveRegisterShortcutSet(popupGroup, myView, null);
-    EmptyAction.registerWithShortcutSet("ChangesView.DeleteUnversioned", CommonShortcuts.getDelete(), myView);
+    EmptyAction.registerWithShortcutSet(IdeActions.DELETE_UNVERSIONED, CommonShortcuts.getDelete(), myView);
 
     group.add(toolbarGroup);
 

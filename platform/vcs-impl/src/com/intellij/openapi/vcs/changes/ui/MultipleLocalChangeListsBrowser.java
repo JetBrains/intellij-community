@@ -141,6 +141,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
       ActionGroup unversionedGroup = UnversionedViewDialog.getUnversionedPopupGroup();
       result.add(unversionedGroup);
       ActionUtil.recursiveRegisterShortcutSet(unversionedGroup, myViewer, null);
+      EmptyAction.registerWithShortcutSet(IdeActions.DELETE_UNVERSIONED, CommonShortcuts.getDelete(), myViewer);
     }
     else {
       // avoid duplicated actions on toolbar

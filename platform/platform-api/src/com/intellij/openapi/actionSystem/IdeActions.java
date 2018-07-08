@@ -312,6 +312,7 @@ public interface IdeActions {
 
   String CONSOLE_CLEAR_ALL = "ConsoleView.ClearAll";
   String MOVE_TO_ANOTHER_CHANGE_LIST = "ChangesView.Move";
+  String DELETE_UNVERSIONED = "ChangesView.DeleteUnversioned";
 
   String ACTION_RECENT_FILES = "RecentFiles";
   String ACTION_SEARCH_EVERYWHERE = "SearchEverywhere";
