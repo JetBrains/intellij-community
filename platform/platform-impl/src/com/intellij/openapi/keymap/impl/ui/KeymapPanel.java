@@ -654,7 +654,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         final String appId = Utils.getAppId();
         if (appId != null && !appId.isEmpty()) {
           myShowFnInitial = NSDefaults.isShowFnKeysEnabled(appId);
-          myCheckbox = new JCheckBox("Show function keys in Touch Bar", myShowFnInitial);
+          myCheckbox = new JCheckBox("Always show function keys (F1-F12) on the Touch Bar", myShowFnInitial);
         } else
           Logger.getInstance(KeymapPanel.class).error("can't obtain application id from NSBundle");
       }
