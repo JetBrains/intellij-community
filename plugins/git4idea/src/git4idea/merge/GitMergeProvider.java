@@ -472,13 +472,6 @@ public class GitMergeProvider implements MergeProvider2 {
   }
 
   @Override
-  public void mergeDone(@NotNull List<VirtualFile> files) {
-    for (GitRepository repository : GitUtil.getRepositoriesForFiles(myProject, files)) {
-      repository.update();
-    }
-  }
-
-  @Override
   public MergeDialogCustomizer createDefaultMergeDialogCustomizer() {
     return new GitDefaultMergeDialogCustomizer(this);
   }
