@@ -296,8 +296,10 @@ public class TouchBarsManager {
           ed.containerSearch.release();
         }
 
-        ed.containerSearch = new BarContainer(BarType.EDITOR_SEARCH, TouchBar.buildFromGroup("editor_search_" + header, actions, true, true), null, header);
-        ourStack.showContainer(ed.containerSearch);
+        if (actions != null) {
+          ed.containerSearch = new BarContainer(BarType.EDITOR_SEARCH, TouchBar.buildFromGroup("editor_search_" + header, actions, true, true), null, header);
+          ourStack.showContainer(ed.containerSearch);
+        }
       }
     }
   }
