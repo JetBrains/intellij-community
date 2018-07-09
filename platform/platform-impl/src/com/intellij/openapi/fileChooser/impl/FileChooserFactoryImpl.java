@@ -42,16 +42,27 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
     }
   }
 
-  @NotNull
-  @Override
-  public PathChooserDialog createPathChooser(@NotNull FileChooserDescriptor descriptor,
-                                             @Nullable Project project,
-                                             @Nullable Component parent) {
+  @Nullable
+  public static PathChooserDialog createNativePathChooserIfEnabled(@NotNull FileChooserDescriptor descriptor, @Nullable Project project, @Nullable Component parent) {
     if (useNativeMacChooser(descriptor)) {
       return new MacPathChooserDialog(descriptor, parent, project);
     }
     else if (useNativeWinChooser()) {
       return new WinPathChooserDialog(descriptor, parent, project);
+    }
+    else {
+      return null;
+    }
+  }
+
+  @NotNull
+  @Override
+  public PathChooserDialog createPathChooser(@NotNull FileChooserDescriptor descriptor,
+                                             @Nullable Project project,
+                                             @Nullable Component parent) {
+    PathChooserDialog chooser = createNativePathChooserIfEnabled(descriptor, project, parent);
+    if (chooser != null) {
+      return chooser;
     }
     else if (parent != null) {
       return new FileChooserDialogImpl(descriptor, parent, project);
