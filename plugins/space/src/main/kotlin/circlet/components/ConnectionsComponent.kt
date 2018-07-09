@@ -46,9 +46,10 @@ class Connection(val loginModel: LoginModel, connectionLifetime: Lifetime) {
         val server = embeddedServer(Jetty, port, "localhost") {
             routing {
                 get("auth") {
+                    val userId = call.parameters[USER_ID_PARAMETER]!!
                     val token = call.parameters[TOKEN_PARAMETER]!!
 
-                    loginModel.signIn(token, "")
+                    loginModel.signIn(userId, token, "")
 
                     call.respondRedirect("success")
                 }
