@@ -126,7 +126,7 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
     return actionText.equals("Add clarifying parentheses") ||
            actionText.equals("Remove unnecessary parentheses") ||
            // TODO: fix and remove exception after merging dfa_refactoring branch
-           actionText.equals("Replace with '(true|false|null)'") ||
+           actionText.matches("Replace with '(true|false|null)'") ||
            // TODO: Remove when IDEA-195015 is fixed
            actionText.equals("Sort content") ||
            actionText.matches("Simplify '\\(+(true|false)\\)+' to \\1") ||
