@@ -515,7 +515,7 @@ class BaseInterpreterInterface:
         name = attr.split("\t")[-1]
         array = pydevd_vars.eval_in_context(name, self.get_namespace(), self.get_namespace())
         # return pydevd_vars.table_like_struct_to_xml(array, name, roffset, coffset, rows, cols, format)
-        return pydevd_vars.table_like_struct_to_thrift_struct(array, name, roffset, coffset, rows, cols, format)
+        return pydevd_thrift.table_like_struct_to_thrift_struct(array, name, roffset, coffset, rows, cols, format)
 
     def evaluate(self, expression):
         # returns `DebugValue` of evaluated expression
