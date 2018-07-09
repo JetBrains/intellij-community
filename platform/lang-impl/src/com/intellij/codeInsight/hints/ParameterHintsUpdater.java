@@ -155,7 +155,7 @@ public class ParameterHintsUpdater {
         myHintsManager.deleteHint(myEditor, info.inlay, useAnimation);
       }
       else if (action == InlayUpdateInfo.Action.REPLACE) {
-        myHintsManager.replaceHint(myEditor, info.inlay, newText);
+        myHintsManager.replaceHint(myEditor, info.inlay, newText, !myForceImmediateUpdate);
       }
     }
   }
