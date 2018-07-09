@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.impl.view.EditorPainter;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Key;
@@ -208,7 +209,7 @@ public class FoldingModelSupport {
     FoldRegion value = editor.getFoldingModel().addFoldRegion(startOffset, endOffset, PLACEHOLDER);
     if (value != null) {
       value.setExpanded(expanded);
-      value.putUserData(FoldRegion.MUTE_INNER_HIGHLIGHTERS, Boolean.TRUE);
+      EditorPainter.muteInnerHighlighters(value);
     }
     return value;
   }

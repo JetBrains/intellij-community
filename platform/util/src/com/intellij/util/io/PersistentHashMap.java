@@ -447,9 +447,8 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
    * Appends value chunk from specified appender to key's value.
    * Important use note: value externalizer used by this map should process all bytes from DataInput during deserialization and make sure
    * that deserialized value is consistent with value chunks appended.
-   * E.g. Value can be Set of String and individual Strings can be appended with this method for particular key, when {@link #get()} will
+   * E.g. Value can be Set of String and individual Strings can be appended with this method for particular key, when {@link #get(Object)} will
    * be eventually called for the key, deserializer will read all bytes retrieving Strings and collecting them into Set
-   * @throws IOException
    */
   public final void appendData(Key key, @NotNull ValueDataAppender appender) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();

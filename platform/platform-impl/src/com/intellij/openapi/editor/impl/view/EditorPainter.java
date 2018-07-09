@@ -510,7 +510,7 @@ public class EditorPainter implements TextDrawingCallback {
 
   @Nullable
   private TextAttributes getInnerHighlighterAttributes(@NotNull FoldRegion region) {
-    if (Boolean.TRUE.equals(region.getUserData(FoldRegion.MUTE_INNER_HIGHLIGHTERS))) return null;
+    if (areInnerHighlightersMuted(region)) return null;
     List<RangeHighlighterEx> innerHighlighters = new ArrayList<>();
     collectVisibleInnerHighlighters(region, myEditor.getMarkupModel(), innerHighlighters);
     collectVisibleInnerHighlighters(region, myEditor.getFilteredDocumentMarkupModel(), innerHighlighters);
@@ -1047,6 +1047,22 @@ public class EditorPainter implements TextDrawingCallback {
       int width = Math.max(location.myWidth, CARET_DIRECTION_MARK_SIZE);
       myEditor.getContentComponent().repaintEditorComponentExact(x - width, y, width * 2, nominalLineHeight);
     }
+  }
+
+
+  /**
+   * If {@code Boolean.TRUE} value is set for this key on a collapsed fold region (see {@link #putUserData(Key, Object)}),
+   * there will not be a visual indication that region contains certain highlighters inside. By default such indication is added.
+   *
+   * @see RangeHighlighterImpl#VISIBLE_IF_FOLDED
+   */
+  private static final Key<Boolean> MUTE_INNER_HIGHLIGHTERS = Key.create("mute.inner.highlighters");
+
+  public static void muteInnerHighlighters(@NotNull FoldRegion value) {
+    value.putUserData(MUTE_INNER_HIGHLIGHTERS, Boolean.TRUE);
+  }
+  private static boolean areInnerHighlightersMuted(@NotNull FoldRegion region) {
+    return Boolean.TRUE.equals(region.getUserData(MUTE_INNER_HIGHLIGHTERS));
   }
 
   private interface MarginWidthConsumer {
