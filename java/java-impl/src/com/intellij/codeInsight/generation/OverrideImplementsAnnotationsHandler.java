@@ -44,6 +44,10 @@ public interface OverrideImplementsAnnotationsHandler {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  /** Perform post processing on the annotations, such as deleting or renaming or otherwise updating annotations in the override */
+  default void cleanup(PsiModifierListOwner source, @Nullable PsiElement targetClass, PsiModifierListOwner target) {
+  }
+
   static void repeatAnnotationsFromSource(PsiModifierListOwner source, @Nullable PsiElement targetClass, PsiModifierListOwner target) {
     Module module = ModuleUtilCore.findModuleForPsiElement(targetClass != null ? targetClass : target);
     GlobalSearchScope moduleScope = module != null ? GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module) : null;
@@ -64,6 +68,10 @@ public interface OverrideImplementsAnnotationsHandler {
           AddAnnotationPsiFix.addPhysicalAnnotation(annotation, valuePairs, modifierList);
         }
       }
+    }
+
+    for (OverrideImplementsAnnotationsHandler each : Extensions.getExtensions(EP_NAME)) {
+      each.cleanup(source, targetClass, target);
     }
   }
 }
