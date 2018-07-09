@@ -1,3 +1,9 @@
+"""Contains methods for building Thrift structures for interacting with IDE
+
+The methods from this file are used for Python console interaction. Please
+note that the debugger still uses XML structures with the similar methods
+contained in `pydevd_xml.py` file.
+"""
 import sys
 import traceback
 
