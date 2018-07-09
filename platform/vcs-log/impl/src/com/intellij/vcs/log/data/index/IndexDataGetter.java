@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.data.index;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -36,6 +35,7 @@ import com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl;
 import com.intellij.vcs.log.util.TroveUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TIntHashSet;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,8 +46,6 @@ import java.util.List;
 import java.util.Set;
 
 public class IndexDataGetter {
-  private static final Logger LOG = Logger.getInstance(IndexDataGetter.class);
-
   @NotNull private final Project myProject;
   @NotNull private final Set<VirtualFile> myRoots;
   @NotNull private final VcsLogPersistentIndex.IndexStorage myIndexStorage;
@@ -114,7 +112,7 @@ public class IndexDataGetter {
 
   @Nullable
   public List<Hash> getParents(int index) {
-    try {
+    return executeAndCatch(() -> {
       List<Integer> parentsIndexes = myIndexStorage.parents.get(index);
       if (parentsIndexes == null) return null;
       List<Hash> result = ContainerUtil.newArrayList();
@@ -124,11 +122,7 @@ public class IndexDataGetter {
         result.add(id.getHash());
       }
       return result;
-    }
-    catch (IOException e) {
-      myFatalErrorsConsumer.consume(this, e);
-    }
-    return null;
+    });
   }
 
   //
@@ -179,36 +173,19 @@ public class IndexDataGetter {
 
   @NotNull
   private TIntHashSet filterUsers(@NotNull Set<VcsUser> users) {
-    try {
-      return myIndexStorage.users.getCommitsForUsers(users);
-    }
-    catch (IOException | StorageException e) {
-      myFatalErrorsConsumer.consume(this, e);
-    }
-    catch (RuntimeException e) {
-      processRuntimeException(e);
-    }
-    return new TIntHashSet();
+    return executeAndCatch(() -> myIndexStorage.users.getCommitsForUsers(users), new TIntHashSet());
   }
 
   @NotNull
   private TIntHashSet filterPaths(@NotNull Collection<FilePath> paths) {
-    try {
-      return myIndexStorage.paths.getCommitsForPaths(paths);
-    }
-    catch (IOException | StorageException e) {
-      myFatalErrorsConsumer.consume(this, e);
-    }
-    catch (RuntimeException e) {
-      processRuntimeException(e);
-    }
-    return new TIntHashSet();
+    return executeAndCatch(() -> myIndexStorage.paths.getCommitsForPaths(paths), new TIntHashSet());
   }
 
   @NotNull
   private TIntHashSet filterMessages(@NotNull VcsLogTextFilter filter) {
-    try {
-      if (!filter.isRegex()) {
+    if (!filter.isRegex()) {
+      TIntHashSet resultByTrigrams = executeAndCatch(() -> {
+
         TIntHashSet commitsForSearch = myIndexStorage.trigrams.getCommitsForSubstring(filter.getText());
         if (commitsForSearch != null) {
           TIntHashSet result = new TIntHashSet();
@@ -229,13 +206,10 @@ public class IndexDataGetter {
           });
           return result;
         }
-      }
-    }
-    catch (StorageException e) {
-      myFatalErrorsConsumer.consume(this, e);
-    }
-    catch (RuntimeException e) {
-      processRuntimeException(e);
+        return null;
+      });
+
+      if (resultByTrigrams != null) return resultByTrigrams;
     }
 
     return filter(myIndexStorage.messages, message -> VcsLogTextFilterImpl.matches(filter, message));
@@ -244,7 +218,7 @@ public class IndexDataGetter {
   @NotNull
   private <T> TIntHashSet filter(@NotNull PersistentMap<Integer, T> map, @NotNull Condition<T> condition) {
     TIntHashSet result = new TIntHashSet();
-    try {
+    return executeAndCatch(() -> {
       Processor<Integer> processor = integer -> {
         try {
           T value = map.get(integer);
@@ -266,12 +240,8 @@ public class IndexDataGetter {
       else {
         myIndexStorage.messages.processKeys(processor);
       }
-    }
-    catch (IOException e) {
-      myFatalErrorsConsumer.consume(this, e);
-    }
-
-    return result;
+      return result;
+    }, result);
   }
 
   //
@@ -282,8 +252,7 @@ public class IndexDataGetter {
   public Set<FilePath> getFileNames(@NotNull FilePath path, int commit) {
     VirtualFile root = VcsUtil.getVcsRootFor(myProject, path);
     if (myRoots.contains(root)) {
-      Set<FilePath> result = executeAndCatch(() -> myIndexStorage.paths.getFileNames(path, commit));
-      if (result != null) return result;
+      return executeAndCatch(() -> myIndexStorage.paths.getFileNames(path, commit), Collections.emptySet());
     }
 
     return Collections.emptySet();
@@ -323,6 +292,12 @@ public class IndexDataGetter {
 
   @Nullable
   private <T> T executeAndCatch(@NotNull Throwable2Computable<T, IOException, StorageException> computable) {
+    return executeAndCatch(computable, null);
+  }
+
+  @Contract("_, !null -> !null")
+  @Nullable
+  private <T> T executeAndCatch(@NotNull Throwable2Computable<T, IOException, StorageException> computable, @Nullable T defaultValue) {
     try {
       return computable.compute();
     }
@@ -333,7 +308,7 @@ public class IndexDataGetter {
     catch (RuntimeException e) {
       processRuntimeException(e);
     }
-    return null;
+    return defaultValue;
   }
 
   private void processRuntimeException(@NotNull RuntimeException e) {
