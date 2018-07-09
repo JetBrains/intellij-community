@@ -19,7 +19,6 @@
 package org.jetbrains.uast
 
 import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiMethodUtil
 import org.jetbrains.uast.visitor.UastVisitor
 
@@ -211,12 +210,14 @@ fun UElement.asRecursiveLogString(render: (UElement) -> String = { it.asLogStrin
  * or companion object's containing class if the given method is main method annotated with [kotlin.jvm.JvmStatic] in companion object,
  * otherwise *null*.
  */
-fun findMainClass(mainMethod: PsiMethod): PsiClass? {
-  var mainClassCandidate = mainMethod.containingClass ?: return null
-  if (PsiMethodUtil.isMainMethod(mainMethod)) return mainClassCandidate
+fun findMainClass(mainMethod: UMethod): PsiClass? {
+  val psiMethod = mainMethod.javaPsi
+  if ("main" != psiMethod.name) return null
+  var mainClassCandidate = psiMethod.containingClass ?: return null
+  if (PsiMethodUtil.isMainMethod(psiMethod)) return mainClassCandidate
 
   // Check for @JvmStatic main method in companion object
   mainClassCandidate = mainClassCandidate.containingClass ?: return null
   val mainInClass = PsiMethodUtil.findMainInClass(mainClassCandidate)
-  return if (mainMethod.manager.areElementsEquivalent(mainMethod, mainInClass)) mainClassCandidate else null
+  return if (psiMethod.manager.areElementsEquivalent(psiMethod, mainInClass)) mainClassCandidate else null
 }
