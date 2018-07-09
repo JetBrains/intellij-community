@@ -25,7 +25,10 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.ElementDescriptionUtil;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.util.Consumer;
@@ -139,12 +142,9 @@ public class GotoImplementationHandler extends GotoTargetHandler {
 
     ImplementationsUpdaterTask(@NotNull GotoData gotoData, @NotNull Editor editor, int offset, final PsiReference reference) {
       super(gotoData.source.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS,
-            createComparatorWrapper(Comparator.comparing(new Function<PsiElement, Comparable>() {
-                @Override
-                public Comparable apply(PsiElement e1) {
-                  return getRenderer(e1, gotoData).getComparingObject(e1);
-                }
-              })));
+            createComparatorWrapper(Comparator.comparing((Function<PsiElement, Comparable>)e1 -> {
+              return getRenderer(e1, gotoData).getComparingObject(e1);
+            })));
       myEditor = editor;
       myOffset = offset;
       myGotoData = gotoData;
