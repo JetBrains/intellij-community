@@ -37,4 +37,12 @@ class IdeaEduProperties extends IdeaCommunityProperties {
 
   @Override
   String getOutputDirectoryName(ApplicationInfoProperties applicationInfo) { "idea-edu" }
+
+  @Override
+  LinuxDistributionCustomizer createLinuxCustomizer(String projectHome) {
+    LinuxDistributionCustomizer base = super.createLinuxCustomizer(projectHome)
+    base.snapName = "intellij-idea-educational"
+    return base
+  }
+
 }
