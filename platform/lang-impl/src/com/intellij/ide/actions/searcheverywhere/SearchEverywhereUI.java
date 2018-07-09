@@ -172,6 +172,9 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     JLabel hintLabel = HintUtil.createAdComponent(hint, JBUI.Borders.emptyLeft(8), SwingConstants.LEFT);
     hintLabel.setOpaque(false);
     hintLabel.setForeground(JBColor.GRAY);
+    Dimension size = hintLabel.getPreferredSize();
+    size.height = JBUI.scale(17);
+    hintLabel.setPreferredSize(size);
     pnl.add(hintLabel, BorderLayout.SOUTH);
 
     return pnl;
