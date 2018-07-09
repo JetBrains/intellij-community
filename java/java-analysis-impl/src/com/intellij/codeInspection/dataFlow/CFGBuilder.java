@@ -460,6 +460,45 @@ public class CFGBuilder {
   }
 
   /**
+   * Start try section. All exceptions from it will be directed to the subsequent catchAll() section.
+   *
+   * @param anchor PSI anchor to handle nested traps
+   * @return this builder
+   */
+  public CFGBuilder doTry(@NotNull PsiElement anchor) {
+    ControlFlow.DeferredOffset offset = new ControlFlow.DeferredOffset();
+    myAnalyzer.pushTrap(new Trap.TryCatchAll(anchor, offset));
+    myBranches.add(() -> {
+      offset.setOffset(myAnalyzer.getInstructionCount());
+    });
+    return this;
+  }
+
+  /**
+   * Start catch section; must be created after {@link #doTry()} section and finished with {@link #end()}.
+   *
+   * @return this builder
+   */
+  public CFGBuilder catchAll() {
+    GotoInstruction gotoInstruction = new GotoInstruction(null);
+    add(gotoInstruction).end();
+    myBranches.add(() -> gotoInstruction.setOffset(myAnalyzer.getInstructionCount()));
+    return this;
+  }
+
+  /**
+   * Adds instructions to throw an exception of given type
+   *
+   * @param exceptionType exception type to throw
+   *
+   * @return this builder
+   */
+  public CFGBuilder doThrow(@NotNull PsiType exceptionType) {
+    myAnalyzer.throwException(exceptionType, null);
+    return this;
+  }
+
+  /**
    * Generate instructions to assign top stack value to the specified variable
    * <p>
    * Stack before: ... value
