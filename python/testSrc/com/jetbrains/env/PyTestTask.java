@@ -1,6 +1,7 @@
 package com.jetbrains.env;
 
 import com.google.common.collect.Sets;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.testFramework.LeakHunter;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -34,6 +35,7 @@ public abstract class PyTestTask {
    * Each inheritor may do anything on edt, but should call parent *after all* on main thread
    */
   public void tearDown() throws Exception {
+    IdeEventQueue.getInstance().flushQueue();
     LeakHunter.checkNonDefaultProjectLeak();
     LeakHunter.checkProjectLeak();
   }
