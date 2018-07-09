@@ -2,37 +2,32 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.google.common.collect.Iterables;
-import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
-import java.util.NavigableSet;
-import java.util.TreeSet;
+import java.util.Set;
 
 public class RecursiveFileHolder implements IgnoredFilesHolder {
 
   private final Project myProject;
   private final HolderType myHolderType;
-  private final TreeSet<VirtualFile> myMap;
-  private final TreeSet<VirtualFile> myDirMap;
+  private final Set<VirtualFile> myMap;
 
   public RecursiveFileHolder(final Project project, final HolderType holderType) {
     myProject = project;
-    myMap = new TreeSet<>(FilePathComparator.getInstance());
-    myDirMap = new TreeSet<>(FilePathComparator.getInstance());
+    myMap = new HashSet<>();
     myHolderType = holderType;
   }
 
   @Override
   public void cleanAll() {
     myMap.clear();
-    myDirMap.clear();
   }
 
   @Override
@@ -46,11 +41,8 @@ public class RecursiveFileHolder implements IgnoredFilesHolder {
 
   @Override
   public void addFile(@NotNull final VirtualFile file) {
-    if (! containsFile(file)) {
+    if (!containsFile(file)) {
       myMap.add(file);
-      if (file.isDirectory()) {
-        myDirMap.add(file);
-      }
     }
   }
 
@@ -58,20 +50,16 @@ public class RecursiveFileHolder implements IgnoredFilesHolder {
   public RecursiveFileHolder copy() {
     final RecursiveFileHolder copyHolder = new RecursiveFileHolder(myProject, myHolderType);
     copyHolder.myMap.addAll(myMap);
-    copyHolder.myDirMap.addAll(myDirMap);
     return copyHolder;
   }
 
   @Override
   public boolean containsFile(@NotNull final VirtualFile file) {
-    if (myMap.contains(file)) return true;
-    final VirtualFile floor = myDirMap.floor(file);
-    if (floor == null) return false;
-    final NavigableSet<VirtualFile> floorMap = myDirMap.headSet(floor, true);
-    for (VirtualFile parent : floorMap) {
-      if (VfsUtilCore.isAncestor(parent, file, false)) {
-        return true;
-      }
+    if (myMap.isEmpty()) return false;
+    VirtualFile parent = file;
+    while (parent != null) {
+      if (myMap.contains(parent)) return true;
+      parent = parent.getParent();
     }
     return false;
   }
