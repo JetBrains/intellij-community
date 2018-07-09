@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.ProjectTopics;
@@ -32,6 +18,7 @@ import com.intellij.psi.impl.java.stubs.index.JavaAutoModuleNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
 import com.intellij.psi.impl.light.LightJavaModule;
+import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
@@ -41,6 +28,8 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * @author dmitry lomov
@@ -183,6 +172,8 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
   @NotNull
   @Override
   public Collection<PsiJavaModule> findModules(@NotNull String moduleName, @NotNull GlobalSearchScope scope) {
+    scope = new LibSrcExcludingScope(scope);
+
     Collection<PsiJavaModule> named = JavaModuleNameIndex.getInstance().get(moduleName, myManager.getProject(), scope);
     if (!named.isEmpty()) {
       return named;
@@ -197,5 +188,19 @@ public class JavaFileManagerImpl implements JavaFileManager, Disposable {
     }
 
     return Collections.emptyList();
+  }
+
+  private static class LibSrcExcludingScope extends DelegatingGlobalSearchScope {
+    private final ProjectFileIndex myIndex;
+
+    private LibSrcExcludingScope(@NotNull GlobalSearchScope baseScope) {
+      super(baseScope);
+      myIndex = ProjectFileIndex.getInstance(requireNonNull(baseScope.getProject()));
+    }
+
+    @Override
+    public boolean contains(@NotNull VirtualFile file) {
+      return super.contains(file) && !myIndex.isInLibrarySource(file);
+    }
   }
 }

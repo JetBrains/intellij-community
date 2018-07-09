@@ -17,7 +17,7 @@ package com.intellij.util;
 
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.EmptyIterator;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.junit.Test;
 
 import java.util.*;

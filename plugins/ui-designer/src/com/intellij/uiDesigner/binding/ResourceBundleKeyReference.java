@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 5, 2005
  */
 public final class ResourceBundleKeyReference extends ReferenceInForm {
   private final String myBundleName;

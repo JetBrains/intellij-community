@@ -16,7 +16,8 @@
 package com.jetbrains.extensions
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 
 
-fun Module.getSdk() = ModuleRootManager.getInstance(this).sdk
+fun Module.getSdk(): Sdk? = ModuleRootManager.getInstance(this).sdk

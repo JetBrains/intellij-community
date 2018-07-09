@@ -37,20 +37,22 @@ public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
   public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
     MyFoldingVisitor visitor = new MyFoldingVisitor();
     root.accept(visitor);
-    return visitor.myFoldingData.toArray(new FoldingDescriptor[visitor.myFoldingData.size()]);
+    return visitor.myFoldingData.toArray(FoldingDescriptor.EMPTY);
   }
 
+  @Override
   public String getPlaceholderText(@NotNull ASTNode node) {
     return UIDesignerBundle.message("uidesigner.generated.code.folding.placeholder.text");
   }
 
+  @Override
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
     return true;
   }
 
   private static boolean isGeneratedUIInitializer(PsiClassInitializer initializer) {
     PsiCodeBlock body = initializer.getBody();
-    if (body.getStatements().length != 1) return false;
+    if (body.getStatementCount() != 1) return false;
     PsiStatement statement = body.getStatements()[0];
     if (!(statement instanceof PsiExpressionStatement) ||
         !(((PsiExpressionStatement)statement).getExpression() instanceof PsiMethodCallExpression)) {
@@ -70,7 +72,8 @@ public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
       if (AsmCodeGenerator.SETUP_METHOD_NAME.equals(method.getName()) ||
           AsmCodeGenerator.GET_ROOT_COMPONENT_METHOD_NAME.equals(method.getName()) ||
           AsmCodeGenerator.LOAD_BUTTON_TEXT_METHOD.equals(method.getName()) ||
-          AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD.equals(method.getName())) {
+          AsmCodeGenerator.LOAD_LABEL_TEXT_METHOD.equals(method.getName()) ||
+          AsmCodeGenerator.GET_FONT_METHOD_NAME.equals(method.getName())) {
         addFoldingData(method);
       }
     }

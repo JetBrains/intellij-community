@@ -55,7 +55,7 @@ class GitPushOperationMultiRepoTest : GitPushOperationBaseTest() {
   fun `test try push from all roots even if one fails`() {
     // fail in the first repo
     git.onPush {
-      if (it == ultimate) GitCommandResult(false, 128, listOf("Failed to push to origin"), listOf<String>(), null)
+      if (it == ultimate) GitCommandResult(false, 128, listOf("Failed to push to origin"), listOf<String>())
       else null
     }
 

@@ -46,7 +46,7 @@ public abstract class SettingsFilter extends ElementFilter.Active.Impl<SimpleNod
   private final SearchTextField mySearch;
   private final ConfigurableGroup[] myGroups;
 
-  private SearchableOptionsRegistrar myRegistrar = SearchableOptionsRegistrar.getInstance();
+  private final SearchableOptionsRegistrar myRegistrar = SearchableOptionsRegistrar.getInstance();
   private Set<Configurable> myFiltered;
   private ConfigurableHit myHits;
 

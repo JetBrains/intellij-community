@@ -85,10 +85,6 @@ public final class ComponentTreeBuilder extends AbstractTreeBuilder {
     return (ComponentTreeStructure)getTreeStructure();
   }
 
-  protected boolean isAlwaysShowPlus(final NodeDescriptor descriptor){
-    return false;
-  }
-
   protected boolean isAutoExpandNode(final NodeDescriptor descriptor){
     return getComponentTreeStructure().isAutoExpandNode(descriptor);
   }

@@ -35,13 +35,11 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.update.UiNotifyConnector;
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList;
 import com.jetbrains.python.newProject.PyFrameworkProjectGenerator;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageUtil;
-import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.*;
 import com.jetbrains.python.sdk.add.PyAddSdkGroupPanel;
 import com.jetbrains.python.sdk.add.PyAddSdkPanel;
@@ -135,10 +133,6 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
         final String fileName = PathUtil.getFileName(getNewProjectPath());
         ((PythonProjectGenerator)myProjectGenerator).locationChanged(fileName);
       });
-      final PyAddSdkGroupPanel interpreterPanel = myInterpreterPanel;
-      if (interpreterPanel != null) {
-        UiNotifyConnector.doWhenFirstShown(interpreterPanel, this::checkValid);
-      }
     }
   }
 
@@ -267,7 +261,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
 
       locationPanel.add(location, BorderLayout.CENTER);
       panel.add(locationPanel);
-      panel.add(createInterpretersPanel());
+      panel.add(createInterpretersPanel(((PythonProjectGenerator)myProjectGenerator).getPreferredEnvironmentType()));
 
       final JPanel basePanelExtension = ((PythonProjectGenerator)myProjectGenerator).extendBasePanel();
       if (basePanelExtension != null) {
@@ -280,7 +274,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   }
 
   @NotNull
-  private JPanel createInterpretersPanel() {
+  private JPanel createInterpretersPanel(@Nullable final String preferredEnvironment) {
     final JPanel container = new JPanel(new BorderLayout());
     final JPanel decoratorPanel = new JPanel(new VerticalFlowLayout());
 
@@ -288,8 +282,8 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     final Sdk preferredSdk = getPreferredSdk(existingSdks);
 
     final String newProjectPath = getNewProjectPath();
-    final PyAddNewEnvironmentPanel newEnvironmentPanel = new PyAddNewEnvironmentPanel(existingSdks, newProjectPath);
-    final PyAddExistingSdkPanel existingSdkPanel = new PyAddExistingSdkPanel(null, existingSdks, newProjectPath, preferredSdk);
+    final PyAddNewEnvironmentPanel newEnvironmentPanel = new PyAddNewEnvironmentPanel(existingSdks, newProjectPath, preferredEnvironment);
+    final PyAddExistingSdkPanel existingSdkPanel = new PyAddExistingSdkPanel(null, null, existingSdks, newProjectPath, preferredSdk);
 
     final PyAddSdkPanel defaultPanel = PySdkSettings.getInstance().getUseNewEnvironmentForNewProject() ?
                                        newEnvironmentPanel : existingSdkPanel;
@@ -308,6 +302,9 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     addLocationChangeListener(event -> myInterpreterPanel.setNewProjectPath(getNewProjectPath()));
 
     container.add(myInterpreterPanel, BorderLayout.NORTH);
+
+    checkValid();
+
     return decoratorPanel;
   }
 
@@ -348,7 +345,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     final boolean onlyPython2 = projectGenerator != null && !projectGenerator.supportsPython3();
     final Sdk preferred = ContainerUtil.getFirstItem(sdks);
     if (preferred == null) return null;
-    if (onlyPython2 && PythonSdkType.getLanguageLevelForSdk(preferred).isAtLeast(LanguageLevel.PYTHON30)) {
+    if (onlyPython2 && !PythonSdkType.getLanguageLevelForSdk(preferred).isPython2()) {
       final Sdk python2Sdk = PythonSdkType.findPython2Sdk(sdks);
       return python2Sdk != null ? python2Sdk : preferred;
     }
@@ -360,7 +357,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     final List<Sdk> pythonSdks = PyConfigurableInterpreterList.getInstance(null).getAllPythonSdks();
     Iterables.removeIf(pythonSdks, sdk -> !(sdk.getSdkType() instanceof PythonSdkType) ||
                                           PythonSdkType.isInvalid(sdk) ||
-                                          PySdkExtKt.getAssociatedProjectPath(sdk) != null);
+                                          PySdkExtKt.getAssociatedModulePath(sdk) != null);
     Collections.sort(pythonSdks, new PreferredSdkComparator());
     return pythonSdks;
   }

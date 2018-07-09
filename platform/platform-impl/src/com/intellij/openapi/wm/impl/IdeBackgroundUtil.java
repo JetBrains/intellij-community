@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -22,22 +23,19 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diff.DiffColors;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.ColorKey;
-import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.AbstractPainter;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.ui.components.JBLoadingPanel;
@@ -46,7 +44,6 @@ import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -70,6 +67,16 @@ public class IdeBackgroundUtil {
   public static final String EDITOR_PROP = "idea.background.editor";
   public static final String FRAME_PROP = "idea.background.frame";
   public static final String TARGET_PROP = "idea.background.target";
+
+  public enum Fill {
+    PLAIN, SCALE, TILE
+  }
+
+  public enum Anchor {
+    TOP_LEFT, TOP_CENTER, TOP_RIGHT,
+    MIDDLE_LEFT, CENTER, MIDDLE_RIGHT,
+    BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT
+  }
 
   static {
     JBSwingUtilities.addGlobalCGTransform(new MyTransform());
@@ -104,6 +111,8 @@ public class IdeBackgroundUtil {
            component instanceof JTabbedPane ? "tabs" :
            component instanceof JButton ? "button" :
            component instanceof ActionToolbar ? "toolbar" :
+           component instanceof StatusBar ? "statusbar" :
+           component instanceof Stripe ? "stripe" :
            component instanceof EditorsSplitters ? "frame" :
            component instanceof EditorComponentImpl ? "editor" :
            component instanceof EditorGutterComponentEx ? "editor" :
@@ -143,7 +152,7 @@ public class IdeBackgroundUtil {
     Image centerImage = url == null ? null : ImageLoader.loadFromUrl(url);
 
     if (centerImage != null) {
-      painters.addPainter(PaintersHelper.newImagePainter(centerImage, PaintersHelper.Fill.PLAIN, PaintersHelper.Place.TOP_CENTER, 1.0f, JBUI.insets(10, 0, 0, 0)), null);
+      painters.addPainter(PaintersHelper.newImagePainter(centerImage, Fill.PLAIN, Anchor.TOP_CENTER, 1.0f, JBUI.insets(10, 0, 0, 0)), null);
     }
     painters.addPainter(new AbstractPainter() {
       EditorEmptyTextPainter p = ServiceManager.getService(EditorEmptyTextPainter.class);
@@ -161,7 +170,7 @@ public class IdeBackgroundUtil {
 
   }
 
-  @Nullable
+  @NotNull
   public static Color getIdeBackgroundColor() {
     Color result = UIUtil.getSlightlyDarkerColor(UIUtil.getPanelBackground());
     return UIUtil.isUnderDarcula() ? new Color(40, 40, 41) : UIUtil.getSlightlyDarkerColor(UIUtil.getSlightlyDarkerColor(result));
@@ -170,6 +179,21 @@ public class IdeBackgroundUtil {
   public static void createTemporaryBackgroundTransform(JPanel root, String tmp, Disposable disposable) {
     PaintersHelper paintersHelper = new PaintersHelper(root);
     PaintersHelper.initWallpaperPainter(tmp, paintersHelper);
+    Disposer.register(disposable, JBSwingUtilities.addGlobalCGTransform((t, v) -> {
+      if (!UIUtil.isAncestor(root, t)) return v;
+      return MyGraphics.wrap(v, paintersHelper, t);
+    }));
+  }
+
+  public static void createTemporaryBackgroundTransform(JPanel root,
+                                                        Image image,
+                                                        Fill fill,
+                                                        Anchor anchor,
+                                                        float alpha,
+                                                        Insets insets,
+                                                        Disposable disposable) {
+    PaintersHelper paintersHelper = new PaintersHelper(root);
+    paintersHelper.addPainter(PaintersHelper.newImagePainter(image, fill, anchor, alpha, insets), root);
     Disposer.register(disposable, JBSwingUtilities.addGlobalCGTransform((t, v) -> {
       if (!UIUtil.isAncestor(root, t)) return v;
       return MyGraphics.wrap(v, paintersHelper, t);
@@ -188,6 +212,7 @@ public class IdeBackgroundUtil {
   }
 
   public static void repaintAllWindows() {
+    UISettings.getInstance().fireUISettingsChanged();
     for (Window window : Window.getWindows()) {
       window.repaint();
     }
@@ -202,8 +227,8 @@ public class IdeBackgroundUtil {
 
   private static class MyGraphics extends Graphics2DDelegate {
     final PaintersHelper helper;
-    final int[] offsets;
-    Set<Color> preserved;
+    final PaintersHelper.Offsets offsets;
+    Condition<Color> preserved;
 
     static Graphics2D wrap(Graphics g, PaintersHelper helper, JComponent component) {
       MyGraphics gg = g instanceof MyGraphics ? (MyGraphics)g : null;
@@ -214,7 +239,7 @@ public class IdeBackgroundUtil {
       return g instanceof MyGraphics ? ((MyGraphics)g).getDelegate() : (Graphics2D)g;
     }
 
-    MyGraphics(Graphics g, PaintersHelper helper, int[] offsets, Set<Color> preserved) {
+    MyGraphics(Graphics g, PaintersHelper helper, PaintersHelper.Offsets offsets, Condition<Color> preserved) {
       super((Graphics2D)g);
       this.helper = helper;
       this.offsets = offsets;
@@ -293,28 +318,54 @@ public class IdeBackgroundUtil {
     }
 
     @Override
+    public boolean drawImage(Image img, int x, int y, int width, int height, Color c,ImageObserver observer) {
+      boolean b = super.drawImage(img, x, y, width, height, c, observer);
+      runAllPainters(x, y, width, height, null, img);
+      return b;
+    }
+
+    @Override
     public boolean drawImage(Image img, int x, int y, ImageObserver observer) {
       boolean b = super.drawImage(img, x, y, observer);
       runAllPainters(x, y, img.getWidth(null), img.getHeight(null), null, img);
       return b;
     }
 
+    @Override
+    public boolean drawImage(Image img, int x, int y, Color c, ImageObserver observer) {
+      boolean b = super.drawImage(img, x, y, c, observer);
+      runAllPainters(x, y, img.getWidth(null), img.getHeight(null), null, img);
+      return b;
+    }
+
+    @Override
+    public boolean drawImage(Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2, ImageObserver observer) {
+      boolean b = super.drawImage(img, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, observer);
+      runAllPainters(dx1, dy1, dx2 - dx1, dy2 - dy1, null, img);
+      return b;
+    }
+
+    @Override
+    public boolean drawImage(Image img, int dx1, int dy1, int dx2, int dy2, int sx1, int sy1, int sx2, int sy2, Color c, ImageObserver observer) {
+      boolean b = super.drawImage(img, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, c, observer);
+      runAllPainters(dx1, dy1, dx2 - dx1, dy2 - dy1, null, img);
+      return b;
+    }
+
     @Nullable
-    private Shape setTempClip(int x, int y, int width, int height, @Nullable Shape sourceShape) {
-      Shape prevClip = getClip();
-      Shape forcedClip = sourceShape != null ? sourceShape : new Rectangle(x, y, width, height);
+    private static Shape calcTempClip(@Nullable Shape prevClip, @NotNull Shape forcedClip) {
       if (prevClip == null) {
-        setClip(forcedClip);
+        return forcedClip;
       }
       else if (prevClip instanceof Rectangle2D && forcedClip instanceof Rectangle2D) {
-        setClip(((Rectangle2D)prevClip).createIntersection((Rectangle2D)forcedClip));
+        Rectangle2D r = ((Rectangle2D)prevClip).createIntersection((Rectangle2D)forcedClip);
+        return r.isEmpty() ? null : r;
       }
       else {
         Area area = new Area(prevClip);
         area.intersect(new Area(forcedClip));
-        setClip(area);
+        return area.getBounds().isEmpty() ? null : area;
       }
-      return prevClip;
     }
 
     void runAllPainters(int x, int y, int width, int height, @Nullable Shape sourceShape, @Nullable Object reason) {
@@ -325,12 +376,15 @@ public class IdeBackgroundUtil {
         if (!(reason instanceof BufferedImage)) return;
         if (((BufferedImage)reason).getColorModel().hasAlpha()) return;
       }
-      boolean preserve = preserved != null && reason instanceof Color && preserved.contains(reason);
+      Shape prevClip = getClip();
+      Shape tmpClip = calcTempClip(prevClip, sourceShape != null ? sourceShape : new Rectangle(x, y, width, height));
+      if (tmpClip == null) return;
+      
+      boolean preserve = preserved != null && reason instanceof Color && preserved.value((Color)reason);
       if (preserve) {
         myDelegate.setRenderingHint(ADJUST_ALPHA, Boolean.TRUE);
       }
-
-      Shape prevClip = setTempClip(x, y, width, height, sourceShape);
+      setClip(tmpClip);
       helper.runAllPainters(myDelegate, offsets);
       setClip(prevClip);
       if (preserve) {
@@ -338,12 +392,6 @@ public class IdeBackgroundUtil {
       }
     }
   }
-
-  private static final JBIterable<Object> ourPreservedKeys = JBIterable.of(
-    EditorColors.SELECTION_BACKGROUND_COLOR,
-    EditorColors.ADDED_LINES_COLOR, EditorColors.MODIFIED_LINES_COLOR, EditorColors.DELETED_LINES_COLOR,
-    EditorColors.WHITESPACES_MODIFIED_LINES_COLOR, EditorColors.BORDER_LINES_COLOR,
-    DiffColors.DIFF_INSERTED, DiffColors.DIFF_DELETED, DiffColors.DIFF_MODIFIED, DiffColors.DIFF_CONFLICT);
 
   private static class MyTransform implements PairFunction<JComponent, Graphics2D, Graphics2D> {
     @Override
@@ -360,14 +408,9 @@ public class IdeBackgroundUtil {
           if (c instanceof EditorComponentImpl && ((EditorImpl)editor).isDumb()) return MyGraphics.unwrap(g);
           Graphics2D gg = withEditorBackground(g, c);
           if (gg instanceof MyGraphics) {
-            EditorColorsScheme scheme = editor.getColorsScheme();
-            ((MyGraphics)gg).preserved = ourPreservedKeys.map(
-              o -> {
-                if (o instanceof ColorKey) return scheme.getColor((ColorKey)o);
-                TextAttributes attrs = scheme.getAttributes((TextAttributesKey)o);
-                return attrs != null ? attrs.getBackgroundColor() : null;
-              }
-            ).toSet();
+            Color background1 = ((EditorEx)editor).getBackgroundColor();
+            Color background2 = ((EditorEx)editor).getGutterComponentEx().getBackground();
+            ((MyGraphics)gg).preserved = color -> color != background1 && color != background2;
           }
           return gg;
         }
@@ -375,10 +418,13 @@ public class IdeBackgroundUtil {
       Graphics2D gg = withEditorBackground(g, c);
       if (gg instanceof MyGraphics) {
         Component view = c instanceof JViewport ? ((JViewport)c).getView() : c;
-        Color selectionColor = view instanceof JTree ? UIUtil.getTreeSelectionBackground() :
-                               view instanceof JList ? UIUtil.getListSelectionBackground() :
-                               view instanceof JTable ? UIUtil.getTableSelectionBackground() : null;
-        ((MyGraphics)gg).preserved = ContainerUtil.createMaybeSingletonSet(selectionColor);
+        Color selection1 = view instanceof JTree ? UIUtil.getTreeSelectionBackground() :
+                           view instanceof JList ? UIUtil.getListSelectionBackground() :
+                           view instanceof JTable ? UIUtil.getTableSelectionBackground() : null;
+        Color selection2 = view instanceof JTree ? UIUtil.getTreeUnfocusedSelectionBackground() :
+                           view instanceof JList ? UIUtil.getListUnfocusedSelectionBackground() :
+                           view instanceof JTable ? UIUtil.getTableUnfocusedSelectionBackground() : null;
+        ((MyGraphics)gg).preserved = color -> color == selection1 || color == selection2;
       }
       return gg;
     }

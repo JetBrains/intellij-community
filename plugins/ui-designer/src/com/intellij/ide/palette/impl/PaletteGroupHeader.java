@@ -179,7 +179,7 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
         if (null == policy) policy = kfm.getDefaultFocusTraversalPolicy();
         Component next =
           moveDown ? policy.getComponentAfter(container, PaletteGroupHeader.this) : policy.getComponentBefore(container, PaletteGroupHeader.this);
-        if (null != next && next instanceof PaletteComponentList) {
+        if (next instanceof PaletteComponentList) {
           final PaletteComponentList list = (PaletteComponentList)next;
           if (list.getModel().getSize() != 0) {
             list.takeFocusFrom(PaletteGroupHeader.this, list == myComponentList ? 0 : -1);
@@ -189,7 +189,7 @@ public class PaletteGroupHeader extends JCheckBox implements DataProvider {
             next = moveDown ? policy.getComponentAfter(container, next) : policy.getComponentBefore(container, next);
           }
         }
-        if (null != next && next instanceof PaletteGroupHeader) {
+        if (next instanceof PaletteGroupHeader) {
 
           IdeFocusManager.getGlobalInstance().requestFocus(next, true);
         }

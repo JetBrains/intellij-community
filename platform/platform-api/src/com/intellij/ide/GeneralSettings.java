@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.ide.ui.UINumericRange;
@@ -22,10 +8,13 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
@@ -45,12 +34,15 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   public static final String PROP_INACTIVE_TIMEOUT = "inactiveTimeout";
   public static final String PROP_SUPPORT_SCREEN_READERS = "supportScreenReaders";
 
+  public static final String SUPPORT_SCREEN_READERS = "ide.support.screenreaders.enabled";
+  private static final Boolean SUPPORT_SCREEN_READERS_OVERRIDEN = getSupportScreenReadersOverriden();
+
   static final UINumericRange SAVE_FILES_AFTER_IDLE_SEC = new UINumericRange(15, 1, 300);
 
   private String myBrowserPath = BrowserUtil.getDefaultAlternativeBrowserPath();
   private boolean myShowTipsOnStartup = true;
   private boolean myReopenLastProject = true;
-  private boolean mySupportScreenReaders = false;
+  private boolean mySupportScreenReaders = ObjectUtils.chooseNotNull(SUPPORT_SCREEN_READERS_OVERRIDEN, Boolean.FALSE);
   private boolean mySyncOnFrameActivation = true;
   private boolean mySaveOnFrameDeactivation = true;
   private boolean myAutoSaveIfInactive = false;  // If true the IDEA automatically saves files if it is inactive for some seconds
@@ -60,8 +52,10 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   private boolean myUseDefaultBrowser = true;
   private boolean mySearchInBackground;
   private boolean myConfirmExit = true;
+  private boolean myShowWelcomeScreen = !PlatformUtils.isDataGrip();
   private int myConfirmOpenNewProject = OPEN_PROJECT_ASK;
   private ProcessCloseConfirmation myProcessCloseConfirmation = ProcessCloseConfirmation.ASK;
+  private String myDefaultProjectDirectory = "";
 
   public static GeneralSettings getInstance(){
     return ServiceManager.getService(GeneralSettings.class);
@@ -82,28 +76,8 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
     return myBrowserPath;
   }
 
-  /**
-   * Use RecentProjectsManagerBase
-   */
-  @Deprecated
-  public String getLastProjectCreationLocation() {
-    return null;
-  }
-
-  /**
-   * Use RecentProjectsManagerBase
-   */
-  @Deprecated
-  public void setLastProjectCreationLocation(String lastProjectLocation) {
-  }
-
   public void setBrowserPath(String browserPath) {
     myBrowserPath = browserPath;
-  }
-
-  @Deprecated
-  public boolean showTipsOnStartup() {
-    return isShowTipsOnStartup();
   }
 
   public boolean isShowTipsOnStartup() {
@@ -129,6 +103,19 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
 
   public void setReopenLastProject(boolean reopenLastProject) {
     myReopenLastProject = reopenLastProject;
+  }
+
+  @Nullable
+  private static Boolean getSupportScreenReadersOverriden() {
+    String prop = System.getProperty(SUPPORT_SCREEN_READERS);
+    if (prop != null) {
+      return Boolean.parseBoolean(prop);
+    }
+    return null;
+  }
+
+  public static boolean isSupportScreenReadersOverriden() {
+    return SUPPORT_SCREEN_READERS_OVERRIDEN != null;
   }
 
   public boolean isSupportScreenReaders() {
@@ -212,7 +199,7 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   }
 
   @Override
-  public void loadState(GeneralSettings state) {
+  public void loadState(@NotNull GeneralSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 
@@ -242,6 +229,14 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
     myConfirmExit = confirmExit;
   }
 
+  public boolean isShowWelcomeScreen() {
+    return myShowWelcomeScreen;
+  }
+
+  public void setShowWelcomeScreen(boolean show) {
+    myShowWelcomeScreen = show;
+  }
+
   @MagicConstant(intValues = {OPEN_PROJECT_ASK, OPEN_PROJECT_NEW_WINDOW, OPEN_PROJECT_SAME_WINDOW})
   @interface OpenNewProjectOption {}
   /**
@@ -268,5 +263,13 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
 
   public void setSearchInBackground(final boolean searchInBackground) {
     mySearchInBackground = searchInBackground;
+  }
+
+  public String getDefaultProjectDirectory() {
+    return myDefaultProjectDirectory;
+  }
+
+  public void setDefaultProjectDirectory(String defaultProjectDirectory) {
+    myDefaultProjectDirectory = defaultProjectDirectory;
   }
 }

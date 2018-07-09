@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2014 Bas Leijdekkers
+ * Copyright 2006-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -67,7 +66,7 @@ public class TypeParameterExtendsFinalClassInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(@NotNull Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(@NotNull Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (parent instanceof PsiTypeParameter) {

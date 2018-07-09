@@ -365,7 +365,8 @@ public class PyEditingTest extends PyTestCase {
   public void testEndOfStringInParenth() {
     doTestEnter("print (\"foo\"<caret>\n" +
                 "    \"bar\")",
-                "print (\"foo\"\n\n" +
+                "print (\"foo\"\n" +
+                "       \n" +
                 "    \"bar\")");
   }
 
@@ -429,7 +430,7 @@ public class PyEditingTest extends PyTestCase {
 
   // PY-15469
   public void testEnterBeforeArrowInFunction() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTestEnter("def func() <caret>-> int:\n" +
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTestEnter("def func() <caret>-> int:\n" +
                                                                "    pass",
                 "def func() \\\n" +
                 "        -> int:\n" +
@@ -438,7 +439,7 @@ public class PyEditingTest extends PyTestCase {
 
   // PY-15469
   public void testEnterAfterArrowInFunction() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTestEnter("def func() -><caret> int:\n" +
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTestEnter("def func() -><caret> int:\n" +
                                                                "    pass",
                 "def func() ->\\\n" +
                 "        int:\n" +
@@ -447,7 +448,7 @@ public class PyEditingTest extends PyTestCase {
 
   // PY-15469
   public void testEnterDoesNotInsertSlashInsideArrow() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> doTestEnter("def func() -<caret>> int:\n" +
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTestEnter("def func() -<caret>> int:\n" +
                                                                "    pass",
                 "def func() -\n" +
                 "> int:\n" +
@@ -590,5 +591,70 @@ public class PyEditingTest extends PyTestCase {
                 "def hello_world():\n" +
                 "    return bar, 'so' \\\n" +
                 "                'me'");
+  }
+
+  // PY-27178
+  public void testIncompleteFunctionTypeComment() {
+    doTypingTest('.');
+  }
+
+  // PY-10972
+  public void testEnterInIncompleteTupleLiteral() {
+    doTypingTest("\n'baz'");
+  }
+
+  // PY-10972
+  public void testEnterInIncompleteListLiteral() {
+    doTypingTest("\n'baz'");
+  }
+
+  // PY-10972
+  public void testEnterInIncompleteSetLiteral() {
+    doTypingTest("\n'baz'");
+  }
+
+  // PY-10972
+  public void testEnterInIncompleteDictLiteral() {
+    doTypingTest("\n'baz'");
+  }
+
+  // PY-10972
+  public void testEnterInIncompleteGluedStringLiteralInParentheses() {
+    doTypingTest("\n'bar'");
+  }
+
+  // PY-10972
+  public void testEnterInIncompleteListComprehension() {
+    doTypingTest("\nfoo");
+  }
+
+  // PY-10972
+  public void testEnterInIncompleteSetComprehension() {
+    doTypingTest("\nfoo");
+  }
+
+  // PY-10972
+  public void testEnterInIncompleteDictComprehension() {
+    doTypingTest("\nfoo");
+  }
+
+  // PY-10972
+  public void testEnterInIncompleteParenthesizedGenerator() {
+    doTypingTest("\nfoo");
+  }
+
+  // PY-10972
+  public void testEnterInIncompleteNestedListLiteral() {
+    doTypingTest("\n'baz'");
+  }
+
+  // PY-10972
+  public void testEnterInIncompleteNestedTupleLiteral() {
+    doTypingTest("\n'baz'");
+  }
+
+  // PY-10972
+  public void testEnterInIncompleteNestedGluedStringInParentheses() {
+    doTypingTest("\n'baz'");
   }
 }

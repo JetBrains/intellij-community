@@ -36,12 +36,7 @@ public final class AttributesDescriptor extends AbstractKeyDescriptor<TextAttrib
     super(displayName, key);
   }
 
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return super.getDisplayName();
-  }
-
+  @SuppressWarnings("RedundantMethodOverride") // binary compatibility
   @NotNull
   @Override
   public TextAttributesKey getKey() {

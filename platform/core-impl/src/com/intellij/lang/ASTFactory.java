@@ -42,12 +42,12 @@ public abstract class ASTFactory {
   // interface methods
 
   @Nullable
-  public LazyParseableElement createLazy(final ILazyParseableElementType type, final CharSequence text) {
+  public LazyParseableElement createLazy(@NotNull ILazyParseableElementType type, final CharSequence text) {
     return null;
   }
 
   @Nullable
-  public CompositeElement createComposite(final IElementType type) {
+  public CompositeElement createComposite(@NotNull IElementType type) {
     return null;
   }
 
@@ -66,7 +66,7 @@ public abstract class ASTFactory {
     if (type == TokenType.CODE_FRAGMENT) {
       return new CodeFragmentElement(null);
     }
-    else if (type == TokenType.DUMMY_HOLDER) {
+    if (type == TokenType.DUMMY_HOLDER) {
       return new DummyHolderElement(text);
     }
 
@@ -98,7 +98,6 @@ public abstract class ASTFactory {
     return customLeaf != null ? customLeaf : DefaultFactoryHolder.DEFAULT.createLeaf(type, text);
   }
 
-  @Nullable
   private static ASTFactory factory(final IElementType type) {
     return LanguageASTFactory.INSTANCE.forLanguage(type.getLanguage());
   }

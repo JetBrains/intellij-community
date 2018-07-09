@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.util.keyFMap.KeyFMap;
 import one.util.streamex.StreamEx;
@@ -92,24 +93,6 @@ public final class DfaFactMap {
   }
 
   /**
-   * Checks whether the passed fact map is always distinct from this map (i.e. any exact value
-   * which conforms the passed fact map does not conform this fact map).
-   *
-   * @param otherMap a fact map to check
-   * @return true if this fact map is always distinct from other map.
-   */
-  public boolean isDistinct(DfaFactMap otherMap) {
-    for (DfaFactType<?> key : DfaFactType.getTypes()) {
-      @SuppressWarnings("unchecked")
-      DfaFactType<Object> type = (DfaFactType<Object>)key;
-      Object thisValue = myMap.get(type);
-      Object other = otherMap.get(type);
-      if(thisValue != null && other != null && type.isDistinct(thisValue, other)) return true;
-    }
-    return false;
-  }
-
-  /**
    * Returns a fact map which is additionally restricted by supplied fact.
    * The returned map is a sub-state of this map.
    *
@@ -123,7 +106,7 @@ public final class DfaFactMap {
    */
   @Nullable
   public <T> DfaFactMap intersect(@NotNull DfaFactType<T> type, @Nullable T value) {
-    if (value == null) return this;
+    if (value == null || type.isUnknown(value)) return this;
     T curFact = get(type);
     if (curFact == null) return with(type, value);
     T newFact = type.intersectFacts(curFact, value);
@@ -186,7 +169,16 @@ public final class DfaFactMap {
   @SuppressWarnings("unchecked")
   @Override
   public String toString() {
-    return StreamEx.of(myMap.getKeys()).map(key -> ((DfaFactType<Object>)key).toString(myMap.get(key))).joining(", ");
+    return facts(DfaFactType::toString).joining(", ");
+  }
+
+  @SuppressWarnings("unchecked")
+  public <R> StreamEx<R> facts(FactMapper<R> mapper) {
+    return StreamEx.of(myMap.getKeys()).map(f -> {
+      DfaFactType<Object> key = (DfaFactType<Object>)f;
+      Object value = myMap.get(f);
+      return mapper.apply(key, value);
+    });
   }
 
   /**
@@ -202,5 +194,25 @@ public final class DfaFactMap {
 
   private static <T> DfaFactMap updateMap(DfaFactMap map, DfaFactType<T> factType, DfaVariableValue value) {
     return map.with(factType, factType.calcFromVariable(value));
+  }
+
+  /**
+   * Derives facts which might be known from given DfaValue without knowing the particular memory state
+   *
+   * @param value a value to derive facts from
+   * @return map of facts derived from the value
+   */
+  @NotNull
+  public static DfaFactMap fromDfaValue(DfaValue value) {
+    return StreamEx.of(DfaFactType.getTypes()).foldLeft(EMPTY, (map, type) -> updateMap(map, type, value));
+  }
+
+  private static <T> DfaFactMap updateMap(DfaFactMap map, DfaFactType<T> factType, DfaValue value) {
+    return map.with(factType, factType.fromDfaValue(value));
+  }
+
+  @FunctionalInterface
+  public interface FactMapper<R> {
+    <T> R apply(DfaFactType<T> factType, T factValue);
   }
 }

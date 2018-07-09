@@ -25,6 +25,7 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ui.CheckBox;
 import com.intellij.util.ui.UIUtil;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.GenerateToStringContext;
 import org.jetbrains.java.generate.GenerateToStringUtils;
@@ -61,12 +62,6 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
 
     public boolean excludeInnerClasses;
 
-  public ClassHasNoToStringMethodInspection() {
-    try {
-      excludeClassNamesPattern = Pattern.compile(excludeClassNames);
-    } catch (PatternSyntaxException e) {
-    }
-  }
 
   @Override
     @NotNull
@@ -146,7 +141,7 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                 final PsiMethod[] toStringMethods = clazz.findMethodsByName("toString", false);
                 for (PsiMethod method : toStringMethods) {
                     final PsiParameterList parameterList = method.getParameterList();
-                    if (parameterList.getParametersCount() == 0) {
+                    if (parameterList.isEmpty()) {
                         // toString() method found
                         return;
                     }
@@ -154,7 +149,7 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                 final PsiMethod[] superMethods = clazz.findMethodsByName("toString", true);
                 for (PsiMethod method : superMethods) {
                     final PsiParameterList parameterList = method.getParameterList();
-                    if (parameterList.getParametersCount() != 0) {
+                    if (!parameterList.isEmpty()) {
                         continue;
                     }
                     if (method.hasModifierProperty(PsiModifier.FINAL)) {
@@ -240,5 +235,14 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
         panel.add(excludeInnerClasses, constraints);
 
         return panel;
+    }
+
+    @Override
+    public void readSettings(@NotNull Element node) {
+        super.readSettings(node);
+        try {
+            excludeClassNamesPattern = Pattern.compile(excludeClassNames);
+        }
+        catch (PatternSyntaxException ignored) { }
     }
 }

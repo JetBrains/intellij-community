@@ -54,7 +54,7 @@ public class MavenGotoSettingsFileContributor implements ChooseByNameContributor
         if (psiFile != null) result.add(psiFile);
       }
     }
-    return result.toArray(new NavigationItem[result.size()]);
+    return result.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
   }
 
   private static List<VirtualFile> getSettingsFiles(Project project) {

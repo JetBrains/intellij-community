@@ -1,9 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.dictionary;
 
 
 import com.intellij.spellchecker.inspection.SpellcheckerInspectionTestCase;
-import com.intellij.util.containers.HashSet;
 
 import java.util.*;
 
@@ -137,5 +136,18 @@ public class AggregatedDictionaryTest extends SpellcheckerInspectionTestCase {
     myAggregatedDictionary.traverse(traversedWords::add);
 
     assertEquals(traversedWords, new ArrayList<>(myAggregatedDictionary.getCachedDictionary().getWords()));
+  }
+  
+  public void testGetSuggestions(){
+    final List<String> suggestions = new ArrayList<>();
+    myAggregatedDictionary.getSuggestions("AAAB", suggestions::add);
+    assert suggestions.size() == 1;
+    assert suggestions.contains("AAAA");
+  }
+
+  public void testNoSuggestions(){
+    final List<String> suggestions = new ArrayList<>();
+    myAggregatedDictionary.getSuggestions("EEEE", suggestions::add);
+    assert suggestions.isEmpty();
   }
 }

@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.java.psi
 
 import com.intellij.openapi.command.WriteCommandAction
@@ -49,6 +51,22 @@ class JavaPsiTest extends LightCodeInsightFixtureTestCase {
     assert statement.text == "exports pkg to M2;"
     runCommand { refs[1].delete() }
     assert statement.text == "exports pkg;"
+  }
+
+  void testReferenceQualifierDeletion() {
+    def file = configureFile("class C {\n  Qualifier /*comment*/ . /*another*/ ref r;\n}")
+    def ref = file.classes[0].fields[0].typeElement.firstChild
+    assert ref != null
+    runCommand { ref.firstChild.delete() }
+    assert ref.text == "ref"
+  }
+
+  void testExpressionQualifierDeletion() {
+    def file = configureFile("class C {\n  Object o = qualifier /*comment*/ . /*another*/ expr;\n}")
+    def expr = file.classes[0].fields[0].initializer
+    assert expr != null
+    runCommand { expr.firstChild.delete() }
+    assert expr.text == "expr"
   }
 
   private PsiJavaFile configureFile(String text) {

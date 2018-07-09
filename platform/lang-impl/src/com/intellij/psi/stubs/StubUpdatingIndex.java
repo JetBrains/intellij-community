@@ -52,7 +52,7 @@ import java.util.*;
 public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree, FileContent>
   implements PsiDependentIndex, CustomInputsIndexFileBasedIndexExtension<Integer> {
   static final Logger LOG = Logger.getInstance("#com.intellij.psi.stubs.StubUpdatingIndex");
-  private static final int VERSION = 32 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1 : 0);
+  private static final int VERSION = 35 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1 : 0);
 
   // todo remove once we don't need this for stub-ast mismatch debug info
   private static final FileAttribute INDEXED_STAMP = new FileAttribute("stubIndexStamp", 2, true);
@@ -455,6 +455,8 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
           final InputDataDiffBuilder<Integer, SerializedStubTree> diffBuilder = super.getCurrentDataEvaluator().compute();
           if (diffBuilder instanceof CollectionInputDataDiffBuilder) {
             oldStubIndexKeys = ((CollectionInputDataDiffBuilder<Integer, SerializedStubTree>)diffBuilder).getSeq();
+          } else if (diffBuilder instanceof MapInputDataDiffBuilder) {
+            oldStubIndexKeys = ((MapInputDataDiffBuilder<Integer, SerializedStubTree>)diffBuilder).getMap().keySet();
           }
           return diffBuilder;
         };
@@ -531,6 +533,18 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     }
 
     @Override
+    public void removeTransientDataForKeys(int inputId, Collection<Integer> keys) {
+      super.removeTransientDataForKeys(inputId, keys);
+      if (keys instanceof StubUpdatingIndexKeys) {
+        Map<StubIndexKey, Map<Object, StubIdList>> stubIndicesValueMap = ((StubUpdatingIndexKeys)keys).myStubIndicesValueMap;
+        final StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
+        for (StubIndexKey key : stubIndicesValueMap.keySet()) {
+          stubIndex.removeTransientDataForFile(key, inputId, stubIndicesValueMap.get(key).keySet());
+        }
+      }
+    }
+
+    @Override
     protected void doClear() throws StorageException, IOException {
       final StubIndexImpl stubIndex = StubIndexImpl.getInstanceOrInvalidate();
       if (stubIndex != null) {
@@ -556,10 +570,8 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
     public void setIndexedStateForFile(int fileId, @NotNull VirtualFile file) {
       super.setIndexedStateForFile(fileId, file);
 
-      try {
-        DataOutputStream stream = FSRecords.writeAttribute(fileId, VERSION_STAMP);
+      try (DataOutputStream stream = FSRecords.writeAttribute(fileId, VERSION_STAMP)) {
         DataInputOutputUtil.writeINT(stream, myStubVersionMap.getIndexingTimestampDiffForFileType(file.getFileType()));
-        stream.close();
       }
       catch (IOException e) {
         LOG.error(e);

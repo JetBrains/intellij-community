@@ -138,6 +138,8 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   @Nullable private Properties myUserProperties;
 
+  @NotNull private final RepositorySystem myRepositorySystem;
+
   public Maven3ServerEmbedderImpl(MavenEmbedderSettings settings) throws RemoteException {
     super(settings.getSettings());
 
@@ -217,7 +219,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
       Constructor constructor = cliRequestClass.getDeclaredConstructor(String[].class, ClassWorld.class);
       constructor.setAccessible(true);
       //noinspection SSBasedInspection
-      cliRequest = constructor.newInstance(commandLineOptions.toArray(new String[commandLineOptions.size()]), classWorld);
+      cliRequest = constructor.newInstance(commandLineOptions.toArray(new String[0]), classWorld);
 
       for (String each : new String[]{"initialize", "cli", "logging", "properties"}) {
         Method m = MavenCli.class.getDeclaredMethod(each, cliRequestClass);
@@ -255,6 +257,8 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
                                     ReflectionUtil.getField(cliRequestClass, cliRequest, Properties.class, "userProperties"));
 
     myLocalRepository = createLocalRepository();
+
+    myRepositorySystem = getComponent(RepositorySystem.class);
   }
 
   private static Settings buildSettings(SettingsBuilder builder,
@@ -430,6 +434,10 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
       Properties props = MavenServerUtil.collectSystemProperties();
       ProjectBuilderConfiguration config = new DefaultProjectBuilderConfiguration().setExecutionProperties(props);
       config.setBuildStartTime(new Date());
+
+      Properties userProperties = new Properties();
+      userProperties.putAll(getMavenAndJvmConfigProperties(basedir));
+      config.setUserProperties(userProperties);
 
       result = interpolator.interpolate(result, basedir, config, false);
     }
@@ -642,7 +650,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
                                                            @NotNull final List<String> activeProfiles,
                                                            @NotNull final List<String> inactiveProfiles,
                                                            final List<ResolutionListener> listeners) throws RemoteException {
-    final File file = files.size() == 1 ? files.iterator().next() : null;
+    final File file = !files.isEmpty() ? files.iterator().next() : null;
     final MavenExecutionRequest request = createRequest(file, activeProfiles, inactiveProfiles, null);
 
     request.setUpdateSnapshots(myAlwaysUpdateSnapshots);
@@ -752,7 +760,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   /**
-   * copied from {@link DefaultProjectBuilder#resolveDependencies(MavenProject, org.sonatype.aether.RepositorySystemSession)}
+   * copied from {@link DefaultProjectBuilder#resolveDependencies(MavenProject, RepositorySystemSession)}
    */
   private DependencyResolutionResult resolveDependencies(MavenProject project, RepositorySystemSession session) {
     DependencyResolutionResult resolutionResult;
@@ -860,6 +868,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
     return lifecycleListeners;
   }
 
+  @Override
   public MavenExecutionRequest createRequest(@Nullable File file,
                                              @Nullable List<String> activeProfiles,
                                              @Nullable List<String> inactiveProfiles,
@@ -882,7 +891,14 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
       getComponent(MavenExecutionRequestPopulator.class).populateDefaults(result);
 
       result.setSystemProperties(mySystemProperties);
-      result.setUserProperties(myUserProperties);
+      Properties userProperties = new Properties();
+      if (myUserProperties != null) {
+        userProperties.putAll(myUserProperties);
+      }
+      if (file != null) {
+        userProperties.putAll(getMavenAndJvmConfigProperties(file.getParentFile()));
+      }
+      result.setUserProperties(userProperties);
 
       if (activeProfiles != null) {
         result.setActiveProfiles(activeProfiles);
@@ -899,10 +915,15 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
         ReflectionUtil.findMethod(ReflectionUtil.getClassDeclaredMethods(result.getClass()), "setMultiModuleProjectDirectory", File.class);
       if (setMultiModuleProjectDirectoryMethod != null) {
         try {
+          File mavenMultiModuleProjectDirectory;
           if (file == null) {
-            file = new File(FileUtil.getTempDirectory());
+            mavenMultiModuleProjectDirectory = new File(FileUtil.getTempDirectory());
           }
-          setMultiModuleProjectDirectoryMethod.invoke(result, MavenServerUtil.findMavenBasedir(file));
+          else {
+            mavenMultiModuleProjectDirectory = MavenServerUtil.findMavenBasedir(file);
+            result.setBaseDirectory(mavenMultiModuleProjectDirectory);
+          }
+          result.setMultiModuleProjectDirectory(mavenMultiModuleProjectDirectory);
         }
         catch (Exception e) {
           Maven3ServerGlobals.getLogger().error(e);
@@ -1246,6 +1267,11 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
       catch (InvalidRepositoryException e) {
         Maven3ServerGlobals.getLogger().warn(e);
       }
+    }
+    if (getComponent(LegacySupport.class).getRepositorySession() == null) {
+      myRepositorySystem.injectMirror(result, myMavenSettings.getMirrors());
+      myRepositorySystem.injectProxy(result, myMavenSettings.getProxies());
+      myRepositorySystem.injectAuthentication(result, myMavenSettings.getServers());
     }
     return result;
   }

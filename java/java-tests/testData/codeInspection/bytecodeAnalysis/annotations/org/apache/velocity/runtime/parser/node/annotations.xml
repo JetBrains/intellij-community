@@ -120,7 +120,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTDirective java.lang.Object init(org.apache.velocity.context.InternalContextAdapter, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,!null-&gt;!null;_,null-&gt;null&quot;"/>
+            <val val="&quot;_,_-&gt;param2&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTDirective java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0'>
@@ -223,7 +223,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTEscape java.lang.Object init(org.apache.velocity.context.InternalContextAdapter, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,!null-&gt;!null;_,null-&gt;null&quot;"/>
+            <val val="&quot;_,_-&gt;param2&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTEscape java.lang.Object init(org.apache.velocity.context.InternalContextAdapter, java.lang.Object) 0'>
@@ -311,7 +311,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTFloatingPointLiteral java.lang.Object init(org.apache.velocity.context.InternalContextAdapter, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,!null-&gt;!null;_,null-&gt;null&quot;"/>
+            <val val="&quot;_,_-&gt;param2&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTFloatingPointLiteral java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0'>
@@ -369,7 +369,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTIdentifier java.lang.Object init(org.apache.velocity.context.InternalContextAdapter, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,!null-&gt;!null;_,null-&gt;null&quot;"/>
+            <val val="&quot;_,_-&gt;param2&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTIdentifier java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0'>
@@ -440,7 +440,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTIndex java.lang.Object init(org.apache.velocity.context.InternalContextAdapter, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,!null-&gt;!null;_,null-&gt;null&quot;"/>
+            <val val="&quot;_,_-&gt;param2&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTIntegerLiteral ASTIntegerLiteral(int)'>
@@ -455,7 +455,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTIntegerLiteral java.lang.Object init(org.apache.velocity.context.InternalContextAdapter, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,!null-&gt;!null;_,null-&gt;null&quot;"/>
+            <val val="&quot;_,_-&gt;param2&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTIntegerLiteral java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0'>
@@ -524,6 +524,11 @@
     <item name='org.apache.velocity.runtime.parser.node.ASTMap java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.velocity.runtime.parser.node.ASTMap java.lang.Object value(org.apache.velocity.context.InternalContextAdapter)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTMathNode ASTMathNode(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -552,7 +557,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTMathNode java.lang.Object init(org.apache.velocity.context.InternalContextAdapter, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,!null-&gt;!null;_,null-&gt;null&quot;"/>
+            <val val="&quot;_,_-&gt;param2&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTMathNode java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0'>
@@ -588,7 +593,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTMethod java.lang.Object init(org.apache.velocity.context.InternalContextAdapter, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,!null-&gt;!null;_,null-&gt;null&quot;"/>
+            <val val="&quot;_,_-&gt;param2&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTMethod java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0'>
@@ -692,6 +697,11 @@
     <item name='org.apache.velocity.runtime.parser.node.ASTObjectArray java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.velocity.runtime.parser.node.ASTObjectArray java.lang.Object value(org.apache.velocity.context.InternalContextAdapter)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTOrNode ASTOrNode(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -744,7 +754,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTReference java.lang.Object init(org.apache.velocity.context.InternalContextAdapter, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,!null-&gt;!null;_,null-&gt;null&quot;"/>
+            <val val="&quot;_,_-&gt;param2&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTReference java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0'>
@@ -790,7 +800,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTSetDirective java.lang.Object init(org.apache.velocity.context.InternalContextAdapter, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,!null-&gt;!null;_,null-&gt;null&quot;"/>
+            <val val="&quot;_,_-&gt;param2&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTSetDirective java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0'>
@@ -813,7 +823,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTStringLiteral java.lang.Object init(org.apache.velocity.context.InternalContextAdapter, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,!null-&gt;!null;_,null-&gt;null&quot;"/>
+            <val val="&quot;_,_-&gt;param2&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTStringLiteral java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0'>
@@ -870,7 +880,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTText java.lang.Object init(org.apache.velocity.context.InternalContextAdapter, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,!null-&gt;!null;_,null-&gt;null&quot;"/>
+            <val val="&quot;_,_-&gt;param2&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.ASTText java.lang.Object init(org.apache.velocity.context.InternalContextAdapter, java.lang.Object) 0'>
@@ -1090,6 +1100,11 @@
     <item name='org.apache.velocity.runtime.parser.node.NodeUtils java.lang.String tokenLiteral(org.apache.velocity.runtime.parser.Token) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.velocity.runtime.parser.node.NodeUtils org.apache.commons.lang.text.StrBuilder getSpecialText(org.apache.velocity.runtime.parser.Token)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.runtime.parser.node.NodeUtils org.apache.commons.lang.text.StrBuilder getSpecialText(org.apache.velocity.runtime.parser.Token) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -1184,7 +1199,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.SimpleNode java.lang.Object childrenAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,!null-&gt;!null;_,null-&gt;null&quot;"/>
+            <val val="&quot;_,_-&gt;param2&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.SimpleNode java.lang.Object execute(java.lang.Object, org.apache.velocity.context.InternalContextAdapter)'>
@@ -1202,7 +1217,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.node.SimpleNode java.lang.Object init(org.apache.velocity.context.InternalContextAdapter, java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,!null-&gt;!null;_,null-&gt;null&quot;"/>
+            <val val="&quot;_,_-&gt;param2&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.node.SimpleNode java.lang.Object jjtAccept(org.apache.velocity.runtime.parser.node.ParserVisitor, java.lang.Object) 0'>

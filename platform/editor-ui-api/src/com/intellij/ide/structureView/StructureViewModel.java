@@ -16,6 +16,8 @@
 package com.intellij.ide.structureView;
 
 import com.intellij.ide.util.treeView.smartTree.TreeModel;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.editor.Editor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,10 +25,10 @@ import org.jetbrains.annotations.Nullable;
  * Defines the model for the data displayed in the standard structure view or file structure
  * popup component. The model of the standard structure view is represented as a tree of elements.
  *
- * @see com.intellij.ide.structureView.TreeBasedStructureViewBuilder#createStructureViewModel()
+ * @see TreeBasedStructureViewBuilder#createStructureViewModel(Editor)
  * @see TextEditorBasedStructureViewModel
  */
-public interface StructureViewModel extends TreeModel {
+public interface StructureViewModel extends TreeModel, Disposable {
   /**
    * Returns the element currently selected in the editor linked to the structure view.
    *

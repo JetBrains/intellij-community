@@ -16,34 +16,32 @@
 package com.intellij.vcs.log.history;
 
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogFilterUi;
-import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
-import com.intellij.vcs.log.data.VcsLogStructureFilterImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-
-import static com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
-
 public class FileHistoryFilterUi implements VcsLogFilterUi {
   @NotNull private final FilePath myPath;
+  @Nullable private final Hash myHash;
+  @NotNull private final VirtualFile myRoot;
   @NotNull private final FileHistoryUiProperties myProperties;
 
-  public FileHistoryFilterUi(@NotNull FilePath path, @NotNull FileHistoryUiProperties properties) {
+  public FileHistoryFilterUi(@NotNull FilePath path, @Nullable Hash hash, @NotNull VirtualFile root,
+                             @NotNull FileHistoryUiProperties properties) {
     myPath = path;
+    myHash = hash;
+    myRoot = root;
     myProperties = properties;
   }
 
   @NotNull
   @Override
   public VcsLogFilterCollection getFilters() {
-    VcsLogStructureFilterImpl fileFilter = new VcsLogStructureFilterImpl(Collections.singleton(myPath));
-    VcsLogBranchFilterImpl branchFilter =
-      myProperties.get(FileHistoryUiProperties.SHOW_ALL_BRANCHES) ? null : VcsLogBranchFilterImpl.fromBranch("HEAD");
-    return new VcsLogFilterCollectionBuilder().with(fileFilter).with(branchFilter).build();
+    return FileHistoryFilterer.createFilters(myPath, myHash, myRoot, myProperties.get(FileHistoryUiProperties.SHOW_ALL_BRANCHES));
   }
 
   @Override

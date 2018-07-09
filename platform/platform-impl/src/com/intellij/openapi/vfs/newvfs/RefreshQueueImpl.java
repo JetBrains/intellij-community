@@ -23,7 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import gnu.trove.TLongObjectHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +39,7 @@ import java.util.concurrent.ExecutorService;
 public class RefreshQueueImpl extends RefreshQueue implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.RefreshQueueImpl");
 
-  private final ExecutorService myQueue = new BoundedTaskExecutor("RefreshQueue pool", PooledThreadExecutor.INSTANCE, 1, this);
+  private final ExecutorService myQueue = AppExecutorUtil.createBoundedApplicationPoolExecutor("RefreshQueue Pool", PooledThreadExecutor.INSTANCE, 1, this);
   private final ProgressIndicator myRefreshIndicator = RefreshProgress.create(VfsBundle.message("file.synchronize.progress"));
   private final TLongObjectHashMap<RefreshSession> mySessions = new TLongObjectHashMap<>();
   private final FrequentEventDetector myEventCounter = new FrequentEventDetector(100, 100, FrequentEventDetector.Level.WARN);

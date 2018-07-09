@@ -17,80 +17,131 @@ package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.HighlighterIteratorWrapper;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
+
+import static java.lang.Integer.min;
+
 /**
  * @author Rustam Vishnyakov
  */
-public abstract class SemanticEditorPosition {
+public class SemanticEditorPosition {
   public interface SyntaxElement {}
   
   private final EditorEx myEditor;
   private final HighlighterIterator myIterator;
   private final CharSequence myChars;
+  private final Function<IElementType, SyntaxElement> myTypeMapper;
+  private final BiFunction<EditorEx, Integer, HighlighterIterator> myCreateHighlighterIteratorAtOffset;
 
-  public SemanticEditorPosition(@NotNull EditorEx editor, int offset) {
+  private SemanticEditorPosition(@NotNull EditorEx editor, int offset,
+                                 @NotNull BiFunction<EditorEx, Integer, HighlighterIterator> createHighlighterIteratorAtOffset,
+                                 @NotNull Function<IElementType, SyntaxElement> typeMapper) {
+    myCreateHighlighterIteratorAtOffset = createHighlighterIteratorAtOffset;
     myEditor = editor;
-    myChars = editor.getDocument().getCharsSequence();
-    myIterator = editor.getHighlighter().createIterator(offset);
+    myChars = myEditor.getDocument().getCharsSequence();
+    myIterator = createHighlighterIteratorAtOffset.apply(editor, offset);
+    myTypeMapper = typeMapper;
   }
-  
-  public SemanticEditorPosition beforeOptional(@NotNull SyntaxElement syntaxElement) {
+
+  public void moveBeforeOptional(@NotNull SyntaxElement syntaxElement) {
     if (!myIterator.atEnd()) {
       if (syntaxElement.equals(map(myIterator.getTokenType()))) myIterator.retreat();
     }
-    return this;
+  }
+
+  public SemanticEditorPosition beforeOptional(@NotNull SyntaxElement syntaxElement) {
+    return copyAnd(position -> position.moveBeforeOptional(syntaxElement));
   }
   
-  public SemanticEditorPosition beforeOptionalMix(@NotNull SyntaxElement... elements) {
+  public void moveBeforeOptionalMix(@NotNull SyntaxElement... elements) {
     while (isAtAnyOf(elements)) {
       myIterator.retreat();
     }
-    return this;
+  }
+
+  public SemanticEditorPosition beforeOptionalMix(@NotNull SyntaxElement... elements) {
+    return copyAnd(position -> position.moveBeforeOptionalMix(elements));
   }
   
-  public SemanticEditorPosition afterOptionalMix(@NotNull SyntaxElement... elements)  {
+  public void moveAfterOptionalMix(@NotNull SyntaxElement... elements)  {
     while (isAtAnyOf(elements)) {
       myIterator.advance();
     }
-    return this;
   }
-  
+
+
+  public SemanticEditorPosition afterOptionalMix(@NotNull SyntaxElement... elements) {
+    return copyAnd(position -> position.moveAfterOptionalMix(elements));
+  }
+
   public boolean isAtMultiline() {
     if (!myIterator.atEnd()) {
       return CharArrayUtil.containLineBreaks(myChars, myIterator.getStart(), myIterator.getEnd());
     }
     return false;
   }
+
+  /**
+   * Checks if there are line breaks strictly after the given offset till the end of the current element.
+   *
+   * @param offset The offset to search line breaks after.
+   * @return True if there are line breaks after the given offset.
+   */
+  public boolean hasLineBreaksAfter(int offset) {
+    if (!myIterator.atEnd() && offset >= 0) {
+      int offsetAfter = offset + 1;
+      if (offsetAfter < myIterator.getEnd()) {
+        return CharArrayUtil.containLineBreaks(myChars, offsetAfter, myIterator.getEnd());
+      }
+    }
+    return false;
+  }
+
+  public boolean isAtMultiline(SyntaxElement... elements) {
+    return isAtAnyOf(elements) && CharArrayUtil.containLineBreaks(myChars, myIterator.getStart(), myIterator.getEnd());
+  }
   
-  public SemanticEditorPosition before() {
+  public void moveBefore() {
     if (!myIterator.atEnd()) {
       myIterator.retreat();
     }
-    return this;
+  }
+
+  public SemanticEditorPosition before() {
+    return copyAnd(position -> position.moveBefore());
   }
   
-  public SemanticEditorPosition afterOptional(@NotNull SyntaxElement syntaxElement) {
+  public void moveAfterOptional(@NotNull SyntaxElement syntaxElement) {
     if (!myIterator.atEnd()) {
       if (syntaxElement.equals(map(myIterator.getTokenType()))) myIterator.advance();
     }
-    return this;
   }
-  
-  public SemanticEditorPosition after() {
+
+  public SemanticEditorPosition afterOptional(@NotNull SyntaxElement syntaxElement) {
+    return copyAnd(position -> position.moveAfterOptional(syntaxElement));
+  }
+
+  public void moveAfter() {
     if (!myIterator.atEnd()) {
       myIterator.advance();
     }
-    return this;
+  }
+
+  public SemanticEditorPosition after() {
+    return copyAnd(position -> position.moveAfter());
   }
   
-  public SemanticEditorPosition beforeParentheses(@NotNull SyntaxElement leftParenthesis, @NotNull SyntaxElement rightParenthesis) {
+  public void moveBeforeParentheses(@NotNull SyntaxElement leftParenthesis, @NotNull SyntaxElement rightParenthesis) {
     int parenLevel = 0;
     while (!myIterator.atEnd()) {
       SyntaxElement currElement = map(myIterator.getTokenType());
@@ -105,42 +156,64 @@ public abstract class SemanticEditorPosition {
         }
       }
     }
-    return this;
+  }
+
+  public SemanticEditorPosition beforeParentheses(@NotNull SyntaxElement leftParenthesis, @NotNull SyntaxElement rightParenthesis) {
+    return copyAnd(position -> position.moveBeforeParentheses(leftParenthesis, rightParenthesis));
+  }
+
+  public void moveToLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
+                                                           @NotNull SyntaxElement rightParenthesis) {
+    moveToLeftParenthesisBackwardsSkippingNestedWithPredicate(leftParenthesis, rightParenthesis, any -> false);
   }
 
   public SemanticEditorPosition findLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
                                                                            @NotNull SyntaxElement rightParenthesis) {
-    return findLeftParenthesisBackwardsSkippingNested(leftParenthesis, rightParenthesis, Conditions.alwaysFalse());
+    return copyAnd(position -> position.moveToLeftParenthesisBackwardsSkippingNested(leftParenthesis, rightParenthesis));
   }
-  
-  public SemanticEditorPosition findLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
-                                                                           @NotNull SyntaxElement rightParenthesis,
-                                                                           @NotNull Condition<SyntaxElement> terminationCondition) {
+
+  public void moveToLeftParenthesisBackwardsSkippingNestedWithPredicate(@NotNull SyntaxElement leftParenthesis,
+                                                                        @NotNull SyntaxElement rightParenthesis,
+                                                                        @NotNull Predicate<SemanticEditorPosition> terminationCondition) {
     while (!myIterator.atEnd()) {
-      if (terminationCondition.value(map(myIterator.getTokenType()))) {
+      if (terminationCondition.test(this)) {
         break;
       }
       if (rightParenthesis.equals(map(myIterator.getTokenType()))) {
-        beforeParentheses(leftParenthesis, rightParenthesis);
+        moveBeforeParentheses(leftParenthesis, rightParenthesis);
+        continue;
       }
       else if (leftParenthesis.equals(map(myIterator.getTokenType()))) {
         break; 
       }
       myIterator.retreat();
     }
-    return this;
   }
-  
+
+  public SemanticEditorPosition findLeftParenthesisBackwardsSkippingNestedWithPredicate(
+    @NotNull SyntaxElement leftParenthesis,
+    @NotNull SyntaxElement rightParenthesis,
+    @NotNull Predicate<SemanticEditorPosition> terminationCondition) 
+  {
+    return copyAnd(position -> position.moveToLeftParenthesisBackwardsSkippingNestedWithPredicate(
+      leftParenthesis, rightParenthesis, terminationCondition));
+  }
+
   public boolean isAfterOnSameLine(@NotNull SyntaxElement... syntaxElements) {
+    return elementAfterOnSameLine(syntaxElements) != null;
+  }
+
+  @Nullable
+  public SyntaxElement elementAfterOnSameLine(@NotNull SyntaxElement... syntaxElements) {
     myIterator.retreat();
     while (!myIterator.atEnd() && !isAtMultiline()) {
       SyntaxElement currElement = map(myIterator.getTokenType());
       for (SyntaxElement element : syntaxElements) {
-        if (element.equals(currElement)) return true;
+        if (element.equals(currElement)) return element;
       }
       myIterator.retreat();
     }
-    return false;
+    return null;
   }
   
   public boolean isAt(@NotNull SyntaxElement syntaxElement) {
@@ -159,7 +232,6 @@ public abstract class SemanticEditorPosition {
     return myIterator.getStart();
   }
 
-  @SuppressWarnings("unused")
   public boolean isAtAnyOf(@NotNull SyntaxElement... syntaxElements) {
     if (!myIterator.atEnd()) {
       SyntaxElement currElement = map(myIterator.getTokenType());
@@ -219,10 +291,47 @@ public abstract class SemanticEditorPosition {
     boolean check(SemanticEditorPosition position);
   }
   
-  public abstract SyntaxElement map(@NotNull IElementType elementType);
+  public SyntaxElement map(@NotNull IElementType elementType) {
+    return myTypeMapper.apply(elementType);
+  }
 
   @Override
   public String toString() {
-    return myIterator.getTokenType().toString();
+    return myIterator.atEnd() 
+       ? "atEnd"
+       : myIterator.getTokenType().toString() 
+         + "=>" 
+         + getChars().subSequence(getStartOffset(), min(getStartOffset() + 255, getChars().length()));
+  }
+
+  public SemanticEditorPosition copy() {
+      return createEditorPosition(myEditor, 
+                                  isAtEnd() ? -1 : myIterator.getStart(),
+                                  (editor, offset) -> !isAtEnd() 
+                                  ? myCreateHighlighterIteratorAtOffset.apply(editor, offset)
+                                  : new HighlighterIteratorWrapper(myIterator) { // A wrapper around current iterator to make it immutable.
+                                    @Override
+                                    public void advance() {
+                                      // do nothing
+                                    }
+                                    @Override
+                                    public void retreat() {
+                                      // do nothing
+                                    }
+                                  }, 
+                                  myTypeMapper);
+  }
+
+  public SemanticEditorPosition copyAnd(@NotNull Consumer<SemanticEditorPosition> modifier) {
+    SemanticEditorPosition position = copy();
+    modifier.accept(position);
+    return position;
+  }
+  
+  @NotNull
+  public static SemanticEditorPosition createEditorPosition(@NotNull EditorEx editor, int offset,
+                                                            @NotNull BiFunction<EditorEx, Integer, HighlighterIterator> createHighlighterIteratorAtOffset,
+                                                            @NotNull Function<IElementType, SyntaxElement> typeMapper) {
+    return new SemanticEditorPosition(editor, offset, createHighlighterIteratorAtOffset, typeMapper);
   }
 }

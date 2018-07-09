@@ -18,6 +18,7 @@ package com.intellij.concurrency;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -27,8 +28,10 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.Timings;
 import com.intellij.util.Processor;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.math.BigDecimal;
@@ -40,9 +43,23 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public class JobUtilTest extends PlatformTestCase {
   private static final AtomicInteger COUNT = new AtomicInteger();
+  private long timeOutMs;
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    timeOutMs = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(2);
+  }
+  private boolean timeOut(Object workProgress) {
+    if (System.currentTimeMillis() > timeOutMs) {
+      System.err.println("Timed out. Stopped at "+workProgress);
+      return true;
+    }
+    return false;
+  }
 
   public void testUnbalancedTaskJobUtilPerformance() {
-    List<Integer> things = new ArrayList<>(Collections.nCopies(10000, null));
+    List<Integer> things = new ArrayList<>(Collections.nCopies(10_000, null));
     int sum = 0;
     for (int i = 0; i < things.size(); i++) {
       int v = i < 9950 ? 1 : 1000;
@@ -52,24 +69,23 @@ public class JobUtilTest extends PlatformTestCase {
     assertEquals(59950, sum);
 
     long start = System.currentTimeMillis();
-    boolean b = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(things, new ProgressIndicatorBase(), false, false, o -> {
-      busySleep(o);
+    boolean b = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(things, new ProgressIndicatorBase(), o -> {
+      busySleepAndIncrement(o);
       return true;
     });
     assertTrue(b);
     long elapsed = System.currentTimeMillis() - start;
-    int expected = 2 * (9950 + 50 * 1000) / JobSchedulerImpl.CORES_COUNT;
-    String message = "Elapsed: " + elapsed + "; expected: " + expected;
-    LOG.debug(message);
-    assertTrue(message, elapsed < expected);
+    int expected = 2 * (9950 + 50 * 1000) / JobSchedulerImpl.getJobPoolParallelism();
+    String message = "Elapsed: " + elapsed + "; expected: " + expected + "; parallelism=" + JobSchedulerImpl.getJobPoolParallelism() + "; current cores=" + Runtime.getRuntime().availableProcessors();
+    assertTrue(message, elapsed <= expected);
   }
 
-  private static int busySleep(int ms) {
+  private static int busySleepAndIncrement(int ms) {
     long end = System.currentTimeMillis() + ms;
     while (System.currentTimeMillis() < end);
     return COUNT.incrementAndGet();
   }
-  private static int busySleep(int ms, Runnable whileWait) {
+  private static int busySleepAndIncrement(int ms, @NotNull Runnable whileWait) {
     long end = System.currentTimeMillis() + ms;
     while (System.currentTimeMillis() < end)  {
       whileWait.run();
@@ -79,12 +95,12 @@ public class JobUtilTest extends PlatformTestCase {
 
   public void testJobUtilCorrectlySplitsUpHugeWorkAndFinishesStress() throws Exception {
     COUNT.set(0);
-    int N = Timings.adjustAccordingToMySpeed(100000, true);
+    int N = Timings.adjustAccordingToMySpeed(100_000, true);
     List<String> list = Collections.nCopies(N, null);
     final AtomicReference<Exception> exception = new AtomicReference<>();
     final AtomicBoolean finished = new AtomicBoolean();
 
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, false, name -> {
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, name -> {
       try {
         if (finished.get()) {
           throw new RuntimeException();
@@ -92,7 +108,7 @@ public class JobUtilTest extends PlatformTestCase {
         for (int i = 0; i < 1000; i++) {
           new BigDecimal(i).multiply(new BigDecimal(1));
         }
-        busySleep(1);
+        busySleepAndIncrement(1);
         if (finished.get()) {
           throw new RuntimeException();
         }
@@ -111,11 +127,11 @@ public class JobUtilTest extends PlatformTestCase {
   public void testJobUtilProcessesAllItemsStress() throws Exception {
     List<String> list = Collections.nCopies(Timings.adjustAccordingToMySpeed(1000, true), null);
     final AtomicReference<Exception> exception = new AtomicReference<>();
-    for (int i=0; i<10; i++) {
+    for (int i=0; i<10 && !timeOut(i); i++) {
       long start = System.currentTimeMillis();
       COUNT.set(0);
-      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, false, name -> {
-        busySleep(1);
+      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, name -> {
+        busySleepAndIncrement(1);
         return true;
       });
       if (exception.get() != null) throw exception.get();
@@ -126,13 +142,14 @@ public class JobUtilTest extends PlatformTestCase {
   }
 
   public void testJobUtilRecursiveStress() {
-    final List<String> list = Collections.nCopies(100, null);
-    for (int i=0; i<10; i++) {
+    int N = Timings.adjustAccordingToMySpeed(100, true);
+    final List<String> list = Collections.nCopies(N, null);
+    for (int i=0; i<10 && !timeOut(i); i++) {
       COUNT.set(0);
       long start = System.currentTimeMillis();
-      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, false, name -> {
-        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, false, name1 -> {
-          busySleep(1);
+      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, name -> {
+        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, name1 -> {
+          busySleepAndIncrement(1);
           return true;
         });
         return true;
@@ -157,30 +174,39 @@ public class JobUtilTest extends PlatformTestCase {
                                                  final DaemonProgressIndicator progress,
                                                  final boolean runInReadAction) throws Throwable {
     final AtomicReference<Throwable> exception = new AtomicReference<>();
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(objects, progress, runInReadAction, o -> {
-      try {
-        if (objects.size() <= 1 || JobSchedulerImpl.CORES_COUNT <= JobLauncherImpl.CORES_FORK_THRESHOLD) {
-          assertTrue(ApplicationManager.getApplication().isDispatchThread());
-        }
-        else {
-          // generally we know nothing about current thread since FJP can help others task to execute while in current context
-        }
-        ProgressIndicator actualIndicator = ProgressManager.getInstance().getProgressIndicator();
-        if (progress == null) {
-          assertNotNull(actualIndicator);
-          assertTrue(actualIndicator instanceof AbstractProgressIndicatorBase);
-        }
-        else {
-          assertTrue(actualIndicator instanceof SensitiveProgressWrapper);
-          ProgressIndicator original = ((SensitiveProgressWrapper)actualIndicator).getOriginalProgressIndicator();
-          assertSame(progress, original);
-        }
-        // there can be read access even if we didn't ask for it (e.g. when task under read action steals others work)
-        assertTrue(!runInReadAction || ApplicationManager.getApplication().isReadAccessAllowed());
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(objects, progress, o -> {
+      ThrowableRunnable<RuntimeException> runnable = () -> {
+          try {
+            if (objects.size() <= 1 || JobSchedulerImpl.getJobPoolParallelism() <= JobLauncherImpl.CORES_FORK_THRESHOLD) {
+              assertTrue(ApplicationManager.getApplication().isDispatchThread());
+            }
+            else {
+              // generally we know nothing about current thread since FJP can help others task to execute while in current context
+            }
+            ProgressIndicator actualIndicator = ProgressManager.getInstance().getProgressIndicator();
+            if (progress == null) {
+              assertNotNull(actualIndicator);
+              assertTrue(actualIndicator instanceof AbstractProgressIndicatorBase);
+            }
+            else {
+              assertTrue(actualIndicator instanceof SensitiveProgressWrapper);
+              ProgressIndicator original = ((SensitiveProgressWrapper)actualIndicator).getOriginalProgressIndicator();
+              assertSame(progress, original);
+            }
+            // there can be read access even if we didn't ask for it (e.g. when task under read action steals others work)
+            assertTrue(!runInReadAction || ApplicationManager.getApplication().isReadAccessAllowed());
+          }
+          catch (Throwable e) {
+            exception.set(e);
+          }
+      };
+      if (runInReadAction) {
+        ReadAction.run(runnable);
       }
-      catch (Throwable e) {
-        exception.set(e);
+      else {
+        runnable.run();
       }
+
       return true;
     });
     if (exception.get() != null) throw exception.get();
@@ -190,9 +216,9 @@ public class JobUtilTest extends PlatformTestCase {
   public void testExceptionalCompletion() {
     COUNT.set(0);
     try {
-      final List<Object> objects = Collections.nCopies(100000000, null);
-      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(objects, null, true, o -> {
-        if (COUNT.incrementAndGet() == 100000) {
+      final List<Object> objects = Collections.nCopies(100_000_000, null);
+      JobLauncher.getInstance().invokeConcurrentlyUnderProgress(objects, null, o -> {
+        if (COUNT.incrementAndGet() == 100_000) {
           LOG.debug("PCE");
           throw new MyException();
         }
@@ -206,9 +232,9 @@ public class JobUtilTest extends PlatformTestCase {
   }
   public void testNotNormalCompletion() {
     COUNT.set(0);
-    final List<Object> objects = Collections.nCopies(100000000, null);
-    boolean success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(objects, null, true, o -> {
-      if (COUNT.incrementAndGet() == 100000) {
+    final List<Object> objects = Collections.nCopies(100_000_000, null);
+    boolean success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(objects, null, o -> {
+      if (COUNT.incrementAndGet() == 100_000) {
         LOG.debug("PCE");
         return false;
       }
@@ -219,7 +245,7 @@ public class JobUtilTest extends PlatformTestCase {
 
   public void testJobUtilCompletesEvenIfCannotGrabReadAction() {
     COUNT.set(0);
-    final List<Object> objects = Collections.nCopies(1000000, null);
+    final List<Object> objects = Collections.nCopies(1_000_000, null);
     ApplicationManager.getApplication().runWriteAction(() -> {
       boolean success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(objects, null, true, false, o -> {
         COUNT.incrementAndGet();
@@ -233,14 +259,14 @@ public class JobUtilTest extends PlatformTestCase {
   public void testJobUtilRecursiveCancel() {
     final List<String> list = Collections.nCopies(100, "");
     final List<Integer> ilist = Collections.nCopies(100, 0);
-    for (int i=0; i<10; i++) {
+    for (int i=0; i<10 && !timeOut(i); i++) {
       COUNT.set(0);
       long start = System.currentTimeMillis();
       boolean success = false;
       try {
-        success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, false, name -> {
-          boolean nestedSuccess = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(ilist, null, false, integer -> {
-            if (busySleep(1) == 1000) {
+        success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(list, null, name -> {
+          boolean nestedSuccess = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(ilist, null, integer -> {
+            if (busySleepAndIncrement(1) == 1000) {
               LOG.debug("PCE");
               throw new MyException();
             }
@@ -262,7 +288,7 @@ public class JobUtilTest extends PlatformTestCase {
 
   public void testSaturation() throws InterruptedException {
     final CountDownLatch latch = new CountDownLatch(1);
-    for (int i=0; i<100; i++) {
+    for (int i=0; i<100 && !timeOut(i); i++) {
       JobLauncher.getInstance().submitToJobThread(() -> {
         try {
           latch.await();
@@ -283,17 +309,18 @@ public class JobUtilTest extends PlatformTestCase {
     }
   }
 
-  public void testProcessorReturningFalseDoesNotCrashTheOtherThread() {
+  public void testProcessorReturningFalseDoesNotCrashTheOtherThreadStress() {
     final AtomicInteger delay = new AtomicInteger(0);
     final Runnable checkCanceled = ProgressManager::checkCanceled;
     Processor<String> processor = s -> {
-      busySleep(delay.incrementAndGet() % 10 + 10, checkCanceled);
+      busySleepAndIncrement(delay.incrementAndGet() % 10 + 10, checkCanceled);
       return delay.get() % 100 != 0;
     };
-    for (int i=0; i<100; i++) {
+    int N = Timings.adjustAccordingToMySpeed(10_000, true);
+    for (int i=0; i<100 && !timeOut(i); i++) {
       ProgressIndicator indicator = new EmptyProgressIndicator();
       boolean result = JobLauncher.getInstance()
-        .invokeConcurrentlyUnderProgress(Collections.nCopies(10000, ""), indicator, false, false, processor);
+        .invokeConcurrentlyUnderProgress(Collections.nCopies(N, ""), indicator, processor);
       assertFalse(indicator.isCanceled());
       assertFalse(result);
     }
@@ -302,11 +329,11 @@ public class JobUtilTest extends PlatformTestCase {
   public void testTasksRunEvenWhenReadActionIsHardToGetStress() throws ExecutionException, InterruptedException {
     AtomicInteger processorCalled = new AtomicInteger();
     final Processor<String> processor = s -> {
-      busySleep(1);
+      busySleepAndIncrement(1);
       processorCalled.incrementAndGet();
       return true;
     };
-    for (int i=0; i<10/*0*/; i++) {
+    for (int i=0; i<10 && !timeOut(i); i++) {
       LOG.debug("i = " + i);
       processorCalled.set(0);
       final ProgressIndicator indicator = new EmptyProgressIndicator();
@@ -317,7 +344,7 @@ public class JobUtilTest extends PlatformTestCase {
       });
       for (int k=0; k<N; k++) {
         ApplicationManager.getApplication().runWriteAction(() -> {
-          busySleep(1);
+          busySleepAndIncrement(1);
         });
       }
       future.get();
@@ -327,7 +354,7 @@ public class JobUtilTest extends PlatformTestCase {
 
   public void testAfterCancelInTheMiddleOfTheExecutionTaskIsDoneReturnsFalseUntilFinished() {
     Random random = new Random();
-    for (int i=0; i<100; i++) {
+    for (int i=0; i<100 && !timeOut(i); i++) {
       final AtomicBoolean finished = new AtomicBoolean();
       final AtomicBoolean started = new AtomicBoolean();
       Job<Void> job = JobLauncher.getInstance().submitToJobThread(() -> {
@@ -358,7 +385,7 @@ public class JobUtilTest extends PlatformTestCase {
   }
 
   public void testJobWaitForTerminationAfterCancelInTheMiddleOfTheExecutionWaitsUntilFinished() throws Exception {
-    for (int i=0; i<100; i++) {
+    for (int i=0; i<100 && !timeOut(i); i++) {
       final AtomicBoolean finished = new AtomicBoolean();
       final AtomicBoolean started = new AtomicBoolean();
       Job<Void> job = JobLauncher.getInstance().submitToJobThread(() -> {
@@ -369,22 +396,22 @@ public class JobUtilTest extends PlatformTestCase {
       assertFalse(job.isDone());
       while (!started.get());
       job.cancel();
-      job.waitForCompletion(100000);
+      job.waitForCompletion(100_000);
       assertTrue(finished.get());
     }
   }
 
-  public void testDaemonDoesNotPauseWhenEventDispatcherHasEventsInTheQueue() throws Throwable {
+  public void testDaemonDoesNotPauseWhenEventDispatcherHasEventsInTheQueueStress() throws Throwable {
     assertTrue(SwingUtilities.isEventDispatchThread());
 
     PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue();
     final AtomicInteger jobsStarted = new AtomicInteger();
     final int N_EVENTS = 50;
-    final int N_JOBS = 10000 * JobSchedulerImpl.CORES_COUNT;
+    final int N_JOBS = 10_000 * JobSchedulerImpl.getJobPoolParallelism();
     ProgressIndicator indicator = new DaemonProgressIndicator();
 
     Job<Void> job = JobLauncher.getInstance().submitToJobThread(
-      () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(N_JOBS, null), indicator, false, o -> {
+      () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(N_JOBS, null), indicator, o -> {
         jobsStarted.incrementAndGet();
         TimeoutUtil.sleep(10);
         return true;
@@ -395,8 +422,8 @@ public class JobUtilTest extends PlatformTestCase {
       SwingUtilities.invokeLater(() -> {
         int jobs0 = jobsStarted.get();
         long start = System.currentTimeMillis();
-        while (jobsStarted.get() < jobs0 + JobSchedulerImpl.CORES_COUNT && jobsStarted.get() < N_JOBS) {
-          if (System.currentTimeMillis() > start + 10000) {
+        while (jobsStarted.get() < jobs0 + JobSchedulerImpl.getJobPoolParallelism() && jobsStarted.get() < N_JOBS) {
+          if (System.currentTimeMillis() > start + 10_000) {
             System.err.println(ThreadDumper.dumpThreadsToString());
             fail();
             break;

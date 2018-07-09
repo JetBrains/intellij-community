@@ -30,10 +30,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
@@ -303,28 +303,25 @@ public class ProjectUtil {
   }
 
   public static void focusProjectWindow(final Project p, boolean executeIfAppInactive) {
-    FocusCommand cmd = new FocusCommand() {
-      @NotNull
-      @Override
-      public ActionCallback run() {
-        JFrame f = WindowManager.getInstance().getFrame(p);
-        if (f != null) {
-          f.toFront();
-          //f.requestFocus();
-        }
-        return ActionCallback.DONE;
-      }
-    };
 
-    if (executeIfAppInactive) {
-      AppIcon.getInstance().requestFocus((IdeFrame)WindowManager.getInstance().getFrame(p));
-      cmd.run();
-    } else {
-      IdeFocusManager.getInstance(p).requestFocus(cmd, true);
+    JFrame f = WindowManager.getInstance().getFrame(p);
+
+    if (f != null) {
+      if (executeIfAppInactive) {
+        AppIcon.getInstance().requestFocus((IdeFrame)WindowManager.getInstance().getFrame(p));
+        f.toFront();
+      } else {
+        IdeFocusManager.getInstance(p).requestFocus(f, true);
+      }
+
     }
   }
 
   public static String getBaseDir() {
+    String defaultDirectory = GeneralSettings.getInstance().getDefaultProjectDirectory();
+    if (StringUtil.isNotEmpty(defaultDirectory)) {
+      return defaultDirectory.replace('/', File.separatorChar);
+    }
     final String lastProjectLocation = RecentProjectsManager.getInstance().getLastProjectCreationLocation();
     if (lastProjectLocation != null) {
       return lastProjectLocation.replace('/', File.separatorChar);

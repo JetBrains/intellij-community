@@ -26,6 +26,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.common.InjectedLanguageBlockBuilder;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -38,14 +39,14 @@ public class XmlInjectedLanguageBlockBuilder extends InjectedLanguageBlockBuilde
     myXmlFormattingPolicy = formattingPolicy;
   }
 
+  @NotNull
   @Override
-  public Block createInjectedBlock(ASTNode node,
-                                   Block originalBlock,
+  public Block createInjectedBlock(@NotNull ASTNode node,
+                                   @NotNull Block originalBlock,
                                    Indent indent,
                                    int offset,
                                    TextRange range,
-                                   @Nullable Language language)
-  {
+                                   @Nullable Language language) {
     return new AnotherLanguageBlockWrapper(node, myXmlFormattingPolicy, originalBlock, indent, offset, range);
   }
 

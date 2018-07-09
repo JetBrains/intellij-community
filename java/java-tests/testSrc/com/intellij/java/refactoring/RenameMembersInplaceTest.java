@@ -109,12 +109,8 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
     final TextRange range = state.getCurrentVariableRange();
     assert range != null;
     final Editor finalEditor = editor;
-    new WriteCommandAction.Simple(project) {
-      @Override
-      protected void run() {
-        finalEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "newDoSomething ");
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(project)
+                      .run(() -> finalEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), "newDoSomething "));
 
     state = TemplateManagerImpl.getTemplateState(editor);
     assert state != null;

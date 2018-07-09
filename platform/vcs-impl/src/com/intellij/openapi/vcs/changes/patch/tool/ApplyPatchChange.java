@@ -26,16 +26,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.HunkStatus;
 import com.intellij.openapi.vcs.ex.LineStatusMarkerRenderer;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
-import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,7 +99,7 @@ class ApplyPatchChange {
     TextDiffType type = getDiffType();
     boolean resolved = isRangeApplied();
 
-    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, false, resolved, false));
+    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, false, resolved, false, false, false));
   }
 
   private void createStatusHighlighter() {
@@ -125,10 +121,7 @@ class ApplyPatchChange {
     RangeHighlighter highlighter = markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),
                                                                    HighlighterLayer.LAST, null, HighlighterTargetArea.LINES_IN_RANGE);
 
-    PairConsumer<Editor, MouseEvent> clickHandler = getResultRange() != null ?
-                                                    (e, event) -> myViewer.scrollToChange(this, Side.RIGHT, false) :
-                                                    null;
-    highlighter.setLineMarkerRenderer(LineStatusMarkerRenderer.createRenderer(line1, line2, color, tooltip, clickHandler));
+    highlighter.setLineMarkerRenderer(new MyGutterRenderer(line1, line2, color, tooltip));
 
     myHighlighters.add(highlighter);
   }
@@ -354,6 +347,40 @@ class ApplyPatchChange {
                  boolean resolved) {
       super(index, startLine, endLine);
       myResolved = resolved;
+    }
+  }
+
+  private class MyGutterRenderer implements ActiveGutterRenderer {
+    private final int myLine1;
+    private final int myLine2;
+    private final Color myColor;
+    private final String myTooltip;
+
+    public MyGutterRenderer(int line1, int line2, Color color, String tooltip) {
+      myLine1 = line1;
+      myLine2 = line2;
+      myColor = color;
+      myTooltip = tooltip;
+    }
+
+    @Override
+    public void paint(Editor editor, Graphics g, Rectangle r) {
+      LineStatusMarkerRenderer.paintSimpleRange(g, editor, myLine1, myLine2, myColor);
+    }
+
+    @Override
+    public String getTooltipText() {
+      return myTooltip;
+    }
+
+    @Override
+    public boolean canDoAction(@NotNull MouseEvent e) {
+      return LineStatusMarkerRenderer.isInsideMarkerArea(e);
+    }
+
+    @Override
+    public void doAction(@NotNull Editor editor, @NotNull MouseEvent e) {
+      if (getResultRange() != null) myViewer.scrollToChange(ApplyPatchChange.this, Side.RIGHT, false);
     }
   }
 }

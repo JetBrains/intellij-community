@@ -40,7 +40,7 @@ import java.util.List;
  * @author Alexey.Ivanov
  */
 public class PySimplifyBooleanCheckInspection extends PyInspection {
-  private static List<String> COMPARISON_LITERALS = ImmutableList.of("True", "False", "[]");
+  private static final List<String> COMPARISON_LITERALS = ImmutableList.of("True", "False", "[]");
 
   public boolean ignoreComparisonToZero = true;
 

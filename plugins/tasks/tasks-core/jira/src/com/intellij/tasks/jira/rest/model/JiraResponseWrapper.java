@@ -48,7 +48,7 @@ public abstract class JiraResponseWrapper {
    * that's why this wrapper was generified and JiraIssue extracted to abstract class
    */
   public static class Issues<T extends JiraIssue> extends JiraResponseWrapper {
-    private List<T> issues = ContainerUtil.emptyList();
+    private final List<T> issues = ContainerUtil.emptyList();
 
     @NotNull
     public List<T> getIssues() {
@@ -57,7 +57,7 @@ public abstract class JiraResponseWrapper {
   }
 
   public static class Comments extends JiraResponseWrapper {
-    private List<JiraComment> comments = ContainerUtil.emptyList();
+    private final List<JiraComment> comments = ContainerUtil.emptyList();
 
     @NotNull
     public List<JiraComment> getComments() {

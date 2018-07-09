@@ -4,7 +4,7 @@ class Ref {
 }
 
 class Modifier {
-  void foo(Ref r) { r.i = 239; r.obj = null; }
+  void foo(Ref r) { r.i = 239; r.obj = <warning descr="Assigning 'null' value to non-annotated field">null</warning>; }
 }
 
 class Test {

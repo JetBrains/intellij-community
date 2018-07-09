@@ -15,17 +15,28 @@
  */
 package com.siyeh.ig.bugs;
 
+import com.intellij.ToolExtensionPoints;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
 public class MismatchedCollectionQueryUpdateInspectionTest extends LightInspectionTestCase {
+  private static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
+    @Override
+    public Sdk getSdk() {
+      return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk18());
+    }
+  };
 
   private static final ImplicitUsageProvider TEST_PROVIDER = new ImplicitUsageProvider() {
     @Override
@@ -48,6 +59,7 @@ public class MismatchedCollectionQueryUpdateInspectionTest extends LightInspecti
   protected void setUp() throws Exception {
     super.setUp();
     PlatformTestUtil.registerExtension(Extensions.getRootArea(), ImplicitUsageProvider.EP_NAME, TEST_PROVIDER, myFixture.getTestRootDisposable());
+    Extensions.getExtensions(ToolExtensionPoints.DEAD_CODE_TOOL);
   }
 
   public void testMismatchedCollectionQueryUpdate() {
@@ -81,7 +93,7 @@ public class MismatchedCollectionQueryUpdateInspectionTest extends LightInspecti
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
+    return PROJECT_DESCRIPTOR;
   }
 
   @Override

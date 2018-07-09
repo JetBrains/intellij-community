@@ -17,7 +17,6 @@ package org.jetbrains.java.generate.element;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import org.jetbrains.java.generate.psi.PsiAdapter;
 
@@ -25,11 +24,9 @@ import org.jetbrains.java.generate.psi.PsiAdapter;
  * Factory for creating {@link FieldElement} or {@link ClassElement} objects.
  */
 public class ElementFactory {
+  private static final Logger LOG = Logger.getInstance("#ElementFactory");
 
-  private static final Logger log = Logger.getInstance("#ElementFactory");
-
-  private ElementFactory() {
-  }
+  private ElementFactory() { }
 
   /**
    * Creates a new {@link ClassElement} object.
@@ -66,7 +63,7 @@ public class ElementFactory {
   /**
    * Create a new {@link FieldElement} object.
    *
-   * @param field   the {@link com.intellij.psi.PsiField} to get the information from.
+   * @param field   the {@link PsiField} to get the information from.
    * @return a new {@link FieldElement} object.
    */
   public static FieldElement newFieldElement(PsiField field, boolean useAccessor) {
@@ -105,7 +102,7 @@ public class ElementFactory {
     // if something is wrong:
     // http://www.intellij.net/forums/thread.jsp?nav=false&forum=18&thread=88676&start=0&msRange=15
     if (type == null) {
-      log.warn("This method does not have a valid return type: " + method.getName() + ", returnType=" + type);
+      LOG.warn("This method does not have a valid return type: " + method.getName() + ", returnType=null");
       return me;
     }
     PsiElementFactory factory = JavaPsiFacade.getInstance(method.getProject()).getElementFactory();

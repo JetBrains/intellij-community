@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.todo;
 
 import com.intellij.openapi.Disposable;
@@ -44,14 +30,17 @@ import java.util.List;
   }
 )
 public class TodoConfiguration implements PersistentStateComponent<Element> {
+  private boolean myMultiLine = true;
   private TodoPattern[] myTodoPatterns;
   private TodoFilter[] myTodoFilters;
   private IndexPattern[] myIndexPatterns;
 
   private final EventDispatcher<PropertyChangeListener> myPropertyChangeMulticaster = EventDispatcher.create(PropertyChangeListener.class);
 
+  @NonNls public static final String PROP_MULTILINE = "multiLine";
   @NonNls public static final String PROP_TODO_PATTERNS = "todoPatterns";
   @NonNls public static final String PROP_TODO_FILTERS = "todoFilters";
+  @NonNls private static final String ELEMENT_MULTILINE = "multiLine";
   @NonNls private static final String ELEMENT_PATTERN = "pattern";
   @NonNls private static final String ELEMENT_FILTER = "filter";
   private final MessageBus myMessageBus;
@@ -78,8 +67,11 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
     buildIndexPatterns();
   }
 
+  /**
+   * Returns the list of default TO_DO patterns. Can be customized in other IDEs (and is customized in Rider).
+   */
   @NotNull
-  private static TodoPattern[] getDefaultPatterns() {
+  protected TodoPattern[] getDefaultPatterns() {
     //noinspection SpellCheckingInspection
     return new TodoPattern[]{
       new TodoPattern("\\btodo\\b.*", TodoAttributesUtil.createDefault(), false),
@@ -149,6 +141,18 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
     return myTodoFilters;
   }
 
+  public boolean isMultiLine() {
+    return myMultiLine;
+  }
+
+  public void setMultiLine(boolean multiLine) {
+    if (multiLine != myMultiLine) {
+      myMultiLine = multiLine;
+      myPropertyChangeMulticaster.getMulticaster().propertyChange(new PropertyChangeEvent(this, PROP_MULTILINE,
+                                                                                          !multiLine, multiLine));
+    }
+  }
+
   public void setTodoFilters(@NotNull TodoFilter[] filters) {
     TodoFilter[] oldFilters = myTodoFilters;
     myTodoFilters = filters;
@@ -160,13 +164,16 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
   }
 
   @Override
-  public void loadState(Element element) {
+  public void loadState(@NotNull Element element) {
+    String multiLineText = element.getChildText(ELEMENT_MULTILINE);
+    myMultiLine = multiLineText == null || Boolean.valueOf(multiLineText);
+
     List<TodoPattern> patternsList = new SmartList<>();
     for (Element child : element.getChildren(ELEMENT_PATTERN)) {
       patternsList.add(new TodoPattern(child, TodoAttributesUtil.getDefaultColorSchemeTextAttributes()));
     }
 
-    TodoPattern[] patterns = patternsList.isEmpty() ? getDefaultPatterns() : patternsList.toArray(new TodoPattern[patternsList.size()]);
+    TodoPattern[] patterns = patternsList.isEmpty() ? getDefaultPatterns() : patternsList.toArray(new TodoPattern[0]);
     doSetTodoPatterns(patterns, false);
 
     List<TodoFilter> filtersList = new SmartList<>();
@@ -175,13 +182,18 @@ public class TodoConfiguration implements PersistentStateComponent<Element> {
     }
 
     if (!(filtersList.isEmpty() && myTodoFilters.length == 0)) {
-      setTodoFilters(filtersList.toArray(new TodoFilter[filtersList.size()]));
+      setTodoFilters(filtersList.toArray(new TodoFilter[0]));
     }
   }
 
   @Override
   public Element getState() {
     Element element = new Element("state");
+    if (!myMultiLine) {
+      Element m = new Element(ELEMENT_MULTILINE);
+      m.setText(Boolean.FALSE.toString());
+      element.addContent(m);
+    }
     TodoPattern[] todoPatterns = myTodoPatterns;
     if (!Arrays.equals(myTodoPatterns, getDefaultPatterns())) {
       for (TodoPattern pattern : todoPatterns) {

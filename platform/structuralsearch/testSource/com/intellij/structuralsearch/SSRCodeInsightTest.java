@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -49,6 +50,11 @@ public class SSRCodeInsightTest extends UsefulTestCase {
            "     throw new $Exception$($msg$);\n" +
            "}",
            "silly null check");
+  }
+
+  public void testBrokenPattern() {
+    // check broken pattern does not throw exceptions
+    doTest("int i(", "semicolon expected");
   }
 
   private void doTest(final String searchPattern, final String patternName) {

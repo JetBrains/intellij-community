@@ -229,7 +229,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
 
     private BusyImpl(@NotNull Set<UiActivity> toWatch, @NotNull BusyContainer container) {
       myToWatch = toWatch;
-      myToWatchArray = toWatch.toArray(new UiActivity[toWatch.size()]);
+      myToWatchArray = toWatch.toArray(new UiActivity[0]);
       myContainer = container;
     }
 
@@ -350,7 +350,7 @@ public class UiActivityMonitorImpl extends UiActivityMonitor implements Modality
     }
 
     public void clear() {
-      final UiActivity[] activities = myActivities.toArray(new UiActivity[myActivities.size()]);
+      final UiActivity[] activities = myActivities.toArray(new UiActivity[0]);
       for (UiActivity each : activities) {
         removeActivity(each);
       }

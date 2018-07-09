@@ -43,7 +43,7 @@ public class JUnit5PlatformInspection extends BaseInspection {
               final PsiClass runnerClass = PsiUtil.resolveClassInClassTypeOnly(operand.getType());
               if (runnerClass != null && "org.junit.platform.runner.JUnitPlatform".equals(runnerClass.getQualifiedName()) &&
                   Arrays.stream(aClass.getMethods()).noneMatch(method -> method.hasModifierProperty(PsiModifier.PUBLIC) &&
-                                                                         method.getParameterList().getParametersCount() == 0 &&
+                                                                         method.getParameterList().isEmpty() &&
                                                                          AnnotationUtil.isAnnotated(method, "org.junit.Test", 0))) {
                 registerError(nameIdentifier, "Class #ref annotated @RunWith(JUnitPlatform.class) lacks test methods");
               }

@@ -49,48 +49,9 @@ file (i.e., it can be interpreted by Python 3), except all the methods are empty
 Python function annotations ([PEP 3107](https://www.python.org/dev/peps/pep-3107/))
 are used to describe the types the function has.
 
-See [PEP 484](http://www.python.org/dev/peps/pep-0484/) for the exact syntax
-of the stub files.
-
-## Syntax example
-
-The below is an excerpt from the types for the `datetime` module.
-
-```python
-from typing import Union
-
-MAXYEAR = ...  # type: int
-MINYEAR = ...  # type: int
-
-class date(object):
-    def __init__(self, year: int, month: int, day: int) -> None: ...
-    @classmethod
-    def fromtimestamp(cls, timestamp: Union[int, float]) -> date: ...
-    @classmethod
-    def fromordinal(cls, ordinal: int) -> date: ...
-    @classmethod
-    def today(self) -> date: ...
-    def ctime(self) -> str: ...
-    def weekday(self) -> int: ...
-```
-
-## Conventions
-
-* At the time of this writing, `unicode` arguments, in Python 2 stubs, are
-  interpreted by type-checkers as `Union[bytes, unicode]` (so it means the same
-  as `Text`).
-  Even so, in Python 2, whenever possible, use `unicode` if that's the only
-  possible type, and `Text` if it can be either `unicode` or `bytes`.
-* Most type-checkers interpret optional parameters of the form `x : Foo = None`
-  as `x : Optional[Foo] = ...`. (So the former is a shortcut for the latter)
-  In typeshed, however, we prefer the explicit latter form.
-* When something is declared as taking only float, it also takes `int`. See
-  https://www.python.org/dev/peps/pep-0484/#the-numeric-tower. So write `float`
-  instead of `Union[int, float]`.
-* Avoid Union return types: https://github.com/python/mypy/issues/1693
-* Avoid invariant collection types (List, Dict) in argument positions, in favor
-  of covariant types like Mapping or Sequence.
-
+See [PEP 484](http://www.python.org/dev/peps/pep-0484/) for the exact
+syntax of the stub files and [CONTRIBUTING.md](CONTRIBUTING.md) for the
+coding style used in typeshed.
 
 ## Directory structure
 
@@ -166,7 +127,7 @@ invoking:
 (Note that flake8 only works with Python 3.6 or higher.)
 
 To run the pytype tests, you need a separate virtual environment with
-Python 2.7. Run:
+Python 2.7, and a Python 3.6 interpreter somewhere you can point to. Run:
 ```
 $ virtualenv --python=python2.7 .venv2
 $ source .venv2/bin/activate
@@ -175,7 +136,7 @@ $ source .venv2/bin/activate
 This will install pytype from its GitHub repo. You can then run pytype
 tests by running:
 ```
-(.venv2)$ python tests/pytype_test.py
+(.venv2)$ python tests/pytype_test.py --python36-exe=/path/to/python3.6
 ```
 
 For mypy, if you are in the typeshed repo that is submodule of the

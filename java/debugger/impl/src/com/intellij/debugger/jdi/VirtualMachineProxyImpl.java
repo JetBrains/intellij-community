@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author Eugene Zhuravlev
@@ -16,12 +16,12 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.HashMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.EventQueue;
 import com.sun.jdi.request.EventRequestManager;
 import com.sun.tools.jdi.JNITypeParser;
 import com.sun.tools.jdi.TargetVM;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -247,15 +247,7 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
    * @return a list of threadGroupProxies
    */
   public List<ThreadGroupReferenceProxyImpl> topLevelThreadGroups() {
-    List<ThreadGroupReference> list = getVirtualMachine().topLevelThreadGroups();
-
-    List<ThreadGroupReferenceProxyImpl> result = new ArrayList<>(list.size());
-
-    for (ThreadGroupReference threadGroup : list) {
-      result.add(getThreadGroupReferenceProxy(threadGroup));
-    }
-
-    return result;
+    return StreamEx.of(getVirtualMachine().topLevelThreadGroups()).map(this::getThreadGroupReferenceProxy).toList();
   }
 
   public void threadGroupCreated(ThreadGroupReference threadGroupReference){
@@ -409,6 +401,15 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   };
   public boolean canGetBytecodes() {
     return myGetBytecodes.isAvailable();
+  }
+
+  private final Capability myGetConstantPool = new Capability() {
+    protected boolean calcValue() {
+      return myVirtualMachine.canGetConstantPool();
+    }
+  };
+  public boolean canGetConstantPool() {
+    return myGetConstantPool.isAvailable();
   }
 
   private final Capability myGetSyntheticAttribute = new Capability() {

@@ -128,7 +128,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     //  });
     //}
 
-    return usages.toArray(new UsageInfo[usages.size()]);
+    return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
@@ -309,6 +309,7 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
   }
 
 
+  @NotNull
   protected String getCommandName() {
     if (myConstructor != null) {
       return RefactoringBundle.message("replace.constructor.0.with.a.factory.method",

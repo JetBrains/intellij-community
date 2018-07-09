@@ -224,7 +224,7 @@ public final class ComponentTree extends Tree implements DataProvider {
         }
       }
     }
-    return result.toArray(new RadComponent[result.size()]);
+    return result.toArray(RadComponent.EMPTY_ARRAY);
   }
 
   /**
@@ -248,7 +248,7 @@ public final class ComponentTree extends Tree implements DataProvider {
 
     if (LW_INSPECTION_SUPPRESSION_ARRAY_DATA_KEY.is(dataId)) {
       Collection<LwInspectionSuppression> elements = getSelectedElements(LwInspectionSuppression.class);
-      return elements.size() == 0 ? null : elements.toArray(new LwInspectionSuppression[elements.size()]);
+      return elements.size() == 0 ? null : elements.toArray(LwInspectionSuppression.EMPTY_ARRAY);
     }
 
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
@@ -556,7 +556,7 @@ public final class ComponentTree extends Tree implements DataProvider {
             final ComponentDropLocation dropLocation = ((RadContainer)targetComponent).getDropLocation(null);
             if (dcl != null) {
               if (!FormEditingUtil.isDropOnChild(dcl, dropLocation)) {
-                RadComponent[] components = dcl.getComponents().toArray(new RadComponent [dcl.getComponents().size()]);
+                RadComponent[] components = dcl.getComponents().toArray(RadComponent.EMPTY_ARRAY);
                 RadContainer[] originalParents = dcl.getOriginalParents();
                 final GridConstraints[] originalConstraints = dcl.getOriginalConstraints();
                 for(int i=0; i<components.length; i++) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -23,10 +9,13 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +25,13 @@ import java.awt.*;
 import java.util.List;
 
 public class NodeRenderer extends ColoredTreeCellRenderer {
+  protected Icon fixIconIfNeeded(Icon icon, boolean selected, boolean hasFocus) {
+    if (!UIUtil.isUnderDarcula() && Registry.is("ide.project.view.change.icon.on.selection") && selected && hasFocus) {
+      return IconLoader.getDarkIcon(icon, true);
+    }
+    return icon;
+  }
+
   @Override
   public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     Object node = TreeUtil.getUserObject(value);
@@ -44,7 +40,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
       NodeDescriptor descriptor = (NodeDescriptor)node;
       // TODO: use this color somewhere
       Color color = descriptor.getColor();
-      setIcon(descriptor.getIcon());
+      setIcon(fixIconIfNeeded(descriptor.getIcon(), selected, hasFocus));
     }
 
     ItemPresentation p0 = getPresentation(node);
@@ -52,12 +48,14 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
     if (p0 instanceof PresentationData) {
       PresentationData presentation = (PresentationData)p0;
       Color color = node instanceof NodeDescriptor ? ((NodeDescriptor)node).getColor() : null;
-      setIcon(presentation.getIcon(false));
+      setIcon(fixIconIfNeeded(presentation.getIcon(false), selected, hasFocus));
 
       final List<PresentableNodeDescriptor.ColoredFragment> coloredText = presentation.getColoredText();
       Color forcedForeground = presentation.getForcedTextForeground();
       if (coloredText.isEmpty()) {
-        String text = tree.convertValueToText(value.toString(), selected, expanded, leaf, row, hasFocus);
+        String text = presentation.getPresentableText();
+        if (StringUtil.isEmpty(text)) text = value.toString();
+        text = tree.convertValueToText(text, selected, expanded, leaf, row, hasFocus);
         SimpleTextAttributes simpleTextAttributes = getSimpleTextAttributes(
           presentation, forcedForeground != null ? forcedForeground : color, node);
         append(text, simpleTextAttributes);

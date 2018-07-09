@@ -24,6 +24,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,10 +37,8 @@ public class CreateSwitchIntention extends BaseElementAtCaretIntentionAction imp
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
     PsiExpressionStatement expressionStatement = PsiTreeUtil.getParentOfType(element, PsiExpressionStatement.class, false);
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     String valueToSwitch = expressionStatement.getExpression().getText();
-    PsiSwitchStatement switchStatement = (PsiSwitchStatement)elementFactory.createStatementFromText("switch (" + valueToSwitch + ") {}", null);
-    switchStatement = (PsiSwitchStatement)expressionStatement.replace(switchStatement);
+    PsiSwitchStatement switchStatement = (PsiSwitchStatement)new CommentTracker().replaceAndRestoreComments(expressionStatement, "switch (" + valueToSwitch + ") {}");
     CodeStyleManager.getInstance(project).reformat(switchStatement);
 
     PsiJavaToken lBrace = switchStatement.getBody().getLBrace();

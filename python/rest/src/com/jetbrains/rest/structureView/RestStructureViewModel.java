@@ -19,7 +19,6 @@ import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewModelBase;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.util.treeView.smartTree.Sorter;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.rest.RestFile;
@@ -30,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * User : catherine
  */
-public class RestStructureViewModel extends StructureViewModelBase implements StructureViewModel.ElementInfoProvider, StructureViewModel.ExpandInfoProvider {
+public class RestStructureViewModel extends StructureViewModelBase implements StructureViewModel.ElementInfoProvider {
   public RestStructureViewModel(@NotNull PsiFile psiFile, @Nullable Editor editor) {
     super(psiFile, editor, new RestStructureViewElement(psiFile));
     withSorters(Sorter.ALPHA_SORTER);
@@ -48,13 +47,4 @@ public class RestStructureViewModel extends StructureViewModelBase implements St
     return element.getChildren().length == 0;
   }
 
-  @Override
-  public boolean isAutoExpand(@NotNull StructureViewTreeElement element) {
-    return element.getValue() instanceof PsiFile || ApplicationManager.getApplication().isUnitTestMode();
-  }
-
-  @Override
-  public boolean isSmartExpand() {
-    return false;
-  }
 }

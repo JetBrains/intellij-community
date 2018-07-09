@@ -30,7 +30,7 @@ import java.util.Map;
 * @author Sergey Evdokimov
 */
 public class MavenPropertiesPanel extends AddEditRemovePanel<Pair<String, String>> {
-  private Map<String, String> myAvailableProperties;
+  private final Map<String, String> myAvailableProperties;
 
   public MavenPropertiesPanel(Map<String, String> availableProperties) {
     super(new MyPropertiesTableModel(), new ArrayList<>(), null);

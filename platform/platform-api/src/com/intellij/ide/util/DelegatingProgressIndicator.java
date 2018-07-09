@@ -21,7 +21,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 12, 2007
  */
 public class DelegatingProgressIndicator implements WrappedProgressIndicator, StandardProgressIndicator {
   private final ProgressIndicator myIndicator;

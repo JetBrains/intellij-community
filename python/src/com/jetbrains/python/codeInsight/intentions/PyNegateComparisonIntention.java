@@ -32,8 +32,6 @@ import java.util.Map;
 /**
  * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
- * Date:   12.03.2010
- * Time:   17:58:56
  */
 public class PyNegateComparisonIntention extends PyBaseIntentionAction {
   private static final Map<PyElementType, String> comparisonStrings = new HashMap<>(7);

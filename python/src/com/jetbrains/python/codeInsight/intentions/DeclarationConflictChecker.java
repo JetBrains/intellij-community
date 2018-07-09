@@ -38,7 +38,6 @@ import java.util.Set;
 /**
  * An utility class that checks local definitions of a given name and can show a conflicts panel.
  * User: dcheryasov
- * Date: Oct 11, 2009 5:59:12 AM
  */
 public class DeclarationConflictChecker {
   private DeclarationConflictChecker() { /* Don't instantiate */ }

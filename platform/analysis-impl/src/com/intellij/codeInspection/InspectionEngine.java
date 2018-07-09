@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInspection;
 
@@ -33,7 +21,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiRecursiveVisitor;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -103,7 +94,7 @@ public class InspectionEngine {
                                                  @NotNull final PsiFile file,
                                                  @NotNull final InspectionManager iManager,
                                                  @NotNull final ProgressIndicator indicator) {
-    final Map<String, List<ProblemDescriptor>> problemDescriptors = inspectEx(toolWrappers, file, iManager, false, false, indicator);
+    final Map<String, List<ProblemDescriptor>> problemDescriptors = inspectEx(toolWrappers, file, iManager, false, indicator);
 
     final List<ProblemDescriptor> result = new ArrayList<>();
     for (List<ProblemDescriptor> group : problemDescriptors.values()) {
@@ -119,7 +110,6 @@ public class InspectionEngine {
                                                                @NotNull final PsiFile file,
                                                                @NotNull final InspectionManager iManager,
                                                                final boolean isOnTheFly,
-                                                               boolean failFastOnAcquireReadAction,
                                                                @NotNull final ProgressIndicator indicator) {
     if (toolWrappers.isEmpty()) return Collections.emptyMap();
 
@@ -130,7 +120,7 @@ public class InspectionEngine {
     List<PsiElement> elements = ContainerUtil.concat(
       (List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.inside, d.outside, d.parents)));
 
-    return inspectElements(toolWrappers, file, iManager, isOnTheFly, failFastOnAcquireReadAction, indicator, elements,
+    return inspectElements(toolWrappers, file, iManager, isOnTheFly, indicator, elements,
                            calcElementDialectIds(elements));
   }
 
@@ -140,7 +130,6 @@ public class InspectionEngine {
                                                               @NotNull final PsiFile file,
                                                               @NotNull final InspectionManager iManager,
                                                               final boolean isOnTheFly,
-                                                              boolean failFastOnAcquireReadAction,
                                                               @NotNull ProgressIndicator indicator,
                                                               @NotNull final List<PsiElement> elements,
                                                               @NotNull final Set<String> elementDialectIds) {
@@ -167,7 +156,7 @@ public class InspectionEngine {
 
       return true;
     };
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(entries, indicator, failFastOnAcquireReadAction, processor);
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(entries, indicator, processor);
 
     return resultDescriptors;
   }
@@ -191,15 +180,19 @@ public class InspectionEngine {
           GlobalSimpleInspectionTool simpleTool = (GlobalSimpleInspectionTool)globalTool;
           ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, file, false);
           ProblemDescriptionsProcessor collectProcessor = new ProblemDescriptionsProcessor() {
-            @Nullable
             @Override
             public CommonProblemDescriptor[] getDescriptions(@NotNull RefEntity refEntity) {
-              return descriptors.toArray(new CommonProblemDescriptor[descriptors.size()]);
+              return descriptors.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
             }
 
             @Override
             public void ignoreElement(@NotNull RefEntity refEntity) {
-              throw new RuntimeException();
+              throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public void resolveProblem(@NotNull CommonProblemDescriptor descriptor) {
+              throw new UnsupportedOperationException();
             }
 
             @Override
@@ -246,7 +239,7 @@ public class InspectionEngine {
 
   private static void convertToProblemDescriptors(@NotNull PsiElement element,
                                                   @NotNull CommonProblemDescriptor[] commonProblemDescriptors,
-                                                  @NotNull List<ProblemDescriptor> descriptors) {
+                                                  @NotNull List<? super ProblemDescriptor> descriptors) {
     for (CommonProblemDescriptor common : commonProblemDescriptors) {
       if (common instanceof ProblemDescriptor) {
         descriptors.add((ProblemDescriptor)common);
@@ -329,8 +322,8 @@ public class InspectionEngine {
   }
 
   private static void addDialects(@NotNull List<PsiElement> elements,
-                                  @NotNull Set<Language> outProcessedLanguages,
-                                  @NotNull Set<String> outDialectIds) {
+                                  @NotNull Set<? super Language> outProcessedLanguages,
+                                  @NotNull Set<? super String> outDialectIds) {
     for (PsiElement element : elements) {
       Language language = element.getLanguage();
       outDialectIds.add(language.getID());

@@ -16,6 +16,7 @@
 package org.jetbrains.debugger.sourcemap
 
 import com.google.gson.stream.JsonToken
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtilRt
@@ -50,7 +51,7 @@ val MAPPING_COMPARATOR_BY_GENERATED_POSITION: Comparator<MappingEntry> = Compara
 internal const val UNMAPPED = -1
 
 // https://docs.google.com/document/d/1U1RGAehQwRypUTovF1KRlpiOFze0b-_2gc6fAH0KY0k/edit?hl=en_US
-fun decodeSourceMap(`in`: CharSequence, sourceResolverFactory: (sourceUrls: List<String>, sourceContents: List<String>?) -> SourceResolver): SourceMap? {
+fun decodeSourceMap(`in`: CharSequence, sourceResolverFactory: (sourceUrls: List<String>, sourceContents: List<String?>?) -> SourceResolver): SourceMap? {
   if (`in`.isEmpty()) {
     throw IOException("source map contents cannot be empty")
   }
@@ -64,7 +65,7 @@ private fun parseMap(reader: JsonReaderEx,
                      line: Int,
                      column: Int,
                      mappings: MutableList<MappingEntry>,
-                     sourceResolverFactory: (sourceUrls: List<String>, sourceContents: List<String>?) -> SourceResolver): SourceMap? {
+                     sourceResolverFactory: (sourceUrls: List<String>, sourceContents: List<String?>?) -> SourceResolver): SourceMap? {
   reader.beginObject()
   var sourceRoot: String? = null
   var sourcesReader: JsonReaderEx? = null
@@ -72,7 +73,7 @@ private fun parseMap(reader: JsonReaderEx,
   var encodedMappings: String? = null
   var file: String? = null
   var version = -1
-  var sourcesContent: MutableList<String>? = null
+  var sourcesContent: MutableList<String?>? = null
   while (reader.hasNext()) {
     when (reader.nextName()) {
       "sections" -> throw IOException("sections is not supported yet")
@@ -114,7 +115,7 @@ private fun parseMap(reader: JsonReaderEx,
         encodedMappings = reader.nextString()
       }
       "file" -> {
-        file = reader.nextString()
+        file = reader.nextNullableString()
       }
       "sourcesContent" -> {
         reader.beginArray()
@@ -124,7 +125,13 @@ private fun parseMap(reader: JsonReaderEx,
             if (reader.peek() == JsonToken.STRING) {
               sourcesContent.add(StringUtilRt.convertLineSeparators(reader.nextString()))
             }
+            else if (reader.peek() == JsonToken.NULL) {
+              // null means source file should be resolved by url
+              sourcesContent.add(null)
+              reader.nextNull()
+            }
             else {
+              logger<SourceMap>().warn("Unknown sourcesContent element: ${reader.peek().name}")
               reader.skipValue()
             }
           }

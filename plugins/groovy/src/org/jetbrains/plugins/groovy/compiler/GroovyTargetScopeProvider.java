@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.compiler;
 
 import com.intellij.compiler.impl.BuildTargetScopeProvider;
 import com.intellij.openapi.compiler.CompileScope;
-import com.intellij.openapi.compiler.CompilerFilter;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -46,7 +45,6 @@ public class GroovyTargetScopeProvider extends BuildTargetScopeProvider {
   @NotNull
   @Override
   public List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull CompileScope baseScope,
-                                                         @NotNull CompilerFilter filter,
                                                          @NotNull Project project,
                                                          boolean forceBuild) {
     Boolean checkResourcesRebuild = baseScope.getUserData(GroovyResourceChecker.CHECKING_RESOURCES_REBUILD);

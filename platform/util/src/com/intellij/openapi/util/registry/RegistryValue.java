@@ -267,6 +267,7 @@ public class RegistryValue {
   void resetCache() {
     myStringCachedValue = null;
     myIntCachedValue = null;
+    myDoubleCachedValue = null;
     myBooleanCachedValue = null;
   }
 

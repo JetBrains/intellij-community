@@ -16,6 +16,7 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -28,6 +29,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -99,7 +101,7 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
       }
       final PsiExpression expression = (PsiExpression)element;
       final String expressionText = "java.util.Objects.equals(" + myName1 + "," + myName2 + ")";
-      PsiReplacementUtil.replaceExpressionAndShorten(expression, myEquals ? expressionText : "!" + expressionText);
+      PsiReplacementUtil.replaceExpressionAndShorten(expression, myEquals ? expressionText : "!" + expressionText, new CommentTracker());
     }
   }
 
@@ -140,15 +142,15 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
           return;
         }
       }
-      if (!checkNotNull) {
-        if (qualifierExpression == null) {
-          return;
-        }
-        final PsiExpression argumentExpression = getArgumentExpression(expression);
-        if (argumentExpression == null) {
-          return;
-        }
-        registerError(expression, qualifierExpression.getText(), argumentExpression.getText(), true);
+      if (qualifierExpression == null) {
+        return;
+      }
+      final PsiExpression argumentExpression = getArgumentExpression(expression);
+      if (argumentExpression == null) {
+        return;
+      }
+      if (isOnTheFly()) {
+        registerError(expression, ProblemHighlightType.INFORMATION, qualifierExpression.getText(), argumentExpression.getText(), true);
       }
     }
 
@@ -218,7 +220,12 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
             final PsiExpression argumentExpression = getArgumentExpression(methodCallExpression);
             if (argumentExpression != null) {
               final PsiExpression expressionToReplace = checkEqualityBefore(expression, equal, qualifierExpression, argumentExpression);
-              registerError(expressionToReplace, nullCheckedExpression.getText(), argumentExpression.getText(), Boolean.valueOf(equal));
+              ProblemHighlightType highlightType = checkNotNull || expression != expressionToReplace ?
+                                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.INFORMATION;
+              if (isOnTheFly() || highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
+                registerError(expressionToReplace, highlightType,
+                              nullCheckedExpression.getText(), argumentExpression.getText(), Boolean.valueOf(equal));
+              }
               return true;
             }
           }
@@ -415,21 +422,11 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
     }
 
     @Override
-    protected Match prefixExpressionsMatch(@NotNull PsiPrefixExpression prefixExpression1,
-                                           @NotNull PsiPrefixExpression prefixExpression2) {
-      if (isSideEffectUnaryOperator(prefixExpression1.getOperationTokenType())) {
+    protected Match unaryExpressionsMatch(@NotNull PsiUnaryExpression unaryExpression1, @NotNull PsiUnaryExpression unaryExpression2) {
+      if (isSideEffectUnaryOperator(unaryExpression1.getOperationTokenType())) {
         return EXACT_MISMATCH;
       }
-      return super.prefixExpressionsMatch(prefixExpression1, prefixExpression2);
-    }
-
-    @Override
-    protected Match postfixExpressionsMatch(@NotNull PsiPostfixExpression postfixExpression1,
-                                            @NotNull PsiPostfixExpression postfixExpression2) {
-      if (isSideEffectUnaryOperator(postfixExpression1.getOperationTokenType())) {
-        return EXACT_MISMATCH;
-      }
-      return super.postfixExpressionsMatch(postfixExpression1, postfixExpression2);
+      return super.unaryExpressionsMatch(unaryExpression1, unaryExpression2);
     }
 
     private static boolean isSideEffectUnaryOperator(IElementType tokenType) {

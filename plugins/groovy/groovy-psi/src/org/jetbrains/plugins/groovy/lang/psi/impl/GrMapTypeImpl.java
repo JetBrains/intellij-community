@@ -37,7 +37,7 @@ public class GrMapTypeImpl extends GrMapType {
                 GlobalSearchScope scope,
                 LinkedHashMap<String, PsiType> stringEntries,
                 List<Couple<PsiType>> otherEntries,
-                LanguageLevel languageLevel) {
+                @NotNull LanguageLevel languageLevel) {
     super(facade, scope, languageLevel);
     myStringEntries = stringEntries;
     myOtherEntries = otherEntries;

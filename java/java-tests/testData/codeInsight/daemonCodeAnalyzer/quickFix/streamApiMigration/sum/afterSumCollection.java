@@ -8,7 +8,7 @@ public class Main {
   }
 
   public long test(List<Person> collection) {
-      long i = collection.stream().mapToLong(Person::getAge).sum();
+    long i = collection.stream().mapToLong(Person::getAge).sum();
       return i;
   }
 }

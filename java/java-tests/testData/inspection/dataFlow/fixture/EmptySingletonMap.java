@@ -1,4 +1,5 @@
 import java.util.*;
+import org.jetbrains.annotations.*;
 
 public class EmptySingletonMap {
   void testEmpty() {
@@ -39,4 +40,26 @@ public class EmptySingletonMap {
       System.out.println("??");
     }
   }
+
+  @Contract(pure = true)
+  static Map<String, String> newMap() {
+    return new HashMap<>();
+  }
+
+  void testDoubleEmpty() {
+    Map<String, String> m1 = newMap();
+    Map<String, String> m2 = newMap();
+    fill(m1, m2);
+    if(m1.isEmpty() && m2.isEmpty()) {
+      System.out.println("both empty");
+    }
+  }
+
+  void testNonEqual() {
+    if(EmptySingletonMap.newMap() == EmptySingletonMap.newMap()) {
+      System.out.println("who knows");
+    }
+  }
+
+  native void fill(Object m1, Object m2);
 }

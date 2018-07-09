@@ -67,15 +67,13 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     private ExportedNameCache(long modificationStamp) {
       myModificationStamp = modificationStamp;
 
-      processDeclarations(PyPsiUtils.collectAllStubChildren(PyFileImpl.this, getStub()), element -> {
-        if (element instanceof PsiNamedElement && !(element instanceof PyKeywordArgument)) {
+      final StubElement stub = getStub();
+      processDeclarations(PyPsiUtils.collectAllStubChildren(PyFileImpl.this, stub), element -> {
+        if (element instanceof PsiNamedElement &&
+            !(element instanceof PyKeywordArgument) &&
+            !(stub == null && element.getParent() instanceof PyImportElement)) {
           final PsiNamedElement namedElement = (PsiNamedElement)element;
-          final String name = namedElement.getName();
-          if (!myNamedElements.containsKey(name)) {
-            myNamedElements.put(name, Lists.newArrayList());
-          }
-          final List<PsiNamedElement> elements = myNamedElements.get(name);
-          elements.add(namedElement);
+          myNamedElements.computeIfAbsent(namedElement.getName(), __ -> new ArrayList<>()).add(namedElement);
         }
         if (element instanceof PyImportedNameDefiner) {
           myImportedNameDefiners.add((PyImportedNameDefiner)element);
@@ -409,13 +407,15 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
     final List<String> allNames = getDunderAll();
     if (allNames != null && allNames.contains(name)) {
-      final PsiElement allElement = findExportedName(PyNames.ALL);
       final ResolveResultList allFallbackResults = new ResolveResultList();
-      allFallbackResults.poke(allElement, RatedResolveResult.RATE_LOW);
+
 
       PyResolveImportUtil
         .resolveModuleAt(QualifiedName.fromComponents(name), getContainingDirectory(), PyResolveImportUtil.fromFoothold(this))
         .forEach(module -> allFallbackResults.poke(module, RatedResolveResult.RATE_LOW));
+
+      final PsiElement allElement = findExportedName(PyNames.ALL);
+      allFallbackResults.poke(allElement, RatedResolveResult.RATE_LOW);
 
       return allFallbackResults;
     }
@@ -440,7 +440,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
   @Nullable
   public PsiElement getElementNamed(final String name) {
     final List<RatedResolveResult> results = multiResolveName(name);
-    final List<PsiElement> elements = PyUtil.filterTopPriorityResults(results.toArray(new ResolveResult[results.size()]));
+    final List<PsiElement> elements = PyUtil.filterTopPriorityResults(results.toArray(ResolveResult.EMPTY_ARRAY));
     final PsiElement element = elements.isEmpty() ? null : elements.get(elements.size() - 1);
     if (element != null) {
       if (!element.isValid()) {
@@ -615,11 +615,15 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
   }
 
+  /**
+   * @deprecated This method will be removed in 2018.3.
+   */
   @Nullable
+  @Deprecated
   public static List<String> getStringListFromTargetExpression(final String name, List<PyTargetExpression> attrs) {
     for (PyTargetExpression attr : attrs) {
       if (name.equals(attr.getName())) {
-        return PyUtil.getStringListFromTargetExpression(attr);
+        return PyUtil.strListValue(attr.findAssignedValue());
       }
     }
     return null;
@@ -750,13 +754,6 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     final PsiElement newElement = super.setName(name);
     PyUtil.deletePycFiles(path);
     return newElement;
-  }
-
-  private static class ArrayListThreadLocal extends ThreadLocal<List<String>> {
-    @Override
-    protected List<String> initialValue() {
-      return new ArrayList<>();
-    }
   }
 
   @Override

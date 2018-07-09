@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,13 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -67,9 +68,7 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    final String replacementString =
-      calculateReplacementExpression(
-        (PsiMethodCallExpression)infos[0]);
+    final String replacementString = calculateReplacementExpression((PsiMethodCallExpression)infos[0], new CommentTracker());
     return InspectionGadgetsBundle.message(
       "unnecessary.temporary.on.conversion.from.string.problem.descriptor",
       replacementString);
@@ -77,68 +76,47 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
 
   @Nullable
   @NonNls
-  static String calculateReplacementExpression(
-    PsiMethodCallExpression expression) {
-    final PsiReferenceExpression methodExpression =
-      expression.getMethodExpression();
-    final PsiExpression qualifierExpression =
-      methodExpression.getQualifierExpression();
-    if (!(qualifierExpression instanceof PsiNewExpression)) {
-      return null;
-    }
-    final PsiNewExpression qualifier =
-      (PsiNewExpression)qualifierExpression;
-    final PsiExpressionList argumentList =
-      qualifier.getArgumentList();
-    if (argumentList == null) {
-      return null;
-    }
+  static String calculateReplacementExpression(PsiMethodCallExpression expression, CommentTracker commentTracker) {
+    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+    final PsiNewExpression qualifier = ObjectUtils.tryCast(methodExpression.getQualifierExpression(), PsiNewExpression.class);
+    if (qualifier == null) return null;
+    final PsiExpressionList argumentList = qualifier.getArgumentList();
+    if (argumentList == null || argumentList.getExpressionCount() != 1) return null;
     final PsiExpression arg = argumentList.getExpressions()[0];
     final PsiType type = qualifier.getType();
-    if (type == null) {
-      return null;
-    }
+    if (type == null) return null;
     final String qualifierType = type.getPresentableText();
     final String canonicalType = type.getCanonicalText();
     final String conversionName = s_conversionMap.get(canonicalType);
     if (TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_BOOLEAN, type)) {
       if (!PsiUtil.isLanguageLevel5OrHigher(expression)) {
-        return qualifierType + '.' + conversionName + '(' +
-               arg.getText() + ").booleanValue()";
+        return qualifierType + '.' + conversionName + '(' + commentTracker.text(arg) + ").booleanValue()";
       }
       else {
-        return qualifierType + ".parseBoolean(" +
-               arg.getText() + ')';
+        return qualifierType + ".parseBoolean(" + commentTracker.text(arg) + ')';
       }
     }
     else {
-      return qualifierType + '.' + conversionName + '(' +
-             arg.getText() + ')';
+      return qualifierType + '.' + conversionName + '(' + commentTracker.text(arg) + ')';
     }
   }
 
   @Override
   @Nullable
   public InspectionGadgetsFix buildFix(Object... infos) {
-    final String replacementExpression =
-      calculateReplacementExpression(
-        (PsiMethodCallExpression)infos[0]);
-    if (replacementExpression == null) {
-      return null;
-    }
+    final String replacementExpression = calculateReplacementExpression((PsiMethodCallExpression)infos[0], new CommentTracker());
+    if (replacementExpression == null) return null;
     final String name = InspectionGadgetsBundle.message(
       "unnecessary.temporary.on.conversion.from.string.fix.name",
       replacementExpression);
     return new UnnecessaryTemporaryObjectFix(name);
   }
 
-  private static class UnnecessaryTemporaryObjectFix
-    extends InspectionGadgetsFix {
+  private static class UnnecessaryTemporaryObjectFix extends InspectionGadgetsFix {
 
     private final String m_name;
 
-    private UnnecessaryTemporaryObjectFix(
-      String name) {
+    private UnnecessaryTemporaryObjectFix(String name) {
       m_name = name;
     }
 
@@ -156,16 +134,12 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiMethodCallExpression expression =
-        (PsiMethodCallExpression)descriptor.getPsiElement();
-      final String newExpression =
-        calculateReplacementExpression(expression);
-      if (newExpression == null) {
-        return;
-      }
-      PsiReplacementUtil.replaceExpression(expression, newExpression);
+    public void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiMethodCallExpression expression = (PsiMethodCallExpression)descriptor.getPsiElement();
+      CommentTracker commentTracker = new CommentTracker();
+      final String newExpression = calculateReplacementExpression(expression, commentTracker);
+      if (newExpression == null) return;
+      PsiReplacementUtil.replaceExpression(expression, newExpression, commentTracker);
     }
   }
 
@@ -174,14 +148,12 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
     return new UnnecessaryTemporaryObjectVisitor();
   }
 
-  private static class UnnecessaryTemporaryObjectVisitor
-    extends BaseInspectionVisitor {
+  private static class UnnecessaryTemporaryObjectVisitor extends BaseInspectionVisitor {
 
     /**
      * @noinspection StaticCollection
      */
-    @NonNls private static final Map<String, String> s_basicTypeMap =
-      new HashMap<>(7);
+    @NonNls private static final Map<String, String> s_basicTypeMap = new HashMap<>(7);
 
     static {
       s_basicTypeMap.put(CommonClassNames.JAVA_LANG_BOOLEAN, "booleanValue");
@@ -194,11 +166,9 @@ public class UnnecessaryTemporaryOnConversionFromStringInspection
     }
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      final PsiReferenceExpression methodExpression =
-        expression.getMethodExpression();
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
       final Map<String, String> basicTypeMap = s_basicTypeMap;
       if (!basicTypeMap.containsValue(methodName)) {

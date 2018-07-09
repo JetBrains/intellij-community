@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates;
 
 import com.intellij.CommonBundle;
@@ -33,6 +19,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -73,7 +60,6 @@ import java.util.zip.ZipOutputStream;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/5/12
  */
 public class SaveProjectAsTemplateAction extends AnAction {
 
@@ -134,10 +120,16 @@ public class SaveProjectAsTemplateAction extends AnAction {
                                  boolean replaceParameters,
                                  final ProgressIndicator indicator,
                                  boolean shouldEscape) {
-
     final Map<String, String> parameters = computeParameters(project, replaceParameters);
     indicator.setText("Saving project...");
-    ApplicationManager.getApplication().invokeAndWait(() -> WriteAction.run(project::save));
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      if (project instanceof ProjectImpl) {
+        (((ProjectImpl)project)).save(true);
+      }
+      else {
+        project.save();
+      }
+    });
     indicator.setText("Processing project files...");
     ZipOutputStream stream = null;
     try {
@@ -155,8 +147,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
       }
 
       String metaDescription = getTemplateMetaText(shouldEscape, roots);
-      writeFile(LocalArchivedTemplate.META_TEMPLATE_DESCRIPTOR_PATH, metaDescription, project, basePathRoot.myRelativePath, stream, true
-      );
+      writeFile(LocalArchivedTemplate.META_TEMPLATE_DESCRIPTOR_PATH, metaDescription, project, basePathRoot.myRelativePath, stream, true);
 
       FileIndex index = moduleToSave == null
                         ? ProjectRootManager.getInstance(project).getFileIndex()
@@ -308,7 +299,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
   private static String getRelativePath(PathMacroManager pathMacroManager, VirtualFile moduleRoot) {
     String path = pathMacroManager.collapsePath(moduleRoot.getPath());
     path = StringUtil.trimStart(path, "$" + PathMacroUtil.PROJECT_DIR_MACRO_NAME + "$");
-    path = StringUtil.trimStart(path, "$" + PathMacroUtil.MODULE_DIR_MACRO_NAME + "$");
+    path = StringUtil.trimStart(path, PathMacroUtil.DEPRECATED_MODULE_DIR);
     path = StringUtil.trimStart(path, "/");
     return path;
   }

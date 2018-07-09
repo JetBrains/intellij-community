@@ -20,7 +20,6 @@ import org.jetbrains.jps.model.module.JpsModule;
 
 /**
  * @author: db
- * Date: 23.09.11
  */
 public class FieldPropertyTest extends IncrementalTestCase {
   public FieldPropertyTest() {

@@ -15,6 +15,7 @@
  */
 package git4idea.push;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,12 +25,12 @@ import org.jetbrains.annotations.Nullable;
  * @see GitPushNativeResultParser
  * @see GitPushRepoResult
  */
-class GitPushNativeResult {
+public class GitPushNativeResult {
 
-  static final String NO_FF_REJECT_REASON = "non-fast-forward";
+  public static final String NO_FF_REJECT_REASON = "non-fast-forward";
   static final String FETCH_FIRST_REASON = "fetch first";
 
-  enum Type {
+  public enum Type {
     SUCCESS,
     FORCED_UPDATE,
     NEW_REF,
@@ -44,11 +45,11 @@ class GitPushNativeResult {
   @Nullable private final String myReason;
   @Nullable private final String myRange;
 
-  GitPushNativeResult(@NotNull Type type, String sourceRef) {
+  public GitPushNativeResult(@NotNull Type type, String sourceRef) {
     this(type, sourceRef, null, null);
   }
 
-  GitPushNativeResult(@NotNull Type type, String sourceRef, @Nullable String reason, @Nullable String range) {
+  public GitPushNativeResult(@NotNull Type type, String sourceRef, @Nullable String reason, @Nullable String range) {
     myType = type;
     mySourceRef = sourceRef;
     myReason = reason;
@@ -75,7 +76,9 @@ class GitPushNativeResult {
   }
 
   boolean isNonFFUpdate() {
-    return myType == Type.REJECTED && (NO_FF_REJECT_REASON.equals(myReason) || FETCH_FIRST_REASON.equals(myReason));
+    return myType == Type.REJECTED &&
+           myReason != null &&
+           (StringUtil.containsIgnoreCase(myReason, NO_FF_REJECT_REASON) || StringUtil.containsIgnoreCase(myReason, FETCH_FIRST_REASON));
   }
 
   @Override

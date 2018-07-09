@@ -1,9 +1,7 @@
 package com.intellij.tasks.generic;
 
-import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.Condition;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.ui.EditorTextField;
@@ -54,7 +52,7 @@ public class GenericRepositoryEditor<T extends GenericRepository> extends BaseRe
   private JBCheckBox myDownloadTasksInSeparateRequests;
 
   private Map<JTextField, TemplateVariable> myField2Variable;
-  private Map<JRadioButton, ResponseType> myRadio2ResponseType;
+  private final Map<JRadioButton, ResponseType> myRadio2ResponseType;
 
   public GenericRepositoryEditor(final Project project,
                                  final T repository,

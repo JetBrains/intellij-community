@@ -34,7 +34,7 @@ import javax.swing.event.ListSelectionListener;
 
 public class ManageRepoDialog extends DialogWrapper {
   private JPanel myMainPanel;
-  private JBList myList;
+  private final JBList myList;
   private boolean myEnabled;
 
   public ManageRepoDialog(Project project, final PackageManagementService controller) {

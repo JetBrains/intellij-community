@@ -1,7 +1,10 @@
 import pkgutil
 import sys
 from _pydev_bundle import pydev_log
-import pydevd_plugins.extensions
+try:
+    import pydevd_plugins.extensions as extensions
+except:
+    extensions = None
 
 
 class ExtensionManager(object):
@@ -12,16 +15,17 @@ class ExtensionManager(object):
 
     def _load_modules(self):
         self.loaded_extensions = []
-        for module_loader, name, ispkg in pkgutil.walk_packages(pydevd_plugins.extensions.__path__,
-                                                                pydevd_plugins.extensions.__name__ + '.'):
-            mod_name = name.split('.')[-1]
-            if not ispkg and mod_name.startswith('pydevd_plugin'):
-                try:
-                    __import__(name)
-                    module = sys.modules[name]
-                    self.loaded_extensions.append(module)
-                except ImportError:
-                    pydev_log.error('Unable to load extension ' + name)
+        if extensions:
+            for module_loader, name, ispkg in pkgutil.walk_packages(extensions.__path__,
+                                                                    extensions.__name__ + '.'):
+                mod_name = name.split('.')[-1]
+                if not ispkg and mod_name.startswith('pydevd_plugin'):
+                    try:
+                        __import__(name)
+                        module = sys.modules[name]
+                        self.loaded_extensions.append(module)
+                    except ImportError:
+                        pydev_log.error('Unable to load extension ' + name)
 
     def _ensure_loaded(self):
         if self.loaded_extensions is None:

@@ -28,12 +28,12 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -137,7 +137,7 @@ public class XsltCommandLineState extends CommandLineState {
       vmParameters.defineProperty("xslt.smart-error-handling", String.valueOf(myXsltRunConfiguration.mySmartErrorHandling));
 
       final PluginId pluginId = PluginManagerCore.getPluginByClassName(getClass().getName());
-      assert pluginId != null || System.getProperty("xslt.plugin.path") != null : "PluginId not found - development builds need to specify -Dxslt.plugin.path=../out/classes/production/xslt-rt";
+      assert pluginId != null || System.getProperty("xslt.plugin.path") != null : "PluginId not found - development builds need to specify -Dxslt.plugin.path=../out/classes/production/intellij.xslt.debugger.rt";
 
       final File pluginPath;
       if (pluginId != null) {
@@ -146,7 +146,7 @@ public class XsltCommandLineState extends CommandLineState {
         pluginPath = descriptor.getPath();
       }
       else {
-        // -Dxslt.plugin.path=C:\work\java\intellij/ultimate\out\classes\production\xslt-rt
+        // -Dxslt.plugin.path=C:\work\java\intellij/ultimate\out\classes\production\intellij.xslt.debugger.rt
         pluginPath = new File(System.getProperty("xslt.plugin.path"));
       }
 
@@ -223,7 +223,9 @@ public class XsltCommandLineState extends CommandLineState {
                                 final VirtualFile fileByUrl = VirtualFileManager.getInstance().refreshAndFindFileByUrl(url.replace(File.separatorChar, '/'));
                                 if (fileByUrl != null) {
                                     fileByUrl.refresh(false, false);
-                                    new OpenFileDescriptor(myXsltRunConfiguration.getProject(), fileByUrl).navigate(true);
+                                  PsiNavigationSupport.getInstance()
+                                                      .createNavigatable(myXsltRunConfiguration.getProject(),
+                                                                         fileByUrl, -1).navigate(true);
                                     return;
                                 }
                             }

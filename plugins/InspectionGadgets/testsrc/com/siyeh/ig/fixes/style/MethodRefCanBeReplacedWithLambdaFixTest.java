@@ -143,9 +143,8 @@ public class MethodRefCanBeReplacedWithLambdaFixTest extends IGQuickFixesTestCas
     doTest();
   }
 
-  public void testNewArrayMethodReferenceHasNoSideEffects() {
-    doTest();
-  }
+  public void testNewArrayMethodReferenceHasNoSideEffects() { doTest(); }
+  public void testExplicitTypeRequired() { doTest(); }
 
   public void testEnsureNoConversionIsSuggestedWhenLambdaWithoutCantBeInferredAndFormalParametersAreNotDenotable() {
     assertQuickfixNotAvailable();

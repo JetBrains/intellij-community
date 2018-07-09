@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.ide.IdeBundle
@@ -22,6 +8,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -31,9 +18,9 @@ import com.intellij.util.io.HttpRequests
 import java.io.File
 import java.io.IOException
 import java.net.URL
-import javax.swing.UIManager
 import java.nio.file.Files
 import java.nio.file.Paths
+import javax.swing.UIManager
 
 object UpdateInstaller {
   private val patchesUrl: String
@@ -54,7 +41,7 @@ object UpdateInstaller {
     val patchName = "${product}-${from}-${to}-patch${jdk}-${patch.osSuffix}.jar"
 
     val baseUrl = patchesUrl
-    val url = URL(URL(if (baseUrl.endsWith('/')) baseUrl else baseUrl + '/'), patchName)
+    val url = URL(URL(if (baseUrl.endsWith('/')) baseUrl else "${baseUrl}/"), patchName)
     val patchFile = File(getTempDir(), "patch.jar")
     HttpRequests.request(url.toString()).gzip(false).forceHttps(forceHttps).saveToFile(patchFile, indicator)
     return patchFile
@@ -70,7 +57,7 @@ object UpdateInstaller {
     val readyToInstall = mutableListOf<PluginDownloader>()
     for (downloader in downloaders) {
       try {
-        if (downloader.pluginId !in disabledToUpdate && downloader.prepareToInstall(indicator) && downloader.descriptor != null) {
+        if (downloader.pluginId !in disabledToUpdate && downloader.prepareToInstall(indicator)) {
           readyToInstall += downloader
         }
         indicator.checkCanceled()
@@ -83,8 +70,8 @@ object UpdateInstaller {
 
     var installed = false
 
-    try {
-      indicator.startNonCancelableSection()
+
+    ProgressManager.getInstance().executeNonCancelableSection {
       for (downloader in readyToInstall) {
         try {
           downloader.install()
@@ -95,10 +82,6 @@ object UpdateInstaller {
         }
       }
     }
-    finally {
-      indicator.finishNonCancelableSection()
-    }
-
     return installed
   }
 

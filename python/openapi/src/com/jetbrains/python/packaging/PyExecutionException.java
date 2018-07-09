@@ -27,8 +27,8 @@ import java.util.List;
  * @author vlan
  */
 public class PyExecutionException extends ExecutionException {
-  @NotNull private String myCommand;
-  @NotNull private List<String> myArgs;
+  @NotNull private final String myCommand;
+  @NotNull private final List<String> myArgs;
   @NotNull private final String myStdout;
   @NotNull private final String myStderr;
   private final int myExitCode;

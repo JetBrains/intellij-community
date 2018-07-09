@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.openapi.Disposable;
@@ -53,15 +38,13 @@ import java.util.*;
 @State(name = "Encoding", storages = @Storage("encodings.xml"))
 public class EncodingProjectManagerImpl extends EncodingProjectManager implements PersistentStateComponent<Element> {
   @NonNls private static final String PROJECT_URL = "PROJECT";
+
   private final Project myProject;
   private final EncodingManagerImpl myIdeEncodingManager;
   private boolean myNative2AsciiForPropertiesFiles;
   private Charset myDefaultCharsetForPropertiesFiles;
   private final SimpleModificationTracker myModificationTracker = new SimpleModificationTracker();
 
-  // we should avoid changed file
-  private String myOldUTFGuessing;
-  private boolean myNative2AsciiForPropertiesFilesWasSpecified;
   private BOMForNewUTF8Files myBOMForNewUTF8Files = BOMForNewUTF8Files.NEVER;
 
   public EncodingProjectManagerImpl(Project project, EncodingManager ideEncodingManager) {
@@ -94,12 +77,8 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
       child.setAttribute("charset", myProjectCharset.name());
     }
 
-    if (myOldUTFGuessing != null) {
-      element.setAttribute("useUTFGuessing", myOldUTFGuessing);
-    }
-
-    if (myNative2AsciiForPropertiesFiles || myNative2AsciiForPropertiesFilesWasSpecified) {
-      element.setAttribute("native2AsciiForPropertiesFiles", Boolean.toString(myNative2AsciiForPropertiesFiles));
+    if (myNative2AsciiForPropertiesFiles) {
+      element.setAttribute("native2AsciiForPropertiesFiles", Boolean.toString(true));
     }
 
     if (myDefaultCharsetForPropertiesFiles != null) {
@@ -109,16 +88,19 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
   }
 
   @Override
-  public void loadState(Element element) {
+  public void loadState(@NotNull Element element) {
     myMapping.clear();
     List<Element> files = element.getChildren("file");
     if (!files.isEmpty()) {
-      Map<VirtualFile, Charset> mapping = new HashMap<>();
+      Map<VirtualFile, Charset> mapping = new THashMap<>();
       for (Element fileElement : files) {
         String url = fileElement.getAttributeValue("url");
         String charsetName = fileElement.getAttributeValue("charset");
         Charset charset = CharsetToolkit.forName(charsetName);
-        if (charset == null) continue;
+        if (charset == null) {
+          continue;
+        }
+
         if (url.equals(PROJECT_URL)) {
           myProjectCharset = charset;
         }
@@ -132,16 +114,10 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
       myMapping.putAll(mapping);
     }
 
-    String native2AsciiForPropertiesFiles = element.getAttributeValue("native2AsciiForPropertiesFiles");
-    myNative2AsciiForPropertiesFiles = Boolean.parseBoolean(native2AsciiForPropertiesFiles);
+    myNative2AsciiForPropertiesFiles = Boolean.parseBoolean(element.getAttributeValue("native2AsciiForPropertiesFiles"));
     myDefaultCharsetForPropertiesFiles = CharsetToolkit.forName(element.getAttributeValue("defaultCharsetForPropertiesFiles"));
 
     myModificationTracker.incModificationCount();
-
-    if (!myProject.isDefault()) {
-      myOldUTFGuessing = element.getAttributeValue("useUTFGuessing");
-      myNative2AsciiForPropertiesFilesWasSpecified = native2AsciiForPropertiesFiles != null;
-    }
   }
 
   private void reloadAlreadyLoadedDocuments() {
@@ -357,11 +333,6 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
     return myProjectCharset;
   }
 
-  @Override
-  public boolean isUseUTFGuessing(final VirtualFile virtualFile) {
-    return true;
-  }
-
   private static final ThreadLocal<Boolean> SUPPRESS_RELOAD = new ThreadLocal<>();
   static void suppressReloadDuring(@NotNull Runnable action) {
     Boolean old = SUPPRESS_RELOAD.get();
@@ -469,7 +440,8 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
       return name;
     }
   }
-  void setBOMForNewUtf8Files(@NotNull BOMForNewUTF8Files option) {
+
+  public void setBOMForNewUtf8Files(@NotNull BOMForNewUTF8Files option) {
     myBOMForNewUTF8Files = option;
   }
 

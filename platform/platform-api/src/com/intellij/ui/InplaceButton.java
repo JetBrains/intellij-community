@@ -35,8 +35,8 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
   private boolean myPainting = true;
   private boolean myActive = true;
 
-  private BaseButtonBehavior myBehavior;
-  private ActionListener myListener;
+  private final BaseButtonBehavior myBehavior;
+  private final ActionListener myListener;
 
   private Icon myIcon;
   private CenteredIcon myRegular;
@@ -305,7 +305,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
       for (Icon icon : icons) {
         if (icon instanceof Accessible) {
           AccessibleContext ac = ((Accessible)icon).getAccessibleContext();
-          if (ac != null && ac instanceof AccessibleIcon) {
+          if (ac instanceof AccessibleIcon) {
             accessibleIconList.add((AccessibleIcon)ac);
           }
         }
@@ -314,7 +314,7 @@ public class InplaceButton extends JComponent implements ActiveComponent, Access
         return null;
       }
 
-      return accessibleIconList.toArray(new AccessibleIcon[accessibleIconList.size()]);
+      return accessibleIconList.toArray(new AccessibleIcon[0]);
     }
 
     @Override

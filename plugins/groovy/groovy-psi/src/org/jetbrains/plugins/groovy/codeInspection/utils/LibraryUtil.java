@@ -32,7 +32,7 @@ public class LibraryUtil {
   public static boolean callOnLibraryMethod(
       @NotNull GrMethodCallExpression expression) {
     final PsiMethod method = expression.resolveMethod();
-    return method != null && method instanceof PsiCompiledElement;
+    return method instanceof PsiCompiledElement;
   }
 
   public static boolean isOverrideOfLibraryMethod(PsiMethod method) {

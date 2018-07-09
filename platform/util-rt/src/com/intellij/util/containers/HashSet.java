@@ -17,16 +17,14 @@ package com.intellij.util.containers;
 
 import java.util.Collection;
 
+/** Use {@link java.util.HashSet} */
 @SuppressWarnings("ClassNameSameAsAncestorName")
+@Deprecated
 public class HashSet<E> extends java.util.HashSet<E> {
   public HashSet() { }
 
   public HashSet(Collection<? extends E> collection) {
     super(collection);
-  }
-
-  public HashSet(int i, float v) {
-    super(i, v);
   }
 
   public HashSet(int i) {

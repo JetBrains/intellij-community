@@ -1,16 +1,14 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.QuickFix;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefDirectory;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.ui.*;
-import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -18,13 +16,19 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
+import java.text.MessageFormat;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
@@ -97,7 +101,9 @@ public abstract class InspectionRVContentProvider {
     final TreePath[] treePaths = tree.getSelectionPaths();
     if (treePaths == null) return false;
     for (TreePath selectionPath : treePaths) {
-      if (!TreeUtil.traverseDepth((TreeNode)selectionPath.getLastPathComponent(), node -> {
+      if (!TreeUtil.treeNodeTraverser((TreeNode)selectionPath.getLastPathComponent())
+        .traverse(TreeTraversal.PRE_ORDER_DFS)
+        .processEach(node -> {
         if (!((InspectionTreeNode) node).isValid()) return true;
         if (node instanceof ProblemDescriptionNode) {
           ProblemDescriptionNode problemDescriptionNode = (ProblemDescriptionNode)node;
@@ -116,8 +122,80 @@ public abstract class InspectionRVContentProvider {
   }
 
   @NotNull
-  public abstract QuickFixAction[] getQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree);
+  public abstract QuickFixAction[] getCommonQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree);
 
+  @NotNull
+  public QuickFixAction[] getPartialQuickFixes(@NotNull InspectionToolWrapper toolWrapper, @NotNull InspectionTree tree) {
+    GlobalInspectionContextImpl context = tree.getContext();
+    InspectionToolPresentation presentation = context.getPresentation(toolWrapper);
+    CommonProblemDescriptor[] descriptors = tree.getSelectedDescriptors();
+    Map<String, FixAndOccurrences> result = new THashMap<>();
+    for (CommonProblemDescriptor d : descriptors) {
+      QuickFix[] fixes = d.getFixes();
+      if (fixes == null || fixes.length == 0) continue;
+      for (QuickFix fix : fixes) {
+        String familyName = fix.getFamilyName();
+        FixAndOccurrences fixAndOccurrences = result.get(familyName);
+        if (fixAndOccurrences == null) {
+          LocalQuickFixWrapper localQuickFixWrapper = new LocalQuickFixWrapper(fix, presentation.getToolWrapper());
+          try {
+            localQuickFixWrapper.setText(StringUtil.escapeMnemonics(fix.getFamilyName()));
+          }
+          catch (AbstractMethodError e) {
+            //for plugin compatibility
+            localQuickFixWrapper.setText("Name is not available");
+          }
+          fixAndOccurrences = new FixAndOccurrences(localQuickFixWrapper);
+          result.put(familyName, fixAndOccurrences);
+        } else {
+          final LocalQuickFixWrapper quickFixAction = fixAndOccurrences.fix;
+          checkFixClass(presentation, fix, quickFixAction);
+        }
+        fixAndOccurrences.occurrences++;
+      }
+    }
+
+    return result
+      .values()
+      .stream()
+      .filter(fixAndOccurrence -> fixAndOccurrence.occurrences != descriptors.length)
+      .sorted(Comparator.comparingInt((FixAndOccurrences fixAndOccurrence) -> fixAndOccurrence.occurrences).reversed())
+      .map(fixAndOccurrence -> {
+        LocalQuickFixWrapper fix = fixAndOccurrence.fix;
+        int occurrences = fixAndOccurrence.occurrences;
+        fix.setText(fix.getText() + " (" + occurrences + " problem" + (occurrences == 1 ? "" : "s") + ")");
+        return fix;
+      })
+      .toArray(QuickFixAction[]::new);
+  }
+
+  protected static void checkFixClass(InspectionToolPresentation presentation, QuickFix fix, LocalQuickFixWrapper quickFixAction) {
+    Class class1 = getFixClass(fix);
+    Class class2 = getFixClass(quickFixAction.getFix());
+    if (!class1.equals(class2)) {
+      String message = MessageFormat.format(
+        "QuickFix-es with the same family name ({0}) should be the same class instances but actually are {1} and {2} instances. " +
+        "Please assign reported exception for the inspection \"{3}\" (\"{4}\") developer.",
+        fix.getFamilyName(), class1.getName(), class2.getName(), presentation.getToolWrapper().getTool().getClass(),
+        presentation.getToolWrapper().getShortName());
+      AssertionError error = new AssertionError(message);
+      StreamEx.of(presentation.getProblemDescriptors()).select(ProblemDescriptorBase.class)
+              .map(ProblemDescriptorBase::getCreationTrace).nonNull()
+              .map(InspectionRVContentProvider::extractStackTrace).findFirst()
+              .ifPresent(error::setStackTrace);
+      LOG.error(message, error);
+    }
+  }
+
+  private static StackTraceElement[] extractStackTrace(Throwable throwable) {
+    // Remove top-of-stack frames which are common for different inspections,
+    // leaving only inspection-specific frames
+    Set<String> classes = StreamEx.of(ProblemDescriptorBase.class, InspectionManagerBase.class, ProblemsHolder.class)
+      .map(Class::getName).toSet();
+    return StreamEx.of(throwable.getStackTrace())
+            .dropWhile(ste -> classes.contains(ste.getClassName()))
+            .toArray(StackTraceElement.class);
+  }
 
   public InspectionNode appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
                                               @NotNull InspectionNode toolNode,
@@ -127,8 +205,20 @@ public abstract class InspectionRVContentProvider {
     InspectionToolWrapper wrapper = toolNode.getToolWrapper();
     InspectionToolPresentation presentation = context.getPresentation(wrapper);
     Map<String, Set<RefEntity>> content = presentation.getContent();
-    SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> problems = presentation.getProblemElements();
-    return appendToolNodeContent(context, toolNode, parentNode, showStructure, groupBySeverity, content, problems::get);
+    return appendToolNodeContent(context, toolNode, parentNode, showStructure, groupBySeverity, content, entity -> {
+      if (context.getUIOptions().FILTER_RESOLVED_ITEMS) {
+        return presentation.isExcluded(entity) ? null : presentation.getProblemElements().get(entity);
+      } else {
+        CommonProblemDescriptor[] problems = ObjectUtils.notNull(presentation.getProblemElements().get(entity), CommonProblemDescriptor.EMPTY_ARRAY);
+        CommonProblemDescriptor[] suppressedProblems = presentation.getSuppressedProblems(entity);
+        CommonProblemDescriptor[] resolvedProblems = presentation.getResolvedProblems(entity);
+        CommonProblemDescriptor[] result = new CommonProblemDescriptor[problems.length + suppressedProblems.length + resolvedProblems.length];
+        System.arraycopy(problems, 0, result, 0, problems.length);
+        System.arraycopy(suppressedProblems, 0, result, problems.length, suppressedProblems.length);
+        System.arraycopy(resolvedProblems, 0, result, problems.length + suppressedProblems.length, resolvedProblems.length);
+        return result;
+      }
+    });
   }
 
   public abstract InspectionNode appendToolNodeContent(@NotNull GlobalInspectionContextImpl context,
@@ -277,7 +367,7 @@ public abstract class InspectionRVContentProvider {
                 if (nodes.isEmpty()) continue;
                 parentNode.removeAllChildren();
                 for (ProblemDescriptionNode node : nodes) {
-                  parentNode.add(node);
+                  parentNode.insertByOrder(node, false);
                 }
               }
             }
@@ -302,21 +392,23 @@ public abstract class InspectionRVContentProvider {
       final RefElementNode currentNode = firstLevel.get() ? nodeToBeAdded : container.createNode(presentation);
       final RefEntityContainer finalContainer = container;
       final RefElementNode finalPrevNode = prevNode;
-      TreeUtil.traverseDepth(parentNode, node -> {
+      TreeUtil.treeNodeTraverser(parentNode).traverse(TreeTraversal.PRE_ORDER_DFS).processEach(node -> {
         if (node instanceof RefElementNode) {
           final RefElementNode refElementNode = (RefElementNode)node;
           final RefEntity userObject = finalContainer.getRefEntity();
           final RefEntity object = refElementNode.getElement();
-          if (userObject != null && object != null && (userObject.getClass().equals(object.getClass())) && finalContainer.areEqual(object, userObject)) {
+          if (userObject != null &&
+              object != null &&
+              (userObject.getClass().equals(object.getClass())) &&
+              finalContainer.areEqual(object, userObject)) {
             if (firstLevel.get()) {
               result.set(refElementNode);
-              return false;
             }
             else {
               refElementNode.insertByOrder(finalPrevNode, false);
               result.set(nodeToBeAdded);
-              return false;
             }
+            return false;
           }
         }
         return true;
@@ -384,5 +476,60 @@ public abstract class InspectionRVContentProvider {
     for (InspectionTreeNode node : children) {
       merge(node, current, true);
     }
+  }
+
+  @NotNull
+  protected static QuickFixAction[] getCommonFixes(@NotNull InspectionToolPresentation presentation,
+                                                   @NotNull CommonProblemDescriptor[] descriptors) {
+    Map<String, LocalQuickFixWrapper> result = null;
+    for (CommonProblemDescriptor d : descriptors) {
+      QuickFix[] fixes = d.getFixes();
+      if (fixes == null || fixes.length == 0) continue;
+      if (result == null) {
+        result = new HashMap<>();
+        for (QuickFix fix : fixes) {
+          if (fix == null) continue;
+          result.put(fix.getFamilyName(), new LocalQuickFixWrapper(fix, presentation.getToolWrapper()));
+        }
+      }
+      else {
+        for (String familyName : new ArrayList<>(result.keySet())) {
+          boolean isFound = false;
+          for (QuickFix fix : fixes) {
+            if (fix == null) continue;
+            if (familyName.equals(fix.getFamilyName())) {
+              isFound = true;
+              final LocalQuickFixWrapper quickFixAction = result.get(fix.getFamilyName());
+              checkFixClass(presentation, fix, quickFixAction);
+              try {
+                quickFixAction.setText(StringUtil.escapeMnemonics(fix.getFamilyName()));
+              }
+              catch (AbstractMethodError e) {
+                //for plugin compatibility
+                quickFixAction.setText("Name is not available");
+              }
+              break;
+            }
+          }
+          if (!isFound) {
+            result.remove(familyName);
+            if (result.isEmpty()) {
+              return QuickFixAction.EMPTY;
+            }
+          }
+        }
+      }
+    }
+    return result == null || result.isEmpty() ? QuickFixAction.EMPTY : result.values().toArray(QuickFixAction.EMPTY);
+  }
+
+  private static Class getFixClass(QuickFix fix) {
+    return fix instanceof ActionClassHolder ? ((ActionClassHolder)fix).getActionClass() : fix.getClass();
+  }
+
+  private static class FixAndOccurrences {
+    final LocalQuickFixWrapper fix;
+    int occurrences;
+    FixAndOccurrences(LocalQuickFixWrapper fix) {this.fix = fix;}
   }
 }

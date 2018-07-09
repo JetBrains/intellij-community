@@ -153,14 +153,14 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         final Pair<String, Icon> pair = (Pair<String, Icon>)value;
-        final String text = pair == null ? null : pair.first;
+        final String text = Pair.getFirst(pair);
         setText(text);
         final Dimension dimension = getPreferredSize();
         if (!validity.value(text)) {
           setFont(getFont().deriveFont(Font.ITALIC));
           setForeground(JBColor.RED);
         }
-        setIcon(pair == null ? null : pair.second);
+        setIcon(Pair.getSecond(pair));
         setPreferredSize(new Dimension(-1, dimension.height));
         return this;
       }
@@ -279,7 +279,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
       }
 
           final Pair<String, Icon> pair = (Pair<String, Icon>)comboBox.getSelectedItem();
-          final String s = pair == null ? null : pair.first;
+      final String s = Pair.getFirst(pair);
           background = s != null && s.trim().length() > 0 ? getDefaultBackground() : background;
 
       comboBox.setBackground(background);

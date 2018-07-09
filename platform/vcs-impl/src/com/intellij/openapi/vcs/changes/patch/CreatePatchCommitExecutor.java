@@ -77,6 +77,11 @@ public class CreatePatchCommitExecutor extends LocalCommitExecutor implements Pr
   }
 
   @Override
+  public boolean supportsPartialCommit() {
+    return true;
+  }
+
+  @Override
   @NotNull
   public CommitSession createCommitSession() {
     return new CreatePatchCommitSession();

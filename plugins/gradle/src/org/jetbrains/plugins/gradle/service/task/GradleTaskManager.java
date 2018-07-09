@@ -21,6 +21,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEventUnsupportedImpl;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
+import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerConfiguration;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.Key;
@@ -36,7 +37,7 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler;
+import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.UnsupportedCancellationToken;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
@@ -86,32 +87,36 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
     GradleExecutionSettings effectiveSettings =
       settings == null ? new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false) : settings;
+
+    ForkedDebuggerConfiguration forkedDebuggerSetup = ForkedDebuggerConfiguration.parse(jvmAgentSetup);
+    if (forkedDebuggerSetup != null) {
+      String javaHome = effectiveSettings.getJavaHome();
+      JdkVersionDetector.JdkVersionInfo jdkVersionInfo =
+        javaHome == null ? null : JdkVersionDetector.getInstance().detectJdkVersionInfo(javaHome);
+      boolean isJdk9orLater = jdkVersionInfo != null && jdkVersionInfo.version.isAtLeast(9);
+      effectiveSettings.withVmOption(forkedDebuggerSetup.getJvmAgentSetup(isJdk9orLater));
+    }
     Function<ProjectConnection, Void> f = connection -> {
       try {
         appendInitScriptArgument(taskNames, jvmAgentSetup, effectiveSettings);
 
-        GradleVersion gradleVersion = GradleExecutionHelper.getGradleVersion(connection, id, listener);
-        if (gradleVersion != null && gradleVersion.compareTo(GradleVersion.version("2.5")) < 0) {
-          listener.onStatusChange(new ExternalSystemTaskExecutionEvent(
-            id, new ExternalSystemProgressEventUnsupportedImpl(gradleVersion + " does not support executions view")));
-        }
-
-        for (GradleBuildParticipant buildParticipant : effectiveSettings.getExecutionWorkspace().getBuildParticipants()) {
-          effectiveSettings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
-        }
-
-        BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, effectiveSettings, listener);
-        launcher.forTasks(ArrayUtil.toStringArray(taskNames));
-
-        if (gradleVersion != null && gradleVersion.compareTo(GradleVersion.version("2.1")) < 0) {
-          myCancellationMap.put(id, new UnsupportedCancellationToken());
-        }
-        else {
-          final CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
-          launcher.withCancellationToken(cancellationTokenSource.token());
-          myCancellationMap.put(id, cancellationTokenSource);
-        }
+        CancellationTokenSource cancellationTokenSource = GradleConnector.newCancellationTokenSource();
         try {
+          myCancellationMap.put(id, cancellationTokenSource);
+          GradleVersion gradleVersion = GradleExecutionHelper.getGradleVersion(connection, id, listener, cancellationTokenSource);
+          if (gradleVersion != null && gradleVersion.compareTo(GradleVersion.version("2.5")) < 0) {
+            listener.onStatusChange(new ExternalSystemTaskExecutionEvent(
+              id, new ExternalSystemProgressEventUnsupportedImpl(gradleVersion + " does not support executions view")));
+          }
+
+          for (GradleBuildParticipant buildParticipant : effectiveSettings.getExecutionWorkspace().getBuildParticipants()) {
+            effectiveSettings.withArguments(GradleConstants.INCLUDE_BUILD_CMD_OPTION, buildParticipant.getProjectPath());
+          }
+
+          BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, effectiveSettings, listener);
+          launcher.forTasks(ArrayUtil.toStringArray(taskNames));
+
+          launcher.withCancellationToken(cancellationTokenSource.token());
           launcher.run();
         }
         finally {
@@ -121,8 +126,8 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       }
       catch (RuntimeException e) {
         LOG.debug("Gradle build launcher error", e);
-        ExternalSystemException friendlyError = new GradleExecutionErrorHandler(e, projectPath, null).getUserFriendlyError();
-        throw friendlyError == null ? e : friendlyError;
+        final GradleProjectResolverExtension projectResolverChain = GradleProjectResolver.createProjectResolverChain(effectiveSettings);
+        throw projectResolverChain.getUserFriendlyError(e, projectPath, null);
       }
     };
     myHelper.execute(projectPath, effectiveSettings, f);

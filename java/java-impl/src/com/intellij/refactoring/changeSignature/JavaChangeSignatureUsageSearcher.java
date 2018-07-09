@@ -37,10 +37,10 @@ import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -56,13 +56,12 @@ class JavaChangeSignatureUsageSearcher {
 
   public UsageInfo[] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<>();
-    final PsiElement element = myChangeInfo.getMethod();
-    if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
+    final PsiMethod method = myChangeInfo.getMethod();
+    if (method != null) {
 
       findSimpleUsages(method, result);
 
-      final UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
+      final UsageInfo[] usageInfos = result.toArray(UsageInfo.EMPTY_ARRAY);
       return UsageViewUtil.removeDuplicatedUsages(usageInfos);
     }
     return UsageInfo.EMPTY_ARRAY;
@@ -221,7 +220,7 @@ class JavaChangeSignatureUsageSearcher {
         if (!isToCatchExceptions) {
           if (RefactoringUtil.isMethodUsage(element)) {
             PsiExpressionList list = RefactoringUtil.getArgumentListByMethodReference(element);
-            if (list == null || !method.isVarArgs() && list.getExpressions().length != parameterCount) continue;
+            if (list == null || !method.isVarArgs() && list.getExpressionCount() != parameterCount) continue;
           }
         }
         if (RefactoringUtil.isMethodUsage(element)) {

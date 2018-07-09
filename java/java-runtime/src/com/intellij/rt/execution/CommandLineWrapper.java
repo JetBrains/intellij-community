@@ -20,7 +20,9 @@ import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
@@ -85,7 +87,7 @@ public class CommandLineWrapper {
       }
       else {
         List list = splitBySpaces(programParameters);
-        mainArgs = (String[])list.toArray(new String[list.size()]);
+        mainArgs = (String[])list.toArray(new String[0]);
       }
     }
     finally {
@@ -173,7 +175,7 @@ public class CommandLineWrapper {
     String[] mainArgs;
     if (args.length > startArgsIdx && "@app_params".equals(args[startArgsIdx - 1])) {
       List lines = readLinesAndDeleteFile(new File(args[startArgsIdx]));
-      mainArgs = (String[])lines.toArray(new String[lines.size()]);
+      mainArgs = (String[])lines.toArray(new String[0]);
       startArgsIdx += 2;
     }
     else {
@@ -182,7 +184,7 @@ public class CommandLineWrapper {
     }
 
     String mainClassName = args[startArgsIdx - 1];
-    ClassLoader loader = new URLClassLoader((URL[])classpathUrls.toArray(new URL[classpathUrls.size()]), null);
+    ClassLoader loader = new URLClassLoader((URL[])classpathUrls.toArray(new URL[0]), null);
     String systemLoaderName = System.getProperty("java.system.class.loader");
     if (systemLoaderName != null) {
       try {
@@ -198,7 +200,7 @@ public class CommandLineWrapper {
 
   /** @noinspection ResultOfMethodCallIgnored*/
   private static List readLinesAndDeleteFile(File file) throws IOException {
-    BufferedReader reader = new BufferedReader(new FileReader(file));
+    BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
     try {
       List lines = new ArrayList();
       String line;

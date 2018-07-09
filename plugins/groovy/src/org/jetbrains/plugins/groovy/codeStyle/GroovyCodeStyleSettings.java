@@ -1,20 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,6 +48,8 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements 
   public boolean SPACE_WITHIN_TUPLE_EXPRESSION = false;
   public boolean INDENT_LABEL_BLOCKS = true;
   public boolean SPACE_AROUND_REGEX_OPERATORS = true;
+  public boolean SPACE_BEFORE_ASSERT_SEPARATOR = false;
+  public boolean SPACE_AFTER_ASSERT_SEPARATOR = true;
 
   //imports
   public boolean USE_FQ_CLASS_NAMES = false;
@@ -170,5 +161,15 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements 
     METHODS_ORDER_WEIGHT = rootSettings.METHODS_ORDER_WEIGHT;
     STATIC_INNER_CLASSES_ORDER_WEIGHT = rootSettings.STATIC_INNER_CLASSES_ORDER_WEIGHT;
     INNER_CLASSES_ORDER_WEIGHT = rootSettings.INNER_CLASSES_ORDER_WEIGHT;
+  }
+
+  @NotNull
+  public static GroovyCodeStyleSettings getInstance(@NotNull PsiFile file) {
+    return CodeStyle.getCustomSettings(file, GroovyCodeStyleSettings.class);
+  }
+
+  @NotNull
+  public static GroovyCodeStyleSettings getInstance(@NotNull Editor editor) {
+    return CodeStyle.getSettings(editor).getCustomSettings(GroovyCodeStyleSettings.class);
   }
 }

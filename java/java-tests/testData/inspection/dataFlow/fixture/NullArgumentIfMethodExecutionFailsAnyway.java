@@ -9,7 +9,7 @@ class Test {
     throw new IllegalStateException();
   }
   public static void main(String[] args) {
-    printAndThrow("test", <warning descr="Passing 'null' argument to non annotated parameter">null</warning>);
-    printAndThrow(<warning descr="Passing 'null' argument to non annotated parameter">null</warning>, new NullPointerException());
+    printAndThrow("test", <warning descr="Passing 'null' argument to non-annotated parameter">null</warning>);
+    printAndThrow(<warning descr="Passing 'null' argument to non-annotated parameter">null</warning>, new NullPointerException());
   }
 }

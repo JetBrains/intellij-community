@@ -39,11 +39,5 @@ public interface AnActionListener {
   abstract class Adapter implements AnActionListener {
     @Override
     public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {}
-
-    @Override
-    public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {}
-
-    @Override
-    public void beforeEditorTyping(char c, DataContext dataContext) {}
   }
 }

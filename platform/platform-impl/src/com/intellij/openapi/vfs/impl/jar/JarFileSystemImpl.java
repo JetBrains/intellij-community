@@ -39,7 +39,6 @@ public class JarFileSystemImpl extends JarFileSystem {
 
   public JarFileSystemImpl() {
     boolean noCopy = SystemProperties.getBooleanProperty("idea.jars.nocopy", !SystemInfo.isWindows);
-    //noinspection deprecation
     myNoCopyJarPaths = noCopy ? null : ConcurrentCollectionFactory.createConcurrentSet(FileUtil.PATH_HASHING_STRATEGY);
 
     // to prevent platform .jar files from copying

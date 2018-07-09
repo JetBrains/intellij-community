@@ -19,15 +19,11 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.or;
-import static java.util.Arrays.asList;
 
 public class PyStringFormatCompletionContributor extends CompletionContributor {
   private static final String DICT_NAME = "dict";
@@ -253,7 +249,7 @@ public class PyStringFormatCompletionContributor extends CompletionContributor {
             final PyExpression callee = callExpression.getCallee();
             if (callee != null && callee.getName() != null && callee.getName().equals(DICT_NAME)) {
               final PyExpression[] arguments = callExpression.getArguments();
-              return asList(arguments).stream()
+              return Arrays.stream(arguments)
                 .filter(a -> a instanceof PyKeywordArgument)
                 .map(a -> getKeywordArgument((PyKeywordArgument)a))
                 .filter(e -> e != null)
@@ -306,7 +302,7 @@ public class PyStringFormatCompletionContributor extends CompletionContributor {
 
     @NotNull
     private static List<LookupElement> getElementsFromDict(@NotNull final PyDictLiteralExpression dict) {
-      return asList(dict.getElements()).stream()
+      return Arrays.stream(dict.getElements())
         .map(e -> PyUtil.as(e.getKey(), PyStringLiteralExpression.class))
         .filter(k-> k != null)
         .map(k -> createLookUpElement(k.getStringValue()))

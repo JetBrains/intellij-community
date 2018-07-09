@@ -33,7 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 public class GrCastFix extends GroovyFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance(GrCastFix.class);
   private final PsiType myExpectedType;
-  private boolean mySafe;
+  private final boolean mySafe;
 
   public GrCastFix(PsiType expectedType, GrExpression expression) {
     this(expectedType, expression, true);

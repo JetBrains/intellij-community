@@ -26,7 +26,7 @@ import com.intellij.uiDesigner.compiler.CodeGenerationException;
 import com.intellij.uiDesigner.compiler.FormErrorInfo;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 import org.jetbrains.org.objectweb.asm.MethodVisitor;

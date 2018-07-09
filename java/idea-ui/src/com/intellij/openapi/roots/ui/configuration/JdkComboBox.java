@@ -45,6 +45,8 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.Collection;
 
+import static com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaSdkType;
+
 /**
  * @author Eugene Zhuravlev
  * @since May 18, 2005
@@ -77,7 +79,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup<JdkComboBox.JdkComboBoxIt
     super(new JdkComboBoxModel(jdkModel, sdkTypeFilter, filter, addSuggestedItems));
     myFilter = filter;
     mySdkTypeFilter = sdkTypeFilter;
-    myCreationFilter = creationFilter;
+    myCreationFilter = getCreationFilter(creationFilter);
     setRenderer(new ColoredListCellRenderer<JdkComboBoxItem>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends JdkComboBoxItem> list,
@@ -121,6 +123,11 @@ public class JdkComboBox extends ComboBoxWithWidePopup<JdkComboBox.JdkComboBoxIt
         }
       }
     });
+  }
+
+  @NotNull
+  private static Condition<SdkTypeId> getCreationFilter(@Nullable Condition<SdkTypeId> creationFilter) {
+    return notSimpleJavaSdkType(creationFilter);
   }
 
   @Override
@@ -236,7 +243,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup<JdkComboBox.JdkComboBoxIt
     addItem(new InvalidJdkComboBoxItem(name));
     setSelectedIndex(getModel().getSize() - 1);
   }
-  
+
   private int indexOf(Sdk jdk) {
     final JdkComboBoxModel model = (JdkComboBoxModel)getModel();
     final int count = model.getSize();
@@ -256,7 +263,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup<JdkComboBox.JdkComboBoxIt
     }
     return -1;
   }
-  
+
   private void removeInvalidElement() {
     final JdkComboBoxModel model = (JdkComboBoxModel)getModel();
     final int count = model.getSize();
@@ -409,7 +416,7 @@ public class JdkComboBox extends ComboBoxWithWidePopup<JdkComboBox.JdkComboBoxIt
       myPath = path;
     }
 
-    @NotNull 
+    @NotNull
     public SdkType getSdkType() {
       return mySdkType;
     }

@@ -20,10 +20,17 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
+/**
+ * @deprecated use {@link XAttachPresentationGroup} instead
+ */
+@Deprecated
 public class XDefaultLocalAttachGroup implements XLocalAttachGroup {
+  public static final XDefaultLocalAttachGroup INSTANCE = new XDefaultLocalAttachGroup();
+
   @Override
   public int getOrder() {
     return 0;
@@ -37,18 +44,29 @@ public class XDefaultLocalAttachGroup implements XLocalAttachGroup {
 
   @NotNull
   @Override
+  public Icon getItemIcon(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+    return getProcessIcon(project, info, dataHolder);
+  }
+
+  @NotNull
+  @Override
+  public String getItemDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+    return getProcessDisplayText(project, info, dataHolder);
+  }
+
+  @Nullable
+  @Override
+  public String getItemDescription(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
+    return null;
+  }
+
+  @NotNull
   public Icon getProcessIcon(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
     return AllIcons.RunConfigurations.Application;
   }
 
   @NotNull
-  @Override
   public String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
     return info.getExecutableDisplayName();
-  }
-
-  @Override
-  public int compare(@NotNull Project project, @NotNull ProcessInfo a, @NotNull ProcessInfo b, @NotNull UserDataHolder dataHolder) {
-    return a.getPid() - b.getPid();
   }
 }

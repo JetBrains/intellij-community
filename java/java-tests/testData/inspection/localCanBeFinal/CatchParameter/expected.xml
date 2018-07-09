@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>CatchParameter.java</file>
-    <line>8</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Local variable or parameter can be final</problem_class>
-    <description>Parameter &lt;code&gt;e&lt;/code&gt; can have &lt;code&gt;final&lt;/code&gt; modifier</description>
-  </problem>
-</problems>

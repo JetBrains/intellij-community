@@ -27,6 +27,7 @@ import javax.swing.*;
  * @deprecated
  * @see com.intellij.ide.presentation.Presentation
  */
+@Deprecated
 public abstract class DomIconProvider extends PomIconProvider {
   @Override
   public Icon getIcon(@NotNull PomTarget target, int flags) {

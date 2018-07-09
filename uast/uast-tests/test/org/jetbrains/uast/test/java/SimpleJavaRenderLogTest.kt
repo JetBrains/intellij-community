@@ -53,4 +53,13 @@ class SimpleJavaRenderLogTest : AbstractJavaRenderLogTest() {
 
   @Test
   fun testPackageInfo() = doTest("Simple/package-info.java")
+
+  @Test
+  fun testStrings() = doTest("Simple/Strings.java")
+
+  @Test
+  fun testAnnotation() = doTest("Simple/Annotation.java")
+
+  @Test
+  fun testComplexCalls() = doTest("Simple/ComplexCalls.java")
 }

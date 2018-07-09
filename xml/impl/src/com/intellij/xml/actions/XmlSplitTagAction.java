@@ -60,7 +60,7 @@ public class XmlSplitTagAction implements IntentionAction {
         final PsiElement psiElement = file.findElementAt(offset);
         if (psiElement != null) {
           final PsiElement parent = psiElement.getParent();
-          if (parent != null && parent instanceof XmlText && parent.getText().trim().length() > 0) {
+          if (parent instanceof XmlText && parent.getText().trim().length() > 0) {
             final PsiElement grandParent = parent.getParent();
             if (grandParent != null && !isInsideUnsplittableElement(grandParent)) {
               return InjectedLanguageManager.getInstance(project).findInjectedElementAt(file, offset) == null;

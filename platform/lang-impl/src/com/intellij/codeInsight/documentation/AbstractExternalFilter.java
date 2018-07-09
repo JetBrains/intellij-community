@@ -1,12 +1,12 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -73,14 +73,7 @@ public abstract class AbstractExternalFilter {
         prev = matcher.end(1) + 1;
         ready.append(before);
         ready.append("\"");
-        ready.append(ApplicationManager.getApplication().runReadAction(
-          new Computable<String>() {
-            @Override
-            public String compute() {
-              return convertReference(root, href.toString());
-            }
-          }
-        ));
+        ready.append(ReadAction.compute(() -> convertReference(root, href.toString())));
         ready.append("\"");
       }
 
@@ -256,12 +249,16 @@ public abstract class AbstractExternalFilter {
       StringBuilder classDetails = new StringBuilder();
       while (((read = buf.readLine()) != null) && !StringUtil.toUpperCase(read).equals(HR) && !StringUtil.toUpperCase(read).equals(P)) {
         if (reachTheEnd(data, read, classDetails, endSection)) return;
-        appendLine(classDetails, read);
+        if (!skipBlockList(read)) {
+          appendLine(classDetails, read);
+        }
       }
 
-      while (((read = buf.readLine()) != null) && !StringUtil.toUpperCase(read).equals(P) && !StringUtil.toUpperCase(read).equals(HR)) {
+      while (((read = buf.readLine()) != null) && !StringUtil.toUpperCase(read).equals(HR) && !StringUtil.toUpperCase(read).equals(P)) {
         if (reachTheEnd(data, read, classDetails, endSection)) return;
-        appendLine(data, read.replaceAll(DT, DT + BR));
+        if (!skipBlockList(read)) {
+          appendLine(data, read.replaceAll(DT, DT + BR));
+        }
       }
 
       data.append(classDetails);
@@ -274,14 +271,18 @@ public abstract class AbstractExternalFilter {
     while (((read = buf.readLine()) != null) &&
            !endSection.matcher(read).find() &&
            StringUtil.indexOfIgnoreCase(read, GREATEST_END_SECTION, 0) == -1) {
-      if (!StringUtil.toUpperCase(read).contains(HR)
-          && !StringUtil.containsIgnoreCase(read, "<ul class=\"blockList\">")
-          && !StringUtil.containsIgnoreCase(read, "<li class=\"blockList\">")) {
+      if (!skipBlockList(read)) {
         appendLine(data, read);
       }
     }
 
     data.append(HTML_CLOSE);
+  }
+
+  private static boolean skipBlockList(String read) {
+    return StringUtil.toUpperCase(read).contains(HR) ||
+           StringUtil.containsIgnoreCase(read, "<ul class=\"blockList\">") ||
+           StringUtil.containsIgnoreCase(read, "<li class=\"blockList\">");
   }
 
   @NotNull
@@ -360,14 +361,14 @@ public abstract class AbstractExternalFilter {
         else {
           URL parsedUrl = BrowserUtil.getURL(url);
           if (parsedUrl != null) {
+            // gzip is disabled because in any case compressed JAR is downloaded
             HttpRequests.request(parsedUrl.toString()).gzip(false).connect(new HttpRequests.RequestProcessor<Void>() {
               @Override
               public Void process(@NotNull HttpRequests.Request request) throws IOException {
                 byte[] bytes = request.readBytes(null);
                 String contentEncoding = null;
                 ByteArrayInputStream stream = new ByteArrayInputStream(bytes);
-                BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-                try {
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream))) {
                   for (String htmlLine = reader.readLine(); htmlLine != null; htmlLine = reader.readLine()) {
                     contentEncoding = parseContentEncoding(htmlLine);
                     if (contentEncoding != null) {
@@ -376,7 +377,6 @@ public abstract class AbstractExternalFilter {
                   }
                 }
                 finally {
-                  reader.close();
                   stream.reset();
                 }
 
@@ -405,7 +405,7 @@ public abstract class AbstractExternalFilter {
   }
 
   private static class MyReader extends InputStreamReader {
-    private ByteArrayInputStream myInputStream;
+    private final ByteArrayInputStream myInputStream;
 
     public MyReader(ByteArrayInputStream in) {
       super(in);

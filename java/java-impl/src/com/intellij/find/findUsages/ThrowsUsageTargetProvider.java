@@ -27,14 +27,13 @@ import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiThrowStatement;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageTargetProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ThrowsUsageTargetProvider implements UsageTargetProvider {
   @Override
   @Nullable
-  public UsageTarget[] getTargets(Editor editor, final PsiFile file) {
-    if (editor == null || file == null) return null;
-
+  public UsageTarget[] getTargets(@NotNull Editor editor, @NotNull final PsiFile file) {
     PsiElement element = file.findElementAt(TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset()));
     if (element == null) return null;
 
@@ -51,7 +50,7 @@ public class ThrowsUsageTargetProvider implements UsageTargetProvider {
   }
 
   @Override
-  public UsageTarget[] getTargets(PsiElement psiElement) {
+  public UsageTarget[] getTargets(@NotNull PsiElement psiElement) {
     return null;
   }
 }

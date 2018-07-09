@@ -16,7 +16,7 @@
 package com.intellij.lang.ant.config.impl.configuration;
 
 import com.intellij.util.config.AbstractProperty;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
 

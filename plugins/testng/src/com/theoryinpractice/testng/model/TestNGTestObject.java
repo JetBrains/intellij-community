@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.theoryinpractice.testng.model;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -36,7 +38,8 @@ public abstract class TestNGTestObject {
     myConfig = config;
   }
 
-  public static TestNGTestObject fromConfig(TestNGConfiguration config) {
+  @NotNull
+  public static TestNGTestObject fromConfig(@NotNull TestNGConfiguration config) {
     final String testObject = config.getPersistantData().TEST_OBJECT;
     if (testObject.equals(TestType.PACKAGE.getType())) {
       return new TestNGTestPackage(config);
@@ -175,7 +178,7 @@ public abstract class TestNGTestObject {
           }
         }));
       }
-      psiClasses = containingClasses.toArray(new PsiClass[containingClasses.size()]);
+      psiClasses = containingClasses.toArray(PsiClass.EMPTY_ARRAY);
     } else {
       psiClasses = classes;
     }
@@ -283,7 +286,7 @@ public abstract class TestNGTestObject {
     }
 
     @Override
-    public void fillTestObjects(Map<PsiClass, Map<PsiMethod, List<String>>> classes) throws CantRunException {}
+    public void fillTestObjects(Map<PsiClass, Map<PsiMethod, List<String>>> classes) {}
 
     @Override
     public String getGeneratedName() {
@@ -296,6 +299,6 @@ public abstract class TestNGTestObject {
     }
 
     @Override
-    public void checkConfiguration() throws RuntimeConfigurationException {}
+    public void checkConfiguration() {}
   }
 }

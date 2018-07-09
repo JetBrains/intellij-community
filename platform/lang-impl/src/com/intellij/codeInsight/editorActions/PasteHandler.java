@@ -43,7 +43,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Producer;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

@@ -36,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 public class PyChangeSignatureHandler implements ChangeSignatureHandler {
   @Nullable
   @Override
-  public PsiElement findTargetMember(PsiFile file, Editor editor) {
+  public PsiElement findTargetMember(@NotNull PsiFile file, @NotNull Editor editor) {
     final PsiElement element = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     return findTargetMember(element);
   }

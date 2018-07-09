@@ -45,7 +45,7 @@ public class PythonMockSdk {
   private PythonMockSdk() {
   }
 
-  public static Sdk findOrCreate(final String version, @NotNull final VirtualFile ... additionalRoots) {
+  public static Sdk findOrCreate(final String version, @NotNull final VirtualFile... additionalRoots) {
     final List<Sdk> sdkList = ProjectJdkTable.getInstance().getSdksOfType(PythonSdkType.getInstance());
     for (Sdk sdk : sdkList) {
       if (sdk.getName().equals(MOCK_SDK_NAME + " " + version)) {
@@ -54,7 +54,7 @@ public class PythonMockSdk {
     }
     final String mock_path = PythonTestUtil.getTestDataPath() + "/MockSdk" + version + "/";
 
-    String sdkHome = new File(mock_path, "bin/python"+version).getPath();
+    String sdkHome = new File(mock_path, "bin/python" + version).getPath();
     SdkType sdkType = PythonSdkType.getInstance();
 
     MultiMap<OrderRootType, VirtualFile> roots = MultiMap.create();
@@ -68,12 +68,14 @@ public class PythonMockSdk {
 
     final LanguageLevel level = LanguageLevel.fromPythonVersion(version);
     final VirtualFile typeShedDir = PyTypeShed.INSTANCE.getDirectory();
+    assert typeShedDir != null;
     PyTypeShed.INSTANCE.findRootsForLanguageLevel(level).forEach(path -> {
       final VirtualFile file = typeShedDir.findFileByRelativePath(path);
       if (file != null) {
         roots.putValue(OrderRootType.CLASSES, file);
       }
     });
+
 
     String mock_stubs_path = mock_path + PythonSdkType.SKELETON_DIR_NAME;
     roots.putValue(PythonSdkType.BUILTIN_ROOT_TYPE, LocalFileSystem.getInstance().refreshAndFindFileByPath(mock_stubs_path));

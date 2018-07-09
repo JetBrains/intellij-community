@@ -1,15 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight
 
 import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.codeInsight.javadoc.DocumentationDelegateProvider
-import com.intellij.codeInsight.lookup.Lookup
-import com.intellij.codeInsight.lookup.LookupElementPresentation
-import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.navigation.CtrlMouseHandler
-import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.java.JavaDocumentationProvider
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiExpressionList
@@ -17,22 +11,12 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.util.ui.UIUtil
 
 /**
  * @author peter
  */
 class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
-  private static final String STYLE_BLOCK =
-    "    <style type=\"text/css\">" +
-    "        #error {" +
-    "            background-color: #eeeeee;" +
-    "            margin-bottom: 10px;" +
-    "        }" +
-    "        p {" +
-    "            margin: 5px 0;" +
-    "        }" +
-    "    </style>"
-
   void testConstructorDoc() {
     configure """\
       class Foo { Foo() {} Foo(int param) {} }
@@ -89,44 +73,33 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     def doc = new JavaDocumentationProvider().generateDoc(exprList, null)
 
     def expected =
-      "<html><head>" + STYLE_BLOCK + "</head><body>" +
-      "<small><b><a href=\"psi_element://Foo\"><code>Foo</code></a></b></small>" +
-      "<PRE>void&nbsp;<b>doFoo</b>()</PRE>" +
-      "</body></html>"
+      "<div class='definition'><pre><a href=\"psi_element://Foo\"><code>Foo</code></a><br>void&nbsp;<b>doFoo</b>()</pre></div><table class='sections'><p></table>"
 
     assert doc == expected
   }
 
   void testGenericMethod() {
-    configure """\
+    doTestCtrlHoverDoc("""\
       class Bar<T> { java.util.List<T> foo(T param); }
 
       class Foo {{
         new Bar<String>().f<caret>oo();
-      }}""".stripIndent()
-
-    def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
-    def doc = CtrlMouseHandler.getInfo(ref.resolve(), ref.element)
-
-    assert doc == "Bar\n List&lt;String&gt; foo(String param)"
+      }}""",
+    "Bar<br/> <a href=\"psi_element://java.util.List\">List</a>&lt;String&gt; foo(String param)")
   }
 
   void testGenericField() {
-    configure """\
+    doTestCtrlHoverDoc("""\
       class Bar<T> { T field; }
 
       class Foo {{
         new Bar<Integer>().fi<caret>eld
-      }}""".stripIndent()
-
-    def ref = myFixture.file.findReferenceAt(myFixture.editor.caretModel.offset)
-    def doc = CtrlMouseHandler.getInfo(ref.resolve(), ref.element)
-
-    assert doc == "Bar\n Integer field"
+      }}""",
+      "Bar<br/> Integer field")
   }
 
   void testMethodInAnonymousClass() {
-    configure """\
+    doTestCtrlHoverDoc("""\
       class Foo {{
         new Runnable() {
           @Override
@@ -136,11 +109,23 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
 
           private void m() {}
         }.run();
-      }}""".stripIndent()
+      }}""",
+      "private void m()")
+  }
 
-    def doc = CtrlMouseHandler.getInfo(editor, CtrlMouseHandler.BrowseMode.Declaration)
-
-    assert doc == "private void m()"
+  void testInnerClass() {
+    doTestCtrlHoverDoc("""\
+      class C {
+        Outer.Inner field;
+        
+        void m() {
+          <caret>field.hashCode();
+        }
+      }
+      class Outer {
+        class Inner {}
+      }""",
+      "<a href=\"psi_element://C\">C</a><br/> <a href=\"psi_element://Outer.Inner\">Outer.Inner</a> field")
   }
 
   void testAsterisksFiltering() {
@@ -158,12 +143,9 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     def doc = new JavaDocumentationProvider().generateDoc(method, null)
 
     def expected =
-      "<html><head>" + STYLE_BLOCK + "</head><body>" +
-      "<small><b><a href=\"psi_element://C\"><code>C</code></a></b></small>" +
-      "<PRE>public&nbsp;void&nbsp;<b>m</b>()</PRE>\n     " +
-      "For example, <a href=\"psi_element://java.lang.String#String(byte[], int, int, java.lang.String)\">" +
-      "<code>String.String(byte[], int, int, String)</code>" +
-      "</a>.</body></html>"
+      "<div class='definition'><pre><a href=\"psi_element://C\"><code>C</code></a><br>public&nbsp;void&nbsp;<b>m</b>()</pre></div><div class='content'>\n" +
+      "     For example, <a href=\"psi_element://java.lang.String#String(byte[], int, int, java.lang.String)\"><code>String.String(byte[], int, int, String)</code></a>.\n" +
+      "   <p></div><table class='sections'><p></table>"
 
     assert doc == expected
   }
@@ -179,11 +161,7 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
     def doc = new JavaDocumentationProvider().generateDoc(method, null)
 
     def expected =
-      "<html><head>" + STYLE_BLOCK + "</head><body>" +
-      "<small><b><a href=\"psi_element://C\"><code>C</code></a></b></small>" +
-      "<PRE>public&nbsp;void&nbsp;<b>m</b>()</PRE>" +
-      " Visit the \"<code>/login</code>\" URL." +
-      "</body></html>"
+      "<div class='definition'><pre><a href=\"psi_element://C\"><code>C</code></a><br>public&nbsp;void&nbsp;<b>m</b>()</pre></div><div class='content'> Visit the \"<code>/login</code>\" URL. <p></div><table class='sections'><p></table>"
 
     assert doc == expected
   }
@@ -211,14 +189,9 @@ class Bar {
     def method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod.class)
     def doc = new JavaDocumentationProvider().generateDoc(method, null)
 
-    String expected = "<html><head>$STYLE_BLOCK</head><body>" +
-                      "<small><b><a href=\"psi_element://Bar\"><code>Bar</code></a></b></small>" +
-                      "<PRE>void&nbsp;<b>foo</b>()</PRE>" +
-                      "<DD><DL><DT>" +
-                      "<b>Description copied from class:</b>&nbsp;<a href=\"psi_element://Foo\"><code>Foo</code></a><br>" +
-                      "\n    Some doc\n  " +
-                      "</DD></DL></DD>" +
-                      "</body></html>"
+    String expected = "<div class='definition'><pre><a href=\"psi_element://Bar\"><code>Bar</code></a><br>void&nbsp;<b>foo</b>()</pre></div><table class='sections'><p><tr><td valign='top' class='section'><p>Description copied from class:</td><td valign='top'><p><a href=\"psi_element://Foo\"><code>Foo</code></a><br>\n" +
+                      "    Some doc\n" +
+                      "  </td></table>"
 
     assert doc == expected
   }
@@ -243,21 +216,13 @@ class Bar {
     assert actual == expected
   }
 
-  void "test overload selected by completion"() {
-    myFixture.configureByText(JavaFileType.INSTANCE, "class C { void m() { System.getPro<caret> } }")
-    def elements = myFixture.completeBasic()
-    ((LookupImpl)myFixture.lookup).finishLookup(Lookup.NORMAL_SELECT_CHAR, 
-                                                elements.find { 
-                                                  LookupElementPresentation p = new LookupElementPresentation();
-                                                  it.renderElement(p)
-                                                  it.lookupString == "getProperty" && p.tailText == "(String key)"})
-    myFixture.checkResult("class C { void m() { System.getProperty(<caret>) } }")
-
-    def actual = JavaExternalDocumentationTest.getDocumentationText(editor)
-    assert actual.contains("<code>null</code> if there is no property with that key")
-  }
-
   private void configure(String text) {
     myFixture.configureByText 'a.java', text
+  }
+
+  void doTestCtrlHoverDoc(String inputFile, String expectedDoc) {
+    configure inputFile.stripIndent()
+    String doc = CtrlMouseHandler.getInfo(myFixture.editor, CtrlMouseHandler.BrowseMode.Declaration)
+    assert UIUtil.getHtmlBody(doc) == expectedDoc
   }
 }

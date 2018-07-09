@@ -51,8 +51,8 @@ public class ScreenReader {
    * 2) in the prop. file: <user home>/.accessibility.properties
    * 3) in the prop. file: <jre>/lib/accessibility.properties
    *
-   * @see {@link #ACCESS_BRIDGE}
-   * @see {@link #ATK_WRAPPER}
+   * @see #ACCESS_BRIDGE
+   * @see #ATK_WRAPPER
    * @param a11yClassName the full class name representing the a11y technology
    * @return true if enabled, otherwise false
    */

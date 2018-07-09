@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -187,20 +173,10 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   private JTextField createColorField(boolean hex) {
-    final NumberDocument doc = new NumberDocument(hex);
-    int lafFix = UIUtil.isUnderWindowsLookAndFeel() || UIUtil.isUnderDarcula() ? 1 : 0;
-    UIManager.LookAndFeelInfo info = LafManager.getInstance().getCurrentLookAndFeel();
-    if (info != null && (info.getName().startsWith("IDEA") || info.getName().equals("Windows Classic")))
-      lafFix = 1;
-    final JTextField field;
-    if (SystemInfo.isMac && UIUtil.isUnderIntelliJLaF()) {
-      field = new JTextField("");
-      field.setDocument(doc);
-      field.setPreferredSize(new Dimension(hex ? 60 : 40, 26));
-    } else {
-      field = new JTextField(doc, "", (hex ? 5 : 2) + lafFix);
-      field.setSize(50, -1);
-    }
+    NumberDocument doc = new NumberDocument(hex);
+    JTextField field = new JTextField("");
+    field.setDocument(doc);
+
     doc.setSource(field);
     field.getDocument().addDocumentListener(this);
     field.addFocusListener(new FocusAdapter() {
@@ -438,8 +414,8 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   private static class ColorWheelPanel extends JPanel {
-    private ColorWheel myColorWheel;
-    private SlideComponent myBrightnessComponent;
+    private final ColorWheel myColorWheel;
+    private final SlideComponent myBrightnessComponent;
     private SlideComponent myOpacityComponent = null;
 
     private ColorWheelPanel(ColorListener listener, boolean enableOpacity, boolean opacityInPercent) {
@@ -966,9 +942,9 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   }
 
   public static class ColorWheelImageProducer extends MemoryImageSource {
-    private int[] myPixels;
-    private int myWidth;
-    private int myHeight;
+    private final int[] myPixels;
+    private final int myWidth;
+    private final int myHeight;
     private float myBrightness = 1f;
 
     private float[] myHues;
@@ -1080,11 +1056,9 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       // it seems like it's the lowest value for opacity for mouse events to be processed correctly
       WindowManager.getInstance().setAlphaModeRatio(picker, SystemInfo.isMac ? 0.95f : 0.99f);
 
-      if (SystemInfo.isJavaVersionAtLeast("1.7")) {
-        Area area = new Area(new Rectangle(0, 0, DIALOG_SIZE, DIALOG_SIZE));
-        area.subtract(new Area(new Rectangle(SIZE / 2 - 1, SIZE / 2 - 1, 3, 3)));
-        picker.setShape(area);
-      }
+      Area area = new Area(new Rectangle(0, 0, DIALOG_SIZE, DIALOG_SIZE));
+      area.subtract(new Area(new Rectangle(SIZE / 2 - 1, SIZE / 2 - 1, 3, 3)));
+      picker.setShape(area);
       return picker;
     }
 

@@ -16,6 +16,7 @@
 package org.jetbrains.jps.incremental.storage;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
@@ -26,6 +27,7 @@ import org.jetbrains.jps.incremental.TargetTypeRegistry;
 import org.jetbrains.jps.model.JpsModel;
 
 import java.io.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -36,9 +38,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class BuildTargetsState {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildTargetsState");
   private final BuildDataPaths myDataPaths;
-  private AtomicInteger myMaxTargetId = new AtomicInteger(0);
-  private ConcurrentMap<BuildTargetType<?>, BuildTargetTypeState> myTypeStates = new ConcurrentHashMap<>(16, 0.75f, 1);
-  private JpsModel myModel;
+  private final AtomicInteger myMaxTargetId = new AtomicInteger(0);
+  private final ConcurrentMap<BuildTargetType<?>, BuildTargetTypeState> myTypeStates = new ConcurrentHashMap<>(16, 0.75f, 1);
+  private final JpsModel myModel;
   private final BuildRootIndexImpl myBuildRootIndex;
 
   public BuildTargetsState(BuildDataPaths dataPaths, JpsModel model, BuildRootIndexImpl buildRootIndex) {
@@ -46,14 +48,8 @@ public class BuildTargetsState {
     myModel = model;
     myBuildRootIndex = buildRootIndex;
     File targetTypesFile = getTargetTypesFile();
-    try {
-      DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(targetTypesFile)));
-      try {
-        myMaxTargetId.set(input.readInt());
-      }
-      finally {
-        input.close();
-      }
+    try (DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(targetTypesFile)))) {
+      myMaxTargetId.set(input.readInt());
     }
     catch (IOException e) {
       LOG.debug("Cannot load " + targetTypesFile + ":" + e.getMessage(), e);
@@ -94,6 +90,14 @@ public class BuildTargetsState {
 
   public BuildTargetConfiguration getTargetConfiguration(@NotNull BuildTarget<?> target) {
     return getTypeState(target.getTargetType()).getConfiguration(target);
+  }
+
+  public List<Pair<String, Integer>> getStaleTargetIds(@NotNull BuildTargetType<?> type) {
+    return getTypeState(type).getStaleTargetIds();
+  }
+
+  public void cleanStaleTarget(BuildTargetType<?> type, String targetId) {
+    getTypeState(type).removeStaleTarget(targetId);
   }
 
   private BuildTargetTypeState getTypeState(BuildTargetType<?> type) {

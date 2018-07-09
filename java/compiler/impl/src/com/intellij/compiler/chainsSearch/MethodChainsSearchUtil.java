@@ -44,9 +44,7 @@ public final class MethodChainsSearchUtil {
           }
         }
         return true;
-      })
-      .sorted(Comparator.comparing(MethodChainsSearchUtil::getNonPrimitiveParameterCount))
-      .findFirst().orElse(null);
+      }).min(Comparator.comparing(MethodChainsSearchUtil::getNonPrimitiveParameterCount)).orElse(null);
   }
 
   private static int getNonPrimitiveParameterCount(PsiMethod method) {

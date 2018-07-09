@@ -35,6 +35,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.TextAccessor;
+import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ResourceUtil;
@@ -209,21 +210,20 @@ public class TipUIUtil {
               BufferedImage image = trinity.second;
               int w = image.getWidth();
               int h = image.getHeight();
-              if (UIUtil.isJreHiDPI(component)) {
-                // compensate JRE scale
-                float sysScale = JBUI.sysScale(component);
-                w /= sysScale;
-                h /= sysScale;
+              if (hidpi) {
+                // the expected (user space) size is @2x / 2 in either JRE-HiDPI or IDE-HiDPI mode
+                float k = 2f;
+                if (UIUtil.isJreHiDPI(component)) {
+                  // in JRE-HiDPI mode we want the image to be drawn in its original size w/h, for better quality
+                  k = JBUI.sysScale(component);
+                }
+                w /= k;
+                h /= k;
               }
-              else {
-                // compensate image scale
-                float imgScale = hidpi ? 2f : 1f;
-                w /= imgScale;
-                h /= imgScale;
-              }
-              // fit the user scale
-              w = (int)(JBUI.scale((float)w));
-              h = (int)(JBUI.scale((float)h));
+              // round the user scale for better quality
+              int userScale = RoundingMode.ROUND_FLOOR_BIAS.round(JBUI.scale(1f));
+              w = userScale * w;
+              h = userScale * h;
               if (fallbackUpscale) {
                 w *= 2;
                 h *= 2;
@@ -255,15 +255,11 @@ public class TipUIUtil {
   private static byte[] readBytes(@NotNull URL url) throws IOException{
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     byte[] buffer = new byte[16384];
-    InputStream stream = null;
-    try {
-      stream = url.openStream();
-      for (int len = stream.read(buffer); len >0 ; len = stream.read(buffer)) {
+    try (InputStream stream = url.openStream()) {
+      for (int len = stream.read(buffer); len > 0; len = stream.read(buffer)) {
         baos.write(buffer, 0, len);
       }
       return baos.toByteArray();
-    } finally {
-      if (stream != null) stream.close();
     }
   }
 
@@ -360,7 +356,7 @@ public class TipUIUtil {
   }
 
   private static class JFXBrowser extends JPanel implements Browser {
-    private JFXPanel myPanel;
+    private final JFXPanel myPanel;
     private WebView myWebView;
     private String myRecentText = "";
 

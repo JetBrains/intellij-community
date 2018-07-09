@@ -54,6 +54,11 @@ public abstract class CompileScope {
   public abstract boolean isWholeTargetAffected(@NotNull BuildTarget<?> target);
 
   /**
+   * @return {@code true} if all files from all targets of type {@code type} are included into the scope
+   */
+  public abstract boolean isAllTargetsOfTypeAffected(@NotNull BuildTargetType<?> type);
+
+  /**
    * @return {@code true} if all files from {@code target} should be recompiled even if they weren't changed since last compilation
    */
   public abstract boolean isBuildForced(@NotNull BuildTarget<?> target);

@@ -37,7 +37,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 16, 2008
  */
 public class IdIndex extends FileBasedIndexExtension<IdIndexEntry, Integer> {
   @NonNls public static final ID<IdIndexEntry, Integer> NAME = ID.create("IdIndex");

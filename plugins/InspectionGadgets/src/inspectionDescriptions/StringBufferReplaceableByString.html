@@ -1,10 +1,9 @@
 <html>
 <body>
-Reports any usages of <b>java.lang.StringBuffer</b> and <b>java.lang.StringBuilder</b>
+Reports any usages of <b>StringBuffer</b>, <b>StringBuilder</b> or <b>StringJoiner</b>
 which can be replaced with a single <b>java.lang.String</b> concatenation. Using a <b>String</b> concatenation
 makes the code shorter and simpler.
-This inspection only reports when the resulting concatenation is at least as efficient or more efficient than the original
-<b>StringBuffer</b> or <b>StringBuilder</b> code.
+This inspection only reports when the resulting concatenation is at least as efficient or more efficient than the original code.
 <!-- tooltip end -->
 <p>
 

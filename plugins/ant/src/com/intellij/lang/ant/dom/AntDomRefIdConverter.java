@@ -32,7 +32,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Apr 16, 2010
  */
 public class AntDomRefIdConverter extends Converter<AntDomElement> implements CustomReferenceConverter<AntDomElement>{
 

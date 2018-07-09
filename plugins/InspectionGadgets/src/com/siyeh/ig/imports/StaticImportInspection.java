@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,28 +15,38 @@
  */
 package com.siyeh.ig.imports;
 
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiImportStaticStatement;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.IgnoreClassFix;
 import com.siyeh.ig.fixes.SuppressForTestsScopeFix;
 import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 public class StaticImportInspection extends StaticImportInspectionBase {
 
   @NotNull
   @Override
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
-    final PsiElement context = (PsiElement)infos[0];
-    final SuppressForTestsScopeFix fix = SuppressForTestsScopeFix.build(this, context);
-    if (fix == null) {
-      return new InspectionGadgetsFix[] {buildFix(infos)};
+    final List<InspectionGadgetsFix> result = new SmartList<>();
+    final PsiImportStaticStatement importStaticStatement = (PsiImportStaticStatement)infos[0];
+    final SuppressForTestsScopeFix fix = SuppressForTestsScopeFix.build(this, importStaticStatement);
+    ContainerUtil.addIfNotNull(result, fix);
+    final PsiClass aClass = importStaticStatement.resolveTargetClass();
+    if (aClass != null) {
+      final String name = aClass.getQualifiedName();
+      result.add(new IgnoreClassFix(name, allowedClasses, "Allow static imports for class '" + name + "'"));
     }
-    return new InspectionGadgetsFix[] {buildFix(infos), fix};
+    result.add(buildFix(infos));
+    return result.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }
 
   @Override

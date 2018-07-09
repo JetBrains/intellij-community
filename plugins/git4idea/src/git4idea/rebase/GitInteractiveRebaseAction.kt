@@ -41,5 +41,5 @@ class GitInteractiveRebaseAction : GitCommitEditingAction() {
     }.queue()
   }
 
-  override fun getFailureTitle() = "Couldn't Start Rebase"
+  override fun getFailureTitle(): String = "Couldn't Start Rebase"
 }

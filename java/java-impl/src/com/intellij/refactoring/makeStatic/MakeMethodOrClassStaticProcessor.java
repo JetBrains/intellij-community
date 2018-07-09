@@ -119,7 +119,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
         result.add(usage);
       }
     }
-    return result.toArray(new UsageInfo[result.size()]);
+    return result.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   private static UsageInfo[] filterInternalUsages(UsageInfo[] usages) {
@@ -129,7 +129,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
         result.add(usage);
       }
     }
-    return result.toArray(new UsageInfo[result.size()]);
+    return result.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   protected MultiMap<PsiElement,String> getConflictDescriptions(UsageInfo[] usages) {
@@ -232,7 +232,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
       }
     }
 
-    return result.toArray(new UsageInfo[result.size()]);
+    return result.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   protected abstract void findExternalUsages(ArrayList<UsageInfo> result);
@@ -296,6 +296,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
     return false;
   }
 
+  @NotNull
   protected String getCommandName() {
     return RefactoringBundle.message("make.static.command", DescriptiveNameUtil.getDescriptiveName(myMember));
   }
@@ -327,7 +328,7 @@ public abstract class MakeMethodOrClassStaticProcessor<T extends PsiTypeParamete
       changeSelf(factory, usages);
     }
     catch (IncorrectOperationException ex) {
-      LOG.assertTrue(false);
+      LOG.error(ex);
     }
   }
 

@@ -55,6 +55,7 @@ public class VirtualFilePointerTracker {
 
   private synchronized void storePointers() {
     if (isTracking) {
+      isTracking = false;
       throw new IllegalStateException("Previous test did not call assertPointersAreDisposed() - see 'Caused by:' for its stacktrace", trace);
     }
     trace = new Throwable();

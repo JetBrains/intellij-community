@@ -25,7 +25,6 @@ import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 2/15/13
  */
 public class MavenTemplateFileProcessorTest extends LightPlatformCodeInsightFixtureTestCase {
 

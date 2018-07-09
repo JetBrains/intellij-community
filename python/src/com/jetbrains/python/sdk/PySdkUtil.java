@@ -35,7 +35,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.jetbrains.python.run.CommandLinePatcher;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NonNls;
@@ -52,8 +52,6 @@ import java.util.Map;
  * Needs not to be instantiated and only holds static methods.
  *
  * @author dcheryasov
- *         Date: Apr 24, 2008
- *         Time: 1:19:47 PM
  */
 public class PySdkUtil {
   protected static final Logger LOG = Logger.getInstance("#com.jetbrains.python.sdk.SdkVersionUtil");

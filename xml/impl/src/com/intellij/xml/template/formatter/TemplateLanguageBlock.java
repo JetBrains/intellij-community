@@ -38,7 +38,7 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
   protected final ASTNode myNode;
   private final CodeStyleSettings mySettings;
   private final AbstractXmlTemplateFormattingModelBuilder myBuilder;
-  private XmlFormattingPolicy myXmlFormattingPolicy;
+  private final XmlFormattingPolicy myXmlFormattingPolicy;
   private Indent myIndent;
   private BlockWithParent myParent;
   private boolean myContainsErrorElements = false;
@@ -92,6 +92,9 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
     List<Block> result = new ArrayList<>();
     ASTNode child = myNode.getFirstChildNode();
     while (child != null) {
+      if (containsFatalError(child.getPsi()) && markupBlocks.size() > 0) {
+        throw new FragmentedTemplateException();
+      }
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
         if (!myBuilder.isMarkupLanguageElement(child.getPsi())) {
           addBlocksForNonMarkupChild(result, child);
@@ -118,6 +121,17 @@ public abstract class TemplateLanguageBlock extends AbstractBlock implements Blo
       }
     }
     return result;
+  }
+
+  /**
+   * Checks that the given element contains fatal syntax errors which mean that the whole fragment is damaged and no reliable formatting
+   * is possible, {@code false} by default but can be overridden in subclasses for specific logic/heuristics.
+   *
+   * @param element The element to check.
+   * @return True if the fragment can't be reliably processed.
+   */
+  public boolean containsFatalError(@NotNull PsiElement element) {
+    return false;
   }
 
   @Override

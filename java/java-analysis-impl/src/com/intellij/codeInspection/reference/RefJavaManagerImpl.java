@@ -29,13 +29,14 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
+import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 
 /**
  * @author anna
- * Date: 20-Dec-2007
  */
 public class RefJavaManagerImpl extends RefJavaManager {
   private static final Condition<PsiElement> PROBLEM_ELEMENT_CONDITION = Conditions
@@ -62,8 +63,8 @@ public class RefJavaManagerImpl extends RefJavaManager {
     myAppPremainPattern = factory.createMethodFromText("void premain(String[] args, java.lang.instrument.Instrumentation i);", null);
     myAppAgentmainPattern = factory.createMethodFromText("void agentmain(String[] args, java.lang.instrument.Instrumentation i);", null);
 
-    myApplet = JavaPsiFacade.getInstance(psiManager.getProject()).findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
-    myServlet = JavaPsiFacade.getInstance(psiManager.getProject()).findClass("javax.servlet.Servlet", GlobalSearchScope.allScope(project));
+    myApplet = JavaPsiFacade.getInstance(project).findClass("java.applet.Applet", GlobalSearchScope.allScope(project));
+    myServlet = JavaPsiFacade.getInstance(project).findClass("javax.servlet.Servlet", GlobalSearchScope.allScope(project));
   }
 
   @Override
@@ -195,8 +196,8 @@ public class RefJavaManagerImpl extends RefJavaManager {
     LOG.assertTrue(myRefManager.isValidPointForReference(), "References may become invalid after process is finished");
     
     return myRefManager.getFromRefTableOrCache(param, () -> {
-      RefParameter ref = new RefParameterImpl(param, index, myRefManager);
-      ((RefParameterImpl)ref).initialize();
+      RefParameterImpl ref = new RefParameterImpl(param, index, myRefManager);
+      ref.initialize();
       return ref;
     });
   }
@@ -241,7 +242,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   @Override
   @Nullable
-  public RefElement createRefElement(final PsiElement elem) {
+  public RefElement createRefElement(@NotNull final PsiElement elem) {
     if (elem instanceof PsiClass) {
       return new RefClassImpl((PsiClass)elem, myRefManager);
     }
@@ -303,7 +304,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   @Override
   @Nullable
-  public String getType(final RefEntity ref) {
+  public String getType(@NotNull final RefEntity ref) {
     if (ref instanceof RefImplicitConstructor) {
       return IMPLICIT_CONSTRUCTOR;
     }
@@ -338,7 +339,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  public void visitElement(final PsiElement element) {
+  public void visitElement(@NotNull final PsiElement element) {
     PsiElementVisitor projectIterator = myProjectIterator;
     if (projectIterator == null) {
       myProjectIterator = projectIterator = new MyJavaElementVisitor();
@@ -348,13 +349,13 @@ public class RefJavaManagerImpl extends RefJavaManager {
 
   @Override
   @Nullable
-  public String getGroupName(final RefEntity entity) {
+  public String getGroupName(@NotNull final RefEntity entity) {
     if (entity instanceof RefFile && !(entity instanceof RefJavaFileImpl)) return null;
     return RefJavaUtil.getInstance().getPackageName(entity);
   }
 
   @Override
-  public boolean belongsToScope(final PsiElement psiElement) {
+  public boolean belongsToScope(@NotNull final PsiElement psiElement) {
     return !(psiElement instanceof PsiTypeParameter);
   }
 
@@ -369,11 +370,26 @@ public class RefJavaManagerImpl extends RefJavaManager {
   }
 
   @Override
-  public void onEntityInitialized(RefElement refElement, PsiElement psiElement) {
+  public void onEntityInitialized(@NotNull RefElement refElement, @NotNull PsiElement psiElement) {
     if (myRefManager.isOfflineView() || !myRefManager.isDeclarationsFound()) return;
     if (isEntryPoint(refElement)) {
       getEntryPointsManager().addEntryPoint(refElement, false);
     }
+  }
+
+  @Override
+  public boolean shouldProcessExternalFile(@NotNull PsiFile file) {
+    return file instanceof PsiClassOwner;
+  }
+
+  @NotNull
+  @Override
+  public Stream<? extends PsiElement> extractExternalFileImplicitReferences(@NotNull PsiFile psiFile) {
+    return Arrays
+      .stream(((PsiClassOwner)psiFile).getClasses())
+      .flatMap(c -> Arrays.stream(c.getSuperTypes()))
+      .map(PsiClassType::resolve)
+      .filter(Objects::nonNull);
   }
 
   @Override
@@ -384,11 +400,6 @@ public class RefJavaManagerImpl extends RefJavaManager {
       myEntryPointsManager = entryPointsManager = new EntryPointsManagerBase(project) {
         @Override
         public void configureAnnotations() {
-        }
-
-        @Override
-        public JButton createConfigureAnnotationsBtn() {
-          return null;
         }
       };
       Disposer.register(project, entryPointsManager);

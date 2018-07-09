@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInspection.unneededThrows;
 
@@ -22,10 +10,7 @@ import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefMethodImpl;
 import com.intellij.psi.*;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public final class RedundantThrowsGraphAnnotator extends RefGraphAnnotatorEx {
   private final RefManager myRefManager;
@@ -57,23 +42,17 @@ public final class RedundantThrowsGraphAnnotator extends RefGraphAnnotatorEx {
       RefElement refResolved = myRefManager.getReference(what);
       if (refResolved instanceof RefMethodImpl) {
         PsiFunctionalExpression expression = (PsiFunctionalExpression)from;
-        PsiElement body = null;
-        PsiElement topElement = null;
+        final Collection<PsiClassType> exceptionTypes;
         if (expression instanceof PsiLambdaExpression) {
-          body = ((PsiLambdaExpression)expression).getBody();
-          topElement = expression;
+          PsiElement body = ((PsiLambdaExpression)expression).getBody();
+          exceptionTypes = body != null ? ExceptionUtil.collectUnhandledExceptions(body, expression, false) : Collections.emptyList();
         }
         else {
           final PsiElement resolve = ((PsiMethodReferenceExpression)expression).resolve();
-          if (resolve instanceof PsiMethod) {
-            body = ((PsiMethod)resolve).getBody();
-            topElement = resolve;
-          }
+          exceptionTypes = resolve instanceof PsiMethod
+                           ? Arrays.asList(((PsiMethod)resolve).getThrowsList().getReferencedTypes())
+                           : Collections.emptyList();
         }
-
-        final Collection<PsiClassType> exceptionTypes = body != null ? ExceptionUtil.collectUnhandledExceptions(body, topElement, false)
-                                                                     : Collections.emptyList();
-
 
         for (final PsiClassType exceptionType : exceptionTypes) {
           ((RefMethodImpl)refResolved).updateThrowsList(exceptionType);

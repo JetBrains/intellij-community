@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.ui.configuration.classpath;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -158,22 +157,19 @@ public abstract class ChangeLibraryLevelActionBase extends AnAction {
       return false;
     }
 
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        for (Map.Entry<String, String> entry : copiedFiles.entrySet()) {
-          String fromPath = entry.getKey();
-          String toPath = entry.getValue();
-          LocalFileSystem.getInstance().refreshAndFindFileByPath(toPath);
-          if (!myCopy) {
-            final VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(fromPath).getParentFile());
-            if (parent != null) {
-              parent.refresh(false, false);
-            }
+    WriteAction.run(() -> {
+      for (Map.Entry<String, String> entry : copiedFiles.entrySet()) {
+        String fromPath = entry.getKey();
+        String toPath = entry.getValue();
+        LocalFileSystem.getInstance().refreshAndFindFileByPath(toPath);
+        if (!myCopy) {
+          final VirtualFile parent = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(fromPath).getParentFile());
+          if (parent != null) {
+            parent.refresh(false, false);
           }
         }
       }
-    }.execute();
+    });
     return true;
   }
 

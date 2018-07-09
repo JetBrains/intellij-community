@@ -21,7 +21,7 @@ import java.awt.event.MouseEvent;
 
 public class PressureShortcut extends MouseShortcut {
 
-  private double myStage;
+  private final double myStage;
 
   public PressureShortcut(double stage) {
     super(MouseEvent.BUTTON1, 0, 1);
@@ -52,11 +52,6 @@ public class PressureShortcut extends MouseShortcut {
 
   public int hashCode() {
     return super.hashCode() + (int)myStage;
-  }
-
-  @Override
-  public boolean isKeyboard() {
-    return false;
   }
 
   @Override

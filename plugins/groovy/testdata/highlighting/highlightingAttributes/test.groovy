@@ -79,3 +79,21 @@ def <info descr="null" textAttributesKey="Groovy var">c</info> = new <info descr
 <info descr="null" textAttributesKey="Class">C</info>.<info descr="null" textAttributesKey="Static method access">staticMethod</info>()
 
 <info descr="null" textAttributesKey="Groovy var">c</info>.'method with literal name'()
+
+class <info descr="null" textAttributesKey="Class">Outer</info> {
+  def <info descr="null" textAttributesKey="Groovy method declaration">getThis</info>() {}
+  def <info descr="null" textAttributesKey="Groovy method declaration">getSuper</info>() {}
+
+  class <info descr="null" textAttributesKey="Class">Inner</info> {
+    def <info descr="null" textAttributesKey="Groovy method declaration">foo</info>() {
+      this
+      super.<info descr="null" textAttributesKey="Method call">hashCode</info>()
+      <info descr="null" textAttributesKey="Class">Outer</info>.<info descr="null" textAttributesKey="GROOVY_KEYWORD">this</info>
+      <info descr="null" textAttributesKey="Class">Outer</info>.<info descr="null" textAttributesKey="GROOVY_KEYWORD">super</info>.<info descr="null" textAttributesKey="Method call">toString</info>()
+    }
+  }
+}
+
+def <info descr="null" textAttributesKey="Groovy var">outer</info> = new <info descr="null" textAttributesKey="Class">Outer</info>()
+<info descr="null" textAttributesKey="Groovy var">outer</info>.<info descr="null" textAttributesKey="Instance property reference ID">this</info>
+<info descr="null" textAttributesKey="Groovy var">outer</info>.<info descr="null" textAttributesKey="Instance property reference ID">super</info>

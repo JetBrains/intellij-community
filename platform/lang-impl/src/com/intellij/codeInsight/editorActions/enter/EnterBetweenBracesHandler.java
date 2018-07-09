@@ -16,88 +16,29 @@
 
 package com.intellij.codeInsight.editorActions.enter;
 
-import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.editorActions.CodeDocumentationUtil;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class EnterBetweenBracesHandler extends EnterHandlerDelegateAdapter {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesHandler");
-
-  @Override
-  public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull final Ref<Integer> caretOffsetRef, @NotNull final Ref<Integer> caretAdvance,
-                                @NotNull final DataContext dataContext, final EditorActionHandler originalHandler) {
-    Document document = editor.getDocument();
-    CharSequence text = document.getCharsSequence();
-    int caretOffset = caretOffsetRef.get().intValue();
-    if (!CodeInsightSettings.getInstance().SMART_INDENT_ON_ENTER) {
-      return Result.Continue;
-    }
-
-    int prevCharOffset = CharArrayUtil.shiftBackward(text, caretOffset - 1, " \t");
-    int nextCharOffset = CharArrayUtil.shiftForward(text, caretOffset, " \t");
-    
-    if (!isValidOffset(prevCharOffset, text) || !isValidOffset(nextCharOffset, text) ||
-        !isBracePair(text.charAt(prevCharOffset), text.charAt(nextCharOffset))) {
-      return Result.Continue;
-    }
-
-    PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
-    if (file.findElementAt(prevCharOffset) == file.findElementAt(nextCharOffset)) {
-      return Result.Continue;
-    }
-
-    final int line = document.getLineNumber(caretOffset);
-    final int start = document.getLineStartOffset(line);
-    final CodeDocumentationUtil.CommentContext commentContext =
-      CodeDocumentationUtil.tryParseCommentContext(file, text, caretOffset, start);
-
-    // special case: enter inside "()" or "{}"
-    String indentInsideJavadoc = isInComment(caretOffset, file) && commentContext.docAsterisk
-                                 ? CodeDocumentationUtil.getIndentInsideJavadoc(document, caretOffset)
-                                 : null;
-
-    originalHandler.execute(editor, editor.getCaretModel().getCurrentCaret(), dataContext);
-
-    Project project = editor.getProject();
-    if (indentInsideJavadoc != null &&
-        project != null &&
-        CodeStyleManager.getInstance(project).getDocCommentSettings(file).isLeadingAsteriskEnabled()) {
-      document.insertString(editor.getCaretModel().getOffset(), "*" + indentInsideJavadoc);
-    }
-
-    PsiDocumentManager.getInstance(file.getProject()).commitDocument(document);
-    try {
-      CodeStyleManager.getInstance(file.getProject()).adjustLineIndent(file, editor.getCaretModel().getOffset());
-    }
-    catch (IncorrectOperationException e) {
-      LOG.error(e);
-    }
-    return indentInsideJavadoc == null ? Result.Continue : Result.DefaultForceIndent;
+/**
+ * @Deprecated Please, use the {@code EnterBetweenBracesDelegate} language-specific implementation instead.
+ */
+public class EnterBetweenBracesHandler extends EnterBetweenBracesFinalHandler {
+  protected boolean isApplicable(@NotNull PsiFile file,
+                                 @NotNull Editor editor,
+                                 CharSequence documentText,
+                                 int caretOffset,
+                                 EnterBetweenBracesDelegate helper) {
+    int prevCharOffset = CharArrayUtil.shiftBackward(documentText, caretOffset - 1, " \t");
+    int nextCharOffset = CharArrayUtil.shiftForward(documentText, caretOffset, " \t");
+    return isValidOffset(prevCharOffset, documentText) &&
+           isValidOffset(nextCharOffset, documentText) &&
+           isBracePair(documentText.charAt(prevCharOffset), documentText.charAt(nextCharOffset)) &&
+           !ourDefaultBetweenDelegate.bracesAreInTheSameElement(file, editor, prevCharOffset, nextCharOffset);
   }
 
-  private static boolean isInComment(int offset, PsiFile file) {
-    return PsiTreeUtil.getParentOfType(file.findElementAt(offset), PsiComment.class)!=null;
-  }
-
-  private static boolean isValidOffset(int offset, CharSequence text) {
-    return offset >= 0 && offset < text.length();
-  }
-
-  protected boolean isBracePair(char c1, char c2) {
-    return (c1 == '(' && c2 == ')') || (c1 == '{' && c2 == '}');
+  protected boolean isBracePair(char lBrace, char rBrace) {
+    return ourDefaultBetweenDelegate.isBracePair(lBrace, rBrace);
   }
 }

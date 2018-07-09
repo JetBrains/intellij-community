@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -88,9 +87,9 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
 
   private static class ReplaceObsoleteAssertsFix extends InspectionGadgetsFix {
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-      final PsiElement psiElement = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
-      if (psiElement == null) {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
+      if (call == null) {
         return;
       }
       final PsiClass newAssertClass =
@@ -101,15 +100,14 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
       if (newAssertClass == null) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)psiElement;
-      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      final PsiReferenceExpression methodExpression = call.getMethodExpression();
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       final PsiElement usedImport = qualifierExpression instanceof PsiReferenceExpression ?
                                     ((PsiReferenceExpression)qualifierExpression).advancedResolve(true).getCurrentFileResolveScope() :
                                     methodExpression.advancedResolve(true).getCurrentFileResolveScope();
-      final PsiMethod psiMethod = methodCallExpression.resolveMethod();
+      final PsiMethod psiMethod = call.resolveMethod();
 
-      final boolean isImportUnused = isImportBecomeUnused(methodCallExpression, usedImport, psiMethod);
+      final boolean isImportUnused = isImportBecomeUnused(call, usedImport, psiMethod);
 
       PsiImportStaticStatement staticStatement = null;
       if (qualifierExpression == null) {
@@ -147,6 +145,18 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
           styleManager.shortenClassReferences(methodExpression);
         }
       }
+
+      PsiMethod newTarget = call.resolveMethod();
+      if (newTarget != null && newTarget.isDeprecated()) {
+        PsiParameter[] parameters = newTarget.getParameterList().getParameters();
+        if (parameters.length > 0) {
+          PsiType paramType = parameters[parameters.length - 1].getType();
+          if (PsiType.DOUBLE.equals(paramType) || PsiType.FLOAT.equals(paramType)) {
+            call.getArgumentList().add(JavaPsiFacade.getElementFactory(project).createExpressionFromText("0.0", call));
+          }
+        }
+      }
+
       /*
           //refs can be optimized now but should we really?
           if (isImportUnused) {

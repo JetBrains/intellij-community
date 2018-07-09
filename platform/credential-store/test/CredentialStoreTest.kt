@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
 import com.intellij.openapi.util.SystemInfo
@@ -30,7 +31,7 @@ internal class CredentialStoreTest {
   }
 
   @Test
-  fun KeePass() {
+  fun keePass() {
     doTest(KeePassCredentialStore())
   }
 
@@ -88,6 +89,7 @@ internal class CredentialStoreTest {
     store.set(CredentialAttributes(serviceName, userName, isPasswordMemoryOnly = true), Credentials(userName, pass))
 
     val credentials = store.get(CredentialAttributes(serviceName, userName))
+    @Suppress("UsePropertyAccessSyntax")
     assertThat(credentials).isNotNull()
     assertThat(credentials!!.userName).isEqualTo(userName)
     assertThat(credentials.password).isNullOrEmpty()

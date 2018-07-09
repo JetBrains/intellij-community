@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ui;
 
@@ -82,7 +82,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     return myProblemLevels.getValue();
   }
 
-  private void dropProblemCountCaches() {
+  void dropProblemCountCaches() {
     InspectionTreeNode current = this;
     while (current != null) {
       current.myProblemLevels.drop();
@@ -146,6 +146,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
       child.excludeElement();
     }
+    dropProblemCountCaches();
   }
 
   public void amnestyElement() {
@@ -154,6 +155,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
       child.amnestyElement();
     }
+    dropProblemCountCaches();
   }
 
   public InspectionTreeNode insertByOrder(InspectionTreeNode child, boolean allowDuplication) {
@@ -193,6 +195,15 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     }
   }
 
+  @Override
+  public void remove(int childIndex) {
+    super.remove(childIndex);
+    dropProblemCountCaches();
+  }
+
+  protected void nodeAddedToTree() {
+  }
+
   private void propagateUpdater(InspectionTreeUpdater updater) {
     if (myUpdater != null) return;
     myUpdater = updater;
@@ -200,6 +211,7 @@ public abstract class InspectionTreeNode extends DefaultMutableTreeNode {
     while (enumeration.hasMoreElements()) {
       InspectionTreeNode child = (InspectionTreeNode)enumeration.nextElement();
       child.propagateUpdater(updater);
+      child.nodeAddedToTree();
     }
   }
 

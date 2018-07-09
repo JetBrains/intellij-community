@@ -1,21 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("FunctionName")
+
 package com.intellij.ui.components
 
 import com.intellij.BundleBase
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.Project
@@ -24,6 +13,7 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton.BrowseFolderActionListe
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.IdeModalityType
 import com.intellij.openapi.ui.TextComponentAccessor
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.openapi.vcs.changes.issueLinks.LinkMouseListenerBase
 import com.intellij.openapi.vfs.VirtualFile
@@ -43,7 +33,7 @@ import javax.swing.text.Segment
 private val HREF_PATTERN = Pattern.compile("<a(?:\\s+href\\s*=\\s*[\"']([^\"']*)[\"'])?\\s*>([^<]*)</a>")
 
 private val LINK_TEXT_ATTRIBUTES: SimpleTextAttributes
-  get() = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UI.getColor("link.foreground"))
+  get() = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.link())
 
 fun Label(text: String, style: UIUtil.ComponentStyle? = null, fontColor: UIUtil.FontColor? = null, bold: Boolean = false): JLabel {
   val finalText = BundleBase.replaceMnemonicAmpersand(text)
@@ -73,7 +63,8 @@ fun Link(text: String, style: UIUtil.ComponentStyle? = null, action: () -> Unit)
   return result
 }
 
-fun noteComponent(note: String): JComponent {
+@JvmOverloads
+fun noteComponent(note: String, linkHandler: ((url: String) -> Unit)? = null): JComponent {
   val matcher = HREF_PATTERN.matcher(note)
   if (!matcher.find()) {
     return Label(note)
@@ -85,7 +76,9 @@ fun noteComponent(note: String): JComponent {
     if (matcher.start() != prev) {
       noteComponent.append(note.substring(prev, matcher.start()))
     }
-    noteComponent.append(matcher.group(2), LINK_TEXT_ATTRIBUTES, SimpleColoredComponent.BrowserLauncherTag(matcher.group(1)))
+
+    val linkUrl = matcher.group(1)
+    noteComponent.append(matcher.group(2), LINK_TEXT_ATTRIBUTES, if (linkHandler == null) SimpleColoredComponent.BrowserLauncherTag(linkUrl) else Runnable { linkHandler(linkUrl) })
     prev = matcher.end()
   }
   while (matcher.find())
@@ -102,7 +95,7 @@ fun noteComponent(note: String): JComponent {
 @JvmOverloads
 fun htmlComponent(text: String = "", font: Font = UIUtil.getLabelFont(), background: Color? = null, foreground: Color? = null, lineWrap: Boolean = false): JEditorPane {
   val pane = SwingHelper.createHtmlViewer(lineWrap, font, background, foreground)
-  if (!text.isNullOrEmpty()) {
+  if (!text.isEmpty()) {
     pane.text = "<html><head>${UIUtil.getCssFontDeclaration(font, UIUtil.getLabelForeground(), null, null)}</head><body>$text</body></html>"
   }
   pane.border = null
@@ -111,7 +104,7 @@ fun htmlComponent(text: String = "", font: Font = UIUtil.getLabelFont(), backgro
   return pane
 }
 
-fun RadioButton(text: String) = JRadioButton(BundleBase.replaceMnemonicAmpersand(text))
+fun RadioButton(text: String): JRadioButton = JRadioButton(BundleBase.replaceMnemonicAmpersand(text))
 
 fun CheckBox(text: String, selected: Boolean = false, toolTip: String? = null): JCheckBox {
   val component = JCheckBox(BundleBase.replaceMnemonicAmpersand(text), selected)
@@ -132,6 +125,9 @@ private fun setTitledBorder(title: String, panel: JPanel) {
   border.acceptMinimumSize(panel)
 }
 
+/**
+ * Consider using [UI DSL](https://github.com/JetBrains/intellij-community/tree/master/platform/platform-impl/src/com/intellij/ui/layout#readme) to create panel.
+ */
 fun dialog(title: String,
            panel: JComponent,
            resizable: Boolean = false,
@@ -141,7 +137,7 @@ fun dialog(title: String,
            parent: Component? = null,
            errorText: String? = null,
            modality: IdeModalityType = IdeModalityType.IDE,
-           ok: (() -> Boolean)? = null): DialogWrapper {
+           ok: (() -> List<ValidationInfo>?)? = null): DialogWrapper {
   return object: DialogWrapper(project, parent, true, modality) {
     init {
       setTitle(title)
@@ -161,8 +157,16 @@ fun dialog(title: String,
     override fun getPreferredFocusedComponent() = focusedComponent
 
     override fun doOKAction() {
-      if (okAction.isEnabled && (ok == null || ok())) {
+      if (!okAction.isEnabled) {
+        return
+      }
+
+      val validationInfoList = ok?.invoke()
+      if (validationInfoList == null || validationInfoList.isEmpty()) {
         super.doOKAction()
+      }
+      else {
+        setErrorInfoAll(validationInfoList)
       }
     }
   }
@@ -175,15 +179,20 @@ fun <T : JComponent> installFileCompletionAndBrowseDialog(project: Project?,
                                                           @Nls(capitalization = Nls.Capitalization.Title) browseDialogTitle: String,
                                                           fileChooserDescriptor: FileChooserDescriptor,
                                                           textComponentAccessor: TextComponentAccessor<T>,
-                                                          fileChoosen: ((chosenFile: VirtualFile) -> String)? = null) {
+                                                          fileChosen: ((chosenFile: VirtualFile) -> String)? = null) {
+  if (ApplicationManager.getApplication() == null) {
+    // tests
+    return
+  }
+
   component.addActionListener(
       object : BrowseFolderActionListener<T>(browseDialogTitle, null, component, project, fileChooserDescriptor, textComponentAccessor) {
         override fun onFileChosen(chosenFile: VirtualFile) {
-          if (fileChoosen == null) {
+          if (fileChosen == null) {
             super.onFileChosen(chosenFile)
           }
           else {
-            textComponentAccessor.setText(myTextComponent.childComponent, fileChoosen(chosenFile))
+            textComponentAccessor.setText(myTextComponent.childComponent, fileChosen(chosenFile))
           }
         }
       })
@@ -195,7 +204,7 @@ fun textFieldWithHistoryWithBrowseButton(project: Project?,
                                          browseDialogTitle: String,
                                          fileChooserDescriptor: FileChooserDescriptor,
                                          historyProvider: (() -> List<String>)? = null,
-                                         fileChoosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithHistoryWithBrowseButton {
+                                         fileChosen: ((chosenFile: VirtualFile) -> String)? = null): TextFieldWithHistoryWithBrowseButton {
   val component = TextFieldWithHistoryWithBrowseButton()
   val textFieldWithHistory = component.childComponent
   textFieldWithHistory.setHistorySize(-1)
@@ -210,7 +219,7 @@ fun textFieldWithHistoryWithBrowseButton(project: Project?,
       browseDialogTitle,
       fileChooserDescriptor,
       TextComponentAccessor.TEXT_FIELD_WITH_HISTORY_WHOLE_TEXT,
-      fileChoosen = fileChoosen
+      fileChosen = fileChosen
   )
   return component
 }

@@ -45,17 +45,15 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
 
     cherryPick(commit)
 
-    assertErrorNotification("Cherry-pick failed", """
-      ${shortHash(commit)} fix #1
-      Some untracked working tree files would be overwritten by cherry-pick.
-      Please move, remove or add them before you can cherry-pick. <a href='view'>View them</a>""")
+    assertErrorNotification("Untracked Files Prevent Cherry-pick", """
+      Move or commit them before cherry-pick""")
   }
 
   protected fun `check conflict with cherry-picked commit should show merge dialog`() {
     val initial = tac("c.txt", "base\n")
-    val commit = appendAndCommit("c.txt", "master")
-    checkoutNew("feature", initial)
-    appendAndCommit("c.txt", "feature")
+    val commit = repo.appendAndCommit("c.txt", "master")
+    repo.checkoutNew("feature", initial)
+    repo.appendAndCommit("c.txt", "feature")
 
     `do nothing on merge`()
 
@@ -75,19 +73,19 @@ abstract class GitCherryPickTest : GitSingleRepoTest() {
     cherryPick(commit)
 
     `assert commit dialog was shown`()
-    assertLastMessage("""
-      on_master
-
-      (cherry picked from commit ${shortHash(commit)})""".trimIndent())
+    assertLastMessage("on_master")
     repo.assertCommitted {
       modified("c.txt")
     }
     assertSuccessfulNotification("Cherry-pick successful",
                                  "${shortHash(commit)} on_master")
+    changeListManager.assertNoChanges()
+    changeListManager.waitScheduledChangelistDeletions()
     changeListManager.assertOnlyDefaultChangelist()
   }
 
   protected fun cherryPick(hashes: List<String>) {
+    updateChangeListManager()
     val details = readDetails(hashes)
     GitCherryPicker(project, git).cherryPick(details)
   }

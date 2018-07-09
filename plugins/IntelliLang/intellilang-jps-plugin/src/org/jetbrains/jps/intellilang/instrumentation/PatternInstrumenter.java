@@ -232,7 +232,6 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
   }
 
   /**
-   * @param annotationClassname
    * @return pattern string for 'alias' annotations, as specified in the 'base' annotation,
    *         otherwise null, (for the  'base' annotation class name null is returned as well)
    */

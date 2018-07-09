@@ -1,0 +1,10 @@
+<html>
+<body>
+Reports cases where method call accepts a non-trivial expression, and there's an equivalent method,
+which accepts lambda instead. Converting an expression to lambda ensures that expression will not be evaluated
+if it happens to be unused inside the method. E.g. <b>optional.orElse(createDefaultValue())</b> could be converted
+to <b>optional.orElseGet(this::createDefaultValue)</b>.
+<!-- tooltip end -->
+<p><small>New in 2018.1</small></p>
+</body>
+</html>

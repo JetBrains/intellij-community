@@ -58,6 +58,8 @@ public abstract class OnesideTextDiffViewer extends OnesideDiffViewer<TextEditor
     myEditorSettingsAction.applyDefaults();
 
     new MyOpenInEditorWithMouseAction().install(getEditors());
+
+    DiffUtil.installLineConvertor(getEditor(), getContent());
   }
 
   @Override

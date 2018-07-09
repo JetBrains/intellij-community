@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl.livePreview;
 
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.ide.IdeTooltipManager;
@@ -28,6 +15,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -39,8 +27,9 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NotNull;
@@ -55,8 +44,8 @@ import java.util.Set;
 
 public class LivePreview implements SearchResults.SearchResultsListener, SelectionListener, DocumentListener {
   private static final Key<Object> IN_SELECTION_KEY = Key.create("LivePreview.IN_SELECTION_KEY");
-  private static final Object IN_SELECTION1 = new Object();
-  private static final Object IN_SELECTION2 = new Object();
+  private static final Object IN_SELECTION1 = ObjectUtils.sentinel("LivePreview.IN_SELECTION1");
+  private static final Object IN_SELECTION2 = ObjectUtils.sentinel("LivePreview.IN_SELECTION2");
   private static final String EMPTY_STRING_DISPLAY_TEXT = "<Empty string>";
 
   private boolean myListeningSelection = false;
@@ -64,7 +53,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
   private boolean myInSmartUpdate = false;
 
   private static final Key<Object> MARKER_USED = Key.create("LivePreview.MARKER_USED");
-  private static final Object YES = new Object();
+  private static final Object YES = ObjectUtils.sentinel("LivePreview.YES");
   private static final Key<Object> SEARCH_MARKER = Key.create("LivePreview.SEARCH_MARKER");
 
   public static PrintStream ourTestOutput;
@@ -93,7 +82,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
 
   public interface Delegate {
     @Nullable
-    String getStringToReplace(@NotNull Editor editor, @Nullable FindResult findResult);
+    String getStringToReplace(@NotNull Editor editor, @Nullable FindResult findResult) throws FindManager.MalformedReplacementStringException;
   }
 
   private static TextAttributes strikeout() {
@@ -190,7 +179,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
   }
 
   private void clearUnusedHightlighters() {
-    Set<RangeHighlighter> unused = new com.intellij.util.containers.HashSet<>();
+    Set<RangeHighlighter> unused = new HashSet<>();
     for (RangeHighlighter highlighter : myHighlighters) {
       if (highlighter.getUserData(MARKER_USED) == null) {
         unused.add(highlighter);
@@ -370,14 +359,22 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     if (!mySearchResults.isUpToDate()) return;
     final FindResult cursor = mySearchResults.getCursor();
     final Editor editor = mySearchResults.getEditor();
-    if (myDelegate != null && cursor != null) {
-      String replacementPreviewText = myDelegate.getStringToReplace(editor, cursor);
-      if (StringUtil.isEmpty(replacementPreviewText)) {
-        replacementPreviewText = EMPTY_STRING_DISPLAY_TEXT;
+    final FindModel findModel = mySearchResults.getFindModel();
+    if (myDelegate != null && cursor != null && findModel.isReplaceState() && findModel.isRegularExpressions()) {
+      String replacementPreviewText;
+      try {
+        replacementPreviewText = myDelegate.getStringToReplace(editor, cursor);
       }
-      final FindModel findModel = mySearchResults.getFindModel();
-      if (findModel.isRegularExpressions() && findModel.isReplaceState()) {
-
+      catch (FindManager.MalformedReplacementStringException e) {
+        return;
+      }
+      if (replacementPreviewText == null) {
+        return;//malformed replacement string
+      }
+      if (Registry.is("ide.find.show.replacement.hint.for.simple.regexp")) {
+        showBalloon(editor, replacementPreviewText.isEmpty() ? EMPTY_STRING_DISPLAY_TEXT : replacementPreviewText);
+      }
+      else if (!replacementPreviewText.equals(findModel.getStringToReplace())) {
         showBalloon(editor, replacementPreviewText);
       }
     }
@@ -474,6 +471,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     final RangeHighlighter h = dummy.get(0);
     highlighters.add(h);
     h.putUserData(SEARCH_MARKER, YES);
+    if (h instanceof RangeHighlighterEx) ((RangeHighlighterEx)h).setVisibleIfFolded(true);
     return h;
   }
 

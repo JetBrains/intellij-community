@@ -58,7 +58,7 @@ public class MakeClassInterfaceFix extends LocalQuickFixAndIntentionActionOnPsiE
                              @NotNull PsiElement endElement) {
     final PsiClass myClass = (PsiClass)startElement;
 
-    return myClass.isValid() && myClass.getManager().isInProject(myClass);
+    return myClass.getManager().isInProject(myClass);
   }
 
   @Override

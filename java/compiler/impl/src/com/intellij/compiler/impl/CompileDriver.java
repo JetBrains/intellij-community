@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.impl;
 
 import com.intellij.CommonBundle;
@@ -57,7 +43,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Chunk;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.DateFormatUtil;
@@ -213,7 +198,7 @@ public class CompileDriver {
     for (BuildTargetScopeProvider provider : BuildTargetScopeProvider.EP_NAME.getExtensions()) {
       List<TargetTypeBuildScope> providerScopes = ReadAction.compute(
         () -> myProject.isDisposed() ? Collections.emptyList()
-                                     : provider.getBuildTargetScopes(scope, myCompilerFilter, myProject, forceBuild));
+                                     : provider.getBuildTargetScopes(scope, myProject, forceBuild));
       scopes = CompileScopeUtil.mergeScopes(scopes, providerScopes);
     }
     return scopes;
@@ -286,8 +271,7 @@ public class CompileDriver {
           }
         }
         else {
-          final CompilerMessageCategory category = kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.ERROR ? CompilerMessageCategory.ERROR
-            : kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.WARNING ? CompilerMessageCategory.WARNING : CompilerMessageCategory.INFORMATION;
+          final CompilerMessageCategory category = convertToCategory(kind, CompilerMessageCategory.INFORMATION);
 
           String sourceFilePath = message.hasSourceFilePath() ? message.getSourceFilePath() : null;
           if (sourceFilePath != null) {
@@ -698,7 +682,7 @@ public class CompileDriver {
               return false;
             }
           }
-  
+
           LanguageLevel moduleLanguageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
           if (languageLevel == null) {
             languageLevel = moduleLanguageLevel;
@@ -783,6 +767,18 @@ public class CompileDriver {
     }
     else {
       service.openProjectSettings();
+    }
+  }
+
+  public static CompilerMessageCategory convertToCategory(CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind kind, CompilerMessageCategory defaultCategory) {
+    switch(kind) {
+      case ERROR: case INTERNAL_BUILDER_ERROR:
+        return CompilerMessageCategory.ERROR;
+      case WARNING: return CompilerMessageCategory.WARNING;
+      case INFO: return CompilerMessageCategory.INFORMATION;
+      case JPS_INFO: return CompilerMessageCategory.INFORMATION;
+      case OTHER: return CompilerMessageCategory.INFORMATION;
+      default: return defaultCategory;
     }
   }
 

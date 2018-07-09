@@ -1,7 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.util;
 
-import com.intellij.codeInsight.CodeInsightServicesUtil;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelector;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelectorBase;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInfo;
@@ -18,6 +17,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.BoolUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +59,10 @@ public abstract class JavaPostfixTemplatesUtils {
     };
   }
 
+  /**
+   * @deprecated
+   */
+  @Deprecated
   public static PostfixTemplateExpressionSelector selectorTopmost() {
     return selectorTopmost(Conditions.alwaysTrue());
   }
@@ -83,11 +87,8 @@ public abstract class JavaPostfixTemplatesUtils {
     };
   }
 
-  public static PostfixTemplateExpressionSelector selectorAllExpressionsWithCurrentOffset() {
-    return selectorAllExpressionsWithCurrentOffset(Conditions.alwaysTrue());
-  }
-
-  public static PostfixTemplateExpressionSelector selectorAllExpressionsWithCurrentOffset(final Condition<PsiElement> additionalFilter) {
+  @NotNull
+  public static PostfixTemplateExpressionSelector selectorAllExpressionsWithCurrentOffset(@Nullable Condition<PsiElement> additionalFilter) {
     return new PostfixTemplateExpressionSelectorBase(additionalFilter) {
       @Override
       protected List<PsiElement> getNonFilteredExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
@@ -99,7 +100,7 @@ public abstract class JavaPostfixTemplatesUtils {
       @Override
       public List<PsiElement> getExpressions(@NotNull PsiElement context, @NotNull Document document, int offset) {
         if (DumbService.getInstance(context.getProject()).isDumb()) return Collections.emptyList();
-        
+
         List<PsiElement> expressions = super.getExpressions(context, document, offset);
         if (!expressions.isEmpty()) return expressions;
 
@@ -128,7 +129,8 @@ public abstract class JavaPostfixTemplatesUtils {
     @Override
     public PsiExpression getNegatedExpression(@NotNull PsiElement element) {
       assert element instanceof PsiExpression;
-      return CodeInsightServicesUtil.invertCondition((PsiExpression)element);
+      String negatedExpressionText = BoolUtils.getNegatedExpressionText((PsiExpression)element);
+      return JavaPsiFacade.getElementFactory(element.getProject()).createExpressionFromText(negatedExpressionText, element);
     }
   };
 
@@ -138,7 +140,10 @@ public abstract class JavaPostfixTemplatesUtils {
   public static final Condition<PsiElement> IS_BOOLEAN =
     element -> element instanceof PsiExpression && isBoolean(((PsiExpression)element).getType());
 
-  public static final Condition<PsiElement> IS_THROWABLE =
+  /**
+   * @deprecated
+   */
+  @Deprecated public static final Condition<PsiElement> IS_THROWABLE =
     element -> element instanceof PsiExpression && isThrowable(((PsiExpression)element).getType());
 
   public static final Condition<PsiElement> IS_NON_VOID =
@@ -146,15 +151,21 @@ public abstract class JavaPostfixTemplatesUtils {
 
   public static final Condition<PsiElement> IS_NOT_PRIMITIVE =
     element -> element instanceof PsiExpression && isNotPrimitiveTypeExpression((PsiExpression)element);
-  
-  public static final Condition<PsiElement> IS_ARRAY = element -> {
+
+  /**
+   * @deprecated
+   */
+  @Deprecated public static final Condition<PsiElement> IS_ARRAY = element -> {
     if (!(element instanceof PsiExpression)) return false;
 
     PsiType type = ((PsiExpression)element).getType();
     return isArray(type);
   };
 
-  public static final Condition<PsiElement> IS_ITERABLE_OR_ARRAY = element -> {
+  /**
+   * @deprecated
+   */
+  @Deprecated public static final Condition<PsiElement> IS_ITERABLE_OR_ARRAY = element -> {
     if (!(element instanceof PsiExpression)) return false;
 
     PsiType type = ((PsiExpression)element).getType();
@@ -182,7 +193,7 @@ public abstract class JavaPostfixTemplatesUtils {
 
   @Contract("null -> false")
   public static boolean isArray(@Nullable PsiType type) {
-    return type != null && type instanceof PsiArrayType;
+    return type instanceof PsiArrayType;
   }
 
   @Contract("null -> false")

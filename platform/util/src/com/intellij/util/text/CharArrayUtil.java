@@ -101,14 +101,6 @@ public class CharArrayUtil {
     }
   }
 
-  /**
-   * @deprecated use {@link #fromSequence(CharSequence)}
-   */
-  @NotNull
-  public static char[] fromSequenceStrict(@NotNull CharSequence seq) {
-    return fromSequence(seq);
-  }
-
   @Nullable
   public static char[] fromSequenceWithoutCopying(@Nullable CharSequence seq) {
     if (seq instanceof CharSequenceBackedByArray) {
@@ -498,7 +490,7 @@ public class CharArrayUtil {
     if (lastTextFound < result.size()) {
       result = result.subList(0, lastTextFound);
     }
-    return result.toArray(new TextRange[result.size()]);
+    return result.toArray(new TextRange[0]);
   }
 
   public static boolean containLineBreaks(@NotNull CharSequence seq) {

@@ -32,7 +32,6 @@ import java.util.*;
 
 /**
  * @author max
- * Date: Oct 21, 2001
  */
 public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
   private static final List<RefMethod> EMPTY_METHOD_LIST = Collections.emptyList();
@@ -291,12 +290,15 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     checkForSuperCall(method);
     setOnlyCallsSuper(refUtil.isMethodOnlyCallsSuper(method));
 
-    setBodyEmpty(isOnlyCallsSuper() || !isExternalOverride() && (body == null || body.getStatements().length == 0));
+    setBodyEmpty(isOnlyCallsSuper() || !isExternalOverride() && (body == null || body.isEmpty()));
 
     refUtil.addTypeReference(method, method.getReturnType(), getRefManager(), this);
 
     for (RefParameter parameter : getParameters()) {
-      refUtil.setIsFinal(parameter, parameter.getElement().hasModifierProperty(PsiModifier.FINAL));
+      PsiParameter psiParameter = parameter.getElement();
+      if (psiParameter != null) {
+        refUtil.setIsFinal(parameter, psiParameter.hasModifierProperty(PsiModifier.FINAL));
+      }
     }
 
     getRefManager().fireBuildReferences(this);
@@ -341,7 +343,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     return isLibraryOverride(new HashSet<>());
   }
 
-  private boolean isLibraryOverride(@NotNull Collection<RefMethod> processed) {
+  private boolean isLibraryOverride(@NotNull Collection<? super RefMethod> processed) {
     if (!processed.add(this)) return false;
 
     if (checkFlag(IS_LIBRARY_OVERRIDE_MASK)) return true;
@@ -543,20 +545,21 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     }
   }
 
-  void updateParameterValues(PsiExpression[] args) {
+  void updateParameterValues(PsiExpression[] args, @Nullable PsiElement elementPlace) {
     if (isExternalOverride()) return;
 
     if (!getSuperMethods().isEmpty()) {
       for (RefMethod refSuper : getSuperMethods()) {
-        ((RefMethodImpl)refSuper).updateParameterValues(args);
+        ((RefMethodImpl)refSuper).updateParameterValues(args, null);
       }
     } else {
       final RefParameter[] params = getParameters();
-      if (params.length <= args.length && params.length > 0) {
-        for (int i = 0; i < args.length; i++) {
-          RefParameter refParameter = params.length <= i ? params[params.length - 1] : params[i];
-          ((RefParameterImpl)refParameter).updateTemplateValue(args[i]);
-        }
+      for (int i = 0; i < Math.min(params.length, args.length); i++) {
+        ((RefParameterImpl)params[i]).updateTemplateValue(args[i], elementPlace);
+      }
+
+      if (params.length != args.length && params.length > 0) {
+        ((RefParameterImpl)params[params.length - 1]).clearTemplateValue();
       }
     }
   }
@@ -610,7 +613,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
       PsiClass element = facade.findClass(exception, GlobalSearchScope.allScope(myManager.getProject()));
       if (element != null) result.add(element);
     }
-    return result.toArray(new PsiClass[result.size()]);
+    return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
 

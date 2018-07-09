@@ -1,25 +1,13 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.lang.jvm.types.JvmType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayFactory;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,16 +15,16 @@ import org.jetbrains.annotations.Nullable;
  * Representation of Java type (primitive type, array or class type).
  */
 public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType {
-  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType BYTE = new PsiPrimitiveType("byte", "java.lang.Byte");
-  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType CHAR = new PsiPrimitiveType("char", "java.lang.Character");
-  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType DOUBLE = new PsiPrimitiveType("double", "java.lang.Double");
-  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType FLOAT = new PsiPrimitiveType("float", "java.lang.Float");
-  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType INT = new PsiPrimitiveType("int", "java.lang.Integer");
-  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType LONG = new PsiPrimitiveType("long", "java.lang.Long");
-  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType SHORT = new PsiPrimitiveType("short", "java.lang.Short");
-  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType BOOLEAN = new PsiPrimitiveType("boolean", "java.lang.Boolean");
-  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType VOID = new PsiPrimitiveType("void", "java.lang.Void");
-  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType NULL = new PsiPrimitiveType("null", (String)null);
+  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType BYTE = new PsiPrimitiveType(JvmPrimitiveTypeKind.BYTE);
+  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType CHAR = new PsiPrimitiveType(JvmPrimitiveTypeKind.CHAR);
+  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType DOUBLE = new PsiPrimitiveType(JvmPrimitiveTypeKind.DOUBLE);
+  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType FLOAT = new PsiPrimitiveType(JvmPrimitiveTypeKind.FLOAT);
+  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType INT = new PsiPrimitiveType(JvmPrimitiveTypeKind.INT);
+  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType LONG = new PsiPrimitiveType(JvmPrimitiveTypeKind.LONG);
+  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType SHORT = new PsiPrimitiveType(JvmPrimitiveTypeKind.SHORT);
+  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType BOOLEAN = new PsiPrimitiveType(JvmPrimitiveTypeKind.BOOLEAN);
+  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType VOID = new PsiPrimitiveType(JvmPrimitiveTypeKind.VOID);
+  @SuppressWarnings("StaticInitializerReferencesSubClass") public static final PsiPrimitiveType NULL = new PsiPrimitiveType(null);
 
   public static final PsiType[] EMPTY_ARRAY = new PsiType[0];
   public static final ArrayFactory<PsiType> ARRAY_FACTORY = count -> count == 0 ? EMPTY_ARRAY : new PsiType[count];
@@ -85,6 +73,8 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
   }
 
   /** @deprecated use {@link #annotate(TypeAnnotationProvider)} (to be removed in IDEA 18) */
+  @Deprecated
+  @NotNull
   public PsiArrayType createArrayType(@NotNull PsiAnnotation... annotations) {
     return new PsiArrayType(this, annotations);
   }
@@ -137,6 +127,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
   /**
    * @return true if values of type {@code type} can be assigned to rvalues of this type.
    */
+  @Contract(pure = true)
   public boolean isAssignableFrom(@NotNull PsiType type) {
     return TypeConversionUtil.isAssignable(this, type);
   }
@@ -160,11 +151,11 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
    * Returns the class type for qualified class name.
    *
    * @param qName qualified class name.
-   * @param project
    * @param resolveScope the scope in which the class is searched.
    * @return the class instance.
    */
-  public static PsiClassType getTypeByName(String qName, Project project, GlobalSearchScope resolveScope) {
+  @NotNull
+  public static PsiClassType getTypeByName(@NotNull String qName, @NotNull Project project, @NotNull GlobalSearchScope resolveScope) {
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     return factory.createTypeByFQClassName(qName, resolveScope);
   }
@@ -340,7 +331,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
     return "PsiType:" + getPresentableText();
   }
 
-  protected static abstract class Stub extends PsiType {
+  protected abstract static class Stub extends PsiType {
     protected Stub(@NotNull PsiAnnotation[] annotations) {
       super(annotations);
     }

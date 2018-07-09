@@ -1,10 +1,10 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
   <title>text</title>
   <g>
     <g>
-      <polygon points="6 0 2 4 6 4 6 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
-      <polygon points="7 0 7 4 7 5 6 5 2 5 2 15 13 15 13 0 7 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
+      <polygon points="7 1 3 5 7 5 7 1" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
+      <polygon points="8 1 8 5 8 6 7 6 3 6 3 15 13 15 13 1 8 1" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
     </g>
-    <path d="M11,6V7H4V6h7ZM4,9h7V8H4V9Zm0,2h7V10H4v1Zm0,2H8V12H4v1Z" fill="#231f20" opacity="0.6"/>
+    <path d="M11,7V8H5V7ZM5,10h6V9H5Zm0,2H9V11H5Z" fill="#231f20" opacity="0.6"/>
   </g>
 </svg>

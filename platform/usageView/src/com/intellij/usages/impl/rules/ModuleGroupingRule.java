@@ -84,10 +84,6 @@ public class ModuleGroupingRule implements UsageGroupingRule, DumbAware {
 
     private final OrderEntry myEntry;
 
-    @Override
-    public void update() {
-    }
-
     public LibraryUsageGroup(@NotNull OrderEntry entry) {
       super(2);
       myEntry = entry;
@@ -116,10 +112,6 @@ public class ModuleGroupingRule implements UsageGroupingRule, DumbAware {
 
   private static class SyntheticLibraryUsageGroup extends UsageGroupBase {
     @NotNull private final ItemPresentation myItemPresentation;
-
-    @Override
-    public void update() {
-    }
 
     public SyntheticLibraryUsageGroup(@NotNull ItemPresentation itemPresentation) {
       super(2);

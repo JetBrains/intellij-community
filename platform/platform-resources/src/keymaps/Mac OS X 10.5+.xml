@@ -266,6 +266,12 @@
   <action id="CallHierarchy">
     <keyboard-shortcut first-keystroke="control alt H"/>
   </action>
+  <action id="Vcs.MoveChangedLinesToChangelist">
+    <keyboard-shortcut first-keystroke="meta shift M"/>
+  </action>
+  <action id="ChangesView.Move">
+    <keyboard-shortcut first-keystroke="meta shift M"/>
+  </action>
 
   <action id="CommentByBlockComment">
     <keyboard-shortcut first-keystroke="meta alt SLASH"/>
@@ -463,6 +469,10 @@
     <keyboard-shortcut first-keystroke="meta E"/>
   </action>
 
+  <action id="ChangesView.SetDefault">
+    <keyboard-shortcut first-keystroke="control SPACE" />
+  </action>
+
   <action id="ShowNavBar">
     <keyboard-shortcut first-keystroke="meta UP"/>
     <keyboard-shortcut first-keystroke="alt HOME"/>
@@ -528,11 +538,9 @@
   </action>
   <action id="EditorDown">
     <keyboard-shortcut first-keystroke="DOWN"/>
-    <keyboard-shortcut first-keystroke="control N"/>
   </action>
   <action id="EditorLeft">
     <keyboard-shortcut first-keystroke="LEFT"/>
-    <keyboard-shortcut first-keystroke="control B"/>
   </action>
   <action id="EditorLineEnd">
     <keyboard-shortcut first-keystroke="END"/>
@@ -546,14 +554,12 @@
   </action>
   <action id="EditorRight">
     <keyboard-shortcut first-keystroke="RIGHT"/>
-    <keyboard-shortcut first-keystroke="control F"/>
   </action>
   <action id="EditorToggleColumnMode">
     <keyboard-shortcut first-keystroke="shift meta 8"/>
   </action>
   <action id="EditorUp">
     <keyboard-shortcut first-keystroke="UP"/>
-    <keyboard-shortcut first-keystroke="control P"/>
   </action>
 
   <action id="UsageView.Include">
@@ -596,13 +602,25 @@
   </action>
 
   <action id="MethodOverloadSwitchUp">
-    <keyboard-shortcut first-keystroke="control P"/>
+    <keyboard-shortcut first-keystroke="alt UP"/>
   </action>
   <action id="MethodOverloadSwitchDown">
-    <keyboard-shortcut first-keystroke="control N"/>
+    <keyboard-shortcut first-keystroke="alt DOWN"/>
   </action>
 
   <action id="RunDashboard.ShowConfigurations">
     <keyboard-shortcut first-keystroke="shift meta T"/>
+  </action>
+
+  <action id="GotoNextElementUnderCaretUsage">
+    <keyboard-shortcut first-keystroke="ctrl alt DOWN"/>
+  </action>
+
+  <action id="GotoPrevElementUnderCaretUsage">
+    <keyboard-shortcut first-keystroke="ctrl alt UP"/>
+  </action>
+
+  <action id="XDebugger.AttachToProcess">
+    <keyboard-shortcut first-keystroke="alt shift F5"/>
   </action>
 </keymap>

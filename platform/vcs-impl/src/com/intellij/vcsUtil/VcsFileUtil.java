@@ -52,22 +52,6 @@ public class VcsFileUtil {
   public static final int FILE_PATH_LIMIT = 7600;
 
   /**
-   * Execute function for each chunk of arguments. Check for being cancelled in process.
-   *
-   * @param arguments the arguments to chunk
-   * @param processor function to execute on each chunk
-   * @param <T>       type of result value
-   * @return list of result values
-   * @throws VcsException
-   */
-  @NotNull
-  public static <T> List<T> foreachChunk(@NotNull List<String> arguments,
-                                         @NotNull ThrowableNotNullFunction<List<String>, List<? extends T>, VcsException> processor)
-    throws VcsException {
-    return foreachChunk(arguments, 1, processor);
-  }
-
-  /**
    * Execute function for each chunk of arguments and collect the result. Check for being cancelled in process.
    *
    * @param arguments the arguments to chunk

@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -40,12 +41,16 @@ public class TableCellState {
       myForeground = table.getForeground();
       myBackground = table.getBackground();
     }
+
+    Border border = UIUtil.getTableFocusCellHighlightBorder();
     if (hasFocus) {
-      myCellBorder = UIUtil.getTableFocusCellHighlightBorder();
+      myCellBorder = border;
       if (table.isCellEditable(row, column)) {
         myForeground = UIUtil.getTableFocusCellForeground();
         myBackground = UIUtil.getTableFocusCellBackground();
       }
+    } else {
+      myCellBorder = new JBEmptyBorder(border.getBorderInsets(null));
     }
   }
 

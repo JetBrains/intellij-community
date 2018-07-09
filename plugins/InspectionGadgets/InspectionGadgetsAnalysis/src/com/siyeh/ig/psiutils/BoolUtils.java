@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package com.siyeh.ig.psiutils;
 
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -58,37 +60,47 @@ public class BoolUtils {
       return null;
     }
     final PsiExpression operand = prefixExpression.getOperand();
-    return ParenthesesUtils.stripParentheses(operand);
+    PsiExpression stripped = ParenthesesUtils.stripParentheses(operand);
+    return stripped == null ? operand : stripped;
   }
 
   @NotNull
   public static String getNegatedExpressionText(@Nullable PsiExpression condition) {
-    return getNegatedExpressionText(condition, ParenthesesUtils.NUM_PRECEDENCES);
+    return getNegatedExpressionText(condition, new CommentTracker());
   }
 
   @NotNull
-  public static String getNegatedExpressionText(@Nullable PsiExpression expression, int precedence) {
+  public static String getNegatedExpressionText(@Nullable PsiExpression condition, CommentTracker tracker) {
+    return getNegatedExpressionText(condition, ParenthesesUtils.NUM_PRECEDENCES, tracker);
+  }
+
+  @NotNull
+  public static String getNegatedExpressionText(@Nullable PsiExpression expression,
+                                                int precedence,
+                                                CommentTracker tracker) {
     if (expression == null) {
       return "";
     }
     if (expression instanceof PsiParenthesizedExpression) {
       final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
-      return '(' + getNegatedExpressionText(parenthesizedExpression.getExpression()) + ')';
+      PsiExpression operand = parenthesizedExpression.getExpression();
+      if (operand != null) {
+        return '(' + getNegatedExpressionText(operand, tracker) + ')';
+      }
     }
     if (expression instanceof PsiConditionalExpression) {
       final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
       final boolean needParenthesis = ParenthesesUtils.getPrecedence(conditionalExpression) >= precedence;
-      final String text = conditionalExpression.getCondition().getText() +
-                          '?' + getNegatedExpressionText(conditionalExpression.getThenExpression()) +
-                          ':' + getNegatedExpressionText(conditionalExpression.getElseExpression());
+      final String text = tracker.text(conditionalExpression.getCondition()) +
+                          '?' + getNegatedExpressionText(conditionalExpression.getThenExpression(), tracker) +
+                          ':' + getNegatedExpressionText(conditionalExpression.getElseExpression(), tracker);
       return needParenthesis ? "(" + text + ")" : text;
     }
     if (isNegation(expression)) {
       final PsiExpression negated = getNegated(expression);
-      if (negated == null) {
-        return "";
+      if (negated != null) {
+        return ParenthesesUtils.getText(tracker.markUnchanged(negated), precedence);
       }
-      return ParenthesesUtils.getText(negated, precedence);
     }
     if (expression instanceof PsiPolyadicExpression) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
@@ -115,7 +127,7 @@ public class BoolUtils {
               result.append(negatedComparison);
             }
           }
-          result.append(operand.getText());
+          result.append(tracker.text(operand));
         }
         return result.toString();
       }
@@ -132,15 +144,21 @@ public class BoolUtils {
         }
         final Function<PsiElement, String> replacer = child -> {
           if (child instanceof PsiExpression) {
-            return getNegatedExpressionText((PsiExpression)child, newPrecedence);
+            return getNegatedExpressionText((PsiExpression)child, newPrecedence, tracker);
           }
-          return child instanceof PsiJavaToken ? targetToken : child.getText();
+          return child instanceof PsiJavaToken ? targetToken : tracker.text(child);
         };
         final String join = StringUtil.join(polyadicExpression.getChildren(), replacer, "");
         return (newPrecedence > precedence) ? '(' + join + ')' : join;
       }
     }
-    return '!' + ParenthesesUtils.getText(expression, ParenthesesUtils.PREFIX_PRECEDENCE);
+    if (expression instanceof PsiLiteralExpression) {
+      Object value = ((PsiLiteralExpression)expression).getValue();
+      if (value instanceof Boolean) {
+        return String.valueOf(!((Boolean)value));
+      }
+    }
+    return '!' + ParenthesesUtils.getText(tracker.markUnchanged(expression), ParenthesesUtils.PREFIX_PRECEDENCE);
   }
 
   @Nullable
@@ -186,5 +204,45 @@ public class BoolUtils {
       return false;
     }
     return PsiKeyword.FALSE.equals(expression.getText());
+  }
+
+  /**
+   * Checks whether two supplied boolean expressions are opposite to each other (e.g. "a == null" and "a != null")
+   *
+   * @param expression1 first expression
+   * @param expression2 second expression
+   * @return true if it's determined that the expressions are opposite to each other.
+   */
+  @Contract(value = "null, _ -> false; _, null -> false", pure = true)
+  public static boolean areExpressionsOpposite(@Nullable PsiExpression expression1, @Nullable PsiExpression expression2) {
+    expression1 = PsiUtil.skipParenthesizedExprDown(expression1);
+    expression2 = PsiUtil.skipParenthesizedExprDown(expression2);
+    if (expression1 == null || expression2 == null) return false;
+    EquivalenceChecker equivalence = EquivalenceChecker.getCanonicalPsiEquivalence();
+    if (isNegation(expression1)) {
+      return equivalence.expressionsAreEquivalent(getNegated(expression1), expression2);
+    }
+    if (isNegation(expression2)) {
+      return equivalence.expressionsAreEquivalent(getNegated(expression2), expression1);
+    }
+    if (expression1 instanceof PsiBinaryExpression && expression2 instanceof PsiBinaryExpression) {
+      PsiBinaryExpression binOp1 = (PsiBinaryExpression)expression1;
+      PsiBinaryExpression binOp2 = (PsiBinaryExpression)expression2;
+      DfaRelationValue.RelationType rel1 = DfaRelationValue.RelationType.fromElementType(binOp1.getOperationTokenType());
+      DfaRelationValue.RelationType rel2 = DfaRelationValue.RelationType.fromElementType(binOp2.getOperationTokenType());
+      if (rel1 == null || rel2 == null) return false;
+      PsiType type = binOp1.getLOperand().getType();
+      // a > b and a <= b are not strictly opposite due to NaN semantics
+      if (type == null || type.equals(PsiType.FLOAT) || type.equals(PsiType.DOUBLE)) return false;
+      if (rel1 == rel2.getNegated()) {
+        return equivalence.expressionsAreEquivalent(binOp1.getLOperand(), binOp2.getLOperand()) &&
+               equivalence.expressionsAreEquivalent(binOp1.getROperand(), binOp2.getROperand());
+      }
+      if (rel1.getFlipped() == rel2.getNegated()) {
+        return equivalence.expressionsAreEquivalent(binOp1.getLOperand(), binOp2.getROperand()) &&
+               equivalence.expressionsAreEquivalent(binOp1.getROperand(), binOp2.getLOperand());
+      }
+    }
+    return false;
   }
 }

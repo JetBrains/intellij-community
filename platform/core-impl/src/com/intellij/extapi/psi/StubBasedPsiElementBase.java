@@ -84,7 +84,6 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   public static final Key<String> CREATION_TRACE = Key.create("CREATION_TRACE");
   public static final boolean ourTraceStubAstBinding = "true".equals(System.getProperty("trace.stub.ast.binding", "false"));
   private volatile SubstrateRef mySubstrateRef;
-  private volatile int myStubIndex = -1;
   private final IElementType myElementType;
 
   public StubBasedPsiElementBase(@NotNull T stub, @NotNull IStubElementType nodeType) {
@@ -238,29 +237,6 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
    */
   public final void setSubstrateRef(@NotNull SubstrateRef substrateRef) {
     mySubstrateRef = substrateRef;
-    myStubIndex = -1;
-  }
-
-  /**
-   * Don't invoke this method, it's public for implementation reasons.
-   */
-  public final void setStubIndex(int stubIndex) {
-    myStubIndex = stubIndex;
-  }
-
-  /**
-   * Don't invoke this method, it's public for implementation reasons.
-   */
-  public int getStubIndex() {
-    return myStubIndex;
-  }
-
-  /**
-   * Don't invoke this method, it's public for implementation reasons.
-   */
-  @NotNull
-  public final SubstrateRef getSubstrateRef() {
-    return mySubstrateRef;
   }
 
   @NotNull
@@ -383,7 +359,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   public T getStub() {
     ProgressIndicatorProvider.checkCanceled(); // Hope, this is called often
     //noinspection unchecked
-    return (T)mySubstrateRef.getStub(myStubIndex);
+    return (T)mySubstrateRef.getStub();
   }
 
   /**
@@ -395,7 +371,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   public final T getGreenStub() {
     ProgressIndicatorProvider.checkCanceled(); // Hope, this is called often
     //noinspection unchecked
-    return (T)mySubstrateRef.getGreenStub(myStubIndex);
+    return (T)mySubstrateRef.getGreenStub();
   }
 
   /**

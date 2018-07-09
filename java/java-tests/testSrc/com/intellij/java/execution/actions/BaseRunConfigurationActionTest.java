@@ -1,33 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.execution.actions;
 
 import com.intellij.execution.actions.BaseRunConfigurationAction;
 import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.execution.configurations.LocatableConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.execution.junit.JUnitConfigurationType;
 import com.intellij.testFramework.LightIdeaTestCase;
 
 public class BaseRunConfigurationActionTest extends LightIdeaTestCase {
   public void testRunApplicationName() {
-    ApplicationConfiguration configuration = new ApplicationConfiguration(null, getProject(), ApplicationConfigurationType.getInstance());
+    ApplicationConfiguration configuration = new ApplicationConfiguration(null, getProject());
 
-    configuration.MAIN_CLASS_NAME = "com.comp.AClass";
+    configuration.setMainClassName("com.comp.AClass");
     configuration.setGeneratedName();
     checkSuggestedName("AClass.main()", configuration);
 
@@ -38,13 +22,13 @@ public class BaseRunConfigurationActionTest extends LightIdeaTestCase {
     configuration.setName("1234567890123456789012345 other long name");
     checkSuggestedName("12345678901234567890...", configuration);
 
-    configuration.MAIN_CLASS_NAME = "com.comp.A12345678901234567890123LongName";
+    configuration.setMainClassName("com.comp.A12345678901234567890123LongName");
     configuration.setGeneratedName();
     checkSuggestedName("A1234567890123....main()", configuration);
   }
 
   public void testRunTestMethodName() {
-    JUnitConfiguration configuration = new JUnitConfiguration(null, getProject(), JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
+    JUnitConfiguration configuration = new JUnitConfiguration(null, getProject());
     JUnitConfiguration.Data data = configuration.getPersistentData();
 
     data.MAIN_CLASS_NAME = "com.comp.ATestClass";

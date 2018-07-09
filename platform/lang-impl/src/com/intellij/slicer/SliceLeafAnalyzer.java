@@ -15,29 +15,33 @@
  */
 package com.intellij.slicer;
 
+import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.WalkingState;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * @author cdr
  */
 public class SliceLeafAnalyzer {
+  private static final Logger LOG = Logger.getInstance(SliceLeafAnalyzer.class);
 
   @NotNull
   private final SliceLeafEquality myLeafEquality;
@@ -203,7 +207,15 @@ public class SliceLeafAnalyzer {
                                                            @NotNull AbstractTreeStructure treeStructure,
                                                            @NotNull final Map<SliceNode, Collection<PsiElement>> map) {
     final SliceNodeGuide guide = new SliceNodeGuide(treeStructure);
+    AtomicInteger depth = new AtomicInteger();
+    boolean printToLog = LOG.isTraceEnabled();
     WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(guide) {
+      @Override
+      public void elementStarted(@NotNull SliceNode element) {
+        depth.incrementAndGet();
+        super.elementStarted(element);
+      }
+
       @Override
       public void visit(@NotNull final SliceNode element) {
         element.calculateDupNode();
@@ -217,6 +229,10 @@ public class SliceLeafAnalyzer {
             final SliceUsage sliceUsage = element.getValue();
 
             Collection<SliceNode> children = element.getChildren();
+            if (printToLog) {
+              LOG.trace(StringUtil.repeat("  ", Math.max(depth.get(), 0)) + "analyzing usages of " + sliceUsage +
+                        " (in " + (sliceUsage == null ? "null" : sliceUsage.getFile().getName() + ":" + sliceUsage.getLine()) + ")");
+            }
             if (children.isEmpty() && sliceUsage != null && sliceUsage.canBeLeaf()) {
               PsiElement value = sliceUsage.getElement();
               if (value != null) {
@@ -231,6 +247,7 @@ public class SliceLeafAnalyzer {
 
       @Override
       public void elementFinished(@NotNull SliceNode element) {
+        depth.decrementAndGet();
         SliceNode parent = guide.getParent(element);
         if (parent != null) {
           node(parent, map).addAll(node(element, map));

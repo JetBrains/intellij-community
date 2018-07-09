@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
 import com.intellij.ide.caches.FileContent;
@@ -24,7 +10,7 @@ import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.TimeoutUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +35,7 @@ public class FileContentQueue {
   private static final long PROCESSED_FILE_BYTES_THRESHOLD = 1024 * 1024 * 3;
   private static final long LARGE_SIZE_REQUEST_THRESHOLD = PROCESSED_FILE_BYTES_THRESHOLD - 1024 * 300; // 300k for other threads
 
-  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("FileContentQueue pool", 1);
+  private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("FileContentQueue Pool");
 
   // Unbounded (!)
   private final LinkedBlockingDeque<FileContent> myLoadedContents = new LinkedBlockingDeque<>();
@@ -57,6 +43,7 @@ public class FileContentQueue {
 
   private final AtomicLong myLoadedBytesInQueue = new AtomicLong();
   private static final Object ourProceedWithLoadingLock = new Object();
+  @NotNull private final Project myProject;
 
   private volatile long myBytesBeingProcessed;
   private volatile boolean myLargeSizeRequested;
@@ -65,7 +52,10 @@ public class FileContentQueue {
   private final ProgressIndicator myProgressIndicator;
   private static final Deque<FileContentQueue> ourContentLoadingQueues = new LinkedBlockingDeque<>();
 
-  public FileContentQueue(@NotNull Collection<VirtualFile> files, @NotNull final ProgressIndicator indicator) {
+  FileContentQueue(@NotNull Project project,
+                   @NotNull Collection<VirtualFile> files,
+                   @NotNull final ProgressIndicator indicator) {
+    myProject = project;
     int numberOfFiles = files.size();
     myContentsToLoad.set(numberOfFiles);
     // ABQ is more memory efficient for significant number of files (e.g. 500K)
@@ -116,12 +106,15 @@ public class FileContentQueue {
       return PreloadState.CANCELLED_OR_FINISHED;
     }
 
-    return loadNextContent(myProgressIndicator) ? PreloadState.PRELOADED_SUCCESSFULLY : PreloadState.CANCELLED_OR_FINISHED;
+    if (myProgressIndicator.isCanceled()) return PreloadState.CANCELLED_OR_FINISHED;
+    return loadNextContent() ? PreloadState.PRELOADED_SUCCESSFULLY : PreloadState.CANCELLED_OR_FINISHED;
   }
   
-  private boolean loadNextContent(ProgressIndicator progressIndicator) {
+  private boolean loadNextContent() { 
+    // Contract: if file is taken from myFilesQueue then it will be loaded to myLoadedContents and myContentsToLoad will be decremented
     VirtualFile file = myFilesQueue.poll();
-    if (file == null || progressIndicator.isCanceled()) return false;
+    if (file == null) return false;
+
     try {
       FileContent content = new FileContent(file);
       if (!isValidFile(file) || !doLoadContent(content)) {
@@ -146,7 +139,9 @@ public class FileContentQueue {
     try {
       myLoadedBytesInQueue.addAndGet(contentLength);
 
-      content.getBytes(); // Reads the content bytes and caches them.
+      // Reads the content bytes and caches them.
+      // hint at the current project to avoid expensive read action in ProjectLocatorImpl
+      ProjectLocator.computeWithPreferredProject(content.getVirtualFile(), myProject, ()-> content.getBytes());
 
       return true;
     }
@@ -221,8 +216,8 @@ public class FileContentQueue {
         if (remainingContentsToLoad == 0) {
           return null;
         }
-        
-        if (!loadNextContent(indicator) && !indicator.isCanceled()) {
+
+        if (!loadNextContent()) {
           TimeoutUtil.sleep(50); // wait a little for loading last content
         }
       }

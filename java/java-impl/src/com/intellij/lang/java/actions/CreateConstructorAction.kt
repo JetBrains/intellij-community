@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.actions
 
 import com.intellij.codeInsight.CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement
@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils
 import com.intellij.codeInsight.daemon.impl.quickfix.GuessTypeParameters
 import com.intellij.codeInsight.generation.OverrideImplementUtil
-import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateBuilder
 import com.intellij.codeInsight.template.TemplateBuilderImpl
@@ -19,28 +18,26 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
-import com.intellij.psi.util.createSmartPointer
 
-class CreateConstructorAction(targetClass: PsiClass, private val myRequest: CreateConstructorRequest) : BaseIntentionAction() {
-
-  private val targetClassPointer = targetClass.createSmartPointer()
+internal class CreateConstructorAction(
+  target: PsiClass,
+  override val request: CreateConstructorRequest
+) : CreateMemberAction(target, request) {
 
   override fun getFamilyName(): String = message("create.constructor.family")
 
-  override fun getElementToMakeWritable(currentFile: PsiFile): PsiElement? = targetClassPointer.element
-
-  override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-    if (targetClassPointer.element == null || !myRequest.isValid) return false
-    text = message("create.constructor.from.new.text")
-    return true
+  override fun getText(): String = if (request is CreateConstructorFromJavaUsageRequest) {
+    message("create.constructor.from.new.text")
+  }
+  else {
+    message("create.constructor.text", getNameForClass(target, false))
   }
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-    val targetClass = targetClassPointer.element ?: error("Target class was invalidated between isAvailable() and invoke()")
-    assert(myRequest.isValid) { "Request was invalidated between isAvailable() and invoke()" }
-    JavaConstructorRenderer(project, targetClass, myRequest).doMagic()
+    JavaConstructorRenderer(project, target, request).doMagic()
   }
 }
 
@@ -58,7 +55,7 @@ private class JavaConstructorRenderer(
     constructor = forcePsiPostprocessAndRestoreElement(constructor) ?: return
 
     val builder = TemplateBuilderImpl(constructor)
-    createTemplateContext(builder).setupParameters(constructor, request.parameters)
+    createTemplateContext(builder).setupParameters(constructor, request.expectedParameters)
     val superConstructor = setupSuperCall(targetClass, constructor, builder)
 
     constructor = forcePsiPostprocessAndRestoreElement(constructor) ?: return
@@ -98,7 +95,7 @@ private class JavaConstructorRenderer(
 
       override fun templateFinished(template: Template, brokenOff: Boolean) {
         if (brokenOff) return
-        WriteCommandAction.runWriteCommandAction(project, this::setupBody)
+        WriteCommandAction.runWriteCommandAction(project) { setupBody() }
       }
 
       private fun setupBody() {

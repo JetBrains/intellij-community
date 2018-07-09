@@ -16,6 +16,7 @@
 
 package org.intellij.plugins.relaxNG.convert;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -30,7 +31,6 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.DocumentAdapter;
 import org.intellij.plugins.relaxNG.compact.RncFileType;
 import org.jetbrains.annotations.NotNull;
@@ -118,7 +118,7 @@ public class ConvertSchemaSettingsImpl implements ConvertSchemaSettings {
     final Charset charset = EncodingProjectManager.getInstance(project).getDefaultCharset();
     myEncoding.setSelectedItem(charset.name());
 
-    final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(project);
+    final CodeStyleSettings styleSettings = CodeStyle.getSettings(project);
     final int indent = styleSettings.getIndentSize(type);
     myIndent.setText(String.valueOf(indent));
 

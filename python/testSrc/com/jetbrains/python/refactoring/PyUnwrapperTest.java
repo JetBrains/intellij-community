@@ -44,7 +44,7 @@ public class PyUnwrapperTest extends PyTestCase {
   public void testForUnwrap() {doTest();}
   public void testForElseUnwrap() {doTest();}
 
-  public void testWithUnwrap() {doTest(LanguageLevel.PYTHON32);}
+  public void testWithUnwrap() {doTest(LanguageLevel.PYTHON34);}
 
   public void testEndOfStatementUnwrap() {doTest();}
   public void testEndOfStatementNextLineUnwrap() {doNegativeTest();}

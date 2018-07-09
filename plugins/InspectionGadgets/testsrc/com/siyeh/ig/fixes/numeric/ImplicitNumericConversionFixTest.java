@@ -26,6 +26,9 @@ public class ImplicitNumericConversionFixTest extends IGQuickFixesTestCase {
 
   public void testOperatorAssignment() { doTest(); }
   public void testHexadecimalLiteral() { doTest(); }
+  public void testParentheses() { doTest("Convert to '100L'"); }
+  public void testArrayAccess() { doTest(); }
+  public void testPrecedence() { doTest(); }
 
   @Override
   protected void setUp() throws Exception {

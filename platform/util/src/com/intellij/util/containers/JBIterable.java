@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 
@@ -112,7 +98,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
     Multi(Iterable<? extends E> iterable) { super(iterable);}
 
     public Iterator<E> iterator() {
-      return ((Iterable<E>)content).iterator();
+      return JBIterator.from(((Iterable<E>)content).iterator());
     }
   }
 
@@ -527,11 +513,11 @@ public abstract class JBIterable<E> implements Iterable<E> {
   @NotNull
   public final JBIterable<E> unique(@NotNull final Function<? super E, ?> identity) {
     return filter(new SCond<E>() {
-      HashSet<Object> visited;
+      java.util.HashSet<Object> visited;
 
       @Override
       public boolean value(E e) {
-        if (visited == null) visited = new HashSet<Object>();
+        if (visited == null) visited = new java.util.HashSet<Object>();
         return visited.add(identity.fun(e));
       }
     });
@@ -584,24 +570,6 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Returns the first element if it is an instance of the specified class, otherwise null.
-   */
-  @Nullable
-  public final <T> T first(@NotNull Class<T> type) {
-    E first = first();
-    return type.isInstance(first) ? (T)first : null;
-  }
-
-  /**
-   * Returns the first element if it satisfies the condition, otherwise null.
-   */
-  @Nullable
-  public final E first(@NotNull Condition<? super E> condition) {
-    E first = first();
-    return condition.value(first) ? first : null;
-  }
-
-  /**
    * Returns the first element if it is the only one, otherwise null.
    */
   @Nullable
@@ -651,7 +619,20 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Returns the index of the first matching element.
+   * Perform calculation over this iterable.
+   */
+  public final E reduce(@NotNull PairFunction<E, ? super E, E> function) {
+    boolean first = true;
+    E cur = null;
+    for (E e : this) {
+      if (first) { cur = e; first = false; }
+      else cur = function.fun(cur, e);
+    }
+    return cur;
+  }
+
+  /**
+   * Returns the the first matching element.
    */
   public final E find(@NotNull Condition<? super E> condition) {
     return filter(condition).first();
@@ -858,10 +839,19 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * @see JBIterable#collect(Collection)
    */
   @NotNull
-  public final JBIterable<E> sorted(@NotNull Comparator<E> comparator) {
+  public final JBIterable<E> sort(@NotNull Comparator<? super E> comparator) {
     ArrayList<E> list = addAllTo(ContainerUtilRt.<E>newArrayList());
     Collections.sort(list, comparator);
     return from(list);
+  }
+
+  /**
+   * @deprecated use {@link #sort(Comparator)} instead
+   */
+  @Deprecated
+  @NotNull
+  public final JBIterable<E> sorted(@NotNull Comparator<E> comparator) {
+    return sort(comparator);
   }
 
   /**
@@ -887,7 +877,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
 
   /**
    * Returns a {@code Map} for which the keys and values are defined by the specified converters.
-   * {@code {@link java.util.LinkedHashMap}} is used, so the order is preserved.
+   * {@code {@link LinkedHashMap}} is used, so the order is preserved.
    */
   @NotNull
   public final <K, V> Map<K, V> toMap(@NotNull Convertor<E, K> toKey, @NotNull Convertor<E, V> toValue) {

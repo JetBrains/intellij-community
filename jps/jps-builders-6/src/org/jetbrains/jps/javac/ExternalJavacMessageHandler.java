@@ -29,7 +29,6 @@ import java.util.Locale;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 1/22/12
  */
 public class ExternalJavacMessageHandler {
   private final DiagnosticOutputConsumer myDiagnosticSink;

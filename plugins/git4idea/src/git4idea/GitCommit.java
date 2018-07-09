@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.WeakStringInterner;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
@@ -43,6 +44,7 @@ import java.util.List;
  */
 public final class GitCommit extends VcsChangesLazilyParsedDetails {
   private static final Logger LOG = Logger.getInstance(GitCommit.class);
+  private static final WeakStringInterner ourPathsInterner = new WeakStringInterner();
   @NotNull private final GitLogUtil.DiffRenameLimit myRenameLimit;
 
   public GitCommit(Project project, @NotNull Hash hash, @NotNull List<Hash> parents, long commitTime, @NotNull VirtualFile root,
@@ -62,13 +64,8 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
         return false; // need to know the value from git.config to give correct answer
       case REGISTRY:
         Changes changes = myChanges.get();
-        int estimate;
-        if (changes instanceof UnparsedChanges) {
-          estimate = ((UnparsedChanges)changes).getRenameLimitEstimate();
-        }
-        else {
-          estimate = getRenameLimitEstimate();
-        }
+        int estimate =
+          changes instanceof UnparsedChanges ? ((UnparsedChanges)changes).getRenameLimitEstimate() : getRenameLimitEstimate();
         return estimate <= Registry.intValue("git.diff.renameLimit");
     }
     return true;
@@ -94,13 +91,14 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
   }
 
   private class UnparsedChanges extends VcsChangesLazilyParsedDetails.UnparsedChanges<GitLogStatusInfo> {
-    @NotNull private final String myRootPath = getRoot().getPath();
+    @NotNull private final String myRootPath = ourPathsInterner.intern(getRoot().getPath());
 
     private UnparsedChanges(@NotNull Project project,
                             @NotNull List<List<GitLogStatusInfo>> changesOutput) {
       super(project, changesOutput, new GitChangesDescriptor());
     }
 
+    @Override
     @NotNull
     protected String absolutePath(@NotNull String path) {
       try {
@@ -121,7 +119,7 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
       return GitChangesParser.parse(myProject, getRoot(), changes, getId().asString(), new Date(getCommitTime()), parentHash);
     }
 
-    public int getRenameLimitEstimate() {
+    int getRenameLimitEstimate() {
       int size = 0;
       for (List<GitLogStatusInfo> changesWithParent : myChangesOutput) {
         int sources = 0;
@@ -149,7 +147,7 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
     }
 
     @NotNull
-    private GitChangeType getType(@NotNull Change.Type type) {
+    private static GitChangeType getType(@NotNull Change.Type type) {
       switch (type) {
         case MODIFICATION:
           return GitChangeType.MODIFIED;
@@ -189,10 +187,11 @@ public final class GitCommit extends VcsChangesLazilyParsedDetails {
         case COPIED:
         case RENAMED:
           return Change.Type.MOVED;
+        default:
         case UNRESOLVED:
           LOG.error("Unsupported status info " + info);
+          throw new RuntimeException(info.toString());
       }
-      return null;
     }
   }
 }

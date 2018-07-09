@@ -1,26 +1,18 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfo;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
@@ -47,6 +39,7 @@ import java.util.function.Function;
 public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   private final JComponent myComponent;
   private final ComboBox<XExpression> myComboBox;
+  private final CollectionComboBoxModel<XExpression> myModel = new CollectionComboBoxModel<>();
   private XDebuggerComboBoxEditor myEditor;
   private XExpression myExpression;
   private Function<Document, Document> myDocumentProcessor = Function.identity();
@@ -54,35 +47,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   public XDebuggerExpressionComboBox(@NotNull Project project, @NotNull XDebuggerEditorsProvider debuggerEditorsProvider, @Nullable @NonNls String historyId,
                                      @Nullable XSourcePosition sourcePosition, boolean showEditor, boolean languageInside) {
     super(project, debuggerEditorsProvider, EvaluationMode.EXPRESSION, historyId, sourcePosition);
-    myComboBox = new ComboBox<>(100);
-    myComboBox.setFocusCycleRoot(true);
-    myComboBox.setFocusTraversalPolicyProvider(true);
-    myComboBox.setFocusTraversalPolicy(new FocusTraversalPolicy() {
-      @Override
-      public Component getComponentAfter(Container aContainer, Component aComponent) {
-        return null;
-      }
-
-      @Override
-      public Component getComponentBefore(Container aContainer, Component aComponent) {
-        return null;
-      }
-
-      @Override
-      public Component getFirstComponent(Container aContainer) {
-        return null;
-      }
-
-      @Override
-      public Component getLastComponent(Container aContainer) {
-        return null;
-      }
-
-      @Override
-      public Component getDefaultComponent(Container aContainer) {
-        return null;
-      }
-    });
+    myComboBox = new ComboBox<>(myModel, 100);
     myComboBox.setEditable(true);
     myExpression = XExpressionImpl.EMPTY_EXPRESSION;
     Dimension minimumSize = new Dimension(myComboBox.getMinimumSize());
@@ -90,7 +55,8 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
     myComboBox.setMinimumSize(minimumSize);
     initEditor(showEditor, languageInside);
     fillComboBox();
-    myComponent = JBUI.Panels.simplePanel(myComboBox);
+    myComponent = JBUI.Panels.simplePanel().addToTop(myComboBox);
+    setExpression(myExpression);
   }
 
   public ComboBox getComboBox() {
@@ -140,23 +106,14 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
   }
 
   private void fillComboBox() {
-    myComboBox.removeAllItems();
-    getRecentExpressions().forEach(myComboBox::addItem);
-    if (myComboBox.getItemCount() > 0) {
-      myComboBox.setSelectedIndex(0);
-    }
+    myModel.setSelectedItem(null); // must do this to preserve current editor
+    myModel.replaceAll(getRecentExpressions());
   }
 
   @Override
   protected void doSetText(XExpression text) {
-    if (myComboBox.getItemCount() > 0) {
-      myComboBox.setSelectedIndex(0);
-    }
-
-    //if (myComboBox.isEditable()) {
-      myEditor.setItem(text);
-    //}
     myExpression = text;
+    myEditor.getEditorTextField().setNewDocumentAndFileType(getFileType(text), createDocument(text));
   }
 
   @Override
@@ -186,8 +143,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
 
   protected void prepareEditor(Editor editor) {
     super.prepareEditor(editor);
-    editor.getColorsScheme().setEditorFontSize(
-      Math.min(myComboBox.getFont().getSize(), EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize()));
+    editor.getColorsScheme().setEditorFontSize(Math.min(myComboBox.getFont().getSize(), EditorUtil.getEditorFont().getSize()));
   }
 
   private class XDebuggerComboBoxEditor implements ComboBoxEditor {
@@ -204,6 +160,29 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
             setExpandable(editor);
           }
           foldNewLines(editor);
+          editor.getFilteredDocumentMarkupModel().addMarkupModelListener(((EditorImpl)editor).getDisposable(), new MarkupModelListener() {
+            int errors = 0;
+            @Override
+            public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
+              processHighlighter(highlighter, true);
+            }
+
+            @Override
+            public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
+              processHighlighter(highlighter, false);
+            }
+
+            void processHighlighter(@NotNull RangeHighlighterEx highlighter, boolean add) {
+              HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+              if (info != null && HighlightSeverity.ERROR.equals(info.getSeverity())) {
+                errors += add ? 1 : -1;
+                if (errors == 0 || errors == 1) {
+                  myComboBox.putClientProperty("JComponent.outline", errors > 0 ? "error" : null);
+                  myComboBox.repaint();
+                }
+              }
+            }
+          });
         }
       };
       myDelegate.getEditorComponent().setFontInheritedFromLAF(false);
@@ -212,7 +191,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
         comp = addChooser(comp);
       }
       if (showMultiline) {
-        comp = addExpand(comp);
+        comp = addExpand(comp, true);
       }
       myPanel = comp;
     }
@@ -228,11 +207,9 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
 
     @Override
     public void setItem(Object anObject) {
-      if (anObject == null) {
-        anObject = XExpressionImpl.EMPTY_EXPRESSION;
+      if (anObject != null) { // do not reset the editor on null
+        setExpression((XExpression)anObject);
       }
-      XExpression expression = (XExpression)anObject;
-      myDelegate.getEditorComponent().setNewDocumentAndFileType(getFileType(expression), createDocument(expression));
     }
 
     @Override

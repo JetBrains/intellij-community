@@ -55,7 +55,21 @@ public class DeleteCatchFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    final PsiTryStatement tryStatement = ((PsiCatchSection)myCatchParameter.getDeclarationScope()).getTryStatement();
+    PsiElement previousElement = deleteCatch(myCatchParameter);
+    if (previousElement != null) {
+      //move caret to previous catch section
+      editor.getCaretModel().moveToOffset(previousElement.getTextRange().getEndOffset());
+    }
+  }
+
+  /**
+   * Deletes catch section
+   *
+   * @param catchParameter the catchParameter in the section to delete (must be a catch parameter)
+   * @return the physical element before the deleted catch section, if available. Can be used to position the editor cursor after deletion.
+   */
+  public static PsiElement deleteCatch(PsiParameter catchParameter) {
+    final PsiTryStatement tryStatement = ((PsiCatchSection)catchParameter.getDeclarationScope()).getTryStatement();
     if (tryStatement.getCatchBlocks().length == 1 && tryStatement.getFinallyBlock() == null && tryStatement.getResourceList() == null) {
       // unwrap entire try statement
       final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
@@ -80,15 +94,12 @@ public class DeleteCatchFix implements IntentionAction {
         }
       }
       tryStatement.delete();
-      if (lastAddedStatement != null) {
-        editor.getCaretModel().moveToOffset(lastAddedStatement.getTextRange().getEndOffset());
-      }
 
-      return;
+      return lastAddedStatement;
     }
 
     // delete catch section
-    final PsiElement catchSection = myCatchParameter.getParent();
+    final PsiElement catchSection = catchParameter.getParent();
     assert catchSection instanceof PsiCatchSection : catchSection;
     //save previous element to move caret to
     PsiElement previousElement = catchSection.getPrevSibling();
@@ -96,10 +107,7 @@ public class DeleteCatchFix implements IntentionAction {
       previousElement = previousElement.getPrevSibling();
     }
     catchSection.delete();
-    if (previousElement != null) {
-      //move caret to previous catch section
-      editor.getCaretModel().moveToOffset(previousElement.getTextRange().getEndOffset());
-    }
+    return previousElement;
   }
 
   @Override

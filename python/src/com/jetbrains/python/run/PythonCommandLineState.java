@@ -89,7 +89,21 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public static final String GROUP_DEBUGGER = "Debugger";
   public static final String GROUP_PROFILER = "Profiler";
   public static final String GROUP_COVERAGE = "Coverage";
+  /**
+   * This group is applied for Python module execution. In this case it
+   * contains two parameters: {@code -m} and the module name.
+   * <p>
+   * For Python script execution this group must be empty.
+   * <p>
+   * Note that this option <cite>terminates option list</cite> so this group
+   * must go <b>after</b> other Python interpreter options. At the same time it
+   * must go <b>before</b> <cite>arguments passed to program in
+   * sys.argv[1:]</cite>, which are stored in {@link #GROUP_SCRIPT}.
+   */
+  public static final String GROUP_MODULE = "Module";
+  //TODO: DOC ParametersListUtil
   public static final String GROUP_SCRIPT = "Script";
+  public static final String MODULE_PARAMETER = "-m";
   private final AbstractPythonRunConfiguration myConfig;
 
   private Boolean myMultiprocessDebug = null;
@@ -257,9 +271,26 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return new PyRemoteProcessStarter();
   }
 
+  /**
+   * Generate command line and apply patchers
+   *
+   * @param patchers array of patchers
+   * @return generated command line changed by patchers
+   */
+  @NotNull
+  public final GeneralCommandLine generateCommandLine(@Nullable CommandLinePatcher[] patchers) {
+    return applyPatchers(generateCommandLine(), patchers);
+  }
 
-  public GeneralCommandLine generateCommandLine(CommandLinePatcher[] patchers) {
-    GeneralCommandLine commandLine = generateCommandLine();
+  /**
+   * Apply patchers to the given command line
+   *
+   * @param commandLine command line to change
+   * @param patchers    array of patchers
+   * @return command line changed by patchers
+   */
+  @NotNull
+  private static GeneralCommandLine applyPatchers(@NotNull GeneralCommandLine commandLine, @Nullable CommandLinePatcher[] patchers) {
     if (patchers != null) {
       for (CommandLinePatcher patcher : patchers) {
         if (patcher != null) patcher.patchCommandLine(commandLine);
@@ -272,6 +303,14 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return PythonProcessRunner.createProcess(commandLine);
   }
 
+  /**
+   * Generate command line from run configuration.
+   * It can be overridden if commandline shouldn't be based on the run configuration or when it requires some additional changes
+   * before patchers applying.
+   *
+   * @return generated command line
+   */
+  @NotNull
   public GeneralCommandLine generateCommandLine() {
     GeneralCommandLine commandLine = createPythonCommandLine(myConfig.getProject(), myConfig, isDebug(), myRunWithPty);
 
@@ -314,6 +353,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
     params.addParamsGroup(GROUP_DEBUGGER);
     params.addParamsGroup(GROUP_PROFILER);
     params.addParamsGroup(GROUP_COVERAGE);
+    params.addParamsGroup(GROUP_MODULE);
     params.addParamsGroup(GROUP_SCRIPT);
   }
 
@@ -399,7 +439,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
                                     final String interpreterPath) {
     final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(interpreterPath);
     if (flavor != null) {
-      flavor.initPythonPath(commandLine, pathList);
+      flavor.initPythonPath(commandLine, passParentEnvs, pathList);
     }
     else {
       PythonSdkFlavor.initPythonPath(commandLine.getEnvironment(), passParentEnvs, pathList);

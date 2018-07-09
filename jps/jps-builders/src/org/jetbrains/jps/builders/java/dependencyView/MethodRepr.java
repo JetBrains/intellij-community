@@ -33,7 +33,6 @@ import java.util.Set;
 
 /**
  * @author: db
- * Date: 01.02.11
  */
 class MethodRepr extends ProtoMember {
 
@@ -242,7 +241,7 @@ class MethodRepr extends ProtoMember {
     }
     stream.println();
 
-    final TypeRepr.AbstractType[] es = myExceptions.toArray(new TypeRepr.AbstractType[myExceptions.size()]);
+    final TypeRepr.AbstractType[] es = myExceptions.toArray(TypeRepr.AbstractType.EMPTY_TYPE_ARRAY);
     Arrays.sort(es, Comparator.comparing(o -> o.getDescr(context)));
     stream.print("          Exceptions : ");
     for (final TypeRepr.AbstractType e : es) {

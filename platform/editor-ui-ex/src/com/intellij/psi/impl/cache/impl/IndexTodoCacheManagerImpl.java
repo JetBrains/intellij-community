@@ -41,7 +41,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 16, 2008
  */
 public class IndexTodoCacheManagerImpl implements TodoCacheManager {
   private final Project myProject;

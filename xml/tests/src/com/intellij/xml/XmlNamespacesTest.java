@@ -23,6 +23,7 @@ import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -254,6 +255,20 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
     myFixture.testHighlighting();
   }
 
+  public void testImplicitPrefixesPattern() {
+    myFixture.configureByText(XmlFileType.INSTANCE, "<html xmlns=\"http://www.w3.org/1999/xhtml\"\n" +
+                                                    "          xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +
+                                                    "    <body about=\"wsdl:definitions/wsdl:types/xs:schema[@targetNamespace='http://www.w3schools.com/webservices/']\">\n" +
+                                                    "    </body>\n" +
+                                                    "</html>");
+    myFixture.testHighlighting();
+  }
+
+  public void testPatternPerformanceProblem() {
+    myFixture.configureByFile("idproblem.html");
+    PlatformTestUtil.startPerformanceTest("?", 100, () -> myFixture.doHighlighting()).assertTiming();
+  }
+
   private void doUnusedDeclarationTest(String text, String after, String name) {
     doUnusedDeclarationTest(text, after, name, true);
   }
@@ -274,12 +289,9 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
 
   private void doOptimizeImportsTest(String after) {
     myFixture.testHighlighting();
-    new WriteCommandAction(getProject(), getFile()) {
-      @Override
-      protected void run(@NotNull Result result) {
-        new OptimizeImportsProcessor(getProject(), getFile()).runWithoutProgress();
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(getProject(), getFile()).run(() -> {
+      new OptimizeImportsProcessor(getProject(), getFile()).runWithoutProgress();
+    });
     myFixture.checkResult(after);
   }
 

@@ -169,7 +169,7 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
     }
 
     public boolean isAcceptable(Object element, PsiElement context) {
-      PsiNameValuePair pair = PsiTreeUtil.getParentOfType(context, PsiNameValuePair.class, false, PsiMember.class, PsiStatement.class);
+      PsiNameValuePair pair = PsiTreeUtil.getParentOfType(context, PsiNameValuePair.class, false, PsiMember.class, PsiStatement.class, PsiCall.class);
       if (null == pair) return false;
       if (!myParameterName.equals(pair.getName())) return false;
       PsiAnnotation annotation = PsiTreeUtil.getParentOfType(pair, PsiAnnotation.class);

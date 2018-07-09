@@ -15,13 +15,10 @@
  */
 package com.intellij.openapi.compiler;
 
+/**
+ * @deprecated Use {@link CompilationStatusListener} instead
+ */
+@Deprecated
 public class CompilationStatusAdapter implements CompilationStatusListener {
-  public void automakeCompilationFinished(int errors, int warnings, CompileContext compileContext) {
-  }
 
-  public void compilationFinished(boolean aborted, int errors, int warnings, final CompileContext compileContext) {
-  }
-
-  public void fileGenerated(String outputRoot, String relativePath) {
-  }
 }

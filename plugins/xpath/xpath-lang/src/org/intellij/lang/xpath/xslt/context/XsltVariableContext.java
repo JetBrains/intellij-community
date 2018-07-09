@@ -22,7 +22,6 @@ import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.Processor;
 import org.intellij.lang.xpath.context.VariableContext;
 import org.intellij.lang.xpath.psi.XPathElement;
 import org.intellij.lang.xpath.psi.XPathVariable;
@@ -47,12 +46,7 @@ import java.util.List;
 public class XsltVariableContext implements VariableContext<XsltVariable> {
     public static final XsltVariableContext INSTANCE = new XsltVariableContext();
     
-    private final ResolveCache.Resolver RESOLVER = new ResolveCache.Resolver() {
-        @Nullable
-        public PsiElement resolve(@NotNull PsiReference psiReference, boolean incompleteCode) {
-            return resolveInner((XPathVariableReference)psiReference);
-        }
-    };
+    private final ResolveCache.Resolver RESOLVER = (psiReference, incompleteCode) -> resolveInner((XPathVariableReference)psiReference);
 
     @NotNull
     public XsltVariable[] getVariablesInScope(XPathElement element) {
@@ -163,7 +157,7 @@ public class XsltVariableContext implements VariableContext<XsltVariable> {
         }
 
         public XsltVariable[] getResult() {
-            return myNames.toArray(new XsltVariable[myNames.size()]);
+            return myNames.toArray(new XsltVariable[0]);
         }
 
         protected void processVarOrParamImpl(XmlTag tag) {

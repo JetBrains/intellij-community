@@ -46,7 +46,7 @@ public class ArtifactCompileScope {
 
   public static ModuleCompileScope createScopeForModulesInArtifacts(@NotNull Project project, @NotNull Collection<? extends Artifact> artifacts) {
     final Set<Module> modules = ArtifactUtil.getModulesIncludedInArtifacts(artifacts, project);
-    return new ModuleCompileScope(project, modules.toArray(new Module[modules.size()]), true);
+    return new ModuleCompileScope(project, modules.toArray(Module.EMPTY_ARRAY), true);
   }
 
   public static CompileScope createArtifactsScope(@NotNull Project project,
@@ -66,7 +66,7 @@ public class ArtifactCompileScope {
   }
 
   public static CompileScope createScopeWithArtifacts(final CompileScope baseScope, @NotNull Collection<Artifact> artifacts, final boolean forceArtifactBuild) {
-    baseScope.putUserData(ARTIFACTS_KEY, artifacts.toArray(new Artifact[artifacts.size()]));
+    baseScope.putUserData(ARTIFACTS_KEY, artifacts.toArray(new Artifact[0]));
     if (forceArtifactBuild) {
       baseScope.putUserData(FORCE_ARTIFACT_BUILD, Boolean.TRUE);
     }

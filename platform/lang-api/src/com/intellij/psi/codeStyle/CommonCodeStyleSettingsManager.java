@@ -22,6 +22,7 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jdom.Content;
@@ -39,7 +40,7 @@ import java.util.Map;
  *
  * @author Rustam Vishnyakov
  */
-public class CommonCodeStyleSettingsManager {
+class CommonCodeStyleSettingsManager {
   private volatile Map<Language, CommonCodeStyleSettings> myCommonSettingsMap;
   private volatile Map<String, Content> myUnknownSettingsMap;
 
@@ -48,30 +49,31 @@ public class CommonCodeStyleSettingsManager {
   @NonNls static final String COMMON_SETTINGS_TAG = "codeStyleSettings";
   private static final String LANGUAGE_ATTR = "language";
 
+  private static class DefaultsHolder {
+    private final static CommonCodeStyleSettings SETTINGS = new CommonCodeStyleSettings(Language.ANY);
+    static {
+      SETTINGS.setRootSettings(CodeStyleSettings.getDefaults());
+    }
+  }
+
   CommonCodeStyleSettingsManager(@NotNull CodeStyleSettings parentSettings) {
     myParentSettings = parentSettings;
   }
 
-  /**
-   * Attempts to get language-specific common settings from {@code LanguageCodeStyleSettingsProvider}.
-   *
-   * @param lang The language to get settings for.
-   * @return If the provider for the language exists and is able to create language-specific default settings
-   *         ({@code LanguageCodeStyleSettingsProvider.getDefaultCommonSettings()} doesn't return null)
-   *         returns the instance of settings for this language. Otherwise returns the instance of parent settings
-   *         shared between several languages.
-   */
-  public CommonCodeStyleSettings getCommonSettings(@Nullable Language lang) {
+  @Nullable
+  CommonCodeStyleSettings getCommonSettings(@Nullable Language lang) {
     Map<Language, CommonCodeStyleSettings> commonSettingsMap = getCommonSettingsMap();
-    CommonCodeStyleSettings settings = commonSettingsMap.get(lang);
-    while (settings == null && lang != null) {
-      lang = lang.getBaseLanguage();
-      settings = commonSettingsMap.get(lang);
+    Language baseLang = ObjectUtils.notNull(lang, Language.ANY);
+    while (baseLang != null) {
+      CommonCodeStyleSettings settings = commonSettingsMap.get(baseLang);
+      if (settings != null) return settings;
+      baseLang = baseLang.getBaseLanguage();
     }
-    if (settings != null) {
-      return settings;
-    }
-    return myParentSettings;
+    return null;
+  }
+
+  CommonCodeStyleSettings getDefaults() {
+    return DefaultsHolder.SETTINGS;
   }
 
   @NotNull
@@ -95,7 +97,7 @@ public class CommonCodeStyleSettingsManager {
    * obtained by name.
    * 
    * @param langName The display name of the language whose settings must be returned.
-   * @return Common code style settings for the given language or parent (shared) settings if not found.
+   * @return Common code style settings for the given language or a new instance with default values if not found.
    */
   @NotNull
   public CommonCodeStyleSettings getCommonSettings(@NotNull String langName) {
@@ -105,7 +107,7 @@ public class CommonCodeStyleSettingsManager {
         return entry.getValue();
       }
     }
-    return myParentSettings;
+    return new CommonCodeStyleSettings(Language.ANY);
   }  
 
 
@@ -224,18 +226,6 @@ public class CommonCodeStyleSettingsManager {
     }
   }
 
-  public static void copy(@NotNull CommonCodeStyleSettings source, @NotNull CommonCodeStyleSettings target) {
-    CommonCodeStyleSettings.copyPublicFields(source, target);
-    CommonCodeStyleSettings.IndentOptions targetIndentOptions = target.getIndentOptions();
-    if (targetIndentOptions != null) {
-      CommonCodeStyleSettings.IndentOptions sourceIndentOptions = source.getIndentOptions();
-      if (sourceIndentOptions != null) {
-        CommonCodeStyleSettings.copyPublicFields(sourceIndentOptions, targetIndentOptions);
-      }
-    }
-    target.setSoftMargins(source.getSoftMargins());
-  }
-
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof CommonCodeStyleSettingsManager) {
@@ -249,7 +239,8 @@ public class CommonCodeStyleSettingsManager {
         CommonCodeStyleSettings otherSettings = other.getCommonSettings(language);
         if (!theseSettings.equals(otherSettings)) return false;
       }
+      return true;
     }
-    return true;
+    return false;
   }
 }

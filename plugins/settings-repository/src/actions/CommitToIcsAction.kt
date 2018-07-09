@@ -66,14 +66,14 @@ class CommitToIcsAction : CommonCheckinFilesAction() {
     }
   }
 
-  override fun getActionName(dataContext: VcsContext) = icsMessage("action.CommitToIcs.text")
+  override fun getActionName(dataContext: VcsContext): String = icsMessage("action.CommitToIcs.text")
 
   override fun isApplicableRoot(file: VirtualFile, status: FileStatus, dataContext: VcsContext): Boolean {
     val project = dataContext.project
     return project is ProjectEx && project.stateStore.storageScheme == StorageScheme.DIRECTORY_BASED && super.isApplicableRoot(file, status, dataContext) && !file.isDirectory && isProjectConfigFile(file, dataContext.project!!)
   }
 
-  override fun prepareRootsForCommit(roots: Array<FilePath>, project: Project) = roots
+  override fun prepareRootsForCommit(roots: Array<FilePath>, project: Project): Array<FilePath> = roots
 
   override fun performCheckIn(context: VcsContext, project: Project, roots: Array<out FilePath>) {
     val projectId = getProjectId(project) ?: return

@@ -68,6 +68,16 @@ public class PsiParameterListImpl extends JavaStubPsiElement<PsiParameterListStu
   }
 
   @Override
+  public boolean isEmpty() {
+    final PsiParameterListStub stub = getGreenStub();
+    if (stub != null) {
+      return stub.getChildrenStubs().stream().noneMatch(child -> child.getStubType() == JavaStubElementTypes.PARAMETER);
+    }
+
+    return getNode().findChildByType(Constants.PARAMETER_BIT_SET) == null;
+  }
+
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor){
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitParameterList(this);

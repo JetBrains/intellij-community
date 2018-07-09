@@ -1,22 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore.kdbx
 
 import com.intellij.util.SmartList
-import com.intellij.util.io.inputStreamIfExists
+import com.intellij.util.io.inputStream
 import com.intellij.util.loadElement
 import com.intellij.util.write
 import org.bouncycastle.crypto.engines.Salsa20Engine
@@ -30,10 +16,15 @@ import java.security.MessageDigest
 import java.time.ZonedDateTime
 import java.time.format.DateTimeParseException
 import java.util.*
-import javax.xml.bind.DatatypeConverter
 
-internal fun loadKdbx(file: Path, credentials: KeePassCredentials) = file.inputStreamIfExists()?.use {
-  KeePassDatabase(KdbxStreamFormat().load(credentials, it))
+internal fun loadKdbx(file: Path, credentials: KeePassCredentials): KeePassDatabase {
+  return file.inputStream().use { inputStream ->
+    val kdbxHeader = KdbxHeader()
+    val element = KdbxSerializer.createUnencryptedInputStream(credentials, kdbxHeader, inputStream).use {
+      load(it, Salsa20Encryption(kdbxHeader.protectedStreamKey))
+    }
+    KeePassDatabase(element)
+  }
 }
 
 class KdbxPassword(password: ByteArray) : KeePassCredentials {
@@ -47,16 +38,6 @@ class KdbxPassword(password: ByteArray) : KeePassCredentials {
 
 interface KeePassCredentials {
   val key: ByteArray
-}
-
-class KdbxStreamFormat {
-  fun load(credentials: KeePassCredentials, inputStream: InputStream): Element {
-    val kdbxHeader = KdbxHeader()
-    KdbxSerializer.createUnencryptedInputStream(credentials, kdbxHeader, inputStream).use {
-      val encryption = Salsa20Encryption(kdbxHeader.protectedStreamKey)
-      return load(it, encryption)
-    }
-  }
 }
 
 internal fun save(rootElement: Element, outputStream: OutputStream, encryption: KdbxEncryption) {
@@ -88,7 +69,7 @@ internal fun save(rootElement: Element, outputStream: OutputStream, encryption: 
 private fun load(inputStream: InputStream, encryption: KdbxEncryption): Element {
   val rootElement = loadElement(inputStream)
   rootElement.getChild("Root")?.getChild("Group")?.let { rootGroupElement ->
-    processEntries(rootGroupElement) { container, valueElement ->
+    processEntries(rootGroupElement) { _, valueElement ->
       if (valueElement.getAttributeValue("Protected", "false").equals("true", ignoreCase = true)) {
         valueElement.text = encryption.decrypt(Base64.getDecoder().decode(valueElement.text)).toString(Charsets.UTF_8)
         valueElement.removeAttribute("Protected")
@@ -161,10 +142,11 @@ internal interface KdbxEncryption {
   fun encrypt(decryptedText: ByteArray): ByteArray
 }
 
-private val SALSA20_IV = DatatypeConverter.parseHexBinary("E830094B97205D2A")
+private val SALSA20_IV = byteArrayOf(-24, 48, 9, 75, -105, 32, 93, 42)  // 0xE830094B97205D2A
 
 /**
- * Salsa20 doesn't quite fit the KeePass memory model - all encrypted items have to be en/decrypted in order of encryption, i.e. in document order and at the same time.
+ * Salsa20 doesn't quite fit the KeePass memory model - all encrypted items have to be en/decrypted in order of encryption,
+ * i.e. in document order and at the same time.
  */
 internal class Salsa20Encryption(override val key: ByteArray) : KdbxEncryption {
   private val salsa20 = Salsa20Engine()
@@ -188,10 +170,10 @@ internal class Salsa20Encryption(override val key: ByteArray) : KdbxEncryption {
 }
 
 internal fun parseTime(value: String): Long {
-  try {
-    return ZonedDateTime.parse(value).toEpochSecond()
+  return try {
+    ZonedDateTime.parse(value).toEpochSecond()
   }
   catch (e: DateTimeParseException) {
-    return 0
+    0
   }
 }

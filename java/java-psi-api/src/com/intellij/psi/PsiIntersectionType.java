@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.util.NullUtils;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
@@ -34,6 +35,7 @@ public class PsiIntersectionType extends PsiType.Stub {
 
   private PsiIntersectionType(@NotNull PsiType[] conjuncts) {
     super(TypeAnnotationProvider.EMPTY);
+    if (NullUtils.hasNull((Object[])conjuncts)) throw new IllegalArgumentException("Null conjunct");
     myConjuncts = conjuncts;
   }
 

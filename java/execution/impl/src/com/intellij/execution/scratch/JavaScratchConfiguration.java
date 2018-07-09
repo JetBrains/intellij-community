@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.execution.scratch;
 
@@ -34,7 +22,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,10 +30,8 @@ import java.io.File;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 29-Sep-15
  */
 public class JavaScratchConfiguration extends ApplicationConfiguration {
-  public int SCRATCH_FILE_ID;
 
   protected JavaScratchConfiguration(String name, Project project, ConfigurationFactory factory) {
     super(name, project, factory);
@@ -54,11 +40,11 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
   @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     JavaParametersUtil.checkAlternativeJRE(this);
-    final String className = MAIN_CLASS_NAME;
+    final String className = getMainClassName();
     if (className == null || className.length() == 0) {
       throw new RuntimeConfigurationError(ExecutionBundle.message("no.main.class.specified.error.text"));
     }
-    if (SCRATCH_FILE_ID <= 0) {
+    if (getScratchFileUrl() == null) {
       throw new RuntimeConfigurationError("No scratch file associated with configuration");
     }
     if (getScratchVirtualFile() == null) {
@@ -111,23 +97,28 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
     return new JavaScratchConfigurable(getProject());
   }
 
-  @Override
-  public boolean isCompileBeforeLaunchAddedByDefault() {
-    return true;
+  public void setScratchFileUrl(String url) {
+    getOptions().setScratchFileUrl(url);
   }
 
   @Nullable
   public String getScratchFileUrl() {
-    final VirtualFile vFile = getScratchVirtualFile();
-    return vFile != null? vFile.getUrl() : null;
+    return getOptions().getScratchFileUrl();
   }
 
   @Nullable
   public VirtualFile getScratchVirtualFile() {
-    final int id = SCRATCH_FILE_ID;
-    if (id <= 0) {
-      return null;
-    }
-    return ManagingFS.getInstance().findFileById(id);
+    final String url = getScratchFileUrl();
+    return url == null? null : VirtualFileManager.getInstance().findFileByUrl(url);
+  }
+
+  @Override
+  protected JavaScratchConfigurationOptions getOptions() {
+    return (JavaScratchConfigurationOptions)super.getOptions();
+  }
+
+  @Override
+  protected Class<? extends ModuleBasedConfigurationOptions> getOptionsClass() {
+    return JavaScratchConfigurationOptions.class;
   }
 }

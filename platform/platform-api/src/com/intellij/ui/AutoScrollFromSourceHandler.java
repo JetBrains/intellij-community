@@ -42,7 +42,7 @@ import javax.swing.*;
 public abstract class AutoScrollFromSourceHandler implements Disposable {
   protected final Project myProject;
   protected final Alarm myAlarm;
-  private JComponent myComponent;
+  private final JComponent myComponent;
 
   public AutoScrollFromSourceHandler(@NotNull Project project, @NotNull JComponent view) {
     this(project, view, null);

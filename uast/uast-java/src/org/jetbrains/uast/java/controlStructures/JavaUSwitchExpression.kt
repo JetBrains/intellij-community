@@ -25,7 +25,7 @@ class JavaUSwitchExpression(
   override val psi: PsiSwitchStatement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), USwitchExpression {
-  override val expression by lz { JavaConverter.convertOrEmpty(psi.expression, this) }
+  override val expression: UExpression by lz { JavaConverter.convertOrEmpty(psi.expression, this) }
 
   override val body: UExpressionList by lz {
     object : JavaUExpressionList(psi, JavaSpecialExpressionKinds.SWITCH, this) {
@@ -67,6 +67,19 @@ private fun PsiCodeBlock.convertToSwitchEntryList(containingElement: UExpression
   return result
 }
 
+internal fun findUSwitchEntry(body: UExpressionList, el: PsiSwitchLabelStatement): JavaUSwitchEntry? =
+  body.also { require(it.kind == JavaSpecialExpressionKinds.SWITCH) }
+    .expressions.find { (it as? JavaUSwitchEntry)?.labels?.contains(el) ?: false } as? JavaUSwitchEntry
+
+internal fun findUSwitchClauseBody(switch: JavaUSwitchExpression, psi: PsiElement): UExpressionList? {
+  val bodyExpressions = switch.body.expressions
+  val uExpression = bodyExpressions.find {
+    (it as JavaUSwitchEntry).body.expressions.any { it.psi == psi }
+  } ?: return null
+  return (uExpression as JavaUSwitchEntry).body
+}
+
+
 class JavaUSwitchEntry(
   val labels: List<PsiSwitchLabelStatement>,
   val statements: List<PsiStatement>,
@@ -74,10 +87,10 @@ class JavaUSwitchEntry(
 ) : JavaAbstractUExpression(givenParent), USwitchClauseExpressionWithBody {
   override val psi: PsiSwitchLabelStatement = labels.first()
 
-  override val caseValues by lz {
+  override val caseValues: List<UExpression> by lz {
     labels.mapNotNull {
       if (it.isDefaultCase) {
-        JavaUDefaultCaseExpression
+        JavaUDefaultCaseExpression(it, this)
       }
       else {
         val value = it.caseValue
@@ -100,17 +113,13 @@ class JavaUSwitchEntry(
   }
 }
 
-object JavaUDefaultCaseExpression : UExpression, JvmDeclarationUElement {
-  override val uastParent: UElement?
-    get() = null
-
-  override val psi: PsiElement?
-    get() = null
+class JavaUDefaultCaseExpression(override val psi: PsiElement?, givenParent: UElement?)
+  : JavaAbstractUExpression(givenParent), JvmDeclarationUElement {
 
   override val annotations: List<UAnnotation>
     get() = emptyList()
 
-  override fun asLogString() = "UDefaultCaseExpression"
+  override fun asLogString(): String = "UDefaultCaseExpression"
 
-  override fun asRenderString() = "else"
+  override fun asRenderString(): String = "else"
 }

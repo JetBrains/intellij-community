@@ -1,15 +1,24 @@
 package com.siyeh.ig.abstraction;
 
+import com.intellij.ToolExtensionPoints;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.openapi.extensions.Extensions;
 import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.Nullable;
 
 public class TypeMayBeWeakenedInspectionTest extends LightInspectionTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    // avoid PSI/document/model changes are not allowed during highlighting
+    Extensions.getExtensions(ToolExtensionPoints.DEAD_CODE_TOOL, null);
+  }
 
   public void testTypeMayBeWeakened() { doTest(); }
   public void testNumberAdderDemo() { doTest(); }
   public void testAutoClosableTest() { doTest(); }
   public void testLambda() { doTest(); }
+  public void testTryWithResources() { doTest(); }
 
   @Override
   protected String[] getEnvironmentClasses() {

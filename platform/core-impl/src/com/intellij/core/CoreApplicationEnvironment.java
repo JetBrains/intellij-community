@@ -1,23 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.core;
 
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
-import com.intellij.concurrency.AsyncFuture;
-import com.intellij.concurrency.AsyncUtil;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -65,7 +49,10 @@ import com.intellij.psi.meta.MetaDataRegistrar;
 import com.intellij.psi.stubs.CoreStubTreeLoader;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.util.Consumer;
+import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.Processor;
+import com.intellij.util.graph.GraphAlgorithms;
+import com.intellij.util.graph.impl.GraphAlgorithmsImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
@@ -117,6 +104,9 @@ public class CoreApplicationEnvironment {
                              : new VirtualFileSystem[]{myLocalFileSystem, myJarFileSystem};
     VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(fs, myApplication.getMessageBus());
     registerComponentInstance(appContainer, VirtualFileManager.class, virtualFileManager);
+    
+    //fake EP for cleaning resources after area disposing (otherwise KeyedExtensionCollector listener will be copied to the next area) 
+    registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.virtualFileSystem"), KeyedLazyInstanceEP.class);
 
     registerApplicationService(EncodingManager.class, new CoreEncodingRegistry());
     registerApplicationService(VirtualFilePointerManager.class, createVirtualFilePointerManager());
@@ -126,12 +116,12 @@ public class CoreApplicationEnvironment {
     registerApplicationService(StubTreeLoader.class, new CoreStubTreeLoader());
     registerApplicationService(PsiReferenceService.class, new PsiReferenceServiceImpl());
     registerApplicationService(MetaDataRegistrar.class, new MetaRegistry());
-
     registerApplicationService(ProgressManager.class, createProgressIndicatorProvider());
-
     registerApplicationService(JobLauncher.class, createJobLauncher());
     registerApplicationService(CodeFoldingSettings.class, new CodeFoldingSettings());
     registerApplicationService(CommandProcessor.class, new CoreCommandProcessor());
+    registerApplicationService(GraphAlgorithms.class, new GraphAlgorithmsImpl());
+
     myApplication.registerService(ApplicationInfo.class, ApplicationInfoImpl.class);
   }
 
@@ -168,15 +158,6 @@ public class CoreApplicationEnvironment {
             return false;
         }
         return true;
-      }
-
-      @NotNull
-      @Override
-      public <T> AsyncFuture<Boolean> invokeConcurrentlyUnderProgressAsync(@NotNull List<T> things,
-                                                                           ProgressIndicator progress,
-                                                                           boolean failFastOnAcquireReadAction,
-                                                                           @NotNull Processor<? super T> thingProcessor) {
-        return AsyncUtil.wrapBoolean(invokeConcurrentlyUnderProgress(things, progress, failFastOnAcquireReadAction, thingProcessor));
       }
 
       @NotNull

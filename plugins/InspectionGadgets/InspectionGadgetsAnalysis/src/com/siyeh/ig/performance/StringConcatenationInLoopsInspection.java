@@ -15,8 +15,12 @@
  */
 package com.siyeh.ig.performance;
 
+import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.codeInspection.util.ChangeToAppendUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,22 +34,21 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
+import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
@@ -75,7 +78,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     return new StringConcatenationInLoopsVisitor();
   }
 
-  static PsiLoopStatement getOutermostCommonLoop(PsiExpression expression, PsiVariable variable) {
+  private static PsiLoopStatement getOutermostCommonLoop(@NotNull PsiExpression expression, @NotNull PsiVariable variable) {
     PsiElement stopAt = null;
     PsiCodeBlock block = StringConcatenationInLoopsVisitor.getSurroundingBlock(expression);
     if (block != null) {
@@ -173,7 +176,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     }
 
     private static boolean isUsedCompletely(PsiVariable variable, PsiLoopStatement loop) {
-      boolean notUsedCompletely = ReferencesSearch.search(variable, new LocalSearchScope(loop)).forEach(ref -> {
+      return !ReferencesSearch.search(variable, new LocalSearchScope(loop)).forEach(ref -> {
         PsiExpression expression = ObjectUtils.tryCast(ref.getElement(), PsiExpression.class);
         if (expression == null) return true;
         PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
@@ -181,14 +184,13 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
           parent = PsiUtil.skipParenthesizedExprUp(parent.getParent());
         }
         if (parent instanceof PsiExpressionList ||
-            (parent instanceof PsiAssignmentExpression &&
-             PsiTreeUtil.isAncestor(((PsiAssignmentExpression)parent).getRExpression(), expression, false))) {
+            parent instanceof PsiAssignmentExpression &&
+             PsiTreeUtil.isAncestor(((PsiAssignmentExpression)parent).getRExpression(), expression, false)) {
           PsiStatement statement = PsiTreeUtil.getParentOfType(parent, PsiStatement.class);
           return ControlFlowUtils.isExecutedOnceInLoop(statement, loop) || ControlFlowUtils.isVariableReassigned(statement, variable);
         }
         return true;
       });
-      return !notUsedCompletely;
     }
 
     @Nullable
@@ -196,9 +198,11 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       PsiElement parent = PsiTreeUtil.getParentOfType(expression, PsiMethod.class, PsiClassInitializer.class, PsiLambdaExpression.class);
       if(parent instanceof PsiMethod) {
         return ((PsiMethod)parent).getBody();
-      } else if(parent instanceof PsiClassInitializer) {
+      }
+      if(parent instanceof PsiClassInitializer) {
         return ((PsiClassInitializer)parent).getBody();
-      } else if(parent instanceof PsiLambdaExpression) {
+      }
+      if(parent instanceof PsiLambdaExpression) {
         PsiElement body = ((PsiLambdaExpression)parent).getBody();
         if(body instanceof PsiCodeBlock) {
           return (PsiCodeBlock)body;
@@ -293,34 +297,64 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     PsiExpression expression = ObjectUtils.tryCast(ArrayUtil.getFirstElement(infos), PsiExpression.class);
     PsiVariable var = getAppendedVariable(expression);
     if (var == null) return InspectionGadgetsFix.EMPTY_ARRAY;
+    boolean needNullSafe = canBeNull(var);
     List<InspectionGadgetsFix> fixes = new ArrayList<>();
     if (var instanceof PsiLocalVariable) {
-      fixes.add(new ReplaceWithStringBuilderFix(var));
+      fixes.add(new ReplaceWithStringBuilderFix(var, false));
+      if (needNullSafe) {
+        fixes.add(new ReplaceWithStringBuilderFix(var, true));
+      }
       PsiLoopStatement loop = getOutermostCommonLoop(expression, var);
       // Do not add IntroduceStringBuilderFix if there's only 0 or 1 reference to the variable outside loop:
       // in this case the result is usually similar to ReplaceWithStringBuilderFix or worse
       if (ReferencesSearch.search(var).findAll().stream()
             .map(PsiReference::getElement).filter(e -> !PsiTreeUtil.isAncestor(loop, e, true))
             .limit(2).count() > 1) {
-        fixes.add(new IntroduceStringBuilderFix(var));
+        fixes.add(new IntroduceStringBuilderFix(var, false));
+        if (needNullSafe) {
+          fixes.add(new IntroduceStringBuilderFix(var, true));
+        }
       }
     }
     else if (var instanceof PsiParameter) {
-      fixes.add(new IntroduceStringBuilderFix(var));
+      fixes.add(new IntroduceStringBuilderFix(var, false));
+      if (needNullSafe) {
+        fixes.add(new IntroduceStringBuilderFix(var, true));
+      }
     }
     return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }
 
-  static abstract class AbstractStringBuilderFix extends InspectionGadgetsFix {
+  private static boolean canBeNull(PsiVariable var) {
+    PsiExpression initializer = var.getInitializer();
+    if (initializer != null && NullabilityUtil.getExpressionNullability(initializer, true) != Nullability.NOT_NULL) {
+      return true;
+    }
+    Processor<PsiReference> isNotNullableWrite = (PsiReference ref) -> {
+      if (!(ref instanceof PsiExpression)) return true;
+      PsiExpression expression = (PsiExpression)ref;
+      if (!PsiUtil.isOnAssignmentLeftHand(expression)) return true;
+      PsiAssignmentExpression assignment = PsiTreeUtil.getParentOfType(expression, PsiAssignmentExpression.class);
+      if (assignment == null || assignment.getOperationTokenType() != JavaTokenType.EQ) return true;
+      PsiExpression rExpression = assignment.getRExpression();
+      return rExpression == null || NullabilityUtil.getExpressionNullability(rExpression, true) == Nullability.NOT_NULL;
+    };
+    return !ReferencesSearch.search(var).forEach(isNotNullableWrite);
+  }
+
+  abstract static class AbstractStringBuilderFix extends InspectionGadgetsFix {
     static final Pattern PRINT_OR_PRINTLN = Pattern.compile("print|println");
 
-    String myName;
-    String myTargetType;
+    final String myName;
+    final String myTargetType;
+    final boolean myNullSafe;
+    Set<PsiExpression> myNullables = Collections.emptySet();
 
-    public AbstractStringBuilderFix(PsiVariable variable) {
+    AbstractStringBuilderFix(@NotNull PsiVariable variable, boolean nullSafe) {
       myName = variable.getName();
       myTargetType = PsiUtil.isLanguageLevel5OrHigher(variable) ?
                      CommonClassNames.JAVA_LANG_STRING_BUILDER : CommonClassNames.JAVA_LANG_STRING_BUFFER;
+      myNullSafe = nullSafe;
     }
 
     @NotNull
@@ -329,7 +363,21 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
         return ct.text(initializer);
       }
       String text = initializer == null || ExpressionUtils.isLiteral(initializer, "") ? "" : ct.text(initializer);
-      return "new " + myTargetType + "(" + text + ")";
+      String stringBuilderText = "new " + myTargetType + "(" + text + ")";
+      if (myNullables.contains(initializer)) {
+        if (ExpressionUtils.isSafelyRecomputableExpression(initializer)) {
+          return initializer.getText() + "==null?null:" + stringBuilderText;
+        }
+        if (PsiUtil.isLanguageLevel8OrHigher(initializer)) {
+          return CommonClassNames.JAVA_UTIL_OPTIONAL +
+                 ".ofNullable(" +
+                 initializer.getText() +
+                 ").map(" +
+                 myTargetType +
+                 "::new).orElse(null)";
+        }
+      }
+      return stringBuilderText;
     }
 
     void replaceAll(PsiVariable variable,
@@ -343,14 +391,41 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
                     PsiVariable builderVariable,
                     PsiElement scope,
                     CommentTracker ct,
-                    Predicate<PsiReferenceExpression> skip) {
+                    Predicate<? super PsiReferenceExpression> skip) {
       Query<PsiReference> query =
         scope == null ? ReferencesSearch.search(variable) : ReferencesSearch.search(variable, new LocalSearchScope(scope));
       Collection<PsiReference> refs = query.findAll();
+      if (myNullSafe) {
+        fillNullables(variable, refs);
+      }
       for(PsiReference ref : refs) {
         PsiElement target = ref.getElement();
         if(target instanceof PsiReferenceExpression && target.isValid() && !skip.test((PsiReferenceExpression)target)) {
           replace(variable, builderVariable, (PsiReferenceExpression)target, ct);
+        }
+      }
+    }
+
+    private void fillNullables(PsiVariable variable, Collection<PsiReference> refs) {
+      if (myNullables instanceof HashSet) return; // already filled
+      myNullables = new HashSet<>();
+      PsiExpression initializer = variable.getInitializer();
+      if (initializer != null && NullabilityUtil.getExpressionNullability(initializer, true) != Nullability.NOT_NULL) {
+        myNullables.add(initializer);
+      }
+      for (PsiReference ref : refs) {
+        if (ref instanceof PsiExpression) {
+          PsiExpression refExpr = (PsiExpression)ref;
+          if (NullabilityUtil.getExpressionNullability(refExpr, true) != Nullability.NOT_NULL) {
+            myNullables.add(refExpr);
+          }
+          if(PsiUtil.isOnAssignmentLeftHand(refExpr)) {
+            PsiExpression rExpr =
+              ExpressionUtils.getAssignmentTo(PsiTreeUtil.getParentOfType(refExpr, PsiAssignmentExpression.class), variable);
+            if (rExpr != null && NullabilityUtil.getExpressionNullability(rExpr, true) != Nullability.NOT_NULL) {
+              myNullables.add(rExpr);
+            }
+          }
         }
       }
     }
@@ -401,7 +476,26 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
         }
         if (operands.length > 1 && operands[0] == ref && TypeUtils.isJavaLangString(operands[1].getType())) return;
       }
-      ct.replace(ref, builderVariable.getName() + ".toString()");
+      String text = builderVariable.getName() + ".toString()";
+      if (myNullables.contains(ref) && !isNotNullContext(ref)) {
+        text = builderVariable.getName() + "==null?null:" + text;
+        if (parent instanceof PsiExpression) {
+          text = "(" + text + ")";
+        }
+      }
+      ct.replace(ref, text);
+    }
+
+    private static boolean isNotNullContext(PsiExpression ref) {
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(ref.getParent());
+      if (!(parent instanceof PsiExpressionList) || !(parent.getParent() instanceof PsiMethodCallExpression)) return false;
+      int argIndex = IntStreamEx.ofIndices(((PsiExpressionList)parent).getExpressions(), arg -> PsiTreeUtil.isAncestor(arg, ref, false))
+        .findFirst().orElse(-1);
+      if (argIndex < 0) return false;
+      PsiMethod method = ((PsiMethodCallExpression)parent.getParent()).resolveMethod();
+      if (method == null) return false;
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      return parameters.length > argIndex && NullableNotNullManager.isNotNull(parameters[argIndex]);
     }
 
     private static boolean canAcceptBuilderInsteadOfString(PsiMethodCallExpression call) {
@@ -440,7 +534,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
           case "lastIndexOf":
             if(args.length >= 1 && args.length <= 2 && TypeUtils.isJavaLangString(args[0].getType())) return;
             break;
-          case "isEmpty": {
+          case "isEmpty":
             String sign = "==";
             PsiExpression negation = BoolUtils.findNegation(call);
             PsiElement toReplace = call;
@@ -457,7 +551,6 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
             }
             ct.replace(toReplace, emptyCheck);
             return;
-          }
           default:
         }
       }
@@ -484,16 +577,13 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
               StringBuilder replacement =
                 ChangeToAppendUtil.buildAppendExpression(rValue, false, new StringBuilder(builderName));
               if (replacement != null) {
-                PsiMethodCallExpression append = (PsiMethodCallExpression)ct.replace(assignment, replacement.toString());
-                while(true) {
-                  PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(append);
-                  if (qualifierCall == null) break;
-                  append = qualifierCall;
-                }
+                PsiMethodCallExpression result = (PsiMethodCallExpression)ct.replace(assignment, replacement.toString());
+                PsiMethodCallExpression append = getDeepestQualifierCall(result);
                 PsiExpression qualifier = append.getMethodExpression().getQualifierExpression();
                 if (qualifier != null) {
                   append.replace(qualifier);
                 }
+                makeNullSafe(operands[0], result);
               }
               return;
             }
@@ -502,7 +592,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
             if (ExpressionUtils.isReferenceTo(lastOp, variable)) {
               ct.delete(concat.getTokenBeforeOperand(lastOp), lastOp);
               replaceAll(variable, builderVariable, rValue, ct);
-              ct.replace(assignment, builderName + ".insert(0," + ct.text(rValue) + ")");
+              makeNullSafe(lastOp, (PsiMethodCallExpression)ct.replace(assignment, builderName + ".insert(0," + ct.text(rValue) + ")"));
               return;
             }
           }
@@ -522,16 +612,39 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
             replacement = sb.toString();
           }
         }
-        ct.replace(assignment, replacement);
+        makeNullSafe(assignment.getLExpression(), (PsiMethodCallExpression)ct.replace(assignment, replacement));
       } else if(assignment.getOperationTokenType().equals(JavaTokenType.EQ)) {
-        ct.replace(assignment, builderName + "=" + generateNewStringBuilder(rValue, ct));
+        JavaCodeStyleManager.getInstance(variable.getProject())
+          .shortenClassReferences(ct.replace(assignment, builderName + "=" + generateNewStringBuilder(rValue, ct)));
       }
+    }
+
+    @NotNull
+    private static PsiMethodCallExpression getDeepestQualifierCall(PsiMethodCallExpression result) {
+      PsiMethodCallExpression append = result;
+      while (true) {
+        PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(append);
+        if (qualifierCall == null) break;
+        append = qualifierCall;
+      }
+      return append;
+    }
+
+    private void makeNullSafe(PsiExpression expression, PsiMethodCallExpression result) {
+      if (!myNullables.contains(expression)) return;
+      PsiExpression qualifier = getDeepestQualifierCall(result).getMethodExpression().getQualifierExpression();
+      if (qualifier == null) return;
+      String builder = qualifier.getText();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(result.getProject());
+      qualifier
+        .replace(factory.createExpressionFromText("(" + builder + "==null?new " + myTargetType + "(\"null\"):" + builder + ")", qualifier));
+      result.replace(factory.createExpressionFromText(builder + "=" + result.getText(), result));
     }
   }
 
   static class IntroduceStringBuilderFix extends AbstractStringBuilderFix {
-    public IntroduceStringBuilderFix(PsiVariable variable) {
-      super(variable);
+    IntroduceStringBuilderFix(@NotNull PsiVariable variable, boolean nullSafe) {
+      super(variable, nullSafe);
     }
 
     @Override
@@ -543,7 +656,8 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       PsiLoopStatement loop = getOutermostCommonLoop(expression, variable);
       if (loop == null) return;
       ControlFlowUtils.InitializerUsageStatus status = ControlFlowUtils.getInitializerUsageStatus(variable, loop);
-      String newName = JavaCodeStyleManager.getInstance(project).suggestUniqueVariableName(variable.getName() + "Builder", loop, true);
+      JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
+      String newName = javaCodeStyleManager.suggestUniqueVariableName(variable.getName() + "Builder", loop, true);
       String newStringBuilder =
         myTargetType + " " + newName + "=new " + myTargetType + "(" + variable.getName() + ");";
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
@@ -567,7 +681,7 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
           // Put original variable declaration after the loop and use its original initializer in StringBuilder constructor
           PsiTypeElement typeElement = variable.getTypeElement();
           if (typeElement != null && initializer != null) {
-            ct.replace(builderInitializer, generateNewStringBuilder(initializer, ct));
+            javaCodeStyleManager.shortenClassReferences(ct.replace(builderInitializer, generateNewStringBuilder(initializer, ct)));
             ct.replace(initializer, newName + ".toString()");
             toString = variable.getText();
             ct.delete(variable);
@@ -576,21 +690,21 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
         case AT_WANTED_PLACE_ONLY:
           // Move original initializer to the StringBuilder constructor
           if (initializer != null) {
-            ct.replace(builderInitializer, generateNewStringBuilder(initializer, ct));
+            javaCodeStyleManager.shortenClassReferences(ct.replace(builderInitializer, generateNewStringBuilder(initializer, ct)));
             initializer.delete();
           }
           break;
         case AT_WANTED_PLACE:
           // Copy original initializer to the StringBuilder constructor if possible
-          if (ExpressionUtils.isSimpleExpression(initializer)) {
-            ct.replace(builderInitializer, generateNewStringBuilder(initializer, ct));
+          if (ExpressionUtils.isSafelyRecomputableExpression(initializer)) {
+            javaCodeStyleManager.shortenClassReferences(ct.replace(builderInitializer, generateNewStringBuilder(initializer, ct)));
           }
           break;
         case UNKNOWN:
           PsiElement prevStatement = PsiTreeUtil.skipWhitespacesAndCommentsBackward(declaration);
           PsiExpression prevAssignment = ExpressionUtils.getAssignmentTo(prevStatement, variable);
           if (prevAssignment != null) {
-            ct.replace(builderInitializer, generateNewStringBuilder(prevAssignment, ct));
+            javaCodeStyleManager.shortenClassReferences(ct.replace(builderInitializer, generateNewStringBuilder(prevAssignment, ct)));
             ct.delete(prevStatement);
           }
           break;
@@ -603,7 +717,8 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("string.concatenation.introduce.fix.name", myName, StringUtil.getShortName(myTargetType));
+      return InspectionGadgetsBundle.message("string.concatenation.introduce.fix.name", myName, StringUtil.getShortName(myTargetType))
+             + (myNullSafe ? " (null-safe)" : "");
     }
 
     @Nls
@@ -615,8 +730,8 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
   }
 
   static class ReplaceWithStringBuilderFix extends AbstractStringBuilderFix {
-    public ReplaceWithStringBuilderFix(PsiVariable variable) {
-      super(variable);
+    ReplaceWithStringBuilderFix(@NotNull PsiVariable variable, boolean nullSafe) {
+      super(variable, nullSafe);
     }
 
     @Override
@@ -633,7 +748,8 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
       ct.replace(typeElement, myTargetType);
       PsiExpression initializer = variable.getInitializer();
       if (initializer != null) {
-        ct.replace(initializer, generateNewStringBuilder(initializer, ct));
+        JavaCodeStyleManager.getInstance(project)
+          .shortenClassReferences(ct.replace(initializer, generateNewStringBuilder(initializer, ct)));
       }
       PsiStatement commentPlace = PsiTreeUtil.getParentOfType(variable, PsiStatement.class);
       ct.insertCommentsBefore(commentPlace == null ? variable : commentPlace);
@@ -643,7 +759,8 @@ public class StringConcatenationInLoopsInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return InspectionGadgetsBundle.message("string.concatenation.replace.fix.name", myName, StringUtil.getShortName(myTargetType));
+      return InspectionGadgetsBundle.message("string.concatenation.replace.fix.name", myName, StringUtil.getShortName(myTargetType))
+             + (myNullSafe ? " (null-safe)" : "");
     }
 
     @Nls

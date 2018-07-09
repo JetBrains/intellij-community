@@ -96,13 +96,13 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   private boolean myHyperlink;
 
   private XStandaloneVariablesView mySplitView;
-  private ActionCallback myInitialized = new ActionCallback();
+  private final ActionCallback myInitialized = new ActionCallback();
   private boolean isShowVars;
 
   /**
    * @param testMode this console will be used to display test output and should support TC messages
    */
-  public PythonConsoleView(final Project project, final String title, final Sdk sdk,  final boolean testMode) {
+  public PythonConsoleView(final Project project, final String title, final Sdk sdk, final boolean testMode) {
     super(project, title, PythonLanguage.getInstance());
     myTestMode = testMode;
     isShowVars = PyConsoleOptions.getInstance(project).isShowVariableByDefault();
@@ -128,24 +128,37 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
   }
 
-  private PyConsoleStartFolding createConsoleFolding() {
-    PyConsoleStartFolding startFolding = new PyConsoleStartFolding(this);
+  /**
+   * Add folding to Console view
+   *
+   * @param addOnce If true, folding will be added once when an appropriate area is found.
+   *                Otherwise folding can be expanded by newly added text.
+   */
+  @Nullable
+  private PyConsoleStartFolding createConsoleFolding(boolean addOnce) {
+    PyConsoleStartFolding startFolding = new PyConsoleStartFolding(this, addOnce);
     myExecuteActionHandler.getConsoleCommunication().addCommunicationListener(startFolding);
-    getEditor().getDocument().addDocumentListener(startFolding);
-    ((FoldingModelEx)getEditor().getFoldingModel()).addListener(startFolding, this);
+    Editor editor = getEditor();
+    if (editor == null) {
+      return null;
+    }
+    editor.getDocument().addDocumentListener(startFolding);
+    ((FoldingModelEx)editor.getFoldingModel()).addListener(startFolding, this);
     return startFolding;
   }
 
-  public void addConsoleFolding(boolean isDebugConsole) {
+  public void addConsoleFolding(boolean isDebugConsole, boolean addOnce) {
     try {
       if (isDebugConsole && myExecuteActionHandler != null && getEditor() != null) {
-        PyConsoleStartFolding folding = createConsoleFolding();
-        // in debug console we should add folding from the place where the folding was turned on
-        folding.setStartLineOffset(getEditor().getDocument().getTextLength());
-        folding.setNumberOfCommandToStop(2);
+        PyConsoleStartFolding folding = createConsoleFolding(addOnce);
+        if (folding != null) {
+          // in debug console we should add folding from the place where the folding was turned on
+          folding.setStartLineOffset(getEditor().getDocument().getTextLength());
+          folding.setNumberOfCommandToStop(2);
+        }
       }
       else {
-        myInitialized.doWhenDone(this::createConsoleFolding);
+        myInitialized.doWhenDone(() -> createConsoleFolding(addOnce));
       }
     }
     catch (Exception e) {
@@ -188,7 +201,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   @Override
   public void requestFocus() {
-    IdeFocusManager.findInstance().requestFocus(getConsoleEditor().getContentComponent(), true);
+    myInitialized.doWhenDone(() ->
+                               IdeFocusManager.getGlobalInstance().requestFocus(getConsoleEditor().getContentComponent(), true));
   }
 
   @Override
@@ -208,7 +222,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
                   if (editor != null) {
                     UIUtil.invokeLaterIfNeeded(
                       () -> HintManager.getInstance()
-                        .showErrorHint(editor, myExecuteActionHandler.getCantExecuteMessage()));
+                                       .showErrorHint(editor, myExecuteActionHandler.getCantExecuteMessage()));
                   }
                   return;
                 }
@@ -219,7 +233,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
               }
             }
           });
-        } else {
+        }
+        else {
           requestFocus();
         }
       }
@@ -239,18 +254,19 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
         if (psiFile != null) {
           CommandProcessor.getInstance().runUndoTransparentAction(() ->
                                                                     CodeStyleManager.getInstance(getProject())
-                                                                      .adjustLineIndent(psiFile,
-                                                                                        new TextRange(0, psiFile.getTextLength())));
+                                                                                    .adjustLineIndent(psiFile,
+                                                                                                      new TextRange(0, psiFile
+                                                                                                        .getTextLength())));
+        }
+        int oldOffset = getConsoleEditor().getCaretModel().getOffset();
+        getConsoleEditor().getCaretModel().moveToOffset(document.getTextLength());
+        myExecuteActionHandler.runExecuteAction(this);
+
+        if (!StringUtil.isEmpty(oldText)) {
+          ApplicationManager.getApplication().runWriteAction(() -> setInputText(oldText));
+          getConsoleEditor().getCaretModel().moveToOffset(oldOffset);
         }
       });
-      int oldOffset = getConsoleEditor().getCaretModel().getOffset();
-      getConsoleEditor().getCaretModel().moveToOffset(document.getTextLength());
-      myExecuteActionHandler.runExecuteAction(this);
-
-      if (!StringUtil.isEmpty(oldText)) {
-        ApplicationManager.getApplication().runWriteAction(() -> setInputText(oldText));
-        getConsoleEditor().getCaretModel().moveToOffset(oldOffset);
-      }
     });
   }
 
@@ -383,7 +399,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     EditorEx viewer = getHistoryViewer();
     DocumentEx document = viewer.getDocument();
     RangeHighlighter highlighter = getHistoryViewer().getMarkupModel()
-      .addRangeHighlighter(document.getTextLength(), document.getTextLength(), 0, null, HighlighterTargetArea.EXACT_RANGE);
+                                                     .addRangeHighlighter(document.getTextLength(), document.getTextLength(), 0, null,
+                                                                          HighlighterTargetArea.EXACT_RANGE);
     final String prompt;
     if (isMainPrompt) {
       prompt = myPromptView.getMainPrompt();
@@ -462,15 +479,16 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
   }
 
   public void restoreWindow() {
-    JBSplitter pane = (JBSplitter)getComponent(0);
-    removeAll();
-    if (mySplitView != null) {
+    Component component = getComponent(0);
+    if (mySplitView != null && component instanceof JBSplitter) {
+      JBSplitter pane = (JBSplitter)component;
+      removeAll();
       Disposer.dispose(mySplitView);
       mySplitView = null;
+      add(pane.getFirstComponent(), BorderLayout.CENTER);
+      validate();
+      repaint();
     }
-    add(pane.getFirstComponent(), BorderLayout.CENTER);
-    validate();
-    repaint();
   }
 
   @Nullable
@@ -502,6 +520,10 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     myPromptView.setPromptAttributes(textAttributes);
   }
 
+  public boolean isInitialized() {
+    return myInitialized.isDone();
+  }
+
   public void initialized() {
     myInitialized.setDone();
   }
@@ -512,5 +534,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   public boolean isShowVars() {
     return isShowVars;
+  }
+
+  public void whenInitialized(Runnable runnable) {
+    myInitialized.doWhenDone(runnable);
   }
 }

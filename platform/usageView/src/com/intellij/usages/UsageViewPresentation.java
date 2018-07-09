@@ -50,6 +50,7 @@ public class UsageViewPresentation {
   private boolean myExcludeAvailable = true;
   private Pattern mySearchPattern;
   private Pattern myReplacePattern;
+  private boolean myReplaceMode;
 
   public String getTabText() {
     return myTabText;
@@ -232,6 +233,14 @@ public class UsageViewPresentation {
 
   public Pattern getReplacePattern() {
     return myReplacePattern;
+  }
+
+  public boolean isReplaceMode() {
+    return myReplaceMode;
+  }
+
+  public void setReplaceMode(boolean replaceMode) {
+    myReplaceMode = replaceMode;
   }
 
   @Override

@@ -40,7 +40,6 @@ import java.util.List;
 /**
  * Panel to choose target buildout script
  * User: dcheryasov
- * Date: Jul 26, 2010 5:09:23 PM
  */
 public class BuildoutConfigPanel extends JPanel {
   private ComboboxWithBrowseButton myScript;
@@ -49,7 +48,7 @@ public class BuildoutConfigPanel extends JPanel {
   private JPanel myErrorPanel;
   private final Module myModule;
   private boolean myFacetEnabled = true;
-  private BuildoutFacetConfiguration myConfiguration;
+  private final BuildoutFacetConfiguration myConfiguration;
 
   public BuildoutConfigPanel(Module module, BuildoutFacetConfiguration config) {
     myModule = module;

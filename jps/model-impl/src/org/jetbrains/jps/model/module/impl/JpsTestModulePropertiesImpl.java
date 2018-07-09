@@ -32,7 +32,7 @@ import org.jetbrains.jps.model.module.JpsTestModuleProperties;
 public class JpsTestModulePropertiesImpl extends JpsCompositeElementBase<JpsTestModulePropertiesImpl> implements JpsTestModuleProperties {
   public static final JpsElementChildRole<JpsTestModuleProperties> ROLE = JpsElementChildRoleBase.create("test module properties");
   private static final JpsElementChildRole<JpsModuleReference> MODULE_REFERENCE_CHILD_ROLE = JpsElementChildRoleBase.create("production module reference");
-  private NullableLazyValue<JpsModule> myCachedProductionModule = new VolatileNullableLazyValue<JpsModule>() {
+  private final NullableLazyValue<JpsModule> myCachedProductionModule = new VolatileNullableLazyValue<JpsModule>() {
     @Nullable
     @Override
     protected JpsModule compute() {

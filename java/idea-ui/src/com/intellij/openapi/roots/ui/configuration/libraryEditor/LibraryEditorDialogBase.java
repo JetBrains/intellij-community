@@ -34,7 +34,7 @@ import java.awt.*;
 */
 public abstract class LibraryEditorDialogBase extends DialogWrapper {
   protected JTextField myNameField;
-  private LibraryRootsComponent myLibraryRootsComponent;
+  private final LibraryRootsComponent myLibraryRootsComponent;
 
   public LibraryEditorDialogBase(final Component parent, final LibraryRootsComponent libraryRootsComponent) {
     super(parent, true);

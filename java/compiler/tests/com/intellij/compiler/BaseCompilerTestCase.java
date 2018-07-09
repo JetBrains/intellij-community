@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler;
 
 import com.intellij.ProjectTopics;
@@ -20,7 +6,6 @@ import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.impl.ExitStatus;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.compiler.*;
@@ -38,7 +23,10 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.ui.UIUtil;
@@ -58,9 +46,13 @@ import java.util.function.Consumer;
  * @author nik
  */
 public abstract class BaseCompilerTestCase extends ModuleTestCase {
-
   @Override
   protected void setUpModule() {
+  }
+
+  @Override
+  protected boolean isCreateProjectFileExplicitly() {
+    return false;
   }
 
   @Override
@@ -106,13 +98,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   protected String getProjectBasePath() {
-    return getBaseDir().getPath();
-  }
-
-  protected VirtualFile getBaseDir() {
-    final VirtualFile baseDir = myProject.getBaseDir();
-    Assert.assertNotNull(baseDir);
-    return baseDir;
+    return myProject.getBasePath();
   }
 
   protected void copyToProject(String relativePath) {
@@ -124,14 +110,11 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull final Result result) {
-        VirtualFile virtualDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
-        assertNotNull(target.getAbsolutePath() + " not found", virtualDir);
-        virtualDir.refresh(false, true);
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> {
+      VirtualFile virtualDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
+      assertNotNull(target.getAbsolutePath() + " not found", virtualDir);
+      virtualDir.refresh(false, true);
+    });
   }
 
   protected Module addModule(final String moduleName, final @Nullable VirtualFile sourceRoot) {
@@ -139,38 +122,35 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   protected Module addModule(final String moduleName, final @Nullable VirtualFile sourceRoot, final @Nullable VirtualFile testRoot) {
-    return new WriteAction<Module>() {
-      @Override
-      protected void run(@NotNull final Result<Module> result) {
-        final Module module = createModule(moduleName);
-        if (sourceRoot != null) {
-          PsiTestUtil.addSourceContentToRoots(module, sourceRoot, false);
-        }
-        if (testRoot != null) {
-          PsiTestUtil.addSourceContentToRoots(module, testRoot, true);
-        }
-        ModuleRootModificationUtil.setModuleSdk(module, getTestProjectJdk());
-        result.setResult(module);
+    return WriteAction.computeAndWait(() -> {
+      final Module module = createModule(moduleName);
+      if (sourceRoot != null) {
+        PsiTestUtil.addSourceContentToRoots(module, sourceRoot, false);
       }
-    }.execute().getResultObject();
+      if (testRoot != null) {
+        PsiTestUtil.addSourceContentToRoots(module, testRoot, true);
+      }
+      ModuleRootModificationUtil.setModuleSdk(module, getTestProjectJdk());
+      return module;
+    });
   }
 
   protected VirtualFile createFile(final String path) {
     return createFile(path, "");
   }
 
-  protected VirtualFile createFile(final String path, final String text) {
-    return VfsTestUtil.createFile(getBaseDir(), path, text);
+  protected VirtualFile createFile(@NotNull String path, final String text) {
+    return VfsTestUtil.createFile(getOrCreateProjectBaseDir(), path, text);
   }
 
   protected CompilationLog make(final Artifact... artifacts) {
     final CompileScope scope = ArtifactCompileScope.createArtifactsScope(myProject, Arrays.asList(artifacts));
-    return make(scope, CompilerFilter.ALL);
+    return make(scope);
   }
 
   protected CompilationLog recompile(final Artifact... artifacts) {
     final CompileScope scope = ArtifactCompileScope.createArtifactsScope(myProject, Arrays.asList(artifacts), true);
-    return make(scope, CompilerFilter.ALL);
+    return make(scope);
   }
 
   protected CompilationLog make(Module... modules) {
@@ -182,11 +162,11 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   private CompilationLog make(boolean includeDependentModules, final boolean includeRuntimeDependencies, Module... modules) {
-    return make(getCompilerManager().createModulesCompileScope(modules, includeDependentModules, includeRuntimeDependencies), CompilerFilter.ALL);
+    return make(getCompilerManager().createModulesCompileScope(modules, includeDependentModules, includeRuntimeDependencies));
   }
 
   protected CompilationLog recompile(Module... modules) {
-    return compile(getCompilerManager().createModulesCompileScope(modules, false), CompilerFilter.ALL, true);
+    return compile(getCompilerManager().createModulesCompileScope(modules, false), true);
   }
 
   protected CompilerManager getCompilerManager() {
@@ -199,27 +179,26 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   protected CompilationLog compile(boolean force, VirtualFile... files) {
-    return compile(getCompilerManager().createFilesCompileScope(files), CompilerFilter.ALL, force);
+    return compile(getCompilerManager().createFilesCompileScope(files), force);
   }
 
-  protected CompilationLog make(final CompileScope scope, final CompilerFilter filter) {
-    return compile(scope, filter, false);
+  protected CompilationLog make(final CompileScope scope) {
+    return compile(scope, false);
   }
 
-  protected CompilationLog compile(final CompileScope scope, final CompilerFilter filter, final boolean forceCompile) {
-    return compile(scope, filter, forceCompile, false);
+  protected CompilationLog compile(final CompileScope scope, final boolean forceCompile) {
+    return compile(scope, forceCompile, false);
   }
 
-  protected CompilationLog compile(final CompileScope scope, final CompilerFilter filter, final boolean forceCompile,
+  protected CompilationLog compile(final CompileScope scope, final boolean forceCompile,
                                    final boolean errorsExpected) {
     return compile(errorsExpected, callback -> {
       final CompilerManager compilerManager = getCompilerManager();
       if (forceCompile) {
-        Assert.assertSame("Only 'ALL' filter is supported for forced compilation", CompilerFilter.ALL, filter);
         compilerManager.compile(scope, callback);
       }
       else {
-        compilerManager.make(scope, filter, callback);
+        compilerManager.make(scope, callback);
       }
     });
   }
@@ -244,7 +223,7 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final List<String> generatedFilePaths = new ArrayList<>();
-    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusAdapter() {
+    myProject.getMessageBus().connect(getTestRootDisposable()).subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
       @Override
       public void fileGenerated(String outputRoot, String relativePath) {
         generatedFilePaths.add(relativePath);
@@ -307,54 +286,38 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   protected void deleteFile(final VirtualFile file) {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull final Result result) {
-        try {
-          file.delete(this);
-        }
-        catch (IOException e) {
-          throw new AssertionError(e);
-        }
-      }
-    }.execute();
+    try {
+      WriteAction.runAndWait(() -> file.delete(this));
+    }
+    catch (IOException e) {
+      throw new AssertionError(e);
+    }
   }
 
   @Override
   protected void setUpProject() throws Exception {
     super.setUpProject();
-    final String baseUrl = myProject.getBaseDir().getUrl();
-    CompilerProjectExtension.getInstance(myProject).setCompilerOutputUrl(baseUrl + "/out");
-  }
 
-  @Override
-  protected File getIprFile() throws IOException {
-    File iprFile = super.getIprFile();
-    FileUtil.delete(iprFile);
-    return iprFile;
+    CompilerProjectExtension.getInstance(myProject).setCompilerOutputUrl("file://" + myProject.getBasePath() + "/out");
   }
 
   @NotNull
   @Override
   protected Module doCreateRealModule(String moduleName) {
     //todo[nik] reuse code from PlatformTestCase
-    final VirtualFile baseDir = myProject.getBaseDir();
-    Assert.assertNotNull(baseDir);
+    final VirtualFile baseDir = getOrCreateProjectBaseDir();
     final File moduleFile = new File(baseDir.getPath().replace('/', File.separatorChar), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-    PlatformTestCase.myFilesToDelete.add(moduleFile);
-    return new WriteAction<Module>() {
-      @Override
-      protected void run(@NotNull Result<Module> result) {
-        Module module = ModuleManager.getInstance(myProject)
-          .newModule(FileUtil.toSystemIndependentName(moduleFile.getAbsolutePath()), getModuleType().getId());
-        module.getModuleFile();
-        result.setResult(module);
-      }
-    }.execute().getResultObject();
+    myFilesToDelete.add(moduleFile);
+    return WriteAction.computeAndWait(() -> {
+      Module module = ModuleManager.getInstance(myProject)
+                                   .newModule(FileUtil.toSystemIndependentName(moduleFile.getAbsolutePath()), getModuleType().getId());
+      module.getModuleFile();
+      return module;
+    });
   }
 
   protected CompilationLog buildAllModules() {
-    return make(getCompilerManager().createProjectCompileScope(myProject), CompilerFilter.ALL);
+    return make(getCompilerManager().createProjectCompileScope(myProject));
   }
 
   protected static void assertOutput(Module module, TestFileSystemBuilder item) {

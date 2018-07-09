@@ -23,7 +23,10 @@ import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.KeymapManager;
-import com.intellij.ui.*;
+import com.intellij.ui.AnActionButton;
+import com.intellij.ui.AnActionButtonRunnable;
+import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -54,7 +57,8 @@ class QuickListPanel {
                         @Override
                         public void run(AnActionButton button) {
                           List<QuickList> items = model.getItems();
-                          ChooseActionsDialog dialog = new ChooseActionsDialog(myActionsList, KeymapManager.getInstance().getActiveKeymap(), items.toArray(new QuickList[items.size()]));
+                          ChooseActionsDialog dialog = new ChooseActionsDialog(myActionsList, KeymapManager.getInstance().getActiveKeymap(), items.toArray(
+                            new QuickList[0]));
                           if (dialog.showAndGet()) {
                             String[] ids = dialog.getTreeSelectedActionIds();
                             for (String id : ids) {

@@ -11,7 +11,6 @@ import java.io.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Nov 3, 2006
  */
 public class IOUtilTest extends TestCase {
 
@@ -61,25 +60,16 @@ public class IOUtilTest extends TestCase {
 
 
   private static byte[] save(String str, IO io) throws IOException {
-    final ByteArrayOutputStream os = new ByteArrayOutputStream();
-    final DataOutputStream out = new DataOutputStream(os);
-    try {
+
+    try (final ByteArrayOutputStream os = new ByteArrayOutputStream(); DataOutputStream out = new DataOutputStream(os)) {
       io.save(str, out);
+      return os.toByteArray();
     }
-    finally {
-      out.close();
-    }
-    return os.toByteArray();
   }
 
   private static String load(byte[] bytes, IO io) throws IOException {
-    final DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes));
-    try {
-      final String str = io.load(in);
-      return str;
-    }
-    finally {
-      in.close();
+    try (DataInputStream in = new DataInputStream(new ByteArrayInputStream(bytes))) {
+      return io.load(in);
     }
 
   }

@@ -289,7 +289,7 @@ public class CoverageConfigurable extends SettingsEditor<RunConfigurationBase> {
 
   private static class CoverageRunnerItem {
     private CoverageRunner myRunner;
-    private @NotNull String myRunnerId;
+    private @NotNull final String myRunnerId;
 
     private CoverageRunnerItem(@NotNull CoverageRunner runner) {
       myRunner = runner;

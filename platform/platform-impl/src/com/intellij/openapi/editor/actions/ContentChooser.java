@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.CommonBundle;
@@ -24,6 +10,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.SplitterProportionsData;
@@ -39,6 +26,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,12 +34,16 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public abstract class ContentChooser<Data> extends DialogWrapper {
+
+  @NotNull @NonNls public static final String RETURN_SYMBOL = "\u23ce";
+
   private List<Data> myAllContents;
   private Editor     myViewer;
 
@@ -76,7 +68,15 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     myUpdateAlarm = new Alarm(getDisposable());
     mySplitter = new JBSplitter(true, 0.3f);
     mySplitter.setSplitterProportionKey(getDimensionServiceKey() + ".splitter");
-    myList = new JBList<>(new CollectionListModel<Item>());
+    myList = new JBList<Item>(new CollectionListModel<>()) {
+      @Override
+      protected void doCopyToClipboardAction() {
+        String text = getSelectedText();
+        if (!text.isEmpty()) {
+          CopyPasteManager.getInstance().setContents(new StringSelection(text));
+        }
+      }
+    };
 
     setOKButtonText(CommonBundle.getOkButtonText());
     setTitle(title);
@@ -169,7 +169,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       @Override
       public void componentResized(ComponentEvent e) {
         FontMetrics metrics = myList.getFontMetrics(myList.getFont());
-        int charWidth = metrics.charWidth('m');
+        int charWidth = metrics.charWidth('i');
         renderer.previewChars = myList.getParent().getParent().getWidth() / charWidth + 10;
       }
     });
@@ -289,8 +289,8 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   protected abstract List<Data> getContents();
 
   public int getSelectedIndex() {
-    Object o = myList.getSelectedValue();
-    return o == null? -1 : ((Item)o).index;
+    Item o = myList.getSelectedValue();
+    return o == null? -1 : o.index;
   }
   
   public void setSelectedIndex(int index) {
@@ -348,7 +348,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       SpeedSearchUtil.applySpeedSearchHighlighting(list, this, true, selected);
     }
   }
-  
+
   private static class Item {
     final int index;
     final String longText;
@@ -373,11 +373,11 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       if (!hasSlashR) {
         String s = StringUtil.first(longText, maxChars, true);
         trimmed = s != longText;
-        shortText = StringUtil.convertLineSeparators(s, "\u23ce");
+        shortText = StringUtil.convertLineSeparators(s, RETURN_SYMBOL);
       }
       else {
         String s = StringUtil.first(longText, maxChars * 2 + 1, false);
-        String s2 = StringUtil.convertLineSeparators(s, "\u23ce");
+        String s2 = StringUtil.convertLineSeparators(s, RETURN_SYMBOL);
         shortText = StringUtil.first(s2, maxChars, true);
         trimmed = s != longText || s2 != shortText;
       }

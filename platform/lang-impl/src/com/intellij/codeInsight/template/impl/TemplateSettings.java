@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.AbstractBundle;
@@ -48,7 +48,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   @NonNls public static final String USER_GROUP_NAME = "user";
   @NonNls private static final String TEMPLATE_SET = "templateSet";
   @NonNls private static final String GROUP = "group";
-  @NonNls static final String TEMPLATE = "template";
+  @NonNls public static final String TEMPLATE = "template";
 
   public static final char SPACE_CHAR = ' ';
   public static final char TAB_CHAR = '\t';
@@ -304,7 +304,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   }
 
   @Override
-  public void loadState(State state) {
+  public void loadState(@NotNull State state) {
     myState = state;
 
     applyNewDeletedTemplates();
@@ -347,7 +347,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
 
   public TemplateImpl[] getTemplates() {
     final Collection<? extends TemplateImpl> all = myTemplates.values();
-    return all.toArray(new TemplateImpl[all.size()]);
+    return all.toArray(new TemplateImpl[0]);
   }
 
   public char getDefaultShortcutChar() {
@@ -572,7 +572,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     return result.isEmpty() ? null : result;
   }
 
-  static TemplateImpl readTemplateFromElement(final String groupName, @NotNull Element element, @NotNull ClassLoader classLoader) {
+  public static TemplateImpl readTemplateFromElement(final String groupName, @NotNull Element element, @NotNull ClassLoader classLoader) {
     String name = element.getAttributeValue(NAME);
     String value = element.getAttributeValue(VALUE);
     String description;
@@ -616,7 +616,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   }
 
   @NotNull
-  static Element serializeTemplate(@NotNull TemplateImpl template, @Nullable TemplateImpl defaultTemplate, @NotNull Lazy<Map<String, TemplateContextType>> idToType) {
+  public static Element serializeTemplate(@NotNull TemplateImpl template, @Nullable TemplateImpl defaultTemplate, @NotNull Lazy<Map<String, TemplateContextType>> idToType) {
     Element element = new Element(TEMPLATE);
     final String id = template.getId();
     if (id != null) {

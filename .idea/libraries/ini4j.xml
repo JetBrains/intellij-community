@@ -1,11 +1,12 @@
 <component name="libraryTable">
-  <library name="ini4j">
+  <library name="ini4j" type="repository">
+    <properties maven-id="org.jetbrains.intellij.deps:ini4j:0.5.5-2" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/ini4j-0.5.2-patched.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/ini4j/0.5.5-2/ini4j-0.5.5-2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/ini4j-0.5.2-patched-sources.zip!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/ini4j/0.5.5-2/ini4j-0.5.5-2-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

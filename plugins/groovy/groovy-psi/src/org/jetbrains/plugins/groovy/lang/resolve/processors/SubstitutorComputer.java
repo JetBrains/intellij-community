@@ -230,8 +230,8 @@ public class SubstitutorComputer {
         argumentTypes.add(PsiType.NULL);
       }
     }
-    PsiType[] parameterArray = parameterTypes.toArray(new PsiType[parameterTypes.size()]);
-    PsiType[] argumentArray = argumentTypes.toArray(new PsiType[argumentTypes.size()]);
+    PsiType[] parameterArray = parameterTypes.toArray(PsiType.EMPTY_ARRAY);
+    PsiType[] argumentArray = argumentTypes.toArray(PsiType.EMPTY_ARRAY);
     inferenceQueue.addFirst(buildStep(parameterArray, argumentArray, typeParameters));
     return inferenceQueue;
   }
@@ -294,7 +294,7 @@ public class SubstitutorComputer {
     Set<PsiTypeParameter> visited = new HashSet<>();
     collectTypeParams(parameters, visited, types);
 
-    return visited.toArray(new PsiTypeParameter[visited.size()]);
+    return visited.toArray(PsiTypeParameter.EMPTY_ARRAY);
   }
 
   private static void collectTypeParams(PsiTypeParameter[] parameters,

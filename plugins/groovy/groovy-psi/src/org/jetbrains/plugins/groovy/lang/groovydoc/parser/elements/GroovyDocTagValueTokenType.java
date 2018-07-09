@@ -22,7 +22,7 @@ import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.IGroovyDocElementType;
@@ -63,7 +63,7 @@ public class GroovyDocTagValueTokenType extends GroovyDocChameleonElementType im
   }
 
   @Override
-  public ASTNode parseContents(ASTNode chameleon) {
+  public ASTNode parseContents(@NotNull ASTNode chameleon) {
     ASTNode parent = chameleon.getTreeParent();
     if (isReferenceElement(parent, chameleon)) {
       return parseImpl(chameleon);

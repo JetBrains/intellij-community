@@ -9,7 +9,6 @@ import java.util.UUID;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 12-Jun-17
  */
 public class JShellMessageMarshallingTest extends TestCase {
 

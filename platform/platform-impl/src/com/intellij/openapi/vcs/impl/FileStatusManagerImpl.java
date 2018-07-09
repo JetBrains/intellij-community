@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.Disposable;
@@ -20,6 +6,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.colors.ColorKey;
@@ -44,10 +31,10 @@ import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
+import java.awt.Color;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -56,9 +43,9 @@ import java.util.Map;
  * @author mike
  */
 public class FileStatusManagerImpl extends FileStatusManager implements ProjectComponent, Disposable {
-  private final Map<VirtualFile, FileStatus> myCachedStatuses = Collections.synchronizedMap(new HashMap<VirtualFile, FileStatus>());
-  private final Map<VirtualFile, Boolean> myWhetherExactlyParentToChanged =
-    Collections.synchronizedMap(new HashMap<VirtualFile, Boolean>());
+  private static final Logger LOG = Logger.getInstance(FileStatusManagerImpl.class);
+  private final Map<VirtualFile, FileStatus> myCachedStatuses = Collections.synchronizedMap(new HashMap<>());
+  private final Map<VirtualFile, Boolean> myWhetherExactlyParentToChanged = Collections.synchronizedMap(new HashMap<>());
   private final Project myProject;
   private final List<FileStatusListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private FileStatusProvider myFileStatusProvider;
@@ -134,15 +121,26 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     for (FileStatusProvider extension : myExtensions.getValue()) {
       final FileStatus status = extension.getFileStatus(virtualFile);
       if (status != null) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug(String.format("File status for file [%s] from provider %s: %s", virtualFile, extension.getClass().getName(), status));
+        }
         return status;
       }
     }
 
     if (virtualFile.isInLocalFileSystem() && myFileStatusProvider != null) {
-      return myFileStatusProvider.getFileStatus(virtualFile);
+      FileStatus status = myFileStatusProvider.getFileStatus(virtualFile);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(String.format("File status for file [%s] from default provider %s: %s", virtualFile, myFileStatusProvider, status));
+      }
+      return status;
     }
 
-    return getDefaultStatus(virtualFile);
+    FileStatus defaultStatus = getDefaultStatus(virtualFile);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("Default status for file [%s]: %s", virtualFile, defaultStatus));
+    }
+    return defaultStatus;
   }
 
   @NotNull
@@ -244,6 +242,9 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     }
 
     FileStatus status = getCachedStatus(file);
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Cached status for file [" + file + "] is " + status);
+    }
     if (status == null || status == FileStatusNull.INSTANCE) {
       status = calcStatus(file);
       cacheChangedFileStatus(file, status);
@@ -262,15 +263,18 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   }
 
   @Override
-  public Color getNotChangedDirectoryColor(@NotNull VirtualFile vf) {
-    final Color notChangedColor = FileStatus.NOT_CHANGED.getColor();
-    if (!vf.isDirectory()) {
-      return notChangedColor;
-    }
-    final Boolean exactMatch = myWhetherExactlyParentToChanged.get(vf);
-    return exactMatch == null
-           ? notChangedColor
-           : exactMatch ? FileStatus.NOT_CHANGED_IMMEDIATE.getColor() : FileStatus.NOT_CHANGED_RECURSIVE.getColor();
+  public Color getNotChangedDirectoryColor(@NotNull VirtualFile file) {
+    return getRecursiveStatus(file).getColor();
+  }
+
+  @NotNull
+  @Override
+  public FileStatus getRecursiveStatus(@NotNull VirtualFile file) {
+    FileStatus status = super.getRecursiveStatus(file);
+    if (status != FileStatus.NOT_CHANGED || !file.isValid() || !file.isDirectory()) return status;
+    Boolean immediate = myWhetherExactlyParentToChanged.get(file);
+    if (immediate == null) return status;
+    return immediate ? FileStatus.NOT_CHANGED_IMMEDIATE : FileStatus.NOT_CHANGED_RECURSIVE;
   }
 
   public void refreshFileStatusFromDocument(final VirtualFile file, final Document doc) {

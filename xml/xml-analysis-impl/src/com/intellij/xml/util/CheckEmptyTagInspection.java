@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.xml.util;
 
@@ -28,6 +14,7 @@ import com.intellij.psi.html.HtmlTag;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlBundle;
+import com.intellij.xml.XmlExtension;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +39,7 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new XmlElementVisitor() {
       @Override public void visitXmlTag(final XmlTag tag) {
-        if (!isTagWithEmptyEndNotAllowed(tag)) {
+        if (XmlExtension.shouldIgnoreSelfClosingTag(tag) || !isTagWithEmptyEndNotAllowed(tag)) {
           return;
         }
         final ASTNode child = XmlChildRole.EMPTY_TAG_END_FINDER.findChild(tag.getNode());
@@ -80,7 +67,11 @@ public class CheckEmptyTagInspection extends XmlSuppressableInspectionTool {
     Language language = tag.getLanguage();
     return ourTagsWithEmptyEndsNotAllowed.contains(tagName) &&
            (language.isKindOf(HTMLLanguage.INSTANCE) || language.isKindOf(XHTMLLanguage.INSTANCE)) ||
-           language.isKindOf(HTMLLanguage.INSTANCE) && !HtmlUtil.isSingleHtmlTagL(tagName) && tagName.indexOf(':') == -1;
+
+           (language.isKindOf(HTMLLanguage.INSTANCE) &&
+           !HtmlUtil.isSingleHtmlTag(tag, false) &&
+           tagName.indexOf(':') == -1 &&
+           !XmlExtension.isCollapsible(tag));
   }
 
   @Override

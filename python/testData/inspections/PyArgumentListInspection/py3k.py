@@ -19,7 +19,7 @@ def a23(a, *b, c=1):
     pass
 
 a23(1,2,3, c=10) # pass
-a23<warning descr="Unexpected argument(s)">(1,2,3, c=10, <warning descr="Unexpected argument">a=1</warning>)</warning> # fail
+a23(1,2,3, c=10, <warning descr="Unexpected argument">a=1</warning>) # fail
 a23(c=10, a=1) # pass
 a23(c=10, <error descr="Positional argument after keyword argument">1</error><warning descr="Parameter 'a' unfilled">)</warning> # fail
 a23(*args, c=1) # pass

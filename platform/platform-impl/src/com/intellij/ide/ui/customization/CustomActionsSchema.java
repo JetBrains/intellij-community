@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.customization;
 
 import com.intellij.icons.AllIcons;
@@ -37,6 +23,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBImageIcon;
@@ -70,6 +57,8 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
   private List<ActionUrl> myActions = new ArrayList<>();
   private boolean isFirstLoadState = true;
 
+  private int myModificationStamp = 0;
+
   public CustomActionsSchema() {
     myIdToName.put(IdeActions.GROUP_MAIN_MENU, ActionsTreeUtil.MAIN_MENU_TITLE);
     myIdToName.put(IdeActions.GROUP_MAIN_TOOLBAR, ActionsTreeUtil.MAIN_TOOLBAR);
@@ -83,6 +72,8 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
     myIdToName.put(IdeActions.GROUP_J2EE_VIEW_POPUP, ActionsTreeUtil.J2EE_POPUP);
     myIdToName.put(IdeActions.GROUP_NAVBAR_POPUP, "Navigation Bar");
     myIdToName.put("NavBarToolBar", "Navigation Bar Toolbar");
+    if (TouchBarsManager.isTouchBarAvailable())
+      myIdToName.put(IdeActions.GROUP_TOUCHBAR, "Touch Bar");
 
     ArrayList<Couple<String>> extList = ContainerUtil.newArrayList();
     CustomizableActionGroupProvider.CustomizableActionGroupRegistrar registrar =
@@ -159,7 +150,7 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
   }
 
   @Override
-  public void loadState(Element element) {
+  public void loadState(@NotNull Element element) {
     myIdToActionGroup.clear();
     myActions.clear();
     myIconCustomizations.clear();
@@ -226,22 +217,27 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
     if (frame != null) {
       frame.updateView();
     }
+
+    getInstance().incrementModificationStamp();
+  }
+
+  public void incrementModificationStamp() {
+    myModificationStamp++;
+  }
+
+  public int getModificationStamp() {
+    return myModificationStamp;
   }
 
   @Override
   public Element getState() {
     Element element = new Element("state");
-    try {
-      //noinspection deprecation
-      DefaultJDOMExternalizer.writeExternal(this, element);
-      for (ActionUrl group : myActions) {
-        Element groupElement = new Element(GROUP);
-        group.writeExternal(groupElement);
-        element.addContent(groupElement);
-      }
-    }
-    catch (WriteExternalException e) {
-      throw new RuntimeException(e);
+    //noinspection deprecation
+    DefaultJDOMExternalizer.writeExternal(this, element);
+    for (ActionUrl group : myActions) {
+      Element groupElement = new Element(GROUP);
+      group.writeExternal(groupElement);
+      element.addContent(groupElement);
     }
     writeIcons(element);
     return element;
@@ -256,7 +252,7 @@ public class CustomActionsSchema implements PersistentStateComponent<Element> {
     ActionGroup actionGroup = (ActionGroup)ActionManager.getInstance().getAction(id);
     if (actionGroup != null) { // if a plugin is disabled
       String name = myIdToName.get(id);
-      ActionGroup corrected = CustomizationUtil.correctActionGroup(actionGroup, this, name, name);
+      ActionGroup corrected = CustomizationUtil.correctActionGroup(actionGroup, this, name, name, true);
       myIdToActionGroup.put(id, corrected);
       return corrected;
     }

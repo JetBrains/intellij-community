@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.*;import java.util.HashMap;
 
 /**
  * Consider to use factory methods {@link #createLinked()}, {@link #createSet()}, {@link #createSmart()}, {@link #create(TObjectHashingStrategy)} instead of override.
@@ -58,7 +58,7 @@ public class MultiMap<K, V> implements Serializable {
 
   @NotNull
   protected Map<K, Collection<V>> createMap() {
-    return new HashMap<K, Collection<V>>();
+    return new java.util.HashMap<K, Collection<V>>();
   }
 
   @NotNull
@@ -160,6 +160,7 @@ public class MultiMap<K, V> implements Serializable {
   /**
    * @deprecated use {@link #remove(Object, Object)} instead
    */
+  @Deprecated
   public void removeValue(K key, V value) {
     remove(key, value);
   }
@@ -313,7 +314,7 @@ public class MultiMap<K, V> implements Serializable {
 
   @NotNull
   public static <K, V> MultiMap<K, V> createConcurrentSet() {
-    return new MultiMap<K, V>() {
+    return new ConcurrentMultiMap<K, V>() {
       @NotNull
       @Override
       protected Collection<V> createCollection() {
@@ -324,12 +325,6 @@ public class MultiMap<K, V> implements Serializable {
       @Override
       protected Collection<V> createEmptyCollection() {
         return Collections.emptySet();
-      }
-
-      @NotNull
-      @Override
-      protected Map<K, Collection<V>> createMap() {
-        return ContainerUtil.newConcurrentMap();
       }
     };
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.ide.todo.TodoPanelSettings;
@@ -25,14 +11,18 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
-import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.Transient;
+import com.intellij.util.xmlb.annotations.XCollection;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 @State(
   name = "VcsManagerConfiguration",
@@ -79,10 +69,10 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean SHOW_UNVERSIONED_FILES_WHILE_COMMIT = true;
   public boolean LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = false;
   public boolean SHELVE_DETAILS_PREVIEW_SHOWN = false;
+  public boolean VCS_LOG_DETAILS_PREVIEW_SHOWN = false;
   public boolean RELOAD_CONTEXT = true;
 
-  @AbstractCollection(surroundWithTag = false, elementTag = "path")
-  @Tag("ignored-roots")
+  @XCollection(elementName = "path", propertyElementName = "ignored-roots")
   public List<String> IGNORED_UNREGISTERED_ROOTS = ContainerUtil.newArrayList();
 
   public enum StandardOption {
@@ -123,7 +113,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean CLEAR_INITIAL_COMMIT_MESSAGE = false;
 
   @Property(surroundWithTag = false)
-  @AbstractCollection(elementTag = "MESSAGE", elementValueAttribute = "value", surroundWithTag = false)
+  @XCollection(elementName = "MESSAGE")
   public List<String> myLastCommitMessages = new ArrayList<>();
   public String LAST_COMMIT_MESSAGE = null;
   public boolean MAKE_NEW_CHANGELIST_ACTIVE = false;
@@ -133,12 +123,14 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean REFORMAT_BEFORE_PROJECT_COMMIT = false;
   public boolean REARRANGE_BEFORE_PROJECT_COMMIT = false;
 
-  public Map<String, ChangeBrowserSettings> CHANGE_BROWSER_SETTINGS = new HashMap<>();
+  @Transient
+  public Map<String, ChangeBrowserSettings> changeBrowserSettings = new THashMap<>();
 
   public boolean UPDATE_GROUP_BY_PACKAGES = false;
   public boolean UPDATE_GROUP_BY_CHANGELIST = false;
   public boolean UPDATE_FILTER_BY_SCOPE = false;
   public boolean SHOW_FILE_HISTORY_AS_TREE = false;
+  public boolean GROUP_MULTIFILE_MERGE_BY_DIRECTORY = false;
 
   private static final int MAX_STORED_MESSAGES = 25;
 
@@ -147,6 +139,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   private final PerformInBackgroundOption myEditOption = new EditInBackgroundOption();
   private final PerformInBackgroundOption myCheckoutOption = new CheckoutInBackgroundOption();
   private final PerformInBackgroundOption myAddRemoveOption = new AddRemoveInBackgroundOption();
+  private final PerformInBackgroundOption myRollbackOption = new RollbackInBackgroundOption();
 
   @Override
   public VcsConfiguration getState() {
@@ -154,7 +147,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   }
 
   @Override
-  public void loadState(VcsConfiguration state) {
+  public void loadState(@NotNull VcsConfiguration state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 
@@ -211,6 +204,10 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     return myAddRemoveOption;
   }
 
+  public PerformInBackgroundOption getRollbackOption() {
+    return myRollbackOption;
+  }
+
   private class UpdateInBackgroundOption implements PerformInBackgroundOption {
     @Override
     public boolean shouldStartInBackground() {
@@ -235,7 +232,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     public void processSentToBackground() {
       PERFORM_EDIT_IN_BACKGROUND = true;
     }
-
   }
 
   private class CheckoutInBackgroundOption implements PerformInBackgroundOption {
@@ -248,7 +244,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     public void processSentToBackground() {
       PERFORM_CHECKOUT_IN_BACKGROUND = true;
     }
-
   }
 
   private class AddRemoveInBackgroundOption implements PerformInBackgroundOption {
@@ -261,7 +256,18 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     public void processSentToBackground() {
       PERFORM_ADD_REMOVE_IN_BACKGROUND = true;
     }
+  }
 
+  private class RollbackInBackgroundOption implements PerformInBackgroundOption {
+    @Override
+    public boolean shouldStartInBackground() {
+      return PERFORM_ROLLBACK_IN_BACKGROUND;
+    }
+
+    @Override
+    public void processSentToBackground() {
+      PERFORM_ROLLBACK_IN_BACKGROUND = true;
+    }
   }
 
   public String getPatchFileExtension() {

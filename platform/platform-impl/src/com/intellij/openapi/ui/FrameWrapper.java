@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.ide.DataManager;
@@ -27,7 +27,6 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.BalloonLayout;
-import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.FrameState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
@@ -56,7 +55,6 @@ public class FrameWrapper implements Disposable, DataProvider {
   private final Map<String, Object> myDataMap = ContainerUtil.newHashMap();
   private Project myProject;
   private final ProjectManagerListener myProjectListener = new MyProjectManagerListener();
-  private FocusTrackback myFocusTrackback;
   private FocusWatcher myFocusWatcher;
 
   private ActionCallback myFocusedCallback;
@@ -65,7 +63,7 @@ public class FrameWrapper implements Disposable, DataProvider {
 
   protected StatusBar myStatusBar;
   private boolean myShown;
-  private boolean myIsDialog;
+  private final boolean myIsDialog;
 
   public FrameWrapper(Project project) {
     this(project, null);
@@ -120,8 +118,6 @@ public class FrameWrapper implements Disposable, DataProvider {
       myStatusBar.install((IdeFrame)frame);
     }
 
-    myFocusTrackback = new FocusTrackback(this, IdeFocusManager.findInstance().getFocusOwner(), true);
-
     if (frame instanceof JFrame) {
       ((JFrame)frame).setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     } else {
@@ -175,12 +171,7 @@ public class FrameWrapper implements Disposable, DataProvider {
       loadFrameState();
     }
 
-    myFocusWatcher = new FocusWatcher() {
-      @Override
-      protected void focusLostImpl(final FocusEvent e) {
-        myFocusTrackback.consume();
-      }
-    };
+    myFocusWatcher = new FocusWatcher();
     myFocusWatcher.install(myComponent);
     myShown = true;
     frame.setVisible(true);
@@ -205,15 +196,13 @@ public class FrameWrapper implements Disposable, DataProvider {
     myPreferredFocus = null;
     myProject = null;
     myDataMap.clear();
-    if (myFocusTrackback != null) {
-      myFocusTrackback.restoreFocus();
-    }
+
     if (myComponent != null && myFocusWatcher != null) {
       myFocusWatcher.deinstall(myComponent);
     }
     myFocusWatcher = null;
     myFocusedCallback = null;
-    myFocusTrackback = null;
+
     myComponent = null;
     myImages = null;
     myDisposed = true;
@@ -229,9 +218,6 @@ public class FrameWrapper implements Disposable, DataProvider {
       frame.removeAll();
       DialogWrapper.cleanupRootPane(rootPane);
 
-      if (frame instanceof JFrame) {
-        FocusTrackback.release((JFrame)frame);
-      }
       if (frame instanceof IdeFrame) {
         MouseGestureManager.getInstance().remove((IdeFrame)frame);
       }
@@ -352,7 +338,6 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   private static class MyJFrame extends JFrame implements DataProvider, IdeFrame.Child {
-
     private FrameWrapper myOwner;
     private final IdeFrame myParent;
 
@@ -439,11 +424,6 @@ public class FrameWrapper implements Disposable, DataProvider {
     }
 
     @Override
-    public IdeFrame getParentFrame() {
-      return myParent;
-    }
-
-    @Override
     public void dispose() {
       FrameWrapper owner = myOwner;
       myOwner = null;
@@ -471,7 +451,6 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   private static class MyJDialog extends JDialog implements DataProvider, IdeFrame.Child {
-
     private FrameWrapper myOwner;
     private final IdeFrame myParent;
 
@@ -526,11 +505,6 @@ public class FrameWrapper implements Disposable, DataProvider {
     @Override
     public IdeRootPaneNorthExtension getNorthExtension(String key) {
       return null;
-    }
-
-    @Override
-    public IdeFrame getParentFrame() {
-      return myParent;
     }
 
     @Override

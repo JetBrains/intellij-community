@@ -44,6 +44,7 @@ public class PropertyListStubElementType extends ILightStubElementType<Propertie
     return new PropertiesListStubImpl(parentStub);
   }
 
+  @Override
   @NotNull
   public String getExternalId() {
     return "properties.propertieslist";

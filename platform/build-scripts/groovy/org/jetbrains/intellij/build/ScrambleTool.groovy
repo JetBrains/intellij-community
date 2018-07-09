@@ -39,4 +39,9 @@ interface ScrambleTool {
    * @return list of names of JAR files which cannot be included into the product 'lib' directory in plain form
    */
   List<String> getNamesOfJarsRequiredToBeScrambled()
+
+  /**
+   * Returns list of module names which cannot be included into the product without scrambling.
+   */
+  List<String> getNamesOfModulesRequiredToBeScrambled()
 }

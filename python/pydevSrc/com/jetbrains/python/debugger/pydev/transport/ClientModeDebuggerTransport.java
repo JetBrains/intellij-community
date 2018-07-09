@@ -1,6 +1,5 @@
 package com.jetbrains.python.debugger.pydev.transport;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.jetbrains.python.debugger.PyDebuggerException;
@@ -16,7 +15,7 @@ import java.io.OutputStream;
 import java.net.ConnectException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.util.concurrent.*;
+import java.net.SocketTimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -33,13 +32,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * At the last point the following problem could arise. When several processes are created almost simultaneously and they become
  * bound to the single port the IDE could establish the connection to some of the processes twice or more times. The first connection is
  * accepted by the Python process but the others are not. Other connections would stay in <i>completed connection queue</i> until a timeout
- * for a response for the {@link AbstractCommand#RUN} arouse. To solve this problem {@link ClientModeDebuggerTransport} has several
- * states. The transport is created with {@link State#INIT}. After the connection is established the transport object is transferred to
- * {@link State#CONNECTED}. After the first message is received from the debugging script the transport is transferred to
- * {@link State#APPROVED}. After the transport is transferred to {@link State#CONNECTED} a task is scheduled in
- * {@link ClientModeDebuggerTransport#CHECK_CONNECTION_APPROVED_DELAY} to check if the state has been changed to {@link State#APPROVED}. If
- * the state had been changed then the current connection is kept and the normal communication with debugging script is performed. If the
- * state has not been changed for this period of time the transport tries to reconnect and schedules the check again.
+ * for a response for the {@link AbstractCommand#RUN} arouse. To solve this problem {@link ClientModeMultiProcessDebugger} creates the pool
+ * of connecting {@link RemoteDebugger}. Some of the debuggers will succeed connecting to the debugging process and later some of them will
+ * succeed in handshaking. Connections of other would eventually die out on the timeout waiting for the connection or waiting for the
+ * debugger script handshake response.
  *
  * @author Alexander Koshevoy
  * @see ClientModeMultiProcessDebugger
@@ -47,9 +43,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
   private static final Logger LOG = Logger.getInstance(ClientModeDebuggerTransport.class);
 
-  private static final int MAX_CONNECTION_TRIES = 20;
-  private static final long CHECK_CONNECTION_APPROVED_DELAY = 1000L;
-  private static final long SLEEP_TIME_BETWEEN_CONNECTION_TRIES = 150L;
+  /**
+   * Connection timeout to the debugger script.
+   */
+  private static final int CONNECTION_TIMEOUT_IN_MILLIS = 5000;
+
+  /**
+   * Delay is long enough to connect to a Python script on a slow remote
+   * machine with the slow connection.
+   */
+  private static final int HANDSHAKE_TIMEOUT_IN_MILLIS = 5000;
 
   @NotNull private final String myHost;
   private final int myPort;
@@ -74,109 +77,56 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
         "Inappropriate state of Python debugger for connecting to Python debugger: " + myState + "; " + State.INIT + " is expected");
     }
 
-    synchronized (mySocketObject) {
-      if (mySocket != null) {
-        try {
-          mySocket.close();
-        }
-        catch (IOException e) {
-          LOG.debug("Failed to close previously opened socket", e);
-        }
-        finally {
-          mySocket = null;
+    boolean connected = false;
+    try {
+      Socket clientSocket = new Socket();
+      clientSocket.setSoTimeout(HANDSHAKE_TIMEOUT_IN_MILLIS);
+      clientSocket.connect(new InetSocketAddress(myHost, myPort), CONNECTION_TIMEOUT_IN_MILLIS);
+
+      synchronized (mySocketObject) {
+        mySocket = clientSocket;
+        myState = State.CONNECTED;
+      }
+
+      DebuggerReader debuggerReader;
+      try {
+        myDebuggerReader = debuggerReader = new DebuggerReader(myDebugger, clientSocket.getInputStream());
+      }
+      catch (IOException e) {
+        LOG.debug("Failed to create debugger reader", e);
+        throw e;
+      }
+
+      try {
+        myDebugger.handshake();
+
+        debuggerReader.connectionApproved();
+        connected = true;
+
+        // after successful connection turn back original timeout
+        clientSocket.setSoTimeout(0);
+      }
+      catch (PyDebuggerException e) {
+        LOG.debug(String.format("[%d] Handshake failed", hashCode()));
+      }
+      finally {
+        if (!connected) {
+          debuggerReader.close();
         }
       }
     }
-
-    int i = 0;
-    boolean connected = false;
-    while (!connected && i < MAX_CONNECTION_TRIES) {
-      i++;
-
-      int attempt = i;
-      LOG.debug(String.format("[%d] Trying to connect: #%d attempt", hashCode(), attempt));
-
-      try {
-        Socket clientSocket = new Socket();
-        clientSocket.setSoTimeout(0);
-        clientSocket.connect(new InetSocketAddress(myHost, myPort));
-
-        synchronized (mySocketObject) {
-          mySocket = clientSocket;
-          myState = State.CONNECTED;
-        }
-
-        try {
-          InputStream stream;
-          synchronized (mySocketObject) {
-            stream = mySocket.getInputStream();
-          }
-          myDebuggerReader = new DebuggerReader(myDebugger, stream);
-        }
-        catch (IOException e) {
-          LOG.debug("Failed to create debugger reader", e);
-          throw e;
-        }
-
-        CountDownLatch beforeHandshake = new CountDownLatch(1);
-        Future<Boolean> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
-          beforeHandshake.countDown();
-          try {
-            myDebugger.handshake();
-            myDebuggerReader.connectionApproved();
-            return true;
-          }
-          catch (PyDebuggerException e) {
-            LOG.debug(String.format("[%d] Handshake failed: #%d attempt", hashCode(), attempt));
-            return false;
-          }
-        });
-        try {
-          beforeHandshake.await();
-          connected = future.get(CHECK_CONNECTION_APPROVED_DELAY, TimeUnit.MILLISECONDS);
-        }
-        catch (InterruptedException e) {
-          LOG.debug(String.format("[%d] Waiting for handshake interrupted: #%d attempt", hashCode(), attempt), e);
-          myDebuggerReader.close();
-          throw new IOException("Waiting for subprocess interrupted", e);
-        }
-        catch (ExecutionException e) {
-          LOG.debug(String.format("[%d] Execution exception occurred: #%d attempt", hashCode(), attempt), e);
-        }
-        catch (TimeoutException e) {
-          LOG.debug(String.format("[%d] Timeout: #%d attempt", hashCode(), attempt), e);
-          future.cancel(true);
-        }
-
-        if (!connected) {
-          myDebuggerReader.close();
-          try {
-            Thread.sleep(SLEEP_TIME_BETWEEN_CONNECTION_TRIES);
-          }
-          catch (InterruptedException e) {
-            throw new IOException(e);
-          }
-        }
-      }
-      catch (ConnectException e) {
-        if (i < MAX_CONNECTION_TRIES) {
-          try {
-            Thread.sleep(SLEEP_TIME_BETWEEN_CONNECTION_TRIES);
-          }
-          catch (InterruptedException e1) {
-            throw new IOException(e1);
-          }
-        }
-      }
+    catch (ConnectException | SocketTimeoutException e) {
+      myState = State.DISCONNECTED;
+      throw new IOException("Failed to connect to debugger script", e);
     }
 
     if (!connected) {
       myState = State.DISCONNECTED;
-      throw new IOException("Failed to connect to debugging script");
+      throw new IOException("Failed to connect to debugger script");
     }
 
     myState = State.APPROVED;
-    LOG.debug(String.format("[%d] Connected to Python debugger script on #%d attempt", hashCode(), i));
+    LOG.debug(String.format("[%d] Connected to debugger script", hashCode()));
   }
 
   @Override
@@ -222,6 +172,11 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
   }
 
   @Override
+  public boolean isConnecting() {
+    return myState == State.CONNECTED;
+  }
+
+  @Override
   public boolean isConnected() {
     return myState == State.APPROVED;
   }
@@ -258,7 +213,7 @@ public class ClientModeDebuggerTransport extends BaseDebuggerTransport {
      */
     private final AtomicBoolean myConnectionApproved = new AtomicBoolean(false);
 
-    public DebuggerReader(@NotNull RemoteDebugger debugger, @NotNull InputStream stream) throws IOException {
+    public DebuggerReader(@NotNull RemoteDebugger debugger, @NotNull InputStream stream) {
       super(stream, CharsetToolkit.UTF8_CHARSET, debugger); //TODO: correct encoding?
       start(getClass().getName());
     }

@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.psi.impl.file;
 
@@ -20,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiElementBase;
@@ -41,7 +30,7 @@ import java.util.Map;
 public abstract class PsiPackageBase extends PsiElementBase implements PsiDirectoryContainer, Queryable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.file.PsiPackageBase");
 
-  final PsiManager myManager;
+  private final PsiManager myManager;
   private final String myQualifiedName;
 
   protected Collection<PsiDirectory> getAllDirectories() {
@@ -50,9 +39,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
 
   protected abstract Collection<PsiDirectory> getAllDirectories(boolean includeLibrarySources);
 
-  protected abstract PsiElement findPackage(String qName);
-
-  protected abstract PsiPackageBase createInstance(PsiManager manager, String qName);
+  protected abstract PsiPackageBase findPackage(String qName);
 
   public PsiPackageBase(PsiManager manager, String qualifiedName) {
     myManager = manager;
@@ -93,7 +80,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
         result.add(directory);
       }
     }
-    return result == null ? PsiDirectory.EMPTY_ARRAY : result.toArray(new PsiDirectory[result.size()]);
+    return result == null ? PsiDirectory.EMPTY_ARRAY : result.toArray(PsiDirectory.EMPTY_ARRAY);
   }
 
   @Override
@@ -137,13 +124,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
 
   public PsiPackageBase getParentPackage() {
     if (myQualifiedName.isEmpty()) return null;
-    int lastDot = myQualifiedName.lastIndexOf('.');
-    if (lastDot < 0) {
-      return createInstance(myManager, "");
-    }
-    else {
-      return createInstance(myManager, myQualifiedName.substring(0, lastDot));
-    }
+    return findPackage(StringUtil.getPackageName(myQualifiedName));
   }
 
   @Override
@@ -154,7 +135,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
   @Override
   @NotNull
   public PsiElement[] getChildren() {
-    LOG.error("method not implemented");
+    LOG.error("method not implemented in " + getClass());
     return PsiElement.EMPTY_ARRAY;
   }
 
@@ -220,7 +201,7 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
 
   @Override
   public PsiElement copy() {
-    LOG.error("method not implemented");
+    LOG.error("method not implemented in " + getClass());
     return null;
   }
 
@@ -272,11 +253,6 @@ public abstract class PsiPackageBase extends PsiElementBase implements PsiDirect
       if (!dir.isWritable()) return false;
     }
     return true;
-  }
-
-  @Override
-  public void accept(@NotNull PsiElementVisitor visitor) {
-    visitor.visitElement(this);
   }
 
   public String toString() {

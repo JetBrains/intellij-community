@@ -18,6 +18,7 @@ package com.intellij.psi.impl.migration;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiPackage;
 import com.intellij.psi.impl.file.PsiPackageImpl;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -54,5 +55,10 @@ public class MigrationPackageImpl extends PsiPackageImpl implements PsiPackage {
   @Override
   public VirtualFile[] occursInPackagePrefixes() {
     return VirtualFile.EMPTY_ARRAY;
+  }
+
+  @Override
+  public boolean mayHaveContentInScope(@NotNull GlobalSearchScope scope) {
+    return true;
   }
 }

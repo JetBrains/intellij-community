@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.fields;
 
 import com.intellij.ui.components.JBTextField;
@@ -23,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static com.intellij.util.ui.JBUI.scale;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
@@ -31,8 +18,7 @@ import static java.util.Collections.unmodifiableList;
 /**
  * @author Sergey Malenkov
  */
-public class ExtendableTextField extends JBTextField {
-  public static final String VARIANT = "extendable";
+public class ExtendableTextField extends JBTextField implements ExtendableTextComponent {
   private List<Extension> extensions = emptyList();
 
   public ExtendableTextField() {
@@ -59,12 +45,6 @@ public class ExtendableTextField extends JBTextField {
     setExtensions(asList(extensions));
   }
 
-  public void addExtension(@NotNull Extension extension) {
-    ArrayList<Extension> extensions = new ArrayList<>(getExtensions());
-    extensions.add(extension);
-    setExtensions(extensions);
-  }
-
   public void setExtensions(Collection<Extension> extensions) {
     setExtensions(new ArrayList<>(extensions));
   }
@@ -72,36 +52,17 @@ public class ExtendableTextField extends JBTextField {
   private void setExtensions(List<Extension> extensions) {
     putClientProperty("JTextField.variant", null);
     this.extensions = unmodifiableList(extensions);
-    putClientProperty("JTextField.variant", VARIANT);
+    putClientProperty("JTextField.variant", ExtendableTextComponent.VARIANT);
   }
 
-  public interface Extension {
-    Icon getIcon(boolean hovered);
+  public void addExtension(@NotNull Extension extension) {
+    ArrayList<Extension> extensions = new ArrayList<>(getExtensions());
+    if (extensions.add(extension)) setExtensions(extensions);
+  }
 
-    default int getIconGap() {
-      return scale(5);
-    }
-
-    default int getPreferredSpace() {
-      Icon icon1 = getIcon(true);
-      Icon icon2 = getIcon(false);
-      if (icon1 == null && icon2 == null) return 0;
-      if (icon1 == null) return getIconGap() + icon2.getIconWidth();
-      if (icon2 == null) return getIconGap() + icon1.getIconWidth();
-      return getIconGap() + Math.max(icon1.getIconWidth(), icon2.getIconWidth());
-    }
-
-    default boolean isIconBeforeText() {
-      return false;
-    }
-
-    default Runnable getActionOnClick() {
-      return null;
-    }
-
-    default String getTooltip() {
-      return null;
-    }
+  public void removeExtension(@NotNull Extension extension) {
+    ArrayList<Extension> extensions = new ArrayList<>(getExtensions());
+    if (extensions.remove(extension)) setExtensions(extensions);
   }
 
   /**
@@ -114,17 +75,15 @@ public class ExtendableTextField extends JBTextField {
   @Deprecated
   public void setUI(TextUI ui) {
     TextUI suggested = ui;
-    String name = ui == null ? null : ui.getClass().getSuperclass().getName();
-    if (!"com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI".equals(name)) {
-      try {
+    try {
+      if (ui == null || !Class.forName("com.intellij.ide.ui.laf.darcula.ui.TextFieldWithPopupHandlerUI").isAssignableFrom(ui.getClass())) {
         ui = (TextUI)Class
           .forName("com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI")
           .getDeclaredMethod("createUI", JComponent.class)
           .invoke(null, this);
       }
-      catch (Exception ignore) {
-      }
-    }
+    } catch (Exception ignore) {}
+
     super.setUI(ui);
     if (ui != suggested) {
       try {

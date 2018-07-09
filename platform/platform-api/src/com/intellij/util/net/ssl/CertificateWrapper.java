@@ -1,6 +1,6 @@
 package com.intellij.util.net.ssl;
 
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

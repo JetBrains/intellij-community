@@ -15,9 +15,11 @@
  */
 package com.intellij.debugger.memory.action;
 
-import com.intellij.debugger.memory.ui.ClassesTable;
+import com.intellij.debugger.memory.ui.ClassesFilteredView;
+import com.intellij.xdebugger.memory.ui.ClassesTable;
 import com.intellij.debugger.memory.ui.InstancesWindow;
-import com.intellij.debugger.memory.utils.InstancesProvider;
+import com.intellij.xdebugger.memory.ui.TypeInfo;
+import com.intellij.xdebugger.memory.utils.InstancesProvider;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
@@ -29,8 +31,8 @@ public class ShowNewInstancesAction extends ShowInstancesAction {
 
   @Override
   protected boolean isEnabled(AnActionEvent e) {
-    final ReferenceType selectedClass = getSelectedClass(e);
-    final InstancesProvider provider = e.getData(ClassesTable.NEW_INSTANCES_PROVIDER_KEY);
+    final ReferenceType selectedClass = ActionUtil.getSelectedClass(e);
+    final InstancesProvider provider = e.getData(ClassesFilteredView.NEW_INSTANCES_PROVIDER_KEY);
     final int count = getInstancesCount(e);
     return super.isEnabled(e) && selectedClass != null && provider != null && count > 0;
   }
@@ -43,7 +45,7 @@ public class ShowNewInstancesAction extends ShowInstancesAction {
   @Override
   protected int getInstancesCount(AnActionEvent e) {
     ClassesTable.ReferenceCountProvider countProvider = e.getData(ClassesTable.REF_COUNT_PROVIDER_KEY);
-    ReferenceType selectedClass = getSelectedClass(e);
+    TypeInfo selectedClass = ActionUtil.getSelectedTypeInfo(e);
     if (countProvider == null || selectedClass == null) {
       return -1;
     }
@@ -55,8 +57,8 @@ public class ShowNewInstancesAction extends ShowInstancesAction {
   protected void perform(AnActionEvent e) {
     final Project project = e.getProject();
 
-    final ReferenceType selectedClass = getSelectedClass(e);
-    final InstancesProvider provider = e.getData(ClassesTable.NEW_INSTANCES_PROVIDER_KEY);
+    final ReferenceType selectedClass = ActionUtil.getSelectedClass(e);
+    final InstancesProvider provider = e.getData(ClassesFilteredView.NEW_INSTANCES_PROVIDER_KEY);
     final XDebugSession session = project != null
                                   ? XDebuggerManager.getInstance(project).getCurrentSession()
                                   : null;

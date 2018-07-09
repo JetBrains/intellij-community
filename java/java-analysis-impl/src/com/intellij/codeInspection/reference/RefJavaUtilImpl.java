@@ -23,6 +23,7 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.VisibilityUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,10 +46,6 @@ public class RefJavaUtilImpl extends RefJavaUtil{
             final RefClassImpl refClass = (RefClassImpl)refFrom.getRefManager().getReference(aClass);
             refFrom.addReference(refClass, aClass, psiFrom, false, true, null);
           }
-
-          if (target instanceof PsiModifierListOwner && isDeprecated(target)) {
-            refFrom.setUsesDeprecatedApi(true);
-          }
         }
 
         @Override
@@ -56,8 +53,11 @@ public class RefJavaUtilImpl extends RefJavaUtil{
           for (PsiReference reference : expression.getReferences()) {
             PsiElement resolve = reference.resolve();
             if (resolve instanceof PsiMember) {
-              final RefElement refClass = refFrom.getRefManager().getReference(resolve);
-              refFrom.addReference(refClass, resolve, psiFrom, false, true, null);
+              final RefElement refResolved = refFrom.getRefManager().getReference(resolve);
+              refFrom.addReference(refResolved, resolve, psiFrom, false, true, null);
+              if (refResolved instanceof RefMethod) {
+                updateRefMethod(resolve, refResolved, expression, psiFrom, refFrom);
+              }
             }
           }
         }
@@ -67,10 +67,6 @@ public class RefJavaUtilImpl extends RefJavaUtil{
 
           final JavaResolveResult result = expression.advancedResolve(false);
           final PsiElement psiResolved = result.getElement();
-
-          if (psiResolved instanceof PsiModifierListOwner) {
-            if (isDeprecated(psiResolved)) refFrom.setUsesDeprecatedApi(true);
-          }
 
           RefElement refResolved = refFrom.getRefManager().getReference(psiResolved);
           refFrom.addReference(
@@ -140,10 +136,6 @@ public class RefJavaUtilImpl extends RefJavaUtil{
 
         @Nullable
         private RefMethod processNewLikeConstruct(final PsiMethod psiConstructor, final PsiExpressionList argumentList) {
-          if (psiConstructor != null) {
-            if (isDeprecated(psiConstructor)) refFrom.setUsesDeprecatedApi(true);
-          }
-
           RefMethodImpl refConstructor = (RefMethodImpl)refFrom.getRefManager().getReference(
             psiConstructor
           );
@@ -156,7 +148,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
             }
 
             if (refConstructor != null) {
-              refConstructor.updateParameterValues(psiParams);
+              refConstructor.updateParameterValues(psiParams, psiConstructor);
             }
           }
           return refConstructor;
@@ -233,6 +225,15 @@ public class RefJavaUtilImpl extends RefJavaUtil{
 
     if (refExpression instanceof PsiMethodReferenceExpression) {
       PsiType returnType = psiMethod.getReturnType();
+      if (!psiMethod.isConstructor() && 
+          !PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)refExpression))) {
+        refMethod.setReturnValueUsed(true);
+        addTypeReference(psiFrom, returnType, refFrom.getRefManager());
+      }
+      return;
+    }
+    if (refExpression instanceof PsiLiteralExpression){ //references in literal expressions
+      PsiType returnType = psiMethod.getReturnType();
       if (!psiMethod.isConstructor() && !PsiType.VOID.equals(returnType)) {
         refMethod.setReturnValueUsed(true);
         addTypeReference(psiFrom, returnType, refFrom.getRefManager());
@@ -246,7 +247,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
     if (call != null) {
       PsiType returnType = psiMethod.getReturnType();
       if (!psiMethod.isConstructor() && !PsiType.VOID.equals(returnType)) {
-        if (!(call.getParent() instanceof PsiExpressionStatement)) {
+        if (!ExpressionUtils.isVoidContext(call)) {
           refMethod.setReturnValueUsed(true);
         }
 
@@ -254,8 +255,8 @@ public class RefJavaUtilImpl extends RefJavaUtil{
       }
 
       PsiExpressionList argumentList = call.getArgumentList();
-      if (argumentList.getExpressions().length > 0) {
-        refMethod.updateParameterValues(argumentList.getExpressions());
+      if (!argumentList.isEmpty()) {
+        refMethod.updateParameterValues(argumentList.getExpressions(), psiMethod);
       }
 
       final PsiExpression psiExpression = call.getMethodExpression().getQualifierExpression();
@@ -426,12 +427,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
 
    @Override
    public int compareAccess(String a1, String a2) {
-     int i1 = getAccessNumber(a1);
-     int i2 = getAccessNumber(a2);
-
-     if (i1 == i2) return 0;
-     if (i1 < i2) return -1;
-     return 1;
+     return Integer.compare(getAccessNumber(a1), getAccessNumber(a2));
    }
 
    @SuppressWarnings("StringEquality")

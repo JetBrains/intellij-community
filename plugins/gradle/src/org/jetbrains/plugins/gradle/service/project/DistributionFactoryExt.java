@@ -20,6 +20,8 @@ import org.gradle.initialization.BuildCancellationToken;
 import org.gradle.internal.classpath.ClassPath;
 import org.gradle.internal.classpath.DefaultClassPath;
 import org.gradle.internal.logging.progress.ProgressLoggerFactory;
+import org.gradle.internal.time.Clock;
+import org.gradle.internal.time.Time;
 import org.gradle.tooling.BuildCancelledException;
 import org.gradle.tooling.GradleConnectionException;
 import org.gradle.tooling.GradleConnector;
@@ -49,14 +51,15 @@ import static org.gradle.internal.FileUtils.hasExtension;
 public class DistributionFactoryExt extends DistributionFactory {
 
   private DistributionFactoryExt() {
+    super(Time.clock());
   }
 
-  public static void setWrappedDistribution(GradleConnector connector, String wrapperPropertyFile, File gradleHome) {
+  public static void setWrappedDistribution(GradleConnector connector, String wrapperPropertyFile, File gradleUserHome) {
     File propertiesFile = new File(wrapperPropertyFile);
     if (propertiesFile.exists()) {
       WrapperExecutor wrapper = WrapperExecutor.forWrapperPropertiesFile(propertiesFile);
       if (wrapper.getDistribution() != null) {
-        Distribution distribution = new DistributionFactoryExt().getWrappedDistribution(propertiesFile, gradleHome);
+        Distribution distribution = new DistributionFactoryExt().getWrappedDistribution(propertiesFile, gradleUserHome);
         try {
           setDistributionField(connector, distribution);
         }
@@ -73,7 +76,7 @@ public class DistributionFactoryExt extends DistributionFactory {
   private Distribution getWrappedDistribution(File propertiesFile, final File userHomeDir) {
     WrapperExecutor wrapper = WrapperExecutor.forWrapperPropertiesFile(propertiesFile);
     if (wrapper.getDistribution() != null) {
-      return new ZippedDistribution(wrapper.getConfiguration(), determineRealUserHomeDir(userHomeDir));
+      return new ZippedDistribution(wrapper.getConfiguration(), determineRealUserHomeDir(userHomeDir), Time.clock());
     }
     return getDownloadedDistribution(GradleVersion.current().getVersion());
   }
@@ -128,10 +131,12 @@ public class DistributionFactoryExt extends DistributionFactory {
     private InstalledDistribution installedDistribution;
     private final WrapperConfiguration wrapperConfiguration;
     private final File distributionBaseDir;
+    private final Clock clock;
 
-    private ZippedDistribution(WrapperConfiguration wrapperConfiguration, File distributionBaseDir) {
+    private ZippedDistribution(WrapperConfiguration wrapperConfiguration, File distributionBaseDir, Clock clock) {
       this.wrapperConfiguration = wrapperConfiguration;
       this.distributionBaseDir = distributionBaseDir;
+      this.clock = clock;
     }
 
     public String getDisplayName() {
@@ -143,7 +148,7 @@ public class DistributionFactoryExt extends DistributionFactory {
                                                        final File userHomeDir,
                                                        BuildCancellationToken cancellationToken) {
       if (installedDistribution == null) {
-        final DistributionInstaller installer = new DistributionInstaller(progressLoggerFactory, progressListener);
+        final DistributionInstaller installer = new DistributionInstaller(progressLoggerFactory, progressListener, clock);
         File installDir;
         try {
           cancellationToken.addCallback(() -> installer.cancel());

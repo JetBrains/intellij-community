@@ -27,7 +27,7 @@ import java.io.IOException;
  * @author Mikhail Golubev
  */
 public class PyTypingTypeAliasStubImpl implements PyTypingAliasStub {
-  private String myText;
+  private final String myText;
 
   public PyTypingTypeAliasStubImpl(@NotNull String text) {
     myText = text;

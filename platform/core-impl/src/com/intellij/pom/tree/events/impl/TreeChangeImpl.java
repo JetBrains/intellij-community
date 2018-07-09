@@ -22,12 +22,14 @@ import com.intellij.pom.tree.events.TreeChange;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class TreeChangeImpl implements TreeChange {
+public class TreeChangeImpl implements TreeChange, Comparable<TreeChangeImpl> {
   private final CompositeElement myParent;
   private final List<CompositeElement> mySuperParents;
   private final LinkedHashSet<TreeElement> myInitialChildren = new LinkedHashSet<>();
@@ -37,6 +39,7 @@ public class TreeChangeImpl implements TreeChange {
 
   public TreeChangeImpl(@NotNull CompositeElement parent) {
     myParent = parent;
+    assert myParent.getPsi() != null : myParent.getElementType() + " of " + myParent.getClass();
     mySuperParents = JBIterable.generate(parent.getTreeParent(), TreeElement::getTreeParent).toList();
     for (TreeElement child : getCurrentChildren()) {
       myInitialChildren.add(child);
@@ -53,8 +56,29 @@ public class TreeChangeImpl implements TreeChange {
     return JBIterable.generate(myParent.getFirstChildNode(), TreeElement::getTreeNext);
   }
 
-  int getCurrentStart() {
-    return myParent.getStartOffset();
+  @Override
+  public int compareTo(@NotNull TreeChangeImpl o) {
+    List<CompositeElement> thisParents = ContainerUtil.reverse(getSuperParents());
+    List<CompositeElement> thatParents = ContainerUtil.reverse(o.getSuperParents());
+    for (int i = 1; i <= thisParents.size() && i <= thatParents.size(); i++) {
+      CompositeElement thisParent = i < thisParents.size() ? thisParents.get(i) : myParent;
+      CompositeElement thatParent = i < thatParents.size() ? thatParents.get(i) : o.myParent;
+      int result = compareNodePositions(thisParent, thatParent);
+      if (result != 0) return result;
+    }
+    return 0;
+  }
+
+  private static int compareNodePositions(CompositeElement node1, CompositeElement node2) {
+    if (node1 == node2) return 0;
+    
+    int o1 = node1.getStartOffsetInParent();
+    int o2 = node2.getStartOffsetInParent();
+    return o1 != o2 ? Integer.compare(o1, o2) : Integer.compare(getChildIndex(node1), getChildIndex(node2));
+  }
+
+  private static int getChildIndex(CompositeElement e) {
+    return ArrayUtil.indexOf(e.getTreeParent().getChildren(null), e);
   }
 
   int getLengthDelta() {
@@ -128,8 +152,14 @@ public class TreeChangeImpl implements TreeChange {
   }
 
   void fireEvents(PsiFile file) {
-    int start = getCurrentStart();
-    for (ChangeInfoImpl change : getAllChanges().values()) {
+    int start = myParent.getStartOffset();
+    Collection<ChangeInfoImpl> changes = getAllChanges().values();
+    if (ContainerUtil.exists(changes, c -> c.hasNoPsi())) {
+      ChangeInfoImpl.childrenChanged(ChangeInfoImpl.createEvent(file, start), myParent, myParent.getTextLength() - getLengthDelta());
+      return;
+    }
+    
+    for (ChangeInfoImpl change : changes) {
       change.fireEvent(start, file, myParent);
     }
   }

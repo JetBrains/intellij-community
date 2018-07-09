@@ -32,6 +32,7 @@ import git4idea.GitRemoteBranch
 import git4idea.GitStandardRemoteBranch
 import git4idea.GitUtil
 import git4idea.GitVcs
+import git4idea.config.GitVersionSpecialty
 import git4idea.log.GitLogProvider
 import git4idea.push.GitPushSource
 import git4idea.push.GitPushTarget
@@ -91,11 +92,12 @@ fun GitPlatformTest.cloneRepo(source: String, destination: String, bare: Boolean
   else {
     git("clone -- . $destination")
   }
+  cd(destination)
+  setupDefaultUsername()
 }
 
-fun setupDefaultUsername(project: Project) {
-  setupUsername(project, USER_NAME, USER_EMAIL)
-}
+fun setupDefaultUsername(project: Project) = setupUsername(project, USER_NAME, USER_EMAIL)
+fun GitPlatformTest.setupDefaultUsername() = setupDefaultUsername(project)
 
 fun setupUsername(project: Project, name: String, email: String) {
   assertFalse("Can not set empty user name ", name.isEmpty())
@@ -176,3 +178,5 @@ fun GitRepository.resolveConflicts() {
   this.git("add -u .")
 }
 
+fun getPrettyFormatTagForFullCommitMessage(project: Project) =
+  if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(project)) "%B" else "%s%n%n%-b"

@@ -25,9 +25,9 @@ import java.awt.*;
  */
 //todo[nik,anyone] feel free to rename this class
 public abstract class ListCellRendererWithRightAlignedComponent<T> implements ListCellRenderer {
-  private ListCellRenderer myLeftRenderer;
-  private ListCellRenderer myRightRenderer;
-  private JComponent myPanel;
+  private final ListCellRenderer myLeftRenderer;
+  private final ListCellRenderer myRightRenderer;
+  private final JComponent myPanel;
   private String myLeftText;
   private String myRightText;
   private Icon myIcon;

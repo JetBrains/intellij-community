@@ -17,10 +17,10 @@ package com.siyeh.ig.style;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,7 +70,7 @@ public class ChainedMethodCallInspectionBase extends BaseInspection {
         final PsiExpressionList expressionList = PsiTreeUtil.getParentOfType(expression, PsiExpressionList.class);
         if (expressionList != null) {
           final PsiElement parent = expressionList.getParent();
-          if (ExpressionUtils.isConstructorInvocation(parent)) {
+          if (JavaPsiConstructorUtil.isConstructorCall(parent)) {
             return;
           }
         }

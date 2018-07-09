@@ -26,7 +26,8 @@ public interface UserDataHolder {
   /**
    * @return a user data value associated with this object. Doesn't require read action.
    */
-  @Nullable <T> T getUserData(@NotNull Key<T> key);
+  @Nullable
+  <T> T getUserData(@NotNull Key<T> key);
 
   /**
    * Add a new user data value to this object. Doesn't require write action.

@@ -1,7 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.impl.ConsoleBuffer;
+import com.intellij.execution.process.ColoredOutputTypeRegistry;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.sm.runner.events.*;
@@ -222,10 +223,10 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  private void fireOnSuiteTreeNodeAdded(String testName, String locationHint, String id, String parentNodeId) {
+  private void fireOnSuiteTreeNodeAdded(String testName, String locationHint, String metaInfo, String id, String parentNodeId) {
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
-      processor.onSuiteTreeNodeAdded(testName, locationHint, id, parentNodeId);
+      processor.onSuiteTreeNodeAdded(testName, locationHint, metaInfo, id, parentNodeId);
     }
   }
 
@@ -237,11 +238,11 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  private void fireOnSuiteTreeStarted(String suiteName, String locationHint, String id, String parentNodeId) {
+  private void fireOnSuiteTreeStarted(String suiteName, String locationHint, String metainfo, String id, String parentNodeId) {
 
     final GeneralTestEventsProcessor processor = myProcessor;
     if (processor != null) {
-      processor.onSuiteTreeStarted(suiteName, locationHint, id, parentNodeId);
+      processor.onSuiteTreeStarted(suiteName, locationHint, metainfo, id, parentNodeId);
     }
   }
 
@@ -323,7 +324,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
   }
 
-  public void setTestingStartedHandler(@NotNull Runnable testingStartedHandler) {
+  public synchronized void setTestingStartedHandler(@NotNull Runnable testingStartedHandler) {
     myTestingStartedHandler = testingStartedHandler;
   }
 
@@ -372,6 +373,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     @NonNls private static final String ATTR_VALUE_STATUS_ERROR = "ERROR";
     @NonNls private static final String ATTR_VALUE_STATUS_WARNING = "WARNING";
     @NonNls private static final String ATTR_KEY_TEXT = "text";
+    @NonNls private static final String ATTR_KEY_TEXT_ATTRIBUTES = "textAttributes";
     @NonNls private static final String ATTR_KEY_ERROR_DETAILS = "errorDetails";
     @NonNls private static final String ATTR_KEY_EXPECTED_FILE_PATH = "expectedFile";
     @NonNls private static final String ATTR_KEY_ACTUAL_FILE_PATH = "actualFile";
@@ -448,11 +450,31 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
     }
 
     public void visitTestStdOut(@NotNull final TestStdOut testStdOut) {
-      fireOnTestOutput(new TestOutputEvent(testStdOut, testStdOut.getStdOut(), true));
+      Key outputType = getOutputType(testStdOut.getAttributes(), ProcessOutputTypes.STDOUT);
+      fireOnTestOutput(new TestOutputEvent(testStdOut, testStdOut.getStdOut(), outputType));
     }
 
     public void visitTestStdErr(@NotNull final TestStdErr testStdErr) {
-      fireOnTestOutput(new TestOutputEvent(testStdErr, testStdErr.getStdErr(), false));
+      Key outputType = getOutputType(testStdErr.getAttributes(), ProcessOutputTypes.STDERR);
+      fireOnTestOutput(new TestOutputEvent(testStdErr, testStdErr.getStdErr(), outputType));
+    }
+
+    @NotNull
+    public Key getOutputType(Map<String, String> attributes, Key baseOutputType) {
+      String textAttributes = attributes.get(ATTR_KEY_TEXT_ATTRIBUTES);
+      if (textAttributes == null) {
+        return baseOutputType;
+      }
+      if (textAttributes.equals(ProcessOutputTypes.STDOUT.toString())) {
+        return ProcessOutputTypes.STDOUT; 
+      }
+      if (textAttributes.equals(ProcessOutputTypes.STDERR.toString())) {
+        return ProcessOutputTypes.STDERR; 
+      }
+      if (textAttributes.equals(ProcessOutputTypes.SYSTEM.toString())) {
+        return ProcessOutputTypes.SYSTEM; 
+      }
+      return ColoredOutputTypeRegistry.getInstance().getOutputType(textAttributes, baseOutputType);
     }
 
     public void visitTestFailed(@NotNull final TestFailed testFailed) {
@@ -516,10 +538,7 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
         }
         else {
           // some other text
-
-          // we cannot pass output type here but it is a service message
-          // let's think that is was stdout
-          fireOnUncapturedOutput(text, ProcessOutputTypes.STDOUT);
+          fireOnUncapturedOutput(text, getOutputType(msg.getAttributes(), ProcessOutputTypes.STDOUT));
         }
       }
     }
@@ -564,13 +583,21 @@ public class OutputToGeneralTestEventsConverter implements ProcessOutputConsumer
         fireOnTestFrameworkAttached();
       }
       else if (SUITE_TREE_STARTED.equals(name)) {
-        fireOnSuiteTreeStarted(msg.getAttributes().get("name"), msg.getAttributes().get(ATTR_KEY_LOCATION_URL), TreeNodeEvent.getNodeId(msg), msg.getAttributes().get("parentNodeId"));
+        fireOnSuiteTreeStarted(msg.getAttributes().get("name"), 
+                               msg.getAttributes().get(ATTR_KEY_LOCATION_URL), 
+                               BaseStartedNodeEvent.getMetainfo(msg),
+                               TreeNodeEvent.getNodeId(msg), 
+                               msg.getAttributes().get("parentNodeId"));
       }
       else if (SUITE_TREE_ENDED.equals(name)) {
         fireOnSuiteTreeEnded(msg.getAttributes().get("name"));
       }
       else if (SUITE_TREE_NODE.equals(name)) {
-        fireOnSuiteTreeNodeAdded(msg.getAttributes().get("name"), msg.getAttributes().get(ATTR_KEY_LOCATION_URL), TreeNodeEvent.getNodeId(msg), msg.getAttributes().get("parentNodeId"));
+        fireOnSuiteTreeNodeAdded(msg.getAttributes().get("name"), 
+                                 msg.getAttributes().get(ATTR_KEY_LOCATION_URL),
+                                 BaseStartedNodeEvent.getMetainfo(msg),
+                                 TreeNodeEvent.getNodeId(msg), 
+                                 msg.getAttributes().get("parentNodeId"));
       }
       else if (BUILD_TREE_ENDED_NODE.equals(name)) {
         fireOnBuildTreeEnded();

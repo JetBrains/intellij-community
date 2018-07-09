@@ -19,6 +19,8 @@ import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
 import com.intellij.ui.EditorCustomization;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Set;
+
 /**
  * @author nik
  */
@@ -36,5 +38,10 @@ public class SpellCheckingEditorCustomizationProviderImpl extends SpellCheckingE
   @Override
   public EditorCustomization getDisabledCustomization() {
     return DISABLED;
+  }
+
+  @Override
+  public Set<String> getSpellCheckingToolNames() {
+    return SpellCheckingEditorCustomization.getSpellCheckingToolNames();
   }
 }

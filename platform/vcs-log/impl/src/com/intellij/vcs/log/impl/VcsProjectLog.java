@@ -48,6 +48,7 @@ public class VcsProjectLog implements Disposable {
   @NotNull private final Project myProject;
   @NotNull private final MessageBus myMessageBus;
   @NotNull private final VcsLogTabsProperties myUiProperties;
+  @NotNull private final VcsLogTabsManager myTabsManager;
 
   @NotNull
   private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
@@ -55,10 +56,11 @@ public class VcsProjectLog implements Disposable {
 
   public VcsProjectLog(@NotNull Project project,
                        @NotNull MessageBus messageBus,
-                       @NotNull VcsLogTabsProperties uiProperties) {
+                       @NotNull VcsLogProjectTabsProperties uiProperties) {
     myProject = project;
     myMessageBus = messageBus;
     myUiProperties = uiProperties;
+    myTabsManager = new VcsLogTabsManager(project, messageBus, uiProperties, this);
   }
 
   @Nullable
@@ -88,11 +90,16 @@ public class VcsProjectLog implements Disposable {
     return myLogManager.getCached();
   }
 
+  @NotNull
+  public VcsLogTabsManager getTabsManager() {
+    return myTabsManager;
+  }
+
   @CalledInAny
   private void recreateLog() {
     UIUtil.invokeLaterIfNeeded(() -> myLogManager.drop(() -> {
       if (hasDvcsRoots()) {
-        createLog();
+        createLog(false);
       }
     }));
   }
@@ -119,11 +126,11 @@ public class VcsProjectLog implements Disposable {
   }
 
   @CalledInBackground
-  public void createLog() {
+  public void createLog(boolean forceInit) {
     VcsLogManager logManager = myLogManager.getValue();
 
     ApplicationManager.getApplication().invokeLater(() -> {
-      if (logManager.isLogVisible()) {
+      if (logManager.isLogVisible() || forceInit) {
         logManager.scheduleInitialization();
       }
       else if (PostponableLogRefresher.keepUpToDate()) {
@@ -180,8 +187,11 @@ public class VcsProjectLog implements Disposable {
       if (myValue != null) {
         myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(myValue);
         myValue.dispose(callback);
+        myValue = null;
       }
-      myValue = null;
+      else if (callback != null) {
+        ApplicationManager.getApplication().executeOnPooledThread(callback);
+      }
     }
 
     @Nullable
@@ -195,13 +205,13 @@ public class VcsProjectLog implements Disposable {
     public void runActivity(@NotNull Project project) {
       if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
 
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        VcsProjectLog projectLog = getInstance(project);
+      VcsProjectLog projectLog = getInstance(project);
 
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
         MessageBusConnection connection = project.getMessageBus().connect(project);
         connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, projectLog::recreateLog);
         if (projectLog.hasDvcsRoots()) {
-          projectLog.createLog();
+          projectLog.createLog(false);
         }
       });
     }

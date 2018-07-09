@@ -179,7 +179,7 @@ public class ByWord implements DiffPolicy {
       Word lastWord = withinFormatting ? policy.createFormatting(text, range) : new Word(text, range);
       words.add(lastWord);
     }
-    return words.toArray(new Word[words.size()]);
+    return words.toArray(new Word[0]);
   }
 
   private static class FragmentBuilder {
@@ -200,7 +200,7 @@ public class ByWord implements DiffPolicy {
 
     @NotNull
     public DiffFragment[] getFragments() {
-      return myFragments.toArray(new DiffFragment[myFragments.size()]);
+      return myFragments.toArray(new DiffFragment[0]);
     }
 
     @NotNull

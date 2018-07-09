@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework
 
 import com.intellij.configurationStore.SchemeNameToFileName
@@ -14,13 +14,13 @@ private val EMPTY = EmptySchemesManager()
 
 class MockSchemeManagerFactory : SchemeManagerFactory() {
   override fun <SCHEME : Any, MUTABLE_SCHEME : SCHEME> create(directoryName: String,
-                                                                 processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>,
-                                                                 presentableName: String?,
-                                                                 roamingType: RoamingType,
-                                                                 schemeNameToFileName: SchemeNameToFileName,
-                                                                 streamProvider: StreamProvider?,
-                                                                 directoryPath: Path?,
-                                                                 autoSave: Boolean): SchemeManager<SCHEME> {
+                                                              processor: SchemeProcessor<SCHEME, MUTABLE_SCHEME>,
+                                                              presentableName: String?,
+                                                              roamingType: RoamingType,
+                                                              schemeNameToFileName: SchemeNameToFileName,
+                                                              streamProvider: StreamProvider?,
+                                                              directoryPath: Path?,
+                                                              isAutoSave: Boolean): SchemeManager<SCHEME> {
     @Suppress("UNCHECKED_CAST")
     return EMPTY as SchemeManager<SCHEME>
   }

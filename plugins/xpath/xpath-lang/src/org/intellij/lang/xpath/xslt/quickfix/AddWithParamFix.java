@@ -19,8 +19,6 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.macro.CompleteMacro;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -65,24 +63,21 @@ public class AddWithParamFix extends AbstractFix {
     }
 
     public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
-        final RunResult<SmartPsiElementPointer<XmlTag>> result = new WriteAction<SmartPsiElementPointer<XmlTag>>() {
-            protected void run(@NotNull Result<SmartPsiElementPointer<XmlTag>> result) throws Throwable {
-                final XmlTag withParamTag = RefactoringUtil.addWithParam(myTag);
+        SmartPsiElementPointer<XmlTag> result = WriteAction.compute(() -> {
+            final XmlTag withParamTag = RefactoringUtil.addWithParam(myTag);
 
-                withParamTag.setAttribute("name", myName != null ? myName : "dummy");
-                withParamTag.setAttribute("select", "dummy");
-
-                result.setResult(SmartPointerManager.getInstance(project).
-                        createSmartPsiElementPointer(withParamTag));
-            }
-        }.execute();
+            withParamTag.setAttribute("name", myName != null ? myName : "dummy");
+            withParamTag.setAttribute("select", "dummy");
+            return SmartPointerManager.getInstance(project).
+              createSmartPsiElementPointer(withParamTag);
+        });
 
         final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
         final Document doc = psiDocumentManager.getDocument(file);
         assert doc != null;
         psiDocumentManager.doPostponedOperationsAndUnblockDocument(doc);
 
-        final XmlTag withParamTag = result.getResultObject().getElement();
+        final XmlTag withParamTag = result.getElement();
         assert withParamTag != null;
 
         final TemplateBuilderImpl builder = new TemplateBuilderImpl(withParamTag);
@@ -100,13 +95,10 @@ public class AddWithParamFix extends AbstractFix {
 
         moveTo(editor, withParamTag);
 
-        new WriteAction() {
-            @SuppressWarnings({ "RawUseOfParameterizedType" })
-            protected void run(@NotNull Result result) throws Throwable {
-                PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
-                final TemplateManager mgr = TemplateManager.getInstance(myTag.getProject());
-                mgr.startTemplate(editor, builder.buildInlineTemplate());
-            }
-        }.execute();
+        WriteAction.run(() -> {
+            PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+            final TemplateManager mgr = TemplateManager.getInstance(myTag.getProject());
+            mgr.startTemplate(editor, builder.buildInlineTemplate());
+        });
     }
 }

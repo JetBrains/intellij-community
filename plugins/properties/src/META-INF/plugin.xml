@@ -131,7 +131,6 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.lang.properties.PropertiesFilesManager</implementation-class>
-      <skipForDefaultProject/>
     </component>
   </project-components>
 

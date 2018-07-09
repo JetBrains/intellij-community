@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +32,7 @@ public class ParameterizedParametersStaticCollectionInspection extends Parameter
   protected InspectionGadgetsFix buildFix(final Object... infos) {
     return new InspectionGadgetsFix() {
       @Override
-      protected void doFix(final Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      protected void doFix(final Project project, ProblemDescriptor descriptor) {
         final PsiElement element = descriptor.getPsiElement();
         final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
         if (method != null && infos[1] instanceof PsiType) {

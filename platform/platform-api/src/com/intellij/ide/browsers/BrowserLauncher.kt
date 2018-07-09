@@ -31,7 +31,7 @@ abstract class BrowserLauncher {
 
   abstract fun open(url: String)
 
-  fun browse(uri: URI) = browse(uri, null)
+  fun browse(uri: URI): Unit = browse(uri, null)
 
   fun browse(uri: URI, project: Project?) {
     browse(uri.toString(), project = project)

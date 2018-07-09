@@ -1,23 +1,8 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInsight;
 
-import com.intellij.codeInspection.dataFlow.CommonDataflow;
-import com.intellij.codeInspection.dataFlow.DfaFactType;
-import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Computable;
@@ -32,7 +17,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,11 +27,10 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   public static final int NEW_AS_CONSTRUCTOR = 0x04;
   public static final int THIS_ACCEPTED = 0x10;
   public static final int SUPER_ACCEPTED = 0x20;
-  public static final int USE_DFA = 0x40;
 
   @Override
   public int getAllAdditionalFlags() {
-    return NEW_AS_CONSTRUCTOR | THIS_ACCEPTED | SUPER_ACCEPTED | USE_DFA;
+    return NEW_AS_CONSTRUCTOR | THIS_ACCEPTED | SUPER_ACCEPTED;
   }
 
   /**
@@ -54,7 +38,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
    */
   @Override
   public int getAdditionalDefinitionSearchFlags() {
-    return THIS_ACCEPTED | SUPER_ACCEPTED | USE_DFA;
+    return THIS_ACCEPTED | SUPER_ACCEPTED;
   }
 
   /**
@@ -83,24 +67,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
         return ((PsiClassType)type).resolve();
       }
     }
-    if (targetElement instanceof PsiMethod && BitUtil.isSet(flags, USE_DFA)) {
-      PsiElement realMethod = findOverridingMethod(editor, offset, (PsiMethod)targetElement);
-      if (realMethod != null) return realMethod;
-    }
     return super.adjustTargetElement(editor, offset, flags, targetElement);
-  }
-
-  @Nullable
-  private static PsiElement findOverridingMethod(Editor editor, int offset, PsiMethod method) {
-    PsiClass qualifierClass = method.getContainingClass();
-    if (qualifierClass == null || !PsiUtil.canBeOverridden(method)) return null;
-    PsiReference reference = TargetElementUtil.findReference(editor, offset);
-    if (!(reference instanceof PsiReferenceExpression) || !reference.isReferenceTo(method)) return null;
-    PsiExpression qualifier = ((PsiReferenceExpression)reference).getQualifierExpression();
-    if (qualifier == null) return null;
-    TypeConstraint constraint = CommonDataflow.getExpressionFact(qualifier, DfaFactType.TYPE_CONSTRAINT);
-    if (constraint == null) return null;
-    return MethodUtils.findSpecificMethod(method, constraint.getPsiType());
   }
 
   @Override
@@ -111,6 +78,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   @Override
   @NotNull
   public ThreeState isAcceptableReferencedElement(@NotNull final PsiElement element, final PsiElement referenceOrReferencedElement) {
+    if (referenceOrReferencedElement instanceof SyntheticElement) return ThreeState.NO;
     if (isEnumConstantReference(element, referenceOrReferencedElement)) return ThreeState.NO;
     return super.isAcceptableReferencedElement(element, referenceOrReferencedElement);
   }
@@ -118,8 +86,8 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   private static boolean isEnumConstantReference(final PsiElement element, final PsiElement referenceOrReferencedElement) {
     return element != null &&
            element.getParent() instanceof PsiEnumConstant &&
-           referenceOrReferencedElement instanceof PsiMethod &&
-           ((PsiMethod)referenceOrReferencedElement).isConstructor();
+           (referenceOrReferencedElement instanceof PsiMethod && ((PsiMethod)referenceOrReferencedElement).isConstructor() || 
+            referenceOrReferencedElement instanceof PsiClass);
   }
 
   @Nullable
@@ -145,8 +113,14 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
         final PsiElement element = file.findElementAt(offset);
         if (element != null) {
           final PsiElement parent = element.getParent();
-          if (parent instanceof PsiFunctionalExpression) {
+          if (parent instanceof PsiFunctionalExpression && 
+              (PsiUtil.isJavaToken(element, JavaTokenType.ARROW) || PsiUtil.isJavaToken(element, JavaTokenType.DOUBLE_COLON))) {
             refElement = PsiUtil.resolveClassInType(((PsiFunctionalExpression)parent).getFunctionalInterfaceType());
+          }
+          else if (element instanceof PsiKeyword && 
+                   parent instanceof PsiTypeElement && 
+                   ((PsiTypeElement)parent).isInferredType()) {
+            refElement = PsiUtil.resolveClassInType(((PsiTypeElement)parent).getType());
           }
         } 
       }
@@ -238,9 +212,8 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   @Nullable
   public Collection<PsiElement> getTargetCandidates(@NotNull PsiReference reference) {
     PsiElement parent = reference.getElement().getParent();
-    if (parent instanceof PsiMethodCallExpression || parent instanceof PsiNewExpression && 
-                                                     ((PsiNewExpression)parent).getArrayDimensions().length == 0 &&
-                                                     ((PsiNewExpression)parent).getArrayInitializer() == null) {
+    if (parent instanceof PsiMethodCallExpression ||
+        parent instanceof PsiNewExpression && !ExpressionUtils.isArrayCreationExpression((PsiNewExpression)parent)) {
       PsiCallExpression callExpr = (PsiCallExpression)parent;
       boolean allowStatics = false;
       PsiExpression qualifier = callExpr instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)callExpr).getMethodExpression().getQualifierExpression()
@@ -277,7 +250,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   public PsiElement getGotoDeclarationTarget(@NotNull final PsiElement element, @Nullable final PsiElement navElement) {
     if (navElement == element && element instanceof PsiCompiledElement && element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod)element;
-      if (method.isConstructor() && method.getParameterList().getParametersCount() == 0) {
+      if (method.isConstructor() && method.getParameterList().isEmpty()) {
         PsiClass aClass = method.getContainingClass();
         PsiElement navClass = aClass == null ? null : aClass.getNavigationElement();
         if (aClass != navClass) return navClass;
@@ -336,7 +309,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
         return null;
       }
 
-      private PsiClass[] getInheritors(PsiClass containingClass, PsiClass psiClass, Set<PsiClass> visited) {
+      private PsiClass[] getInheritors(PsiClass containingClass, PsiClass psiClass, Set<? super PsiClass> visited) {
         if (psiClass instanceof PsiTypeParameter) {
           List<PsiClass> result = new ArrayList<>();
           for (PsiClassType classType : psiClass.getExtendsListTypes()) {
@@ -368,6 +341,9 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   public SearchScope getSearchScope(Editor editor, @NotNull final PsiElement element) {
     final PsiReferenceExpression referenceExpression = editor != null ? findReferenceExpression(editor) : null;
     if (referenceExpression != null && element instanceof PsiMethod) {
+       if (!PsiUtil.canBeOverridden((PsiMethod)element)) {
+         return element.getUseScope();
+       }
       final PsiClass[] memberClass = getClassesWithMember(referenceExpression, (PsiMember)element);
       if (memberClass != null && memberClass.length == 1) {
         return CachedValuesManager.getCachedValue(memberClass[0], () -> {

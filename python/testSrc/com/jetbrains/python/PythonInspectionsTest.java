@@ -24,7 +24,7 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   private void doTestWithPy3k(String testName, LocalInspectionTool localInspectionTool) {
-    doTestWithLanguageLevel(testName, localInspectionTool, LanguageLevel.PYTHON30);
+    doTestWithLanguageLevel(testName, localInspectionTool, LanguageLevel.PYTHON34);
   }
 
   private void doTestWithLanguageLevel(String testName,
@@ -54,6 +54,15 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PyMethodParametersInspection.class, LanguageLevel.PYTHON36);
   }
 
+  public void testPyMethodParametersInspectionClassGetItem() {
+    doHighlightingTest(PyMethodParametersInspection.class, LanguageLevel.PYTHON37);
+  }
+
+  // PY-14896
+  public void testPyMethodParametersInspectionAbstractClassAndStaticMethods() {
+    doHighlightingTest(PyMethodParametersInspection.class, LanguageLevel.PYTHON34);
+  }
+
   public void testPyNestedDecoratorsInspection() {
     LocalInspectionTool inspection = new PyNestedDecoratorsInspection();
     doTest(getTestName(false), inspection);
@@ -81,13 +90,7 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyDefaultArgumentInspection() {
-    LocalInspectionTool inspection = new PyDefaultArgumentInspection();
-    doTest(getTestName(false), inspection);
-  }
-
-  public void testPyRaisingNewStyleClassInspection() {
-    LocalInspectionTool inspection = new PyRaisingNewStyleClassInspection();
-    doTestWithLanguageLevel(getTestName(false), inspection, LanguageLevel.PYTHON24);
+    doHighlightingTest(PyDefaultArgumentInspection.class);
   }
 
   public void testPyDocstringInspection() {
@@ -97,12 +100,12 @@ public class PythonInspectionsTest extends PyTestCase {
 
   //PY-3373
   public void testPyDocstringParametersInspection() {
-    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON33));
+    runWithDocStringFormat(DocStringFormat.EPYTEXT, () -> doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON34));
   }
 
   // PY-9795
   public void testGoogleDocstringParametersInspection() {
-    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON33));
+    runWithDocStringFormat(DocStringFormat.GOOGLE, () -> doHighlightingTest(PyIncorrectDocstringInspection.class, LanguageLevel.PYTHON34));
   }
 
   public void testPySimplifyBooleanCheckInspection() {
@@ -176,17 +179,13 @@ public class PythonInspectionsTest extends PyTestCase {
     myFixture.checkHighlighting(true, false, true);
   }
 
-  public void testPyPropertyDefinitionInspection25() {
-    doHighlightingTest(PyPropertyDefinitionInspection.class, LanguageLevel.PYTHON25);
-  }
-
   public void testPyPropertyDefinitionInspection26() {
     doHighlightingTest(PyPropertyDefinitionInspection.class, LanguageLevel.PYTHON26);
   }
 
   // PY-11426
   public void testPyPropertyDefinitionInspection33() {
-    doHighlightingTest(PyPropertyDefinitionInspection.class, LanguageLevel.PYTHON33);
+    doHighlightingTest(PyPropertyDefinitionInspection.class, LanguageLevel.PYTHON34);
   }
 
   public void testInconsistentIndentation() {
@@ -210,7 +209,7 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyDictDuplicateKeysInspection() {
-    doHighlightingTest(PyDictDuplicateKeysInspection.class);
+    doHighlightingTest(PyDictDuplicateKeysInspection.class, LanguageLevel.PYTHON37);
   }
 
   public void testPyListCreationInspection() {         //PY-2823
@@ -227,6 +226,10 @@ public class PythonInspectionsTest extends PyTestCase {
 
   public void testPyArgumentEqualDefaultInspection() {    //PY-3125
     doHighlightingTest(PyArgumentEqualDefaultInspection.class);
+  }
+
+  public void testPyArgumentEqualDefaultInspectionPy3() {
+    doHighlightingTest(PyArgumentEqualDefaultInspection.class, LanguageLevel.PYTHON34);
   }
 
   public void testPyNonAsciiCharInspection() {    //PY-5868

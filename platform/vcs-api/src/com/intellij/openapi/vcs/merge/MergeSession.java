@@ -57,5 +57,4 @@ public interface MergeSession {
    * @param resolution the used resolution.
    */
   void conflictResolvedForFile(@NotNull VirtualFile file, @NotNull Resolution resolution);
-
 }

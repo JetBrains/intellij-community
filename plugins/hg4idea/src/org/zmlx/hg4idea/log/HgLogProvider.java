@@ -65,7 +65,7 @@ public class HgLogProvider implements VcsLogProvider {
   public HgLogProvider(@NotNull Project project, @NotNull HgRepositoryManager repositoryManager, @NotNull VcsLogObjectsFactory factory) {
     myProject = project;
     myRepositoryManager = repositoryManager;
-    myRefSorter = new HgRefManager();
+    myRefSorter = new HgRefManager(project, repositoryManager);
     myVcsObjectsFactory = factory;
   }
 
@@ -99,11 +99,11 @@ public class HgLogProvider implements VcsLogProvider {
   public void readFullDetails(@NotNull VirtualFile root,
                               @NotNull List<String> hashes,
                               @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
-                              boolean fast)
+                              boolean isForIndexing)
     throws VcsException {
-    // parameter fast is currently not used
+    // parameter isForIndexing is currently not used
     // since this method is not called from index yet, fast always is false
-    // but when implementing indexing mercurial commits, we'll need to avoid rename/move detection when fast = true
+    // but when implementing indexing mercurial commits, we'll need to avoid rename/move detection when isForIndexing = true
 
     HgVcs hgvcs = HgVcs.getInstance(myProject);
     assert hgvcs != null;
@@ -222,7 +222,7 @@ public class HgLogProvider implements VcsLogProvider {
     List<String> filterParameters = ContainerUtil.newArrayList();
 
     // branch filter and user filter may be used several times without delimiter
-    VcsLogBranchFilter branchFilter = filterCollection.getBranchFilter();
+    VcsLogBranchFilter branchFilter = filterCollection.get(VcsLogFilterCollection.BRANCH_FILTER);
     if (branchFilter != null) {
       HgRepository repository = myRepositoryManager.getRepositoryForRoot(root);
       if (repository == null) {
@@ -254,51 +254,53 @@ public class HgLogProvider implements VcsLogProvider {
       }
     }
 
-    if (filterCollection.getUserFilter() != null) {
+    VcsLogUserFilter userFilter = filterCollection.get(VcsLogFilterCollection.USER_FILTER);
+    if (userFilter != null) {
       filterParameters.add("-r");
-      String authorFilter =
-        StringUtil.join(ContainerUtil.map(ContainerUtil.map(filterCollection.getUserFilter().getUsers(root), VcsUserUtil::toExactString),
-                                          UserNameRegex.EXTENDED_INSTANCE), "|");
+      String authorFilter = StringUtil.join(ContainerUtil.map(ContainerUtil.map(userFilter.getUsers(root), VcsUserUtil::toExactString),
+                                                              UserNameRegex.EXTENDED_INSTANCE), "|");
       filterParameters.add("user('re:" + authorFilter + "')");
     }
 
-    if (filterCollection.getDateFilter() != null) {
+    VcsLogDateFilter dateFilter = filterCollection.get(VcsLogFilterCollection.DATE_FILTER);
+    if (dateFilter != null) {
       StringBuilder args = new StringBuilder();
       final SimpleDateFormat dateFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm");
       filterParameters.add("-d");
-      VcsLogDateFilter filter = filterCollection.getDateFilter();
-      if (filter.getAfter() != null) {
-        if (filter.getBefore() != null) {
-          args.append(dateFormatter.format(filter.getAfter())).append(" to ").append(dateFormatter.format(filter.getBefore()));
+      if (dateFilter.getAfter() != null) {
+        if (dateFilter.getBefore() != null) {
+          args.append(dateFormatter.format(dateFilter.getAfter())).append(" to ").append(dateFormatter.format(dateFilter.getBefore()));
         }
         else {
-          args.append('>').append(dateFormatter.format(filter.getAfter()));
+          args.append('>').append(dateFormatter.format(dateFilter.getAfter()));
         }
       }
 
-      else if (filter.getBefore() != null) {
-        args.append('<').append(dateFormatter.format(filter.getBefore()));
+      else if (dateFilter.getBefore() != null) {
+        args.append('<').append(dateFormatter.format(dateFilter.getBefore()));
       }
       filterParameters.add(args.toString());
     }
 
-    if (filterCollection.getTextFilter() != null) {
-      String textFilter = filterCollection.getTextFilter().getText();
-      if (filterCollection.getTextFilter().isRegex()) {
+    VcsLogTextFilter textFilter = filterCollection.get(VcsLogFilterCollection.TEXT_FILTER);
+    if (textFilter != null) {
+      String text = textFilter.getText();
+      if (textFilter.isRegex()) {
         filterParameters.add("-r");
-        filterParameters.add("grep(r'" + textFilter + "')");
+        filterParameters.add("grep(r'" + text + "')");
       }
-      else if (filterCollection.getTextFilter().matchesCase()) {
+      else if (textFilter.matchesCase()) {
         filterParameters.add("-r");
-        filterParameters.add("grep(r'" + StringUtil.escapeChars(textFilter, UserNameRegex.EXTENDED_REGEX_CHARS) + "')");
+        filterParameters.add("grep(r'" + StringUtil.escapeChars(text, UserNameRegex.EXTENDED_REGEX_CHARS) + "')");
       }
       else {
-        filterParameters.add(HgHistoryUtil.prepareParameter("keyword", textFilter));
+        filterParameters.add(HgHistoryUtil.prepareParameter("keyword", text));
       }
     }
 
-    if (filterCollection.getStructureFilter() != null) {
-      for (FilePath file : filterCollection.getStructureFilter().getFiles()) {
+    VcsLogStructureFilter structureFilter = filterCollection.get(VcsLogFilterCollection.STRUCTURE_FILTER);
+    if (structureFilter != null) {
+      for (FilePath file : structureFilter.getFiles()) {
         filterParameters.add(file.getPath());
       }
     }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.objectTree;
 
 import com.intellij.openapi.util.Comparing;
@@ -85,7 +71,7 @@ public class ThrowableInterner {
     if (BACKTRACE_FIELD != null) {
       BACKTRACE_FIELD_OFFSET = LUCKILY_NOT_NEEDED;
     }
-    else if ((SystemInfo.isOracleJvm || SystemInfo.isJetBrainsJvm) && SystemInfo.isJavaVersionAtLeast("1.7")) {
+    else if ((SystemInfo.isOracleJvm || SystemInfo.isJetBrainsJvm) && SystemInfo.isJavaVersionAtLeast(7, 0, 0)) {
       Field firstField = Throwable.class.getDeclaredFields()[1];
       long firstFieldOffset = AtomicFieldUpdater.getUnsafe().objectFieldOffset(firstField);
       BACKTRACE_FIELD_OFFSET = firstFieldOffset == 12 ? 8 : firstFieldOffset == 16 ? 12 : firstFieldOffset == 24 ? 16 : UNKNOWN;

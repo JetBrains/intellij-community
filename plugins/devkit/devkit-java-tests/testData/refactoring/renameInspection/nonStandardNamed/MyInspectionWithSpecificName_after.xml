@@ -1,0 +1,11 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <localInspection language="XML"
+                     shortName="someShortName"
+                     displayName="My Inspection With Specific Name"
+                     groupName="RenameInspectionTestGroupName"
+                     enabledByDefault="true"
+                     level="ERROR"
+                     implementationClass="NewMyInspectionWithSpecificName"/>
+  </extensions>
+</idea-plugin>

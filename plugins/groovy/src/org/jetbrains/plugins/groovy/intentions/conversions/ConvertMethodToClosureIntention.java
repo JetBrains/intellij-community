@@ -28,7 +28,6 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
@@ -45,6 +44,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Collection;
+import java.util.HashSet;
 
 import static com.intellij.openapi.util.text.StringUtil.isJavaIdentifier;
 

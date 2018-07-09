@@ -17,7 +17,6 @@ package git4idea.rebase
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.openapi.progress.EmptyProgressIndicator
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.ui.CommitMessage
@@ -31,12 +30,10 @@ import git4idea.test.*
 import org.junit.Assume
 import org.mockito.Mockito
 import org.mockito.Mockito.`when`
-import kotlin.properties.Delegates
-import kotlin.test.assertFailsWith
 
 class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
-  private var repo: GitRepository by Delegates.notNull()
+  private lateinit var repo: GitRepository
 
   override fun setUp() {
     super.setUp()
@@ -220,8 +217,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     assertErrorNotification("Rebase Failed",
         """
         $UNKNOWN_ERROR_TEXT<br/>
-        <a>Retry.</a><br/>
-        Note that some local changes were <a>stashed</a> before rebase.
+        Local changes were stashed before rebase.
         """)
     assertNoRebaseInProgress(repo)
     repo.assertNoLocalChanges()
@@ -421,7 +417,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
 
     rebaseInteractively()
 
-    assertSuccessfulNotification("Rebase Stopped for Editing", "Once you are satisfied with your changes you may <a href='continue'>continue</a>")
+    assertSuccessfulNotification("Rebase Stopped for Editing", "")
     assertEquals("The repository must be in the 'SUSPENDED' state", repo, repositoryManager.ongoingRebaseSpec!!.ongoingRebase)
 
     GitRebaseUtils.continueRebase(project)
@@ -450,7 +446,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     GitTestingRebaseProcess(project, GitRebaseParams.editCommits("HEAD^", rebaseEditor, false), repo).rebase()
 
     assertNotNull("Didn't get any rebase entries", receivedEntries)
-    assertEquals("Rebase entries parsed incorrectly", listOf(GitRebaseEntry.Action.pick), receivedEntries!!.map { it.action })
+    assertEquals("Rebase entries parsed incorrectly", listOf(GitRebaseEntry.Action.PICK), receivedEntries!!.map { it.action })
   }
 
   // IDEA-176455
@@ -496,8 +492,6 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     repo.`diverge feature and master`()
 
   dialogManager.onDialog(GitRebaseEditor::class.java) { DialogWrapper.CANCEL_EXIT_CODE }
-    assertFailsWith(ProcessCanceledException::class) { rebaseInteractively() }
-
     assertNoNotification()
     assertNoRebaseInProgress(repo)
     repo.`assert feature not rebased on master`()
@@ -513,7 +507,6 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     }
 
     dialogManager.onMessage { Messages.CANCEL }
-    assertFailsWith(ProcessCanceledException::class) { rebaseInteractively() }
 
     assertNoNotification()
     assertNoRebaseInProgress(repo)

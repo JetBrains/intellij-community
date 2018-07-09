@@ -40,7 +40,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * @author: db
- * Date: 28.01.11
  */
 public class Mappings {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.ether.dependencyView.Mappings");
@@ -328,7 +327,7 @@ public class Mappings {
             final MethodRepr memberMethod = (MethodRepr)member;
             return memberMethod.name == m.name && Arrays.equals(memberMethod.myArgumentTypes, m.myArgumentTypes);
           }
-          return member.name == m.name;
+          return false;
         }
       }, className);
     }
@@ -710,7 +709,10 @@ public class Mappings {
     }
 
     void affectModule(ModuleRepr m, final Collection<File> affectedFiles) {
-      final Collection<File> depFiles = myClassToSourceFile.get(m.name);
+      Collection<File> depFiles = myMappings != null? myMappings.myClassToSourceFile.get(m.name) : null;
+      if (depFiles == null) {
+        depFiles = myClassToSourceFile.get(m.name);
+      }
       if (depFiles != null) {
         debug("Affecting module ", m.name);
         affectedFiles.addAll(depFiles);
@@ -790,6 +792,11 @@ public class Mappings {
     public class InheritanceConstraint extends PackageConstraint {
       public final int rootClass;
 
+      public InheritanceConstraint(ClassRepr rootClass) {
+        super(rootClass.getPackageName());
+        this.rootClass = rootClass.name;
+      }
+
       public InheritanceConstraint(final int rootClass) {
         super(ClassRepr.getPackageName(myContext.getValue(rootClass)));
         this.rootClass = rootClass;
@@ -798,7 +805,7 @@ public class Mappings {
       @Override
       public boolean checkResidence(final int residence) {
         final Boolean inheritorOf = isInheritorOf(residence, rootClass, null);
-        return inheritorOf == null || !inheritorOf || super.checkResidence(residence);
+        return (inheritorOf == null || !inheritorOf) && super.checkResidence(residence);
       }
     }
   }
@@ -1442,7 +1449,7 @@ public class Mappings {
             myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
 
             for (final UsageRepr.Usage usage : usages) {
-              state.myUsageConstraints.put(usage, myFuture.new InheritanceConstraint(it.name));
+              state.myUsageConstraints.put(usage, myFuture.new PackageConstraint(it.getPackageName()));
             }
 
             state.myAffectedUsages.addAll(usages);
@@ -1450,7 +1457,7 @@ public class Mappings {
             constrained = true;
           }
 
-          if ((d.base() & Difference.TYPE) > 0 || (d.base() & Difference.SIGNATURE) > 0 || throwsChanged) {
+          if ((d.base() & Difference.TYPE) != 0 || (d.base() & Difference.SIGNATURE) != 0 || throwsChanged) {
             if (!affected) {
               debug("Return type, throws list or signature changed --- affecting method usages");
               myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
@@ -1474,31 +1481,37 @@ public class Mappings {
               affected = true;
             }
           }
-          else if ((d.base() & Difference.ACCESS) > 0) {
-            if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0 ||
-                (d.removedModifiers() & Opcodes.ACC_STATIC) > 0 ||
-                (d.addedModifiers() & Opcodes.ACC_PRIVATE) > 0) {
+          else if ((d.base() & Difference.ACCESS) != 0) {
+            if ((d.addedModifiers() & (Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_BRIDGE)) != 0 ||
+                (d.removedModifiers() & Opcodes.ACC_STATIC) != 0) {
+
+              // When synthetic or bridge flags are added, this effectively means that explicitly written in the code
+              // method with the same signature and return type has been removed and a bridge method has been generated instead.
+              // In some cases (e.g. using raw types) the presence of such synthetic methods in the bytecode is ignored by the compiler
+              // so that the code that called such method via raw type reference might not compile anymore => to be on the safe side
+              // we should recompile all places where the method was used
+
               if (!affected) {
-                debug("Added static or private specifier or removed static specifier --- affecting method usages");
+                debug("Added {static | private | synthetic | bridge} specifier or removed static specifier --- affecting method usages");
                 myFuture.affectMethodUsages(m, propagated, m.createUsage(myContext, it.name), usages, state.myDependants);
                 state.myAffectedUsages.addAll(usages);
                 affected = true;
               }
 
-              if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0) {
+              if ((d.addedModifiers() & Opcodes.ACC_STATIC) != 0) {
                 debug("Added static specifier --- affecting subclasses");
                 myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles, null);
               }
             }
             else {
-              if ((d.addedModifiers() & Opcodes.ACC_FINAL) > 0 ||
-                  (d.addedModifiers() & Opcodes.ACC_PUBLIC) > 0 ||
-                  (d.addedModifiers() & Opcodes.ACC_ABSTRACT) > 0) {
+              if ((d.addedModifiers() & Opcodes.ACC_FINAL) != 0 ||
+                  (d.addedModifiers() & Opcodes.ACC_PUBLIC) != 0 ||
+                  (d.addedModifiers() & Opcodes.ACC_ABSTRACT) != 0) {
                 debug("Added final, public or abstract specifier --- affecting subclasses");
                 myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles, null);
               }
 
-              if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0 && !((d.removedModifiers() & Opcodes.ACC_PRIVATE) > 0)) {
+              if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) != 0 && !((d.removedModifiers() & Opcodes.ACC_PRIVATE) != 0)) {
                 if (!constrained) {
                   debug("Added public or package-private method became protected --- affect method usages with protected constraint");
                   if (!affected) {
@@ -1508,7 +1521,7 @@ public class Mappings {
                   }
 
                   for (final UsageRepr.Usage usage : usages) {
-                    state.myUsageConstraints.put(usage, myFuture.new InheritanceConstraint(it.name));
+                    state.myUsageConstraints.put(usage, myFuture.new InheritanceConstraint(it));
                   }
                   constrained = true;
                 }
@@ -1516,7 +1529,7 @@ public class Mappings {
             }
           }
 
-          if ((d.base() & Difference.ANNOTATIONS) > 0) {
+          if ((d.base() & Difference.ANNOTATIONS) != 0) {
             final Set<AnnotationsChangeTracker.Recompile> toRecompile = EnumSet.noneOf(AnnotationsChangeTracker.Recompile.class);
             for (AnnotationsChangeTracker extension : myAnnotationChangeTracker) {
               if (toRecompile.containsAll(AnnotationsChangeTracker.RECOMPILE_ALL)) {
@@ -1611,38 +1624,35 @@ public class Mappings {
         for (final Pair<FieldRepr, ClassRepr> p : overriddenFields) {
           final FieldRepr ff = p.first;
           final ClassRepr cc = p.second;
-
-          if (!ff.isPrivate()) {
+          if (ff.isPrivate()) {
+            continue;
+          }
+          final boolean sameKind = f.myType.equals(ff.myType) && f.isStatic() == ff.isStatic() && f.isSynthetic() == ff.isSynthetic() && f.isFinal() == ff.isFinal();
+          if (!sameKind || Difference.weakerAccess(f.access, ff.access)) {
             final TIntHashSet propagated = myPresent.propagateFieldAccess(ff.name, cc.name);
-            final Set<UsageRepr.Usage> localUsages = new HashSet<>();
 
+            final Set<UsageRepr.Usage> affectedUsages = new HashSet<>();
             debug("Affecting usages of overridden field in class ", cc.name);
-            myFuture.affectFieldUsages(ff, propagated, ff.createUsage(myContext, cc.name), localUsages, state.myDependants);
+            myFuture.affectFieldUsages(ff, propagated, ff.createUsage(myContext, cc.name), affectedUsages, state.myDependants);
 
-            if (f.isPrivate() || (f.isPublic() && (ff.isPublic() || ff.isPackageLocal())) || (f.isProtected() && ff.isProtected()) || (f.isPackageLocal() && ff.isPackageLocal())) {
-              // nothing
-            }
-            else {
-              UsageConstraint constraint;
-
-              if ((ff.isProtected() && f.isPublic()) || (f.isProtected() && ff.isPublic()) || (ff.isPackageLocal() && f.isProtected())) {
-                constraint = myFuture.new InheritanceConstraint(cc.name).negate();
+            if (sameKind) {
+              // check if we can reduce the number of usages going to be recompiled
+              UsageConstraint constraint = null;
+              if (f.isProtected()) {
+                // no need to recompile usages in field class' package and hierarchy, since newly added field is accessible in this scope
+                constraint = myFuture.new InheritanceConstraint(cc);
               }
-              else if (ff.isPublic() && ff.isPackageLocal()) {
-                constraint = myFuture.new PackageConstraint(cc.getPackageName()).negate();
+              else if (f.isPackageLocal()) {
+                // no need to recompile usages in field class' package, since newly added field is accessible in this scope
+                constraint = myFuture.new PackageConstraint(cc.getPackageName());
               }
-              else {
-                final Util.InheritanceConstraint inherit = myFuture.new InheritanceConstraint(cc.name);
-                final Util.PackageConstraint matchPackage = myFuture.new PackageConstraint(cc.getPackageName());
-                constraint = inherit.negate().and(matchPackage.negate());
-              }
-
-              for (final UsageRepr.Usage usage : localUsages) {
-                state.myUsageConstraints.put(usage, constraint);
+              if (constraint != null) {
+                for (final UsageRepr.Usage usage : affectedUsages) {
+                  state.myUsageConstraints.put(usage, constraint);
+                }
               }
             }
-
-            state.myAffectedUsages.addAll(localUsages);
+            state.myAffectedUsages.addAll(affectedUsages);
           }
         }
       }
@@ -1702,10 +1712,10 @@ public class Mappings {
         // only if the field was a compile-time constant
         if (!field.isPrivate() && (field.access & DESPERATE_MASK) == DESPERATE_MASK && d.hadValue()) { 
           final int changedModifiers = d.addedModifiers() | d.removedModifiers();
-          final boolean harmful = (changedModifiers & (Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)) > 0;
-          final boolean accessChanged = (changedModifiers & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED)) > 0;
-          final boolean becameLessAccessible = accessChanged && !d.weakedAccess();
-          final boolean valueChanged = (d.base() & Difference.VALUE) > 0;
+          final boolean harmful = (changedModifiers & (Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)) != 0;
+          final boolean accessChanged = (changedModifiers & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED)) != 0;
+          final boolean becameLessAccessible = accessChanged && d.accessRestricted();
+          final boolean valueChanged = (d.base() & Difference.VALUE) != 0;
 
           if (harmful || valueChanged || becameLessAccessible) {
             debug("Inline field changed it's access or value => a switch to non-incremental mode requested");
@@ -1724,55 +1734,59 @@ public class Mappings {
 
         if (d.base() != Difference.NONE) {
           final TIntHashSet propagated = myFuture.propagateFieldAccess(field.name, it.name);
-          boolean affected = false;
 
-          if ((d.base() & Difference.TYPE) > 0 || (d.base() & Difference.SIGNATURE) > 0) {
+          if ((d.base() & Difference.TYPE) != 0 || (d.base() & Difference.SIGNATURE) != 0) {
             debug("Type or signature changed --- affecting field usages");
-            myFuture
-              .affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
-            affected = true;
+            myFuture.affectFieldUsages(
+              field, propagated, field.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants
+            );
           }
-          else if ((d.base() & Difference.ACCESS) > 0) {
-            if ((d.addedModifiers() & Opcodes.ACC_STATIC) > 0 ||
-                (d.removedModifiers() & Opcodes.ACC_STATIC) > 0 ||
-                (d.addedModifiers() & Opcodes.ACC_PRIVATE) > 0 ||
-                (d.addedModifiers() & Opcodes.ACC_VOLATILE) > 0) {
+          else if ((d.base() & Difference.ACCESS) != 0) {
+            if ((d.addedModifiers() & Opcodes.ACC_STATIC) != 0 ||
+                (d.removedModifiers() & Opcodes.ACC_STATIC) != 0 ||
+                (d.addedModifiers() & Opcodes.ACC_PRIVATE) != 0 ||
+                (d.addedModifiers() & Opcodes.ACC_VOLATILE) != 0) {
               debug("Added/removed static modifier or added private/volatile modifier --- affecting field usages");
-              myFuture
-                .affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
-              affected = true;
+              myFuture.affectFieldUsages(
+                field, propagated, field.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants
+              );
             }
             else {
               final Set<UsageRepr.Usage> usages = new THashSet<>();
 
-              if ((d.addedModifiers() & Opcodes.ACC_FINAL) > 0) {
+              if ((d.addedModifiers() & Opcodes.ACC_FINAL) != 0) {
                 debug("Added final modifier --- affecting field assign usages");
                 myFuture.affectFieldUsages(field, propagated, field.createAssignUsage(myContext, it.name), usages, state.myDependants);
                 state.myAffectedUsages.addAll(usages);
-                affected = true;
               }
 
-              if ((d.removedModifiers() & Opcodes.ACC_PUBLIC) > 0) {
+              if ((d.removedModifiers() & Opcodes.ACC_PUBLIC) != 0) {
                 debug("Removed public modifier, affecting field usages with appropriate constraint");
-                if (!affected) {
-                  myFuture.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), usages, state.myDependants);
-                  state.myAffectedUsages.addAll(usages);
-                  affected = true;
-                }
+                myFuture.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), usages, state.myDependants);
+                state.myAffectedUsages.addAll(usages);
 
                 for (final UsageRepr.Usage usage : usages) {
-                  if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) > 0) {
-                    state.myUsageConstraints.put(usage, myFuture.new InheritanceConstraint(it.name));
+                  if ((d.addedModifiers() & Opcodes.ACC_PROTECTED) != 0) {
+                    state.myUsageConstraints.put(usage, myFuture.new InheritanceConstraint(it));
                   }
                   else {
                     state.myUsageConstraints.put(usage, myFuture.new PackageConstraint(it.getPackageName()));
                   }
                 }
               }
+              else if ((d.removedModifiers() & Opcodes.ACC_PROTECTED) != 0 && d.accessRestricted()) {
+                debug("Removed protected modifier and the field became less accessible, affecting field usages with package constraint");
+                myFuture.affectFieldUsages(field, propagated, field.createUsage(myContext, it.name), usages, state.myDependants);
+                state.myAffectedUsages.addAll(usages);
+
+                for (final UsageRepr.Usage usage : usages) {
+                  state.myUsageConstraints.put(usage, myFuture.new PackageConstraint(it.getPackageName()));
+                }
+              }
             }
           }
 
-          if ((d.base() & Difference.ANNOTATIONS) > 0) {
+          if ((d.base() & Difference.ANNOTATIONS) != 0) {
             final Set<AnnotationsChangeTracker.Recompile> toRecompile = EnumSet.noneOf(AnnotationsChangeTracker.Recompile.class);
             for (AnnotationsChangeTracker extension : myAnnotationChangeTracker) {
               if (toRecompile.containsAll(AnnotationsChangeTracker.RECOMPILE_ALL)) {
@@ -1827,9 +1841,9 @@ public class Mappings {
 
           final int addedModifiers = diff.addedModifiers();
 
-          final boolean superClassChanged = (diff.base() & Difference.SUPERCLASS) > 0;
+          final boolean superClassChanged = (diff.base() & Difference.SUPERCLASS) != 0;
           final boolean interfacesChanged = !diff.interfaces().unchanged();
-          final boolean signatureChanged = (diff.base() & Difference.SIGNATURE) > 0;
+          final boolean signatureChanged = (diff.base() & Difference.SIGNATURE) != 0;
 
           if (superClassChanged) {
             myDelta.registerRemovedSuperClass(changedClass.name, changedClass.getSuperClass().className);
@@ -1896,7 +1910,7 @@ public class Mappings {
             }
           }
 
-          if ((diff.addedModifiers() & Opcodes.ACC_INTERFACE) > 0 || (diff.removedModifiers() & Opcodes.ACC_INTERFACE) > 0) {
+          if ((diff.addedModifiers() & Opcodes.ACC_INTERFACE) != 0 || (diff.removedModifiers() & Opcodes.ACC_INTERFACE) != 0) {
             debug("Class-to-interface or interface-to-class conversion detected, added class usage to affected usages");
             state.myAffectedUsages.add(changedClass.createUsage());
           }
@@ -1909,12 +1923,12 @@ public class Mappings {
             }
           }
 
-          if ((addedModifiers & Opcodes.ACC_PROTECTED) > 0) {
+          if ((addedModifiers & Opcodes.ACC_PROTECTED) != 0) {
             debug("Introduction of 'protected' modifier detected, adding class usage + inheritance constraint to affected usages");
             final UsageRepr.Usage usage = changedClass.createUsage();
 
             state.myAffectedUsages.add(usage);
-            state.myUsageConstraints.put(usage, myFuture.new InheritanceConstraint(changedClass.name));
+            state.myUsageConstraints.put(usage, myFuture.new InheritanceConstraint(changedClass));
           }
 
           if (diff.packageLocalOn()) {
@@ -1925,12 +1939,12 @@ public class Mappings {
             state.myUsageConstraints.put(usage, myFuture.new PackageConstraint(changedClass.getPackageName()));
           }
 
-          if ((addedModifiers & Opcodes.ACC_FINAL) > 0 || (addedModifiers & Opcodes.ACC_PRIVATE) > 0) {
+          if ((addedModifiers & Opcodes.ACC_FINAL) != 0 || (addedModifiers & Opcodes.ACC_PRIVATE) != 0) {
             debug("Introduction of 'private' or 'final' modifier(s) detected, adding class usage to affected usages");
             state.myAffectedUsages.add(changedClass.createUsage());
           }
 
-          if ((addedModifiers & Opcodes.ACC_ABSTRACT) > 0 || (addedModifiers & Opcodes.ACC_STATIC) > 0) {
+          if ((addedModifiers & Opcodes.ACC_ABSTRACT) != 0 || (addedModifiers & Opcodes.ACC_STATIC) != 0) {
             debug("Introduction of 'abstract' or 'static' modifier(s) detected, adding class new usage to affected usages");
             state.myAffectedUsages.add(UsageRepr.createClassNewUsage(myContext, changedClass.name));
           }
@@ -1999,7 +2013,7 @@ public class Mappings {
             return false;
           }
 
-          if ((diff.base() & Difference.ANNOTATIONS) > 0) {
+          if ((diff.base() & Difference.ANNOTATIONS) != 0) {
             final Set<AnnotationsChangeTracker.Recompile> toRecompile = EnumSet.noneOf(AnnotationsChangeTracker.Recompile.class);
             for (AnnotationsChangeTracker extension : myAnnotationChangeTracker) {
               if (toRecompile.containsAll(AnnotationsChangeTracker.RECOMPILE_ALL)) {
@@ -2350,6 +2364,9 @@ public class Mappings {
 
       for (ModuleRepr moduleRepr : modulesDiff.added()) {
         myDelta.addChangedClass(moduleRepr.name); // need this for integrate
+        // after module has been added, the whole target should be rebuilt
+        // because necessary 'require' directives may be missing from the newly added module-info file
+        myFuture.affectModule(moduleRepr, myAffectedFiles);
       }
       
       for (ModuleRepr removedModule : modulesDiff.removed()) {

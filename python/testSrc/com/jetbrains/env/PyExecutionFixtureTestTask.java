@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
@@ -86,6 +87,14 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
    */
   protected PyExecutionFixtureTestTask(@Nullable final String relativeTestDataPath) {
     myRelativeTestDataPath = relativeTestDataPath;
+  }
+
+  /**
+   * Debug output of this classes will be captured and reported in case of test failure
+   */
+  @NotNull
+  public Iterable<Class<?>> getClassesToEnableDebug() {
+    return Collections.emptyList();
   }
 
   public Project getProject() {
@@ -171,6 +180,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     return PythonTestUtil.getTestDataPath();
   }
 
+  @Override
   public void tearDown() throws Exception {
     if (myFixture != null) {
       EdtTestUtil.runInEdtAndWait(() -> {
@@ -244,13 +254,14 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   /**
    * Creates SDK by its path
    *
-   * @param sdkHome         path to sdk (probably obtained by {@link #runTestOn(String)})
+   * @param sdkHome         path to sdk (probably obtained by {@link PyTestTask#runTestOn(String, Sdk)})
    * @param sdkCreationType SDK creation strategy (see {@link sdkTools.SdkCreationType} doc)
    * @return sdk
    */
   @NotNull
   protected Sdk createTempSdk(@NotNull final String sdkHome, @NotNull final SdkCreationType sdkCreationType)
     throws InvalidSdkException {
+
     final VirtualFile sdkHomeFile = LocalFileSystem.getInstance().findFileByPath(sdkHome);
     Assert.assertNotNull("Interpreter file not found: " + sdkHome, sdkHomeFile);
     final Sdk sdk = PySdkTools.createTempSdk(sdkHomeFile, sdkCreationType, myFixture.getModule());

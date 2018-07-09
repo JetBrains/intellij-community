@@ -1,21 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.diagnostic.VMOptions.MemoryKind;
+import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
+import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -30,7 +19,8 @@ import com.intellij.util.io.MappingFailedException;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author kir
@@ -57,12 +47,27 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
       ErrorReportSubmitter submitter = IdeErrorsDialog.getSubmitter(event.getThrowable());
       boolean showPluginError = !(submitter instanceof ITNReporter) || ((ITNReporter)submitter).showErrorInRelease(event);
 
-      //noinspection ThrowableResultOfMethodCallIgnored
+      boolean isOOM = getOOMErrorKind(event.getThrowable()) != null;
+      boolean isMappingFailed = !isOOM && event.getThrowable() instanceof MappingFailedException;
+      String key = "ide.error";
+      if(isOOM){
+        key+=".oom";
+      }
+      if(isMappingFailed){
+        key+=".mappingFailed";
+      }
+
+      FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, key);
+      Map<String, Object> values = new HashMap<>();
+      values.put("oom",isOOM);
+      values.put("mappingFailed",isMappingFailed);
+      FeatureUsageLogger.INSTANCE.log("lifecycle",  "ide.error", values);
+
       return notificationEnabled ||
              showPluginError ||
              ApplicationManagerEx.getApplicationEx().isInternal() ||
-             getOOMErrorKind(event.getThrowable()) != null ||
-             event.getThrowable() instanceof MappingFailedException;
+             isOOM ||
+             isMappingFailed;
     }
     catch (LinkageError e) {
       if (e.getMessage().contains("Could not initialize class com.intellij.diagnostic.IdeErrorsDialog")) {
@@ -78,7 +83,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
 
     try {
       Throwable throwable = event.getThrowable();
-      final MemoryKind kind = getOOMErrorKind(throwable);
+      MemoryKind kind = getOOMErrorKind(throwable);
       if (kind != null) {
         ourOomOccurred = true;
         SwingUtilities.invokeAndWait(() -> new OutOfMemoryDialog(kind).show());
@@ -87,8 +92,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
         processMappingFailed(event);
       }
       else if (!ourOomOccurred) {
-        MessagePool messagePool = MessagePool.getInstance();
-        messagePool.addIdeFatalMessage(event);
+        MessagePool.getInstance().addIdeFatalMessage(event);
       }
     }
     catch (Throwable e) {
@@ -118,10 +122,10 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     return null;
   }
 
-  private static void processMappingFailed(IdeaLoggingEvent event) throws InterruptedException, InvocationTargetException {
+  private static void processMappingFailed(IdeaLoggingEvent event) {
     if (!ourMappingFailedNotificationPosted && SystemInfo.isWindows && SystemInfo.is32Bit) {
       ourMappingFailedNotificationPosted = true;
-      @SuppressWarnings("ThrowableResultOfMethodCallIgnored") String exceptionMessage = event.getThrowable().getMessage();
+      String exceptionMessage = event.getThrowable().getMessage();
       String text = exceptionMessage +
         "<br>Possible cause: unable to allocate continuous memory chunk of necessary size.<br>" +
         "Reducing JVM maximum heap size (-Xmx) may help.";

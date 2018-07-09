@@ -1,3 +1,6 @@
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.remoteServer.impl.configuration;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
@@ -39,7 +42,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
 
   private final RemoteServersManager myServersManager;
   private RemoteServer<?> myLastSelectedServer;
-  private String myInitialSelectedName;
+  private final String myInitialSelectedName;
   private final List<ServerType<?>> myDisplayedServerTypes;
 
   private RemoteServerListConfigurable(@NotNull RemoteServersManager manager,
@@ -252,11 +255,6 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
     @Override
     public ActionGroup getActionGroup() {
       return this;
-    }
-
-    @Override
-    public int getDefaultIndex() {
-      return 0;
     }
   }
 

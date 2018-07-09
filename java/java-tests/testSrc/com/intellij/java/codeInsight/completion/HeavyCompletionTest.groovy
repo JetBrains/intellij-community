@@ -26,13 +26,13 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.project.IntelliJProjectConfiguration
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
@@ -145,10 +145,8 @@ class HeavyCompletionTest extends JavaCodeInsightFixtureTestCase {
   }
 
   void testPreferOwnMethods() {
-    def lib = LocalFileSystem.getInstance().refreshAndFindFileByPath(PathManagerEx.getTestDataPath() + "/../../../lib")
-    def nanoJar = lib.children.find { it.name.startsWith("nanoxml") }
-
-    PsiTestUtil.addLibrary(myModule, 'nano1', lib.path, ["/$nanoJar.name!/"] as String[], [] as String[])
+    def nanoUrls = IntelliJProjectConfiguration.getProjectLibraryClassesRootUrls("NanoXML")
+    ModuleRootModificationUtil.addModuleLibrary(myModule, 'nano1', nanoUrls, [])
 
     assert JavaPsiFacade.getInstance(project).findClass('net.n3.nanoxml.StdXMLParser', GlobalSearchScope.allScope(project))
 

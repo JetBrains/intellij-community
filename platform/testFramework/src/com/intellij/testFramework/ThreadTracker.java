@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
+import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
@@ -24,10 +11,11 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.WaitFor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -40,6 +28,8 @@ import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.ForkJoinWorkerThread;
 import java.util.concurrent.TimeUnit;
+import java.util.prefs.BackingStoreException;
+import java.util.prefs.Preferences;
 
 /**
  * @author cdr
@@ -87,6 +77,7 @@ public class ThreadTracker {
     wellKnownOffenders.add("main");
     wellKnownOffenders.add("Monitor Ctrl-Break");
     wellKnownOffenders.add("Netty ");
+    wellKnownOffenders.add("ObjectCleanerThread");
     wellKnownOffenders.add("Reference Handler");
     wellKnownOffenders.add("RMI TCP Connection");
     wellKnownOffenders.add("Signal Dispatcher");
@@ -97,14 +88,24 @@ public class ThreadTracker {
     wellKnownOffenders.add("VM Periodic Task Thread");
     wellKnownOffenders.add("VM Thread");
     wellKnownOffenders.add("YJPAgent-Telemetry");
+    wellKnownOffenders.add("Batik CleanerThread");
+    wellKnownOffenders.add(FlushingDaemon.NAME);
 
     Application application = ApplicationManager.getApplication();
-    // LeakHunter might be accessed first time after Application is already disposed (during test framework shutdown).    
+    // LeakHunter might be accessed first time after Application is already disposed (during test framework shutdown).
     if (!application.isDisposed()) {
       longRunningThreadCreated(application,
                                "Periodic tasks thread",
                                "ApplicationImpl pooled thread ",
                                ProcessIOExecutorService.POOLED_THREAD_PREFIX);
+    }
+
+    try {
+      // init zillions of timers in e.g. MacOSXPreferencesFile
+      Preferences.userRoot().flush();
+    }
+    catch (BackingStoreException e) {
+      throw new RuntimeException(e);
     }
   }
 
@@ -117,6 +118,7 @@ public class ThreadTracker {
 
   @TestOnly
   public void checkLeak() throws AssertionError {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     NettyUtil.awaitQuiescenceOfGlobalEventExecutor(100, TimeUnit.SECONDS);
     ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS);
     try {
@@ -132,15 +134,13 @@ public class ThreadTracker {
         if (isWellKnownOffender(thread)) continue;
 
         if (!thread.isAlive()) continue;
-        if (thread.getStackTrace().length == 0) {
+        if (thread.getStackTrace().length == 0
+            // give thread a chance to run up to the completion
+            || thread.getState() == Thread.State.RUNNABLE) {
           thread.interrupt();
-          if (new WaitFor(10000){
-            @Override
-            protected boolean condition() {
-              return !thread.isAlive();
-            }
-          }.isConditionRealized()) {
-            continue;
+          long start = System.currentTimeMillis();
+          while (thread.isAlive() && System.currentTimeMillis() < start + 10000) {
+            UIUtil.dispatchAllInvocationEvents(); // give blocked thread opportunity to die if it's stuck doing invokeAndWait()
           }
         }
         StackTraceElement[] stackTrace = thread.getStackTrace();
@@ -148,20 +148,11 @@ public class ThreadTracker {
           continue; // ignore threads with empty stack traces for now. Seems they are zombies unwilling to die.
         }
 
-        if (isIdleApplicationPoolThread(thread, stackTrace)) {
-          continue;
-        }
+        if (isWellKnownOffender(thread)) continue; // check once more because the thread name may be set via race
+        if (isIdleApplicationPoolThread(thread, stackTrace)) continue;
+        if (isIdleCommonPoolThread(thread, stackTrace)) continue;
 
-        if (isIdleCommonPoolThread(thread, stackTrace)) {
-          continue;
-        }
-
-        @SuppressWarnings("NonConstantStringShouldBeStringBuffer")
-        String trace = "Thread leaked: " + thread + "; " + thread.getState() + " (" + thread.isAlive() + ")\n--- its stacktrace:\n";
-        for (final StackTraceElement stackTraceElement : stackTrace) {
-          trace += " at "+stackTraceElement +"\n";
-        }
-        trace += "---\n";
+        String trace = PerformanceWatcher.printStacktrace("Thread leaked", thread, stackTrace);
         Assert.fail(trace);
       }
     }

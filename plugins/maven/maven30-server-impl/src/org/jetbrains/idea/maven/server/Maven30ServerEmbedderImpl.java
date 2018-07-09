@@ -134,6 +134,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   @Nullable private Properties myUserProperties;
 
+  @NotNull private final RepositorySystem myRepositorySystem;
+
   public Maven30ServerEmbedderImpl(MavenServerSettings settings) throws RemoteException {
     super(settings);
 
@@ -193,7 +195,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       Constructor constructor = cliRequestClass.getDeclaredConstructor(String[].class, ClassWorld.class);
       constructor.setAccessible(true);
       //noinspection SSBasedInspection
-      cliRequest = constructor.newInstance(commandLineOptions.toArray(new String[commandLineOptions.size()]), classWorld);
+      cliRequest = constructor.newInstance(commandLineOptions.toArray(new String[0]), classWorld);
 
       for (String each : new String[]{"initialize", "cli", "logging", "properties", "container"}) {
         Method m = MavenCli.class.getDeclaredMethod(each, cliRequestClass);
@@ -229,6 +231,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
                     ReflectionUtil.getField(cliRequestClass, cliRequest, Properties.class, "userProperties"));
 
     myLocalRepository = createLocalRepository();
+
+    myRepositorySystem = getComponent(RepositorySystem.class);
   }
 
   private static Settings buildSettings(SettingsBuilder builder,
@@ -403,6 +407,10 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       Properties props = MavenServerUtil.collectSystemProperties();
       ProjectBuilderConfiguration config = new DefaultProjectBuilderConfiguration().setExecutionProperties(props);
       config.setBuildStartTime(new Date());
+
+      Properties userProperties = new Properties();
+      userProperties.putAll(getMavenAndJvmConfigProperties(basedir));
+      config.setUserProperties(userProperties);
 
       result = interpolator.interpolate(result, basedir, config, false);
     }
@@ -814,6 +822,7 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     return lifecycleListeners;
   }
 
+  @Override
   public MavenExecutionRequest createRequest(@Nullable File file,
                                              @Nullable List<String> activeProfiles,
                                              @Nullable List<String> inactiveProfiles,
@@ -836,7 +845,14 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       getComponent(MavenExecutionRequestPopulator.class).populateDefaults(result);
 
       result.setSystemProperties(mySystemProperties);
-      result.setUserProperties(myUserProperties);
+      Properties userProperties = new Properties();
+      if (myUserProperties != null) {
+        userProperties.putAll(myUserProperties);
+      }
+      if (file != null) {
+        userProperties.putAll(getMavenAndJvmConfigProperties(file.getParentFile()));
+      }
+      result.setUserProperties(userProperties);
 
       if (activeProfiles != null) {
         result.setActiveProfiles(activeProfiles);
@@ -1098,6 +1114,11 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       catch (InvalidRepositoryException e) {
         Maven3ServerGlobals.getLogger().warn(e);
       }
+    }
+    if (getComponent(LegacySupport.class).getRepositorySession() == null) {
+      myRepositorySystem.injectMirror(result, myMavenSettings.getMirrors());
+      myRepositorySystem.injectProxy(result, myMavenSettings.getProxies());
+      myRepositorySystem.injectAuthentication(result, myMavenSettings.getServers());
     }
     return result;
   }

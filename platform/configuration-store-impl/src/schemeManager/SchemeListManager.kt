@@ -90,18 +90,18 @@ internal class SchemeListManager<T : Any>(private val schemeManager: SchemeManag
 
     schemes.addAll(newSchemes)
 
-    val oldCurrentScheme = schemeManager.currentScheme
+    val oldCurrentScheme = schemeManager.activeScheme
     schemeManager.retainExternalInfo()
 
     if (oldCurrentScheme != newCurrentScheme) {
       val newScheme: T?
       if (newCurrentScheme != null) {
-        schemeManager.currentScheme = newCurrentScheme
+        schemeManager.activeScheme = newCurrentScheme
         newScheme = newCurrentScheme
       }
       else if (oldCurrentScheme != null && !schemes.contains(oldCurrentScheme)) {
         newScheme = schemes.firstOrNull()
-        schemeManager.currentScheme = newScheme
+        schemeManager.activeScheme = newScheme
       }
       else {
         newScheme = null
@@ -126,8 +126,8 @@ internal class SchemeListManager<T : Any>(private val schemeManager: SchemeManag
         continue
       }
 
-      if (schemeManager.currentScheme === scheme) {
-        schemeManager.currentScheme = null
+      if (schemeManager.activeScheme === scheme) {
+        schemeManager.activeScheme = null
       }
 
       iterator.remove()

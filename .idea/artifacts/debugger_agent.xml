@@ -2,10 +2,12 @@
   <artifact type="jar" name="debugger-agent">
     <output-path>$PROJECT_DIR$/out/artifacts/debugger_agent</output-path>
     <root id="archive" name="debugger-agent.jar">
-      <element id="module-output" name="debugger-agent" />
+      <element id="module-output" name="intellij.java.debugger.agent" />
       <element id="directory" name="META-INF">
         <element id="file-copy" path="$PROJECT_DIR$/java/debugger/debugger-agent/META-INF/MANIFEST.MF" />
       </element>
+      <element id="extracted-dir" path="$PROJECT_DIR$/java/debugger/debugger-agent/lib/asm-capture.jar" path-in-jar="/" />
+      <element id="artifact" artifact-name="debugger-agent-storage" />
     </root>
   </artifact>
 </component>

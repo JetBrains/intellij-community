@@ -20,13 +20,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.actions.BackgroundTaskGroup;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
-import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.CommitId;
@@ -42,17 +42,16 @@ public class VcsCherryPickManager {
   @NotNull private final Project myProject;
   @NotNull private final ProjectLevelVcsManager myProjectLevelVcsManager;
   @NotNull private final Set<CommitId> myIdsInProgress = ContainerUtil.newConcurrentSet();
-  private final BackgroundTaskGroup myTaskQueue;
+  @NotNull private final BackgroundTaskQueue myTaskQueue;
 
   public VcsCherryPickManager(@NotNull Project project, @NotNull ProjectLevelVcsManager projectLevelVcsManager) {
     myProject = project;
     myProjectLevelVcsManager = projectLevelVcsManager;
-    myTaskQueue = new BackgroundTaskGroup(project, "Cherry-picking");
+    myTaskQueue = new BackgroundTaskQueue(project, "Cherry-picking");
   }
 
   public void cherryPick(@NotNull VcsLog log) {
-    log.requestSelectedDetails(
-      details -> myTaskQueue.runInBackground("Cherry-picking", new CherryPickingTask(ContainerUtil.reverse(details))));
+    log.requestSelectedDetails( details -> myTaskQueue.run(new CherryPickingTask(ContainerUtil.reverse(details))));
   }
 
   public boolean isCherryPickAlreadyStartedFor(@NotNull List<CommitId> commits) {
@@ -78,11 +77,12 @@ public class VcsCherryPickManager {
                               picker -> picker.getSupportedVcs().equals(key));
   }
 
-  private class CherryPickingTask implements ThrowableConsumer<ProgressIndicator, VcsException> {
+  private class CherryPickingTask extends Task.Backgroundable {
     @NotNull private final List<VcsFullCommitDetails> myAllDetailsInReverseOrder;
     @NotNull private final ChangeListManagerEx myChangeListManager;
 
     public CherryPickingTask(@NotNull List<VcsFullCommitDetails> detailsInReverseOrder) {
+      super(VcsCherryPickManager.this.myProject, "Cherry-Picking");
       myAllDetailsInReverseOrder = detailsInReverseOrder;
       myChangeListManager = (ChangeListManagerEx)ChangeListManager.getInstance(myProject);
       myChangeListManager.blockModalNotifications();
@@ -115,7 +115,7 @@ public class VcsCherryPickManager {
     }
 
     @Override
-    public void consume(ProgressIndicator indicator) {
+    public void run(@NotNull ProgressIndicator indicator) {
       try {
         boolean isOk = true;
         MultiMap<VcsCherryPicker, VcsFullCommitDetails> groupedCommits = createArrayMultiMap();

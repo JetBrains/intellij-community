@@ -15,18 +15,20 @@
  */
 package com.intellij.platform;
 
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.actions.OpenProjectFileChooserDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.fileChooser.*;
+import com.intellij.openapi.fileChooser.FileChooser;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
 
-import java.util.List;
+import java.io.File;
 
 /**
  * @author yole
@@ -36,6 +38,11 @@ public class OpenDirectoryProjectAction extends AnAction implements DumbAware {
     final FileChooserDescriptor descriptor = new OpenProjectFileChooserDescriptor(false);
     final Project project = e.getData(CommonDataKeys.PROJECT);
 
-    FileChooser.chooseFiles(descriptor, project, null, files -> PlatformProjectOpenProcessor.getInstance().doOpenProject(files.get(0), project, false));
+    VirtualFile toSelect = null;
+    if (StringUtil.isNotEmpty(GeneralSettings.getInstance().getDefaultProjectDirectory())) {
+      toSelect = VfsUtil.findFileByIoFile(new File(GeneralSettings.getInstance().getDefaultProjectDirectory()), true);
+    }
+
+    FileChooser.chooseFiles(descriptor, project, toSelect, files -> PlatformProjectOpenProcessor.getInstance().doOpenProject(files.get(0), project, false));
   }
 }

@@ -21,7 +21,6 @@ import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.compiler.make.ManifestBuilder;
 import com.intellij.openapi.deployment.DeploymentUtil;
@@ -154,16 +153,8 @@ public class ManifestFileUtil {
   }
 
   public static Manifest readManifest(@NotNull VirtualFile manifestFile) {
-    try {
-      final InputStream inputStream = manifestFile.getInputStream();
-      final Manifest manifest;
-      try {
-        manifest = new Manifest(inputStream);
-      }
-      finally {
-        inputStream.close();
-      }
-      return manifest;
+    try (InputStream inputStream = manifestFile.getInputStream()) {
+      return new Manifest(inputStream);
     }
     catch (IOException ignored) {
       return new Manifest();
@@ -207,14 +198,8 @@ public class ManifestFileUtil {
     ManifestBuilder.setVersionAttribute(mainAttributes);
 
     ApplicationManager.getApplication().runWriteAction(() -> {
-      try {
-        final OutputStream outputStream = file.getOutputStream(ManifestFileUtil.class);
-        try {
-          manifest.write(outputStream);
-        }
-        finally {
-          outputStream.close();
-        }
+      try (OutputStream outputStream = file.getOutputStream(ManifestFileUtil.class)) {
+        manifest.write(outputStream);
       }
       catch (IOException e) {
         LOG.info(e);
@@ -275,39 +260,26 @@ public class ManifestFileUtil {
   @Nullable
   public static VirtualFile createManifestFile(final @NotNull VirtualFile directory, final @NotNull Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    final Ref<IOException> exc = Ref.create(null);
-    final VirtualFile file = new WriteAction<VirtualFile>() {
-      protected void run(@NotNull final Result<VirtualFile> result) {
+    try {
+      return WriteAction.compute(() -> {
         VirtualFile dir = directory;
-        try {
-          if (!dir.getName().equals(MANIFEST_DIR_NAME)) {
-            dir = VfsUtil.createDirectoryIfMissing(dir, MANIFEST_DIR_NAME);
-          }
-          final VirtualFile file = dir.createChildData(this, MANIFEST_FILE_NAME);
-          final OutputStream output = file.getOutputStream(this);
-          try {
-            final Manifest manifest = new Manifest();
-            ManifestBuilder.setVersionAttribute(manifest.getMainAttributes());
-            manifest.write(output);
-          }
-          finally {
-            output.close();
-          }
-          result.setResult(file);
+        if (!dir.getName().equals(MANIFEST_DIR_NAME)) {
+          dir = VfsUtil.createDirectoryIfMissing(dir, MANIFEST_DIR_NAME);
         }
-        catch (IOException e) {
-          exc.set(e);
+        final VirtualFile f = dir.createChildData(dir, MANIFEST_FILE_NAME);
+        try (OutputStream output = f.getOutputStream(dir)) {
+          final Manifest manifest = new Manifest();
+          ManifestBuilder.setVersionAttribute(manifest.getMainAttributes());
+          manifest.write(output);
         }
-      }
-    }.execute().getResultObject();
-
-    final IOException exception = exc.get();
-    if (exception != null) {
-      LOG.info(exception);
-      Messages.showErrorDialog(project, exception.getMessage(), CommonBundle.getErrorTitle());
+        return f;
+      });
+    }
+    catch (IOException e) {
+      LOG.info(e);
+      Messages.showErrorDialog(project, e.getMessage(), CommonBundle.getErrorTitle());
       return null;
     }
-    return file;
   }
 
   public static FileChooserDescriptor createDescriptorForManifestDirectory() {

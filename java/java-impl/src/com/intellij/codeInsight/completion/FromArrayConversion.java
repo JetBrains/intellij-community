@@ -15,18 +15,19 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionContributor.createExpression;
@@ -41,12 +42,14 @@ class FromArrayConversion {
                              final PsiType itemType,
                              final Consumer<LookupElement> result,
                              @Nullable PsiElement qualifier,
-                             final PsiType expectedType) throws IncorrectOperationException {
+                             @NotNull PsiType expectedType) throws IncorrectOperationException {
     final String methodName = getArraysConversionMethod(itemType, expectedType);
     if (methodName == null) return;
 
     final String qualifierText = ReferenceExpressionCompletionContributor.getQualifierText(qualifier);
     final PsiExpression conversion = createExpression("java.util.Arrays." + methodName + "(" + qualifierText + prefix + ")", element);
+    if (!expectedType.isAssignableFrom(conversion.getType())) return;
+
     final String presentable = "Arrays." + methodName + "(" + qualifierText + prefix + ")";
     String[] lookupStrings = {StringUtil.isEmpty(qualifierText) ? presentable : prefix, prefix, presentable, methodName + "(" + prefix + ")"};
     result.consume(new ExpressionLookupItem(conversion, PlatformIcons.METHOD_ICON, presentable, lookupStrings) {
@@ -56,7 +59,8 @@ class FromArrayConversion {
 
         int startOffset = context.getStartOffset() - qualifierText.length();
         final Project project = element.getProject();
-        final String callSpace = getSpace(CodeStyleSettingsManager.getSettings(project).SPACE_WITHIN_METHOD_CALL_PARENTHESES);
+        final String callSpace = getSpace(
+          CodeStyle.getLanguageSettings(context.getFile()).SPACE_WITHIN_METHOD_CALL_PARENTHESES);
         final String newText = "java.util.Arrays." + methodName + "(" + callSpace + qualifierText + prefix + callSpace + ")";
         context.getDocument().replaceString(startOffset, context.getTailOffset(), newText);
 

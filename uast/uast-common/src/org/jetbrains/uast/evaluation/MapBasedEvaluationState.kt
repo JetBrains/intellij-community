@@ -47,7 +47,7 @@ class MapBasedEvaluationState(
     }
   }
 
-  override fun merge(otherState: UEvaluationState) =
+  override fun merge(otherState: UEvaluationState): MapBasedEvaluationState =
     if (this == otherState) this else MapBasedEvaluationState(this, otherState)
 
   constructor(boundElement: UElement) : this(mapOf(), boundElement)
@@ -58,9 +58,9 @@ class MapBasedEvaluationState(
   constructor(first: UEvaluationState, second: UEvaluationState) :
     this(mergingMap(first, second))
 
-  override fun equals(other: Any?) = other is MapBasedEvaluationState && map == other.map
+  override fun equals(other: Any?): Boolean = other is MapBasedEvaluationState && map == other.map
 
-  override fun hashCode() = map.hashCode()
+  override fun hashCode(): Int = map.hashCode()
 
   override fun toString(): String = map.toString()
 

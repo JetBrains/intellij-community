@@ -66,6 +66,6 @@ fun runLinearBek(graphBuilder: TestGraphBuilder.() -> Unit): LinearBekGraph {
   return afterLinearBek
 }
 
-fun assertEquals(expected: TestGraphBuilder.() -> Unit, actual: LinearGraph): Unit {
+fun assertEquals(expected: TestGraphBuilder.() -> Unit, actual: LinearGraph) {
   assertEquals(graph(expected).asTestGraphString(), actual.asTestGraphString())
 }

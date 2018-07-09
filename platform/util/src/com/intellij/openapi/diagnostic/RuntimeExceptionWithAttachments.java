@@ -1,37 +1,42 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
 @SuppressWarnings("ExceptionClassNameDoesntEndWithException")
 public class RuntimeExceptionWithAttachments extends RuntimeException implements ExceptionWithAttachments {
+  private final String myUserMessage;
   private final Attachment[] myAttachments;
 
   public RuntimeExceptionWithAttachments(String message, Attachment... attachments) {
     super(message);
+    myUserMessage = null;
     myAttachments = attachments;
   }
 
   public RuntimeExceptionWithAttachments(Throwable cause, Attachment... attachments) {
     super(cause);
+    myUserMessage = null;
     myAttachments = attachments;
+  }
+
+  /**
+   * Corresponds to {@link Logger#error(String, Throwable, Attachment...)}
+   * ({@code LOG.error(userMessage, new RuntimeException(details), attachments)}).
+   */
+  public RuntimeExceptionWithAttachments(String userMessage, String details, Attachment... attachments) {
+    super(details);
+    myUserMessage = userMessage;
+    myAttachments = attachments;
+  }
+
+  @Nullable
+  public String getUserMessage() {
+    return myUserMessage;
   }
 
   @NotNull

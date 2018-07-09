@@ -44,7 +44,11 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
     anyOf(staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "singleton", "singletonList").parameterCount(1),
           staticCall(CommonClassNames.JAVA_UTIL_LIST, "of").parameterTypes("E"));
 
-  private static final int MAX_ITERATIONS = 64;
+  /**
+   * Do not show the intention if approximate size of generated code exceeds given value to prevent
+   * accidental code blow up or out-of-memory error
+   */
+  private static final int MAX_BODY_SIZE_ESTIMATE = 5_000;
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull final PsiElement element) {
@@ -52,11 +56,16 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
     PsiVariable iterationParameter = getVariable(loop);
     if (iterationParameter == null || !(loop.getParent() instanceof PsiCodeBlock)) return false;
     List<PsiExpression> expressions = extractExpressions(loop);
-    if (expressions.isEmpty() || expressions.size() > MAX_ITERATIONS) return false;
-    PsiStatement[] statements = ControlFlowUtils.unwrapBlock(loop.getBody());
+    PsiStatement body = loop.getBody();
+    if (body == null) return false;
+    if (expressions.isEmpty() || expressions.size() > MAX_BODY_SIZE_ESTIMATE ||
+        (expressions.size() - 1) * body.getTextLength() > MAX_BODY_SIZE_ESTIMATE){
+      return false;
+    }
+    PsiStatement[] statements = ControlFlowUtils.unwrapBlock(body);
     if (statements.length == 0) return false;
     if (Arrays.stream(statements).anyMatch(PsiDeclarationStatement.class::isInstance)) return false;
-    if (VariableAccessUtils.variableIsAssigned(iterationParameter, loop.getBody())) return false;
+    if (VariableAccessUtils.variableIsAssigned(iterationParameter, body)) return false;
     for (PsiStatement statement : statements) {
       if (isLoopBreak(statement)) continue;
       boolean acceptable = PsiTreeUtil.processElements(statement, e -> {
@@ -112,24 +121,27 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
     if (loop instanceof PsiForStatement) {
       CountingLoop countingLoop = CountingLoop.from((PsiForStatement)loop);
       if (countingLoop != null) {
+        boolean descending = countingLoop.isDescending();
+        long multiplier = descending ? -1 : 1;
         Object from = ExpressionUtils.computeConstantExpression(countingLoop.getInitializer());
         if (!(from instanceof Integer) && !(from instanceof Long)) return Collections.emptyList();
         long fromValue = ((Number)from).longValue();
         Object to = ExpressionUtils.computeConstantExpression(countingLoop.getBound());
         if (!(to instanceof Integer) && !(to instanceof Long)) return Collections.emptyList();
         long toValue = ((Number)to).longValue();
-        long diff = toValue - fromValue;
+        long diff = multiplier * (toValue - fromValue);
         String suffix = PsiType.LONG.equals(countingLoop.getCounter().getType()) ? "L" : "";
         if (countingLoop.isIncluding()) {
           diff++; // overflow is ok: diff will become negative and we will exit
         }
-        if (diff < 0 || diff > MAX_ITERATIONS) return Collections.emptyList();
+        if (diff < 0 || diff > MAX_BODY_SIZE_ESTIMATE) return Collections.emptyList();
         int size = (int)(diff); // Less or equal to MAX_ITERATIONS => fits to int
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(loop.getProject());
         return new AbstractList<PsiExpression>() {
           @Override
           public PsiExpression get(int index) {
-            return factory.createExpressionFromText(String.valueOf(fromValue + index) + suffix, loop);
+            long value = fromValue + multiplier * index;
+            return factory.createExpressionFromText(value + suffix, loop);
           }
 
           @Override
@@ -165,7 +177,10 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
     CommentTracker ct = new CommentTracker();
     PsiElement anchor = loop;
     for (PsiExpression expression : expressions) {
-      PsiLoopStatement copy = (PsiLoopStatement)factory.createStatementFromText(ct.text(loop), element);
+      if (loop.getBody() != null) {
+        ct.markUnchanged(loop.getBody());
+      }
+      PsiLoopStatement copy = (PsiLoopStatement)factory.createStatementFromText(loop.getText(), element);
       PsiVariable variable = Objects.requireNonNull(getVariable(copy));
       for (PsiReference reference : ReferencesSearch.search(variable, new LocalSearchScope(copy))) {
         final PsiElement referenceElement = reference.getElement();
@@ -190,7 +205,7 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
           PsiIfStatement ifStatement = (PsiIfStatement)added;
           PsiExpression condition = Objects.requireNonNull(ifStatement.getCondition());
           PsiStatement thenBranch = Objects.requireNonNull(ifStatement.getThenBranch());
-          String negated = BoolUtils.getNegatedExpressionText(condition);
+          String negated = BoolUtils.getNegatedExpressionText(condition, ct);
           condition.replace(factory.createExpressionFromText(negated, condition));
           PsiBlockStatement block = (PsiBlockStatement)thenBranch.replace(factory.createStatementFromText("{}", added));
           anchor = block.getCodeBlock().getLastChild();

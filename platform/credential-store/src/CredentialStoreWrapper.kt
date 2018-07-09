@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
+import com.google.common.cache.CacheBuilder
 import com.intellij.ide.passwordSafe.PasswordStorage
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
@@ -25,10 +12,11 @@ import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.QueueProcessor
+import java.util.concurrent.TimeUnit
 
 private val nullCredentials = Credentials("\u0000", OneTimeString("\u0000"))
 
-private val NOTIFICATION_MANAGER by lazy {
+internal val NOTIFICATION_MANAGER by lazy {
   // we use name "Password Safe" instead of "Credentials Store" because it was named so previously (and no much sense to rename it)
   SingletonNotificationManager(NotificationGroup.balloonGroup("Password Safe"), NotificationType.WARNING, null)
 }
@@ -36,13 +24,19 @@ private val NOTIFICATION_MANAGER by lazy {
 private class CredentialStoreWrapper(private val store: CredentialStore) : PasswordStorage {
   private val fallbackStore = lazy { KeePassCredentialStore(memoryOnly = true) }
 
-  private val queueProcessor = QueueProcessor<() -> Unit>({ it() })
+  private val queueProcessor = QueueProcessor<() -> Unit> { it() }
 
   private val postponedCredentials = KeePassCredentialStore(memoryOnly = true)
+  private val deniedItems = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<CredentialAttributes, Boolean>()
 
   override fun get(attributes: CredentialAttributes): Credentials? {
     postponedCredentials.get(attributes)?.let {
       return if (it == nullCredentials) null else it
+    }
+
+    if (deniedItems.getIfPresent(attributes) != null) {
+      LOG.warn("User denied access to $attributes")
+      return null
     }
 
     var store = if (fallbackStore.isInitialized()) fallbackStore.value else store
@@ -50,6 +44,10 @@ private class CredentialStoreWrapper(private val store: CredentialStore) : Passw
     val userName = attributes.userName
     try {
       val value = store.get(attributes)
+      if (value === ACCESS_TO_KEY_CHAIN_DENIED) {
+        deniedItems.put(attributes, true)
+        return null
+      }
       if (value != null || requestor == null || userName == null) {
         return value
       }

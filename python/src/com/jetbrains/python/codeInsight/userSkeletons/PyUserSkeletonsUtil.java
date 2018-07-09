@@ -15,12 +15,13 @@
  */
 package com.jetbrains.python.codeInsight.userSkeletons;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,7 +34,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
@@ -56,31 +56,21 @@ public class PyUserSkeletonsUtil {
   private static final Logger LOG = Logger.getInstance("#com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil");
   public static final Key<Boolean> HAS_SKELETON = Key.create("PyUserSkeleton.hasSkeleton");
 
-  private static final ImmutableList<String> STDLIB_SKELETONS = ImmutableList.of(
+  private static final ImmutableSet<String> STDLIB_SKELETONS = ImmutableSet.of(
     "asyncio",
     "multiprocessing",
     "os",
-    "__builtin__.py",
     "_csv.py",
-    "builtins.py",
-    "collections.py",
     "copy.py",
     "cStringIO.py",
-    "datetime.py",
     "decimal.py",
-    "functools.py",
     "io.py",
     "itertools.py",
     "logging.py",
-    "math.py",
     "pathlib.py",
     "pickle.py",
-    "re.py",
-    "shutil.py",
-    "sqlite3.py",
     "StringIO.py",
     "struct.py",
-    "subprocess.py",
     "sys.py"
   );
 
@@ -130,12 +120,13 @@ public class PyUserSkeletonsUtil {
     if (skeletonsDir == null) {
       return false;
     }
-    final String relativePath = VfsUtilCore.getRelativePath(virtualFile, skeletonsDir);
+    final String relativePath = VfsUtilCore.getRelativePath(virtualFile, skeletonsDir, '/');
     // not under skeletons directory
     if (relativePath == null) {
       return false;
     }
-    return ContainerUtil.exists(STDLIB_SKELETONS, relativePath::startsWith);
+    final String firstComponent = ContainerUtil.getFirstItem(StringUtil.split(relativePath, "/"));
+    return STDLIB_SKELETONS.contains(firstComponent);
   }
 
   @Nullable
@@ -235,10 +226,6 @@ public class PyUserSkeletonsUtil {
     if (moduleVirtualFile != null) {
       String moduleName = QualifiedNameFinder.findShortestImportableName(file, moduleVirtualFile);
       if (moduleName != null) {
-        // TODO: Delete user-skeletons altogether, meanwhile disabled user-skeletons for modules already covered by PyTypeShed
-        if (PyTypeShed.INSTANCE.getWHITE_LIST().contains(moduleName)) {
-          return null;
-        }
         final QualifiedName qName = QualifiedName.fromDottedString(moduleName);
         final QualifiedName restored = QualifiedNameFinder.canonizeQualifiedName(qName, null);
         if (restored != null) {

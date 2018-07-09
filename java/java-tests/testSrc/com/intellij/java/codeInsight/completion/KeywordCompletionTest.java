@@ -45,9 +45,14 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     return JavaTestUtil.getJavaTestDataPath();
   }
 
-  public void testFileScope1() { doTest(8, FILE_SCOPE_KEYWORDS); }
+  public void testFileScope1() { 
+    doTest(8, "package", "public", "import", "final", "class", "interface", "abstract", "enum");
+    assertNotContainItems("private", "default");
+  }
+
   public void testFileScopeAfterComment() { doTest(4, "package", "class", "import", "public", "private"); }
   public void testFileScopeAfterJavaDoc() { doTest(4, "package", "class", "import", "public", "private"); }
+  public void testFileScopeAfterJavaDocInsideModifierList() { doTest(2, "class", "public"); }
   public void testFileScope2() { doTest(7, CLASS_SCOPE_KEYWORDS); }
   public void testClassScope1() { doTest(5, CLASS_SCOPE_KEYWORDS); }
   public void testClassScope2() { doTest(4, CLASS_SCOPE_KEYWORDS); }
@@ -126,6 +131,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testPrimitivesInClassAnnotationValueAttribute() { doTest(2, "true", "int", "boolean"); }
   public void testPrimitivesInClassAnnotationAttribute() { doTest(3, "true", "int", "boolean"); }
   public void testPrimitivesInMethodReturningArray() { doTest(2, "true", "byte", "boolean"); }
+  public void testPrimitivesInMethodReturningClass() { doTest(3, "byte", "boolean", "void"); }
 
   public void testNoClassKeywordsInLocalArrayInitializer() { doTest(0, "class", "interface", "enum"); }
   public void testNoClassKeywordsInFieldArrayInitializer() { doTest(0, "class", "interface", "enum"); }
@@ -142,11 +148,12 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testFinalInCatch() { doTest(1, "final"); }
   public void testFinalInIncompleteCatch() { doTest(1, "final"); }
   public void testFinalInCompleteCatch() { doTest(1, "final"); }
-  public void testFinalInTryWithResources() { doTest(1, "final", "float", "class"); }
+  public void testFinalInTryWithResources() { doTest(1, "final", "class"); }
   public void testFinalInCompleteTryWithResources() { doTest(1, "final", "float", "class"); }
   public void testFinalInLambda() { doTest(2, "final", "float"); }
   public void testNoFinalAfterTryBody() { doTest(1, "final", "finally"); }
   public void testClassInMethod() { doTest(2, "class", "char"); }
+  public void testClassInMethodOvertype() { doTest(2, "class", "char"); }
   public void testIntInClassArray() { doTest(2, "int", "char", "final"); }
   public void testIntInClassArray2() { doTest(2, "int", "char", "final"); }
   public void testIntInClassArray3() { doTest(2, "int", "char", "final"); }
@@ -172,6 +179,12 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
     configureByTestName();
     assertEquals("toString", myItems[0].getLookupString());
     assertEquals("this", myItems[1].getLookupString());
+  }
+
+  public void testAfterPackageAnnotation() {
+    configureFromFileText("package-info.java", "@Anno <caret>");
+    complete();
+    testByCount(1, "package");
   }
 
   private void doTest() {

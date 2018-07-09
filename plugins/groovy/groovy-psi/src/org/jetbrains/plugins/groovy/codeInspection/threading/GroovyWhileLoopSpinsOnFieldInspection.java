@@ -24,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrWhileStatement;
@@ -77,11 +76,8 @@ public class GroovyWhileLoopSpinsOnFieldInspection extends BaseInspection {
       if (ignoreNonEmtpyLoops && !statementIsEmpty(body)) {
         return;
       }
-      final GrCondition condition = statement.getCondition();
-      if (!(condition instanceof GrExpression)) {
-        return;
-      }
-      if (!isSimpleFieldComparison((GrExpression) condition)) {
+      final GrExpression condition = statement.getCondition();
+      if (condition == null || !isSimpleFieldComparison(condition)) {
         return;
       }
       registerStatementError(statement);

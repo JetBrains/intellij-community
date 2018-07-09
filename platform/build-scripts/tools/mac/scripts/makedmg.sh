@@ -28,7 +28,7 @@ chmod a+x ${EXPLODED}/"$BUILD_NAME"/Contents/bin/fs*
 
 mkdir ${EXPLODED}/.background
 mv ${BG_PIC} ${EXPLODED}/.background
-ln -s /Applications ${EXPLODED}/" "
+ln -s /Applications ${EXPLODED}/"Applications"
 # allocate space for .DS_Store
 dd if=/dev/zero of=${EXPLODED}/DSStorePlaceHolder bs=1024 count=512
 stat ${EXPLODED}/DSStorePlaceHolder

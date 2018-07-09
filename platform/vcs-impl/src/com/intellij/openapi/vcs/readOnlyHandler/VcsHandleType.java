@@ -72,7 +72,7 @@ public class VcsHandleType extends HandleType {
         LocalChangeList list = myChangeListManager.findChangeList(changelist);
         if (list != null) {
           List<Change> changes = ContainerUtil.mapNotNull(files, myChangeFunction);
-          myChangeListManager.moveChangesTo(list, changes.toArray(new Change[changes.size()]));
+          myChangeListManager.moveChangesTo(list, changes.toArray(new Change[0]));
         }
       }, InvokeAfterUpdateMode.SILENT, "", ModalityState.NON_MODAL);
     }

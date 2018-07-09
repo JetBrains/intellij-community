@@ -110,7 +110,7 @@ public class ChangeTypeSignatureHandler implements RefactoringActionHandler {
           fields.add(aField);
           aField = PsiTreeUtil.getNextSiblingOfType(aField, PsiField.class);
           if (aField == null || aField.getTypeElement() != typeElement) {
-            return fields.toArray(new PsiElement[fields.size()]);
+            return fields.toArray(PsiElement.EMPTY_ARRAY);
           }
         }
       }

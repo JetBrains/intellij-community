@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.Patches;
@@ -39,7 +25,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.xdebugger.frame.XValueModifier;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
@@ -59,7 +44,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   NodeRenderer myAutoRenderer = null;
 
   private Value myValue;
-  private boolean myValueReady;
+  private volatile boolean myValueReady;
 
   private EvaluateException myValueException;
   protected EvaluationContextImpl myStoredEvaluationContext = null;
@@ -148,6 +133,10 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     myShowIdLabel = showIdLabel;
   }
 
+  public boolean isValueReady() {
+    return myValueReady;
+  }
+
   @Override
   public Value getValue() {
     // the following code makes sense only if we do not use ObjectReference.enableCollection() / disableCollection()
@@ -161,7 +150,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
         semaphore.down();
         evalContext.getDebugProcess().getManagerThread().invoke(new SuspendContextCommandImpl(evalContext.getSuspendContext()) {
           @Override
-          public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+          public void contextAction(@NotNull SuspendContextImpl suspendContext) {
             // re-setting the context will cause value recalculation
             try {
               setContext(myStoredEvaluationContext);
@@ -221,7 +210,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     catch (EvaluateException e) {
       myValueException = e;
       setFailed(e);
-      myValue = getTargetExceptionWithStackTraceFilled(evaluationContext, e);
+      myValue = getTargetExceptionWithStackTraceFilled(evaluationContext, e,
+                                                       isPrintExceptionToConsole() || ApplicationManager.getApplication().isUnitTestMode());
       myIsExpandable = false;
     }
     finally {
@@ -231,24 +221,36 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     myIsNew = false;
   }
 
+  protected boolean isPrintExceptionToConsole() {
+    return true;
+  }
+
   @Nullable
-  private static ObjectReference getTargetExceptionWithStackTraceFilled(final EvaluationContextImpl evaluationContext, EvaluateException ex){
+  protected static Value invokeExceptionGetStackTrace(ObjectReference exceptionObj, EvaluationContextImpl evaluationContext)
+    throws EvaluateException {
+    Method method = ((ClassType)exceptionObj.referenceType()).concreteMethodByName("getStackTrace", "()[Ljava/lang/StackTraceElement;");
+    if (method != null) {
+      return evaluationContext.getDebugProcess().invokeMethod(evaluationContext, exceptionObj, method, Collections.emptyList());
+    }
+    return null;
+  }
+
+  @Nullable
+  private static ObjectReference getTargetExceptionWithStackTraceFilled(@Nullable EvaluationContextImpl evaluationContext,
+                                                                        EvaluateException ex,
+                                                                        boolean printToConsole) {
     final ObjectReference exceptionObj = ex.getExceptionFromTargetVM();
     if (exceptionObj != null && evaluationContext != null) {
       try {
-        ClassType refType = (ClassType)exceptionObj.referenceType();
-        Method method = refType.concreteMethodByName("getStackTrace", "()[Ljava/lang/StackTraceElement;");
-        if (method != null) {
-          final DebugProcessImpl process = evaluationContext.getDebugProcess();
-          Value trace = process.invokeMethod(evaluationContext, exceptionObj, method, Collections.emptyList());
+        Value trace = invokeExceptionGetStackTrace(exceptionObj, evaluationContext);
 
-          // print to console as well
-          if (trace instanceof ArrayReference) {
-            ArrayReference traceArray = (ArrayReference)trace;
-            process.printToConsole(DebuggerUtils.getValueAsString(evaluationContext, exceptionObj) + "\n");
-            for (Value stackElement : traceArray.getValues()) {
-              process.printToConsole("\tat " + DebuggerUtils.getValueAsString(evaluationContext, stackElement) + "\n");
-            }
+        // print to console as well
+        if (printToConsole && trace instanceof ArrayReference) {
+          DebugProcessImpl process = evaluationContext.getDebugProcess();
+          ArrayReference traceArray = (ArrayReference)trace;
+          process.printToConsole(DebuggerUtils.getValueAsString(evaluationContext, exceptionObj) + "\n");
+          for (Value stackElement : traceArray.getValues()) {
+            process.printToConsole("\tat " + DebuggerUtils.getValueAsString(evaluationContext, stackElement) + "\n");
           }
         }
       }
@@ -491,41 +493,36 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     if (objRef instanceof StringReference && !classRenderer.SHOW_STRINGS_TYPE) {
       return null;
     }
-    StringBuilder buf = StringBuilderSpinAllocator.alloc();
-    try {
-      final boolean showConcreteType =
-        !classRenderer.SHOW_DECLARED_TYPE ||
-        (!(objRef instanceof StringReference) && !(objRef instanceof ClassObjectReference) && !isEnumConstant(objRef));
-      if (showConcreteType || classRenderer.SHOW_OBJECT_ID) {
-        //buf.append('{');
-        if (showConcreteType) {
-          buf.append(classRenderer.renderTypeName(objRef.type().name()));
-        }
-        if (classRenderer.SHOW_OBJECT_ID) {
-          buf.append('@');
-          if(ApplicationManager.getApplication().isUnitTestMode()) {
-            //noinspection HardCodedStringLiteral
-            buf.append("uniqueID");
-          }
-          else {
-            buf.append(objRef.uniqueID());
-          }
-        }
-        //buf.append('}');
+    StringBuilder buf = new StringBuilder();
+    final boolean showConcreteType =
+      !classRenderer.SHOW_DECLARED_TYPE ||
+      (!(objRef instanceof StringReference) && !(objRef instanceof ClassObjectReference) && !isEnumConstant(objRef));
+    if (showConcreteType || classRenderer.SHOW_OBJECT_ID) {
+      //buf.append('{');
+      if (showConcreteType) {
+        buf.append(classRenderer.renderTypeName(objRef.type().name()));
       }
-
-      if (objRef instanceof ArrayReference) {
-        int idx = buf.indexOf("[");
-        if(idx >= 0) {
-          buf.insert(idx + 1, Integer.toString(((ArrayReference)objRef).length()));
+      if (classRenderer.SHOW_OBJECT_ID) {
+        buf.append('@');
+        if(ApplicationManager.getApplication().isUnitTestMode()) {
+          //noinspection HardCodedStringLiteral
+          buf.append("uniqueID");
+        }
+        else {
+          buf.append(objRef.uniqueID());
         }
       }
+      //buf.append('}');
+    }
 
-      return buf.toString();
+    if (objRef instanceof ArrayReference) {
+      int idx = buf.indexOf("[");
+      if(idx >= 0) {
+        buf.insert(idx + 1, Integer.toString(((ArrayReference)objRef).length()));
+      }
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buf);
-    }
+
+    return buf.toString();
   }
 
   private static boolean isEnumConstant(final ObjectReference objRef) {

@@ -151,7 +151,7 @@ class SmartCastProvider extends CompletionProvider<CompletionParameters> {
 
     if (parenthesisOwner instanceof PsiParenthesizedExpression) {
       PsiElement next = parenthesisOwner.getNextSibling();
-      while (next != null && (next instanceof PsiEmptyExpressionImpl || next instanceof PsiErrorElement || next instanceof PsiWhiteSpace)) {
+      while ((next instanceof PsiEmptyExpressionImpl || next instanceof PsiErrorElement || next instanceof PsiWhiteSpace)) {
         next = next.getNextSibling();
       }
       if (next instanceof PsiExpression) {

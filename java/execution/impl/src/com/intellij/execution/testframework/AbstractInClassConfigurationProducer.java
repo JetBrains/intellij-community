@@ -26,8 +26,10 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.junit.InheritorChooser;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -146,7 +148,19 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
     }
 
     configuration.restoreOriginalModule(originalModule);
-    LOG.assertTrue(configuration.getConfigurationModule().getModule() != null);
+    Module module = configuration.getConfigurationModule().getModule();
+    if (module == null) {
+      PsiFile containingFile = psiClass.getContainingFile();
+      LOG.error("No module found", new Attachment("context.txt",
+                                                  "generated name:" + configuration.getName() +
+                                                  "; valid: " + psiClass.isValid() +
+                                                  "; physical: " + psiClass.isPhysical() +
+                                                  "; className: " + psiClass.getQualifiedName() +
+                                                  "; file: " + containingFile +
+                                                  "; module: " + ModuleUtilCore.findModuleForPsiElement(psiClass) + 
+                                                  "; original module: " + originalModule));
+      return false;
+    }
     settings.setName(configuration.getName());
     sourceElement.set(psiElement);
     return true;

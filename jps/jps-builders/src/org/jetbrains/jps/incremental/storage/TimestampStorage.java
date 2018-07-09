@@ -27,7 +27,6 @@ import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/7/11
  */
 public class TimestampStorage extends AbstractStateStorage<File, TimestampStorage.TimestampPerTarget[]> implements Timestamps {
   private final BuildTargetsState myTargetsState;

@@ -23,12 +23,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -128,15 +128,15 @@ public class VarargParameterInspection extends BaseInspection {
     public static void modifyCall(PsiReference reference, String arrayTypeText, int indexOfFirstVarargArgument) {
       final PsiElement element = reference.getElement();
       final PsiCall call = (PsiCall)(element instanceof PsiCall ? element : element.getParent());
+      JavaResolveResult result = call.resolveMethodGenerics();
+      if (result instanceof MethodCandidateInfo && ((MethodCandidateInfo)result).getPertinentApplicabilityLevel() != MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
+        return;
+      }
       final PsiExpressionList argumentList = call.getArgumentList();
       if (argumentList == null) {
         return;
       }
       final PsiExpression[] arguments = argumentList.getExpressions();
-      if (arguments.length > indexOfFirstVarargArgument && ExpressionUtils.isNullLiteral(arguments[indexOfFirstVarargArgument]) &&
-          indexOfFirstVarargArgument + 1 == arguments.length) {
-        return;
-      }
       @NonNls final StringBuilder builder = new StringBuilder("new ").append(arrayTypeText).append("[]{");
       if (arguments.length > indexOfFirstVarargArgument) {
         final PsiExpression firstArgument = arguments[indexOfFirstVarargArgument];
@@ -151,11 +151,8 @@ public class VarargParameterInspection extends BaseInspection {
       if (arguments.length > indexOfFirstVarargArgument) {
         final PsiExpression firstArgument = arguments[indexOfFirstVarargArgument];
         argumentList.deleteChildRange(firstArgument, arguments[arguments.length - 1]);
-        argumentList.add(arrayExpression);
       }
-      else {
-        argumentList.add(arrayExpression);
-      }
+      argumentList.add(arrayExpression);
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(argumentList);
       CodeStyleManager.getInstance(project).reformat(argumentList);
     }

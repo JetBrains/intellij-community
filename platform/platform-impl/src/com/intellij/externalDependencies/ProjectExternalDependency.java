@@ -16,7 +16,8 @@
 package com.intellij.externalDependencies;
 
 /**
- * @author nik
+ * Base interface for external dependencies of a project.
+ * @see ExternalDependenciesManager
  */
 public interface ProjectExternalDependency {
 }

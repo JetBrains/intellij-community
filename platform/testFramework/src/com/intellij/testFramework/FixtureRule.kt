@@ -1,8 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework
 
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.idea.IdeaTestApplication
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.ComponentManager
@@ -16,6 +17,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
@@ -172,10 +174,10 @@ class EdtRule : TestRule {
 }
 
 class InitInspectionRule : TestRule {
-  override fun apply(base: Statement, description: Description) = statement { runInInitMode { base.evaluate() } }
+  override fun apply(base: Statement, description: Description): Statement = statement { runInInitMode { base.evaluate() } }
 }
 
-inline fun statement(crossinline runnable: () -> Unit) = object : Statement() {
+inline fun statement(crossinline runnable: () -> Unit): Statement = object : Statement() {
   override fun evaluate() {
     runnable()
   }
@@ -219,7 +221,7 @@ inline fun <T> Project.runInLoadComponentStateMode(task: () -> T): T {
   }
 }
 
-fun createHeavyProject(path: String, useDefaultProjectSettings: Boolean = false) = ProjectManagerEx.getInstanceEx().newProject(null, path, useDefaultProjectSettings, false)!!
+fun createHeavyProject(path: String, useDefaultProjectSettings: Boolean = false): Project = ProjectManagerEx.getInstanceEx().newProject(null, path, useDefaultProjectSettings, false)!!
 
 fun Project.use(task: (Project) -> Unit) {
   val projectManager = ProjectManagerEx.getInstanceEx() as ProjectManagerImpl
@@ -263,7 +265,7 @@ class DisposeModulesRule(private val projectRule: ProjectRule) : ExternalResourc
  * So, should be one task per rule.
  */
 class WrapRule(private val before: () -> () -> Unit) : TestRule {
-  override fun apply(base: Statement, description: Description) = statement {
+  override fun apply(base: Statement, description: Description): Statement = statement {
     val after = before()
     try {
       base.evaluate()
@@ -275,14 +277,14 @@ class WrapRule(private val before: () -> () -> Unit) : TestRule {
 }
 
 fun createProjectAndUseInLoadComponentStateMode(tempDirManager: TemporaryDirectory, directoryBased: Boolean = false, task: (Project) -> Unit) {
-  createOrLoadProject(tempDirManager, task, directoryBased = directoryBased)
+  createOrLoadProject(tempDirManager, task = task, directoryBased = directoryBased, loadComponentState = true)
 }
 
-fun loadAndUseProject(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String)? = null, task: (Project) -> Unit) {
-  createOrLoadProject(tempDirManager, task, projectCreator, false)
+fun loadAndUseProjectInLoadComponentStateMode(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String)? = null, task: (Project) -> Unit) {
+  createOrLoadProject(tempDirManager, projectCreator, task = task, directoryBased = false, loadComponentState = true)
 }
 
-private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Project) -> Unit, projectCreator: ((VirtualFile) -> String)? = null, directoryBased: Boolean) {
+fun createOrLoadProject(tempDirManager: TemporaryDirectory, projectCreator: ((VirtualFile) -> String)? = null, directoryBased: Boolean = true, loadComponentState: Boolean = false, task: (Project) -> Unit) {
   runInEdtAndWait {
     val filePath = if (projectCreator == null) {
       tempDirManager.newPath("test${if (directoryBased) "" else ProjectFileType.DOT_DEFAULT_EXTENSION}", refreshVfs = true).systemIndependentPath
@@ -292,12 +294,30 @@ private fun createOrLoadProject(tempDirManager: TemporaryDirectory, task: (Proje
     }
 
     val project = if (projectCreator == null) createHeavyProject(filePath, true) else ProjectManagerEx.getInstanceEx().loadProject(filePath)!!
-    project.runInLoadComponentStateMode {
+    if (loadComponentState) {
+      project.runInLoadComponentStateMode {
+        project.use(task)
+      }
+    }
+    else {
       project.use(task)
     }
   }
 }
 
 fun ComponentManager.saveStore() {
-  stateStore.save(SmartList())
+  stateStore.save(SmartList(), true)
+}
+
+class DisposableRule : ExternalResource() {
+  private var _disposable = lazy { Disposer.newDisposable() }
+
+  val disposable: Disposable
+    get() = _disposable.value
+
+  override fun after() {
+    if (_disposable.isInitialized()) {
+      Disposer.dispose(_disposable.value)
+    }
+  }
 }

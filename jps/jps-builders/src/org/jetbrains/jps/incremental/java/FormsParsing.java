@@ -27,7 +27,6 @@ import java.util.Properties;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/12/11
  */
 public class FormsParsing {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.java.FormsParsing");
@@ -37,8 +36,7 @@ public class FormsParsing {
   }
 
   public static String readBoundClassName(File formFile) throws IOException {
-    final BufferedInputStream in = new BufferedInputStream(new FileInputStream(formFile));
-    try {
+    try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(formFile))) {
       final Ref<String> result = new Ref<>(null);
       parse(in, new IXMLBuilderAdapter() {
         public void startElement(final String elemName, final String nsPrefix, final String nsURI, final String systemID, final int lineNr)
@@ -61,9 +59,6 @@ public class FormsParsing {
         }
       });
       return result.get();
-    }
-    finally {
-      in.close();
     }
   }
 

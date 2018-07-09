@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 public class PropertiesASTFactory extends ASTFactory {
   @Override
   @Nullable
-  public CompositeElement createComposite(final IElementType type) {
+  public CompositeElement createComposite(@NotNull final IElementType type) {
     if (type instanceof IFileElementType) {
       return new FileElement(type, null);
     }

@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * @author max
  */
-class UsageModelTracker implements Disposable {
+public class UsageModelTracker implements Disposable {
   @FunctionalInterface
   public interface UsageModelTrackerListener {
     void modelChanged(boolean isPropertyChange);
@@ -35,7 +35,7 @@ class UsageModelTracker implements Disposable {
 
   private final List<UsageModelTrackerListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  UsageModelTracker(@NotNull Project project) {
+  public UsageModelTracker(@NotNull Project project) {
     final PsiTreeChangeListener myPsiListener = new PsiTreeChangeAdapter() {
       @Override
       public void childAdded(@NotNull PsiTreeChangeEvent event) {
@@ -82,7 +82,7 @@ class UsageModelTracker implements Disposable {
   public void dispose() {
   }
 
-  void addListener(@NotNull UsageModelTrackerListener listener, @NotNull Disposable parent) {
+  public void addListener(@NotNull UsageModelTrackerListener listener, @NotNull Disposable parent) {
     myListeners.add(listener);
     Disposer.register(parent, () -> myListeners.remove(listener));
   }

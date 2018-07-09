@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 Bas Leijdekkers
+ * Copyright 2007-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,12 +18,12 @@ package com.siyeh.ig.style;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -69,17 +69,14 @@ public class CallToStringConcatCanBeReplacedByOperatorInspection
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiReferenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)parent;
-      final PsiExpression qualifier =
-        referenceExpression.getQualifierExpression();
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)parent;
+      final PsiExpression qualifier = referenceExpression.getQualifierExpression();
       if (qualifier == null) {
         return;
       }
@@ -87,19 +84,16 @@ public class CallToStringConcatCanBeReplacedByOperatorInspection
       if (!(grandParent instanceof PsiMethodCallExpression)) {
         return;
       }
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)grandParent;
-      final PsiExpressionList argumentList =
-        methodCallExpression.getArgumentList();
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+      final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length != 1) {
         return;
       }
       final PsiExpression argument = arguments[0];
-      @NonNls
-      final String newExpression =
-        qualifier.getText() + '+' + argument.getText();
-      PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression);
+      CommentTracker tracker = new CommentTracker();
+      @NonNls final String newExpression = tracker.text(qualifier) + '+' + tracker.text(argument);
+      PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression, tracker);
     }
   }
 

@@ -84,21 +84,11 @@ public final class CompressedDictionary implements Dictionary {
     return new TreeSet<>(COMPARATOR);
   }
 
-  /** @deprecated use {@link #getWords(char, int, int, Collection)} (to be removed in IDEA 17) */
-  public List<String> getWords(char first, int minLength, int maxLength) {
-    List<String> result = new ArrayList<>();
-    getWords(first, minLength, maxLength, result);
-    return result;
-  }
-
-  /** @deprecated use {@link #getWords(char, int, int, Collection)} (to be removed in IDEA 17) */
-  public List<String> getWords(char first) {
-    List<String> result = new ArrayList<>();
-    getWords(first, 0, Integer.MAX_VALUE, result);
-    return result;
-  }
-
   public void getWords(char first, int minLength, int maxLength, @NotNull Collection<String> result) {
+    getWords(first, minLength, maxLength, result::add);
+  }
+
+  public void getWords(char first, int minLength, int maxLength, @NotNull Consumer<String> consumer) {
     int index = alphabet.getIndex(first, false);
     if (index == -1) return;
 
@@ -109,11 +99,17 @@ public final class CompressedDictionary implements Dictionary {
       for (int x = 0; x < data.length; x += length) {
         if (encoder.getFirstLetterIndex(data[x]) == index) {
           String decoded = encoder.decode(data, x, x + length);
-          result.add(decoded);
+          consumer.consume(decoded);
         }
       }
       i++;
     }
+  }
+
+
+  @Override
+  public void getSuggestions(@NotNull String word, @NotNull Consumer<String> consumer) {
+      getWords(word.charAt(0), 0, Integer.MAX_VALUE, consumer);
   }
 
   @NotNull

@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -27,9 +28,6 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.Objects;
 
-/**
- * @author Tagir Valeev
- */
 public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final String JAVA_UTIL_MAP_ENTRY = CommonClassNames.JAVA_UTIL_MAP + ".Entry";
 
@@ -52,7 +50,7 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
+    if (!JavaFeature.ADVANCED_COLLECTIONS_API.isFeatureSupported(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
@@ -94,13 +92,16 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
           TextRange range;
           PsiJavaToken rParenth = loop.getRParenth();
           PsiElement firstChild = loop.getFirstChild();
+          PsiElement toHighlight;
           if (wholeStatement && rParenth != null) {
-            range = new TextRange(0, rParenth.getStartOffsetInParent() + 1);
+            toHighlight = loop;
+            range = new TextRange(firstChild.getStartOffsetInParent(), rParenth.getStartOffsetInParent() + 1);
           }
           else {
+            toHighlight = firstChild;
             range = new TextRange(0, firstChild.getTextLength());
           }
-          holder.registerProblem(loop.getFirstChild(), InspectionsBundle.message("inspection.map.foreach.message"),
+          holder.registerProblem(toHighlight, InspectionsBundle.message("inspection.map.foreach.message"),
                                  type, range, new ReplaceWithMapForEachFix());
         }
       }
@@ -118,8 +119,9 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getStartElement();
-      if (element.getParent() instanceof PsiForeachStatement) {
-        fixInForeach((PsiForeachStatement)element.getParent());
+      PsiElement foreach = element instanceof PsiForeachStatement ? element : element.getParent();
+      if (foreach instanceof PsiForeachStatement) {
+        fixInForeach((PsiForeachStatement)foreach);
         return;
       }
       PsiMethodCallExpression call = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
@@ -198,7 +200,7 @@ public class Java8MapForEachInspection extends AbstractBaseJavaLocalInspectionTo
       final PsiType myType;
       String myName;
 
-      public ParameterCandidate(PsiType entryType, boolean isKey) {
+      ParameterCandidate(PsiType entryType, boolean isKey) {
         myName = isKey ? "key" : "value";
         myType = GenericsUtil
           .getVariableTypeByExpressionType(PsiUtil.substituteTypeParameter(entryType, JAVA_UTIL_MAP_ENTRY, isKey ? 0 : 1, true));

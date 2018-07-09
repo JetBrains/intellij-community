@@ -120,13 +120,17 @@ class BuildUtils {
    * Defines sshexec task using libraries from IntelliJ IDEA project sources.
    */
   @CompileDynamic
-  static void defineSshTask(AntBuilder ant, String communityLib) {
+  static void defineSshTask(BuildContext context) {
+    List<File> jschJars = context.project.libraryCollection.findLibrary("JSch").getFiles(JpsOrderRootType.COMPILED) +
+                                [new File(context.paths.communityHome, "lib/ant/lib/ant-jsch.jar")]
+    def ant = context.ant
     def sshTaskLoaderRef = "SSH_TASK_CLASS_LOADER"
     if (ant.project.hasReference(sshTaskLoaderRef)) return
     
     Path pathSsh = new Path(ant.project)
-    pathSsh.createPathElement().setLocation(new File("$communityLib/jsch-0.1.54.jar"))
-    pathSsh.createPathElement().setLocation(new File("$communityLib/ant/lib/ant-jsch.jar"))
+    jschJars.each {
+      pathSsh.createPathElement().setLocation(it)
+    }
     ant.project.addReference(sshTaskLoaderRef, new SplitClassLoader(ant.project.getClass().getClassLoader(), pathSsh, ant.project,
                                                                     ["SSHExec", "SSHBase", "LogListener", "SSHUserInfo"] as String[]))
     ant.taskdef(name: "sshexec", classname: "org.apache.tools.ant.taskdefs.optional.ssh.SSHExec", loaderRef: sshTaskLoaderRef)

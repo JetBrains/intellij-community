@@ -19,8 +19,6 @@ import javax.swing.*;
 
 /**
  * @author nick
- * Date: 14.03.2003
- * Time: 19:07:06
  */
 public interface Step {
   /**

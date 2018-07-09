@@ -1,9 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
@@ -18,15 +17,13 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ConstructionUtils;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author cdr
@@ -88,7 +85,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
     }
     // Or allow simple initializers
     PsiExpression value = assignment.getRExpression();
-    return ExpressionUtils.isSimpleExpression(value) || ConstructionUtils.isEmptyCollectionInitializer(value);
+    return ExpressionUtils.isSafelyRecomputableExpression(value) || ConstructionUtils.isEmptyCollectionInitializer(value);
   }
 
   private static boolean isValidAsFieldInitializer(final PsiExpression initializer,
@@ -153,7 +150,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
 
   private static boolean isInitializedWithSameExpression(final PsiField field,
                                                          final PsiAssignmentExpression assignment,
-                                                         final Collection<PsiAssignmentExpression> initializingAssignments) {
+                                                         final Collection<? super PsiAssignmentExpression> initializingAssignments) {
     final PsiExpression expression = assignment.getRExpression();
     if (expression == null) return false;
     PsiClass containingClass = field.getContainingClass();
@@ -175,7 +172,7 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
         PsiMember member = PsiTreeUtil.getParentOfType(assignmentExpression, PsiMember.class);
         if (member instanceof PsiClassInitializer || member instanceof PsiMethod && ((PsiMethod)member).isConstructor()) {
           // ignore usages other than initializing
-          if (rValue == null || !PsiEquivalenceUtil.areElementsEquivalent(rValue, expression)) {
+          if (rValue == null || !EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(rValue, expression)) {
             result.set(Boolean.FALSE);
           }
           initializingAssignments.add(assignmentExpression);
@@ -220,8 +217,10 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
       PsiElement prev = PsiTreeUtil.skipWhitespacesAndCommentsBackward(assignment.getParent());
       String comments = prev == null ? null : CommentTracker.commentsBetween(prev, assignment);
 
-      PsiExpression initializer = assignment.getRExpression();
-      field.setInitializer(initializer);
+      CommentTracker ct = new CommentTracker();
+      // Should not reach here if getRExpression is null: isInitializedWithSameExpression would return false
+      PsiExpression initializer = Objects.requireNonNull(assignment.getRExpression());
+      field.setInitializer(ct.markUnchanged(initializer));
 
       PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
       if (comments != null) {
@@ -242,19 +241,21 @@ public class MoveFieldAssignmentToInitializerInspection extends AbstractBaseJava
             parent instanceof PsiWhileStatement ||
             parent instanceof PsiForStatement ||
             parent instanceof PsiForeachStatement) {
-          PsiStatement emptyStatement = factory.createStatementFromText(";", statement);
-          statement.replace(emptyStatement);
+          ct.replace(statement, ";");
         }
         else {
-          statement.delete();
+          ct.delete(statement);
         }
+        ct.insertCommentsBefore(field);
+        // if we replace/delete several assignments we want to restore comments at each place separately
+        ct = new CommentTracker();
       }
 
       // Delete empty initializer left after fix
       if (owner instanceof PsiClassInitializer) {
         PsiCodeBlock body = ((PsiClassInitializer)owner).getBody();
-        if(body.getStatements().length == 0 && Arrays.stream(body.getChildren()).noneMatch(PsiComment.class::isInstance)) {
-          owner.delete();
+        if(body.isEmpty() && Arrays.stream(body.getChildren()).noneMatch(PsiComment.class::isInstance)) {
+          new CommentTracker().deleteAndRestoreComments(owner);
         }
       }
     }

@@ -37,8 +37,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author irengrig
- *         Date: 3/17/11
- *         Time: 7:51 PM
  */
 public class VcsAnnotationCachedProxy implements AnnotationProvider {
   private final VcsHistoryCache myCache;
@@ -94,7 +92,7 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
 
     VcsAnnotation vcsAnnotation = null;
     if (revisionNumber != null) {
-      Object cachedData = myCache.get(filePath, myVcs.getKeyInstanceMethod(), revisionNumber);
+      Object cachedData = myCache.getAnnotation(filePath, myVcs.getKeyInstanceMethod(), revisionNumber);
       vcsAnnotation = ObjectUtils.tryCast(cachedData, VcsAnnotation.class);
     }
 
@@ -117,7 +115,7 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
     if (vcsAnnotation == null) return fileAnnotation;
 
     if (revisionNumber != null) {
-      myCache.put(filePath, myVcs.getKeyInstanceMethod(), revisionNumber, vcsAnnotation);
+      myCache.putAnnotation(filePath, myVcs.getKeyInstanceMethod(), revisionNumber, vcsAnnotation);
     }
 
     if (myVcs.getVcsHistoryProvider() instanceof VcsCacheableHistorySessionFactory) {
@@ -194,18 +192,6 @@ public class VcsAnnotationCachedProxy implements AnnotationProvider {
         @Override
         public void reportException(VcsException exception) {
           exc[0] = exception;
-        }
-
-        @Override
-        public void finished() {
-        }
-
-        @Override
-        public void beforeRefresh() {
-        }
-
-        @Override
-        public void forceRefresh() {
         }
       });
     } catch (ProcessCanceledException e) {

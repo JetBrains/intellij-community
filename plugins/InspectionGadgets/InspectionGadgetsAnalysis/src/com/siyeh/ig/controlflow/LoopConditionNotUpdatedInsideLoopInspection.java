@@ -17,26 +17,26 @@ package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.IteratorUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
 
-public class LoopConditionNotUpdatedInsideLoopInspection
-  extends BaseInspection {
+public class LoopConditionNotUpdatedInsideLoopInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
+  public boolean ignorePossibleNonLocalChanges = true;
+
+  // Preserved for serialization compatibility
+  @SuppressWarnings("unused")
   public boolean ignoreIterators = false;
 
   @Override
@@ -59,11 +59,17 @@ public class LoopConditionNotUpdatedInsideLoopInspection
   }
 
   @Override
+  public void writeSettings(@NotNull Element node) {
+    defaultWriteSettings(node, "ignorePossibleNonLocalChanges");
+    writeBooleanOption(node, "ignorePossibleNonLocalChanges", true);
+  }
+
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message("ignore.iterator.loop.variables"),
-      this, "ignoreIterators");
+      InspectionGadgetsBundle.message("loop.variable.not.updated.inside.loop.option.nonlocal"),
+      this, "ignorePossibleNonLocalChanges");
   }
 
   @Override
@@ -95,13 +101,29 @@ public class LoopConditionNotUpdatedInsideLoopInspection
       check(condition, statement);
     }
 
-    private void check(PsiExpression condition, PsiStatement statement) {
+    private void check(@Nullable PsiExpression condition, @NotNull PsiLoopStatement statement) {
       final List<PsiExpression> notUpdated = new SmartList<>();
-      if (checkCondition(condition, statement, notUpdated)) {
+      PsiStatement body = statement.getBody();
+      if (body == null || condition == null || SideEffectChecker.mayHaveSideEffects(condition)) return;
+      if (ignorePossibleNonLocalChanges && !ExpressionUtils.isLocallyDefinedExpression(condition)) {
+        if (SideEffectChecker.mayHaveNonLocalSideEffects(body)) return;
+        if (statement instanceof PsiForStatement) {
+          PsiStatement update = ((PsiForStatement)statement).getUpdate();
+          if (update != null && SideEffectChecker.mayHaveNonLocalSideEffects(update)) return;
+        }
+      }
+      if (isConditionNotUpdated(condition, statement, notUpdated)) {
+        if (!ControlFlowUtils.statementMayCompleteNormally(body) && !ControlFlowUtils.statementIsContinueTarget(statement)) {
+          // Such loop is reported by LoopStatementsThatDontLoopInspection, so no need to report
+          // "Loop condition is not updated" if it's checked only once anyways.
+          // Sometimes people write while(flag) {...; break;}
+          // instead of if(flag) {...} just to be able to use break inside (though the 'if' could be labeled instead)
+          return;
+        }
         if (notUpdated.isEmpty()) {
           // condition involves only final variables and/or constants,
           // flag the whole condition
-          if (!BoolUtils.isTrue(condition)) {
+          if (!BoolUtils.isBooleanLiteral(condition)) {
             registerError(condition, Boolean.TRUE);
           }
         }
@@ -113,9 +135,9 @@ public class LoopConditionNotUpdatedInsideLoopInspection
       }
     }
 
-    private boolean checkCondition(@Nullable PsiExpression condition,
-                                   @NotNull PsiStatement context,
-                                   List<PsiExpression> notUpdated) {
+    private boolean isConditionNotUpdated(@Nullable PsiExpression condition,
+                                          @NotNull PsiStatement context,
+                                          List<PsiExpression> notUpdated) {
       if (condition == null) {
         return false;
       }
@@ -126,13 +148,13 @@ public class LoopConditionNotUpdatedInsideLoopInspection
         final PsiInstanceOfExpression instanceOfExpression =
           (PsiInstanceOfExpression)condition;
         final PsiExpression operand = instanceOfExpression.getOperand();
-        return checkCondition(operand, context, notUpdated);
+        return isConditionNotUpdated(operand, context, notUpdated);
       }
       else if (condition instanceof PsiParenthesizedExpression) {
         // catch stuff like "while ((x)) { ... }"
         final PsiExpression expression =
           ((PsiParenthesizedExpression)condition).getExpression();
-        return checkCondition(expression, context, notUpdated);
+        return isConditionNotUpdated(expression, context, notUpdated);
       }
       else if (condition instanceof PsiPolyadicExpression) {
         // while (value != x) { ... }
@@ -140,7 +162,7 @@ public class LoopConditionNotUpdatedInsideLoopInspection
         // while (b1 && b2) { ... }
         final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)condition;
         for (PsiExpression operand : polyadicExpression.getOperands()) {
-          if (!checkCondition(operand, context, notUpdated)) {
+          if (!isConditionNotUpdated(operand, context, notUpdated)) {
             return false;
           }
         }
@@ -163,38 +185,30 @@ public class LoopConditionNotUpdatedInsideLoopInspection
             if (qualifier == null) {
               return true;
             }
-            else if (checkCondition(qualifier, context,
-                                    notUpdated)) {
+            else if (isConditionNotUpdated(qualifier, context,
+                                           notUpdated)) {
               return true;
             }
           }
         }
-        else if (element instanceof PsiVariable) {
+        else if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
           final PsiVariable variable = (PsiVariable)element;
-          if (variable.hasModifierProperty(PsiModifier.FINAL)) {
-            // final variables cannot be updated, don't bother to
-            // flag them
-            return true;
-          }
-          else if (element instanceof PsiLocalVariable || element instanceof PsiParameter) {
-            final PsiType type = variable.getType();
-            if (!VariableAccessUtils.variableIsAssigned(variable, context) &&
-                (!(type instanceof PsiArrayType) || !VariableAccessUtils.arrayContentsAreAssigned(variable, context))) {
+          boolean isFinal = variable.hasModifierProperty(PsiModifier.FINAL);
+          final PsiType type = variable.getType();
+          boolean arrayUpdated = type instanceof PsiArrayType && VariableAccessUtils.arrayContentsAreAssigned(variable, context);
+          if ((isFinal || !VariableAccessUtils.variableIsAssigned(variable, context)) && !arrayUpdated) {
+            if (!isFinal) {
               notUpdated.add(referenceExpression);
-              return true;
             }
+            return true;
           }
         }
       }
       else if (condition instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression prefixExpression =
-          (PsiPrefixExpression)condition;
-        final IElementType tokenType = prefixExpression.getOperationTokenType();
-        if (JavaTokenType.EXCL.equals(tokenType) ||
-            JavaTokenType.PLUS.equals(tokenType) ||
-            JavaTokenType.MINUS.equals(tokenType)) {
+        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)condition;
+        if (!PsiUtil.isIncrementDecrementOperation(prefixExpression)) {
           final PsiExpression operand = prefixExpression.getOperand();
-          return checkCondition(operand, context, notUpdated);
+          return isConditionNotUpdated(operand, context, notUpdated);
         }
       }
       else if (condition instanceof PsiArrayAccessExpression) {
@@ -205,13 +219,10 @@ public class LoopConditionNotUpdatedInsideLoopInspection
         //   while (local_ints[0] > 0) { other_ints[0]--; }
         //
         // Keep this check?
-        final PsiArrayAccessExpression accessExpression =
-          (PsiArrayAccessExpression)condition;
-        final PsiExpression indexExpression =
-          accessExpression.getIndexExpression();
-        return checkCondition(indexExpression, context, notUpdated)
-               && checkCondition(accessExpression.getArrayExpression(),
-                                 context, notUpdated);
+        final PsiArrayAccessExpression accessExpression = (PsiArrayAccessExpression)condition;
+        final PsiExpression indexExpression = accessExpression.getIndexExpression();
+        return isConditionNotUpdated(indexExpression, context, notUpdated)
+               && isConditionNotUpdated(accessExpression.getArrayExpression(), context, notUpdated);
       }
       else if (condition instanceof PsiConditionalExpression) {
         final PsiConditionalExpression conditionalExpression =
@@ -223,46 +234,23 @@ public class LoopConditionNotUpdatedInsideLoopInspection
         if (thenExpression == null || elseExpression == null) {
           return false;
         }
-        return checkCondition(conditionalExpression.getCondition(),
-                              context, notUpdated)
-               && checkCondition(thenExpression, context, notUpdated)
-               && checkCondition(elseExpression, context, notUpdated);
+        return isConditionNotUpdated(conditionalExpression.getCondition(), context, notUpdated)
+               && isConditionNotUpdated(thenExpression, context, notUpdated)
+               && isConditionNotUpdated(elseExpression, context, notUpdated);
       }
-      else if (condition instanceof PsiThisExpression) {
+      else if (condition instanceof PsiMethodCallExpression) {
+        PsiExpression qualifier = ((PsiMethodCallExpression)condition).getMethodExpression().getQualifierExpression();
+        if (!isConditionNotUpdated(qualifier, context, notUpdated)) return false;
+        for (PsiExpression arg : ((PsiMethodCallExpression)condition).getArgumentList().getExpressions()) {
+          if (!isConditionNotUpdated(arg, context, notUpdated)) return false;
+        }
         return true;
       }
-      else if (condition instanceof PsiMethodCallExpression &&
-               !ignoreIterators) {
-        final PsiMethodCallExpression methodCallExpression =
-          (PsiMethodCallExpression)condition;
-        if (!IteratorUtils.isCallToHasNext(methodCallExpression)) {
-          return false;
-        }
-        final PsiReferenceExpression methodExpression =
-          methodCallExpression.getMethodExpression();
-        final PsiExpression qualifierExpression =
-          methodExpression.getQualifierExpression();
-        if (qualifierExpression instanceof PsiReferenceExpression) {
-          final PsiReferenceExpression referenceExpression =
-            (PsiReferenceExpression)qualifierExpression;
-          final PsiElement element = referenceExpression.resolve();
-          if (!(element instanceof PsiVariable)) {
-            return false;
-          }
-          final PsiVariable variable = (PsiVariable)element;
-          if (!IteratorUtils.containsCallToScannerNext(context,
-                                                       variable, true)) {
-            notUpdated.add(qualifierExpression);
-            return true;
-          }
-        }
-        else {
-          if (!IteratorUtils.containsCallToScannerNext(context,
-                                                       null, true)) {
-            notUpdated.add(methodCallExpression);
-            return true;
-          }
-        }
+      else if (condition instanceof PsiTypeCastExpression) {
+        return isConditionNotUpdated(((PsiTypeCastExpression)condition).getOperand(), context, notUpdated);
+      }
+      else if (condition instanceof PsiThisExpression || condition instanceof PsiClassObjectAccessExpression) {
+        return true;
       }
       return false;
     }

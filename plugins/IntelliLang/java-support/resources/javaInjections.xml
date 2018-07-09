@@ -81,6 +81,7 @@
   <injection language="HQL" injector-id="java">
     <display-name>Session.createQuery (org.hibernate)</display-name>
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createQuery").definedInClass("org.hibernate.query.QueryProducer"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createQuery").definedInClass("org.hibernate.Session"))]]></place>
   </injection>
   <injection language="SQL" injector-id="java">
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("createSQLQuery").definedInClass("org.hibernate.query.QueryProducer"))]]></place>

@@ -53,7 +53,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11/20/12
  */
 public class FormsInstrumenter extends FormsBuilder {
   public static final String BUILDER_NAME = "forms";

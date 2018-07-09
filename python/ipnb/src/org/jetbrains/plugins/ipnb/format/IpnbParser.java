@@ -300,9 +300,9 @@ public class IpnbParser {
     List<String> latex;
     List<String> svg;
     Integer prompt_number;
+    String output_type;
     List<String> traceback;
     Map<String, Object> metadata;
-    String output_type;
     List<String> text;
 
     public static CellOutputRaw fromOutput(@NotNull final IpnbOutputCell outputCell, int nbformat) {

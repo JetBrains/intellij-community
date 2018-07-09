@@ -17,7 +17,6 @@ package com.intellij.compiler.artifacts;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.impl.DefaultFacetsProvider;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -71,12 +70,7 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
   }
 
   protected static void commitModel(final ModifiableArtifactModel model) {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull final Result result) {
-        model.commit();
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> model.commit());
   }
 
   protected Artifact rename(Artifact artifact, String newName) {
@@ -103,31 +97,23 @@ public abstract class ArtifactsTestCase extends IdeaTestCase {
   }
 
   public static void renameFile(final VirtualFile file, final String newName) {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull final Result result) {
-        try {
-          file.rename(IdeaTestCase.class, newName);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }.execute();
+    try {
+      WriteAction.runAndWait(() -> file.rename(IdeaTestCase.class, newName));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected Module addModule(final String moduleName, final @Nullable VirtualFile sourceRoot) {
-    return new WriteAction<Module>() {
-      @Override
-      protected void run(@NotNull final Result<Module> result) {
-        final Module module = createModule(moduleName);
-        if (sourceRoot != null) {
-          PsiTestUtil.addSourceContentToRoots(module, sourceRoot);
-        }
-        ModuleRootModificationUtil.setModuleSdk(module, getTestProjectJdk());
-        result.setResult(module);
+    return WriteAction.computeAndWait(() -> {
+      final Module module = createModule(moduleName);
+      if (sourceRoot != null) {
+        PsiTestUtil.addSourceContentToRoots(module, sourceRoot);
       }
-    }.execute().getResultObject();
+      ModuleRootModificationUtil.setModuleSdk(module, getTestProjectJdk());
+      return module;
+    });
   }
 
   public static class MockPackagingEditorContext extends ArtifactEditorContextImpl {

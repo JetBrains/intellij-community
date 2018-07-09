@@ -6,9 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.psi.PyCallSiteExpression;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -22,31 +20,47 @@ import java.util.*;
 public class PyNamedTupleType extends PyTupleType implements PyCallableType {
 
   @NotNull
-  private final PsiElement myDeclaration;
-
-  @NotNull
   private final String myName;
 
   @NotNull
-  private final Map<String, FieldTypeAndDefaultValue> myFields;
+  private final LinkedHashMap<String, FieldTypeAndDefaultValue> myFields;
 
   @NotNull
   private final DefinitionLevel myDefinitionLevel;
 
+  private final boolean myTyped;
+  private final PyTargetExpression myTargetExpression;
+
   public PyNamedTupleType(@NotNull PyClass tupleClass,
-                          @NotNull PsiElement declaration,
                           @NotNull String name,
-                          @NotNull Map<String, FieldTypeAndDefaultValue> fields,
-                          @NotNull DefinitionLevel definitionLevel) {
+                          @NotNull LinkedHashMap<String, FieldTypeAndDefaultValue> fields,
+                          @NotNull DefinitionLevel definitionLevel,
+                          boolean typed) {
+    this(tupleClass, name, fields, definitionLevel, typed, null);
+  }
+
+  public PyNamedTupleType(@NotNull PyClass tupleClass,
+                          @NotNull String name,
+                          @NotNull LinkedHashMap<String, FieldTypeAndDefaultValue> fields,
+                          @NotNull DefinitionLevel definitionLevel,
+                          boolean typed,
+                          @Nullable PyTargetExpression target) {
     super(tupleClass,
           Collections.unmodifiableList(ContainerUtil.map(fields.values(), typeAndValue -> typeAndValue.getType())),
           false,
           definitionLevel != DefinitionLevel.INSTANCE);
 
-    myDeclaration = declaration;
-    myFields = Collections.unmodifiableMap(fields);
+    myFields = new LinkedHashMap<>(fields);
     myName = name;
     myDefinitionLevel = definitionLevel;
+    myTyped = typed;
+    myTargetExpression = target;
+  }
+
+  @NotNull
+  @Override
+  public PyQualifiedNameOwner getDeclarationElement() {
+    return myTargetExpression;
   }
 
   @Override
@@ -72,13 +86,12 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
 
   @Nullable
   @Override
-  public PyType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
+  public PyNamedTupleType getCallType(@NotNull TypeEvalContext context, @NotNull PyCallSiteExpression callSite) {
     if (myDefinitionLevel == DefinitionLevel.NT_FUNCTION) {
-      return new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.NEW_TYPE);
+      return new PyNamedTupleType(myClass, myName, myFields, DefinitionLevel.NEW_TYPE, myTyped, myTargetExpression);
     }
     else if (myDefinitionLevel == DefinitionLevel.NEW_TYPE) {
-      final Map<String, FieldTypeAndDefaultValue> fields = takeFieldsTypesFromCallSiteIfNeeded(context, callSite);
-      return new PyNamedTupleType(myClass, myDeclaration, myName, fields, DefinitionLevel.INSTANCE);
+      return getCallDefinitionType(callSite, context);
     }
 
     return null;
@@ -86,18 +99,18 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
 
   @NotNull
   @Override
-  public PyClassType toInstance() {
+  public PyNamedTupleType toInstance() {
     return myDefinitionLevel == DefinitionLevel.NEW_TYPE
-           ? new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.INSTANCE)
+           ? new PyNamedTupleType(myClass, myName, myFields, DefinitionLevel.INSTANCE, myTyped, myTargetExpression)
            : this;
   }
 
   @NotNull
   @Override
-  public PyClassLikeType toClass() {
+  public PyNamedTupleType toClass() {
     return myDefinitionLevel == DefinitionLevel.INSTANCE
-           ? this
-           : new PyNamedTupleType(myClass, myDeclaration, myName, myFields, DefinitionLevel.NEW_TYPE);
+           ? new PyNamedTupleType(myClass, myName, myFields, DefinitionLevel.NEW_TYPE, myTyped, myTargetExpression)
+           : this;
   }
 
   @Override
@@ -133,7 +146,7 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
 
   @NotNull
   public Map<String, FieldTypeAndDefaultValue> getFields() {
-    return myFields;
+    return Collections.unmodifiableMap(myFields);
   }
 
   @Override
@@ -149,28 +162,49 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
            : null;
   }
 
+  public boolean isTyped() {
+    return myTyped;
+  }
+
   @NotNull
-  private Map<String, FieldTypeAndDefaultValue> takeFieldsTypesFromCallSiteIfNeeded(@NotNull TypeEvalContext context,
-                                                                                    @NotNull PyCallSiteExpression callSite) {
-    if (StreamEx.of(getElementTypes()).allMatch(Objects::isNull)) {
+  public PyNamedTupleType clarifyFields(@NotNull Map<String, PyType> fieldNameToType) {
+    if (!myTyped) {
+      final LinkedHashMap<String, FieldTypeAndDefaultValue> newFields = new LinkedHashMap<>(myFields);
+
+      for (Map.Entry<String, PyType> entry : fieldNameToType.entrySet()) {
+        final String fieldName = entry.getKey();
+
+        if (newFields.containsKey(fieldName)) {
+          newFields.put(fieldName, new FieldTypeAndDefaultValue(entry.getValue(), null));
+        }
+      }
+
+      return new PyNamedTupleType(myClass, myName, newFields, myDefinitionLevel, false, myTargetExpression);
+    }
+
+    return this;
+  }
+
+  @NotNull
+  private PyNamedTupleType getCallDefinitionType(@NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+    if (!myTyped) {
       final List<PyExpression> arguments = callSite.getArguments(null);
 
       if (arguments.size() == myFields.size()) {
-        final Map<String, FieldTypeAndDefaultValue> result = new HashMap<>();
+        final Map<String, PyType> result = new HashMap<>();
 
         for (Map.Entry<String, PyExpression> entry : StreamEx.ofKeys(myFields).zipWith(StreamEx.of(arguments))) {
           final String name = entry.getKey();
           final PyType type = context.getType(entry.getValue());
-          final PyExpression value = myFields.get(name).getDefaultValue();
 
-          result.put(name, new FieldTypeAndDefaultValue(type, value));
+          result.put(name, type);
         }
 
-        return result;
+        return toInstance().clarifyFields(result);
       }
     }
 
-    return myFields;
+    return toInstance();
   }
 
   @NotNull

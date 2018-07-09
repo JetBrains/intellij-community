@@ -16,12 +16,15 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.siyeh.HardcodedMethodConstants;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -201,16 +204,13 @@ public class MethodCallUtils {
   }
 
   public static boolean isCallDuringObjectConstruction(PsiMethodCallExpression expression) {
+    PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();
+    if (qualifier != null && !(qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression)) {
+      return false;
+    }
     final PsiMember member = PsiTreeUtil.getParentOfType(expression, PsiMember.class, true, PsiClass.class, PsiLambdaExpression.class);
     if (member == null) {
       return false;
-    }
-    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    final PsiExpression qualifier = methodExpression.getQualifierExpression();
-    if (qualifier != null) {
-      if (!(qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression)) {
-        return false;
-      }
     }
     final PsiClass containingClass = member.getContainingClass();
     if (containingClass == null || containingClass.hasModifierProperty(PsiModifier.FINAL)) {
@@ -321,13 +321,13 @@ public class MethodCallUtils {
   }
 
   public static boolean isSuperMethodCall(@NotNull PsiMethodCallExpression expression, @NotNull PsiMethod method) {
-    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    final PsiExpression target = ParenthesesUtils.stripParentheses(methodExpression.getQualifierExpression());
-    if (!(target instanceof PsiSuperExpression)) {
-      return false;
-    }
+    if (!hasSuperQualifier(expression)) return false;
     final PsiMethod targetMethod = expression.resolveMethod();
     return targetMethod != null && MethodSignatureUtil.isSuperMethod(targetMethod, method);
+  }
+
+  public static boolean hasSuperQualifier(@NotNull PsiMethodCallExpression expression) {
+    return ParenthesesUtils.stripParentheses(expression.getMethodExpression().getQualifierExpression()) instanceof PsiSuperExpression;
   }
 
   /**
@@ -410,6 +410,59 @@ public class MethodCallUtils {
       tryCast(PsiUtil.skipParenthesizedExprDown(methodCall.getMethodExpression().getQualifierExpression()), PsiMethodCallExpression.class);
   }
 
+  public static boolean isUsedAsSuperConstructorCallArgument(@NotNull PsiParameter parameter, boolean superMustBeLibrary) {
+    final PsiElement scope = parameter.getDeclarationScope();
+    if (!(scope instanceof PsiMethod)) {
+      return false;
+    }
+    PsiMethod method = (PsiMethod)scope;
+    final Set<PsiMethod> checked = new THashSet<>();
+
+    while (true) {
+      ProgressManager.checkCanceled();
+      if (!checked.add(method)) {
+        // we've already seen this method -> circular call chain
+        return false;
+      }
+      final PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
+      if (call == null) {
+        return false;
+      }
+      final int index = getParameterReferenceIndex(call, parameter);
+      if (index < 0) {
+        return false;
+      }
+      final JavaResolveResult resolveResult = call.resolveMethodGenerics();
+      if (!resolveResult.isValidResult()) {
+        return false;
+      }
+      method = (PsiMethod)resolveResult.getElement();
+      if (method == null) {
+        return false;
+      }
+      if (JavaPsiConstructorUtil.isSuperConstructorCall(call) && (!superMustBeLibrary || method instanceof PsiCompiledElement)) {
+        return true;
+      }
+      parameter = method.getParameterList().getParameters()[index];
+    }
+  }
+
+  private static int getParameterReferenceIndex(PsiMethodCallExpression call, PsiParameter parameter) {
+    final PsiExpressionList argumentList = call.getArgumentList();
+    final PsiExpression[] arguments = argumentList.getExpressions();
+    for (int i = 0; i < arguments.length; i++) {
+      PsiExpression argument = arguments[i];
+      argument = ParenthesesUtils.stripParentheses(argument);
+      if (argument instanceof PsiReferenceExpression) {
+        final PsiElement target = ((PsiReferenceExpression)argument).resolve();
+        if (target == parameter) {
+          return i;
+        }
+      }
+    }
+    return -1;
+  }
+
   private static class SuperCallVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private final PsiMethod myMethod;
@@ -424,18 +477,6 @@ public class MethodCallUtils {
       if (!mySuperCallFound) {
         super.visitElement(element);
       }
-    }
-
-    @Override
-    public void visitClass(PsiClass aClass) {
-      // anonymous and inner classes inside methods are visited to reduce false positives
-      super.visitClass(aClass);
-    }
-
-    @Override
-    public void visitLambdaExpression(PsiLambdaExpression expression) {
-      // lambda's are visited to reduce false positives
-      super.visitLambdaExpression(expression);
     }
 
     @Override

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.sforms;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -33,7 +19,6 @@ import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -58,8 +43,6 @@ public class SSAConstructorSparseEx {
 
   // var, version
   private final HashMap<Integer, Integer> lastversion = new HashMap<>();
-
-  private final List<VarVersionPair> startVars = new ArrayList<>();
 
   // set factory
   private FastSparseSetFactory<Integer> factory;
@@ -260,7 +243,7 @@ public class SSAConstructorSparseEx {
       if (cardinality == 1) { // == 1
         // set version
         Integer it = vers.iterator().next();
-        vardest.setVersion(it.intValue());
+        vardest.setVersion(it);
       }
       else if (cardinality == 2) { // size > 1
         Integer current_vers = vardest.getVersion();
@@ -372,7 +355,7 @@ public class SSAConstructorSparseEx {
         }
 
         // false path?
-        boolean isFalsePath = true;
+        boolean isFalsePath;
 
         if (recFinally) {
           isFalsePath = !finwrap.destination.equals(nodeid);
@@ -477,7 +460,6 @@ public class SSAConstructorSparseEx {
           setCurrentVar(map, varindex, version);
 
           extraVarVersions.put(dgraph.nodes.getWithKey(flatthelper.getMapDestinationNodes().get(stat.getStats().get(i).id)[0]).id, map);
-          startVars.add(new VarVersionPair(varindex, version));
         }
     }
 
@@ -501,7 +483,6 @@ public class SSAConstructorSparseEx {
       FastSparseSet<Integer> set = factory.spawnEmptySet();
       set.add(version);
       map.put(varindex, set);
-      startVars.add(new VarVersionPair(varindex, version));
 
       if (thisvar) {
         if (i == 0) {
@@ -521,9 +502,5 @@ public class SSAConstructorSparseEx {
 
   public HashMap<VarVersionPair, FastSparseSet<Integer>> getPhi() {
     return phi;
-  }
-
-  public List<VarVersionPair> getStartVars() {
-    return startVars;
   }
 }

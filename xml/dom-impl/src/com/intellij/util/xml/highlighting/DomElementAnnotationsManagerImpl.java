@@ -63,22 +63,9 @@ public class DomElementAnnotationsManagerImpl extends DomElementAnnotationsManag
     }
 
     @Override
-    public List<DomElementProblemDescriptor> getProblems(final DomElement domElement, boolean includeXmlProblems) {
-      return Collections.emptyList();
-    }
-
-    @Override
     public List<DomElementProblemDescriptor> getProblems(final DomElement domElement,
                                                          final boolean includeXmlProblems,
                                                          final boolean withChildren) {
-      return Collections.emptyList();
-    }
-
-    @Override
-    public List<DomElementProblemDescriptor> getProblems(DomElement domElement,
-                                                         final boolean includeXmlProblems,
-                                                         final boolean withChildren,
-                                                         HighlightSeverity minSeverity) {
       return Collections.emptyList();
     }
 

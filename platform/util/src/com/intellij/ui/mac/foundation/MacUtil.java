@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.foundation;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
@@ -41,7 +28,7 @@ import static com.intellij.ui.mac.foundation.Foundation.*;
 public class MacUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.foundation.MacUtil");
   public static final String MAC_NATIVE_WINDOW_SHOWING = "MAC_NATIVE_WINDOW_SHOWING";
-  
+
   private MacUtil() {
   }
 
@@ -111,7 +98,7 @@ public class MacUtil {
     catch (InterruptedException ignored) {
     }
   }
-  
+
   public static synchronized void startModal(JComponent component) {
     startModal(component, MAC_NATIVE_WINDOW_SHOWING);
   }
@@ -152,7 +139,7 @@ public class MacUtil {
 
   public static ID findWindowFromJavaWindow(final Window w) {
     ID windowId = null;
-    if (SystemInfo.isJavaVersionAtLeast("1.7") && Registry.is("skip.untitled.windows.for.mac.messages")) {
+    if (Registry.is("skip.untitled.windows.for.mac.messages")) {
       try {
         Class <?> cWindowPeerClass  = w.getPeer().getClass();
         Method getPlatformWindowMethod = cWindowPeerClass.getDeclaredMethod("getPlatformWindow");
@@ -190,27 +177,37 @@ public class MacUtil {
     return windowTitle;
   }
 
-  public static Object wakeUpNeo(String reason) {
+  public static Object wakeUpNeo(final String reason) {
     // http://lists.apple.com/archives/java-dev/2014/Feb/msg00053.html
     // https://developer.apple.com/library/prerelease/ios/documentation/Cocoa/Reference/Foundation/Classes/NSProcessInfo_Class/index.html#//apple_ref/c/tdef/NSActivityOptions
     if (SystemInfo.isMacOSMavericks && Registry.is("idea.mac.prevent.app.nap")) {
-      ID processInfo = invoke("NSProcessInfo", "processInfo");
-      ID activity = invoke(processInfo, "beginActivityWithOptions:reason:",
-                         (0x00FFFFFFL & ~(1L << 20))  /* NSActivityUserInitiatedAllowingIdleSystemSleep */ |
-                         0xFF00000000L /* NSActivityLatencyCritical */,
-                         nsString(reason));
-      cfRetain(activity);
-      return activity;
+      final Ref<Object> result = Ref.create();
+      executeOnMainThread(false, true, new Runnable() {
+        @Override
+        public void run() {
+          ID processInfo = invoke("NSProcessInfo", "processInfo");
+          ID activity = invoke(processInfo, "beginActivityWithOptions:reason:",
+                               (0x00FFFFFFL & ~(1L << 20))  /* NSActivityUserInitiatedAllowingIdleSystemSleep */ |
+                               0xFF00000000L /* NSActivityLatencyCritical */,
+                               nsString(reason));
+          cfRetain(activity);
+          result.set(activity);
+        }
+      });
+      return result.get();
     }
     return null;
   }
 
-  public static void matrixHasYou(Object activity) {
-    if (activity != null) {
-      ID processInfo = invoke("NSProcessInfo", "processInfo");
-      invoke(processInfo, "endActivity:", activity);
-      cfRelease((ID)activity);
-    }
+  public static void matrixHasYou(@NotNull final Object activity) {
+    executeOnMainThread(false, false, new Runnable() {
+      @Override
+      public void run() {
+        ID processInfo = invoke("NSProcessInfo", "processInfo");
+        invoke(processInfo, "endActivity:", activity);
+        cfRelease((ID)activity);
+      }
+    });
   }
 
   @NotNull

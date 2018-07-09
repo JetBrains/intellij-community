@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.actions
 
 import com.intellij.configurationStore.StateStorageManagerImpl
@@ -34,7 +20,8 @@ internal abstract class SyncAction(private val syncType: SyncType) : DumbAwareAc
     }
 
     val repositoryManager = icsManager.repositoryManager
-    e.presentation.isEnabledAndVisible = repositoryManager.isRepositoryExists() && repositoryManager.hasUpstream()
+    e.presentation.isEnabledAndVisible = (repositoryManager.isRepositoryExists() && repositoryManager.hasUpstream()) ||
+      (syncType == SyncType.MERGE && icsManager.readOnlySourcesManager.repositories.isNotEmpty())
   }
 
   override fun actionPerformed(event: AnActionEvent) {
@@ -42,12 +29,15 @@ internal abstract class SyncAction(private val syncType: SyncType) : DumbAwareAc
   }
 }
 
-fun syncAndNotify(syncType: SyncType, project: Project?, notifyIfUpToDate: Boolean = true) {
+private fun syncAndNotify(syncType: SyncType, project: Project?) {
   try {
-    if (!icsManager.syncManager.sync(syncType, project) && !notifyIfUpToDate) {
-      return
+    val message = if (icsManager.syncManager.sync(syncType, project)) {
+      icsMessage("sync.done.message")
     }
-    NOTIFICATION_GROUP.createNotification(icsMessage("sync.done.message"), NotificationType.INFORMATION).notify(project)
+    else {
+      icsMessage("sync.up.to.date.message")
+    }
+    NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION).notify(project)
   }
   catch (e: Exception) {
     LOG.warn(e)
@@ -72,11 +62,11 @@ internal class ConfigureIcsAction : DumbAwareAction() {
       return
     }
 
-    if (icsManager.active) {
+    if (icsManager.isActive) {
       e.presentation.isEnabledAndVisible = true
     }
     else {
-      e.presentation.isEnabledAndVisible = !(application.stateStore.stateStorageManager as StateStorageManagerImpl).compoundStreamProvider.enabled
+      e.presentation.isEnabledAndVisible = !(application.stateStore.storageManager as StateStorageManagerImpl).compoundStreamProvider.enabled
     }
     e.presentation.icon = null
   }

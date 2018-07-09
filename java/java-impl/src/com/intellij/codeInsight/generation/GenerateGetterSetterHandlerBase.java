@@ -23,14 +23,12 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiField;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -77,7 +75,7 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
 
   @Override
   protected String getHelpId() {
-    return "Getter and Setter Templates Dialog";
+    return "Getter_and_Setter_Templates_Dialog";
   }
 
   @Override
@@ -143,7 +141,7 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
 
   private static void setComboboxModel(TemplatesManager templatesManager, ComboBox comboBox) {
     final Collection<TemplateResource> templates = templatesManager.getAllTemplates();
-    comboBox.setModel(new DefaultComboBoxModel(templates.toArray(new TemplateResource[templates.size()])));
+    comboBox.setModel(new DefaultComboBoxModel(templates.toArray(new TemplateResource[0])));
     comboBox.setSelectedItem(templatesManager.getDefaultTemplate());
   }
 
@@ -175,7 +173,7 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
         return false;
       }
     });
-    return members.toArray(new ClassMember[members.size()]);
+    return members.toArray(ClassMember.EMPTY_ARRAY);
   }
 
 

@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.indices;
 
+import com.intellij.jarRepository.services.bintray.BintrayModel;
+import com.intellij.jarRepository.services.bintray.BintrayRepositoryService;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,11 +46,10 @@ import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 
 import java.io.*;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 
-import static com.intellij.openapi.util.text.StringUtil.*;
+import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.openapi.util.text.StringUtil.split;
 import static com.intellij.util.containers.ContainerUtil.notNullize;
 
 public class MavenIndex {
@@ -161,25 +162,9 @@ public class MavenIndex {
 
   private static NotNexusIndexer initNotNexusIndexer(Kind kind, String repositoryPathOrUrl) {
     if (kind == Kind.REMOTE) {
-      try {
-        URL url = new URL(repositoryPathOrUrl);
-
-        String host = url.getHost();
-        if (host != null) {
-          List<String> path = split(trimStart(url.getPath(), "/"), "/");
-          if (host.equals("dl.bintray.com")) {
-            if (path.size() > 1) {
-              return new BintrayIndexer(path.get(0), path.get(1));
-            }
-          }
-          else if (host.endsWith(".bintray.com")) {
-            if (!path.isEmpty()) {
-              return new BintrayIndexer(trimEnd(host, ".bintray.com"), path.get(0));
-            }
-          }
-        }
-      }
-      catch (MalformedURLException ignored) {
+      BintrayModel.Repository info = BintrayRepositoryService.parseInfo(repositoryPathOrUrl);
+      if (info != null && info.repo != null) {
+        return new BintrayIndexer(info.subject, info.repo);
       }
     }
     return null;
@@ -496,12 +481,7 @@ public class MavenIndex {
   }
 
   private static <T> Set<T> getOrCreate(Map<String, Set<T>> map, String key) {
-    Set<T> result = map.get(key);
-    if (result == null) {
-      result = new THashSet<>();
-      map.put(key, result);
-    }
-    return result;
+    return map.computeIfAbsent(key, k -> new THashSet<>());
   }
 
   private static <T> void persist(Map<String, T> map, PersistentHashMap<String, T> persistentMap) throws IOException {
@@ -601,29 +581,14 @@ public class MavenIndex {
     if (isBroken) return false;
 
     final String groupWithArtifactWithVersion = groupId + ":" + artifactId + ':' + version;
-
-    Boolean res = myData.hasVersionCache.get(groupWithArtifactWithVersion);
-    if (res == null) {
-      String groupWithArtifact = groupWithArtifactWithVersion.substring(0, groupWithArtifactWithVersion.length() - version.length() - 1);
-      res = doIndexTask(() -> {
-        Set<String> set = myData.groupWithArtifactToVersionMap.get(groupWithArtifact);
-        return set != null && set.contains(version);
-      }, false);
-
-      myData.hasVersionCache.put(groupWithArtifactWithVersion, res);
-    }
-
-    return res;
+    String groupWithArtifact = groupWithArtifactWithVersion.substring(0, groupWithArtifactWithVersion.length() - version.length() - 1);
+    return myData.hasVersionCache.computeIfAbsent(groupWithArtifactWithVersion, gav -> doIndexTask(
+      () -> notNullize(myData.groupWithArtifactToVersionMap.get(groupWithArtifact)).contains(version),
+      false));
   }
 
   private boolean hasValue(final PersistentHashMap<String, ?> map, Map<String, Boolean> cache, final String value) {
-    Boolean res = cache.get(value);
-    if (res == null) {
-      res = doIndexTask(() -> map.tryEnumerate(value) != 0, false);
-      cache.put(value, res);
-    }
-
-    return res;
+    return cache.computeIfAbsent(value, v -> doIndexTask(() -> map.tryEnumerate(v) != 0, false));
   }
 
   public synchronized Set<MavenArtifactInfo> search(final Query query, final int maxResult) {

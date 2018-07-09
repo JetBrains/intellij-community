@@ -51,8 +51,7 @@ public class ScanSourceCommentsAction extends AnAction {
     final String file =
       Messages.showInputDialog(p, "Enter path to the file comments will be extracted to", "Comments File Path", Messages.getQuestionIcon());
 
-    try {
-      final PrintStream stream = new PrintStream(file);
+    try (final PrintStream stream = new PrintStream(file)){
       stream.println("Comments in " + p.getName());
 
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
@@ -76,10 +75,6 @@ public class ScanSourceCommentsAction extends AnAction {
         }
 
       }, "Generating Comments", true, p);
-
-
-      stream.close();
-
     }
     catch (Throwable e1) {
       LOG.error(e1);

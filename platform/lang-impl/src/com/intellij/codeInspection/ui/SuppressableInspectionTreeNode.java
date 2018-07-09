@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.CommonProblemDescriptor;
@@ -29,7 +31,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   private volatile Boolean myValid;
   private volatile NodeState myPreviousState;
 
-  protected SuppressableInspectionTreeNode(Object userObject, @NotNull InspectionToolPresentation presentation) {
+  SuppressableInspectionTreeNode(Object userObject, @NotNull InspectionToolPresentation presentation) {
     super(userObject);
     myPresentation = presentation;
   }
@@ -55,7 +57,7 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   @Override
   protected boolean isProblemCountCacheValid() {
     NodeState currentState = calculateState();
-    if (myPreviousState == null || !currentState.equals(myPreviousState)) {
+    if (!currentState.equals(myPreviousState)) {
       myPreviousState = currentState;
       return false;
     }
@@ -68,22 +70,18 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
   }
 
   @NotNull
-  public Set<SuppressIntentionAction> getAvailableSuppressActions() {
-    return myAvailableSuppressActions;
+  public synchronized Set<SuppressIntentionAction> getAvailableSuppressActions() {
+    Set<SuppressIntentionAction> actions = myAvailableSuppressActions;
+    if (actions == null) {
+      actions = calculateAvailableSuppressActions();
+      myAvailableSuppressActions = actions;
+    }
+    return actions;
   }
 
   public void removeSuppressActionFromAvailable(@NotNull SuppressIntentionAction action) {
     myAvailableSuppressActions.remove(action);
   }
-
-  protected void init(Project project) {
-    myPresentableName = calculatePresentableName();
-    myValid = calculateIsValid();
-    myAvailableSuppressActions = getElement() == null
-                                 ? Collections.emptySet()
-                                 : calculateAvailableSuppressActions(project);
-  }
-
 
   @Nullable
   public abstract RefEntity getElement();
@@ -121,6 +119,20 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
       return "Suppressed";
     }
     return !isValid() ? "No longer valid" : null;
+  }
+
+  @Override
+  protected void nodeAddedToTree() {
+    myPresentableName = calculatePresentableName();
+    myValid = calculateIsValid();
+    myAvailableSuppressActions = calculateAvailableSuppressActions();
+  }
+
+  @NotNull
+  private Set<SuppressIntentionAction> calculateAvailableSuppressActions() {
+    return getElement() == null
+                                 ? Collections.emptySet()
+                                 : calculateAvailableSuppressActions(myPresentation.getContext().getProject());
   }
 
   @NotNull
@@ -173,34 +185,41 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
     private final boolean isValid;
     private final boolean isSuppressed;
     private final boolean isFixApplied;
+    private final boolean isExcluded;
 
-    private NodeState(boolean isValid, boolean isSuppressed, boolean isFixApplied) {
+    private NodeState(boolean isValid, boolean isSuppressed, boolean isFixApplied, boolean isExcluded) {
       this.isValid = isValid;
       this.isSuppressed = isSuppressed;
       this.isFixApplied = isFixApplied;
+      this.isExcluded = isExcluded;
     }
 
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (!(o instanceof NodeState)) return false;
 
       NodeState state = (NodeState)o;
 
       if (isValid != state.isValid) return false;
       if (isSuppressed != state.isSuppressed) return false;
       if (isFixApplied != state.isFixApplied) return false;
+      if (isExcluded != state.isExcluded) return false;
 
       return true;
     }
 
     @Override
     public int hashCode() {
-     return (isValid ? 0x1 : 0) + (isFixApplied ? 0x2 : 0) + (isSuppressed ? 0x4 : 0);
+      int result = (isValid ? 1 : 0);
+      result = 31 * result + (isSuppressed ? 1 : 0);
+      result = 31 * result + (isFixApplied ? 1 : 0);
+      result = 31 * result + (isExcluded ? 1 : 0);
+      return result;
     }
   }
 
-  protected NodeState calculateState() {
-    return NodeState.INTERNER.intern(new NodeState(isValid(), isAlreadySuppressedFromView(), isQuickFixAppliedFromView()));
+  private NodeState calculateState() {
+    return NodeState.INTERNER.intern(new NodeState(isValid(), isAlreadySuppressedFromView(), isQuickFixAppliedFromView(), isExcluded()));
   }
 }

@@ -1,11 +1,12 @@
 <component name="libraryTable">
-  <library name="proxy-vole">
+  <library name="proxy-vole" type="repository">
+    <properties include-transitive-deps="false" maven-id="com.github.markusbernhardt:proxy-vole:1.0.4" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/proxy-vole-1.0.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/markusbernhardt/proxy-vole/1.0.4/proxy-vole-1.0.4.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/proxy-vole-proxy-vole-1.0.3-src.zip!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/markusbernhardt/proxy-vole/1.0.4/proxy-vole-1.0.4-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

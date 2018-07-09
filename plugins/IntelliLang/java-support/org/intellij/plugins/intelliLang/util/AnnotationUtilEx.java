@@ -305,6 +305,6 @@ public class AnnotationUtilEx {
         ContainerUtil.addAll(all, modifierList.getAnnotations());
       }
     }
-    return all.isEmpty() ? PsiAnnotation.EMPTY_ARRAY : all.toArray(new PsiAnnotation[all.size()]);
+    return all.isEmpty() ? PsiAnnotation.EMPTY_ARRAY : all.toArray(PsiAnnotation.EMPTY_ARRAY);
   }
 }

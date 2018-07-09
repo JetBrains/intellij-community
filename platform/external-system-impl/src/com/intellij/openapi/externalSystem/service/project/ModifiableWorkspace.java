@@ -58,8 +58,8 @@ public class ModifiableWorkspace {
     });
   private final AbstractIdeModifiableModelsProvider myModelsProvider;
   private final ExternalProjectsWorkspaceImpl.State myState;
-  private MultiMap<String/* module owner */, String /* substitution modules */> mySubstitutions = MultiMap.createSet();
-  private Map<String /* module name */, String /* library name */> myNamesMap = ContainerUtil.newHashMap();
+  private final MultiMap<String/* module owner */, String /* substitution modules */> mySubstitutions = MultiMap.createSet();
+  private final Map<String /* module name */, String /* library name */> myNamesMap = ContainerUtil.newHashMap();
 
 
   public ModifiableWorkspace(ExternalProjectsWorkspaceImpl.State state,

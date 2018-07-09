@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
@@ -50,12 +49,7 @@ public class VirtualFileListenerTest extends BareTestFixtureTestCase {
       }
     }, getTestRootDisposable());
 
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws IOException {
-        dir.createChildData(this, "x.txt");
-      }
-    }.execute();
+    WriteAction.computeAndWait(() -> dir.createChildData(this, "x.txt"));
 
     assertTrue(eventFired.get());
   }

@@ -18,9 +18,9 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BeforeAfter;
@@ -35,18 +35,32 @@ public class ChangeListsIndexes {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListsIndexes");
   private final Map<FilePath, Data> myMap;
   private final TreeSet<FilePath> myAffectedPaths;
+  private final Set<Change> myChanges;
 
   public ChangeListsIndexes() {
     myMap = new HashMap<>();
     myAffectedPaths = new TreeSet<>(HierarchicalFilePathComparator.SYSTEM_CASE_SENSITIVE);
+    myChanges = new HashSet<>();
   }
 
   public ChangeListsIndexes(@NotNull ChangeListsIndexes idx) {
     myMap = new HashMap<>(idx.myMap);
     myAffectedPaths = new TreeSet<>(idx.myAffectedPaths);
+    myChanges = new HashSet<>(idx.myChanges);
   }
 
-  private void add(@NotNull FilePath file, @NotNull FileStatus status, @Nullable VcsKey key, @NotNull VcsRevisionNumber number) {
+  public void copyFrom(@NotNull ChangeListsIndexes idx) {
+    myMap.clear();
+    myAffectedPaths.clear();
+    myChanges.clear();
+
+    myMap.putAll(idx.myMap);
+    myAffectedPaths.addAll(idx.myAffectedPaths);
+    myChanges.addAll(idx.myChanges);
+  }
+
+
+  private void add(@NotNull FilePath file, @NotNull FileStatus status, @Nullable AbstractVcs key, @NotNull VcsRevisionNumber number) {
     myMap.put(file, new Data(status, key, number));
     myAffectedPaths.add(file);
     if (LOG.isDebugEnabled()) {
@@ -54,7 +68,7 @@ public class ChangeListsIndexes {
     }
   }
 
-  public void remove(final FilePath file) {
+  private void remove(final FilePath file) {
     myMap.remove(file);
     myAffectedPaths.remove(file);
   }
@@ -70,7 +84,9 @@ public class ChangeListsIndexes {
     return data != null ? data.status : null;
   }
 
-  public void changeAdded(@NotNull Change change, VcsKey key) {
+  public void changeAdded(@NotNull Change change, AbstractVcs key) {
+    myChanges.add(change);
+
     ContentRevision afterRevision = change.getAfterRevision();
     ContentRevision beforeRevision = change.getBeforeRevision();
 
@@ -90,6 +106,8 @@ public class ChangeListsIndexes {
   }
 
   public void changeRemoved(@NotNull Change change) {
+    myChanges.remove(change);
+
     ContentRevision afterRevision = change.getAfterRevision();
     ContentRevision beforeRevision = change.getBeforeRevision();
 
@@ -101,18 +119,23 @@ public class ChangeListsIndexes {
     }
   }
 
+  @NotNull
+  public Set<Change> getChanges() {
+    return myChanges;
+  }
+
   @Nullable
-  public VcsKey getVcsFor(@NotNull Change change) {
-    VcsKey key = getVcsForRevision(change.getAfterRevision());
-    if (key != null) return key;
+  public AbstractVcs getVcsFor(@NotNull Change change) {
+    AbstractVcs vcs = getVcsForRevision(change.getAfterRevision());
+    if (vcs != null) return vcs;
     return getVcsForRevision(change.getBeforeRevision());
   }
 
   @Nullable
-  private VcsKey getVcsForRevision(@Nullable ContentRevision revision) {
+  private AbstractVcs getVcsForRevision(@Nullable ContentRevision revision) {
     if (revision != null) {
       Data data = myMap.get(revision.getFile());
-      return data != null ? data.vcsKey : null;
+      return data != null ? data.vcs : null;
     }
     return null;
   }
@@ -164,22 +187,13 @@ public class ChangeListsIndexes {
   }
 
   private static BaseRevision createBaseRevision(@NotNull FilePath path, @NotNull Data data) {
-    return new BaseRevision(data.vcsKey, data.revision, path);
-  }
-
-  @NotNull
-  public List<BaseRevision> getAffectedFilesUnderVcs() {
-    final List<BaseRevision> result = new ArrayList<>();
-    for (Map.Entry<FilePath, Data> entry : myMap.entrySet()) {
-      final Data value = entry.getValue();
-      result.add(createBaseRevision(entry.getKey(), value));
-    }
-    return result;
+    return new BaseRevision(data.vcs, data.revision, path);
   }
 
   public void clear() {
     myMap.clear();
     myAffectedPaths.clear();
+    myChanges.clear();
   }
 
   @NotNull
@@ -189,17 +203,17 @@ public class ChangeListsIndexes {
 
   private static class Data {
     @NotNull public final FileStatus status;
-    public final VcsKey vcsKey;
+    public final AbstractVcs vcs;
     @NotNull public final VcsRevisionNumber revision;
 
-    public Data(@NotNull FileStatus status, VcsKey vcsKey, @NotNull VcsRevisionNumber revision) {
+    public Data(@NotNull FileStatus status, AbstractVcs vcs, @NotNull VcsRevisionNumber revision) {
       this.status = status;
-      this.vcsKey = vcsKey;
+      this.vcs = vcs;
       this.revision = revision;
     }
 
     public boolean sameRevisions(@NotNull Data data) {
-      return Comparing.equal(vcsKey, data.vcsKey) && Comparing.equal(revision, data.revision);
+      return Comparing.equal(vcs, data.vcs) && Comparing.equal(revision, data.revision);
     }
   }
 }

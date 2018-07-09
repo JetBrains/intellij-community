@@ -14,8 +14,6 @@ import java.util.List;
 
 /**
  * @author maxim
- * Date: 31.12.2004
- * Time: 12:01:29
  */
 public class DeclarationStatementHandler extends MatchingHandler {
   private MatchingHandler myCommentHandler;
@@ -63,7 +61,7 @@ public class DeclarationStatementHandler extends MatchingHandler {
       }
       boolean result = context.getMatcher().matchSequentially(
         new ArrayBackedNodeIterator(declared),
-        new ArrayBackedNodeIterator(matchNodes.toArray(new PsiElement[matchNodes.size()]))
+        new ArrayBackedNodeIterator(matchNodes.toArray(PsiElement.EMPTY_ARRAY))
       );
 
       if (result && declared[0] instanceof PsiVariable) {

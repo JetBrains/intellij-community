@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.i18n;
 
@@ -25,12 +25,12 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
-import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExceptionUtils;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -45,7 +45,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -358,13 +357,13 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     final PsiClassInitializer[] initializers = aClass.getInitializers();
     List<ProblemDescriptor> result = new ArrayList<>();
     for (PsiClassInitializer initializer : initializers) {
-      final ProblemDescriptor[] descriptors = checkElement(initializer, manager, isOnTheFly);
+      final ProblemDescriptor[] descriptors = checkElement(initializer.getBody(), manager, isOnTheFly);
       if (descriptors != null) {
         ContainerUtil.addAll(result, descriptors);
       }
     }
 
-    return result.isEmpty() ? null : result.toArray(new ProblemDescriptor[result.size()]);
+    return result.isEmpty() ? null : result.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Override
@@ -396,7 +395,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     StringI18nVisitor visitor = new StringI18nVisitor(manager, isOnTheFly);
     element.accept(visitor);
     List<ProblemDescriptor> problems = visitor.getProblems();
-    return problems.isEmpty() ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
+    return problems.isEmpty() ? null : problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -452,6 +451,10 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     }
 
     @Override
+    public void visitClassInitializer(PsiClassInitializer initializer) {
+    }
+
+    @Override
     public void visitLiteralExpression(PsiLiteralExpression expression) {
       Object value = expression.getValue();
       if (!(value instanceof String)) return;
@@ -492,7 +495,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
           }
         }
 
-        LocalQuickFix[] farr = fixes.toArray(new LocalQuickFix[fixes.size()]);
+        LocalQuickFix[] farr = fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
         final ProblemDescriptor problem = myManager.createProblemDescriptor(expression,
                                                                             description, myOnTheFly, farr,
                                                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
@@ -529,7 +532,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
       return false;
     }
 
-    if (JavaI18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NON_NLS, new HashMap<>(), nonNlsTargets)) {
+    if (JavaI18nUtil.isPassedToAnnotatedParam(expression, AnnotationUtil.NON_NLS, null, nonNlsTargets)) {
       return false;
     }
 
@@ -545,7 +548,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
       return false;
     }
 
-    if (JavaI18nUtil.mustBePropertyKey(expression, new HashMap<>())) {
+    if (JavaI18nUtil.mustBePropertyKey(expression, null)) {
       return false;
     }
 
@@ -555,7 +558,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     if (ignoreForAssertStatements && isArgOfAssertStatement(expression)) {
       return false;
     }
-    if (ignoreForExceptionConstructors && isArgOfExceptionConstructor(expression)) {
+    if (ignoreForExceptionConstructors && ExceptionUtils.isExceptionArgument(expression)) {
       return false;
     }
     if (ignoreForEnumConstants && isArgOfEnumConstant(expression)) {
@@ -620,11 +623,6 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     return JavaPsiFacade.getInstance(expression.getProject()).findClass(value, GlobalSearchScope.allScope(expression.getProject())) != null;
   }
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
-  }
-
   private static boolean isClassNonNls(@NotNull PsiClass clazz) {
     final PsiDirectory directory = clazz.getContainingFile().getContainingDirectory();
     return directory != null && isPackageNonNls(JavaDirectoryService.getInstance().getPackage(directory));
@@ -635,7 +633,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
       return false;
     }
     final PsiModifierList pkgModifierList = psiPackage.getAnnotationList();
-    return pkgModifierList != null && pkgModifierList.findAnnotation(AnnotationUtil.NON_NLS) != null
+    return pkgModifierList != null && pkgModifierList.hasAnnotation(AnnotationUtil.NON_NLS)
            || isPackageNonNls(psiPackage.getParentPackage());
   }
 
@@ -755,7 +753,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
         return isNonNlsCall((PsiMethodCallExpression)grParent, nonNlsTargets);
       }
       else if (grParent instanceof PsiNewExpression) {
-        final PsiElement parentOfNew = grParent.getParent();
+        final PsiElement parentOfNew = PsiUtil.skipParenthesizedExprUp(grParent.getParent());
         if (parentOfNew instanceof PsiLocalVariable) {
           final PsiLocalVariable newVariable = (PsiLocalVariable)parentOfNew;
           if (annotatedAsNonNls(newVariable)) {
@@ -833,7 +831,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     if (method == null) return false;
     final PsiType returnType = method.getReturnType();
     return TO_STRING.equals(method.getName())
-           && method.getParameterList().getParametersCount() == 0
+           && method.getParameterList().isEmpty()
            && returnType != null
            && "java.lang.String".equals(returnType.getCanonicalText());
   }
@@ -869,41 +867,6 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     final PsiClass junitAssert = JavaPsiFacade.getInstance(project).findClass("junit.framework.Assert", scope);
     return junitAssert != null && !containingClass.isInheritor(junitAssert, true);
-  }
-
-  private static boolean isArgOfExceptionConstructor(PsiExpression expression) {
-    final PsiElement parent = PsiTreeUtil.getParentOfType(expression, PsiExpressionList.class, PsiClass.class);
-    if (!(parent instanceof PsiExpressionList)) {
-      return false;
-    }
-    final PsiElement grandparent = parent.getParent();
-    final PsiClass aClass;
-    if (RefactoringChangeUtil.isSuperOrThisMethodCall(grandparent)) {
-      final PsiMethod method = ((PsiMethodCallExpression)grandparent).resolveMethod();
-      if (method != null) {
-        aClass = method.getContainingClass();
-      } else {
-        return false;
-      }
-    } else {
-      if (!(grandparent instanceof PsiNewExpression)) {
-        return false;
-      }
-      final PsiJavaCodeReferenceElement reference = ((PsiNewExpression)grandparent).getClassReference();
-      if (reference == null) {
-        return false;
-      }
-      final PsiElement referent = reference.resolve();
-      if (!(referent instanceof PsiClass)) {
-        return false;
-      }
-
-      aClass = (PsiClass)referent;
-    }
-    final Project project = expression.getProject();
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
-    final PsiClass throwable = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_THROWABLE, scope);
-    return throwable != null && aClass.isInheritor(throwable, true);
   }
 
   private static boolean isArgOfSpecifiedExceptionConstructor(PsiExpression expression, String[] specifiedExceptions) {

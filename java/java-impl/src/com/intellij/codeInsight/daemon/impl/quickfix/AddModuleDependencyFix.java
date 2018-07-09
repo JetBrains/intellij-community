@@ -4,7 +4,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.application.options.ModuleListCellRenderer;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
-import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -21,8 +20,8 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiJavaModuleReference;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.util.PointersKt;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.modules.CircularModuleDependenciesDetector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,14 +108,14 @@ class AddModuleDependencyFix extends OrderEntryFix {
       addDependencyOnModule(project, editor, ContainerUtil.getFirstItem(myModules));
     }
     else {
-      JBList<Module> list = new JBList<>(myModules);
-      list.setCellRenderer(new ModuleListCellRenderer());
-      JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+      JBPopup popup = JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(ContainerUtil.newArrayList(myModules))
+        .setRenderer(new ModuleListCellRenderer())
         .setTitle(QuickFixBundle.message("orderEntry.fix.choose.module.to.add.dependency.on"))
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback(() -> addDependencyOnModule(project, editor, list.getSelectedValue()))
+        .setItemChosenCallback((selectedValue) -> addDependencyOnModule(project, editor, selectedValue))
         .createPopup();
       if (editor != null) {
         popup.showInBestPositionFor(editor);
@@ -129,7 +128,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
 
   private void addDependencyOnModule(Project project, Editor editor, @Nullable Module module) {
     if (module == null) return;
-    Couple<Module> circularModules = ModuleCompilerUtil.addingDependencyFormsCircularity(myCurrentModule, module);
+    Couple<Module> circularModules = CircularModuleDependenciesDetector.addingDependencyFormsCircularity(myCurrentModule, module);
     if (circularModules == null || showCircularWarning(project, circularModules, module)) {
       JavaProjectModelModificationService.getInstance(project).addDependency(myCurrentModule, module, myScope, myExported);
 
@@ -156,8 +155,4 @@ class AddModuleDependencyFix extends OrderEntryFix {
     return Messages.showOkCancelDialog(project, message, title, Messages.getWarningIcon()) == Messages.OK;
   }
 
-  @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
 }

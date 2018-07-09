@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.bookmarks;
 
@@ -24,9 +10,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
@@ -49,10 +33,12 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @State(
   name = "BookmarkManager",
@@ -64,7 +50,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
   private static final int MAX_AUTO_DESCRIPTION_SIZE = 50;
   private static final Key<List<Bookmark>> BOOKMARKS_KEY = Key.create("bookmarks");
 
-  private final List<Bookmark> myBookmarks = new ArrayList<>();
+  private final List<Bookmark> myBookmarks = new CopyOnWriteArrayList<>();
   private final Map<Trinity<VirtualFile, Integer, String>, Bookmark> myDeletedDocumentBookmarks =
     new HashMap<>();
   private final Map<Document, List<Trinity<Bookmark, Integer, String>>> myBeforeChangeData = new HashMap<>();
@@ -85,12 +71,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
     myProject = project;
     myBus = project.getMessageBus();
     MessageBusConnection connection = project.getMessageBus().connect();
-    connection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
-      @Override
-      public void globalSchemeChange(EditorColorsScheme scheme) {
-        colorsChanged();
-      }
-    });
+    connection.subscribe(EditorColorsManager.TOPIC, __ -> colorsChanged());
     EditorEventMulticaster multicaster = editorFactory.getEventMulticaster();
     multicaster.addDocumentListener(new MyDocumentListener(), myProject);
     multicaster.addEditorMouseListener(new MyEditorMouseListener(), myProject);
@@ -142,9 +123,9 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
     }
   }
 
-  public void editDescription(@NotNull Bookmark bookmark) {
+  public void editDescription(@NotNull Bookmark bookmark, JComponent popup) {
     String description = Messages
-      .showInputDialog(myProject, IdeBundle.message("action.bookmark.edit.description.dialog.message"),
+      .showInputDialog(popup, IdeBundle.message("action.bookmark.edit.description.dialog.message"),
                        IdeBundle.message("action.bookmark.edit.description.dialog.title"), Messages.getQuestionIcon(),
                        bookmark.getDescription(), new InputValidator() {
           @Override
@@ -183,7 +164,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
   }
 
   @NotNull
-  public static String getAutoDescription(@NotNull final Editor editor, final int lineIndex) {
+  private static String getAutoDescription(@NotNull final Editor editor, final int lineIndex) {
     String autoDescription = editor.getSelectionModel().getSelectedText();
     if (autoDescription == null) {
       Document document = editor.getDocument();
@@ -277,7 +258,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
   }
 
   @Override
-  public void loadState(final Element state) {
+  public void loadState(@NotNull final Element state) {
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized((DumbAwareRunnable)() -> {
       for (Bookmark bookmark : myBookmarks) {
         bookmark.release();
@@ -417,7 +398,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
     myBus.syncPublisher(BookmarksListener.TOPIC).bookmarkChanged(bookmark);
   }
 
-  public void colorsChanged() {
+  private void colorsChanged() {
     for (Bookmark bookmark : myBookmarks) {
       bookmark.updateHighlighter();
     }
@@ -455,10 +436,7 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
         Document doc = bookmark.getDocument();
         if (doc == null || doc != e.getDocument()) continue;
         if (bookmark.getLine() == -1) continue;
-        List<Trinity<Bookmark, Integer, String>> list = myBeforeChangeData.get(doc);
-        if (list == null) {
-          myBeforeChangeData.put(doc, list = new ArrayList<>());
-        }
+        List<Trinity<Bookmark, Integer, String>> list = myBeforeChangeData.computeIfAbsent(doc, k -> new ArrayList<>());
         list.add(new Trinity<>(bookmark,
                                bookmark.getLine(),
                                doc.getText(new TextRange(doc.getLineStartOffset(bookmark.getLine()),
@@ -495,6 +473,9 @@ public class BookmarkManager implements PersistentStateComponent<Element> {
 
     @Override
     public void documentChanged(DocumentEvent e) {
+      if (!ApplicationManager.getApplication().isDispatchThread()) {
+        return;// Changes in lightweight documents are irrelevant to bookmarks and have to be ignored
+      }
       List<Bookmark> bookmarksToRemove = null;
       for (Bookmark bookmark : myBookmarks) {
         if (!bookmark.isValid() || isDuplicate(bookmark, bookmarksToRemove)) {

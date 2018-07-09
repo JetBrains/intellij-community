@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.type;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -6,7 +6,6 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -20,9 +19,7 @@ import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyNamedArgumentProvider;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentUtilKt;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
@@ -50,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil.ApplicabilityResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.DefaultConstructor;
@@ -64,6 +62,7 @@ import java.util.Map;
 
 import static com.intellij.psi.util.PsiUtil.extractIterableTypeParameter;
 import static org.jetbrains.plugins.groovy.codeInspection.type.GroovyTypeCheckVisitorHelper.*;
+import static org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils.isImplicitReturnStatement;
 
 public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
@@ -80,7 +79,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     if (type instanceof GrClosureType) {
       if (argumentTypes == null) return true;
 
-      GrClosureSignatureUtil.ApplicabilityResult result =
+      ApplicabilityResult result =
         PsiUtil.isApplicableConcrete(argumentTypes, (GrClosureType)type, info.getCall());
       switch (result) {
         case inapplicable:
@@ -201,7 +200,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     }
 
     final Object result = GroovyConstantExpressionEvaluator.evaluate(expression);
-    if (result == null || !(result instanceof String)) {
+    if (!(result instanceof String)) {
       registerError(
         elementToHighlight,
         ProblemHighlightType.WEAK_WARNING,
@@ -281,68 +280,9 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     if (element instanceof GrBuilderMethod) return true;
 
     final PsiMethod method = (PsiMethod)element;
-    if ("call".equals(method.getName()) && info.getInvokedExpression() instanceof GrReferenceExpression) {
-      final GrExpression qualifierExpression = ((GrReferenceExpression)info.getInvokedExpression()).getQualifierExpression();
-      if (qualifierExpression != null) {
-        final PsiType type = qualifierExpression.getType();
-        if (type instanceof GrClosureType) {
-          GrClosureSignatureUtil.ApplicabilityResult result =
-            PsiUtil.isApplicableConcrete(info.getArgumentTypes(), (GrClosureType)type, info.getInvokedExpression());
-          switch (result) {
-            case inapplicable:
-              highlightInapplicableMethodUsage(methodResolveResult, info, method);
-              return false;
-            case canBeApplicable://q(1,2)
-              if (checkUnknownArgs) {
-                highlightUnknownArgs(info);
-              }
-              return !checkUnknownArgs;
-            default:
-              return true;
-          }
-        }
-      }
-    }
 
-    if (method instanceof GrGdkMethod && info.getInvokedExpression() instanceof GrReferenceExpression) {
-      final GrReferenceExpression invoked = (GrReferenceExpression)info.getInvokedExpression();
-      final GrExpression qualifier = PsiImplUtil.getRuntimeQualifier(invoked);
-      if (qualifier == null && method.getName().equals("call")) {
-        GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(invoked.getProject());
-        final GrReferenceExpression callRef = factory.createReferenceExpressionFromText("qualifier.call", invoked);
-        callRef.setQualifier(invoked);
-        return checkMethodApplicability(methodResolveResult, checkUnknownArgs, new DelegatingCallInfo<T>(info) {
-          @Nullable
-          @Override
-          public GrExpression getInvokedExpression() {
-            return callRef;
-          }
+    ApplicabilityResult applicable = calcApplicability(method, methodResolveResult.getSubstitutor(), info);
 
-          @NotNull
-          @Override
-          public GroovyResolveResult advancedResolve() {
-            return methodResolveResult;
-          }
-
-          @NotNull
-          @Override
-          public GroovyResolveResult[] multiResolve() {
-            return new GroovyResolveResult[]{methodResolveResult};
-          }
-
-          @Nullable
-          @Override
-          public PsiType getQualifierInstanceType() {
-            return info.getInvokedExpression().getType();
-          }
-        });
-      }
-    }
-
-    if (info.getArgumentTypes() == null) return true;
-
-    GrClosureSignatureUtil.ApplicabilityResult applicable =
-      PsiUtil.isApplicableConcrete(info.getArgumentTypes(), method, methodResolveResult.getSubstitutor(), info.getCall(), false);
     switch (applicable) {
       case inapplicable:
         highlightInapplicableMethodUsage(methodResolveResult, info, method);
@@ -355,6 +295,21 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
       default:
         return true;
     }
+  }
+
+  private static <T extends GroovyPsiElement> ApplicabilityResult calcApplicability(@NotNull PsiMethod method,
+                                                                                    @NotNull PsiSubstitutor substitutor,
+                                                                                    @NotNull CallInfo<T> info) {
+    if ("call".equals(method.getName()) && info.getInvokedExpression() instanceof GrReferenceExpression) {
+      final GrExpression qualifierExpression = ((GrReferenceExpression)info.getInvokedExpression()).getQualifierExpression();
+      if (qualifierExpression != null) {
+        final PsiType type = qualifierExpression.getType();
+        if (type instanceof GrClosureType) {
+          return PsiUtil.isApplicableConcrete(info.getArgumentTypes(), (GrClosureType)type, info.getInvokedExpression());
+        }
+      }
+    }
+    return PsiUtil.isApplicableConcrete(info.getArgumentTypes(), method, substitutor, info.getCall(), false);
   }
 
   private void checkMethodCall(@NotNull CallInfo<? extends GrMethodCall> info) {
@@ -564,7 +519,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
     registerError(
       toHighlight,
       message,
-      fixes.toArray(new LocalQuickFix[fixes.size()]),
+      fixes.toArray(LocalQuickFix.EMPTY_ARRAY),
       result == ConversionResult.ERROR ? ProblemHighlightType.GENERIC_ERROR : ProblemHighlightType.GENERIC_ERROR_OR_WARNING
     );
   }
@@ -765,11 +720,10 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   public void visitAssignmentExpression(@NotNull GrAssignmentExpression assignment) {
     super.visitAssignmentExpression(assignment);
 
+    if (assignment.isOperatorAssignment()) return;
+
     final GrExpression lValue = assignment.getLValue();
     if (!PsiUtil.mightBeLValue(lValue)) return;
-
-    final IElementType opToken = assignment.getOperationTokenType();
-    if (opToken != GroovyTokenTypes.mASSIGN) return;
 
     final GrExpression rValue = assignment.getRValue();
     if (rValue == null) return;
@@ -895,7 +849,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
     GrParameter[] parameters = parameterList.getParameters();
     if (parameters.length > 0) {
-      List<PsiType[]> signatures = ClosureParamsEnhancer.findFittingSignatures((GrClosableBlock)parent);
+      List<PsiType[]> signatures = ClosureParamsEnhancer.findFittingSignatures((GrClosableBlock)parent); // TODO: suspicious method call
       final List<PsiType> paramTypes = ContainerUtil.map(parameters, parameter -> parameter.getType());
 
       if (signatures.size() > 1) {

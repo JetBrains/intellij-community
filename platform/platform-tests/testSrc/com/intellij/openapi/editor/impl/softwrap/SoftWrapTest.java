@@ -51,7 +51,7 @@ public class SoftWrapTest extends AbstractEditorTest {
     Matcher matcher = Pattern.compile(TAGS_PATTERN).matcher(text);
     StringBuilder cleanedText = new StringBuilder();
     while(matcher.find()) {
-      cleanedText.append(text.substring(pos, matcher.start()));
+      cleanedText.append(text, pos, matcher.start());
       docPos += matcher.start() - pos;
       pos = matcher.end();
       if (matcher.group(1) != null) {       // <fold>

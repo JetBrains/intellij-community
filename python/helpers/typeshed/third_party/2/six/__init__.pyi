@@ -4,17 +4,17 @@ from __future__ import print_function
 
 import types
 from typing import (
-    Any, AnyStr, Callable, Dict, Iterable, Mapping, Optional,
+    Any, AnyStr, Callable, Dict, Iterable, Mapping, NoReturn, Optional,
     Pattern, Tuple, Type, TypeVar, Union, overload, ValuesView, KeysView, ItemsView
 )
 import typing
 import unittest
-from mypy_extensions import NoReturn
 
 # Exports
 from __builtin__ import unichr as unichr
 from StringIO import StringIO as StringIO, StringIO as BytesIO
 from functools import wraps as wraps
+from . import moves
 
 
 _T = TypeVar('_T')

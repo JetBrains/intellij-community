@@ -21,6 +21,7 @@ import java.awt.*;
  * @author Eugene Belyaev
  * @deprecated use com.intellij.ui.Gray
  */
+@Deprecated
 public class SameColor extends Color {
   public SameColor(int i) {
     super(i, i, i);

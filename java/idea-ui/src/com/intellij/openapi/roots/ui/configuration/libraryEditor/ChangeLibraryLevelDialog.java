@@ -40,7 +40,7 @@ public class ChangeLibraryLevelDialog extends DialogWrapper {
   private TextFieldWithBrowseButton myDirectoryForFilesField;
   private JPanel myMainPanel;
   private final boolean myAllowEmptyName;
-  private LibraryTable.ModifiableModel myModifiableModel;
+  private final LibraryTable.ModifiableModel myModifiableModel;
 
   public ChangeLibraryLevelDialog(JComponent parent,
                                   Project project,

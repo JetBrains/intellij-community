@@ -241,7 +241,10 @@ public class QualifiedNameFinder {
               return true;
             }
           }
-          myResults.add(QualifiedName.fromComponents(result));
+          final QualifiedName resQname = QualifiedName.fromComponents(result);
+          if (!myResults.contains(resQname)) {
+            myResults.add(resQname);
+          }
         }
       }
       return true;

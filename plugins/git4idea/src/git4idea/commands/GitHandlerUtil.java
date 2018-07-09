@@ -166,7 +166,7 @@ public class GitHandlerUtil {
      * {@inheritDoc}
      */
     public void processTerminated(final int exitCode) {
-      if (exitCode != 0 && !myHandler.isIgnoredErrorCode(exitCode)) {
+      if (exitCode != 0) {
         ensureError(exitCode);
         if (myShowErrors) {
           EventQueue.invokeLater(() -> GitUIUtil.showOperationErrors(myHandler.project(), myHandler.errors(), myOperationName));

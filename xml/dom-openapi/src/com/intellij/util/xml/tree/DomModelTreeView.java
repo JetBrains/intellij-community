@@ -50,13 +50,12 @@ import java.awt.*;
 
 public class DomModelTreeView extends Wrapper implements DataProvider, Disposable {
   public static final DataKey<DomModelTreeView> DATA_KEY = DataKey.create("DOM_MODEL_TREE_VIEW_KEY");
-  @Deprecated @NonNls public static String DOM_MODEL_TREE_VIEW_KEY = DATA_KEY.getName();
   @NonNls public static String DOM_MODEL_TREE_VIEW_POPUP = "DOM_MODEL_TREE_VIEW_POPUP";
 
   private final SimpleTree myTree;
   private final AbstractTreeBuilder myBuilder;
-  private DomManager myDomManager;
-  @Nullable private DomElement myRootElement;
+  private final DomManager myDomManager;
+  @Nullable private final DomElement myRootElement;
 
   public DomModelTreeView(@NotNull DomElement rootElement) {
     this(rootElement, rootElement.getManager(), new DomModelTreeStructure(rootElement));

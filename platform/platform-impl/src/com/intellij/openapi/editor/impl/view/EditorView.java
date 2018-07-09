@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.editor.impl.view;
 
@@ -34,6 +22,7 @@ import com.intellij.openapi.editor.impl.TextDrawingCallback;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -42,6 +31,7 @@ import java.awt.*;
 import java.awt.event.HierarchyEvent;
 import java.awt.event.HierarchyListener;
 import java.awt.font.FontRenderContext;
+import java.awt.font.LineMetrics;
 import java.awt.geom.Point2D;
 import java.text.Bidi;
 
@@ -52,7 +42,7 @@ import java.text.Bidi;
  * Also contains a cache of several font-related quantities (line height, space width, etc).
  */
 public class EditorView implements TextDrawingCallback, Disposable, Dumpable, HierarchyListener, VisibleAreaListener {
-  private static Key<LineLayout> FOLD_REGION_TEXT_LAYOUT = Key.create("text.layout");
+  private static final Key<LineLayout> FOLD_REGION_TEXT_LAYOUT = Key.create("text.layout");
 
   private final EditorImpl myEditor;
   private final DocumentEx myDocument;
@@ -69,7 +59,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   private TextAttributes myPrefixAttributes; // accessed only in EDT
   private int myBidiFlags; // accessed only in EDT
   
-  private int myPlainSpaceWidth; // guarded by myLock
+  private float myPlainSpaceWidth; // guarded by myLock
   private int myLineHeight; // guarded by myLock
   private int myDescent; // guarded by myLock
   private int myCharHeight; // guarded by myLock
@@ -424,7 +414,7 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     return relativeOffset < 0 ? -1 : lineStartOffset + relativeOffset;
   }
 
-  public int getPlainSpaceWidth() {
+  public float getPlainSpaceWidth() {
     synchronized (myLock) {
       initMetricsIfNeeded();
       return myPlainSpaceWidth;
@@ -496,9 +486,10 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   private void initMetricsIfNeeded() {
     if (myPlainSpaceWidth >= 0) return;
 
-    FontMetrics fm = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.PLAIN));
+    Font font = myEditor.getColorsScheme().getFont(EditorFontType.PLAIN);
+    FontMetrics fm = FontInfo.getFontMetrics(font, myFontRenderContext);
 
-    int width = FontLayoutService.getInstance().charWidth(fm, ' ');
+    float width = FontLayoutService.getInstance().charWidth2D(fm, ' ');
     myPlainSpaceWidth = width > 0 ? width : 1;
 
     myCharHeight = FontLayoutService.getInstance().charWidth(fm, 'a');
@@ -506,15 +497,31 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
     float verticalScalingFactor = getVerticalScalingFactor();
 
     int fontMetricsHeight = FontLayoutService.getInstance().getHeight(fm);
-    myLineHeight = (int)Math.ceil(fontMetricsHeight * verticalScalingFactor);
+    if (Registry.is("editor.text.xcode.vertical.spacing")) {
+      //Here we approximate line calculation to the variant used in Xcode 9 editor
+      LineMetrics metrics = font.getLineMetrics("", myFontRenderContext);
 
+      double height = Math.ceil(metrics.getHeight()) + metrics.getLeading();
+      double delta = verticalScalingFactor - 1;
+      int spacing;
+      if (Math.round((height * delta) / 2) <= 1) {
+        spacing = delta > 0 ? 2 : 0;
+      }
+      else {
+        spacing = ((int)Math.ceil((height * delta) / 2)) * 2;
+      }
+      myLineHeight = (int)Math.ceil(height) + spacing;
+    }
+    else {
+      myLineHeight = (int)Math.ceil(fontMetricsHeight * verticalScalingFactor);
+    }
     int descent = FontLayoutService.getInstance().getDescent(fm);
-    myDescent = (int)Math.floor(descent * verticalScalingFactor);
+    myDescent = descent + (myLineHeight - fontMetricsHeight) / 2;
     myTopOverhang = fontMetricsHeight - myLineHeight + myDescent - descent;
     myBottomOverhang = descent - myDescent;
 
     // assuming that bold italic 'W' gives a good approximation of font's widest character
-    FontMetrics fmBI = myEditor.getContentComponent().getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.BOLD_ITALIC));
+    FontMetrics fmBI = FontInfo.getFontMetrics(myEditor.getColorsScheme().getFont(EditorFontType.BOLD_ITALIC), myFontRenderContext);
     myMaxCharWidth = FontLayoutService.getInstance().charWidth(fmBI, 'W');
   }
   
@@ -530,12 +537,19 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   private boolean setFontRenderContext(FontRenderContext context) {
     FontRenderContext contextToSet = context == null ? FontInfo.getFontRenderContext(myEditor.getContentComponent()) : context;
     if (areEqualContexts(myFontRenderContext, contextToSet)) return false;
-    myFontRenderContext = contextToSet;
+    myFontRenderContext = contextToSet.getFractionalMetricsHint() == myEditor.myFractionalMetricsHintValue 
+                          ? contextToSet
+                          : new FontRenderContext(contextToSet.getTransform(), 
+                                                  contextToSet.getAntiAliasingHint(), 
+                                                  myEditor.myFractionalMetricsHintValue);
     return true;
   }
 
   private void checkFontRenderContext(FontRenderContext context) {
     if (setFontRenderContext(context)) {
+      synchronized (myLock) {
+        myPlainSpaceWidth = -1;
+      }
       myTextLayoutCache.resetToDocumentSize(false);
       invalidateFoldRegionLayouts();
     }
@@ -544,8 +558,8 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
   private static boolean areEqualContexts(FontRenderContext c1, FontRenderContext c2) {
     if (c1 == c2) return true;
     if (c1 == null || c2 == null) return false;
-    // We ignore fractional metrics aspect of contexts, because we assume it's not changing during editor's lifecycle.
-    // And it has different values for component graphics (OFF) and component's font metrics (DEFAULT), causing
+    // We ignore fractional metrics aspect of contexts, because we it's not changing during editor's lifecycle.
+    // And it has different values for component graphics (ON/OFF) and component's font metrics (DEFAULT), causing
     // unnecessary layout cache resets.
     return c1.getTransform().equals(c2.getTransform()) && c1.getAntiAliasingHint().equals(c2.getAntiAliasingHint());
   }

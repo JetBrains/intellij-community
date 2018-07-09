@@ -68,12 +68,13 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
       InspectionGadgetsBundle.message("extract.parameter.as.local.variable.quickfix"),
       "class X {\n" +
       "    void m(String s) {\n" +
-      "        /**/s = \"hello\";\n" +
+      "        /**/s = \"hello\";//end of line comment\n" +
       "        System.out.println(s);\n" +
       "    }\n" +
       "}",
       "class X {\n" +
       "    void m(String s) {\n" +
+      "        //end of line comment\n" +
       "        String hello = \"hello\";\n" +
       "        System.out.println(hello);\n" +
       "    }\n" +
@@ -154,7 +155,7 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
            "     */\n" +
            "    void foo(String customEnumElement) {\n" +
            "        if (customEnumElement != null) {\n" +
-           "            /**/customEnumElement = customEnumElement.trim();\n" +
+           "            /**/customEnumElement = customEnumElement.trim();//my end of line comment\n" +
            "        }\n" +
            "    }\n" +
            "}",
@@ -166,7 +167,7 @@ public class ExtractParameterAsLocalVariableFixTest extends IGQuickFixesTestCase
            "    void foo(String customEnumElement) {\n" +
            "        String enumElement = customEnumElement;\n" +
            "        if (enumElement != null) {\n" +
-           "            enumElement = enumElement.trim();\n" +
+           "            enumElement = enumElement.trim();//my end of line comment\n" +
            "        }\n" +
            "    }\n" +
            "}");

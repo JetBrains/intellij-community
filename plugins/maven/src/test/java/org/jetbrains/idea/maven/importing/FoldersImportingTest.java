@@ -56,9 +56,10 @@ public class FoldersImportingTest extends MavenImportingTestCase {
   }
 
   public void testInvalidProjectHasContentRoot() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1");
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1");
+    importProjectWithErrors(true);
 
     assertModules("project");
     assertContentRoots("project", getProjectPath());
@@ -214,7 +215,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     assertTestResources("project", "testRes1", "testRes2");
   }
 
-  public void testDoNotAddCustomSourceFoldersOutsideOfContentRoot() {
+  public void testCustomSourceFoldersOutsideOfContentRoot() {
     createStdProjectFolders();
     createProjectSubDirs("m",
                          "src",
@@ -248,11 +249,11 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     importProject();
     assertModules("project", "m");
     assertContentRoots("m",
-                       getProjectPath() + "/m");
-    //getProjectPath() + "/src",
-    //getProjectPath() + "/test",
-    //getProjectPath() + "/res",
-    //getProjectPath() + "/testRes");
+                       getProjectPath() + "/m",
+                       getProjectPath() + "/src",
+                       getProjectPath() + "/test",
+                       getProjectPath() + "/res",
+                       getProjectPath() + "/testRes");
   }
 
   public void testPluginSources() {
@@ -456,6 +457,7 @@ public class FoldersImportingTest extends MavenImportingTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
                      "<modules>" +
                      "  <module>m1</module>" +

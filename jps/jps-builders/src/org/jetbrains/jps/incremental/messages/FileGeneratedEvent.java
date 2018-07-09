@@ -27,7 +27,6 @@ import java.util.Collections;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/29/11
  */
 public class FileGeneratedEvent extends BuildMessage {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.messages.FileGeneratedEvent");

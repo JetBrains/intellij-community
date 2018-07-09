@@ -19,7 +19,6 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.ant.dom.AntDomFileDescription;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -36,11 +35,10 @@ import java.util.Collection;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 19, 2007
  */
 public final class AntRenameHandler extends PsiElementRenameHandler {
   
-  public boolean isAvailableOnDataContext(final DataContext dataContext) {
+  public boolean isAvailableOnDataContext(@NotNull final DataContext dataContext) {
     final PsiElement[] elements = getElements(dataContext);
     return elements != null && elements.length > 1;
   }
@@ -52,25 +50,21 @@ public final class AntRenameHandler extends PsiElementRenameHandler {
     }
   }
 
-  public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
-    super.invoke(project, elements, dataContext);
-  }
-
-  @Nullable 
+  @Nullable
   private static PsiElement[] getElements(DataContext dataContext) {
     final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     if (!(psiFile instanceof XmlFile && AntDomFileDescription.isAntFile((XmlFile)psiFile))) {
       return null;
     }
-    final Editor editor = LangDataKeys.EDITOR.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       return null;
     }
-    return getPsiElementsIn(editor, psiFile);
+    return getPsiElementsIn(editor);
   }
   
   @Nullable
-  private static PsiElement[] getPsiElementsIn(final Editor editor, final PsiFile psiFile) {
+  private static PsiElement[] getPsiElementsIn(final Editor editor) {
     try {
       final PsiReference reference = TargetElementUtil.findReference(editor, editor.getCaretModel().getOffset());
       if (reference == null) {

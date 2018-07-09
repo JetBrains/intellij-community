@@ -6,6 +6,18 @@
   <item name="java.io.BufferedInputStream BufferedInputStream(java.io.InputStream, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name="java.io.BufferedInputStream int read()">
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-1"/>
+      <val name="to" val="255"/>
+    </annotation>
+  </item>
+  <item name="java.io.BufferedInputStream int read(byte[], int, int)">
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-1"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
   <item name="java.io.BufferedInputStream int read(byte[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -23,6 +35,18 @@
   </item>
   <item name="java.io.BufferedReader BufferedReader(java.io.Reader, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.BufferedReader int read()">
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-1"/>
+      <val name="to" val="0xFFFF"/>
+    </annotation>
+  </item>
+  <item name="java.io.BufferedReader int read(char[], int, int)">
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-1"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
   </item>
   <item name="java.io.BufferedReader int read(char[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -170,8 +194,26 @@
   <item name='java.io.FileInputStream FileInputStream(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name="java.io.FileInputStream int read()">
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-1"/>
+      <val name="to" val="255"/>
+    </annotation>
+  </item>
+  <item name="java.io.FileInputStream int read(byte[])">
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-1"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
   <item name='java.io.FileInputStream int read(byte[]) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name="java.io.FileInputStream int read(byte[], int, int)">
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-1"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
   </item>
   <item name='java.io.FileInputStream int read(byte[], int, int) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -245,11 +287,35 @@
   <item name="java.io.FilterReader FilterReader(java.io.Reader) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name="java.io.InputStream int read()">
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-1"/>
+      <val name="to" val="255"/>
+    </annotation>
+  </item>
+  <item name="java.io.InputStream int read(byte[])">
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-1"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
   <item name="java.io.InputStream int read(byte[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name="java.io.InputStream int read(byte[], int, int)">
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-1"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
   <item name="java.io.InputStream int read(byte[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.InputStream long skip(long)">
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="0"/>
+      <val name="to" val="java.lang.Long.MAX_VALUE"/>
+    </annotation>
   </item>
   <item name='java.io.InputStreamReader InputStreamReader(java.io.InputStream) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -271,6 +337,18 @@
   </item>
   <item name='java.io.InputStreamReader InputStreamReader(java.io.InputStream, java.nio.charset.CharsetDecoder) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name="java.io.InputStreamReader int read()">
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-1"/>
+      <val name="to" val="0xFFFF"/>
+    </annotation>
+  </item>
+  <item name="java.io.InputStreamReader int read(char[], int, int)">
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-1"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
   </item>
   <item name='java.io.InputStreamReader int read(char[], int, int) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -425,8 +503,26 @@
   <item name="java.io.Reader Reader(java.lang.Object) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name="java.io.Reader int read()">
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-1"/>
+      <val name="to" val="0xFFFF"/>
+    </annotation>
+  </item>
+  <item name="java.io.Reader int read(char[])">
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-1"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
+  </item>
   <item name="java.io.Reader int read(char[]) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.Reader int read(char[], int, int)">
+    <annotation name='org.jetbrains.annotations.Range'>
+      <val name="from" val="-1"/>
+      <val name="to" val="java.lang.Integer.MAX_VALUE"/>
+    </annotation>
   </item>
   <item name="java.io.Reader int read(char[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />

@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.AbstractMap;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -117,7 +118,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
     final Set<K> ts = getMap().keySet();
     K nullKey = FAKE_NULL();
     if (ts.contains(nullKey)) {
-      final HashSet<K> hashSet = new HashSet<K>(ts);
+      final java.util.HashSet<K> hashSet = new HashSet<K>(ts);
       hashSet.remove(nullKey);
       hashSet.add(null);
       return hashSet;

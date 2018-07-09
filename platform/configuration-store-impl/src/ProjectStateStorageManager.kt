@@ -26,12 +26,13 @@ import org.jdom.Element
 // extended in upsource
 open class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstitutor,
                                       private val project: ProjectImpl,
-                                      useVirtualFileTracker: Boolean = true) : StateStorageManagerImpl("project", macroSubstitutor, if (useVirtualFileTracker) project else null) {
+                                      useVirtualFileTracker: Boolean = true) : StateStorageManagerImpl(ROOT_TAG_NAME, macroSubstitutor, if (useVirtualFileTracker) project else null) {
   companion object {
-    internal val VERSION_OPTION = "version"
+    internal const val VERSION_OPTION = "version"
+    const val ROOT_TAG_NAME: String = "project"
   }
 
-  override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), PROJECT_CONFIG_DIR)
+  override fun normalizeFileSpec(fileSpec: String): String = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), PROJECT_CONFIG_DIR)
 
   override fun expandMacros(path: String): String {
     if (path[0] == '$') {

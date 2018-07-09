@@ -23,8 +23,9 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.lang.regexp.psi.RegExpElement;
@@ -42,13 +43,7 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
         return RegExpLanguage.INSTANCE;
     }
 
-    @NotNull
-    @SuppressWarnings({ "ConstantConditions", "EmptyMethod" })
-    public ASTNode getNode() {
-        return super.getNode();
-    }
-
-    public String toString() {
+  public String toString() {
         return getClass().getSimpleName() + ": <" + getText() + ">";
     }
 
@@ -85,12 +80,19 @@ public abstract class RegExpElementImpl extends ASTWrapperPsiElement implements 
 
   public static boolean isLiteralExpression(@Nullable PsiElement context) {
     if (context == null) return false;
-    final ASTNode astNode = context.getNode();
+    ASTNode astNode = context.getNode();
     if (astNode == null) {
       return false;
     }
-    final IElementType elementType = astNode.getElementType();
+    ASTNode child = null;
+    if (astNode instanceof CompositeElement) { // in some languages token nodes are wrapped within a single-child composite
+      ASTNode[] children = astNode.getChildren(null);
+      if (children.length == 1) {
+        child = children[0];
+      }
+    }
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(context.getLanguage());
-    return parserDefinition.getStringLiteralElements().contains(elementType);
+    final TokenSet literalElements = parserDefinition.getStringLiteralElements();
+    return literalElements.contains(astNode.getElementType()) || child != null && literalElements.contains(child.getElementType());
   }
 }

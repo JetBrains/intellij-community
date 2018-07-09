@@ -15,21 +15,19 @@
  */
 package jetbrains.antlayout.datatypes;
 
-import jetbrains.antlayout.util.TempFileFactory;
 import jetbrains.antlayout.util.LayoutFileSet;
+import jetbrains.antlayout.util.TempFileFactory;
+import org.apache.tools.ant.taskdefs.Copy;
 
 import java.io.File;
-import java.util.List;
 import java.util.Collections;
-
-import org.apache.tools.ant.taskdefs.Copy;
-import org.apache.tools.ant.BuildException;
+import java.util.List;
 
 /**
  * @author max
  */
 public class RootContainer extends Container {
-    private File destDirectory;
+    private final File destDirectory;
 
     public RootContainer(File destDirectory) {
         this.destDirectory = destDirectory;
@@ -60,9 +58,5 @@ public class RootContainer extends Container {
 
         task.addFileset(unprefixed);
         task.perform();
-    }
-
-    public void validateArguments() throws BuildException {
-        super.validateArguments();        
     }
 }

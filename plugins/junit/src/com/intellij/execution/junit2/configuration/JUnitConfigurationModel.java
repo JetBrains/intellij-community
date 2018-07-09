@@ -44,8 +44,9 @@ public class JUnitConfigurationModel {
   public static final int DIR = 4;
   public static final int CATEGORY = 5;
   public static final int UNIQUE_ID = 6;
-  public static final int BY_SOURCE_POSITION = 7;
-  public static final int BY_SOURCE_CHANGES = 8;
+  public static final int TAGS = 7;
+  public static final int BY_SOURCE_POSITION = 8;
+  public static final int BY_SOURCE_CHANGES = 9;
 
   private static final List<String> ourTestObjects;
 
@@ -57,6 +58,7 @@ public class JUnitConfigurationModel {
                                    JUnitConfiguration.TEST_DIRECTORY,
                                    JUnitConfiguration.TEST_CATEGORY,
                                    JUnitConfiguration.TEST_UNIQUE_ID,
+                                   JUnitConfiguration.TEST_TAGS,
                                    JUnitConfiguration.BY_SOURCE_POSITION,
                                    JUnitConfiguration.BY_SOURCE_CHANGES);
   }

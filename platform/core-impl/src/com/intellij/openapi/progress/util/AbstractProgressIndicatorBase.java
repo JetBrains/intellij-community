@@ -38,6 +38,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Optional;
 import java.util.Set;
 
 public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicatorStacked {
@@ -58,10 +60,10 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   private Stack<String> myTextStack;
   private DoubleArrayList myFractionStack;
   private Stack<String> myText2Stack;
-  private volatile int myNonCancelableCount;
 
-  protected ProgressIndicator myModalityProgress;
+  ProgressIndicator myModalityProgress;
   private volatile ModalityState myModalityState = ModalityState.NON_MODAL;
+  private volatile int myNonCancelableSectionCount;
 
   @Override
   public synchronized void start() {
@@ -97,14 +99,15 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     stopSystemActivity();
   }
 
-  protected void startSystemActivity() {
+  private void startSystemActivity() {
     myMacActivity = myShouldStartActivity ? MacUtil.wakeUpNeo(toString()) : null;
   }
 
-  protected void stopSystemActivity() {
-    if (myMacActivity != null) {
-      synchronized (myMacActivity) {
-        MacUtil.matrixHasYou(myMacActivity);
+  void stopSystemActivity() {
+    Object macActivity = myMacActivity;
+    if (macActivity != null) {
+      synchronized (macActivity) {
+        MacUtil.matrixHasYou(macActivity);
         myMacActivity = null;
       }
     }
@@ -180,7 +183,15 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   @Override
   public void setFraction(final double fraction) {
     if (isIndeterminate()) {
-      LOG.warn("This progress indicator is indeterminate, this may lead to visual inconsistency. Please call setIndeterminate(false) before you start progress.");
+      StackTraceElement[] trace = new Throwable().getStackTrace();
+      Optional<StackTraceElement> first =
+        Arrays.stream(trace).filter(element -> !element.getClassName().startsWith("com.intellij.openapi.progress.util")).findFirst();
+      String message = "This progress indicator is indeterminate, this may lead to visual inconsistency. " +
+                       "Please call setIndeterminate(false) before you start progress.";
+      if (first.isPresent()) {
+        message += "\n" + first.get();
+      }
+      LOG.warn(message);
       setIndeterminate(false);
     }
     myFraction = fraction;
@@ -209,16 +220,16 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   public void startNonCancelableSection() {
-    myNonCancelableCount++;
+    myNonCancelableSectionCount++;
   }
 
   @Override
   public void finishNonCancelableSection() {
-    myNonCancelableCount--;
+    myNonCancelableSectionCount--;
   }
 
   protected boolean isCancelable() {
-    return myNonCancelableCount == 0;
+    return myNonCancelableSectionCount == 0 && !ProgressManager.getInstance().isInNonCancelableSection();
   }
 
   @Override
@@ -285,8 +296,6 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     if (indicator instanceof ProgressIndicatorStacked) {
       ProgressIndicatorStacked stacked = (ProgressIndicatorStacked)indicator;
 
-      myNonCancelableCount = stacked.getNonCancelableCount();
-
       myTextStack = new Stack<>(stacked.getTextStack());
 
       myText2Stack = new Stack<>(stacked.getText2Stack());
@@ -315,10 +324,5 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   public synchronized Stack<String> getText2Stack() {
     if (myText2Stack == null) myText2Stack = new Stack<>(2);
     return myText2Stack;
-  }
-
-  @Override
-  public int getNonCancelableCount() {
-    return myNonCancelableCount;
   }
 }

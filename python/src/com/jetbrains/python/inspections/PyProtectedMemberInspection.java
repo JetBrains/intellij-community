@@ -7,15 +7,16 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.inspections.quickfix.PyAddPropertyForFieldQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyMakePublicQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
@@ -24,6 +25,7 @@ import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.testing.PyTestsSharedKt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -71,12 +73,24 @@ public class PyProtectedMemberInspection extends PyInspection {
       }
     }
 
-    private boolean isImportFromTheSamePackage(PyReferenceExpression importSource) {
-      PsiDirectory directory = importSource.getContainingFile().getContainingDirectory();
-      if (directory != null && PyUtil.isPackage(directory, true, importSource.getContainingFile()) &&
-          directory.getName().equals(importSource.getName())) {
-        return true;
+    private boolean isImportFromTheSamePackage(@NotNull PyReferenceExpression importSource) {
+      final PsiDirectory currentFileDirectory = importSource.getContainingFile().getContainingDirectory();
+
+      if (currentFileDirectory != null && PyUtil.isPackage(currentFileDirectory, true, importSource)) {
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
+
+        return StreamEx
+          .of(importSource.getReference(resolveContext).multiResolve(false))
+          .map(ResolveResult::getElement)
+          .nonNull()
+          .map(PsiElement::getContainingFile)
+          .nonNull()
+          .map(PsiFile::getContainingDirectory)
+          .nonNull()
+          .map(PsiDirectory::getVirtualFile)
+          .anyMatch(importedSourceDir -> VfsUtilCore.isAncestor(importedSourceDir, currentFileDirectory.getVirtualFile(), false));
       }
+
       return false;
     }
 
@@ -84,12 +98,12 @@ public class PyProtectedMemberInspection extends PyInspection {
     public void visitPyReferenceExpression(PyReferenceExpression node) {
       final PyExpression qualifier = node.getQualifier();
       if (ignoreAnnotations && PsiTreeUtil.getParentOfType(node, PyAnnotation.class) != null) return;
-      if (qualifier == null || PyNames.CANONICAL_SELF.equals(qualifier.getText())) return;
+      if (qualifier == null || ArrayUtil.contains(qualifier.getText(), PyNames.CANONICAL_SELF, PyNames.CANONICAL_CLS)) return;
+      if (isImportFromTheSamePackage(node)) return;
       checkReference(node, qualifier);
     }
 
     private void checkReference(@NotNull final PyReferenceExpression node, @NotNull final PyExpression qualifier) {
-      if (myTypeEvalContext.getType(qualifier) instanceof PyNamedTupleType) return;
       final String name = node.getName();
       final List<LocalQuickFix> quickFixes = new ArrayList<>();
       quickFixes.add(new PyRenameElementQuickFix());
@@ -102,7 +116,7 @@ public class PyProtectedMemberInspection extends PyInspection {
           }
         }
         final PsiElement resolvedExpression = reference.resolve();
-        final PyClass resolvedClass = getClassOwner(resolvedExpression);
+        final PyClass resolvedClass = getNotPyiClassOwner(resolvedExpression);
 
         if (resolvedExpression instanceof PyTargetExpression) {
 
@@ -150,6 +164,12 @@ public class PyProtectedMemberInspection extends PyInspection {
         final String bundleKey = type instanceof PyModuleType ? "INSP.protected.member.$0.access.module" : "INSP.protected.member.$0.access";
         registerProblem(node, PyBundle.message(bundleKey, name), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,  null, quickFixes.toArray(new LocalQuickFix[quickFixes.size()-1]));
       }
+    }
+
+    @Nullable
+    private PyClass getNotPyiClassOwner(@Nullable PsiElement element) {
+      final PyClass owner = getClassOwner(element);
+      return owner == null ? null : PyiUtil.stubToOriginal(owner, PyClass.class);
     }
 
     @Nullable

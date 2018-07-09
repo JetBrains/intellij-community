@@ -96,7 +96,7 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
 
       @Override
       public void onSuccess() {
-        new PatchApplier<BinaryFilePatch>(project, baseDir, patches, chooser.getSelectedList(), null, null).execute();
+        new PatchApplier<BinaryFilePatch>(project, baseDir, patches, chooser.getSelectedList(), null).execute();
       }
     });
   }

@@ -70,8 +70,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- * Date: Oct 9, 2003
- * Time: 1:19:47 PM
  */
 public class ContentEntryTreeEditor {
   private final Project myProject;

@@ -37,7 +37,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11-Sep-15
  */
 public class JavaScratchPositionManager extends PositionManagerImpl{
   private final VirtualFile myScratchFile;

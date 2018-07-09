@@ -32,8 +32,28 @@ interface UElement {
   /**
    * Returns the PSI element underlying this element. Note that some UElements are synthetic and do not have
    * an underlying PSI element; this doesn't mean that they are invalid.
+   *
+   * **Node for implementors**: please implement both [sourcePsi] and [javaPsi] fields or make them return `null` explicitly
+   * if implementing is not possible. Redirect `psi` to one of them keeping existing behavior, use [sourcePsi] if nothing else is specified.
    */
+  @Deprecated("ambiguous psi element, use `sourcePsi` or `javaPsi`", ReplaceWith("javaPsi"))
   val psi: PsiElement?
+
+
+  /**
+   * Returns the PSI element in original (physical) tree to which this UElement corresponds.
+   * **Note**: that some UElements are synthetic and do not have an underlying PSI element;
+   * this doesn't mean that they are invalid.
+   */
+  val sourcePsi: PsiElement?
+    get() = psi
+
+  /**
+   * Returns the element which try to mimic Java-api psi element: [com.intellij.psi.PsiClass], [com.intellij.psi.PsiMethod] or [com.intellij.psi.PsiAnnotation] etc.
+   * Will return null if this UElement doesn't have Java representation or it is not implemented.
+   */
+  val javaPsi: PsiElement?
+    get() = psi
 
   /**
    * Returns true if this element is valid, false otherwise.
@@ -102,75 +122,18 @@ interface UElement {
   fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R = visitor.visitElement(this, data)
 }
 
-/**
- * This is transitional type, all its content will be moved to `UElement` as soon as all implementations will implement it,
- * and someday this interface will be dropped.
- */
-@ApiStatus.Experimental
-interface JvmDeclarationUElement : UElement {
+@Deprecated("No use anymore, all declarations were moved to UElement. To be removed in 2018.2")
+interface JvmDeclarationUElement : UElement
 
-  /**
-   * Returns the PSI element in original (physical) tree to which this UElement corresponds.
-   * **Note**: that some UElements are synthetic and do not have an underlying PSI element;
-   * this doesn't mean that they are invalid.
-   */
-  val sourcePsi: PsiElement?
-    get() = psi
-
-  /**
-   * Returns the element which try to mimic Java-api psi element: [com.intellij.psi.PsiClass], [com.intellij.psi.PsiMethod] or [com.intellij.psi.PsiAnnotation] etc.
-   * Will return null if this UElement doesn't have Java representation or it is not implemented.
-   */
-  val javaPsi: PsiElement?
-    get() = psi
-
-  /**
-   * Returns the PSI element underlying this element. Note that some UElements are synthetic and do not have
-   * an underlying PSI element; this doesn't mean that they are invalid.
-   *
-   * **Node for implementors**: please implement both [sourcePsi] and [javaPsi] fields or make them return `null` explicitly
-   * if implementing is not possible. Redirect `psi` to one of them keeping existing behavior, use [sourcePsi] if nothing else is specified.
-   */
-  @Deprecated("ambiguous psi element, use `sourcePsi` or `javaPsi`", ReplaceWith("javaPsi"))
-  override val psi: PsiElement?
-}
-
-/**
- * Experimental API
- */
+@get:ApiStatus.Experimental
 val UElement?.sourcePsiElement: PsiElement?
-  get() = fun(): PsiElement? {
-    val element = (this as? JvmDeclarationUElement)?.sourcePsi ?: return null;
-
-    // All following is a workaround for KT-21025 when returned `sourcePsi` is not actually a source psi
-    // and also it is a copy of a similar hack in `AbstractBaseUastLocalInspectionTool` in 173-branch
-    // Refer IDEA-CR-25636 and IDEA-CR-25766
-    val desiredFile = this?.getContainingUFile()?.psi ?: return element
-
-    fun inFile(element: PsiElement): Boolean {
-      val file = element.containingFile ?: return false
-      return file.viewProvider === desiredFile.viewProvider
-    }
-
-    if (inFile(element)) return element
-    val navigationElement = element.navigationElement ?: return element
-    if (inFile(navigationElement)) return navigationElement
-
-    // last resort
-    val elementAtSamePosition = desiredFile.findElementAt(navigationElement.textRange.startOffset)
-    return if (elementAtSamePosition != null && elementAtSamePosition.text == navigationElement.text) {
-      elementAtSamePosition
-    }
-    else element // it can't be helped
-  }()
+  get() = this?.sourcePsi
 
 
 @ApiStatus.Experimental
 @SuppressWarnings("unchecked")
-fun <T : PsiElement> UElement?.getAsJavaPsiElement(clazz: Class<T>): T? = when (this) {
-  is JvmDeclarationUElement -> this.javaPsi
-  else -> this?.psi
-}?.takeIf { clazz.isAssignableFrom(it.javaClass) } as? T
+fun <T : PsiElement> UElement?.getAsJavaPsiElement(clazz: Class<T>): T? =
+  this?.javaPsi?.takeIf { clazz.isAssignableFrom(it.javaClass) } as? T
 
 /**
  * Returns a sequence including this element and its containing elements.

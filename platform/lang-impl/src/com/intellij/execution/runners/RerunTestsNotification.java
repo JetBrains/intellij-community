@@ -20,6 +20,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -28,7 +29,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.GotItMessage;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.Alarm;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +37,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
+import java.util.concurrent.TimeUnit;
 
 public class RerunTestsNotification {
 
@@ -54,8 +58,7 @@ public class RerunTestsNotification {
   }
 
   private static void doShow(@NotNull ExecutionConsole executionConsole) {
-    Alarm alarm = new Alarm();
-    alarm.addRequest(() -> {
+    EdtExecutorService.getScheduledExecutorInstance().schedule(() -> {
       String shortcutText = KeymapUtil.getFirstKeyboardShortcutText(
         ActionManager.getInstance().getAction(RerunTestsAction.ID)
       );
@@ -66,7 +69,9 @@ public class RerunTestsNotification {
       ConsoleView consoleView = UIUtil.findComponentOfType(executionConsole.getComponent(), ConsoleViewImpl.class);
       if (consoleView != null) {
         GotItMessage message = GotItMessage.createMessage("Rerun tests with " + shortcutText, "");
-        message.setDisposable(executionConsole);
+        Disposable disposable = Disposer.newDisposable();
+        Disposer.register(executionConsole, disposable);
+        message.setDisposable(disposable);
         message.setCallback(() -> PropertiesComponent.getInstance().setValue(KEY, true));
         message.setShowCallout(false);
         JComponent consoleComponent = consoleView.getComponent();
@@ -90,10 +95,17 @@ public class RerunTestsNotification {
           },
           Balloon.Position.below
         );
+        consoleComponent.addHierarchyListener(new HierarchyListener() {
+          @Override
+          public void hierarchyChanged(HierarchyEvent e) {
+            if (!consoleComponent.isShowing()) {
+              Disposer.dispose(disposable);
+              consoleComponent.removeHierarchyListener(this);
+            }
+          }
+        });
       }
-
-      Disposer.dispose(alarm);
-    }, 1000);
+    }, 1000, TimeUnit.MILLISECONDS);
   }
 
 }

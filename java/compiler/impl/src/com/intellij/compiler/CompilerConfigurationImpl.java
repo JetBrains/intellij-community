@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.compiler;
 
 import com.intellij.CommonBundle;
@@ -39,9 +41,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.artifacts.ArtifactBySourceFileFinder;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.xmlb.Accessor;
 import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.apache.oro.text.regex.*;
@@ -59,9 +62,11 @@ import org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfig
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
+import static com.intellij.compiler.ExternalCompilerConfigurationStorageKt.*;
+import static com.intellij.util.JdomKt.element;
 import static org.jetbrains.jps.model.java.impl.compiler.ResourcePatterns.normalizeWildcards;
-import static org.jetbrains.jps.model.java.impl.compiler.ResourcePatterns.optimize;
 import static org.jetbrains.jps.model.serialization.java.compiler.JpsJavaCompilerConfigurationSerializer.DEFAULT_WILDCARD_PATTERNS;
 
 @State(name = "CompilerConfiguration", storages = @Storage("compiler.xml"))
@@ -117,6 +122,13 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       public void moduleAdded(@NotNull Project project, @NotNull Module module) {
         myProcessorsProfilesMap = null; // clear cache
       }
+
+      @Override
+      public void modulesRenamed(@NotNull Project project,
+                                 @NotNull List<Module> modules,
+                                 @NotNull Function<Module, String> oldNameProvider) {
+        updateModuleNames(modules.stream().collect(Collectors.toMap(oldNameProvider::fun, Module::getName)));
+      }
     });
   }
 
@@ -149,18 +161,13 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     public String DEFAULT_COMPILER = JavaCompilers.JAVAC_ID;
     public int BUILD_PROCESS_HEAP_SIZE = DEFAULT_BUILD_PROCESS_HEAP_SIZE;
     public String BUILD_PROCESS_ADDITIONAL_VM_OPTIONS = "";
+    public boolean USE_RELEASE_OPTION = true;
   }
 
   @Override
   public Element getState() {
-
     Element state = new Element("state");
-    XmlSerializer.serializeInto(myState, state, new SkipDefaultValuesSerializationFilters() {
-      @Override
-      public boolean accepts(@NotNull Accessor accessor, @NotNull Object bean) {
-        return super.accepts(accessor, bean);
-      }
-    });
+    XmlSerializer.serializeInto(myState, state, new SkipDefaultValuesSerializationFilters());
 
     if (!myAddNotNullAssertions) {
       addChild(state, JpsJavaCompilerConfigurationSerializer.ADD_NOTNULL_ASSERTIONS).setAttribute(
@@ -207,28 +214,15 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
       state.addContent(annotationProcessingSettings);
     }
 
-    if (!StringUtil.isEmpty(myBytecodeTargetLevel) || !myModuleBytecodeTarget.isEmpty()) {
-      final Element bytecodeTarget = addChild(state, JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
+    List<String> moduleNames = getFilteredModuleNameList(myProject, myModuleBytecodeTarget, false);
+    if (!StringUtil.isEmpty(myBytecodeTargetLevel) || !moduleNames.isEmpty()) {
+      final Element bytecodeTarget = element(state, JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
       if (!StringUtil.isEmpty(myBytecodeTargetLevel)) {
         bytecodeTarget.setAttribute(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE, myBytecodeTargetLevel);
       }
-      if (!myModuleBytecodeTarget.isEmpty()) {
-        final List<String> moduleNames = new ArrayList<>(myModuleBytecodeTarget.keySet());
-        Collections.sort(moduleNames, String.CASE_INSENSITIVE_ORDER);
-        for (String name : moduleNames) {
-          final Element moduleElement = addChild(bytecodeTarget, JpsJavaCompilerConfigurationSerializer.MODULE);
-          moduleElement.setAttribute(JpsJavaCompilerConfigurationSerializer.NAME, name);
-          final String value = myModuleBytecodeTarget.get(name);
-          moduleElement.setAttribute(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE, value != null ? value : "");
-        }
-      }
+      writeBytecodeTarget(moduleNames, myModuleBytecodeTarget, bytecodeTarget);
     }
     return state;
-  }
-
-  @Override
-  public void loadState(Element state) {
-    readExternal(state);
   }
 
   @Override
@@ -256,6 +250,39 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     myState.BUILD_PROCESS_ADDITIONAL_VM_OPTIONS = options == null? "" : options.trim();
   }
 
+  private void updateModuleNames(Map<String, String> moduleNameMap) {
+    JpsJavaCompilerOptions settings = getCompilerSettings();
+    boolean updated = false;
+    for (Map.Entry<String, String> entry : moduleNameMap.entrySet()) {
+      String targetLevel = myModuleBytecodeTarget.remove(entry.getKey());
+      if (targetLevel != null) {
+        myModuleBytecodeTarget.put(entry.getValue(), targetLevel);
+        updated = true;
+      }
+      if (settings != null) {
+        String options = settings.ADDITIONAL_OPTIONS_OVERRIDE.remove(entry.getKey());
+        if (options != null) {
+          settings.ADDITIONAL_OPTIONS_OVERRIDE.put(entry.getValue(), options);
+          updated = true;
+        }
+      }
+    }
+
+    for (ProcessorConfigProfile profile : myModuleProcessorProfiles) {
+      Set<String> names = profile.getModuleNames();
+      Collection<String> updatedNames = ContainerUtil.intersection(names, moduleNameMap.keySet());
+      if (!updatedNames.isEmpty()) {
+        profile.removeModuleNames(updatedNames);
+        profile.addModuleNames(ContainerUtil.map(updatedNames, moduleNameMap::get));
+        updated = true;
+      }
+    }
+
+    if (updated) {
+      BuildManager.getInstance().clearState(myProject);
+    }
+  }
+
   @Override
   public void setProjectBytecodeTarget(@Nullable String level) {
     final String previous = myBytecodeTargetLevel;
@@ -269,6 +296,16 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
   @Nullable
   public String getProjectBytecodeTarget() {
     return myBytecodeTargetLevel;
+  }
+
+  @Override
+  public boolean useReleaseOption() {
+    return myState.USE_RELEASE_OPTION;
+  }
+
+  @Override
+  public void setUseReleaseOption(boolean useReleaseOption) {
+    myState.USE_RELEASE_OPTION = useReleaseOption;
   }
 
   public void setModulesBytecodeTargetMap(@NotNull Map<String, String> mapping) {
@@ -620,7 +657,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     if (slash >= 0) {
       dirPattern = wildcardPattern.substring(0, slash + 1);
       wildcardPattern = wildcardPattern.substring(slash + 1);
-      ResourcePatterns.handleDirPattern(dirPattern);
+      dirPattern = ResourcePatterns.optimizeDirPattern(dirPattern);
     }
 
     wildcardPattern = normalizeWildcards(wildcardPattern);
@@ -629,6 +666,10 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     final Pattern dirCompiled = dirPattern == null ? null : compilePattern(dirPattern);
     final Pattern srcCompiled = srcRoot == null ? null : compilePattern(optimize(normalizeWildcards(srcRoot)));
     return new CompiledPattern(compilePattern(wildcardPattern), dirCompiled, srcCompiled);
+  }
+
+  private static String optimize(String wildcardPattern) {
+    return wildcardPattern.replaceAll("(?:\\.\\*)+", ".*");
   }
 
   public static boolean isPatternNegated(String wildcardPattern) {
@@ -702,8 +743,8 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return true;
   }
 
-
-  public void readExternal(@NotNull Element parentNode)  {
+  @Override
+  public void loadState(@NotNull Element parentNode) {
     myState = XmlSerializer.deserialize(parentNode, State.class);
     if (!myProject.isDefault()) {
       for (Element option : parentNode.getChildren("option")) {
@@ -785,20 +826,16 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
 
     myBytecodeTargetLevel = null;
     myModuleBytecodeTarget.clear();
-    final Element bytecodeTargetElement = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
+
+    Element bytecodeTargetElement = parentNode.getChild(JpsJavaCompilerConfigurationSerializer.BYTECODE_TARGET_LEVEL);
     if (bytecodeTargetElement != null) {
       myBytecodeTargetLevel = bytecodeTargetElement.getAttributeValue(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE);
-      for (Element elem : bytecodeTargetElement.getChildren(JpsJavaCompilerConfigurationSerializer.MODULE)) {
-        final String name = elem.getAttributeValue(JpsJavaCompilerConfigurationSerializer.NAME);
-        if (name == null) {
-          continue;
-        }
-        final String target = elem.getAttributeValue(JpsJavaCompilerConfigurationSerializer.TARGET_ATTRIBUTE);
-        if (target == null) {
-          continue;
-        }
-        myModuleBytecodeTarget.put(name, target);
-      }
+      readByteTargetLevel(parentNode, myModuleBytecodeTarget);
+    }
+
+    Map<String, String> externalState = myProject.getComponent(ExternalCompilerConfigurationStorage.class).getLoadedState();
+    if (externalState != null) {
+      myModuleBytecodeTarget.putAll(externalState);
     }
   }
 

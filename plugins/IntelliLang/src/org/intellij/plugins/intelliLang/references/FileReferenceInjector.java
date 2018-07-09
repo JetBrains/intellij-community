@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 01.08.13
  */
 public class FileReferenceInjector extends ReferenceInjector {
 

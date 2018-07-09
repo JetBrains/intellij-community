@@ -37,7 +37,7 @@ public class JDialogFixture extends ComponentFixture<JDialogFixture, JDialog> im
   public void waitTillGone() {
     String title = target().getTitle();
     GenericTypeMatcher<JDialog> matcher = getMatcher(title);
-    Pause.pause(new Condition("Wait till dialog with title '" + title+ "' gone ") {
+    Pause.pause(new Condition("Wait till dialog with title '" + title + "' gone ") {
       @Override
       public boolean test() {
         return robot().finder().findAll(matcher).isEmpty();
@@ -45,9 +45,13 @@ public class JDialogFixture extends ComponentFixture<JDialogFixture, JDialog> im
     });
   }
 
+  public void scroll(int times) {
+    robot().rotateMouseWheel(times);
+  }
+
   @NotNull
   public static JDialogFixture find(@NotNull Robot robot, String title) {
-    return find(robot, title, GuiTestUtil.SHORT_TIMEOUT);
+    return find(robot, title, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
   }
 
   @NotNull
@@ -95,5 +99,4 @@ public class JDialogFixture extends ComponentFixture<JDialogFixture, JDialog> im
       }
     };
   }
-
 }

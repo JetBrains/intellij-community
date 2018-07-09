@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.update;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -56,14 +42,15 @@ import static java.util.Arrays.asList;
 public class GitMergeUpdater extends GitUpdater {
   private static final Logger LOG = Logger.getInstance(GitMergeUpdater.class);
 
-  private final ChangeListManager myChangeListManager;
+  @NotNull private final ChangeListManager myChangeListManager;
 
-  public GitMergeUpdater(Project project, @NotNull Git git,
-                         VirtualFile root,
-                         final GitBranchPair branchAndTracked,
-                         ProgressIndicator progressIndicator,
-                         UpdatedFiles updatedFiles) {
-    super(project, git, root, branchAndTracked, progressIndicator, updatedFiles);
+  public GitMergeUpdater(@NotNull Project project,
+                         @NotNull Git git,
+                         @NotNull GitRepository repository,
+                         @NotNull GitBranchPair branchAndTracked,
+                         @NotNull ProgressIndicator progressIndicator,
+                         @NotNull UpdatedFiles updatedFiles) {
+    super(project, git, repository, branchAndTracked, progressIndicator, updatedFiles);
     myChangeListManager = ChangeListManager.getInstance(myProject);
   }
 
@@ -173,13 +160,12 @@ public class GitMergeUpdater extends GitUpdater {
   }
 
   private void cancel() {
-    try {
-      GitSimpleHandler h = new GitSimpleHandler(myProject, myRoot, GitCommand.RESET);
-      h.addParameters("--merge");
-      h.run();
-    } catch (VcsException e) {
-      LOG.info("cancel git reset --merge", e);
-      GitUIUtil.notifyImportantError(myProject, "Couldn't reset merge", e.getLocalizedMessage());
+    GitLineHandler h = new GitLineHandler(myProject, myRoot, GitCommand.RESET);
+    h.addParameters("--merge");
+    GitCommandResult result = Git.getInstance().runCommand(h);
+    if (!result.success()) {
+      LOG.info("cancel git reset --merge: " + result.getErrorOutputAsJoinedString());
+      GitUIUtil.notifyImportantError(myProject, "Couldn't reset merge", result.getErrorOutputAsHtmlString());
     }
   }
 
@@ -235,7 +221,7 @@ public class GitMergeUpdater extends GitUpdater {
 
   private static class MergeLineListener extends GitLineHandlerAdapter {
     private MergeError myMergeError;
-    private List<String> myOutput = new ArrayList<>();
+    private final List<String> myOutput = new ArrayList<>();
     private boolean myLocalChangesError = false;
 
     @Override
@@ -264,13 +250,13 @@ public class GitMergeUpdater extends GitUpdater {
     private final VirtualFile myRoot;
 
     public MyConflictResolver(Project project, @NotNull Git git, GitMerger merger, VirtualFile root) {
-      super(project, git, Collections.singleton(root), makeParams());
+      super(project, git, Collections.singleton(root), makeParams(project));
       myMerger = merger;
       myRoot = root;
     }
     
-    private static Params makeParams() {
-      Params params = new Params();
+    private static Params makeParams(Project project) {
+      Params params = new Params(project);
       params.setErrorNotificationTitle("Can't complete update");
       params.setMergeDescription("Merge conflicts detected. Resolve them before continuing update.");
       return params;

@@ -176,7 +176,7 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
 
     if (referencesList.isEmpty()) return null;
     if (referencesList.size() == 1) return referencesList.get(0);
-    return new PsiMultiReference(referencesList.toArray(new PsiReference[referencesList.size()]),
+    return new PsiMultiReference(referencesList.toArray(PsiReference.EMPTY_ARRAY),
                                  referencesList.get(referencesList.size() - 1).getElement());
   }
 

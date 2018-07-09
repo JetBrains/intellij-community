@@ -45,7 +45,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 25, 2007
  *
  * A file has three indexed states (per particular index): indexed (with particular index_stamp), outdated and (trivial) unindexed
  * if index version is advanced or we rebuild it then index_stamp is advanced, we rebuild everything
@@ -64,6 +63,14 @@ public class IndexingStamp {
 
   private IndexingStamp() {}
 
+  public static void initPersistentIndexStamp(DataInput in) throws IOException {
+    IndexVersion.advanceIndexStamp(DataInputOutputUtil.readTIME(in));
+  }
+
+  public static void savePersistentIndexStamp(DataOutput out) throws IOException {
+    DataInputOutputUtil.writeTIME(out, IndexVersion.ourLastStamp);
+  }
+
   static class IndexVersion {
     private static volatile long ourLastStamp; // ensure any file index stamp increases
     final long myModificationCount;
@@ -74,12 +81,16 @@ public class IndexingStamp {
 
     private IndexVersion(long modificationCount) {
       myModificationCount = modificationCount;
+      advanceIndexStamp(modificationCount);
+    }
+
+    private static void advanceIndexStamp(long modificationCount) {
       ourLastStamp = Math.max(modificationCount, ourLastStamp);
     }
 
     public IndexVersion(DataInput in) throws IOException {
       myModificationCount = DataInputOutputUtil.readTIME(in);
-      ourLastStamp = Math.max(ourLastStamp, myModificationCount);
+      advanceIndexStamp(myModificationCount);
     }
 
     public void write(DataOutput os) throws IOException {
@@ -112,7 +123,7 @@ public class IndexingStamp {
       FileUtil.deleteWithRenaming(file);
     }
     file.getParentFile().mkdirs();
-    final DataOutputStream os = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<DataOutputStream, FileNotFoundException>() {
+    try (final DataOutputStream os = FileUtilRt.doIOOperation(new FileUtilRt.RepeatableIOOperation<DataOutputStream, FileNotFoundException>() {
       @Nullable
       @Override
       public DataOutputStream execute(boolean lastAttempt) throws FileNotFoundException {
@@ -124,17 +135,14 @@ public class IndexingStamp {
           return null;
         }
       }
-    });
-    assert os != null;
-    try {
+    })) {
+      assert os != null;
+
       DataInputOutputUtil.writeINT(os, version);
       DataInputOutputUtil.writeINT(os, VERSION);
       DataInputOutputUtil.writeTIME(os, FSRecords.getCreationTimestamp());
       newIndexVersion.write(os);
       ourIndexIdToCreationStamp.put(indexId, newIndexVersion);
-    }
-    finally {
-      os.close();
     }
   }
 
@@ -148,11 +156,11 @@ public class IndexingStamp {
     return getIndexVersion(indexId, currentIndexVersion) == null;
   }
 
-  private static final int ANY_VERSION = 1;
+  private static final int ANY_CURRENT_INDEX_VERSION = Integer.MIN_VALUE;
   private static final long NO_VERSION = 0;
   
   public static long getIndexCreationStamp(@NotNull ID<?, ?> indexName) {
-    IndexVersion version = getIndexVersion(indexName, ANY_VERSION);
+    IndexVersion version = getIndexVersion(indexName, ANY_CURRENT_INDEX_VERSION);
     return version != null ? version.myModificationCount : NO_VERSION;
   }
 
@@ -165,20 +173,14 @@ public class IndexingStamp {
       if (version != null) return version;
 
       File versionFile = IndexInfrastructure.getVersionFile(indexName);
-      try {
-        final DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(versionFile)));
-        try {
+      try (DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(versionFile)))) {
 
-          if ((DataInputOutputUtil.readINT(in) == currentIndexVersion || currentIndexVersion == ANY_VERSION) &&
-              DataInputOutputUtil.readINT(in) == VERSION &&
-              DataInputOutputUtil.readTIME(in) == FSRecords.getCreationTimestamp()) {
-            version = new IndexVersion(in);
-            ourIndexIdToCreationStamp.put(indexName, version);
-            return version;
-          }
-        }
-        finally {
-          in.close();
+        if ((DataInputOutputUtil.readINT(in) == currentIndexVersion || currentIndexVersion == ANY_CURRENT_INDEX_VERSION) &&
+            DataInputOutputUtil.readINT(in) == VERSION &&
+            DataInputOutputUtil.readTIME(in) == FSRecords.getCreationTimestamp()) {
+          version = new IndexVersion(in);
+          ourIndexIdToCreationStamp.put(indexName, version);
+          return version;
         }
       }
       catch (IOException ignore) {
@@ -219,43 +221,38 @@ public class IndexingStamp {
 
     private Timestamps(@Nullable DataInputStream stream) throws IOException {
       if (stream != null) {
-        try {
-          int[] outdatedIndices = null;
-          long dominatingIndexStamp = DataInputOutputUtil.readTIME(stream);
-          long diff = dominatingIndexStamp - DataInputOutputUtil.timeBase;
-          if (diff > 0 && diff < ID.MAX_NUMBER_OF_INDICES) {
-            int numberOfOutdatedIndices = (int)diff;
-            outdatedIndices = new int[numberOfOutdatedIndices];
-            while(numberOfOutdatedIndices > 0) {
-              outdatedIndices[--numberOfOutdatedIndices] = DataInputOutputUtil.readINT(stream);
-            }
-            dominatingIndexStamp = DataInputOutputUtil.readTIME(stream);
+        int[] outdatedIndices = null;
+        long dominatingIndexStamp = DataInputOutputUtil.readTIME(stream);
+        long diff = dominatingIndexStamp - DataInputOutputUtil.timeBase;
+        if (diff > 0 && diff < ID.MAX_NUMBER_OF_INDICES) {
+          int numberOfOutdatedIndices = (int)diff;
+          outdatedIndices = new int[numberOfOutdatedIndices];
+          while(numberOfOutdatedIndices > 0) {
+            outdatedIndices[--numberOfOutdatedIndices] = DataInputOutputUtil.readINT(stream);
           }
+          dominatingIndexStamp = DataInputOutputUtil.readTIME(stream);
+        }
 
-          while(stream.available() > 0) {
-            ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(stream));
+        while(stream.available() > 0) {
+          ID<?, ?> id = ID.findById(DataInputOutputUtil.readINT(stream));
+          if (id != null && !(id instanceof StubIndexKey)) {
+            long stamp = getIndexCreationStamp(id);
+            if (stamp == 0) continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
+            if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<>(5, 0.98f);
+            if (stamp <= dominatingIndexStamp) myIndexStamps.put(id, stamp);
+          }
+        }
+
+        if (outdatedIndices != null) {
+          for(int outdatedIndexId:outdatedIndices) {
+            ID<?, ?> id = ID.findById(outdatedIndexId);
             if (id != null && !(id instanceof StubIndexKey)) {
-              long stamp = getIndexCreationStamp(id);
-              if (stamp == 0) continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
+              if (getIndexCreationStamp(id) == 0) continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
+              long stamp = INDEX_DATA_OUTDATED_STAMP;
               if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<>(5, 0.98f);
               if (stamp <= dominatingIndexStamp) myIndexStamps.put(id, stamp);
             }
           }
-
-          if (outdatedIndices != null) {
-            for(int outdatedIndexId:outdatedIndices) {
-              ID<?, ?> id = ID.findById(outdatedIndexId);
-              if (id != null && !(id instanceof StubIndexKey)) {
-                if (getIndexCreationStamp(id) == 0) continue; // All (indices) IDs should be valid in this running session (e.g. we can have ID instance existing but index is not registered)
-                long stamp = INDEX_DATA_OUTDATED_STAMP;
-                if (myIndexStamps == null) myIndexStamps = new TObjectLongHashMap<>(5, 0.98f);
-                if (stamp <= dominatingIndexStamp) myIndexStamps.put(id, stamp);
-              }
-            }
-          }
-        }
-        finally {
-          stream.close();
         }
       }
     }
@@ -362,8 +359,7 @@ public class IndexingStamp {
     }
     Timestamps timestamps = myTimestampsCache.get(id);
     if (timestamps == null) {
-      final DataInputStream stream = FSRecords.readAttributeWithLock(id, Timestamps.PERSISTENCE);
-      try {
+      try (final DataInputStream stream = FSRecords.readAttributeWithLock(id, Timestamps.PERSISTENCE)) {
         timestamps = new Timestamps(stream);
       }
       catch (IOException e) {
@@ -431,9 +427,9 @@ public class IndexingStamp {
             if (timestamp == null) continue;
 
             if (timestamp.isDirty() /*&& file.isValid()*/) {
-              final DataOutputStream sink = FSRecords.writeAttribute(file, Timestamps.PERSISTENCE);
-              timestamp.writeToStream(sink);
-              sink.close();
+              try (DataOutputStream sink = FSRecords.writeAttribute(file, Timestamps.PERSISTENCE)) {
+                timestamp.writeToStream(sink);
+              }
             }
           } catch (IOException e) {
             throw new RuntimeException(e);

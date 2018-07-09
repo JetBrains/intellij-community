@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion.handlers;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.Lookup;
@@ -55,7 +56,7 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
     final Editor editor = context.getEditor();
 
     if (argumentList != null) {
-      CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(context.getProject()).getCurrentSettings();
+      CodeStyleSettings settings = CodeStyle.getSettings(context.getFile());
       GroovyCodeStyleSettings codeStyleSettings = settings.getCustomSettings(GroovyCodeStyleSettings.class);
       CommonCodeStyleSettings commonCodeStyleSettings = settings.getCommonSettings(GroovyLanguage.INSTANCE);
 

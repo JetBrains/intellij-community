@@ -4,6 +4,7 @@ package com.jetbrains.python.inspections.stdlib
 import com.intellij.psi.PsiReference
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType
+import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibClassMembersProvider
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.psi.PyElement
@@ -14,6 +15,10 @@ import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.TypeEvalContext
 
 class PyStdlibInspectionExtension : PyInspectionExtension() {
+
+  companion object {
+    private val NAMEDTUPLE_SPECIAL_ATTRIBUTES = setOf("_make", "_asdict", "_replace", "_source", "_fields")
+  }
 
   override fun ignoreInitNewSignatures(original: PyFunction, complementary: PyFunction): Boolean {
     return PyNames.TYPE_ENUM == complementary.containingClass?.qualifiedName
@@ -33,10 +38,17 @@ class PyStdlibInspectionExtension : PyInspectionExtension() {
       val qualifier = node.qualifier
       if (qualifier is PyReferenceExpression) {
         return PyStdlibClassMembersProvider.referenceToMockPatch(qualifier, context) &&
-               PyStdlibClassMembersProvider.MOCK_PATCH_MEMBERS.find { it.name == node.name } != null
+               PyStdlibClassMembersProvider.calcMockPatchMembers(qualifier).any { it.name == node.name }
       }
     }
 
     return false
+  }
+
+  override fun ignoreProtectedSymbol(expression: PyReferenceExpression, context: TypeEvalContext): Boolean {
+    val qualifier = expression.qualifier
+    return qualifier != null &&
+           expression.referencedName in NAMEDTUPLE_SPECIAL_ATTRIBUTES &&
+           PyNamedTupleTypeProvider.isNamedTuple(context.getType(qualifier), context)
   }
 }

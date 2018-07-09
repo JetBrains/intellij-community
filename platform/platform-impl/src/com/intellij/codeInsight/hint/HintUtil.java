@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.icons.AllIcons;
@@ -40,16 +26,15 @@ import static com.intellij.util.ObjectUtils.notNull;
 public class HintUtil {
   /** @deprecated use getInformationColor() */
   @Deprecated
-  public static final Color INFORMATION_COLOR = new JBColor(new Color(253, 254, 226), new Color(0x4d4f51));
-  /** @deprecated use getQuestionColor() */
-  @Deprecated
-  public static final Color QUESTION_COLOR = new JBColor(new Color(181, 208, 251), new Color(55, 108, 137));
+  public static final Color INFORMATION_COLOR = new JBColor(0xF7F7F7, 0x4B4D4D);
+  private static final Color INFORMATION_BORDER = new JBColor(0xE6E6E6, 0x5C5C5C);
   /** @deprecated use getErrorColor() */
   @Deprecated
   public static final Color ERROR_COLOR = new JBColor(new Color(255, 220, 220), new Color(0x781732));
 
   public static final ColorKey INFORMATION_COLOR_KEY = ColorKey.createColorKey("INFORMATION_HINT", INFORMATION_COLOR);
-  public static final ColorKey QUESTION_COLOR_KEY = ColorKey.createColorKey("QUESTION_HINT", QUESTION_COLOR);
+  public static final ColorKey QUESTION_COLOR_KEY = ColorKey.createColorKey("QUESTION_HINT",
+                                                                            new JBColor(new Color(181, 208, 251), new Color(55, 108, 137)));
   public static final ColorKey ERROR_COLOR_KEY = ColorKey.createColorKey("ERROR_HINT", ERROR_COLOR);
 
   public static final Color QUESTION_UNDERSCORE_COLOR = JBColor.foreground();
@@ -82,30 +67,16 @@ public class HintUtil {
                                                   @Nullable Ref<Consumer<String>> updatedTextConsumer) {
     HintHint hintHint = getInformationHint();
     HintLabel label = createLabel(text, null, hintHint.getTextBackground(), hintHint);
-
-    if (hyperlinkListener != null) {
-      label.myPane.addHyperlinkListener(hyperlinkListener);
-    }
-    if (mouseListener != null) {
-      label.myPane.addMouseListener(mouseListener);
-    }
-    if (updatedTextConsumer != null) {
-      updatedTextConsumer.set(s -> {
-        label.myPane.setText(s);
-
-        // Force preferred size recalculation.
-        label.setPreferredSize(null);
-        label.myPane.setPreferredSize(null);
-      });
-    }
-
+    configureLabel(label, hyperlinkListener, mouseListener, updatedTextConsumer);
     return label;
   }
 
   @NotNull
   public static HintHint getInformationHint() {
     //noinspection UseJBColor
-    return new HintHint().setTextBg(getInformationColor())
+    return new HintHint()
+      .setBorderColor(INFORMATION_BORDER)
+      .setTextBg(getInformationColor())
       .setTextFg(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : Color.black)
       .setFont(getBoldFont())
       .setAwtTooltip(true);
@@ -156,14 +127,24 @@ public class HintUtil {
     return new HintLabel(component);
   }
 
-  public static JComponent createErrorLabel(String text) {
+  public static JComponent createErrorLabel(@NotNull String text,
+                                            @Nullable HyperlinkListener hyperlinkListener,
+                                            @Nullable MouseListener mouseListener,
+                                            @Nullable Ref<Consumer<String>> updatedTextConsumer) {
     Color bg = getErrorColor();
     HintHint hintHint = new HintHint().setTextBg(bg)
-      .setTextFg(JBColor.foreground())
-      .setFont(getBoldFont())
-      .setAwtTooltip(true);
+                                      .setTextFg(JBColor.foreground())
+                                      .setFont(getBoldFont())
+                                      .setAwtTooltip(true);
 
-    return createLabel(text, null, bg, hintHint);
+    HintLabel label = createLabel(text, null, bg, hintHint);
+    configureLabel(label, hyperlinkListener, mouseListener, updatedTextConsumer);
+    return label;
+  }
+
+  @NotNull
+  public static JComponent createErrorLabel(@NotNull String text) {
+    return createErrorLabel(text, null, null, null);
   }
 
   @NotNull
@@ -209,6 +190,26 @@ public class HintUtil {
       UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(), hintHint.getUlImg()),
       htmlBody
     );
+  }
+
+  private static void configureLabel(@NotNull HintLabel label, @Nullable HyperlinkListener hyperlinkListener,
+                                     @Nullable MouseListener mouseListener,
+                                     @Nullable Ref<Consumer<String>> updatedTextConsumer) {
+    if (hyperlinkListener != null) {
+      label.myPane.addHyperlinkListener(hyperlinkListener);
+    }
+    if (mouseListener != null) {
+      label.myPane.addMouseListener(mouseListener);
+    }
+    if (updatedTextConsumer != null) {
+      updatedTextConsumer.set(s -> {
+        label.myPane.setText(s);
+
+        // Force preferred size recalculation.
+        label.setPreferredSize(null);
+        label.myPane.setPreferredSize(null);
+      });
+    }
   }
 
   private static class HintLabel extends JPanel {

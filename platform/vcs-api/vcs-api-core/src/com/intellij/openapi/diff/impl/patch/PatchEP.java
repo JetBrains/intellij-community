@@ -22,8 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author irengrig
- *         Date: 7/11/11
- *         Time: 11:43 AM
  */
 public interface PatchEP {
   ExtensionPointName<PatchEP> EP_NAME = ExtensionPointName.create("com.intellij.patch.extension");

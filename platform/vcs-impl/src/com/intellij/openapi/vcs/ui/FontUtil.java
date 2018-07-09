@@ -15,11 +15,15 @@
  */
 package com.intellij.openapi.vcs.ui;
 
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.impl.FontFallbackIterator;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import sun.java2d.SunGraphics2D;
 
 import java.awt.*;
+import java.awt.font.FontRenderContext;
 
 public class FontUtil {
   @NotNull
@@ -58,5 +62,26 @@ public class FontUtil {
     }
 
     return result.toString();
+  }
+
+  @NotNull
+  public static Font getEditorFont() {
+    return EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
+  }
+
+  @NotNull
+  public static Font getCommitMessageFont() {
+    return getEditorFont();
+  }
+
+  public static Font getCommitMetadataFont() {
+    return UIUtil.getLabelFont();
+  }
+
+  public static int getStandardAscent(@NotNull Font font, @NotNull Graphics g) {
+    FontRenderContext context = ((Graphics2D)g).getFontRenderContext();
+    char[] chars = {'G', 'l', 'd', 'h', 'f'};
+    double y = font.layoutGlyphVector(context, chars, 0, chars.length, Font.LAYOUT_LEFT_TO_RIGHT).getVisualBounds().getY();
+    return Math.toIntExact(Math.round(Math.ceil(-y)));
   }
 }

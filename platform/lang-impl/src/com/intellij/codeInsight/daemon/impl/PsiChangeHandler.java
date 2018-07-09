@@ -124,7 +124,7 @@ class PsiChangeHandler extends PsiTreeChangeAdapter implements Disposable {
         if (!editor.isDisposed()) {
           EditorMarkupModel markupModel = (EditorMarkupModel)editor.getMarkupModel();
           PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-          TrafficLightRenderer.setOrRefreshErrorStripeRenderer(markupModel, myProject, editor.getDocument(), file);
+          ErrorStripeUpdateManager.getInstance(myProject).setOrRefreshErrorStripeRenderer(markupModel, file);
         }
       }, ModalityState.stateForComponent(editor.getComponent()), myProject.getDisposed());
     }

@@ -23,7 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -65,7 +65,7 @@ public class UnimplementInterfaceAction implements IntentionAction {
     if (referenceElement == null) return false;
 
     final PsiElement target = referenceElement.resolve();
-    if (target == null || !(target instanceof PsiClass)) return false;
+    if (!(target instanceof PsiClass)) return false;
 
     PsiClass targetClass = (PsiClass)target;
     if (targetClass.isInterface()) {
@@ -107,7 +107,7 @@ public class UnimplementInterfaceAction implements IntentionAction {
     if (element == null) return;
 
     final PsiElement target = element.resolve();
-    if (target == null || !(target instanceof PsiClass)) return;
+    if (!(target instanceof PsiClass)) return;
 
     PsiClass targetClass = (PsiClass)target;
 

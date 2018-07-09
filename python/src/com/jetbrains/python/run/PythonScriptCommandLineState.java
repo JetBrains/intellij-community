@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.run;
 
-import com.google.common.collect.Lists;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -23,39 +22,45 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.ParamsGroup;
-import com.intellij.execution.console.ConsoleExecuteAction;
 import com.intellij.execution.executors.DefaultDebugExecutor;
+import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.filters.Filter;
+import com.intellij.execution.filters.OpenFileHyperlinkInfo;
 import com.intellij.execution.filters.UrlFilter;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathMapper;
 import com.intellij.util.io.BaseDataReader;
 import com.intellij.util.io.BaseOutputReader;
-import com.jetbrains.python.PythonHelper;
-import com.jetbrains.python.console.*;
-import com.jetbrains.python.console.actions.ShowVarsAction;
+import com.jetbrains.python.actions.PyExecuteSelectionAction;
+import com.jetbrains.python.console.PyConsoleOptions;
+import com.jetbrains.python.console.PydevConsoleRunner;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.io.File;
 import java.util.Map;
-
-import static com.intellij.execution.runners.AbstractConsoleRunnerWithHistory.registerActionShortcuts;
 
 /**
  * @author yole
  */
 public class PythonScriptCommandLineState extends PythonCommandLineState {
+  private static final String INPUT_FILE_MESSAGE = "Input is being redirected from ";
   private final PythonRunConfiguration myConfig;
 
   public PythonScriptCommandLineState(PythonRunConfiguration runConfiguration, ExecutionEnvironment env) {
@@ -64,13 +69,18 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
   }
 
   @Override
+  @Nullable
   public ExecutionResult execute(Executor executor,
                                  PythonProcessStarter processStarter,
-                                 final CommandLinePatcher... patchers) throws ExecutionException {
+                                 CommandLinePatcher... patchers) throws ExecutionException {
     Project project = myConfig.getProject();
-    assert myConfig.getSdk() != null;
 
-    if (myConfig.showCommandLineAfterwards() && !myConfig.emulateTerminal()) {
+    if (myConfig.showCommandLineAfterwards() && !emulateTerminal()) {
+      if (executor.getId() != DefaultDebugExecutor.EXECUTOR_ID && executor.getId() != DefaultRunExecutor.EXECUTOR_ID) {
+        // disable "Show command line" for all executors except of Run and Debug, because it's useless
+        return super.execute(executor, processStarter, patchers);
+      }
+
       if (executor.getId() == DefaultDebugExecutor.EXECUTOR_ID) {
         return super.execute(executor, processStarter, ArrayUtil.append(patchers, new CommandLinePatcher() {
           @Override
@@ -80,30 +90,19 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
         }));
       }
 
-      Module module = myConfig.getModule();
-      PyConsoleOptions.PyConsoleSettings settingsProvider = PyConsoleOptions.getInstance(project).getPythonConsoleSettings();
-      PathMapper pathMapper = PydevConsoleRunner.getPathMapper(project, myConfig.getSdk(), settingsProvider);
-      String workingDir = PydevConsoleRunnerFactory.getWorkingDir(project, module, pathMapper, settingsProvider);
-      String[] setupFragment = PydevConsoleRunnerFactory.createSetupFragment(module, workingDir, pathMapper, settingsProvider);
-
-      PythonScriptWithConsoleRunner runner =
-        new PythonScriptWithConsoleRunner(project, myConfig.getSdk(), PyConsoleType.PYTHON, workingDir,
-                                          myConfig.getEnvs(), patchers,
-                                          settingsProvider,
-                                          setupFragment);
-      runner.setEnableAfterConnection(false);
-      runner.runSync();
-      // runner.getProcessHandler() would be null if execution error occurred
-      if (runner.getProcessHandler() == null) {
-        return null;
+      final String runFileText = buildScriptWithConsoleRun();
+      if (PyExecuteSelectionAction.canFindConsole(project, myConfig.getSdkHome())) {
+        // there are existing consoles, don't care about Rerun action
+        PyExecuteSelectionAction.selectConsoleAndExecuteCode(project, runFileText);
       }
-      runner.getPydevConsoleCommunication().setConsoleView(runner.getConsoleView());
-      List<AnAction> actions = Lists.newArrayList(createActions(runner.getConsoleView(), runner.getProcessHandler()));
-      actions.add(new ShowVarsAction(runner.getConsoleView(), runner.getPydevConsoleCommunication()));
+      else {
+        PyExecuteSelectionAction.startNewConsoleInstance(project, codeExecutor ->
+          PyExecuteSelectionAction.executeInConsole(codeExecutor, runFileText, null), runFileText, myConfig);
+      }
 
-      return new DefaultExecutionResult(runner.getConsoleView(), runner.getProcessHandler(), actions.toArray(new AnAction[actions.size()]));
+      return null;
     }
-    else if (myConfig.emulateTerminal()) {
+    else if (emulateTerminal()) {
       setRunWithPty(true);
 
       final ProcessHandler processHandler = startProcess(processStarter, patchers);
@@ -118,14 +117,66 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       return new DefaultExecutionResult(executeConsole, processHandler, AnAction.EMPTY_ARRAY);
     }
     else {
-      return super.execute(executor, processStarter, patchers);
+      ExecutionResult executionResult = super.execute(executor, processStarter, patchers);
+      if (myConfig.isRedirectInput()) {
+        addInputRedirectionMessage(project, executionResult);
+      }
+      return executionResult;
     }
+  }
+
+  private void addInputRedirectionMessage(@NotNull Project project, @NotNull ExecutionResult executionResult) {
+    final String filePath = FileUtil.toSystemDependentName(new File(myConfig.getInputFile()).getAbsolutePath());
+    final ProcessHandler processHandler = executionResult.getProcessHandler();
+    processHandler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void startNotified(@NotNull ProcessEvent event) {
+        processHandler.notifyTextAvailable(INPUT_FILE_MESSAGE + filePath + "\n", ProcessOutputTypes.SYSTEM);
+      }
+
+      @Override
+      public void processTerminated(@NotNull ProcessEvent event) {
+        processHandler.removeProcessListener(this);
+      }
+    });
+
+    final ExecutionConsole console = executionResult.getExecutionConsole();
+    if (console instanceof ConsoleView) {
+      ((ConsoleView)console).addMessageFilter(new Filter() {
+        @Nullable
+        @Override
+        public Result applyFilter(String line, int entireLength) {
+          int position = line.indexOf(INPUT_FILE_MESSAGE);
+          if (position >= 0) {
+            VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(filePath));
+            if (file == null) {
+              return null;
+            }
+            return new Result(entireLength - filePath.length() - 1, entireLength, new OpenFileHyperlinkInfo(new OpenFileDescriptor(project, file)));
+          }
+          return null;
+        }
+      });
+    }
+  }
+
+  /**
+   * {@link PythonRunConfiguration#emulateTerminal()} setting might stick from
+   * the Python Run configuration with a local interpreter used and running
+   * configuration with an interpreter later changed to the remote will fail
+   * with <cite>Works currently only with OSProcessHandler</cite> error.
+   *
+   * @return effective emulate terminal configuration option
+   * @see com.intellij.terminal.ProcessHandlerTtyConnector
+   */
+  private boolean emulateTerminal() {
+    return myConfig.emulateTerminal() && !PySdkUtil.isRemote(getSdk());
   }
 
   @Override
   public void customizeEnvironmentVars(Map<String, String> envs, boolean passParentEnvs) {
     super.customizeEnvironmentVars(envs, passParentEnvs);
-    if (myConfig.emulateTerminal()) {
+    if (emulateTerminal()) {
       if (!SystemInfo.isWindows) {
         envs.put("TERM", "xterm-256color");
       }
@@ -134,7 +185,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
 
   @Override
   protected ProcessHandler doCreateProcess(GeneralCommandLine commandLine) throws ExecutionException {
-    if (myConfig.emulateTerminal()) {
+    if (emulateTerminal()) {
       return new OSProcessHandler(commandLine) {
         @NotNull
         @Override
@@ -170,15 +221,20 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     assert exeOptions != null;
     exeOptions.addParametersString(myConfig.getInterpreterOptions());
 
-    if (myConfig.isModuleMode()) {
-      exeOptions.addParameter("-m");
-    }
-
     ParamsGroup scriptParameters = parametersList.getParamsGroup(GROUP_SCRIPT);
     assert scriptParameters != null;
 
-    if (!StringUtil.isEmptyOrSpaces(myConfig.getScriptName())) {
-      scriptParameters.addParameter(myConfig.getScriptName());
+    if (myConfig.isModuleMode()) {
+      ParamsGroup moduleParameters = parametersList.getParamsGroup(GROUP_MODULE);
+      assert moduleParameters != null;
+
+      moduleParameters.addParameter(MODULE_PARAMETER);
+      moduleParameters.addParameters(myConfig.getScriptName());
+    }
+    else {
+      if (!StringUtil.isEmptyOrSpaces(myConfig.getScriptName())) {
+        scriptParameters.addParameter(myConfig.getScriptName());
+      }
     }
 
     final String scriptOptionsString = myConfig.getScriptParameters();
@@ -187,58 +243,55 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
     if (!StringUtil.isEmptyOrSpaces(myConfig.getWorkingDirectory())) {
       commandLine.setWorkDirectory(myConfig.getWorkingDirectory());
     }
+    String inputFile = myConfig.getInputFile();
+    if (myConfig.isRedirectInput() && !StringUtil.isEmptyOrSpaces(inputFile)) {
+      commandLine.withInput(new File(inputFile));
+    }
   }
 
-  /**
-   * @author traff
-   */
-  public class PythonScriptWithConsoleRunner extends PydevConsoleRunnerImpl {
+  private static String escape(String s) {
+    return StringUtil.escapeCharCharacters(s);
+  }
 
-    private CommandLinePatcher[] myPatchers;
-    private String PYDEV_RUN_IN_CONSOLE_PY = "pydev/pydev_run_in_console.py";
-
-    public PythonScriptWithConsoleRunner(@NotNull Project project,
-                                         @NotNull Sdk sdk,
-                                         @NotNull PyConsoleType consoleType,
-                                         @Nullable String workingDir,
-                                         Map<String, String> environmentVariables,
-                                         CommandLinePatcher[] patchers,
-                                         PyConsoleOptions.PyConsoleSettings consoleSettings,
-                                         String... statementsToExecute) {
-      super(project, sdk, consoleType, workingDir, environmentVariables, consoleSettings, (s) -> {
-      }, statementsToExecute);
-      myPatchers = patchers;
+  private String buildScriptWithConsoleRun() {
+    StringBuilder sb = new StringBuilder();
+    final Map<String, String> configEnvs = myConfig.getEnvs();
+    configEnvs.remove(PythonEnvUtil.PYTHONUNBUFFERED);
+    if (configEnvs.size() > 0) {
+      sb.append("import os\n");
+      for (Map.Entry<String, String> entry : configEnvs.entrySet()) {
+        sb.append("os.environ['").append(escape(entry.getKey())).append("'] = '").append(escape(entry.getValue())).append("'\n");
+      }
     }
 
-    @Override
-    protected void createContentDescriptorAndActions() {
-      AnAction a = new ConsoleExecuteAction(super.getConsoleView(), myConsoleExecuteActionHandler,
-                                            myConsoleExecuteActionHandler.getEmptyExecuteAction(), myConsoleExecuteActionHandler);
-      registerActionShortcuts(Lists.newArrayList(a), getConsoleView().getConsoleEditor().getComponent());
+    final Project project = myConfig.getProject();
+    final Sdk sdk = myConfig.getSdk();
+    final PathMapper pathMapper =
+      PydevConsoleRunner.getPathMapper(project, sdk, PyConsoleOptions.getInstance(project).getPythonConsoleSettings());
+
+    String scriptPath = myConfig.getScriptName();
+    String workingDir = myConfig.getWorkingDirectory();
+    if (PySdkUtil.isRemote(sdk) && pathMapper != null) {
+      scriptPath = pathMapper.convertToRemote(scriptPath);
+      workingDir = pathMapper.convertToRemote(workingDir);
     }
 
-    @Override
-    protected String getRunnerFileFromHelpers() {
-      return PYDEV_RUN_IN_CONSOLE_PY;
+    sb.append("runfile('").append(escape(scriptPath)).append("'");
+
+    String scriptParameters = myConfig.getScriptParameters();
+    if (!scriptParameters.isEmpty()) {
+      sb.append(", args='").append(escape(scriptParameters)).append("'");
     }
 
-    @Override
-    protected GeneralCommandLine createCommandLine(@NotNull Sdk sdk,
-                                                   @NotNull Map<String, String> environmentVariables,
-                                                   String workingDir, int[] ports) {
-      GeneralCommandLine consoleCmdLine = doCreateConsoleCmdLine(sdk, environmentVariables, workingDir, ports, PythonHelper.RUN_IN_CONSOLE);
-
-      final GeneralCommandLine cmd = generateCommandLine(myPatchers);
-
-      ParamsGroup group = consoleCmdLine.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
-      assert group != null;
-      group.addParameters(cmd.getParametersList().getList());
-
-      PythonEnvUtil.mergePythonPath(consoleCmdLine.getEnvironment(), cmd.getEnvironment());
-
-      consoleCmdLine.getEnvironment().putAll(cmd.getEnvironment());
-
-      return consoleCmdLine;
+    if (!workingDir.isEmpty()) {
+      sb.append(", wdir='").append(escape(workingDir)).append("'");
     }
+
+    if (myConfig.isModuleMode()) {
+      sb.append(", is_module=True");
+    }
+
+    sb.append(")");
+    return sb.toString();
   }
 }

@@ -63,7 +63,7 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
     Processor<NavigationItem> processor = Processors.cancelableCollectProcessor(result);
     processElementsWithName(name, processor, FindSymbolParameters.wrap(pattern, project, includeNonProjectItems));
 
-    return result.isEmpty() ? NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY : result.toArray(new NavigationItem[result.size()]);
+    return result.isEmpty() ? NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY : result.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
   }
 
   @Override

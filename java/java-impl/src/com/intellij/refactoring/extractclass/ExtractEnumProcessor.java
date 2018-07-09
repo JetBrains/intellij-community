@@ -69,7 +69,7 @@ public class ExtractEnumProcessor {
           }
         }
         resolvableConflicts.addAll(0, usageInfos);
-        refUsages.set(resolvableConflicts.toArray(new UsageInfo[resolvableConflicts.size()]));
+        refUsages.set(resolvableConflicts.toArray(UsageInfo.EMPTY_ARRAY));
       }
     }
   }
@@ -162,7 +162,7 @@ public class ExtractEnumProcessor {
           migrationInfos.add(((EnumTypeMigrationUsageInfo)usageInfo).getUsageInfo());
         }
       }
-      myTypeMigrationProcessor.performRefactoring(migrationInfos.toArray(new UsageInfo[migrationInfos.size()]));
+      myTypeMigrationProcessor.performRefactoring(migrationInfos.toArray(UsageInfo.EMPTY_ARRAY));
     }
   }
 

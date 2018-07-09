@@ -85,7 +85,7 @@ class LookupPreview {
       FList<TextRange> fragments = LookupCellRenderer.getMatchingFragments(prefix, itemText);
       if (fragments != null && !fragments.isEmpty()) {
         List<TextRange> list = ContainerUtil.newArrayList(fragments);
-        return itemText.substring(list.get(list.size() - 1).getEndOffset(), itemText.length());
+        return itemText.substring(list.get(list.size() - 1).getEndOffset());
       }
     }
     return "";

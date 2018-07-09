@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A pointer to a PSI element which can survive PSI reparse.
  *
- * @see com.intellij.psi.SmartPointerManager#createSmartPsiElementPointer(PsiElement)
+ * @see SmartPointerManager#createSmartPsiElementPointer(PsiElement)
  */
 public interface SmartPsiElementPointer<E extends PsiElement> {
   /**

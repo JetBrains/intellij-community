@@ -4,6 +4,7 @@ package com.intellij.codeInsight.template.postfix.settings;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.intention.impl.config.ActionUsagePanel;
+import com.intellij.codeInsight.intention.impl.config.BeforeAfterMetaData;
 import com.intellij.codeInsight.intention.impl.config.PlainTextDescriptor;
 import com.intellij.codeInsight.intention.impl.config.TextDescriptor;
 import com.intellij.openapi.Disposable;
@@ -38,7 +39,7 @@ class PostfixDescriptionPanel implements Disposable {
     initializeExamplePanel(myBeforePanel);
   }
 
-  public void reset(@NotNull PostfixTemplateMetaData actionMetaData) {
+  public void reset(@NotNull BeforeAfterMetaData actionMetaData) {
     boolean isEmpty = actionMetaData == PostfixTemplateMetaData.EMPTY_METADATA;
     readHtml(actionMetaData, isEmpty);
     showUsages(myBeforePanel, isEmpty
@@ -51,7 +52,7 @@ class PostfixDescriptionPanel implements Disposable {
                              : ArrayUtil.getFirstElement(actionMetaData.getExampleUsagesAfter()));
   }
 
-  private void readHtml(@NotNull PostfixTemplateMetaData actionMetaData, boolean isEmpty) {
+  private void readHtml(@NotNull BeforeAfterMetaData actionMetaData, boolean isEmpty) {
     final HintHint hintHint = new HintHint(myDescriptionBrowser, new Point(0, 0));
     hintHint.setFont(UIUtil.getLabelFont());
     String description = isEmpty ? CodeInsightBundle.message("templates.postfix.settings.category.text")
@@ -111,7 +112,8 @@ class PostfixDescriptionPanel implements Disposable {
 
   public void resetHeights(int preferredWidth) {
     //adjust vertical dimension to be equal for all three panels
-    double height = (myDescriptionBrowser.getSize().getHeight() + myBeforePanel.getSize().getHeight() + myAfterPanel.getSize().getHeight()) / 3;
+    double height =
+      (myDescriptionBrowser.getSize().getHeight() + myBeforePanel.getSize().getHeight() + myAfterPanel.getSize().getHeight()) / 3;
     if (height == 0) return;
     final Dimension newd = new Dimension(preferredWidth, (int)height);
     myDescriptionBrowser.setSize(newd);

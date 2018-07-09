@@ -1,33 +1,21 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.debugger
 
 import com.intellij.concurrency.ConcurrentCollectionFactory
-import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.EventDispatcher
 import com.intellij.util.SmartList
 import com.intellij.util.Url
 import com.intellij.util.containers.ContainerUtil
 import gnu.trove.TObjectHashingStrategy
-import org.jetbrains.concurrency.*
+import org.jetbrains.concurrency.Promise
+import org.jetbrains.concurrency.all
+import org.jetbrains.concurrency.nullPromise
+import org.jetbrains.concurrency.rejectedPromise
 import java.util.concurrent.ConcurrentMap
 
 abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager {
-  override val breakpoints = ContainerUtil.newConcurrentSet<T>()
+  override val breakpoints: MutableSet<T> = ContainerUtil.newConcurrentSet<T>()
 
   protected val breakpointDuplicationByTarget: ConcurrentMap<T, T> = ConcurrentCollectionFactory.createMap<T, T>(object : TObjectHashingStrategy<T> {
     override fun computeHashCode(b: T): Int {
@@ -40,7 +28,12 @@ abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager 
       return result
     }
 
-    override fun equals(b1: T, b2: T) = b1.target.javaClass == b2.target.javaClass && b1.target == b2.target && b1.line == b2.line && b1.column == b2.column && StringUtil.equals(b1.condition, b2.condition)
+    override fun equals(b1: T, b2: T) =
+      b1.target.javaClass == b2.target.javaClass &&
+      b1.target == b2.target &&
+      b1.line == b2.line &&
+      b1.column == b2.column &&
+      StringUtil.equals(b1.condition, b2.condition)
   })
 
   protected val dispatcher: EventDispatcher<BreakpointListener> = EventDispatcher.create(BreakpointListener::class.java)
@@ -49,24 +42,22 @@ abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager 
 
   protected abstract fun doSetBreakpoint(target: BreakpointTarget, url: Url?, breakpoint: T): Promise<out Breakpoint>
 
-  override fun setBreakpoint(target: BreakpointTarget, line: Int, column: Int, url: Url?, condition: String?, ignoreCount: Int, enabled: Boolean, promiseRef: Ref<Promise<out Breakpoint>>?): Breakpoint {
-    val breakpoint = createBreakpoint(target, line, column, condition, ignoreCount, enabled)
+  override fun setBreakpoint(target: BreakpointTarget,
+                             line: Int,
+                             column: Int,
+                             url: Url?,
+                             condition: String?,
+                             ignoreCount: Int): BreakpointManager.SetBreakpointResult {
+    val breakpoint = createBreakpoint(target, line, column, condition, ignoreCount, true)
     val existingBreakpoint = breakpointDuplicationByTarget.putIfAbsent(breakpoint, breakpoint)
     if (existingBreakpoint != null) {
-      promiseRef?.set(resolvedPromise(breakpoint))
-      return existingBreakpoint
+      return BreakpointManager.BreakpointExist(existingBreakpoint)
     }
 
     breakpoints.add(breakpoint)
-    if (enabled) {
-      val promise = doSetBreakpoint(target, url, breakpoint)
-        .rejected { dispatcher.multicaster.errorOccurred(breakpoint, it.message ?: it.toString()) }
-      promiseRef?.set(promise)
-    }
-    else {
-      promiseRef?.set(resolvedPromise(breakpoint))
-    }
-    return breakpoint
+    val promise = doSetBreakpoint(target, url, breakpoint)
+      .onError { dispatcher.multicaster.errorOccurred(breakpoint, it.message ?: it.toString()) }
+    return BreakpointManager.BreakpointCreated(breakpoint, promise)
   }
 
   override final fun remove(breakpoint: Breakpoint): Promise<*> {
@@ -89,7 +80,7 @@ abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager 
         promises.add(doClearBreakpoint(b))
       }
     }
-    return all(promises)
+    return promises.all()
   }
 
   protected abstract fun doClearBreakpoint(breakpoint: T): Promise<*>
@@ -105,27 +96,39 @@ abstract class BreakpointManagerBase<T : BreakpointBase<*>> : BreakpointManager 
   }
 
   @Suppress("UNCHECKED_CAST")
-  override fun flush(breakpoint: Breakpoint) = (breakpoint as T).flush(this)
+  override fun flush(breakpoint: Breakpoint): Promise<*> = (breakpoint as T).flush(this)
 
   override fun enableBreakpoints(enabled: Boolean): Promise<*> = rejectedPromise<Any?>("Unsupported")
+
+  override fun setBreakOnFirstStatement() {
+  }
+
+  override fun isBreakOnFirstStatement(context: SuspendContext<*>): Boolean = false
 }
 
+// used in goland
+@Suppress("unused")
 class DummyBreakpointManager : BreakpointManager {
   override val breakpoints: Iterable<Breakpoint>
     get() = emptyList()
 
-  override fun setBreakpoint(target: BreakpointTarget, line: Int, column: Int, url: Url?, condition: String?, ignoreCount: Int, enabled: Boolean, promiseRef: Ref<Promise<out Breakpoint>>?): Breakpoint {
+  override fun setBreakpoint(target: BreakpointTarget, line: Int, column: Int, url: Url?, condition: String?, ignoreCount: Int): BreakpointManager.SetBreakpointResult {
     throw UnsupportedOperationException()
   }
 
-  override fun remove(breakpoint: Breakpoint) = nullPromise()
+  override fun remove(breakpoint: Breakpoint): Promise<*> = nullPromise()
 
   override fun addBreakpointListener(listener: BreakpointListener) {
   }
 
-  override fun removeAll() = nullPromise()
+  override fun removeAll(): Promise<*> = nullPromise()
 
-  override fun flush(breakpoint: Breakpoint) = nullPromise()
+  override fun flush(breakpoint: Breakpoint): Promise<*> = nullPromise()
 
-  override fun enableBreakpoints(enabled: Boolean) = nullPromise()
+  override fun enableBreakpoints(enabled: Boolean): Promise<*> = nullPromise()
+
+  override fun setBreakOnFirstStatement() {
+  }
+
+  override fun isBreakOnFirstStatement(context: SuspendContext<*>): Boolean = false
 }

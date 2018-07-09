@@ -152,8 +152,8 @@ public class GitRebaseEditorService {
    * @param editorNo the editor number
    */
   public void configureHandler(GitLineHandler h, @NotNull UUID editorNo) {
-    h.setEnvironment(GitCommand.GIT_EDITOR_ENV, getEditorCommand());
-    h.setEnvironment(GitRebaseEditorMain.IDEA_REBASE_HANDER_NO, editorNo.toString());
+    h.addCustomEnvironmentVariable(GitCommand.GIT_EDITOR_ENV, getEditorCommand());
+    h.addCustomEnvironmentVariable(GitRebaseEditorMain.IDEA_REBASE_HANDER_NO, editorNo.toString());
   }
 
 

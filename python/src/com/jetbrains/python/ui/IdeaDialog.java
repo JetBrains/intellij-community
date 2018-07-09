@@ -27,7 +27,6 @@ import java.awt.event.ActionListener;
 
 /**
  * @author Alexei Orischenko
- *         Date: Nov 30, 2009
  */
 public abstract class IdeaDialog extends DialogWrapper {
 

@@ -6,6 +6,8 @@ import com.jetbrains.python.psi.PyParameter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Predicate;
+
 /**
  * @author vlan
  */
@@ -36,13 +38,8 @@ public interface PyCallableParameter {
 
   boolean hasDefaultValue();
 
-  /**
-   * @apiNote This method will be marked as abstract in 2018.2.
-   */
   @Nullable
-  default String getDefaultValueText() {
-    return null;
-  }
+  String getDefaultValueText();
 
   boolean isPositionalContainer();
 
@@ -69,6 +66,20 @@ public interface PyCallableParameter {
    */
   @NotNull
   String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context);
+
+  /**
+   * @param includeDefaultValue if true, include the default value after an "=".
+   * @param context             context to be used to resolve argument type
+   * @param typeFilter          predicate to be used to ignore resolved argument type
+   * @return canonical representation of parameter.
+   * Includes asterisks for *param and **param.
+   * Also includes argument type if {@code context} is not null and filter returns `false` for it.
+   * @apiNote This method will be marked as abstract in 2018.3.
+   */
+  @NotNull
+  default String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context, @NotNull Predicate<PyType> typeFilter) {
+    return getPresentableText(includeDefaultValue, context);
+  }
 
   /**
    * @param context context to be used to resolve argument type

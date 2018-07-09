@@ -22,6 +22,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import com.intellij.util.TripleFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,8 @@ public final class CompilerMessageImpl implements CompilerMessage {
   private final VirtualFile myFile;
   private final int myRow;
   private final int myColumn;
+  @NotNull
+  private TripleFunction<CompilerMessage, Integer, Integer, Integer> myColumnAdjuster = (msg, line, col) -> col;
 
   public CompilerMessageImpl(Project project, CompilerMessageCategory category, String message) {
     this(project, category, message, null, -1, -1, null);
@@ -55,6 +58,10 @@ public final class CompilerMessageImpl implements CompilerMessage {
     myFile = file;
   }
 
+  public void setColumnAdjuster(@NotNull TripleFunction<CompilerMessage, Integer, Integer, Integer> columnAdjuster) {
+    myColumnAdjuster = columnAdjuster;
+  }
+
   @NotNull
   @Override
   public CompilerMessageCategory getCategory() {
@@ -72,10 +79,10 @@ public final class CompilerMessageImpl implements CompilerMessage {
       return myNavigatable;
     }
     final VirtualFile virtualFile = getVirtualFile();
-    if (virtualFile != null && virtualFile.isValid()) {
+    if (virtualFile != null && virtualFile.isValid() && !virtualFile.getFileType().isBinary()) {
       final int line = getLine() - 1; // editor lines are zero-based
       if (line >= 0) {
-        return myNavigatable = new OpenFileDescriptor(myProject, virtualFile, line, Math.max(0, getColumn()-1));
+        return myNavigatable = new OpenFileDescriptor(myProject, virtualFile, line, myColumnAdjuster.fun(this, line, Math.max(0, getColumn()-1))) ;
       }
     }
     return null;

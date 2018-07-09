@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -26,53 +25,44 @@ import org.jetbrains.annotations.NotNull;
 class HardElementInfo extends SmartPointerElementInfo {
   @NotNull
   private final PsiElement myElement;
-  @NotNull
-  private final Project myProject;
 
-  public HardElementInfo(@NotNull Project project, @NotNull PsiElement element) {
+  HardElementInfo(@NotNull PsiElement element) {
     myElement = element;
-    myProject = project;
   }
 
   @Override
-  public PsiElement restoreElement() {
+  PsiElement restoreElement(@NotNull SmartPointerManagerImpl manager) {
     return myElement;
   }
 
   @Override
-  public PsiFile restoreFile() {
+  PsiFile restoreFile(@NotNull SmartPointerManagerImpl manager) {
     return myElement.isValid() ? myElement.getContainingFile() : null;
   }
 
   @Override
-  public int elementHashCode() {
+  int elementHashCode() {
     return myElement.hashCode();
   }
 
   @Override
-  public boolean pointsToTheSameElementAs(@NotNull final SmartPointerElementInfo other) {
+  boolean pointsToTheSameElementAs(@NotNull final SmartPointerElementInfo other, @NotNull SmartPointerManagerImpl manager) {
     return other instanceof HardElementInfo && myElement.equals(((HardElementInfo)other).myElement);
   }
 
   @Override
-  public VirtualFile getVirtualFile() {
+  VirtualFile getVirtualFile() {
     return PsiUtilCore.getVirtualFile(myElement);
   }
 
   @Override
-  public Segment getRange() {
+  Segment getRange(@NotNull SmartPointerManagerImpl manager) {
     return myElement.getTextRange();
   }
 
   @Override
-  public Segment getPsiRange() {
-    return getRange();
-  }
-
-  @NotNull
-  @Override
-  public Project getProject() {
-    return myProject;
+  Segment getPsiRange(@NotNull SmartPointerManagerImpl manager) {
+    return getRange(manager);
   }
 
   @Override

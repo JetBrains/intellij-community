@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.editor;
 
 import com.intellij.codeInsight.editorActions.StringLiteralCopyPasteProcessor;
@@ -36,6 +22,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.GroovyStringLiteralManipulator;
 
 /**
  * @author peter
@@ -61,7 +48,19 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
   @Nullable
   @Override
   protected TextRange getEscapedRange(@NotNull PsiElement token) {
-    return isStringLiteral(token) ? token.getTextRange() : null; // TODO: calculate correct ranges for different types of literals
+    final ASTNode node = token.getNode();
+    if (node == null) return null;
+
+    final IElementType tokenType = node.getElementType();
+    if (tokenType == GroovyTokenTypes.mSTRING_LITERAL || tokenType == GroovyTokenTypes.mGSTRING_LITERAL) {
+      final String text = token.getText();
+      if (text == null) return null;
+      return GroovyStringLiteralManipulator.getLiteralRange(text).shiftRight(node.getStartOffset());
+    }
+    if (tokenType == GroovyTokenTypes.mREGEX_CONTENT) {
+      return token.getTextRange();
+    }
+    return null;
   }
 
   @Override

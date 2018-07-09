@@ -24,7 +24,6 @@
 
     <projectService serviceInterface="org.intellij.images.search.ImageTagManager"
                     serviceImplementation="org.intellij.images.search.ImageTagManager"/>
-    <statistics.usagesCollector implementation="org.intellij.images.statistics.BackgroundImagesUsageCollector"/>
   </extensions>
 
   <actions>
@@ -84,6 +83,10 @@
         <keyboard-shortcut first-keystroke="control DIVIDE" keymap="$default"/>
         <keyboard-shortcut first-keystroke="control SLASH" keymap="$default"/>
       </action>
+      <action class="org.intellij.images.editor.actions.FitZoomToWindowAction"
+              id="Images.Editor.FitZoomToWindow"
+              icon="AllIcons.Graph.FitContent"
+              text="Fit Zoom to Window"/>
       <reference id="ShowColorPicker" />
     </group>
     <group id="Images.EditorPopupMenu">

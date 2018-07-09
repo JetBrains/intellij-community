@@ -68,7 +68,7 @@ public class ParameterCanBeLocalInspection extends ParameterCanBeLocalInspection
           if (psiParameter == parameter) continue;
           info.add(new ParameterInfoImpl(i, psiParameter.getName(), psiParameter.getType()));
         }
-        final ParameterInfoImpl[] newParams = info.toArray(new ParameterInfoImpl[info.size()]);
+        final ParameterInfoImpl[] newParams = info.toArray(new ParameterInfoImpl[0]);
         final String visibilityModifier = VisibilityUtil.getVisibilityModifier(method.getModifierList());
         final PsiType returnType = method.getReturnType();
         final JavaChangeInfo changeInfo = new JavaChangeInfoImpl(visibilityModifier, method, method.getName(),

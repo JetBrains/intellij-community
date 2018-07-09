@@ -21,6 +21,8 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +39,12 @@ public interface RunContentManager {
   Topic<RunContentWithExecutorListener> TOPIC =
     Topic.create("Run Content", RunContentWithExecutorListener.class);
 
+  static RunContentManager getInstance(Project project) {
+    return ServiceManager.getService(project, RunContentManager.class);
+  }
+
   /** @deprecated Use {@link LangDataKeys#RUN_CONTENT_DESCRIPTOR} instead (to be removed in IDEA 16) */
-  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated @SuppressWarnings("UnusedDeclaration")
   DataKey<RunContentDescriptor> RUN_CONTENT_DESCRIPTOR = LangDataKeys.RUN_CONTENT_DESCRIPTOR;
 
   /**
@@ -82,11 +88,11 @@ public interface RunContentManager {
 
   void hideRunContent(@NotNull Executor executor, RunContentDescriptor descriptor);
 
-  boolean removeRunContent(@NotNull Executor executor, RunContentDescriptor descriptor);
+  boolean removeRunContent(@NotNull Executor executor, @NotNull RunContentDescriptor descriptor);
 
-  void toFrontRunContent(Executor requestor, RunContentDescriptor descriptor);
+  void toFrontRunContent(@NotNull Executor requestor, @NotNull RunContentDescriptor descriptor);
 
-  void toFrontRunContent(Executor requestor, ProcessHandler handler);
+  void toFrontRunContent(@NotNull Executor requestor, @NotNull ProcessHandler handler);
 
   @Nullable
   ToolWindow getToolWindowByDescriptor(@NotNull RunContentDescriptor descriptor);

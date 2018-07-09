@@ -1,6 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
+import com.intellij.lang.java.beans.PropertyKind;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaSimplePropertyIndexKt;
@@ -96,7 +97,7 @@ public class PropertyUtil extends PropertyUtilBase {
     }
     else {
       @NonNls final String name = method.getName();
-      if (!name.startsWith("set")) {
+      if (!name.startsWith(SET_PREFIX)) {
         return null;
       }
       final PsiCodeBlock body = method.getBody();
@@ -187,43 +188,34 @@ public class PropertyUtil extends PropertyUtilBase {
       return null;
     }
     final String methodName = propertyMethod.getName();
-    final String prefix;
-    if (methodName.startsWith("get")) {
-      prefix = "get";
-    }
-    else if (methodName.startsWith(IS_PREFIX)) {
-      prefix = IS_PREFIX;
-    }
-    else if (methodName.startsWith("set")) {
-      prefix = "set";
-    }
-    else {
+    final PropertyKind kind = getPropertyKind(propertyMethod.getName());
+    if (kind == null) {
       return null;
     }
-    final String name = methodName.substring(prefix.length());
-    final PsiField field = prefix.equals("set") ? getFieldOfSetter(propertyMethod) : getFieldOfGetter(propertyMethod);
+    final String name = methodName.substring(kind.prefix.length());
+    final PsiField field = kind == PropertyKind.SETTER ? getFieldOfSetter(propertyMethod) : getFieldOfGetter(propertyMethod);
     if (field == null) {
       return null;
     }
-    if (prefix.equals("set")) {
-      final PsiMethod result = findPropertyMethod(aClass, "get", name, field);
+    if (kind == PropertyKind.SETTER) {
+      final PsiMethod result = findPropertyMethod(aClass, PropertyKind.GETTER, name, field);
       if (result != null) {
         return result;
       }
-      return findPropertyMethod(aClass, IS_PREFIX, name, field);
+      return findPropertyMethod(aClass, PropertyKind.BOOLEAN_GETTER, name, field);
     }
     else {
-      return findPropertyMethod(aClass, "set", name, field);
+      return findPropertyMethod(aClass, PropertyKind.SETTER, name, field);
     }
   }
 
   private static PsiMethod findPropertyMethod(@NotNull PsiClass aClass,
-                                              @NotNull String prefix,
+                                              @NotNull PropertyKind kind,
                                               @NotNull String propertyName,
                                               @NotNull PsiField field1) {
-    final PsiMethod[] methods = aClass.findMethodsByName(prefix + propertyName, true);
+    final PsiMethod[] methods = aClass.findMethodsByName(kind.prefix + propertyName, true);
     for (PsiMethod method : methods) {
-      final PsiField field2 = prefix.equals("set") ? getFieldOfSetter(method) : getFieldOfGetter(method);
+      final PsiField field2 = kind == PropertyKind.SETTER ? getFieldOfSetter(method) : getFieldOfGetter(method);
       if (field1.equals(field2)) {
         return method;
       }

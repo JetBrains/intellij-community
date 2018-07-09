@@ -37,12 +37,19 @@ public interface ParameterInfoHandler <ParameterOwner, ParameterType> {
   void updateUI(ParameterType p, @NotNull ParameterInfoUIContext context);
 
   default boolean supportsOverloadSwitching() { return false; }
-  default void dispose() {}
+  default void dispose(@NotNull DeleteParameterInfoContext context) {}
+
+  default boolean isWhitespaceSensitive() {
+    return false;
+  }
 
   /** @deprecated not used */
+  @Deprecated
   default @Nullable Object[] getParametersForDocumentation(ParameterType p, ParameterInfoContext context) { return null; }
   /** @deprecated not used */
+  @Deprecated
   default @Nullable String getParameterCloseChars() { return null; }
   /** @deprecated not used */
+  @Deprecated
   default boolean tracksParameterIndex() { return false; }
 }

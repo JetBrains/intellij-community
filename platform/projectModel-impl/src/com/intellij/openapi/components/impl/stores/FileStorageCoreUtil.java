@@ -42,7 +42,7 @@ public class FileStorageCoreUtil {
   public static final String DEFAULT_EXT = ".xml";
 
   @NotNull
-  public static Map<String, Element> load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor, boolean intern) {
+  public static Map<String, Element> load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor) {
     if (pathMacroSubstitutor != null) {
       pathMacroSubstitutor.expandPaths(rootElement);
     }
@@ -79,11 +79,8 @@ public class FileStorageCoreUtil {
 
       // remove only after "getMacroNames" - some PathMacroFilter requires element name attribute
       element.removeAttribute(NAME);
-      if (intern) {
-        element = JDOMUtil.internElement(element);
-      }
 
-      map.put(name, element);
+      map.put(name, JDOMUtil.internElement(element));
     }
     return map;
   }

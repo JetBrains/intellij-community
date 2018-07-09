@@ -59,7 +59,6 @@ public abstract class EditorColorPalette {
     return (color.getRed() + color.getGreen() + color.getBlue()) / 3;
   }
 
-  @SuppressWarnings("unused")
   @Contract(pure = true)
   private static int getDefaultOrder(@NotNull Color color) { return 0; }
 

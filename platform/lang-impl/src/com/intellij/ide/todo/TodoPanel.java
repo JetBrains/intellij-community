@@ -1,30 +1,16 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.todo;
 
 import com.intellij.find.FindModel;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
-import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.ide.actions.NextOccurenceToolbarAction;
 import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.ide.todo.nodes.TodoFileNode;
 import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.todo.nodes.TodoTreeHelper;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -33,11 +19,11 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -88,6 +74,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   protected final TodoTreeBuilder myTodoTreeBuilder;
   private MyVisibilityWatcher myVisibilityWatcher;
   private UsagePreviewPanel myUsagePreviewPanel;
+  private MyAutoScrollToSourceHandler myAutoScrollToSourceHandler;
 
   /**
    * @param currentFileMode if {@code true} then view doesn't have "Group By Packages" and "Flatten Packages"
@@ -129,6 +116,9 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
 
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
+    group.addSeparator();
+    group.add(CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, this));
+    group.add(CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, this));
     group.addSeparator();
     group.add(ActionManager.getInstance().getAction(IdeActions.GROUP_VERSION_CONTROLS));
     PopupHandler.installPopupHandler(myTree, group, ActionPlaces.TODO_VIEW_POPUP, ActionManager.getInstance());
@@ -175,53 +165,66 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
 
     JPanel toolBarPanel = new JPanel(new GridLayout());
 
-    DefaultActionGroup leftGroup = new DefaultActionGroup();
-    leftGroup.add(new PreviousOccurenceToolbarAction(myOccurenceNavigator));
-    leftGroup.add(new NextOccurenceToolbarAction(myOccurenceNavigator));
-    leftGroup.add(new ContextHelpAction("find.todoList"));
-    toolBarPanel.add(
-      ActionManager.getInstance().createActionToolbar(ActionPlaces.TODO_VIEW_TOOLBAR, leftGroup, false).getComponent());
-
-    DefaultActionGroup rightGroup = new DefaultActionGroup();
-    AnAction expandAllAction = CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, this);
-    rightGroup.add(expandAllAction);
-
-    AnAction collapseAllAction = CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, this);
-    rightGroup.add(collapseAllAction);
+    DefaultActionGroup toolbarGroup = new DefaultActionGroup();
+    toolbarGroup.add(new PreviousOccurenceToolbarAction(myOccurenceNavigator));
+    toolbarGroup.add(new NextOccurenceToolbarAction(myOccurenceNavigator));
+    toolbarGroup.add(new SetTodoFilterAction(myProject, mySettings, todoFilter -> setTodoFilter(todoFilter)));
 
     if (!myCurrentFileMode) {
-      MyShowModulesAction showModulesAction = new MyShowModulesAction();
-      showModulesAction.registerCustomShortcutSet(
-        new CustomShortcutSet(
-          KeyStroke.getKeyStroke(KeyEvent.VK_M, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)),
-        myTree);
-      rightGroup.add(showModulesAction);
-      MyShowPackagesAction showPackagesAction = new MyShowPackagesAction();
-      showPackagesAction.registerCustomShortcutSet(
-        new CustomShortcutSet(
-          KeyStroke.getKeyStroke(KeyEvent.VK_P, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)),
-        myTree);
-      rightGroup.add(showPackagesAction);
-
-      MyFlattenPackagesAction flattenPackagesAction = new MyFlattenPackagesAction();
-      flattenPackagesAction.registerCustomShortcutSet(
-        new CustomShortcutSet(
-          KeyStroke.getKeyStroke(KeyEvent.VK_F, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)),
-        myTree);
-      rightGroup.add(flattenPackagesAction);
+      DefaultActionGroup groupBy = createGroupByActionGroup();
+      toolbarGroup.add(groupBy);
     }
 
-    MyAutoScrollToSourceHandler autoScrollToSourceHandler = new MyAutoScrollToSourceHandler();
-    autoScrollToSourceHandler.install(myTree);
-    rightGroup.add(autoScrollToSourceHandler.createToggleAction());
+    myAutoScrollToSourceHandler = new MyAutoScrollToSourceHandler();
+    myAutoScrollToSourceHandler.install(myTree);
 
-    SetTodoFilterAction setTodoFilterAction = new SetTodoFilterAction(myProject, mySettings, todoFilter -> setTodoFilter(todoFilter));
-    rightGroup.add(setTodoFilterAction);
-    rightGroup.add(new MyPreviewAction());
-    toolBarPanel.add(
-      ActionManager.getInstance().createActionToolbar(ActionPlaces.TODO_VIEW_TOOLBAR, rightGroup, false).getComponent());
+    toolbarGroup.add(new MyPreviewAction());
+    toolBarPanel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.TODO_VIEW_TOOLBAR, toolbarGroup, false).getComponent());
 
     setToolbar(toolBarPanel);
+  }
+
+  @NotNull
+  protected DefaultActionGroup createGroupByActionGroup() {
+    DefaultActionGroup groupBy = new DefaultActionGroup() {
+      {
+        getTemplatePresentation().setIcon(AllIcons.Actions.GroupBy);
+        getTemplatePresentation().setText("View Options");
+        setPopup(true);
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        JBPopupFactory.getInstance().createActionGroupPopup(null, this, e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true)
+                      .showUnderneathOf(e.getInputEvent().getComponent());
+      }
+    };
+
+    groupBy.addSeparator("Group by");
+    MyShowModulesAction showModulesAction = new MyShowModulesAction();
+    showModulesAction.registerCustomShortcutSet(
+      new CustomShortcutSet(
+        KeyStroke.getKeyStroke(KeyEvent.VK_M, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)),
+      myTree);
+    groupBy.add(showModulesAction);
+    MyShowPackagesAction showPackagesAction = new MyShowPackagesAction();
+    showPackagesAction.registerCustomShortcutSet(
+      new CustomShortcutSet(
+        KeyStroke.getKeyStroke(KeyEvent.VK_P, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)),
+      myTree);
+    groupBy.add(showPackagesAction);
+
+    MyFlattenPackagesAction flattenPackagesAction = new MyFlattenPackagesAction();
+    flattenPackagesAction.registerCustomShortcutSet(
+      new CustomShortcutSet(
+        KeyStroke.getKeyStroke(KeyEvent.VK_F, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)),
+      myTree);
+    groupBy.add(flattenPackagesAction);
+    return groupBy;
+  }
+
+  protected AnAction createAutoScrollToSourceAction() {
+    return myAutoScrollToSourceHandler.createToggleAction();
   }
 
   protected JComponent createCenterComponent() {
@@ -248,6 +251,11 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
           final RangeMarker rangeMarker = value.getRangeMarker();
           if (psiFile != null) {
             infos.add(new UsageInfo(psiFile, rangeMarker.getStartOffset(), rangeMarker.getEndOffset()));
+            for (RangeMarker additionalMarker: value.getAdditionalRangeMarkers()) {
+              if (additionalMarker.isValid()) {
+                infos.add(new UsageInfo(psiFile, additionalMarker.getStartOffset(), additionalMarker.getEndOffset()));
+              }
+            }
           }
         }
       }
@@ -353,9 +361,11 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
       }
       TodoItemNode pointer = myTodoTreeBuilder.getFirstPointerForElement(element);
       if (pointer != null) {
-        return new OpenFileDescriptor(myProject, pointer.getValue().getTodoItem().getFile().getVirtualFile(),
-          pointer.getValue().getRangeMarker().getStartOffset()
-        );
+        return PsiNavigationSupport.getInstance().createNavigatable(myProject,
+                                                                    pointer.getValue().getTodoItem().getFile()
+                                                                           .getVirtualFile(),
+                                                                    pointer.getValue().getRangeMarker()
+                                                                           .getStartOffset());
       }
       else {
         return null;
@@ -436,6 +446,10 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     }, 300);
   }
 
+  TreeExpander getTreeExpander() {
+    return myTreeExpander;
+  }
+  
   private final class MyTreeExpander implements TreeExpander {
     @Override
     public boolean canCollapse() {
@@ -542,8 +556,9 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
       if (pointer == null) return null;
       myTodoTreeBuilder.select(pointer);
       return new OccurenceInfo(
-        new OpenFileDescriptor(myProject, pointer.getValue().getTodoItem().getFile().getVirtualFile(),
-                               pointer.getValue().getRangeMarker().getStartOffset()),
+        PsiNavigationSupport.getInstance()
+                            .createNavigatable(myProject, pointer.getValue().getTodoItem().getFile().getVirtualFile(),
+                                               pointer.getValue().getRangeMarker().getStartOffset()),
         -1,
         -1
       );
@@ -617,7 +632,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
 
   private final class MyShowModulesAction extends ToggleAction {
     MyShowModulesAction() {
-      super(IdeBundle.message("action.group.by.modules"), null, AllIcons.ObjectBrowser.ShowModules);
+      super(IdeBundle.message("action.group.by.modules"), null, AllIcons.Actions.GroupByModule);
     }
 
     @Override
@@ -670,11 +685,6 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
 
     MyPreviewAction() {
       super("Preview Source", null, AllIcons.Actions.PreviewDetails);
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      super.update(e);
     }
 
     @Override

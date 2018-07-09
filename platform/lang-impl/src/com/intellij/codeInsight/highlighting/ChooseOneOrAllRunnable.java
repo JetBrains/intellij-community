@@ -19,21 +19,21 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Vector;
 
 public abstract class ChooseOneOrAllRunnable<T extends PsiElement> implements Runnable {
   private final T[] myClasses;
   private final Editor myEditor;
-  private JList myList;
+
   private final String myTitle;
 
   public ChooseOneOrAllRunnable(final List<T> classes, final Editor editor, final String title, Class<T> type) {
@@ -60,32 +60,29 @@ public abstract class ChooseOneOrAllRunnable<T extends PsiElement> implements Ru
         selected(myClasses);
         return;
       }
-      Vector<Object> model = new Vector<>(Arrays.asList(myClasses));
-      model.insertElementAt(CodeInsightBundle.message("highlight.thrown.exceptions.chooser.all.entry"), 0);
+      List<Object> model = new ArrayList<>(Arrays.asList(myClasses));
+      String selectAll = CodeInsightBundle.message("highlight.thrown.exceptions.chooser.all.entry");
+      model.add(0, selectAll);
 
-      myList = new JBList(model);
-      myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      myList.setCellRenderer(renderer);
-
-      final PopupChooserBuilder builder = new PopupChooserBuilder(myList);
+      final IPopupChooserBuilder builder = JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(model)
+        .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+        .setRenderer(renderer)
+        .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+        .setItemChosenCallback((selectedValue) -> {
+          if (selectedValue.equals(selectAll)) {
+            selected(myClasses);
+          }
+          else {
+            selected((T[])ArrayUtil.toObjectArray(selectedValue.getClass(), selectedValue));
+          }
+        })
+        .setTitle(myTitle);
       renderer.installSpeedSearch(builder);
 
-      final Runnable callback = () -> {
-        int idx = myList.getSelectedIndex();
-        if (idx < 0) return;
-        if (idx > 0) {
-          selected((T[])ArrayUtil.toObjectArray(myClasses[idx-1].getClass(), myClasses[idx-1]));
-        }
-        else {
-          selected(myClasses);
-        }
-      };
-
-      ApplicationManager.getApplication().invokeLater(() -> builder.
-        setTitle(myTitle).
-        setItemChoosenCallback(callback).
-        createPopup().
-        showInBestPositionFor(myEditor));
+      ApplicationManager.getApplication().invokeLater(() -> builder
+        .createPopup()
+        .showInBestPositionFor(myEditor));
     }
   }
 

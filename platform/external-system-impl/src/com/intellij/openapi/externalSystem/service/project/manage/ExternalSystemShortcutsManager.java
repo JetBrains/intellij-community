@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
@@ -43,7 +30,6 @@ public class ExternalSystemShortcutsManager implements Disposable {
   private static final String ACTION_ID_PREFIX = "ExternalSystem_";
   @NotNull
   private final Project myProject;
-  private ExternalSystemKeyMapListener myKeyMapListener;
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public ExternalSystemShortcutsManager(@NotNull Project project) {
@@ -51,7 +37,17 @@ public class ExternalSystemShortcutsManager implements Disposable {
   }
 
   public void init() {
-    myKeyMapListener = new ExternalSystemKeyMapListener();
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
+      @Override
+      public void activeKeymapChanged(Keymap keymap) {
+        fireShortcutsUpdated();
+      }
+
+      @Override
+      public void shortcutChanged(@NotNull Keymap keymap, @NotNull String actionId) {
+        fireShortcutsUpdated();
+      }
+    });
   }
 
   public String getActionId(@Nullable String projectPath, @Nullable String taskName) {
@@ -107,43 +103,6 @@ public class ExternalSystemShortcutsManager implements Disposable {
     void shortcutsUpdated();
   }
 
-  private class ExternalSystemKeyMapListener implements KeymapManagerListener, Keymap.Listener {
-    private Keymap myCurrentKeymap;
-
-    private ExternalSystemKeyMapListener() {
-      KeymapManager keymapManager = KeymapManager.getInstance();
-      if (keymapManager != null) {
-        listenTo(keymapManager.getActiveKeymap());
-        keymapManager.addKeymapManagerListener(this, ExternalSystemShortcutsManager.this);
-      }
-    }
-
-    @Override
-    public void activeKeymapChanged(Keymap keymap) {
-      listenTo(keymap);
-      fireShortcutsUpdated();
-    }
-
-    private void listenTo(Keymap keymap) {
-      if (myCurrentKeymap != null) {
-        myCurrentKeymap.removeShortcutChangeListener(this);
-      }
-      myCurrentKeymap = keymap;
-      if (myCurrentKeymap != null) {
-        myCurrentKeymap.addShortcutChangeListener(this);
-      }
-    }
-
-    @Override
-    public void onShortcutChanged(String actionId) {
-      fireShortcutsUpdated();
-    }
-
-    private void stopListen() {
-      listenTo(null);
-    }
-  }
-
   public void scheduleKeymapUpdate(Collection<DataNode<TaskData>> taskData) {
     ExternalSystemKeymapExtension.updateActions(myProject, taskData);
   }
@@ -154,9 +113,6 @@ public class ExternalSystemShortcutsManager implements Disposable {
 
   @Override
   public void dispose() {
-    if (myKeyMapListener != null) {
-      myKeyMapListener.stopListen();
-    }
     ExternalSystemKeymapExtension.clearActions(myProject);
   }
 }

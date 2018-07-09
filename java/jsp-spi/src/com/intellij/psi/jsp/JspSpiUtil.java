@@ -18,8 +18,10 @@ package com.intellij.psi.jsp;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,7 +54,11 @@ public abstract class JspSpiUtil {
 
   @Nullable
   private static JspSpiUtil getJspSpiUtil() {
-    return ServiceManager.getService(JspSpiUtil.class);
+    Ref<JspSpiUtil> result = Ref.create();
+    ProgressManager.getInstance().executeNonCancelableSection(() -> {
+      result.set(ServiceManager.getService(JspSpiUtil.class));
+    });
+    return result.get();
   }
 
   public static int escapeCharsInJspContext(JspFile file, int offset, String toEscape) throws IncorrectOperationException {

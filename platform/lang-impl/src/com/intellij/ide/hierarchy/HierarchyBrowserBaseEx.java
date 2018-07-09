@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
@@ -57,7 +59,10 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   public static final String SCOPE_TEST = IdeBundle.message("hierarchy.scope.test");
   public static final String SCOPE_CLASS = IdeBundle.message("hierarchy.scope.this.class");
 
-  private static final String HELP_ID = "reference.toolWindows.hierarchy";
+  public static final String HELP_ID = "reference.toolWindows.hierarchy";
+
+  /** @deprecated use {@link #getBuilderForType(String)} and {@link #getBuilders()} (to be removed in IDEA 2018) */
+  @Deprecated protected final Hashtable<String, HierarchyTreeBuilder> myBuilders = new Hashtable<>();
 
   private static final OccurenceNavigator EMPTY_NAVIGATOR = new OccurenceNavigator() {
     @Override
@@ -91,12 +96,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
   };
 
-  /** @deprecated use {@link #getBuilderForType(String)} and {@link #getBuilders()} (to be removed in IDEA 2018) */
-  @SuppressWarnings({"UseOfObsoleteCollectionType", "DeprecatedIsStillUsed"})
-  protected final Hashtable<String, HierarchyTreeBuilder> myBuilders = new Hashtable<>();
-
   /** @deprecated use {@link #getCurrentViewType()} (to be removed in IDEA 2018) */
-  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   protected String myCurrentViewType;
 
   private final Map<String, HierarchyTreeBuilder> myType2BuilderMap;
@@ -113,8 +114,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   public HierarchyBrowserBaseEx(@NotNull Project project, @NotNull PsiElement element) {
     super(project);
 
-    @SuppressWarnings("deprecation") Map<String, HierarchyTreeBuilder> mapView = myBuilders;
-    myType2BuilderMap = mapView;
+    myType2BuilderMap = new Hashtable<>();
 
     setHierarchyBase(element);
 
@@ -233,10 +233,9 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
         @Override
         public Color getFileColorFor(Object object) {
-          return ProjectViewTree.getColorForObject(object, myProject, toPsiConverter);
+          return ProjectViewTree.getColorForElement(toPsiConverter.fun(object));
         }
       };
-      HintUpdateSupply.installDataContextHintUpdateSupply(tree);
 
       if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
         DnDManager.getInstance().registerSource(new DnDSource() {
@@ -297,10 +296,11 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
         @Override
         public Color getFileColorFor(Object object) {
-          return ProjectViewTree.getColorForObject(object, myProject, toPsiConverter);
+          return ProjectViewTree.getColorForElement(toPsiConverter.fun(object));
         }
       };
     }
+    HintUpdateSupply.installDataContextHintUpdateSupply(tree);
     configureTree(tree);
     EditSourceOnDoubleClickHandler.install(tree);
     EditSourceOnEnterKeyHandler.install(tree);

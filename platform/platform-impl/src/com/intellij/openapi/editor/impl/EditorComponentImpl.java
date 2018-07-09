@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.CutProvider;
@@ -56,8 +42,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
+import com.intellij.ui.paint.PaintUtil;
+import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.ui.JBSwingUtilities;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.intellij.lang.annotations.MagicConstant;
@@ -232,28 +219,28 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   @Override
   public void paintComponent(Graphics g) {
-    myApplication.editorPaintStart();
+    myEditor.measureTypingLatency();
 
-    try {
-      Graphics2D gg = (Graphics2D)g;
-      UIUtil.setupComposite(gg);
-      if (myEditor.useEditorAntialiasing()) {
-        EditorUIUtil.setupAntialiasing(gg);
-      }
-      else {
-        UISettings.setupAntialiasing(gg);
-      }
-      AffineTransform origTx = JBUI.alignToIntGrid(gg);
-      myEditor.paint(gg);
-      if (origTx != null) gg.setTransform(origTx);
+    Graphics2D gg = (Graphics2D)g;
+    UIUtil.setupComposite(gg);
+    if (myEditor.useEditorAntialiasing()) {
+      EditorUIUtil.setupAntialiasing(gg);
     }
-    finally {
-      myApplication.editorPaintFinish();
+    else {
+      UISettings.setupAntialiasing(gg);
     }
+    gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myEditor.myFractionalMetricsHintValue);
+    AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.CEIL);
+    myEditor.paint(gg);
+    if (origTx != null) gg.setTransform(origTx);
   }
 
   public void repaintEditorComponent() {
     repaint();
+  }
+
+  public void repaintEditorComponentExact(int x, int y, int width, int height) {
+    repaint(x, y, width, height);
   }
 
   public void repaintEditorComponent(int x, int y, int width, int height) {
@@ -910,13 +897,12 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     public AccessibleEditorComponentImpl() {
       if (myEditor.isDisposed()) return;
 
-      myEditor.getCaretModel().addCaretListener(this);
+      myEditor.getCaretModel().addCaretListener(this, myEditor.getDisposable());
       myEditor.getDocument().addDocumentListener(this);
 
       Disposer.register(myEditor.getDisposable(), new Disposable() {
         @Override
         public void dispose() {
-          myEditor.getCaretModel().removeCaretListener(AccessibleEditorComponentImpl.this);
           myEditor.getDocument().removeDocumentListener(AccessibleEditorComponentImpl.this);
         }
       });

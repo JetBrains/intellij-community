@@ -45,7 +45,7 @@ public class ConfigFilesTreeBuilder {
   }
 
   public Set<PsiFile> buildTree(DefaultMutableTreeNode root, ConfigFileSearcher... searchers) {
-    final Set<PsiFile> psiFiles = new com.intellij.util.containers.HashSet<>();
+    final Set<PsiFile> psiFiles = new HashSet<>();
 
     final MultiMap<Module, PsiFile> files = new MultiMap<>();
     final MultiMap<VirtualFile, PsiFile> jars = new MultiMap<>();

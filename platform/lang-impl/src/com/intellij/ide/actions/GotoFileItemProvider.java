@@ -163,9 +163,11 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
     }
 
     if (group.size() > 1) {
+      //noinspection StringToUpperCaseOrToLowerCaseWithoutLocale
       Collections.sort(group,
                        Comparator.<PsiFileSystemItem, Boolean>comparing(f -> f instanceof PsiDirectory).
                          thenComparing(qualifierMatchingDegrees::get).
+                         thenComparing(i -> FileUtilRt.getNameWithoutExtension(i.getName()).toLowerCase()).
                          thenComparing(i -> i.getName().toLowerCase()).
                          thenComparing(nesting::get).
                          thenComparing(dirCloseness::get).
@@ -275,7 +277,17 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
                          DirectoryPathMatcher dirMatcher) {
       MinusculeMatcher fullMatcher = getQualifiedNameMatcher(sanitizedPattern);
 
-      List<List<String>> groups = groupByMatchingDegree(!pattern.startsWith("*"));
+      List<MatchResult> matchingNames = this.matchingNames;
+      if (patternSuffix.length() <= 3) {
+        // just enumerate over files
+        // otherwise there are too many names matching the remaining few letters, and querying index for all of them with a very constrained scope is expensive
+        Set<String> existingNames = dirMatcher.findFileNamesMatchingIfCheap(patternSuffix.charAt(0), matcher);
+        if (existingNames != null) {
+          matchingNames = ContainerUtil.filter(matchingNames, mr -> existingNames.contains(mr.elementName));
+        }
+      }
+
+      List<List<String>> groups = groupByMatchingDegree(!pattern.startsWith("*"), matchingNames);
       for (List<String> group : groups) {
         List<PsiFileSystemItem> files = getFilesMatchingPath(pattern, everywhere, fullMatcher, group, dirMatcher, indicator);
         if (!files.isEmpty()) {
@@ -300,7 +312,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
       return ContainerUtil.exists(groups, group -> !getFilesMatchingPath(pattern, true, fullMatcher, group, dirMatcher, indicator).isEmpty());
     }
 
-    private List<List<String>> groupByMatchingDegree(boolean preferStartMatches) {
+    private List<List<String>> groupByMatchingDegree(boolean preferStartMatches, List<MatchResult> matchingNames) {
       if (matchingNames.isEmpty()) return Collections.emptyList();
 
       List<List<String>> groups = new ArrayList<>();

@@ -50,8 +50,8 @@ class ScrollPainter extends RegionPainter.Alpha {
   }
 
   static final class Track {
-    static final RegionPainter<Float> DARCULA = new ScrollPainter(0, .0f, .1f, Gray.x80, null);
-    static final RegionPainter<Float> DEFAULT = DARCULA;
+    static final RegionPainter<Float> DARCULA = new TrackPainter("ide.scroll.track.darcula.alpha", "ide.scroll.track.darcula.fill");
+    static final RegionPainter<Float> DEFAULT = new TrackPainter("ide.scroll.track.default.alpha", "ide.scroll.track.default.fill");
   }
 
   static final class Thumb {
@@ -215,7 +215,7 @@ class ScrollPainter extends RegionPainter.Alpha {
 
   private static class Protected implements RegionPainter<Float> {
     private RegionPainter<Float> myPainter;
-    private RegionPainter<Float> myFallback;
+    private final RegionPainter<Float> myFallback;
 
     private Protected(RegionPainter<Float> painter, RegionPainter<Float> fallback) {
       myPainter = painter;
@@ -375,6 +375,20 @@ class ScrollPainter extends RegionPainter.Alpha {
     @Override
     protected void paint(Graphics2D g, int x, int y, int width, int height) {
       RectanglePainter.paint(g, x, y, width, height, SystemInfo.isMac ? Math.min(width, height) : 0, myFillColor, myDrawColor);
+    }
+  }
+
+  private static class TrackPainter extends ScrollPainter {
+    private final IntSupplier supplier;
+
+    private TrackPainter(String alpha, String fill) {
+      super(0, 0, 0, gray(fill, 0x80), null);
+      supplier = value(alpha, 26);
+    }
+
+    @Override
+    protected float getAlpha(Float value) {
+      return value == null ? 0 : value * supplier.getAsInt() / 255;
     }
   }
 }

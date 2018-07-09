@@ -17,7 +17,7 @@ package com.intellij.openapi.ui.playback;
 
 public class StageInfo {
   
-  private String myName;
+  private final String myName;
 
   public StageInfo(String name) {
     myName = name;

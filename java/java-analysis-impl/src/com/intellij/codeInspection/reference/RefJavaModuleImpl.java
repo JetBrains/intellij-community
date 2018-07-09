@@ -278,6 +278,6 @@ public class RefJavaModuleImpl extends RefElementImpl implements RefJavaModule {
     final PsiMethod[] methods = psiClass.findMethodsByName("provider", false);
     return ContainerUtil.find(methods, m -> m.hasModifierProperty(PsiModifier.PUBLIC) &&
                                             m.hasModifierProperty(PsiModifier.STATIC) &&
-                                            m.getParameterList().getParametersCount() == 0);
+                                            m.getParameterList().isEmpty());
   }
 }

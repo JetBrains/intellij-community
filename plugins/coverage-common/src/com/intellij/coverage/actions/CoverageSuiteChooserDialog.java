@@ -12,11 +12,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.*;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -95,7 +95,9 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     final List<CoverageSuite> suites = collectSelectedSuites();
-    myCoverageManager.chooseSuitesBundle(suites.isEmpty() ? null : new CoverageSuitesBundle(suites.toArray(new CoverageSuite[suites.size()])));
+    myCoverageManager
+      .chooseSuitesBundle(suites.isEmpty() ? null : new CoverageSuitesBundle(suites.toArray(new CoverageSuite[0])));
+    ((CoverageDataManagerImpl)myCoverageManager).addRootsToWatch(suites);
     super.doOKAction();
   }
 
@@ -120,7 +122,9 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
   @Nullable
   private static CoverageRunner getCoverageRunner(VirtualFile file) {
     for (CoverageRunner runner : Extensions.getExtensions(CoverageRunner.EP_NAME)) {
-      if (Comparing.strEqual(file.getExtension(), runner.getDataFileExtension())) return runner;
+      for (String extension : runner.getDataFileExtensions()) {
+        if (Comparing.strEqual(file.getExtension(), extension)) return runner;
+      }
     }
     return null;
   }
@@ -171,7 +175,7 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
         runnerNode.add(localNode);
         runnerNode.add(remoteNode);
         for (String aClass : providers.keySet()) {
-          DefaultMutableTreeNode node = Comparing.strEqual(aClass, DefaultCoverageFileProvider.class.getName())  ? localNode : remoteNode;
+          DefaultMutableTreeNode node = Comparing.strEqual(aClass, DefaultCoverageFileProvider.class.getName()) ? localNode : remoteNode;
           for (CoverageSuite suite : providers.get(aClass)) {
             final CheckedTreeNode treeNode = new CheckedTreeNode(suite);
             treeNode.setChecked(currentSuite != null && currentSuite.contains(suite) ? Boolean.TRUE : Boolean.FALSE);
@@ -265,6 +269,9 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
           }
         }, myProject, null);
       if (file != null) {
+        //ensure timestamp in vfs is updated
+        VfsUtil.markDirtyAndRefresh(false, false, false, file);
+        
         final CoverageRunner coverageRunner = getCoverageRunner(file);
         if (coverageRunner == null) {
           Messages.showErrorDialog(myProject, "No coverage runner available for " + file.getName(), CommonBundle.getErrorTitle());
@@ -286,7 +293,8 @@ public class CoverageSuiteChooserDialog extends DialogWrapper {
           if (!(childNode instanceof CheckedTreeNode)) {
             if (LOCAL.equals(((DefaultMutableTreeNode)childNode).getUserObject())) {
               node = (DefaultMutableTreeNode)childNode;
-            } else {
+            }
+            else {
               final DefaultMutableTreeNode localNode = new DefaultMutableTreeNode(LOCAL);
               node.add(localNode);
               node = localNode;

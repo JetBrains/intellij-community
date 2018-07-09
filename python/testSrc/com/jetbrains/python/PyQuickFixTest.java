@@ -4,6 +4,7 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.containers.ContainerUtil;
@@ -248,6 +249,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-15506
   public void testEmptyListOfBaseClasses() {
+    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doInspectionTest(PyRedundantParenthesesInspection.class, PyBundle.message("QFIX.redundant.parentheses"), true, true);
   }
 
@@ -263,11 +265,13 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-3126
   public void testChainedComparison1() {
+    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
   }
 
   // PY-3126
   public void testChainedComparison2() {
+    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
   }
 
@@ -278,6 +282,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-5623
   public void testChainedComparison4() {
+    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
   }
 
@@ -288,6 +293,7 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-20004
   public void testChainedComparison7() {
+    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doInspectionTest(PyChainedComparisonsInspection.class, PyBundle.message("QFIX.chained.comparison"), true, true);
   }
 
@@ -301,6 +307,16 @@ public class PyQuickFixTest extends PyTestCase {
     doInspectionTest(PyChainedComparisonsInspection.class, "Simplify chained comparison", true, true);
   }
 
+  // PY-24942
+  public void testChainedComparison8() {
+    doInspectionTest(PyChainedComparisonsInspection.class, "Simplify chained comparison", true, true);
+  }
+
+  // PY-29121
+  public void testChainedComparison9() {
+    doInspectionTest(PyChainedComparisonsInspection.class, "Simplify chained comparison", true, true);
+  }
+
   // PY-1362, PY-2585
   public void testStatementEffect() {
     doInspectionTest(PyStatementEffectInspection.class, PyBundle.message("QFIX.statement.effect"), true, true);
@@ -309,11 +325,6 @@ public class PyQuickFixTest extends PyTestCase {
   // PY-1265
   public void testStatementEffectIntroduceVariable() {
     doInspectionTest(PyStatementEffectInspection.class, PyBundle.message("QFIX.statement.effect.introduce.variable"), true, true);
-  }
-
-  // PY-2083
-  public void testUnresolvedWith() {
-    runWithLanguageLevel(LanguageLevel.PYTHON25, () -> doInspectionTest(PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.unresolved.reference.add.future"), true, true));
   }
 
   // PY-2092
@@ -653,9 +664,10 @@ public class PyQuickFixTest extends PyTestCase {
 
   // PY-8174
   public void testChangeSignatureAddKeywordOnlyParameter() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, () -> {
-      doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of func(x, *args, foo, <b>bar</b>)</html>", true, true);
-    });
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON34,
+      () -> doInspectionTest(PyArgumentListInspection.class, "<html>Change signature of func(x, *args, foo, <b>bar</b>)</html>", true, true)
+    );
   }
 
   // PY-8174
@@ -742,6 +754,6 @@ public class PyQuickFixTest extends PyTestCase {
   private static String graftBeforeExt(String name, String insertion) {
     int dotpos = name.indexOf('.');
     if (dotpos < 0) dotpos = name.length();
-    return name.substring(0, dotpos) + insertion + name.substring(dotpos, name.length());
+    return name.substring(0, dotpos) + insertion + name.substring(dotpos);
   }
 }

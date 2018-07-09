@@ -26,6 +26,7 @@ public interface PsiPostfixExpression extends PsiUnaryExpression {
    *
    * @return the operand expression.
    */
+  @Override
   @NotNull
   PsiExpression getOperand();
 
@@ -35,6 +36,7 @@ public interface PsiPostfixExpression extends PsiUnaryExpression {
    *
    * @return the token for the operation performed.
    */
+  @Override
   @NotNull
   PsiJavaToken getOperationSign();
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.java.impl
 
 import com.intellij.openapi.util.text.StringUtil
@@ -65,7 +65,7 @@ private fun LanguageLevel.toAsmCode() = when (this) {
   LanguageLevel.JDK_1_7 -> Opcodes.V1_7
   LanguageLevel.JDK_1_8 -> Opcodes.V1_8
   LanguageLevel.JDK_1_9 -> Opcodes.V9
-  LanguageLevel.JDK_X -> throw UnsupportedOperationException("Java 10 isn't supported yet")
+  else -> throw UnsupportedOperationException("${this} isn't supported yet")
 }
 
 private fun AccessModifier.toAsmCode() = when (this) {

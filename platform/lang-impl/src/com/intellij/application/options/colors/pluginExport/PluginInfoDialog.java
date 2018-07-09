@@ -23,7 +23,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class PluginInfoDialog extends DialogWrapper {
-  private PluginExportData myExportData;
+  private final PluginExportData myExportData;
   private PluginInfoForm myForm;
 
   protected PluginInfoDialog(@NotNull Component parent, @NotNull PluginExportData exportData) {

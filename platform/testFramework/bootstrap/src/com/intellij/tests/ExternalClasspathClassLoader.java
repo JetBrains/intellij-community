@@ -30,17 +30,13 @@ import java.util.*;
 public class ExternalClasspathClassLoader {
 
   private static List<File> loadFilesPaths(String classpathFilePath) {
-    Set<File> roots = new LinkedHashSet<>();
-    File file = new File(classpathFilePath);
     try {
-      final BufferedReader reader = new BufferedReader(new FileReader(file));
-      try {
+      File file = new File(classpathFilePath);
+      Set<File> roots = new LinkedHashSet<>();
+      try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
         while (reader.ready()) {
           roots.add(new File(reader.readLine()));
         }
-      }
-      finally {
-        reader.close();
       }
       return new ArrayList<>(roots);
     }

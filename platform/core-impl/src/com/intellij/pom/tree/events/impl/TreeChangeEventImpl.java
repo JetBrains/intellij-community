@@ -90,7 +90,7 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     CompositeElement newParent = nextChange.getChangedParent();
 
     for (TreeChangeImpl descendant : new ArrayList<>(myChangesByAllParents.get(newParent))) {
-      TreeElement ancestorChild = findAncestorChild(newParent, descendant.getChangedParent());
+      TreeElement ancestorChild = findAncestorChild(newParent, descendant);
       if (ancestorChild != null) {
         nextChange.markChildChanged(ancestorChild, descendant.getLengthDelta());
       }
@@ -115,15 +115,14 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
     }
   }
 
+  /** @return a direct child of {@code ancestor} which contains {@code change} */
   @Nullable
-  private static TreeElement findAncestorChild(@NotNull TreeElement ancestor, @NotNull TreeElement candidate) {
-    TreeElement element = candidate.getTreeParent();
-    while (element != null) {
-      if (element == ancestor) return candidate;
-      candidate = element;
-      element = element.getTreeParent();
-    }
-    return null;
+  private static TreeElement findAncestorChild(@NotNull CompositeElement ancestor, @NotNull TreeChangeImpl change) {
+    List<CompositeElement> superParents = change.getSuperParents();
+    int index = superParents.indexOf(ancestor);
+    return index < 0 ? null : 
+           index == 0 ? change.getChangedParent() : 
+           superParents.get(index - 1);
   }
 
   @Override
@@ -146,10 +145,18 @@ public class TreeChangeEventImpl implements TreeChangeEvent{
   }
 
   public void fireEvents() {
-    Collection<TreeChangeImpl> changes = ContainerUtil.sorted(myChangedElements.values(), Comparator.comparing(
-      TreeChangeImpl::getCurrentStart));
+    Collection<TreeChangeImpl> changes = ContainerUtil.sorted(myChangedElements.values());
     for (TreeChangeImpl change : changes) {
       change.fireEvents((PsiFile)myFileElement.getPsi());
+    }
+  }
+
+  @Override
+  public void beforeNestedTransaction() {
+    // compute changes and remember them, to prevent lazy computation to happen in another transaction
+    // when more changes might have occurred but shouldn't count in this transaction 
+    for (TreeChangeImpl change : myChangedElements.values()) {
+      change.getAffectedChildren(); 
     }
   }
 

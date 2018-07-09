@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.scopeView;
 
@@ -20,15 +6,15 @@ import com.intellij.ide.SelectInContext;
 import com.intellij.ide.SelectInManager;
 import com.intellij.ide.StandardTargetWeights;
 import com.intellij.ide.impl.ProjectViewSelectInTarget;
+import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.packageDependencies.DependencyValidationManager;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.search.scope.packageSet.NamedScope;
-import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.psi.search.scope.packageSet.PackageSet;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,21 +32,22 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
 
   @Override
   public boolean canSelect(PsiFileSystemItem fileSystemItem) {
-    if (!super.canSelect(fileSystemItem)) return false;
+    VirtualFile file = PsiUtilCore.getVirtualFile(fileSystemItem);
+    if (file == null || !file.isValid()) return false;
+    ProjectRootManager manager = myProject.isDisposed() ? null : ProjectRootManager.getInstance(myProject);
+    if (manager == null || null == manager.getFileIndex().getModuleForFile(file)) return false; // libraries are not supported yet
     if (!(fileSystemItem instanceof PsiFile)) return false;
-    return getContainingScope((PsiFile)fileSystemItem) != null;
+    return getContainingFilter((PsiFile)fileSystemItem) != null;
   }
 
   @Nullable
-  private NamedScope getContainingScope(@Nullable PsiFile file) {
+  private NamedScopeFilter getContainingFilter(@Nullable PsiFile file) {
     if (file == null) return null;
     if (ScratchUtil.isScratch(file.getVirtualFile())) return null;
-    NamedScopesHolder scopesHolder = DependencyValidationManager.getInstance(myProject);
-    for (NamedScope scope : ScopeViewPane.getShownScopes(myProject)) {
-      PackageSet packageSet = scope.getValue();
-      if (packageSet != null && packageSet.contains(file, scopesHolder)) {
-        return scope;
-      }
+    ScopeViewPane pane = getScopeViewPane();
+    if (pane == null) return null;
+    for (NamedScopeFilter filter : pane.getFilters()) {
+      if (filter.accept(file.getVirtualFile())) return filter;
     }
     return null;
   }
@@ -68,9 +55,9 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
   @Override
   public void select(PsiElement element, boolean requestFocus) {
     if (getSubId() == null) {
-      NamedScope scope = getContainingScope(element.getContainingFile());
-      if (scope == null) return;
-      setSubId(scope.getName());
+      NamedScopeFilter filter = getContainingFilter(element.getContainingFile());
+      if (filter == null) return;
+      setSubId(filter.toString());
     }
     super.select(element, requestFocus);
   }
@@ -89,10 +76,14 @@ public class ScopePaneSelectInTarget extends ProjectViewSelectInTarget {
   public boolean isSubIdSelectable(@NotNull String subId, @NotNull SelectInContext context) {
     PsiFileSystemItem file = getContextPsiFile(context);
     if (!(file instanceof PsiFile)) return false;
-    final NamedScope scope = NamedScopesHolder.getScope(myProject, subId);
-    PackageSet packageSet = scope != null ? scope.getValue() : null;
-    if (packageSet == null) return false;
-    NamedScopesHolder holder = NamedScopesHolder.getHolder(myProject, subId, DependencyValidationManager.getInstance(myProject));
-    return packageSet.contains((PsiFile)file, holder);
+    ScopeViewPane pane = getScopeViewPane();
+    NamedScopeFilter filter = pane == null ? null : pane.getFilter(subId);
+    return filter != null && filter.accept(file.getVirtualFile());
+  }
+
+  private ScopeViewPane getScopeViewPane() {
+    ProjectView view = ProjectView.getInstance(myProject);
+    Object pane = view == null ? null : view.getProjectViewPaneById(ScopeViewPane.ID);
+    return pane instanceof ScopeViewPane ? (ScopeViewPane)pane : null;
   }
 }

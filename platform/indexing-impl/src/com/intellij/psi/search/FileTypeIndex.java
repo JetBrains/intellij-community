@@ -17,35 +17,35 @@ package com.intellij.psi.search;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.ID;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-import static com.intellij.psi.search.FilenameIndex.getService;
-
 /**
  * @author Dmitry Avdeev
  */
 public class FileTypeIndex {
-
   /**
-   * @deprecated Not to be used.
+   * @deprecated Use {@link #getFiles(FileType, GlobalSearchScope)},
+   * {@link #containsFileOfType(FileType, GlobalSearchScope)} or
+   * {@link #processFiles(FileType, Processor, GlobalSearchScope)} instead
    */
   @Deprecated
   public static final ID<FileType, Void> NAME = ID.create("filetypes");
 
   @NotNull
   public static Collection<VirtualFile> getFiles(@NotNull FileType fileType, @NotNull GlobalSearchScope scope) {
-    return getService().getFilesWithFileType(fileType, scope);
+    return FilenameIndex.getService().getFilesWithFileType(fileType, scope);
   }
 
   public static boolean containsFileOfType(@NotNull FileType type, @NotNull GlobalSearchScope scope) {
-    return !getService().processFilesWithFileType(type, file -> false, scope);
+    return !processFiles(type, CommonProcessors.alwaysFalse(), scope);
   }
 
   public static boolean processFiles(@NotNull FileType fileType, @NotNull Processor<VirtualFile> processor, @NotNull GlobalSearchScope scope) {
-    return getService().processFilesWithFileType(fileType, processor, scope);
+    return FilenameIndex.getService().processFilesWithFileType(fileType, processor, scope);
   }
 }

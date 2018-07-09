@@ -15,9 +15,9 @@
  */
 package org.jetbrains.uast
 
-import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
+import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.visitor.UastVisitor
 
 /**
@@ -25,9 +25,9 @@ import org.jetbrains.uast.visitor.UastVisitor
  * Qualified `this` is not supported at the moment.
  */
 interface UThisExpression : UInstanceExpression {
-  override fun asLogString() = log("label = $label")
+  override fun asLogString(): String = log("label = $label")
 
-  override fun asRenderString() = "this"
+  override fun asRenderString(): String = "this"
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitThisExpression(this)) return
@@ -35,6 +35,6 @@ interface UThisExpression : UInstanceExpression {
     visitor.afterVisitThisExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitThisExpression(this, data)
 }

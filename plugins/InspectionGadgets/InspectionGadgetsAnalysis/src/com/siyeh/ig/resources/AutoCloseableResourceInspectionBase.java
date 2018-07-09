@@ -16,6 +16,9 @@
 package com.siyeh.ig.resources;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.resources.ImplicitResourceCloser;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -26,8 +29,11 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodMatcher;
 import com.siyeh.ig.psiutils.TypeUtils;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -37,15 +43,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.util.ObjectUtils.tryCast;
+
 /**
  * @author Bas Leijdekkers
  */
 public class AutoCloseableResourceInspectionBase extends ResourceInspection {
 
+  private static final CallMatcher CLOSE = CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE, "close");
+
   private static final List<String> DEFAULT_IGNORED_TYPES =
     Arrays.asList("java.util.stream.Stream", "java.util.stream.IntStream", "java.util.stream.LongStream", "java.util.stream.DoubleStream");
   @SuppressWarnings("PublicField")
   public boolean ignoreFromMethodCall = false;
+
 
   final List<String> ignoredTypes = new ArrayList<>(DEFAULT_IGNORED_TYPES);
   protected final MethodMatcher myMethodMatcher;
@@ -59,6 +70,8 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
       .add("java.io.PrintWriter", "printf")
       .finishDefault();
   }
+
+  CallMatcher STREAM_HOLDING_RESOURCE = CallMatcher.staticCall("java.nio.file.Files", "lines", "walk", "list", "find");
 
   @Nls
   @NotNull
@@ -141,7 +154,12 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
   @Override
   protected boolean isResourceCreation(PsiExpression expression) {
     return TypeUtils.expressionHasTypeOrSubtype(expression, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE) &&
-           !TypeUtils.expressionHasTypeOrSubtype(expression, ignoredTypes);
+           (isStreamHoldingResource(expression)
+            || !TypeUtils.expressionHasTypeOrSubtype(expression, ignoredTypes));
+  }
+
+  private boolean isStreamHoldingResource(PsiExpression expression) {
+    return STREAM_HOLDING_RESOURCE.matches(tryCast(expression, PsiMethodCallExpression.class));
   }
 
   @Override
@@ -159,7 +177,7 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
     @Override
     public void visitNewExpression(PsiNewExpression expression) {
       super.visitNewExpression(expression);
-      if (!isNotSafelyClosedResource(expression)) {
+      if (isSafelyClosedResource(expression)) {
         return;
       }
       registerNewExpressionError(expression, expression.getType(), Boolean.FALSE);
@@ -168,10 +186,19 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (ignoreFromMethodCall || myMethodMatcher.matches(expression) || !isNotSafelyClosedResource(expression)) {
+      if (ignoreFromMethodCall || myMethodMatcher.matches(expression) || isSafelyClosedResource(expression)) {
         return;
       }
-      registerMethodCallError(expression, expression.getType(), Boolean.TRUE);
+      PsiExpression returnedValue = JavaMethodContractUtil.findReturnedValue(expression);
+      PsiExpression[] arguments = expression.getArgumentList().getExpressions();
+      PsiExpression qualifier = expression.getMethodExpression().getQualifierExpression();
+      if (qualifier == returnedValue) return;
+      for (PsiExpression argument : arguments) {
+        if (returnedValue == argument) {
+          return;
+        }
+      }
+      registerMethodCallError(expression, expression.getType(), !isStreamHoldingResource(expression));
     }
 
     @Override
@@ -192,13 +219,16 @@ public class AutoCloseableResourceInspectionBase extends ResourceInspection {
       registerError(expression, type, Boolean.FALSE);
     }
 
-    private boolean isNotSafelyClosedResource(PsiExpression expression) {
+    private boolean isSafelyClosedResource(PsiExpression expression) {
       if (!isResourceCreation(expression)) {
-        return false;
+        return true;
       }
+      if (CLOSE.test(ExpressionUtils.getCallForQualifier(expression))) return true;
       final PsiVariable variable = ResourceInspection.getVariable(expression);
-      return !(variable instanceof PsiResourceVariable) &&
-             !isResourceEscapingFromMethod(variable, expression);
+      if (variable instanceof PsiResourceVariable || isResourceEscapingFromMethod(variable, expression)) return true;
+      if (variable == null) return false;
+      return StreamEx.of(Extensions.getExtensions(ImplicitResourceCloser.EP_NAME))
+                     .anyMatch(closer -> closer.isSafelyClosed(variable));
     }
   }
 }

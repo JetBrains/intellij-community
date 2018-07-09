@@ -20,13 +20,13 @@ import com.intellij.codeInsight.codeFragment.CodeFragmentUtil;
 import com.intellij.codeInsight.codeFragment.Position;
 import com.intellij.codeInsight.controlflow.ControlFlow;
 import com.intellij.codeInsight.controlflow.Instruction;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -55,9 +55,6 @@ public class PyCodeFragmentUtil {
     final int start = startInScope.getTextOffset();
     final int end = endInScope.getTextOffset() + endInScope.getTextLength();
     final ControlFlow flow = ControlFlowCache.getControlFlow(owner);
-    if (flow == null) {
-      throw new CannotCreateCodeFragmentException(PyBundle.message("refactoring.extract.method.error.undetermined.execution.flow"));
-    }
     final List<Instruction> graph = Arrays.asList(flow.getInstructions());
     final List<Instruction> subGraph = getFragmentSubGraph(graph, start, end);
     final AnalysisResult subGraphAnalysis = analyseSubGraph(subGraph, start, end);
@@ -100,7 +97,7 @@ public class PyCodeFragmentUtil {
     }
 
     final boolean yieldsFound = subGraphAnalysis.yieldExpressions > 0;
-    if (yieldsFound && LanguageLevel.forElement(owner).isOlderThan(LanguageLevel.PYTHON33)) {
+    if (yieldsFound && LanguageLevel.forElement(owner).isPython2()) {
       throw new CannotCreateCodeFragmentException(PyBundle.message("refactoring.extract.method.error.yield"));
     }
     final boolean isAsync = owner instanceof PyFunction && ((PyFunction)owner).isAsync();
@@ -218,7 +215,14 @@ public class PyCodeFragmentUtil {
       final boolean isExceptTarget = target instanceof PyExceptPart || target instanceof PyFinallyPart;
       final boolean isLoopTarget = target instanceof PyWhileStatement || PyForStatementNavigator.getPyForStatementByIterable(target) != null;
 
-      if (target != null && !isExceptTarget && !isLoopTarget) {
+      final PyBinaryExpression binaryExpression = PsiTreeUtil.getParentOfType(source, PyBinaryExpression.class);
+      final boolean isOppositeBinaryTarget =
+        binaryExpression != null &&
+        ArrayUtil.contains(binaryExpression.getOperator(), PyTokenTypes.AND_KEYWORD, PyTokenTypes.OR_KEYWORD) &&
+        binaryExpression.getLeftExpression() == source &&
+        binaryExpression.getRightExpression() == target;
+
+      if (target != null && !isExceptTarget && !isLoopTarget && !isOppositeBinaryTarget) {
         targetInstructions.add(targetInstruction);
       }
 
@@ -239,7 +243,7 @@ public class PyCodeFragmentUtil {
         }
       }
       if (element instanceof PyContinueStatement || element instanceof PyBreakStatement) {
-        final PyLoopStatement loopStatement = PsiTreeUtil.getParentOfType(element, PyLoopStatement.class);
+        final PyLoopStatement loopStatement = PyUtil.getCorrespondingLoop(element);
         if (loopStatement != null && !subGraphElements.contains(loopStatement)) {
           outerLoopBreaks++;
         }

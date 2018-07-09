@@ -1,0 +1,12 @@
+Anonymous -> UClass (name = Anonymous)
+foo -> UMethod (name = foo)
+    variable -> ULocalVariable (name = variable)
+    Runnable -> USimpleNameReferenceExpression (identifier = Runnable)
+    runnable -> ULocalVariable (name = runnable)
+    Runnable -> USimpleNameReferenceExpression (identifier = Runnable)
+    run -> UMethod (name = run)
+        variable -> ULocalVariable (name = variable)
+        variable -> USimpleNameReferenceExpression (identifier = variable)
+    runnable -> USimpleNameReferenceExpression (identifier = runnable)
+    run -> UQualifiedReferenceExpression
+    variable -> USimpleNameReferenceExpression (identifier = variable)

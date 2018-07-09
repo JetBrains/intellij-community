@@ -1,32 +1,22 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ui.actions;
 
 import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-/**
- * @author Dmitry Batkovich
- */
 public abstract class InspectionViewActionBase extends AnAction {
   public InspectionViewActionBase(@Nullable String text, @Nullable String description, @Nullable Icon icon) {
     super(text, description, icon);
@@ -48,11 +38,24 @@ public abstract class InspectionViewActionBase extends AnAction {
     return true;
   }
 
+  @Nullable
   public static InspectionResultsView getView(@Nullable AnActionEvent event) {
     if (event == null) {
       return null;
     }
-    final InspectionResultsView view = InspectionResultsView.DATA_KEY.getData(event.getDataContext());
-    return view == null || view.isDisposed() ? null : view;
+    InspectionResultsView view = InspectionResultsView.DATA_KEY.getData(event.getDataContext());
+    if (view == null) {
+      Project project = event.getProject();
+      if (project == null) return null;
+      ToolWindowManager twManager = ToolWindowManager.getInstance(project);
+      ToolWindow window = twManager.getToolWindow(ToolWindowId.INSPECTION);
+      if (window == null) return null;
+      Content selectedContent = window.getContentManager().getSelectedContent();
+      if (selectedContent == null) return null;
+      DataContext twContext = DataManager.getInstance().getDataContext(selectedContent.getComponent());
+      view = InspectionResultsView.DATA_KEY.getData(twContext);
+      if (view == null) return null;
+    }
+    return view.isDisposed() ? null : view;
   }
 }

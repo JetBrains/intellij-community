@@ -15,23 +15,25 @@
  */
 package com.jetbrains.python;
 
-import com.intellij.navigation.ChooseByNameContributor;
+import com.intellij.lang.Language;
+import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
  * @author yole
  */
-public class PyGotoClassContributor implements ChooseByNameContributor {
+public class PyGotoClassContributor implements GotoClassContributor {
   @NotNull
   public String[] getNames(final Project project, final boolean includeNonProjectItems) {
     Set<String> results = new HashSet<>();
@@ -46,6 +48,24 @@ public class PyGotoClassContributor implements ChooseByNameContributor {
     final List<NavigationItem> results = new ArrayList<>();
     results.addAll(PyClassNameIndex.find(name, project, includeNonProjectItems));
     results.addAll(PyModuleNameIndex.find(name, project, includeNonProjectItems));
-    return results.toArray(new NavigationItem[results.size()]);
+    return results.toArray(NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY);
+  }
+
+  @Nullable
+  @Override
+  public String getQualifiedName(NavigationItem item) {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public String getQualifiedNameSeparator() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public Language getElementLanguage() {
+    return PythonLanguage.getInstance();
   }
 }

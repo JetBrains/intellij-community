@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.editor.Editor;
@@ -45,26 +30,32 @@ import java.util.Map;
  * @author yole
  */
 public abstract class RenamePsiElementProcessor {
-  protected static final ExtensionPointName<RenamePsiElementProcessor> EP_NAME = ExtensionPointName.create("com.intellij.renamePsiElementProcessor");
+  public static final ExtensionPointName<RenamePsiElementProcessor> EP_NAME = ExtensionPointName.create("com.intellij.renamePsiElementProcessor");
 
   public abstract boolean canProcessElement(@NotNull PsiElement element);
 
-  public RenameDialog createRenameDialog(Project project, PsiElement element, PsiElement nameSuggestionContext, Editor editor) {
+  @NotNull
+  public RenameDialog createRenameDialog(@NotNull Project project,
+                                         @NotNull PsiElement element,
+                                         @Nullable PsiElement nameSuggestionContext,
+                                         @Nullable Editor editor) {
     return new RenameDialog(project, element, nameSuggestionContext, editor);
   }
 
-  public void renameElement(final PsiElement element, String newName, UsageInfo[] usages,
+  public void renameElement(@NotNull PsiElement element,
+                            @NotNull String newName,
+                            @NotNull UsageInfo[] usages,
                             @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
     RenameUtil.doRenameGenericNamedElement(element, newName, usages, listener);
   }
 
   @NotNull
-  public Collection<PsiReference> findReferences(final PsiElement element, boolean searchInCommentsAndStrings) {
+  public Collection<PsiReference> findReferences(@NotNull PsiElement element, boolean searchInCommentsAndStrings) {
     return findReferences(element);
   }
 
   @NotNull
-  public Collection<PsiReference> findReferences(final PsiElement element) {
+  public Collection<PsiReference> findReferences(@NotNull PsiElement element) {
     return ReferencesSearch.search(element, GlobalSearchScope.projectScope(element.getProject())).findAll();
   }
 
@@ -74,7 +65,7 @@ public abstract class RenamePsiElementProcessor {
   }
 
   @Nullable
-  public String getQualifiedNameAfterRename(final PsiElement element, final String newName, final boolean nonJava) {
+  public String getQualifiedNameAfterRename(@NotNull PsiElement element, @NotNull String newName, final boolean nonJava) {
     return null;
   }
 
@@ -85,17 +76,25 @@ public abstract class RenamePsiElementProcessor {
    * @param newName the name into which the element is being renamed.
    * @param allRenames the map (from element to its new name) into which all additional elements to be renamed should be stored.
    */
-  public void prepareRenaming(final PsiElement element, final String newName, final Map<PsiElement, String> allRenames) {
+  public void prepareRenaming(@NotNull PsiElement element, @NotNull String newName, @NotNull Map<PsiElement, String> allRenames) {
     prepareRenaming(element, newName, allRenames, element.getUseScope());
   }
 
-  public void prepareRenaming(final PsiElement element, final String newName, final Map<PsiElement, String> allRenames, SearchScope scope) {
+  public void prepareRenaming(@NotNull PsiElement element,
+                              @NotNull String newName,
+                              @NotNull Map<PsiElement, String> allRenames,
+                              @NotNull SearchScope scope) {
   }
 
-  public void findExistingNameConflicts(final PsiElement element, final String newName, final MultiMap<PsiElement,String> conflicts) {
+  public void findExistingNameConflicts(@NotNull PsiElement element,
+                                        @NotNull String newName,
+                                        @NotNull MultiMap<PsiElement, String> conflicts) {
   }
-  
-  public void findExistingNameConflicts(final PsiElement element, final String newName, final MultiMap<PsiElement,String> conflicts, Map<PsiElement, String> allRenames) {
+
+  public void findExistingNameConflicts(@NotNull PsiElement element,
+                                        @NotNull String newName,
+                                        @NotNull MultiMap<PsiElement, String> conflicts,
+                                        @NotNull Map<PsiElement, String> allRenames) {
     findExistingNameConflicts(element, newName, conflicts);
   }
 
@@ -103,6 +102,7 @@ public abstract class RenamePsiElementProcessor {
     return true;
   }
 
+  @NotNull
   public static List<RenamePsiElementProcessor> allForElement(@NotNull PsiElement element) {
     final List<RenamePsiElementProcessor> result = new ArrayList<>();
     for (RenamePsiElementProcessor processor : EP_NAME.getExtensions()) {
@@ -116,7 +116,7 @@ public abstract class RenamePsiElementProcessor {
   @NotNull
   public static RenamePsiElementProcessor forElement(@NotNull PsiElement element) {
     RenamePsiElementProcessor[] extensions = Extensions.getExtensions(EP_NAME);
-    for(RenamePsiElementProcessor processor: extensions) {
+    for (RenamePsiElementProcessor processor : extensions) {
       if (processor.canProcessElement(element)) {
         return processor;
       }
@@ -125,7 +125,9 @@ public abstract class RenamePsiElementProcessor {
   }
 
   @Nullable
-  public Runnable getPostRenameCallback(final PsiElement element, final String newName, final RefactoringElementListener elementListener) {
+  public Runnable getPostRenameCallback(@NotNull PsiElement element,
+                                        @NotNull String newName,
+                                        @NotNull RefactoringElementListener elementListener) {
     return null;
   }
 
@@ -138,27 +140,27 @@ public abstract class RenamePsiElementProcessor {
     return "refactoring.renameDialogs";
   }
 
-  public boolean isToSearchInComments(final PsiElement element) {
+  public boolean isToSearchInComments(@NotNull PsiElement element) {
     return element instanceof PsiFileSystemItem && RefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FILE;
   }
 
-  public void setToSearchInComments(final PsiElement element, boolean enabled) {
+  public void setToSearchInComments(@NotNull PsiElement element, boolean enabled) {
     if (element instanceof PsiFileSystemItem) {
       RefactoringSettings.getInstance().RENAME_SEARCH_IN_COMMENTS_FOR_FILE = enabled;
     }
   }
 
-  public boolean isToSearchForTextOccurrences(final PsiElement element) {
+  public boolean isToSearchForTextOccurrences(@NotNull PsiElement element) {
     return element instanceof PsiFileSystemItem && RefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_FILE;
   }
 
-  public void setToSearchForTextOccurrences(final PsiElement element, boolean enabled) {
+  public void setToSearchForTextOccurrences(@NotNull PsiElement element, boolean enabled) {
     if (element instanceof PsiFileSystemItem) {
       RefactoringSettings.getInstance().RENAME_SEARCH_FOR_TEXT_FOR_FILE = enabled;
     }
   }
 
-  public boolean showRenamePreviewButton(final PsiElement psiElement){
+  public boolean showRenamePreviewButton(@NotNull PsiElement psiElement){
     return true;
   }
 
@@ -171,7 +173,7 @@ public abstract class RenamePsiElementProcessor {
    * @return the element to rename, or null if the rename refactoring should be canceled.
    */
   @Nullable
-  public PsiElement substituteElementToRename(final PsiElement element, @Nullable Editor editor) {
+  public PsiElement substituteElementToRename(@NotNull PsiElement element, @Nullable Editor editor) {
     return element;
   }
 
@@ -188,8 +190,10 @@ public abstract class RenamePsiElementProcessor {
     renameCallback.pass(psiElement);
   }
 
-  public void findCollisions(final PsiElement element, final String newName, final Map<? extends PsiElement, String> allRenames,
-                             final List<UsageInfo> result) {
+  public void findCollisions(@NotNull PsiElement element,
+                             @NotNull String newName,
+                             @NotNull Map<? extends PsiElement, String> allRenames,
+                             @NotNull List<UsageInfo> result) {
   }
 
   public static final RenamePsiElementProcessor DEFAULT = new RenamePsiElementProcessor() {
@@ -209,11 +213,12 @@ public abstract class RenamePsiElementProcessor {
   }
 
   @Nullable
-  public PsiElement getElementToSearchInStringsAndComments(PsiElement element) {
+  public PsiElement getElementToSearchInStringsAndComments(@NotNull PsiElement element) {
     return element;
   }
 
-  public UsageInfo createUsageInfo(@NotNull PsiElement element, PsiReference ref, PsiElement referenceElement) {
+  @NotNull
+  public UsageInfo createUsageInfo(@NotNull PsiElement element, @NotNull PsiReference ref, @NotNull PsiElement referenceElement) {
     return new MoveRenameUsageInfo(referenceElement, ref,
                                    ref.getRangeInElement().getStartOffset(),
                                    ref.getRangeInElement().getEndOffset(),

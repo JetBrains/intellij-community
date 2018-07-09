@@ -32,12 +32,12 @@ class InspectionSchemeTest {
   companion object {
     @JvmField
     @ClassRule
-    val projectRule = ProjectRule()
+    val projectRule: ProjectRule = ProjectRule()
   }
 
   @JvmField
   @Rule
-  val fsRule = InMemoryFsRule()
+  val fsRule: InMemoryFsRule = InMemoryFsRule()
 
   @Test fun loadSchemes() {
     val schemeFile = fsRule.fs.getPath("inspection/Bar.xml")

@@ -49,7 +49,7 @@ public abstract class BaseOccurrenceManager implements OccurrenceManager {
           myOccurrences = defaultOccurrences();
         }
         else {
-          myOccurrences = result.toArray(new PsiExpression[result.size()]);
+          myOccurrences = result.toArray(PsiExpression.EMPTY_ARRAY);
         }
       }
 

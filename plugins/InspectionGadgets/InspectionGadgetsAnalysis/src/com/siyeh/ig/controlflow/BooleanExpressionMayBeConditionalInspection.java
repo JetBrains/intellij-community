@@ -29,7 +29,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.EquivalenceChecker;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.Nls;
@@ -90,18 +90,21 @@ public class BooleanExpressionMayBeConditionalInspection extends BaseInspection 
       if (thenExpression == null || elseExpression == null) {
         return;
       }
+      CommentTracker commentTracker = new CommentTracker();
       if (BoolUtils.isNegation(llhs) ) {
         PsiReplacementUtil.replaceExpression(binaryExpression,
-                                             getText(lrhs) + '?' + getText(elseExpression) + ':' + getText(thenExpression));
+                                             getText(lrhs, commentTracker) + '?' + getText(elseExpression, commentTracker) + ':' + getText(thenExpression, commentTracker),
+                                             commentTracker);
       }
       else {
         PsiReplacementUtil.replaceExpression(binaryExpression,
-                                             getText(llhs) + '?' + getText(thenExpression) + ':' + getText(elseExpression));
+                                             getText(llhs, commentTracker) + '?' + getText(thenExpression, commentTracker) + ':' + getText(elseExpression, commentTracker),
+                                             commentTracker);
       }
     }
 
-    private static String getText(@NotNull PsiExpression expression) {
-      return ParenthesesUtils.getText(expression, ParenthesesUtils.CONDITIONAL_PRECEDENCE);
+    private static String getText(@NotNull PsiExpression expression, CommentTracker commentTracker) {
+      return ParenthesesUtils.getText(commentTracker.markUnchanged(expression), ParenthesesUtils.CONDITIONAL_PRECEDENCE);
     }
   }
 
@@ -133,17 +136,7 @@ public class BooleanExpressionMayBeConditionalInspection extends BaseInspection 
       }
       final PsiExpression expression1 = ParenthesesUtils.stripParentheses(lBinaryExpression.getLOperand());
       final PsiExpression expression2 = ParenthesesUtils.stripParentheses(rBinaryExpression.getLOperand());
-      if (expression1 == null || expression2 == null ||
-          ParenthesesUtils.stripParentheses(lBinaryExpression.getROperand()) == null ||
-          ParenthesesUtils.stripParentheses(rBinaryExpression.getROperand()) == null) {
-        return;
-      }
-      if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(BoolUtils.getNegated(expression1), expression2) &&
-          !SideEffectChecker.mayHaveSideEffects(expression2)) {
-        registerError(expression);
-      }
-      else if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(expression1, BoolUtils.getNegated(expression2)) &&
-               !SideEffectChecker.mayHaveSideEffects(expression1)) {
+      if (BoolUtils.areExpressionsOpposite(expression1, expression2) && !SideEffectChecker.mayHaveSideEffects(expression1)) {
         registerError(expression);
       }
     }

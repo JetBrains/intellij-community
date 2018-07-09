@@ -50,6 +50,7 @@ import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.*;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -72,6 +73,7 @@ public class ExternalJavacManager {
   private final Map<UUID, JavacProcessDescriptor> myMessageHandlers = new HashMap<>();
   private int myListenPort = DEFAULT_SERVER_PORT;
   private final Set<ProcessHandler> myRunningHandlers = ContainerUtil.newConcurrentSet();
+  private final ThreadPoolExecutor myExecutor = ConcurrencyUtil.newSingleThreadExecutor("Javac server event loop pool");
 
   public ExternalJavacManager(@NotNull final File workingDir) {
     myWorkingDir = workingDir;
@@ -81,7 +83,7 @@ public class ExternalJavacManager {
   public void start(int listenPort) {
     final ChannelHandler compilationRequestsHandler = new CompilationRequestsHandler();
     final ServerBootstrap bootstrap = new ServerBootstrap()
-      .group(new NioEventLoopGroup(1, ConcurrencyUtil.newNamedThreadFactory("Javac server event loop")))
+      .group(new NioEventLoopGroup(1, myExecutor))
       .channel(NioServerSocketChannel.class)
       .childOption(ChannelOption.TCP_NODELAY, true)
       .childOption(ChannelOption.SO_KEEPALIVE, true)
@@ -191,6 +193,16 @@ public class ExternalJavacManager {
     return true;
   }
 
+  @TestOnly
+  public boolean awaitNettyThreadPoolTermination(long time, @NotNull TimeUnit unit) {
+    try {
+      return myExecutor.awaitTermination(time, unit);
+    }
+    catch (InterruptedException ignored) {
+      return true;
+    }
+  }
+
   private void unregisterMessageHandler(UUID uuid) {
     final JavacProcessDescriptor descriptor;
     synchronized (myMessageHandlers) {
@@ -209,6 +221,7 @@ public class ExternalJavacManager {
 
   public void stop() {
     myChannelRegistrar.close().awaitUninterruptibly();
+    myExecutor.shutdown();
   }
 
   private ExternalJavacProcessHandler launchExternalJavacProcess(UUID uuid,

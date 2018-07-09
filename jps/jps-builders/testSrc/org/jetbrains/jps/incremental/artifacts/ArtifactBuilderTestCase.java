@@ -109,7 +109,7 @@ public abstract class ArtifactBuilderTestCase extends JpsBuildTestCase {
 
   protected void buildAll() {
     Collection<JpsArtifact> artifacts = JpsArtifactService.getInstance().getArtifacts(myProject);
-    buildArtifacts(artifacts.toArray(new JpsArtifact[artifacts.size()]));
+    buildArtifacts(artifacts.toArray(new JpsArtifact[0]));
   }
 
   protected void buildArtifacts(JpsArtifact... artifacts) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.java.propertyBased;
 
+import com.intellij.java.psi.formatter.java.AbstractJavaFormatterTest;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.psi.PsiFile;
@@ -22,11 +23,12 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.testFramework.propertyBased.*;
-import jetCheck.Generator;
-import jetCheck.PropertyChecker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.PropertyChecker;
 
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * @author peter
@@ -37,8 +39,12 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void tearDown() throws Exception {
     // remove jdk if it was created during highlighting to avoid leaks
-    JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
-    super.tearDown();
+    try {
+      JavaAwareProjectJdkTableImpl.removeInternalJdkInTests();
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   @NotNull
@@ -49,20 +55,52 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
 
   public void testRandomActivity() {
     MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable());
-    Function<PsiFile, Generator<? extends MadTestingAction>> fileActions = file ->
-      Generator.anyOf(InvokeIntention.randomIntentions(file, new JavaIntentionPolicy()),
-                      InvokeCompletion.completions(file, new JavaCompletionPolicy()),
-                      Generator.constant(new StripTestDataMarkup(file)),
-                      DeleteRange.psiRangeDeletions(file));
-    PropertyChecker.forAll(actionsOnJavaFiles(fileActions)).shouldHold(FileWithActions::runActions);
+    Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
+      file -> Generator.sampledFrom(new InvokeIntention(file, new JavaIntentionPolicy()),
+                                    new InvokeCompletion(file, new JavaCompletionPolicy()),
+                                    new StripTestDataMarkup(file),
+                                    new DeleteRange(file));
+    PropertyChecker
+      .checkScenarios(actionsOnJavaFiles(fileActions));
+  }
+
+  public void testPreserveComments() {
+    boolean oldSettings = AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING;
+    try {
+      AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING = false;
+      MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable());
+      Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
+        file -> Generator.sampledFrom(new InvokeIntention(file, new JavaCommentingStrategy()),
+                                      new InsertLineComment(file, "//simple end comment\n"));
+      PropertyChecker
+        .checkScenarios(actionsOnJavaFiles(fileActions));
+    }
+    finally {
+      AbstractJavaFormatterTest.getJavaSettings().ENABLE_JAVADOC_FORMATTING = oldSettings;
+    }
+  }
+
+  public void testParenthesesDontChangeIntention() {
+    MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable());
+    Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
+      file -> Generator.sampledFrom(new InvokeIntention(file, new JavaParenthesesPolicy()), new StripTestDataMarkup(file));
+    PropertyChecker
+      .checkScenarios(actionsOnJavaFiles(fileActions));
   }
 
   @NotNull
-  private Generator<FileWithActions> actionsOnJavaFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
+  private Supplier<MadTestingAction> actionsOnJavaFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
     return MadTestingUtil.actionsOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"), fileActions);
   }
 
   public void testReparse() {
-    PropertyChecker.forAll(actionsOnJavaFiles(MadTestingUtil::randomEditsWithReparseChecks)).shouldHold(FileWithActions::runActions);
+    PropertyChecker
+      .checkScenarios(actionsOnJavaFiles(MadTestingUtil::randomEditsWithReparseChecks));
   }
+
+  public void testIncrementalHighlighterUpdate() {
+    PropertyChecker
+      .checkScenarios(actionsOnJavaFiles(CheckHighlighterConsistency.randomEditsWithHighlighterChecks));
+  }
+
 }

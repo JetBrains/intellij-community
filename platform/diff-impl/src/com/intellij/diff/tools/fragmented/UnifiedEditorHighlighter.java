@@ -18,7 +18,6 @@ package com.intellij.diff.tools.fragmented;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -137,10 +136,6 @@ class UnifiedEditorHighlighter implements EditorHighlighter {
     // and we need index of the first element that is less or equal (floorElement)
     if (index < 0) index = Math.max(-index - 2, 0);
     return new ProxyIterator(myDocument, index, myPieces);
-  }
-
-  @Override
-  public void setColorScheme(@NotNull EditorColorsScheme scheme) {
   }
 
   @Override

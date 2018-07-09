@@ -1,22 +1,14 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInspection.deadCode;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.GlobalJavaInspectionContext;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.*;
@@ -24,6 +16,7 @@ import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.RefFilter;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -31,14 +24,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.profile.codeInspection.ui.SingleInspectionProfilePanel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtilBase;
@@ -67,7 +59,6 @@ import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
-import javax.swing.tree.TreePath;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
@@ -182,8 +173,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
       @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
 
       final HighlightSeverity severity = getSeverity(refElement);
-      final String attributeKey =
-        getTextAttributeKey(refElement.getRefManager().getProject(), severity, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+      final String attributeKey = HighlightInfoType.UNUSED_SYMBOL.getAttributesKey().getExternalName();
       problemClassElement.setAttribute("severity", severity.myName);
       problemClassElement.setAttribute("attribute_key", attributeKey);
 
@@ -211,28 +201,10 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @NotNull
   @Override
-  public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements, @Nullable InspectionTree tree) {
-    boolean showFixes = false;
-    for (RefEntity element : refElements) {
-      if (!myFixedElements.containsKey(element) && element.isValid()) {
-        showFixes = true;
-        break;
-      }
-    }
-
-    if (showFixes) {
-      final TreePath[] paths = tree != null ? tree.getSelectionPaths() : null;
-      if (paths != null) {
-        long count = Arrays.stream(paths).map(TreePath::getLastPathComponent)
-          .filter(component -> component instanceof ProblemDescriptionNode).count();
-        if (count > 0) {
-          final QuickFixAction[] fixes = super.getQuickFixes(refElements, tree);
-          return count == paths.length ? fixes : ArrayUtil.mergeArrays(fixes, myQuickFixActions);
-        }
-      }
-      return myQuickFixActions;
-    }
-    return QuickFixAction.EMPTY;
+  public QuickFixAction[] getQuickFixes(@NotNull RefEntity... refElements) {
+    return Arrays.stream(refElements).anyMatch(element -> element instanceof RefJavaElement && getFilter().accepts((RefJavaElement)element) && !myFixedElements.containsKey(element) && element.isValid())
+           ? myQuickFixActions
+           : QuickFixAction.EMPTY;
   }
 
   final QuickFixAction[] myQuickFixActions;
@@ -684,8 +656,8 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
           vFile = VfsUtil.findFileByURL(url);
         }
         if (vFile != null) {
-          final OpenFileDescriptor descriptor = new OpenFileDescriptor(project, vFile, offset);
-          FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
+          Navigatable descriptor = PsiNavigationSupport.getInstance().createNavigatable(project, vFile, offset);
+          descriptor.navigate(true);
         }
       }
     });

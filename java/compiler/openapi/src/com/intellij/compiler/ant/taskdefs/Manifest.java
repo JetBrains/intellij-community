@@ -27,7 +27,6 @@ import java.util.jar.Attributes;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 19, 2004
  */
 public class Manifest extends Tag{
   public Manifest() {

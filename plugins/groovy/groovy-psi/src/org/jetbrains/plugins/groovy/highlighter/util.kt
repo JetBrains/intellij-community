@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiMethod
 import org.jetbrains.plugins.groovy.GroovyLanguage
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
@@ -48,3 +49,7 @@ private fun PsiElement?.isStringNameElement() = this?.node?.elementType in Token
 internal fun GrReferenceElement<*>.isAnonymousClassReference(): Boolean {
   return (parent as? GrAnonymousClassDefinition)?.baseClassReferenceGroovy == this
 }
+
+internal fun PsiElement.isThisOrSuper() = node?.elementType?.let {
+  it == GroovyTokenTypes.kTHIS || it == GroovyTokenTypes.kSUPER
+} ?: false

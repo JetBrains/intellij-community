@@ -32,7 +32,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/8/12
  */
 public class DomStubUsingTest extends DomStubTest {
 
@@ -148,12 +147,7 @@ public class DomStubUsingTest extends DomStubTest {
     assertNotNull(domElement);
     assertTrue(domElement.exists());
 
-    new WriteCommandAction.Simple(null) {
-      @Override
-      protected void run() {
-        domElement.undefine();
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(null).run(() -> domElement.undefine());
 
     assertFalse(domElement.exists());
   }

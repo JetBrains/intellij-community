@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.util;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -24,19 +10,13 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.StreamApiUtil;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author Tagir Valeev
- */
 public class OptionalUtil {
   private static final String OPTIONAL_INT = "java.util.OptionalInt";
   private static final String OPTIONAL_LONG = "java.util.OptionalLong";
@@ -184,7 +164,10 @@ public class OptionalUtil {
               PsiMethod method = mappedStream.resolveMethod();
               if(method != null && method.getContainingClass() != null) {
                 String className = method.getContainingClass().getQualifiedName();
-                if(className != null && className.startsWith("java.util.stream.")) {
+                PsiParameter[] parameters = method.getParameterList().getParameters();
+                if(className != null && className.startsWith("java.util.stream.")
+                   && parameters.length == 1
+                   && !(parameters[0].getType() instanceof PsiArrayType)) {
                   PsiExpression arg = args[0];
                   if(ExpressionUtils.isReferenceTo(arg, var)) {
                     return qualifier + ".stream()";
@@ -207,10 +190,25 @@ public class OptionalUtil {
       String typeArg = getMapTypeArgument(trueExpression, targetType, falseExpression);
       qualifier += "." + typeArg + "map(" + LambdaUtil.createLambda(var, trueExpression) + ")";
     }
-    if (useOrElseGet && !ExpressionUtils.isSimpleExpression(falseExpression)) {
+    if (useOrElseGet && !ExpressionUtils.isSafelyRecomputableExpression(falseExpression)) {
       return qualifier + ".orElseGet(() -> " + falseExpression.getText() + ")";
     } else {
-      return qualifier + ".orElse(" + falseExpression.getText() + ")";
+      PsiType falseType = falseExpression.getType();
+      String falseText = falseExpression.getText();
+      if (falseType instanceof PsiPrimitiveType && targetType instanceof PsiPrimitiveType && !(targetType.equals(falseType))) {
+        Number falseValue = JavaPsiMathUtil.getNumberFromLiteral(falseExpression);
+        if (falseValue != null) {
+          falseText = falseValue.toString();
+          if (targetType.equals(PsiType.FLOAT)) {
+            falseText += "F";
+          } else if(targetType.equals(PsiType.DOUBLE) && !falseText.contains(".")) {
+            falseText += ".0";
+          } else if(targetType.equals(PsiType.LONG)) {
+            falseText += "L";
+          }
+        }
+      }
+      return qualifier + ".orElse(" + falseText + ")";
     }
   }
 
@@ -237,7 +235,7 @@ public class OptionalUtil {
         TypeConversionUtil.isAssignable(type, exprType)) {
       if (falseExpression == null) return "";
       PsiType falseType = falseExpression.getType();
-      if (falseType != null && falseType.isAssignableFrom(exprType)) return "";
+      if (falseType != null && (falseType.isAssignableFrom(exprType) || falseType.equals(PsiType.NULL))) return "";
     }
     return "<" + type.getCanonicalText() + ">";
   }

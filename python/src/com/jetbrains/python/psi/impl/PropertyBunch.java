@@ -30,7 +30,6 @@ import java.util.Objects;
  * Something that describes a property, with all related accessors.
  * <br/>
  * User: dcheryasov
- * Date: Jun 3, 2010 2:07:48 PM
  */
 public abstract class PropertyBunch<MType> {
 

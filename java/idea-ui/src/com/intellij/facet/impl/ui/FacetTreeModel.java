@@ -16,18 +16,18 @@
 
 package com.intellij.facet.impl.ui;
 
-import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.FacetInfo;
 import com.intellij.facet.FacetType;
+import com.intellij.facet.FacetTypeId;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.BidirectionalMap;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Collection;
 
 /**
  * @author nik
@@ -52,7 +52,7 @@ public class FacetTreeModel {
   }
 
   public FacetInfo[] getFacetInfos() {
-    return myFacetInfos.toArray(new FacetInfo[myFacetInfos.size()]);
+    return myFacetInfos.toArray(FacetInfo.EMPTY_ARRAY);
   }
 
   public void removeFacetInfo(@NotNull FacetInfo info) {

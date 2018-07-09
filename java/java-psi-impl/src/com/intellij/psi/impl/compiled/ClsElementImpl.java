@@ -110,7 +110,7 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   }
 
   @NotNull
-  static IncorrectOperationException cannotModifyException(@NotNull ClsElementImpl element) {
+  static IncorrectOperationException cannotModifyException(@NotNull PsiCompiledElement element) {
     VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
     String path = virtualFile == null ? "?" : virtualFile.getPresentableUrl();
     return new IncorrectOperationException(JavaCoreBundle.message("psi.error.attempt.to.edit.class.file", path));

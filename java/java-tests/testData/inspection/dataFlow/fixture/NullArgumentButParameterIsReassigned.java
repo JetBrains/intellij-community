@@ -11,7 +11,7 @@ class Test {
   }
 
   void usage() {
-    dangerousMethod(<warning descr="Passing 'null' argument to non annotated parameter">null</warning>);
+    dangerousMethod(<warning descr="Passing 'null' argument to non-annotated parameter">null</warning>);
   }
 
 }

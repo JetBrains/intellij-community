@@ -39,7 +39,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
@@ -122,17 +122,11 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
 
       final String[] availableProfileNames = profileManager.getAvailableProfileNames();
       if (availableProfileNames.length == 0) {
-        //can't be
-        return null;
+        throw new IllegalStateException("There should be at least one inspection profile");
       }
       profile = profileManager.getProfile(availableProfileNames[0], true);
     }
     return profile;
-  }
-
-  @Override
-  public boolean isSuppressed(@NotNull RefEntity entity, @NotNull String id) {
-    return entity instanceof RefElementImpl && ((RefElementImpl)entity).isSuppressed(id);
   }
 
   @Override
@@ -295,9 +289,9 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
   }
 
 
-  public void initializeTools(@NotNull List<Tools> outGlobalTools,
-                              @NotNull List<Tools> outLocalTools,
-                              @NotNull List<Tools> outGlobalSimpleTools) {
+  public void initializeTools(@NotNull List<? super Tools> outGlobalTools,
+                              @NotNull List<? super Tools> outLocalTools,
+                              @NotNull List<? super Tools> outGlobalSimpleTools) {
     final List<Tools> usedTools = getUsedTools();
     for (Tools currentTools : usedTools) {
       final String shortName = currentTools.getShortName();
@@ -336,9 +330,9 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
     return new ArrayList<>(set);
   }
 
-  private static void classifyTool(@NotNull List<Tools> outGlobalTools,
-                                   @NotNull List<Tools> outLocalTools,
-                                   @NotNull List<Tools> outGlobalSimpleTools,
+  private static void classifyTool(@NotNull List<? super Tools> outGlobalTools,
+                                   @NotNull List<? super Tools> outLocalTools,
+                                   @NotNull List<? super Tools> outGlobalSimpleTools,
                                    @NotNull Tools currentTools,
                                    @NotNull InspectionToolWrapper toolWrapper) {
     if (toolWrapper instanceof LocalInspectionToolWrapper) {
@@ -410,7 +404,7 @@ public class GlobalInspectionContextBase extends UserDataHolderBase implements G
       }
       GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase)InspectionManager.getInstance(project).createNewGlobalContext(false);
       final InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getCurrentProfile();
-      AnalysisScope analysisScope = new AnalysisScope(new LocalSearchScope(psiElements.toArray(new PsiElement[psiElements.size()])), project);
+      AnalysisScope analysisScope = new AnalysisScope(new LocalSearchScope(psiElements.toArray(PsiElement.EMPTY_ARRAY)), project);
       globalContext.codeCleanup(analysisScope, profile, null, runnable, true);
     };
 

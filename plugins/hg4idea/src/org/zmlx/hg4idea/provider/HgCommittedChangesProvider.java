@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -57,11 +58,6 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
     myVcs = vcs;
   }
 
-  @NotNull
-  public ChangeBrowserSettings createDefaultSettings() {
-    return new ChangeBrowserSettings();
-  }
-
   public ChangesBrowserSettingsEditor<ChangeBrowserSettings> createFilterUI(boolean showDateFilter) {
     return new HgVersionFilterComponent(showDateFilter);
   }
@@ -84,7 +80,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
   public void loadCommittedChanges(ChangeBrowserSettings changeBrowserSettings,
                                    RepositoryLocation repositoryLocation,
                                    int maxCount,
-                                   final AsynchConsumer<CommittedChangeList> consumer) throws VcsException {
+                                   final AsynchConsumer<CommittedChangeList> consumer) {
 
     try {
       List<CommittedChangeList> results = getCommittedChanges(changeBrowserSettings, repositoryLocation, maxCount);
@@ -166,7 +162,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
   }
 
   public VcsCommittedViewAuxiliary createActions(DecoratorManager decoratorManager, RepositoryLocation repositoryLocation) {
-    AnAction copyHashAction = new AnAction("Copy &Hash", "Copy hash to clipboard", PlatformIcons.COPY_ICON) {
+    AnAction copyHashAction = new DumbAwareAction("Copy &Hash", "Copy hash to clipboard", PlatformIcons.COPY_ICON) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);

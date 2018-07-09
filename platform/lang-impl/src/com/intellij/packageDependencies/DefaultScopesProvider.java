@@ -1,30 +1,16 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packageDependencies;
 
 import com.intellij.ide.scratch.ScratchesNamedScope;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
+import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.psi.search.scope.ProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProvider;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,7 +21,6 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class DefaultScopesProvider extends CustomScopesProviderEx {
-  private final NamedScope myProblemsScope;
   private final Project myProject;
   private final List<NamedScope> myScopes;
 
@@ -45,10 +30,10 @@ public class DefaultScopesProvider extends CustomScopesProviderEx {
 
   public DefaultScopesProvider(@NotNull Project project) {
     myProject = project;
-    NamedScope projectScope = new ProjectFilesScope();
-    NamedScope nonProjectScope = new NonProjectFilesScope();
-    myProblemsScope = new ProblemScope(project);
-    myScopes = Arrays.asList(projectScope, getProblemsScope(), getAllScope(), nonProjectScope, new ScratchesNamedScope());
+    myScopes = Arrays.asList(ProjectFilesScope.INSTANCE,
+                             getAllScope(),
+                             NonProjectFilesScope.INSTANCE,
+                             new ScratchesNamedScope());
   }
 
   @Override
@@ -57,9 +42,13 @@ public class DefaultScopesProvider extends CustomScopesProviderEx {
     return myScopes;
   }
 
+  /**
+   * @deprecated use {@link ProblemsScope#INSTANCE} instead
+   */
+  @Deprecated
   @NotNull
   public NamedScope getProblemsScope() {
-    return myProblemsScope;
+    return ProblemsScope.INSTANCE;
   }
 
   @NotNull
@@ -69,15 +58,5 @@ public class DefaultScopesProvider extends CustomScopesProviderEx {
       scopes.addAll(provider.getFilteredScopes());
     }
     return scopes;
-  }
-
-  @Nullable
-  public NamedScope findCustomScope(String name) {
-    for (NamedScope scope : getAllCustomScopes()) {
-      if (name.equals(scope.getName())) {
-        return scope;
-      }
-    }
-    return null;
   }
 }

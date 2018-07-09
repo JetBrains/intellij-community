@@ -110,7 +110,7 @@ public class ReferenceProvidersRegistryImpl extends ReferenceProvidersRegistry {
     ContainerUtil.addAllNotNull(result, maxPriorityRefs);
     ContainerUtil.addAllNotNull(result, getLowerPriorityReferences(allReferencesMap, maxPriority, maxPriorityRefs));
 
-    return result.toArray(new PsiReference[result.size()]);
+    return result.toArray(PsiReference.EMPTY_ARRAY);
   }
 
   @NotNull

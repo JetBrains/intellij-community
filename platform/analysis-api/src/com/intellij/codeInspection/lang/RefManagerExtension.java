@@ -3,16 +3,17 @@
 package com.intellij.codeInspection.lang;
 
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.reference.RefVisitor;
+import com.intellij.codeInspection.reference.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.stream.Stream;
 
 public interface RefManagerExtension<T> {
   @NotNull
@@ -28,7 +29,7 @@ public interface RefManagerExtension<T> {
   void removeReference(@NotNull RefElement refElement);
 
   @Nullable
-  RefElement createRefElement(PsiElement psiElement);
+  RefElement createRefElement(@NotNull PsiElement psiElement);
 
   /**
    * The method finds problem container (ex: method, class, file) that used to be shown as inspection view tree node.
@@ -43,22 +44,31 @@ public interface RefManagerExtension<T> {
   }
 
   @Nullable
-  RefEntity getReference(final String type, final String fqName);
+  RefEntity getReference(String type, String fqName);
 
   @Nullable
-  String getType(RefEntity entity);
+  String getType(@NotNull RefEntity entity);
 
   @NotNull
   RefEntity getRefinedElement(@NotNull RefEntity ref);
 
-  void visitElement(final PsiElement element);
+  void visitElement(@NotNull PsiElement element);
 
   @Nullable
-  String getGroupName(final RefEntity entity);
+  String getGroupName(@NotNull RefEntity entity);
 
-  boolean belongsToScope(final PsiElement psiElement);
+  boolean belongsToScope(@NotNull PsiElement psiElement);
 
   void export(@NotNull RefEntity refEntity, @NotNull Element element);
 
-  void onEntityInitialized(RefElement refEntity, PsiElement psiElement);
+  void onEntityInitialized(@NotNull RefElement refEntity, @NotNull PsiElement psiElement);
+
+  default boolean shouldProcessExternalFile(@NotNull PsiFile file) {
+    return false;
+  }
+
+  @NotNull
+  default Stream<? extends PsiElement> extractExternalFileImplicitReferences(@NotNull PsiFile psiFile) {
+    return Stream.empty();
+  }
 }

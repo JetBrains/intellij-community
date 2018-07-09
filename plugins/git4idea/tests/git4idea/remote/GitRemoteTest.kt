@@ -19,6 +19,7 @@ import com.intellij.openapi.components.service
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.GitHttpAuthService
 import git4idea.commands.GitHttpAuthenticator
+import git4idea.config.GitVersion
 import git4idea.test.GitHttpAuthTestService
 import git4idea.test.GitPlatformTest
 import java.io.File
@@ -41,13 +42,15 @@ class GitRemoteTest : GitPlatformTest() {
   }
 
   override fun tearDown() {
-    try{
+    try {
       authTestService.cleanup()
     }
     finally {
       super.tearDown()
     }
   }
+
+  override fun hasRemoteGitOperation() = true
 
   fun `test clone from http with username`() {
     val cloneWaiter = cloneOnPooledThread(makeUrl("gituser"))
@@ -79,7 +82,14 @@ class GitRemoteTest : GitPlatformTest() {
 
     assertTrue("Clone didn't complete during the reasonable period of time", cloneWaiter.await(30, TimeUnit.SECONDS))
     assertFalse("Repository directory shouldn't be created", File(testRoot, projectName).exists())
-    assertErrorNotification("Clone failed", "Authentication failed for '$url/'")
+
+    val expectedAuthFailureMessage = if (vcs.version.isLaterOrEqual(GitVersion(1, 8, 3, 0))) {
+      "Authentication failed for '$url/'"
+    }
+    else {
+      "Authentication failed"
+    }
+    assertErrorNotification("Clone failed", expectedAuthFailureMessage)
   }
 
   private fun makeUrl(username: String?) : String {

@@ -30,7 +30,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
@@ -99,7 +102,7 @@ public class JavaReflectionReferenceUtil {
 
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("JavaLangClassMemberReference");
 
-  @Nullable
+  @Contract("null -> null")
   public static ReflectiveType getReflectiveType(@Nullable PsiExpression context) {
     context = ParenthesesUtils.stripParentheses(context);
     if (context == null) {
@@ -126,7 +129,7 @@ public class JavaReflectionReferenceUtil {
           }
         }
       }
-      else if (GET_CLASS.equals(methodReferenceName) && methodCall.getArgumentList().getExpressions().length == 0) {
+      else if (GET_CLASS.equals(methodReferenceName) && methodCall.getArgumentList().isEmpty()) {
         final PsiMethod method = methodCall.resolveMethod();
         if (method != null && isJavaLangObject(method.getContainingClass())) {
           final PsiExpression qualifier = ParenthesesUtils.stripParentheses(methodCall.getMethodExpression().getQualifierExpression());
@@ -144,6 +147,24 @@ public class JavaReflectionReferenceUtil {
         }
       }
     }
+
+    if (context instanceof PsiReferenceExpression) {
+      PsiReferenceExpression reference = (PsiReferenceExpression)context;
+      final PsiElement resolved = reference.resolve();
+      if (resolved instanceof PsiVariable) {
+        PsiVariable variable = (PsiVariable)resolved;
+        if (isJavaLangClass(PsiTypesUtil.getPsiClass(variable.getType()))) {
+          final PsiExpression definition = findVariableDefinition(reference, variable);
+          if (definition != null) {
+            ReflectiveType result = ourGuard.doPreventingRecursion(variable, false, () -> getReflectiveType(definition));
+            if (result != null) {
+              return result;
+            }
+          }
+        }
+      }
+    }
+
     final PsiType type = context.getType();
     if (type instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
@@ -169,15 +190,6 @@ public class JavaReflectionReferenceUtil {
         final PsiClass argumentClass = PsiTypesUtil.getPsiClass(erasure);
         if (argumentClass != null && !isJavaLangObject(argumentClass)) {
           return ReflectiveType.create(argumentClass, false);
-        }
-      }
-    }
-    if (context instanceof PsiReferenceExpression) {
-      final PsiElement resolved = ((PsiReferenceExpression)context).resolve();
-      if (resolved instanceof PsiVariable) {
-        final PsiExpression definition = findVariableDefinition((PsiReferenceExpression)context, (PsiVariable)resolved);
-        if (definition != null) {
-          return ourGuard.doPreventingRecursion(resolved, false, () -> getReflectiveType(definition));
         }
       }
     }

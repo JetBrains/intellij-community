@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle.arrangement;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
@@ -22,8 +23,6 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
@@ -39,7 +38,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -56,21 +58,9 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
   protected FileType fileType;
   protected Language language;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    CodeStyleSettingsManager.getInstance(myFixture.getProject()).setTemporarySettings(new CodeStyleSettings());
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    CodeStyleSettingsManager.getInstance(myFixture.getProject()).dropTemporarySettings();
-    super.tearDown();
-  }
-
   @NotNull
   protected CommonCodeStyleSettings getCommonSettings() {
-    return CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings().getCommonSettings(language);
+    return CodeStyle.getSettings(myFixture.getProject()).getCommonSettings(language);
   }
 
   protected static ArrangementSectionRule section(@NotNull StdArrangementMatchRule... rules) {
@@ -121,7 +111,7 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
 
   @NotNull
   protected static StdArrangementMatchRule rule(@NotNull List<ArrangementAtomMatchCondition> conditions) {
-    return rule(conditions.toArray(new ArrangementAtomMatchCondition[conditions.size()]));
+    return rule(conditions.toArray(new ArrangementAtomMatchCondition[0]));
   }
 
   @NotNull
@@ -159,7 +149,7 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
       fail("Duplicate ranges set: explicit: " + ranges + ", " + "derived: " + info.ranges + ", text:\n" + text);
     }
     if (isEmpty(info.ranges)) {
-      info.ranges = !isEmpty(ranges) ? ranges : Arrays.asList(TextRange.from(0, text.length()));
+      info.ranges = !isEmpty(ranges) ? ranges : Collections.singletonList(TextRange.from(0, text.length()));
     }
 
     myFixture.configureByText(fileType, info.text);
@@ -180,7 +170,7 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
 
     @SuppressWarnings("unchecked")
     List<StdArrangementRuleAliasToken> aliases = (List<StdArrangementRuleAliasToken>)args.get("aliases");
-    CommonCodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings().getCommonSettings(language);
+    CommonCodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject()).getCommonSettings(language);
     final StdArrangementSettings arrangementSettings =
       aliases == null ?
       new StdArrangementSettings(groupingRules, sectionRules) :

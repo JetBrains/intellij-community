@@ -38,30 +38,39 @@ class WinExeInstallerBuilder {
   }
 
   private void generateInstallationConfigFileForSilentMode() {
-    if (customizer.silentInstallationConfig == null) {
-      buildContext.messages.warning("Silent config file for Windows installer won't be generated because it is not defined.")
-      return
-    }
-    if (! new File(customizer.silentInstallationConfig).exists()) {
-      buildContext.messages.error(
-        "Silent config file for Windows installer won't be generated. The template doesn't exist: '${customizer.silentInstallationConfig}'")
-    }
-    else {
-      def extensionsList = customizer.fileAssociations
-      String associations = "; List of associations. To create an association change value to 1.\n"
-      if (! extensionsList.isEmpty()) {
+    def targetFilePath = "${buildContext.paths.artifacts}/silent.config"
+    if (!new File(targetFilePath).exists()) {
+      String silentConfigTemplate
+      def customConfigPath = customizer.silentInstallationConfig
+      if (customConfigPath != null) {
+        if (!new File(customConfigPath).exists()) {
+          buildContext.messages.error("WindowsDistributionCustomizer.silentInstallationConfig points to a file which doesn't exist: $customConfigPath")
+        }
+        silentConfigTemplate = customConfigPath
+      }
+      else {
+        silentConfigTemplate = "$buildContext.paths.communityHome/platform/build-scripts/resources/win/nsis/silent.config"
+      }
+
+      buildContext.ant.copy(file: "$silentConfigTemplate", tofile: targetFilePath)
+      File silentConfigFile = new File(targetFilePath)
+      def extensionsList = getFileAssociations()
+      String associations = "\n\n; List of associations. To create an association change value to 1.\n"
+      if (!extensionsList.isEmpty()) {
         associations += extensionsList.collect { "$it=0\n" }.join("")
       }
       else {
-        associations = "; There are no associations for the product.\n"
+        associations = "\n\n; There are no associations for the product.\n"
       }
-      buildContext.ant.copy(todir: "${buildContext.paths.artifacts}") {
-        fileset(file: customizer.silentInstallationConfig)
-        filterset(begintoken: "@@", endtoken: "@@") {
-          filter(token: "List of associations", value: associations)
-        }
-      }
+      silentConfigFile.append(associations)
     }
+  }
+
+  /**
+   * Returns list of file extensions with leading dot added
+   */
+  private List<String> getFileAssociations() {
+    customizer.fileAssociations.collect { !it.startsWith(".") ? ".$it" : it}
   }
 
   void buildInstaller(String winDistPath) {
@@ -128,16 +137,24 @@ class WinExeInstallerBuilder {
                         " \"${box}/nsiconf/idea.nsi\"")
     }
     else if (SystemInfoRt.isLinux) {
-      String installScriptPath = "$box/install_nsis3.sh"
+      String installerToolsDir = "$box/installer"
+      String installScriptPath = "$installerToolsDir/install_nsis3.sh"
       buildContext.ant.copy(file: "$communityHome/build/conf/install_nsis3.sh", tofile: installScriptPath)
+      buildContext.ant.copy(todir: "$installerToolsDir") {
+        fileset(dir: "${buildContext.paths.communityHome}/build/tools") {
+          include(name: "nsis*.*")
+          include(name: "scons*.*")
+        }
+      }
+
       buildContext.ant.fixcrlf(file: installScriptPath, eol: "unix")
       ant.exec(executable: "chmod") {
         arg(line: " u+x \"$installScriptPath\"")
       }
       ant.exec(command: "\"$installScriptPath\"" +
-                        " \"${buildContext.paths.communityHome}\"")
+                        " \"${installerToolsDir}\"")
 
-      ant.exec(command: "\"${buildContext.paths.communityHome}/build/tools/nsis/nsis-3.01/bin/makensis\"" +
+      ant.exec(command: "\"${installerToolsDir}/nsis-3.02.1/bin/makensis\"" +
       " '-X!AddPluginDir \"${box}/NSIS/Plugins/x86-unicode\"'" +
       " '-X!AddIncludeDir \"${box}/NSIS/Include\"'" +
                  " -DNSIS_DIR=\"${box}/NSIS\"" +
@@ -169,7 +186,7 @@ class WinExeInstallerBuilder {
 !define PRODUCT_VM_OPTIONS_FILE "${toSystemDependentName("$winDistPath/bin/")}\${PRODUCT_VM_OPTIONS_NAME}"
 """
 
-    def extensionsList = customizer.fileAssociations
+    def extensionsList = getFileAssociations()
     def fileAssociations = extensionsList.isEmpty() ? "NoAssociation" : extensionsList.join(",")
     def linkToJre = customizer.getBaseDownloadUrlForJre() != null ?
                       "${customizer.getBaseDownloadUrlForJre()}/${buildContext.bundledJreManager.archiveNameJre(buildContext)}" :

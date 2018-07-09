@@ -5,7 +5,10 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtilBase;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
@@ -49,8 +52,7 @@ public class FieldCanBeLocalInspectionBase extends AbstractBaseJavaLocalInspecti
       }
     }
 
-
-    removeFieldsReferencedFromInitializers(aClass, candidates);
+    removeFieldsReferencedFromInitializers(aClass, aClass, candidates);
     if (candidates.isEmpty()) return;
 
     final Set<PsiField> usedFields = new THashSet<>();
@@ -85,7 +87,7 @@ public class FieldCanBeLocalInspectionBase extends AbstractBaseJavaLocalInspecti
         if (fix != null) {
           fixes.add(fix);
         }
-        holder.registerProblem(field.getNameIdentifier(), message, fixes.toArray(new LocalQuickFix[fixes.size()]));
+        holder.registerProblem(field.getNameIdentifier(), message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
     }
   }
@@ -94,8 +96,8 @@ public class FieldCanBeLocalInspectionBase extends AbstractBaseJavaLocalInspecti
     return null;
   }
 
-  private static void removeFieldsReferencedFromInitializers(final PsiClass aClass, final Set<PsiField> candidates) {
-    aClass.accept(new JavaRecursiveElementVisitor() {
+  private static void removeFieldsReferencedFromInitializers(PsiElement aClass, PsiElement root, Set<PsiField> candidates) {
+    root.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitMethod(PsiMethod method) {
         if (method.isConstructor()) {
@@ -107,7 +109,7 @@ public class FieldCanBeLocalInspectionBase extends AbstractBaseJavaLocalInspecti
               if (expression instanceof PsiMethodCallExpression) {
                 final PsiMethod resolveMethod = ((PsiMethodCallExpression)expression).resolveMethod();
                 if (resolveMethod != null && resolveMethod.isConstructor()) {
-                  visitMethodCallExpression((PsiMethodCallExpression)expression);
+                  removeFieldsReferencedFromInitializers(aClass, expression, candidates);
                 }
               }
             }
@@ -115,7 +117,7 @@ public class FieldCanBeLocalInspectionBase extends AbstractBaseJavaLocalInspecti
         }
         final PsiDocComment docComment = method.getDocComment();
         if (docComment != null) {
-          docComment.accept(this);
+          removeFieldsReferencedFromInitializers(aClass, docComment, candidates);
         }
         //do not go inside method
       }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -28,8 +14,10 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.SingleRootFileViewProvider;
@@ -85,6 +73,9 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
   @NotNull
   public FileEditorState readState(@NotNull Element element, @NotNull Project project, @NotNull VirtualFile file) {
     TextEditorState state = new TextEditorState();
+    if (JDOMUtil.isEmpty(element)) {
+      return state;
+    }
 
     try {
       List<Element> caretElements = element.getChildren(CARET_ELEMENT);
@@ -97,12 +88,11 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
           state.CARETS[i] = readCaretInfo(caretElements.get(i));
         }
       }
-
-      String verticalScrollProportion = element.getAttributeValue(RELATIVE_CARET_POSITION_ATTR);
-      state.RELATIVE_CARET_POSITION = verticalScrollProportion == null ? 0 : Integer.parseInt(verticalScrollProportion);
     }
     catch (NumberFormatException ignored) {
     }
+
+    state.RELATIVE_CARET_POSITION = StringUtilRt.parseInt(element.getAttributeValue(RELATIVE_CARET_POSITION_ATTR), 0);
 
     return state;
   }
@@ -111,7 +101,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     TextEditorState.CaretState caretState = new TextEditorState.CaretState();
     caretState.LINE = parseWithDefault(element, LINE_ATTR);
     caretState.COLUMN = parseWithDefault(element, COLUMN_ATTR);
-    caretState.LEAN_FORWARD = parseBooleanWithDefault(element, LEAN_FORWARD_ATTR);
+    caretState.LEAN_FORWARD = Boolean.parseBoolean(element.getAttributeValue(LEAN_FORWARD_ATTR));
     caretState.SELECTION_START_LINE = parseWithDefault(element, SELECTION_START_LINE_ATTR);
     caretState.SELECTION_START_COLUMN = parseWithDefault(element, SELECTION_START_COLUMN_ATTR);
     caretState.SELECTION_END_LINE = parseWithDefault(element, SELECTION_END_LINE_ATTR);
@@ -120,32 +110,41 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
   }
 
   private static int parseWithDefault(Element element, String attributeName) {
-    String value = element.getAttributeValue(attributeName);
-    return value == null ? 0 : Integer.parseInt(value);
-  }
-
-  private static boolean parseBooleanWithDefault(Element element, String attributeName) {
-    String value = element.getAttributeValue(attributeName);
-    return value != null && Boolean.parseBoolean(value);
+    return StringUtilRt.parseInt(element.getAttributeValue(attributeName), 0);
   }
 
   @Override
   public void writeState(@NotNull FileEditorState _state, @NotNull Project project, @NotNull Element element) {
     TextEditorState state = (TextEditorState)_state;
 
-    element.setAttribute(RELATIVE_CARET_POSITION_ATTR, Integer.toString(state.RELATIVE_CARET_POSITION));
+    if (state.RELATIVE_CARET_POSITION != 0) {
+      element.setAttribute(RELATIVE_CARET_POSITION_ATTR, Integer.toString(state.RELATIVE_CARET_POSITION));
+    }
+
     if (state.CARETS != null) {
       for (TextEditorState.CaretState caretState : state.CARETS) {
         Element e = new Element(CARET_ELEMENT);
-        e.setAttribute(LINE_ATTR, Integer.toString(caretState.LINE));
-        e.setAttribute(COLUMN_ATTR, Integer.toString(caretState.COLUMN));
-        e.setAttribute(LEAN_FORWARD_ATTR, Boolean.toString(caretState.LEAN_FORWARD));
-        e.setAttribute(SELECTION_START_LINE_ATTR, Integer.toString(caretState.SELECTION_START_LINE));
-        e.setAttribute(SELECTION_START_COLUMN_ATTR, Integer.toString(caretState.SELECTION_START_COLUMN));
-        e.setAttribute(SELECTION_END_LINE_ATTR, Integer.toString(caretState.SELECTION_END_LINE));
-        e.setAttribute(SELECTION_END_COLUMN_ATTR, Integer.toString(caretState.SELECTION_END_COLUMN));
-        element.addContent(e);
+        writeIfNot0(e, LINE_ATTR, caretState.LINE);
+        writeIfNot0(e, COLUMN_ATTR, caretState.COLUMN);
+        if (caretState.LEAN_FORWARD) {
+          e.setAttribute(LEAN_FORWARD_ATTR, Boolean.toString(true));
+        }
+        writeIfNot0(e, SELECTION_START_LINE_ATTR, caretState.SELECTION_START_LINE);
+        writeIfNot0(e, SELECTION_START_COLUMN_ATTR, caretState.SELECTION_START_COLUMN);
+        writeIfNot0(e, SELECTION_END_LINE_ATTR, caretState.SELECTION_END_LINE);
+        writeIfNot0(e, SELECTION_END_LINE_ATTR, caretState.SELECTION_END_LINE);
+        writeIfNot0(e, SELECTION_END_COLUMN_ATTR, caretState.SELECTION_END_COLUMN);
+
+        if (!JDOMUtil.isEmpty(e)) {
+          element.addContent(e);
+        }
       }
+    }
+  }
+
+  private static void writeIfNot0(@NotNull Element element, @NotNull String name, int value) {
+    if (value != 0) {
+      element.setAttribute(name, Integer.toString(value));
     }
   }
 
@@ -219,7 +218,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
       LogicalPosition caretPosition = caretState.getCaretPosition();
       LogicalPosition selectionStartPosition = caretState.getSelectionStart();
       LogicalPosition selectionEndPosition = caretState.getSelectionEnd();
-      
+
       TextEditorState.CaretState s = new TextEditorState.CaretState();
       s.LINE = getLine(caretPosition);
       s.COLUMN = getColumn(caretPosition);
@@ -256,7 +255,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     return pos == null ? 0 : pos.column;
   }
 
-  protected void setStateImpl(final Project project, final Editor editor, final TextEditorState state){
+  protected void setStateImpl(final Project project, final Editor editor, final TextEditorState state, boolean exactState){
     TextEditorState.CaretState[] carets = state.CARETS;
     if (carets != null && carets.length > 0) {
       if (!editor.getCaretModel().supportsMultipleCarets()) carets = Arrays.copyOf(carets, 1);
@@ -278,7 +277,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
         if (relativeCaretPosition != Integer.MAX_VALUE) {
           EditorUtil.setRelativeCaretPosition(editor, relativeCaretPosition);
         }
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+        if (!exactState) editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
         editor.getScrollingModel().enableAnimation();
       }
     };
@@ -334,7 +333,12 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
 
     @Override
     public void setState(@NotNull FileEditorState state) {
-      setStateImpl(null, myEditor, (TextEditorState)state);
+      setState(state, false);
+    }
+
+    @Override
+    public void setState(@NotNull FileEditorState state, boolean exactState) {
+      setStateImpl(null, myEditor, (TextEditorState)state, exactState);
     }
 
     @Override

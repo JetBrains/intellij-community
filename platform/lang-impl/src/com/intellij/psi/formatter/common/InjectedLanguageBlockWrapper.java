@@ -45,7 +45,6 @@ public class InjectedLanguageBlockWrapper implements BlockEx {
    * @param original block inside injected code
    * @param offset start offset of injected code inside the main document
    * @param range range of code inside injected document which is really placed in the main document
-   * @param indent
    */
   public InjectedLanguageBlockWrapper(@NotNull final Block original, final int offset, @Nullable TextRange range, @Nullable Indent indent) {
     this(original, offset, range, indent, null);
@@ -55,8 +54,7 @@ public class InjectedLanguageBlockWrapper implements BlockEx {
                                       final int offset,
                                       @Nullable TextRange range,
                                       @Nullable Indent indent,
-                                      @Nullable Language language)
-  {
+                                      @Nullable Language language) {
     myOriginal = original;
     myOffset = offset;
     myRange = range;
@@ -110,7 +108,7 @@ public class InjectedLanguageBlockWrapper implements BlockEx {
     final ArrayList<Block> result = new ArrayList<>(list.size());
     if (myRange == null) {
       for (Block block : list) {
-        result.add(new InjectedLanguageBlockWrapper(block, myOffset, myRange, null, myLanguage));
+        result.add(new InjectedLanguageBlockWrapper(block, myOffset, null, null, myLanguage));
       }
     }
     else {

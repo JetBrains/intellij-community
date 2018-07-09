@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.search;
 
+import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiFile;
@@ -55,7 +42,8 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
   @Override
   @NotNull
   public TodoItem[] findTodoItems(@NotNull PsiFile file, int startOffset, int endOffset) {
-    final Collection<IndexPatternOccurrence> occurrences = IndexPatternSearch.search(file, TodoIndexPatternProvider.getInstance()).findAll();
+    final Collection<IndexPatternOccurrence> occurrences =
+      IndexPatternSearch.search(file, TodoIndexPatternProvider.getInstance(), TodoConfiguration.getInstance().isMultiLine()).findAll();
     if (occurrences.isEmpty()) {
       return EMPTY_TODO_ITEMS;
     }
@@ -68,14 +56,15 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
     List<TodoItem> items = new ArrayList<>(occurrences.size());
     TextRange textRange = new TextRange(startOffset, endOffset);
     final TodoItemsCreator todoItemsCreator = new TodoItemsCreator();
-    for(IndexPatternOccurrence occurrence: occurrences) {
+    for (IndexPatternOccurrence occurrence: occurrences) {
       TextRange occurrenceRange = occurrence.getTextRange();
-      if (textRange.contains(occurrenceRange)) {
+      if (textRange.intersectsStrict(occurrenceRange) ||
+          occurrence.getAdditionalTextRanges().stream().anyMatch(r -> textRange.intersectsStrict(r))) {
         items.add(todoItemsCreator.createTodo(occurrence));
       }
     }
 
-    return items.toArray(new TodoItem[items.size()]);
+    return items.toArray(new TodoItem[0]);
   }
 
   @NotNull
@@ -88,7 +77,9 @@ public class PsiTodoSearchHelperImpl implements PsiTodoSearchHelper {
   @Override
   public TodoItem[] findTodoItemsLight(@NotNull PsiFile file, int startOffset, int endOffset) {
     final Collection<IndexPatternOccurrence> occurrences =
-      LightIndexPatternSearch.SEARCH.createQuery(new IndexPatternSearch.SearchParameters(file, TodoIndexPatternProvider.getInstance())).findAll();
+      LightIndexPatternSearch.SEARCH.createQuery(
+        new IndexPatternSearch.SearchParameters(file, TodoIndexPatternProvider.getInstance(), TodoConfiguration.getInstance().isMultiLine())
+      ).findAll();
 
     if (occurrences.isEmpty()) {
       return EMPTY_TODO_ITEMS;

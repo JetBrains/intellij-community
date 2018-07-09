@@ -18,9 +18,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.siyeh.ig.psiutils.MethodCallUtils.getQualifierMethodCall;
 
-/**
- * @author Tagir Valeev
- */
 public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher STREAM_COUNT =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "count").parameterCount(0);
@@ -110,7 +107,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
       PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)function;
       if (!STREAM_METHOD.equals(methodRef.getReferenceName())) return false;
       PsiMethod method = ObjectUtils.tryCast(methodRef.resolve(), PsiMethod.class);
-      if (method != null && STREAM_METHOD.equals(method.getName()) && method.getParameterList().getParametersCount() == 0) {
+      if (method != null && STREAM_METHOD.equals(method.getName()) && method.getParameterList().isEmpty()) {
         final PsiClass containingClass = method.getContainingClass();
         if (containingClass != null && CommonClassNames.JAVA_UTIL_COLLECTION.equals(containingClass.getQualifiedName())) {
           return true;

@@ -346,7 +346,7 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
 
   private static class MyListener implements SdkModel.Listener {
     private final PyIdeCommonOptionsForm myForm;
-    private PyConfigurableInterpreterList myInterpreterList;
+    private final PyConfigurableInterpreterList myInterpreterList;
 
     public MyListener(PyIdeCommonOptionsForm form, PyConfigurableInterpreterList interpreterList) {
       myForm = form;
@@ -371,10 +371,6 @@ public class PyIdeCommonOptionsForm implements AbstractPyCommonOptionsForm {
     @Override
     public void sdkChanged(Sdk sdk, String previousName) {
       update();
-    }
-
-    @Override
-    public void sdkHomeSelected(Sdk sdk, String newSdkHome) {
     }
   }
 

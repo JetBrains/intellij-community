@@ -55,11 +55,6 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
                          @NotNull PsiElement endElement) {
         runTypeMigrationOnVariable((PsiVariable)startElement, getReturnType(), editor, optimizeImports, true);
       }
-
-      @Override
-      public boolean startInWriteAction() {
-        return false;
-      }
     };
   }
 

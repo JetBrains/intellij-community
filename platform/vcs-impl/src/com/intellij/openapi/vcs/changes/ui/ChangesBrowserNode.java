@@ -1,21 +1,10 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -30,6 +19,7 @@ import com.intellij.util.containers.Convertor;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.MutableTreeNode;
@@ -41,7 +31,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.FontUtil.spaceAndThinSpace;
 
-public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
+public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements UserDataHolderEx {
   @NonNls private static final String ROOT_NODE_VALUE = "root";
 
   public static final Object IGNORED_FILES_TAG = new Tag("changes.nodetitle.ignored.files");
@@ -53,9 +43,10 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   public static final Object SWITCHED_ROOTS_TAG = new Tag("changes.nodetitle.switched.roots");
   public static final Object LOCALLY_DELETED_NODE_TAG = new Tag("changes.nodetitle.locally.deleted.files");
 
+  protected static final int CONFLICTS_SORT_WEIGHT = 0;
   protected static final int DEFAULT_CHANGE_LIST_SORT_WEIGHT = 1;
   protected static final int CHANGE_LIST_SORT_WEIGHT = 2;
-  protected static final int MODULE_SORT_WEIGHT = 3;
+  protected static final int REPOSITORY_SORT_WEIGHT = 3;
   protected static final int DIRECTORY_PATH_SORT_WEIGHT = 4;
   protected static final int FILE_PATH_SORT_WEIGHT = 5;
   protected static final int GENERIC_FILE_PATH_SORT_WEIGHT = 6;
@@ -73,6 +64,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
   private int myFileCount = -1;
   private int myDirectoryCount = -1;
   private boolean myHelper;
+  @NotNull private final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
   protected ChangesBrowserNode(Object userObject) {
     super(userObject);
@@ -114,6 +106,33 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
       return (ChangesBrowserNode) userObject;
     }
     return new ChangesBrowserNode(userObject);
+  }
+
+  @Override
+  public ChangesBrowserNode<?> getParent() {
+    return (ChangesBrowserNode<?>)super.getParent();
+  }
+
+  @Nullable
+  @Override
+  public <V> V getUserData(@NotNull Key<V> key) {
+    return myUserDataHolder.getUserData(key);
+  }
+
+  @Override
+  public <V> void putUserData(@NotNull Key<V> key, @Nullable V value) {
+    myUserDataHolder.putUserData(key, value);
+  }
+
+  @NotNull
+  @Override
+  public <V> V putUserDataIfAbsent(@NotNull Key<V> key, @NotNull V value) {
+    return myUserDataHolder.putUserDataIfAbsent(key, value);
+  }
+
+  @Override
+  public <V> boolean replace(@NotNull Key<V> key, @Nullable V oldValue, @Nullable V newValue) {
+    return myUserDataHolder.replace(key, oldValue, newValue);
   }
 
   @Override
@@ -280,12 +299,16 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode {
     myAttributes = attributes;
   }
 
-  protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @NotNull FilePath parentPath) {
-    appendParentPath(renderer, parentPath.getPresentableUrl());
+  protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable FilePath parentPath) {
+    if (parentPath != null) {
+      appendParentPath(renderer, parentPath.getPresentableUrl());
+    }
   }
 
-  protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @NotNull VirtualFile parentPath) {
-    appendParentPath(renderer, parentPath.getPresentableUrl());
+  protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable VirtualFile parentPath) {
+    if (parentPath != null) {
+      appendParentPath(renderer, parentPath.getPresentableUrl());
+    }
   }
 
   private static void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @NotNull String parentPath) {

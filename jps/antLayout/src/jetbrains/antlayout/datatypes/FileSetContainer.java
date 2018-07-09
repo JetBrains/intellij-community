@@ -20,16 +20,14 @@ import jetbrains.antlayout.util.TempFileFactory;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.types.FileSet;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author nik
  */
 public class FileSetContainer extends Content {
-  private FileSet fileSet;
+  private final FileSet fileSet;
 
   public FileSetContainer(FileSet fileSet) {
     this.fileSet = fileSet;

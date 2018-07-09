@@ -19,13 +19,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveResult;
 import com.intellij.util.containers.SortedList;
 
-import java.util.Comparator;
 import java.util.List;
 
 /**
  * Provides a way to sort results of multi-resolve.
  * User: dcheryasov
- * Date: Dec 5, 2008 11:06:30 AM
  */
 public class RatedResolveResult implements ResolveResult {
   private final int myRate;
@@ -42,6 +40,7 @@ public class RatedResolveResult implements ResolveResult {
     return myWhat;
   }
 
+  @Override
   public boolean isValidResult() {
     return myWhat != null;
   }

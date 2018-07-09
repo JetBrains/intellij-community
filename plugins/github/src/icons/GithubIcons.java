@@ -28,5 +28,14 @@ public class GithubIcons {
     return IconLoader.getIcon(path, GithubIcons.class);
   }
 
-  public static final Icon Github_icon = load("/org/jetbrains/plugins/github/github_icon.png"); // 16x16
+  private static Icon load(String path, Class<?> clazz) {
+    return IconLoader.getIcon(path, clazz);
+  }
+
+  public static final Icon DefaultAvatar_40 = load("/org/jetbrains/plugins/github/defaultAvatar_40.svg"); // 40x40
+
+  /** @deprecated to be removed in IDEA 2020 - use AllIcons.Vcs.Vendors.Github */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final Icon Github_icon = load("/vcs/vendors/github.svg", com.intellij.icons.AllIcons.class);
 }

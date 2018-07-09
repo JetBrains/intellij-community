@@ -250,7 +250,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
     private int myCurrValue = Integer.MAX_VALUE;
 
     private IntOption(@NotNull String title, String fieldName) {
-      this(title, CodeStyleSettings.class, fieldName, false);
+      this(title, CommonCodeStyleSettings.class, fieldName, false);
     }
 
     private IntOption(@NotNull String title, Class<? extends CustomCodeStyleSettings> targetClass, String fieldName) {
@@ -258,7 +258,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
       myTargetClass = targetClass;
     }
 
-    @SuppressWarnings("unused") // dummy is used to distinguish constructors
+    // dummy is used to distinguish constructors
     private IntOption(@NotNull String title, Class<?> fieldClass, String fieldName, boolean dummy) {
       try {
         myTarget = fieldClass.getField(fieldName);

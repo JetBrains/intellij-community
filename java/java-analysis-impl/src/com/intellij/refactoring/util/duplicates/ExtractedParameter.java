@@ -50,12 +50,6 @@ public class ExtractedParameter {
     if (type == null) {
       return false;
     }
-    if (patternPart.myVariable != null && !isStaticOrLocal(patternPart.myVariable)) {
-      return false;
-    }
-    if (candidatePart.myVariable != null && !isStaticOrLocal(candidatePart.myVariable)) {
-      return false;
-    }
     for (ExtractedParameter parameter : parameters) {
       boolean samePattern = parameter.samePattern(patternPart);
       boolean sameCandidate = parameter.sameCandidate(candidatePart);
@@ -72,18 +66,19 @@ public class ExtractedParameter {
   }
 
   @NotNull
-  public ExtractedParameter mapPatternToItself(@NotNull Match match) {
-    ExtractableExpressionPart copy = myPattern.copy();
-    ExtractableExpressionPart deepCopy = myPattern.deepCopy();
-
-    ExtractedParameter parameter = new ExtractedParameter(copy, deepCopy, copy.myType);
-    parameter.myPatternUsages.addAll(myPatternUsages);
-
-    match.getExtractedParameters().add(parameter);
-    return parameter;
+  public ExtractedParameter copyWithCandidateUsage(@NotNull PsiExpression candidateUsage) {
+    ExtractedParameter result = new ExtractedParameter(myPattern, ExtractableExpressionPart.fromUsage(candidateUsage, myType), myType);
+    result.myPatternUsages.addAll(myPatternUsages);
+    return result;
   }
 
-  private void addUsages(ExtractableExpressionPart patternPart) {
+  @NotNull
+  public String getLocalVariableTypeText() {
+    PsiType type = GenericsUtil.getVariableTypeByExpressionType(myType);
+    return type.getCanonicalText();
+  }
+
+  public void addUsages(ExtractableExpressionPart patternPart) {
     myPatternUsages.add(patternPart.getUsage());
   }
 
@@ -139,13 +134,6 @@ public class ExtractedParameter {
       }
     }
     return false;
-  }
-
-  static boolean isStaticOrLocal(@NotNull PsiVariable variable) {
-    if (variable instanceof PsiField && variable.hasModifierProperty(PsiModifier.STATIC)) {
-      return true;
-    }
-    return variable instanceof PsiLocalVariable || variable instanceof PsiParameter;
   }
 
   private static class FieldModificationVisitor extends JavaRecursiveElementWalkingVisitor {

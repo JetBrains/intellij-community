@@ -32,7 +32,7 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
     super(DeafStream.DEAF_PRINT_STREAM);
   }
 
-  public void createListeners(ArrayList listeners) {
+  public void createListeners(ArrayList listeners, int count) {
     myTestsListener = new SMTestListener();
     myListeners = listeners;
   }
@@ -218,7 +218,7 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
       }
       final String methodName = getMethodName(test);
       System.out.println("##teamcity[testStarted name=\'" + escapeName(methodName) + 
-                         "\' locationHint=\'java:test://" + escapeName(className + "." + methodName) + "\']");
+                         "\' locationHint=\'java:test://" + escapeName(className + "/" + methodName) + "\']");
     }
 
     protected void finishSuite() {

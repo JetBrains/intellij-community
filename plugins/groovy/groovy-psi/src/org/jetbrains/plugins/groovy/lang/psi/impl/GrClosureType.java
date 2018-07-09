@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Comparing;
@@ -25,8 +25,9 @@ import java.util.List;
 public class GrClosureType extends GrLiteralClassType {
   private final GrSignature mySignature;
   private volatile PsiType[] myTypeArgs;
+  private GrClosableBlock myClosure;
 
-  private GrClosureType(LanguageLevel languageLevel,
+  private GrClosureType(@NotNull LanguageLevel languageLevel,
                         @NotNull GlobalSearchScope scope,
                         @NotNull JavaPsiFacade facade,
                         @NotNull GrSignature closureSignature,
@@ -36,7 +37,7 @@ public class GrClosureType extends GrLiteralClassType {
     if (!shouldInferTypeParameters) myTypeArgs = PsiType.EMPTY_ARRAY;
   }
 
-  private GrClosureType(LanguageLevel level,
+  private GrClosureType(@NotNull LanguageLevel level,
                         @NotNull GlobalSearchScope scope,
                         @NotNull JavaPsiFacade facade,
                         @NotNull GrSignature signature,
@@ -47,10 +48,13 @@ public class GrClosureType extends GrLiteralClassType {
     myTypeArgs = typeArgs;
   }
 
-  @Override
-  @NotNull
-  public String getClassName() {
-    return "Closure";
+  @Nullable
+  public GrClosableBlock getClosure() {
+    return myClosure;
+  }
+
+  private void setClosure(@NotNull GrClosableBlock closure) {
+    myClosure = closure;
   }
 
   @Override
@@ -120,7 +124,8 @@ public class GrClosureType extends GrLiteralClassType {
     return new GrClosureType(languageLevel, myScope, myFacade, mySignature, myTypeArgs);
   }
 
-  public static GrClosureType create(GroovyResolveResult[] results, GroovyPsiElement context) {
+  @NotNull
+  public static GrClosureType create(@NotNull Iterable<? extends GroovyResolveResult> results, @NotNull GroovyPsiElement context) {
     List<GrClosureSignature> signatures = new ArrayList<>();
     for (GroovyResolveResult result : results) {
       if (result.getElement() instanceof PsiMethod) {
@@ -134,7 +139,7 @@ public class GrClosureType extends GrLiteralClassType {
       return create(signatures.get(0), resolveScope, facade, LanguageLevel.JDK_1_5, true);
     }
     else {
-      return create(GrClosureSignatureUtil.createMultiSignature(signatures.toArray(new GrClosureSignature[signatures.size()])),
+      return create(GrClosureSignatureUtil.createMultiSignature(signatures.toArray(GrClosureSignature.EMPTY_ARRAY)),
                     resolveScope, facade, LanguageLevel.JDK_1_5, true);
     }
   }
@@ -143,30 +148,15 @@ public class GrClosureType extends GrLiteralClassType {
     final GrClosureSignature signature = GrClosureSignatureUtil.createSignature(closure);
     final GlobalSearchScope resolveScope = closure.getResolveScope();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(closure.getProject());
-    return create(signature, resolveScope, facade,LanguageLevel.JDK_1_5, shouldInferTypeParameters);
-  }
-
-  @Deprecated
-  public static GrClosureType create(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor) {
-    final GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor);
-    final GlobalSearchScope scope = GlobalSearchScope.allScope(method.getProject());
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(method.getProject());
-    return create(signature, scope, facade, LanguageLevel.JDK_1_5, true);
-  }
-
-  @Deprecated
-  public static GrClosureType create(@NotNull PsiParameter[] parameters,
-                                     @Nullable PsiType returnType,
-                                     JavaPsiFacade facade,
-                                     GlobalSearchScope scope,
-                                     LanguageLevel languageLevel) {
-    return create(GrClosureSignatureUtil.createSignature(parameters, returnType), scope, facade, languageLevel, true);
+    GrClosureType type = create(signature, resolveScope, facade, LanguageLevel.JDK_1_5, shouldInferTypeParameters);
+    type.setClosure(closure);
+    return type;
   }
 
   public static GrClosureType create(@NotNull GrSignature signature,
                                      GlobalSearchScope scope,
                                      JavaPsiFacade facade,
-                                     LanguageLevel languageLevel,
+                                     @NotNull LanguageLevel languageLevel,
                                      boolean shouldInferTypeParameters) {
     return new GrClosureType(languageLevel, scope, facade, signature, shouldInferTypeParameters);
   }

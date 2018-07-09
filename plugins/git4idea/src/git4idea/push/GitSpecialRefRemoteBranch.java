@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Semi-fake remote branch if pushing to special push specs like "HEAD:refs/for/master".
  */
-class GitSpecialRefRemoteBranch extends GitRemoteBranch {
+public class GitSpecialRefRemoteBranch extends GitRemoteBranch {
   private final String myRef;
   private final GitRemote myRemote;
 

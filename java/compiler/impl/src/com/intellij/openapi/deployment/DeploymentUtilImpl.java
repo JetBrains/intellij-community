@@ -15,89 +15,23 @@
  */
 package com.intellij.openapi.deployment;
 
-import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
-import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.descriptors.ConfigFile;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
-import java.util.Set;
 
 /**
  * @author Alexey Kudravtsev
  */
 public class DeploymentUtilImpl extends DeploymentUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.deployment.MakeUtilImpl");
-
-  public void copyFile(@NotNull final File fromFile,
-                       @NotNull final File toFile,
-                       @NotNull CompileContext context,
-                       @Nullable Set<String> writtenPaths,
-                       @Nullable FileFilter fileFilter) throws IOException {
-    if (fileFilter != null && !fileFilter.accept(fromFile)) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Skipping " + fromFile.getAbsolutePath() + ": it wasn't accepted by filter " + fileFilter);
-      }
-      return;
-    }
-    checkPathDoNotNavigatesUpFromFile(fromFile);
-    checkPathDoNotNavigatesUpFromFile(toFile);
-    if (fromFile.isDirectory()) {
-      final File[] fromFiles = fromFile.listFiles();
-      toFile.mkdirs();
-      for (File file : fromFiles) {
-        copyFile(file, new File(toFile, file.getName()), context, writtenPaths, fileFilter);
-      }
-      return;
-    }
-    if (toFile.isDirectory()) {
-      context.addMessage(CompilerMessageCategory.ERROR,
-                         CompilerBundle.message("message.text.destination.is.directory", createCopyErrorMessage(fromFile, toFile)), null, -1, -1);
-      return;
-    }
-    if (FileUtil.filesEqual(fromFile, toFile) || writtenPaths != null && !writtenPaths.add(toFile.getPath())) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Skipping " + fromFile.getAbsolutePath() + ": " + toFile.getAbsolutePath() + " is already written");
-      }
-      return;
-    }
-    if (!FileUtil.isFilePathAcceptable(toFile, fileFilter)) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Skipping " + fromFile.getAbsolutePath() + ": " + toFile.getAbsolutePath() + " wasn't accepted by filter " + fileFilter);
-      }
-      return;
-    }
-    context.getProgressIndicator().setText("Copying files");
-    context.getProgressIndicator().setText2(fromFile.getPath());
-    try {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Copy file '" + fromFile + "' to '"+toFile+"'");
-      }
-      if (toFile.exists() && !SystemInfo.isFileSystemCaseSensitive) {
-        File canonicalFile = toFile.getCanonicalFile();
-        if (!canonicalFile.getAbsolutePath().equals(toFile.getAbsolutePath())) {
-          FileUtil.delete(toFile);
-        }
-      }
-      FileUtil.copy(fromFile, toFile);
-    }
-    catch (IOException e) {
-      context.addMessage(CompilerMessageCategory.ERROR, createCopyErrorMessage(fromFile, toFile) + ": "+e.getLocalizedMessage(), null, -1, -1);
-    }
-  }
 
   // OS X is sensitive for that
   private static void checkPathDoNotNavigatesUpFromFile(File file) {
@@ -115,29 +49,6 @@ public class DeploymentUtilImpl extends DeploymentUtil {
   private static String createCopyErrorMessage(final File fromFile, final File toFile) {
     return CompilerBundle.message("message.text.error.copying.file.to.file", FileUtil.toSystemDependentName(fromFile.getPath()),
                               FileUtil.toSystemDependentName(toFile.getPath()));
-  }
-
-  public void reportDeploymentDescriptorDoesNotExists(ConfigFile descriptor, CompileContext context, Module module) {
-    final String description = ModuleType.get(module).getName() + " '" + module.getName() + '\'';
-    String descriptorPath = VfsUtil.urlToPath(descriptor.getUrl());
-    final String message =
-      CompilerBundle.message("message.text.compiling.item.deployment.descriptor.could.not.be.found", description, descriptorPath);
-    context.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
-  }
-
-  public void checkConfigFile(final ConfigFile descriptor, final CompileContext compileContext, final Module module) {
-    if (new File(VfsUtil.urlToPath(descriptor.getUrl())).exists()) {
-      String message = getConfigFileErrorMessage(descriptor);
-      if (message != null) {
-        final String moduleDescription = ModuleType.get(module).getName() + " '" + module.getName() + '\'';
-        compileContext.addMessage(CompilerMessageCategory.ERROR,
-                                CompilerBundle.message("message.text.compiling.module.message", moduleDescription, message),
-                                  descriptor.getUrl(), -1, -1);
-      }
-    }
-    else {
-      DeploymentUtil.getInstance().reportDeploymentDescriptorDoesNotExists(descriptor, compileContext, module);
-    }
   }
 
   @Nullable

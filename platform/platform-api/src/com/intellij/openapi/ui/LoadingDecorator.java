@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui;
 
+import com.intellij.ide.RemoteDesktopService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.components.JBLayeredPane;
@@ -58,7 +59,7 @@ public class LoadingDecorator {
     setLoadingText("Loading...");
 
 
-    myFadeOutAnimator = new Animator("Loading", 10, 500, false) {
+    myFadeOutAnimator = new Animator("Loading", 10, RemoteDesktopService.isRemoteSession()? 2500 : 500, false) {
       public void paintNow(final int frame, final int totalFrames, final int cycle) {
         myLoadingLayer.setAlpha(1f - ((float)frame) / ((float)totalFrames));
       }

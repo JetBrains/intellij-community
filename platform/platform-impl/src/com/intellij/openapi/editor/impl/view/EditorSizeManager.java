@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.diagnostic.Dumpable;
@@ -31,10 +17,8 @@ import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.impl.softwrap.mapping.IncrementalCacheUpdateEvent;
 import com.intellij.openapi.editor.impl.softwrap.mapping.SoftWrapAwareDocumentParsingListenerAdapter;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,7 +26,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -274,17 +257,10 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
 
   private void validateMaxLineWithExtension() {
     if (myMaxLineWithExtensionWidth > 0) {
-      Project project = myEditor.getProject();
-      VirtualFile virtualFile = myEditor.getVirtualFile();
-      if (project != null && virtualFile != null) {
-        for (EditorLinePainter painter : EditorLinePainter.EP_NAME.getExtensions()) {
-          Collection<LineExtensionInfo> extensions = painter.getLineExtensions(project, virtualFile, myWidestLineWithExtension);
-          if (extensions != null && !extensions.isEmpty()) {
-            return;
-          }
-        }
+      boolean hasNoExtensions = myEditor.processLineExtensions(myWidestLineWithExtension, (info) -> false);
+      if (hasNoExtensions) {
+        myMaxLineWithExtensionWidth = 0;
       }
-      myMaxLineWithExtensionWidth = 0;
     }
   }
 
@@ -321,7 +297,7 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
     FoldRegion[] topLevelRegions = myEditor.getFoldingModel().fetchTopLevel();
     if (quickEvaluationListener != null &&
         (topLevelRegions == null || topLevelRegions.length == 0) && myEditor.getSoftWrapModel().getRegisteredSoftWraps().isEmpty() &&
-        !myView.getTextLayoutCache().hasCachedLayoutFor(visualLine)) {
+        !myView.getTextLayoutCache().hasCachedLayoutFor(visualLine) && !myEditor.getInlayModel().hasInlineElements()) {
       // fast path - speeds up editor opening
       quickEvaluationListener.run();
       return myView.getLogicalPositionCache().offsetToLogicalColumn(visualLine,
@@ -482,8 +458,21 @@ class EditorSizeManager extends InlayModel.SimpleAdapter implements PrioritizedD
     assert myLineWidths.size() == myEditor.getVisibleLineCount();
   }
 
+  private void assertCorrectCachedWidths() {
+    if (myDocument.isInBulkUpdate() || myDirty) return;
+    for (int visualLine = 0; visualLine < myLineWidths.size(); visualLine++) {
+      int cachedWidth = myLineWidths.get(visualLine);
+      if (cachedWidth < 0 || cachedWidth == UNKNOWN_WIDTH) continue;
+      Ref<Boolean> quickEvaluation = new Ref<>();
+      int actualWidth = calculateLineWidth(new VisualLinesIterator(myEditor, visualLine), () -> quickEvaluation.set(Boolean.TRUE));
+      assert !quickEvaluation.isNull() || actualWidth == cachedWidth :
+        "Wrong cached width for visual line " + visualLine + ", cached: " + cachedWidth + ", actual: " + actualWidth;
+    }
+  }
+
   @TestOnly
   void validateState() {
     assertValidState();
+    assertCorrectCachedWidths();
   }
 }

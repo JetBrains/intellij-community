@@ -21,7 +21,6 @@ import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -34,7 +33,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -65,10 +64,12 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
     setInjectedContext(true);
   }
 
+  @Override
   protected boolean isAvailableInEditorOnly() {
     return true;
   }
 
+  @Override
   protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return false;
   }
@@ -78,6 +79,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
     return true;
   }
 
+  @Override
   protected RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new MyRefactoringActionHandler();
   }
@@ -97,7 +99,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
   }
 
   @Nullable
-  public static Pair<XmlElement, TextRange> getSelectedElementAndTextRange(Editor editor, final PsiFile file) {
+  static Pair<XmlElement, TextRange> getSelectedElementAndTextRange(Editor editor, final PsiFile file) {
     final int startOffset = editor.getSelectionModel().getSelectionStart();
     final int endOffset = editor.getSelectionModel().getSelectionEnd();
 
@@ -110,14 +112,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
     if (elementAt instanceof XmlToken) elementAt = elementAt.getParent();
 
     if (elementAt instanceof XmlText || elementAt instanceof XmlAttributeValue) {
-      TextRange range;
-
-      if (editor.getSelectionModel().hasSelection()) {
-        range = new TextRange(startOffset, endOffset);
-      }
-      else {
-        range = elementAt.getTextRange();
-      }
+      TextRange range = editor.getSelectionModel().hasSelection() ? new TextRange(startOffset, endOffset) : elementAt.getTextRange();
 
       return Pair.create((XmlElement)elementAt, range);
     }
@@ -126,6 +121,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
   }
 
   private static class MyRefactoringActionHandler implements RefactoringActionHandler {
+    @Override
     public void invoke(@NotNull final Project project, final Editor editor, PsiFile file, DataContext dataContext) {
       PsiDocumentManager.getInstance(project).commitAllDocuments();
 
@@ -157,24 +153,21 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       if (dialog.getExitCode() != DialogWrapper.OK_EXIT_CODE) return;
 
       final String propertyName = dialog.getEnteredName();
-      final String replaceWith = PREFIX + propertyName + SUFFIX;
       final MavenDomProjectModel selectedProject = dialog.getSelectedProject();
 
       if (ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(getFiles(file, selectedProject)).hasReadonlyFiles()) {
         return;
       }
 
-      new WriteCommandAction(project) {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), replaceWith);
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
+      final String replaceWith = PREFIX + propertyName + SUFFIX;
+      WriteCommandAction.runWriteCommandAction(project, () -> {
+        editor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), replaceWith);
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-          createMavenProperty(selectedProject, propertyName, selectedString);
+        createMavenProperty(selectedProject, propertyName, selectedString);
 
-          PsiDocumentManager.getInstance(project).commitAllDocuments();
-        }
-      }.execute();
+        PsiDocumentManager.getInstance(project).commitAllDocuments();
+      });
 
       showFindUsages(project, propertyName, selectedString, replaceWith, selectedProject);
     }
@@ -192,7 +185,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
         if (vf != null) virtualFiles.add(vf);
       }
 
-      return VfsUtil.toVirtualFileArray(virtualFiles);
+      return VfsUtilCore.toVirtualFileArray(virtualFiles);
     }
 
     private static void createMavenProperty(@NotNull MavenDomProjectModel model,
@@ -223,12 +216,12 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(project, true, presentation);
 
       findManager.getFindInProjectModel().copyFrom(findModel);
-      final FindModel findModelCopy = (FindModel)findModel.clone();
+      final FindModel findModelCopy = findModel.clone();
 
       ReplaceInProjectManager.getInstance(project)
         .searchAndShowUsages(manager, new MyUsageSearcherFactory(model, propertyName, selectedString), findModelCopy, presentation,
-                             processPresentation,
-                             findManager);
+                             processPresentation
+        );
     }
 
     //IDEA-54113
@@ -237,7 +230,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
     }
 
     private static FindModel createFindModel(FindManager findManager, String selectedString, String replaceWith) {
-      FindModel findModel = (FindModel)findManager.getFindInProjectModel().clone();
+      FindModel findModel = findManager.getFindInProjectModel().clone();
 
       findModel.setStringToFind(selectedString);
       findModel.setStringToReplace(replaceWith);
@@ -249,6 +242,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       return findModel;
     }
 
+    @Override
     public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     }
 
@@ -257,20 +251,20 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
       private final String myPropertyName;
       private final String mySelectedString;
 
-      public MyUsageSearcherFactory(MavenDomProjectModel model, String propertyName, String selectedString) {
+      MyUsageSearcherFactory(MavenDomProjectModel model, String propertyName, String selectedString) {
         myModel = model;
         myPropertyName = propertyName;
         mySelectedString = selectedString;
       }
 
+      @Override
       public UsageSearcher create() {
         return new UsageSearcher() {
           Set<UsageInfo> usages = new HashSet<>();
 
+          @Override
           public void generate(@NotNull final Processor<Usage> processor) {
-            AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-
-            try {
+            ApplicationManager.getApplication().runReadAction(() -> {
               collectUsages(myModel);
               for (MavenDomProjectModel model : MavenDomProjectProcessorUtils.getChildrenProjects(myModel)) {
                 collectUsages(model);
@@ -279,10 +273,7 @@ public class IntroducePropertyAction extends BaseRefactoringAction {
               for (UsageInfo usage : usages) {
                 processor.process(UsageInfo2UsageAdapter.CONVERTER.fun(usage));
               }
-            }
-            finally {
-              accessToken.finish();
-            }
+            });
           }
 
           private void collectUsages(@NotNull MavenDomProjectModel model) {

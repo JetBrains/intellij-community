@@ -41,6 +41,6 @@ public class MarkSourceRootActionGroup extends ActionGroup {
                                                          JavaResourceRootType.RESOURCE, JavaResourceRootType.TEST_RESOURCE)) {
       actions.add(new MarkSourceRootAction(type));
     }
-    return actions.toArray(new AnAction[actions.size()]);
+    return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 }

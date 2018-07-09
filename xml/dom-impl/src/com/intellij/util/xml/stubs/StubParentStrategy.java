@@ -29,7 +29,6 @@ import java.util.List;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 8/9/12
  */
 public class StubParentStrategy implements DomParentStrategy {
 

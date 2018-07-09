@@ -20,14 +20,21 @@ import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocCommentBase;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CollapseExpandDocCommentsHandler implements CodeInsightActionHandler {
+
+  private static final Key<Boolean> DOC_COMMENT_MARK = Key.create("explicit.fold.region.doc.comment.mark");
+
+  public static void setDocCommentMark(@NotNull FoldRegion region, boolean value) {
+    region.putUserData(DOC_COMMENT_MARK, value);
+  }
+
   private final boolean myExpand;
 
   public CollapseExpandDocCommentsHandler(boolean isExpand) {
@@ -42,7 +49,7 @@ public class CollapseExpandDocCommentsHandler implements CodeInsightActionHandle
     Runnable processor = () -> {
       for (FoldRegion region : allFoldRegions) {
         PsiElement element = EditorFoldingInfo.get(editor).getPsiElement(region);
-        if (element instanceof PsiDocCommentBase) {
+        if (element instanceof PsiDocCommentBase || Boolean.TRUE.equals(region.getUserData(DOC_COMMENT_MARK))) {
           region.setExpanded(myExpand);
         }
       }

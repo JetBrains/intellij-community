@@ -16,10 +16,6 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
-import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -47,7 +43,7 @@ public class Java8MigrationUtils {
     PsiMethodCallExpression call;
     if (condition instanceof PsiBinaryExpression) {
       negated ^= ((PsiBinaryExpression)condition).getOperationTokenType().equals(JavaTokenType.EQEQ);
-      PsiExpression value = ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)condition);
+      PsiExpression value = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)condition));
       if (value instanceof PsiReferenceExpression && statement != null) {
         valueReference = (PsiReferenceExpression)value;
         PsiElement previous = PsiTreeUtil.skipWhitespacesAndCommentsBackward(statement);
@@ -262,12 +258,6 @@ public class Java8MigrationUtils {
 
     public PsiExpression getFullCondition() {
       return myFullCondition;
-    }
-
-    public void register(ProblemsHolder holder, boolean informationLevel, LocalQuickFix fix, String methodName) {
-      //noinspection DialogTitleCapitalization
-      holder.registerProblem(getFullCondition(), QuickFixBundle.message("java.8.map.api.inspection.description", methodName),
-                             informationLevel ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
     }
 
     public boolean isMapValueType(@Nullable PsiType type) {

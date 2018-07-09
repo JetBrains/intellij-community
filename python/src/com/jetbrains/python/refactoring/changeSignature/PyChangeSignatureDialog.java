@@ -41,7 +41,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.table.EditorTextFieldJBTableRowRenderer;
 import com.intellij.util.ui.table.JBTableRow;
@@ -82,8 +82,9 @@ public class PyChangeSignatureDialog extends
     return PythonFileType.INSTANCE;
   }
 
+  @NotNull
   @Override
-  protected PyParameterTableModel createParametersInfoModel(PyMethodDescriptor method) {
+  protected PyParameterTableModel createParametersInfoModel(@NotNull PyMethodDescriptor method) {
     final PyParameterList parameterList = PsiTreeUtil.getChildOfType(method.getMethod(), PyParameterList.class);
     return new PyParameterTableModel(parameterList, myDefaultValueContext, myProject);
   }
@@ -92,7 +93,7 @@ public class PyChangeSignatureDialog extends
   public BaseRefactoringProcessor createRefactoringProcessor() {
     final List<PyParameterInfo> parameters = getParameters();
     return new PyChangeSignatureProcessor(myProject, myMethod.getMethod(), getMethodName(),
-                                          parameters.toArray(new PyParameterInfo[parameters.size()]));
+                                          parameters.toArray(new PyParameterInfo[0]));
   }
 
   @Nullable
@@ -149,7 +150,7 @@ public class PyChangeSignatureDialog extends
       if (name.equals("*")) {
         hadSingleStar = true;
         if (index == parametersLength - 1) {
-          return PyBundle.message("ANN.named.arguments.after.star");
+          return PyBundle.message("ANN.named.parameters.after.star");
         }
       }
       else if (name.startsWith("*") && !name.startsWith("**")) {
@@ -166,7 +167,7 @@ public class PyChangeSignatureDialog extends
       }
       else if (name.startsWith("**")) {
         if (hadSingleStar && !hadParamsAfterSingleStar) {
-          return PyBundle.message("ANN.named.arguments.after.star");
+          return PyBundle.message("ANN.named.parameters.after.star");
         }
         if (hadKeywordContainer) {
           return PyBundle.message("refactoring.change.signature.dialog.validation.multiple.double.star");
@@ -391,7 +392,7 @@ public class PyChangeSignatureDialog extends
             if (myDefaultInSignature != null) {
               focusable.add(myDefaultInSignature);
             }
-            return focusable.toArray(new JComponent[focusable.size()]);
+            return focusable.toArray(new JComponent[0]);
           }
         };
       }

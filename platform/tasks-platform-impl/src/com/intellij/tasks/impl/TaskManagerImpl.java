@@ -15,6 +15,7 @@
  */
 package com.intellij.tasks.impl;
 
+import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
@@ -47,11 +48,10 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.xmlb.XmlSerializationException;
-import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,16 +68,10 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-
 /**
  * @author Dmitry Avdeev
  */
-@State(
-  name = "TaskManager",
-  storages = {
-    @Storage(StoragePathMacros.WORKSPACE_FILE)
-  }
-)
+@State(name = "TaskManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class TaskManagerImpl extends TaskManager implements ProjectComponent, PersistentStateComponent<TaskManagerImpl.Config>,
                                                             ChangeListDecorator {
 
@@ -94,7 +88,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   private final WorkingContextManager myContextManager;
 
-  private final Map<String, Task> myIssueCache = Collections.synchronizedMap(new LinkedHashMap<String, Task>());
+  private final Map<String, Task> myIssueCache = Collections.synchronizedMap(new LinkedHashMap<>());
 
   private final Map<String, LocalTask> myTasks = Collections.synchronizedMap(new LinkedHashMap<String, LocalTask>() {
     @Override
@@ -125,7 +119,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   private final List<TaskRepository> myRepositories = new ArrayList<>();
   private final EventDispatcher<TaskListener> myDispatcher = EventDispatcher.create(TaskListener.class);
-  private Set<TaskRepository> myBadRepositories = ContainerUtil.newConcurrentSet();
+  private final Set<TaskRepository> myBadRepositories = ContainerUtil.newConcurrentSet();
 
   public TaskManagerImpl(Project project, WorkingContextManager contextManager, ChangeListManager changeListManager) {
 
@@ -158,7 +152,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   @Override
   public TaskRepository[] getAllRepositories() {
-    return myRepositories.toArray(new TaskRepository[myRepositories.size()]);
+    return myRepositories.toArray(new TaskRepository[0]);
   }
 
   public <T extends TaskRepository> void setRepositories(List<T> repositories) {
@@ -171,10 +165,11 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     myRepositories.clear();
     myRepositories.addAll(repositories);
 
+    List<TaskProjectConfiguration.SharedServer> servers = getProjectConfiguration().servers;
+    servers.clear();
     reps:
     for (T repository : repositories) {
       if (repository.isShared() && repository.getUrl() != null) {
-        List<TaskProjectConfiguration.SharedServer> servers = getProjectConfiguration().servers;
         TaskRepositoryType type = repository.getRepositoryType();
         for (TaskProjectConfiguration.SharedServer server : servers) {
           if (repository.getUrl().equals(server.url) && type.getName().equals(server.type)) {
@@ -583,7 +578,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return myConfig;
   }
 
-  public void loadState(Config config) {
+  public void loadState(@NotNull Config config) {
     XmlSerializerUtil.copyBean(config, myConfig);
 
     myRepositories.clear();
@@ -611,17 +606,15 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
   public static ArrayList<TaskRepository> loadRepositories(Element element) {
     ArrayList<TaskRepository> repositories = new ArrayList<>();
     for (TaskRepositoryType repositoryType : TaskRepositoryType.getRepositoryTypes()) {
-      for (Object o : element.getChildren()) {
-        if (((Element)o).getName().equals(repositoryType.getName())) {
-          try {
-            @SuppressWarnings({"unchecked"})
-            TaskRepository repository = (TaskRepository)XmlSerializer.deserialize((Element)o, repositoryType.getRepositoryClass());
-            repository.setRepositoryType(repositoryType);
-            repositories.add(repository);
-          }
-          catch (XmlSerializationException e) {
-            LOG.error(e.getMessage(), e);
-          }
+      for (Element o : element.getChildren(repositoryType.getName())) {
+        try {
+          @SuppressWarnings({"unchecked"})
+          TaskRepository repository = (TaskRepository)XmlSerializer.deserialize(o, repositoryType.getRepositoryClass());
+          repository.setRepositoryType(repositoryType);
+          repositories.add(repository);
+        }
+        catch (XmlSerializationException e) {
+          LOG.error(e.getMessage(), e);
         }
       }
     }
@@ -964,11 +957,9 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
     return myChangeListListener;
   }
 
-
   public static class Config {
-
     @Property(surroundWithTag = false)
-    @AbstractCollection(surroundWithTag = false, elementTag = "task")
+    @XCollection(elementName = "task")
     public List<LocalTaskImpl> tasks = new ArrayList<>();
 
     public int localTasksCounter = 1;
@@ -998,11 +989,10 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
     public boolean searchClosedTasks = false;
     @Tag("servers")
-    public Element servers = new Element("servers");
+    public Element servers;
   }
 
   private abstract class TestConnectionTask extends com.intellij.openapi.progress.Task.Modal {
-
     protected Exception myException;
 
     @Nullable

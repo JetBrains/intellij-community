@@ -189,11 +189,6 @@ public class StubTreeLoaderImpl extends StubTreeLoader {
     }
   }
 
-  @Override
-  public boolean isStubReloadingProhibited() {
-    return ourStubReloadingProhibited;
-  }
-
   private static int getCurrentTextContentLength(Project project, VirtualFile vFile, Document document, PsiFile psiFile) {
     if (vFile.getFileType().isBinary()) {
       return -1;

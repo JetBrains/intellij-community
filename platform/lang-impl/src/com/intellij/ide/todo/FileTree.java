@@ -17,7 +17,7 @@ package com.intellij.ide.todo;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 
 import java.util.*;
 

@@ -27,7 +27,9 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
+import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.scope.processor.FilterScopeProcessor;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -35,6 +37,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -113,8 +116,9 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       methodSignature = null;
     }
 
-    for (PsiMethod method : scope.findMethodsByName(name, true)) {
-      if (methodSignature != null && !MethodSignatureUtil.areSignaturesErasureEqual(methodSignature, method.getSignature(PsiSubstitutor.EMPTY))) continue;
+    for (PsiMethod method : getAllMethods(scope, this)) {
+      if (!method.getName().equals(name) ||
+          methodSignature != null && !MethodSignatureUtil.areSignaturesErasureEqual(methodSignature, method.getSignature(PsiSubstitutor.EMPTY))) continue;
       return new MyReference(method) {
 
         @Override
@@ -134,6 +138,14 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
 
     return null;
   }
+  
+   @NotNull 
+   private static PsiMethod[] getAllMethods(PsiElement scope, PsiElement place) {
+    final SmartList<PsiMethod> result = new SmartList<>();
+    scope.processDeclarations(new FilterScopeProcessor<>(ElementClassFilter.METHOD, result), ResolveState.initial(), null, place);
+    return result.toArray(PsiMethod.EMPTY_ARRAY);
+  }
+
 
   @Override
   public int getTextOffset() {
@@ -321,12 +333,12 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         @NonNls StringBuffer newText = new StringBuffer();
         newText.append("/** @see ");
         if (name.equals(newName)) { // hasSignature is true here, so we can search for '('
-          newText.append(text.substring(0, text.indexOf('(')));
+          newText.append(text, 0, text.indexOf('('));
         }
         else {
           final int sharpIndex = text.indexOf('#');
           if (sharpIndex >= 0) {
-            newText.append(text.substring(0, sharpIndex + 1));
+            newText.append(text, 0, sharpIndex + 1);
           }
           newText.append(newName);
         }
@@ -358,6 +370,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       return getManager().areElementsEquivalent(resolve(), element);
     }
 
+    @NotNull
     @Override
     public TextRange getRangeInElement() {
       final ASTNode sharp = findChildByType(DOC_TAG_VALUE_SHARP_TOKEN);
@@ -371,6 +384,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
       return new TextRange(getTextLength(), getTextLength());
     }
 
+    @NotNull
     @Override
     public PsiElement getElement() {
       return PsiDocMethodOrFieldRef.this;

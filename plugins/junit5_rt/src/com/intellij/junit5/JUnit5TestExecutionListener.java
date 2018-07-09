@@ -45,10 +45,10 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   private final PrintStream myPrintStream;
   private TestPlan myTestPlan;
   private long myCurrentTestStart;
-  private int myFinishCount;
+  private int myFinishCount = 0;
   private String myRootName;
-  private boolean mySuccessful;
-  private String myForkModifier = "";
+  private boolean mySuccessful = true;
+  private String myIdSuffix = "";
   private final Set<TestIdentifier> myActiveRoots = new HashSet<>();
 
   public JUnit5TestExecutionListener() {
@@ -64,13 +64,16 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     return mySuccessful;
   }
 
-  public void initialize(boolean forked) {
-    mySuccessful = true;
-    myFinishCount = 0;
-    if (forked) {
-      myForkModifier = String.valueOf(System.currentTimeMillis());
+  public void initializeIdSuffix(boolean forked) {
+    if (forked && myIdSuffix.length() == 0) {
+      myIdSuffix = String.valueOf(System.currentTimeMillis());
     }
   }
+  
+  public void initializeIdSuffix(int i) {
+    myIdSuffix = i + "th"; 
+  }
+
 
   @Override
   public void reportingEntryPublished(TestIdentifier testIdentifier, ReportEntry entry) {
@@ -293,7 +296,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   }
 
   private String getId(TestIdentifier identifier) {
-    return identifier.getUniqueId() + myForkModifier;
+    return identifier.getUniqueId() + myIdSuffix;
   }
 
   private void sendTreeUnderRoot(TestPlan testPlan,
@@ -335,7 +338,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     }
 
     return parent
-      .map(identifier -> identifier.getUniqueId() + myForkModifier)
+      .map(identifier -> identifier.getUniqueId() + myIdSuffix)
       .orElse("0");
   }
 
@@ -343,10 +346,17 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     return root.getSource()
       .map(testSource -> getLocationHintValue(testSource))
       .filter(maybeLocationHintValue -> !NO_LOCATION_HINT_VALUE.equals(maybeLocationHintValue))
-      .map(locationHintValue -> "locationHint=\'" + locationHintValue + "\'")
+      .map(locationHintValue -> "locationHint=\'" + locationHintValue + "\'" + getMetainfo(root))
       .orElse(NO_LOCATION_HINT);
   }
 
+  private static String getMetainfo(TestIdentifier root) {
+    return root.getSource()
+      .filter(testSource -> testSource instanceof MethodSource)
+      .map(testSource -> " metainfo=\'" + ((MethodSource)testSource).getMethodParameterTypes() + "\'")
+      .orElse(NO_LOCATION_HINT);
+  }
+  
   static String getLocationHintValue(TestSource testSource) {
 
     if (testSource instanceof CompositeTestSource) {
@@ -384,7 +394,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
 
   private static String javaLocation(String className, String maybeMethodName, boolean isTest) {
     String type = isTest ? "test" : "suite";
-    String methodName = maybeMethodName == null ? "" : "." + maybeMethodName;
+    String methodName = maybeMethodName == null ? "" : "/" + maybeMethodName;
     String location = escapeName(className + methodName);
     return "java:" + type + "://" + location;
   }

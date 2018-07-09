@@ -68,7 +68,7 @@ public class FileReferenceQuickFixProvider {
 
     PsiFileSystemItem context = null;
     PsiElement element = reference.getElement();
-    PsiFile containingFile = element == null ? null : element.getContainingFile();
+    PsiFile containingFile = element.getContainingFile();
 
     if(index > 0) {
       context = fileReferenceSet.getReference(index - 1).resolve();
@@ -121,7 +121,7 @@ public class FileReferenceQuickFixProvider {
       }
     }
 
-    final boolean isdirectory;
+    final boolean isDirectory;
 
     if (!reference.isLast()) {
       // directory
@@ -130,7 +130,7 @@ public class FileReferenceQuickFixProvider {
       } catch(IncorrectOperationException ex) {
         return Collections.emptyList();
       }
-      isdirectory = true;
+      isDirectory = true;
     } else {
       FileType ft = FileTypeManager.getInstance().getFileTypeByFileName(newFileName);
       if (ft instanceof UnknownFileType) return Collections.emptyList();
@@ -141,10 +141,10 @@ public class FileReferenceQuickFixProvider {
         return Collections.emptyList();
       }
 
-      isdirectory = false;
+      isDirectory = false;
     }
 
-    final CreateFileFix action = new MyCreateFileFix(isdirectory, newFileName, directory, reference);
+    final CreateFileFix action = new MyCreateFileFix(isDirectory, newFileName, directory, reference);
     return Collections.singletonList(action);
   }
 
@@ -159,10 +159,10 @@ public class FileReferenceQuickFixProvider {
     private final boolean isDirectory;
     private final String myNewFileTemplateName;
 
-    public MyCreateFileFix(boolean isdirectory, String newFileName, PsiDirectory directory, FileReference reference) {
-      super(isdirectory, newFileName, directory);
-      isDirectory = isdirectory;
-      myNewFileTemplateName = isDirectory ? null : reference.getNewFileTemplateName();
+    MyCreateFileFix(boolean isDirectory, String newFileName, PsiDirectory directory, FileReference reference) {
+      super(isDirectory, newFileName, directory);
+      this.isDirectory = isDirectory;
+      myNewFileTemplateName = this.isDirectory ? null : reference.getNewFileTemplateName();
     }
 
     @Override

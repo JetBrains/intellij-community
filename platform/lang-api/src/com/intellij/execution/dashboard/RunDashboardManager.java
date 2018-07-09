@@ -53,9 +53,13 @@ public interface RunDashboardManager {
 
   Icon getToolWindowIcon();
 
+  String getToolWindowContextHelpId();
+
   boolean isToolWindowAvailable();
 
   void createToolWindowContent(@NotNull ToolWindow toolWindow);
+
+  void updateDashboard(boolean withSStructure);
 
   List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> getRunConfigurations();
 

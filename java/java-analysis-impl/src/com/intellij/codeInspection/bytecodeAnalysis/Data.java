@@ -192,31 +192,6 @@ interface Result {
     return Stream.empty();
   }
 }
-final class Final implements Result {
-  @NotNull final Value value;
-
-  Final(@NotNull Value value) {
-    this.value = value;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    return value == ((Final)o).value;
-  }
-
-  @Override
-  public int hashCode() {
-    return value.ordinal();
-  }
-
-  @Override
-  public String toString() {
-    return "Final[" + value + ']';
-  }
-}
 
 final class Pending implements Result {
   @NotNull final Component[] delta; // sum
@@ -263,6 +238,7 @@ final class Pending implements Result {
 
 final class Effects implements Result {
   static final Set<EffectQuantum> TOP_EFFECTS = Collections.singleton(EffectQuantum.TopEffectQuantum);
+  static final Effects VOLATILE_EFFECTS = new Effects(DataValue.UnknownDataValue2, Collections.singleton(EffectQuantum.TopEffectQuantum));
 
   @NotNull final DataValue returnValue;
   @NotNull final Set<EffectQuantum> effects;

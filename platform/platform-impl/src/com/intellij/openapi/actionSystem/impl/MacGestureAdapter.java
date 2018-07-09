@@ -30,7 +30,7 @@ import java.awt.event.MouseEvent;
 class MacGestureAdapter extends GestureAdapter {
   double magnification;
   private final IdeFrame myFrame;
-  private MouseGestureManager myManager;
+  private final MouseGestureManager myManager;
   private ZoomableViewport myMagnifyingViewport;
 
   public MacGestureAdapter(MouseGestureManager manager, IdeFrame frame) {

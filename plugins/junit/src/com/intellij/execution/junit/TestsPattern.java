@@ -17,13 +17,13 @@
 package com.intellij.execution.junit;
 
 import com.intellij.execution.CantRunException;
-import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ConfigurationUtil;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.RuntimeConfigurationException;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.SourceScope;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,8 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
-import com.intellij.util.Function;
-import com.intellij.util.FunctionUtil;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
@@ -54,37 +53,24 @@ public class TestsPattern extends TestPackage {
   }
 
   @Override
-  public SearchForTestsTask createSearchingForTestsTask() {
-    final JUnitConfiguration.Data data = getConfiguration().getPersistentData();
-    final Project project = getConfiguration().getProject();
-    final Set<String> classNames = new LinkedHashSet<>();
-    boolean hasPattern = false;
+  protected void searchTests(Module module, TestClassFilter classFilter, Set<String> classNames) {
+    JUnitConfiguration.Data data = getConfiguration().getPersistentData();
+    Project project = getConfiguration().getProject();
     for (String className : data.getPatterns()) {
-      final PsiClass psiClass = getTestClass(project, className);
+      final PsiClass psiClass = ReadAction.compute(() -> getTestClass(project, className));
       if (psiClass != null) {
-        if (JUnitUtil.isTestClass(psiClass)) {
-          classNames.add(className);
+        if (ReadAction.compute(() -> JUnitUtil.isTestClass(psiClass))) {
+          classNames.add(className); //with method, comma separated
         }
       }
       else {
-        hasPattern |= className.contains("*");
+        classNames.clear();
+        Set<PsiClass> classes = new THashSet<>();
+        ConfigurationUtil.findAllTestClasses(classFilter, module, classes);
+        classes.forEach(aClass -> ReadAction.compute(() -> classNames.add(JavaExecutionUtil.getRuntimeQualifiedName(aClass))));
+        return;
       }
     }
-
-    if (!hasPattern) {
-      return new SearchForTestsTask(project, myServerSocket) {
-        @Override
-        protected void search() throws ExecutionException { }
-
-        @Override
-        protected void onFound() throws ExecutionException {
-          final Function<String, String> nameFunction = StringUtil.isEmpty(data.METHOD_NAME) ? FunctionUtil.id() : className -> className;
-          addClassesListToJavaParameters(classNames, nameFunction, "", false, getJavaParameters());
-        }
-      };
-    }
-
-    return super.createSearchingForTestsTask();
   }
 
   @Override

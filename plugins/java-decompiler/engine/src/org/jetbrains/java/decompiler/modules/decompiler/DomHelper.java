@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.cfg.BasicBlock;
@@ -191,7 +177,7 @@ public class DomHelper {
         lstPosts.add(stt.id);
       }
 
-      Collections.sort(lstPosts, Comparator.comparing(mapSortOrder::get));
+      lstPosts.sort(Comparator.comparing(mapSortOrder::get));
 
       if (lstPosts.size() > 1 && lstPosts.get(0).intValue() == st.id) {
         lstPosts.add(lstPosts.remove(0));
@@ -467,14 +453,12 @@ public class DomHelper {
 
       Set<Integer> setExtPosts = mapExtPost.get(headid);
 
-      for (int i = 0; i < posts.size(); i++) {
-
-        Integer postid = posts.get(i);
-        if (!postid.equals(headid) && !setExtPosts.contains(postid)) {
+      for (Integer postId : posts) {
+        if (!postId.equals(headid) && !setExtPosts.contains(postId)) {
           continue;
         }
 
-        Statement post = stats.getWithKey(postid);
+        Statement post = stats.getWithKey(postId);
 
         if (post == null) { // possible in case of an inherited postdominance set
           continue;
@@ -553,14 +537,14 @@ public class DomHelper {
 
         // build statement and return
         if (excok) {
-          Statement res = null;
+          Statement res;
 
           setPreds.removeAll(setNodes);
           if (setPreds.size() == 0) {
             if ((setNodes.size() > 1 ||
                  head.getNeighbours(StatEdge.TYPE_REGULAR, Statement.DIRECTION_BACKWARD).contains(head))
                 && setNodes.size() < stats.size()) {
-              if (checkSynchronizedCompleteness(head, setNodes)) {
+              if (checkSynchronizedCompleteness(setNodes)) {
                 res = new GeneralStatement(head, setNodes, same ? null : post);
                 stat.collapseNodesToStatement(res);
 
@@ -575,8 +559,7 @@ public class DomHelper {
     return null;
   }
 
-  private static boolean checkSynchronizedCompleteness(Statement head, HashSet<Statement> setNodes) {
-
+  private static boolean checkSynchronizedCompleteness(Set<Statement> setNodes) {
     // check exit nodes
     for (Statement stat : setNodes) {
       if (stat.isMonitorEnter()) {
@@ -632,12 +615,7 @@ public class DomHelper {
               set.removeAll(setOldNodes);
 
               if (setOldNodes.contains(key)) {
-                Set<Integer> setNew = mapExtPost.get(newid);
-                if (setNew == null) {
-                  mapExtPost.put(newid, setNew = new HashSet<>());
-                }
-                setNew.addAll(set);
-
+                mapExtPost.computeIfAbsent(newid, k -> new HashSet<>()).addAll(set);
                 mapExtPost.remove(key);
               }
               else {

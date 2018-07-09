@@ -27,6 +27,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.documentation.docstrings.DocStringUtil;
@@ -202,7 +203,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public Ref<PyType> getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+  public Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     if (isApplicable(function)) {
       final PyExpression callee = callSite instanceof PyCallExpression ? ((PyCallExpression)callSite).getCallee() : null;
       final NumpyDocString docString = forFunction(function, callee);
@@ -221,6 +222,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
               .map(typeName -> isUfuncType(function, typeName)
                                ? facade.parseTypeAnnotation("T", function)
                                : parseNumpyDocType(function, typeName))
+              .map(type -> PyTypingTypeProvider.toAsyncIfNeeded(function, type))
               .map(Ref::create)
               .orElse(null);
           default:
@@ -249,7 +251,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
             }
 
             final PyType type = unionMembers.isEmpty() ? facade.createTupleType(members, function) : facade.createUnionType(unionMembers);
-            return Ref.create(type);
+            return Ref.create(PyTypingTypeProvider.toAsyncIfNeeded(function, type));
         }
       }
     }
@@ -406,26 +408,17 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
-  @Nullable
   @Override
-  public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
-    return Optional
-      .ofNullable(PyUtil.as(callable, PyFunction.class))
-      .map(function -> getCallType(function, null, context))
-      .orElse(null);
-  }
-
-  @Override
-  public PyType getReferenceType(@NotNull PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor) {
+  public Ref<PyType> getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
     if (referenceTarget instanceof PyFunction) {
       if (NumpyUfuncs.isUFunc(((PyFunction)referenceTarget).getName()) && isInsideNumPy(referenceTarget)) {
         // we intentionally looking here for the user stub class
         final PyClass uFuncClass = PyPsiFacade.getInstance(referenceTarget.getProject()).findClass("numpy.core.ufunc");
         if (uFuncClass != null) {
-          return new PyClassTypeImpl(uFuncClass, false);
+          return Ref.create(new PyClassTypeImpl(uFuncClass, false));
         }
       }
     }
-    return super.getReferenceType(referenceTarget, context, anchor);
+    return null;
   }
 }

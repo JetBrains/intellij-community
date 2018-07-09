@@ -16,58 +16,52 @@
 package com.intellij.testGuiFramework.fixtures.extended
 
 import com.intellij.testGuiFramework.cellReader.ExtendedJTableCellReader
+import com.intellij.testGuiFramework.fixtures.CheckBoxFixture
 import org.fest.swing.core.Robot
 import org.fest.swing.fixture.JTableFixture
 import javax.swing.JCheckBox
 import javax.swing.JTable
 
-class ExtendedTableFixture(val myRobot: Robot, val myTable: JTable) : JTableFixture(myRobot, myTable) {
+class ExtendedTableFixture(private val myRobot: Robot, val myTable: JTable) : JTableFixture(myRobot, myTable) {
 
   init {
     replaceCellReader(ExtendedJTableCellReader())
   }
 
-  fun row(i: Int): RowFixture = RowFixture(i, this)
-  fun row(value: String): RowFixture = RowFixture(cell(value).row(), this)
-
-
+  fun row(i: Int): RowFixture = RowFixture(myRobot, i, this)
+  fun row(value: String): RowFixture = RowFixture(myRobot, cell(value).row(), this)
 }
 
-class RowFixture(val rowNumber: Int, val tableFixture: ExtendedTableFixture) {
+class RowFixture(private val myRobot: Robot, val rowNumber: Int, val tableFixture: ExtendedTableFixture) {
 
-  val myTable = tableFixture.myTable
+  val myTable: JTable = tableFixture.myTable
 
   fun hasCheck(): Boolean =
-    (0..myTable.columnCount - 1)
+    (0 until myTable.columnCount)
       .map { myTable.prepareRenderer(myTable.getCellRenderer(rowNumber, it), rowNumber, it) }
       .any { it is JCheckBox }
 
-
-  fun isCheck(): Boolean {
-    val checkBox = getCheckBox()
-    return checkBox.isSelected
-
-  }
+  fun isCheck(): Boolean = getCheckBox().isSelected
 
   fun check() {
     val checkBox = getCheckBox()
-    return checkBox.model.setSelected(true)
+    if (!checkBox.isSelected) CheckBoxFixture(myRobot, checkBox).click()
   }
 
   fun uncheck() {
     val checkBox = getCheckBox()
-    return checkBox.model.setSelected(false)
+    if (checkBox.isSelected) CheckBoxFixture(myRobot, checkBox).click()
   }
 
   fun values(): List<String> {
     val cellReader = ExtendedJTableCellReader()
-    return (0..myTable.columnCount - 1)
+    return (0 until myTable.columnCount)
       .map { cellReader.valueAt(myTable, rowNumber, it) ?: "null" }
   }
 
   private fun getCheckBox(): JCheckBox {
     if (!hasCheck()) throw Exception("Unable to find checkbox cell in row: $rowNumber")
-    return (0..myTable.columnCount - 1)
+    return (0 until myTable.columnCount)
       .map { myTable.prepareRenderer(myTable.getCellRenderer(rowNumber, it), rowNumber, it) }
       .find { it is JCheckBox } as JCheckBox
   }

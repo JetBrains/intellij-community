@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 
 internal val indexedPropertyFqn = "groovy.transform.IndexedProperty"
 internal val indexedPropertyOriginInfo = "by @IndexedProperty"
-val indexedMethodKind = "groovy.transform.IndexedProperty.kind"
+val indexedMethodKind: String = "groovy.transform.IndexedProperty.kind"
 
 internal fun GrField.getIndexedComponentType() = CachedValuesManager.getCachedValue(this) {
   Result.create(doGetIndexedComponentType(this), containingFile)

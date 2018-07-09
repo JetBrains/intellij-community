@@ -7,7 +7,6 @@ import javax.xml.bind.annotation.XmlType;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 14-Jun-17
  */
 @XmlType
 public class CodeSnippet {

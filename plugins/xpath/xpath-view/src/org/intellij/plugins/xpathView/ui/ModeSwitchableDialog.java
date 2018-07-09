@@ -116,14 +116,10 @@ public abstract class ModeSwitchableDialog extends DialogWrapper {
   /**
    * @deprecated we gotta do this ourselves because this value is cached but the key for this dialog changes with mode changes
    */
+  @Deprecated
   @Override
   protected final String getDimensionServiceKey() {
     //noinspection ConstantConditions
     return null;
-  }
-
-  @Override
-  public boolean isOK() {
-    return getExitCode() == OK_EXIT_CODE;
   }
 }

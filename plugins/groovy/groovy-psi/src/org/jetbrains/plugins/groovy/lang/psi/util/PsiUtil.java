@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
@@ -19,7 +21,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntStack;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -149,7 +150,7 @@ public class PsiUtil {
   public static boolean isLValueOfOperatorAssignment(@NotNull GrReferenceExpression element) {
     PsiElement parent = PsiTreeUtil.skipParentsOfType(element, GrParenthesizedExpression.class);
     return parent instanceof GrAssignmentExpression
-           && ((GrAssignmentExpression)parent).getOperationTokenType() != GroovyTokenTypes.mASSIGN
+           && ((GrAssignmentExpression)parent).isOperatorAssignment()
            && PsiTreeUtil.isAncestor(((GrAssignmentExpression)parent).getLValue(), element, false);
   }
 
@@ -563,7 +564,7 @@ public class PsiUtil {
       final PsiType[] types = getArgumentTypes(call.getInvokedExpression(), true);
       final Trinity<GrClosureSignature, GrClosureSignatureUtil.ArgInfo<PsiType>[], GrClosureSignatureUtil.ApplicabilityResult>
         resultTrinity = types != null ? GrClosureSignatureUtil.getApplicableSignature(signature, types, call) : null;
-      _signature = resultTrinity != null ? resultTrinity.first : null;
+      _signature = Trinity.getFirst(resultTrinity);
     }
     if (_signature != null) {
       return isRawType(_signature.getReturnType(), TypesUtil.composeSubstitutors(_signature.getSubstitutor(), result.getSubstitutor()));
@@ -817,7 +818,7 @@ public class PsiUtil {
       if (!modifiers.hasModifierProperty(PsiModifier.STATIC)
           && !modifiers.hasModifierProperty(PsiModifier.PRIVATE)
           && !modifiers.hasModifierProperty(PsiModifier.PROTECTED)
-          && method.getParameterList().getParametersCount() == 0) {
+          && method.getParameterList().isEmpty()) {
         final PsiType type = getSmartReturnType(method);
         if (type != null && (TypesUtil.isClassType(type, CommonClassNames.JAVA_LANG_OBJECT) || TypesUtil.isClassType(type,
                                                                                                                      GroovyCommonClassNames.GROOVY_LANG_CLOSURE))) {
@@ -1407,7 +1408,7 @@ public class PsiUtil {
     return CachedValuesManager.getCachedValue(block, () -> CachedValueProvider.Result.create(ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
       @Override
       public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
-        return returnValue == null || !(returnValue instanceof GrLiteral);
+        return !(returnValue instanceof GrLiteral);
       }
     }), PsiModificationTracker.MODIFICATION_COUNT));
   }

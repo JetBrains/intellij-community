@@ -34,7 +34,7 @@ import java.util.*;
 
 public class CommonsImagingImageReaderSpi extends ImageReaderSpi {
 
-  private ThreadLocal<ImageFormat> myFormat = new ThreadLocal<>();
+  private final ThreadLocal<ImageFormat> myFormat = new ThreadLocal<>();
   private final List<ImageFormat> myFormats;
 
   public CommonsImagingImageReaderSpi() {
@@ -198,7 +198,7 @@ public class CommonsImagingImageReaderSpi extends ImageReaderSpi {
       if (myImages == null) {
         try {
           List<BufferedImage> images = Imaging.getAllBufferedImages(getBytes());
-          myImages = images.toArray(new BufferedImage[images.size()]);
+          myImages = images.toArray(new BufferedImage[0]);
         }
         catch (ImageReadException e) {
           throw new IOException(e);

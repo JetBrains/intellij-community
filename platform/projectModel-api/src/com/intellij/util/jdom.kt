@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util
 
 import com.intellij.openapi.util.JDOMUtil
@@ -13,7 +13,7 @@ import org.jdom.JDOMException
 import org.jdom.Parent
 import org.jdom.filter.ElementFilter
 import org.jdom.input.SAXBuilder
-import org.jdom.input.SAXHandler
+import org.jdom.input.sax.SAXHandler
 import org.xml.sax.EntityResolver
 import org.xml.sax.InputSource
 import org.xml.sax.XMLReader
@@ -39,8 +39,8 @@ private fun getSaxBuilder(): SAXBuilder {
     }
     saxBuilder.ignoringBoundaryWhitespace = true
     saxBuilder.ignoringElementContentWhitespace = true
-    saxBuilder.entityResolver = EntityResolver { publicId, systemId -> InputSource(CharArrayReader(ArrayUtil.EMPTY_CHAR_ARRAY)) }
-    cachedSaxBuilder.set(SoftReference<SAXBuilder>(saxBuilder))
+    saxBuilder.entityResolver = EntityResolver { _, _ -> InputSource(CharArrayReader(ArrayUtil.EMPTY_CHAR_ARRAY)) }
+    cachedSaxBuilder.set(SoftReference(saxBuilder))
   }
   return saxBuilder
 }
@@ -64,7 +64,7 @@ fun Parent.write(output: OutputStream, lineSeparator: String = "\n", filter: JDO
 }
 
 @Throws(IOException::class, JDOMException::class)
-fun loadElement(chars: CharSequence) = loadElement(CharSequenceReader(chars))
+fun loadElement(chars: CharSequence): Element = loadElement(CharSequenceReader(chars))
 
 @Throws(IOException::class, JDOMException::class)
 fun loadElement(reader: Reader): Element = loadDocument(reader).detachRootElement()
@@ -77,7 +77,7 @@ fun loadElement(path: Path): Element = loadDocument(path.inputStream().bufferedR
 
 fun loadDocument(reader: Reader): Document = reader.use { getSaxBuilder().build(it) }
 
-fun Element?.isEmpty() = this == null || JDOMUtil.isEmpty(this)
+fun Element?.isEmpty(): Boolean = this == null || JDOMUtil.isEmpty(this)
 
 fun Element.getOrCreate(name: String): Element {
   var element = getChild(name)

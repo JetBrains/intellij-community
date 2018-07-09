@@ -20,14 +20,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vfs.WritingAccessProvider;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.WritingAccessProvider;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.Collections;
+import java.util.HashSet;
 
 /**
  * @author Dmitry Avdeev
@@ -46,7 +46,7 @@ public class ChangelistConflictAccessProvider extends WritingAccessProvider {
   @Override
   public Collection<VirtualFile> requestWriting(VirtualFile... files) {
     ChangelistConflictTracker.Options options = myManager.getConflictTracker().getOptions();
-    if (!options.TRACKING_ENABLED || !options.SHOW_DIALOG) {
+    if (!options.SHOW_DIALOG) {
       return Collections.emptyList();
     }
     ArrayList<VirtualFile> denied = new ArrayList<>();

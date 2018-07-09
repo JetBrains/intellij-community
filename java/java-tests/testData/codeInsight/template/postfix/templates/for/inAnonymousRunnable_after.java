@@ -4,7 +4,7 @@ class Example {
             @Override
             public void run() {
                 for (T t : foo) {
-                    <caret>
+
                 }
             }
         };

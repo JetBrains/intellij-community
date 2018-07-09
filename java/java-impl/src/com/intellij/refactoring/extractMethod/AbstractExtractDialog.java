@@ -34,4 +34,8 @@ public interface AbstractExtractDialog {
 
   void show();
   boolean isOK();
+
+  default boolean isPreviewUsages() {return false;}
+
+  default boolean showInTransaction() {return false;}
 }

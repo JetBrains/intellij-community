@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.messages;
 
 import com.intellij.icons.AllIcons;
@@ -20,10 +6,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdesktop.swingx.graphics.GraphicsUtilities;
@@ -56,12 +42,12 @@ public class SheetController implements Disposable {
   private boolean myDoNotAskResult;
 
   private BufferedImage myShadowImage;
-  
+
   private final JButton[] buttons;
-  private JButton myDefaultButton;
+  private final JButton myDefaultButton;
   private JComponent myFocusedComponent;
 
-  private JCheckBox doNotAskCheckBox = new JCheckBox();
+  private final JCheckBox doNotAskCheckBox = new JCheckBox();
 
   public static int SHADOW_BORDER = 5;
 
@@ -125,8 +111,10 @@ public class SheetController implements Disposable {
       buttons[i].setOpaque(false);
       handleMnemonics(i, buttonTitle);
 
+      final TouchbarDataKeys.DlgButtonDesc bdesc = TouchbarDataKeys.putDialogButtonDescriptor(buttons[i], buttons.length - i).setMainGroup(true);
       if (buttonTitle.equals(defaultButtonTitle)) {
         defaultButtonIndex = i;
+        bdesc.setDefault(true);
       }
 
       if (buttonTitle.equals(focusedButtonTitle) && !focusedButtonTitle.equals("Cancel")) {
@@ -209,6 +197,12 @@ public class SheetController implements Disposable {
     }
   }
 
+  void setResultAndStartClose(String result) {
+    if (result != null)
+      myResult = result;
+    mySheetMessage.startAnimation(false);
+  }
+
   JPanel getPanel(final JDialog w) {
     w.getRootPane().setDefaultButton(myDefaultButton);
 
@@ -216,10 +210,8 @@ public class SheetController implements Disposable {
     ActionListener actionListener = new ActionListener() {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
-        if (e.getSource() instanceof JButton) {
-          myResult = ((JButton)e.getSource()).getName();
-        }
-        mySheetMessage.startAnimation(false);
+        final String res = e.getSource() instanceof JButton ? ((JButton)e.getSource()).getName() : null;
+        setResultAndStartClose(res);
       }
     };
 
@@ -482,9 +474,7 @@ public class SheetController implements Disposable {
     myOffScreenFrame.add(mySheetPanel);
     myOffScreenFrame.getRootPane().setDefaultButton(myDefaultButton);
 
-    final BufferedImage image = (SystemInfo.isJavaVersionAtLeast("1.7")) ?
-                                UIUtil.createImage(SHEET_NC_WIDTH, SHEET_NC_HEIGHT, BufferedImage.TYPE_INT_ARGB) :
-                                GraphicsUtilities.createCompatibleTranslucentImage(SHEET_NC_WIDTH, SHEET_NC_HEIGHT);
+    BufferedImage image = UIUtil.createImage(SHEET_NC_WIDTH, SHEET_NC_HEIGHT, BufferedImage.TYPE_INT_ARGB);
 
     Graphics g = image.createGraphics();
     mySheetPanel.paint(g);
@@ -496,6 +486,8 @@ public class SheetController implements Disposable {
     myOffScreenFrame.dispose();
     return image;
   }
+
+  JPanel getSheetPanel() { return mySheetPanel; }
 
   public boolean getDoNotAskResult () {
     return myDoNotAskResult;

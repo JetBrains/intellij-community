@@ -1,11 +1,11 @@
 UFile (package = ) [public final enum EnumSwitchWithoutBreaks {...]
     UClass (name = EnumSwitchWithoutBreaks) [public final enum EnumSwitchWithoutBreaks {...}]
         UEnumConstant (name = FIRST) [FIRST] = NON-EVALUATED
-            USimpleNameReferenceExpression (identifier = EnumSwitchWithoutBreaks) [EnumSwitchWithoutBreaks] = NON-EVALUATED
+            USimpleNameReferenceExpression (identifier = EnumSwitchWithoutBreaks) [EnumSwitchWithoutBreaks] = external EnumSwitchWithoutBreaks()
         UEnumConstant (name = SECOND) [SECOND] = NON-EVALUATED
-            USimpleNameReferenceExpression (identifier = EnumSwitchWithoutBreaks) [EnumSwitchWithoutBreaks] = NON-EVALUATED
+            USimpleNameReferenceExpression (identifier = EnumSwitchWithoutBreaks) [EnumSwitchWithoutBreaks] = external EnumSwitchWithoutBreaks()
         UEnumConstant (name = THIRD) [THIRD] = NON-EVALUATED
-            USimpleNameReferenceExpression (identifier = EnumSwitchWithoutBreaks) [EnumSwitchWithoutBreaks] = NON-EVALUATED
+            USimpleNameReferenceExpression (identifier = EnumSwitchWithoutBreaks) [EnumSwitchWithoutBreaks] = external EnumSwitchWithoutBreaks()
         UMethod (name = foo) [public static fun foo(key: EnumSwitchWithoutBreaks) : int {...}]
             UParameter (name = key) [var key: EnumSwitchWithoutBreaks]
             UBlockExpression [{...}] = Nothing
@@ -34,7 +34,7 @@ UFile (package = ) [public final enum EnumSwitchWithoutBreaks {...]
                                     USimpleNameReferenceExpression (identifier = result) [result] = (var result = Undetermined)
                                     ULiteralExpression (value = 13) [13] = 13
                         USwitchClauseExpressionWithBody [else -> {...] = Undetermined
-                            UDefaultCaseExpression [else] = NON-EVALUATED
+                            UDefaultCaseExpression [else] = Undetermined
                             UExpressionList (switch_entry) [{...] = Undetermined
                                 UBinaryExpression (operator = =) [result = 66] = 66
                                     USimpleNameReferenceExpression (identifier = result) [result] = (var result = Undetermined)

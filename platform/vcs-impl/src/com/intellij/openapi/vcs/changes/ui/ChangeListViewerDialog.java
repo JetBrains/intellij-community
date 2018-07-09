@@ -97,7 +97,7 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
     myProject = project;
     myChangeList = changeList;
     final Collection<Change> changes = myChangeList.getChanges();
-    myChanges = changes.toArray(new Change[changes.size()]);
+    myChanges = changes.toArray(new Change[0]);
 
     setTitle(VcsBundle.message("dialog.title.changes.browser"));
     setCancelButtonText(CommonBundle.message("close.action.name"));
@@ -142,9 +142,9 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
     myChangesBrowser = new CommittedChangesBrowser(myProject) {
       @NotNull
       @Override
-      protected List<AnAction> createToolbarActions() {
+      protected List<AnAction> createPopupMenuActions() {
         return ContainerUtil.append(
-          super.createToolbarActions(),
+          super.createPopupMenuActions(),
           ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER)
         );
       }

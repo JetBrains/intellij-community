@@ -66,6 +66,7 @@ public class Group implements KeymapGroup {
 
   @Override
   public void addActionId(String id) {
+    if (myChildren.contains(id)) return;
     myChildren.add(id);
   }
 

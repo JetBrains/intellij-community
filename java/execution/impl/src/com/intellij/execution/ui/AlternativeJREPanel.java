@@ -41,10 +41,10 @@ import java.util.ArrayList;
 
 /**
  * User: anna
- * Date: Jun 21, 2005
  *
  * @deprecated use {@link JrePathEditor} instead
  */
+@Deprecated
 public class AlternativeJREPanel extends JPanel implements PanelWithAnchor {
   private final ComponentWithBrowseButton<TextFieldWithHistory> myPathField;
   private final JBCheckBox myCbEnabled;

@@ -17,7 +17,6 @@ package com.intellij.debugger.engine.evaluation.expression;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 22, 2007
  */
 public class SuperEvaluator extends ThisEvaluator{
 

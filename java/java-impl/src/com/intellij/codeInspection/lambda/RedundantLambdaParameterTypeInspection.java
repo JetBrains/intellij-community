@@ -6,8 +6,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
+import java.util.Collections;
 
 public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance(RedundantLambdaParameterTypeInspection.class);
@@ -32,7 +37,14 @@ public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLoca
     final PsiLambdaExpression expression = (PsiLambdaExpression)parent;
     final PsiParameter[] parameters = parameterList.getParameters();
     for (PsiParameter parameter : parameters) {
-      if (parameter.getTypeElement() == null) return false;
+      PsiTypeElement typeElement = parameter.getTypeElement();
+      if (typeElement == null) return false;
+      if (!PsiUtil.isLanguageLevel11OrHigher(parameterList)) {
+        if (AnonymousCanBeLambdaInspection.hasRuntimeAnnotations(parameter, Collections.emptySet())) {
+          return false;
+        }
+      }
+      else if (typeElement.isInferredType() && keepVarType(parameter)) return false;
     }
     if (parameters.length == 0) return false;
     final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
@@ -64,6 +76,16 @@ public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLoca
   private static void removeTypes(PsiLambdaExpression lambdaExpression) {
     if (lambdaExpression != null) {
       final PsiParameter[] parameters = lambdaExpression.getParameterList().getParameters();
+      if (PsiUtil.isLanguageLevel11OrHigher(lambdaExpression) &&
+          Arrays.stream(parameters).anyMatch(parameter -> keepVarType(parameter))) {
+        for (PsiParameter parameter : parameters) {
+          PsiTypeElement element = parameter.getTypeElement();
+          if (element != null) {
+            new CommentTracker().replaceAndRestoreComments(element, PsiKeyword.VAR);
+          }
+        }
+        return;
+      }
       final String text;
       if (parameters.length == 1) {
         text = parameters[0].getName();
@@ -73,8 +95,14 @@ public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLoca
       }
       final PsiLambdaExpression expression = (PsiLambdaExpression)JavaPsiFacade.getElementFactory(lambdaExpression.getProject())
         .createExpressionFromText(text + "->{}", lambdaExpression);
-      lambdaExpression.getParameterList().replace(expression.getParameterList());
+      CommentTracker tracker = new CommentTracker();
+      tracker.replaceAndRestoreComments(lambdaExpression.getParameterList(), expression.getParameterList());
     }
+  }
+
+  private static boolean keepVarType(PsiParameter parameter) {
+    return parameter.hasModifierProperty(PsiModifier.FINAL) || 
+                                                    parameter.getAnnotations().length > 0;
   }
 
   private static class LambdaParametersFix implements LocalQuickFix {

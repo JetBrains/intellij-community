@@ -1,6 +1,7 @@
 // "Replace with lambda" "true"
 
 class Test {
-    //my comment
+    //comment inside new expression
+//my comment
     Runnable r = () -> {};
 }

@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.inspections.quickfix.PyMakeFunctionReturnTypeQuickFix;
@@ -30,7 +31,7 @@ import static com.jetbrains.python.psi.impl.PyCallExpressionHelper.*;
  */
 public class PyTypeCheckerInspection extends PyInspection {
   private static final Logger LOG = Logger.getInstance(PyTypeCheckerInspection.class.getName());
-  private static Key<Long> TIME_KEY = Key.create("PyTypeCheckerInspection.StartTime");
+  private static final Key<Long> TIME_KEY = Key.create("PyTypeCheckerInspection.StartTime");
 
   @NotNull
   @Override
@@ -198,7 +199,7 @@ public class PyTypeCheckerInspection extends PyInspection {
         final PyCallableParameter parameter = entry.getValue();
         final PyType expected = parameter.getArgumentType(myTypeEvalContext);
         final PyType actual = myTypeEvalContext.getType(argument);
-        final boolean matched = PyTypeChecker.match(expected, actual, myTypeEvalContext, substitutions);
+        final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
         result.add(new AnalyzeArgumentResult(argument, expected, substituteGenerics(expected, substitutions), actual, matched));
       }
       final PyCallableParameter positionalContainer = getMappedPositionalContainer(mappedParameters);
@@ -220,7 +221,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       // For an expected type with generics we have to match all the actual types against it in order to do proper generic unification
       if (PyTypeChecker.hasGenerics(expected, myTypeEvalContext)) {
         final PyType actual = PyUnionType.union(arguments.stream().map(e -> myTypeEvalContext.getType(e)).collect(Collectors.toList()));
-        final boolean matched = PyTypeChecker.match(expected, actual, myTypeEvalContext, substitutions);
+        final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
         return arguments.stream()
           .map(argument -> new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched))
           .collect(Collectors.toList());
@@ -229,11 +230,18 @@ public class PyTypeCheckerInspection extends PyInspection {
         return arguments.stream()
           .map(argument -> {
             final PyType actual = myTypeEvalContext.getType(argument);
-            final boolean matched = PyTypeChecker.match(expected, actual, myTypeEvalContext, substitutions);
+            final boolean matched = matchParameterAndArgument(expected, actual, substitutions);
             return new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched);
           })
           .collect(Collectors.toList());
       }
+    }
+
+    private boolean matchParameterAndArgument(@Nullable PyType parameterType,
+                                              @Nullable PyType argumentType,
+                                              @NotNull Map<PyGenericType, PyType> substitutions) {
+      return PyTypeChecker.match(parameterType, argumentType, myTypeEvalContext, substitutions) &&
+             !PyProtocolsKt.matchingProtocolDefinitions(parameterType, argumentType, myTypeEvalContext);
     }
 
     @Nullable

@@ -17,7 +17,7 @@ package com.jetbrains.python.refactoring.classes;
 
 import com.intellij.refactoring.classMembers.AbstractMemberInfoStorage;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;

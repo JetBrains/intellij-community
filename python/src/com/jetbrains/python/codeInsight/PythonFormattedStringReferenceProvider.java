@@ -19,6 +19,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiReferenceProvider;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
@@ -51,13 +52,7 @@ public class PythonFormattedStringReferenceProvider extends PsiReferenceProvider
 
   @NotNull
   public static PySubstitutionChunkReference[] getReferencesFromChunks(@NotNull final PyStringLiteralExpression element,
-                                                        @NotNull final List<PyStringFormatParser.SubstitutionChunk> chunks) {
-
-    final PySubstitutionChunkReference[] result = new PySubstitutionChunkReference[chunks.size()];
-      for (int i = 0; i < chunks.size(); i++) {
-        final PyStringFormatParser.SubstitutionChunk chunk = chunks.get(i);
-        result[i] = new PySubstitutionChunkReference(element, chunk, i);
-      }
-    return result;
+                                                                       @NotNull final List<PyStringFormatParser.SubstitutionChunk> chunks) {
+    return ContainerUtil.map2Array(chunks, PySubstitutionChunkReference.class, chunk -> new PySubstitutionChunkReference(element, chunk));
   }
 }

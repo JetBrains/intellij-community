@@ -23,8 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author irengrig
- *         Date: 12/20/10
- *         Time: 2:57 PM
  */
 public class GitBinaryContentRevision extends GitContentRevision implements BinaryContentRevision {
   public GitBinaryContentRevision(@NotNull FilePath file, @NotNull GitRevisionNumber revision, @NotNull Project project) {

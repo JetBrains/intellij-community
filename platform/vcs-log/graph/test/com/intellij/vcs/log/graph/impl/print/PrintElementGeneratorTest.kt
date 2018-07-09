@@ -44,10 +44,9 @@ open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGener
       }
 
       if (element is GraphEdge) {
-        val edge = element
-        val normalEdge = LinearGraphUtils.asNormalEdge(edge)
+        val normalEdge = LinearGraphUtils.asNormalEdge(element)
         if (normalEdge != null) return normalEdge.up + normalEdge.down
-        return LinearGraphUtils.getNotNullNodeIndex(edge)
+        return LinearGraphUtils.getNotNullNodeIndex(element)
       }
 
       throw IllegalStateException("Incorrect graph element type: " + element)
@@ -64,46 +63,48 @@ open class PrintElementGeneratorTest : AbstractTestWithTwoTextFile("elementGener
 
   private fun runTest(`in`: String, out: String, longEdgeSize: Int, visiblePartSize: Int, edgeWithArrowSize: Int) {
     val graph = LinearGraphParser.parse(`in`)
-    val graphLayout = GraphLayoutBuilder.build(graph, object : Comparator<Int> {
-      override fun compare(o1: Int, o2: Int): Int {
-        return o1.compareTo(o2)
-      }
-    })
-    val graphElementComparator = GraphElementComparatorByLayoutIndex(object : NotNullFunction<Int, Int> {
-      override fun `fun`(nodeIndex: Int?): Int {
-        return graphLayout.getLayoutIndex(nodeIndex!!)
-      }
-    })
+    val graphLayout = GraphLayoutBuilder.build(graph) { o1, o2 -> o1.compareTo(o2) }
+    val graphElementComparator = GraphElementComparatorByLayoutIndex(
+      NotNullFunction<Int, Int> { nodeIndex -> graphLayout.getLayoutIndex(nodeIndex!!) }
+    )
     val elementManager = TestPrintElementManager(graphElementComparator)
     val printElementGenerator = PrintElementGeneratorImpl(graph, elementManager, longEdgeSize, visiblePartSize, edgeWithArrowSize)
     val actual = printElementGenerator.asString(graph.nodesCount())
     assertEquals(out, actual)
   }
 
-  @Test fun oneNode() {
+  @Test
+  fun oneNode() {
     doTest("oneNode")
   }
 
-  @Test fun manyNodes() {
+  @Test
+  fun manyNodes() {
     doTest("manyNodes")
   }
 
-  @Test fun longEdges() {
+  @Test
+  fun longEdges() {
     doTest("longEdges")
   }
 
-  @Test fun specialElements() {
+  @Test
+  fun specialElements() {
     doTest("specialElements")
   }
 
-//  oneUpOneDown tests were created in order to investigate some arrow behavior in upsource
-  @Test fun oneUpOneDown1() {
+  //  oneUpOneDown tests were created in order to investigate some arrow behavior in upsource
+  @Test
+  fun oneUpOneDown1() {
     val testName = "oneUpOneDown1"
-    runTest(loadText(testName + AbstractTestWithTwoTextFile.IN_POSTFIX), loadText(testName + AbstractTestWithTwoTextFile.OUT_POSTFIX), 7, 1, 10)
+    runTest(loadText(testName + AbstractTestWithTwoTextFile.IN_POSTFIX), loadText(testName + AbstractTestWithTwoTextFile.OUT_POSTFIX), 7, 1,
+            10)
   }
 
-  @Test fun oneUpOneDown2() {
+  @Test
+  fun oneUpOneDown2() {
     val testName = "oneUpOneDown2"
-    runTest(loadText(testName + AbstractTestWithTwoTextFile.IN_POSTFIX), loadText(testName + AbstractTestWithTwoTextFile.OUT_POSTFIX), 10, 1, 10)
+    runTest(loadText(testName + AbstractTestWithTwoTextFile.IN_POSTFIX), loadText(testName + AbstractTestWithTwoTextFile.OUT_POSTFIX), 10,
+            1, 10)
   }
 }

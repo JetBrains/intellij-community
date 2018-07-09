@@ -53,6 +53,11 @@ public class PyUnusedImportTest extends PyTestCase {
     doTest("test1.py");
   }
 
+  //PY-20075
+  public void testMultipleSubmodules() {
+    doTest("test1.py");
+  }
+
   private void doTest(@NotNull String filename) {
     myFixture.copyDirectoryToProject("inspections/unusedImport/" + getTestName(true), "");
     myFixture.enableInspections(PyUnresolvedReferencesInspection.class);

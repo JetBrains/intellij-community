@@ -15,7 +15,12 @@
  */
 package org.jetbrains.uast
 
+import com.intellij.openapi.util.text.StringUtilRt
+import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiElement
+import com.intellij.psi.SyntaxTraverser
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastTypedVisitor
@@ -25,6 +30,8 @@ import org.jetbrains.uast.visitor.UastVisitor
  * An annotation wrapper to be used in [UastVisitor].
  */
 interface UAnnotation : UElement, UResolvable {
+
+  override val javaPsi: PsiAnnotation?
   /**
    * Returns the annotation qualified name.
    */
@@ -44,7 +51,7 @@ interface UAnnotation : UElement, UResolvable {
 
   fun findDeclaredAttributeValue(name: String?): UExpression?
 
-  override fun asRenderString() = buildString {
+  override fun asRenderString(): String = buildString {
     append("@")
     append(qualifiedName)
     if (attributeValues.isNotEmpty()) {
@@ -56,7 +63,7 @@ interface UAnnotation : UElement, UResolvable {
     }
   }
 
-  override fun asLogString() = log("fqName = $qualifiedName")
+  override fun asLogString(): String = log("fqName = $qualifiedName")
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitAnnotation(this)) return
@@ -64,6 +71,33 @@ interface UAnnotation : UElement, UResolvable {
     visitor.afterVisitAnnotation(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitAnnotation(this, data)
 }
+
+/**
+ * Handy method to get psiElement for reporting warnings and putting gutters
+ */
+val UAnnotation?.namePsiElement: PsiElement?
+  get() {
+    if (this is UAnnotationEx) return this.uastAnchor?.sourcePsi
+    // A workaround for IDEA-184211
+    val sourcePsiElement = this?.sourcePsiElement ?: return null
+    val identifier = sourcePsiElement.navigationElement ?: return null
+    val qualifiedName = this.qualifiedName
+    if (qualifiedName != null) {
+      val shortName = StringUtilRt.getShortName(qualifiedName)
+      SyntaxTraverser.psiTraverser(sourcePsiElement)
+        .filter { psi -> psi.references.isNotEmpty() && psi.text.contains(shortName) }
+        .traverse()
+        .first()
+        ?.let {
+          return PsiTreeUtil.getDeepestFirst(it)
+        }
+    }
+
+    return PsiTreeUtil.getDeepestFirst(identifier)
+  }
+
+
+interface UAnnotationEx : UAnnotation, UAnchorOwner

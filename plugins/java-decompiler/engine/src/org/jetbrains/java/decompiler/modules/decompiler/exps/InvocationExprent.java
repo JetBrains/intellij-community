@@ -1,24 +1,11 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.main.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
@@ -38,6 +25,7 @@ import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.ListStack;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.lang.reflect.Method;
@@ -314,10 +302,11 @@ public class InvocationExprent extends Exprent {
           buf.append("<invokedynamic>");
         }
         buf.append("(");
-
         break;
+
       case TYP_CLINIT:
         throw new RuntimeException("Explicit invocation of " + CodeConstants.CLINIT_NAME);
+
       case TYP_INIT:
         if (super_qualifier != null) {
           buf.append("super(");
@@ -325,31 +314,20 @@ public class InvocationExprent extends Exprent {
         else if (isInstanceThis) {
           buf.append("this(");
         }
+        else if (instance != null) {
+          buf.append(instance.toJava(indent, tracer)).append(".<init>(");
+        }
         else {
-          if (instance != null) {
-            buf.append(instance.toJava(indent, tracer)).append(".<init>(");
-          }
-          else {
-            throw new RuntimeException("Unrecognized invocation of " + CodeConstants.INIT_NAME);
-          }
+          throw new RuntimeException("Unrecognized invocation of " + CodeConstants.INIT_NAME);
         }
     }
 
-    List<VarVersionPair> sigFields = null;
+    List<VarVersionPair> mask = null;
     boolean isEnum = false;
     if (functype == TYP_INIT) {
       ClassNode newNode = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
-
-      if (newNode != null) {  // own class
-        if (newNode.getWrapper() != null) {
-          sigFields = newNode.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, stringDescriptor).signatureFields;
-        }
-        else {
-          if (newNode.type == ClassNode.CLASS_MEMBER && (newNode.access & CodeConstants.ACC_STATIC) == 0) { // non-static member class
-            sigFields = new ArrayList<>(Collections.nCopies(lstParameters.size(), (VarVersionPair)null));
-            sigFields.set(0, new VarVersionPair(-1, 0));
-          }
-        }
+      if (newNode != null) {
+        mask = ExprUtil.getSyntheticParametersMask(newNode, stringDescriptor, lstParameters.size());
         isEnum = newNode.classStruct.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
       }
     }
@@ -367,7 +345,7 @@ public class InvocationExprent extends Exprent {
     boolean firstParameter = true;
     int start = isEnum ? 2 : 0;
     for (int i = start; i < lstParameters.size(); i++) {
-      if (sigFields == null || sigFields.get(i) == null) {
+      if (mask == null || mask.get(i) == null) {
         TextBuffer buff = new TextBuffer();
         boolean ambiguous = setAmbiguousParameters.get(i);
 
@@ -387,7 +365,7 @@ public class InvocationExprent extends Exprent {
       }
     }
 
-    buf.append(")");
+    buf.append(')');
 
     return buf;
   }
@@ -561,7 +539,7 @@ public class InvocationExprent extends Exprent {
   @Override
   public boolean equals(Object o) {
     if (o == this) return true;
-    if (o == null || !(o instanceof InvocationExprent)) return false;
+    if (!(o instanceof InvocationExprent)) return false;
 
     InvocationExprent it = (InvocationExprent)o;
     return InterpreterUtil.equalObjects(name, it.getName()) &&

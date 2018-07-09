@@ -154,9 +154,6 @@ public class TaskConfigurable extends BindableConfigurable implements Searchable
     return myPanel;
   }
 
-  public void disposeUIResources() {
-  }
-
   @NotNull
   public String getId() {
     return "tasks";

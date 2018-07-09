@@ -1,7 +1,7 @@
 class SideEffectReturn {
   private boolean isValidValue(String value) {
     try {
-        Test.valueOf(value);
+        Test.valueOf(value/*oops*/);
         return true;
     } catch (IllegalArgumentException e) {
       return false;

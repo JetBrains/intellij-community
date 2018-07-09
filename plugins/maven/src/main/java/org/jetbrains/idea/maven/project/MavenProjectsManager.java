@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.CommonBundle;
@@ -21,7 +7,6 @@ import com.intellij.notification.*;
 import com.intellij.notification.impl.NotificationSettings;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompileContext;
@@ -116,11 +101,11 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   private final EventDispatcher<MavenProjectsTree.Listener> myProjectsTreeDispatcher =
     EventDispatcher.create(MavenProjectsTree.Listener.class);
   private final List<Listener> myManagerListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private ModificationTracker myModificationTracker;
+  private final ModificationTracker myModificationTracker;
 
   private MavenWorkspaceSettings myWorkspaceSettings;
 
-  private MavenMergingUpdateQueue mySaveQueue;
+  private final MavenMergingUpdateQueue mySaveQueue;
   private static final int SAVE_DELAY = 1000;
 
   public static MavenProjectsManager getInstance(Project p) {
@@ -144,7 +129,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @Override
-  public void loadState(MavenProjectsManagerState state) {
+  public void loadState(@NotNull MavenProjectsManagerState state) {
     myState = state;
     if (isInitialized()) {
       applyStateToTree();
@@ -199,14 +184,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       CompilerManager.getInstance(myProject).addBeforeTask(new CompileTask() {
         @Override
         public boolean execute(CompileContext context) {
-          AccessToken token = ReadAction.start();
-
-          try {
-            new MavenResourceCompilerConfigurationGenerator(myProject, myProjectsTree).generateBuildConfiguration(context.isRebuild());
-          }
-          finally {
-            token.finish();
-          }
+          ApplicationManager.getApplication().runReadAction(() -> new MavenResourceCompilerConfigurationGenerator(myProject, myProjectsTree).generateBuildConfiguration(context.isRebuild()));
           return true;
         }
       });
@@ -474,14 +452,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
             MavenImportingSettings importingSettings;
 
-            AccessToken token = ReadAction.start();
-            try {
-              if (myProject.isDisposed()) return;
-              importingSettings = getImportingSettings();
-            }
-            finally {
-              token.finish();
-            }
+            importingSettings = ReadAction.compute(() -> myProject.isDisposed() ? null : getImportingSettings());
+            if (importingSettings == null) return;
 
             scheduleArtifactsDownloading(Collections.singleton(projectWithChanges.first),
                                          null,
@@ -552,13 +524,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public boolean isMavenizedModule(@NotNull Module m) {
-    AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
-    try {
-      return !m.isDisposed() && ExternalSystemModulePropertyManager.getInstance(m).isMavenized();
-    }
-    finally {
-      accessToken.finish();
-    }
+    return ReadAction.compute(() -> !m.isDisposed() && ExternalSystemModulePropertyManager.getInstance(m).isMavenized());
   }
 
   public void setMavenizedModules(Collection<Module> modules, boolean mavenized) {
@@ -1192,7 +1158,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     else {
       MavenUtil.runInBackground(myProject, ProjectBundle.message("maven.project.importing"), false, new MavenTask() {
         @Override
-        public void run(MavenProgressIndicator indicator) throws MavenProcessCanceledException {
+        public void run(MavenProgressIndicator indicator) {
           r.run();
         }
       }).waitFor();
@@ -1283,7 +1249,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
     @Override
     public void markDirtyAllExternalProjects(@NotNull Project project) {
-      runWhenFullyOpen(project, (manager) -> manager.doScheduleUpdateProjects(null, true, true));
+      runWhenFullyOpen(project, (manager) -> manager.doScheduleUpdateProjects(null, true, false));
     }
 
     @Override
@@ -1291,7 +1257,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
       runWhenFullyOpen(module.getProject(), (manager) -> {
         MavenProject mavenProject = manager.findProject(module);
         if (mavenProject != null) {
-          manager.doScheduleUpdateProjects(ContainerUtil.list(mavenProject), true, true);
+          manager.doScheduleUpdateProjects(ContainerUtil.list(mavenProject), true, false);
         }
       });
     }

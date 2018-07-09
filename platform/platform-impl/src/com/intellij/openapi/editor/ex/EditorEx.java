@@ -23,12 +23,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorKind;
+import com.intellij.openapi.editor.LineExtensionInfo;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -45,6 +43,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Collection;
+import java.util.function.IntFunction;
 
 public interface EditorEx extends Editor {
   @NonNls String PROP_INSERT_MODE = "insertMode";
@@ -167,18 +167,6 @@ public interface EditorEx extends Editor {
 
   VirtualFile getVirtualFile();
 
-  /**
-   * @deprecated Use {@link #offsetToLogicalPosition(int)}
-   * or {@link EditorUtil#calcColumnNumber(Editor, CharSequence, int, int, int)} instead. To be removed in IDEA 2017.2.
-   */
-  int calcColumnNumber(@NotNull CharSequence text, int start, int offset, int tabSize);
-
-  /**
-   * @deprecated Use {@link #offsetToLogicalPosition(int)}
-   * or {@link EditorUtil#calcColumnNumber(Editor, CharSequence, int, int, int)} instead. To be removed in IDEA 2017.2.
-   */
-  int calcColumnNumber(int offset, int lineIndex);
-
   TextDrawingCallback getTextDrawingCallback();
 
   @NotNull
@@ -198,20 +186,6 @@ public interface EditorEx extends Editor {
    */
   @NotNull
   EditorColorsScheme createBoundColorSchemeDelegate(@Nullable EditorColorsScheme customGlobalScheme);
-
-  /**
-   * Instructs current editor about soft wraps appliance appliance use-case.
-   * <p/>
-   * {@link SoftWrapAppliancePlaces#MAIN_EDITOR} is used by default.
-   *
-   * @param place   soft wraps appliance appliance use-case
-   * @deprecated set {@link EditorKind} via
-   * {@link com.intellij.openapi.editor.EditorFactory#createEditor(Document, Project, EditorKind) },
-   * {@link com.intellij.openapi.editor.EditorFactory#createViewer(Document, Project, EditorKind)}
-   * {@link com.intellij.openapi.editor.EditorFactory#createEditor(Document, Project, VirtualFile, boolean, EditorKind)}
-   */
-  @Deprecated
-  void setSoftWrapAppliancePlace(@NotNull SoftWrapAppliancePlaces place);
 
   /**
    * Allows to define {@code 'placeholder text'} for the current editor, i.e. virtual text that will be represented until
@@ -292,6 +266,12 @@ public interface EditorEx extends Editor {
    * @param enabled  'pure painting mode' status to use
    */
   void setPurePaintingMode(boolean enabled);
+
+  /**
+   * Registers a function which will be applied to a line number to obtain additional text fragments. The fragments returned by the
+   * function will be drawn in the editor after end of the line (together with fragments returned by {@link com.intellij.openapi.editor.EditorLinePainter} extensions).
+   */
+  void registerLineExtensionPainter(IntFunction<Collection<LineExtensionInfo>> lineExtensionPainter);
 
   /**
    * Allows to register a callback that will be called one each repaint of the editor vertical scrollbar.

@@ -1,19 +1,5 @@
 
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.application.options.editor.AutoImportOptionsConfigurable;
@@ -28,7 +14,9 @@ import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -223,15 +211,6 @@ public class AddImportAction implements QuestionAction {
   }
 
   private void _addImport(PsiReference ref, PsiClass targetClass) {
-    int caretOffset = myEditor.getCaretModel().getOffset();
-    RangeMarker caretMarker = myEditor.getDocument().createRangeMarker(caretOffset, caretOffset);
-    int colByOffset = myEditor.offsetToLogicalPosition(caretOffset).column;
-    int col = myEditor.getCaretModel().getLogicalPosition().column;
-    int virtualSpace = col == colByOffset ? 0 : col - colByOffset;
-    int line = myEditor.getCaretModel().getLogicalPosition().line;
-    LogicalPosition pos = new LogicalPosition(line, 0);
-    myEditor.getCaretModel().moveToLogicalPosition(pos);
-
     try{
       bindReference(ref, targetClass);
       if (CodeInsightWorkspaceSettings.getInstance(myProject).optimizeImportsOnTheFly) {
@@ -243,16 +222,7 @@ public class AddImportAction implements QuestionAction {
     catch(IncorrectOperationException e){
       LOG.error(e);
     }
-
-    line = myEditor.getCaretModel().getLogicalPosition().line;
-    LogicalPosition pos1 = new LogicalPosition(line, col);
-    myEditor.getCaretModel().moveToLogicalPosition(pos1);
-    if (caretMarker.isValid()){
-      LogicalPosition pos2 = myEditor.offsetToLogicalPosition(caretMarker.getStartOffset());
-      int newCol = pos2.column + virtualSpace;
-      myEditor.getCaretModel().moveToLogicalPosition(new LogicalPosition(pos2.line, newCol));
-      myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    }
+    myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
   }
 
   protected void bindReference(PsiReference ref, PsiClass targetClass) {

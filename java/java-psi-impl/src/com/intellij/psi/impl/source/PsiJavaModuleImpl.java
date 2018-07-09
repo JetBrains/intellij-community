@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -10,6 +12,8 @@ import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiJavaModuleStub;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.search.ProjectScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
@@ -73,13 +77,25 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
   @NotNull
   @Override
   public Iterable<PsiUsesStatement> getUses() {
-    return psiTraverser().children(this).filter(PsiUsesStatement.class);
+    PsiJavaModuleStub stub = getGreenStub();
+    if (stub != null) {
+      return JBIterable.of(stub.getChildrenByType(JavaElementType.USES_STATEMENT, PsiUsesStatement.EMPTY_ARRAY));
+    }
+    else {
+      return psiTraverser().children(this).filter(PsiUsesStatement.class);
+    }
   }
 
   @NotNull
   @Override
   public Iterable<PsiProvidesStatement> getProvides() {
-    return psiTraverser().children(this).filter(PsiProvidesStatement.class);
+    PsiJavaModuleStub stub = getGreenStub();
+    if (stub != null) {
+      return JBIterable.of(stub.getChildrenByType(JavaElementType.PROVIDES_STATEMENT, PsiProvidesStatement.EMPTY_ARRAY));
+    }
+    else {
+      return psiTraverser().children(this).filter(PsiProvidesStatement.class);
+    }
   }
 
   @NotNull
@@ -134,12 +150,6 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     return getNameIdentifier().getTextOffset();
   }
 
-  @NotNull
-  @Override
-  public PsiElement getNavigationElement() {
-    return getNameIdentifier();
-  }
-
   @Override
   public PsiElement getOriginalElement() {
     return CachedValuesManager.getCachedValue(this, () -> {
@@ -157,6 +167,12 @@ public class PsiJavaModuleImpl extends JavaStubPsiElement<PsiJavaModuleStub> imp
     else {
       visitor.visitElement(this);
     }
+  }
+
+  @NotNull
+  @Override
+  public SearchScope getUseScope() {
+    return ProjectScope.getProjectScope(getProject());
   }
 
   @Override

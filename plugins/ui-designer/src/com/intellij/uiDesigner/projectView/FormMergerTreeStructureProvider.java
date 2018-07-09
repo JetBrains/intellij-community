@@ -28,7 +28,10 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.uiDesigner.binding.FormClassIndex;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,7 +65,7 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
     if (!formsFound) return children;
 
     Collection<AbstractTreeNode> result = new LinkedHashSet<>(children);
-    ProjectViewNode[] copy = children.toArray(new ProjectViewNode[children.size()]);
+    ProjectViewNode[] copy = children.toArray(new ProjectViewNode[0]);
     for (ProjectViewNode element : copy) {
       PsiClass psiClass = null;
       if (element.getValue() instanceof PsiClass) {
@@ -99,24 +102,22 @@ public class FormMergerTreeStructureProvider implements TreeStructureProvider {
     return result;
   }
 
-  public Object getData(Collection<AbstractTreeNode> selected, String dataId) {
-    if (selected != null) {
-      if (Form.DATA_KEY.is(dataId)) {
-        List<Form> result = new ArrayList<>();
-        for(AbstractTreeNode node: selected) {
-          if (node.getValue() instanceof Form) {
-            result.add((Form) node.getValue());
-          }
-        }
-        if (!result.isEmpty()) {
-          return result.toArray(new Form[result.size()]);
+  public Object getData(@NotNull Collection<AbstractTreeNode> selected, String dataId) {
+    if (Form.DATA_KEY.is(dataId)) {
+      List<Form> result = new ArrayList<>();
+      for(AbstractTreeNode node: selected) {
+        if (node.getValue() instanceof Form) {
+          result.add((Form) node.getValue());
         }
       }
-      else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
-        for(AbstractTreeNode node: selected) {
-          if (node.getValue() instanceof Form) {
-            return new MyDeleteProvider(selected);
-          }
+      if (!result.isEmpty()) {
+        return result.toArray(new Form[0]);
+      }
+    }
+    else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+      for(AbstractTreeNode node: selected) {
+        if (node.getValue() instanceof Form) {
+          return new MyDeleteProvider(selected);
         }
       }
     }

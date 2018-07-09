@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ui.actions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeEditor.printing.ExportToHTMLSettings;
 import com.intellij.codeInspection.InspectionApplication;
 import com.intellij.codeInspection.InspectionsBundle;
@@ -25,7 +12,10 @@ import com.intellij.codeInspection.ex.ScopeToolState;
 import com.intellij.codeInspection.ex.Tools;
 import com.intellij.codeInspection.export.ExportToHTMLDialog;
 import com.intellij.codeInspection.export.InspectionTreeHtmlWriter;
-import com.intellij.codeInspection.ui.*;
+import com.intellij.codeInspection.ui.InspectionNode;
+import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.InspectionToolPresentation;
+import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -43,7 +33,6 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
 import org.jdom.Document;
@@ -63,7 +52,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
   @NonNls private static final String XML = "XML";
 
   public ExportHTMLAction(final InspectionResultsView view) {
-    super(InspectionsBundle.message("inspection.action.export.html"), null, AllIcons.Actions.Export);
+    super(InspectionsBundle.message("inspection.action.export.html"), null, AllIcons.ToolbarDecorator.Export);
     myView = view;
   }
 
@@ -131,7 +120,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       final IOException[] ex = new IOException[1];
 
       final Set<InspectionToolWrapper> visitedWrappers = new THashSet<>();
-      TreeUtil.traverse(root, node -> {
+      TreeUtil.treeNodeTraverser(root).traverse().processEach(node -> {
         if (node instanceof InspectionNode) {
           InspectionNode toolNode = (InspectionNode)node;
           Element problems = new Element(PROBLEMS);
@@ -150,7 +139,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
             if (problems.getContentSize() != 0) {
               JDOMUtil.writeDocument(new Document(problems),
                                      outputDirectoryName + File.separator + toolWrapper.getShortName() + InspectionApplication.XML_EXTENSION,
-                                     CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+                                     CodeStyle.getDefaultSettings().getLineSeparator());
             }
           }
           catch (IOException e) {
@@ -169,7 +158,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       }
       JDOMUtil.write(element,
                      new File(outputDirectoryName, InspectionApplication.DESCRIPTIONS + InspectionApplication.XML_EXTENSION),
-                     CodeStyleSettingsManager.getSettings(null).getLineSeparator());
+                     CodeStyle.getDefaultSettings().getLineSeparator());
     }
     catch (IOException e) {
       ApplicationManager.getApplication().invokeLater(() -> Messages.showErrorDialog(myView, e.getMessage()));

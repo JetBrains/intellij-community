@@ -22,10 +22,10 @@ import java.util.ArrayList;
 
 public class WrapProcessor {
   private LeafBlockWrapper myFirstWrappedBlockOnLine = null;
-  private BlockRangesMap myBlockRangesMap;
+  private final BlockRangesMap myBlockRangesMap;
   private LeafBlockWrapper myWrapCandidate = null;
-  private IndentAdjuster myIndentAdjuster;
-  private int myRightMargin;
+  private final IndentAdjuster myIndentAdjuster;
+  private final int myRightMargin;
 
   public WrapProcessor(BlockRangesMap blockHelper, IndentAdjuster indentAdjuster, int rightMargin) {
     myIndentAdjuster = indentAdjuster;

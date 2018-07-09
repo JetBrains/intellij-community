@@ -104,13 +104,17 @@ interface UCallExpression : UExpression, UResolvable {
     visitor.afterVisitCallExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitCallExpression(this, data)
 
-  override fun asLogString() = log("kind = $kind, argCount = $valueArgumentCount)")
+  override fun asLogString(): String = log("kind = $kind, argCount = $valueArgumentCount)")
 
   override fun asRenderString(): String {
     val ref = classReference?.asRenderString() ?: methodName ?: methodIdentifier?.asRenderString() ?: "<noref>"
     return ref + "(" + valueArguments.joinToString { it.asRenderString() } + ")"
   }
+}
+
+interface UCallExpressionEx : UCallExpression {
+  fun getArgumentForParameter(i: Int): UExpression?
 }

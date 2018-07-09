@@ -121,16 +121,12 @@ class ProfileViewer {
 
     for (File file : dir.listFiles()) {
       if (file.getName().endsWith(".txt")) {
-        BufferedReader reader = new BufferedReader(new FileReader(file));
-        try {
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
           while (true) {
             String line = reader.readLine();
             if (line == null) break;
             list.add(line);
           }
-        }
-        finally {
-          reader.close();
         }
       }
     }

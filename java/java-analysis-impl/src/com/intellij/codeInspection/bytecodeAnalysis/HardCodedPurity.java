@@ -17,6 +17,7 @@ package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.org.objectweb.asm.tree.FieldInsnNode;
 
@@ -28,50 +29,52 @@ import java.util.Set;
 class HardCodedPurity {
   static final boolean AGGRESSIVE_HARDCODED_PURITY = Registry.is("java.annotations.inference.aggressive.hardcoded.purity", true);
 
-  private static Set<Couple<String>> ownedFields = ContainerUtil.set(
+  private static final Set<Couple<String>> ownedFields = ContainerUtil.set(
     new Couple<>("java/lang/AbstractStringBuilder", "value")
   );
-  private static Set<Method> thisChangingMethods = ContainerUtil.set(
-    new Method("java/lang/Throwable", "fillInStackTrace", "()Ljava/lang/Throwable;")
+  private static final Set<Member> thisChangingMethods = ContainerUtil.set(
+    new Member("java/lang/Throwable", "fillInStackTrace", "()Ljava/lang/Throwable;")
   );
   // Assumed that all these methods are not only pure, but return object which could be safely modified
-  private static Set<Method> pureMethods = ContainerUtil.set(
+  private static final Set<Member> pureMethods = ContainerUtil.set(
     // Maybe overloaded and be not pure, but this would be definitely bad code style
     // Used in Throwable(Throwable) ctor, so this helps to infer purity of many exception constructors
-    new Method("java/lang/Throwable", "toString", "()Ljava/lang/String;"),
+    new Member("java/lang/Throwable", "toString", "()Ljava/lang/String;"),
+    // Cycle in AbstractStringBuilder ctor and this method disallows to infer the purity
+    new Member("java/lang/StringUTF16", "newBytesFor", "(I)[B"),
     // Declared in final class StringBuilder
-    new Method("java/lang/StringBuilder", "toString", "()Ljava/lang/String;"),
-    new Method("java/lang/StringBuffer", "toString", "()Ljava/lang/String;"),
+    new Member("java/lang/StringBuilder", "toString", "()Ljava/lang/String;"),
+    new Member("java/lang/StringBuffer", "toString", "()Ljava/lang/String;"),
     // Native
-    new Method("java/lang/Object", "getClass", "()Ljava/lang/Class;"),
-    new Method("java/lang/Class", "getComponentType", "()Ljava/lang/Class;"),
-    new Method("java/lang/reflect/Array", "newInstance", "(Ljava/lang/Class;I)Ljava/lang/Object;"),
-    new Method("java/lang/reflect/Array", "newInstance", "(Ljava/lang/Class;[I)Ljava/lang/Object;"),
-    new Method("java/lang/Float", "floatToRawIntBits", "(F)I"),
-    new Method("java/lang/Float", "intBitsToFloat", "(I)F"),
-    new Method("java/lang/Double", "doubleToRawLongBits", "(D)J"),
-    new Method("java/lang/Double", "longBitsToDouble", "(J)D")
+    new Member("java/lang/Object", "getClass", "()Ljava/lang/Class;"),
+    new Member("java/lang/Class", "getComponentType", "()Ljava/lang/Class;"),
+    new Member("java/lang/reflect/Array", "newInstance", "(Ljava/lang/Class;I)Ljava/lang/Object;"),
+    new Member("java/lang/reflect/Array", "newInstance", "(Ljava/lang/Class;[I)Ljava/lang/Object;"),
+    new Member("java/lang/Float", "floatToRawIntBits", "(F)I"),
+    new Member("java/lang/Float", "intBitsToFloat", "(I)F"),
+    new Member("java/lang/Double", "doubleToRawLongBits", "(D)J"),
+    new Member("java/lang/Double", "longBitsToDouble", "(J)D")
   );
-  private static Map<Method, Set<EffectQuantum>> solutions = new HashMap<>();
-  private static Set<EffectQuantum> thisChange = Collections.singleton(EffectQuantum.ThisChangeQuantum);
+  private static final Map<Member, Set<EffectQuantum>> solutions = new HashMap<>();
+  private static final Set<EffectQuantum> thisChange = Collections.singleton(EffectQuantum.ThisChangeQuantum);
 
   static {
     // Native
-    solutions.put(new Method("java/lang/System", "arraycopy", "(Ljava/lang/Object;ILjava/lang/Object;II)V"),
+    solutions.put(new Member("java/lang/System", "arraycopy", "(Ljava/lang/Object;ILjava/lang/Object;II)V"),
                   Collections.singleton(new EffectQuantum.ParamChangeQuantum(2)));
-    solutions.put(new Method("java/lang/Object", "hashCode", "()I"), Collections.emptySet());
+    solutions.put(new Member("java/lang/Object", "hashCode", "()I"), Collections.emptySet());
   }
 
   static HardCodedPurity getInstance() {
     return AGGRESSIVE_HARDCODED_PURITY ? new AggressiveHardCodedPurity() : new HardCodedPurity();
   }
 
-  Effects getHardCodedSolution(Method method) {
+  Effects getHardCodedSolution(Member method) {
     if (isThisChangingMethod(method)) {
       return new Effects(isBuilderChainCall(method) ? DataValue.ThisDataValue : DataValue.UnknownDataValue1, thisChange);
     }
     else if (isPureMethod(method)) {
-      return new Effects(DataValue.LocalDataValue, Collections.emptySet());
+      return new Effects(getReturnValueForPureMethod(method), Collections.emptySet());
     }
     else {
       Set<EffectQuantum> effects = solutions.get(method);
@@ -79,11 +82,11 @@ class HardCodedPurity {
     }
   }
 
-  boolean isThisChangingMethod(Method method) {
+  boolean isThisChangingMethod(Member method) {
     return isBuilderChainCall(method) || thisChangingMethods.contains(method);
   }
 
-  boolean isBuilderChainCall(Method method) {
+  boolean isBuilderChainCall(Member method) {
     // Those methods are virtual, thus contracts cannot be inferred automatically,
     // but all possible implementations are controlled
     // (only final classes j.l.StringBuilder and j.l.StringBuffer extend package-private j.l.AbstractStringBuilder)
@@ -91,8 +94,23 @@ class HardCodedPurity {
            method.methodName.startsWith("append");
   }
 
-  boolean isPureMethod(Method method) {
-    return pureMethods.contains(method);
+  DataValue getReturnValueForPureMethod(Member method) {
+    String type = StringUtil.substringAfter(method.methodDesc, ")");
+    if (type != null && (type.length() == 1 || type.equals("Ljava/lang/String;") || type.equals("Ljava/lang/Class;"))) {
+      return DataValue.UnknownDataValue1;
+    }
+    return DataValue.LocalDataValue;
+  }
+
+  boolean isPureMethod(Member method) {
+    if(pureMethods.contains(method)) {
+      return true;
+    }
+    // Array clone() method is a special beast: it's qualifier class is array itself
+    if(method.internalClassName.startsWith("[") && method.methodName.equals("clone") && method.methodDesc.equals("()Ljava/lang/Object;")) {
+      return true;
+    }
+    return false;
   }
 
   boolean isOwnedField(FieldInsnNode fieldInsn) {
@@ -106,7 +124,7 @@ class HardCodedPurity {
                                                            "java/util/AbstractSet", "java/util/TreeSet");
 
     @Override
-    boolean isThisChangingMethod(Method method) {
+    boolean isThisChangingMethod(Member method) {
       if (method.methodName.equals("next") && method.methodDesc.startsWith("()") && method.internalClassName.equals("java/util/Iterator")) {
         return true;
       }
@@ -114,7 +132,7 @@ class HardCodedPurity {
     }
 
     @Override
-    boolean isPureMethod(Method method) {
+    boolean isPureMethod(Member method) {
       if (method.methodName.equals("toString") && method.methodDesc.equals("()Ljava/lang/String;")) return true;
       if (method.methodName.equals("iterator") && method.methodDesc.equals("()Ljava/util/Iterator;") &&
           ITERABLES.contains(method.internalClassName)) {

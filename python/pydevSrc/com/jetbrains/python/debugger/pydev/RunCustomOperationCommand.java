@@ -2,7 +2,6 @@ package com.jetbrains.python.debugger.pydev;
 
 import com.intellij.openapi.diagnostic.Logger;
 
-import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
@@ -17,7 +16,7 @@ import java.net.URLEncoder;
  * <p>
  * Once created, the command should be posted to the target with {@link AbstractDebugTarget#postCommand(AbstractDebuggerCommand)}.
  * Optionally, the function run on the target can return a string for further processing. In this case the command's
- * {@link #setCompletionListener(ICommandResponseListener)} should be set and on completion, {@link #getResponsePayload()}
+ * {@link #setCompletionListener(ICommandResponseListener)} should be set and on completion, {@link #getPayload()}
  * can be used to obtain the returned value.
  * <p>
  * For an example, see {@link PrettyPrintCommandHandler}
@@ -25,10 +24,10 @@ import java.net.URLEncoder;
 public class RunCustomOperationCommand<T> extends AbstractCommand<T> {
   private static final Logger LOG = Logger.getInstance(RunCustomOperationCommand.class);
 
-  private String myEncodedCodeOrFile;
-  private String myOperationFnName;
-  private PyVariableLocator myLocator;
-  private String myStyle;
+  private final String myEncodedCodeOrFile;
+  private final String myOperationFnName;
+  private final PyVariableLocator myLocator;
+  private final String myStyle;
 
   private RunCustomOperationCommand(RemoteDebugger target, PyVariableLocator locator,
                                     String style, String codeOrFile, String operationFnName) {

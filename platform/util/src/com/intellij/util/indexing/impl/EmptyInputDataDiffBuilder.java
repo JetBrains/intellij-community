@@ -30,14 +30,14 @@ public class EmptyInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<
   }
 
   @Override
-  public void differentiate(@NotNull Map<Key, Value> newData,
+  public boolean differentiate(@NotNull Map<Key, Value> newData,
                             @NotNull final KeyValueUpdateProcessor<Key, Value> addProcessor,
                             @NotNull KeyValueUpdateProcessor<Key, Value> updateProcessor,
                             @NotNull RemovedKeyProcessor<Key> removeProcessor) throws StorageException {
-    processKeys(newData, addProcessor, myInputId);
+    return processKeys(newData, addProcessor, myInputId);
   }
 
-  static <Key, Value >void processKeys(@NotNull Map<Key, Value> currentData,
+  static <Key, Value > boolean processKeys(@NotNull Map<Key, Value> currentData,
                                        @NotNull final KeyValueUpdateProcessor<Key, Value> processor,
                                        final int inputId)
     throws StorageException {
@@ -65,5 +65,7 @@ public class EmptyInputDataDiffBuilder<Key, Value> extends InputDataDiffBuilder<
         processor.process(entry.getKey(), entry.getValue(), inputId);
       }
     }
+
+    return true;
   }
 }

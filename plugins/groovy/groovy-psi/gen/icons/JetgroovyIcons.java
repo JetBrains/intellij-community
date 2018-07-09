@@ -28,13 +28,13 @@ public class JetgroovyIcons {
     return IconLoader.getIcon(path, JetgroovyIcons.class);
   }
 
-  
+
   public static class Griffon {
     public static final Icon Griffon = load("/icons/griffon/griffon.png"); // 16x16
-    public static final Icon GriffonToolWindow = load("/icons/griffon/griffonToolWindow.png"); // 13x13
+    public static final Icon GriffonToolWindow = load("/icons/griffon/griffonToolWindow.svg"); // 13x13
 
   }
-  
+
   public static class Groovy {
     public static final Icon AbstractClass = load("/icons/groovy/abstractClass.png"); // 16x16
     public static final Icon AbstractField = load("/icons/groovy/abstractField.png"); // 16x16
@@ -64,7 +64,7 @@ public class JetgroovyIcons {
     public static final Icon Variable = load("/icons/groovy/variable.png"); // 16x16
 
   }
-  
+
   public static class Mvc {
     public static final Icon Action_method = load("/icons/mvc/action_method.png"); // 16x16
     public static final Icon Config_folder_closed = load("/icons/mvc/config_folder_closed.png"); // 16x16

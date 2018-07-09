@@ -103,8 +103,8 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       int pHeight = progressBar.getPreferredSize().height;
       int pWidth = progressBar.getPreferredSize().width;
 
-      float yOffset = r.y + (r.height - pHeight) / 2.0f;
-      float xOffset = r.x + (r.width - pWidth) / 2.0f;
+      int yOffset = r.y + (r.height - pHeight) / 2;
+      int xOffset = r.x + (r.width - pWidth) / 2;
 
       if (isSimplified()) {
         Color[] ca = {startColor, endColor};
@@ -126,12 +126,12 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
         int step = JBUI.scale(6);
         if (orientation == SwingConstants.HORIZONTAL) {
           shape = getShapedRect(r.x, yOffset, r.width, pHeight, pHeight);
-          yOffset = r.y + pHeight/2.0f;
+          yOffset = r.y + pHeight / 2;
           g2.setPaint(new GradientPaint(r.x + getAnimationIndex()*step*2, yOffset, startColor,
                                         r.x + getFrameCount()*step + getAnimationIndex()*step*2, yOffset, endColor, true));
         } else {
           shape = getShapedRect(xOffset, r.y, pWidth, r.height, pWidth);
-          xOffset = r.x + pWidth/2.0f;
+          xOffset = r.x + pWidth / 2;
           g2.setPaint(new GradientPaint(xOffset, r.y + getAnimationIndex()*step*2, startColor,
                                         xOffset, r.y + getFrameCount()*step + getAnimationIndex()*step*2, endColor, true));
         }
@@ -209,13 +209,13 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
       int orientation = progressBar.getOrientation();
       if (orientation == SwingConstants.HORIZONTAL) {
         int pHeight = progressBar.getPreferredSize().height;
-        float yOffset = r.y + (r.height - pHeight) / 2.0f;
+        int yOffset = r.y + (r.height - pHeight) / 2;
 
         fullShape = getShapedRect(r.x, yOffset, r.width, pHeight, pHeight);
         coloredShape = getShapedRect(r.x, yOffset, amountFull, pHeight, pHeight);
       } else {
         int pWidth = progressBar.getPreferredSize().width;
-        float xOffset = r.x + (r.width - pWidth) / 2.0f;
+        int xOffset = r.x + (r.width - pWidth) / 2;
 
         fullShape = getShapedRect(xOffset, r.y, pWidth, r.height, pWidth);
         coloredShape = getShapedRect(xOffset, r.y, pWidth, amountFull, pWidth);
@@ -257,11 +257,13 @@ public class DarculaProgressBarUI extends BasicProgressBarUI {
     if (!(c instanceof JProgressBar)) {
       return size;
     }
-
-    if (((JProgressBar)c).getOrientation() == SwingConstants.HORIZONTAL) {
-      size.height = getStripeWidth();
-    } else {
-      size.width = getStripeWidth();
+    if( !((JProgressBar)c).isStringPainted()) {
+      if (((JProgressBar)c).getOrientation() == SwingConstants.HORIZONTAL) {
+        size.height = getStripeWidth();
+      }
+      else {
+        size.width = getStripeWidth();
+      }
     }
     return size;
   }

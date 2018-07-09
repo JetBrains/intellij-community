@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
@@ -26,9 +26,6 @@ import java.util.regex.Pattern;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 
-/**
- * @author Tagir Valeev
- */
 public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher OPTIONAL_OR_ELSE =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "orElse").parameterCount(1);
@@ -74,7 +71,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       else if (OPTIONAL_OR_ELSE_GET.test(call)) {
         useOrElseGet = true;
         PsiLambdaExpression lambda = getLambda(call.getArgumentList().getExpressions()[0]);
-        if (lambda == null || lambda.getParameterList().getParametersCount() != 0) return;
+        if (lambda == null || !lambda.getParameterList().isEmpty()) return;
         falseArg = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
       }
       if (falseArg == null) return;
@@ -119,7 +116,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       PsiParameter parameter = parameters[0];
       String proposed = OptionalUtil.generateOptionalUnwrap(opt, parameter, trueArg, falseArg, call.getType(), useOrElseGet);
       String canonicalOrElse;
-      if (useOrElseGet && !ExpressionUtils.isSimpleExpression(falseArg)) {
+      if (useOrElseGet && !ExpressionUtils.isSafelyRecomputableExpression(falseArg)) {
         canonicalOrElse = ".orElseGet(() -> " + falseArg.getText() + ")";
       }
       else {
@@ -184,7 +181,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     }
     if (OPTIONAL_OR_ELSE_GET.test(call)) {
       PsiLambdaExpression lambda = getLambda(call.getArgumentList().getExpressions()[0]);
-      if (lambda == null || lambda.getParameterList().getParametersCount() != 0) return null;
+      if (lambda == null || !lambda.getParameterList().isEmpty()) return null;
       return LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
     }
     return null;
@@ -373,7 +370,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
           tryCast(PsiTreeUtil.skipWhitespacesForward(returnVar.getParent()), PsiStatement.class);
         if (nextStatement == null) return null;
         PsiExpression defaultValue = extractConditionalDefaultValue(nextStatement, returnVar);
-        boolean isSimple = ExpressionUtils.isSimpleExpression(defaultValue);
+        boolean isSimple = ExpressionUtils.isSafelyRecomputableExpression(defaultValue);
         if (defaultValue == null || (!isSimple && !LambdaGenerationUtil.canBeUncheckedLambda(defaultValue))) return null;
         PsiType type = defaultValue.getType();
         PsiType methodCallReturnValue = call.getMethodExpression().getType();
@@ -460,9 +457,9 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
       @Nullable
       static Context extract(@NotNull PsiMethodCallExpression orElseCall, @NotNull PsiExpression orElseArgument) {
         if (!ExpressionUtils.isNullLiteral(orElseArgument)) return null;
-        PsiLocalVariable returnVar = PsiTreeUtil.getParentOfType(orElseCall, PsiLocalVariable.class, true);
+        PsiLocalVariable returnVar = tryCast(orElseCall.getParent(), PsiLocalVariable.class);
         if (returnVar == null) return null;
-        PsiStatement statement = PsiTreeUtil.getParentOfType(returnVar, PsiStatement.class, false);
+        PsiStatement statement = PsiTreeUtil.getParentOfType(returnVar, PsiStatement.class, true);
         if(statement == null) return null;
         PsiStatement nextStatement =
           tryCast(PsiTreeUtil.skipWhitespacesForward(returnVar.getParent()), PsiStatement.class);

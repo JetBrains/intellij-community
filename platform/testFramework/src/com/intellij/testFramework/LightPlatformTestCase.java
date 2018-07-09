@@ -16,6 +16,8 @@
 package com.intellij.testFramework;
 
 import com.intellij.ProjectTopics;
+import com.intellij.ReviseWhenPortedToJDK;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
@@ -78,8 +80,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.impl.DocumentCommitThread;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
@@ -138,6 +138,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
+  private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
 
   /**
    * @return Project to be used in tests for example for project components retrieval.
@@ -275,7 +276,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       doSetup(descriptor, configureLocalInspectionTools(), getTestRootDisposable());
       InjectedLanguageManagerImpl.pushInjectors(getProject());
 
-      storeSettings();
+      myCodeStyleSettingsTracker = new CodeStyleSettingsTracker(
+        () -> isStressTest() ||
+              ApplicationManager.getApplication() == null ||
+              ApplicationManager.getApplication() instanceof MockApplication ? null : CodeStyle.getDefaultSettings());
 
       myThreadTracker = new ThreadTracker();
       ModuleRootManager.getInstance(ourModule).orderEntries().getAllLibrariesAndSdkClassesRoots();
@@ -340,7 +344,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
                "; startup passed:" + passed +
                "; all open projects: " + Arrays.asList(ProjectManager.getInstance().getOpenProjects()), getProject().isInitialized());
 
-    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(new CodeStyleSettings());
+    CodeStyle.setTemporarySettings(getProject(), new CodeStyleSettings());
 
     final FileDocumentManager manager = FileDocumentManager.getInstance();
     if (manager instanceof FileDocumentManagerImpl) {
@@ -377,9 +381,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   protected void tearDown() throws Exception {
     Project project = getProject();
 
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
     new RunAll(
-      () -> CodeStyleSettingsManager.getInstance(project).dropTemporarySettings(),
-      this::checkForSettingsDamage,
+      () -> CodeStyle.dropTemporarySettings(project),
+      () -> myCodeStyleSettingsTracker.checkForSettingsDamage(),
       () -> doTearDown(project, ourApplication),
       () -> checkEditorsReleased(),
       () -> myOldSdks.checkForJdkTableLeaks(),
@@ -391,9 +397,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void doTearDown(@NotNull Project project, @NotNull IdeaTestApplication application) {
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
     new RunAll().
       append(() -> ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue()).
-      append(() -> CodeStyleSettingsManager.getInstance(project).dropTemporarySettings()).
+      append(() -> CodeStyle.dropTemporarySettings(project)).
       append(LightPlatformTestCase::checkJavaSwingTimersAreDisposed).
       append(() -> UsefulTestCase.doPostponedFormatting(project)).
       append(() -> LookupManager.getInstance(project).hideActiveLookup()).
@@ -432,7 +440,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }).
       append(() -> clearUncommittedDocuments(project)).
       append(() -> ((HintManagerImpl)HintManager.getInstance()).cleanup()).
-      append(() -> DocumentCommitThread.getInstance().clearQueue()).
       append(() -> ((UndoManagerImpl)UndoManager.getGlobalInstance()).dropHistoryInTests()).
       append(() -> ((UndoManagerImpl)UndoManager.getInstance(project)).dropHistoryInTests()).
       append(() -> ((DocumentReferenceManagerImpl)DocumentReferenceManager.getInstance()).cleanupForNextTest()).
@@ -454,6 +461,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   
   private static int ourTestCount;
 
+  @ReviseWhenPortedToJDK("9")
   private static void checkJavaSwingTimersAreDisposed() throws Exception {
     Class<?> TimerQueueClass = Class.forName("javax.swing.TimerQueue");
     Method sharedInstance = ReflectionUtil.getMethod(TimerQueueClass, "sharedInstance");
@@ -467,7 +475,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       Method getTimer = ReflectionUtil.getDeclaredMethod(timer.getClass(), "getTimer");
       Timer swingTimer = (Timer)getTimer.invoke(timer);
       text = "Timer (listeners: "+Arrays.asList(swingTimer.getActionListeners()) + ") "+text;
-      throw new AssertionFailedError("Not disposed java.swing.Timer: " + text + "; queue:" + timerQueue);
+      try {
+        throw new AssertionFailedError("Not disposed java.swing.Timer: " + text + "; queue:" + timerQueue);
+      }
+      finally {
+        swingTimer.stop();
+      }
     }
   }
 
@@ -483,6 +496,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   public static void checkEditorsReleased() {
+    // don't use method references here to make stack trace reading easier
+    //noinspection Convert2MethodRef
     new RunAll(
       () -> UIUtil.dispatchAllInvocationEvents(),
       () -> {
@@ -622,7 +637,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   @NotNull
   @Override
   protected CodeStyleSettings getCurrentCodeStyleSettings() {
-    return CodeStyleSettingsManager.getSettings(getProject());
+    return CodeStyle.getSettings(getProject());
   }
 
   protected static Document getDocument(@NotNull PsiFile file) {

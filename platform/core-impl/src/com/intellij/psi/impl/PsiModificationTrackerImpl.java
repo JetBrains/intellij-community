@@ -43,7 +43,6 @@ import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.PROPERTY
 
 /**
  * @author mike
- * Date: Jul 18, 2002
  */
 public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTreeChangePreprocessor {
   private static final RegistryValue ourEnableCodeBlockTracker = Registry.get("psi.modification.tracker.code-block");
@@ -202,7 +201,7 @@ public class PsiModificationTrackerImpl implements PsiModificationTracker, PsiTr
 
   @ApiStatus.Experimental
   @NotNull
-  public ModificationTracker forLanguages(@NotNull Condition<Language> condition) {
+  public ModificationTracker forLanguages(@NotNull Condition<? super Language> condition) {
     if (!ourEnableLanguageTracker.asBoolean()) return this;
     return () -> {
       long result = 0;

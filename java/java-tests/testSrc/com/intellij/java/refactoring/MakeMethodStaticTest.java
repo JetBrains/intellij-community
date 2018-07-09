@@ -207,6 +207,14 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
     doTest(false);
   }
 
+  public void testMethodReferenceInTheSameMethod() {
+    doTest(false);
+  }
+
+  public void testExpandMethodReference() {
+    doTest(true);
+  }
+
   public void testPreserveParametersAlignment() {
     doTest();
   }
@@ -272,6 +280,6 @@ public class MakeMethodStaticTest extends LightRefactoringTestCase {
             method,
             new Settings(true, addClassParameter ? "anObject" : null,
                          parametersForFields.toArray(
-                           new VariableData[parametersForFields.size()]), delegate)).run();
+                           new VariableData[0]), delegate)).run();
   }
 }

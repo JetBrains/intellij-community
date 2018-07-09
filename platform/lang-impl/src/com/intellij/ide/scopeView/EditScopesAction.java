@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.scopeView;
 
@@ -21,43 +7,37 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
-public class EditScopesAction extends AnAction implements DumbAware {
-  private static final Logger LOG = Logger.getInstance("com.intellij.ide.scopeView.EditScopesAction");
-
+public final class EditScopesAction extends AnAction implements DumbAware {
   public EditScopesAction() {
-    getTemplatePresentation().setIcon(AllIcons.Ide.LocalScope);
+    super(AllIcons.Ide.LocalScope);
   }
 
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    final DataContext dataContext = e.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    LOG.assertTrue(project != null);
-    final String scopeName = ProjectView.getInstance(project).getCurrentProjectViewPane().getSubId();
-    LOG.assertTrue(scopeName != null);
-    final ScopeChooserConfigurable scopeChooserConfigurable = new ScopeChooserConfigurable(project);
-    ShowSettingsUtil.getInstance().editConfigurable(project, scopeChooserConfigurable, () -> scopeChooserConfigurable.selectNodeInTree(scopeName));
-  }
-
-  @Override
-  public void update(AnActionEvent e) {
-    super.update(e);
-    e.getPresentation().setEnabled(false);
-    final DataContext dataContext = e.getDataContext();
-    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project != null) {
-      final AbstractProjectViewPane projectViewPane = ProjectView.getInstance(project).getCurrentProjectViewPane();
-      if (projectViewPane != null) {
-        final String scopeName = projectViewPane.getSubId();
-        if (scopeName != null) {
-          e.getPresentation().setEnabled(true);
+  public void actionPerformed(@NotNull AnActionEvent event) {
+    Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
+    ProjectView view = project == null ? null : ProjectView.getInstance(project);
+    if (view != null) {
+      ScopeChooserConfigurable configurable = new ScopeChooserConfigurable(project);
+      ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> {
+        AbstractProjectViewPane pane = view.getCurrentProjectViewPane();
+        if (pane instanceof ScopeViewPane) {
+          NamedScopeFilter filter = ((ScopeViewPane)pane).getFilter(pane.getSubId());
+          if (filter != null) configurable.selectNodeInTree(filter.getScope().getName());
         }
-      }
+      });
     }
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent event) {
+    super.update(event);
+    Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
+    ProjectView view = project == null ? null : ProjectView.getInstance(project);
+    event.getPresentation().setEnabledAndVisible(view != null && view.getProjectViewPaneById(ScopeViewPane.ID) != null);
   }
 }

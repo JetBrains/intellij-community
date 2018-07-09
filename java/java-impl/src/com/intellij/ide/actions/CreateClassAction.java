@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.actions;
 
@@ -56,22 +42,21 @@ public class CreateClassAction extends JavaCreateTemplateInPackageAction<PsiClas
       builder.addKind("Enum", PlatformIcons.ENUM_ICON, JavaTemplateUtil.INTERNAL_ENUM_TEMPLATE_NAME);
       builder.addKind("Annotation", PlatformIcons.ANNOTATION_TYPE_ICON, JavaTemplateUtil.INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME);
     }
-    
+
     for (FileTemplate template : FileTemplateManager.getInstance(project).getAllTemplates()) {
       final JavaCreateFromTemplateHandler handler = new JavaCreateFromTemplateHandler();
       if (handler.handlesTemplate(template) && JavaCreateFromTemplateHandler.canCreate(directory)) {
         builder.addKind(template.getName(), JavaFileType.INSTANCE.getIcon(), template.getName());
       }
     }
-    
+
     builder.setValidator(new InputValidatorEx() {
       @Override
       public String getErrorText(String inputString) {
         if (inputString.length() > 0 && !PsiNameHelper.getInstance(project).isQualifiedName(inputString)) {
           return "This is not a valid Java qualified name";
         }
-
-        if (level.isAtLeast(LanguageLevel.JDK_X) && PsiKeyword.VAR.equals(StringUtil.getShortName(inputString))) {
+        if (level.isAtLeast(LanguageLevel.JDK_10) && PsiKeyword.VAR.equals(StringUtil.getShortName(inputString))) {
           return "var cannot be used for type declarations";
         }
         return null;

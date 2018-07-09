@@ -247,7 +247,7 @@ public class BuildArtifactAction extends DumbAwareAction {
   private static abstract class ArtifactActionItem implements Runnable {
     protected final List<ArtifactPopupItem> myArtifactPopupItems;
     protected final Project myProject;
-    private String myActionName;
+    private final String myActionName;
 
     protected ArtifactActionItem(@NotNull List<ArtifactPopupItem> item, @NotNull Project project, @NotNull String name) {
       myArtifactPopupItems = item;
@@ -293,7 +293,7 @@ public class BuildArtifactAction extends DumbAwareAction {
   private static class ChooseArtifactStep extends MultiSelectionListPopupStep<ArtifactPopupItem> {
     private final Artifact myFirst;
     private final Project myProject;
-    private ArtifactAwareProjectSettingsService mySettingsService;
+    private final ArtifactAwareProjectSettingsService mySettingsService;
 
     public ChooseArtifactStep(List<ArtifactPopupItem> artifacts,
                               Artifact first,

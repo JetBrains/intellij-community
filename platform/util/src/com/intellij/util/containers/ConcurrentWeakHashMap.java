@@ -28,6 +28,7 @@ import java.lang.ref.WeakReference;
  * Null values are NOT allowed
  * @deprecated Use {@link ContainerUtil#createConcurrentWeakMap()} instead
  */
+@Deprecated
 public final class ConcurrentWeakHashMap<K, V> extends ConcurrentRefHashMap<K, V> {
   private static class WeakKey<K, V> extends WeakReference<K> implements KeyReference<K, V> {
     private final int myHash; /* Hashcode of key, stored here since the key may be tossed by the GC */

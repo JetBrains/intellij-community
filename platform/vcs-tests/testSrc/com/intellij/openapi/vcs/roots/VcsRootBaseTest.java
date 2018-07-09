@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.roots;
 
 import com.intellij.openapi.extensions.ExtensionPoint;
@@ -24,7 +10,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.VcsRootChecker;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -49,7 +34,7 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
   protected String myVcsName;
   protected VirtualFile myRepository;
 
-  private VcsRootChecker myExtension;
+  protected MockRootChecker myRootChecker;
   protected RootModelImpl myRootModel;
 
   @Override
@@ -65,24 +50,8 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
 
     myVcs = new MockAbstractVcs(myProject);
     ExtensionPoint<VcsRootChecker> point = getExtensionPoint();
-    myExtension = new VcsRootChecker() {
-      @NotNull
-      @Override
-      public VcsKey getSupportedVcs() {
-        return myVcs.getKeyInstanceMethod();
-      }
-
-      @Override
-      public boolean isRoot(@NotNull String path) {
-        return new File(path, DOT_MOCK).exists();
-      }
-
-      @Override
-      public boolean isVcsDir(@NotNull String path) {
-        return path.toLowerCase().endsWith(DOT_MOCK);
-      }
-    };
-    point.registerExtension(myExtension);
+    myRootChecker = new MockRootChecker(myVcs);
+    point.registerExtension(myRootChecker);
     vcsManager.registerVcs(myVcs);
     myVcsName = myVcs.getName();
     myRepository.refresh(false, true);
@@ -95,7 +64,7 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
   @Override
   protected void tearDown() throws Exception {
     try {
-      getExtensionPoint().unregisterExtension(myExtension);
+      getExtensionPoint().unregisterExtension(myRootChecker);
       vcsManager.unregisterVcs(myVcs);
     }
     finally {
@@ -129,7 +98,7 @@ public abstract class VcsRootBaseTest extends VcsPlatformTest {
   void createProjectStructure(@NotNull Project project, @NotNull Collection<String> paths) {
     for (String path : paths) {
       cd(project.getBaseDir().getPath());
-      File f = new File(project.getBaseDir().getPath(), path);
+      File f = new File(project.getBasePath(), path);
       f.mkdirs();
       LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
     }

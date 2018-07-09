@@ -26,7 +26,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 05.08.13
  */
 public class InjectedReferencesInspection extends LocalInspectionTool {
 

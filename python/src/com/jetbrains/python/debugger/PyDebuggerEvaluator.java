@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class PyDebuggerEvaluator extends XDebuggerEvaluator {
 
-  private Project myProject;
+  private final Project myProject;
   private final PyFrameAccessor myDebugProcess;
 
   public PyDebuggerEvaluator(@NotNull Project project, @NotNull final PyFrameAccessor debugProcess) {

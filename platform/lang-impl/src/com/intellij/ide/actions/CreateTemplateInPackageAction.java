@@ -40,7 +40,7 @@ import java.util.function.Function;
  * @author peter
  */
 public abstract class CreateTemplateInPackageAction<T extends PsiElement> extends CreateFromTemplateAction<T> {
-  private Set<? extends JpsModuleSourceRootType<?>> mySourceRootTypes;
+  private final Set<? extends JpsModuleSourceRootType<?>> mySourceRootTypes;
 
   protected CreateTemplateInPackageAction(String text, String description, Icon icon,
                                           final Set<? extends JpsModuleSourceRootType<?>> rootTypes) {

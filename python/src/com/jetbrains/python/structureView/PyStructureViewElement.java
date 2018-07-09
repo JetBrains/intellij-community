@@ -35,11 +35,11 @@ public class PyStructureViewElement implements StructureViewTreeElement {
     PREDEFINED // like "__init__"; only if really visible
   }
 
-  private PyElement myElement;
-  private Visibility myVisibility;
+  private final PyElement myElement;
+  private final Visibility myVisibility;
   private Icon myIcon;
-  private boolean myInherited;
-  private boolean myField;
+  private final boolean myInherited;
+  private final boolean myField;
 
   protected PyStructureViewElement(PyElement element, Visibility visibility, boolean inherited, boolean field) {
     myElement = element;
@@ -134,7 +134,7 @@ public class PyStructureViewElement implements StructureViewTreeElement {
         }
       }
     }
-    return children.toArray(new StructureViewTreeElement[children.size()]);
+    return children.toArray(StructureViewTreeElement.EMPTY_ARRAY);
   }
 
   protected boolean elementIsField(PyElement element) {

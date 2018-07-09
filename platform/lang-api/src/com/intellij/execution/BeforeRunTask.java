@@ -23,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: May 18, 2009
  */
 public abstract class BeforeRunTask<T extends BeforeRunTask> implements Cloneable {
   @NotNull
@@ -51,8 +50,9 @@ public abstract class BeforeRunTask<T extends BeforeRunTask> implements Cloneabl
   }
 
   /**
-   * @deprecated Use PersistentStateComponent (see LaunchBrowserBeforeRunTask for example).
+   * @deprecated Use {@link PersistentStateComponent} instead (see {@link com.intellij.ide.browsers.LaunchBrowserBeforeRunTask} for example).
    */
+  @Deprecated
   public void writeExternal(@NotNull Element element) {
     if (this instanceof PersistentStateComponent) {
       ((PersistentStateComponent)this).getState();
@@ -63,8 +63,9 @@ public abstract class BeforeRunTask<T extends BeforeRunTask> implements Cloneabl
   }
 
   /**
-   * @deprecated Use PersistentStateComponent (see LaunchBrowserBeforeRunTask for example).
+   * @deprecated Use {@link PersistentStateComponent} instead (see {@link com.intellij.ide.browsers.LaunchBrowserBeforeRunTask} for example).
    */
+  @Deprecated
   public void readExternal(@NotNull Element element) {
     String attribValue = element.getAttributeValue("enabled");
     if (attribValue == null) {

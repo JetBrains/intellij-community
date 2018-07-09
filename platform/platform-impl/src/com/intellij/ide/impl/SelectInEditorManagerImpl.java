@@ -44,7 +44,6 @@ import java.awt.event.FocusListener;
 
 /**
  * @author MYakovlev
- * Date: Jul 1, 2002
  */
 public class SelectInEditorManagerImpl extends SelectInEditorManager implements Disposable, FocusListener, CaretListener{
   private final Project myProject;

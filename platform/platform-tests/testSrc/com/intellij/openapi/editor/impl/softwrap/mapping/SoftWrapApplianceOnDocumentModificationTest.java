@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.softwrap.mapping;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
@@ -11,7 +11,7 @@ import com.intellij.openapi.editor.impl.AbstractEditorTest;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.SoftWrapModelImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.EditorTestUtil;
 import com.intellij.testFramework.TestFileType;
@@ -538,7 +538,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     type('a');
 
     LogicalPosition logicalPositionAfter = myEditor.visualToLogicalPosition(changePosition);
-    assertEquals(new LogicalPosition(1, 0, 0, 0, 0, 0, 0), logicalPositionAfter);
+    assertEquals(new LogicalPosition(1, 0), logicalPositionAfter);
     assertEquals(offsetBefore + softWrap.getText().length() + 1, myEditor.getCaretModel().getOffset());
     assertEquals(logicalLinesBefore + 1, myEditor.offsetToLogicalPosition(text.length()).line);
   }
@@ -807,9 +807,7 @@ public class SoftWrapApplianceOnDocumentModificationTest extends AbstractEditorT
     VisualPosition caretPositionBefore = getEditor().getCaretModel().getVisualPosition();
 
     // Change tab size.
-    final CommonCodeStyleSettings.IndentOptions indentOptions = getCurrentCodeStyleSettings()
-      .getCommonSettings(PlainTextLanguage.INSTANCE)
-      .getIndentOptions();
+    final CommonCodeStyleSettings.IndentOptions indentOptions = getCurrentCodeStyleSettings().getIndentOptions(PlainTextFileType.INSTANCE);
 
     assertNotNull(indentOptions);
     indentOptions.TAB_SIZE++;

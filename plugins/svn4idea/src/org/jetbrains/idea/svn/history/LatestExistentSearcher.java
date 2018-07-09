@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,17 +11,18 @@ import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnFileUrlMapping;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.ErrorCode;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.info.Info;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNErrorMessage;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.util.Map;
+
+import static com.google.common.net.UrlEscapers.urlFragmentEscaper;
+import static org.jetbrains.idea.svn.SvnUtil.ensureStartSlash;
+import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 
 public class LatestExistentSearcher {
 
@@ -43,13 +30,13 @@ public class LatestExistentSearcher {
 
   private long myStartNumber;
   private boolean myStartExistsKnown;
-  @NotNull private final SVNURL myUrl;
-  @NotNull private final SVNURL myRepositoryUrl;
+  @NotNull private final Url myUrl;
+  @NotNull private final Url myRepositoryUrl;
   @NotNull private final String myRelativeUrl;
   private final SvnVcs myVcs;
   private long myEndNumber;
 
-  public LatestExistentSearcher(final SvnVcs vcs, @NotNull SVNURL url, @NotNull SVNURL repositoryUrl) {
+  public LatestExistentSearcher(final SvnVcs vcs, @NotNull Url url, @NotNull Url repositoryUrl) {
     this(0, -1, false, vcs, url, repositoryUrl);
   }
 
@@ -57,8 +44,8 @@ public class LatestExistentSearcher {
                                 final long endNumber,
                                 final boolean startExistsKnown,
                                 final SvnVcs vcs,
-                                @NotNull SVNURL url,
-                                @NotNull SVNURL repositoryUrl) {
+                                @NotNull Url url,
+                                @NotNull Url repositoryUrl) {
     myStartNumber = startNumber;
     myEndNumber = endNumber;
     myStartExistsKnown = startExistsKnown;
@@ -66,26 +53,26 @@ public class LatestExistentSearcher {
     myUrl = url;
     myRepositoryUrl = repositoryUrl;
     // TODO: Make utility method that compare relative urls checking all possible cases when start/end slash exists or not.
-    myRelativeUrl = SvnUtil.ensureStartSlash(SVNURLUtil.getRelativeURL(myRepositoryUrl, myUrl, true));
+    myRelativeUrl = ensureStartSlash(urlFragmentEscaper().escape(getRelativeUrl(myRepositoryUrl, myUrl)));
   }
 
   public long getDeletionRevision() {
     if (! detectStartRevision()) return -1;
 
-    final Ref<Long> latest = new Ref<>(myStartNumber);
+    final Ref<Long> latest = new Ref<>(-1L);
     try {
       if (myEndNumber == -1) {
         myEndNumber = getLatestRevision();
       }
 
-      final SVNURL existingParent = getExistingParent(myUrl);
+      final Url existingParent = getExistingParent(myUrl);
       if (existingParent == null) {
         return myStartNumber;
       }
 
-      final SVNRevision startRevision = SVNRevision.create(myStartNumber);
-      SvnTarget target = SvnTarget.fromURL(existingParent, startRevision);
-      myVcs.getFactory(target).createHistoryClient().doLog(target, startRevision, SVNRevision.HEAD, false, true, false, 0, null,
+      final Revision startRevision = Revision.of(myStartNumber);
+      Target target = Target.on(existingParent, startRevision);
+      myVcs.getFactory(target).createHistoryClient().doLog(target, startRevision, Revision.HEAD, false, true, false, 0, null,
                                                            createHandler(latest));
     }
     catch (VcsException e) {
@@ -103,7 +90,7 @@ public class LatestExistentSearcher {
         final LogEntryPath path = (LogEntryPath)o;
         if ((path.getType() == 'D') && (myRelativeUrl.equals(path.getPath()))) {
           latest.set(logEntry.getRevision());
-          throw new SVNException(SVNErrorMessage.UNKNOWN_ERROR_MESSAGE);
+          throw new SvnBindException("Latest existent revision found for " + myRelativeUrl);
         }
       }
     };
@@ -148,7 +135,7 @@ public class LatestExistentSearcher {
   }
 
   @Nullable
-  private SVNURL getExistingParent(SVNURL url) throws SvnBindException {
+  private Url getExistingParent(Url url) throws SvnBindException {
     while (url != null && !url.equals(myRepositoryUrl) && !existsInRevision(url, myEndNumber)) {
       url = SvnUtil.removePathTail(url);
     }
@@ -156,8 +143,8 @@ public class LatestExistentSearcher {
     return url;
   }
 
-  private boolean existsInRevision(@NotNull SVNURL url, long revisionNumber) throws SvnBindException {
-    SVNRevision revision = SVNRevision.create(revisionNumber);
+  private boolean existsInRevision(@NotNull Url url, long revisionNumber) throws SvnBindException {
+    Revision revision = Revision.of(revisionNumber);
     Info info = null;
 
     try {
@@ -165,7 +152,7 @@ public class LatestExistentSearcher {
     }
     catch (SvnBindException e) {
       // throw error if not "does not exist" error code
-      if (!e.contains(SVNErrorCode.RA_ILLEGAL_URL)) {
+      if (!e.contains(ErrorCode.RA_ILLEGAL_URL)) {
         throw e;
       }
     }

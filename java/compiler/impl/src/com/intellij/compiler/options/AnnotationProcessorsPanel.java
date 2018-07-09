@@ -33,7 +33,6 @@ import com.intellij.ui.AnActionButton;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.ToolbarDecorator;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.EditableTreeModel;
@@ -77,7 +76,7 @@ public class AnnotationProcessorsPanel extends JPanel {
     myTree = new Tree(new MyTreeModel());
     myTree.setRootVisible(false);
         final JPanel treePanel =
-          ToolbarDecorator.createDecorator(myTree).addExtraAction(new AnActionButton("Move to", AllIcons.Actions.Nextfile) {
+          ToolbarDecorator.createDecorator(myTree).addExtraAction(new AnActionButton("Move to", AllIcons.Actions.Forward) {
             @Override
             public void actionPerformed(AnActionEvent e) {
               final MyModuleNode node = (MyModuleNode)myTree.getSelectionPath().getLastPathComponent();
@@ -89,35 +88,31 @@ public class AnnotationProcessorsPanel extends JPanel {
                 profiles.add(profile);
               }
               profiles.remove(nodeProfile);
-              final JBList list = new JBList(profiles);
-              final JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+              final JBPopup popup = JBPopupFactory.getInstance()
+                .createPopupChooserBuilder(profiles)
                 .setTitle("Move to")
-                .setItemChoosenCallback(() -> {
-                  final Object value = list.getSelectedValue();
-                  if (value instanceof ProcessorConfigProfile) {
-                    final ProcessorConfigProfile chosenProfile = (ProcessorConfigProfile)value;
-                    final Module toSelect = (Module)node.getUserObject();
-                    if (selectedNodes != null) {
-                      for (TreePath selectedNode : selectedNodes) {
-                        final Object node1 = selectedNode.getLastPathComponent();
-                        if (node1 instanceof MyModuleNode) {
-                          final Module module = (Module)((MyModuleNode)node1).getUserObject();
-                          if (nodeProfile != myDefaultProfile) {
-                            nodeProfile.removeModuleName(module.getName());
-                          }
-                          if (chosenProfile != myDefaultProfile) {
-                            chosenProfile.addModuleName(module.getName());
-                          }
+                .setItemChosenCallback((chosenProfile) -> {
+                  final Module toSelect = (Module)node.getUserObject();
+                  if (selectedNodes != null) {
+                    for (TreePath selectedNode : selectedNodes) {
+                      final Object node1 = selectedNode.getLastPathComponent();
+                      if (node1 instanceof MyModuleNode) {
+                        final Module module = (Module)((MyModuleNode)node1).getUserObject();
+                        if (nodeProfile != myDefaultProfile) {
+                          nodeProfile.removeModuleName(module.getName());
+                        }
+                        if (chosenProfile != myDefaultProfile) {
+                          chosenProfile.addModuleName(module.getName());
                         }
                       }
                     }
+                  }
 
-                    final RootNode root = (RootNode)myTree.getModel().getRoot();
-                    root.sync();
-                    final DefaultMutableTreeNode node1 = TreeUtil.findNodeWithObject(root, toSelect);
-                    if (node1 != null) {
-                      TreeUtil.selectNode(myTree, node1);
-                    }
+                  final RootNode root = (RootNode)myTree.getModel().getRoot();
+                  root.sync();
+                  final DefaultMutableTreeNode node1 = TreeUtil.findNodeWithObject(root, toSelect);
+                  if (node1 != null) {
+                    TreeUtil.selectNode(myTree, node1);
                   }
                 })
                 .createPopup();

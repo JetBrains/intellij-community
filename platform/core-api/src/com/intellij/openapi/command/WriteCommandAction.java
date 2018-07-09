@@ -25,7 +25,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThrowableRunnable;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,10 +41,28 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   private static final String DEFAULT_GROUP_ID = null;
 
   public interface Builder {
-    @NotNull Builder withName(@Nullable String name);
-    @NotNull Builder withGroupId(@Nullable String groupId);
+    @Contract(pure = true)
+    @NotNull
+    Builder withName(@Nullable String name);
+
+    @Contract(pure = true)
+    @NotNull
+    Builder withGroupId(@Nullable String groupId);
+
+    @Contract(pure = true)
+    @NotNull
+    Builder withUndoConfirmationPolicy(@NotNull UndoConfirmationPolicy policy);
+
+    @Contract(pure = true)
+    @NotNull
+    Builder withGlobalUndo();
+
+    @Contract(pure = true)
+    @NotNull
+    Builder shouldRecordActionForActiveDocument(boolean value);
 
     <E extends Throwable> void run(@NotNull ThrowableRunnable<E> action) throws E;
+
     <R, E extends Throwable> R compute(@NotNull ThrowableComputable<R, E> action) throws E;
   }
 
@@ -51,8 +71,11 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     private final PsiFile[] myFiles;
     private String myCommandName = DEFAULT_COMMAND_NAME;
     private String myGroupId = DEFAULT_GROUP_ID;
+    private UndoConfirmationPolicy myPolicy;
+    private boolean myGlobalUndoAction;
+    private boolean myShouldRecordActionForActiveDocument = true;
 
-    private BuilderImpl(Project project, PsiFile... files) {
+    private BuilderImpl(Project project, @NotNull PsiFile... files) {
       myProject = project;
       myFiles = files;
     }
@@ -66,14 +89,36 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
 
     @NotNull
     @Override
+    public Builder withGlobalUndo() {
+      myGlobalUndoAction = true;
+      return this;
+    }
+
+    @NotNull
+    @Override
+    public Builder shouldRecordActionForActiveDocument(boolean value) {
+      myShouldRecordActionForActiveDocument = value;
+      return this;
+    }
+
+    @NotNull
+    @Override
+    public Builder withUndoConfirmationPolicy(@NotNull UndoConfirmationPolicy policy) {
+      if (myPolicy != null) throw new IllegalStateException("do not call withUndoConfirmationPolicy() several times");
+      myPolicy = policy;
+      return this;
+    }
+
+    @NotNull
+    @Override
     public Builder withGroupId(String groupId) {
       myGroupId = groupId;
       return this;
     }
 
     @Override
-    public <E extends Throwable> void run(@NotNull final ThrowableRunnable<E> action) throws E {
-      new WriteCommandAction(myProject, myCommandName, myGroupId, myFiles) {
+    public <E extends Throwable> void run(@NotNull final ThrowableRunnable<E> action) {
+      new MyActionWrap() {
         @Override
         protected void run(@NotNull Result result) throws Throwable {
           action.run();
@@ -82,24 +127,54 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     }
 
     @Override
-    public <R, E extends Throwable> R compute(@NotNull final ThrowableComputable<R, E> action) throws E {
-      return new WriteCommandAction<R>(myProject, myCommandName, myGroupId, myFiles) {
+    public <R, E extends Throwable> R compute(@NotNull final ThrowableComputable<R, E> action) {
+      return new MyActionWrap<R>() {
         @Override
         protected void run(@NotNull Result<R> result) throws Throwable {
           result.setResult(action.compute());
         }
       }.execute().getResultObject();
     }
+
+    private abstract class MyActionWrap<T> extends WriteCommandAction<T> {
+      MyActionWrap() {
+        super(BuilderImpl.this.myProject, BuilderImpl.this.myCommandName, myGroupId, myFiles);
+      }
+
+      @NotNull
+      @Override
+      protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
+        return ObjectUtils.notNull(myPolicy, UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION);
+      }
+
+      @Override
+      protected boolean isGlobalUndoAction() {
+        return myGlobalUndoAction;
+      }
+
+      @Override
+      protected boolean shouldRecordActionForActiveDocument() {
+        return myShouldRecordActionForActiveDocument;
+      }
+    }
   }
 
   @NotNull
+  @Contract(pure = true)
   public static Builder writeCommandAction(Project project) {
     return new BuilderImpl(project);
   }
 
   @NotNull
+  @Contract(pure = true)
   public static Builder writeCommandAction(@NotNull PsiFile first, @NotNull PsiFile... others) {
     return new BuilderImpl(first.getProject(), ArrayUtil.prepend(first, others));
+  }
+
+  @NotNull
+  @Contract(pure = true)
+  public static Builder writeCommandAction(Project project, @NotNull PsiFile... files) {
+    return new BuilderImpl(project, files);
   }
 
   private final String myCommandName;
@@ -107,20 +182,34 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   private final Project myProject;
   private final PsiFile[] myPsiFiles;
 
-  protected WriteCommandAction(@Nullable Project project, /*@NotNull*/ PsiFile... files) {
+  /**
+   * @deprecated Use {@link #writeCommandAction(Project, PsiFile...)}{@code .run()} instead
+   */
+  @Deprecated
+  protected WriteCommandAction(@Nullable Project project, @NotNull PsiFile... files) {
     this(project, DEFAULT_COMMAND_NAME, files);
   }
 
-  protected WriteCommandAction(@Nullable Project project, @Nullable String commandName, /*@NotNull*/ PsiFile... files) {
+  /**
+   * @deprecated Use {@link #writeCommandAction(Project, PsiFile...)}{@code .withName(commandName).run()} instead
+   */
+  @Deprecated
+  protected WriteCommandAction(@Nullable Project project, @Nullable String commandName, @NotNull PsiFile... files) {
     this(project, commandName, DEFAULT_GROUP_ID, files);
   }
 
-  protected WriteCommandAction(@Nullable Project project, @Nullable String commandName, @Nullable String groupID, /*@NotNull*/ PsiFile... files) {
+  /**
+   * @deprecated Use {@link #writeCommandAction(Project, PsiFile...)}{@code .withName(commandName).withGroupId(groupID).run()} instead
+   */
+  @Deprecated
+  protected WriteCommandAction(@Nullable Project project,
+                               @Nullable String commandName,
+                               @Nullable String groupID,
+                               @NotNull PsiFile... files) {
     myCommandName = commandName;
     myGroupID = groupID;
     myProject = project;
-    if (files == null) LOG.warn("'files' parameter must not be null", new Throwable());
-    myPsiFiles = files == null || files.length == 0 ? PsiFile.EMPTY_ARRAY : files;
+    myPsiFiles = files.length == 0 ? PsiFile.EMPTY_ARRAY : files;
   }
 
   public final Project getProject() {
@@ -135,6 +224,10 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     return myGroupID;
   }
 
+  /**
+   * @deprecated Use {@code #writeCommandAction(Project).run()} or compute() instead
+   */
+  @Deprecated
   @NotNull
   @Override
   public RunResult<T> execute() {
@@ -154,7 +247,8 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
       try {
         TransactionGuard.getInstance().submitTransactionAndWait(() -> performWriteCommandAction(result));
       }
-      catch (ProcessCanceledException ignored) { }
+      catch (ProcessCanceledException ignored) {
+      }
     }
     return result;
   }
@@ -166,7 +260,6 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     final RunResult[] results = {result};
 
     doExecuteCommand(() -> {
-      //noinspection deprecation
       ApplicationManager.getApplication().runWriteAction(() -> {
         results[0].run();
         results[0] = null;
@@ -174,21 +267,39 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     });
   }
 
+  /**
+   * @deprecated Use {@link #writeCommandAction(Project)}.withGlobalUndo() instead
+   */
+  @Deprecated
   protected boolean isGlobalUndoAction() {
     return false;
   }
 
+  /**
+   * See {@link CommandProcessor#executeCommand(Project, Runnable, String, Object, UndoConfirmationPolicy, boolean)} for details.
+   *
+   * @deprecated Use {@link #writeCommandAction(Project)}.withUndoConfirmationPolicy() instead
+   */
+  @Deprecated
+  @NotNull
   protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
     return UndoConfirmationPolicy.DO_NOT_REQUEST_CONFIRMATION;
   }
 
   /**
    * See {@link CommandProcessor#executeCommand(Project, Runnable, String, Object, UndoConfirmationPolicy, boolean)} for details.
+   *
+   * @deprecated Use {@link #writeCommandAction(Project)}.shouldRecordActionForActiveDocument() instead
    */
+  @Deprecated
   protected boolean shouldRecordActionForActiveDocument() {
     return true;
   }
 
+  /**
+   * @deprecated Use {@link CommandProcessor#executeCommand(Project, Runnable, String, Object)} instead
+   */
+  @Deprecated
   public void performCommand() throws Throwable {
     //this is needed to prevent memory leak, since command
     // is put into undo queue
@@ -215,7 +326,10 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
 
   /**
    * WriteCommandAction without result
+   *
+   * @deprecated Use {@link #writeCommandAction(Project)}.run() or .compute() instead
    */
+  @Deprecated
   public abstract static class Simple<T> extends WriteCommandAction<T> {
     protected Simple(Project project, /*@NotNull*/ PsiFile... files) {
       super(project, files);
@@ -246,42 +360,24 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
                                            @Nullable final String groupID,
                                            @NotNull final Runnable runnable,
                                            @NotNull PsiFile... files) {
-    new Simple(project, commandName, groupID, files) {
-      @Override
-      protected void run() throws Throwable {
-        runnable.run();
-      }
-    }.execute();
+    writeCommandAction(project, files).withName(commandName).withGroupId(groupID).run(() -> runnable.run());
   }
 
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public static <T> T runWriteCommandAction(Project project, @NotNull final Computable<T> computable) {
-    return new WriteCommandAction<T>(project) {
-      @Override
-      protected void run(@NotNull Result<T> result) throws Throwable {
-        result.setResult(computable.compute());
-      }
-    }.execute().getResultObject();
+    return writeCommandAction(project).compute(() -> computable.compute());
   }
 
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
-  public static <T, E extends Throwable> T runWriteCommandAction(Project project, @NotNull final ThrowableComputable<T, E> computable) throws E {
-    RunResult<T> result = new WriteCommandAction<T>(project, "") {
-      @Override
-      protected void run(@NotNull Result<T> result) throws Throwable {
-        result.setResult(computable.compute());
-      }
-    }.execute();
-    Throwable t = result.getThrowable();
-    if (t != null) { @SuppressWarnings("unchecked") E e = (E)t; throw e; }
-    return result.throwException().getResultObject();
+  public static <T, E extends Throwable> T runWriteCommandAction(Project project, @NotNull final ThrowableComputable<T, E> computable)
+    throws E {
+    return writeCommandAction(project).compute(computable);
   }
 
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link FileModificationService#preparePsiElementsForWrite(Collection)} (to be removed in IDEA 2018) */
-  @SuppressWarnings("unused")
+  /**
+   * @deprecated use {@link FileModificationService#preparePsiElementsForWrite(Collection)} (to be removed in IDEA 2018)
+   */
   public static boolean ensureFilesWritable(@NotNull Project project, @NotNull Collection<PsiFile> psiFiles) {
     return FileModificationService.getInstance().preparePsiElementsForWrite(psiFiles);
   }
-  //</editor-fold>
 }

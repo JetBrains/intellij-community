@@ -43,7 +43,7 @@ public class UpdateData<Key, Value> {
     myForwardIndexUpdate = forwardIndexUpdate;
   }
 
-  public void iterateKeys(KeyValueUpdateProcessor<Key, Value> addProcessor,
+  public boolean iterateKeys(KeyValueUpdateProcessor<Key, Value> addProcessor,
                           KeyValueUpdateProcessor<Key, Value> updateProcessor,
                           RemovedKeyProcessor<Key> removeProcessor) throws StorageException {
     final InputDataDiffBuilder<Key, Value> currentData;
@@ -53,7 +53,7 @@ public class UpdateData<Key, Value> {
     catch (IOException e) {
       throw new StorageException(e);
     }
-    currentData.differentiate(myNewData, addProcessor, updateProcessor, removeProcessor);
+    return currentData.differentiate(myNewData, addProcessor, updateProcessor, removeProcessor);
   }
 
   protected ThrowableComputable<InputDataDiffBuilder<Key, Value>, IOException> getCurrentDataEvaluator() {

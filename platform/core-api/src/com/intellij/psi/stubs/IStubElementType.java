@@ -60,18 +60,4 @@ public abstract class IStubElementType<StubT extends StubElement, PsiT extends P
     return true;
   }
 
-  public String getId(@NotNull StubT stub) {
-    assert stub.getStubType() == this;
-
-    final StubElement parent = stub.getParentStub();
-    int count = 0;
-    for (Object child : parent.getChildrenStubs()) {
-      if (((StubElement)child).getStubType() == this) count++;
-      if (child == stub) {
-        return '#' + String.valueOf(count);
-      }
-    }
-
-    throw new RuntimeException("Parent/child relations corrupted");
-  }
 }

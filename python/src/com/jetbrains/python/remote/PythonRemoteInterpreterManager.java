@@ -172,7 +172,7 @@ public abstract class PythonRemoteInterpreterManager {
 
   public abstract SdkAdditionalData loadRemoteSdkData(Sdk sdk, Element additional);
 
-  public abstract PyConsoleProcessHandler createConsoleProcessHandler(RemoteProcess process,
+  public abstract PyConsoleProcessHandler createConsoleProcessHandler(@NotNull Process process,
                                                                       PythonConsoleView view,
                                                                       PydevConsoleCommunication consoleCommunication,
                                                                       String commandLine,

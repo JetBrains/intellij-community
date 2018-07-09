@@ -121,6 +121,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
     });
 
     Point location = DimensionService.getInstance().getLocation(DIMENSION_SERVICE_KEY, project);
+    myPopup.getContent().putClientProperty("BookmarkPopup", "TRUE");
     if (location != null) {
       popup.showInScreenCoordinates(WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow(), location);
     }

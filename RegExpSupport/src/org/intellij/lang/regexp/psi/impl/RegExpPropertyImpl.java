@@ -66,10 +66,12 @@ public class RegExpPropertyImpl extends RegExpElementImpl implements RegExpPrope
     }
 
   private class MyPsiReference implements PsiReference {
+        @NotNull
         public PsiElement getElement() {
             return RegExpPropertyImpl.this;
         }
 
+        @NotNull
         public TextRange getRangeInElement() {
             ASTNode firstNode = getNode().findChildByType(RegExpTT.CARET);
             if (firstNode == null) {

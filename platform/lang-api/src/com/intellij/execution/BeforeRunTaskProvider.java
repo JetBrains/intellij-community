@@ -63,6 +63,7 @@ public abstract class BeforeRunTaskProvider<T extends BeforeRunTask> {
    * @return {@code true} if task configuration is changed
    * @deprecated do not call directly, use {@link #configureTask(DataContext, RunConfiguration, BeforeRunTask)} instead
    */
+  @Deprecated
   public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull T task) {
     return false;
   }

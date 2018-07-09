@@ -14,14 +14,9 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import static git4idea.test.GitExecutor.git;
 import static java.util.Arrays.asList;
 
 public class GitCrlfProblemsDetectorTest extends GitSingleRepoTest {
-
-  private String myOldGlobalAutoCrlfValue;
-  private String myOldSystemAutoCrlfValue;
-
   public void setUp() throws Exception {
     try {
       super.setUp();
@@ -31,31 +26,7 @@ public class GitCrlfProblemsDetectorTest extends GitSingleRepoTest {
       throw e;
     }
     Executor.cd(projectRoot);
-    try {
-      myOldGlobalAutoCrlfValue = git("config --global core.autocrlf", true);
-      git("config --global --unset core.autocrlf", true);
-    }
-    catch (Exception e) {
-      System.out.println("Couldn't operate with global config: " + e.getMessage());
-    }
-
-    myOldSystemAutoCrlfValue = git("config --system core.autocrlf", true);
-    git("config --system --unset core.autocrlf", true);
-  }
-
-  public void tearDown() throws Exception {
-    try {
-      if (!StringUtil.isEmptyOrSpaces(myOldGlobalAutoCrlfValue)) {
-        git("config --global core.autocrlf " + myOldGlobalAutoCrlfValue);
-      }
-
-      if (!StringUtil.isEmptyOrSpaces(myOldSystemAutoCrlfValue)) {
-        git("config --global core.autocrlf " + myOldSystemAutoCrlfValue);
-      }
-    }
-    finally {
-      super.tearDown();
-    }
+    git("config core.autocrlf false");
   }
 
   public void test_no_warning_if_autocrlf_is_true() throws IOException {
@@ -71,11 +42,6 @@ public class GitCrlfProblemsDetectorTest extends GitSingleRepoTest {
   public void test_no_warning_if_no_files_with_CRLF() throws IOException {
     createFile("temp", "Unix file\nNice separators\nOnly LF\n");
     assertFalse("No warning should be done if all files are LFs", detect("temp").shouldWarn());
-  }
-
-  public void test_no_warning_if_file_with_CRLF_no_attrs_autocrlf_is_false() throws IOException {
-    createCrlfFile("win");
-    assertFalse("Warning should be done for a CRLF file with core.autocrlf = false", detect("temp").shouldWarn());
   }
 
   public void test_no_warning_if_file_with_CRLF_but_text_is_set() throws IOException {
@@ -102,7 +68,7 @@ public class GitCrlfProblemsDetectorTest extends GitSingleRepoTest {
     assertFalse("No warning should be done if the file has a crlf attribute", detect("win").shouldWarn());
   }
 
-  public void test_warning_if_file_with_CRLF_nothing_is_set() throws IOException {
+  public void test_warning_if_file_with_CRLF_no_attrs_autocrlf_is_false() throws IOException {
     createCrlfFile("win");
     assertTrue("Warning should be done if the file has CRLFs inside, and no explicit attributes", detect("win").shouldWarn());
   }

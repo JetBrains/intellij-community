@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.ui;
 
 import com.intellij.execution.testframework.TestConsoleProperties;
@@ -25,9 +11,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.*;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -74,7 +60,12 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
         repaint();
       }
     };
-    ToolWindowManagerEx.getInstanceEx(properties.getProject()).addToolWindowManagerListener(listener, this);
+    properties.getProject().getMessageBus().connect(this).subscribe(ToolWindowManagerListener.TOPIC, listener);
+  }
+
+  @NotNull
+  public TestStatusLine getStatusLine() {
+    return myStatusLine;
   }
 
   public void initUI() {
@@ -98,15 +89,16 @@ public abstract class TestResultsPanel extends JPanel implements Disposable, Dat
         mySplitter.dispose();
       }
     });
+    mySplitter.setOpaque(false);
     add(mySplitter, BorderLayout.CENTER);
     final JPanel leftPanel = new JPanel(new BorderLayout());
     leftPanel.add(myLeftPane, BorderLayout.CENTER);
     leftPanel.add(myToolbarPanel, BorderLayout.NORTH);
     mySplitter.setFirstComponent(leftPanel);
     myStatusLine.setMinimumSize(new Dimension(0, myStatusLine.getMinimumSize().height));
-    final JPanel rightPanel = new JPanel(new BorderLayout());
+    final JPanel rightPanel = new NonOpaquePanel(new BorderLayout());
     rightPanel.add(SameHeightPanel.wrap(myStatusLine, myToolbarPanel), BorderLayout.NORTH);
-    JPanel outputTab = new JPanel(new BorderLayout());
+    JPanel outputTab = new NonOpaquePanel(new BorderLayout());
     myConsole.setFocusable(true);
     final Color editorBackground = EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground();
     myConsole.setBorder(new CompoundBorder(IdeBorderFactory.createBorder(SideBorder.RIGHT), new SideBorder(editorBackground, SideBorder.LEFT)));

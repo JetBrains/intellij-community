@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.compiler;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
@@ -154,7 +140,7 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
         if (method.isVarArgs() && method.hasTypeParameters() && args.length > method.getParameterList().getParametersCount() + 50) {
           PsiSubstitutor substitutor = resolveResult.getSubstitutor();
           for (PsiTypeParameter typeParameter : method.getTypeParameters()) {
-            if (!PsiTypesUtil.isDenotableType(substitutor.substitute(typeParameter))) {
+            if (!PsiTypesUtil.isDenotableType(substitutor.substitute(typeParameter), expression)) {
               return;
             }
           }
@@ -177,14 +163,36 @@ public class JavacQuirksInspectionVisitor extends JavaElementVisitor {
   public void visitIdentifier(PsiIdentifier identifier) {
     super.visitIdentifier(identifier);
     if ("_".equals(identifier.getText()) &&
-        mySdkVersion != null && mySdkVersion.isAtLeast(JavaSdkVersion.JDK_1_8) &&
+        mySdkVersion != null &&
+        mySdkVersion.isAtLeast(JavaSdkVersion.JDK_1_8) &&
         myLanguageLevel.isLessThan(LanguageLevel.JDK_1_9)) {
-      final String message = JavaErrorMessages.message("underscore.identifier.warn");
+      String message = JavaErrorMessages.message("underscore.identifier.warn");
       myHolder.registerProblem(identifier, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     }
-    else if (identifier.getParent() instanceof PsiClass && "var".equals(identifier.getText()) &&
-             myLanguageLevel.isLessThan(LanguageLevel.JDK_X)) {
-      myHolder.registerProblem(identifier, "Usage of 'var' as class name might not be supported in releases after java 9");
+    if ("var".equals(identifier.getText()) &&
+        identifier.getParent() instanceof PsiClass &&
+        myLanguageLevel.isLessThan(LanguageLevel.JDK_10)) {
+      String message = JavaErrorMessages.message("var.identifier.warn");
+      myHolder.registerProblem(identifier, message);
+    }
+  }
+
+  @Override
+  public void visitKeyword(PsiKeyword keyword) {
+    super.visitKeyword(keyword);
+    if (myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_9) && !myLanguageLevel.isAtLeast(LanguageLevel.JDK_10)) {
+      @PsiModifier.ModifierConstant String modifier = keyword.getText();
+      if (PsiKeyword.STATIC.equals(modifier) || PsiKeyword.TRANSITIVE.equals(modifier)) {
+        PsiElement parent = keyword.getParent();
+        if (parent instanceof PsiModifierList) {
+          PsiElement grand = parent.getParent();
+          if (grand instanceof PsiRequiresStatement && PsiJavaModule.JAVA_BASE.equals(((PsiRequiresStatement)grand).getModuleName())) {
+            String message = JavaErrorMessages.message("module.unwanted.modifier");
+            LocalQuickFix fix = QuickFixFactory.getInstance().createModifierListFix((PsiModifierList)parent, modifier, false, false);
+            myHolder.registerProblem(keyword, message, fix);
+          }
+        }
+      }
     }
   }
 

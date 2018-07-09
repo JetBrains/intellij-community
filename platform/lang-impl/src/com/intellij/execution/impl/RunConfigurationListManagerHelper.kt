@@ -1,10 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.configurations.RunConfiguration
-import com.intellij.execution.configurations.UnknownConfigurationType
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
@@ -30,11 +29,9 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
   @Volatile
   var immutableSortedSettingsList: List<RunnerAndConfigurationSettings>? = emptyList()
 
-  fun setOrder(comparator: Comparator<RunnerAndConfigurationSettings>?) {
-    val sorted = idToSettings.values.filterTo(ArrayList(idToSettings.size)) { it.type !is UnknownConfigurationType }
-    if (comparator != null) {
-      sorted.sortWith(comparator)
-    }
+  fun setOrder(comparator: Comparator<RunnerAndConfigurationSettings>) {
+    val sorted = idToSettings.values.filterTo(ArrayList(idToSettings.size)) { it.type.isManaged }
+    sorted.sortWith(comparator)
     customOrder.clear()
     customOrder.ensureCapacity(sorted.size)
     sorted.mapIndexed { index, settings -> customOrder.put(settings.uniqueID, index) }
@@ -50,16 +47,12 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
       isCustomOrderApplied = false
     }
     immutableSortedSettingsList = null
-    manager.allSettings
   }
 
-  fun loadOrder(order: ArrayList<String>) {
+  fun setCustomOrder(order: List<String>) {
     customOrder.clear()
     customOrder.ensureCapacity(order.size)
     order.mapIndexed { index, id -> customOrder.put(id, index) }
-
-    // DeprecatedProjectRunConfigurationManager will not call requestSort if no shared configurations
-    requestSort()
   }
 
   private fun sortAlphabetically() {
@@ -155,7 +148,6 @@ internal class RunConfigurationListManagerHelper(val manager: RunManagerImpl) {
   fun checkIfDependenciesAreStable(configuration: RunConfiguration, list: List<RunnerAndConfigurationSettings>) {
     for (runTask in configuration.beforeRunTasks) {
       val runTaskSettings = (runTask as? RunConfigurationBeforeRunProvider.RunConfigurableBeforeRunTask)?.settings
-
       if (runTaskSettings?.isTemporary == true) {
         manager.makeStable(runTaskSettings)
         checkIfDependenciesAreStable(runTaskSettings.configuration, list)

@@ -31,6 +31,7 @@ import org.codehaus.groovy.control.messages.WarningMessage;
 import org.codehaus.groovy.tools.javac.JavaAwareCompilationUnit;
 import org.codehaus.groovy.tools.javac.JavaCompiler;
 import org.codehaus.groovy.tools.javac.JavaCompilerFactory;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.security.AccessController;
@@ -46,7 +47,9 @@ public class DependentGroovycRunner {
   public static final String[] RESOURCES_TO_MASK = {"META-INF/services/org.codehaus.groovy.transform.ASTTransformation", "META-INF/services/org.codehaus.groovy.runtime.ExtensionModule"};
   private static final String STUB_DIR = "stubDir";
 
-  public static boolean runGroovyc(boolean forStubs, String argsPath, String configScript, Queue mailbox) {
+  public static boolean runGroovyc(boolean forStubs, String argsPath, 
+                                   @Nullable String configScript,
+                                   @Nullable String targetBytecode, @Nullable Queue mailbox) {
     File argsFile = new File(argsPath);
     final CompilerConfiguration config = new CompilerConfiguration();
     config.setClasspath("");
@@ -89,6 +92,10 @@ public class DependentGroovycRunner {
       }
       catch (LinkageError ignored) {
       }
+    }
+
+    if (targetBytecode != null) {
+      config.setTargetBytecode(targetBytecode);
     }
 
     System.out.println(GroovyRtConstants.PRESENTABLE_MESSAGE + "Groovyc: loading sources...");
@@ -262,7 +269,7 @@ public class DependentGroovycRunner {
     if (!patchers.isEmpty()) {
       for (CompilationUnitPatcher patcher : patchers) {
         try {
-          patcher.patchCompilationUnit(unit, loader, srcFiles.toArray(new File[srcFiles.size()]));
+          patcher.patchCompilationUnit(unit, loader, srcFiles.toArray(new File[0]));
         }
         catch (LinkageError e) {
           addExceptionInfo(compilerMessages, e, "Couldn't run " + patcher.getClass().getName());

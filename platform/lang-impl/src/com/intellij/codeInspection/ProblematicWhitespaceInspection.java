@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorSettings;
@@ -28,7 +29,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
@@ -86,7 +86,7 @@ public class ProblematicWhitespaceInspection extends LocalInspectionTool {
       if (!(fileType instanceof LanguageFileType)) {
         return;
       }
-      final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject());
+      final CodeStyleSettings settings = CodeStyle.getSettings(file);
       final CommonCodeStyleSettings.IndentOptions indentOptions = settings.getIndentOptions(fileType);
       final boolean useTabs = indentOptions.USE_TAB_CHARACTER;
       final boolean smartTabs = indentOptions.SMART_TABS;

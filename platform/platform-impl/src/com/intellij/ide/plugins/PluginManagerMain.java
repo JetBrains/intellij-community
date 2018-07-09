@@ -45,6 +45,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.OnePixelDivider;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
@@ -180,6 +181,7 @@ public abstract class PluginManagerMain implements Disposable {
     myToolbarPanel.setLayout(new BorderLayout());
     myActionToolbar = ActionManager.getInstance().createActionToolbar("PluginManager", getActionGroup(true), true);
     JComponent component = myActionToolbar.getComponent();
+    component.setBorder(JBUI.Borders.emptyLeft(UIUtil.DEFAULT_HGAP));
     myToolbarPanel.add(component, BorderLayout.CENTER);
     myToolbarPanel.add(myFilter, BorderLayout.WEST);
     new ClickListener() {
@@ -409,6 +411,7 @@ public abstract class PluginManagerMain implements Disposable {
   /**
    * @deprecated use {@link #downloadPlugins(List, List, Runnable, PluginEnabler, Runnable)} instead
    */
+  @Deprecated
   public static boolean downloadPlugins(List<PluginNode> plugins,
                                         List<PluginId> allPlugins,
                                         Runnable onSuccess,
@@ -588,6 +591,7 @@ public abstract class PluginManagerMain implements Disposable {
       return myComponent.getSelectedRow();
     }
 
+    @NotNull
     @Override
     public Object[] getAllElements() {
       return myComponent.getElements();
@@ -614,7 +618,7 @@ public abstract class PluginManagerMain implements Disposable {
     pluginTable.select(descriptors);
   }
 
-  protected static boolean isAccepted(@Nullable String filter, @NotNull Set<String> search, @NotNull IdeaPluginDescriptor descriptor) {
+  public static boolean isAccepted(@Nullable String filter, @NotNull Set<String> search, @NotNull IdeaPluginDescriptor descriptor) {
     if (StringUtil.isEmpty(filter)) return true;
     if (StringUtil.containsIgnoreCase(descriptor.getName(), filter) || isAccepted(search, filter, descriptor.getName())) return true;
     if (isAccepted(search, filter, descriptor.getDescription())) return true;
@@ -779,6 +783,31 @@ public abstract class PluginManagerMain implements Disposable {
       }
     };
     UpdateChecker.NOTIFICATIONS.createNotification(title, XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION, listener).notify(project);
+  }
+
+  public static boolean checkThirdPartyPluginsAllowed(Iterable<? extends IdeaPluginDescriptor> descriptors) {
+    UpdateSettings updateSettings = UpdateSettings.getInstance();
+
+    if (updateSettings.isThirdPartyPluginsAllowed()) {
+      return true;
+    }
+
+    for (IdeaPluginDescriptor descriptor : descriptors) {
+      if (!isDevelopedByJetBrains(descriptor)) {
+        String title = IdeBundle.message("third.party.plugins.privacy.note.title");
+        String message = IdeBundle.message("third.party.plugins.privacy.note.message");
+        String yesText = IdeBundle.message("third.party.plugins.privacy.note.yes");
+        String noText = IdeBundle.message("third.party.plugins.privacy.note.no");
+        if (Messages.showYesNoDialog(message, title, yesText, noText, Messages.getWarningIcon()) == Messages.YES) {
+          updateSettings.setThirdPartyPluginsAllowed(true);
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 
   public class MyPluginsFilter extends FilterComponent {

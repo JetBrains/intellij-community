@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -44,14 +45,14 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
 
   private final Document myDocument;
   private final Project myProject;
-  private final IndentOptions myOptionsToAdjust;
+  private final TimeStampedIndentOptions myOptionsToAdjust;
   private final ExecutorService myExecutor;
   
   private volatile long myComputationStarted = 0;
 
   public DetectAndAdjustIndentOptionsTask(@NotNull Project project, 
                                           @NotNull Document document, 
-                                          @NotNull IndentOptions toAdjust,
+                                          @NotNull TimeStampedIndentOptions toAdjust,
                                           @NotNull ExecutorService executor) {
     myProject = project;
     myDocument = document;
@@ -95,10 +96,13 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
     myOptionsToAdjust.copyFrom(currentDefault);
 
     adjuster.adjust(myOptionsToAdjust);
-    if (myOptionsToAdjust instanceof TimeStampedIndentOptions) {
-      TimeStampedIndentOptions cachedInDocument = (TimeStampedIndentOptions)myOptionsToAdjust;
-      cachedInDocument.setTimeStamp(myDocument.getModificationStamp());
-      cachedInDocument.setOriginalIndentOptionsHash(currentDefault.hashCode());
+    myOptionsToAdjust.setTimeStamp(myDocument.getModificationStamp());
+    myOptionsToAdjust.setOriginalIndentOptionsHash(currentDefault.hashCode());
+
+    if (!currentDefault.equals(myOptionsToAdjust)) {
+      myOptionsToAdjust.setDetected(true);
+      //noinspection deprecation
+      CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged(file);
     }
   }
 
@@ -140,10 +144,9 @@ class DetectAndAdjustIndentOptionsTask extends ReadTask {
 
   @NotNull
   public static TimeStampedIndentOptions getDefaultIndentOptions(@NotNull PsiFile file, @NotNull Document document) {
-    Project project = file.getProject();
     FileType fileType = file.getFileType();
-    CodeStyleSettings manager = CodeStyleSettingsManager.getSettings(project);
-    return new TimeStampedIndentOptions(manager.getIndentOptions(fileType), document.getModificationStamp());
+    CodeStyleSettings settings = CodeStyle.getSettings(file);
+    return new TimeStampedIndentOptions(settings.getIndentOptions(fileType), document.getModificationStamp());
   }
 
   

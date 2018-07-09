@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2017 Bas Leijdekkers
+ * Copyright 2008-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +41,7 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("redundant.string.format.call.problem.descriptor");
+    return InspectionGadgetsBundle.message("redundant.call.problem.descriptor");
   }
 
   @Override
@@ -72,13 +73,14 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
       }
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      CommentTracker commentTracker = new CommentTracker();
       @NonNls final StringBuilder newExpression = new StringBuilder();
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       if (qualifierExpression != null) {
-        newExpression.append(qualifierExpression.getText()).append('.');
+        newExpression.append(commentTracker.text(qualifierExpression)).append('.');
       }
-      newExpression.append("print").append(methodCallExpression.getArgumentList().getText());
-      PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString());
+      newExpression.append("print").append(commentTracker.text(methodCallExpression.getArgumentList()));
+      PsiReplacementUtil.replaceExpression(methodCallExpression, newExpression.toString(), commentTracker);
     }
   }
 
@@ -98,7 +100,7 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
       }
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
       final PsiExpression[] arguments = methodCallExpression.getArgumentList().getExpressions();
-      methodCallExpression.replace(arguments[arguments.length - 1]);
+      new CommentTracker().replaceAndRestoreComments(methodCallExpression, arguments[arguments.length - 1]);
     }
   }
 
@@ -153,7 +155,7 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
       }
       if (firstType.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
         if (arguments.length == 1 && !containsPercentN(firstArgument)) {
-          registerMethodCallError(expression, Boolean.valueOf(printf));
+          registerMethodCallError(expression, printf);
         }
       }
       else if (firstType.equalsToText("java.util.Locale")) {
@@ -168,7 +170,7 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
         if (containsPercentN(secondArgument)) {
           return;
         }
-        registerMethodCallError(expression, Boolean.valueOf(printf));
+        registerMethodCallError(expression, printf);
       }
     }
 

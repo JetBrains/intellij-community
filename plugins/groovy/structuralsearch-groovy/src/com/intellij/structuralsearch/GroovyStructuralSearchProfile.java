@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
@@ -53,6 +54,7 @@ public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
     return result;
   }
 
+  @NotNull
   @Override
   public Class<? extends TemplateContextType> getTemplateContextTypeClass() {
     return GroovyTemplateContextType.class;
@@ -66,20 +68,7 @@ public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
   }
 
   @Override
-  public Class getElementContextByPsi(PsiElement element) {
-    if (element instanceof PsiIdentifier) {
-      element = element.getParent();
-    }
-
-    if (element instanceof PsiMember) {
-      return PsiMember.class;
-    } else {
-      return PsiExpression.class;
-    }
-  }
-
-  @Override
-  public boolean isIdentifier(PsiElement element) {
+  public boolean isIdentifier(@Nullable PsiElement element) {
     return element instanceof PsiIdentifier;
   }
 }

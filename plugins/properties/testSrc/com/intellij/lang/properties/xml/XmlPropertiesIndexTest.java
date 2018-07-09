@@ -24,7 +24,6 @@ import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 7/25/11
  */
 public class XmlPropertiesIndexTest extends LightPlatformCodeInsightFixtureTestCase {
 

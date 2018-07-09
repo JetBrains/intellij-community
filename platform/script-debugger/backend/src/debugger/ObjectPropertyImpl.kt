@@ -26,9 +26,9 @@ class ObjectPropertyImpl(name: String,
                          valueModifier: ValueModifier? = null,
                          private val flags: Int = 0) : VariableImpl(name, value, valueModifier), ObjectProperty {
   companion object {
-    val WRITABLE = 0x01
-    val CONFIGURABLE = 0x02
-    val ENUMERABLE = 0x04
+    val WRITABLE: Int = 0x01
+    val CONFIGURABLE: Int = 0x02
+    val ENUMERABLE: Int = 0x04
   }
 
   override val isWritable: Boolean

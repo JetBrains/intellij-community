@@ -78,7 +78,7 @@ public class PsiWhileStatementImpl extends CompositePsiElement implements PsiWhi
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == WHILE_KEYWORD) {

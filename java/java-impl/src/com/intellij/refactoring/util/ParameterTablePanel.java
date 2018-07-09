@@ -171,7 +171,7 @@ public abstract class ParameterTablePanel extends AbstractParameterTablePanel<Va
         }
       });
     }
-    return result.toArray(new PsiExpression[result.size()]);
+    return result.toArray(PsiExpression.EMPTY_ARRAY);
   }
 
   @Override

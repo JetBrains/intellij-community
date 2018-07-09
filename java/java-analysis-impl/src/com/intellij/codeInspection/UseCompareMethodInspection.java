@@ -26,9 +26,6 @@ import java.util.Map;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-/**
- * @author Tagir Valeev
- */
 public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
@@ -312,7 +309,7 @@ public class UseCompareMethodInspection extends AbstractBaseJavaLocalInspectionT
   }
 
   private static class ReplaceWithPrimitiveCompareFix implements LocalQuickFix {
-    private String myClassName;
+    private final String myClassName;
 
     public ReplaceWithPrimitiveCompareFix(String className) {
       myClassName = className;

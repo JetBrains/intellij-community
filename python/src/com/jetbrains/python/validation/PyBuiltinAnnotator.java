@@ -16,8 +16,6 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.Annotation;
-import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -40,16 +38,8 @@ public class PyBuiltinAnnotator extends PyAnnotator {
     if (highlightedAsAttribute) {
       return;
     }
-    if (PyBuiltinCache.isInBuiltins(node) || PyUtil.isPy2ReservedWord(node)) {
-      final Annotation ann;
-      final PsiElement parent = node.getParent();
-      if (parent instanceof PyDecorator) {
-        // don't mark the entire decorator, only mark the "@", else we'll conflict with deco annotator
-        addHighlightingAnnotation(parent.getFirstChild(), PyHighlighter.PY_BUILTIN_NAME);
-      }
-      else {
-        addHighlightingAnnotation(node, PyHighlighter.PY_BUILTIN_NAME);
-      }
+    if ((PyBuiltinCache.isInBuiltins(node) || PyUtil.isPy2ReservedWord(node)) && !(node.getParent() instanceof PyDecorator)) {
+      addHighlightingAnnotation(node, PyHighlighter.PY_BUILTIN_NAME);
     }
   }
 

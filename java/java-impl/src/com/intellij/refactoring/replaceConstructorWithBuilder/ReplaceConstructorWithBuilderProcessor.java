@@ -18,7 +18,6 @@ package com.intellij.refactoring.replaceConstructorWithBuilder;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -30,7 +29,10 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.replaceConstructorWithBuilder.usageInfo.ReplaceConstructorWithSettersChainInfo;
 import com.intellij.refactoring.util.FixableUsageInfo;
@@ -250,7 +252,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
     PsiMethod constructor = getMostCommonConstructor();
     if (constructor == null){
       constructor = myConstructors[0];
-      if (constructor.getParameterList().getParametersCount() == 0) {
+      if (constructor.getParameterList().isEmpty()) {
         constructor = myConstructors[1];
       }
     }
@@ -320,6 +322,7 @@ public class ReplaceConstructorWithBuilderProcessor extends FixableUsagesRefacto
     return showConflicts(conflicts, refUsages.get());
   }
 
+  @NotNull
   protected String getCommandName() {
     return REFACTORING_NAME;
   }

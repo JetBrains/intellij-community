@@ -8,7 +8,7 @@ public class TestClassFields {
    static {
       sizes = new int[names.length];// 15
       TestClassFields.Inner.staticMutable = 3;// 17
-      SIZE = TestClassFields.Inner.staticMutable;// 14 18
+      SIZE = TestClassFields.Inner.staticMutable;// 18
    }// 19
 
    private static class Inner {
@@ -18,20 +18,20 @@ public class TestClassFields {
 
 class 'pkg/TestClassFields' {
    method '<clinit> ()V' {
-      0      10
-      2      9
       11      8
       14      8
       17      8
-      1a      9
+      1b      9
+      1f      10
       22      10
       25      11
    }
 }
 
 Lines mapping:
-14 <-> 11
 15 <-> 9
 17 <-> 10
 18 <-> 11
 19 <-> 12
+Not mapped:
+14

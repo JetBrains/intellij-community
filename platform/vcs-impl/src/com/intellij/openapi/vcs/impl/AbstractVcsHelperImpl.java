@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.ide.actions.CloseTabToolbarAction;
@@ -42,6 +28,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction;
@@ -133,7 +120,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                               @NotNull FilePath path,
                               @NotNull AbstractVcs vcs) {
     FileHistoryRefresherI refresher = FileHistoryRefresher.findOrCreate(historyProvider, path, vcs);
-    refresher.run(false, true);
+    refresher.selectContent();
+    refresher.refresh(true);
   }
 
   public void showFileHistory(@NotNull VcsHistoryProviderEx historyProvider,
@@ -141,7 +129,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                               @NotNull AbstractVcs vcs,
                               @Nullable VcsRevisionNumber startingRevisionNumber) {
     FileHistoryRefresherI refresher = FileHistoryRefresher.findOrCreate(historyProvider, path, vcs, startingRevisionNumber);
-    refresher.run(false, true);
+    refresher.selectContent();
+    refresher.refresh(true);
   }
 
   public void showRollbackChangesDialog(List<Change> changes) {
@@ -160,7 +149,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     }
 
     if (files.size() == 1 && singleFilePromptTemplate != null) {
-      String filePrompt = MessageFormat.format(singleFilePromptTemplate, files.get(0).getPresentableUrl());
+      String filePrompt = MessageFormat.format(singleFilePromptTemplate,
+                                               FileUtil.getLocationRelativeToUserHome(files.get(0).getPresentableUrl()));
       if (ConfirmationDialog
         .requestForConfirmation(confirmationOption, myProject, filePrompt, singleFileTitle, Messages.getQuestionIcon())) {
         return files;
@@ -225,15 +215,16 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   public void showErrors(final List<VcsException> abstractVcsExceptions, @NotNull final String tabDisplayName) {
-    showErrorsImpl(abstractVcsExceptions.isEmpty(), () -> abstractVcsExceptions.get(0), tabDisplayName, vcsErrorViewPanel -> addDirectMessages(vcsErrorViewPanel, abstractVcsExceptions));
+    showErrorsImpl(abstractVcsExceptions.isEmpty(), () -> abstractVcsExceptions.get(0), tabDisplayName,
+                   vcsErrorViewPanel -> addDirectMessages(vcsErrorViewPanel, abstractVcsExceptions));
   }
-  
+
   @Override
   public boolean commitChanges(@NotNull Collection<Change> changes, @NotNull LocalChangeList initialChangeList,
                                @NotNull String commitMessage, @Nullable CommitResultHandler customResultHandler) {
-      return CommitChangeListDialog.commitChanges(myProject, changes, initialChangeList,
-                                                  CommitChangeListDialog.collectExecutors(myProject, changes), true, commitMessage,
-                                                  customResultHandler);
+    return CommitChangeListDialog.commitChanges(myProject, changes, initialChangeList,
+                                                CommitChangeListDialog.collectExecutors(myProject, changes), true, commitMessage,
+                                                customResultHandler);
   }
 
   private static void addDirectMessages(VcsErrorViewPanel vcsErrorViewPanel, List<VcsException> abstractVcsExceptions) {
@@ -295,7 +286,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       for (Map.Entry<HotfixData, List<VcsException>> entry : exceptionGroups.entrySet()) {
         if (entry.getKey() == null) {
           addDirectMessages(vcsErrorViewPanel, entry.getValue());
-        } else {
+        }
+        else {
           final List<VcsException> exceptionList = entry.getValue();
           final List<SimpleErrorData> list = new ArrayList<>(exceptionList.size());
           for (VcsException exception : exceptionList) {
@@ -464,7 +456,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
     if (ok) {
       if (myProject.isDefault() || (ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss().length == 0) ||
-          (! ModalityState.NON_MODAL.equals(ModalityState.current()))) {
+          (!ModalityState.NON_MODAL.equals(ModalityState.current()))) {
         final List<CommittedChangeList> versions = new ArrayList<>();
 
         if (parent == null || !parent.isValid()) {
@@ -483,13 +475,13 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
         if (task[0] != null) {
           task[0].cancel();
           final List<VcsException> exceptions = task[0].getExceptions();
-          if (! exceptions.isEmpty()) {
+          if (!exceptions.isEmpty()) {
             Messages.showErrorDialog(myProject, VcsBundle.message("browse.changes.error.message", exceptions.get(0).getMessage()),
                                      VcsBundle.message("browse.changes.error.title"));
             return;
           }
 
-          if (! task[0].isRevisionsReturned()) {
+          if (!task[0].isRevisionsReturned()) {
             Messages.showInfoMessage(myProject, VcsBundle.message("browse.changes.nothing.found"),
                                      VcsBundle.message("browse.changes.nothing.found.title"));
           }
@@ -672,8 +664,11 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     private volatile boolean myCanceled;
     private boolean myRevisionsReturned;
 
-    private AsynchronousListsLoader(@Nullable Project project, final CommittedChangesProvider provider,
-                                    final RepositoryLocation location, final ChangeBrowserSettings settings, final ChangesBrowserDialog dlg) {
+    private AsynchronousListsLoader(@Nullable Project project,
+                                    final CommittedChangesProvider provider,
+                                    final RepositoryLocation location,
+                                    final ChangeBrowserSettings settings,
+                                    final ChangesBrowserDialog dlg) {
       super(project, VcsBundle.message("browse.changes.progress.title"), true);
       myProvider = provider;
       myLocation = location;
@@ -693,6 +688,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       final Application application = ApplicationManager.getApplication();
       try {
         myProvider.loadCommittedChanges(mySettings, myLocation, 0, new AsynchConsumer<CommittedChangeList>() {
+          @Override
           public void consume(CommittedChangeList committedChangeList) {
             myRevisionsReturned = true;
             bufferedListConsumer.consumeOne(committedChangeList);
@@ -701,11 +697,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
             }
           }
 
+          @Override
           public void finished() {
             bufferedListConsumer.flush();
             appender.finished();
 
-            if (! myRevisionsReturned) {
+            if (!myRevisionsReturned) {
               application.invokeLater(() -> myDlg.close(-1), ModalityState.stateForComponent(myDlg.getWindow()));
             }
           }

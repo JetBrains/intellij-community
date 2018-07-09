@@ -29,7 +29,7 @@ import java.util.List;
  * @author nik
  */
 @Deprecated
-public abstract class ConfigurablesGroupBase implements ConfigurableGroup {
+abstract class ConfigurablesGroupBase implements ConfigurableGroup {
   private Configurable[] myChildren;
   private final ComponentManager myComponentManager;
   private final ExtensionPointName<ConfigurableEP<Configurable>> myConfigurablesExtensionPoint;
@@ -49,7 +49,7 @@ public abstract class ConfigurablesGroupBase implements ConfigurableGroup {
 
       ConfigurableEP<Configurable>[] extensions = myComponentManager.getExtensions(myConfigurablesExtensionPoint);
       List<Configurable> result = ConfigurableExtensionPointUtil.buildConfigurablesList(extensions, getConfigurableFilter());
-      myChildren = result.toArray(new Configurable[result.size()]);
+      myChildren = result.toArray(new Configurable[0]);
     }
     return myChildren;
   }
@@ -57,8 +57,4 @@ public abstract class ConfigurablesGroupBase implements ConfigurableGroup {
   @Nullable
   protected abstract ConfigurableFilter getConfigurableFilter();
 
-  @Override
-  public String getShortName() {
-    return null;
-  }
 }

@@ -71,26 +71,22 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
         if (safeToReload == EncodingUtil.Magic8.NO_WAY) {
           Ref<Charset> current = Ref.create();
           EncodingUtil.FailReason failReason = EncodingUtil.checkCanReload(virtualFile, current);
-          Charset autoDetected = current.get();
           int res;
           byte[] bom = virtualFile.getBOM();
+          String explanation = "<br><br>" +
+                               (failReason == null ? "" : "Why: " + failReason + "<br>") +
+                               (current.isNull() ? "" : "Current encoding: '" + current.get().displayName() + "'");
           if (bom != null) {
-            Messages
-              .showErrorDialog(XmlStringUtil.wrapInHtml(
-                          "File '" + virtualFile.getName() + "' can't be reloaded in the '" + charset.displayName() + "' encoding.<br><br>" +
-                          (failReason == null ? "" : "Why: "+ failReason +"<br>") +
-                          (autoDetected == null ? "" : "Detected encoding: '"+ autoDetected.displayName()+"'")),
-                               "Incompatible Encoding: " + charset.displayName()
-                          );
+            Messages.showErrorDialog(XmlStringUtil.wrapInHtml(
+                          "File '" + virtualFile.getName() + "' can't be reloaded in the '" + charset.displayName() + "' encoding." +
+                          explanation),
+                               "Incompatible Encoding: " + charset.displayName());
             res = -1;
           }
           else {
-            res = Messages
-              .showDialog(XmlStringUtil.wrapInHtml(
-                        "File '" + virtualFile.getName() + "' most likely isn't stored in the '" + charset.displayName() + "' encoding." +
-                        "<br><br>" +
-                        (failReason == null ? "" : "Why: " + failReason + "<br>") +
-                        (autoDetected == null ? "" : "Detected encoding: '" + autoDetected.displayName() + "'")),
+            res = Messages.showDialog(XmlStringUtil.wrapInHtml(
+                "File '" + virtualFile.getName() + "' most likely isn't stored in the '" + charset.displayName() + "' encoding." +
+                explanation),
                         "Incompatible Encoding: " + charset.displayName(), new String[]{"Reload anyway", "Cancel"}, 1,
                         AllIcons.General.WarningDialog);
           }

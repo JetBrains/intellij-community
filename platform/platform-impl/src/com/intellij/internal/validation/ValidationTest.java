@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  * @author Konstantin Bulenkov
  */
 public class ValidationTest extends DialogWrapper {
-  private ValidTest myPanel;
+  private final ValidTest myPanel;
   final ValidationInfo[] ERRORS;
 
   protected ValidationTest(Project project) {
@@ -47,13 +47,11 @@ public class ValidationTest extends DialogWrapper {
     };
 
     init();
+
+    myPanel.field5.addActionListener(e -> myPanel.spinner.setEnabled(myPanel.field5.isSelected()));
+    myPanel.spinner.setEnabled(myPanel.field5.isSelected());
   }
 
-
-  @Override
-  protected boolean postponeValidation() {
-    return true;
-  }
 
   @Override
   public JComponent getPreferredFocusedComponent() {

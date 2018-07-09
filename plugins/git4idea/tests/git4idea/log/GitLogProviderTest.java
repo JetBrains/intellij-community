@@ -27,7 +27,7 @@ import com.intellij.vcs.log.data.VcsLogBranchFilterImpl;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.impl.VcsLogFilterCollectionImpl.VcsLogFilterCollectionBuilder;
 import com.intellij.vcs.log.ui.filter.VcsLogTextFilterImpl;
-import com.intellij.vcsUtil.VcsFileUtil;
+import git4idea.config.GitVersion;
 import git4idea.test.GitSingleRepoTest;
 import git4idea.test.GitTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,8 +42,13 @@ import static com.intellij.openapi.vcs.Executor.touch;
 import static git4idea.test.GitExecutor.*;
 import static git4idea.test.GitTestUtil.readAllRefs;
 import static java.util.Collections.singleton;
+import static org.junit.Assume.assumeTrue;
 
 public class GitLogProviderTest extends GitSingleRepoTest {
+  /**
+   * Prior to 1.8.0 --regexp-ignore-case does not work when --fixed-strings parameter is specified, so can not filter case-insensitively without regex.
+   */
+  private static final GitVersion FIXED_STRINGS_WORKS_WITH_IGNORE_CASE = new GitVersion(1, 8, 0, 0);
 
   private GitLogProvider myLogProvider;
   private VcsLogObjectsFactory myObjectsFactory;
@@ -162,13 +167,16 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     assertEquals(hashes, actualHashes);
   }
 
+  /*
+   3 cases: no regexp + match case, regex + match case, regex + no matching case
+    */
   public void test_filter_by_text() throws Exception {
     String initial = last(repo);
 
     String fileName = "f";
 
     touch(fileName, "content" + Math.random());
-    String smallBrackets = addCommit(repo ,"[git] " + fileName);
+    String smallBrackets = addCommit(repo, "[git] " + fileName);
     echo(fileName, "content" + Math.random());
     String bigBrackets = addCommit(repo, "[GIT] " + fileName);
     echo(fileName, "content" + Math.random());
@@ -179,28 +187,54 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     String text = "[git]";
     assertEquals(Collections.singletonList(smallBrackets), getFilteredHashes(
       new VcsLogFilterCollectionBuilder().with(new VcsLogTextFilterImpl(text, false, true)).build()));
-    assertEquals(Arrays.asList(bigBrackets, smallBrackets), getFilteredHashes(
-      new VcsLogFilterCollectionBuilder().with(new VcsLogTextFilterImpl(text, false, false)).build()));
     assertEquals(Arrays.asList(bigNoBrackets, smallNoBrackets, bigBrackets, smallBrackets, initial),
                  getFilteredHashes(new VcsLogFilterCollectionBuilder().with(new VcsLogTextFilterImpl(text, true, false)).build()));
     assertEquals(Arrays.asList(smallNoBrackets, smallBrackets, initial),
                  getFilteredHashes(new VcsLogFilterCollectionBuilder().with(new VcsLogTextFilterImpl(text, true, true)).build()));
   }
 
-  public void test_filter_by_text_and_user() throws Exception {
+  public void test_filter_by_text_no_regex() throws Exception {
+    assumeFixedStringsWorks();
+
+    String fileName = "f";
+
+    touch(fileName, "content" + Math.random());
+    String smallBrackets = addCommit(repo, "[git] " + fileName);
+    echo(fileName, "content" + Math.random());
+    String bigBrackets = addCommit(repo, "[GIT] " + fileName);
+    echo(fileName, "content" + Math.random());
+
+    assertEquals(Arrays.asList(bigBrackets, smallBrackets), getFilteredHashes(
+      new VcsLogFilterCollectionBuilder().with(new VcsLogTextFilterImpl("[git]", false, false)).build()));
+  }
+
+  private void assumeFixedStringsWorks() {
+    assumeTrue("Not testing: --regexp-ignore-case does not affect grep" +
+               " or author filter when --fixed-strings parameter is specified prior to 1.8.0",
+               vcs.getVersion().isLaterOrEqual(FIXED_STRINGS_WORKS_WITH_IGNORE_CASE));
+  }
+
+  private void filter_by_text_and_user(boolean regexp) throws Exception {
     List<String> hashes = generateHistoryForFilters(false, true);
     VcsUserImpl user = new VcsUserImpl(GitTestUtil.USER_NAME, GitTestUtil.USER_EMAIL);
     VcsLogUserFilter userFilter = new VcsLogUserFilterImpl(singleton(GitTestUtil.USER_NAME),
                                                            Collections.emptyMap(),
                                                            singleton(user));
-    assertEquals(hashes, getFilteredHashes(
-      new VcsLogFilterCollectionBuilder().with(userFilter).with(new VcsLogTextFilterImpl("", false, false)).build()));
-    assertEquals(hashes, getFilteredHashes(
-      new VcsLogFilterCollectionBuilder().with(userFilter).with(new VcsLogTextFilterImpl("", true, false)).build()));
+    assertEquals(hashes, getFilteredHashes(new VcsLogFilterCollectionBuilder().with(userFilter).
+      with(new VcsLogTextFilterImpl(regexp ? ".*" : "", regexp, false)).build()));
+  }
+
+  public void test_filter_by_text_with_regex_and_user() throws Exception {
+    filter_by_text_and_user(true);
+  }
+
+  public void test_filter_by_simple_text_and_user() throws Exception {
+    assumeFixedStringsWorks();
+    filter_by_text_and_user(false);
   }
 
   public void test_short_details() throws Exception {
-    prepareLongHistory(VcsFileUtil.FILE_PATH_LIMIT * 2 / 40);
+    prepareLongHistory(15);
     List<VcsCommitMetadata> log = log();
 
     final List<String> hashes = ContainerUtil.newArrayList();
@@ -213,7 +247,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
   }
 
   public void test_full_details() throws Exception {
-    prepareLongHistory(VcsFileUtil.FILE_PATH_LIMIT * 2 / 40);
+    prepareLongHistory(15);
     List<VcsCommitMetadata> log = log();
 
     final List<String> hashes = ContainerUtil.newArrayList();
@@ -229,7 +263,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
   }
 
   @NotNull
-  private Function<VcsShortCommitDetails, String> getShortDetailsToString() {
+  private static Function<VcsShortCommitDetails, String> getShortDetailsToString() {
     return details -> {
       String result = "";
 

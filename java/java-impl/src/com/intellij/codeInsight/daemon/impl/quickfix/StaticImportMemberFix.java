@@ -31,6 +31,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.PsiMember;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +79,7 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
 
   @NotNull protected abstract List<T> getMembersToImport(boolean applicableOnly, @NotNull StaticMembersProcessor.SearchMode mode);
 
-  protected abstract boolean showMembersFromDefaultPackage();
+  protected abstract boolean toAddStaticImports();
 
   public static boolean isExcluded(PsiMember method) {
     String name = PsiUtil.getMemberQualifiedName(method);
@@ -112,6 +113,12 @@ public abstract class StaticImportMemberFix<T extends PsiMember> implements Inte
 
     final PsiElement element = getElement();
     if (element == null) {
+      return ImportClassFixBase.Result.POPUP_NOT_SHOWN;
+    }
+
+    if (toAddStaticImports() &&
+        candidates.size() == 1 &&
+        PsiTreeUtil.isAncestor(element.getContainingFile(), candidates.get(0), true)) {
       return ImportClassFixBase.Result.POPUP_NOT_SHOWN;
     }
 

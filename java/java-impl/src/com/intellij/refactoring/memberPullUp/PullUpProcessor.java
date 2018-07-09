@@ -42,7 +42,6 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
@@ -88,7 +87,7 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
         }
       }
     }
-    return result.isEmpty() ? UsageInfo.EMPTY_ARRAY : result.toArray(new UsageInfo[result.size()]);
+    return result.isEmpty() ? UsageInfo.EMPTY_ARRAY : result.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -155,14 +154,15 @@ public class PullUpProcessor extends BaseRefactoringProcessor implements PullUpD
     }), MethodDuplicatesHandler.REFACTORING_NAME, true, myProject);
   }
 
+  @NotNull
   @Override
   protected String getCommandName() {
     return RefactoringBundle.message("pullUp.command", DescriptiveNameUtil.getDescriptiveName(mySourceClass));
   }
 
   public void moveMembersToBase() throws IncorrectOperationException {
-    myMovedMembers = ContainerUtil.newHashSet();
-    myMembersAfterMove = ContainerUtil.newHashSet();
+    myMovedMembers = ContainerUtil.newLinkedHashSet();
+    myMembersAfterMove = ContainerUtil.newLinkedHashSet();
 
     // build aux sets
     for (MemberInfo info : myMembersToMove) {

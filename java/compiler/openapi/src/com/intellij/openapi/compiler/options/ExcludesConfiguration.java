@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 12-Nov-14
  */
 public interface ExcludesConfiguration {
   ExcludeEntryDescription[] getExcludeEntryDescriptions();

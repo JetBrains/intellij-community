@@ -23,39 +23,41 @@ import org.jetbrains.intellij.build.impl.LayoutBuilder
  */
 class IntelliJCoreArtifactsBuilder {
   private static final List<String> ANALYSIS_API_MODULES = [
-    "analysis-api",
-    "boot",
-    "core-api",
-    "duplicates-analysis",
-    "editor-ui-api",
-    "editor-ui-ex",
-    "extensions",
-    "indexing-api",
-    "java-analysis-api",
-    "java-indexing-api",
-    "java-psi-api",
-    "java-structure-view",
-    "jps-model-api",
-    "jps-model-serialization",
-    "projectModel-api",
-    "util",
-    "util-rt",
-    "xml-analysis-api",
-    "xml-psi-api",
-    "xml-structure-view-api",
+    "intellij.platform.analysis",
+    "intellij.platform.boot",
+    "intellij.platform.core",
+    "intellij.platform.duplicates.analysis",
+    "intellij.platform.editor",
+    "intellij.platform.editor.ex",
+    "intellij.platform.extensions",
+    "intellij.platform.indexing",
+    "intellij.java.analysis",
+    "intellij.java.indexing",
+    "intellij.java.psi",
+    "intellij.java.structureView",
+    "intellij.platform.jps.model",
+    "intellij.platform.jps.model.serialization",
+    "intellij.platform.projectModel",
+    "intellij.platform.util",
+    "intellij.platform.util.rt",
+    "intellij.xml.analysis",
+    "intellij.xml.psi",
+    "intellij.xml.structureView",
+    "intellij.jvm.analysis",
   ]
   private static final List<String> ANALYSIS_IMPL_MODULES = [
-    "analysis-impl",
-    "core-impl",
-    "indexing-impl",
-    "java-analysis-impl",
-    "java-indexing-impl",
-    "java-psi-impl",
-    "projectModel-impl",
-    "structure-view-impl",
-    "xml-analysis-impl",
-    "xml-psi-impl",
-    "xml-structure-view-impl",
+    "intellij.platform.analysis.impl",
+    "intellij.platform.core.impl",
+    "intellij.platform.indexing.impl",
+    "intellij.java.analysis.impl",
+    "intellij.java.indexing.impl",
+    "intellij.java.psi.impl",
+    "intellij.platform.projectModel.impl",
+    "intellij.platform.structureView.impl",
+    "intellij.xml.analysis.impl",
+    "intellij.xml.psi.impl",
+    "intellij.xml.structureView.impl",
+    "intellij.jvm.analysis.impl",
   ]
   private final BuildContext buildContext
 
@@ -74,30 +76,31 @@ class IntelliJCoreArtifactsBuilder {
       ant.mkdir(dir: coreArtifactDir)
       String home = buildContext.paths.communityHome
       List<String> analysisModules = ANALYSIS_API_MODULES + ANALYSIS_IMPL_MODULES
-      new LayoutBuilder(ant, buildContext.project, false).layout(coreArtifactDir) {
+      new LayoutBuilder(buildContext, false).layout(coreArtifactDir) {
         jar("intellij-core.jar") {
-          module("util-rt")
-          module("util")
-          module("core-api")
-          module("core-impl")
-          module("extensions")
-          module("java-psi-api")
-          module("java-psi-impl")
-        }
-
-        jar("annotations.jar") {
-          module("annotations-common")
-          module("annotations")
+          module("intellij.platform.util.rt")
+          module("intellij.platform.util")
+          module("intellij.platform.core")
+          module("intellij.platform.core.impl")
+          module("intellij.platform.extensions")
+          module("intellij.java.psi")
+          module("intellij.java.psi.impl")
         }
 
         jar("intellij-core-analysis.jar") {
           analysisModules.each { module it }
         }
 
-        ["ASM", "Guava", "picocontainer", "Trove4j", "cli-parser", "Snappy-Java", "jayatana", "imgscalr", "batik", "xmlgraphics-commons"].each {
+        [
+          "ASM", "Guava", "picocontainer", "Trove4j", "cli-parser", "lz4-java", "jayatana", "imgscalr", "batik", "xmlgraphics-commons",
+         "OroMatcher", "jna", "Log4J", "StreamEx"
+        ].each {
           projectLibrary(it)
         }
+        projectLibrary("jetbrains-annotations-java5", true)
+        projectLibrary("JDOM", true)
       }
+      ant.move(file: "$coreArtifactDir/annotations-java5.jar", tofile: "$coreArtifactDir/annotations.jar")
       buildContext.notifyArtifactBuilt(coreArtifactDir)
 
       def intellijCoreZip = "${buildContext.paths.artifacts}/intellij-core-${buildContext.buildNumber}.zip"

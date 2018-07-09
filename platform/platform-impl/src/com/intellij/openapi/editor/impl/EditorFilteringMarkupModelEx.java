@@ -85,7 +85,7 @@ public class EditorFilteringMarkupModelEx implements MarkupModelEx {
   @NotNull
   public RangeHighlighter[] getAllHighlighters() {
     List<RangeHighlighter> list = ContainerUtil.filter(myDelegate.getAllHighlighters(), IS_AVAILABLE);
-    return list.toArray(new RangeHighlighter[list.size()]);
+    return list.toArray(RangeHighlighter.EMPTY_ARRAY);
   }
 
   @Override

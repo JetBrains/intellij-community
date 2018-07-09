@@ -125,7 +125,7 @@ public class JdkPopupAction extends AnAction {
               }
             });
           }
-          return result.toArray(new AnAction[result.size()]);
+          return result.toArray(AnAction.EMPTY_ARRAY);
         }
       });
     JPopupMenu menuComponent = menu.getComponent();
@@ -157,7 +157,7 @@ public class JdkPopupAction extends AnAction {
           String line = lines.get(1);
           int pos = line.indexOf("(build ");
           if (pos != -1) {
-            stringBuilder.append(line.substring(pos + 7, line.length() - 1));
+            stringBuilder.append(line, pos + 7, line.length() - 1);
           }
           line = lines.get(2);
           pos = line.indexOf(" (build");

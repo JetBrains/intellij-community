@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.internal;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo;
@@ -68,21 +69,33 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
 
   @SuppressWarnings("unchecked")
   protected void doExecute() throws Exception {
-    final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
-    Project ideProject = getIdeProject();
-    RemoteExternalSystemProjectResolver resolver = manager.getFacade(ideProject, myProjectPath, getExternalSystemId()).getResolver();
-    ExternalSystemExecutionSettings settings = ExternalSystemApiUtil.getExecutionSettings(ideProject, myProjectPath, getExternalSystemId());
-    if(StringUtil.isNotEmpty(myVmOptions)) {
-      settings.withVmOptions(ParametersListUtil.parse(myVmOptions));
-    }
-    if(StringUtil.isNotEmpty(myArguments)) {
-      settings.withArguments(ParametersListUtil.parse(myArguments));
-    }
-
     ExternalSystemProgressNotificationManagerImpl progressNotificationManager =
       (ExternalSystemProgressNotificationManagerImpl)ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
     ExternalSystemTaskId id = getId();
-    progressNotificationManager.onStart(id, myProjectPath);
+
+    Project ideProject;
+    RemoteExternalSystemProjectResolver resolver;
+    ExternalSystemExecutionSettings settings;
+    try {
+      progressNotificationManager.onStart(id, myProjectPath);
+
+      final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
+      ideProject = getIdeProject();
+      resolver = manager.getFacade(ideProject, myProjectPath, getExternalSystemId()).getResolver();
+      settings = ExternalSystemApiUtil.getExecutionSettings(ideProject, myProjectPath, getExternalSystemId());
+      if (StringUtil.isNotEmpty(myVmOptions)) {
+        settings.withVmOptions(ParametersListUtil.parse(myVmOptions));
+      }
+      if (StringUtil.isNotEmpty(myArguments)) {
+        settings.withArguments(ParametersListUtil.parse(myArguments));
+      }
+    }
+    catch (Exception e) {
+      progressNotificationManager.onFailure(id, e);
+      progressNotificationManager.onEnd(id);
+      throw e;
+    }
+
     try {
       DataNode<ProjectData> project = resolver.resolveProjectInfo(id, myProjectPath, myIsPreviewMode, settings);
       if (project != null) {
@@ -118,11 +131,6 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     return resolver.cancelTask(getId());
   }
 
-  @Nullable
-  public DataNode<ProjectData> getExternalProject() {
-    return myExternalProject.get();
-  }
-
   @Override
   @NotNull
   protected String wrapProgressText(@NotNull String text) {
@@ -134,7 +142,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     super.setState(state);
     if (state.isStopped()) {
       InternalExternalProjectInfo projectInfo =
-        new InternalExternalProjectInfo(getExternalSystemId(), getExternalProjectPath(), getExternalProject());
+        new InternalExternalProjectInfo(getExternalSystemId(), getExternalProjectPath(), myExternalProject.getAndSet(null));
       final long currentTimeMillis = System.currentTimeMillis();
       projectInfo.setLastImportTimestamp(currentTimeMillis);
       projectInfo.setLastSuccessfulImportTimestamp(state == ExternalSystemTaskState.FAILED ? -1 : currentTimeMillis);

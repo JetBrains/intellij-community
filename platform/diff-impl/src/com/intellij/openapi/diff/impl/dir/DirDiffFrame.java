@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NonNls;
  * @author Konstantin Bulenkov
  */
 public class DirDiffFrame extends FrameWrapper {
-  private DirDiffPanel myPanel;
+  private final DirDiffPanel myPanel;
 
   public DirDiffFrame(Project project, DirDiffTableModel model) {
     super(project, "DirDiffDialog");

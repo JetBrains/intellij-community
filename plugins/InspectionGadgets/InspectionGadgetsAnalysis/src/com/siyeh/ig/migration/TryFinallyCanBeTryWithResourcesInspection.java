@@ -22,20 +22,23 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
-import com.siyeh.ig.psiutils.PsiElementOrderComparator;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
+import com.siyeh.ig.psiutils.*;
+import gnu.trove.TIntArrayList;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
  * @author Bas Leijdekkers
@@ -66,11 +69,9 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
   }
 
   private static class TryFinallyCanBeTryWithResourcesFix extends InspectionGadgetsFix {
-
-    public TryFinallyCanBeTryWithResourcesFix() {}
-
-    @Override
+    @Nls
     @NotNull
+    @Override
     public String getFamilyName() {
       return InspectionGadgetsBundle.message("try.finally.can.be.try.with.resources.quickfix");
     }
@@ -83,204 +84,107 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         return;
       }
       final PsiTryStatement tryStatement = (PsiTryStatement)parent;
-      final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-      if (tryBlock == null) {
-        return;
-      }
-      final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-      if (finallyBlock == null) {
-        return;
-      }
-      final PsiElement[] tryBlockChildren = tryBlock.getChildren();
-      final Set<PsiLocalVariable> variables = new LinkedHashSet<>();
-      for (final PsiLocalVariable variable : collectVariables(tryStatement)) {
-        if (!isVariableUsedOutsideContext(variable, tryBlock)) {
-          variables.add(variable);
-        }
-      }
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      @NonNls final StringBuilder newTryStatementText = new StringBuilder("try (");
-      final Set<Integer> unwantedChildren = new HashSet<>(2);
-      boolean separator = false;
-      for (final PsiLocalVariable variable : variables) {
-        final boolean hasInitializer;
-        final PsiExpression initializer = variable.getInitializer();
-        if (initializer == null) {
-          hasInitializer = false;
-        }
-        else {
-          final PsiType type = initializer.getType();
-          hasInitializer = !PsiType.NULL.equals(type);
-        }
-        if (separator) {
-          newTryStatementText.append(';');
-        }
-        newTryStatementText.append(variable.getTypeElement().getText()).append(' ').append(variable.getName()).append('=');
-        if (hasInitializer) {
-          newTryStatementText.append(initializer.getText());
-        }
-        else {
-          final int index = findInitialization(tryBlockChildren, variable, false);
-          if (index < 0) {
-            return;
-          }
-          unwantedChildren.add(index);
-          final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)tryBlockChildren[index];
-          if (expressionStatement.getNextSibling() instanceof PsiWhiteSpace) {
-            unwantedChildren.add(index + 1);
-          }
-          final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expressionStatement.getExpression();
-          final PsiExpression rhs = assignmentExpression.getRExpression();
-          if (rhs == null) {
-            return;
-          }
-          newTryStatementText.append(rhs.getText());
-        }
-        separator = true;
-      }
-      if (!unwantedChildren.isEmpty()) {
-        int j = 1;
-        while (!unwantedChildren.contains(Integer.valueOf(j)) && j < tryBlockChildren.length - 1) {
-          tryStatement.getParent().addBefore(tryBlockChildren[j], tryStatement);
-          unwantedChildren.add(j);
-          j++;
-        }
-      }
-      newTryStatementText.append(") {");
-      final int tryBlockStatementsLength = tryBlockChildren.length - 1;
-      for (int i = 1; i < tryBlockStatementsLength; i++) {
-        final PsiElement child = tryBlockChildren[i];
-        if (unwantedChildren.contains(Integer.valueOf(i))) {
-          continue;
-        }
-        newTryStatementText.append(child.getText());
-      }
-      newTryStatementText.append('}');
-      final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
-      for (final PsiCatchSection catchSection : catchSections) {
-        newTryStatementText.append(catchSection.getText());
-      }
-      final PsiElement[] finallyChildren = finallyBlock.getChildren();
-      boolean appended = false;
-      final int finallyChildrenLength = finallyChildren.length - 1;
-      final List<PsiElement> savedComments = new ArrayList<>();
-      for (int i = 1; i < finallyChildrenLength; i++) {
-        final PsiElement child = finallyChildren[i];
-        if (isCloseStatement(child, variables)) {
-          continue;
-        }
-        if (!appended) {
-          if (child instanceof PsiComment) {
-            final PsiComment comment = (PsiComment)child;
-            final PsiElement prevSibling = child.getPrevSibling();
-            if (prevSibling instanceof PsiWhiteSpace && savedComments.isEmpty()) {
-              savedComments.add(prevSibling);
-            }
-            savedComments.add(comment);
-            final PsiElement nextSibling = child.getNextSibling();
-            if (nextSibling instanceof PsiWhiteSpace) {
-              savedComments.add(nextSibling);
-            }
-          }
-          else if (!(child instanceof PsiWhiteSpace)) {
-            newTryStatementText.append(" finally {");
-            for (final PsiElement savedComment : savedComments) {
-              newTryStatementText.append(savedComment.getText());
-            }
-            newTryStatementText.append(child.getText());
-            appended = true;
+      PsiCodeBlock tryBlock = tryStatement.getTryBlock();
+      if (tryBlock == null) return;
+      Context context = Context.from(tryStatement);
+      if (context == null) return;
+      String resourceList = context.myResourceVariables.stream()
+                                                       .map(ResourceVariable::generateResourceDeclaration)
+                                                       .collect(Collectors.joining(";"));
+      StringBuilder sb = new StringBuilder("try(");
+      sb.append(resourceList);
+      PsiResourceList resourceListElement = tryStatement.getResourceList();
+      if (resourceListElement != null) {
+        PsiElement[] children = resourceListElement.getChildren();
+        if (children.length > 2 && resourceListElement.getResourceVariablesCount() > 0) {
+          sb.append(";");
+          for (int i = 1; i < children.length - 1; i++) {
+            sb.append(children[i].getText());
           }
         }
-        else {
-          newTryStatementText.append(child.getText());
-        }
       }
-      if (appended) {
-        newTryStatementText.append('}');
-      }
-      for (final PsiLocalVariable variable : variables) {
-        variable.delete();
-      }
-      if (!appended) {
-        final int savedCommentsSize = savedComments.size();
-        final PsiElement parent1 = tryStatement.getParent();
-        for (int i = savedCommentsSize - 1; i >= 0; i--) {
-          final PsiElement savedComment = savedComments.get(i);
-          parent1.addAfter(savedComment, tryStatement);
-        }
-      }
-      final PsiStatement newTryStatement = factory.createStatementFromText(newTryStatementText.toString(), element);
-      tryStatement.replace(newTryStatement);
-    }
+      sb.append(")");
+      List<PsiLocalVariable> locals = StreamEx.of(context.myResourceVariables)
+                                              .map(resourceVariable -> resourceVariable.myVariable)
+                                              .select(PsiLocalVariable.class)
+                                              .sorted(PsiElementOrderComparator.getInstance())
+                                              .toList();
 
-    private static boolean isCloseStatement(PsiElement element, Set<PsiLocalVariable> variables) {
-      if (element instanceof PsiExpressionStatement) {
-        final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)element;
-        final PsiExpression expression = expressionStatement.getExpression();
-        if (!(expression instanceof PsiMethodCallExpression)) {
-          return false;
+      if (locals.size() == 1) {
+        PsiLocalVariable variable = locals.get(0);
+        PsiStatement declaration = PsiTreeUtil.getParentOfType(variable, PsiStatement.class);
+        if (declaration == null) return;
+        if (declaration.getParent() != tryStatement.getParent()) return;
+        List<PsiStatement> statements = collectStatementsBetween(declaration, tryStatement);
+        PsiJavaToken lBrace = tryBlock.getLBrace();
+        if (lBrace != null) {
+          for (int i = statements.size() - 1; i >= 0; i--) {
+            PsiStatement statement = statements.get(i);
+            tryBlock.addAfter(statement, lBrace);
+            if (statement.isValid()) {
+              statement.delete();
+            }
+          }
         }
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-        final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-        final String methodName = methodExpression.getReferenceName();
-        if (!HardcodedMethodConstants.CLOSE.equals(methodName)) {
-          return false;
-        }
-        final PsiExpression qualifier = methodExpression.getQualifierExpression();
-        if (!(qualifier instanceof PsiReferenceExpression)) {
-          return false;
-        }
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
-        final PsiElement target = referenceExpression.resolve();
-        if (!(target instanceof PsiLocalVariable)) {
-          return false;
-        }
-        final PsiLocalVariable variable = (PsiLocalVariable)target;
-        return variables.contains(variable);
       }
-      else if (element instanceof PsiIfStatement) {
-        final PsiIfStatement ifStatement = (PsiIfStatement)element;
-        if (ifStatement.getElseBranch() != null) {
-          return false;
+      restoreStatementsBeforeLastVariableInTryResource(tryStatement, tryBlock, context);
+
+
+      for (PsiStatement statement : context.myStatementsToDelete) {
+        if (statement.isValid()) {
+          new CommentTracker().deleteAndRestoreComments(statement);
         }
-        final PsiExpression condition = ifStatement.getCondition();
-        if (!(condition instanceof PsiBinaryExpression)) {
-          return false;
+      }
+      for (ResourceVariable variable : context.myResourceVariables) {
+        if (!variable.myUsedOutsideTry) {
+          if (variable.myVariable.isValid()) {
+            new CommentTracker().deleteAndRestoreComments(variable.myVariable);
+          }
         }
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)condition;
-        final IElementType tokenType = binaryExpression.getOperationTokenType();
-        if (!JavaTokenType.NE.equals(tokenType)) {
-          return false;
-        }
-        final PsiExpression lhs = binaryExpression.getLOperand();
-        final PsiExpression rhs = binaryExpression.getROperand();
-        if (rhs == null) {
-          return false;
-        }
-        if (PsiType.NULL.equals(rhs.getType())) {
-          if (resolveLocalVariable(lhs) == null) return false;
-        }
-        else if (PsiType.NULL.equals(lhs.getType())) {
-          if (resolveLocalVariable(rhs) == null) return false;
-        }
-        else {
-          return false;
-        }
-        final PsiStatement thenBranch = ifStatement.getThenBranch();
-        if (thenBranch instanceof PsiExpressionStatement) {
-          return isCloseStatement(thenBranch, variables);
-        }
-        else if (thenBranch instanceof PsiBlockStatement) {
-          final PsiBlockStatement blockStatement = (PsiBlockStatement)thenBranch;
-          final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
-          return isCloseStatement(ControlFlowUtils.getOnlyStatementInBlock(codeBlock), variables);
-        }
-        else {
-          return false;
-        }
+      }
+      sb.append(tryBlock.getText());
+      for (PsiCatchSection section : tryStatement.getCatchSections()) {
+        sb.append(section.getText());
+      }
+      PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
+      if (finallyBlock == null) return;
+      if (!ControlFlowUtils.isEmptyCodeBlock(finallyBlock)) {
+        sb.append("finally").append(finallyBlock.getText());
       }
       else {
-        return false;
+        PsiElement[] finallyBlockChildren = finallyBlock.getChildren();
+        if (!StreamEx.of(finallyBlockChildren).skip(1).limit(finallyBlockChildren.length - 2).allMatch(el -> el instanceof PsiWhiteSpace)) {
+          PsiElement tryParent = tryStatement.getParent();
+          tryParent.addRangeAfter(finallyBlockChildren[1], finallyBlockChildren[finallyBlockChildren.length - 2], tryStatement);
+        }
+      }
+      tryStatement.replace(JavaPsiFacade.getElementFactory(project).createStatementFromText(sb.toString(), tryStatement));
+    }
+
+
+    private static void restoreStatementsBeforeLastVariableInTryResource(PsiTryStatement tryStatement,
+                                                                         PsiCodeBlock tryBlock,
+                                                                         Context context) {
+      Optional<PsiExpression> lastInTryVariable = StreamEx.of(context.myResourceVariables)
+                                                          .map(v -> v.myInitializer)
+                                                          .filter(e -> e != null && PsiTreeUtil.isAncestor(tryBlock, e, false))
+                                                          .max(PsiElementOrderComparator.getInstance());
+      List<PsiStatement> elementsToRestore = new ArrayList<>();
+      if (lastInTryVariable.isPresent()) {
+        PsiStatement last = PsiTreeUtil.getParentOfType(lastInTryVariable.get(), PsiStatement.class);
+        PsiStatement[] statements = tryBlock.getStatements();
+        for (int i = 0; i < statements.length && statements[i] != last; i++) {
+          PsiStatement current = statements[i];
+          if (context.myStatementsToDelete.contains(current)) {
+            continue;
+          }
+          elementsToRestore.add(current);
+        }
+      }
+      PsiElement tryStatementParent = tryStatement.getParent();
+      for (PsiStatement statement : elementsToRestore) {
+        tryStatementParent.addBefore(statement, tryStatement);
+        statement.delete();
       }
     }
   }
@@ -300,35 +204,158 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     @Override
     public void visitTryStatement(PsiTryStatement tryStatement) {
       super.visitTryStatement(tryStatement);
-      final PsiResourceList resourceList = tryStatement.getResourceList();
-      if (resourceList != null) {
-        return;
+      if (Context.from(tryStatement) == null) return;
+      registerStatementError(tryStatement);
+    }
+  }
+
+  private static class Context {
+    final @NotNull List<ResourceVariable> myResourceVariables;
+    final @NotNull Set<PsiStatement> myStatementsToDelete;
+
+    private Context(@NotNull List<ResourceVariable> resourceVariables, @NotNull Set<PsiStatement> statementsToDelete) {
+      myResourceVariables = resourceVariables;
+      myStatementsToDelete = statementsToDelete;
+    }
+
+    static @Nullable
+    Context from(@NotNull PsiTryStatement tryStatement) {
+      PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
+      if (finallyBlock == null) return null;
+      PsiCodeBlock tryBlock = tryStatement.getTryBlock();
+      if (tryBlock == null) return null;
+      PsiStatement[] tryStatements = tryBlock.getStatements();
+      PsiStatement[] finallyStatements = finallyBlock.getStatements();
+      BitSet closedVariableStatementIndices = new BitSet(finallyStatements.length);
+      Set<PsiVariable> collectedVariables = new HashSet<>();
+      for (int i = 0, length = finallyStatements.length; i < length; i++) {
+        PsiStatement statement = finallyStatements[i];
+        closedVariableStatementIndices.set(i, findAutoCloseableVariables(statement, collectedVariables));
       }
-      final PsiCodeBlock tryBlock = tryStatement.getTryBlock();
-      if (tryBlock == null) {
-        return;
-      }
-      final List<PsiLocalVariable> variables = collectVariables(tryStatement);
-      if (variables.isEmpty()) {
-        return;
-      }
-      final PsiStatement[] tryBlockStatements = tryBlock.getStatements();
-      for (PsiVariable variable : variables) {
-        final boolean hasInitializer;
-        final PsiExpression initializer = variable.getInitializer();
-        if (initializer == null) {
-          hasInitializer = false;
+      if (collectedVariables.isEmpty()) return null;
+      if (resourceVariablesUsedInFinally(finallyStatements, closedVariableStatementIndices, collectedVariables)) return null;
+      if (resourceVariableUsedInCatches(tryStatement, collectedVariables)) return null;
+
+      List<ResourceVariable> resourceVariables = new ArrayList<>();
+      List<PsiStatement> statementsToDelete = new ArrayList<>();
+      TIntArrayList initializerPositions = new TIntArrayList();
+      for (PsiVariable resourceVariable : collectedVariables) {
+        boolean variableUsedOutsideTry = isVariableUsedOutsideContext(resourceVariable, tryStatement);
+        if (!PsiUtil.isLanguageLevel9OrHigher(finallyBlock) && variableUsedOutsideTry) return null;
+        if (!variableUsedOutsideTry && resourceVariable instanceof PsiLocalVariable) {
+          PsiExpression initializer = resourceVariable.getInitializer();
+          boolean hasNonNullInitializer = initializer != null && !PsiType.NULL.equals(initializer.getType());
+          if (!hasNonNullInitializer) {
+            int assignmentStatementIndex = findInitialization(tryStatements, resourceVariable);
+            if (assignmentStatementIndex == -1) return null;
+            initializerPositions.add(assignmentStatementIndex);
+            PsiExpressionStatement assignmentStatement = (PsiExpressionStatement)tryStatements[assignmentStatementIndex];
+            PsiExpression expression = assignmentStatement.getExpression();
+            PsiAssignmentExpression assignment = tryCast(expression, PsiAssignmentExpression.class);
+            if (assignment == null) return null;
+            initializer = assignment.getRExpression();
+            if (initializer == null) return null;
+            statementsToDelete.add(tryStatements[assignmentStatementIndex]);
+          }
+          else {
+            if (VariableAccessUtils.variableIsAssigned(resourceVariable, tryBlock)) return null;
+          }
+          resourceVariables.add(new ResourceVariable(initializer, false, resourceVariable));
+        }
+        else if (((resourceVariable instanceof PsiLocalVariable && resourceVariable.getInitializer() != null) ||
+                  resourceVariable instanceof PsiParameter) && FinalUtils.canBeFinal(resourceVariable)) {
+          resourceVariables.add(new ResourceVariable(null, true, resourceVariable));
         }
         else {
-          final PsiType type = initializer.getType();
-          hasInitializer = !PsiType.NULL.equals(type);
-        }
-        final int index = findInitialization(tryBlockStatements, variable, hasInitializer);
-        if ((index >= 0) == hasInitializer || isVariableUsedOutsideContext(variable, tryBlock)) {
-          return;
+          return null;
         }
       }
-      registerStatementError(tryStatement);
+      for (int i = 0; i < finallyStatements.length; i++) {
+        if (closedVariableStatementIndices.get(i)) {
+          statementsToDelete.add(finallyStatements[i]);
+        }
+      }
+      if (!noStatementsBetweenVariableDeclarations(collectedVariables)) return null;
+      if (!initializersAreAtTheBeginning(initializerPositions)) return null;
+
+      Collections.sort(resourceVariables, Comparator.comparing(o -> o.myVariable, PsiElementOrderComparator.getInstance()));
+      return new Context(resourceVariables, new HashSet<>(statementsToDelete));
+    }
+
+    private static boolean initializersAreAtTheBeginning(TIntArrayList initializerPositions) {
+      initializerPositions.sort();
+      for (int i = 0; i < initializerPositions.size(); i++) {
+        if (initializerPositions.get(i) != i) return false;
+      }
+      return true;
+    }
+
+    private static boolean noStatementsBetweenVariableDeclarations(Set<PsiVariable> collectedVariables) {
+      return StreamEx.of(collectedVariables)
+                     .select(PsiLocalVariable.class)
+                     .sorted(PsiElementOrderComparator.getInstance())
+                     .map(var -> PsiTreeUtil.getParentOfType(var, PsiStatement.class))
+                     .pairMap((l1, l2) -> l1 != null && l2 != null && l1.getParent() == l2.getParent() && collectStatementsBetween(l1, l2).isEmpty())
+                     .allMatch(b -> b);
+    }
+  }
+
+  private static List<PsiStatement> collectStatementsBetween(PsiStatement startExclusive, PsiStatement endExclusive) {
+    List<PsiStatement> statements = new ArrayList<>();
+    PsiStatement current = PsiTreeUtil.getNextSiblingOfType(startExclusive, PsiStatement.class);
+    while (current != endExclusive && current != null) {
+      statements.add(current);
+      current = PsiTreeUtil.getNextSiblingOfType(current.getNextSibling(), PsiStatement.class);
+    }
+    return statements;
+  }
+
+  private static boolean resourceVariablesUsedInFinally(PsiStatement[] statements,
+                                                        BitSet closedVariableStatementIndices,
+                                                        Set<PsiVariable> resourceVariables) {
+    for (int i = 0; i < statements.length; i++) {
+      if (!closedVariableStatementIndices.get(i)) {
+        Set<PsiVariable> usedVariables = VariableAccessUtils.collectUsedVariables(statements[i]);
+        for (PsiVariable usedVariable : usedVariables) {
+          if (resourceVariables.contains(usedVariable)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean resourceVariableUsedInCatches(PsiTryStatement tryStatement, Set<PsiVariable> collectedVariables) {
+    for (PsiCatchSection catchSection : tryStatement.getCatchSections()) {
+      for (PsiVariable variable : collectedVariables) {
+        if (VariableAccessUtils.variableIsUsed(variable, catchSection)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private static class ResourceVariable {
+    final @Nullable("when in java 9") PsiExpression myInitializer;
+    final boolean myUsedOutsideTry; // true only if Java9 or above
+    final @NotNull PsiVariable myVariable;
+
+    ResourceVariable(@Nullable PsiExpression initializer, boolean usedOutsideTry, @NotNull PsiVariable variable) {
+      myInitializer = initializer;
+      myUsedOutsideTry = usedOutsideTry;
+      myVariable = variable;
+    }
+
+    String generateResourceDeclaration() {
+      if (myUsedOutsideTry) {
+        return myVariable.getName();
+      }
+      else {
+        assert myInitializer != null;
+        return Objects.requireNonNull(myVariable.getTypeElement()).getText() + " " + myVariable.getName() + "=" + myInitializer.getText();
+      }
     }
   }
 
@@ -342,62 +369,31 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     return visitor.variableIsUsed();
   }
 
-  private static List<PsiLocalVariable> collectVariables(PsiTryStatement tryStatement) {
-    final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
-    if (finallyBlock == null) {
-      return Collections.emptyList();
-    }
-    final PsiStatement[] statements = finallyBlock.getStatements();
-    if (statements.length == 0) {
-      return Collections.emptyList();
-    }
-    final List<PsiLocalVariable> variables = new ArrayList<>();
-    for (PsiStatement statement : statements) {
-      final PsiLocalVariable variable = findAutoCloseableVariable(statement);
-      if (variable != null) {
-        variables.add(variable);
-      }
-    }
-    Collections.sort(variables, PsiElementOrderComparator.getInstance());
-    return variables;
-  }
-
-  @Nullable
-  private static PsiLocalVariable findAutoCloseableVariable(PsiStatement statement) {
+  private static boolean findAutoClosableVariableWithoutTry(PsiStatement statement, Set<PsiVariable> variables) {
     if (statement instanceof PsiIfStatement) {
       final PsiIfStatement ifStatement = (PsiIfStatement)statement;
-      if (ifStatement.getElseBranch() != null) {
-        return null;
-      }
+      if (ifStatement.getElseBranch() != null) return false;
       final PsiExpression condition = ifStatement.getCondition();
-      if (!(condition instanceof PsiBinaryExpression)) {
-        return null;
-      }
+      if (!(condition instanceof PsiBinaryExpression)) return false;
       final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)condition;
       final IElementType tokenType = binaryExpression.getOperationTokenType();
-      if (!JavaTokenType.NE.equals(tokenType)) {
-        return null;
-      }
+      if (!JavaTokenType.NE.equals(tokenType)) return false;
       final PsiExpression lhs = binaryExpression.getLOperand();
       final PsiExpression rhs = binaryExpression.getROperand();
-      if (rhs == null) {
-        return null;
-      }
+      if (rhs == null) return false;
       final PsiElement variable;
       if (PsiType.NULL.equals(rhs.getType())) {
-        variable = resolveLocalVariable(lhs);
+        variable = ExpressionUtils.resolveLocalVariable(lhs);
       }
       else if (PsiType.NULL.equals(lhs.getType())) {
-        variable = resolveLocalVariable(rhs);
+        variable = ExpressionUtils.resolveLocalVariable(rhs);
       }
       else {
-        return null;
+        return false;
       }
-      if (variable == null) {
-        return null;
-      }
+      if (variable == null) return false;
       final PsiStatement thenBranch = ifStatement.getThenBranch();
-      final PsiLocalVariable resourceVariable;
+      final PsiVariable resourceVariable;
       if (thenBranch instanceof PsiExpressionStatement) {
         resourceVariable = findAutoCloseableVariable(thenBranch);
       }
@@ -407,40 +403,70 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         resourceVariable = findAutoCloseableVariable(ControlFlowUtils.getOnlyStatementInBlock(codeBlock));
       }
       else {
-        return null;
+        return false;
       }
       if (variable.equals(resourceVariable)) {
-        return resourceVariable;
+        variables.add(resourceVariable);
+        return true;
       }
     }
     else if (statement instanceof PsiExpressionStatement) {
       final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
       final PsiExpression expression = expressionStatement.getExpression();
-      if (!(expression instanceof PsiMethodCallExpression)) {
-        return null;
-      }
+      if (!(expression instanceof PsiMethodCallExpression)) return false;
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final String methodName = methodExpression.getReferenceName();
-      if (!HardcodedMethodConstants.CLOSE.equals(methodName)) {
-        return null;
+      if (HardcodedMethodConstants.CLOSE.equals(methodName)) {
+        final PsiExpression qualifier = methodExpression.getQualifierExpression();
+        if (!(qualifier instanceof PsiReferenceExpression)) return false;
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
+        final PsiElement target = referenceExpression.resolve();
+        if (!(target instanceof PsiLocalVariable || target instanceof PsiParameter) || target instanceof PsiResourceVariable) return false;
+        PsiVariable variable = (PsiVariable)target;
+        if (!isAutoCloseable(variable)) return false;
+        variables.add(variable);
+        return true;
       }
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (!(qualifier instanceof PsiReferenceExpression)) {
-        return null;
+      else {
+        return false;
       }
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
-      final PsiElement target = referenceExpression.resolve();
-      if (!(target instanceof PsiLocalVariable) || target instanceof PsiResourceVariable) {
-        return null;
-      }
-      final PsiLocalVariable variable = (PsiLocalVariable)target;
-      if (!isAutoCloseable(variable)) {
-        return null;
-      }
-      return variable;
     }
-    return null;
+    return false;
+  }
+
+  @Nullable
+  private static PsiVariable findAutoCloseableVariable(PsiStatement statement) {
+    Set<PsiVariable> variables = new HashSet<>(1);
+    if (!findAutoCloseableVariables(statement, variables)) return null;
+    if (variables.isEmpty()) {
+      return null;
+    }
+    else {
+      return ContainerUtil.getFirstItem(variables);
+    }
+  }
+
+  private static boolean findAutoCloseableVariables(PsiStatement statement, Set<PsiVariable> variables) {
+    if (findAutoClosableVariableWithoutTry(statement, variables)) return true;
+    if (statement instanceof PsiTryStatement) {
+      PsiTryStatement tryStatement = (PsiTryStatement)statement;
+      if (tryStatement.getResourceList() != null || tryStatement.getFinallyBlock() != null) return true;
+      PsiCodeBlock[] catchBlocks = tryStatement.getCatchBlocks();
+      if (catchBlocks.length != 1) return true;
+      PsiStatement[] catchStatements = catchBlocks[0].getStatements();
+      if (catchStatements.length != 0) return true;
+      PsiCodeBlock tryBlock = tryStatement.getTryBlock();
+      if (tryBlock == null) return true;
+      PsiStatement[] tryStatements = tryBlock.getStatements();
+      for (PsiStatement tryStmt : tryStatements) {
+        if (!findAutoClosableVariableWithoutTry(tryStmt, variables)) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
   }
 
   private static boolean isAutoCloseable(PsiVariable variable) {
@@ -448,44 +474,31 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     return InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_AUTO_CLOSEABLE);
   }
 
-  private static int findInitialization(PsiElement[] elements, PsiVariable variable, boolean hasInitializer) {
+  private static int findInitialization(PsiElement[] elements, PsiVariable variable) {
     int result = -1;
     final int statementsLength = elements.length;
     for (int i = 0; i < statementsLength; i++) {
       final PsiElement element = elements[i];
-      if (isNormalAssignment(element, variable)) {
-        if (result >= 0 && !hasInitializer) {
+      if (isAssignmentToVariable(element, variable)) {
+        if (result >= 0) {
           return -1;
-        }
-        if (hasInitializer) {
-          return i;
         }
         result = i;
       }
       else if (VariableAccessUtils.variableIsAssigned(variable, element)) {
-        return hasInitializer ? i : -1;
+        return -1;
       }
     }
     return result;
   }
 
-  private static boolean isNormalAssignment(PsiElement element, PsiVariable variable) {
-    if (!(element instanceof PsiExpressionStatement)) {
-      return false;
-    }
-    final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)element;
-    final PsiExpression expression = expressionStatement.getExpression();
-    if (!(expression instanceof PsiAssignmentExpression)) {
-      return false;
-    }
-    final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)expression;
-    final PsiExpression lhs = assignmentExpression.getLExpression();
-    if (!(lhs instanceof PsiReferenceExpression)) {
-      return false;
-    }
-    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
-    final PsiElement target = referenceExpression.resolve();
-    return variable.equals(target);
+  private static boolean isAssignmentToVariable(PsiElement element, PsiVariable variable) {
+    PsiExpressionStatement expressionStatement = tryCast(element, PsiExpressionStatement.class);
+    if (expressionStatement == null) return false;
+    PsiAssignmentExpression assignmentExpression = tryCast(expressionStatement.getExpression(), PsiAssignmentExpression.class);
+    if (assignmentExpression == null) return false;
+    if (assignmentExpression.getRExpression() == null) return false;
+    return ExpressionUtils.isReferenceTo(assignmentExpression.getLExpression(), variable);
   }
 
   private static class VariableUsedOutsideContextVisitor extends JavaRecursiveElementWalkingVisitor {
@@ -531,7 +544,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         return false;
       }
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-      if (argumentList.getExpressions().length != 0) {
+      if (!argumentList.isEmpty()) {
         return false;
       }
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
@@ -542,14 +555,5 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     public boolean variableIsUsed() {
       return used;
     }
-  }
-
-  private static PsiLocalVariable resolveLocalVariable(PsiExpression expression) {
-    if (!(expression instanceof PsiReferenceExpression)) {
-      return null;
-    }
-    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
-    final PsiElement target = referenceExpression.resolve();
-    return !(target instanceof PsiLocalVariable) ? null : (PsiLocalVariable)target;
   }
 }

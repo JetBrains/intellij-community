@@ -483,7 +483,7 @@ public class ToBeMergedDialog extends DialogWrapper {
   private class MyListCellRenderer implements TableCellRenderer {
     private final JPanel myPanel;
     private final CommittedChangeListRenderer myRenderer;
-    private JCheckBox myCheckBox;
+    private final JCheckBox myCheckBox;
 
     private MyListCellRenderer() {
       myPanel = new JPanel(new BorderLayout());

@@ -29,7 +29,7 @@
       <add-to-group group-id="VcsGroups" anchor="last"/>
     </group>
     <action id="ConfigureIcs" class="org.jetbrains.settingsRepository.actions.ConfigureIcsAction">
-      <add-to-group group-id="ExportImportGroup"/>
+      <add-to-group group-id="ExportImportGroup" anchor="after" relative-to-action="ExportSettings"/>
       <add-to-group group-id="WelcomeScreen.Configure" anchor="after" relative-to-action="WelcomeScreen.Configure.Export"/>
     </action>
     <!--<action id="CommitToIcs" class="org.jetbrains.settingsRepository.actions.CommitToIcsAction">-->

@@ -43,8 +43,9 @@ public class InvertBooleanAction extends BaseRefactoringAction {
     return false;
   }
 
-  protected boolean isAvailableOnElementInEditorAndFile(@NotNull final PsiElement element, 
-                                                        @NotNull final Editor editor, 
+  @Override
+  protected boolean isAvailableOnElementInEditorAndFile(@NotNull final PsiElement element,
+                                                        @NotNull final Editor editor,
                                                         @NotNull PsiFile file,
                                                         @NotNull DataContext context) {
     for (InvertBooleanDelegate delegate : Extensions.getExtensions(InvertBooleanDelegate.EP_NAME)) {

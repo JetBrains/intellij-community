@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInspection.ex;
 
@@ -63,7 +51,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
   @TestOnly
   public static boolean INIT_INSPECTIONS;
   @NotNull protected final Supplier<List<InspectionToolWrapper>> myToolSupplier;
-  protected final Map<String, Element> myUninitializedSettings = new TreeMap<>();
+  protected final Map<String, Element> myUninitializedSettings = new TreeMap<>(); // accessed in EDT
   protected Map<String, ToolsImpl> myTools = new THashMap<>();
   protected volatile Set<String> myChangedToolNames;
   @Attribute("is_locked")
@@ -91,11 +79,11 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     this(profileName, toolSupplier, (BaseInspectionProfileManager)InspectionProfileManager.getInstance(), baseProfile, null);
   }
 
-  public InspectionProfileImpl(@NotNull String profileName,
-                               @NotNull Supplier<List<InspectionToolWrapper>> toolSupplier,
-                               @NotNull BaseInspectionProfileManager profileManager,
-                               @Nullable InspectionProfileImpl baseProfile,
-                               @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
+  protected InspectionProfileImpl(@NotNull String profileName,
+                                  @NotNull Supplier<List<InspectionToolWrapper>> toolSupplier,
+                                  @NotNull BaseInspectionProfileManager profileManager,
+                                  @Nullable InspectionProfileImpl baseProfile,
+                                  @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
     super(profileName, profileManager);
 
     myToolSupplier = toolSupplier;
@@ -124,8 +112,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     final InspectionToolWrapper inspectionTool = toolWrapper.createCopy();
     if (toolWrapper.isInitialized()) {
       Element config = new Element("config");
-      toolWrapper.getTool().writeSettings(config);
-      inspectionTool.getTool().readSettings(config);
+      ScopeToolState.tryWriteSettings(toolWrapper.getTool(), config);
+      ScopeToolState.tryReadSettings(inspectionTool.getTool(), config);
     }
     return inspectionTool;
   }
@@ -135,7 +123,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     Project project = element == null ? null : element.getProject();
     final ToolsImpl tools = getToolsOrNull(inspectionToolKey.toString(), project);
     HighlightDisplayLevel level = tools != null ? tools.getLevel(element) : HighlightDisplayLevel.WARNING;
-    if (!getProfileManager().getOwnSeverityRegistrar().isSeverityValid(level.getSeverity().getName())) {
+    if (!getProfileManager().getSeverityRegistrar().isSeverityValid(level.getSeverity().getName())) {
       level = HighlightDisplayLevel.WARNING;
       setErrorLevel(inspectionToolKey, level, project);
     }
@@ -149,7 +137,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     final Element highlightElement = element.getChild(USED_LEVELS);
     if (highlightElement != null) {
       // from old profiles
-      getProfileManager().getOwnSeverityRegistrar().readExternal(highlightElement);
+      getProfileManager().getSeverityRegistrar().readExternal(highlightElement);
     }
 
     String version = element.getAttributeValue(VERSION_TAG);
@@ -353,11 +341,19 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     });
   }
 
+  /**
+   * Warning: Usage of this method is discouraged as if separate tool options are defined for different scopes, it just returns
+   * the options for the first scope which may lead to unexpected results. Consider using {@link #getInspectionTool(String, PsiElement)} instead.
+   *
+   * @param shortName an inspection short name
+   * @param project   a project
+   * @return an InspectionToolWrapper associated with this tool.
+   */
   @Override
   @Nullable
   public InspectionToolWrapper getInspectionTool(@NotNull String shortName, Project project) {
     final ToolsImpl tools = getToolsOrNull(shortName, project);
-    return tools != null? tools.getTool() : null;
+    return tools != null ? tools.getTool() : null;
   }
 
   public InspectionToolWrapper getToolById(@NotNull String id, @NotNull PsiElement element) {
@@ -431,7 +427,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     for (Tools toolList : myTools.values()) {
       result.add(toolList.getInspectionTool(element));
     }
-    return result.toArray(new InspectionToolWrapper[result.size()]);
+    return result.toArray(InspectionToolWrapper.EMPTY_ARRAY);
   }
 
   @Override

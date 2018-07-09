@@ -133,7 +133,7 @@ public final class LoaderFactory {
       // ignore
     }
 
-    final URL[] _urls = urls.toArray(new URL[urls.size()]);
+    final URL[] _urls = urls.toArray(new URL[0]);
     return new DesignTimeClassLoader(Arrays.asList(_urls), LoaderFactory.class.getClassLoader(), moduleName);
   }
 

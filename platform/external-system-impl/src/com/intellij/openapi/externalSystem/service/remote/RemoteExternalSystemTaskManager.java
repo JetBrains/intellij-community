@@ -45,17 +45,6 @@ public interface RemoteExternalSystemTaskManager<S extends ExternalSystemExecuti
                                @NotNull List<String> taskNames,
                                @NotNull String projectPath,
                                @Nullable ExternalSystemExecutionSettings settings,
-                               @NotNull List<String> vmOptions,
-                               @NotNull List<String> scriptParameters,
-                               @Nullable String jvmAgentSetup) throws ExternalSystemException
-      {
-      }
-
-      @Override
-      public void executeTasks(@NotNull ExternalSystemTaskId id,
-                               @NotNull List<String> taskNames,
-                               @NotNull String projectPath,
-                               @Nullable ExternalSystemExecutionSettings settings,
                                @Nullable String jvmAgentSetup) throws ExternalSystemException {
       }
 
@@ -88,6 +77,7 @@ public interface RemoteExternalSystemTaskManager<S extends ExternalSystemExecuti
   /**
    * @deprecated use {@link RemoteExternalSystemTaskManager#executeTasks(ExternalSystemTaskId, List, String, ExternalSystemExecutionSettings, String)}
    */
+  @Deprecated
   default void executeTasks(@NotNull ExternalSystemTaskId id,
                             @NotNull List<String> taskNames,
                             @NotNull String projectPath,

@@ -104,7 +104,7 @@ public class JobLauncherImpl extends JobLauncher {
     if (things.isEmpty()) return true;
 
     if (things.size() <= 1 ||
-        JobSchedulerImpl.CORES_COUNT <= CORES_FORK_THRESHOLD ||
+        JobSchedulerImpl.getJobPoolParallelism() <= CORES_FORK_THRESHOLD ||
         runInReadAction && ApplicationManager.getApplication().isWriteAccessAllowed()
       ) {
       final AtomicBoolean result = new AtomicBoolean(true);
@@ -119,7 +119,7 @@ public class JobLauncherImpl extends JobLauncher {
         }
       }, progress);
       if (runInReadAction) {
-        if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(runnable)) return false;
+        ApplicationManagerEx.getApplicationEx().runReadAction(runnable);
       }
       else {
         runnable.run();
@@ -130,15 +130,6 @@ public class JobLauncherImpl extends JobLauncher {
   }
 
   // This implementation is not really async
-
-  @NotNull
-  @Override
-  public <T> AsyncFuture<Boolean> invokeConcurrentlyUnderProgressAsync(@NotNull List<T> things,
-                                                                       ProgressIndicator progress,
-                                                                       boolean failFastOnAcquireReadAction,
-                                                                       @NotNull Processor<? super T> thingProcessor) {
-    return AsyncUtil.wrapBoolean(invokeConcurrentlyUnderProgress(things, progress, failFastOnAcquireReadAction, thingProcessor));
-  }
 
   @NotNull
   @Override
@@ -336,7 +327,7 @@ public class JobLauncherImpl extends JobLauncher {
     }
 
     List<ForkJoinTask<Boolean>> tasks = new ArrayList<>();
-    for (int i = 0; i < JobSchedulerImpl.CORES_COUNT; i++) {
+    for (int i = 0; i < JobSchedulerImpl.getJobPoolParallelism(); i++) {
       tasks.add(ForkJoinPool.commonPool().submit(new MyTask(i)));
     }
 

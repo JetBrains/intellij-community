@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
@@ -30,8 +16,11 @@ import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings;
+import com.intellij.diff.impl.DiffToolSubstitutor;
 import com.intellij.diff.requests.ContentDiffRequest;
+import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.DiffNotifications;
+import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.text.*;
@@ -48,7 +37,6 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.GenericDataProvider;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -56,6 +44,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
@@ -98,6 +87,7 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.Equality;
+import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -252,6 +242,41 @@ public class DiffUtil {
     if (OutsidersPsiFileSupport.isDiffFile(file)) return false;
     if (file.getUserData(TEMP_FILE_KEY) == Boolean.TRUE) return false;
     return true;
+  }
+
+
+  public static void installLineConvertor(@NotNull EditorEx editor, @NotNull FoldingModelSupport foldingSupport) {
+    assert foldingSupport.getCount() == 1;
+    TIntFunction foldingLineConvertor = foldingSupport.getLineConvertor(0);
+    editor.getGutterComponentEx().setLineNumberConvertor(foldingLineConvertor);
+  }
+
+  public static void installLineConvertor(@NotNull EditorEx editor, @NotNull DocumentContent content) {
+    TIntFunction contentLineConvertor = getContentLineConvertor(content);
+    editor.getGutterComponentEx().setLineNumberConvertor(contentLineConvertor);
+  }
+
+  public static void installLineConvertor(@NotNull EditorEx editor, @NotNull DocumentContent content,
+                                          @NotNull FoldingModelSupport foldingSupport, int editorIndex) {
+    TIntFunction contentLineConvertor = getContentLineConvertor(content);
+    TIntFunction foldingLineConvertor = foldingSupport.getLineConvertor(editorIndex);
+    editor.getGutterComponentEx().setLineNumberConvertor(mergeLineConverters(contentLineConvertor, foldingLineConvertor));
+  }
+
+  @Nullable
+  public static TIntFunction getContentLineConvertor(@NotNull DocumentContent content) {
+    return content.getUserData(DiffUserDataKeysEx.LINE_NUMBER_CONVERTOR);
+  }
+
+  @Nullable
+  public static TIntFunction mergeLineConverters(@Nullable TIntFunction convertor1, @Nullable TIntFunction convertor2) {
+    if (convertor1 == null && convertor2 == null) return null;
+    if (convertor1 == null) return convertor2;
+    if (convertor2 == null) return convertor1;
+    return value -> {
+      int value2 = convertor2.execute(value);
+      return value2 >= 0 ? convertor1.execute(value2) : value2;
+    };
   }
 
   //
@@ -522,11 +547,11 @@ public class DiffUtil {
                                        @Nullable Charset charset,
                                        @Nullable Boolean bom,
                                        boolean readOnly) {
-    if (readOnly) title += " " + DiffBundle.message("diff.content.read.only.content.title.suffix");
-
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(JBUI.Borders.empty(0, 4));
-    panel.add(new JBLabel(title).setCopyable(true), BorderLayout.CENTER);
+    JBLabel titleLabel = new JBLabel(title).setCopyable(true);
+    if (readOnly) titleLabel.setIcon(AllIcons.Ide.Readonly);
+    panel.add(titleLabel, BorderLayout.CENTER);
     if (charset != null && separator != null) {
       JPanel panel2 = new JPanel();
       panel2.setLayout(new BoxLayout(panel2, BoxLayout.X_AXIS));
@@ -632,11 +657,23 @@ public class DiffUtil {
     IdeFocusManager.getInstance(project).requestFocus(component, true);
   }
 
+  public static boolean isFocusedComponentInWindow(@Nullable Component component) {
+    if (component == null) return false;
+    Window window = UIUtil.getWindow(component);
+    if (window == null) return false;
+    Component windowFocusOwner = window.getMostRecentFocusOwner();
+    return windowFocusOwner != null && SwingUtilities.isDescendingFrom(windowFocusOwner, component);
+  }
+
+  public static void requestFocusInWindow(@Nullable Component component) {
+    if (component != null) component.requestFocusInWindow();
+  }
+
   public static void runPreservingFocus(@NotNull FocusableContext context, @NotNull Runnable task) {
-    boolean hadFocus = context.isFocused();
-    if (hadFocus) KeyboardFocusManager.getCurrentKeyboardFocusManager().clearFocusOwner();
+    boolean hadFocus = context.isFocusedInWindow();
+//    if (hadFocus) KeyboardFocusManager.getCurrentKeyboardFocusManager().clearFocusOwner();
     task.run();
-    if (hadFocus) context.requestFocus();
+    if (hadFocus) context.requestFocusInWindow();
   }
 
   //
@@ -772,26 +809,63 @@ public class DiffUtil {
   // Document modification
   //
 
+  public static boolean isSomeRangeSelected(@NotNull Editor editor, @NotNull Condition<? super BitSet> condition) {
+    List<Caret> carets = editor.getCaretModel().getAllCarets();
+    if (carets.size() != 1) return true;
+    Caret caret = carets.get(0);
+    if (caret.hasSelection()) return true;
+
+    return condition.value(getSelectedLines(editor));
+  }
+
   @NotNull
   public static BitSet getSelectedLines(@NotNull Editor editor) {
     Document document = editor.getDocument();
     int totalLines = getLineCount(document);
     BitSet lines = new BitSet(totalLines + 1);
 
-    for (Caret caret : editor.getCaretModel().getAllCarets()) {
-      if (caret.hasSelection()) {
-        int line1 = editor.offsetToLogicalPosition(caret.getSelectionStart()).line;
-        int line2 = editor.offsetToLogicalPosition(caret.getSelectionEnd()).line;
-        lines.set(line1, line2 + 1);
-        if (caret.getSelectionEnd() == document.getTextLength()) lines.set(totalLines);
-      }
-      else {
-        lines.set(caret.getLogicalPosition().line);
-        if (caret.getOffset() == document.getTextLength()) lines.set(totalLines);
+    if (editor instanceof EditorEx) {
+      int expectedCaretOffset = ((EditorEx)editor).getExpectedCaretOffset();
+      if (editor.getCaretModel().getOffset() != expectedCaretOffset) {
+        Caret caret = editor.getCaretModel().getPrimaryCaret();
+        appendSelectedLines(editor, lines, caret, expectedCaretOffset);
+        return lines;
       }
     }
 
+    for (Caret caret : editor.getCaretModel().getAllCarets()) {
+      appendSelectedLines(editor, lines, caret, -1);
+    }
+
     return lines;
+  }
+
+  private static void appendSelectedLines(@NotNull Editor editor, @NotNull BitSet lines, @NotNull Caret caret, int expectedCaretOffset) {
+    Document document = editor.getDocument();
+    int totalLines = getLineCount(document);
+
+    if (caret.hasSelection()) {
+      int line1 = editor.offsetToLogicalPosition(caret.getSelectionStart()).line;
+      int line2 = editor.offsetToLogicalPosition(caret.getSelectionEnd()).line;
+      lines.set(line1, line2 + 1);
+      if (caret.getSelectionEnd() == document.getTextLength()) lines.set(totalLines);
+    }
+    else {
+      int offset;
+      VisualPosition visualPosition;
+      if (expectedCaretOffset == -1) {
+        offset = caret.getOffset();
+        visualPosition = caret.getVisualPosition();
+      }
+      else {
+        offset = expectedCaretOffset;
+        visualPosition = editor.offsetToVisualPosition(expectedCaretOffset);
+      }
+
+      Pair<LogicalPosition, LogicalPosition> pair = EditorUtil.calcSurroundingRange(editor, visualPosition, visualPosition);
+      lines.set(pair.first.line, pair.second.line);
+      if (offset == document.getTextLength()) lines.set(totalLines);
+    }
   }
 
   public static boolean isSelectedByLine(int line, int line1, int line2) {
@@ -879,15 +953,67 @@ public class DiffUtil {
     }
   }
 
+  public static String applyModification(@NotNull CharSequence text,
+                                         @NotNull LineOffsets lineOffsets,
+                                         @NotNull CharSequence otherText,
+                                         @NotNull LineOffsets otherLineOffsets,
+                                         @NotNull List<Range> ranges) {
+    return new Object() {
+      private final StringBuilder stringBuilder = new StringBuilder();
+      private boolean isEmpty = true;
+
+      @NotNull
+      public String execute() {
+        int lastLine = 0;
+
+        for (Range range : ranges) {
+          CharSequence newChunkContent = getLinesContent(otherText, otherLineOffsets, range.start2, range.end2);
+
+          appendOriginal(lastLine, range.start1);
+          append(newChunkContent, range.end2 - range.start2);
+
+          lastLine = range.end1;
+        }
+
+        appendOriginal(lastLine, lineOffsets.getLineCount());
+
+        return stringBuilder.toString();
+      }
+
+      private void appendOriginal(int start, int end) {
+        append(getLinesContent(text, lineOffsets, start, end), end - start);
+      }
+
+      private void append(CharSequence content, int lineCount) {
+        if (lineCount > 0 && !isEmpty) {
+          stringBuilder.append('\n');
+        }
+        stringBuilder.append(content);
+        isEmpty &= lineCount == 0;
+      }
+    }.execute();
+  }
+
   @NotNull
   public static CharSequence getLinesContent(@NotNull Document document, int line1, int line2) {
     return getLinesRange(document, line1, line2).subSequence(document.getImmutableCharSequence());
   }
 
   @NotNull
+  public static CharSequence getLinesContent(@NotNull Document document, int line1, int line2, boolean includeNewLine) {
+    return getLinesRange(document, line1, line2, includeNewLine).subSequence(document.getImmutableCharSequence());
+  }
+
+  @NotNull
   public static CharSequence getLinesContent(@NotNull CharSequence sequence, @NotNull LineOffsets lineOffsets, int line1, int line2) {
+    return getLinesContent(sequence, lineOffsets, line1, line2, false);
+  }
+
+  @NotNull
+  public static CharSequence getLinesContent(@NotNull CharSequence sequence, @NotNull LineOffsets lineOffsets, int line1, int line2,
+                                             boolean includeNewline) {
     assert sequence.length() == lineOffsets.getTextLength();
-    return getLinesRange(lineOffsets, line1, line2, false).subSequence(sequence);
+    return getLinesRange(lineOffsets, line1, line2, includeNewline).subSequence(sequence);
   }
 
   /**
@@ -945,17 +1071,27 @@ public class DiffUtil {
   }
 
   @NotNull
+  public static List<String> getLines(@NotNull CharSequence text, @NonNls LineOffsets lineOffsets) {
+    return getLines(text, lineOffsets, 0, lineOffsets.getLineCount());
+  }
+
+  @NotNull
   public static List<String> getLines(@NotNull Document document, int startLine, int endLine) {
-    if (startLine < 0 || startLine > endLine || endLine > getLineCount(document)) {
+    return getLines(document.getCharsSequence(), LineOffsetsUtil.create(document), startLine, endLine);
+  }
+
+  @NotNull
+  public static List<String> getLines(@NotNull CharSequence text, @NonNls LineOffsets lineOffsets, int startLine, int endLine) {
+    if (startLine < 0 || startLine > endLine || endLine > lineOffsets.getLineCount()) {
       throw new IndexOutOfBoundsException(String.format("Wrong line range: [%d, %d); lineCount: '%d'",
-                                                        startLine, endLine, document.getLineCount()));
+                                                        startLine, endLine, lineOffsets.getLineCount()));
     }
 
     List<String> result = new ArrayList<>();
     for (int i = startLine; i < endLine; i++) {
-      int start = document.getLineStartOffset(i);
-      int end = document.getLineEndOffset(i);
-      result.add(document.getText(new TextRange(start, end)));
+      int start = lineOffsets.getLineStart(i);
+      int end = lineOffsets.getLineEnd(i);
+      result.add(text.subSequence(start, end).toString());
     }
     return result;
   }
@@ -1175,11 +1311,11 @@ public class DiffUtil {
                         BooleanGetter.FALSE);
   }
 
-  private static boolean compareWordMergeContents(@NotNull MergeWordFragment fragment,
-                                                  @NotNull List<? extends CharSequence> texts,
-                                                  @NotNull ComparisonPolicy policy,
-                                                  @NotNull ThreeSide side1,
-                                                  @NotNull ThreeSide side2) {
+  public static boolean compareWordMergeContents(@NotNull MergeWordFragment fragment,
+                                                 @NotNull List<? extends CharSequence> texts,
+                                                 @NotNull ComparisonPolicy policy,
+                                                 @NotNull ThreeSide side1,
+                                                 @NotNull ThreeSide side2) {
     int start1 = fragment.getStartOffset(side1);
     int end1 = fragment.getEndOffset(side1);
     int start2 = fragment.getStartOffset(side2);
@@ -1460,6 +1596,23 @@ public class DiffUtil {
 
     List<T> filteredTools = ContainerUtil.filter(tools, tool -> !suppressedTools.contains(tool.getClass()));
     return filteredTools.isEmpty() ? tools : filteredTools;
+  }
+
+  @Nullable
+  public static DiffTool findToolSubstitutor(@NotNull DiffTool tool, @NotNull DiffContext context, @NotNull DiffRequest request) {
+    for (DiffToolSubstitutor substitutor : DiffToolSubstitutor.EP_NAME.getExtensions()) {
+      DiffTool replacement = substitutor.getReplacement(tool, context, request);
+      if (replacement == null) continue;
+
+      boolean canShow = replacement.canShow(context, request);
+      if (!canShow) {
+        LOG.error("DiffTool substitutor returns invalid tool");
+        continue;
+      }
+
+      return replacement;
+    }
+    return null;
   }
 
   //

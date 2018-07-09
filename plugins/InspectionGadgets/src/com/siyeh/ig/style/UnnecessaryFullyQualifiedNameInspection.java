@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -25,12 +26,10 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -107,7 +106,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       final PsiJavaCodeReferenceElement referenceElement;
       if (descriptor.getHighlightType() == ProblemHighlightType.INFORMATION) {
@@ -178,8 +177,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         if ("package-info.java".equals(file.getName())) {
           return;
         }
-        final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(reference.getProject());
-        final JavaCodeStyleSettings javaSettings = styleSettings.getCustomSettings(JavaCodeStyleSettings.class);
+        final JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(reference.getContainingFile());
         if (javaSettings.useFqNamesInJavadocAlways()) {
           return;
         }
@@ -235,7 +233,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       if (!(target instanceof PsiClass)) {
         return;
       }
-      final CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(reference.getProject());
+      final CodeStyleSettings styleSettings = CodeStyle.getSettings(containingFile);
       final PsiDocComment containingComment = PsiTreeUtil.getParentOfType(reference, PsiDocComment.class);
       boolean reportAsInformationInsideJavadoc = false;
       if (containingComment != null) {
@@ -258,6 +256,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         collectInnerClassNames(reference, references);
       }
       Collections.reverse(references);
+      PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(containingFile.getProject()).getResolveHelper();
       for (final PsiJavaCodeReferenceElement aReference : references) {
         final PsiElement referenceTarget = aReference.resolve();
         if (!(referenceTarget instanceof PsiClass)) {
@@ -266,6 +265,9 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
         final PsiClass aClass = (PsiClass)referenceTarget;
         final String qualifiedName = aClass.getQualifiedName();
         if (qualifiedName == null) {
+          continue;
+        }
+        if (!resolveHelper.isAccessible(aClass, containingFile, null)) {
           continue;
         }
         if (!ImportUtils.nameCanBeImported(qualifiedName, reference)) {

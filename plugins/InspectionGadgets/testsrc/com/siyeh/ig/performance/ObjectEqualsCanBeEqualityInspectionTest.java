@@ -16,7 +16,9 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -28,6 +30,14 @@ public class ObjectEqualsCanBeEqualityInspectionTest extends LightInspectionTest
     doTest("class X {" +
            "  boolean m(Class c1, Class c2) {" +
            "    return c1./*'equals()' can be replaced with '=='*/equals/**/(c2);" +
+           "  }" +
+           "}");
+  }
+
+  public void testClassObjects() {
+    doTest("class X {" +
+           "  boolean m(Class c1, Class c2) {" +
+           "    return java.util.Objects./*'equals()' can be replaced with '=='*/equals/**/(c1, c2);" +
            "  }" +
            "}");
   }
@@ -70,6 +80,12 @@ public class ObjectEqualsCanBeEqualityInspectionTest extends LightInspectionTest
            "    return s1./*'equals()' can be replaced with '=='*/equals/**/(s2);" +
            "  }" +
            "}");
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 
   @Nullable

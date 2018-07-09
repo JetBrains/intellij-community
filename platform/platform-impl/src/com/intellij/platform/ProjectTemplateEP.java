@@ -23,7 +23,6 @@ import com.intellij.util.xmlb.annotations.Attribute;
  * Allows to define a project template in plugin.xml.
  *
  * @author Dmitry Avdeev
- *         Date: 07.11.13
  */
 public class ProjectTemplateEP extends AbstractExtensionPointBean {
 

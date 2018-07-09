@@ -27,7 +27,14 @@
         <xs:element type="feedbackType" name="feedback" minOccurs="0"/>
         <xs:element type="urlType" name="whatsnew" minOccurs="0"/>
         <xs:element type="keymapType" name="keymap" minOccurs="0"/>
-        <xs:element type="urlType" name="third-party" minOccurs="0"/>
+        <xs:element type="urlType" name="third-party" minOccurs="0">
+          <xs:annotation>
+            <xs:documentation>
+              Deprecated. This value isn't used anymore, because now file containing information about third-party libraries is bundled and
+              shown inside IDE.
+            </xs:documentation>
+          </xs:annotation>
+        </xs:element>
         <xs:element type="urlType" name="jetbrains-tv" minOccurs="0"/>
         <xs:element type="subscriptionsType" name="subscriptions" minOccurs="0"/>
         <xs:element type="statisticsType" name="statistics" minOccurs="0"/>
@@ -81,6 +88,13 @@
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
+    <xs:attribute type="xs:string" name="motto">
+      <xs:annotation>
+        <xs:documentation>
+          Motto of the product. Used as a comment for the command-line launcher. Default is "The Drive to Develop".
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
   <xs:complexType name="companyType">
     <xs:attribute type="xs:string" name="name" use="required">
@@ -95,6 +109,13 @@
       <xs:annotation>
         <xs:documentation>
           Shortened name of the product vendor without "Inc." or similar suffixes, e.g. "JetBrains" for JetBrains products.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
+    <xs:attribute type="xs:string" name="copyrightStart">
+      <xs:annotation>
+        <xs:documentation>
+          Year of first publication of the product protected by copyright.
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
@@ -348,5 +369,7 @@
     <xs:attribute type="xs:string" name="settings"/>
     <xs:attribute type="xs:string" name="service"/>
     <xs:attribute type="xs:string" name="service-key"/>
+    <xs:attribute type="xs:string" name="fus-settings"/>
+    <xs:attribute type="xs:string" name="event-log-settings"/>
   </xs:complexType>
 </xs:schema>

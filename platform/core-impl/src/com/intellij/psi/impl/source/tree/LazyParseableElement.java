@@ -19,10 +19,10 @@
  */
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.lang.ASTNode;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.StaticGetter;
 import com.intellij.psi.impl.DebugUtil;
@@ -58,7 +58,7 @@ public class LazyParseableElement extends CompositeElement {
    * Guarded by {@link #lock}
    * */
   @NotNull private Getter<CharSequence> myText;
-  private boolean myParsed;
+  private volatile boolean myParsed;
 
   public LazyParseableElement(@NotNull IElementType type, @Nullable CharSequence text) {
     super(type);
@@ -142,9 +142,7 @@ public class LazyParseableElement extends CompositeElement {
   }
 
   public boolean isParsed() {
-    synchronized (lock) {
-      return myParsed;
-    }
+    return myParsed;
   }
 
   private CharSequence myText() {
@@ -173,6 +171,8 @@ public class LazyParseableElement extends CompositeElement {
     if (!ourParsingAllowed) {
       LOG.error("Parsing not allowed!!!");
     }
+    if (myParsed) return;
+
     CharSequence text;
     synchronized (lock) {
       if (myParsed) return;
@@ -180,21 +180,17 @@ public class LazyParseableElement extends CompositeElement {
       assert text != null;
     }
 
-    if (TreeUtil.getFileElement(this) == null) {
+    FileElement fileElement = TreeUtil.getFileElement(this);
+    if (fileElement == null) {
       LOG.error("Chameleons must not be parsed till they're in file tree: " + this);
     }
+    else {
+      fileElement.assertReadAccessAllowed();
+    }
 
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-
-    DebugUtil.startPsiModification("lazy-parsing");
-    try {
-      ILazyParseableElementTypeBase type = (ILazyParseableElementTypeBase)getElementType();
-      ASTNode parsedNode = type.parseContents(this);
-
-      if (parsedNode == null && text.length() > 0) {
-        CharSequence diagText = ApplicationManager.getApplication().isInternal() ? text : "";
-        LOG.error("No parse for a non-empty string: " + diagText + "; type=" + LogUtil.objectAndClass(type));
-      }
+    DebugUtil.performPsiModification("lazy-parsing", () -> {
+      TreeElement parsedNode = (TreeElement)((ILazyParseableElementTypeBase)getElementType()).parseContents(this);
+      assertTextLengthIntact(text, parsedNode);
 
       synchronized (lock) {
         if (myParsed) return;
@@ -202,29 +198,38 @@ public class LazyParseableElement extends CompositeElement {
           LOG.error("Reentrant parsing?");
         }
 
-        myParsed = true;
-
         if (parsedNode != null) {
-          super.rawAddChildrenWithoutNotifications((TreeElement)parsedNode);
+          setChildren(parsedNode);
         }
 
-        AstPath.cacheNodePaths(this);
-
-        assertTextLengthIntact(text.length());
+        myParsed = true;
         myText = new SoftReference<>(text);
       }
+    });
+  }
+
+  private void assertTextLengthIntact(CharSequence text, TreeElement child) {
+    int length = 0;
+    while (child != null) {
+      length += child.getTextLength();
+      child = child.getTreeNext();
     }
-    finally {
-      DebugUtil.finishPsiModification();
+    if (length != text.length()) {
+      LOG.error("Text mismatch in " + LogUtil.objectAndClass(getElementType()), new Attachment("code.txt", text.toString()));
     }
   }
 
-  private void assertTextLengthIntact(int expected) {
-    int length = 0;
-    for (ASTNode node : getChildren(null)) {
-      length += node.getTextLength();
-    }
-    assert length == expected : "Text mismatch in " + getElementType();
+  private void setChildren(@NotNull TreeElement parsedNode) {
+    ProgressManager.getInstance().executeNonCancelableSection(() -> {
+      try {
+        TreeElement last = rawSetParents(parsedNode, this);
+        super.setFirstChildNode(parsedNode);
+        super.setLastChildNode(last);
+      }
+      catch (Throwable e) {
+        LOG.error("Chameleon expansion may not be interrupted by exceptions", e);
+      }
+    });
   }
 
   @Override

@@ -55,7 +55,7 @@ public class PyClassHasNoInitInspectionTest extends PyInspectionTestCase {
 
   // PY-24436
   public void testAInheritsBAndBInheritsImportedAWithDunderInit() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doMultiFileTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doMultiFileTest);
   }
 
   @NotNull

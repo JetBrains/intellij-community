@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -33,9 +20,7 @@ import com.intellij.ui.FieldPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 
@@ -50,12 +35,14 @@ import java.util.*;
 import java.util.List;
 
 public class ChooseComponentsToExportDialog extends DialogWrapper {
+  private static final String DEFAULT_FILE_NAME = "settings.zip";
+  private static final String DEFAULT_PATH = FileUtil.toSystemDependentName(PathManager.getConfigPath() + "/") + DEFAULT_FILE_NAME;
+
   private static final Logger LOG = Logger.getInstance(ChooseComponentsToExportDialog.class);
+  public static final String KEY_UNMAKRKED_NAMES = "export.settings.unmarked";
 
   private final ElementsChooser<ComponentElementProperties> myChooser;
   private final FieldPanel myPathPanel;
-  @NonNls
-  public static final String DEFAULT_PATH = FileUtil.toSystemDependentName(PathManager.getConfigPath()+"/"+"settings.jar");
   private final boolean myShowFilePath;
   private final String myDescription;
 
@@ -78,8 +65,9 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     }
     myChooser = new ElementsChooser<>(true);
     myChooser.setColorUnmarkedElements(false);
+    Set<String> unmarkedElementNames = getUnmarkedElementNames();
     for (ComponentElementProperties componentElementProperty : new LinkedHashSet<>(componentToContainingListElement.values())) {
-      myChooser.addElement(componentElementProperty, true, componentElementProperty);
+      myChooser.addElement(componentElementProperty, !unmarkedElementNames.contains(componentElementProperty.toString()), componentElementProperty);
     }
     myChooser.sort(Comparator.comparing(ComponentElementProperties::toString));
 
@@ -87,7 +75,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
         chooseSettingsFile(myPathPanel.getText(), getWindow(), IdeBundle.message("title.export.file.location"), IdeBundle.message("prompt.choose.export.settings.file.path"))
-          .done(path -> myPathPanel.setText(FileUtil.toSystemDependentName(path)));
+          .onSuccess(path -> myPathPanel.setText(FileUtil.toSystemDependentName(path)));
       }
     };
 
@@ -102,8 +90,16 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     init();
   }
 
+  private static Set<String> getUnmarkedElementNames() {
+    String value = PropertiesComponent.getInstance().getValue(KEY_UNMAKRKED_NAMES);
+    if (StringUtil.isEmpty(value)) {
+      return Collections.emptySet();
+    }
+    return new THashSet<>(StringUtil.split(value.trim(), "|"));
+  }
+
   private void updateControls() {
-    setOKActionEnabled(!StringUtil.isEmptyOrSpaces(myPathPanel.getText()));    
+    setOKActionEnabled(!StringUtil.isEmptyOrSpaces(myPathPanel.getText()));
   }
 
   @NotNull
@@ -133,6 +129,14 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     PropertiesComponent.getInstance().setValue("export.settings.path", myPathPanel.getText(), DEFAULT_PATH);
+    List<ComponentElementProperties> unmarked = myChooser.getElements(false);
+    StringBuilder builder = new StringBuilder();
+    for (ComponentElementProperties element : unmarked) {
+      builder.append(element.toString());
+      builder.append("|");
+    }
+    PropertiesComponent.getInstance().setValue(KEY_UNMAKRKED_NAMES, builder.length() == 0 ? null : builder.toString());
+
     super.doOKAction();
   }
 
@@ -168,6 +172,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     chooserDescriptor.setDescription(description);
     chooserDescriptor.setHideIgnored(false);
     chooserDescriptor.setTitle(title);
+    chooserDescriptor.withFileFilter(ConfigImportHelper::isSettingsFile);
 
     VirtualFile initialDir;
     if (oldPath != null) {
@@ -186,7 +191,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
       public void consume(List<VirtualFile> files) {
         VirtualFile file = files.get(0);
         if (file.isDirectory()) {
-          result.setResult(file.getPath() + '/' + new File(DEFAULT_PATH).getName());
+          result.setResult(file.getPath() + '/' + DEFAULT_FILE_NAME);
         }
         else {
           result.setResult(file.getPath());

@@ -15,72 +15,65 @@
  */
 package com.intellij.psi.formatter.java;
 
-import com.intellij.openapi.editor.DefaultLineWrapPositionStrategy;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.PsiAwareDefaultLineWrapPositionStrategy;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.JavaDocTokenType;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public class JavaLineWrapPositionStrategy extends DefaultLineWrapPositionStrategy {
+public class JavaLineWrapPositionStrategy extends PsiAwareDefaultLineWrapPositionStrategy {
+
+  private final static IElementType[] ALLOWED_TYPES = {
+    JavaTokenType.C_STYLE_COMMENT,
+    JavaTokenType.END_OF_LINE_COMMENT,
+    JavaTokenType.STRING_LITERAL,
+    JavaDocTokenType.DOC_COMMENT_DATA,
+    JavaTokenType.EQ,
+    JavaTokenType.COMMA,
+    JavaTokenType.QUEST,
+    JavaTokenType.COLON
+  };
+
+  public static final String A_LINK_START = "<a";
+  public static final String A_LINK_END = "</a>";
+
+  public JavaLineWrapPositionStrategy() {
+    super(true, ALLOWED_TYPES);
+  }
 
   @Override
-  protected boolean canUseOffset(@NotNull Document document, int offset, boolean virtual) {
-    CharSequence chars = document.getCharsSequence();
-    char charAtOffset = chars.charAt(offset);
-
-    if (charAtOffset == '.') {
-      if (offset > 0) {
-        char charBefore = chars.charAt(offset - 1);
-        if (charBefore == '.' || Character.isDigit(charBefore)) {
-          return false;
-        }
-      }
-
-      if (offset + 1 < chars.length()) {
-        char charAfter = chars.charAt(offset + 1);
-        if (charAfter == '.' || Character.isDigit(charAfter)) {
-          return false;
-        }
+  protected int doCalculateWrapPosition(@NotNull Document document,
+                                        @Nullable Project project,
+                                        @NotNull PsiElement element,
+                                        int startOffset,
+                                        int endOffset,
+                                        int maxPreferredOffset,
+                                        boolean isSoftWrap) {
+    if (element.getNode().getElementType() == JavaDocTokenType.DOC_COMMENT_DATA) {
+      CharSequence docChars = document.getCharsSequence();
+      int refStart = CharArrayUtil.indexOf(docChars, A_LINK_START, startOffset, endOffset);
+      if (refStart >= 0 && refStart < maxPreferredOffset) {
+        int refEnd = CharArrayUtil.indexOf(docChars, A_LINK_END, refStart, endOffset);
+        if (refEnd >= 0 && refEnd < maxPreferredOffset) return refEnd + A_LINK_END.length();
+        return refStart;
       }
     }
-
-    if (isInsideJDLinkTag(document, offset) || isInsideHrefTag(document, offset)) {
-      return false;
+    int wrapPos = super.doCalculateWrapPosition(document, project, element, startOffset, endOffset, maxPreferredOffset, isSoftWrap);
+    if (element.getNode().getElementType() == JavaTokenType.STRING_LITERAL) {
+      TextRange range = element.getTextRange();
+      if (range.getEndOffset() - wrapPos <= 1) {
+        wrapPos = range.getEndOffset();
+      }
+      else if (wrapPos - range.getStartOffset() <= 1) {
+        wrapPos = range.getStartOffset();
+      }
     }
-
-    return true;
-  }
-
-  private static boolean isInsideHrefTag(Document document, int offset) {
-    return isInsideTag(document, offset, "<a", ">");
-  }
-
-  private static boolean isInsideJDLinkTag(Document document, int offset) {
-    return isInsideTag(document, offset, "{@link", "}");
-  }
-
-  private static boolean isInsideTag(Document document, int offset, String tagStart, String tagEnd) {
-    CharSequence sequence = document.getCharsSequence();
-
-    final int lineNumber = document.getLineNumber(offset);
-    final int lineStartOffset = document.getLineStartOffset(lineNumber);
-    final int lineEndOffset = document.getLineEndOffset(lineNumber);
-
-    int searchStartOffset = lineStartOffset;
-    int searchEndOffset = lineEndOffset;
-
-    if (lineEndOffset - lineStartOffset > 200) {
-      searchStartOffset = Math.max(offset - 100, lineStartOffset);
-      searchEndOffset = Math.min(offset + 100, lineEndOffset);
-    }
-
-    CharSequence textChunkAroundOffset = sequence.subSequence(searchStartOffset, searchEndOffset);
-    int offsetInChunk = offset - searchStartOffset;
-    
-    int tagStartIndex = CharArrayUtil.lastIndexOf(textChunkAroundOffset, tagStart, offsetInChunk);
-    if (tagStartIndex > 0) {
-      int nearestTagEndIndex = CharArrayUtil.indexOf(textChunkAroundOffset, tagEnd, tagStartIndex);
-      return nearestTagEndIndex > offsetInChunk;
-    }
-    return false;
+    return wrapPos;
   }
 }

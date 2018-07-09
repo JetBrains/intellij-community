@@ -56,7 +56,8 @@ public class VcsLogSpeedSearch extends SpeedSearchBase<VcsLogGraphTable> {
   }
 
   @Override
-  protected void selectElement(@NotNull Object row, @NotNull String selectedText) {
+  protected void selectElement(@Nullable Object row, @NotNull String selectedText) {
+    if (row == null) return;
     myComponent.jumpToRow((Integer)row);
   }
 

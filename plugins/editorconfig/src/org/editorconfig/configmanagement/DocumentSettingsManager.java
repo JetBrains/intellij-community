@@ -1,10 +1,11 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,18 +20,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DocumentSettingsManager extends FileDocumentManagerAdapter {
+public class DocumentSettingsManager implements FileDocumentManagerListener {
   // Handles the following EditorConfig settings:
   public static final String trimTrailingWhitespaceKey = "trim_trailing_whitespace";
   public static final String insertFinalNewlineKey = "insert_final_newline";
-  private static final Map<String, String> trimMap;
-
-  static {
-    Map<String, String> map = new HashMap<>();
-    map.put("true", EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
-    map.put("false", EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
-    trimMap = Collections.unmodifiableMap(map);
-  }
 
   private static final Map<String, Boolean> newlineMap;
 
@@ -67,11 +60,22 @@ public class DocumentSettingsManager extends FileDocumentManagerAdapter {
     // Apply trailing spaces setting
     final String trimTrailingWhitespace = Utils.configValueForKey(outPairs, trimTrailingWhitespaceKey);
     applyConfigValueToUserData(file, TrailingSpacesStripper.OVERRIDE_STRIP_TRAILING_SPACES_KEY,
-                               trimTrailingWhitespaceKey, trimTrailingWhitespace, trimMap);
+                               trimTrailingWhitespaceKey, trimTrailingWhitespace, getTrimMap());
     // Apply final newline setting
     final String insertFinalNewline = Utils.configValueForKey(outPairs, insertFinalNewlineKey);
     applyConfigValueToUserData(file, TrailingSpacesStripper.OVERRIDE_ENSURE_NEWLINE_KEY,
                                insertFinalNewlineKey, insertFinalNewline, newlineMap);
+  }
+
+  private static Map<String, String> getTrimMap() {
+    Map<String, String> map = new HashMap<>();
+    String stripSpaces = EditorSettingsExternalizable.getInstance().getStripTrailingSpaces();
+    String stripValue = EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE.equals(stripSpaces) ?
+                        EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE :
+                        stripSpaces;
+    map.put("true", stripValue);
+    map.put("false", EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
+    return map;
   }
 
   private <T> void applyConfigValueToUserData(VirtualFile file, Key<T> userDataKey, String editorConfigKey,

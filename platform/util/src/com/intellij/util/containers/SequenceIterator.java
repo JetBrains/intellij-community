@@ -32,7 +32,7 @@ public class SequenceIterator<T> implements Iterator<T> {
   }
   public SequenceIterator(@NotNull Collection<Iterator<T>> iterators) {
     //noinspection unchecked
-    this(iterators.toArray(new Iterator[iterators.size()]));
+    this(iterators.toArray(new Iterator[0]));
   }
 
   @Override

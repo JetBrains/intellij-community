@@ -79,10 +79,9 @@ internal abstract class FileSystemExternalSystemStorage(dirName: String, project
       return null
     }
 
-    val element: Element? = nameToPath(name).inputStreamIfExists()?.use {
+    return nameToPath(name).inputStreamIfExists()?.use {
       loadElement(it)
     }
-    return if (element == null) null else JDOMUtil.internElement(element)
   }
 
   override fun write(name: String, element: Element?, filter: JDOMUtil.ElementOutputFilter?) {

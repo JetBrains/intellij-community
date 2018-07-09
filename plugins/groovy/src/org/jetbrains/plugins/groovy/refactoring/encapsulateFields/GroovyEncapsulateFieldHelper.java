@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.plugins.groovy.refactoring.encapsulateFields;
 
@@ -19,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.encapsulateFields.*;
@@ -167,8 +154,7 @@ public class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
         GrAssignmentExpression assignment = (GrAssignmentExpression)parent;
         if (assignment.getRValue() != null) {
           PsiElement opSign = assignment.getOperationToken();
-          IElementType opType = assignment.getOperationTokenType();
-          if (opType == GroovyTokenTypes.mASSIGN) {
+          if (!assignment.isOperatorAssignment()) {
             if (!processSet || (checkSetterIsSimple(field, setter) && checkFieldIsInaccessible(field, expr))) return true;
 
 

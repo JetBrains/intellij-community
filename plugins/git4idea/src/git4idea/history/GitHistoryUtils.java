@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history;
 
 import com.intellij.openapi.project.Project;
@@ -36,9 +22,9 @@ import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
+import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
-import git4idea.commands.GitSimpleHandler;
-import git4idea.config.GitVersionSpecialty;
+import git4idea.commands.GitLineHandler;
 import git4idea.history.browser.SHAHash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -67,14 +53,14 @@ public class GitHistoryUtils {
   public static VcsRevisionNumber getCurrentRevision(@NotNull Project project, @NotNull FilePath filePath,
                                                      @Nullable String branch) throws VcsException {
     filePath = getLastCommitName(project, filePath);
-    GitSimpleHandler h = new GitSimpleHandler(project, GitUtil.getGitRoot(filePath), GitCommand.LOG);
+    GitLineHandler h = new GitLineHandler(project, GitUtil.getGitRoot(filePath), GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, HASH, COMMIT_TIME);
     h.setSilent(true);
     h.addParameters("-n1", parser.getPretty());
     h.addParameters(!StringUtil.isEmpty(branch) ? branch : "--all");
     h.endOptions();
     h.addRelativePaths(filePath);
-    String result = h.run();
+    String result = Git.getInstance().runCommand(h).getOutputOrThrow();
     if (result.length() == 0) {
       return null;
     }
@@ -90,7 +76,7 @@ public class GitHistoryUtils {
   public static VcsRevisionDescription getCurrentRevisionDescription(@NotNull Project project, @NotNull FilePath filePath)
     throws VcsException {
     filePath = getLastCommitName(project, filePath);
-    GitSimpleHandler h = new GitSimpleHandler(project, GitUtil.getGitRoot(filePath), GitCommand.LOG);
+    GitLineHandler h = new GitLineHandler(project, GitUtil.getGitRoot(filePath), GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, HASH, COMMIT_TIME, AUTHOR_NAME, COMMITTER_NAME, SUBJECT, BODY, RAW_BODY);
     h.setSilent(true);
     h.addParameters("-n1", parser.getPretty());
@@ -98,7 +84,7 @@ public class GitHistoryUtils {
     h.addParameters("--all");
     h.endOptions();
     h.addRelativePaths(filePath);
-    String result = h.run();
+    String result = Git.getInstance().runCommand(h).getOutputOrThrow();
     if (result.length() == 0) {
       return null;
     }
@@ -131,13 +117,13 @@ public class GitHistoryUtils {
       return new ItemLatestState(getCurrentRevision(project, filePath, null), true, false);
     }
     filePath = getLastCommitName(project, filePath);
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, HASH, COMMIT_TIME, PARENTS);
     h.setSilent(true);
     h.addParameters("-n1", parser.getPretty(), "--name-status", t.getFullName());
     h.endOptions();
     h.addRelativePaths(filePath);
-    String result = h.run();
+    String result = Git.getInstance().runCommand(h).getOutputOrThrow();
     if (result.length() == 0) {
       return null;
     }
@@ -161,7 +147,7 @@ public class GitHistoryUtils {
       return null;
     }
 
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, COMMIT_TIME, SUBJECT, AUTHOR_NAME,
                                            AUTHOR_EMAIL, RAW_BODY, COMMITTER_NAME, COMMITTER_EMAIL, AUTHOR_TIME);
 
@@ -172,7 +158,7 @@ public class GitHistoryUtils {
     h.addParameters(refs);
     h.endOptions();
 
-    String output = h.run();
+    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
     List<GitLogRecord> records = parser.parse(output);
     if (records.size() != refs.length) return null;
 
@@ -211,14 +197,14 @@ public class GitHistoryUtils {
     throws VcsException {
     // adjust path using change manager
     path = getLastCommitName(project, path);
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, HASH, COMMIT_TIME);
     h.setStdoutSuppressed(true);
     h.addParameters(parameters);
     h.addParameters(parser.getPretty(), "--encoding=UTF-8");
     h.endOptions();
     h.addRelativePaths(path);
-    String output = h.run();
+    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
 
     final List<Pair<SHAHash, Date>> rc = new ArrayList<>();
     for (GitLogRecord record : parser.parse(output)) {
@@ -237,7 +223,7 @@ public class GitHistoryUtils {
   @NotNull
   public static List<GitCommit> history(@NotNull Project project, @NotNull VirtualFile root, String... parameters)
     throws VcsException {
-    final VcsLogObjectsFactory factory = GitLogUtil.getObjectsFactoryWithDisposeCheck(project);
+    VcsLogObjectsFactory factory = GitLogUtil.getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
       return Collections.emptyList();
     }
@@ -254,24 +240,26 @@ public class GitHistoryUtils {
     return ArrayUtil.toStringArray(parameters);
   }
 
+  // used externally
+  @SuppressWarnings("unused")
   public static void loadDetails(@NotNull Project project,
                                  @NotNull VirtualFile root,
                                  @NotNull Consumer<? super GitCommit> commitConsumer,
                                  @NotNull String... parameters) throws VcsException {
-    GitLogUtil.readFullDetails(project, root, commitConsumer, parameters);
+    GitLogUtil.readFullDetails(project, root, commitConsumer, true, true, false, parameters);
   }
 
   public static long getAuthorTime(@NotNull Project project, @NotNull FilePath path, @NotNull String commitsId) throws VcsException {
     // adjust path using change manager
     path = getLastCommitName(project, path);
     final VirtualFile root = GitUtil.getGitRoot(path);
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.SHOW);
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.SHOW);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS, AUTHOR_TIME);
     h.setSilent(true);
     h.addParameters("--name-status", parser.getPretty(), "--encoding=UTF-8");
     h.addParameters(commitsId);
 
-    String output = h.run();
+    String output = Git.getInstance().runCommand(h).getOutputOrThrow();
     GitLogRecord logRecord = parser.parseOneRecord(output);
     if (logRecord == null) throw new VcsException("Can not parse log output \"" + output + "\"");
     return logRecord.getAuthorTimeStamp();
@@ -300,10 +288,10 @@ public class GitHistoryUtils {
   public static GitRevisionNumber getMergeBase(@NotNull Project project, @NotNull VirtualFile root, @NotNull String first,
                                                @NotNull String second)
     throws VcsException {
-    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.MERGE_BASE);
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.MERGE_BASE);
     h.setSilent(true);
     h.addParameters(first, second);
-    String output = h.run().trim();
+    String output = Git.getInstance().runCommand(h).getOutputOrThrow().trim();
     if (output.length() == 0) {
       return null;
     }

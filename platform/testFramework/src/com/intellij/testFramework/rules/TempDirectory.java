@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.rules;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -25,6 +11,9 @@ import org.junit.runners.model.Statement;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import static org.junit.Assert.assertTrue;
 
@@ -78,19 +67,26 @@ public class TempDirectory extends TemporaryFolder {
   /** Allows subdirectories in a directory name (i.e. "dir1/dir2/target"); does not fail if these intermediates already exist. */
   @Override
   public File newFolder(String directoryName) throws IOException {
-    File dir = new File(getRoot(), directoryName);
-    if (dir.exists()) throw new IOException("Already exists: " + dir);
-    if (!dir.mkdirs()) throw new IOException("Cannot create: " + dir);
-    return dir;
+    Path dir = Paths.get(getRoot().getPath(), directoryName);
+    if (Files.exists(dir)) throw new IOException("Already exists: " + dir);
+    Files.createDirectories(dir);
+    return dir.toFile();
   }
 
   /** Allows subdirectories in a file name (i.e. "dir1/dir2/target"); does not fail if these intermediates already exist. */
   @Override
   public File newFile(String fileName) throws IOException {
-    File file = new File(getRoot(), fileName);
-    if (file.exists()) throw new IOException("Already exists: " + file);
-    File parent = file.getParentFile();
-    if (!(parent.isDirectory() || parent.mkdirs()) || !file.createNewFile()) throw new IOException("Cannot create: " + file);
-    return file;
+    Path file = Paths.get(getRoot().getPath(), fileName);
+    if (Files.exists(file)) throw new IOException("Already exists: " + file);
+    makeDirectories(file.getParent());
+    Files.createFile(file);
+    return file.toFile();
+  }
+
+  private static void makeDirectories(Path path) throws IOException {
+    if (!Files.isDirectory(path)) {
+      makeDirectories(path.getParent());
+      Files.createDirectory(path);
+    }
   }
 }

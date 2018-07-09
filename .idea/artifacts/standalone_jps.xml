@@ -3,46 +3,48 @@
     <output-path>$PROJECT_DIR$/build/lib/jps</output-path>
     <root id="root">
       <element id="archive" name="util.jar">
-        <element id="module-output" name="util" />
-        <element id="module-output" name="util-rt" />
-        <element id="module-output" name="annotations" />
-        <element id="module-output" name="annotations-common" />
+        <element id="module-output" name="intellij.platform.util" />
+        <element id="module-output" name="intellij.platform.util.rt" />
       </element>
       <element id="archive" name="jps-model.jar">
-        <element id="module-output" name="jps-model-api" />
-        <element id="module-output" name="jps-model-impl" />
-        <element id="module-output" name="jps-model-serialization" />
+        <element id="module-output" name="intellij.platform.jps.model" />
+        <element id="module-output" name="intellij.platform.jps.model.impl" />
+        <element id="module-output" name="intellij.platform.jps.model.serialization" />
       </element>
       <element id="archive" name="jps-builders.jar">
-        <element id="module-output" name="forms-compiler" />
-        <element id="module-output" name="forms_rt" />
-        <element id="module-output" name="instrumentation-util" />
-        <element id="module-output" name="java-runtime" />
-        <element id="module-output" name="jps-builders" />
-        <element id="module-output" name="jps-standalone-builder" />
-        <element id="module-output" name="instrumentation-util-8" />
+        <element id="module-output" name="intellij.java.guiForms.compiler" />
+        <element id="module-output" name="intellij.java.guiForms.rt" />
+        <element id="module-output" name="intellij.java.compiler.instrumentationUtil" />
+        <element id="module-output" name="intellij.java.rt" />
+        <element id="module-output" name="intellij.platform.jps.build" />
+        <element id="module-output" name="intellij.tools.jps.build.standalone" />
+        <element id="module-output" name="intellij.java.compiler.instrumentationUtil.java8" />
       </element>
       <element id="archive" name="groovy-jps-plugin.jar">
-        <element id="module-output" name="groovy-jps-plugin" />
+        <element id="module-output" name="intellij.groovy.jps" />
       </element>
       <element id="archive" name="groovy_rt.jar">
-        <element id="module-output" name="groovy_rt" />
+        <element id="module-output" name="intellij.groovy.rt" />
       </element>
       <element id="archive" name="ui-designer-jps-plugin.jar">
-        <element id="module-output" name="ui-designer-jps-plugin" />
+        <element id="module-output" name="intellij.java.guiForms.jps" />
       </element>
       <element id="archive" name="antlayout.jar">
-        <element id="module-output" name="antlayout" />
+        <element id="module-output" name="intellij.tools.jps.antTasks" />
       </element>
       <element id="archive" name="groovy-rt-constants.jar">
-        <element id="module-output" name="groovy-rt-constants" />
+        <element id="module-output" name="intellij.groovy.constants.rt" />
       </element>
       <element id="archive" name="jps-builders-6.jar">
-        <element id="module-output" name="jps-builders-6" />
+        <element id="module-output" name="intellij.platform.jps.build.javac.rt" />
       </element>
       <element id="archive" name="aether-dependency-resolver.jar">
-        <element id="module-output" name="aether-dependency-resolver" />
+        <element id="module-output" name="intellij.java.aetherDependencyResolver" />
       </element>
+      <element id="archive" name="testFramework.core.jar">
+        <element id="module-output" name="intellij.platform.testFramework.core" />
+      </element>
+      <element id="library" level="project" name="jetbrains-annotations-java5" />
     </root>
   </artifact>
 </component>

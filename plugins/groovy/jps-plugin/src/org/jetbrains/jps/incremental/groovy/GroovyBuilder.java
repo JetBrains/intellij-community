@@ -131,8 +131,8 @@ public class GroovyBuilder extends ModuleLevelBuilder {
   static List<String> getGroovyRtRoots() {
     File rt = ClasspathBootstrap.getResourceFile(GroovyBuilder.class);
     File constants = ClasspathBootstrap.getResourceFile(GroovyRtConstants.class);
-    return Arrays.asList(new File(rt.getParentFile(), rt.isFile() ? "groovy_rt.jar" : "groovy_rt").getPath(),
-                         new File(constants.getParentFile(), constants.isFile() ? "groovy-rt-constants.jar" : "groovy-rt-constants").getPath());
+    return Arrays.asList(new File(rt.getParentFile(), rt.isFile() ? "groovy_rt.jar" : "intellij.groovy.rt").getPath(),
+                         new File(constants.getParentFile(), constants.isFile() ? "groovy-rt-constants.jar" : "intellij.groovy.constants.rt").getPath());
   }
 
   public static boolean isGroovyFile(String path) {

@@ -123,12 +123,17 @@ public class UnaryPlusInspection extends BaseInspection {
       }
       if (onlyReportInsideBinaryExpression) {
         final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(prefixExpression);
-        if (!(operand instanceof PsiParenthesizedExpression) && !(operand instanceof PsiPrefixExpression) &&
-            !(parent instanceof PsiPolyadicExpression) && !(parent instanceof PsiPrefixExpression)) {
+        if (!(operand instanceof PsiParenthesizedExpression ||
+              operand instanceof PsiPrefixExpression ||
+              parent instanceof PsiPolyadicExpression ||
+              parent instanceof PsiPrefixExpression ||
+              parent instanceof PsiAssignmentExpression ||
+              parent instanceof PsiVariable)) {
           return;
         }
       }
-      else if (TypeUtils.unaryNumericPromotion(type) != type && MethodCallUtils.isNecessaryForSurroundingMethodCall(prefixExpression, operand)) {
+      else if (TypeUtils.unaryNumericPromotion(type) != type &&
+               MethodCallUtils.isNecessaryForSurroundingMethodCall(prefixExpression, operand)) {
         // unary plus might have been used as cast to int
         return;
       }

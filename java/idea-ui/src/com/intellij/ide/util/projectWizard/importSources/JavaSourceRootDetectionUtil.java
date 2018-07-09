@@ -46,7 +46,7 @@ public class JavaSourceRootDetectionUtil {
   @NotNull
   public static Collection<JavaModuleSourceRoot> suggestRoots(@NotNull File dir) {
     final List<JavaSourceRootDetector> detectors = ContainerUtil.findAll(ProjectStructureDetector.EP_NAME.getExtensions(), JavaSourceRootDetector.class);
-    final RootDetectionProcessor processor = new RootDetectionProcessor(dir, detectors.toArray(new JavaSourceRootDetector[detectors.size()]));
+    final RootDetectionProcessor processor = new RootDetectionProcessor(dir, detectors.toArray(new JavaSourceRootDetector[0]));
     final Map<ProjectStructureDetector,List<DetectedProjectRoot>> rootsMap = processor.runDetectors();
 
     Map<File, JavaModuleSourceRoot> result = new HashMap<>();

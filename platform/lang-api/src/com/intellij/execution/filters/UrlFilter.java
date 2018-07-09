@@ -15,28 +15,47 @@
  */
 package com.intellij.execution.filters;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author yole
  */
 public class UrlFilter implements Filter, DumbAware {
+  private final Project myProject;
+
+  public UrlFilter() {
+    this(null);
+  }
+
+  public UrlFilter(Project project) {
+    myProject = project;
+  }
+
   @Nullable
   @Override
   public Result applyFilter(String line, int entireLength) {
     if (!URLUtil.canContainUrl(line)) return null;
 
     int textStartOffset = entireLength - line.length();
-    Matcher m = URLUtil.URL_PATTERN.matcher(line);
+    Pattern pattern = line.contains(URLUtil.FILE_PROTOCOL + URLUtil.SCHEME_SEPARATOR) ? URLUtil.FILE_URL_PATTERN : URLUtil.URL_PATTERN;
+    Matcher m = pattern.matcher(line);
     ResultItem item = null;
     List<ResultItem> items = null;
     while (m.find()) {
@@ -57,13 +76,36 @@ public class UrlFilter implements Filter, DumbAware {
 
   @NotNull
   protected HyperlinkInfo buildHyperlinkInfo(@NotNull String url) {
-    return new BrowserHyperlinkInfo(url);
+    HyperlinkInfo fileHyperlinkInfo = buildFileHyperlinkInfo(url);
+    return fileHyperlinkInfo != null ? fileHyperlinkInfo : new BrowserHyperlinkInfo(url);
+  }
+
+  @Nullable
+  private HyperlinkInfo buildFileHyperlinkInfo(@NotNull String url) {
+    if (myProject != null && url.startsWith("file://")) {
+      try {
+        VirtualFile file = VfsUtil.findFileByURL(new URL(url));
+        if (file != null && file.isValid()) {
+          return new OpenFileHyperlinkInfo(myProject, file, -1);
+        }
+      }
+      catch (MalformedURLException ignored) {
+      }
+      return new HyperlinkInfo() {
+        @Override
+        public void navigate(Project project) {
+          Messages.showErrorDialog(project, "Cannot find file " + StringUtil.trimMiddle(url, 150),
+                                   IdeBundle.message("title.cannot.open.file"));
+        }
+      };
+    }
+    return null;
   }
 
   public static class UrlFilterProvider implements ConsoleFilterProviderEx {
     @Override
     public Filter[] getDefaultFilters(@NotNull Project project, @NotNull GlobalSearchScope scope) {
-      return new Filter[]{new UrlFilter()};
+      return new Filter[]{new UrlFilter(project)};
     }
 
     @NotNull

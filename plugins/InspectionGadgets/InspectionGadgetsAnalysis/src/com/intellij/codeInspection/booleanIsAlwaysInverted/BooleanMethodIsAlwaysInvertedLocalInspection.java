@@ -63,6 +63,6 @@ public class BooleanMethodIsAlwaysInvertedLocalInspection extends AbstractBaseJa
       return null;
     }
     if (usageCount[0] < 2) return null;
-    return new ProblemDescriptor[] { myGlobalTool.createProblemDescriptor(manager, method.getNameIdentifier()) };
+    return new ProblemDescriptor[] { myGlobalTool.createProblemDescriptor(manager, method.getNameIdentifier(), isOnTheFly) };
   }
 }

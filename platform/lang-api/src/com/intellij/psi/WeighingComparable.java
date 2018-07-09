@@ -28,6 +28,11 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
     public int compareTo(final Object o) {
       throw new UnsupportedOperationException("Method compareTo is not yet implemented in " + getClass().getName());
     }
+
+    @Override
+    public String toString() {
+      return "null";
+    }
   };
   @NotNull private Comparable[] myComputedWeighs;
   private final Computable<T> myElement;
@@ -93,7 +98,7 @@ public class WeighingComparable<T,Loc> implements Comparable<WeighingComparable<
       if (i != 0) builder.append(", ");
       builder.append(myWeighers[i]);
       builder.append("=");
-      builder.append(getWeight(i));
+      builder.append(myComputedWeighs[i]);
     }
     return builder.append("]").toString();
   }

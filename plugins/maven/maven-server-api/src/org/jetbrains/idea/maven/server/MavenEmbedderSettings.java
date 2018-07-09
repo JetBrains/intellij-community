@@ -28,9 +28,9 @@ public class MavenEmbedderSettings implements Serializable {
   @NotNull
   private final MavenServerSettings settings;
   @Nullable
-  private String workingDirectory;
+  private final String workingDirectory;
   @Nullable
-  private String multiModuleProjectDirectory;
+  private final String multiModuleProjectDirectory;
 
   public MavenEmbedderSettings(@NotNull MavenServerSettings settings) {
     this(settings, null, null);

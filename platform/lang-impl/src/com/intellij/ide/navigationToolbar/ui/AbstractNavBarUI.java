@@ -7,7 +7,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -19,6 +18,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.image.BufferedImage;
+import java.util.HashMap;
 import java.util.Map;
 
 import static com.intellij.ui.RelativeFont.SMALL;

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.CommonActionsManager;
@@ -12,7 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.frame.XExecutionStack;
@@ -158,6 +158,10 @@ public class XFramesView extends XDebugView {
     myMainPanel.add(myThreadsPanel, BorderLayout.NORTH);
   }
 
+  public JComponent getDefaultFocusedComponent() {
+    return myFramesList;
+  }
+
   private class ThreadsBuilder implements XSuspendContext.XExecutionStackContainer {
     private volatile boolean myObsolete;
 
@@ -223,7 +227,6 @@ public class XFramesView extends XDebugView {
     final ActionToolbarImpl toolbar =
       (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, framesGroup, true);
     toolbar.setReservePlaceAutoPopupIcon(false);
-    toolbar.setAddSeparatorFirst(true);
     return toolbar;
   }
 
@@ -291,7 +294,6 @@ public class XFramesView extends XDebugView {
       if (!invisible) {
         myThreadsPanel.add(myThreadComboBox, BorderLayout.CENTER);
       }
-      myToolbar.setAddSeparatorFirst(!invisible);
       updateFrames(activeExecutionStack, session, event == SessionEvent.FRAME_CHANGED ? currentStackFrame : null);
     });
   }
@@ -428,24 +430,22 @@ public class XFramesView extends XDebugView {
 
     private void addFrameListElements(final List<?> values, final boolean last) {
       if (myExecutionStack != null && myExecutionStack == mySelectedStack) {
-        DefaultListModel model = myFramesList.getModel();
-        int insertIndex = model.size();
-        boolean loadingPresent = !model.isEmpty() && model.getElementAt(model.getSize() - 1) == null;
+        CollectionListModel model = myFramesList.getModel();
+        int insertIndex = model.getSize();
+        boolean loadingPresent = insertIndex > 0 && model.getElementAt(insertIndex - 1) == null;
         if (loadingPresent) {
           insertIndex--;
         }
-        for (Object value : values) {
-          //noinspection unchecked
-          model.add(insertIndex++, value);
-        }
+        //noinspection unchecked
+        model.addAll(insertIndex, values);
         if (last) {
           if (loadingPresent) {
-            model.removeElementAt(model.getSize() - 1);
+            model.remove(model.getSize() - 1);
           }
         }
         else if (!loadingPresent) {
           //noinspection unchecked
-          model.addElement(null);
+          model.add((Object)null);
         }
         myFramesList.repaint();
       }
@@ -490,7 +490,7 @@ public class XFramesView extends XDebugView {
         int selectedFrameIndex = (int)myToSelect;
         if (myFramesList.getSelectedIndex() != selectedFrameIndex &&
             myFramesList.getElementCount() > selectedFrameIndex &&
-            myFramesList.getModel().get(selectedFrameIndex) != null) {
+            myFramesList.getModel().getElementAt(selectedFrameIndex) != null) {
           myFramesList.setSelectedIndex(selectedFrameIndex);
           processFrameSelection(mySession, false);
           myListenersEnabled = true;
@@ -501,14 +501,13 @@ public class XFramesView extends XDebugView {
     }
 
     @SuppressWarnings("unchecked")
-    public boolean initModel(final DefaultListModel model) {
-      model.removeAllElements();
-      myStackFrames.forEach(model::addElement);
+    public boolean initModel(final CollectionListModel model) {
+      model.replaceAll(myStackFrames);
       if (myErrorMessage != null) {
-        model.addElement(myErrorMessage);
+        model.add(myErrorMessage);
       }
       else if (!myAllFramesLoaded) {
-        model.addElement(null);
+        model.add((Object)null);
       }
       return selectCurrentFrame();
     }

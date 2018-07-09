@@ -44,7 +44,7 @@ public class PyYieldFromIntention extends PyBaseIntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (LanguageLevel.forElement(file).isAtLeast(LanguageLevel.PYTHON33)) {
+    if (!LanguageLevel.forElement(file).isPython2()) {
       final PyForStatement forLoop = findForStatementAtCaret(editor, file);
       if (forLoop != null) {
         final PyTargetExpression forTarget = findSingleForLoopTarget(forLoop);
@@ -100,9 +100,8 @@ public class PyYieldFromIntention extends PyBaseIntentionAction {
   @Nullable
   private static PyReferenceExpression findSingleYieldValue(@NotNull PyForStatement forLoop) {
     final PyForPart forPart = forLoop.getForPart();
-    final PyStatementList stmtList = forPart.getStatementList();
-    if (stmtList != null && forLoop.getElsePart() == null) {
-      final PyStatement[] statements = stmtList.getStatements();
+    if (forLoop.getElsePart() == null) {
+      final PyStatement[] statements = forPart.getStatementList().getStatements();
       if (statements.length == 1) {
         final PyStatement firstStmt = statements[0];
         if (firstStmt instanceof PyExpressionStatement) {

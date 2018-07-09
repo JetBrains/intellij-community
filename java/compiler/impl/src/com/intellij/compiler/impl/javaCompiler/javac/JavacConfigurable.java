@@ -29,7 +29,6 @@ import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 30, 2004
  */
 public class JavacConfigurable implements Configurable{
   private JPanel myPanel;
@@ -46,6 +45,7 @@ public class JavacConfigurable implements Configurable{
     myProject = project;
     myJavacSettings = javacSettings;
     myAdditionalOptionsField.setDialogCaption(CompilerBundle.message("java.compiler.option.additional.command.line.parameters"));
+    myAdditionalOptionsField.setDescriptor(null, false);
   }
 
   private void createUIComponents() {
@@ -94,8 +94,5 @@ public class JavacConfigurable implements Configurable{
     myCbGenerateNoWarnings.setSelected(myJavacSettings.GENERATE_NO_WARNINGS);
     myAdditionalOptionsField.setText(myJavacSettings.ADDITIONAL_OPTIONS_STRING);
     myOptionsOverride.setModuleOptionsMap(myJavacSettings.ADDITIONAL_OPTIONS_OVERRIDE);
-  }
-
-  public void disposeUIResources() {
   }
 }

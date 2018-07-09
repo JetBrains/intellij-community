@@ -37,11 +37,11 @@ import java.awt.event.MouseEvent;
  * @author max
  */
 public class FramelessNotificationPopup {
-  private JComponent myContent;
+  private final JComponent myContent;
   public static final Dimension myPreferredContentSize = JBUI.size(300, 100);
-  private JBPopup myPopup;
+  private final JBPopup myPopup;
   private int myTimerTick;
-  private Color myBackgroud;
+  private final Color myBackgroud;
   private final boolean myUseDefaultPreferredSize;
   private final static int FADE_IN_TICKS = 60;
   private final static int SHOW_TIME_TICKS = FADE_IN_TICKS + 300;
@@ -66,7 +66,7 @@ public class FramelessNotificationPopup {
     }
   };
   private final Timer myFadeInTimer;
-  private ActionListener myActionListener;
+  private final ActionListener myActionListener;
 
   public FramelessNotificationPopup(final JComponent owner, final JComponent content, Color backgroud) {
     this(owner, content, backgroud, true, null);

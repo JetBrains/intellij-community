@@ -35,7 +35,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 5, 2004
  */
 public class NewModuleAction extends AnAction implements DumbAware {
   public NewModuleAction() {

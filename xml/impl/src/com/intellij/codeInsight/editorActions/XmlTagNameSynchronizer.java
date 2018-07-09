@@ -16,7 +16,6 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.editor.WebEditorOptions;
-import com.intellij.codeInsight.completion.XmlTagInsertHandler;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInspection.htmlInspections.RenameTagBeginOrEndIntentionAction;
@@ -68,6 +67,7 @@ import java.util.Set;
  * @author Dennis.Ushakov
  */
 public class XmlTagNameSynchronizer implements NamedComponent, CommandListener {
+  public static final Key<Boolean> SKIP_COMMAND = Key.create("tag.name.synchronizer.skip.command");
   private static final Logger LOG = Logger.getInstance(XmlTagNameSynchronizer.class);
   private static final Set<Language> SUPPORTED_LANGUAGES = ContainerUtil.set(HTMLLanguage.INSTANCE,
                                                                              XMLLanguage.INSTANCE,
@@ -168,8 +168,9 @@ public class XmlTagNameSynchronizer implements NamedComponent, CommandListener {
       final CharSequence fragment = event.getNewFragment();
       final int newLength = event.getNewLength();
 
-      if (document.getUserData(XmlTagInsertHandler.ENFORCING_TAG) == Boolean.TRUE) {
+      if (document.getUserData(SKIP_COMMAND) == Boolean.TRUE) {
         // xml completion inserts extra space after tag name to ensure correct parsing
+        // js auto-import may change beginning of the document when component is imported
         // we need to ignore it
         return;
       }
@@ -284,7 +285,7 @@ public class XmlTagNameSynchronizer implements NamedComponent, CommandListener {
         }
         seenColon |= c == ':';
       }
-      if (end < 0 || start >= end) return null;
+      if (end < 0 || start > end) return null;
       return document.createRangeMarker(start, end, true);
     }
 
@@ -298,6 +299,9 @@ public class XmlTagNameSynchronizer implements NamedComponent, CommandListener {
         for (Couple<RangeMarker> couple : myMarkers) {
           final RangeMarker leader = couple.first;
           final RangeMarker support = couple.second;
+          if (document.getTextLength() < leader.getEndOffset()) {
+            return;
+          }
           final String name = document.getText(new TextRange(leader.getStartOffset(), leader.getEndOffset()));
           if (document.getTextLength() >= support.getEndOffset() &&
               !name.equals(document.getText(new TextRange(support.getStartOffset(), support.getEndOffset())))) {
@@ -327,11 +331,34 @@ public class XmlTagNameSynchronizer implements NamedComponent, CommandListener {
         support = findSupportElement(element);
       }
 
-      if (support == null) return null;
+      if (support == null) return findSupportForTagList(leader, element, document);
 
       final TextRange range = support.getTextRange();
       TextRange realRange = InjectedLanguageManager.getInstance(file.getProject()).injectedToHost(element.getContainingFile(), range);
       return document.createRangeMarker(realRange.getStartOffset(), realRange.getEndOffset(), true);
+    }
+
+    private static RangeMarker findSupportForTagList(RangeMarker leader, PsiElement element, Document document) {
+      if (leader.getStartOffset() != leader.getEndOffset() || element == null) return null;
+
+      PsiElement support = null;
+      if ("<>".equals(element.getText())) {
+        PsiElement last = element.getParent().getLastChild();
+        if ("</>".equals(last.getText())) {
+          support = last;
+        }
+      }
+      if ("</>".equals(element.getText())) {
+        PsiElement first = element.getParent().getFirstChild();
+        if ("<>".equals(first.getText())) {
+          support = first;
+        }
+      }
+      if (support != null) {
+        TextRange range = support.getTextRange();
+        return document.createRangeMarker(range.getEndOffset() - 1, range.getEndOffset() - 1, true);
+      }
+      return null;
     }
 
     private static PsiElement findSupportElement(PsiElement element) {

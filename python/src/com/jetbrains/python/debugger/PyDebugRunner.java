@@ -16,7 +16,9 @@
 package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Lists;
-import com.intellij.execution.*;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.console.LanguageConsoleBuilder;
 import com.intellij.execution.executors.DefaultDebugExecutor;
@@ -236,36 +238,40 @@ public class PyDebugRunner extends GenericProgramRunner {
   public CommandLinePatcher[] createCommandLinePatchers(final Project project, final PythonCommandLineState state,
                                                         RunProfile profile,
                                                         final int serverLocalPort) {
-    return new CommandLinePatcher[]{createDebugServerPatcher(project, state, serverLocalPort), createRunConfigPatcher(state, profile)};
+    return new CommandLinePatcher[]{createDebugServerPatcher(project, state, serverLocalPort, profile),
+      createRunConfigPatcher(state, profile)};
+  }
+
+  public static boolean patchExeParams(ParametersList parametersList) {
+    // we should remove '-m' parameter, but notify debugger of it
+    // but we can't remove one parameter from group, so we create new parameters group
+    int moduleParamsIndex =
+      parametersList.getParamsGroups().indexOf(parametersList.getParamsGroup(PythonCommandLineState.GROUP_MODULE));
+    ParamsGroup oldModuleParams = parametersList.removeParamsGroup(moduleParamsIndex);
+    if (oldModuleParams == null) {
+      return false;
+    }
+    boolean isModule = false;
+
+    ParamsGroup newModuleParams = new ParamsGroup(PythonCommandLineState.GROUP_MODULE);
+    for (String param : oldModuleParams.getParameters()) {
+      if (!param.equals("-m")) {
+        newModuleParams.addParameter(param);
+      }
+      else {
+        isModule = true;
+      }
+    }
+
+    parametersList.addParamsGroupAt(moduleParamsIndex, newModuleParams);
+    return isModule;
   }
 
   private CommandLinePatcher createDebugServerPatcher(final Project project,
                                                       final PythonCommandLineState pyState,
-                                                      final int serverLocalPort) {
+                                                      final int serverLocalPort,
+                                                      final RunProfile profile) {
     return new CommandLinePatcher() {
-
-      private boolean patchExeParams(ParametersList parametersList) {
-        // we should remove '-m' parameter, but notify debugger of it
-        // but we can't remove one parameter from group, so we create new parameters group
-        int exeParamsIndex =
-          parametersList.getParamsGroups().indexOf(parametersList.getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS));
-        ParamsGroup oldExeParams = parametersList.removeParamsGroup(exeParamsIndex);
-        boolean isModule = false;
-
-        ParamsGroup newExeParams = new ParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);
-        for (String param : oldExeParams.getParameters()) {
-          if (!param.equals("-m")) {
-            newExeParams.addParameter(param);
-          }
-          else {
-            isModule = true;
-          }
-        }
-
-        parametersList.addParamsGroupAt(exeParamsIndex, newExeParams);
-        return isModule;
-      }
-
       @Override
       public void patchCommandLine(GeneralCommandLine commandLine) {
         // script name is the last parameter; all other params are for python interpreter; insert just before name
@@ -276,7 +282,8 @@ public class PyDebugRunner extends GenericProgramRunner {
         assert debugParams != null;
 
         boolean isModule = patchExeParams(parametersList);
-        fillDebugParameters(project, debugParams, serverLocalPort, pyState, commandLine, isModule);
+
+        fillDebugParameters(project, debugParams, serverLocalPort, pyState, commandLine, profile, isModule);
 
         @SuppressWarnings("ConstantConditions") @NotNull
         ParamsGroup exeParams = parametersList.getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);
@@ -297,6 +304,7 @@ public class PyDebugRunner extends GenericProgramRunner {
                                    int serverLocalPort,
                                    @NotNull PythonCommandLineState pyState,
                                    @NotNull GeneralCommandLine cmd,
+                                   @Nullable RunProfile runProfile,
                                    boolean isModule) {
     PythonHelper.DEBUGGER.addToGroup(debugParams, cmd);
 
@@ -307,12 +315,13 @@ public class PyDebugRunner extends GenericProgramRunner {
 
     configureDebugParameters(project, debugParams, pyState, cmd);
 
-    configureDebugEnvironment(project, cmd.getEnvironment());
+    configureDebugEnvironment(project, cmd.getEnvironment(), runProfile);
 
     configureDebugConnectionParameters(debugParams, serverLocalPort);
   }
 
-  public static void configureDebugEnvironment(@NotNull Project project, Map<String, String> environment) {
+  public static void configureDebugEnvironment(@NotNull Project project, Map<String, String> environment,
+                                               @Nullable RunProfile runProfile) {
     if (PyDebuggerOptionsProvider.getInstance(project).isSupportGeventDebugging()) {
       environment.put(GEVENT_SUPPORT, "True");
     }
@@ -324,8 +333,8 @@ public class PyDebugRunner extends GenericProgramRunner {
     if (debuggerSettings.isLibrariesFilterEnabled()) {
       environment.put(PYDEVD_FILTER_LIBRARIES, "True");
     }
-    if (debuggerSettings.isLoadValuesAsync()) {
-      environment.put(PyVariableViewSettings.PYDEVD_LOAD_VALUES_ASYNC, "True");
+    if (debuggerSettings.getValuesPolicy() != PyDebugValue.ValuesPolicy.SYNC) {
+      environment.put(PyDebugValue.POLICY_ENV_VARS.get(debuggerSettings.getValuesPolicy()), "True");
     }
 
     PydevConsoleRunnerFactory.putIPythonEnvFlag(project, environment);
@@ -333,7 +342,13 @@ public class PyDebugRunner extends GenericProgramRunner {
     PythonEnvUtil.addToPythonPath(environment, CYTHON_EXTENSIONS_DIR);
 
     addProjectRootsToEnv(project, environment);
-    addSdkRootsToEnv(project, environment);
+
+    final AbstractPythonRunConfiguration runConfiguration = runProfile instanceof AbstractPythonRunConfiguration ?
+                                                            (AbstractPythonRunConfiguration)runProfile : null;
+    if (runConfiguration != null) {
+      addSdkRootsToEnv(environment, runConfiguration);
+      PythonEnvUtil.addToPythonPath(environment, runConfiguration.getWorkingDirectorySafe());
+    }
   }
 
   protected void configureDebugParameters(@NotNull Project project,
@@ -385,22 +400,15 @@ public class PyDebugRunner extends GenericProgramRunner {
     environment.put(IDE_PROJECT_ROOTS, StringUtil.join(roots, File.pathSeparator));
   }
 
-  private static void addSdkRootsToEnv(@NotNull Project project, @NotNull Map<String, String> environment) {
-    final RunManager runManager = RunManager.getInstance(project);
-    final RunnerAndConfigurationSettings selectedConfiguration = runManager.getSelectedConfiguration();
-    if (selectedConfiguration != null) {
-      final RunConfiguration configuration = selectedConfiguration.getConfiguration();
-      if (configuration instanceof AbstractPythonRunConfiguration) {
-        AbstractPythonRunConfiguration runConfiguration = (AbstractPythonRunConfiguration)configuration;
-        final Sdk sdk = runConfiguration.getSdk();
-        if (sdk != null) {
-          List<String> roots = Lists.newArrayList();
-          for (VirtualFile contentRoot : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
-            roots.add(contentRoot.getPath());
-          }
-          environment.put(LIBRARY_ROOTS, StringUtil.join(roots, File.pathSeparator));
-        }
+  private static void addSdkRootsToEnv(@NotNull Map<String, String> environment,
+                                       @NotNull AbstractPythonRunConfiguration runConfiguration) {
+    final Sdk sdk = runConfiguration.getSdk();
+    if (sdk != null) {
+      List<String> roots = Lists.newArrayList();
+      for (VirtualFile contentRoot : sdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
+        roots.add(contentRoot.getPath());
       }
+      environment.put(LIBRARY_ROOTS, StringUtil.join(roots, File.pathSeparator));
     }
   }
 }

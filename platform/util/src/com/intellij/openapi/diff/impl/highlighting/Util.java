@@ -16,8 +16,8 @@
 package com.intellij.openapi.diff.impl.highlighting;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.diff.ex.DiffFragment;
+import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.diff.Diff;
@@ -350,7 +350,7 @@ public class Util {
         result.add(side.createFragment(null, DiffString.concatenate(rightText.substring(1), secondText.substring(0, 1)), true));
         result.add(side.createFragment(secondText.substring(1), secondText.substring(1), second.isModified()));
         result.addAll(Arrays.asList(fragments).subList(2, fragments.length));
-        return result.toArray(new DiffFragment[result.size()]);
+        return result.toArray(new DiffFragment[0]);
       }
     }
     return fragments;

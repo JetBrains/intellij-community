@@ -1,112 +1,105 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.externalSystem.service.project.settings
 
-import com.intellij.execution.RunManager
-import com.intellij.execution.application.ApplicationConfiguration
-import com.intellij.execution.application.ApplicationConfigurationType
-import com.intellij.execution.configurations.ConfigurationTypeUtil
+import com.intellij.execution.RunManagerEx
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.util.ObjectUtils.consumeIfCast
 
 /**
  * Created by Nikita.Skvortsov
- * date: 05.09.2017.
  */
-
-class RunConfigurationHandler: ConfigurationHandler {
+class RunConfigurationHandler : ConfigurationHandler {
 
   companion object {
-    val LOG = Logger.getInstance(RunConfigurationHandler::class.java)
+    val LOG: Logger = Logger.getInstance(RunConfigurationHandler::class.java)
   }
 
-  override fun apply(module: Module, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
-    configuration.eachRunConfiguration { typeName, name, cfg ->
-      RunConfigHandlerExtensionManager.handlerForType(
-        typeName)?.process(module, name, cfg )
-    }
-  }
+  private fun Any?.isTrue(): Boolean = this != null && this is Boolean && this
+
+  override fun apply(module: Module, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {}
 
   override fun apply(project: Project, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
-    configuration.eachRunConfiguration { typeName, name, cfg ->
-      RunConfigHandlerExtensionManager.handlerForType(
-        typeName)?.process(project, name, cfg)
-    }
-  }
+    val runCfgMap = configuration.find("runConfigurations")
+    val runManagerEx = RunManagerEx.getInstanceEx(project)
 
-  private fun ConfigurationData.eachRunConfiguration(f: (String, String, Map<String, *>) -> Unit) {
-    val runCfgMap = find("runConfigurations")
+    if (runCfgMap !is List<*>) return
 
-    if (runCfgMap !is Map<*,*>) return
+    runCfgMap
+      .filterIsInstance<Map<*, *>>()
+      .sortedByDescending { it["defaults"].isTrue() }
+      .forEach { cfg ->
 
-    runCfgMap.forEach { name, cfg ->
-      if (name !is String) {
-        LOG.warn("unexpected key type in runConfigurations map: ${name?.javaClass?.name}, skipping")
-        return@forEach
+        val name = cfg["name"] as? String ?: ""
+        val typeName = cfg["type"] as? String
+        if (typeName == null) {
+          LOG.warn("Missing type for run configuration: '${name}', skipping")
+          return@forEach
+        }
+
+        val importer = RunConfigImporterExtensionManager.handlerForType(typeName)
+        if (importer == null) {
+          LOG.warn("No importers for run configuration '${name}' with type '$typeName', skipping")
+          return@forEach
+        }
+
+        val isDefaults = cfg["defaults"].isTrue()
+
+        val runnerAndConfigurationSettings = if (isDefaults) {
+          runManagerEx.getConfigurationTemplate(importer.configurationFactory)
+        }
+        else {
+          runManagerEx.createConfiguration(name, importer.configurationFactory)
+        }
+
+        try {
+          importer.process(project, runnerAndConfigurationSettings.configuration, cfg as Map<String, *>, modelsProvider)
+          if (!isDefaults) {
+            runManagerEx.addConfiguration(runnerAndConfigurationSettings)
+          }
+
+          consumeIfCast(cfg["beforeRun"], List::class.java) {
+            var tasksList = runManagerEx.getBeforeRunTasks(runnerAndConfigurationSettings.configuration)
+            it.filterIsInstance(Map::class.java)
+              .forEach { beforeRunConfig ->
+                val typeName = beforeRunConfig["type"] as? String ?: return@forEach
+                BeforeRunTaskImporterExtensionManager.importerForType(typeName)?.let { importer ->
+                  tasksList = importer.process(project,
+                                               modelsProvider,
+                                               runnerAndConfigurationSettings.configuration,
+                                               tasksList,
+                                               beforeRunConfig as MutableMap<String, *>)
+                }
+              }
+            runManagerEx.setBeforeRunTasks(runnerAndConfigurationSettings.configuration, tasksList)
+          }
+        }
+        catch (e: Exception) {
+          LOG.warn("Error occurred when importing run configuration ${name}: ${e.message}", e)
+        }
       }
-      if (cfg !is Map<*, *>) {
-        LOG.warn("unexpected value type in runConfigurations map: ${cfg?.javaClass?.name}, skipping")
-        return@forEach
-      }
-
-      val typeName = cfg["type"] as? String
-
-      if (typeName == null) {
-        LOG.warn("Missing type for run configuration: ${name}, skipping")
-        return@forEach
-      }
-
-      try {
-        f(typeName, name, cfg as Map<String, *>)
-      } catch (e: Exception) {
-        LOG.warn("Error occurred when importing run configuration ${name}: ${e.message}", e)
-      }
-    }
   }
 }
 
 
-class RunConfigHandlerExtensionManager {
+class RunConfigImporterExtensionManager {
   companion object {
     fun handlerForType(typeName: String): RunConfigurationImporter? =
       Extensions.getExtensions(
-        RunConfigurationImporter.EP_NAME).firstOrNull { it.canHandle(typeName) }
+        RunConfigurationImporter.EP_NAME).firstOrNull { it.canImport(typeName) }
   }
 }
 
-class ApplicationRunConfigurationImporter : RunConfigurationImporter {
-  override fun process(module: Module, name: String, cfg: Map<String, *>) {
-    val cfgType = ConfigurationTypeUtil.findConfigurationType<ApplicationConfigurationType>(
-      ApplicationConfigurationType::class.java)
-    val runManager = RunManager.getInstance(module.project)
-    val runnerAndConfigurationSettings = runManager.createConfiguration(name, cfgType.configurationFactories[0])
-    val appConfig = runnerAndConfigurationSettings.configuration as ApplicationConfiguration
 
-    appConfig.MAIN_CLASS_NAME = cfg["mainClass"] as? String
-    appConfig.VM_PARAMETERS   = cfg["jvmArgs"] as? String
-    appConfig.setModule(module)
-
-    runManager.addConfiguration(runnerAndConfigurationSettings)
+class BeforeRunTaskImporterExtensionManager {
+  companion object {
+    fun importerForType(typeName: String): BeforeRunTaskImporter? =
+      Extensions.getExtensions(BeforeRunTaskImporter.EP_NAME).firstOrNull { it.canImport(typeName) }
   }
-
-  override fun process(project: Project, name: String, cfg: Map<String, *>) {}
-
-  override fun canHandle(typeName: String): Boolean = typeName == "application"
 }

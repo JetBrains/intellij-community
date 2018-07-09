@@ -22,7 +22,6 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.*;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -87,11 +86,8 @@ public final class PythonImportUtils {
     Set<String> seenCandidateNames = new HashSet<>(); // true import names
 
     PsiFile existingImportFile = addCandidatesFromExistingImports(node, refText, fix, seenCandidateNames);
-    if (fix.getCandidates().isEmpty()|| fix.hasProjectImports() || Registry.is("python.import.always.ask")) {
-      // maybe some unimported file has it, too
-      ProgressManager.checkCanceled(); // before expensive index searches
-      addSymbolImportCandidates(node, refText, asName, fix, seenCandidateNames, existingImportFile);
-    }
+    ProgressManager.checkCanceled(); // before expensive index searches
+    addSymbolImportCandidates(node, refText, asName, fix, seenCandidateNames, existingImportFile);
 
     for(PyImportCandidateProvider provider: Extensions.getExtensions(PyImportCandidateProvider.EP_NAME)) {
       provider.addImportCandidates(reference, refText, fix);
@@ -246,7 +242,7 @@ public final class PythonImportUtils {
     // Add modules
     FilenameIndex.processFilesByName(refText + ".py", false, true, item -> {
       ProgressManager.checkCanceled();
-      if (isImportableModule(targetFile, item)) {
+      if (isImportable(targetFile, item)) {
         result.add(item);
       }
       return true;
@@ -255,12 +251,15 @@ public final class PythonImportUtils {
     return result;
   }
 
-  public static boolean isImportableModule(PsiFile targetFile, @NotNull PsiFileSystemItem file) {
+  /**
+   * Checks whether {@param file} representing Python module or package can be imported into {@param file}.
+   */
+  public static boolean isImportable(PsiFile targetFile, @NotNull PsiFileSystemItem file) {
     PsiDirectory parent = (PsiDirectory)file.getParent();
     return parent != null && file != targetFile &&
-           (parent.findFile(PyNames.INIT_DOT_PY) != null ||
-            ImportFromExistingAction.isRoot(parent) ||
-            parent == targetFile.getParent());
+           (ImportFromExistingAction.isRoot(parent) ||
+            parent == targetFile.getParent() ||
+            PyUtil.isPackage(parent, false, null));
   }
 
   private static boolean isIndexableTopLevel(PsiElement symbol) {

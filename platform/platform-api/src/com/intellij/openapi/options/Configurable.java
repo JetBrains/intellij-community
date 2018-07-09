@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.UINumericRange;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -24,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * This interface represents a named configurable component that provides a Swing form
@@ -214,5 +203,32 @@ public interface Configurable extends UnnamedConfigurable {
 
   default boolean isModified(@NotNull JToggleButton toggleButton, boolean value) {
     return toggleButton.isSelected() != value;
+  }
+
+  default <T> boolean isModified(@NotNull ComboBox<T> comboBox, T value) {
+    return !Comparing.equal(comboBox.getSelectedItem(), value);
+  }
+
+  /**
+   * @return component which should be focused when the dialog appears
+   *         on the screen.
+   */
+  default JComponent getPreferredFocusedComponent() {
+    return null;
+  }
+
+  interface TopComponentController {
+    void setLeftComponent(@Nullable Component component);
+
+    void showProgress(boolean start);
+  }
+
+  interface TopComponentProvider {
+    default boolean isAvailable() {
+      return true;
+    }
+
+    @NotNull
+    Component getCenterComponent(@NotNull TopComponentController controller);
   }
 }

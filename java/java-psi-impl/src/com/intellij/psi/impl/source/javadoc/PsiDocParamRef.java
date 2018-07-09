@@ -137,7 +137,7 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
             filtered.add(namedElement);
           }
         }
-        return filtered.toArray(new PsiElement[filtered.size()]);
+        return filtered.toArray(PsiElement.EMPTY_ARRAY);
       }
 
       @Override
@@ -145,12 +145,14 @@ public class PsiDocParamRef extends CompositePsiElement implements PsiDocTagValu
         return false;
       }
 
+      @NotNull
       @Override
       public TextRange getRangeInElement() {
         final int startOffsetInParent = valueToken.getPsi().getStartOffsetInParent();
         return new TextRange(startOffsetInParent, startOffsetInParent + valueToken.getTextLength());
       }
 
+      @NotNull
       @Override
       public PsiElement getElement() {
         return PsiDocParamRef.this;

@@ -15,9 +15,11 @@
  */
 package org.intellij.lang.regexp;
 
+import com.intellij.mock.MockSmartPointerManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.psi.IdentitySmartPointer;
 import com.intellij.psi.PsiComment;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.SyntaxTraverser;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.testFramework.ParsingTestCase;
@@ -34,6 +36,12 @@ public class RegExpParsingTest extends ParsingTestCase {
 
   public RegExpParsingTest() {
     super("psi", "regexp", new RegExpParserDefinition());
+  }
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    myProject.registerService(SmartPointerManager.class, new MockSmartPointerManager());
   }
 
   @Override
@@ -157,6 +165,7 @@ public class RegExpParsingTest extends ParsingTestCase {
   public void testCharClasses69() throws IOException { doCodeTest("\\p{^L}"); }
   public void testCharClasses70() throws IOException { doCodeTest("[&&&&a]"); }
   public void testCharClasses71() throws IOException { doCodeTest("[a-\\Qz\\E]"); }
+  public void testCharClasses72() throws IOException { doCodeTest("([\\^])"); }
 
   public void testGroups1() throws IOException { doCodeTest("()ef"); }
   public void testGroups2() throws IOException { doCodeTest("()*"); }
@@ -359,7 +368,8 @@ public class RegExpParsingTest extends ParsingTestCase {
       RegExpCapabilitiesProvider.EP.addExplicitExtension(RegExpLanguage.INSTANCE, provider);
       PsiComment context = SyntaxTraverser.psiTraverser(createPsiFile("c", "(?#xxx)")).filter(PsiComment.class).first();
       myFile = createPsiFile("a", "[[:blank:]]");
-      FileContextUtil.INJECTED_IN_ELEMENT.set(myFile, new IdentitySmartPointer<>(context));
+      SmartPsiElementPointer<PsiComment> pointer = SmartPointerManager.createPointer(context);
+      myFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, pointer);
       ensureParsed(myFile);
       checkResult(myFilePrefix + getTestName(), myFile);
     }

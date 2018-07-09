@@ -6,6 +6,7 @@
   <module value="com.intellij.modules.vcs"/>
   <module value="com.intellij.modules.xdebugger"/>
   <module value="com.intellij.modules.xml"/>
+  <module value="com.intellij.modules.externalSystem"/>
 
   <xi:include href="/componentSets/IdeaComponents.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/RichPlatformActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -85,6 +86,8 @@
 
     <extensionPoint name="projectStructureValidator"
                     interface="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureValidator"/>
+
+    <extensionPoint name="compiler.updateResourcesBuildContributor" interface="com.intellij.compiler.impl.UpdateResourcesBuildContributor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -107,7 +110,7 @@
     <compiler.buildTargetScopeProvider implementation="com.intellij.packaging.impl.compiler.ArtifactBuildTargetScopeProvider"/>
     <compiler implementation="com.intellij.packaging.impl.compiler.ArtifactsCompiler" id="artifactsCompiler"/>
 
-    <compiler.task execute="BEFORE" implementation="com.intellij.compiler.impl.JavaModuleIndexBuildTask"/>
+    <projectTaskRunner implementation="com.intellij.task.impl.JpsProjectTaskRunner" id="jps" order="last"/>
 
     <gotoRelatedProvider implementation="com.intellij.testIntegration.GotoTestRelatedProvider"/>
 
@@ -151,9 +154,6 @@
     <applicationService serviceInterface="com.intellij.packaging.elements.PackagingElementFactory"
                         serviceImplementation="com.intellij.packaging.impl.elements.PackagingElementFactoryImpl"/>
 
-    <applicationService serviceInterface="com.intellij.psi.impl.file.PsiPackageImplementationHelper"
-                        serviceImplementation="com.intellij.psi.impl.file.PsiPackageImplementationHelperImpl"/>
-
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.OrderEntryAppearanceService"
                         serviceImplementation="com.intellij.openapi.roots.ui.OrderEntryAppearanceServiceImpl"/>
 
@@ -166,45 +166,12 @@
     <projectService serviceInterface="com.intellij.lang.injection.InjectedLanguageManager"
                     serviceImplementation="com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl"/>
 
-    <projectService serviceInterface="com.intellij.codeInsight.ExternalAnnotationsManager"
-                    serviceImplementation="com.intellij.codeInsight.ExternalAnnotationsManagerImpl"/>
-
-    <projectService serviceInterface="com.intellij.codeInsight.InferredAnnotationsManager"
-                    serviceImplementation="com.intellij.codeInsight.InferredAnnotationsManagerImpl"/>
-
-    <projectService serviceInterface="com.intellij.task.ProjectTaskManager"
-                    serviceImplementation="com.intellij.task.impl.ProjectTaskManagerImpl"/>
-
-    <projectService serviceInterface="com.intellij.build.BuildContentManager"
-                    serviceImplementation="com.intellij.build.BuildContentManagerImpl"
-                    testServiceImplementation="com.intellij.build.internal.DummyBuildContentManager"/>
-
-    <projectService serviceInterface="com.intellij.build.BuildViewManager"
-                    serviceImplementation="com.intellij.build.BuildViewManager"
-                    testServiceImplementation="com.intellij.build.internal.DummyBuildViewManager"/>
-    <projectService serviceInterface="com.intellij.build.SyncViewManager"
-                    serviceImplementation="com.intellij.build.SyncViewManager"
-                    testServiceImplementation="com.intellij.build.internal.DummySyncViewManager"/>
-    <projectService serviceInterface="com.intellij.build.RunTasksViewManager"
-                    serviceImplementation="com.intellij.build.RunTasksViewManager"
-                    testServiceImplementation="com.intellij.build.internal.DummyTasksViewManager"/>
-    <projectService serviceInterface="com.intellij.build.DebugTasksViewManager"
-                    serviceImplementation="com.intellij.build.DebugTasksViewManager"
-                    testServiceImplementation="com.intellij.build.internal.DummyTasksViewManager"/>
-
-    <projectService serviceInterface="com.intellij.execution.runners.ExecutionEnvironmentProvider"
-                    serviceImplementation="com.intellij.task.impl.ExecutionEnvironmentProviderImpl"/>
-
     <projectService serviceInterface="com.intellij.openapi.compiler.CompilerManager"
                     serviceImplementation="com.intellij.compiler.CompilerManagerImpl"/>
     <projectService serviceInterface="com.intellij.compiler.options.ValidationConfiguration"
                     serviceImplementation="com.intellij.compiler.options.ValidationConfiguration"/>
     <projectService serviceInterface="com.intellij.compiler.options.ValidationConfiguration$ExcludedFromValidationConfiguration"
                     serviceImplementation="com.intellij.compiler.options.ValidationConfiguration$ExcludedFromValidationConfiguration"/>
-    <projectService serviceInterface="com.intellij.openapi.roots.CompilerProjectExtension"
-                    serviceImplementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl"/>
-    <projectService serviceInterface="com.intellij.openapi.roots.LanguageLevelProjectExtension"
-                    serviceImplementation="com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl"/>
     <projectService serviceInterface="com.intellij.compiler.CompilerEncodingService"
                     serviceImplementation="com.intellij.compiler.impl.CompilerEncodingServiceImpl"/>
 
@@ -215,7 +182,10 @@
                     serviceImplementation="com.intellij.compiler.CompilerWorkspaceConfiguration"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory"
-                    serviceImplementation="com.intellij.openapi.vcs.changes.ui.ChangesModuleGroupingPolicyFactory"/>
+                    serviceImplementation="com.intellij.openapi.vcs.changes.ui.ChangesModuleGroupingPolicy$Factory"/>
+    <changesGroupingPolicy key="module" id="module"
+                           implementationClass="com.intellij.openapi.vcs.changes.ui.ModuleChangesGroupingPolicy$Factory"/>
+
     <projectService serviceInterface="com.intellij.openapi.vcs.impl.DefaultVcsRootPolicy"
                     serviceImplementation="com.intellij.openapi.vcs.impl.ModuleDefaultVcsRootPolicy"/>
     <projectService serviceInterface="com.intellij.openapi.roots.FileIndexFacade"
@@ -275,13 +245,10 @@
     <!-- Application Configurables -->
 
     <!-- Path Variables -->
-    <!-- the implementation of this configurable is in platform-impl but it's not registered in platform because
+    <!-- the implementation of this configurable is in intellij.platform.ide.impl but it's not registered in platform because
          it's only required in full IDEA -->
     <applicationConfigurable groupId="appearance" groupWeight="-10" instance="com.intellij.application.options.pathMacros.PathMacroConfigurable" id="preferences.pathVariables"
                              key="title.path.variables" bundle="messages.ApplicationBundle"/>
-    <postStartupActivity implementation="com.intellij.externalDependencies.impl.CheckRequiredPluginsActivity"/>
-    <projectConfigurable groupId="build" provider="com.intellij.externalDependencies.impl.ExternalDependenciesConfigurableProvider"
-                         id="preferences.externalDependencies" displayName="Required Plugins"/>
 
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.AttachSourcesNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.LibrarySourceNotificationProvider"/>
@@ -292,9 +259,6 @@
     <attachSourcesProvider implementation="com.intellij.jarFinder.InternetAttachSourceProvider"/>
     <attachSourcesProvider implementation="com.intellij.jarFinder.IvyAttachSourceProvider"/>
 
-    <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectCheckoutListener"/>
-    <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectDirCheckoutListener"/>
-    <checkoutListener implementation="com.intellij.openapi.vcs.checkout.ProjectImporterCheckoutListener"/>
     <checkoutListener implementation="com.intellij.openapi.vcs.checkout.NewProjectCheckoutListener" order="last"/>
     <vcsAwareCheckoutListener implementation="com.intellij.openapi.vcs.checkout.RegisterMappingCheckoutListener"/>
 
@@ -336,23 +300,22 @@
 
     <moduleConfigurationEditorProvider implementation="com.intellij.openapi.roots.ui.configuration.DefaultModuleEditorsProvider" order="first"/>
 
-    <statistics.usagesCollector implementation="com.intellij.openapi.roots.ui.configuration.libraries.impl.LibraryUsageCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.compiler.CompilerSettingsUsageCollector"/>
+    <postStartupActivity implementation="com.intellij.compiler.impl.CleanStaleModuleOutputsActivity"/>
 
     <keymapExtension implementation="com.intellij.debugger.actions.DebuggerKeymapExtension"/>
 
     <moduleExtension implementation="com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl"/>
-    <moduleExtension implementation="com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl"/>
 
-    <orderRootType implementation="com.intellij.openapi.roots.AnnotationOrderRootType"/>
     <orderRootType implementation="com.intellij.openapi.roots.NativeLibraryOrderRootType"/>
-    <orderRootType implementation="com.intellij.openapi.roots.JavadocOrderRootType"/>
+
+    <codeUsageScopeOptimizer implementation="com.intellij.compiler.JavaCompilerReferencesCodeUsageScopeOptimizer"/>
 
 
     <stepsBeforeRunProvider implementation="com.intellij.compiler.options.CompileStepBeforeRun" id="compileBeforeRun"/>
     <stepsBeforeRunProvider implementation="com.intellij.compiler.options.MakeProjectStepBeforeRun" id="makeProjectBeforeRun"/>
     <stepsBeforeRunProvider implementation="com.intellij.compiler.options.CompileStepBeforeRunNoErrorCheck" id="compileBeforeRunNoErrorCheck" order="after compileBeforeRun"/>
     <stepsBeforeRunProvider implementation="com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTaskProvider" order="after compileBeforeRunNoErrorCheck"/>
+    <externalSystem.beforeRunTaskImporter implementation="com.intellij.compiler.options.CompileStepBeforeRunImporter"/>
     <programRunner id="defaultRunRunner" implementation="com.intellij.execution.impl.DefaultJavaProgramRunner"/>
     <programRunner implementation="com.intellij.execution.runners.DefaultRunProgramRunner" order="last"/>
 
@@ -375,8 +338,6 @@
 
     <applicationService serviceInterface="com.intellij.openapi.roots.ModifiableModelsProvider"
                         serviceImplementation="com.intellij.openapi.roots.IdeaModifiableModelsProvider"/>
-    <projectExtension implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyProjectExtension"/>
-    <roots.watchedRootsProvider implementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl$MyWatchedRootsProvider"/>
     <projectService serviceInterface="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsSettings"
                     serviceImplementation="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsSettingsImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureProblemsSettings"
@@ -387,8 +348,10 @@
 
     <buildProcess.parametersProvider implementation="com.intellij.compiler.CompilerReferenceIndexBuildParametersProvider"/>
 
-    <editorActionHandler action="EditorChooseLookupItemReplace" 
+    <editorActionHandler action="EditorChooseLookupItemReplace"
                          implementationClass="com.intellij.codeInsight.hint.NextParameterAfterCompletionHandler"/>
+
+    <compiler.updateResourcesBuildContributor implementation="com.intellij.compiler.impl.JavaResourcesBuildContributor"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <webServerRootsProvider implementation="org.jetbrains.builtInWebServer.ArtifactWebServerRootsProvider" order="last"/>

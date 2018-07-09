@@ -102,9 +102,8 @@ public class ChangeSuperClassFix implements LocalQuickFix, HighPriorityAction {
     final PsiClass oldSuperClass = myOldSuperClass.getElement();
     final PsiClass newSuperClass = myNewSuperClass.getElement();
     if (oldSuperClass == null || newSuperClass == null) return;
-    PsiElement element = myTargetClass.getElement();
-    if (element == null || !FileModificationService.getInstance().preparePsiElementsForWrite(element)) return;
-    PsiClass aClass = (PsiClass)element;
+    PsiClass aClass = myTargetClass.getElement();
+    if (aClass == null || !FileModificationService.getInstance().preparePsiElementsForWrite(aClass)) return;
     changeSuperClass(aClass, oldSuperClass, newSuperClass);
   }
 

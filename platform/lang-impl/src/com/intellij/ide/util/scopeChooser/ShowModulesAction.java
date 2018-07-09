@@ -27,7 +27,7 @@ public final class ShowModulesAction extends ToggleAction {
 
   public ShowModulesAction(final Runnable update) {
     super(IdeBundle.message("action.show.modules"),
-          IdeBundle.message("action.description.show.modules"), AllIcons.ObjectBrowser.ShowModules);
+          IdeBundle.message("action.description.show.modules"), AllIcons.Actions.GroupByModule);
     myUpdate = update;
   }
 

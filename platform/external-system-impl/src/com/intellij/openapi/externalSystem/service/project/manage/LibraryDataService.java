@@ -23,7 +23,6 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.RootPolicy;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -64,8 +63,21 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
                          @Nullable final ProjectData projectData,
                          @NotNull final Project project,
                          @NotNull final IdeModifiableModelsProvider modelsProvider) {
-    for (DataNode<LibraryData> dataNode : toImport) {
-      importLibrary(dataNode.getData(), modelsProvider);
+    Map<String, LibraryData> processedLibraries = ContainerUtil.newHashMap();
+    for (DataNode<LibraryData> dataNode: toImport) {
+      LibraryData libraryData = dataNode.getData();
+      String libraryName = libraryData.getInternalName();
+      LibraryData importedLibrary = processedLibraries.putIfAbsent(libraryName, libraryData);
+      if (importedLibrary == null) {
+        importLibrary(libraryData, modelsProvider);
+      }
+      else {
+        LOG.warn("Multiple project level libraries found with the same name '" + libraryName + "'");
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Chosen library:" + importedLibrary.getPaths(LibraryPathType.BINARY));
+          LOG.debug("Ignored library:" + libraryData.getPaths(LibraryPathType.BINARY));
+        }
+      }
     }
   }
 
@@ -86,7 +98,7 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
   @NotNull
   public Map<OrderRootType, Collection<File>> prepareLibraryFiles(@NotNull LibraryData data) {
     Map<OrderRootType, Collection<File>> result = ContainerUtilRt.newHashMap();
-    for (LibraryPathType pathType : LibraryPathType.values()) {
+    for (LibraryPathType pathType: LibraryPathType.values()) {
       Set<String> paths = data.getPaths(pathType);
       if (paths.isEmpty()) {
         continue;
@@ -100,8 +112,8 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
                             @NotNull Map<OrderRootType, Collection<File>> libraryFiles,
                             @NotNull Library.ModifiableModel model,
                             @NotNull String libraryName) {
-    for (Map.Entry<OrderRootType, Collection<File>> entry : libraryFiles.entrySet()) {
-      for (File file : entry.getValue()) {
+    for (Map.Entry<OrderRootType, Collection<File>> entry: libraryFiles.entrySet()) {
+      for (File file: entry.getValue()) {
         VirtualFile virtualFile = unresolved ? null : ExternalSystemUtil.refreshAndFindFileByIoFile(file);
         if (virtualFile == null) {
           if (!unresolved && ExternalSystemConstants.VERBOSE_PROCESSING && entry.getKey() == OrderRootType.CLASSES) {
@@ -145,7 +157,6 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
 
   /**
    * Remove orphan project libraries during postprocess phase (after execution of LibraryDependencyDataService#import)
-   * in order to use LibraryDataService.isOrphanProjectLibrary method properly
    */
   @Override
   public void postProcess(@NotNull Collection<DataNode<LibraryData>> toImport,
@@ -157,19 +168,49 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
 
     // do not cleanup orphan project libraries if import runs from Project Structure Dialog
     // since libraries order entries cannot be imported for modules in that case
-    // and hence #isOrphanProjectLibrary() method will work incorrectly
+    // and hence orphans will be detected incorrectly
     if (modelsProvider instanceof IdeUIModifiableModelsProvider) return;
 
     final List<Library> orphanIdeLibraries = ContainerUtil.newSmartList();
     final LibraryTable.ModifiableModel librariesModel = modelsProvider.getModifiableProjectLibrariesModel();
-    for (Library library : librariesModel.getLibraries()) {
+    final Map<String, Library> namesToLibs = ContainerUtil.newHashMap();
+    final Set<Library> potentialOrphans = ContainerUtil.newHashSet();
+    RootPolicy<Void> excludeUsedLibraries = new RootPolicy<Void>() {
+      @Override
+      public Void visitLibraryOrderEntry(@NotNull LibraryOrderEntry ideDependency, Void value) {
+        if (ideDependency.isModuleLevel()) {
+          return null;
+        }
+        Library lib = ideDependency.getLibrary();
+        if (lib == null) {
+          lib = namesToLibs.get(ideDependency.getLibraryName());
+        }
+        if (lib != null) {
+          potentialOrphans.remove(lib);
+        }
+        return null;
+      }
+    };
+
+    for (Library library: librariesModel.getLibraries()) {
       if (!ExternalSystemApiUtil.isExternalSystemLibrary(library, projectData.getOwner())) continue;
-      if (isOrphanProjectLibrary(library, modelsProvider) && !modelsProvider.isSubstituted(library.getName())) {
-        orphanIdeLibraries.add(library);
+      namesToLibs.put(library.getName(), library);
+      potentialOrphans.add(library);
+    }
+
+    for (Module module: modelsProvider.getModules()) {
+      for (OrderEntry entry: modelsProvider.getOrderEntries(module)) {
+        entry.accept(excludeUsedLibraries, null);
       }
     }
 
-    for (Library library : orphanIdeLibraries) {
+    for (Library lib: potentialOrphans) {
+      if (!modelsProvider.isSubstituted(lib.getName())) {
+        orphanIdeLibraries.add(lib);
+      }
+    }
+
+    for (Library library: orphanIdeLibraries) {
       String libraryName = library.getName();
       if (libraryName != null) {
         Library libraryToRemove = librariesModel.getLibraryByName(libraryName);
@@ -188,7 +229,7 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     }
     final Map<OrderRootType, Set<String>> toRemove = ContainerUtilRt.newHashMap();
     final Map<OrderRootType, Set<String>> toAdd = ContainerUtilRt.newHashMap();
-    for (LibraryPathType pathType : LibraryPathType.values()) {
+    for (LibraryPathType pathType: LibraryPathType.values()) {
       OrderRootType ideType = myLibraryPathTypeMapper.map(pathType);
       HashSet<String> toAddPerType = ContainerUtilRt.newHashSet(externalLibrary.getPaths(pathType));
       toAdd.put(ideType, toAddPerType);
@@ -196,7 +237,7 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
       HashSet<String> toRemovePerType = ContainerUtilRt.newHashSet();
       toRemove.put(ideType, toRemovePerType);
 
-      for (VirtualFile ideFile : ideLibrary.getFiles(ideType)) {
+      for (VirtualFile ideFile: ideLibrary.getFiles(ideType)) {
         String idePath = ExternalSystemApiUtil.getLocalFileSystemPath(ideFile);
         if (!toAddPerType.remove(idePath)) {
           toRemovePerType.add(ideFile.getUrl());
@@ -208,34 +249,16 @@ public class LibraryDataService extends AbstractProjectDataService<LibraryData, 
     }
 
     final Library.ModifiableModel libraryModel = modelsProvider.getModifiableLibraryModel(ideLibrary);
-    for (Map.Entry<OrderRootType, Set<String>> entry : toRemove.entrySet()) {
-      for (String path : entry.getValue()) {
+    for (Map.Entry<OrderRootType, Set<String>> entry: toRemove.entrySet()) {
+      for (String path: entry.getValue()) {
         libraryModel.removeRoot(path, entry.getKey());
       }
     }
 
-    for (Map.Entry<OrderRootType, Set<String>> entry : toAdd.entrySet()) {
+    for (Map.Entry<OrderRootType, Set<String>> entry: toAdd.entrySet()) {
       Map<OrderRootType, Collection<File>> roots = ContainerUtilRt.newHashMap();
       roots.put(entry.getKey(), ContainerUtil.map(entry.getValue(), PATH_TO_FILE));
       registerPaths(externalLibrary.isUnresolved(), roots, libraryModel, externalLibrary.getInternalName());
     }
-  }
-
-  private static boolean isOrphanProjectLibrary(@NotNull final Library library,
-                                                @NotNull final IdeModifiableModelsProvider modelsProvider) {
-    RootPolicy<Boolean> visitor = new RootPolicy<Boolean>() {
-      @Override
-      public Boolean visitLibraryOrderEntry(@NotNull LibraryOrderEntry ideDependency, Boolean value) {
-        return !ideDependency.isModuleLevel() &&
-               (library == ideDependency.getLibrary() ||
-                (ideDependency.getLibrary() == null && StringUtil.equals(library.getName(), ideDependency.getLibraryName())));
-      }
-    };
-    for (Module module : modelsProvider.getModules()) {
-      for (OrderEntry entry : modelsProvider.getOrderEntries(module)) {
-        if (entry.accept(visitor, false)) return false;
-      }
-    }
-    return true;
   }
 }

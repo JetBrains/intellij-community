@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,8 +6,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ConcurrencyUtil;
 import com.sun.jdi.VMDisconnectedException;
-import org.jetbrains.annotations.Debugger;
+import org.jetbrains.annotations.Async;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.*;
@@ -58,7 +45,8 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       }
       ourWorkerRequest.set(this);
       try {
-        myOwner.run(this);
+        ConcurrencyUtil.runUnderThreadName("DebuggerManagerThread", ()->
+        myOwner.run(this));
       } 
       finally {
         ourWorkerRequest.set(null);
@@ -127,15 +115,12 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
   protected abstract void processEvent(E e);
 
   protected void startNewWorkerThread() {
-    final WorkerThreadRequest workerRequest = new WorkerThreadRequest<>(this);
+    final WorkerThreadRequest<E> workerRequest = new WorkerThreadRequest<>(this);
     myCurrentRequest = workerRequest;
     workerRequest.setRequestFuture( ApplicationManager.getApplication().executeOnPooledThread(workerRequest) );
   }
 
   private void run(final @NotNull WorkerThreadRequest threadRequest) {
-    String oldThreadName = Thread.currentThread().getName();
-    Thread.currentThread().setName("DebuggerManagerThread");
-
     try {
       DumbService.getInstance(myProject).setAlternativeResolveEnabled(true);
       while(true) {
@@ -146,10 +131,8 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
           final WorkerThreadRequest currentRequest = getCurrentRequest();
           if(currentRequest != threadRequest) {
-            LOG.error("Expected " + threadRequest + " instead of " + currentRequest);
-            if (currentRequest != null && !currentRequest.isDone()) {
-              continue; // ensure events are processed by one thread at a time
-            }
+            reportCommandError(new IllegalStateException("Expected " + threadRequest + " instead of " + currentRequest));
+            break; // ensure events are processed by one thread at a time
           }
 
           processEvent(myEvents.get());
@@ -165,10 +148,10 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
           if(e.getCause() instanceof InterruptedException) {
             break;
           }
-          LOG.error(e);
+          reportCommandError(e);
         }
         catch (Throwable e) {
-          LOG.error(e);
+          reportCommandError(e);
         }
       }
     }
@@ -186,9 +169,16 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
 
       LOG.debug("Request " + toString() + " exited");
       DumbService.getInstance(myProject).setAlternativeResolveEnabled(false);
-      Thread.currentThread().setName(oldThreadName);
     }
+  }
 
+  private static void reportCommandError(Throwable e) {
+    try {
+      LOG.error(e);
+    }
+    catch (AssertionError ignored) {
+       //do not destroy commands processing
+    }
   }
 
   protected static InvokeThread currentThread() {
@@ -196,7 +186,7 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
     return request != null? request.getOwner() : null;
   }
 
-  public boolean schedule(@Debugger.Capture E r) {
+  public boolean schedule(@Async.Schedule E r) {
     if(LOG.isDebugEnabled()) {
       LOG.debug("schedule " + r + " in " + this);
     }

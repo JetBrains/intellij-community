@@ -34,7 +34,10 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiSuperMethodUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.util.JavaNonCodeSearchElementDescriptionProvider;
 import com.intellij.refactoring.util.NonCodeSearchDescriptionLocation;
 import com.intellij.usageView.UsageInfo;
@@ -181,6 +184,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
                                                                        ContainerUtil.iterate(containingClass.getMethods()));
         if (setter != null) accessors.add(setter);
         accessors.addAll(PropertyUtilBase.getAccessors(containingClass, fieldName));
+        accessors.removeIf(accessor -> field != PropertyUtilBase.findPropertyFieldByMember(accessor));
         if (!accessors.isEmpty()) {
           boolean containsPhysical = ContainerUtil.find(accessors, psiMethod -> psiMethod.isPhysical()) != null;
           final boolean doSearch = !containsPhysical || askShouldSearchAccessors(fieldName);
@@ -265,7 +269,7 @@ public class JavaFindUsagesHandler extends FindUsagesHandler{
       }
       for (PsiMethod superMethod : superMethods) {
         if (resolveScope != null) {
-          superMethod = PsiSuperMethodUtil.correctMethodByScope(superMethod, resolveScope);
+          superMethod = PsiSuperMethodUtil.correctMethodByScope(superMethod, resolveScope).orElse(superMethod);
         }
         result.addAll(MethodReferencesSearch.search(superMethod, searchScope, true).findAll());
       }

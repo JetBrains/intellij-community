@@ -67,7 +67,7 @@ public class BuiltInServerOptions implements PersistentStateComponent<BuiltInSer
   }
 
   @Override
-  public void loadState(BuiltInServerOptions state) {
+  public void loadState(@NotNull BuiltInServerOptions state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 

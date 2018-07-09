@@ -126,7 +126,7 @@ public class PyStaticCallHierarchyUtil {
   }
 
   /**
-   * @see {@link com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory#createFindUsagesHandler(com.intellij.psi.PsiElement, boolean) createFindUsagesHandler}
+   * @see com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory#createFindUsagesHandler(com.intellij.psi.PsiElement, boolean)
    */
   @Nullable
   private static FindUsagesHandler createFindUsageHandler(@NotNull final PsiElement element) {
@@ -152,7 +152,7 @@ public class PyStaticCallHierarchyUtil {
   }
 
   /**
-   * @see {@link com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory#isInObject(com.jetbrains.python.psi.PyFunction) isInObject}
+   * @see com.jetbrains.python.findUsages.PyFindUsagesHandlerFactory#isInObject(PyFunction)
    */
   private static boolean isInObject(PyFunction fun) {
     final PyClass containingClass = fun.getContainingClass();

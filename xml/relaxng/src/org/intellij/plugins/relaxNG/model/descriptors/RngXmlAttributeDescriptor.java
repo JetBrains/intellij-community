@@ -135,7 +135,7 @@ public class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
       } else {
         copy = myValues;
       }
-      return copy.keySet().toArray(new String[copy.size()]);
+      return ArrayUtil.toStringArray(copy.keySet());
     } else {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }

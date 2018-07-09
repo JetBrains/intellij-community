@@ -1,5 +1,7 @@
 package com.intellij.openapi.externalSystem;
 
+import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -95,6 +97,16 @@ public interface ExternalSystemManager<
    */
   @Nullable
   default GlobalSearchScope getSearchScope(@NotNull Project project, @NotNull ExternalSystemTaskExecutionSettings taskExecutionSettings) {
+    return null;
+  }
+
+  /**
+   * @return SMTRunnerConsoleProperties to integrate external system test runner with the 'Import Tests Results' action
+   */
+  @Nullable
+  default Object createTestConsoleProperties(@NotNull Project project,
+                                             @NotNull Executor executor,
+                                             @NotNull RunConfiguration runConfiguration) {
     return null;
   }
 }

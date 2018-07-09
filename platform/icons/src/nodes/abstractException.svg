@@ -1,11 +1,13 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
   <title>abstractException</title>
   <g>
-    <path d="M11,1.68261a6.93358,6.93358,0,0,0-6,0V14.31737a6.93358,6.93358,0,0,0,6,0V1.68261Z" fill="#40b6e0" opacity="0.5" style="isolation: isolate"/>
+    <path d="M3,3.10547a6.98911,6.98911,0,0,0,0,9.78906Z" fill="#9aa7b0" opacity="0.7"/>
+    <path d="M13,3.10547v9.78906a6.98911,6.98911,0,0,0,0-9.78906Z" fill="#9aa7b0" opacity="0.7"/>
     <g opacity="0.6">
+      <path d="M12,2.25977a6.98025,6.98025,0,0,0-8,0V13.74023a6.98025,6.98025,0,0,0,8,0Z" fill="#40b6e0"/>
+    </g>
+    <g opacity="0.7">
       <path d="M6.9999,13l2-4H4L8.9999,3l-1,4H12Z" fill="#231f20"/>
     </g>
-    <path d="M4,2.26A6.99125,6.99125,0,0,0,4,13.74V2.26Z" fill="#9aa7b0" opacity="0.6" style="isolation: isolate"/>
-    <path d="M12,2.26V13.74A6.99125,6.99125,0,0,0,12,2.26Z" fill="#9aa7b0" opacity="0.6" style="isolation: isolate"/>
   </g>
 </svg>

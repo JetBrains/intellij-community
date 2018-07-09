@@ -1,6 +1,6 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,6 +29,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.xml.NanoXmlUtil;
 import com.oracle.javafx.scenebuilder.kit.editor.EditorController;
 import com.oracle.javafx.scenebuilder.kit.editor.panel.content.ContentPanelController;
@@ -135,7 +136,6 @@ public class SceneBuilderImpl implements SceneBuilder {
     if (myProject.isDisposed()) {
       return;
     }
-    UsageTrigger.trigger("scene-builder.open");
   }
 
   private static void logUncaughtException(Thread t, Throwable e) {
@@ -185,8 +185,8 @@ public class SceneBuilderImpl implements SceneBuilder {
       // Take custom components from libraries, but not from the project modules, because SceneBuilder instantiates the components' classes.
       // Modules might be not compiled or may change since last compile, it's too expensive to keep track of that.
       final GlobalSearchScope scope = ProjectScope.getLibrariesScope(nodeClass.getProject());
-      final String ideJdkVersion = Object.class.getPackage().getSpecificationVersion();
-      final LanguageLevel ideLanguageLevel = LanguageLevel.parse(ideJdkVersion);
+      final JavaSdkVersion ideJdkVersion = JavaSdkVersion.fromJavaVersion(JavaVersion.current());
+      final LanguageLevel ideLanguageLevel = ideJdkVersion != null ? ideJdkVersion.getMaxLanguageLevel() : null;
       final Query<PsiClass> query = ClassInheritorsSearch.search(nodeClass, scope, true, true, false);
       final Set<PsiClass> result = new THashSet<>();
       query.forEach(psiClass -> {
@@ -312,7 +312,6 @@ public class SceneBuilderImpl implements SceneBuilder {
     myListener = (observable, oldValue, newValue) -> {
       if (!mySkipChanges) {
         myEditorCallback.saveChanges(myEditorController.getFxmlText());
-        UsageTrigger.trigger("scene-builder.edit");
       }
     };
     mySelectionListener = (observable, oldValue, newValue) -> {

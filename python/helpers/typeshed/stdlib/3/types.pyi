@@ -29,6 +29,7 @@ class FunctionType:
     __dict__ = ...  # type: Dict[str, Any]
     __globals__ = ...  # type: Dict[str, Any]
     __name__ = ...  # type: str
+    __qualname__ = ...  # type: str
     __annotations__ = ...  # type: Dict[str, Any]
     __kwdefaults__ = ...  # type: Dict[str, Any]
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
@@ -77,8 +78,11 @@ class MappingProxyType(Mapping[_KT, _VT], Generic[_KT, _VT]):
     def __iter__(self) -> Iterator[_KT]: ...
     def __len__(self) -> int: ...
 
-# TODO: use __getattr__ and __setattr__ instead of inheriting from Any, pending mypy#521.
-class SimpleNamespace(Any): ...  # type: ignore
+class SimpleNamespace:
+    def __init__(self, **kwargs: Any) -> None: ...
+    def __getattribute__(self, name: str) -> Any: ...
+    def __setattr__(self, name: str, value: Any) -> None: ...
+    def __delattr__(self, name: str) -> None: ...
 
 class GeneratorType:
     gi_code = ...  # type: CodeType
@@ -140,18 +144,30 @@ class MethodType:
     __func__ = ...  # type: _StaticFunctionType
     __self__ = ...  # type: object
     __name__ = ...  # type: str
+    __qualname__ = ...  # type: str
     def __init__(self, func: Callable, obj: object) -> None: ...
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 class BuiltinFunctionType:
     __self__ = ...  # type: Union[object, ModuleType]
+    __name__ = ...  # type: str
+    __qualname__ = ...  # type: str
     def __call__(self, *args: Any, **kwargs: Any) -> Any: ...
 BuiltinMethodType = BuiltinFunctionType
 
 class TracebackType:
-    tb_frame = ...  # type: FrameType
-    tb_lasti = ...  # type: int
-    tb_lineno = ...  # type: int
-    tb_next = ...  # type: TracebackType
+    if sys.version_info >= (3, 7):
+        def __init__(self, tb_next: Optional[TracebackType], tb_frame: FrameType, tb_lasti: int, tb_lineno: int) -> None: ...
+        tb_next: Optional[TracebackType]
+    else:
+        @property
+        def tb_next(self) -> Optional[TracebackType]: ...
+    # the rest are read-only even in 3.7
+    @property
+    def tb_frame(self) -> FrameType: ...
+    @property
+    def tb_lasti(self) -> int: ...
+    @property
+    def tb_lineno(self) -> int: ...
 
 class FrameType:
     f_back = ...  # type: FrameType
@@ -162,6 +178,9 @@ class FrameType:
     f_lineno = ...  # type: int
     f_locals = ...  # type: Dict[str, Any]
     f_trace = ...  # type: Callable[[], None]
+    if sys.version_info >= (3, 7):
+        f_frace_lines: bool
+        f_trace_opcodes: bool
 
     def clear(self) -> None: ...
 

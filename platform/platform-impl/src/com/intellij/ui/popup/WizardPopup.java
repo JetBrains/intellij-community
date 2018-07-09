@@ -214,10 +214,6 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
   protected void afterShow() {
     super.afterShow();
     registerAutoMove();
-
-    if (!myFocusTrackback.isMustBeShown()) {
-      cancel();
-    }
   }
 
   private void registerAutoMove() {

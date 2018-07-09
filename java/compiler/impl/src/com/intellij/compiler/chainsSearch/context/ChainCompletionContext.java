@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.chainsSearch.context;
 
 import com.intellij.compiler.CompilerReferenceService;
@@ -22,11 +8,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.psi.*;
-import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -34,7 +23,7 @@ import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.backwardRefs.LightRef;
+import org.jetbrains.jps.backwardRefs.CompilerRef;
 
 import java.util.List;
 import java.util.Map;
@@ -69,10 +58,10 @@ public class ChainCompletionContext {
   @NotNull
   private final CompilerReferenceServiceEx myRefServiceEx;
 
-  private final NotNullLazyValue<Set<LightRef>> myContextClassReferences = new NotNullLazyValue<Set<LightRef>>() {
+  private final NotNullLazyValue<Set<CompilerRef>> myContextClassReferences = new NotNullLazyValue<Set<CompilerRef>>() {
     @NotNull
     @Override
-    protected Set<LightRef> compute() {
+    protected Set<CompilerRef> compute() {
       return getContextTypes()
         .stream()
         .map(PsiUtil::resolveClassInType)
@@ -81,7 +70,7 @@ public class ChainCompletionContext {
         .filter(Objects::nonNull)
         .mapToInt(c -> myRefServiceEx.getNameId(c))
         .filter(n -> n != 0)
-        .mapToObj(n -> new LightRef.JavaLightClassRef(n)).collect(Collectors.toSet());
+        .mapToObj(n -> new CompilerRef.JavaCompilerClassRef(n)).collect(Collectors.toSet());
     }
   };
 
@@ -136,7 +125,7 @@ public class ChainCompletionContext {
   }
 
   @NotNull
-  public Set<LightRef> getContextClassReferences() {
+  public Set<CompilerRef> getContextClassReferences() {
     return myContextClassReferences.getValue();
   }
 
@@ -167,7 +156,7 @@ public class ChainCompletionContext {
   }
 
   @Nullable
-  public PsiClass resolvePsiClass(LightRef.LightClassHierarchyElementDef aClass) {
+  public PsiClass resolvePsiClass(CompilerRef.CompilerClassHierarchyElementDef aClass) {
     int nameId = aClass.getName();
     if (myQualifierClassResolver.contains(nameId)) {
       return myQualifierClassResolver.get(nameId);
@@ -225,7 +214,7 @@ public class ChainCompletionContext {
     return result;
   }
 
-  private static class ContextProcessor extends BaseScopeProcessor implements ElementClassHint {
+  private static class ContextProcessor implements PsiScopeProcessor, ElementClassHint {
     private final List<PsiNamedElement> myContextElements = new SmartList<>();
     private final PsiVariable myCompletionVariable;
     private final PsiResolveHelper myResolveHelper;
@@ -257,10 +246,10 @@ public class ChainCompletionContext {
           (!(element instanceof PsiMember) || myResolveHelper.isAccessible((PsiMember)element, myPlace, null))) {
         PsiType type = getType(element);
         if (type == null) {
-          return false;
+          return true;
         }
         if (isWidelyUsed(type)) {
-          return false;
+          return true;
         }
         myContextElements.add((PsiNamedElement)element);
       }
@@ -273,7 +262,7 @@ public class ChainCompletionContext {
         //noinspection unchecked
         return (T)this;
       }
-      return super.getHint(hintKey);
+      return null;
     }
 
     @NotNull

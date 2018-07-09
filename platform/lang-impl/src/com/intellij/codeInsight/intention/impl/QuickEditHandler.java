@@ -22,6 +22,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -124,7 +125,8 @@ public class QuickEditHandler implements Disposable, DocumentListener {
     // suppress possible errors as in injected mode
     myNewFile.putUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION,
                           injectedFile.getUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION));
-    myNewFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, shreds.getHostPointer());
+    PsiLanguageInjectionHost host = InjectedLanguageManager.getInstance(project).getInjectionHost(injectedFile.getViewProvider());
+    myNewFile.putUserData(FileContextUtil.INJECTED_IN_ELEMENT, SmartPointerManager.getInstance(project).createSmartPsiElementPointer(host));
     myNewDocument = PsiDocumentManager.getInstance(project).getDocument(myNewFile);
     assert myNewDocument != null;
     EditorActionManager.getInstance().setReadonlyFragmentModificationHandler(myNewDocument, new MyQuietHandler());
@@ -203,17 +205,22 @@ public class QuickEditHandler implements Disposable, DocumentListener {
         editor.putUserData(QuickEditAction.QUICK_EDIT_HANDLER, this);
         final FoldingModel foldingModel = editor.getFoldingModel();
         foldingModel.runBatchFoldingOperation(() -> {
+          CharSequence sequence = myNewDocument.getImmutableCharSequence();
           for (RangeMarker o : ContainerUtil.reverse(((DocumentEx)myNewDocument).getGuardedBlocks())) {
             String replacement = o.getUserData(REPLACEMENT_KEY);
             if (StringUtil.isEmpty(replacement)) continue;
-            FoldRegion region = foldingModel.addFoldRegion(o.getStartOffset(), o.getEndOffset(), replacement);
+            int start = o.getStartOffset();
+            int end = o.getEndOffset();
+            start += StringUtil.countChars(sequence, '\n', start, end, true);
+            end -= StringUtil.countChars(sequence, '\n', end, start, true);
+            FoldRegion region = start <= end ? foldingModel.addFoldRegion(start, end, replacement) : null;
             if (region != null) region.setExpanded(false);
           }
         });
       }
-      SwingUtilities.invokeLater(() -> myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE));
-
     }
+    ApplicationManager.getApplication().invokeLater(
+      () -> myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER), ModalityState.any());
   }
 
   public static void showBalloon(Editor editor, PsiFile newFile, JComponent component) {
@@ -371,7 +378,7 @@ public class QuickEditHandler implements Disposable, DocumentListener {
         ProperTextRange localInsideFile = new ProperTextRange(Math.max(localInsideFileCursor, rangeMarker.getStartOffset()), rangeMarker.getEndOffset());
         if (insideHost != null) {
           //append unchanged inter-markers fragment
-          sb.append(hostText.substring(insideHost.getEndOffset(), localInsideHost.getStartOffset()));
+          sb.append(hostText, insideHost.getEndOffset(), localInsideHost.getStartOffset());
         }
         sb.append(localInsideFile.getEndOffset() <= text.length() && !localInsideFile.isEmpty()? localInsideFile.substring(text) : "");
         localInsideFileCursor = localInsideFile.getEndOffset();

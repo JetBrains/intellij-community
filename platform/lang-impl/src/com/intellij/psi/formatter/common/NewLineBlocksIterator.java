@@ -36,7 +36,7 @@ public class NewLineBlocksIterator implements Iterator<Block> {
 
   private int myCurrentLineStartOffset;
   private int myCurrentDocumentLine;
-  private Stack<Block> myStack = new Stack<>();
+  private final Stack<Block> myStack = new Stack<>();
 
   @TestOnly
   public NewLineBlocksIterator(@NotNull Block root, @NotNull Document document) {

@@ -76,7 +76,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   private void doTestPy3() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   public void testWrapTuple() {  // PY-1792
@@ -246,7 +246,7 @@ public class PyFormatterTest extends PyTestCase {
       "   desired_impulse_response = {'dirac, 'gaussian', logistic_derivative'}\n" +
       "return desired,                o";
 
-    final PsiFile file = PyElementGenerator.getInstance(myFixture.getProject()).createDummyFile(LanguageLevel.PYTHON30, initial);
+    final PsiFile file = PyElementGenerator.getInstance(myFixture.getProject()).createDummyFile(LanguageLevel.PYTHON34, initial);
     final PsiElement reformatted = CodeStyleManager.getInstance(myFixture.getProject()).reformat(file);
 
     String expected =
@@ -785,7 +785,7 @@ public class PyFormatterTest extends PyTestCase {
 
   // PY-20970
   public void testSpacesAfterNonlocal() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-21515
@@ -794,7 +794,7 @@ public class PyFormatterTest extends PyTestCase {
   }
 
   public void testSpacesAfterFromInYieldFrom() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-24220
@@ -902,5 +902,15 @@ public class PyFormatterTest extends PyTestCase {
 
   public void testVariableAnnotations() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-27266
+  public void testChainedMethodCallsInParentheses() {
+    doTest();
+  }
+
+  // PY-27266
+  public void testChainedAttributeAccessInParentheses() {
+    doTest();
   }
 }

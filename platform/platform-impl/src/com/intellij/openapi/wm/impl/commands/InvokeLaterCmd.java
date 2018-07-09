@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.impl.commands;
 
 
 import com.intellij.util.ui.EdtInvocationManager;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Vladimir Kondratyev
@@ -24,11 +25,12 @@ import com.intellij.util.ui.EdtInvocationManager;
 public final class InvokeLaterCmd extends FinalizableCommand{
   private final Runnable myRunnable;
 
-  public InvokeLaterCmd(final Runnable runnable,final Runnable finishCallBack){
+  public InvokeLaterCmd(@NotNull Runnable runnable, @NotNull Runnable finishCallBack){
     super(finishCallBack);
     myRunnable=runnable;
   }
 
+  @Override
   public void run(){
     EdtInvocationManager.getInstance().invokeLater(() -> {
      try {

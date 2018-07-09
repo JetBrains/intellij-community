@@ -26,9 +26,9 @@ import org.jetbrains.uast.visitor.UastVisitor
  * Represents the class literal expression, e.g. `Clazz.class`.
  */
 interface UClassLiteralExpression : UExpression {
-  override fun asLogString() = log()
+  override fun asLogString(): String = log()
 
-  override fun asRenderString() = (type?.name) ?: "(${expression?.asRenderString() ?: "<no expression>"})" + "::class"
+  override fun asRenderString(): String = (type?.name) ?: "(${expression?.asRenderString() ?: "<no expression>"})"+"::class"
 
   /**
    * Returns the type referenced by this class literal, or null if the type can't be determined in a compile-time.
@@ -48,6 +48,6 @@ interface UClassLiteralExpression : UExpression {
     visitor.afterVisitClassLiteralExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitClassLiteralExpression(this, data)
 }

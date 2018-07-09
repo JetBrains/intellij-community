@@ -1,10 +1,10 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
   <title>exceptionClass</title>
   <g>
-    <g id="_Group_" data-name=" Group " opacity="0.5">
+    <g id="_Group_" data-name="&lt;Group&gt;" opacity="0.6">
       <circle cx="8" cy="8" r="7" fill="#40b6e0"/>
     </g>
-    <g opacity="0.6">
+    <g opacity="0.7">
       <path d="M6.9999,13l2-4H4L8.9999,3l-1,4H12Z" fill="#231f20"/>
     </g>
   </g>

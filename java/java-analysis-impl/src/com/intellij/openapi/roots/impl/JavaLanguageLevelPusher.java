@@ -98,20 +98,16 @@ public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel
 
   @Override
   public void persistAttribute(@NotNull Project project, @NotNull VirtualFile fileOrDir, @NotNull LanguageLevel level) throws IOException {
-    final DataInputStream iStream = PERSISTENCE.readAttribute(fileOrDir);
-    if (iStream != null) {
-      try {
+    try (DataInputStream iStream = PERSISTENCE.readAttribute(fileOrDir)) {
+      if (iStream != null) {
         final int oldLevelOrdinal = DataInputOutputUtil.readINT(iStream);
         if (oldLevelOrdinal == level.ordinal()) return;
       }
-      finally {
-        iStream.close();
-      }
     }
 
-    final DataOutputStream oStream = PERSISTENCE.writeAttribute(fileOrDir);
-    DataInputOutputUtil.writeINT(oStream, level.ordinal());
-    oStream.close();
+    try (DataOutputStream oStream = PERSISTENCE.writeAttribute(fileOrDir)) {
+      DataInputOutputUtil.writeINT(oStream, level.ordinal());
+    }
 
     // Todo: GwtLanguageLevelPusher changes java language level for single files without firing filePropertiesChanged
     // so code below doesn't work.

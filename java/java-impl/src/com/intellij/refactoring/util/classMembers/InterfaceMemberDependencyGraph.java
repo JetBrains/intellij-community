@@ -19,7 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberDependencyGraph;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 
 import java.util.HashSet;
 import java.util.Iterator;

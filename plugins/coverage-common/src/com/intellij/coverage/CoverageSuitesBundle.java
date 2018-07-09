@@ -29,7 +29,7 @@ import java.util.TreeMap;
 
 public class CoverageSuitesBundle {
   private final CoverageSuite[] mySuites;
-  private CoverageEngine myEngine;
+  private final CoverageEngine myEngine;
 
   private Set<Module> myProcessedModules;
 
@@ -149,6 +149,9 @@ public class CoverageSuitesBundle {
 
   public void restoreCoverageData() {
     myData = new SoftReference<>(null);
+    for (CoverageSuite suite : mySuites) {
+      suite.restoreCoverageData();
+    }
   }
 
   public String getPresentableName() {

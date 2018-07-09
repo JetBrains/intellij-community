@@ -1,26 +1,15 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.Patches;
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
+import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.internal.statistic.UsageTrigger;
+import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -31,6 +20,7 @@ import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -55,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.concurrent.ForkJoinPool;
 
 public class IdeaApplication {
   public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
@@ -74,12 +65,22 @@ public class IdeaApplication {
     return ourInstance != null && ourInstance.myLoaded;
   }
 
-  private final String[] myArgs;
+  @SuppressWarnings("SSBasedInspection")
+  public static void initApplication(String[] args) {
+    IdeaApplication app = new IdeaApplication(args);
+    // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance
+    SwingUtilities.invokeLater(() -> {
+      PluginManager.installExceptionHandler();
+      app.run();
+    });
+  }
+
+  private final @NotNull String[] myArgs;
   private static boolean myPerformProjectLoad = true;
   private ApplicationStarter myStarter;
-  private volatile boolean myLoaded = false;
+  private volatile boolean myLoaded;
 
-  public IdeaApplication(String[] args) {
+  public IdeaApplication(@NotNull String[] args) {
     LOG.assertTrue(ourInstance == null);
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     ourInstance = this;
@@ -130,7 +131,7 @@ public class IdeaApplication {
    * @see IdeaApplication#SAFE_JAVA_ENV_PARAMETERS
    */
   @NotNull
-  private static String[] processProgramArguments(String[] args) {
+  private static String[] processProgramArguments(@NotNull String[] args) {
     ArrayList<String> arguments = new ArrayList<>();
     List<String> safeKeys = Arrays.asList(SAFE_JAVA_ENV_PARAMETERS);
     for (String arg : args) {
@@ -147,9 +148,13 @@ public class IdeaApplication {
   }
 
   private static void patchSystem(boolean headless) {
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(headless);
+    LOG.info("CPU cores: " + Runtime.getRuntime().availableProcessors()+"; ForkJoinPool.commonPool: " + ForkJoinPool.commonPool() + "; factory: " + ForkJoinPool.commonPool().getFactory());
+
     System.setProperty("sun.awt.noerasebackground", "true");
 
-    IdeEventQueue.getInstance(); // replace system event queue
+    //noinspection ResultOfMethodCallIgnored
+    IdeEventQueue.getInstance();  // replaces system event queue
 
     if (headless) return;
 
@@ -211,7 +216,7 @@ public class IdeaApplication {
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"})
+  @SuppressWarnings("HardCodedStringLiteral")
   private static void initLAF() {
     try {
       Class.forName("com.jgoodies.looks.plastic.PlasticLookAndFeel");
@@ -262,7 +267,7 @@ public class IdeaApplication {
       return null;
     }
 
-    private void updateSplashScreen(@NotNull ApplicationInfoEx appInfo, SplashScreen splashScreen) {
+    private static void updateSplashScreen(@NotNull ApplicationInfoEx appInfo, @NotNull SplashScreen splashScreen) {
       final Graphics2D graphics = splashScreen.createGraphics();
       final Dimension size = splashScreen.getSize();
       if (Splash.showLicenseeInfo(graphics, 0, 0, size.height, appInfo.getSplashTextColor(), appInfo)) {
@@ -271,7 +276,7 @@ public class IdeaApplication {
     }
 
     @Nullable
-    private SplashScreen getSplashScreen() {
+    private static SplashScreen getSplashScreen() {
       try {
         return SplashScreen.getSplashScreen();
       }
@@ -287,7 +292,7 @@ public class IdeaApplication {
     }
 
     @Override
-    public void processExternalCommandLine(String[] args, @Nullable String currentDirectory) {
+    public void processExternalCommandLine(@NotNull String[] args, @Nullable String currentDirectory) {
       LOG.info("Request to open in " + currentDirectory + " with parameters: " + StringUtil.join(args, ","));
 
       if (args.length > 0) {
@@ -313,7 +318,7 @@ public class IdeaApplication {
       }
     }
 
-    private Project loadProjectFromExternalCommandLine(String[] args) {
+    private static Project loadProjectFromExternalCommandLine(String[] args) {
       Project project = null;
       if (args != null && args.length > 0 && args[0] != null) {
         LOG.info("IdeaApplication.loadProject");
@@ -343,6 +348,11 @@ public class IdeaApplication {
       LOG.info("App initialization took " + (System.nanoTime() - PluginManager.startupStart) / 1000000 + " ms");
       PluginManagerCore.dumpPluginClassStatistics();
 
+      // Temporary check until the jre implementation has been checked and bundled
+      if (Registry.is("ide.popup.enablePopupType")) {
+        System.setProperty("jbre.popupwindow.settype", "true");
+      }
+
       if (JetBrainsProtocolHandler.getCommand() != null || !willOpenProject.get()) {
         WelcomeFrame.showNow();
         lifecyclePublisher.welcomeScreenDisplayed();
@@ -351,12 +361,12 @@ public class IdeaApplication {
         windowManager.showFrame();
       }
 
-      app.invokeLater(() -> {
-        if (mySplash != null) {
+      if (mySplash != null) {
+        app.invokeLater(() -> {
           mySplash.dispose();
           mySplash = null; // Allow GC collect the splash window
-        }
-      }, ModalityState.any());
+        }, ModalityState.any());
+      }
 
       TransactionGuard.submitTransaction(app, () -> {
         Project projectFromCommandLine = myPerformProjectLoad ? loadProjectFromExternalCommandLine(args) : null;
@@ -365,8 +375,8 @@ public class IdeaApplication {
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(PluginManager::reportPluginError);
 
-        //safe for headless and unit test modes
-        UsageTrigger.trigger(app.getName() + "app.started");
+        FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, "ide.start");
+        FeatureUsageLogger.INSTANCE.log("lifecycle", "app.started");
       });
     }
 
@@ -381,6 +391,7 @@ public class IdeaApplication {
     ShutDownTracker.getInstance().run();
   }
 
+  @NotNull
   public String[] getCommandLineArguments() {
     return myArgs;
   }

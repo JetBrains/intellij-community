@@ -62,7 +62,7 @@ final class ObjectNode<T> {
   private ObjectNode<T>[] getChildrenArray() {
     List<ObjectNode<T>> children = myChildren;
     if (children == null || children.isEmpty()) return EMPTY_ARRAY;
-    return children.toArray(new ObjectNode[children.size()]);
+    return children.toArray(new ObjectNode[0]);
   }
 
   void addChild(@NotNull ObjectNode<T> child) {

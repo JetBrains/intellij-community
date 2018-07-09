@@ -1,18 +1,19 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.debugger.breakpoints;
 
 import com.intellij.debugger.InstanceFilter;
+import com.intellij.debugger.ui.breakpoints.CallerFiltersField;
 import com.intellij.debugger.ui.breakpoints.ClassFiltersField;
 import com.intellij.debugger.ui.breakpoints.EditInstanceFiltersDialog;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.MultiLineTooltipUI;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
@@ -47,6 +48,9 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   private ClassFiltersField myCatchClassFilters;
   private JPanel myCatchFiltersPanel;
   private JPanel myPassCountFieldPanel;
+  private JCheckBox myCallerFiltersCheckBox;
+  private CallerFiltersField myCallerFilters;
+  private JPanel myCallerFiltersPanel;
 
   private final FieldPanel myInstanceFiltersField;
 
@@ -85,20 +89,23 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
     myInstanceFiltersCheckBox.addActionListener(updateListener);
     myClassFiltersCheckBox.addActionListener(updateListener);
     myCatchCheckBox.addActionListener(updateListener);
+    myCallerFiltersCheckBox.addActionListener(updateListener);
 
     ToolTipManager.sharedInstance().registerComponent(myInstanceFiltersField.getTextField());
 
     insert(myInstanceFiltersFieldPanel, myInstanceFiltersField);
 
-    myCatchClassFilters.setBorder(JBUI.Borders.emptyLeft(UIUtil.getCheckBoxTextHorizontalOffset(myCatchCheckBox)));
-    myInstanceFiltersField.setBorder(JBUI.Borders.emptyLeft(UIUtil.getCheckBoxTextHorizontalOffset(myInstanceFiltersCheckBox)));
-    myClassFiltersField.setBorder(JBUI.Borders.emptyLeft(UIUtil.getCheckBoxTextHorizontalOffset(myClassFiltersCheckBox)));
-    myPassCountFieldPanel.setBorder(JBUI.Borders.emptyLeft(UIUtil.getCheckBoxTextHorizontalOffset(myPassCountCheckbox)));
+    myCatchClassFilters.setBorder(JBUI.Borders.emptyLeft(myCatchCheckBox.getInsets().left));
+    myInstanceFiltersField.setBorder(JBUI.Borders.emptyLeft(myInstanceFiltersCheckBox.getInsets().left));
+    myClassFiltersField.setBorder(JBUI.Borders.emptyLeft(myClassFiltersCheckBox.getInsets().left));
+    myPassCountFieldPanel.setBorder(JBUI.Borders.emptyLeft(myPassCountCheckbox.getInsets().left));
+    myCallerFilters.setBorder(JBUI.Borders.emptyLeft(myCallerFiltersCheckBox.getInsets().left));
 
     DebuggerUIUtil.focusEditorOnCheck(myPassCountCheckbox, myPassCountField);
     DebuggerUIUtil.focusEditorOnCheck(myInstanceFiltersCheckBox, myInstanceFiltersField.getTextField());
     DebuggerUIUtil.focusEditorOnCheck(myClassFiltersCheckBox, myClassFiltersField.getTextField());
     DebuggerUIUtil.focusEditorOnCheck(myCatchCheckBox, myCatchClassFilters.getTextField());
+    DebuggerUIUtil.focusEditorOnCheck(myCallerFiltersCheckBox, myCallerFilters);
   }
 
   @NotNull
@@ -114,6 +121,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
       return properties.isCOUNT_FILTER_ENABLED() ||
              properties.isCLASS_FILTERS_ENABLED() ||
              properties.isINSTANCE_FILTERS_ENABLED() ||
+             properties.isCALLER_FILTERS_ENABLED() ||
              (properties instanceof JavaExceptionBreakpointProperties &&
               ((JavaExceptionBreakpointProperties)properties).isCatchFiltersEnabled());
     }
@@ -155,6 +163,10 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
     changed = properties.setINSTANCE_FILTERS_ENABLED(!myInstanceFiltersField.getText().isEmpty() && myInstanceFiltersCheckBox.isSelected()) || changed;
     changed = properties.setInstanceFilters(myInstanceFilters) || changed;
 
+    changed = properties.setCALLER_FILTERS_ENABLED(!myCallerFilters.getText().isEmpty() && myCallerFiltersCheckBox.isSelected()) || changed;
+    changed = properties.setCallerFilters(myCallerFilters.getClassFilters()) || changed;
+    changed = properties.setCallerExclusionFilters(myCallerFilters.getClassExclusionFilters()) || changed;
+
     if (changed) {
       ((XBreakpointBase)breakpoint).fireBreakpointChanged();
     }
@@ -168,6 +180,8 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   @Override
   public void loadFrom(@NotNull B breakpoint) {
     myCatchFiltersPanel.setVisible(false);
+    myCallerFiltersPanel.setVisible(false);
+
     JavaBreakpointProperties properties = breakpoint.getProperties();
     if (properties != null) {
       if (properties.getCOUNT_FILTER() > 0) {
@@ -194,6 +208,12 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
                                             exceptionBreakpointProperties.getCatchClassExclusionFilters());
       }
 
+      if (Registry.is("debugger.breakpoints.caller.filter")) {
+        myCallerFiltersPanel.setVisible(true);
+        myCallerFiltersCheckBox.setSelected(properties.isCALLER_FILTERS_ENABLED());
+        myCallerFilters.setClassFilters(properties.getCallerFilters(), properties.getCallerExclusionFilters());
+      }
+
       XSourcePosition position = breakpoint.getSourcePosition();
       // TODO: need to calculate psi class
       //myBreakpointPsiClass = breakpoint.getPsiClass();
@@ -202,12 +222,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   }
 
   private void updateInstanceFilterEditor(boolean updateText) {
-    List<String> filters = new ArrayList<>();
-    for (InstanceFilter instanceFilter : myInstanceFilters) {
-      if (instanceFilter.isEnabled()) {
-        filters.add(Long.toString(instanceFilter.getId()));
-      }
-    }
+    List<String> filters = StreamEx.of(myInstanceFilters).filter(InstanceFilter::isEnabled).map(f -> Long.toString(f.getId())).toList();
     if (updateText) {
       myInstanceFiltersField.setText(StringUtil.join(filters, " "));
     }
@@ -219,6 +234,7 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   private void createUIComponents() {
     myClassFiltersField = new ClassFiltersField(myProject, this);
     myCatchClassFilters = new ClassFiltersField(myProject, this);
+    myCallerFilters = new CallerFiltersField(myProject, this);
   }
 
   private class MyTextField extends JTextField {
@@ -265,21 +281,21 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
   }
 
   private static String concatWithEx(List<String> s, String concator, int N, String NthConcator) {
-    String result = "";
+    StringBuilder result = new StringBuilder();
     int i = 1;
     for (Iterator iterator = s.iterator(); iterator.hasNext(); i++) {
       String str = (String) iterator.next();
-      result += str;
+      result.append(str);
       if(iterator.hasNext()){
         if(i % N == 0){
-          result += NthConcator;
+          result.append(NthConcator);
         }
         else {
-          result += concator;
+          result.append(concator);
         }
       }
     }
-    return result;
+    return result.toString();
   }
 
   protected ClassFilter createClassConditionFilter() {
@@ -320,5 +336,8 @@ public class JavaBreakpointFiltersPanel<T extends JavaBreakpointProperties, B ex
 
     myCatchClassFilters.setEnabled(myCatchCheckBox.isSelected());
     myCatchClassFilters.setEditable(myCatchCheckBox.isSelected());
+
+    myCallerFilters.setEnabled(myCallerFiltersCheckBox.isSelected());
+    myCallerFilters.setEditable(myCallerFiltersCheckBox.isSelected());
   }
 }

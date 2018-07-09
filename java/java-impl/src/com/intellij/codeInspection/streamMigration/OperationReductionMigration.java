@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
@@ -46,6 +47,7 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
     PsiVariable var = StreamApiMigrationInspection.extractAccumulator(assignment, myReductionOperation.getCompoundAssignmentOp());
     if (var == null) return null;
 
+    CommentTracker ct = new CommentTracker();
     PsiExpression operand = StreamApiMigrationInspection.extractOperand(assignment, myReductionOperation.getCompoundAssignmentOp());
     if (operand == null) return null;
     PsiType type = var.getType();
@@ -53,7 +55,7 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
     PsiType operandType = operand.getType();
     if (operandType != null && !TypeConversionUtil.isAssignable(type, operandType)) {
       operand = JavaPsiFacade.getElementFactory(project).createExpressionFromText(
-        "(" + type.getCanonicalText() + ")" + ParenthesesUtils.getText(operand, ParenthesesUtils.MULTIPLICATIVE_PRECEDENCE), operand);
+        "(" + type.getCanonicalText() + ")" + ct.text(operand, ParenthesesUtils.TYPE_CAST_PRECEDENCE), operand);
     }
     JavaCodeStyleManager javaStyle = JavaCodeStyleManager.getInstance(project);
     String leftOperand = javaStyle.suggestUniqueVariableName("a", body, true);
@@ -65,13 +67,13 @@ public class OperationReductionMigration extends BaseStreamApiMigration {
 
     PsiExpression initializer = var.getInitializer();
     String identity = initializer != null && myReductionOperation.getInitializerExpressionRestriction().test(initializer)
-               ? initializer.getText()
+               ? ct.text(initializer)
                : myReductionOperation.getIdentity();
-    String stream = tb.add(new StreamApiMigrationInspection.MapOp(operand, tb.getVariable(), type)).generate()
+    String stream = tb.add(new StreamApiMigrationInspection.MapOp(operand, tb.getVariable(), type)).generate(ct)
                     + String.format(Locale.ENGLISH, ".reduce(%s, (%s, %s) -> %s %s %s)",
                                     identity, leftOperand, rightOperand, leftOperand,
                                     myReductionOperation.getOperation(), rightOperand);
-    return replaceWithOperation(tb.getStreamSourceStatement(), var, stream, type, myReductionOperation);
+    return replaceWithOperation(tb.getStreamSourceStatement(), var, stream, type, myReductionOperation, ct);
   }
 
   static class ReductionOperation {

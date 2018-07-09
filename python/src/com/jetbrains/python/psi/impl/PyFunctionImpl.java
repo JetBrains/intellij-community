@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
+import com.google.common.collect.ImmutableMap;
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.extensions.Extensions;
@@ -216,6 +217,10 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       }
     }
 
+    if (getProperty() == null && PyKnownDecoratorUtil.hasUnknownOrChangingReturnTypeDecorator(this, context)) {
+      inferredType = PyUnionType.createWeakType(inferredType);
+    }
+
     return PyTypingTypeProvider.toAsyncIfNeeded(this, inferredType);
   }
 
@@ -230,10 +235,17 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     }
 
     final PyExpression receiver = callSite.getReceiver(this);
-    final Map<PyExpression, PyCallableParameter> mapping =
-      PyCallExpressionHelper.mapArguments(callSite, this, context).getMappedParameters();
+    final PyCallExpression.PyArgumentsMapping fullMapping = PyCallExpressionHelper.mapArguments(callSite, this, context);
+    final Map<PyExpression, PyCallableParameter> mappedExplicitParameters = fullMapping.getMappedParameters();
 
-    return getCallType(receiver, mapping, context);
+    final Map<PyExpression, PyCallableParameter> allMappedParameters = new LinkedHashMap<>();
+    final PyCallableParameter firstImplicit = ContainerUtil.getFirstItem(fullMapping.getImplicitParameters());
+    if (receiver != null && firstImplicit != null) {
+      allMappedParameters.put(receiver, firstImplicit);
+    }
+    allMappedParameters.putAll(mappedExplicitParameters);
+
+    return getCallType(receiver, allMappedParameters, context);
   }
 
   @Nullable
@@ -289,8 +301,9 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       @Override
       public String getLocationString() {
         final PyClass containingClass = getContainingClass();
-        if (containingClass != null) {
-          return "(" + containingClass.getName() + " in " + getPackageForFile(getContainingFile()) + ")";
+        final String packageForFile = getPackageForFile(getContainingFile());
+        if (containingClass != null && packageForFile != null) {
+          return String.format("(%s in %s)", containingClass.getName(), packageForFile);
         }
         return super.getLocationString();
       }
@@ -299,8 +312,16 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Nullable
   private PyType replaceSelf(@Nullable PyType returnType, @Nullable PyExpression receiver, @NotNull TypeEvalContext context) {
+    return replaceSelf(returnType, receiver, context, true);
+  }
+
+  @Nullable
+  private PyType replaceSelf(@Nullable PyType returnType,
+                             @Nullable PyExpression receiver,
+                             @NotNull TypeEvalContext context,
+                             boolean allowCoroutineOrGenerator) {
     if (receiver != null) {
-      // TODO: Currently we substitute only simple subclass types, but we could handle union and collection types as well
+      // TODO: Currently we substitute only simple subclass types and unions, but we could handle collection types as well
       if (returnType instanceof PyClassType) {
         final PyClassType returnClassType = (PyClassType)returnType;
 
@@ -310,11 +331,28 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
           if (receiverType instanceof PyClassType) {
             final PyClassType receiverClassType = (PyClassType)receiverType;
 
-            if (receiverClassType.getPyClass() != returnClassType.getPyClass() && PyTypeChecker.match(returnType, receiverType, context)) {
-              return returnClassType.isDefinition() ? receiverType : receiverClassType.toInstance();
+            if (receiverClassType.getPyClass() != returnClassType.getPyClass() &&
+                PyTypeChecker.match(returnClassType.toClass(), receiverClassType.toClass(), context)) {
+              return returnClassType.isDefinition() ? receiverClassType.toClass() : receiverClassType.toInstance();
             }
           }
         }
+        else if (allowCoroutineOrGenerator &&
+                 returnType instanceof PyCollectionType &&
+                 PyTypingTypeProvider.coroutineOrGeneratorElementType(returnType) != null) {
+          final List<PyType> replacedElementTypes = ContainerUtil.map(
+            ((PyCollectionType)returnType).getElementTypes(),
+            type -> replaceSelf(type, receiver, context, false)
+          );
+
+          return new PyCollectionTypeImpl(returnClassType.getPyClass(),
+                                          returnClassType.isDefinition(),
+                                          replacedElementTypes);
+        }
+      }
+      else if (returnType instanceof PyUnionType) {
+        final Collection<PyType> members = ((PyUnionType)returnType).getMembers();
+        return PyUnionType.union(ContainerUtil.map(members, type -> replaceSelf(type, receiver, context, true)));
       }
     }
     return returnType;
@@ -622,15 +660,30 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
     final String funcName = getName();
 
-    // implicit staticmethod __new__
     final PyClass cls = getContainingClass();
-    if (cls != null && PyNames.NEW.equals(funcName) && cls.isNewStyleClass(null)) {
-      return STATICMETHOD;
-    }
+    if (cls != null) {
+      // implicit staticmethod __new__
+      if (PyNames.NEW.equals(funcName) && cls.isNewStyleClass(null)) {
+        return STATICMETHOD;
+      }
 
-    // implicit classmethod __init_subclass__
-    if (cls != null && PyNames.INIT_SUBCLASS.equals(funcName) && LanguageLevel.forElement(this).isAtLeast(LanguageLevel.PYTHON36)) {
-      return CLASSMETHOD;
+      final LanguageLevel level = LanguageLevel.forElement(this);
+
+      // implicit classmethod __init_subclass__
+      if (PyNames.INIT_SUBCLASS.equals(funcName) && level.isAtLeast(LanguageLevel.PYTHON36)) {
+        return CLASSMETHOD;
+      }
+
+      // implicit classmethod __class_getitem__
+      if (PyNames.CLASS_GETITEM.equals(funcName) && level.isAtLeast(LanguageLevel.PYTHON37)) {
+        return CLASSMETHOD;
+      }
+
+      final TypeEvalContext context = TypeEvalContext.codeInsightFallback(getProject());
+      for (PyKnownDecoratorUtil.KnownDecorator knownDecorator : PyKnownDecoratorUtil.getKnownDecorators(this, context)) {
+        if (knownDecorator == PyKnownDecoratorUtil.KnownDecorator.ABC_ABSTRACTCLASSMETHOD) return CLASSMETHOD;
+        if (knownDecorator == PyKnownDecoratorUtil.KnownDecorator.ABC_ABSTRACTSTATICMETHOD) return STATICMETHOD;
+      }
     }
 
     final PyFunctionStub stub = getStub();
@@ -669,6 +722,11 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
 
   @Override
   public boolean isGenerator() {
+    final PyFunctionStub stub = getStub();
+    if (stub != null) {
+      return stub.isGenerator();
+    }
+
     Boolean result = myIsGenerator;
     if (result == null) {
       Ref<Boolean> containsYield = Ref.create(false);
@@ -707,13 +765,19 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
   @Override
   public boolean isAsyncAllowed() {
     final LanguageLevel languageLevel = LanguageLevel.forElement(this);
+    if (languageLevel.isOlderThan(LanguageLevel.PYTHON35)) return false;
+
     final String functionName = getName();
 
-    return languageLevel.isAtLeast(LanguageLevel.PYTHON35) && (
-      functionName == null ||
-      ArrayUtil.contains(functionName, PyNames.AITER, PyNames.ANEXT, PyNames.AENTER, PyNames.AEXIT, PyNames.CALL) ||
-      !PyNames.getBuiltinMethods(languageLevel).containsKey(functionName)
-    );
+    if (functionName == null ||
+        ArrayUtil.contains(functionName, PyNames.AITER, PyNames.ANEXT, PyNames.AENTER, PyNames.AEXIT, PyNames.CALL)) {
+      return true;
+    }
+
+    final ImmutableMap<String, PyNames.BuiltinDescription> builtinMethods =
+      asMethod() != null ? PyNames.getBuiltinMethods(languageLevel) : PyNames.getModuleBuiltinMethods(languageLevel);
+
+    return !builtinMethods.containsKey(functionName);
   }
 
   @Override

@@ -19,7 +19,7 @@ UFile (package = ) [public class DoWhileWithReturn {...]
                                 ULiteralExpression (value = 0) [0] = 0
                             UReturnExpression [return count] = Nothing
                                 USimpleNameReferenceExpression (identifier = count) [count] = (var count = 0)
-                            UastEmptyExpression [UastEmptyExpression] = NON-EVALUATED
+                            UastEmptyExpression [UastEmptyExpression] = Undetermined
                         UPostfixExpression (operator = ++) [count++] = Undetermined
                             USimpleNameReferenceExpression (identifier = count) [count] = Undetermined
                         UPostfixExpression (operator = --) [number--] = Undetermined

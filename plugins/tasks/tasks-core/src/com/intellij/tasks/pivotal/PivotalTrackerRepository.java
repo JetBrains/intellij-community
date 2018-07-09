@@ -88,7 +88,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
     List<Element> children = getStories(query, max);
 
     final List<Task> tasks = ContainerUtil.mapNotNull(children, (NullableFunction<Element, Task>)o -> createIssue(o));
-    return tasks.toArray(new Task[tasks.size()]);
+    return tasks.toArray(Task.EMPTY_ARRAY);
   }
 
   private List<Element> getStories(@Nullable final String query, final int max) throws Exception {
@@ -237,7 +237,7 @@ public class PivotalTrackerRepository extends BaseRepositoryImpl {
       final String author = note.getChildText("author");
       result.add(new SimpleComment(date.get(), author, text));
     }
-    return result.toArray(new Comment[result.size()]);
+    return result.toArray(Comment.EMPTY_ARRAY);
   }
 
   @Nullable

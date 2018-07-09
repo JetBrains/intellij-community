@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.editor.impl;
 
@@ -45,7 +33,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -221,6 +209,7 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
     myEditors.add(editor);
     myEditorEventMulticaster.registerEditor(editor);
     myEditorFactoryEventDispatcher.getMulticaster().editorCreated(new EditorFactoryEvent(this, editor));
+    TouchBarsManager.registerEditor(editor);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("number of Editors after create: " + myEditors.size());
@@ -245,6 +234,7 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
         }
       }
     }
+    TouchBarsManager.releaseEditor(editor);
   }
 
   @Override
@@ -258,7 +248,7 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
         list.add(editor);
       }
     }
-    return list == null ? Editor.EMPTY_ARRAY : list.toArray(new Editor[list.size()]);
+    return list == null ? Editor.EMPTY_ARRAY : list.toArray(Editor.EMPTY_ARRAY);
   }
 
   @Override
@@ -270,7 +260,7 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
   @Override
   @NotNull
   public Editor[] getAllEditors() {
-    return ArrayUtil.stripTrailingNulls(myEditors.toArray(new Editor[myEditors.size()]));
+    return myEditors.toArray(Editor.EMPTY_ARRAY);
   }
 
   @Override

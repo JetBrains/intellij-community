@@ -24,8 +24,6 @@ import com.intellij.util.ThrowableRunnable;
 
 /**
  * @author irengrig
- *         Date: 3/16/11
- *         Time: 3:22 PM
  */
 public class VcsSynchronousProgressWrapper {
   private VcsSynchronousProgressWrapper() {

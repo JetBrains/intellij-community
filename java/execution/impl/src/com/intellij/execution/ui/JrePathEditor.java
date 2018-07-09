@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
 import com.intellij.execution.ExecutionBundle;
@@ -22,18 +8,19 @@ import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
-import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
-import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.util.HashSet;
@@ -42,14 +29,11 @@ import java.util.Set;
 /**
  * @author nik
  */
-public class JrePathEditor extends JPanel implements PanelWithAnchor {
+public class JrePathEditor extends LabeledComponent<ComboboxWithBrowseButton> implements PanelWithAnchor {
   private static final String DEFAULT_JRE_TEXT = "Default";
-  private final ComboboxWithBrowseButton myPathField;
-  private final JBLabel myLabel;
   private final JreComboboxEditor myComboboxEditor;
   private final DefaultJreItem myDefaultJreItem;
   private DefaultJreSelector myDefaultJreSelector;
-  private JComponent myAnchor;
   private final SortedComboBoxModel<JreComboBoxItem> myComboBoxModel;
   private String myPreviousCustomJrePath;
 
@@ -62,8 +46,6 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
    * This constructor can be used in UI forms. <strong>Don't forget to call {@link #setDefaultJreSelector(DefaultJreSelector)}!</strong>
    */
   public JrePathEditor() {
-    myLabel = new JBLabel(ExecutionBundle.message("run.configuration.jre.label"));
-
     myComboBoxModel = new SortedComboBoxModel<>((o1, o2) -> {
       int result = Comparing.compare(o1.getOrder(), o2.getOrder());
       if (result != 0) {
@@ -103,6 +85,11 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
     ComboBox<JreComboBoxItem> comboBox = new ComboBox<>(myComboBoxModel, 100);
     comboBox.setEditable(true);
     comboBox.setRenderer(new ColoredListCellRenderer<JreComboBoxItem>() {
+      {
+        setIpad(JBUI.insets(1, 0));
+        setMyBorder(null);
+      }
+
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends JreComboBoxItem> list,
                                            JreComboBoxItem value,
@@ -117,19 +104,17 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
     myComboboxEditor = new JreComboboxEditor(myComboBoxModel);
     myComboboxEditor.getEditorComponent().setTextToTriggerEmptyTextStatus(DEFAULT_JRE_TEXT);
     comboBox.setEditor(myComboboxEditor);
-    myPathField = new ComboboxWithBrowseButton(comboBox);
-    myPathField.addBrowseFolderListener(ExecutionBundle.message("run.configuration.select.alternate.jre.label"),
-                                        ExecutionBundle.message("run.configuration.select.jre.dir.label"),
-                                        null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR,
-                                        JreComboboxEditor.TEXT_COMPONENT_ACCESSOR);
-
-    setLayout(new MigLayout("ins 0, gap 10, fill, flowx"));
-    add(myLabel, "shrinkx");
-    add(myPathField, "growx, pushx");
-
     InsertPathAction.addTo(myComboboxEditor.getEditorComponent());
 
-    setAnchor(myLabel);
+    ComboboxWithBrowseButton pathField = new ComboboxWithBrowseButton(comboBox);
+    pathField.addBrowseFolderListener(ExecutionBundle.message("run.configuration.select.alternate.jre.label"),
+                                      ExecutionBundle.message("run.configuration.select.jre.dir.label"),
+                                      null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR,
+                                      JreComboboxEditor.TEXT_COMPONENT_ACCESSOR);
+
+    setLabelLocation(BorderLayout.WEST);
+    setText(ExecutionBundle.message("run.configuration.jre.label"));
+    setComponent(pathField);
 
     updateUI();
   }
@@ -148,7 +133,7 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
   }
 
   private JreComboBoxItem getSelectedJre() {
-    return (JreComboBoxItem)myPathField.getComboBox().getEditor().getItem();
+    return (JreComboBoxItem)getComponent().getComboBox().getEditor().getItem();
   }
 
   public void setDefaultJreSelector(DefaultJreSelector defaultJreSelector) {
@@ -165,7 +150,7 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
         toSelect = alternative;
       }
     }
-    myPathField.getChildComponent().setSelectedItem(toSelect);
+    getComponent().getChildComponent().setSelectedItem(toSelect);
     updateDefaultJrePresentation();
   }
 
@@ -188,19 +173,8 @@ public class JrePathEditor extends JPanel implements PanelWithAnchor {
     return item;
   }
 
-  @Override
-  public JComponent getAnchor() {
-    return myAnchor;
-  }
-
-  @Override
-  public void setAnchor(JComponent anchor) {
-    myAnchor = anchor;
-    myLabel.setAnchor(anchor);
-  }
-
   public void addActionListener(ActionListener listener) {
-    myPathField.getComboBox().addActionListener(listener);
+    getComponent().getComboBox().addActionListener(listener);
   }
 
   interface JreComboBoxItem {

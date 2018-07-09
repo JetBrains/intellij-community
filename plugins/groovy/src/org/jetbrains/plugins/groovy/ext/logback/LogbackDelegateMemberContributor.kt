@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.ext.logback
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
-import com.intellij.psi.scope.BaseScopeProcessor
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.NameHint
 import com.intellij.psi.scope.PsiScopeProcessor
@@ -40,7 +25,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.wrapClassType
 
 class LogbackDelegateMemberContributor : NonCodeMembersContributor() {
 
-  override fun getParentClassName() = componentDelegateFqn
+  override fun getParentClassName(): String = componentDelegateFqn
 
   override fun processDynamicElements(qualifierType: PsiType, processor: PsiScopeProcessor, place: PsiElement, state: ResolveState) {
     val name = processor.getHint(NameHint.KEY)?.getName(state)
@@ -75,7 +60,7 @@ class LogbackDelegateMemberContributor : NonCodeMembersContributor() {
     return componentType?.resolve()
   }
 
-  class ComponentProcessor(val delegate: PsiScopeProcessor, val place: PsiElement, val name: String?) : BaseScopeProcessor() {
+  class ComponentProcessor(val delegate: PsiScopeProcessor, val place: PsiElement, val name: String?) : PsiScopeProcessor {
 
     override fun execute(method: PsiElement, state: ResolveState): Boolean {
       method as? PsiMethod ?: return true
@@ -128,7 +113,7 @@ class LogbackDelegateMemberContributor : NonCodeMembersContributor() {
       return true
     }
 
-    override fun <T : Any?> getHint(hintKey: Key<T>) = if (hintKey == ElementClassHint.KEY) {
+    override fun <T : Any?> getHint(hintKey: Key<T>): T? = if (hintKey == ElementClassHint.KEY) {
       @Suppress("UNCHECKED_CAST")
       ElementClassHint { it == ElementClassHint.DeclarationKind.METHOD } as T
     }

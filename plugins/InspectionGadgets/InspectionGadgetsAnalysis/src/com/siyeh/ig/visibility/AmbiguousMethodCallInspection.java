@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2011 Bas Leijdekkers
+ * Copyright 2008-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ig.visibility;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -27,6 +26,8 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Arrays;
 
 public class AmbiguousMethodCallInspection extends BaseInspection {
 
@@ -59,7 +60,7 @@ public class AmbiguousMethodCallInspection extends BaseInspection {
     }
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiElement parent = element.getParent();
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)parent.getParent();
@@ -87,21 +88,24 @@ public class AmbiguousMethodCallInspection extends BaseInspection {
       if (containingClass == null) {
         return;
       }
-      final PsiMethod method = expression.resolveMethod();
-      if (method == null) {
+      final PsiMethod targetMethod = expression.resolveMethod();
+      if (targetMethod == null) {
         return;
       }
-      final PsiClass methodClass = method.getContainingClass();
+      final PsiClass methodClass = targetMethod.getContainingClass();
       if (methodClass == null || !containingClass.isInheritor(methodClass, true)) {
         return;
       }
       containingClass = ClassUtils.getContainingClass(containingClass);
-      final String methodName = methodExpression.getReferenceName();
+      boolean staticAccess = false;
       while (containingClass != null) {
-        final PsiMethod[] methods = containingClass.findMethodsByName(methodName, false);
+        staticAccess |= containingClass.hasModifierProperty(PsiModifier.STATIC);
+        final PsiMethod[] methods = containingClass.findMethodsBySignature(targetMethod, false);
         if (methods.length > 0 && !methodClass.equals(containingClass)) {
-          registerMethodCallError(expression, methodClass, containingClass);
-          return;
+          if (!staticAccess || Arrays.stream(methods).anyMatch(m -> m.hasModifierProperty(PsiModifier.STATIC))) {
+            registerMethodCallError(expression, methodClass, containingClass);
+            return;
+          }
         }
         containingClass = ClassUtils.getContainingClass(containingClass);
       }

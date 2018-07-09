@@ -25,7 +25,7 @@ import org.jetbrains.jps.model.java.runConfiguration.JpsApplicationRunConfigurat
  * @author nik
  */
 public class JpsApplicationRunConfigurationPropertiesImpl extends JpsElementBase<JpsApplicationRunConfigurationPropertiesImpl> implements JpsApplicationRunConfigurationProperties {
-  private JpsApplicationRunConfigurationState myState;
+  private final JpsApplicationRunConfigurationState myState;
 
   public JpsApplicationRunConfigurationPropertiesImpl(JpsApplicationRunConfigurationState state) {
     myState = state;

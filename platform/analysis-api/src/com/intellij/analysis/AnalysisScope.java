@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 
 package com.intellij.analysis;
@@ -63,12 +51,13 @@ public class AnalysisScope {
   public static final int DIRECTORY = 2;
   public static final int FILE = 3;
   public static final int MODULE = 4;
+  static final int PACKAGE = 5;
   public static final int INVALID = 6;
   public static final int MODULES = 7;
   public static final int CUSTOM = 8;
   public static final int VIRTUAL_FILES = 9;
   public static final int UNCOMMITTED_FILES = 10;
-  @MagicConstant(intValues = {PROJECT, DIRECTORY, FILE, MODULE, INVALID, MODULES, CUSTOM, VIRTUAL_FILES, UNCOMMITTED_FILES})
+  @MagicConstant(intValues = {PROJECT, DIRECTORY, FILE, MODULE, PACKAGE, INVALID, MODULES, CUSTOM, VIRTUAL_FILES, UNCOMMITTED_FILES})
   public @interface Type { }
 
   @NotNull
@@ -182,6 +171,7 @@ public class AnalysisScope {
             return;
           }
           if (!shouldHighlightFile(file)) return;
+          if (myFilesSet == null) return;
           myFilesSet.add(virtualFile);
         }
       }
@@ -337,7 +327,7 @@ public class AnalysisScope {
   }
 
   @NotNull
-  private ContentIterator createScopeIterator(@NotNull final Processor<VirtualFile> processor, 
+  private ContentIterator createScopeIterator(@NotNull final Processor<? super VirtualFile> processor,
                                               @Nullable final SearchScope searchScope) {
     return fileOrDir -> {
       final boolean isInScope = ReadAction.compute(() -> {
@@ -415,7 +405,7 @@ public class AnalysisScope {
     }
   }
 
-  protected boolean accept(@NotNull final PsiDirectory dir, @NotNull final Processor<VirtualFile> processor) {
+  protected boolean accept(@NotNull final PsiDirectory dir, @NotNull final Processor<? super VirtualFile> processor) {
     final Project project = dir.getProject();
     //we should analyze generated source files only if the action is explicitly invoked for a directory located under generated roots
     final boolean processGeneratedFiles = GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(dir.getVirtualFile(), project);
@@ -601,7 +591,7 @@ public class AnalysisScope {
   }
 
   @NotNull
-  static AnalysisScope collectScopes(@NotNull final Project defaultProject, @NotNull final HashSet<Module> modules) {
+  static AnalysisScope collectScopes(@NotNull final Project defaultProject, @NotNull final Set<Module> modules) {
     if (modules.isEmpty()) {
       return new AnalysisScope(defaultProject);
     }
@@ -612,7 +602,7 @@ public class AnalysisScope {
       modulesToAnalyze.addAll(getExportBackwardDependencies(module, allModules));
       modulesToAnalyze.add(module);
     }
-    return new AnalysisScope(modulesToAnalyze.toArray(new Module[modulesToAnalyze.size()]));
+    return new AnalysisScope(modulesToAnalyze.toArray(Module.EMPTY_ARRAY));
   }
 
   @NotNull
@@ -665,18 +655,14 @@ public class AnalysisScope {
       case DIRECTORY:
         return GlobalSearchScopesCore.directoryScope((PsiDirectory)myElement, true);
       case FILE:
-        return new LocalSearchScope(myElement);
+        return GlobalSearchScope.fileScope((PsiFile)myElement);
       case INVALID:
-        return LocalSearchScope.EMPTY;
+        return GlobalSearchScope.EMPTY_SCOPE;
       case MODULE:
         GlobalSearchScope moduleScope = GlobalSearchScope.moduleScope(myModule);
         return myIncludeTestSource ? moduleScope : GlobalSearchScope.notScope(GlobalSearchScopesCore.projectTestScope(myModule.getProject())).intersectWith(moduleScope);
       case MODULES:
-        SearchScope scope = GlobalSearchScope.EMPTY_SCOPE;
-        for (Module module : myModules) {
-          scope = scope.union(GlobalSearchScope.moduleScope(module));
-        }
-        return scope;
+        return GlobalSearchScope.union(myModules.stream().map(m -> GlobalSearchScope.moduleScope(m)).toArray(GlobalSearchScope[]::new));
       case PROJECT:
         return myIncludeTestSource ? GlobalSearchScope.projectScope(myProject) : GlobalSearchScopesCore.projectProductionScope(myProject);
       case VIRTUAL_FILES:
@@ -684,11 +670,6 @@ public class AnalysisScope {
           @Override
           public boolean contains(@NotNull VirtualFile file) {
             return myFilesSet.contains(file);
-          }
-
-          @Override
-          public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-            return 0;
           }
 
           @Override
@@ -705,29 +686,6 @@ public class AnalysisScope {
         LOG.error("invalid type " + myType);
         return GlobalSearchScope.EMPTY_SCOPE;
     }
-  }
-
-  boolean isAnalyzeTestsByDefault() {
-    switch (myType) {
-      case DIRECTORY:
-        return TestSourcesFilter.isTestSources(((PsiDirectory)myElement).getVirtualFile(), myElement.getProject());
-      case FILE:
-        final PsiFile containingFile = myElement.getContainingFile();
-        return TestSourcesFilter.isTestSources(containingFile.getVirtualFile(), containingFile.getProject());
-      case MODULE:
-        return isTestOnly(myModule);
-      case MODULES:
-        for (Module module : myModules) {
-          if (!isTestOnly(module)) return false;
-        }
-        return true;
-
-    }
-    return false;
-  }
-
-  private static boolean isTestOnly(@NotNull Module module) {
-    return ModuleRootManager.getInstance(module).getSourceRootUrls(false).length == 0;
   }
 
   public boolean isIncludeTestSource() {

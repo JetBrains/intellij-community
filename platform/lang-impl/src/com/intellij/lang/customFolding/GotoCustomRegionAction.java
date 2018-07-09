@@ -32,11 +32,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -61,8 +61,7 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware, Popup
         () -> {
           Collection<FoldingDescriptor> foldingDescriptors = getCustomFoldingDescriptors(editor, project);
           if (foldingDescriptors.size() > 0) {
-            CustomFoldingRegionsPopup regionsPopup = new CustomFoldingRegionsPopup(foldingDescriptors, editor, project);
-            regionsPopup.show();
+            CustomFoldingRegionsPopup.show(foldingDescriptors, editor, project);
           }
           else {
             notifyCustomRegionsUnavailable(editor, project);

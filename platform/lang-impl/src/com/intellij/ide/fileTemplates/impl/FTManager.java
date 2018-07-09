@@ -15,15 +15,14 @@
  */
 package com.intellij.ide.fileTemplates.impl;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
-import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +32,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 3/22/11
  */
 public class FTManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.FTManager");
@@ -287,7 +285,7 @@ public class FTManager {
     }
 
     if (!allNames.isEmpty()) {
-      final String lineSeparator = CodeStyleSettingsManager.getSettings(ProjectManagerEx.getInstanceEx().getDefaultProject()).getLineSeparator();
+      final String lineSeparator = CodeStyle.getDefaultSettings().getLineSeparator();
       for (String name : allNames) {
         final File customizedTemplateFile = templatesOnDisk.get(name);
         final FileTemplateBase templateToSave = templatesToSave.get(name);
@@ -331,6 +329,20 @@ public class FTManager {
   private static void saveTemplate(File parentDir, FileTemplateBase template, final String lineSeparator) throws IOException {
     final File templateFile = new File(parentDir, encodeFileName(template.getName(), template.getExtension()));
 
+    try (FileOutputStream fileOutputStream = startWriteOrCreate(templateFile);
+         OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, CharsetToolkit.UTF8_CHARSET)) {
+      String content = template.getText();
+
+      if (!lineSeparator.equals("\n")) {
+        content = StringUtil.convertLineSeparators(content, lineSeparator);
+      }
+
+      outputStreamWriter.write(content);
+    }
+  }
+
+  @NotNull
+  private static FileOutputStream startWriteOrCreate(@NotNull File templateFile) throws FileNotFoundException {
     FileOutputStream fileOutputStream;
     try {
       fileOutputStream = new FileOutputStream(templateFile);
@@ -340,16 +352,7 @@ public class FTManager {
       FileUtil.delete(templateFile);
       fileOutputStream = new FileOutputStream(templateFile);
     }
-    OutputStreamWriter outputStreamWriter = new OutputStreamWriter(fileOutputStream, CharsetToolkit.UTF8_CHARSET);
-    String content = template.getText();
-
-    if (!lineSeparator.equals("\n")){
-      content = StringUtil.convertLineSeparators(content, lineSeparator);
-    }
-
-    outputStreamWriter.write(content);
-    outputStreamWriter.close();
-    fileOutputStream.close();
+    return fileOutputStream;
   }
 
   @NotNull

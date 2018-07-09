@@ -16,16 +16,16 @@
  */
 package com.intellij.codeInsight.guess.impl;
 
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 
 class MethodPatternMap {
-  private final HashMap myMethodNameToPatternsMap = new HashMap();
+  private final HashMap<String, MethodPattern> myMethodNameToPatternsMap = new HashMap<>();
 
   public void addPattern(MethodPattern pattern){
     myMethodNameToPatternsMap.put(pattern.methodName + "#" + pattern.parameterCount, pattern);
   }
 
   public MethodPattern findPattern(String name, int parameterCount){
-    return (MethodPattern)myMethodNameToPatternsMap.get(name + "#" + parameterCount);
+    return myMethodNameToPatternsMap.get(name + "#" + parameterCount);
   }
 }

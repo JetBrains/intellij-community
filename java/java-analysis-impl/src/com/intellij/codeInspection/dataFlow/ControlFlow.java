@@ -42,7 +42,7 @@ public class ControlFlow {
   }
 
   public Instruction[] getInstructions(){
-    return myInstructions.toArray(new Instruction[myInstructions.size()]);
+    return myInstructions.toArray(new Instruction[0]);
   }
 
   public int getInstructionCount() {
@@ -50,13 +50,7 @@ public class ControlFlow {
   }
 
   public ControlFlowOffset getNextOffset() {
-    final int currentSize = myInstructions.size();
-    return new ControlFlowOffset() {
-      @Override
-      public int getInstructionOffset() {
-        return currentSize;
-      }
-    };
+    return new FixedOffset(myInstructions.size());
   }
 
   public void startElement(PsiElement psiElement) {
@@ -74,7 +68,7 @@ public class ControlFlow {
 
   public void removeVariable(@Nullable PsiVariable variable) {
     if (variable == null) return;
-    addInstruction(new FlushVariableInstruction(myFactory.getVarFactory().createVariableValue(variable, false)));
+    addInstruction(new FlushVariableInstruction(myFactory.getVarFactory().createVariableValue(variable)));
   }
 
   /**
@@ -111,7 +105,7 @@ public class ControlFlow {
 
     for (int i = 0; i < instructions.size(); i++) {
       Instruction instruction = instructions.get(i);
-      result.append(Integer.toString(i)).append(": ").append(instruction.toString());
+      result.append(i).append(": ").append(instruction.toString());
       result.append("\n");
     }
     return result.toString();
@@ -133,6 +127,40 @@ public class ControlFlow {
         return delegate.getInstructionOffset() + delta;
       }
     };
+  }
+
+  public static class FixedOffset extends ControlFlowOffset {
+    private final int myOffset;
+
+    public FixedOffset(int offset) {
+      myOffset = offset;
+    }
+
+    @Override
+    public int getInstructionOffset() {
+      return myOffset;
+    }
+  }
+
+  public static class DeferredOffset extends ControlFlowOffset {
+    private int myOffset = -1;
+
+    @Override
+    public int getInstructionOffset() {
+      if (myOffset == -1) {
+        throw new IllegalStateException("Not set");
+      }
+      return myOffset;
+    }
+
+    public void setOffset(int offset) {
+      if (myOffset != -1) {
+        throw new IllegalStateException("Already set");
+      }
+      else {
+        myOffset = offset;
+      }
+    }
   }
 
 }

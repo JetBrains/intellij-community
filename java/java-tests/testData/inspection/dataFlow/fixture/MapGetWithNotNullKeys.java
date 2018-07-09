@@ -14,4 +14,16 @@ class Test {
       System.out.println("it's not contained");
     }
   }
+
+  public void main2(Map<@NotNull String, @NotNull Integer> map, HashMap<@NotNull String, @NotNull Integer> hashMap) {
+    Integer value = map.remove("y");
+    if (value == null) {
+      System.out.println("it's not contained");
+    }
+
+    value = hashMap.remove("y");
+    if (value == null) {
+      System.out.println("it's not contained");
+    }
+  }
 }

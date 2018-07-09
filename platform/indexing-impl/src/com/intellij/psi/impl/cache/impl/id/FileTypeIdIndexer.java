@@ -20,7 +20,6 @@ package com.intellij.psi.impl.cache.impl.id;
  * @deprecated left for compatibility, use IdIndexer interface instead. To be removed in IntelliJ 2018.3
  *
  * @author Eugene Zhuravlev
- *         Date: Jan 16, 2008
  */
 @Deprecated
 public abstract class FileTypeIdIndexer implements IdIndexer {

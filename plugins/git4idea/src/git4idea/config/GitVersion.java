@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -140,6 +141,11 @@ public final class GitVersion implements Comparable<GitVersion> {
     return Integer.parseInt(match);
   }
 
+  /**
+   * @deprecated use {@link GitExecutableManager#identifyVersion(String)} with appropriate {@link ProgressIndicator}
+   * or {@link GitExecutableManager#getVersion(Project)}
+   */
+  @Deprecated
   @NotNull
   public static GitVersion identifyVersion(@NotNull String gitExecutable) throws TimeoutException, ExecutionException, ParseException {
     GeneralCommandLine commandLine = new GeneralCommandLine();
@@ -213,8 +219,8 @@ public final class GitVersion implements Comparable<GitVersion> {
    * (msys git 1.7.3).compareTo(cygwin git 1.7.3) == 0
    * BUT
    * (msys git 1.7.3).equals(cygwin git 1.7.3) == false
-   * 
-   * {@link GitVersion#NULL} is less than any other not-NULL version. 
+   *
+   * {@link GitVersion#NULL} is less than any other not-NULL version.
    */
   public int compareTo(@NotNull GitVersion o) {
     if (o.getType() == Type.NULL) {

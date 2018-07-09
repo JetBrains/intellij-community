@@ -33,7 +33,7 @@ public class ResourcesTargetType extends ModuleBasedBuildTargetType<ResourcesTar
   public static final ResourcesTargetType TEST = new ResourcesTargetType("resources-test", true);
   public static final List<ResourcesTargetType> ALL_TYPES = Arrays.asList(PRODUCTION, TEST);
 
-  private boolean myTests;
+  private final boolean myTests;
 
   private ResourcesTargetType(String typeId, boolean tests) {
     super(typeId, true);

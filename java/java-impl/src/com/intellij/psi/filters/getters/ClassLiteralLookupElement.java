@@ -24,19 +24,25 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author peter
  */
-public class ClassLiteralLookupElement extends LookupElement implements TypedLookupItem {
+class ClassLiteralLookupElement extends LookupElement implements TypedLookupItem {
   @NonNls private static final String DOT_CLASS = ".class";
+  @Nullable private final SmartPsiElementPointer<PsiClass> myClass;
   private final PsiExpression myExpr;
   private final String myPresentableText;
   private final String myCanonicalText;
 
-  public ClassLiteralLookupElement(PsiClassType type, PsiElement context) {
+  ClassLiteralLookupElement(PsiClassType type, PsiElement context) {
+    PsiClass psiClass = PsiUtil.resolveClassInType(type);
+    myClass = psiClass == null ? null : SmartPointerManager.createPointer(psiClass);
+    
     myCanonicalText = type.getCanonicalText();
     myPresentableText = type.getPresentableText();
     myExpr = JavaPsiFacade.getInstance(context.getProject()).getElementFactory().createExpressionFromText(myCanonicalText + DOT_CLASS, context);
@@ -56,6 +62,12 @@ public class ClassLiteralLookupElement extends LookupElement implements TypedLoo
     if (StringUtil.isNotEmpty(pkg)) {
       presentation.setTailText(" (" + pkg + ")", true);
     }
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getPsiElement() {
+    return myClass == null ? null : myClass.getElement();
   }
 
   @NotNull

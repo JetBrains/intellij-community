@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,7 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
   /**
    * @deprecated use {@link #buildFix(PsiBinaryExpression)} instead
    */
+  @Deprecated
   public EqualityToEqualsFix() {
     this(true);
   }
@@ -98,17 +100,14 @@ public class EqualityToEqualsFix extends InspectionGadgetsFix {
     if (lhs == null || rhs == null) {
       return;
     }
+    CommentTracker commentTracker = new CommentTracker();
     final StringBuilder newExpression = new StringBuilder();
     if (JavaTokenType.NE.equals(expression.getOperationTokenType())) {
       newExpression.append('!');
     }
-    if (ParenthesesUtils.getPrecedence(lhs) > ParenthesesUtils.METHOD_CALL_PRECEDENCE) {
-      newExpression.append('(').append(lhs.getText()).append(')');
-    }
-    else {
-      newExpression.append(lhs.getText());
-    }
-    newExpression.append(".equals(").append(rhs.getText()).append(')');
-    PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression.toString());
+    newExpression.append(commentTracker.text(lhs, ParenthesesUtils.METHOD_CALL_PRECEDENCE));
+    newExpression.append(".equals(").append(commentTracker.text(rhs)).append(')');
+
+    PsiReplacementUtil.replaceExpressionAndShorten(expression, newExpression.toString(), commentTracker);
   }
 }

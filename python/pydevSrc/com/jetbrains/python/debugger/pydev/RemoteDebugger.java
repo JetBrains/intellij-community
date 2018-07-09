@@ -52,7 +52,7 @@ public class RemoteDebugger implements ProcessDebugger {
   private final Map<Integer, ProtocolFrame> myResponseQueue = new HashMap<>();
   private final TempVarsHolder myTempVars = new TempVarsHolder();
 
-  private Map<Pair<String, Integer>, String> myTempBreakpoints = Maps.newHashMap();
+  private final Map<Pair<String, Integer>, String> myTempBreakpoints = Maps.newHashMap();
 
 
   private final List<RemoteDebuggerCloseListener> myCloseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -315,19 +315,28 @@ public class RemoteDebugger implements ProcessDebugger {
     long until = System.currentTimeMillis() + RESPONSE_TIMEOUT;
 
     synchronized (myResponseQueue) {
+      boolean interrupted = false;
       do {
         try {
           myResponseQueue.wait(1000);
         }
-        catch (InterruptedException ignore) {
+        catch (InterruptedException e) {
+          // restore interrupted flag
+          Thread.currentThread().interrupt();
+
+          interrupted = true;
         }
         response = myResponseQueue.get(sequence);
       }
-      while (response == null && isConnected() && System.currentTimeMillis() < until);
+      while (response == null && shouldWaitForResponse() && !interrupted && System.currentTimeMillis() < until);
       myResponseQueue.remove(sequence);
     }
 
     return response;
+  }
+
+  private boolean shouldWaitForResponse() {
+    return myDebuggerTransport.isConnecting() || myDebuggerTransport.isConnected();
   }
 
   @Override
@@ -355,6 +364,9 @@ public class RemoteDebugger implements ProcessDebugger {
         myLatch.await(RESPONSE_TIMEOUT, TimeUnit.MILLISECONDS);
       }
       catch (InterruptedException e) {
+        // restore interrupted flag
+        Thread.currentThread().interrupt();
+
         LOG.error(e);
       }
     }
@@ -428,7 +440,14 @@ public class RemoteDebugger implements ProcessDebugger {
   public void setTempBreakpoint(@NotNull String type, @NotNull String file, int line) {
     final SetBreakpointCommand command =
       new SetBreakpointCommand(this, type, file, line);
-    execute(command);  // set temp. breakpoint
+    try {
+      command.execute();
+    }
+    catch (PyDebuggerException e) {
+      if (isConnected()) {
+        LOG.error(e);
+      }
+    }
     myTempBreakpoints.put(Pair.create(file, line), type);
   }
 
@@ -440,7 +459,7 @@ public class RemoteDebugger implements ProcessDebugger {
       execute(command);  // remove temp. breakpoint
     }
     else {
-      LOG.error("Temp breakpoint not found for " + file + ":" + line);
+      LOG.warn("Temp breakpoint not found for " + file + ":" + line);
     }
   }
 
@@ -689,7 +708,7 @@ public class RemoteDebugger implements ProcessDebugger {
     }
   }
 
-  protected void onProcessCreatedEvent() throws PyDebuggerException {
+  protected void onProcessCreatedEvent() {
   }
 
   protected void fireCloseEvent() {

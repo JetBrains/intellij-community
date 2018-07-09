@@ -27,16 +27,12 @@ import com.intellij.refactoring.ui.MethodSignatureComponent;
 import com.intellij.refactoring.util.AbstractVariableData;
 import com.intellij.refactoring.util.SimpleParameterTablePanel;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class AbstractExtractMethodDialog<T> extends DialogWrapper implements ExtractMethodSettings<T> {
   private JPanel myContentPane;
@@ -44,7 +40,7 @@ public class AbstractExtractMethodDialog<T> extends DialogWrapper implements Ext
   private JTextField myMethodNameTextField;
   private MethodSignatureComponent mySignaturePreviewTextArea;
   private JTextArea myOutputVariablesTextArea;
-  private ComboBoxVisibilityPanel<T> myVisibilityComboBox;
+  private final ComboBoxVisibilityPanel<T> myVisibilityComboBox;
   private final Project myProject;
   private final String myDefaultName;
   private final ExtractMethodValidator myValidator;

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -312,7 +312,7 @@ public class GrClosureSignatureUtil {
       return result.get(0);
     }
     else {
-      return new GrMultiSignatureImpl(result.toArray(new GrClosureSignature[result.size()]));
+      return new GrMultiSignatureImpl(result.toArray(GrClosureSignature.EMPTY_ARRAY));
     }
   }
 
@@ -333,7 +333,7 @@ public class GrClosureSignatureUtil {
   }
 
   @Nullable
-  private static <Arg> ArgInfo<Arg>[] mapParametersToArguments(@NotNull GrClosureSignature signature,
+  public static <Arg> ArgInfo<Arg>[] mapParametersToArguments(@NotNull GrClosureSignature signature,
                                                                @NotNull Arg[] args,
                                                                @NotNull Function<Arg, PsiType> typeComputer,
                                                                @NotNull PsiElement context,
@@ -691,7 +691,7 @@ public class GrClosureSignatureUtil {
                                                                 boolean hasNamedArgs,
                                                                 boolean partial,
                                                                 @NotNull PsiElement context) {
-    final ArgInfo<InnerArg>[] innerMap = mapParametersToArguments(signature, innerArgs.toArray(new InnerArg[innerArgs.size()]), o -> o.type, context, partial);
+    final ArgInfo<InnerArg>[] innerMap = mapParametersToArguments(signature, innerArgs.toArray(new InnerArg[0]), o -> o.type, context, partial);
     if (innerMap == null) return null;
 
     ArgInfo<PsiElement>[] map = new ArgInfo[innerMap.length];
@@ -954,11 +954,11 @@ public class GrClosureSignatureUtil {
         final int pcount = signature.isVarargs() ? signature.getParameterCount() - 2 : signature.getParameterCount() - 1;
         for (int i = pcount; i >= 0; i--) {
           if (original[i].isOptional()) {
-            result.add(new GrImmediateClosureSignatureImpl(parameters.toArray(new GrClosureParameter[parameters.size()]), signature.getReturnType(), signature.isVarargs(), false));
+            result.add(new GrImmediateClosureSignatureImpl(parameters.toArray(GrClosureParameter.EMPTY_ARRAY), signature.getReturnType(), signature.isVarargs(), false));
             parameters.remove(i);
           }
         }
-        result.add(new GrImmediateClosureSignatureImpl(parameters.toArray(new GrClosureParameter[parameters.size()]), signature.getReturnType(), signature.isVarargs(), false));
+        result.add(new GrImmediateClosureSignatureImpl(parameters.toArray(GrClosureParameter.EMPTY_ARRAY), signature.getReturnType(), signature.isVarargs(), false));
       }
     });
     return result;

@@ -107,7 +107,7 @@ public class UnknownGuardInspection extends AbstractBaseJavaLocalInspectionTool 
       else if (expression instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
         final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
-        if (argumentList.getExpressions().length != 0) {
+        if (!argumentList.isEmpty()) {
           return false;
         }
         final JavaResolveResult result = methodCallExpression.resolveMethodGenerics();

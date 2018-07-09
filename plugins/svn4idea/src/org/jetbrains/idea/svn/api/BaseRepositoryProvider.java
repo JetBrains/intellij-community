@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,13 @@ package org.jetbrains.idea.svn.api;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
 public abstract class BaseRepositoryProvider implements RepositoryProvider {
 
   @NotNull protected final SvnVcs myVcs;
-  @NotNull protected final SvnTarget myTarget;
+  @NotNull protected final Target myTarget;
 
-  public BaseRepositoryProvider(@NotNull SvnVcs vcs, @NotNull SvnTarget target) {
+  public BaseRepositoryProvider(@NotNull SvnVcs vcs, @NotNull Target target) {
     myVcs = vcs;
     myTarget = target;
   }

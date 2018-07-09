@@ -34,10 +34,15 @@ sealed class DirectoryContentSpecImpl : DirectoryContentSpec {
 }
 
 abstract class DirectorySpecBase : DirectoryContentSpecImpl() {
-  protected val children = LinkedHashMap<String, DirectoryContentSpecImpl>()
+  protected val children: LinkedHashMap<String, DirectoryContentSpecImpl> = LinkedHashMap<String, DirectoryContentSpecImpl>()
 
   fun addChild(name: String, spec: DirectoryContentSpecImpl) {
     if (name in children) {
+      val existing = children[name]
+      if (spec is DirectorySpecBase && existing is DirectorySpecBase) {
+        existing.children += spec.children
+        return
+      }
       throw IllegalArgumentException("'$name' already exists")
     }
     children[name] = spec

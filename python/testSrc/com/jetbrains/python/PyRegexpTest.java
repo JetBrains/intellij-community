@@ -21,12 +21,14 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.codeInsight.regexp.PythonRegexpParserDefinition;
 import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpLanguage;
 import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpParserDefinition;
 import com.jetbrains.python.fixtures.PyLexerTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -185,6 +187,12 @@ public class PyRegexpTest extends PyTestCase {
     doTestInjectedText("import re\n" +
                        "re.fullmatch(\"<caret>\\w+\", \"string\"",
                        "\\w+");
+  }
+
+  @Nullable
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return getName().equals("testFullmatch") ? ourPy3Descriptor : super.getProjectDescriptor();
   }
 
   @NotNull

@@ -60,6 +60,6 @@ public class FormFileErrorCollector extends FormErrorCollector {
   }
 
   public ProblemDescriptor[] result() {
-    return myProblems.toArray(new ProblemDescriptor[myProblems.size()]);
+    return myProblems.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 }

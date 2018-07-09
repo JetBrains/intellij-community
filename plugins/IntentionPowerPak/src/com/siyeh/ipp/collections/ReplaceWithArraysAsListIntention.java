@@ -1,29 +1,17 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.siyeh.ipp.collections;
 
-import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
@@ -74,11 +62,12 @@ public class ReplaceWithArraysAsListIntention extends Intention implements HighP
     final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
     final PsiReferenceParameterList parameterList = methodExpression.getParameterList();
+    CommentTracker commentTracker = new CommentTracker();
     if (parameterList != null) {
       final int dotIndex = replacementText.lastIndexOf('.') + 1;
-      replacementText = replacementText.substring(0, dotIndex) + parameterList.getText() + replacementText.substring(dotIndex);
+      replacementText = replacementText.substring(0, dotIndex) + commentTracker.text(parameterList) + replacementText.substring(dotIndex);
     }
-    PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, replacementText + argumentList.getText());
+    PsiReplacementUtil.replaceExpressionAndShorten(methodCallExpression, replacementText + commentTracker.text(argumentList), commentTracker);
   }
 
   private static String getReplacementMethodText(String methodName, PsiMethodCallExpression context) {
@@ -88,7 +77,7 @@ public class ReplaceWithArraysAsListIntention extends Intention implements HighP
       return "java.util.Collections.singletonList";
     }
     if (methodName.equals("emptyList") || methodName.equals("singletonList")) {
-      if (Arrays.stream(arguments).noneMatch(e -> isPossiblyNull(e))) {
+      if (Arrays.stream(arguments).noneMatch(ReplaceWithArraysAsListIntention::isPossiblyNull)) {
         if (PsiUtil.isLanguageLevel9OrHigher(context)) {
           return "java.util.List.of";
         }
@@ -118,22 +107,6 @@ public class ReplaceWithArraysAsListIntention extends Intention implements HighP
   }
 
   private static boolean isPossiblyNull(PsiExpression expression) {
-    expression = ParenthesesUtils.stripParentheses(expression);
-    if (expression instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
-      final PsiElement target = referenceExpression.resolve();
-      if (target instanceof PsiModifierListOwner) {
-        final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)target;
-        return NullableNotNullManager.getInstance(expression.getProject()).isNullable(modifierListOwner, false);
-      }
-    }
-    else if (ExpressionUtils.isNullLiteral(expression)) {
-      return true;
-    }
-    else if (expression instanceof PsiConditionalExpression) {
-      final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)expression;
-      return isPossiblyNull(conditionalExpression.getThenExpression()) || isPossiblyNull(conditionalExpression.getElseExpression());
-    }
-    return false;
+    return NullabilityUtil.getExpressionNullability(expression) == Nullability.NULLABLE;
   }
 }

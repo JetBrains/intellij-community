@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.find.FindManager;
@@ -8,13 +8,10 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Map;
 
 public class EscapeHandler extends EditorActionHandler {
   private final EditorActionHandler myOriginalHandler;
@@ -25,28 +22,30 @@ public class EscapeHandler extends EditorActionHandler {
 
   @Override
   protected void doExecute(@NotNull Editor editor, Caret caret, DataContext dataContext){
-    editor.setHeaderComponent(null);
+    if (editor.getCaretModel().getCaretCount() == 1) {
+      editor.setHeaderComponent(null);
 
-    Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    if (project != null && editor.getCaretModel().getCaretCount() == 1) {
-      HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(project);
-      if (highlightManager != null && highlightManager.hideHighlights(editor, HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_ANY_KEY)) {
-
-        StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
-        if (statusBar != null) {
-          statusBar.setInfo("");
-        }
-
-        FindManager findManager = FindManager.getInstance(project);
-        if (findManager != null) {
-          FindModel model = findManager.getFindNextModel(editor);
-          if (model != null) {
-            model.setSearchHighlighters(false);
-            findManager.setFindNextModel(model);
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
+      if (project != null) {
+        HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(project);
+        if (highlightManager != null && highlightManager.hideHighlights(editor, HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_ANY_KEY)) {
+  
+          StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+          if (statusBar != null) {
+            statusBar.setInfo("");
           }
+  
+          FindManager findManager = FindManager.getInstance(project);
+          if (findManager != null) {
+            FindModel model = findManager.getFindNextModel(editor);
+            if (model != null) {
+              model.setSearchHighlighters(false);
+              findManager.setFindNextModel(model);
+            }
+          }
+  
+          return;
         }
-
-        return;
       }
     }
 
@@ -60,17 +59,7 @@ public class EscapeHandler extends EditorActionHandler {
 
     if (project != null) {
       HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(project);
-      if (highlightManager != null) {
-        Map<RangeHighlighter, HighlightManagerImpl.HighlightInfo> map = highlightManager.getHighlightInfoMap(editor, false);
-        if (map != null) {
-          for (HighlightManagerImpl.HighlightInfo info : map.values()) {
-            if (!info.editor.equals(editor)) continue;
-            if ((info.flags & HighlightManager.HIDE_BY_ESCAPE) != 0) {
-              return true;
-            }
-          }
-        }
-      }
+      if (highlightManager != null && highlightManager.hasHideByEscapeHighlighters(editor)) return true;
     }
 
     return myOriginalHandler.isEnabled(editor, caret, dataContext);

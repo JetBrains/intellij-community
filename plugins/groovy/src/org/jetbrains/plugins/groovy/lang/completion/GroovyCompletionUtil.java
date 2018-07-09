@@ -1,9 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.completion;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.completion.*;
@@ -21,7 +20,6 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
@@ -35,6 +33,7 @@ import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
@@ -73,6 +72,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import static org.jetbrains.plugins.groovy.lang.resolve.ReferencesKt.resolvePackageFqn;
 
 /**
  * @author ilyas
@@ -331,10 +332,10 @@ public class GroovyCompletionUtil {
     return setupLookupBuilder(o, PsiSubstitutor.EMPTY, LookupElementBuilder.create(o, o.getName()), null);
   }
 
-  private static LookupElementBuilder setupLookupBuilder(PsiElement element,
-                                                         PsiSubstitutor substitutor,
-                                                         LookupElementBuilder builder,
-                                                         @Nullable PsiElement position) {
+  public static LookupElement setupLookupBuilder(PsiElement element,
+                                                 PsiSubstitutor substitutor,
+                                                 LookupElementBuilder builder,
+                                                 @Nullable PsiElement position) {
     builder = builder.withIcon(element.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS))
       .withInsertHandler(GroovyInsertHandler.INSTANCE);
     builder = setTailText(element, builder, substitutor);
@@ -375,7 +376,7 @@ public class GroovyCompletionUtil {
 
 
   private static boolean showSpaceAfterComma(PsiClass element) {
-    return CodeStyleSettingsManager.getSettings(element.getProject()).SPACE_AFTER_COMMA;
+    return CodeStyle.getLanguageSettings(element.getContainingFile(), GroovyLanguage.INSTANCE).SPACE_AFTER_COMMA;
   }
 
 
@@ -385,12 +386,7 @@ public class GroovyCompletionUtil {
                                                   @Nullable PsiElement position) {
     PsiType type = null;
     if (element instanceof GrVariable) {
-      if (position != null && org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isLocalVariable(element)) {
-        type = TypeInferenceHelper.getInferredType(position, ((GrVariable)element).getName());
-      }
-      else {
-        type = ((GrVariable)element).getTypeGroovy();
-      }
+      type = TypeInferenceHelper.getVariableTypeInContext(position, (GrVariable)element);
     }
     else if (element instanceof PsiVariable) {
       type = ((PsiVariable)element).getType();
@@ -412,7 +408,7 @@ public class GroovyCompletionUtil {
     for (GroovyResolveResult result : constructors) {
       final PsiElement element = result.getElement();
       if (element instanceof PsiMethod) {
-        if (((PsiMethod)element).getParameterList().getParametersCount() > 0) {
+        if (!((PsiMethod)element).getParameterList().isEmpty()) {
           hasParameters = true;
         }
         if (result.isAccessible()) {
@@ -487,7 +483,7 @@ public class GroovyCompletionUtil {
       newStartOffset = marker.getStartOffset();
     }
 
-    if (toDelete.isValid()) {
+    if (toDelete != null && toDelete.isValid()) {
       document.deleteString(toDelete.getStartOffset(), toDelete.getEndOffset());
     }
 
@@ -609,7 +605,7 @@ public class GroovyCompletionUtil {
 
   public static void processVariants(GrReferenceElement referenceElement, PrefixMatcher matcher, CompletionParameters parameters, Consumer<LookupElement> consumer) {
     if (referenceElement instanceof GrCodeReferenceElementImpl) {
-      CompleteCodeReferenceElement.processVariants((GrCodeReferenceElementImpl)referenceElement, consumer, matcher);
+      CompleteCodeReferenceElement.complete((GrCodeReferenceElement)referenceElement, matcher, consumer);
     }
     else if (referenceElement instanceof GrReferenceExpressionImpl) {
       CompleteReferenceExpression.processVariants(matcher, consumer, (GrReferenceExpressionImpl)referenceElement, parameters);
@@ -670,5 +666,10 @@ public class GroovyCompletionUtil {
       }
     }
     return qualifierType;
+  }
+
+  static boolean canResolveToPackage(@NotNull PsiElement qualifier) {
+    return qualifier instanceof GrReferenceExpression
+           && resolvePackageFqn((GrReferenceElement<?>)qualifier) != null;
   }
 }

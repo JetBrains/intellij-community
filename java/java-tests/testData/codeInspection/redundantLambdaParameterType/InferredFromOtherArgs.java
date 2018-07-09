@@ -10,6 +10,6 @@ class ReturnTypeCompatibility {
     }
 
     public static void main(String[] args) {
-        call("",  (Str<caret>ing  i) -> "");
+        call("",  (Str<caret>ing/*comment*/  i) -> "");
     }
 }

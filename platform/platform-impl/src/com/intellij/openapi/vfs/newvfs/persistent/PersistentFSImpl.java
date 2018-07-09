@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.vfs.newvfs.persistent;
 
@@ -27,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -70,9 +57,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.persistent.PersistentFS");
 
   private final Map<String, VirtualFileSystemEntry> myRoots =
-    ConcurrentCollectionFactory.createMap(10, 0.4f, JobSchedulerImpl.CORES_COUNT, FileUtil.PATH_HASHING_STRATEGY);
+    ConcurrentCollectionFactory.createMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount(), FileUtil.PATH_HASHING_STRATEGY);
   private final IntObjectMap<VirtualFileSystemEntry>
-    myRootsById = ContainerUtil.createConcurrentIntObjectMap(10, 0.4f, JobSchedulerImpl.CORES_COUNT);
+    myRootsById = ContainerUtil.createConcurrentIntObjectMap(10, 0.4f, JobSchedulerImpl.getCPUCoresCount());
 
   // FS roots must be in this map too. findFileById() relies on this.
   private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = ContainerUtil.createConcurrentIntObjectSoftValueMap();
@@ -81,6 +68,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private final AtomicBoolean myShutDown = new AtomicBoolean(false);
   private final AtomicInteger myStructureModificationCount = new AtomicInteger();
   private final BulkFileListener myPublisher;
+  private final VfsData myVfsData = new VfsData();
 
   public PersistentFSImpl(@NotNull MessageBus bus) {
     ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
@@ -211,7 +199,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     FSRecords.updateList(id, childrenIds.toNativeArray());
     setChildrenCached(id);
 
-    return nameIds.toArray(new FSRecords.NameId[nameIds.size()]);
+    return nameIds.toArray(FSRecords.NameId.EMPTY_ARRAY);
   }
 
   private static void setChildrenCached(int id) {
@@ -253,7 +241,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return FSRecords.readContent(getFileId(file));
   }
 
-  @Nullable
+  @NotNull
   private static DataInputStream readContentById(int contentId) {
     return FSRecords.readContentById(contentId);
   }
@@ -553,15 +541,14 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
     catch (IOException e) {
       FSRecords.handleError(e);
-      return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
+    return ArrayUtil.EMPTY_BYTE_ARRAY;
   }
 
   @Override
   @NotNull
   public byte[] contentsToByteArray(int contentId) throws IOException {
     final DataInputStream stream = readContentById(contentId);
-    assert stream != null : contentId;
     return FileUtil.loadBytes(stream);
   }
 
@@ -650,21 +637,16 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         myPublisher.before(events);
 
         NewVirtualFileSystem delegate = getDelegate(file);
-        OutputStream ioFileStream = delegate.getOutputStream(file, requestor, modStamp, timeStamp);
         // FSRecords.ContentOutputStream already buffered, no need to wrap in BufferedStream
-        OutputStream persistenceStream = writeContent(file, delegate.isReadOnly());
-
-        try {
+        try (OutputStream persistenceStream = writeContent(file, delegate.isReadOnly())) {
           persistenceStream.write(buf, 0, count);
         }
         finally {
-          try {
+          try (OutputStream ioFileStream = delegate.getOutputStream(file, requestor, modStamp, timeStamp)) {
             ioFileStream.write(buf, 0, count);
           }
           finally {
             closed = true;
-            persistenceStream.close();
-            ioFileStream.close();
 
             executeTouch(file, false, event.getModificationStamp());
             myPublisher.after(events);
@@ -1008,9 +990,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     int rootId = FSRecords.findRootRecord(rootUrl);
 
-    VfsData.Segment segment = VfsData.getSegment(rootId, true);
+    VfsData.Segment segment = myVfsData.getSegment(rootId, true);
     VfsData.DirectoryData directoryData = new VfsData.DirectoryData();
-    VirtualFileSystemEntry newRoot = new FsRoot(rootId, segment, directoryData, fs, rootName, StringUtil.trimEnd(rootPath, '/'));
+    VirtualFileSystemEntry newRoot = new FsRoot(rootId, segment, directoryData, fs, rootName, StringUtil.trimTrailing(rootPath, '/'));
 
     boolean mark;
     synchronized (myRoots) {
@@ -1070,45 +1052,20 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   @Nullable
   public NewVirtualFile findFileById(final int id) {
-    return findFileById(id, false);
+    VirtualFileSystemEntry cached = myIdToDirCache.get(id);
+    return cached != null ? cached : FSRecords.findFileById(id, myIdToDirCache);
   }
 
   @Override
   public NewVirtualFile findFileByIdIfCached(final int id) {
-    return findFileById(id, true);
-  }
-
-  @Nullable
-  private VirtualFileSystemEntry findFileById(int id, boolean cachedOnly) {
-    VirtualFileSystemEntry cached = myIdToDirCache.get(id);
-    if (cached != null) return cached;
-
-    Pair<TIntArrayList, VirtualFileSystemEntry> pair = FSRecords.getParents(id, myIdToDirCache);
-    TIntArrayList parents = pair.getFirst();
-    VirtualFileSystemEntry cachedDir = pair.getSecond();
-    if (cachedDir == null) return null;
-    VirtualFileSystemEntry result = cachedDir;
-
-    for (int i=parents.size() - 2; i>=0; i--) {
-      if (!(result instanceof VirtualDirectoryImpl)) {
-        return null;
-      }
-      int parentId = parents.get(i);
-      result = ((VirtualDirectoryImpl)result).findChildById(parentId, cachedOnly);
-      if (result instanceof VirtualDirectoryImpl) {
-        VirtualFileSystemEntry old = myIdToDirCache.putIfAbsent(parentId, result);
-        if (old != null) result = old;
-      }
-    }
-
-    return result;
+    return myVfsData.hasLoadedFile(id) ? findFileById(id) : null;
   }
 
   @Override
   @NotNull
   public VirtualFile[] getRoots() {
     Collection<VirtualFileSystemEntry> roots = myRoots.values();
-    return ArrayUtil.stripTrailingNulls(VfsUtilCore.toVirtualFileArray(roots));
+    return VfsUtilCore.toVirtualFileArray(roots); // ConcurrentHashMap.keySet().toArray(new T[0]) guaranteed to return array with no nulls
   }
 
   @Override
@@ -1353,6 +1310,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   @TestOnly
+  public void cleanPersistedContent(int id) {
+    doCleanPersistedContent(id);
+  }
+
+  @TestOnly
   public void cleanPersistedContents() {
     int[] roots = FSRecords.listRoots();
     for (int root : roots) {
@@ -1367,10 +1329,13 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       }
     }
     else {
-      setFlag(id, MUST_RELOAD_CONTENT, true);
+      doCleanPersistedContent(id);
     }
   }
 
+  private static void doCleanPersistedContent(int id) {
+    setFlag(id, MUST_RELOAD_CONTENT, true);
+  }
 
   private static class FsRoot extends VirtualDirectoryImpl {
     private final String myName;

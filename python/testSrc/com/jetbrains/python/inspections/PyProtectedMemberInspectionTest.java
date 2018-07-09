@@ -74,6 +74,26 @@ public class PyProtectedMemberInspectionTest extends PyInspectionTestCase {
     doMultiFileTest();
   }
 
+  // PY-26112
+  public void testMemberResolvedToStub() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::doMultiFileTest);
+  }
+
+  // PY-27148
+  public void testTypingNamedTuple() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-26139
+  public void testProtectedModuleInSamePackage() {
+    doMultiFileTest("my_package/module2.py");
+  }
+
+  // PY-26139
+  public void testProtectedModuleInPackageAbove() {
+    doMultiFileTest("my_package/my_subpackage/module2.py");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

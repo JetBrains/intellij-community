@@ -49,32 +49,36 @@ public class UsageViewUtil {
 
   private UsageViewUtil() { }
 
-  public static String createNodeText(PsiElement element) {
+  @NotNull
+  public static String createNodeText(@NotNull PsiElement element) {
     return ElementDescriptionUtil.getElementDescription(element, UsageViewNodeTextLocation.INSTANCE);
   }
 
-  public static String getShortName(final PsiElement psiElement) {
+  @NotNull
+  public static String getShortName(@NotNull PsiElement psiElement) {
     LOG.assertTrue(psiElement.isValid(), psiElement);
     return ElementDescriptionUtil.getElementDescription(psiElement, UsageViewShortNameLocation.INSTANCE);
   }
 
-  public static String getLongName(final PsiElement psiElement) {
+  @NotNull
+  public static String getLongName(@NotNull PsiElement psiElement) {
     LOG.assertTrue(psiElement.isValid(), psiElement);
     return ElementDescriptionUtil.getElementDescription(psiElement, UsageViewLongNameLocation.INSTANCE);
   }
 
+  @NotNull 
   public static String getType(@NotNull PsiElement psiElement) {
     return ElementDescriptionUtil.getElementDescription(psiElement, UsageViewTypeLocation.INSTANCE);
   }
 
-  public static boolean hasNonCodeUsages(UsageInfo[] usages) {
+  private static boolean hasNonCodeUsages(@NotNull UsageInfo[] usages) {
     for (UsageInfo usage : usages) {
       if (usage.isNonCodeUsage) return true;
     }
     return false;
   }
 
-  public static boolean hasUsagesInGeneratedCode(UsageInfo[] usages, Project project) {
+  private static boolean hasUsagesInGeneratedCode(@NotNull UsageInfo[] usages, @NotNull Project project) {
     for (UsageInfo usage : usages) {
       VirtualFile file = usage.getVirtualFile();
       if (file != null && GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(file, project)) {
@@ -84,7 +88,7 @@ public class UsageViewUtil {
     return false;
   }
 
-  public static boolean hasReadOnlyUsages(UsageInfo[] usages) {
+  public static boolean hasReadOnlyUsages(@NotNull UsageInfo[] usages) {
     for (UsageInfo usage : usages) {
       if (!usage.isWritable()) return true;
     }
@@ -96,13 +100,11 @@ public class UsageViewUtil {
     Set<UsageInfo> set = new LinkedHashSet<>(Arrays.asList(usages));
 
     // Replace duplicates of move rename usage infos in injections from non code usages of master files
-    String newTextInNonCodeUsage = null;
-
-    for(UsageInfo usage:usages) {
-      if (!(usage instanceof NonCodeUsageInfo)) continue;
-      newTextInNonCodeUsage = ((NonCodeUsageInfo)usage).newText;
-      break;
-    }
+    String newTextInNonCodeUsage =
+      Arrays.stream(usages)
+            .filter(usage -> usage instanceof NonCodeUsageInfo)
+            .map(usage -> ((NonCodeUsageInfo)usage).newText)
+            .findFirst().orElse(null);
 
     if (newTextInNonCodeUsage != null) {
       for(UsageInfo usage:usages) {
@@ -138,7 +140,7 @@ public class UsageViewUtil {
         }
       }
     }
-    return set.toArray(new UsageInfo[set.size()]);
+    return set.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   @NotNull
@@ -149,7 +151,7 @@ public class UsageViewUtil {
 
   @NotNull
   public static PsiElement[] toElements(@NotNull UsageInfo[] usageInfos) {
-    return ContainerUtil.map2Array(usageInfos, PsiElement.class, info -> info.getElement());
+    return ContainerUtil.map2Array(usageInfos, PsiElement.class, UsageInfo::getElement);
   }
 
   public static void navigateTo(@NotNull UsageInfo info, boolean requestFocus) {
@@ -161,7 +163,8 @@ public class UsageViewUtil {
     }
   }
 
-  public static Set<UsageInfo> getNotExcludedUsageInfos(final UsageView usageView) {
+  @NotNull
+  public static Set<UsageInfo> getNotExcludedUsageInfos(@NotNull UsageView usageView) {
     Set<Usage> excludedUsages = usageView.getExcludedUsages();
 
     Set<UsageInfo> usageInfos = new LinkedHashSet<>();
@@ -174,7 +177,7 @@ public class UsageViewUtil {
     return usageInfos;
   }
 
-  public static boolean reportNonRegularUsages(UsageInfo[] usages, final Project project) {
+  public static boolean reportNonRegularUsages(@NotNull UsageInfo[] usages, @NotNull Project project) {
     boolean inGeneratedCode = hasUsagesInGeneratedCode(usages, project);
     if (hasNonCodeUsages(usages) || inGeneratedCode) {
       StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);

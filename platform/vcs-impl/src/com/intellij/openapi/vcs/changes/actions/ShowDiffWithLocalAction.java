@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -56,36 +57,41 @@ public class ShowDiffWithLocalAction extends AnAction implements DumbAware, AnAc
     return e.getData(VcsDataKeys.CHANGES_SELECTION) != null;
   }
 
-  public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getRequiredData(CommonDataKeys.PROJECT);
     if (ChangeListManager.getInstance(project).isFreezedWithNotification(null)) return;
     ListSelection<Change> selection = e.getRequiredData(VcsDataKeys.CHANGES_SELECTION);
 
-    ListSelection<Change> changesToLocal = selection.map(change -> {
-      return getChangeWithLocal(change);
-    });
+    ListSelection<Change> changesToLocal = selection.map(change -> getChangeWithLocal(change));
 
     if (!changesToLocal.isEmpty()) {
       showDiffForChange(project, changesToLocal);
     }
   }
 
-  public void update(final AnActionEvent e) {
+  public void update(@NotNull final AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     ListSelection<Change> selection = e.getData(VcsDataKeys.CHANGES_SELECTION);
     boolean isInAir = CommittedChangesBrowserUseCase.IN_AIR.equals(CommittedChangesBrowserUseCase.DATA_KEY.getData(e.getDataContext()));
-    boolean isToolbar = "ChangesBrowser".equals(e.getPlace());
 
-    e.getPresentation().setEnabled(project != null && !isToolbar && selection != null && !isInAir && canShowDiff(selection.getList()));
-    e.getPresentation().setVisible(!isToolbar);
+    e.getPresentation().setEnabled(project != null && selection != null && !isInAir && canShowDiff(selection.getList()));
   }
 
   @Nullable
   private Change getChangeWithLocal(@NotNull Change c) {
     ContentRevision revision = myUseBeforeVersion ? c.getBeforeRevision() : c.getAfterRevision();
+    ContentRevision otherRevision = myUseBeforeVersion ? c.getAfterRevision() : c.getBeforeRevision();
     if (!isValidRevision(revision)) return null;
 
-    ContentRevision contentRevision = CurrentContentRevision.create(revision.getFile());
+    FilePath filePath = revision.getFile();
+    if (filePath.getVirtualFile() == null && otherRevision != null) {
+      FilePath otherFile = otherRevision.getFile();
+      if (otherFile.getVirtualFile() != null) {
+        filePath = otherFile;
+      }
+    }
+
+    ContentRevision contentRevision = CurrentContentRevision.create(filePath);
     return new Change(revision, contentRevision);
   }
 

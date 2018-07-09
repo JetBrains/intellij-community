@@ -39,10 +39,12 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcs.log.visible.VisiblePackChangeListener;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -54,6 +56,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   public static final ExtensionPointName<VcsLogHighlighterFactory> LOG_HIGHLIGHTER_FACTORY_EP =
     ExtensionPointName.create("com.intellij.logHighlighterFactory");
 
+  @NotNull private final String myId;
   @NotNull protected final Project myProject;
   @NotNull protected final VcsLogData myLogData;
   @NotNull protected final VcsLogColorManager myColorManager;
@@ -65,11 +68,12 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
 
   @NotNull protected VisiblePack myVisiblePack;
 
-  public AbstractVcsLogUi(@NotNull VcsLogData logData,
-                          @NotNull Project project,
+  public AbstractVcsLogUi(@NotNull String id,
+                          @NotNull VcsLogData logData,
                           @NotNull VcsLogColorManager manager,
                           @NotNull VisiblePackRefresher refresher) {
-    myProject = project;
+    myId = id;
+    myProject = logData.getProject();
     myLogData = logData;
     myRefresher = refresher;
     myColorManager = manager;
@@ -85,6 +89,12 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
       }
     });
     myRefresher.addVisiblePackChangeListener(myVisiblePackChangeListener);
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return myId;
   }
 
   public void requestFocus() {
@@ -116,17 +126,11 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @NotNull
   public abstract Component getMainComponent();
 
-  protected abstract VcsLogFilterCollection getFilters();
-
   @NotNull
   public abstract VcsLogUiProperties getProperties();
 
-  public abstract boolean isShowRootNames();
-
-  @Override
-  public boolean areGraphActionsEnabled() {
-    return getTable().getRowCount() > 0;
-  }
+  @Nullable
+  public abstract String getHelpId();
 
   @NotNull
   public VisiblePackRefresher getRefresher() {
@@ -139,11 +143,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   }
 
   @NotNull
-  public Project getProject() {
-    return myProject;
-  }
-
-  @NotNull
   public VcsLog getVcsLog() {
     return myLog;
   }
@@ -151,6 +150,11 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
   @NotNull
   public VcsLogData getLogData() {
     return myLogData;
+  }
+
+  public void requestMore(@NotNull Runnable onLoaded) {
+    myRefresher.moreCommitsNeeded(onLoaded);
+    getTable().setPaintBusy(true);
   }
 
   @Override
@@ -182,9 +186,9 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
 
     GraphTableModel model = getTable().getModel();
 
-    int row = rowGetter.fun(model, commitId);
-    if (row >= 0) {
-      getTable().jumpToRow(row);
+    int result = rowGetter.fun(model, commitId);
+    if (result >= 0) {
+      getTable().jumpToRow(result);
       future.set(true);
     }
     else if (model.canRequestMore()) {
@@ -194,13 +198,33 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
       invokeOnChange(() -> jumpTo(commitId, rowGetter, future));
     }
     else {
-      handleCommitNotFound(commitId, rowGetter);
+      handleCommitNotFound(commitId, result == GraphTableModel.COMMIT_DOES_NOT_MATCH, rowGetter);
       future.set(false);
     }
   }
 
-  protected <T> void handleCommitNotFound(@NotNull T commitId, @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
-    VcsBalloonProblemNotifier.showOverChangesView(myProject, "Commit " + commitId.toString() + " not found.", MessageType.WARNING);
+  protected <T> void handleCommitNotFound(@NotNull T commitId,
+                                          boolean commitExists,
+                                          @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
+    String message = getCommitNotFoundMessage(commitId, commitExists);
+    VcsBalloonProblemNotifier.showOverChangesView(myProject, message, MessageType.WARNING);
+  }
+
+  @NotNull
+  protected static <T> String getCommitNotFoundMessage(@NotNull T commitId, boolean exists) {
+    return exists ? "Commit " + getCommitPresentation(commitId) + " doesn't match the filters" :
+           "Commit " + getCommitPresentation(commitId) + " not found";
+  }
+
+  @NotNull
+  protected static <T> String getCommitPresentation(@NotNull T commitId) {
+    if (commitId instanceof Hash) {
+      return ((Hash)commitId).toShortString();
+    }
+    else if (commitId instanceof String) {
+      return VcsLogUtil.getShortHash((String)commitId);
+    }
+    return commitId.toString();
   }
 
   protected void showWarningWithLink(@NotNull String mainText, @NotNull String linkText, @NotNull Runnable onClick) {

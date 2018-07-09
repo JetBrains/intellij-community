@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.compiler.CompilerConfiguration;
@@ -31,6 +17,8 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.service.project.IdeModelsProvider;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings.SyncType;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.module.*;
@@ -117,7 +105,11 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         setModuleOptions(module, node);
         ModifiableRootModel modifiableRootModel = modelsProvider.getModifiableRootModel(module);
         syncPaths(module, modifiableRootModel, node.getData());
-        setLanguageLevel(modifiableRootModel, node.getData());
+
+        if(ModuleTypeId.JAVA_MODULE.equals(module.getModuleTypeName())) {
+          // todo [Vlad, IDEA-187832]: extract to `external-system-java` module
+          setLanguageLevel(modifiableRootModel, node.getData());
+        }
         setSdk(modifiableRootModel, node.getData());
       }
     }
@@ -186,8 +178,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
   private static void syncPaths(@NotNull Module module, @NotNull ModifiableRootModel modifiableModel, @NotNull ModuleData data) {
     CompilerModuleExtension extension = modifiableModel.getModuleExtension(CompilerModuleExtension.class);
     if (extension == null) {
-      //modifiableModel.dispose();
-      LOG.warn(String.format("Can't sync paths for module '%s'. Reason: no compiler extension is found for it", module.getName()));
+      LOG.debug(String.format("No compiler extension is found for '%s', compiler output path will not be synced.", module.getName()));
       return;
     }
     String compileOutputPath = data.getCompileOutputPath(ExternalSystemSourceType.SOURCE);
@@ -248,13 +239,15 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
           return;
         }
 
-        if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-          for (Module module : modules) {
-            if (module.isDisposed()) continue;
-            String path = module.getModuleFilePath();
+        AbstractExternalSystemLocalSettings<?> localSettings = ExternalSystemApiUtil.getLocalSettings(project, projectData.getOwner());
+        SyncType syncType = localSettings.getProjectSyncType().get(projectData.getLinkedExternalProjectPath());
+        for (Module module : modules) {
+          if (module.isDisposed()) continue;
+          String path = module.getModuleFilePath();
+          if (!ApplicationManager.getApplication().isHeadlessEnvironment() && syncType == SyncType.RE_IMPORT) {
             try {
               // we need to save module configuration before dispose, to get the up-to-date content of the unlinked module iml
-              ServiceKt.getStateStore(module).save(new ArrayList<>());
+              ServiceKt.getStateStore(module).save(new SmartList<>(), false);
               VirtualFile moduleFile = module.getModuleFile();
               if (moduleFile != null) {
                 Path orphanModulePath = unlinkedModulesDir.resolve(String.valueOf(path.hashCode()));
@@ -267,10 +260,9 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
             catch (Exception e) {
               LOG.warn(e);
             }
-            final ModifiableModuleModel moduleModel = modelsProvider.getModifiableModuleModel();
-            moduleModel.disposeModule(module);
-            ModuleBuilder.deleteModuleFile(path);
           }
+          modelsProvider.getModifiableModuleModel().disposeModule(module);
+          ModuleBuilder.deleteModuleFile(path);
         }
       }
       finally {
@@ -311,7 +303,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
 
       String buildSystem = projectData != null ? projectData.getOwner().getReadableName() : "build system";
       String content = ExternalSystemBundle.message("orphan.modules.text", buildSystem,
-                                                    StringUtil.shortenTextWithEllipsis(modulesToRestoreText.toString(), 100, 0));
+                                                    StringUtil.shortenTextWithEllipsis(modulesToRestoreText.toString(), 50, 0));
       Notification cleanUpNotification = ORPHAN_MODULE_NOTIFICATION_GROUP.createNotification(content, NotificationType.INFORMATION)
         .setListener((notification, event) -> {
           if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) return;
@@ -370,7 +362,7 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         GridBagConstraints gbConstraints = new GridBagConstraints();
         JPanel panel = new JPanel(new GridBagLayout());
         gbConstraints.insets = JBUI.insets(4, 0, 10, 8);
-        panel.add(new JLabel(ExternalSystemBundle.message("orphan.modules.dialog.text", buildSystem)), gbConstraints);
+        panel.add(new JLabel(ExternalSystemBundle.message("orphan.modules.dialog.text")), gbConstraints);
         return panel;
       }
     };
@@ -421,6 +413,8 @@ public abstract class AbstractModuleDataService<E extends ModuleData> extends Ab
         rearrangeOrderEntries(orderAwareMap, modelsProvider.getModifiableRootModel(module));
       }
       setBytecodeTargetLevel(project, module, moduleDataNode.getData());
+      moduleDataNode.putUserData(MODULE_KEY, null);
+      moduleDataNode.putUserData(ORDERED_DATA_MAP_KEY, null);
     }
 
     for (Module module : modelsProvider.getModules()) {

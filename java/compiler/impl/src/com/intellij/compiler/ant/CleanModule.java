@@ -21,7 +21,6 @@ import com.intellij.openapi.compiler.CompilerBundle;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 24, 2004
  */
 public class CleanModule extends Target {
   public CleanModule(ModuleChunk chunk) {

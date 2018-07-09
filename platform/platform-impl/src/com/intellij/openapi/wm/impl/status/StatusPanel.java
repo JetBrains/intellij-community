@@ -32,7 +32,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ClickListener;
-import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
@@ -137,13 +136,6 @@ class StatusPanel extends JPanel {
     });
 
     add(myTextPanel, BorderLayout.WEST);
-
-    JPanel panel = new JPanel();
-    panel.setOpaque(isOpaque());
-    JLabel label = new JLabel("aaa");
-    label.setBackground(JBColor.YELLOW);
-    add(panel, BorderLayout.CENTER);
-
   }
 
   private Action createCopyAction() {
@@ -237,9 +229,6 @@ class StatusPanel extends JPanel {
 
   private void setStatusText(String text) {
     myTextPanel.setText(text);
-    if (!myAfterClick) {
-      myTextPanel.revalidate();
-    }
   }
 
   public String getText() {

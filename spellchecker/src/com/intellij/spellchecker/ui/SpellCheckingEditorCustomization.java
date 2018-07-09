@@ -34,8 +34,10 @@ import com.intellij.ui.SimpleEditorCustomization;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -50,12 +52,12 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
   /**
    * @deprecated use {@link SpellCheckingEditorCustomizationProvider#getEnabledCustomization()} instead
    */
-  public static final SpellCheckingEditorCustomization ENABLED = (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization();
+  @Deprecated public static final SpellCheckingEditorCustomization ENABLED = (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getEnabledCustomization();
 
   /**
    * @deprecated use {@link SpellCheckingEditorCustomizationProvider#getDisabledCustomization()} instead
    */
-  public static final SpellCheckingEditorCustomization DISABLED = (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
+  @Deprecated public static final SpellCheckingEditorCustomization DISABLED = (SpellCheckingEditorCustomization)SpellCheckingEditorCustomizationProvider.getInstance().getDisabledCustomization();
 
   private static final Map<String, LocalInspectionToolWrapper> SPELL_CHECK_TOOLS = new HashMap<>();
   private static final boolean READY = init();
@@ -125,6 +127,10 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
     if (analyzer != null) {
       analyzer.restart(file);
     }
+  }
+
+  public static Set<String> getSpellCheckingToolNames() {
+    return Collections.unmodifiableSet(SPELL_CHECK_TOOLS.keySet());
   }
 
   private static class MyInspectionProfileStrategy implements Function<InspectionProfileImpl, InspectionProfileWrapper> {

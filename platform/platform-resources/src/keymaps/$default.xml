@@ -77,8 +77,8 @@
   <action id="EditorLookupUp"><keyboard-shortcut first-keystroke="control UP"/></action>
   <action id="EditorLookupDown"><keyboard-shortcut first-keystroke="control DOWN"/></action>
 
-  <action id="MethodOverloadSwitchUp"><keyboard-shortcut first-keystroke="alt P"/></action>
-  <action id="MethodOverloadSwitchDown"><keyboard-shortcut first-keystroke="alt N"/></action>
+  <action id="MethodOverloadSwitchUp"><keyboard-shortcut first-keystroke="control UP"/></action>
+  <action id="MethodOverloadSwitchDown"><keyboard-shortcut first-keystroke="control DOWN"/></action>
 
   <action id="ReformatCode">
     <keyboard-shortcut first-keystroke="control alt L"/>
@@ -593,6 +593,12 @@
   <action id="ChangesView.Revert">
     <keyboard-shortcut first-keystroke="control alt Z"/>
   </action>
+  <action id="Vcs.MoveChangedLinesToChangelist">
+    <keyboard-shortcut first-keystroke="alt shift M"/>
+  </action>
+  <action id="ChangesView.Move">
+    <keyboard-shortcut first-keystroke="alt shift M"/>
+  </action>
 
   <action id="GotoNextError">
     <keyboard-shortcut first-keystroke="F2"/>
@@ -706,6 +712,9 @@
   </action>
   <action id="XDebugger.NewWatch">
     <keyboard-shortcut first-keystroke="INSERT"/>
+  </action>
+  <action id="XDebugger.AttachToProcess">
+    <keyboard-shortcut first-keystroke="control alt F5"/>
   </action>
   <action id="Debugger.EditTypeSource">
     <keyboard-shortcut first-keystroke="shift F4"/>
@@ -1031,6 +1040,9 @@
   <action id="VcsHistory.ShowAllAffected">
     <keyboard-shortcut first-keystroke="alt shift A" />
   </action>
+  <action id="ChangesView.GroupBy.Directory">
+    <keyboard-shortcut first-keystroke="ctrl P"/>
+  </action>
   <action id="ShelveChanges.UnshelveWithDialog">
     <keyboard-shortcut first-keystroke="control shift U" />
   </action>
@@ -1068,6 +1080,10 @@
     <keyboard-shortcut first-keystroke="Shift F6"/>
   </action>
 
+  <action id="ChangesView.SetDefault">
+    <keyboard-shortcut first-keystroke="control SPACE" />
+  </action>
+
   <action id="DirDiffMenu.SynchronizeDiff">
     <keyboard-shortcut first-keystroke="ENTER"/>
   </action>
@@ -1077,5 +1093,9 @@
 
   <action id="RunDashboard.ShowConfigurations">
     <keyboard-shortcut first-keystroke="control shift T"/>
+  </action>
+
+  <action id="BraceOrQuoteOut">
+    <keyboard-shortcut first-keystroke="TAB"/>
   </action>
 </keymap>

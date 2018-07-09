@@ -1,7 +1,10 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.equalsAndHashcode;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -75,10 +78,10 @@ public class EqualsAndHashcodeBase extends AbstractBaseJavaLocalInspectionTool {
                                    PsiMethod equals, PsiMethod hashcode) {
     final PsiMethod[] methods = aClass.getMethods();
     for (PsiMethod method : methods) {
-      if (MethodSignatureUtil.areSignaturesEqual(method, equals)) {
+      if (MethodSignatureUtil.areSignaturesEqual(method, equals) && !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
         hasEquals[0] = true;
       }
-      else if (MethodSignatureUtil.areSignaturesEqual(method, hashcode)) {
+      else if (MethodSignatureUtil.areSignaturesEqual(method, hashcode) && !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
         hasHashCode[0] = true;
       }
     }

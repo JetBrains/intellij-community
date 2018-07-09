@@ -4,9 +4,7 @@ from _pydevd_bundle import pydevd_extension_utils
 from _pydevd_bundle import pydevd_resolver
 import sys
 from _pydevd_bundle.pydevd_constants import dict_iter_items, dict_keys, IS_PY3K, \
-    BUILTINS_MODULE_NAME, MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_ASYNC, \
-    DEFAULT_VALUE
-
+    BUILTINS_MODULE_NAME, MAXIMUM_VARIABLE_REPRESENTATION_SIZE, RETURN_VALUES_DICT, LOAD_VALUES_POLICY, ValuesPolicy, DEFAULT_VALUES_DICT
 from _pydev_bundle.pydev_imports import quote
 from _pydevd_bundle.pydevd_extension_api import TypeResolveProvider, StrPresentationProvider
 
@@ -232,7 +230,7 @@ def is_builtin(x):
 
 
 def should_evaluate_full_value(val):
-    return not LOAD_VALUES_ASYNC or (is_builtin(type(val)) and not isinstance(val, (list, tuple, dict)))
+    return LOAD_VALUES_POLICY == ValuesPolicy.SYNC or (is_builtin(type(val)) and not isinstance(val, (list, tuple, dict)))
 
 
 def frame_vars_to_xml(frame_f_locals, hidden_ns=None):
@@ -289,7 +287,7 @@ def var_to_xml(val, name, doTrim=True, additional_in_xml='', evaluate_full_value
     _type, typeName, resolver = get_type(v)
     type_qualifier = getattr(_type, "__module__", "")
     if not evaluate_full_value:
-        value = DEFAULT_VALUE
+        value = DEFAULT_VALUES_DICT[LOAD_VALUES_POLICY]
     else:
         try:
             str_from_provider = _str_from_providers(v, _type, typeName)

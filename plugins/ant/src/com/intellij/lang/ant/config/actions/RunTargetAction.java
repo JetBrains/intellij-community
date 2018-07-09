@@ -44,7 +44,6 @@ import java.util.Collections;
 
 /**
  * Created by Eugene Petrenko (eugene.petrenko@gmail.com)
- * Date: 28.05.12 16:07
  */
 public class RunTargetAction extends AnAction {
   public RunTargetAction() {
@@ -57,7 +56,7 @@ public class RunTargetAction extends AnAction {
     if (antTarget == null) return;
 
     ExecutionHandler.runBuild(
-      antTarget.first, new String[] {antTarget.second.getName().getValue() },
+      antTarget.first, Collections.singletonList(antTarget.second.getName().getValue()),
       null,
       e.getDataContext(),
       Collections.emptyList(),

@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageTargetProvider;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -35,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 class PyMagicLiteralUsageTargetProvider implements UsageTargetProvider {
   @Nullable
   @Override
-  public UsageTarget[] getTargets(final Editor editor, final PsiFile file) {
+  public UsageTarget[] getTargets(@NotNull final Editor editor, @NotNull final PsiFile file) {
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     if (element != null) {
       final PyStringLiteralExpression literal = PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class);
@@ -48,7 +49,7 @@ class PyMagicLiteralUsageTargetProvider implements UsageTargetProvider {
 
   @Nullable
   @Override
-  public UsageTarget[] getTargets(final PsiElement psiElement) {
+  public UsageTarget[] getTargets(@NotNull final PsiElement psiElement) {
     return UsageTarget.EMPTY_ARRAY;
   }
 }

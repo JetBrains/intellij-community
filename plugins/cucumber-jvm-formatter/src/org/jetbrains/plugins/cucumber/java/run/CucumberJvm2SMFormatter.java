@@ -6,59 +6,69 @@ import cucumber.api.event.*;
 import cucumber.api.formatter.Formatter;
 import gherkin.events.PickleEvent;
 
+import java.io.PrintStream;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
 import static cucumber.api.Result.Type.*;
 import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.*;
-import static org.jetbrains.plugins.cucumber.java.run.CucumberJvmSMFormatterUtil.escape;
 
 @SuppressWarnings("unused")
 public class CucumberJvm2SMFormatter implements Formatter {
   private static final String EXAMPLES_CAPTION = "Examples:";
   private static final String SCENARIO_OUTLINE_CAPTION = "Scenario: Line: ";
-  private Map<String, String> pathToDescription = new HashMap<String, String>();
+  private final Map<String, String> pathToDescription = new HashMap<String, String>();
   private String currentFilePath;
   private int currentScenarioOutlineLine;
   private String currentScenarioOutlineName;
+  private final PrintStream myOut;
+  private final String myCurrentTimeValue;
 
   public CucumberJvm2SMFormatter() {
+    //noinspection UseOfSystemOutOrSystemErr
+    this(System.out, null);
+  }
+
+  public CucumberJvm2SMFormatter(PrintStream out, String currentTimeValue) {
+    myOut = out;
+    myCurrentTimeValue = currentTimeValue;
     outCommand(String.format(TEMPLATE_ENTER_THE_MATRIX, getCurrentTime()));
     outCommand(String.format(TEMPLATE_SCENARIO_COUNTING_STARTED, 0, getCurrentTime()));
   }
 
-  private EventHandler<TestCaseStarted> testCaseStartedHandler = new EventHandler<TestCaseStarted>() {
+  private final EventHandler<TestCaseStarted> testCaseStartedHandler = new EventHandler<TestCaseStarted>() {
     public void receive(TestCaseStarted event) {
       CucumberJvm2SMFormatter.this.handleTestCaseStarted(event);
     }
   };
 
-  private EventHandler<TestCaseFinished> testCaseFinishedHandler = new EventHandler<TestCaseFinished>() {
+  private final EventHandler<TestCaseFinished> testCaseFinishedHandler = new EventHandler<TestCaseFinished>() {
     public void receive(TestCaseFinished event) {
       handleTestCaseFinished(event);
     }
   };
 
-  private EventHandler<TestRunFinished> testRunFinishedHandler = new EventHandler<TestRunFinished>() {
+  private final EventHandler<TestRunFinished> testRunFinishedHandler = new EventHandler<TestRunFinished>() {
     public void receive(TestRunFinished event) {
       CucumberJvm2SMFormatter.this.handleTestRunFinished(event);
     }
   };
 
-  private EventHandler<TestStepStarted> testStepStartedHandler = new EventHandler<TestStepStarted>() {
+  private final EventHandler<TestStepStarted> testStepStartedHandler = new EventHandler<TestStepStarted>() {
     public void receive(TestStepStarted event) {
       handleTestStepStarted(event);
     }
   };
 
-  private EventHandler<TestStepFinished> testStepFinishedHandler = new EventHandler<TestStepFinished>() {
+  private final EventHandler<TestStepFinished> testStepFinishedHandler = new EventHandler<TestStepFinished>() {
     public void receive(TestStepFinished event) {
       handleTestStepFinished(event);
     }
   };
 
-  private EventHandler<TestSourceRead> testSourceReadHandler = new EventHandler<TestSourceRead>() {
+  private final EventHandler<TestSourceRead> testSourceReadHandler = new EventHandler<TestSourceRead>() {
     public void receive(TestSourceRead event) {
       CucumberJvm2SMFormatter.this.handleTestSourceRead(event);
     }
@@ -109,7 +119,7 @@ public class CucumberJvm2SMFormatter implements Formatter {
                              event.testCase.getUri() + ":" + event.testCase.getLine(), getScenarioName(event.testCase)));
   }
 
-  private static void handleTestCaseFinished(TestCaseFinished event) {
+  private void handleTestCaseFinished(TestCaseFinished event) {
     outCommand(String.format(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), getScenarioName(event.testCase)));
   }
 
@@ -118,19 +128,12 @@ public class CucumberJvm2SMFormatter implements Formatter {
     outCommand(String.format(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(),
                              getFeatureFileDescription(currentFilePath)));
   }
-  private static void handleTestStepStarted(TestStepStarted event) {
-    if (event.testStep.isHook()) {
-      return;
-    }
-
+  private void handleTestStepStarted(TestStepStarted event) {
     outCommand(String.format(TEMPLATE_TEST_STARTED, getCurrentTime(), getStepLocation(event.testStep),
                              getStepName(event.testStep)));
   }
 
-  private static void handleTestStepFinished(TestStepFinished event) {
-    if (event.testStep.isHook()) {
-      return;
-    }
+  private void handleTestStepFinished(TestStepFinished event) {
     if (event.result.getStatus() == PASSED) {
       // write nothing
     } else if (event.result.getStatus() == SKIPPED || event.result.getStatus() == PENDING) {
@@ -152,13 +155,7 @@ public class CucumberJvm2SMFormatter implements Formatter {
 
   private void handleTestSourceRead(TestSourceRead event) {
     closeCurrentScenarioOutline();
-
-    String[] lines = event.source.split("\n");
-    if (lines.length > 0) {
-      pathToDescription.put(event.uri, lines[0]);
-    } else {
-      pathToDescription.put(event.uri, event.source);
-    }
+    pathToDescription.put(event.uri, getFeatureName(event.source));
   }
 
   private void closeCurrentScenarioOutline() {
@@ -171,16 +168,43 @@ public class CucumberJvm2SMFormatter implements Formatter {
   }
 
   private static String getStepLocation(TestStep step) {
-    return step.getStepLocation() + ":" + step.getStepLine();
+    if (step.isHook()) {
+      try {
+        Field definitionMatchField = step.getClass().getSuperclass().getDeclaredField("definitionMatch");
+        definitionMatchField.setAccessible(true);
+        Object definitionMatchFieldValue = definitionMatchField.get(step);
+        
+        Field hookDefinitionField = definitionMatchFieldValue.getClass().getDeclaredField("hookDefinition");
+        hookDefinitionField.setAccessible(true);
+        Object hookDefinitionFieldValue = hookDefinitionField.get(definitionMatchFieldValue);
+
+        Field methodField = hookDefinitionFieldValue.getClass().getDeclaredField("method");
+        methodField.setAccessible(true);
+        Object methodFieldValue = methodField.get(hookDefinitionFieldValue);
+        if (methodFieldValue instanceof Method) {
+          Method method = (Method)methodFieldValue;
+          return String.format("java:test://%s/%s", method.getDeclaringClass().getName(), method.getName());
+        }
+      }
+      catch (Exception ignored) {
+      }
+      return "";
+    }
+    return FILE_RESOURCE_PREFIX + step.getStepLocation() + ":" + step.getStepLine();
   }
 
   private static String getStepName(TestStep step) {
-    return escape(step.getStepText());
+    String stepName;
+    if (step.isHook()) {
+      stepName = "Hook: " + step.getHookType().toString();
+    } else {
+      stepName = step.getStepText();
+    }
+    return escape(stepName);
   }
 
-  private static void outCommand(String s) {
-    //noinspection UseOfSystemOutOrSystemErr
-    System.out.println(s);
+  private void outCommand(String s) {
+    myOut.println(s);
   }
 
   private static PickleEvent getPickleEvent(TestCase testCase) {
@@ -212,5 +236,12 @@ public class CucumberJvm2SMFormatter implements Formatter {
       return SCENARIO_OUTLINE_CAPTION + testCase.getLine();
     }
     return escape(testCase.getName());
+  }
+
+  private String getCurrentTime() {
+    if (myCurrentTimeValue != null) {
+      return myCurrentTimeValue;
+    }
+    return CucumberJvmSMFormatterUtil.getCurrentTime();
   }
 }

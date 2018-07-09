@@ -171,7 +171,6 @@ public final class InsertComponentProcessor extends EventProcessor {
 
   public static String getUniqueBinding(RadRootContainer root, final String baseName) {
     // Generate member name based on current code style
-    //noinspection ForLoopThatDoesntUseLoopVariable
     for (int i = 0; true; i++) {
       final String nameCandidate = baseName + (i + 1);
       final String binding = JavaCodeStyleManager.getInstance(root.getProject()).propertyNameToVariableName(

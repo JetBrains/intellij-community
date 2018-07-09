@@ -69,11 +69,7 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
     final int dot = redPart.indexOf('.');
     final boolean fixPath = dot >= 0;
     final String firstRedName = fixPath ? redPart.substring(0, dot) : redPart;
-    for (Iterator<PsiDirectory> i = directories.iterator(); i.hasNext(); ) {
-      if (!checkCreateClassOrPackage(kind != null && !fixPath, i.next(), firstRedName)) {
-        i.remove();
-      }
-    }
+    directories.removeIf(directory -> !checkCreateClassOrPackage(kind != null && !fixPath, directory, firstRedName));
     return new CreateClassOrPackageFix(directories,
                                        context,
                                        fixPath ? qualifiedName : redPart,
@@ -167,7 +163,7 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
       }
 
       return DirectoryChooserUtil
-          .chooseDirectory(myWritableDirectoryList.toArray(new PsiDirectory[myWritableDirectoryList.size()]),
+          .chooseDirectory(myWritableDirectoryList.toArray(PsiDirectory.EMPTY_ARRAY),
                            preferredDirectory, project,
                            new HashMap<>());
     }
@@ -223,9 +219,9 @@ public class CreateClassOrPackageFix extends LocalQuickFixAndIntentionActionOnPs
     return false;
   }
 
-  public static List<PsiDirectory> getWritableDirectoryListDefault(@Nullable final PsiPackage context,
-                                                                   final GlobalSearchScope scope,
-                                                                   final PsiManager psiManager) {
+  private static List<PsiDirectory> getWritableDirectoryListDefault(@Nullable final PsiPackage context,
+                                                                    final GlobalSearchScope scope,
+                                                                    final PsiManager psiManager) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Getting writable directory list for package '" + (context == null ? null : context.getQualifiedName()) + "', scope=" + scope);
     }

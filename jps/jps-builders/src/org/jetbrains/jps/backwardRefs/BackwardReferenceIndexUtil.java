@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.backwardRefs;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,17 +24,18 @@ public class BackwardReferenceIndexUtil {
                            TObjectIntHashMap<? extends JavacRef> refs,
                            Collection<JavacDef> defs,
                            Collection<JavacTypeCast> casts,
-                           final BackwardReferenceIndexWriter writer) {
+                           Collection<JavacRef> implicitToString,
+                           final JavaBackwardReferenceIndexWriter writer) {
 
     try {
       final int fileId = writer.enumeratePath(filePath);
       int funExprId = 0;
 
-      Map<LightRef, Void> definitions = new HashMap<>(defs.size());
-      Map<LightRef, Collection<LightRef>> backwardHierarchyMap = new HashMap<>();
-      Map<SignatureData, Collection<LightRef>> signatureData = new THashMap<>();
-      THashMap<LightRef, Collection<LightRef>> castMap = new THashMap<>();
-
+      Map<CompilerRef, Void> definitions = new HashMap<>(defs.size());
+      Map<CompilerRef, Collection<CompilerRef>> backwardHierarchyMap = new HashMap<>();
+      Map<SignatureData, Collection<CompilerRef>> signatureData = new THashMap<>();
+      Map<CompilerRef, Collection<CompilerRef>> castMap = new THashMap<>();
+      Map<CompilerRef, Void> implicitToStringMap = new THashMap<>();
 
       final AnonymousClassEnumerator anonymousClassEnumerator = new AnonymousClassEnumerator();
 
@@ -56,7 +43,7 @@ public class BackwardReferenceIndexUtil {
         if (def instanceof JavacDef.JavacClassDef) {
           JavacRef.JavacClass sym = (JavacRef.JavacClass)def.getDefinedElement();
 
-          final LightRef.LightClassHierarchyElementDef aClass;
+          final CompilerRef.CompilerClassHierarchyElementDef aClass;
           if (sym.isAnonymous()) {
             final JavacRef[] classes = ((JavacDef.JavacClassDef)def).getSuperClasses();
             if (classes.length == 0) {
@@ -71,23 +58,24 @@ public class BackwardReferenceIndexUtil {
 
           final JavacRef[] superClasses = ((JavacDef.JavacClassDef)def).getSuperClasses();
           for (JavacRef superClass : superClasses) {
-            LightRef.JavaLightClassRef superClassRef = writer.asClassUsage(superClass);
+            CompilerRef.JavaCompilerClassRef superClassRef = writer.asClassUsage(superClass);
 
             backwardHierarchyMap.computeIfAbsent(superClassRef, k -> new SmartList<>()).add(aClass);
           }
         }
         else if (def instanceof JavacDef.JavacFunExprDef) {
-          final LightRef.JavaLightClassRef functionalType = writer.asClassUsage(def.getDefinedElement());
+          final CompilerRef.JavaCompilerClassRef functionalType = writer.asClassUsage(def.getDefinedElement());
           int id = funExprId++;
-          LightRef.JavaLightFunExprDef result = new LightRef.JavaLightFunExprDef(id);
+          CompilerRef.JavaCompilerFunExprDef result = new CompilerRef.JavaCompilerFunExprDef(id);
           definitions.put(result, null);
 
           ContainerUtil.getOrCreate(backwardHierarchyMap, functionalType,
-                                    (Factory<Collection<LightRef>>)() -> new SmartList<>()).add(result);
+                                    (Factory<Collection<CompilerRef>>)() -> new SmartList<>()).add(result);
         }
         else if (def instanceof JavacDef.JavacMemberDef) {
-          final LightRef ref = writer.enumerateNames(def.getDefinedElement(), name -> anonymousClassEnumerator.getLightRefIfAnonymous(name));
-          final LightRef.JavaLightClassRef returnType = writer.asClassUsage(((JavacDef.JavacMemberDef)def).getReturnType());
+          final CompilerRef
+            ref = writer.enumerateNames(def.getDefinedElement(), name -> anonymousClassEnumerator.getCompilerRefIfAnonymous(name));
+          final CompilerRef.JavaCompilerClassRef returnType = writer.asClassUsage(((JavacDef.JavacMemberDef)def).getReturnType());
           if (ref != null && returnType != null) {
             final SignatureData data = new SignatureData(returnType.getName(), ((JavacDef.JavacMemberDef)def).getIteratorKind(), ((JavacDef.JavacMemberDef)def).isStatic());
             signatureData.computeIfAbsent(data, element -> new SmartList<>()).add(ref);
@@ -95,15 +83,15 @@ public class BackwardReferenceIndexUtil {
         }
       }
 
-      Map<LightRef, Integer> convertedRefs = new THashMap<>();
+      Map<CompilerRef, Integer> convertedRefs = new THashMap<>();
       IOException[] exception = new IOException[]{null};
       refs.forEachEntry((ref, count) -> {
-        final LightRef lightRef;
+        final CompilerRef compilerRef;
         try {
-          lightRef = writer.enumerateNames(ref, name -> anonymousClassEnumerator.getLightRefIfAnonymous(name));
-          if (lightRef != null) {
-            Integer old = convertedRefs.get(lightRef);
-            convertedRefs.put(lightRef, old == null ? count : (old + count));
+          compilerRef = writer.enumerateNames(ref, name -> anonymousClassEnumerator.getCompilerRefIfAnonymous(name));
+          if (compilerRef != null) {
+            Integer old = convertedRefs.get(compilerRef);
+            convertedRefs.put(compilerRef, old == null ? count : (old + count));
           }
         }
         catch (IOException e) {
@@ -117,14 +105,18 @@ public class BackwardReferenceIndexUtil {
       }
 
       for (JavacTypeCast cast : casts) {
-        LightRef enumeratedCastType = writer.enumerateNames(cast.getCastType(), name -> null);
+        CompilerRef enumeratedCastType = writer.enumerateNames(cast.getCastType(), name -> null);
         if (enumeratedCastType == null) continue;
-        LightRef enumeratedOperandType = writer.enumerateNames(cast.getOperandType(), name -> null);
+        CompilerRef enumeratedOperandType = writer.enumerateNames(cast.getOperandType(), name -> null);
         if (enumeratedOperandType == null) continue;
         castMap.computeIfAbsent(enumeratedCastType, t -> new SmartList<>()).add(enumeratedOperandType);
       }
 
-      writer.writeData(fileId, new CompiledFileData(backwardHierarchyMap, castMap, convertedRefs, definitions, signatureData));
+      for (JavacRef ref : implicitToString) {
+        implicitToStringMap.put(writer.asClassUsage(ref), null);
+      }
+
+      writer.writeData(fileId, new CompiledFileData(backwardHierarchyMap, castMap, convertedRefs, definitions, signatureData, implicitToStringMap));
     }
     catch (IOException e) {
       writer.setRebuildCause(e);
@@ -132,21 +124,21 @@ public class BackwardReferenceIndexUtil {
   }
 
   private static class AnonymousClassEnumerator {
-    private THashMap<String, LightRef.LightClassHierarchyElementDef> myAnonymousName2Id = null;
+    private THashMap<String, CompilerRef.CompilerClassHierarchyElementDef> myAnonymousName2Id = null;
 
-    private LightRef.JavaLightAnonymousClassRef addAnonymous(String internalName,
-                                                             LightRef.JavaLightClassRef base) {
+    private CompilerRef.JavaCompilerAnonymousClassRef addAnonymous(String internalName,
+                                                                   CompilerRef.JavaCompilerClassRef base) {
       if (myAnonymousName2Id == null) {
         myAnonymousName2Id = new THashMap<>();
       }
       final int anonymousIdx = myAnonymousName2Id.size();
       myAnonymousName2Id.put(internalName, base);
-      return new LightRef.JavaLightAnonymousClassRef(anonymousIdx);
+      return new CompilerRef.JavaCompilerAnonymousClassRef(anonymousIdx);
     }
 
-    private Integer getLightRefIfAnonymous(String className) {
+    private Integer getCompilerRefIfAnonymous(String className) {
       if (myAnonymousName2Id == null) return null;
-      final LightRef.LightClassHierarchyElementDef ref = myAnonymousName2Id.get(className);
+      final CompilerRef.CompilerClassHierarchyElementDef ref = myAnonymousName2Id.get(className);
       return ref == null ? null : ref.getName();
     }
   }

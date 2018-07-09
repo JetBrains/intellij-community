@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.codeHighlighting.RainbowHighlighter;
@@ -88,6 +74,8 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
     TAG_HIGHLIGHTING_MAP.put("tag", DefaultLanguageHighlighterColors.MARKUP_TAG);
     TAG_HIGHLIGHTING_MAP.put("attribute", DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE);
     TAG_HIGHLIGHTING_MAP.put("entity", DefaultLanguageHighlighterColors.MARKUP_ENTITY);
+    TAG_HIGHLIGHTING_MAP.put("reassigned_parameter", DefaultLanguageHighlighterColors.REASSIGNED_PARAMETER);
+    TAG_HIGHLIGHTING_MAP.put("reassigned_local", DefaultLanguageHighlighterColors.REASSIGNED_LOCAL_VARIABLE);
   }
 
   private final static AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
@@ -140,6 +128,8 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.local.variable"), DefaultLanguageHighlighterColors.LOCAL_VARIABLE),
     new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.reassigned.local.variable"), DefaultLanguageHighlighterColors.REASSIGNED_LOCAL_VARIABLE),
+    new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.global.variable"), DefaultLanguageHighlighterColors.GLOBAL_VARIABLE),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.function.declaration"), DefaultLanguageHighlighterColors.FUNCTION_DECLARATION),
@@ -147,6 +137,8 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       OptionsBundle.message("options.language.defaults.function.call"), DefaultLanguageHighlighterColors.FUNCTION_CALL),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.parameter"), DefaultLanguageHighlighterColors.PARAMETER),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.reassigned.parameter"), DefaultLanguageHighlighterColors.REASSIGNED_PARAMETER),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.interface.name"), DefaultLanguageHighlighterColors.INTERFACE_NAME),
     new AttributesDescriptor(
@@ -178,7 +170,10 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT),
     new AttributesDescriptor(
       OptionsBundle.message("options.java.attribute.descriptor.inline.parameter.hint.highlighted"), 
-      DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED)
+      DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_HIGHLIGHTED),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.java.attribute.descriptor.inline.parameter.hint.current"), 
+      DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT_CURRENT)
   };
 
   @Nullable
@@ -224,9 +219,12 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       " */</doc_comment>\n" +
       "Function <func_decl>declaration</func_decl> (<param>parameter1</param> <param>parameter2</param> <param>parameter3</param> <param>parameter4</param>)\n" +
       "    Local <local_var>variable1</local_var> <local_var>variable2</local_var> <local_var>variable3</local_var> <local_var>variable4</local_var>\n" +
+      "    Reassigned local <reassigned_local>variable</reassigned_local>\n" +
+      "    Reassigned <reassigned_parameter>parameter</reassigned_parameter>\n" +
       "Function <func_call>call</func_call>(" +
-      "<parameter_hint p>0, <parameter_hint_highlighted param>1, <parameter_hint parameterName>2" +
+      "<parameter_hint p:>0, <parameter_hint param:>1, <parameter_hint parameterName:>2" +
       ")\n" +
+      "Current function <func_call>call</func_call>(<parameter_hint_highlighted param:>0, <parameter_hint_current currentParam:>1)\n" +
       "Interface <interface>Name</interface>\n" +
       "<metadata>@Metadata</metadata>\n" +
       "Class <class_name>Name</class_name>\n" +

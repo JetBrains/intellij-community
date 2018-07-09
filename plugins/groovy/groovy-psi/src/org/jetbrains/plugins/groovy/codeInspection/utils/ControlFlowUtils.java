@@ -24,7 +24,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -523,6 +522,14 @@ public class ControlFlowUtils {
     });
 
     return applicable.get(0);
+  }
+
+  public static boolean isImplicitReturnStatement(@NotNull GrExpression expression) {
+    GrControlFlowOwner flowOwner = findControlFlowOwner(expression);
+    return flowOwner != null &&
+           PsiUtil.isExpressionStatement(expression) &&
+           isReturnValue(expression, flowOwner) &&
+           !PsiUtil.isVoidMethodCall(expression);
   }
 
   private static class ReturnFinder extends GroovyRecursiveElementVisitor {

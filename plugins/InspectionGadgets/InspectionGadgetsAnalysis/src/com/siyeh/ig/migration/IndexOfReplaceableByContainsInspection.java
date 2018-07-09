@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2014  Bas Leijdekkers
+ * Copyright 2005-2018  Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NonNls;
@@ -59,14 +59,14 @@ public class IndexOfReplaceableByContainsInspection
       final PsiMethodCallExpression callExpression =
         (PsiMethodCallExpression)lhs;
       text = createContainsExpressionText(callExpression, false,
-                                          expression.getOperationTokenType());
+                                          expression.getOperationTokenType(), new CommentTracker());
     }
     else {
       final PsiMethodCallExpression callExpression =
         (PsiMethodCallExpression)expression.getROperand();
       assert callExpression != null;
       text = createContainsExpressionText(callExpression, true,
-                                          expression.getOperationTokenType());
+                                          expression.getOperationTokenType(), new CommentTracker());
     }
     return InspectionGadgetsBundle.message(
       "expression.can.be.replaced.problem.descriptor", text);
@@ -82,35 +82,31 @@ public class IndexOfReplaceableByContainsInspection
     extends InspectionGadgetsFix {
 
     @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    protected void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       if (!(element instanceof PsiBinaryExpression)) {
         return;
       }
-      final PsiBinaryExpression expression =
-        (PsiBinaryExpression)element;
+      final PsiBinaryExpression expression = (PsiBinaryExpression)element;
       final PsiExpression lhs = expression.getLOperand();
       final PsiExpression rhs = expression.getROperand();
+      CommentTracker commentTracker = new CommentTracker();
       final String newExpressionText;
       if (lhs instanceof PsiMethodCallExpression) {
-        final PsiMethodCallExpression callExpression =
-          (PsiMethodCallExpression)lhs;
-        newExpressionText =
-          createContainsExpressionText(callExpression, false,
-                                       expression.getOperationTokenType());
+        final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)lhs;
+        newExpressionText = createContainsExpressionText(callExpression, false, expression.getOperationTokenType(), commentTracker);
       }
       else if (rhs instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression callExpression =
           (PsiMethodCallExpression)rhs;
         newExpressionText =
-          createContainsExpressionText(callExpression, true,
-                                       expression.getOperationTokenType());
+          createContainsExpressionText(callExpression, true, expression.getOperationTokenType(), commentTracker);
       }
       else {
         return;
       }
-      PsiReplacementUtil.replaceExpression(expression, newExpressionText);
+
+      PsiReplacementUtil.replaceExpression(expression, newExpressionText, commentTracker);
     }
 
     @Override
@@ -121,24 +117,20 @@ public class IndexOfReplaceableByContainsInspection
     }
   }
 
-  static String createContainsExpressionText(
-    @NotNull PsiMethodCallExpression call,
-    boolean flipped, IElementType tokenType) {
-    final PsiReferenceExpression methodExpression =
-      call.getMethodExpression();
-    final PsiExpression qualifierExpression =
-      methodExpression.getQualifierExpression();
+  static String createContainsExpressionText(@NotNull PsiMethodCallExpression call, boolean flipped, IElementType tokenType, CommentTracker commentTracker) {
+    final PsiReferenceExpression methodExpression = call.getMethodExpression();
+    final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
     final String qualifierText;
     if (qualifierExpression == null) {
       qualifierText = "";
     }
     else {
-      qualifierText = qualifierExpression.getText();
+      qualifierText = commentTracker.text(qualifierExpression);
     }
     final PsiExpressionList argumentList = call.getArgumentList();
     final PsiExpression expression = argumentList.getExpressions()[0];
     @NonNls final String newExpressionText =
-      qualifierText + ".contains(" + expression.getText() + ')';
+      qualifierText + ".contains(" + commentTracker.text(expression) + ')';
     if (tokenType.equals(JavaTokenType.EQEQ)) {
       return '!' + newExpressionText;
     }

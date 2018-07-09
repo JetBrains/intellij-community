@@ -41,7 +41,6 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -73,7 +72,7 @@ public class MoveClassesOrPackagesUtil {
 
     findNonCodeUsages(searchInStringsAndComments, searchInNonJavaFiles, element, newQName, results);
     preprocessUsages(results);
-    return results.toArray(new UsageInfo[results.size()]);
+    return results.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   private static void preprocessUsages(ArrayList<UsageInfo> results) {
@@ -101,6 +100,9 @@ public class MoveClassesOrPackagesUtil {
     }
     else if (element instanceof PsiDirectory) {
       return getStringToSearch(JavaDirectoryService.getInstance().getPackage((PsiDirectory)element));
+    }
+    else if (element instanceof PsiClassOwner) {
+      return ((PsiClassOwner)element).getName();
     }
     else {
       LOG.error("Unknown element type");
@@ -247,7 +249,7 @@ public class MoveClassesOrPackagesUtil {
         !PsiUtil.isModuleFile(file)) {
       String qualifiedName = newPackage.getQualifiedName();
       if (!Comparing.strEqual(qualifiedName, ((PsiClassOwner)file).getPackageName()) && 
-          PsiNameHelper.getInstance(file.getProject()).isQualifiedName(qualifiedName)) {
+          (qualifiedName.isEmpty() || PsiNameHelper.getInstance(file.getProject()).isQualifiedName(qualifiedName))) {
         // Do not rely on class instance identity retention after setPackageName (Scala)
         String aClassName = aClass.getName();
         ((PsiClassOwner)file).setPackageName(qualifiedName);
@@ -323,7 +325,7 @@ public class MoveClassesOrPackagesUtil {
     buildDirectoryList(targetPackage, contentSourceRoots, targetDirectories, relativePathsToCreate);
 
     final PsiDirectory selectedDirectory = DirectoryChooserUtil.chooseDirectory(
-      targetDirectories.toArray(new PsiDirectory[targetDirectories.size()]),
+      targetDirectories.toArray(PsiDirectory.EMPTY_ARRAY),
       initialDirectory,
       project,
       relativePathsToCreate

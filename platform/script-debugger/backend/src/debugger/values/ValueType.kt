@@ -43,6 +43,6 @@ enum class ValueType {
     get() = this == OBJECT || this == ARRAY || this == FUNCTION || this == NODE
 
   companion object {
-    fun fromIndex(index: Int) = VALUE_TYPES.get(index)
+    fun fromIndex(index: Int): ValueType = VALUE_TYPES.get(index)
   }
 }

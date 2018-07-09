@@ -22,12 +22,12 @@ import com.intellij.lang.parameterInfo.UpdateParameterInfoContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyArgumentList;
@@ -44,7 +44,6 @@ import java.util.List;
 /**
  * Tests parameter info available via ^P at call sites.
  * <br/>User: dcheryasov
- * Date: Jul 14, 2009 3:42:44 AM
  */
 public class PyParameterInfoTest extends LightMarkedTestCase {
 
@@ -440,8 +439,6 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   // PY-22005
   public void testWithSpecifiedType() {
-    myFixture.copyDirectoryToProject("typing", "");
-
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> {
@@ -463,8 +460,6 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   // PY-22004
   public void testMultiResolved() {
-    myFixture.copyDirectoryToProject("typing", "");
-
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> {
@@ -480,8 +475,6 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testOverloadsInImportedClass() {
-    myFixture.copyDirectoryToProject("typing", "");
-
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> {
@@ -497,8 +490,6 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testOverloadsInImportedModule() {
-    myFixture.copyDirectoryToProject("typing", "");
-
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> {
@@ -513,8 +504,6 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testOverloadsWithDifferentNumberOfArgumentsInImportedClass() {
-    myFixture.copyDirectoryToProject("typing", "");
-
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> {
@@ -530,8 +519,6 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
   }
 
   public void testOverloadsWithDifferentNumberOfArgumentsInImportedModule() {
-    myFixture.copyDirectoryToProject("typing", "");
-
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
       () -> {
@@ -653,24 +640,19 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   // PY-22249
   public void testInitializingCollectionsNamedTuple() {
-    runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
-      () -> {
-        final Map<String, PsiElement> test = loadTest(2);
+    final Map<String, PsiElement> test = loadTest(2);
 
-        for (int offset : StreamEx.of(test.values()).map(PsiElement::getTextOffset)) {
-          final List<String> texts = Collections.singletonList("bar, baz");
-          final List<String[]> highlighted = Collections.singletonList(new String[]{"bar, "});
+    for (int offset : StreamEx.of(test.values()).map(PsiElement::getTextOffset)) {
+      final List<String> texts = Collections.singletonList("bar, baz");
+      final List<String[]> highlighted = Collections.singletonList(new String[]{"bar, "});
 
-          feignCtrlP(offset).check(texts, highlighted, Collections.singletonList(ArrayUtil.EMPTY_STRING_ARRAY));
-        }
-      }
-    );
+      feignCtrlP(offset).check(texts, highlighted, Collections.singletonList(ArrayUtil.EMPTY_STRING_ARRAY));
+    }
   }
 
   public void testInitializingTypingNamedTuple() {
     runWithLanguageLevel(
-      LanguageLevel.PYTHON35,
+      LanguageLevel.PYTHON36,
       () -> {
         final Map<String, PsiElement> test = loadTest(7);
 
@@ -704,6 +686,176 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         for (int offset : StreamEx.of(loadTest(2).values()).map(PsiElement::getTextOffset)) {
           feignCtrlP(offset).check("self: Foo, arg: int", new String[]{"arg: int"}, new String[]{"self: Foo, "});
         }
+      }
+    );
+  }
+
+  // PY-27148
+  public void testCollectionsNamedTupleReplace() {
+    final Map<String, PsiElement> test = loadTest(2);
+
+    for (int offset : StreamEx.of(test.values()).map(PsiElement::getTextOffset)) {
+      feignCtrlP(offset).check("*, bar=..., baz=...", ArrayUtil.EMPTY_STRING_ARRAY);
+    }
+  }
+
+  // PY-27148
+  public void testTypingNamedTupleReplace() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        final Map<String, PsiElement> test = loadTest(2);
+
+        for (int offset : StreamEx.of(test.values()).map(PsiElement::getTextOffset)) {
+          feignCtrlP(offset).check("*, bar: int=..., baz: str=...", ArrayUtil.EMPTY_STRING_ARRAY);
+        }
+      }
+    );
+  }
+
+  // PY-26582
+  public void testStructuralType() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> {
+        final Map<String, PsiElement> marks = loadTest(1);
+
+        feignCtrlP(marks.get("<arg1>").getTextOffset()).check("p1, p2: int", new String[]{"p1, "});
+      }
+    );
+  }
+
+  // PY-27398
+  public void testInitializingDataclass() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        final Map<String, PsiElement> marks = loadMultiFileTest(10);
+
+        feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x: int, y: str, z: float=0.0", new String[]{"x: int, "});
+        feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x: int, y: str, z: float=0.0", new String[]{"x: int, "});
+
+        feignCtrlP(marks.get("<arg3>").getTextOffset()).check(
+          Arrays.asList("self: object", "cls: object"),
+          Arrays.asList(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY),
+          Arrays.asList(new String[]{"self: object"}, new String[]{"cls: object"})
+        );
+
+        feignCtrlP(marks.get("<arg4>").getTextOffset()).check("self: B2, x: int", new String[]{"x: int"}, new String[]{"self: B2, "});
+        feignCtrlP(marks.get("<arg5>").getTextOffset()).check("b: int", new String[]{"b: int"});
+        feignCtrlP(marks.get("<arg6>").getTextOffset()).check("b: int", new String[]{"b: int"});
+        feignCtrlP(marks.get("<arg7>").getTextOffset()).check("a: int, b: int", new String[]{"a: int, "});
+
+        feignCtrlP(marks.get("<arg8>").getTextOffset()).check("a: int, b: int, d: int=..., e: int=...", new String[]{"a: int, "});
+
+        feignCtrlP(marks.get("<arg9>").getTextOffset()).check("x: int, y: str, z: float=0.0", new String[]{"x: int, "});
+        feignCtrlP(marks.get("<arg10>").getTextOffset()).check(Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
+      }
+    );
+  }
+
+  // PY-26354
+  public void testInitializingAttrsUsingPep526() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        final Map<String, PsiElement> marks = loadTest(7);
+
+        feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x: int, y: str, z: float=0.0", new String[]{"x: int, "});
+        feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x: int, y: str, z: float=0.0", new String[]{"x: int, "});
+
+        feignCtrlP(marks.get("<arg3>").getTextOffset()).check(
+          Arrays.asList("self: object", "cls: object"),
+          Arrays.asList(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.EMPTY_STRING_ARRAY),
+          Arrays.asList(new String[]{"self: object"}, new String[]{"cls: object"})
+        );
+
+        feignCtrlP(marks.get("<arg4>").getTextOffset()).check("self: B2, x: int", new String[]{"x: int"}, new String[]{"self: B2, "});
+        feignCtrlP(marks.get("<arg5>").getTextOffset()).check("b: int", new String[]{"b: int"});
+        feignCtrlP(marks.get("<arg6>").getTextOffset()).check("x: int, y: str=\"0\"", new String[]{"x: int, "});
+        feignCtrlP(marks.get("<arg7>").getTextOffset()).check("x: int", new String[]{"x: int"});
+      }
+    );
+  }
+
+  // PY-26354
+  public void testInitializingAttrs() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> {
+        final Map<String, PsiElement> marks = loadTest(7);
+
+        feignCtrlP(marks.get("<arg1>").getTextOffset()).check("x, y, z: int=...", new String[]{"x, "});
+        feignCtrlP(marks.get("<arg2>").getTextOffset()).check("x, y, z: int=...", new String[]{"x, "});
+        feignCtrlP(marks.get("<arg3>").getTextOffset()).check("x, z: int=...", new String[]{"x, "});
+        feignCtrlP(marks.get("<arg4>").getTextOffset()).check("x, y, z: list=...", new String[]{"x, "});
+        feignCtrlP(marks.get("<arg5>").getTextOffset()).check("x, y: int=...", new String[]{"x, "});
+        feignCtrlP(marks.get("<arg6>").getTextOffset()).check("x, y: str=...", new String[]{"x, "});
+        feignCtrlP(marks.get("<arg7>").getTextOffset()).check("x: int=...", new String[]{"x: int=..."});
+      }
+    );
+  }
+
+  // PY-28957
+  public void testDataclassesReplace() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        final Map<String, PsiElement> marks = loadMultiFileTest(4);
+
+        feignCtrlP(marks.get("<arg1>").getTextOffset()).check("obj: A, *, a: int=..., b: str=\"str\"", ArrayUtil.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg2>").getTextOffset()).check("obj: B, *, a: int=...", ArrayUtil.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg3>").getTextOffset()).check("obj: C, *, a: int=..., b: str=\"str\"", ArrayUtil.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg4>").getTextOffset()).check("obj, **changes", new String[]{"**changes"});
+      }
+    );
+  }
+
+  // PY-26354
+  public void testAttrsReplace() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> {
+        final Map<String, PsiElement> marks = loadTest(8);
+
+        feignCtrlP(marks.get("<arg1>").getTextOffset()).check("inst: A, *, a: int=..., b: str=\"str\"", ArrayUtil.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg2>").getTextOffset()).check("inst: A, *, a: int=..., b: str=\"str\"", ArrayUtil.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg3>").getTextOffset()).check("inst: B, *, a: int=...", ArrayUtil.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg4>").getTextOffset()).check("inst: B, *, a: int=...", ArrayUtil.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg5>").getTextOffset()).check("inst: _T, **changes", new String[]{"**changes"});
+        feignCtrlP(marks.get("<arg6>").getTextOffset()).check("inst: _T, **changes", new String[]{"**changes"});
+        feignCtrlP(marks.get("<arg7>").getTextOffset()).check("inst: D, *, a: int=...", ArrayUtil.EMPTY_STRING_ARRAY);
+        feignCtrlP(marks.get("<arg8>").getTextOffset()).check("inst: D, *, a: int=...", ArrayUtil.EMPTY_STRING_ARRAY);
+      }
+    );
+  }
+
+  // EA-102450
+  public void testKeywordOnlyWithFilledPositional() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON34,
+      () -> {
+        final Map<String, PsiElement> test = loadTest(4);
+
+        feignCtrlP(test.get("<arg1>").getTextOffset()).check("*, kw1, kw2", ArrayUtil.EMPTY_STRING_ARRAY);
+        feignCtrlP(test.get("<arg2>").getTextOffset()).check("*, kw1, kw2", ArrayUtil.EMPTY_STRING_ARRAY);
+
+        feignCtrlP(test.get("<arg3>").getTextOffset()).check("*, kw1, kw2", new String[]{"kw1, "});
+        feignCtrlP(test.get("<arg4>").getTextOffset()).check("*, kw1, kw2", new String[]{"kw2"});
+      }
+    );
+  }
+
+  // PY-28127
+  public void testInitializingTypeVar() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON34,
+      () -> {
+        final int offset = loadTest(1).get("<arg1>").getTextOffset();
+
+        feignCtrlP(offset).check("name: str, *constraints: type, bound: type=..., covariant: bool=False, contravariant: bool=False",
+                                 new String[]{"name: str, "},
+                                 ArrayUtil.EMPTY_STRING_ARRAY);
       }
     );
   }
@@ -852,7 +1004,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     @Override
     @NotNull
     public Color getDefaultParameterColor() {
-      return java.awt.Color.BLACK;
+      return Color.BLACK;
     }
 
     @Override
@@ -892,6 +1044,11 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     @Override
     public boolean isInnermostContext() {
       return false;
+    }
+
+    @Override
+    public UserDataHolderEx getCustomContext() {
+      throw new UnsupportedOperationException();
     }
 
     @Override

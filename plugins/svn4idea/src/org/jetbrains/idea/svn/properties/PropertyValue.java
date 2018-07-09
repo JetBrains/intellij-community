@@ -18,21 +18,13 @@ package org.jetbrains.idea.svn.properties;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNPropertyValue;
 
 /**
  * TODO: Add correct support of binary properties - support in api, diff, etc.
- *
- * @author Konstantin Kolosovsky.
  */
 public class PropertyValue {
 
   @NotNull private final String myValue;
-
-  @Contract(value = "null -> null; !null -> !null", pure = true)
-  public static PropertyValue create(@Nullable SVNPropertyValue value) {
-    return create(SVNPropertyValue.getPropertyAsString(value));
-  }
 
   private PropertyValue(@NotNull String propertyValue) {
     myValue = propertyValue;

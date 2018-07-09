@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.function.Predicate;
 
 /**
  * @author vlan
@@ -34,15 +35,21 @@ public class PyCallableParameterImpl implements PyCallableParameter {
   @Nullable private final Ref<PyType> myType;
   @Nullable private final PyExpression myDefaultValue;
   @Nullable private final PyParameter myElement;
+  private final boolean myIsPositional;
+  private final boolean myIsKeyword;
 
   private PyCallableParameterImpl(@Nullable String name,
                                   @Nullable Ref<PyType> type,
                                   @Nullable PyExpression defaultValue,
-                                  @Nullable PyParameter element) {
+                                  @Nullable PyParameter element,
+                                  boolean isPositional,
+                                  boolean isKeyword) {
     myName = name;
     myType = type;
     myDefaultValue = defaultValue;
     myElement = element;
+    myIsPositional = isPositional;
+    myIsKeyword = isKeyword;
   }
 
   @NotNull
@@ -57,17 +64,27 @@ public class PyCallableParameterImpl implements PyCallableParameter {
 
   @NotNull
   public static PyCallableParameter nonPsi(@Nullable String name, @Nullable PyType type, @Nullable PyExpression defaultValue) {
-    return new PyCallableParameterImpl(name, Ref.create(type), defaultValue, null);
+    return new PyCallableParameterImpl(name, Ref.create(type), defaultValue, null, false, false);
+  }
+
+  @NotNull
+  public static PyCallableParameter positionalNonPsi(@Nullable String name, @Nullable PyType type) {
+    return new PyCallableParameterImpl(name, Ref.create(type), null, null, true, false);
+  }
+
+  @NotNull
+  public static PyCallableParameter keywordNonPsi(@Nullable String name, @Nullable PyType type) {
+    return new PyCallableParameterImpl(name, Ref.create(type), null, null, false, true);
   }
 
   @NotNull
   public static PyCallableParameter psi(@NotNull PyParameter parameter) {
-    return new PyCallableParameterImpl(null, null, null, parameter);
+    return new PyCallableParameterImpl(null, null, null, parameter, false, false);
   }
 
   @NotNull
   public static PyCallableParameter psi(@NotNull PyParameter parameter, @Nullable PyType type) {
-    return new PyCallableParameterImpl(null, Ref.create(type), null, parameter);
+    return new PyCallableParameterImpl(null, Ref.create(type), null, parameter, false, false);
   }
 
   @Nullable
@@ -120,12 +137,16 @@ public class PyCallableParameterImpl implements PyCallableParameter {
 
   @Override
   public boolean isPositionalContainer() {
+    if (myIsPositional) return true;
+
     final PyNamedParameter namedParameter = PyUtil.as(myElement, PyNamedParameter.class);
     return namedParameter != null && namedParameter.isPositionalContainer();
   }
 
   @Override
   public boolean isKeywordContainer() {
+    if (myIsKeyword) return true;
+
     final PyNamedParameter namedParameter = PyUtil.as(myElement, PyNamedParameter.class);
     return namedParameter != null && namedParameter.isKeywordContainer();
   }
@@ -139,6 +160,12 @@ public class PyCallableParameterImpl implements PyCallableParameter {
   @NotNull
   @Override
   public String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context) {
+    return getPresentableText(includeDefaultValue, context, Objects::isNull);
+  }
+
+  @NotNull
+  @Override
+  public String getPresentableText(boolean includeDefaultValue, @Nullable TypeEvalContext context, @NotNull Predicate<PyType> typeFilter) {
     if (myElement instanceof PyNamedParameter || myElement == null) {
       final StringBuilder sb = new StringBuilder();
 
@@ -148,10 +175,12 @@ public class PyCallableParameterImpl implements PyCallableParameter {
       final String name = getName();
       sb.append(name != null ? name : "...");
 
-      final PyType argumentType = context == null ? null : getArgumentType(context);
-      if (argumentType != null) {
-        sb.append(": ");
-        sb.append(PythonDocumentationProvider.getTypeDescription(argumentType, context));
+      if (context != null) {
+        final PyType argumentType = getArgumentType(context);
+        if (!typeFilter.test(argumentType)) {
+          sb.append(": ");
+          sb.append(PythonDocumentationProvider.getTypeDescription(argumentType, context));
+        }
       }
 
       final String defaultValue = getDefaultValueText();
@@ -201,13 +230,16 @@ public class PyCallableParameterImpl implements PyCallableParameter {
     if (o == null || getClass() != o.getClass()) return false;
 
     final PyCallableParameterImpl parameter = (PyCallableParameterImpl)o;
-    return Objects.equals(myName, parameter.myName) &&
+    return myIsPositional == parameter.myIsPositional &&
+           myIsKeyword == parameter.myIsKeyword &&
+           Objects.equals(myName, parameter.myName) &&
            Objects.equals(Ref.deref(myType), Ref.deref(parameter.myType)) &&
+           Objects.equals(myDefaultValue, parameter.myDefaultValue) &&
            Objects.equals(myElement, parameter.myElement);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(myName, Ref.deref(myType), myElement);
+    return Objects.hash(myName, Ref.deref(myType), myDefaultValue, myElement, myIsPositional, myIsKeyword);
   }
 }

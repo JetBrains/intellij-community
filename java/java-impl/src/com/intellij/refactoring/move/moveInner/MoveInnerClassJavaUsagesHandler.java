@@ -19,10 +19,11 @@ import com.intellij.psi.*;
 import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MoveInnerClassJavaUsagesHandler implements MoveInnerClassUsagesHandler {
   @Override
-  public void correctInnerClassUsage(@NotNull UsageInfo usage, @NotNull PsiClass outerClass) {
+  public void correctInnerClassUsage(@NotNull UsageInfo usage, @NotNull PsiClass outerClass, @Nullable String parameterNameOuterClass) {
     PsiElement refElement = usage.getElement();
     if (refElement == null) return;
 
@@ -37,7 +38,14 @@ public class MoveInnerClassJavaUsagesHandler implements MoveInnerClassUsagesHand
       PsiExpressionList argList = newExpr.getArgumentList();
 
       if (argList != null) { // can happen in incomplete code
-        if (newExpr.getQualifier() == null) {
+        PsiExpression qualifier = newExpr.getQualifier();
+        if (qualifier != null) {
+          if (parameterNameOuterClass != null) {
+            argList.addAfter(qualifier, null);
+          }
+          qualifier.delete();
+        }
+        else if (parameterNameOuterClass != null) {
           PsiThisExpression thisExpr;
           PsiClass parentClass = RefactoringChangeUtil.getThisClass(newExpr);
           if (outerClass.equals(parentClass)) {
@@ -48,11 +56,12 @@ public class MoveInnerClassJavaUsagesHandler implements MoveInnerClassUsagesHand
           }
           argList.addAfter(thisExpr, null);
         }
-        else {
-          argList.addAfter(newExpr.getQualifier(), null);
-          newExpr.getQualifier().delete();
-        }
       }
     }
+  }
+
+  @Override
+  public void correctInnerClassUsage(@NotNull UsageInfo usage, @NotNull PsiClass outerClass) {
+    correctInnerClassUsage(usage, outerClass, null);
   }
 }

@@ -32,9 +32,13 @@ package com.intellij.diff.util
 
 import com.intellij.diff.DiffRequestFactoryImpl
 import com.intellij.diff.DiffTestCase
+import com.intellij.diff.comparison.ComparisonPolicy
+import com.intellij.diff.tools.util.text.LineOffsetsUtil
 import com.intellij.openapi.diff.DiffBundle
+import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.util.containers.ContainerUtil
 import java.io.File
+import java.util.*
 
 class DiffUtilTest : DiffTestCase() {
   fun `test getSortedIndexes`() {
@@ -125,5 +129,52 @@ class DiffUtilTest : DiffTestCase() {
     doTest("/path/to/dir1/", "/path/to/file2.txt", "dir1/ <-> file2.txt (/path/to)")
     doTest("/path/to/file1.txt", "/path/to/dir2/", "file1.txt <-> dir2/ (/path/to)")
     doTest("/path/to/dir1/", "/path/to_another/file2.txt", "dir1/ <-> file2.txt (/path/to <-> /path/to_another)")
+  }
+
+  fun `test applyModification`() {
+    val runs = 10000
+    val textLength = 30
+
+    doAutoTest(System.currentTimeMillis(), runs) {
+      val text1 = generateText(textLength)
+      val text2 = generateText(textLength)
+
+      val lineOffsets1 = LineOffsetsUtil.create(text1)
+      val lineOffsets2 = LineOffsetsUtil.create(text2)
+
+      val fragments = MANAGER.compareLines(text1, text2, ComparisonPolicy.DEFAULT, INDICATOR)
+
+      val ranges = fragments.map {
+        Range(it.startLine1, it.endLine1, it.startLine2, it.endLine2)
+      }
+
+      val patched = DiffUtil.applyModification(text1, lineOffsets1, text2, lineOffsets2, ranges)
+
+      val base = textToReadableFormat(text1)
+      val expected = textToReadableFormat(text2)
+      val actual = textToReadableFormat(patched)
+      assertEquals(expected, actual, "$base\n$expected\n$actual")
+    }
+  }
+
+  fun `test getLines`() {
+    fun doTest(text: String, expectedLines: List<String>) {
+      val document = DocumentImpl(text)
+      assertEquals(expectedLines, DiffUtil.getLines(document))
+
+      val lineOffsets = LineOffsetsUtil.create(text)
+      assertEquals(expectedLines, DiffUtil.getLines(text, lineOffsets))
+    }
+
+    doTest("", listOf(""))
+    doTest(" ", listOf(" "))
+    doTest("\n", listOf("", ""))
+    doTest("\na\n", listOf("", "a", ""))
+    doTest("\na", listOf("", "a"))
+    doTest("a\n\nb", listOf("a", "", "b"))
+    doTest("ab\ncd", listOf("ab", "cd"))
+    doTest("ab\ncd\n", listOf("ab", "cd", ""))
+    doTest("\nab\ncd", listOf("", "ab", "cd"))
+    doTest("\nab\ncd\n", listOf("", "ab", "cd", ""))
   }
 }

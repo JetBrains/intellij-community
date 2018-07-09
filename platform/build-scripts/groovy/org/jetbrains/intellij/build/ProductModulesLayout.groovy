@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.MultiValuesMap
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 
@@ -28,21 +15,37 @@ import java.util.function.Consumer
 @CompileStatic
 class ProductModulesLayout {
   /**
-   * Name of the main product JAR file. Outputs of {@link #platformImplementationModules} will be packed into it.
+   * Name of the main product JAR file. Outputs of {@link #productImplementationModules} will be packed into it.
    */
   String mainJarName
+
+  List<String> platformApiJarModules = []
+  List<String> platformImplJarModules = []
 
   /**
    * Names of the modules which need to be packed into openapi.jar in the product's 'lib' directory.
    * @see CommunityRepositoryModules#PLATFORM_API_MODULES
+   * @deprecated if you need to pack additional modules into the product, use {@link #productApiModules} instead; {@link CommunityRepositoryModules#PLATFORM_API_MODULES}
+   * will be packed into platform-api.jar in the product's 'lib' directory automatically then.
    */
   List<String> platformApiModules = []
 
   /**
    * Names of the modules which need to be included into {@link #mainJarName} in the product's 'lib' directory
    * @see CommunityRepositoryModules#PLATFORM_IMPLEMENTATION_MODULES
-   */
+   * @deprecated if you need to pack additional modules into the product, use {@link #productImplementationModules} instead; {@link CommunityRepositoryModules#PLATFORM_IMPLEMENTATION_MODULES}
+   * will be packed into platform-api.jar in the product's 'lib' directory automatically then.   */
   List<String> platformImplementationModules = []
+
+  /**
+   * Names of the additional product-specific modules which need to be packed into openapi.jar in the product's 'lib' directory.
+   */
+  List<String> productApiModules = []
+
+  /**
+   * Names of the additional product-specific modules which need to be included into {@link #mainJarName} in the product's 'lib' directory
+   */
+  List<String> productImplementationModules = []
 
   /**
    * Names of the main modules (containing META-INF/plugin.xml) of the plugins which need to be bundled with the product. It may also
@@ -51,11 +54,44 @@ class ProductModulesLayout {
    */
   List<String> bundledPluginModules = []
 
+
+  private LinkedHashMap<String, PluginPublishingSpec> pluginsToPublish = []
+
   /**
    * Names of the main modules (containing META-INF/plugin.xml) of the plugins which aren't bundled with the product but may be installed
    * into it. Zip archives of these plugins will be built and placed under 'plugins' directory in the build artifacts.
+   * 
+   * @see #setPluginPublishingSpec
    */
-  List<String> pluginModulesToPublish = []
+  void setPluginModulesToPublish(List<String> plugins) {
+    pluginsToPublish = new LinkedHashMap<>()
+    for (String each : plugins) {
+      pluginsToPublish[each] = new PluginPublishingSpec()
+    }
+  }
+
+  /**
+   * @see #setPluginModulesToPublish 
+   */
+  List<String> getPluginModulesToPublish() {
+    return pluginsToPublish.keySet().toList()
+  }
+
+  /**
+   * Specification ({@link PluginPublishingSpec}) for the published plugin. 
+   * @see #setPluginModulesToPublish
+   */
+  void setPluginPublishingSpec(String mainModule, PluginPublishingSpec spec) {
+    pluginsToPublish[mainModule] = spec
+  }
+
+  /**
+   * @see #setPluginPublishingSpec
+   * @see #setPluginModulesToPublish 
+   */
+  PluginPublishingSpec getPluginPublishingSpec(String mainModule) {
+    return pluginsToPublish[mainModule]
+  }
 
   /**
    * Describes non-trivial layout of all plugins which may be included into the product. The actual list of the plugins need to be bundled
@@ -96,22 +132,43 @@ class ProductModulesLayout {
   /**
    * Name of the module containing search/searchableOptions.xml file.
    */
-  String searchableOptionsModule = "platform-resources"
+  String searchableOptionsModule = "intellij.platform.resources"
 
   /**
-   * Paths to license files which are required to start IDE in headless mode to generate searchable options index
-   */
-  List<String> licenseFilesToBuildSearchableOptions = []
-
-  /**
-   * If {@code true} a special xml descriptor in custom plugin repository format will be generated for {@link #pluginModulesToPublish} plugins.
+   * If {@code true} a special xml descriptor in custom plugin repository format will be generated for {@link #setPluginModulesToPublish} plugins.
    * This descriptor and the plugin *.zip files need to be uploaded to the URL specified in 'plugins@builtin-url' attribute in *ApplicationInfo.xml file.
+   *
+   * @see #setPluginModulesToPublish
+   * @see #setPluginPublishingSpec
+   * @see org.jetbrains.intellij.build.PluginPublishingSpec#includeInCustomPluginRepository
    */
   boolean prepareCustomPluginRepositoryForPublishedPlugins = false
+  
+
+  /**
+   * @deprecated use {@link #setPluginPublishingSpec} instead 
+   */
+  @Deprecated
+  List<String> getPluginModulesWithRestrictedCompatibleBuildRange() {
+    def error = "`ProductModulesLayout.pluginModulesWithRestrictedCompatibleBuildRange` property has been replaced with `ProductModulesLayout.setPluginPublishingSpec`"
+    System.err.println(error)
+    throw new UnsupportedOperationException(error)
+  }
+
+  /**
+   * @deprecated use {@link #setPluginPublishingSpec} instead 
+   */
+  @Deprecated
+  void setPluginModulesWithRestrictedCompatibleBuildRange(List<String> __) {
+    //noinspection GrDeprecatedAPIUsage
+    getPluginModulesWithRestrictedCompatibleBuildRange() // to rethrow
+  }
 
   /**
    * If {@code true} then all plugins that compatible with an IDE will be built.
-   * Otherwise only plugins from {@link #pluginModulesToPublish} will be considered.
+   * Otherwise only plugins from {@link #setPluginModulesToPublish} will be considered.
+   * 
+   * @see #setPluginPublishingSpec
    */
   boolean buildAllCompatiblePlugins = false
 
@@ -119,14 +176,6 @@ class ProductModulesLayout {
    * List of plugin names which should not be built even if they are compatible and {@link #buildAllCompatiblePlugins} is true
    */
   List<String> compatiblePluginsToIgnore = []
-
-  /**
-   * Names of the main modules of plugins from {@link #pluginModulesToPublish} list where since-build/until-build range should be restricted.
-   * These plugins will be compatible with builds which number differ from the build which produces these plugins only in the last component,
-   * i.e. plugins produced in 163.1111.22 build will be compatible with 163.1111.* builds. The plugins not included into this list
-   * will be compatible with all builds from the same baseline, i.e. with 163.* builds.
-   */
-  List<String> pluginModulesWithRestrictedCompatibleBuildRange = []
 
   /**
    * Specifies path to a text file containing list of classes in order they are loaded by the product. Entries in the produces *.jar files
@@ -143,7 +192,10 @@ class ProductModulesLayout {
     (enabledPluginModules + modulesFromNonTrivialPlugins) as List<String>
   }
 
+  /**
+   * @deprecated this method isn't supposed to be used in product build scripts
+   */
   List<String> getIncludedPlatformModules() {
-    platformApiModules + platformImplementationModules + additionalPlatformJars.values()
+    DistributionJARsBuilder.getIncludedPlatformModules(this)
   }
 }

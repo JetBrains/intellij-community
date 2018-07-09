@@ -47,7 +47,6 @@ import com.intellij.util.TimeoutUtil;
 import com.intellij.util.lang.CompoundRuntimeException;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jdi.Method;
-import com.sun.jdi.ThreadReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaMethodBreakpointProperties;
 
@@ -495,14 +494,6 @@ public abstract class ExecutionWithDebuggerToolsTestCase extends ExecutionTestCa
 
     public DelayedEventsProcessListener(DebugProcessAdapterImpl target) {
       myTarget = target;
-    }
-
-    @Override
-    public void threadStarted(DebugProcess proc, ThreadReference thread) {
-    }
-
-    @Override
-    public void threadStopped(DebugProcess proc, ThreadReference thread) {
     }
 
     @Override

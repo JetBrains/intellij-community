@@ -29,7 +29,7 @@ public class SillyAssignmentInspection extends SillyAssignmentInspectionBase {
 
   @Override
   protected LocalQuickFix createRemoveAssignmentFix(PsiReferenceExpression expression) {
-    final PsiElement parent = expression.getParent();
+    final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (parent instanceof PsiVariable) {
       final PsiVariable variable = (PsiVariable)parent;
       if (variable.hasModifierProperty(PsiModifier.FINAL)) {

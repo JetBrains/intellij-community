@@ -17,12 +17,12 @@ package org.jetbrains.jps.incremental.artifacts.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.artifact.elements.JpsComplexPackagingElement;
 import org.jetbrains.jps.model.artifact.elements.JpsCompositePackagingElement;
 import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 
+import java.util.HashSet;
 import java.util.Set;
 
 /**

@@ -167,6 +167,12 @@ public class TestsPresentationUtil {
           "sm.test.runner.ui.tests.tree.presentation.labels.all.tests.passed"),
                       SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
+    else if (magnitude == TestStateInfo.Magnitude.IGNORED_INDEX && !testProxy.hasErrors()) {
+      renderer.setIcon(PoolOfTestIcons.IGNORED_ICON);
+      renderer.append(SMTestsRunnerBundle.message(
+        "sm.test.runner.ui.tests.tree.presentation.labels.all.but.ignored.passed"),
+                      SimpleTextAttributes.REGULAR_ATTRIBUTES );
+    }
     else {
       if (!testProxy.getChildren().isEmpty()) {
         // some times test proxy may be updated faster than tests tree

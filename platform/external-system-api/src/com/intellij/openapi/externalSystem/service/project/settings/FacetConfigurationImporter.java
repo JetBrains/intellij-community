@@ -30,16 +30,12 @@ import java.util.Map;
  * date: 12.09.2017.
  */
 public interface FacetConfigurationImporter<F extends Facet> {
-  ExtensionPointName<FacetConfigurationImporter> EP_NAME = ExtensionPointName.create("com.intellij.facetConfigurationImporter");
+  ExtensionPointName<FacetConfigurationImporter> EP_NAME = ExtensionPointName.create("com.intellij.externalSystem.facetConfigurationImporter");
 
   @NotNull
-  default Collection<F> process(@NotNull Module module,
+  Collection<F> process(@NotNull Module module,
                                 @NotNull String name,
                                 @NotNull Map<String, Object> cfg,
-                                @NotNull FacetManager facetManager) {
-    return Collections.emptySet();
-  }
-  default boolean canHandle(@NotNull String typeName) {
-    return false;
-  }
+                                @NotNull FacetManager facetManager);
+  boolean canHandle(@NotNull String typeName);
 }

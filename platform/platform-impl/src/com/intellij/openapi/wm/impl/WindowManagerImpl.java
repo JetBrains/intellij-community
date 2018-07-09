@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -54,10 +39,7 @@ import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.peer.ComponentPeer;
 import java.awt.peer.FramePeer;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Anton Katilin
@@ -86,21 +68,21 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
     }
   }
 
-  private Boolean myAlphaModeSupported = null;
+  private Boolean myAlphaModeSupported;
 
   private final EventDispatcher<WindowManagerListener> myEventDispatcher = EventDispatcher.create(WindowManagerListener.class);
 
-  private final CommandProcessor myCommandProcessor;
-  private final WindowWatcher myWindowWatcher;
+  private final CommandProcessor myCommandProcessor = new CommandProcessor();
+  private final WindowWatcher myWindowWatcher = new WindowWatcher();
   /**
    * That is the default layout.
    */
-  private final DesktopLayout myLayout;
+  private final DesktopLayout myLayout = new DesktopLayout();
 
   // null keys must be supported
-  private final HashMap<Project, IdeFrameImpl> myProjectToFrame;
+  private final Map<Project, IdeFrameImpl> myProjectToFrame = new HashMap<>();
 
-  private final HashMap<Project, Set<JDialog>> myDialogsToDispose;
+  private final Map<Project, Set<JDialog>> myDialogsToDispose = new HashMap<>();
 
   @NotNull
   final FrameInfo myDefaultFrameInfo = new FrameInfo();
@@ -121,21 +103,11 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
 
     final Application application = ApplicationManager.getApplication();
     if (!application.isUnitTestMode()) {
-      Disposer.register(application, new Disposable() {
-        @Override
-        public void dispose() {
-          disposeRootFrame();
-        }
-      });
+      Disposer.register(application, this::disposeRootFrame);
     }
 
-    myCommandProcessor = new CommandProcessor();
-    myWindowWatcher = new WindowWatcher();
     final KeyboardFocusManager keyboardFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     keyboardFocusManager.addPropertyChangeListener(FOCUSED_WINDOW_PROPERTY_NAME, myWindowWatcher);
-    myLayout = new DesktopLayout();
-    myProjectToFrame = new HashMap<>();
-    myDialogsToDispose = new HashMap<>();
 
     myActivationListener = new WindowAdapter() {
       @Override
@@ -148,13 +120,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
     };
 
     if (UIUtil.hasLeakingAppleListeners()) {
-      UIUtil.addAwtListener(new AWTEventListener() {
-        @Override
-        public void eventDispatched(AWTEvent event) {
-          if (event.getID() == ContainerEvent.COMPONENT_ADDED) {
-            if (((ContainerEvent)event).getChild() instanceof JViewport) {
-              UIUtil.removeLeakingAppleListeners();
-            }
+      UIUtil.addAwtListener(event -> {
+        if (event.getID() == ContainerEvent.COMPONENT_ADDED) {
+          if (((ContainerEvent)event).getChild() instanceof JViewport) {
+            UIUtil.removeLeakingAppleListeners();
           }
         }
       }, AWTEvent.CONTAINER_EVENT_MASK, application);
@@ -165,7 +134,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   @NotNull
   public IdeFrameImpl[] getAllProjectFrames() {
     final Collection<IdeFrameImpl> ideFrames = myProjectToFrame.values();
-    return ideFrames.toArray(new IdeFrameImpl[ideFrames.size()]);
+    return ideFrames.toArray(new IdeFrameImpl[0]);
   }
 
   @Override
@@ -207,11 +176,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   @Override
   public final boolean isInsideScreenBounds(final int x, final int y, final int width) {
     return ScreenUtil.getAllScreensShape().contains(x, y, width, 1);
-  }
-
-  @Override
-  public final boolean isInsideScreenBounds(final int x, final int y) {
-    return ScreenUtil.getAllScreensShape().contains(x, y);
   }
 
   @Override
@@ -385,11 +349,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   }
 
   @Override
-  public StatusBar getStatusBar(@NotNull Component c) {
-    return getStatusBar(c, null);
-  }
-
-  @Override
   public StatusBar getStatusBar(@NotNull Component c, @Nullable Project project) {
     Component parent = UIUtil.findUltimateParent(c);
     if (parent instanceof IdeFrame) {
@@ -516,7 +475,14 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
       myDefaultFrameInfo.setBounds(FrameBoundsConverter.convertFromDeviceSpace(rawBounds));
     }
 
-    updateFrameBounds(frame);
+    if (!(FrameState.isMaximized(frame.getExtendedState()) || FrameState.isFullScreen(frame)) ||
+        !FrameState.isMaximized(myDefaultFrameInfo.getExtendedState())) // going to quit maximized
+    {
+      Rectangle bounds = myDefaultFrameInfo.getBounds();
+      if (bounds != null) {
+        frame.setBounds(bounds);
+      }
+    }
     frame.setExtendedState(myDefaultFrameInfo.getExtendedState());
 
     frame.setProject(project);
@@ -554,11 +520,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   }
 
   private void queueForDisposal(JDialog dialog, Project project) {
-    Set<JDialog> dialogs = myDialogsToDispose.get(project);
-    if (dialogs == null) {
-      dialogs = new HashSet<>();
-      myDialogsToDispose.put(project, dialogs);
-    }
+    Set<JDialog> dialogs = myDialogsToDispose.computeIfAbsent(project, k -> new HashSet<>());
     dialogs.add(dialog);
   }
 
@@ -622,7 +584,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
   }
 
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     final Element frameElement = state.getChild(FRAME_ELEMENT);
     if (frameElement != null) {
       int frameExtendedState = StringUtil.parseInt(frameElement.getAttributeValue(EXTENDED_STATE_ATTR), Frame.NORMAL);
@@ -737,7 +699,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
     return SystemInfo.isMacOSLion || SystemInfo.isWindows || SystemInfo.isXWindow && X11UiUtil.isFullScreenSupported();
   }
 
-  public static boolean isFloatingMenuBarSupported() {
+  static boolean isFloatingMenuBarSupported() {
     return !SystemInfo.isMac && getInstance().isFullScreenSupportedInCurrentOS();
   }
 
@@ -750,7 +712,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
      * @param bounds the bounds in the device space
      * @return the bounds in the user space
      */
-    public static Rectangle convertFromDeviceSpace(@NotNull Rectangle bounds) {
+    @NotNull
+    static Rectangle convertFromDeviceSpace(@NotNull Rectangle bounds) {
       Rectangle b = bounds.getBounds();
       if (!shouldConvert()) return b;
 
@@ -794,8 +757,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements NamedCom
       {
         return false;
       }
-      if (!UIUtil.isJreHiDPIEnabled()) return false; // device space equals user space
-      return true;
+      // device space equals user space
+      return UIUtil.isJreHiDPIEnabled();
     }
 
     private static void scaleUp(@NotNull Rectangle bounds, @NotNull GraphicsConfiguration gc) {

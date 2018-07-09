@@ -38,7 +38,7 @@ import java.io.File;
 public class MacFileSaverDialog implements FileSaverDialog {
 
   private FileDialog myFileDialog;
-  private FileSaverDescriptor myDescriptor;
+  private final FileSaverDescriptor myDescriptor;
 
   private static String getChooserTitle(final FileChooserDescriptor descriptor) {
     final String title = descriptor.getTitle();

@@ -1,20 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
+import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
+import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
@@ -31,7 +19,10 @@ import java.util.Set;
 @SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"})
 @State(
   name = "FeatureUsageStatistics",
-  storages = @Storage(value = "feature.usage.statistics.xml", roamingType = RoamingType.DISABLED)
+  storages = {
+    @Storage(value = UsageStatisticsPersistenceComponent.USAGE_STATISTICS_XML, roamingType = RoamingType.DISABLED),
+    @Storage(value = "feature.usage.statistics.xml", roamingType = RoamingType.DISABLED, deprecated = true)
+  }
 )
 public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements PersistentStateComponent<Element> {
   private static final int HOUR = 1000 * 60 * 60;
@@ -116,7 +107,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
   }
 
   @Override
-  public void loadState(final Element element) {
+  public void loadState(@NotNull final Element element) {
     List featuresList = element.getChildren(FEATURE_TAG);
     for (Object aFeaturesList : featuresList) {
       Element featureElement = (Element)aFeaturesList;
@@ -186,6 +177,7 @@ public class FeatureUsageTrackerImpl extends FeatureUsageTracker implements Pers
      // TODO: LOG.error("Feature '" + featureId +"' must be registered prior triggerFeatureUsed() is called");
     }
     else {
+      FeatureUsageLogger.INSTANCE.log(descriptor.getGroupId(), descriptor.getId());
       descriptor.triggerUsed();
     }
   }

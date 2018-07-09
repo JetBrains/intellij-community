@@ -16,8 +16,10 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.vcs.log.VcsLogFilter;
+import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogRootFilter;
 import com.intellij.vcs.log.VcsLogStructureFilter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class VcsLogFileFilter implements VcsLogFilter {
@@ -37,5 +39,11 @@ public class VcsLogFileFilter implements VcsLogFilter {
   @Nullable
   public VcsLogRootFilter getRootFilter() {
     return myRootFilter;
+  }
+
+  @NotNull
+  @Override
+  public VcsLogFilterCollection.FilterKey<?> getKey() {
+    return VcsLogFilterCollection.FilterKey.create("file");
   }
 }

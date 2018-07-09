@@ -1,28 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.actions;
 
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -33,7 +16,6 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.textCompletion.DefaultTextCompletionValueDescriptor;
-import com.intellij.util.textCompletion.ValuesCompletionProvider;
 import com.intellij.util.ui.ColorIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -49,11 +31,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.concurrent.CancellationException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class GoToHashOrRefPopup {
   private static final Logger LOG = Logger.getInstance(GoToHashOrRefPopup.class);
@@ -74,8 +55,10 @@ public class GoToHashOrRefPopup {
                             @NotNull Comparator<VcsRef> comparator) {
     myOnSelectedHash = onSelectedHash;
     myOnSelectedRef = onSelectedRef;
+    VcsRefDescriptor vcsRefDescriptor = new VcsRefDescriptor(project, colorManager, comparator, roots);
+    VcsRefCompletionProvider completionProvider = new VcsRefCompletionProvider(variants, roots, vcsRefDescriptor);
     myTextField =
-      new TextFieldWithProgress(project, new VcsRefCompletionProvider(project, variants, roots, colorManager, comparator)) {
+      new TextFieldWithProgress(project, completionProvider) {
         @Override
         public void onOk() {
           if (myFuture == null) {
@@ -101,6 +84,7 @@ public class GoToHashOrRefPopup {
         }
       };
     myTextField.setAlignmentX(Component.LEFT_ALIGNMENT);
+    myTextField.setBorder(JBUI.Borders.empty(3));
 
     JBLabel label = new JBLabel("Enter hash or branch/tag name:");
     label.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
@@ -115,7 +99,7 @@ public class GoToHashOrRefPopup {
 
     myPopup = JBPopupFactory.getInstance().createComponentPopupBuilder(panel, myTextField.getPreferableFocusComponent())
       .setCancelOnClickOutside(true).setCancelOnWindowDeactivation(true).setCancelKeyEnabled(true).setRequestFocus(true).createPopup();
-    myPopup.addListener(new JBPopupListener.Adapter() {
+    myPopup.addListener(new JBPopupListener() {
       @Override
       public void onClosed(LightweightWindowEvent event) {
         if (!event.isOk()) {
@@ -139,65 +123,6 @@ public class GoToHashOrRefPopup {
 
   public void show(@NotNull JComponent anchor) {
     myPopup.showInCenterOf(anchor);
-  }
-
-  private class VcsRefCompletionProvider extends ValuesCompletionProvider<VcsRef> {
-    private static final int TIMEOUT = 100;
-    @NotNull private final VcsLogRefs myRefs;
-    @NotNull private final Collection<VirtualFile> myRoots;
-
-    public VcsRefCompletionProvider(@NotNull Project project,
-                                    @NotNull VcsLogRefs refs,
-                                    @NotNull Collection<VirtualFile> roots,
-                                    @NotNull VcsLogColorManager colorManager,
-                                    @NotNull Comparator<VcsRef> comparator) {
-      super(new VcsRefDescriptor(project, colorManager, comparator, roots), ContainerUtil.emptyList());
-      myRefs = refs;
-      myRoots = roots;
-    }
-
-    @Override
-    public void fillCompletionVariants(@NotNull CompletionParameters parameters,
-                                       @NotNull String prefix,
-                                       @NotNull CompletionResultSet result) {
-      addValues(result, filterAndSort(result, myRefs.getBranches().stream()));
-
-      Future<List<VcsRef>> future = ApplicationManager.getApplication()
-        .executeOnPooledThread(() -> filterAndSort(result, myRefs.stream().filter(ref -> !ref.getType().isBranch())));
-      while (true) {
-        try {
-          List<VcsRef> tags = future.get(TIMEOUT, TimeUnit.MILLISECONDS);
-          if (tags != null) {
-            addValues(result, tags);
-            break;
-          }
-        }
-        catch (InterruptedException | CancellationException e) {
-          break;
-        }
-        catch (TimeoutException ignored) {
-        }
-        catch (ExecutionException e) {
-          LOG.error(e);
-          break;
-        }
-        ProgressManager.checkCanceled();
-      }
-      result.stopHere();
-    }
-
-    public void addValues(@NotNull CompletionResultSet result, @NotNull Collection<? extends VcsRef> values) {
-      for (VcsRef completionVariant : values) {
-        result.addElement(installInsertHandler(myDescriptor.createLookupBuilder(completionVariant)));
-      }
-    }
-
-    @NotNull
-    private List<VcsRef> filterAndSort(@NotNull CompletionResultSet result, @NotNull Stream<VcsRef> stream) {
-      return ContainerUtil
-        .sorted(stream.filter(ref -> myRoots.contains(ref.getRoot()) && result.getPrefixMatcher().prefixMatches(ref.getName()))
-                  .collect(Collectors.toList()), myDescriptor);
-    }
   }
 
   private class VcsRefDescriptor extends DefaultTextCompletionValueDescriptor<VcsRef> {

@@ -50,7 +50,9 @@ public class InlineVariableFix extends InspectionGadgetsFix {
       final PsiExpression expression = InlineUtil.inlineVariable(variable, initializer, (PsiJavaCodeReferenceElement)reference);
       replacedElements.add(expression);
     }
-    HighlightUtils.highlightElements(replacedElements);
+    if (isOnTheFly()) {
+      HighlightUtils.highlightElements(replacedElements);
+    }
     variable.delete();
   }
 }

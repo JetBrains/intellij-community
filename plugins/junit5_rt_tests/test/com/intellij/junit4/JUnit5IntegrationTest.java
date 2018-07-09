@@ -20,11 +20,13 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.idea.Bombed;
 import com.intellij.idea.IdeaTestApplication;
+import com.intellij.java.execution.AbstractTestFrameworkCompilingIntegrationTest;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.rt.execution.junit.RepeatCount;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataProvider;
@@ -33,17 +35,26 @@ import jetbrains.buildServer.messages.serviceMessages.TestFailed;
 import jetbrains.buildServer.messages.serviceMessages.TestIgnored;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
 import java.util.Calendar;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class JUnit5IntegrationTest extends JUnitAbstractCompilingIntegrationTest {
+public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegrationTest {
 
   @Override
   protected String getTestContentRoot() {
     return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit5_rt_tests/testData/integration/mixed45Project");
+  }
+
+  @Override
+  protected void setupModule() throws Exception {
+    super.setupModule();
+    final ArtifactRepositoryManager repoManager = getRepoManager();
+    addLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.2.0"), repoManager);
+    addLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("junit", "junit", "4.12"), repoManager);
   }
 
   public void testRunPackage() throws Exception {
@@ -122,6 +133,22 @@ public class JUnit5IntegrationTest extends JUnitAbstractCompilingIntegrationTest
     assertEmpty(processOutput.out);
     assertEmpty(processOutput.err);
     assertSize(1, processOutput.messages.stream().filter(TestFailed.class::isInstance).collect(Collectors.toList()));
+    assertTrue(systemOutput.contains("-junit5"));
+  }
+
+  public void testRunClassRepeatedTwice() throws Exception {
+    PsiClass aClass = JavaPsiFacade.getInstance(myProject).findClass("mixed.v5.MyTest5", GlobalSearchScope.projectScope(myProject));
+    RunConfiguration configuration = createConfiguration(aClass);
+    ((JUnitConfiguration)configuration).setRepeatMode(RepeatCount.N);
+    ((JUnitConfiguration)configuration).setRepeatCount(2);
+    
+
+    ProcessOutput processOutput = doStartTestsProcess(configuration);
+    String systemOutput = processOutput.sys.toString(); //command line
+
+    assertEmpty(processOutput.out);
+    assertEmpty(processOutput.err);
+    assertSize(2, processOutput.messages.stream().filter(TestFailed.class::isInstance).collect(Collectors.toList()));
     assertTrue(systemOutput.contains("-junit5"));
   }
 
@@ -204,13 +231,5 @@ public class JUnit5IntegrationTest extends JUnitAbstractCompilingIntegrationTest
     RunConfiguration configuration = createConfiguration(aPackage);
     assertInstanceOf(configuration, JUnitConfiguration.class);
     return configuration;
-  }
-
-  @Override
-  protected JpsMavenRepositoryLibraryDescriptor[] getRequiredLibs() {
-    return new JpsMavenRepositoryLibraryDescriptor[] {
-      new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.0.0"),
-      new JpsMavenRepositoryLibraryDescriptor("junit", "junit", "4.12")
-    };
   }
 }

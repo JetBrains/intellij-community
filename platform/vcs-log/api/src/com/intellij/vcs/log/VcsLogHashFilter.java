@@ -19,8 +19,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
-public interface VcsLogHashFilter {
+import static com.intellij.vcs.log.VcsLogFilterCollection.HASH_FILTER;
+
+public interface VcsLogHashFilter extends VcsLogFilter {
 
   @NotNull
   Collection<String> getHashes();
+
+  @NotNull
+  @Override
+  default VcsLogFilterCollection.FilterKey<VcsLogHashFilter> getKey() {
+    return HASH_FILTER;
+  }
 }

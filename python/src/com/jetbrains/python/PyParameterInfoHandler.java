@@ -21,6 +21,7 @@ import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyCallableParameterImpl;
+import com.jetbrains.python.psi.types.PyStructuralType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,12 +43,6 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   @Override
   @NotNull
   public Object[] getParametersForLookup(LookupElement item, ParameterInfoContext context) {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
-
-  @Override
-  @NotNull
-  public Object[] getParametersForDocumentation(Pair<PyCallExpression, PyMarkedCallee> callAndCallee, ParameterInfoContext context) {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
@@ -145,17 +140,6 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     context.setCurrentParameter(offset);
   }
 
-  @NotNull
-  @Override
-  public String getParameterCloseChars() {
-    return ",()"; // lpar may mean a nested tuple param, so it's included
-  }
-
-  @Override
-  public boolean tracksParameterIndex() {
-    return false;
-  }
-
   @Override
   public void updateUI(@NotNull Pair<PyCallExpression, PyMarkedCallee> callAndCallee, @NotNull ParameterInfoUIContext context) {
     final PyCallExpression callExpression = callAndCallee.getFirst();
@@ -243,7 +227,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
         highlightIndex = marked.getImplicitOffset(); // no args, highlight first (PY-3690)
       }
       else if (lastParamIndex < parameterList.size() - 1) { // lastParamIndex not at end, or no args
-        if (indexToNamedParameter.get(lastParamIndex).isPositionalContainer()) {
+        if (!indexToNamedParameter.containsKey(lastParamIndex) || indexToNamedParameter.get(lastParamIndex).isPositionalContainer()) {
           highlightIndex = lastParamIndex; // stick to *arg
         }
         else {
@@ -393,7 +377,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
         public void visitNonPsiParameter(@NotNull PyCallableParameter parameter, boolean first, boolean last) {
           indexToNamedParameter.put(currentParameterIndex[0], parameter);
           final StringBuilder stringBuilder = new StringBuilder();
-          stringBuilder.append(parameter.getPresentableText(true, context));
+          stringBuilder.append(parameter.getPresentableText(true, context, type -> type == null || type instanceof PyStructuralType));
           if (!last) stringBuilder.append(", ");
           final int hintIndex = hintsList.size();
           parameterToHintIndex.put(parameter, hintIndex);

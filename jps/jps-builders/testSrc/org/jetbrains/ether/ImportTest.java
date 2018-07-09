@@ -18,8 +18,6 @@ package org.jetbrains.ether;
 /**
  * Created with IntelliJ IDEA.
  * @author: db
- * Date: 13.02.12
- * Time: 11:57
  * To change this template use File | Settings | File Templates.
  */
 public class ImportTest { //extends IncrementalTestCase {

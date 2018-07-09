@@ -18,6 +18,7 @@ package com.intellij.testIntegration.createTest;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.daemon.impl.analysis.ImportsHighlightUtil;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
@@ -31,10 +32,12 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
@@ -70,7 +73,8 @@ public class JavaTestGenerator implements TestGenerator {
               addSuperClass(targetClass, project, superClassName);
             }
 
-            Editor editor = CodeInsightUtil.positionCursorAtLBrace(project, targetClass.getContainingFile(), targetClass);
+            PsiFile file = targetClass.getContainingFile();
+            Editor editor = CodeInsightUtil.positionCursorAtLBrace(project, file, targetClass);
             addTestMethods(editor,
                            targetClass,
                            d.getTargetClass(),
@@ -78,6 +82,24 @@ public class JavaTestGenerator implements TestGenerator {
                            d.getSelectedMethods(),
                            d.shouldGeneratedBefore(),
                            d.shouldGeneratedAfter());
+
+            if (file instanceof PsiJavaFile) {
+              PsiImportList list = ((PsiJavaFile)file).getImportList();
+              if (list != null) {
+                PsiImportStatementBase[] importStatements = list.getAllImportStatements();
+                if (importStatements.length > 0) {
+                  VirtualFile virtualFile = PsiUtilCore.getVirtualFile(list);
+                  if (virtualFile != null) {
+                    Set<String> imports = new HashSet<>();
+                    for (PsiImportStatementBase base : importStatements) {
+                      imports.add(base.getText());
+                    }
+                    virtualFile.putCopyableUserData(ImportsHighlightUtil.IMPORTS_FROM_TEMPLATE, imports);
+                  }
+                }
+              }
+            }
+
             return targetClass;
           }
           catch (IncorrectOperationException e) {

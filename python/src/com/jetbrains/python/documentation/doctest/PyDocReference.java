@@ -76,7 +76,7 @@ public class PyDocReference extends PyReferenceImpl {
                                                                                 pair.getFirst());
             if (resultList.size() > 0) {
               List<RatedResolveResult> ret = RatedResolveResult.sorted(resultList);
-              return ret.toArray(new RatedResolveResult[ret.size()]);
+              return ret.toArray(RatedResolveResult.EMPTY_ARRAY);
             }
           }
         }
@@ -89,7 +89,7 @@ public class PyDocReference extends PyReferenceImpl {
           final List<RatedResolveResult> resultList = getResultsFromProcessor(referencedName, processor, referenceAnchor, topLevel);
           if (resultList.size() > 0) {
             final List<RatedResolveResult> ret = RatedResolveResult.sorted(resultList);
-            return ret.toArray(new RatedResolveResult[ret.size()]);
+            return ret.toArray(RatedResolveResult.EMPTY_ARRAY);
           }
         }
       }
@@ -151,9 +151,8 @@ public class PyDocReference extends PyReferenceImpl {
   @NotNull
   public Object[] getVariants() {
     final ArrayList<Object> ret = Lists.newArrayList(super.getVariants());
-    final PsiElement originalElement = CompletionUtil.getOriginalElement(myElement);
-    final PyQualifiedExpression element = originalElement instanceof PyQualifiedExpression ?
-                                          (PyQualifiedExpression)originalElement : myElement;
+    final PyQualifiedExpression originalElement = CompletionUtil.getOriginalElement(myElement);
+    final PyQualifiedExpression element = originalElement != null ? originalElement : myElement;
 
     final ScopeOwner scopeOwner = getHostScopeOwner();
     if (scopeOwner != null) {

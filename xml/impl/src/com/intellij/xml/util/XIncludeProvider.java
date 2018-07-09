@@ -74,6 +74,6 @@ public class XIncludeProvider extends FileIncludeProvider {
         isXInclude = false;
       }
     });
-    return infos.toArray(new FileIncludeInfo[infos.size()]);
+    return infos.toArray(FileIncludeInfo.EMPTY);
   }
 }

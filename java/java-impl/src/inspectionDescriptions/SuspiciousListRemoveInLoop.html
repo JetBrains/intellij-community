@@ -1,0 +1,11 @@
+<html>
+<body>
+Reports when <strong>list.remove(index)</strong> is called inside the ascending counted loop. This is suspicious as list becomes
+shorter after that and the element next to removed will not be processed. Simple fix is to decrease the index variable after removal,
+but probably removing via iterator or using <strong>removeIf</strong> method (since Java 8) is a more robust alternative.
+If you don't expect that <strong>remove</strong> will be called more than once in a loop, consider adding a <strong>break</strong> command
+after it.
+<!-- tooltip end -->
+<p><small>New in 2018.2</small></p>
+</body>
+</html>

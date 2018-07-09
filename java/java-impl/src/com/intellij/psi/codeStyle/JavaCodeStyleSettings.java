@@ -15,12 +15,16 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.psi.PsiFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,11 +41,15 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public String STATIC_FIELD_NAME_PREFIX = "";
   public String PARAMETER_NAME_PREFIX = "";
   public String LOCAL_VARIABLE_NAME_PREFIX = "";
+  public String TEST_NAME_PREFIX = "";
+  public String SUBCLASS_NAME_PREFIX = "";
 
   public String FIELD_NAME_SUFFIX = "";
   public String STATIC_FIELD_NAME_SUFFIX = "";
   public String PARAMETER_NAME_SUFFIX = "";
   public String LOCAL_VARIABLE_NAME_SUFFIX = "";
+  public String TEST_NAME_SUFFIX = "Test";
+  public String SUBCLASS_NAME_SUFFIX = "Impl";
 
   public boolean PREFER_LONGER_NAMES = true;
 
@@ -96,7 +104,9 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public static final int SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT = 3;
 
   public int CLASS_NAMES_IN_JAVADOC = FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED;
-  
+  public boolean SPACE_BEFORE_COLON_IN_FOREACH = true;
+  public boolean SPACE_INSIDE_ONE_LINE_ENUM_BRACES = false;
+
   public boolean useFqNamesInJavadocAlways() {
     return CLASS_NAMES_IN_JAVADOC == FULLY_QUALIFY_NAMES_ALWAYS;
   }
@@ -311,6 +321,10 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     JD_PARAM_DESCRIPTION_ON_NEW_LINE = rootSettings.JD_PARAM_DESCRIPTION_ON_NEW_LINE;
 
     JD_INDENT_ON_CONTINUATION = rootSettings.JD_INDENT_ON_CONTINUATION;
+
+    if (rootSettings.WRAP_COMMENTS) {
+      rootSettings.getCommonSettings(JavaLanguage.INSTANCE).WRAP_COMMENTS = rootSettings.WRAP_COMMENTS;
+    }
   }
 
   @Override
@@ -364,7 +378,15 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
     }
   }
 
+  public static JavaCodeStyleSettings getInstance(@NotNull PsiFile file) {
+    return CodeStyle.getCustomSettings(file, JavaCodeStyleSettings.class);
+  }
+
+  /**
+   * For production code use {@link #getInstance(PsiFile)}
+   */
+  @TestOnly
   public static JavaCodeStyleSettings getInstance(@NotNull Project project) {
-    return CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class);
+    return CodeStyle.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class);
   }
 }

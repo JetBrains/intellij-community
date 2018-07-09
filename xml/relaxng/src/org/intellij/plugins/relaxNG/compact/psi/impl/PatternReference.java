@@ -53,6 +53,7 @@ class PatternReference extends PsiReferenceBase.Poly<RncRef> implements Function
     super(ref);
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     final ASTNode node = findNameNode();

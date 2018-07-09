@@ -52,11 +52,11 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
   /**
    * @deprecated to be removed in IDEA 2017
    */
-  public static final Key<RunConfiguration> RUN_CONFIGURATION = CompilerManager.RUN_CONFIGURATION_KEY;
+  @Deprecated public static final Key<RunConfiguration> RUN_CONFIGURATION = CompilerManager.RUN_CONFIGURATION_KEY;
   /**
    * @deprecated to be removed in IDEA 2017
    */
-  public static final Key<String> RUN_CONFIGURATION_TYPE_ID = CompilerManager.RUN_CONFIGURATION_TYPE_ID_KEY;
+  @Deprecated public static final Key<String> RUN_CONFIGURATION_TYPE_ID = CompilerManager.RUN_CONFIGURATION_TYPE_ID_KEY;
 
   @NonNls protected static final String MAKE_PROJECT_ON_RUN_KEY = "makeProjectOnRun";
 

@@ -38,8 +38,8 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
+import java.util.HashMap;
+import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -230,7 +230,7 @@ public class GenericInlineHandler {
 
   //order of usages across different files is irrelevant
   public static PsiReference[] sortDepthFirstRightLeftOrder(final Collection<? extends PsiReference> allReferences) {
-    final PsiReference[] usages = allReferences.toArray(new PsiReference[allReferences.size()]);
+    final PsiReference[] usages = allReferences.toArray(PsiReference.EMPTY_ARRAY);
     Arrays.sort(usages, (usage1, usage2) -> {
       final PsiElement element1 = usage1.getElement();
       final PsiElement element2 = usage2.getElement();

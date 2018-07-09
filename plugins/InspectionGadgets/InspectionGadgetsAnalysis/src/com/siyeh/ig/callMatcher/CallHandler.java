@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.callMatcher;
 
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiMethodReferenceExpression;
 
@@ -49,6 +50,10 @@ public class CallHandler<T> implements Function<PsiMethodCallExpression, T> {
 
   public T applyMethodReference(PsiMethodReferenceExpression ref) {
     return matcher().methodReferenceMatches(ref) ? myTransformer.apply(null) : null;
+  }
+
+  public T applyMethod(PsiMethod method) {
+    return matcher().methodMatches(method) ? myTransformer.apply(null) : null;
   }
 
   /**

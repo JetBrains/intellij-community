@@ -15,16 +15,21 @@
  */
 package org.jetbrains.idea.maven.dom
 
-import org.jetbrains.idea.maven.MavenImportingTestCase
-import org.jetbrains.idea.maven.dom.MavenDomTestCase
+import org.jetbrains.idea.maven.MavenCustomRepositoryHelper
 
 /**
  * @author Sergey Evdokimov
  */
 class MavenSurefirePluginTest extends MavenDomTestCase {
 
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    setRepositoryPath(new MavenCustomRepositoryHelper(myDir, "plugins").getTestDataPath("plugins"));
+  }
+
   void testCompletion() {
-    importProject("""
+    configureProjectPom("""
   <groupId>simpleMaven</groupId>
   <artifactId>simpleMaven</artifactId>
   <packaging>jar</packaging>
@@ -43,6 +48,7 @@ class MavenSurefirePluginTest extends MavenDomTestCase {
     </plugins>
   </build>
 """)
+    importProject()
 
     createProjectSubFile("src/main/A.txt", "")
     createProjectSubFile("src/test/A.txt", "")
@@ -52,7 +58,7 @@ class MavenSurefirePluginTest extends MavenDomTestCase {
   }
 
   void testCompletionSurefireProperties() {
-    importProject("""
+    configureProjectPom("""
   <groupId>simpleMaven</groupId>
   <artifactId>simpleMaven</artifactId>
   <version>1.0</version>
@@ -71,12 +77,13 @@ class MavenSurefirePluginTest extends MavenDomTestCase {
     </plugins>
   </build>
 """)
+    importProject()
 
     assertCompletionVariants(myProjectPom, "surefire.forkNumber", "surefire.threadNumber")
   }
 
   void testCompletionSurefirePropertiesOutsideConfiguration() {
-    importProject("""
+    configureProjectPom("""
   <groupId>simpleMaven</groupId>
   <artifactId>simpleMaven</artifactId>
   <version>1.0</version>
@@ -96,6 +103,7 @@ class MavenSurefirePluginTest extends MavenDomTestCase {
     </plugins>
   </build>
 """)
+    importProject()
 
     assertCompletionVariants(myProjectPom)
   }

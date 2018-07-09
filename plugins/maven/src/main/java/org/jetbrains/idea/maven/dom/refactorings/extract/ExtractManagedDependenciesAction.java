@@ -122,50 +122,47 @@ public class ExtractManagedDependenciesAction extends BaseRefactoringAction {
       assert model != null;
       assert usages != null;
 
-      new WriteCommandAction(project, getFiles(file, model, usages)) {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          MavenDomDependency addedDependency = model.getDependencyManagement().getDependencies().addDependency();
-          addedDependency.getGroupId().setStringValue(dependency.getGroupId().getStringValue());
-          addedDependency.getArtifactId().setStringValue(dependency.getArtifactId().getStringValue());
-          addedDependency.getVersion().setStringValue(dependency.getVersion().getStringValue());
-          String typeValue = dependency.getType().getStringValue();
+      WriteCommandAction.writeCommandAction(project, getFiles(file, model, usages)).run(() -> {
+        MavenDomDependency addedDependency = model.getDependencyManagement().getDependencies().addDependency();
+        addedDependency.getGroupId().setStringValue(dependency.getGroupId().getStringValue());
+        addedDependency.getArtifactId().setStringValue(dependency.getArtifactId().getStringValue());
+        addedDependency.getVersion().setStringValue(dependency.getVersion().getStringValue());
+        String typeValue = dependency.getType().getStringValue();
 
-          dependency.getVersion().undefine();
+        dependency.getVersion().undefine();
 
-          if (typeValue != null) {
-            addedDependency.getType().setStringValue(typeValue);
-          }
-
-          String classifier = dependency.getClassifier().getStringValue();
-          if (classifier != null) {
-            addedDependency.getClassifier().setStringValue(classifier);
-          }
-
-          String systemPath = dependency.getSystemPath().getStringValue();
-          if (systemPath != null) {
-            addedDependency.getSystemPath().setStringValue(systemPath);
-            dependency.getSystemPath().undefine();
-          }
-
-
-          if (extractExclusions) {
-            MavenDomExclusions addedExclusions = addedDependency.getExclusions();
-            for (MavenDomExclusion exclusion : dependency.getExclusions().getExclusions()) {
-              MavenDomExclusion domExclusion = addedExclusions.addExclusion();
-
-              domExclusion.getGroupId().setStringValue(exclusion.getGroupId().getStringValue());
-              domExclusion.getArtifactId().setStringValue(exclusion.getArtifactId().getStringValue());
-            }
-
-            dependency.getExclusions().undefine();
-          }
-
-          for (MavenDomDependency usage : usages) {
-            usage.getVersion().undefine();
-          }
+        if (typeValue != null) {
+          addedDependency.getType().setStringValue(typeValue);
         }
-      }.execute();
+
+        String classifier = dependency.getClassifier().getStringValue();
+        if (classifier != null) {
+          addedDependency.getClassifier().setStringValue(classifier);
+        }
+
+        String systemPath = dependency.getSystemPath().getStringValue();
+        if (systemPath != null) {
+          addedDependency.getSystemPath().setStringValue(systemPath);
+          dependency.getSystemPath().undefine();
+        }
+
+
+        if (extractExclusions) {
+          MavenDomExclusions addedExclusions = addedDependency.getExclusions();
+          for (MavenDomExclusion exclusion : dependency.getExclusions().getExclusions()) {
+            MavenDomExclusion domExclusion = addedExclusions.addExclusion();
+
+            domExclusion.getGroupId().setStringValue(exclusion.getGroupId().getStringValue());
+            domExclusion.getArtifactId().setStringValue(exclusion.getArtifactId().getStringValue());
+          }
+
+          dependency.getExclusions().undefine();
+        }
+
+        for (MavenDomDependency usage : usages) {
+          usage.getVersion().undefine();
+        }
+      });
     }
 
     private static PsiFile[] getFiles(@NotNull PsiFile file, @NotNull MavenDomProjectModel model, @NotNull Set<MavenDomDependency> usages) {

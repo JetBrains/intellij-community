@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
@@ -46,6 +47,7 @@ import java.util.stream.Collectors;
 public class CollectionTree extends XDebuggerTree implements TraceContainer {
   private static final TreePath[] EMPTY_PATHS = new TreePath[0];
   private static final Map<Integer, Color> COLORS_CACHE = new HashMap<>();
+  private static final Object NULL_MARKER = ObjectUtils.sentinel("CollectionTree.NULL_MARKER");
 
   private final NodeManagerImpl myNodeManager;
   private final Project myProject;
@@ -71,7 +73,9 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     setRoot(root, false);
     root.setLeaf(false);
 
-    final Map<Value, List<TraceElement>> map2TraceElement = StreamEx.of(traceElements).groupingBy(TraceElement::getValue);
+    final Map<Object, List<TraceElement>> key2TraceElements =
+      StreamEx.of(traceElements).groupingBy(CollectionTree::extractKey);
+    final Map<Object, Integer> key2Index = new HashMap<>(key2TraceElements.size() + 1);
 
     addTreeListener(new XDebuggerTreeListener() {
       @Override
@@ -86,12 +90,14 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
               protected void action() {
                 final Value value = descriptor.getValue();
                 ApplicationManager.getApplication().invokeLater(() -> {
-                  final List<TraceElement> trace = map2TraceElement.get(value);
-                  if (trace != null && !trace.isEmpty()) {
-                    final TraceElement head = trace.get(0);
-                    myValue2Path.put(head, node.getPath());
-                    myPath2Value.put(node.getPath(), head);
-                    map2TraceElement.put(value, tail(trace));
+                  final Object key = value == null ? NULL_MARKER : value;
+                  List<TraceElement> elements = key2TraceElements.get(key);
+                  final int nextIndex = key2Index.getOrDefault(key, -1) + 1;
+                  if (elements != null && nextIndex < elements.size()) {
+                    final TraceElement element = elements.get(nextIndex);
+                    myValue2Path.put(element, node.getPath());
+                    myPath2Value.put(node.getPath(), element);
+                    key2Index.put(key, nextIndex);
                   }
 
                   if (myPath2Value.size() == traceElements.size()) {
@@ -111,9 +117,8 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
         return;
       }
 
-      @Nullable final TreePath[] selectedPaths = getSelectionPaths();
-
-      @NotNull final TreePath[] paths = selectedPaths == null ? EMPTY_PATHS : selectedPaths;
+      final TreePath[] selectedPaths = getSelectionPaths();
+      final TreePath[] paths = selectedPaths == null ? EMPTY_PATHS : selectedPaths;
       final List<TraceElement> selectedItems =
         Arrays.stream(paths)
           .map(this::getTopPath)
@@ -313,15 +318,6 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     return myHighlighted.contains(path) || isPathSelected(path);
   }
 
-  @NotNull
-  private static <T> List<T> tail(@NotNull List<T> list) {
-    if (list.size() <= 1) {
-      return Collections.emptyList();
-    }
-
-    return list.subList(1, list.size());
-  }
-
   private class MyRootValue extends XValue {
     private final List<Value> myValues;
     private final EvaluationContextImpl myEvaluationContext;
@@ -377,5 +373,10 @@ public class CollectionTree extends XDebuggerTree implements TraceContainer {
     }
 
     return current != null ? current : path;
+  }
+
+  private static Object extractKey(@NotNull TraceElement element) {
+    final Value value = element.getValue();
+    return value == null ? NULL_MARKER : value;
   }
 }

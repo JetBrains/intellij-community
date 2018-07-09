@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 import java.awt.*;
 import java.util.ArrayList;
@@ -229,9 +230,16 @@ public class TableUtil {
   }
 
   public static void setupCheckboxColumn(@NotNull JTable table, int columnIndex) {
-    setupCheckboxColumn(table.getColumnModel().getColumn(columnIndex));
+    TableColumnModel cModel = table.getColumnModel();
+    setupCheckboxColumn(cModel.getColumn(columnIndex), cModel.getColumnMargin());
   }
 
+  /**
+   * Deprecated because doesn't take into account column margin.
+   * Use {@link #setupCheckboxColumn(JTable, int)} instead.
+   * Or use {@link #setupCheckboxColumn(TableColumn, int)} with {@link TableColumnModel#getColumnMargin()} accounted for.
+   */
+  @Deprecated
   public static void setupCheckboxColumn(@NotNull TableColumn column) {
     setupCheckboxColumn(column, 0);
   }

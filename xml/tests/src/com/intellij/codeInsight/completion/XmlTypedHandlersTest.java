@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.highlighter.HtmlFileType;
@@ -25,7 +26,6 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 
 /**
  * @author Dmitry Avdeev
- *         Date: 30.08.13
  */
 public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCase {
   public void testClosingTag() {
@@ -267,6 +267,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
   }
 
   private HtmlCodeStyleSettings getHtmlSettings() {
-    return getCurrentCodeStyleSettings().getCustomSettings(HtmlCodeStyleSettings.class);
+    return CodeStyle.getSettings(myFixture.getProject())
+                    .getCustomSettings(HtmlCodeStyleSettings.class);
   }
 }

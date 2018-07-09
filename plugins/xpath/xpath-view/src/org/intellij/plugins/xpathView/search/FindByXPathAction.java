@@ -101,10 +101,12 @@ public class FindByXPathAction extends AnAction {
         final Factory<UsageSearcher> searcherFactory =
           () -> new XPathUsageSearcher(project, context.input, scope, settings.MATCH_RECURSIVELY);
         final UsageViewManager.UsageViewStateListener stateListener = new UsageViewManager.UsageViewStateListener() {
+            @Override
             public void usageViewCreated(@NotNull UsageView usageView) {
                 usageView.addButtonToLowerPane(new MyEditExpressionAction(project, module), "&Edit Expression");
             }
 
+            @Override
             public void findingUsagesFinished(UsageView usageView) {
             }
         };

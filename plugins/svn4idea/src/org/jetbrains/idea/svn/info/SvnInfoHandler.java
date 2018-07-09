@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.info;
 
 import com.intellij.openapi.util.Getter;
@@ -22,10 +8,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.NodeKind;
+import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.lock.Lock;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNDate;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
@@ -33,10 +17,13 @@ import org.xml.sax.helpers.DefaultHandler;
 import java.io.File;
 import java.util.*;
 
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
+
 public class SvnInfoHandler extends DefaultHandler {
   @Nullable private final File myBase;
   private final Consumer<org.jetbrains.idea.svn.info.Info> myInfoConsumer;
-  private Map<File, org.jetbrains.idea.svn.info.Info> myResultsMap;
+  private final Map<File, org.jetbrains.idea.svn.info.Info> myResultsMap;
   private SvnInfoStructure myPending;
   private final Map<String, Getter<ElementHandlerBase>> myElementsMap;
   private final List<ElementHandlerBase> myParseStack;
@@ -59,7 +46,7 @@ public class SvnInfoHandler extends DefaultHandler {
     try {
       info = myPending.convert();
     }
-    catch (SVNException e) {
+    catch (SvnBindException e) {
       throw new SAXException(e);
     }
     if (myInfoConsumer != null) {
@@ -503,9 +490,9 @@ public class SvnInfoHandler extends DefaultHandler {
     @Override
     public void characters(String s, SvnInfoStructure structure) throws SAXException {
       try {
-        structure.myCopyFromURL = SVNURL.parseURIEncoded(s);
+        structure.myCopyFromURL = createUrl(s);
       }
-      catch (SVNException e) {
+      catch (SvnBindException e) {
         throw new SAXException(e);
       }
     }
@@ -573,9 +560,9 @@ public class SvnInfoHandler extends DefaultHandler {
     @Override
     public void characters(String s, SvnInfoStructure structure) throws SAXException {
       try {
-        structure.myRootURL = SVNURL.parseURIEncoded(s);
+        structure.myRootURL = createUrl(s);
       }
-      catch (SVNException e) {
+      catch (SvnBindException e) {
         throw new SAXException(e);
       }
     }
@@ -607,9 +594,9 @@ public class SvnInfoHandler extends DefaultHandler {
     @Override
     public void characters(String s, SvnInfoStructure structure) throws SAXException {
       try {
-        structure.myUrl = SVNURL.parseURIEncoded(s);
+        structure.myUrl = createUrl(s);
       }
-      catch (SVNException e) {
+      catch (SvnBindException e) {
         throw new SAXException(e);
       }
     }
@@ -693,7 +680,7 @@ public class SvnInfoHandler extends DefaultHandler {
 
     @Override
     public void characters(String s, SvnInfoStructure structure) {
-      structure.myLockBuilder.setCreationDate(SVNDate.parseDate(s));
+      structure.myLockBuilder.setCreationDate(SvnUtil.parseDate(s));
     }
   }
 
@@ -708,8 +695,7 @@ public class SvnInfoHandler extends DefaultHandler {
     @Override
     protected void updateInfo(Attributes attributes, SvnInfoStructure structure) throws SAXException {
       final String kind = attributes.getValue("kind");
-      assertSAX(! StringUtil.isEmptyOrSpaces(kind));
-      structure.myKind = NodeKind.from(kind);
+      structure.myKind = NodeKind.from(notNullize(kind));
 
       if (myBase != null) {
         final String path = attributes.getValue("path");

@@ -1,18 +1,32 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.concurrency
 
 import com.intellij.testFramework.assertConcurrent
+import com.intellij.testFramework.assertConcurrentPromises
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Test
+import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.test.fail
 
 class AsyncPromiseTest {
   @Test
   fun done() {
     doHandlerTest(false)
+  }
+
+  @Test
+  fun cancel() {
+    val promise = AsyncPromise<Boolean>()
+    assertThat(promise.isCancelled).isFalse()
+    assertThat(promise.cancel(true)).isTrue()
+    assertThat(promise.isCancelled).isTrue()
+    assertThat(promise.cancel(true)).isFalse()
+    assertThat(promise.isCancelled).isTrue()
+    assertThat(promise.blockingGet(1)).isNull()
   }
 
   @Test
@@ -24,24 +38,36 @@ class AsyncPromiseTest {
   fun state() {
     val promise = AsyncPromise<String>()
     val count = AtomicInteger()
+    val log = StringBuffer()
 
-    val r = {
-      promise.done { count.incrementAndGet() }
+    class Incrementer(val descr:String) : ()->Promise<String> {
+      override fun toString(): String {
+        return descr
+      }
+
+      override fun invoke(): Promise<String> {
+        return promise.onSuccess { count.incrementAndGet(); log.append("\n" + this + " " + System.identityHashCode(this)) }
+      }
     }
 
-    val s = {
+    val setResulter: () -> Promise<String> = {
       promise.setResult("test")
+      promise
     }
 
     val numThreads = 30
-    assertConcurrent(*Array(numThreads, {
-      if ((it and 1) == 0) r else s
-    }))
+    val array = Array(numThreads) {
+      if ((it and 1) == 0) Incrementer("handler $it") else setResulter
+    }
+    assertConcurrentPromises(*array)
 
+    if (count.get() != (numThreads / 2)) {
+      fail("count: "+count +" "+ log.toString()+"\n---Array:\n"+ Arrays.toString(array))
+    }
     assertThat(count.get()).isEqualTo(numThreads / 2)
     assertThat(promise.get()).isEqualTo("test")
 
-    r()
+    Incrementer("extra").invoke()
     assertThat(count.get()).isEqualTo((numThreads / 2) + 1)
   }
 
@@ -49,18 +75,29 @@ class AsyncPromiseTest {
   fun blockingGet() {
     val promise = AsyncPromise<String>()
     assertConcurrent(
-        { assertThat(promise.blockingGet(1000)).isEqualTo("test") },
-        {
-          Thread.sleep(100)
-          promise.setResult("test")
-        })
+      { assertThat(promise.blockingGet(1000)).isEqualTo("test") },
+      {
+        Thread.sleep(100)
+        promise.setResult("test")
+      })
   }
 
   @Test
-  fun `ignoreErrors`() {
+  fun `get from Future`() {
+    val promise = AsyncPromise<String>()
+    assertConcurrent(
+      { assertThat(promise.get(1000, TimeUnit.MILLISECONDS)).isEqualTo("test") },
+      {
+        Thread.sleep(100)
+        promise.setResult("test")
+      })
+  }
+
+  @Test
+  fun `ignore errors`() {
     val a = resolvedPromise("foo")
     val b = rejectedPromise<String>()
-    assertThat(collectResults(listOf(a, b), ignoreErrors = true).blockingGet(100, TimeUnit.MILLISECONDS)).containsExactly("foo")
+    assertThat(listOf(a, b).collectResults(ignoreErrors = true).blockingGet(100, TimeUnit.MILLISECONDS)).containsExactly("foo")
   }
 
   @Test
@@ -80,10 +117,10 @@ class AsyncPromiseTest {
 
     val r = {
       if (reject) {
-        promise.rejected { count.incrementAndGet() }
+        promise.onError { count.incrementAndGet() }
       }
       else {
-        promise.done { count.incrementAndGet() }
+        promise.onSuccess { count.incrementAndGet() }
       }
     }
 
@@ -101,6 +138,8 @@ class AsyncPromiseTest {
     if (!reject) {
       assertThat(promise.get()).isEqualTo("test")
     }
+    assertThat(promise.isDone).isTrue()
+    assertThat(promise.isCancelled).isFalse()
 
     r()
     assertThat(count.get()).isEqualTo(numThreads + 1)

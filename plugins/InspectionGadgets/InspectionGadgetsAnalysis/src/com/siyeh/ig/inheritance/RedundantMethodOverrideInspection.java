@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2017 Bas Leijdekkers
+ * Copyright 2005-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,21 +85,21 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
       final PsiCodeBlock body = method.getBody();
-      if (body == null) {
+      if (body == null || method.getNameIdentifier() == null) {
         return;
       }
-      if (method.getNameIdentifier() == null) {
+      final PsiMethod[] methods = method.findSuperMethods();
+      if (methods.length == 0) {
         return;
       }
-      final PsiMethod superMethod = MethodUtils.getSuper(method);
-      if (superMethod == null) {
+      final PsiMethod superMethod = methods[0];
+      if (superMethod.hasModifierProperty(PsiModifier.DEFAULT) && methods.length > 1) {
         return;
       }
-      if (!MethodUtils.haveEquivalentModifierLists(method, superMethod)) {
-        return;
-      }
-      final PsiType superReturnType = superMethod.getReturnType();
-      if (superReturnType == null || !superReturnType.equals(method.getReturnType())) {
+      if (!AbstractMethodOverridesAbstractMethodInspection.methodsHaveSameAnnotationsAndModifiers(method, superMethod) ||
+          !AbstractMethodOverridesAbstractMethodInspection.methodsHaveSameReturnTypes(method, superMethod) ||
+          !AbstractMethodOverridesAbstractMethodInspection.haveSameExceptionSignatures(method, superMethod) ||
+          method.isVarArgs() != superMethod.isVarArgs()) {
         return;
       }
       final PsiCodeBlock superBody = superMethod.getBody();
@@ -122,7 +121,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
 
       @Override
       protected Match referenceExpressionsMatch(PsiReferenceExpression referenceExpression1,
-                                                                PsiReferenceExpression referenceExpression2) {
+                                                PsiReferenceExpression referenceExpression2) {
         if (areSameParameters(referenceExpression1, referenceExpression2)) {
           return EXACT_MATCH;
         }
@@ -191,7 +190,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
         }
         final PackageScope scope = new PackageScope(aPackage, false, false);
         if (isOnTheFly()) {
-          final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(method.getProject());
+          final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(method.getProject());
           final PsiSearchHelper.SearchCostResult cost =
             searchHelper.isCheapEnoughToSearch(method.getName(), scope, null, null);
           if (cost == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) {

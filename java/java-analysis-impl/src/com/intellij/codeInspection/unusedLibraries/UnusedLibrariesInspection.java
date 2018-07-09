@@ -236,7 +236,7 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
 
   private static class RemoveUnusedLibrary implements QuickFix<ModuleProblemDescriptor> {
     private final Set<VirtualFile> myFiles;
-    private String myLibraryName;
+    private final String myLibraryName;
 
     public RemoveUnusedLibrary(String libraryName, final Set<VirtualFile> files) {
       myLibraryName = libraryName;

@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.settings;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -226,6 +227,10 @@ public abstract class AbstractExternalSystemSettings<
       setLinkedProjectsSettings(settings, new ExternalSystemSettingsListenerAdapter() {
         @Override
         public void onProjectsLinked(@NotNull Collection linked) {
+          if (ApplicationManager.getApplication().isHeadlessEnvironment() && !ApplicationManager.getApplication().isUnitTestMode()) {
+            return;
+          }
+
           for (Object o : linked) {
             final ExternalProjectSettings settings = (ExternalProjectSettings)o;
             for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {

@@ -55,12 +55,7 @@ public final class ColorDescriptor extends AbstractKeyDescriptor<ColorKey> {
     return myKind;
   }
 
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return super.getDisplayName();
-  }
-
+  @SuppressWarnings("RedundantMethodOverride") // binary compatibility
   @NotNull
   @Override
   public ColorKey getKey() {

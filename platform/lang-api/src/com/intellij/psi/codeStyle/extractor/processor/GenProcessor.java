@@ -23,18 +23,14 @@ import com.intellij.psi.codeStyle.extractor.Utils;
 import com.intellij.psi.codeStyle.extractor.differ.Differ;
 import com.intellij.psi.codeStyle.extractor.differ.LangCodeStyleExtractor;
 import com.intellij.psi.codeStyle.extractor.values.Gens;
+import org.jetbrains.annotations.NotNull;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-/**
- * @author Roman.Shein
- * @since 29.07.2015.
- */
 public class GenProcessor extends CodeStyleDeriveProcessor {
-
-  private static DateFormat formatter = new SimpleDateFormat("mm:ss");
+  private String myReport = "No result";
 
   public GenProcessor(LangCodeStyleExtractor langExtractor) {
     super(langExtractor);
@@ -47,21 +43,28 @@ public class GenProcessor extends CodeStyleDeriveProcessor {
 
     final Differ differ = myLangExtractor.getDiffer(project, file, settings);
     forSelection.dropToInitial();
-    Utils.resetRandom();
 
     long startTime = System.nanoTime();
     Utils.adjustValuesGA(forSelection, differ, indicator);
-    reportResult("GA", forSelection, differ, startTime, file.getName());
+    myReport = "<br> Genetic phase: " + reportResult(forSelection, differ, startTime);
 
     startTime = System.nanoTime();
     Utils.adjustValuesMin(forSelection, differ, indicator);
-    reportResult("MIN", forSelection, differ, startTime, file.getName());
+    myReport += "<br> Minimization Phase: " + reportResult(forSelection, differ, startTime);
 
     return forSelection;
   }
 
-  private void reportResult(String label, Gens gens, Differ differ, long startTime, String fileName) {
+  @NotNull
+  @Override
+  public String getHTMLReport() {
+    return myReport;
+  }
+
+  @NotNull
+  private static String reportResult(@NotNull Gens gens, @NotNull Differ differ, long startTime) {
+    DateFormat formatter = new SimpleDateFormat("mm:ss");
     Date date = new Date((System.nanoTime() - startTime) / 1000000);
-    System.out.println(fileName + ": " + label + " range:" + differ.getDifference(gens) + "  Execution Time: " + formatter.format(date));
+    return "Difference in spaces with the original:" + differ.getDifference(gens) + " Execution Time:" + formatter.format(date);
   }
 }

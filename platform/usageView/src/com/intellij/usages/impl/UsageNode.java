@@ -21,8 +21,6 @@ import com.intellij.usages.Usage;
 import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-
 /**
  * @author max
  */
@@ -93,11 +91,11 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
   @NotNull
   @Override
   protected String getText(@NotNull final UsageView view) {
-    try {
-      return getUsage().getPresentation().getPlainText();
-    }
-    catch(AbstractMethodError e) {
-      return Arrays.asList(getUsage().getPresentation().getText()).toString();
-    }
+    return getUsage().getPresentation().getPlainText();
+  }
+
+  @Override
+  protected void updateCachedPresentation() {
+    getUsage().getPresentation().updateCachedText();
   }
 }

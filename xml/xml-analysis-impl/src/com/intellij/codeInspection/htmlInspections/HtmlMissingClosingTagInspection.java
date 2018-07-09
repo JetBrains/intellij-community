@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
@@ -31,6 +17,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlTagUtil;
 import org.jetbrains.annotations.Nls;
@@ -50,12 +37,15 @@ public class HtmlMissingClosingTagInspection extends HtmlLocalInspectionTool {
     if (child instanceof PsiErrorElement) {
       return;
     }
+    if (child != null && child.getNode().getElementType() == XmlTokenType.XML_EMPTY_ELEMENT_END) {
+      return;
+    }
     final XmlToken tagNameElement = XmlTagUtil.getStartTagNameElement(tag);
     if (tagNameElement == null) {
       return;
     }
     final String tagName = tagNameElement.getText();
-    if (HtmlUtil.isSingleHtmlTag(tagName) || XmlTagUtil.getEndTagNameElement(tag) != null) {
+    if (HtmlUtil.isSingleHtmlTag(tag, true) || XmlTagUtil.getEndTagNameElement(tag) != null) {
       return;
     }
 

@@ -23,6 +23,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Options configurable manager.
@@ -44,17 +45,12 @@ final class OptionsManagerImpl extends OptionsManager implements PersistentState
   @Override
   public Element getState() {
     Element element = new Element("state");
-    try {
-      options.writeExternal(element);
-    }
-    catch (WriteExternalException e) {
-      throw new RuntimeException(e);
-    }
+    options.writeExternal(element);
     return element;
   }
 
   @Override
-  public void loadState(final Element state) {
+  public void loadState(@NotNull final Element state) {
     options.readExternal(state);
   }
 }

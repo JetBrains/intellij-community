@@ -86,7 +86,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
   private final List<AnAction> myAddActions = ContainerUtil.newArrayList();
   private final JLabel myCountLabel;
 
-  private Configuration myConfiguration;
+  private final Configuration myConfiguration;
 
   public InjectionsSettingsUI(final Project project, final Configuration configuration) {
     myProject = project;
@@ -278,7 +278,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
         updateCountLabel();
       }
     });
-    decorator.addExtraAction(new DumbAwareActionButton("Export", "Export", AllIcons.Actions.Export) {
+    decorator.addExtraAction(new DumbAwareActionButton("Export", "Export", AllIcons.ToolbarDecorator.Export) {
 
       @Override
       public void actionPerformed(@NotNull final AnActionEvent e) {
@@ -367,7 +367,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
         ContainerUtil.addAll(configurables, support.createSettings(myProject, myConfiguration));
       }
       Collections.sort(configurables, (o1, o2) -> Comparing.compare(o1.getDisplayName(), o2.getDisplayName()));
-      return configurables.toArray(new Configurable[configurables.size()]);
+      return configurables.toArray(new Configurable[0]);
   }
 
   @NotNull
@@ -486,7 +486,7 @@ public class InjectionsSettingsUI extends SearchableConfigurable.Parent.Abstract
       setShowGrid(false);
       setShowVerticalLines(false);
       setGridColor(getForeground());
-      TableUtil.setupCheckboxColumn(getColumnModel().getColumn(0));
+      TableUtil.setupCheckboxColumn(this, 0);
 
       new DoubleClickListener() {
         @Override

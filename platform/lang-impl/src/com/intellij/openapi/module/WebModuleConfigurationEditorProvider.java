@@ -23,7 +23,7 @@ public class WebModuleConfigurationEditorProvider implements ModuleConfiguration
   @Override
   public ModuleConfigurationEditor[] createEditors(final ModuleConfigurationState state) {
     Module module = state.getRootModel().getModule();
-    if (!WebModuleTypeBase.isWebModule(module)) {
+    if (!ModuleTypeWithWebFeatures.isAvailable(module)) {
       return ModuleConfigurationEditor.EMPTY;
     }
     return new ModuleConfigurationEditor[]{new CommonContentEntriesEditor(module.getName(), state)};

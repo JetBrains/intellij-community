@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServerListener;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -64,7 +65,7 @@ public abstract class ServersToolWindowManager {
 
       if (toolWindow == null) {
         if (available) {
-          createToolWindow(myProject, toolWindowManager).show(null);
+          createToolWindow(myProject, toolWindowManager, false).show(null);
         }
         return;
       }
@@ -84,10 +85,25 @@ public abstract class ServersToolWindowManager {
     }
   }
 
+  /**
+   * @deprecated use {@link #createToolWindow(Project, ToolWindowManager, boolean)}
+   */
+  @Deprecated
   protected ToolWindow createToolWindow(Project project, ToolWindowManager toolWindowManager) {
+    return createToolWindow(project, toolWindowManager, false);
+  }
+
+  protected ToolWindow createToolWindow(Project project, ToolWindowManager toolWindowManager, boolean deferContentCreation) {
     ToolWindow toolWindow = toolWindowManager.registerToolWindow(myWindowId, false, ToolWindowAnchor.BOTTOM);
     toolWindow.setIcon(myIcon);
-    getFactory().createToolWindowContent(project, toolWindow);
+
+    Runnable createContent = () -> getFactory().createToolWindowContent(project, toolWindow);
+    if (deferContentCreation) {
+      UiNotifyConnector.doWhenFirstShown(toolWindow.getContentManager().getComponent(), createContent);
+    }
+    else {
+      createContent.run();
+    }
     return toolWindow;
   }
 

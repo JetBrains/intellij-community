@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * Use this factory to create correct instances of such commonly used vcs-log-api objects as {@link Hash} or {@link VcsShortCommitDetails}.
+ * Use this factory to create correct instances of such commonly used intellij.platform.vcs.log objects as {@link Hash} or {@link VcsShortCommitDetails}.
  *
  * @author Kirill Likhodedov
  */

@@ -22,9 +22,9 @@ import org.jetbrains.jps.model.library.JpsOrderRootType;
  * @author nik
  */
 public class JpsLibraryRootTypeSerializer implements Comparable<JpsLibraryRootTypeSerializer> {
-  private String myTypeId;
-  private JpsOrderRootType myType;
-  private boolean myWriteIfEmpty;
+  private final String myTypeId;
+  private final JpsOrderRootType myType;
+  private final boolean myWriteIfEmpty;
 
   public JpsLibraryRootTypeSerializer(@NotNull String typeId, @NotNull JpsOrderRootType type, boolean writeIfEmpty) {
     myTypeId = typeId;

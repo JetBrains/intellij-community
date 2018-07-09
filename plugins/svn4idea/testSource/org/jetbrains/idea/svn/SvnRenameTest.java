@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.execution.process.ProcessOutput;
@@ -22,8 +8,6 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.TimeoutUtil;
@@ -41,7 +25,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class SvnRenameTest extends Svn17TestCase {
+public class SvnRenameTest extends SvnTestCase {
   @NonNls private static final String LOG_SEPARATOR = "------------------------------------------------------------------------\n";
   @NonNls private static final String LOG_SEPARATOR_START = "-------------";
 
@@ -109,8 +93,7 @@ public class SvnRenameTest extends Svn17TestCase {
                  "D child" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt");
 
     refreshVfs();   // wait for end of refresh operations initiated from SvnFileSystemListener
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    insideInitializedChangeListManager(changeListManager, () -> {
+    insideInitializedChangeListManager(() -> {
       changeListManager.ensureUpToDate(false);
       List<Change> changes = new ArrayList<>(changeListManager.getDefaultChangeList().getChanges());
       Assert.assertEquals(4, changes.size());
@@ -130,11 +113,11 @@ public class SvnRenameTest extends Svn17TestCase {
     Assert.assertEquals(FileStatus.DELETED, changeListManager.getStatus(oldChild));*/
   }
 
-  private void insideInitializedChangeListManager(final ChangeListManager changeListManager, final Runnable runnable) {
+  private void insideInitializedChangeListManager(final Runnable runnable) {
     try {
       runnable.run();
     } finally {
-      ((ChangeListManagerImpl) changeListManager).stopEveryThingIfInTestMode();
+      changeListManager.stopEveryThingIfInTestMode();
     }
   }
 
@@ -177,15 +160,14 @@ public class SvnRenameTest extends Svn17TestCase {
     final VirtualFile child = prepareDirectoriesForRename();
     renameFileInCommand(child, "newchild");
 
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    insideInitializedChangeListManager(changeListManager, () -> {
+    insideInitializedChangeListManager(() -> {
       changeListManager.ensureUpToDate(false);
       final Change change = changeListManager.getChange(myWorkingCopyDir.findChild("newchild"));
       Assert.assertNotNull(change);
 
       final List<VcsException> exceptions = new ArrayList<>();
-      SvnVcs.getInstance(myProject).getRollbackEnvironment().rollbackChanges(Collections.singletonList(change), exceptions,
-                                                                             RollbackProgressListener.EMPTY);
+      vcs.getRollbackEnvironment().rollbackChanges(Collections.singletonList(change), exceptions,
+                                                   RollbackProgressListener.EMPTY);
       Assert.assertTrue(exceptions.isEmpty());
       Assert.assertFalse(new File(myWorkingCopyDir.getPath(), "newchild").exists());
       Assert.assertTrue(new File(myWorkingCopyDir.getPath(), "child").exists());
@@ -201,8 +183,7 @@ public class SvnRenameTest extends Svn17TestCase {
     final VirtualFile grandChild = createDirInCommand(child, "grandChild");
     createFileInCommand(grandChild, "a.txt", "a");
     checkin();
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    insideInitializedChangeListManager(changeListManager, () -> {
+    insideInitializedChangeListManager(() -> {
       moveFileInCommand(grandChild, myWorkingCopyDir);
       refreshVfs();   // wait for end of refresh operations initiated from SvnFileSystemListener
       changeListManager.ensureUpToDate(false);
@@ -231,8 +212,7 @@ public class SvnRenameTest extends Svn17TestCase {
     final VirtualFile unversionedDir = createDirInCommand(child, "uc");
     createFileInCommand(unversionedDir, "c.txt", "c");
 
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    insideInitializedChangeListManager(changeListManager, () -> {
+    insideInitializedChangeListManager(() -> {
       changeListManager.ensureUpToDate(false);
       Assert.assertEquals(FileStatus.UNKNOWN, changeListManager.getStatus(unversioned));
 
@@ -246,11 +226,11 @@ public class SvnRenameTest extends Svn17TestCase {
       refreshVfs();
       changeListManager.ensureUpToDate(false);
       final List<Change> changes = new ArrayList<>();
-      changes.add(ChangeListManager.getInstance(myProject).getChange(myWorkingCopyDir.findChild("newchild").findChild("a.txt")));
-      changes.add(ChangeListManager.getInstance(myProject).getChange(myWorkingCopyDir.findChild("newchild")));
+      changes.add(changeListManager.getChange(myWorkingCopyDir.findChild("newchild").findChild("a.txt")));
+      changes.add(changeListManager.getChange(myWorkingCopyDir.findChild("newchild")));
 
       final List<VcsException> exceptions = new ArrayList<>();
-      SvnVcs.getInstance(myProject).getRollbackEnvironment().rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
+      vcs.getRollbackEnvironment().rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
       TimeoutUtil.sleep(300);
       Assert.assertTrue(exceptions.isEmpty());
       final File fileA = new File(childPath, "a.txt");
@@ -266,7 +246,6 @@ public class SvnRenameTest extends Svn17TestCase {
   // IDEA-13824
   @Test
   public void testRenameFileRenameDir() throws Exception {
-    setNativeAcceleration(true);  //todo debug
     final VirtualFile child = prepareDirectoriesForRename();
     final VirtualFile f = child.findChild("a.txt");
     renameFileInCommand(f, "anew.txt");
@@ -275,12 +254,11 @@ public class SvnRenameTest extends Svn17TestCase {
     verifySorted(runSvn("status"), "A + newchild", "A + newchild" + File.separatorChar + "anew.txt",
                  "D child", "D child" + File.separatorChar + "a.txt", "D child" + File.separatorChar + "grandChild", "D child" + File.separatorChar + "grandChild" + File.separatorChar + "b.txt", "D + newchild" + File.separatorChar + "a.txt");
 
-    final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    insideInitializedChangeListManager(changeListManager, () -> {
+    insideInitializedChangeListManager(() -> {
       refreshVfs();   // wait for end of refresh operations initiated from SvnFileSystemListener
       changeListManager.ensureUpToDate(false);
       final List<Change> changes = new ArrayList<>(changeListManager.getDefaultChangeList().getChanges());
-      final List<VcsException> list = SvnVcs.getInstance(myProject).getCheckinEnvironment().commit(changes, "test");
+      final List<VcsException> list = vcs.getCheckinEnvironment().commit(changes, "test");
       Assert.assertEquals(0, list.size());
     });
   }
@@ -466,19 +444,15 @@ public class SvnRenameTest extends Svn17TestCase {
 
   private VirtualFile moveToNewPackage(final VirtualFile file, final String packageName) {
     final VirtualFile[] dir = new VirtualFile[1];
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      public void run() {
-        try {
-          dir[0] = myWorkingCopyDir.createChildDirectory(this, packageName);
-          file.move(this, dir[0]);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-
+    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      try {
+        dir[0] = myWorkingCopyDir.createChildDirectory(this, packageName);
+        file.move(this, dir[0]);
       }
-    }.execute().throwException();
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    });
     return dir[0];
   }
 }

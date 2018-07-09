@@ -6,7 +6,6 @@ import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.RecentProjectsManager;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
@@ -24,6 +23,7 @@ import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
@@ -32,6 +32,7 @@ import com.intellij.ui.components.JBSlidingPanel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.Function;
@@ -108,6 +109,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       size.width,
       size.height
     );
+
+    if (Registry.is("suppress.focus.stealing") && Registry.is("suppress.focus.stealing.auto.request.focus")) {
+      setAutoRequestFocus(false);
+    }
+
     // at this point a window insets may be unavailable,
     // so we need resize window when it is shown
     doWhenFirstShown(this, this::pack);
@@ -140,9 +146,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     }
     Disposer.dispose(myScreen);
     WelcomeFrame.resetInstance();
-
-    // open project from welcome screen show progress dialog and call FocusTrackback.register()
-    FocusTrackback.release(this);
   }
 
   private static void saveLocation(Rectangle location) {
@@ -189,6 +192,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     if (Boolean.getBoolean("ide.ui.version.in.title")) {
       title += ' ' + ApplicationInfo.getInstance().getFullVersion();
     }
+    title += IdeFrameImpl.getElevationSuffix();
     return title;
   }
 
@@ -203,8 +207,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     return pair.second;
   }
 
-  private class FlatWelcomeScreen extends JPanel implements WelcomeScreen {
-    private JBSlidingPanel mySlidingPanel = new JBSlidingPanel();
+  private class FlatWelcomeScreen extends JPanel implements WelcomeScreen, DataProvider {
+    private final JBSlidingPanel mySlidingPanel = new JBSlidingPanel();
+    private final DefaultActionGroup myTouchbarActions = new DefaultActionGroup();
     public Consumer<List<NotificationType>> myEventListener;
     public Computable<Point> myEventLocation;
 
@@ -254,6 +259,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         }
       }
       add(createBody(), BorderLayout.CENTER);
+
+      TouchbarDataKeys.putActionDescriptor(myTouchbarActions).setShowText(true);
     }
 
     @Override
@@ -364,7 +371,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
             .createActionGroupPopup(null, new IconsFreeActionGroup(configureGroup), e.getDataContext(), JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false,
                                     ActionPlaces.WELCOME_SCREEN);
           popup.showUnderneathOfLabel(ref.get());
-          UsageTrigger.trigger("welcome.screen." + groupId);
         }
       };
       JComponent panel = createActionLink(text, icon, ref, action);
@@ -394,6 +400,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       DefaultActionGroup group = new DefaultActionGroup();
       collectAllActions(group, quickStart);
 
+      myTouchbarActions.removeAll();
       for (AnAction action : group.getChildren(null)) {
         AnActionEvent e =
           AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataManager.getInstance().getDataContext(this));
@@ -418,9 +425,11 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           button.setBorder(JBUI.Borders.empty(8, 20));
           if (action instanceof WelcomePopupAction) {
             button.add(createArrow(link), BorderLayout.EAST);
+            TouchbarDataKeys.putActionDescriptor(action).setContextComponent(link);
           }
           installFocusable(button, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, true);
           actions.add(button);
+          myTouchbarActions.add(action);
         }
       }
 
@@ -429,11 +438,19 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       return panel.root;
     }
 
+    @Nullable
+    @Override
+    public Object getData(String dataId) {
+      if (TouchbarDataKeys.ACTIONS_KEY.is(dataId))
+        return myTouchbarActions;
+      return null;
+    }
+
     /**
      * Wraps an {@link ActionLink} component and delegates accessibility support to it.
      */
     protected class JActionLinkPanel extends JPanel {
-      @NotNull private ActionLink myActionLink;
+      @NotNull private final ActionLink myActionLink;
 
       public JActionLinkPanel(@NotNull ActionLink actionLink) {
         super(new BorderLayout());
@@ -524,7 +541,10 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       logo.setBorder(JBUI.Borders.empty(30,0,10,0));
       logo.setHorizontalAlignment(SwingConstants.CENTER);
       panel.add(logo, BorderLayout.NORTH);
-      JLabel appName = new JLabel(ApplicationNamesInfo.getInstance().getFullProductName());
+      final String applicationName = Boolean.getBoolean("ide.ui.name.with.edition")
+                                     ? ApplicationNamesInfo.getInstance().getFullProductNameWithEdition()
+                                     : ApplicationNamesInfo.getInstance().getFullProductName();
+      JLabel appName = new JLabel(applicationName);
       Font font = getProductFont();
       appName.setForeground(JBColor.foreground());
       appName.setFont(font.deriveFont(JBUI.scale(36f)).deriveFont(Font.PLAIN));
@@ -555,14 +575,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + name);
       } else {
 
-        try {
-          InputStream is = url.openStream();
-          try {
-            return Font.createFont(Font.TRUETYPE_FONT, is);
-          }
-          finally {
-            is.close();
-          }
+        try (InputStream is = url.openStream()) {
+          return Font.createFont(Font.TRUETYPE_FONT, is);
         }
         catch (Throwable t) {
           Logger.getInstance(AppUIUtil.class).warn("Cannot load font: " + url, t);
@@ -700,7 +714,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             child.actionPerformed(e);
-            UsageTrigger.trigger("welcome.screen." + e.getActionManager().getId(child));
           }
 
           @Override
@@ -723,7 +736,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   }
 
   private static Runnable createUsageTracker(final AnAction action) {
-    return () -> UsageTrigger.trigger("welcome.screen." + ActionManager.getInstance().getId(action));
+    return () -> {
+    };
   }
 
   private static JLabel createArrow(final ActionLink link) {
@@ -754,6 +768,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
   @Nullable
   @Override
   public Project getProject() {
+    if (ApplicationManager.getApplication().isDisposeInProgress()) return null;
     return ProjectManager.getInstance().getDefaultProject();
   }
 
@@ -858,7 +873,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     pane.setBackground(getProjectsBackground());
     actionsListPanel.add(pane, BorderLayout.CENTER);
 
-    int width = (int)Math.min(Math.round(list.getPreferredSize().getWidth()), 200);
+    int width = (int)Math.max(Math.min(Math.round(list.getPreferredSize().getWidth()), JBUI.scale(200)), JBUI.scale(100));
     pane.setPreferredSize(JBUI.size(width + 14, -1));
 
     boolean singleProjectGenerator = list.getModel().getSize() == 1;

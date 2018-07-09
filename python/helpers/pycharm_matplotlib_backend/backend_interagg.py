@@ -14,8 +14,6 @@ PORT = PORT if PORT != -1 else None
 index = int(os.getenv("PYCHARM_MATPLOTLIB_INDEX", 0))
 
 rcParams = matplotlib.rcParams
-verbose = matplotlib.verbose
-
 
 class Show(ShowBase):
     def __call__(self, **kwargs):
@@ -61,6 +59,7 @@ class FigureCanvasInterAgg(FigureCanvasAgg):
         FigureCanvasAgg.__init__(self, figure)
 
     def show(self):
+        self.figure.tight_layout()
         FigureCanvasAgg.draw(self)
         if PORT is None:
             return
@@ -85,7 +84,7 @@ class FigureCanvasInterAgg(FigureCanvasAgg):
             sock.send(struct.pack('>i', plot_index))
             sock.send(struct.pack('>i', len(buffer)))
             sock.send(buffer)
-        except ConnectionRefusedError as _:
+        except OSError as _:
             # nothing bad. It just means, that our tool window doesn't run yet
             pass
 

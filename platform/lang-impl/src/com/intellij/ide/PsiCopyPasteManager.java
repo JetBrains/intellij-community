@@ -11,11 +11,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.DataFlavor;
@@ -249,7 +251,7 @@ public class PsiCopyPasteManager {
       return ReadAction.compute(() -> {
         String names = Stream.of(myDataProxy.getElements())
           .filter(PsiNamedElement.class::isInstance)
-          .map(e -> ((PsiNamedElement)e).getName())
+          .map(e -> StringUtil.nullize(((PsiNamedElement)e).getName(), true))
           .filter(Objects::nonNull)
           .collect(Collectors.joining("\n"));
         return names.isEmpty() ? null : names;
@@ -263,7 +265,15 @@ public class PsiCopyPasteManager {
 
     @Override
     public DataFlavor[] getTransferDataFlavors() {
-      return myDataProxy.isCopied() ? DATA_FLAVORS_COPY : DATA_FLAVORS_CUT;
+      DataFlavor[] flavors = myDataProxy.isCopied() ? DATA_FLAVORS_COPY : DATA_FLAVORS_CUT;
+      return JBIterable.of(flavors).filter(flavor -> {
+        try {
+          return getTransferDataOrNull(flavor) != null;
+        }
+        catch (UnsupportedFlavorException ex) {
+          return false;
+        }
+      }).toList().toArray(new DataFlavor[0]);
     }
 
     @Override

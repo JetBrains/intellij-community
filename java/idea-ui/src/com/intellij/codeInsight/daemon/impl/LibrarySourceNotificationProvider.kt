@@ -19,8 +19,8 @@ import com.intellij.ProjectTopics
 import com.intellij.diff.DiffContentFactory
 import com.intellij.diff.DiffManager
 import com.intellij.diff.requests.SimpleDiffRequest
+import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
@@ -31,6 +31,8 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiExtensibleClass
+import com.intellij.psi.util.PsiFormatUtil
+import com.intellij.psi.util.PsiFormatUtilBase
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.LightColors
@@ -63,7 +65,7 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
             panel.setText(ProjectBundle.message("library.source.mismatch", offender.name))
             panel.createActionLabel(ProjectBundle.message("library.source.open.class"), {
               if (!project.isDisposed && clsFile.isValid) {
-                OpenFileDescriptor(project, clsFile, -1).navigate(true)
+                PsiNavigationSupport.getInstance().createNavigatable(project, clsFile, -1).navigate(true)
               }
             })
             panel.createActionLabel(ProjectBundle.message("library.source.show.diff"), {
@@ -86,11 +88,28 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
     val binary = clazz.originalElement
     return binary !== clazz &&
         binary is PsiClass &&
-        (differs(fields(clazz), fields(binary)) || differs(methods(clazz), methods(binary)) || differs(inners(clazz), inners(binary)))
+           (fieldDiffers(fields(clazz), fields(binary)) || methodsDiffers(methods(clazz), methods(binary)) || classDiffers(inners(clazz), inners(binary)))
   }
 
-  private fun differs(list1: List<PsiMember>, list2: List<PsiMember>): Boolean =
-      list1.size != list2.size || list1.map { it.name ?: "" }.sorted() != list2.map { it.name ?: "" }.sorted()
+  private fun classDiffers(list1: List<PsiClass>, list2: List<PsiClass>): Boolean {
+    val classOptions = PsiFormatUtil.SHOW_NAME + PsiFormatUtil.SHOW_FQ_CLASS_NAMES + PsiFormatUtil.SHOW_EXTENDS_IMPLEMENTS
+    return list1.size != list2.size || list1.map { PsiFormatUtil.formatClass(it, classOptions) }.sorted() !=
+                                       list2.map { PsiFormatUtil.formatClass(it, classOptions) }.sorted()
+  }
+  
+  private fun fieldDiffers(list1: List<PsiField>, list2: List<PsiField>): Boolean {
+    val fieldOptions = PsiFormatUtil.SHOW_NAME + PsiFormatUtil.SHOW_TYPE + PsiFormatUtil.SHOW_FQ_CLASS_NAMES 
+    return list1.size != list2.size || list1.map { PsiFormatUtil.formatVariable(it, fieldOptions, PsiSubstitutor.EMPTY) }.sorted() != 
+                                       list2.map { PsiFormatUtil.formatVariable(it, fieldOptions, PsiSubstitutor.EMPTY) }.sorted()
+  }
+
+  private fun methodsDiffers(list1: List<PsiMethod>, list2: List<PsiMethod>): Boolean {
+    val methodOptions = PsiFormatUtil.SHOW_NAME + PsiFormatUtilBase.SHOW_PARAMETERS
+    val parametersOptions = PsiFormatUtilBase.SHOW_TYPE + PsiFormatUtil.SHOW_FQ_CLASS_NAMES
+    return list1.size != list2.size || 
+           list1.map { PsiFormatUtil.formatMethod(it, PsiSubstitutor.EMPTY, methodOptions, parametersOptions) }.sorted() !=
+           list2.map { PsiFormatUtil.formatMethod(it, PsiSubstitutor.EMPTY, methodOptions, parametersOptions) }.sorted()
+  }
 
   private fun fields(clazz: PsiClass) = (clazz as? PsiExtensibleClass)?.ownFields ?: clazz.fields.asList()
   private fun methods(clazz: PsiClass): List<PsiMethod> =

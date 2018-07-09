@@ -25,11 +25,12 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,8 +72,8 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     GotoData gotoData = new GotoData(source, targets, Collections.emptyList());
     gotoData.listUpdaterTask = new ImplementationsUpdaterTask(gotoData, editor, offset, reference) {
       @Override
-      public void onFinished() {
-        super.onFinished();
+      public void onSuccess() {
+        super.onSuccess();
         PsiElement oneElement = getTheOnlyOneElement();
         if (oneElement != null && navigateToElement(oneElement)) {
           myPopup.cancel();
@@ -133,7 +134,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     return CodeInsightBundle.message("goto.implementation.notFound");
   }
 
-  private class ImplementationsUpdaterTask extends ListBackgroundUpdaterTask {
+  private class ImplementationsUpdaterTask extends BackgroundUpdaterTask {
     private final Editor myEditor;
     private final int myOffset;
     private final GotoData myGotoData;
@@ -141,12 +142,9 @@ public class GotoImplementationHandler extends GotoTargetHandler {
 
     ImplementationsUpdaterTask(@NotNull GotoData gotoData, @NotNull Editor editor, int offset, final PsiReference reference) {
       super(gotoData.source.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS,
-            createComparatorWrapper(Comparator.comparing(new Function<PsiElement, Comparable>() {
-                @Override
-                public Comparable apply(PsiElement e1) {
-                  return getRenderer(e1, gotoData).getComparingObject(e1);
-                }
-              })));
+            createComparatorWrapper(Comparator.comparing((Function<PsiElement, Comparable>)e1 -> {
+              return getRenderer(e1, gotoData).getComparingObject(e1);
+            })));
       myEditor = editor;
       myOffset = offset;
       myGotoData = gotoData;
@@ -177,7 +175,8 @@ public class GotoImplementationHandler extends GotoTargetHandler {
 
     @Override
     public String getCaption(int size) {
-      return getChooserTitle(myGotoData.source, ((PsiNamedElement)myGotoData.source).getName(), size, isFinished());
+      String name = ElementDescriptionUtil.getElementDescription(myGotoData.source, UsageViewShortNameLocation.INSTANCE);
+      return getChooserTitle(myGotoData.source, name, size, isFinished());
     }
   }
 }

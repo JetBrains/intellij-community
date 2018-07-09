@@ -58,11 +58,11 @@ public class CommonCodeStyleSettings {
 
   private ArrangementSettings myArrangementSettings;
   private CodeStyleSettings   myRootSettings;
-  private IndentOptions       myIndentOptions;
+  private @Nullable IndentOptions       myIndentOptions;
   private final FileType myFileType;
   private boolean             myForceArrangeMenuAvailable;
 
-  protected SoftMargins mySoftMargins = new SoftMargins();
+  private final SoftMargins mySoftMargins = new SoftMargins();
 
   @NonNls private static final String INDENT_OPTIONS_TAG = "indentOptions";
 
@@ -138,9 +138,20 @@ public class CommonCodeStyleSettings {
     return commonSettings;
   }
 
-  protected static void copyPublicFields(Object from, Object to) {
+  static void copyPublicFields(Object from, Object to) {
     assert from != to;
     ReflectionUtil.copyFields(to.getClass().getFields(), from, to);
+  }
+
+  public void copyFrom(@NotNull CommonCodeStyleSettings source) {
+    copyPublicFields(source, this);
+    if (myIndentOptions != null) {
+      CommonCodeStyleSettings.IndentOptions sourceIndentOptions = source.getIndentOptions();
+      if (sourceIndentOptions != null) {
+        myIndentOptions.copyFrom(sourceIndentOptions);
+      }
+    }
+    setSoftMargins(source.getSoftMargins());
   }
 
   @Nullable
@@ -168,6 +179,9 @@ public class CommonCodeStyleSettings {
     Set<String> supportedFields = getSupportedFields();
     if (supportedFields != null) {
       supportedFields.add("FORCE_REARRANGE_MODE");
+    }
+    else {
+      return;
     }
     DefaultJDOMExternalizer.writeExternal(this, element, new SupportedFieldsDiffFilter(this, supportedFields, defaultSettings));
     mySoftMargins.serializeInto(element);
@@ -207,7 +221,7 @@ public class CommonCodeStyleSettings {
 
     @Override
     public boolean isAccept(@NotNull Field field) {
-      if (mySupportedFieldNames == null ||
+      if (mySupportedFieldNames != null &&
           mySupportedFieldNames.contains(field.getName())) {
         return super.isAccept(field);
       }
@@ -269,6 +283,12 @@ public class CommonCodeStyleSettings {
 
   public int BLANK_LINES_AFTER_CLASS_HEADER = 0;
   public int BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER = 0;
+
+  /**
+   * In Java-like languages specifies a number of blank lines before class closing brace '}'.
+   */
+  public int BLANK_LINES_BEFORE_CLASS_END = 0;
+
   //public int BLANK_LINES_BETWEEN_CASE_BLOCKS;
 
 
@@ -321,23 +341,7 @@ public class CommonCodeStyleSettings {
   @BraceStyleConstant public int METHOD_BRACE_STYLE = END_OF_LINE;
   @BraceStyleConstant public int LAMBDA_BRACE_STYLE = END_OF_LINE;
 
-  /**
-   * Defines if 'flying geese' style should be used for curly braces formatting, e.g. if we want to format code like
-   * <p/>
-   * <pre>
-   *     class Test {
-   *         {
-   *             System.out.println();
-   *         }
-   *     }
-   * </pre>
-   * to
-   * <pre>
-   *     class Test { {
-   *         System.out.println();
-   *     } }
-   * </pre>
-   */
+  @Deprecated
   public boolean USE_FLYING_GEESE_BRACES = false;
 
   public boolean DO_NOT_INDENT_TOP_LEVEL_CLASS_MEMBERS = false;
@@ -414,7 +418,7 @@ public class CommonCodeStyleSettings {
   public boolean ALIGN_MULTILINE_PARAMETERS_IN_CALLS = false;
   public boolean ALIGN_MULTILINE_RESOURCES = true;
   public boolean ALIGN_MULTILINE_FOR = true;
-  /** @deprecated Use RubyCodeStyleSettings.INDENT_WITH_CASES */
+
   @Deprecated
   public boolean INDENT_WHEN_CASES = true;
 
@@ -843,6 +847,7 @@ public class CommonCodeStyleSettings {
   public int ASSIGNMENT_WRAP = DO_NOT_WRAP;
   public boolean PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE = false;
 
+  @Deprecated
   public int LABELED_STATEMENT_WRAP = WRAP_ALWAYS;
 
   public boolean WRAP_COMMENTS = false;
@@ -969,7 +974,7 @@ public class CommonCodeStyleSettings {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (!(o instanceof IndentOptions)) return false;
 
       IndentOptions that = (IndentOptions)o;
 
@@ -1009,7 +1014,7 @@ public class CommonCodeStyleSettings {
     }
 
     @Nullable
-    FileIndentOptionsProvider getFileIndentOptionsProvider() {
+    public FileIndentOptionsProvider getFileIndentOptionsProvider() {
       return myFileIndentOptionsProvider;
     }
 
@@ -1017,7 +1022,7 @@ public class CommonCodeStyleSettings {
       myFileIndentOptionsProvider = provider;
     }
 
-    void associateWithDocument(@NotNull Document document) {
+    public void associateWithDocument(@NotNull Document document) {
       document.putUserData(INDENT_OPTIONS_KEY, this);
     }
 
@@ -1053,7 +1058,7 @@ public class CommonCodeStyleSettings {
       if (
         ReflectionUtil.comparePublicNonFinalFields(this, obj) &&
         mySoftMargins.equals(((CommonCodeStyleSettings)obj).mySoftMargins) &&
-        myIndentOptions.equals(((CommonCodeStyleSettings)obj).getIndentOptions()) &&
+        Comparing.equal(myIndentOptions, ((CommonCodeStyleSettings)obj).getIndentOptions()) &&
         arrangementSettingsEqual((CommonCodeStyleSettings)obj)
         ) {
         return true;

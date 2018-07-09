@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeBundle;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
@@ -98,8 +97,8 @@ public class JoinLinesHandler extends EditorActionHandler {
     int lineCount = endLine - startLine;
     int line = startLine;
 
-    ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithProgressInDispatchThread(
-      "Join Lines", project, null, IdeBundle.message("action.stop"), indicator -> {
+    ((ApplicationImpl)ApplicationManager.getApplication()).runWriteActionWithCancellableProgressInDispatchThread(
+      "Join Lines", project, null, indicator -> {
         indicator.setIndeterminate(false);
         Ref<Integer> caretRestoreOffset = new Ref<>(-1);
         CodeEditUtil.setNodeReformatStrategy(node -> node.getTextRange().getStartOffset() >= startReformatOffset);
@@ -296,6 +295,11 @@ public class JoinLinesHandler extends EditorActionHandler {
       if (commentElement.getNode().getElementType() == docCommenter.getLineCommentTokenType() &&
         blockCommentPrefix != null && blockCommentSuffix != null && lineCommentPrefix != null) {
         String commentText = StringUtil.trimStart(commentElement.getText(), lineCommentPrefix);
+        String suffix = docCommenter.getBlockCommentSuffix();
+        if (suffix != null && suffix.length() > 1) {
+          String fixedSuffix = suffix.charAt(0)+" "+suffix.substring(1);
+          commentText = commentText.replace(suffix, fixedSuffix);
+        }
         try {
           Project project = commentElement.getProject();
           PsiParserFacade parserFacade = PsiParserFacade.SERVICE.getInstance(project);

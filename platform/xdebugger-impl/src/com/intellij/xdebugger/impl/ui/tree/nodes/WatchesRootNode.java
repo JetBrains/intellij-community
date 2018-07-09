@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.util.ArrayUtil;
@@ -32,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.TreeNode;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -42,18 +29,20 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
   private final XWatchesView myWatchesView;
   private final List<WatchNodeImpl> myChildren;
 
+  @SuppressWarnings("unused")
+  // required for com.google.gct.core
   public WatchesRootNode(@NotNull XDebuggerTree tree,
                          @NotNull XWatchesView watchesView,
                          @NotNull XExpression[] expressions) {
-    this(tree, watchesView, expressions, null, false);
+    this(tree, watchesView, Arrays.asList(expressions), null, false);
   }
 
   public WatchesRootNode(@NotNull XDebuggerTree tree,
                          @NotNull XWatchesView watchesView,
-                         @NotNull XExpression[] expressions,
+                         @NotNull List<XExpression> expressions,
                          @Nullable XStackFrame stackFrame,
                          boolean watchesInVariables) {
-    super(tree, null, new XValueContainer() {
+    super(tree, null, false, new XValueContainer() {
       @Override
       public void computeChildren(@NotNull XCompositeNode node) {
         if (stackFrame != null && watchesInVariables) {
@@ -64,7 +53,6 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
         }
       }
     });
-    setLeaf(false);
     myWatchesView = watchesView;
     myChildren = ContainerUtil.newArrayList();
     for (XExpression watchExpression : expressions) {
@@ -88,6 +76,7 @@ public class WatchesRootNode extends XValueContainerNode<XValueContainer> {
   /**
    * @deprecated use {@link #getWatchChildren()} instead
    */
+  @Deprecated
   @NotNull
   public List<? extends WatchNode> getAllChildren() {
     return getWatchChildren();

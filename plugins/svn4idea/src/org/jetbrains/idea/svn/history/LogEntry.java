@@ -18,17 +18,12 @@ package org.jetbrains.idea.svn.history;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNLogEntry;
-import org.tmatesoft.svn.core.SVNLogEntryPath;
 
 import javax.xml.bind.annotation.*;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author Konstantin Kolosovsky.
- */
 public class LogEntry {
 
   public static final LogEntry EMPTY = new LogEntry.Builder().setRevision(-1).setHasChildren(false).build();
@@ -38,27 +33,7 @@ public class LogEntry {
   private final String myMessage;
   private final String myAuthor;
   @NotNull private final Map<String, LogEntryPath> myChangedPaths;
-  private boolean myHasChildren;
-
-  @Nullable
-  public static LogEntry create(@Nullable SVNLogEntry entry) {
-    LogEntry result = null;
-
-    if (entry != null) {
-      LogEntry.Builder builder = new LogEntry.Builder();
-
-      if (entry.getChangedPaths() != null) {
-        for (SVNLogEntryPath path : entry.getChangedPaths().values()) {
-          builder.addPath(LogEntryPath.create(path));
-        }
-      }
-
-      result = builder.setRevision(entry.getRevision()).setAuthor(entry.getAuthor()).setDate(entry.getDate()).setMessage(entry.getMessage())
-        .setHasChildren(entry.hasChildren()).build();
-    }
-
-    return result;
-  }
+  private final boolean myHasChildren;
 
   public LogEntry(@NotNull LogEntry.Builder builder) {
     myRevision = builder.revision;
@@ -125,10 +100,10 @@ public class LogEntry {
 
     @XmlElementWrapper(name = "paths")
     @XmlElement(name = "path")
-    private List<LogEntryPath.Builder> changedPaths = ContainerUtil.newArrayList();
+    private final List<LogEntryPath.Builder> changedPaths = ContainerUtil.newArrayList();
 
     @XmlElement(name = "logentry")
-    private List<LogEntry.Builder> childEntries = ContainerUtil.newArrayList();
+    private final List<LogEntry.Builder> childEntries = ContainerUtil.newArrayList();
 
     @NotNull
     public List<LogEntry.Builder> getChildEntries() {

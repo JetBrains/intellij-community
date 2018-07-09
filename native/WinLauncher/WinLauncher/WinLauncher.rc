@@ -148,12 +148,11 @@ BEGIN
     IDC_WINLAUNCHER         "WINLAUNCHER"
     IDS_COMMAND_LINE_PROCESSOR_CLASS 
                             "com/intellij/ide/WindowsCommandLineProcessor"
-    IDS_BOOTCLASSPATH_LIBS  "boot.jar"
 END
 
 STRINGTABLE
 BEGIN
-    IDS_VM_OPTIONS          "-Didea.jre.check=false"
+    IDS_VM_OPTIONS          "-Didea.jre.check=false -Dide.native.launcher=true"
     IDS_PROPS_ENV_VAR       "IDEA_PROPERTIES"
     IDS_VM_OPTIONS_ENV_VAR  "IDEA_VM_OPTIONS"
     IDS_ERROR_LAUNCHING_APP "Error Launching IntelliJ Platform"

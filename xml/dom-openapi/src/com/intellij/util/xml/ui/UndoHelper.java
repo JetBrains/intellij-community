@@ -104,7 +104,7 @@ public class UndoHelper {
   }
 
   public final Document[] getDocuments() {
-    return myCurrentDocuments.toArray(new Document[myCurrentDocuments.size()]);
+    return myCurrentDocuments.toArray(Document.EMPTY_ARRAY);
   }
 
 

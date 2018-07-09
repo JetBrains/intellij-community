@@ -22,7 +22,7 @@ import java.util.*
  */
 abstract class TraceExpressionBuilderBase(protected val dsl: Dsl, private val handlerFactory: HandlerFactory)
   : TraceExpressionBuilder {
-  protected val resultVariableName = "myRes"
+  protected val resultVariableName: String = "myRes"
 
   override fun createTraceExpression(chain: StreamChain): String {
     val intermediateHandlers = chain.intermediateCalls.mapIndexedTo(ArrayList(), handlerFactory::getForIntermediate)
@@ -89,7 +89,7 @@ abstract class TraceExpressionBuilderBase(protected val dsl: Dsl, private val ha
   private fun createTimePeekCall(elementType: GenericType): IntermediateStreamCall {
     val lambda = dsl.lambda("x") {
       doReturn(dsl.updateTime())
-    }.toCode()
+    }
 
     return dsl.createPeekCall(elementType, lambda)
   }

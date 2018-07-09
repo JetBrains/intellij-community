@@ -9,7 +9,7 @@ public final class MyClass {
   }
 
   public static void testStream(Person p) {
-    p.name().stream().forEach(System.out::println);
+    p.name().stream().flatMap(Stream::of).forEach(System.out::println);
     p.name().stream().map(String::trim).forEach(System.out::println);
     p.name().stream().flatMap(n -> Stream.of(n.split(""))).forEach(System.out::println);
     p.name().stream().mapToInt(String::length).forEach(System.out::println);

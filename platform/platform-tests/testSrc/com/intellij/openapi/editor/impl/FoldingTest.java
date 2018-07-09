@@ -1,32 +1,22 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.testFramework.TestFileType;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -362,5 +352,50 @@ public class FoldingTest extends AbstractEditorTest {
     FoldRegion region = addCollapsedFoldRegion(5, 10, "...");
     myModel.runBatchFoldingOperation(() -> myModel.clearFoldRegions());
     assertFalse(region.isValid());
+  }
+
+  public void testGroupIsUpdatedOnRegionDisposal() {
+    FoldingGroup group = FoldingGroup.newGroup("test");
+    FoldRegion[] regions = new FoldRegion[2];
+    myModel.runBatchFoldingOperation(() -> {
+      regions[0] = myModel.createFoldRegion(1, 2, "a", group, false);
+      regions[1] = myModel.createFoldRegion(3, 4, "b", group, false);
+    });
+    assertNotNull(regions[0]);
+    assertNotNull(regions[1]);
+    List<FoldRegion> regionsInGroup = myModel.getGroupedRegions(group);
+    assertTrue(regionsInGroup.size() == 2 && regionsInGroup.containsAll(Arrays.asList(regions)));
+    WriteCommandAction.runWriteCommandAction(ourProject, () -> myEditor.getDocument().deleteString(0, 3));
+    assertFalse(regions[0].isValid());
+    assertTrue(regions[1].isValid());
+    List<FoldRegion> newRegionsInGroup = myModel.getGroupedRegions(group);
+    assertEquals(Arrays.asList(regions[1]), newRegionsInGroup);
+  }
+
+  public void testAllRegionsFromInvalidNodeAreRemovedFromGroups() {
+    FoldingGroup group = FoldingGroup.newGroup("test");
+    FoldRegion[] regions = new FoldRegion[3];
+    myModel.runBatchFoldingOperation(() -> {
+      regions[0] = myModel.createFoldRegion(1, 4, "a", group, false);
+      regions[1] = myModel.createFoldRegion(3, 4, "b", group, false);
+      regions[2] = myModel.createFoldRegion(20, 30, "c", group, false);
+    });
+    assertNotNull(regions[0]);
+    assertNotNull(regions[1]);
+    assertNotNull(regions[2]);
+    WriteCommandAction.runWriteCommandAction(ourProject, () -> DocumentUtil.executeInBulk(myEditor.getDocument(), true, () -> {
+      myEditor.getDocument().deleteString(1, 3); // make first two regions belong to the same interval tree node
+      myEditor.getDocument().deleteString(1, 2); // invalidate regions
+    }));
+    assertFalse(regions[0].isValid());
+    assertFalse(regions[1].isValid());
+    assertTrue(regions[2].isValid());
+    List<FoldRegion> regionsInGroup = myModel.getGroupedRegions(regions[2].getGroup());
+    assertEquals(Collections.singletonList(regions[2]), regionsInGroup);
+  }
+
+  public void testAddingEmptyRegion() {
+    FoldRegion region = addFoldRegion(0, 0, ".");
+    assertNull(region);
   }
 }

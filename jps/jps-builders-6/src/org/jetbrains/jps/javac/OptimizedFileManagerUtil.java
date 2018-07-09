@@ -22,7 +22,6 @@ import java.lang.reflect.Method;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 14-Dec-16
  */
 public class OptimizedFileManagerUtil {
 

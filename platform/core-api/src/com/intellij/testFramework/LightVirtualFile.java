@@ -70,7 +70,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
     setCharset(charset);
   }
 
-  public LightVirtualFile(@NotNull String name, final Language language, @NotNull CharSequence text) {
+  public LightVirtualFile(@NotNull String name, @NotNull Language language, @NotNull CharSequence text) {
     super(name, null, LocalTimeCounter.currentTime());
     myContent = text;
     setLanguage(language);

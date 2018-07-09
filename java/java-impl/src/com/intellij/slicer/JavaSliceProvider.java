@@ -63,7 +63,7 @@ public class JavaSliceProvider implements SliceLanguageSupportProvider, SliceUsa
   @Nullable
   @Override
   public PsiElement getExpressionAtCaret(PsiElement atCaret, boolean dataFlowToThis) {
-    PsiElement element = PsiTreeUtil.getParentOfType(atCaret, PsiExpression.class, PsiVariable.class);
+    PsiElement element = PsiTreeUtil.getParentOfType(atCaret, PsiExpression.class, PsiVariable.class, PsiMethod.class);
     if (dataFlowToThis && element instanceof PsiLiteralExpression) return null;
     return element;
   }

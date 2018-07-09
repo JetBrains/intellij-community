@@ -29,7 +29,7 @@ public abstract class SyntheticFileSystemItem extends PsiElementBase implements 
     myManager = PsiManager.getInstance(myProject);
   }
 
-  protected static boolean processFileSystemItem(PsiElementProcessor<PsiFileSystemItem> processor, PsiFileSystemItem element) {
+  protected static boolean processFileSystemItem(PsiElementProcessor<? super PsiFileSystemItem> processor, PsiFileSystemItem element) {
     if (processor instanceof PsiFileSystemItemProcessor && !((PsiFileSystemItemProcessor)processor).acceptItem(element.getName(), true)) {
       return true;
     }
@@ -106,6 +106,10 @@ public abstract class SyntheticFileSystemItem extends PsiElementBase implements 
   public void checkSetName(final String name) throws IncorrectOperationException {
     throw new IncorrectOperationException("Frameworks cannot be renamed");
   }
+
+  @Override
+  @NotNull @NonNls
+  public abstract String getName();
 
   @Override
   public PsiElement setName(@NonNls @NotNull final String name) throws IncorrectOperationException {

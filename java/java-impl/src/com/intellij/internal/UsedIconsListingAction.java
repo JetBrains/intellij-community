@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -122,7 +108,7 @@ public class UsedIconsListingAction extends AnAction {
 
     final List<XmlAttribute> xmlAttributes = new ArrayList<>();
 
-    PsiSearchHelper.SERVICE.getInstance(project).processAllFilesWithWordInText(
+    PsiSearchHelper.getInstance(project).processAllFilesWithWordInText(
       "icon",
       new DelegatingGlobalSearchScope(GlobalSearchScope.projectScope(project)) {
         @Override
@@ -196,12 +182,9 @@ public class UsedIconsListingAction extends AnAction {
       if (replacement != null) {
         final PsiFile file = att.getContainingFile();
         if (useScope.contains(file.getVirtualFile())) {
-          new WriteCommandAction<Void>(project, file) {
-            @Override
-            protected void run(@NotNull Result<Void> result) throws Throwable {
-              att.setValue(replacement);
-            }
-          }.execute();
+          WriteCommandAction.writeCommandAction(project, file).run(() -> {
+            att.setValue(replacement);
+          });
         }
       }
     }
@@ -216,20 +199,17 @@ public class UsedIconsListingAction extends AnAction {
 
           final PsiFile file = call.getContainingFile();
           if (useScope.contains(file.getVirtualFile())) {
-            new WriteCommandAction(project, file) {
-              @Override
-              protected void run(@NotNull Result result) throws Throwable {
-                if (call instanceof PsiLiteralExpression) {
-                  call.replace(factory.createExpressionFromText("\"" + replacement + "\"", call));
-                }
-                else {
-                  JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
-                  String packageName = replacement.startsWith("AllIcons.") ? "com.intellij.icons." : "icons.";
-                  PsiElement expr = factory.createExpressionFromText(packageName + replacement, call);
-                  styleManager.shortenClassReferences(call.replace(expr));
-                }
+            WriteCommandAction.writeCommandAction(project, file).run(() -> {
+              if (call instanceof PsiLiteralExpression) {
+                call.replace(factory.createExpressionFromText("\"" + replacement + "\"", call));
               }
-            }.execute();
+              else {
+                JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
+                String packageName = replacement.startsWith("AllIcons.") ? "com.intellij.icons." : "icons.";
+                PsiElement expr = factory.createExpressionFromText(packageName + replacement, call);
+                styleManager.shortenClassReferences(call.replace(expr));
+              }
+            });
           }
         }
       }
@@ -245,16 +225,13 @@ public class UsedIconsListingAction extends AnAction {
 
           PsiFile file = annotation.getContainingFile();
           if (useScope.contains(file.getVirtualFile())) {
-            new WriteCommandAction(project, file) {
-              @Override
-              protected void run(@NotNull Result result) throws Throwable {
-                annotation.getNode();
-                annotation.setDeclaredAttributeValue(
-                  "icon",
-                  JavaPsiFacade.getInstance(annotation.getProject()).getElementFactory()
-                    .createAnnotationFromText("@A(\"" + replacement + "\")", null).findDeclaredAttributeValue(null));
-              }
-            }.execute();
+            WriteCommandAction.writeCommandAction(project, file).run(() -> {
+              annotation.getNode();
+              annotation.setDeclaredAttributeValue(
+                "icon",
+                JavaPsiFacade.getInstance(annotation.getProject()).getElementFactory()
+                             .createAnnotationFromText("@A(\"" + replacement + "\")", null).findDeclaredAttributeValue(null));
+            });
           }
         }
       }

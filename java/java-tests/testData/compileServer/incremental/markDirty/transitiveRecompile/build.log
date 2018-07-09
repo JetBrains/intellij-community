@@ -5,12 +5,6 @@ Compiling files:
 lib/src/y/Lib.java
 End of files
 Cleaning output files:
-out/production/lib/y/Lib.class
-End of files
-Compiling files:
-lib/src/y/Lib.java
-End of files
-Cleaning output files:
 out/test/lib/LibTest.class
 End of files
 Compiling files:

@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Bas Leijdekkers
+ * Copyright 2009-2018 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,17 @@
  */
 package com.siyeh.ipp.opassign;
 
-import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ipp.base.MutablyNamedIntention;
-import com.siyeh.ipp.base.PsiElementPredicate;
-import com.siyeh.IntentionPowerPackBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
+import com.intellij.psi.util.PsiUtil;
+import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ipp.base.MutablyNamedIntention;
+import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceAssignmentWithPostfixExpressionIntention
-  extends MutablyNamedIntention {
+public class ReplaceAssignmentWithPostfixExpressionIntention extends MutablyNamedIntention {
 
   @NotNull
   @Override
@@ -38,7 +38,7 @@ public class ReplaceAssignmentWithPostfixExpressionIntention
     final PsiAssignmentExpression assignmentExpression =
       (PsiAssignmentExpression)element;
     final PsiBinaryExpression rhs =
-      (PsiBinaryExpression)assignmentExpression.getRExpression();
+      (PsiBinaryExpression)PsiUtil.skipParenthesizedExprDown(assignmentExpression.getRExpression());
     final PsiExpression lhs = assignmentExpression.getLExpression();
     final String lhsText = lhs.getText();
     final IElementType tokenType;
@@ -61,23 +61,23 @@ public class ReplaceAssignmentWithPostfixExpressionIntention
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element) {
     final PsiAssignmentExpression assignmentExpression =
       (PsiAssignmentExpression)element;
     final PsiExpression lhs = assignmentExpression.getLExpression();
-    final String lhsText = lhs.getText();
-    final PsiExpression rhs = assignmentExpression.getRExpression();
+    CommentTracker commentTracker = new CommentTracker();
+    final String lhsText = commentTracker.text(lhs);
+    final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(assignmentExpression.getRExpression());
     if (!(rhs instanceof PsiBinaryExpression)) {
       return;
     }
     final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)rhs;
     final IElementType tokenType = binaryExpression.getOperationTokenType();
     if (JavaTokenType.PLUS.equals(tokenType)) {
-      PsiReplacementUtil.replaceExpression(assignmentExpression, lhsText + "++");
+      PsiReplacementUtil.replaceExpression(assignmentExpression, lhsText + "++", commentTracker);
     }
     else if (JavaTokenType.MINUS.equals(tokenType)) {
-      PsiReplacementUtil.replaceExpression(assignmentExpression, lhsText + "--");
+      PsiReplacementUtil.replaceExpression(assignmentExpression, lhsText + "--", commentTracker);
     }
   }
 }

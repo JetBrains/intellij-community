@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.xdebugger;
 
@@ -25,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 import java.util.concurrent.Semaphore;
+import java.util.function.BiFunction;
 
 public class XTestContainer<T> {
   private final List<T> myChildren = new SmartList<>();
@@ -52,12 +41,12 @@ public class XTestContainer<T> {
     myFinished.release();
   }
 
-  public boolean isObsolete() {
-    return false;
+  public Pair<List<T>, String> waitFor(long timeoutMs) {
+    return waitFor(timeoutMs, (semaphore, timeout) -> XDebuggerTestUtil.waitFor(myFinished, timeout));
   }
 
-  public Pair<List<T>, String> waitFor(long timeoutMs) {
-    if (!XDebuggerTestUtil.waitFor(myFinished, timeoutMs)) {
+  public Pair<List<T>, String> waitFor(long timeoutMs, BiFunction<Semaphore, Long, Boolean> waitFunction) {
+    if (!waitFunction.apply(myFinished, timeoutMs)) {
       throw new AssertionError("Waiting timed out");
     }
 

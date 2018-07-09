@@ -17,6 +17,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -24,10 +25,11 @@ import java.util.Set;
  * Possible places in the IDEA user interface where an action can appear.
  */
 
-@SuppressWarnings({"HardCodedStringLiteral"})
+@SuppressWarnings("HardCodedStringLiteral")
 public abstract class ActionPlaces {
   public static final String UNKNOWN = "unknown";
   public static final String TOOLBAR = "toolbar";
+  public static final String POPUP = "popup";
 
   /**
    * consider to use {@link #isMainMenuOrActionSearch(String)} instead
@@ -47,7 +49,6 @@ public abstract class ActionPlaces {
   public static final String PROJECT_VIEW_TOOLBAR = "ProjectViewToolbar";
 
   public static final String FAVORITES_VIEW_POPUP = "FavoritesPopup";
-  public static final String FAVORITES_VIEW_TOOLBAR = "FavoritesViewToolbar";
 
   public static final String STATUS_BAR_PLACE = "StatusBarPlace";
 
@@ -56,7 +57,7 @@ public abstract class ActionPlaces {
 
   public static final String TESTTREE_VIEW_POPUP = "TestTreeViewPopup";
   public static final String TESTTREE_VIEW_TOOLBAR = "TestTreeViewToolbar";
-  public static final String TESTSTATISTICS_VIEW_POPUP = "TestStatisticsViewPopup";
+  private static final String TESTSTATISTICS_VIEW_POPUP = "TestStatisticsViewPopup";
 
   public static final String TYPE_HIERARCHY_VIEW_POPUP = "TypeHierarchyViewPopup";
   public static final String TYPE_HIERARCHY_VIEW_TOOLBAR = "TypeHierarchyViewToolbar";
@@ -92,13 +93,9 @@ public abstract class ActionPlaces {
   public static final String JAVADOC_INPLACE_SETTINGS = "JavadocInplaceSettings";
   public static final String FILEHISTORY_VIEW_TOOLBAR = "FileHistoryViewToolbar";
   public static final String UPDATE_POPUP = "UpdatePopup";
-  public static final String COMBO_PAGER = "ComboBoxPager";
   public static final String FILEVIEW_POPUP = "FileViewPopup";
-  public static final String FILE_VIEW = "FileViewActionToolbal";
   public static final String CHECKOUT_POPUP = "CheckoutPopup";
-  public static final String FILE_HISTORY_TOOLBAR = "FileHistoryToolbar";
   public static final String LVCS_DIRECTORY_HISTORY_POPUP = "LvcsHistoryPopup";
-  public static final String LVCS_DIRECTORY_HISTORY_TOOLBAR = "LvcsDirectoryHistoryToolbar";
   public static final String GUI_DESIGNER_EDITOR_POPUP = "GuiDesigner.EditorPopup";
   public static final String GUI_DESIGNER_COMPONENT_TREE_POPUP = "GuiDesigner.ComponentTreePopup";
   public static final String GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP = "GuiDesigner.PropertyInspectorPopup";
@@ -122,7 +119,6 @@ public abstract class ActionPlaces {
   public static final String DOCK_MENU = "DockMenu";
   public static final String PHING_MESSAGES_TOOLBAR = "PhingMessagesToolbar";
 
-  public static final String CHANGES_LOCAL_DIFF_SETTINGS = "CHANGES_LOCAL_DIFF_SETTINGS";
   public static final String DIFF_TOOLBAR = "DiffToolbar";
 
   public static final String ANALYZE_STACKTRACE_PANEL_TOOLBAR = "ANALYZE_STACKTRACE_PANEL_TOOLBAR";
@@ -133,28 +129,14 @@ public abstract class ActionPlaces {
 
   public static final String RUN_DASHBOARD_POPUP = "RunDashboardPopup";
 
-  private static final Set<String> ourToolbarPlaces = ContainerUtil.newHashSet(
-    EDITOR_TOOLBAR, PROJECT_VIEW_TOOLBAR, TESTTREE_VIEW_TOOLBAR, MAIN_TOOLBAR, TOOLBAR, RUNNER_TOOLBAR,
-    ANT_EXPLORER_TOOLBAR, ANT_MESSAGES_TOOLBAR, COMPILER_MESSAGES_TOOLBAR, TODO_VIEW_TOOLBAR, STRUCTURE_VIEW_TOOLBAR, USAGE_VIEW_TOOLBAR,
-    DEBUGGER_TOOLBAR, CALL_HIERARCHY_VIEW_TOOLBAR, METHOD_HIERARCHY_VIEW_TOOLBAR, TYPE_HIERARCHY_VIEW_TOOLBAR, JAVADOC_TOOLBAR,
-    FILE_HISTORY_TOOLBAR, FILEHISTORY_VIEW_TOOLBAR, LVCS_DIRECTORY_HISTORY_TOOLBAR, CHANGES_VIEW_TOOLBAR, PHING_EXPLORER_TOOLBAR,
-    PHING_MESSAGES_TOOLBAR, ANALYZE_STACKTRACE_PANEL_TOOLBAR, DIFF_TOOLBAR, NAVIGATION_BAR_TOOLBAR
-  );
-
-
-  /**
-   * @deprecated use {@link AnActionEvent#isFromActionToolbar()}
-   */
-  public static boolean isToolbarPlace(@NotNull String place) {
-    return ourToolbarPlaces.contains(place);
-  }
+  public static final String TOUCHBAR_GENERAL = "TouchBarGeneral";
 
   public static boolean isMainMenuOrActionSearch(String place) {
     return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place);
   }
 
   private static final Set<String> ourPopupPlaces = ContainerUtil.newHashSet(
-    EDITOR_POPUP, EDITOR_TAB_POPUP, COMMANDER_POPUP,
+    POPUP, EDITOR_POPUP, EDITOR_TAB_POPUP, COMMANDER_POPUP,
     PROJECT_VIEW_POPUP, FAVORITES_VIEW_POPUP, SCOPE_VIEW_POPUP, TESTTREE_VIEW_POPUP, TESTSTATISTICS_VIEW_POPUP, TYPE_HIERARCHY_VIEW_POPUP,
     METHOD_HIERARCHY_VIEW_POPUP, CALL_HIERARCHY_VIEW_POPUP, J2EE_ATTRIBUTES_VIEW_POPUP, J2EE_VIEW_POPUP, USAGE_VIEW_POPUP,
     STRUCTURE_VIEW_POPUP, TODO_VIEW_POPUP, COMPILER_MESSAGES_POPUP, ANT_MESSAGES_POPUP, ANT_EXPLORER_POPUP, UPDATE_POPUP,
@@ -165,7 +147,14 @@ public abstract class ActionPlaces {
     V8_CPU_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, RUN_DASHBOARD_POPUP
   );
 
+  private static final String POPUP_PREFIX = "popup@";
+
   public static boolean isPopupPlace(@NotNull String place) {
-    return ourPopupPlaces.contains(place);
+    return ourPopupPlaces.contains(place) || place.startsWith(POPUP_PREFIX);
+  }
+
+  @NotNull
+  public static String getActionGroupPopupPlace(@Nullable String actionId) {
+    return actionId == null ? POPUP : POPUP_PREFIX + actionId;
   }
 }

@@ -68,16 +68,7 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
     final FileType currentFileType = myAnnotation.getFile().getFileType();
     FilePath filePath =
       (revision instanceof VcsFileRevisionEx ? ((VcsFileRevisionEx)revision).getPath() : VcsUtil.getFilePath(myAnnotation.getFile()));
-    return new VcsVirtualFile(filePath.getPath(), revision, VcsFileSystem.getInstance()) {
-      @NotNull
-      @Override
-      public FileType getFileType() {
-        FileType type = super.getFileType();
-        if (!type.isBinary()) return type;
-        if (!currentFileType.isBinary()) return currentFileType;
-        return PlainTextFileType.INSTANCE;
-      }
-    };
+    return new MyVcsVirtualFile(filePath, revision, currentFileType);
   }
 
   @Nullable
@@ -101,5 +92,23 @@ abstract class AnnotateRevisionAction extends AnnotateRevisionActionBase impleme
   @Override
   public void consume(Integer integer) {
     currentLine = integer;
+  }
+
+  private static class MyVcsVirtualFile extends VcsVirtualFile {
+    @NotNull private final FileType myCurrentFileType;
+
+    public MyVcsVirtualFile(@NotNull FilePath filePath, @NotNull VcsFileRevision revision, @NotNull FileType currentFileType) {
+      super(filePath.getPath(), revision, VcsFileSystem.getInstance());
+      myCurrentFileType = currentFileType;
+    }
+
+    @NotNull
+    @Override
+    public FileType getFileType() {
+      FileType type = super.getFileType();
+      if (!type.isBinary()) return type;
+      if (!myCurrentFileType.isBinary()) return myCurrentFileType;
+      return PlainTextFileType.INSTANCE;
+    }
   }
 }

@@ -20,6 +20,6 @@ UFile (package = ) [public class Labeled {...]
                                     USimpleNameReferenceExpression (identifier = first) [first] = (var first = 1)
                                     ULiteralExpression (value = 0) [0] = 0
                                 UBreakExpression (label = labeled) [break@labeled] = Nothing(break)
-                                UastEmptyExpression [UastEmptyExpression] = NON-EVALUATED
+                                UastEmptyExpression [UastEmptyExpression] = Undetermined
                 UReturnExpression [return second] = Nothing
                     USimpleNameReferenceExpression (identifier = second) [second] = (var second = 3)

@@ -23,6 +23,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -30,6 +31,8 @@ import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
 
 /**
  * Allows to retrieve files and Java classes, methods and fields in a project by non-qualified names.
@@ -87,11 +90,11 @@ public abstract class PsiShortNamesCache {
   @NotNull
   public abstract String[] getAllClassNames();
 
-  public boolean processAllClassNames(Processor<String> processor) {
+  public boolean processAllClassNames(@NotNull Processor<String> processor) {
     return ContainerUtil.process(getAllClassNames(), processor);
   }
 
-  public boolean processAllClassNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+  public boolean processAllClassNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     return ContainerUtil.process(getAllClassNames(), processor);
   }
 
@@ -100,8 +103,12 @@ public abstract class PsiShortNamesCache {
    * to the specified set.
    *
    * @param dest the set to add the names to.
+   * @see #processAllClassNames
    */
-  public abstract void getAllClassNames(@NotNull HashSet<String> dest);
+  @Deprecated
+  public void getAllClassNames(@NotNull HashSet<String> dest) {
+    processAllClassNames(new CommonProcessors.CollectProcessor<>(dest));
+  }
 
   /**
    * Returns the list of all methods with the specified name in the specified scope.
@@ -125,11 +132,11 @@ public abstract class PsiShortNamesCache {
     return processMethodsWithName(name, scope, method -> processor.process(method));
   }
 
-  public boolean processAllMethodNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+  public boolean processAllMethodNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     return ContainerUtil.process(getAllMethodNames(), processor);
   }
 
-  public boolean processAllFieldNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+  public boolean processAllFieldNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     return ContainerUtil.process(getAllFieldNames(), processor);
   }
 
@@ -147,8 +154,12 @@ public abstract class PsiShortNamesCache {
    * to the specified set.
    *
    * @param set the set to add the names to.
+   * @see #processAllMethodNames
    */
-  public abstract void getAllMethodNames(@NotNull HashSet<String> set);
+  @Deprecated
+  public void getAllMethodNames(@NotNull HashSet<String> set) {
+    Collections.addAll(set, getAllMethodNames());
+  }
 
   /**
    * Returns the list of all fields with the specified name in the specified scope.
@@ -174,8 +185,12 @@ public abstract class PsiShortNamesCache {
    * to the specified set.
    *
    * @param set the set to add the names to.
+   * @see #processAllFieldNames
    */
-  public abstract void getAllFieldNames(@NotNull HashSet<String> set);
+  @Deprecated
+  public void getAllFieldNames(@NotNull HashSet<String> set) {
+    Collections.addAll(set, getAllFieldNames());
+  }
 
   public boolean processFieldsWithName(@NotNull String name,
                                        @NotNull Processor<? super PsiField> processor,

@@ -36,5 +36,5 @@ class PyImplementMethodsHandler : LanguageCodeInsightActionHandler {
     }
   }
 
-  override fun startInWriteAction() = false
+  override fun startInWriteAction(): Boolean = false
 }

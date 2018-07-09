@@ -47,6 +47,7 @@ public class LibrarySourceItem extends PackagingSourceItem {
     myLibrary = library;
   }
 
+  @NotNull
   @Override
   public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new LibrarySourceItemPresentation(myLibrary, context);

@@ -3,8 +3,7 @@ package org.jetbrains.plugins.groovy.util;
 import com.intellij.codeInsight.TailType;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
 /**
  * @author Sergey Evdokimov
@@ -26,7 +25,7 @@ public class FieldInitializerTailTypes extends TailType {
 
   @Override
   public int processTail(Editor editor, int tailOffset) {
-    CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(editor.getProject());
+    CommonCodeStyleSettings styleSettings = getLocalCodeStyleSettings(editor, tailOffset);
     Document document = editor.getDocument();
     CharSequence chars = document.getCharsSequence();
     int textLength = chars.length();

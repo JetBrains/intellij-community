@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-class CompositeActiveComponent implements ActiveComponent {
+public class CompositeActiveComponent implements ActiveComponent {
   private final ActiveComponent[] myComponents;
   private final JPanel myComponent;
 

@@ -480,7 +480,7 @@ public class ScrollingUtil {
     if (size == 0) return;
     int index = selectionModel.getLeadSelectionIndex();
     int indexToSelect = index + direction;
-    if (indexToSelect < 0 || indexToSelect == size) {
+    if (indexToSelect < 0 || indexToSelect >= size) {
       if (cycleScrolling) {
         indexToSelect = indexToSelect < 0 ? size - 1 : 0;
       } else {
@@ -649,7 +649,7 @@ public class ScrollingUtil {
   static class MoveAction extends AbstractAction {
     private final String myId;
     private final JComponent myComponent;
-    private Boolean myCycleScrolling;
+    private final Boolean myCycleScrolling;
 
     public MoveAction(String id, JComponent component, Boolean cycleScrolling) {
       myId = id;

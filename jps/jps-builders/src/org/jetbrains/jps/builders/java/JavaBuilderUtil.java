@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.builders.java;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,6 +10,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetIndex;
@@ -41,6 +28,8 @@ import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JavaModuleIndex;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
@@ -83,14 +72,15 @@ public class JavaBuilderUtil {
   public static void registerSuccessfullyCompiled(CompileContext context, File file) {
     registerSuccessfullyCompiled(context, Collections.singleton(file));
   }
-  
+
   public static void registerSuccessfullyCompiled(CompileContext context, Collection<File> files) {
     getFilesContainer(context, SUCCESSFULLY_COMPILED_FILES_KEY).addAll(files);
   }
 
   /**
    * The files accepted by {@code filter} won't be marked dirty by {@link #updateMappings} method when this compilation round finishes.
-   * Use this method to register a filter accepting files of your language if you compute and mark as dirty affected files yourself in your builder.
+   * Call this method from {@link ModuleLevelBuilder#build} to register a filter accepting files of your language if you compute and mark
+   * as dirty affected files yourself.
    */
   public static void registerFilterToSkipMarkingAffectedFileDirty(@NotNull CompileContext context, @NotNull FileFilter filter) {
     List<FileFilter> filters = SKIP_MARKING_DIRTY_FILTERS_KEY.get(context);
@@ -115,13 +105,13 @@ public class JavaBuilderUtil {
     CompileContext context, DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder, ModuleChunk chunk) throws IOException {
 
     Mappings delta = null;
-    
+
     final Pair<Mappings, Callbacks.Backend> pair = MAPPINGS_DELTA_KEY.get(context);
     if (pair != null) {
       MAPPINGS_DELTA_KEY.set(context, null);
       delta = pair.getFirst();
     }
-    
+
     if (delta == null) {
       return false;
     }
@@ -130,8 +120,12 @@ public class JavaBuilderUtil {
     final Set<File> successfullyCompiled = getFilesContainer(context, SUCCESSFULLY_COMPILED_FILES_KEY);
     SUCCESSFULLY_COMPILED_FILES_KEY.set(context, null);
     FileFilter filter = createOrFilter(SKIP_MARKING_DIRTY_FILTERS_KEY.get(context));
-    SKIP_MARKING_DIRTY_FILTERS_KEY.set(context, null);
     return updateMappings(context, delta, dirtyFilesHolder, chunk, compiledFiles, successfullyCompiled, CompilationRound.NEXT, filter);
+  }
+
+  public static void clearDataOnRoundCompletion(CompileContext context) {
+    //during next compilation round ModuleLevelBuilders may register filters again so we need to remove old ones to avoid duplicating instances
+    SKIP_MARKING_DIRTY_FILTERS_KEY.set(context, null);
   }
 
   /**
@@ -140,6 +134,7 @@ public class JavaBuilderUtil {
    * {@link #registerFilesToCompile(CompileContext, Collection)}, or
    * {@link #registerSuccessfullyCompiled(CompileContext, Collection)} instead.
    */
+  @Deprecated
   public static boolean updateMappings(CompileContext context,
                                        final Mappings delta,
                                        DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
@@ -266,8 +261,21 @@ public class JavaBuilderUtil {
                   FSOperations.markDirtyIfNotDeleted(context, markDirtyRound, file);
                 }
               }
+              
+              if (targetsToMark == null || !targetsToMark.contains(chunk.representativeTarget())) {
+                // additionally check whether annotation-processor generated files from this chunk are affected
+                if (containsProcessorGeneratedFiles(chunk, newlyAffectedFiles)) {
+                  // If among affected files are those processor-generated, then we need to re-generate them before compiling.
+                  // To achieve this, we need to recompile the whole chunk which will cause processors to re-generated these affected files
+                  if (targetsToMark == null) {
+                    targetsToMark = new THashSet<>(); // lazy init
+                  }
+                  targetsToMark.addAll(chunk.getTargets());
+                }
+              }
+
+              boolean currentChunkAfected = false;
               if (targetsToMark != null) {
-                boolean currentChunkAfected = false;
                 for (ModuleBuildTarget target : targetsToMark) {
                   if (chunk.getTargets().contains(target)) {
                     currentChunkAfected = true;
@@ -286,7 +294,7 @@ public class JavaBuilderUtil {
                   FSOperations.markDirty(context, markDirtyRound, chunk, null);
                 }
               }
-              additionalPassRequired = compilingIncrementally && chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
+              additionalPassRequired = compilingIncrementally && (currentChunkAfected || moduleBasedFilter.containsFilesFromCurrentTargetChunk(newlyAffectedFiles));
             }
           }
           else {
@@ -345,6 +353,26 @@ public class JavaBuilderUtil {
     }
   }
 
+  private static boolean containsProcessorGeneratedFiles(ModuleChunk chunk, Collection<File> files) {
+    final JpsModule module = chunk.representativeTarget().getModule();
+    final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getCompilerConfiguration(module.getProject());
+    assert compilerConfig != null;
+    final ProcessorConfigProfile profile = compilerConfig.getAnnotationProcessingProfile(module);
+    if (!profile.isEnabled()) {
+      return false;
+    }
+    final File outputDir = ProjectPaths.getAnnotationProcessorGeneratedSourcesOutputDir(module, chunk.containsTests(), profile);
+    if (outputDir == null) {
+      return false;
+    }
+    for (File file : files) {
+      if (FileUtil.isAncestor(outputDir, file, true)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   @Nullable
   public static File findModuleInfoFile(CompileContext context, ModuleBuildTarget target) {
     return getJavaModuleIndex(context).getModuleInfoFile(target.getModule(), target.isTests());
@@ -352,8 +380,7 @@ public class JavaBuilderUtil {
 
   private static JavaModuleIndex getJavaModuleIndex(CompileContext context) {
     JpsProject project = context.getProjectDescriptor().getProject();
-    File storageRoot = context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot();
-    return JpsJavaExtensionService.getInstance().getJavaModuleIndex(project, storageRoot);
+    return JpsJavaExtensionService.getInstance().getJavaModuleIndex(project);
   }
 
   private static FileFilter createOrFilter(final List<FileFilter> filters) {
@@ -369,13 +396,11 @@ public class JavaBuilderUtil {
   }
 
   private static void removeFilesAcceptedByFilter(@NotNull Set<File> files, @Nullable FileFilter filter) {
-    if (filter == null) return;
-
-    Iterator<File> iterator = files.iterator();
-    while (iterator.hasNext()) {
-      File next = iterator.next();
-      if (filter.accept(next)) {
-        iterator.remove();
+    if (filter != null) {
+      for (final Iterator<File> it = files.iterator(); it.hasNext();) {
+        if (filter.accept(it.next())) {
+          it.remove();
+        }
       }
     }
   }
@@ -391,36 +416,19 @@ public class JavaBuilderUtil {
     return scope.isBuildIncrementally(JavaModuleBuildTargetType.PRODUCTION) || scope.isBuildIncrementally(JavaModuleBuildTargetType.TEST);
   }
 
-  private static List<Pair<File, JpsModule>> checkAffectedFilesInCorrectModules(CompileContext context,
-                                                                             Collection<File> affected,
-                                                                             ModulesBasedFileFilter moduleBasedFilter) {
+  private static List<Pair<File, JpsModule>> checkAffectedFilesInCorrectModules(CompileContext context, Collection<File> affected, ModulesBasedFileFilter moduleBasedFilter) {
     if (affected.isEmpty()) {
       return Collections.emptyList();
     }
     final List<Pair<File, JpsModule>> result = new ArrayList<>();
+    final BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
     for (File file : affected) {
       if (!moduleBasedFilter.accept(file)) {
-        final JavaSourceRootDescriptor moduleAndRoot = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context,
-                                                                                                                                 file);
+        final JavaSourceRootDescriptor moduleAndRoot = rootIndex.findJavaRootDescriptor(context, file);
         result.add(Pair.create(file, moduleAndRoot != null ? moduleAndRoot.target.getModule() : null));
       }
     }
     return result;
-  }
-
-  private static boolean chunkContainsAffectedFiles(CompileContext context, ModuleChunk chunk, final Set<File> affected)
-    throws IOException {
-    final Set<JpsModule> chunkModules = chunk.getModules();
-    if (!chunkModules.isEmpty()) {
-      for (File file : affected) {
-        final JavaSourceRootDescriptor moduleAndRoot = context.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(context,
-                                                                                                                                 file);
-        if (moduleAndRoot != null && chunkModules.contains(moduleAndRoot.target.getModule())) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   @NotNull
@@ -524,6 +532,15 @@ public class JavaBuilderUtil {
     public boolean belongsToCurrentTargetChunk(File file) {
       final JavaSourceRootDescriptor rd = myBuildRootIndex.findJavaRootDescriptor(myContext, file);
       return rd != null && myChunkTargets.contains(rd.target);
+    }
+
+    public boolean containsFilesFromCurrentTargetChunk(Collection<File> files) {
+      for (File file : files) {
+        if (belongsToCurrentTargetChunk(file)) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 

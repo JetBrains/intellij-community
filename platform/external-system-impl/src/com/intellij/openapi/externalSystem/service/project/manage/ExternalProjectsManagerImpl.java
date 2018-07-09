@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.Disposable;
@@ -37,8 +23,8 @@ import com.intellij.openapi.externalSystem.view.ExternalProjectsViewImpl;
 import com.intellij.openapi.externalSystem.view.ExternalProjectsViewState;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectFileStoreOptionManager;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.util.Disposer;
@@ -61,8 +47,8 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.TASK;
  * @author Vladislav.Soroka
  * @since 10/23/2014
  */
-@State(name = "ExternalProjectsManager", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
-public class ExternalProjectsManagerImpl implements ExternalProjectsManager, PersistentStateComponent<ExternalProjectsState>, Disposable, ProjectFileStoreOptionManager {
+@State(name = "ExternalProjectsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+public class ExternalProjectsManagerImpl implements ExternalProjectsManager, PersistentStateComponent<ExternalProjectsState>, Disposable {
   private static final Logger LOG = Logger.getInstance(ExternalProjectsManager.class);
 
   private final AtomicBoolean isInitializationFinished = new AtomicBoolean();
@@ -93,13 +79,16 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
     return (ExternalProjectsManagerImpl)service;
   }
 
-  @Override
-  public boolean isStoredExternally() {
-    return myState.storeExternally;
+  @Nullable
+  public static Project setupCreatedProject(@Nullable Project project) {
+    if (project != null) {
+      getInstance(project).setStoreExternally(true);
+    }
+    return project;
   }
 
   public void setStoreExternally(boolean value) {
-    myState.storeExternally = value;
+    ExternalStorageConfigurationManager.getInstance(myProject).setEnabled(value);
     // force re-save
     try {
       for (Module module : ModuleManager.getInstance(myProject).getModules()) {
@@ -136,7 +125,6 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
   public void registerView(@NotNull ExternalProjectsView externalProjectsView) {
     assert getExternalProjectsView(externalProjectsView.getSystemId()) == null;
 
-    init();
     myProjectsViews.add(externalProjectsView);
     if (externalProjectsView instanceof ExternalProjectsViewImpl) {
       ExternalProjectsViewImpl view = (ExternalProjectsViewImpl)externalProjectsView;
@@ -298,8 +286,13 @@ public class ExternalProjectsManagerImpl implements ExternalProjectsManager, Per
   }
 
   @Override
-  public void loadState(ExternalProjectsState state) {
-    myState = state == null ? new ExternalProjectsState() : state;
+  public void loadState(@NotNull ExternalProjectsState state) {
+    myState = state;
+    // migrate to new
+    if (myState.storeExternally) {
+      myState.storeExternally = false;
+      ExternalStorageConfigurationManager.getInstance(myProject).setEnabled(true);
+    }
   }
 
   @Override

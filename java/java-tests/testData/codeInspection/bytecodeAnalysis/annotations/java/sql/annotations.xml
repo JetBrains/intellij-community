@@ -142,16 +142,6 @@
     <item name='java.sql.DriverManager boolean isDriverAllowed(java.sql.Driver, java.lang.ClassLoader) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
-    <item name='java.sql.DriverManager int getLoginTimeout()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.sql.DriverManager java.io.PrintStream getLogStream()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
     <item name='java.sql.DriverManager java.sql.Connection getConnection(java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -204,12 +194,10 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.sql.SQLException java.sql.SQLException getNextException()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
     <item name='java.sql.SQLException java.util.Iterator&lt;java.lang.Throwable&gt; iterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.sql.Time Time(long)'>
@@ -244,6 +232,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.sql.Time java.sql.Time valueOf(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.sql.Time java.sql.Time valueOf(java.lang.String) 0'>
@@ -300,6 +291,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.sql.Timestamp java.sql.Timestamp valueOf(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.sql.Timestamp java.sql.Timestamp valueOf(java.lang.String) 0'>

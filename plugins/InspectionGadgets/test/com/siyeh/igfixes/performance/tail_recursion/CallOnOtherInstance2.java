@@ -7,7 +7,9 @@ class CallOnOtherInstance2 {
     if (!duplicate) {
       return something;
     } else {
-      return getOriginal().<caret>foo();
+      return
+        //comment
+        getOriginal().<caret>foo();
     }
   }
 

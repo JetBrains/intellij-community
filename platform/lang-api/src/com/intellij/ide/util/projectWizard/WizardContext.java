@@ -108,14 +108,6 @@ public class WizardContext extends UserDataHolderBase {
     }
   }
 
-  /**
-   * Use {@link #WizardContext(Project, Disposable)}.
-   */
-  @Deprecated
-  public WizardContext(@Nullable Project project) {
-    this(project, null);
-  }
-
   @Nullable
   public Project getProject() {
     return myProject;

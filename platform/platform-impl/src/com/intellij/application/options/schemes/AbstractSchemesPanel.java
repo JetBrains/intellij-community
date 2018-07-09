@@ -117,7 +117,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     mySchemesCombo = new EditableSchemesCombo<>(this);
     controlsPanel.add(mySchemesCombo.getComponent());
     myToolbar = createToolbar();
-    controlsPanel.add(Box.createRigidArea(new JBDimension(6, 0)));
+    controlsPanel.add(Box.createRigidArea(new JBDimension(4, 0)));
     controlsPanel.add(myToolbar);
     controlsPanel.add(Box.createRigidArea(new JBDimension(9, 0)));
     myInfoComponent = createInfoComponent();
@@ -127,7 +127,6 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     mySchemesCombo.getComponent().setMaximumSize(mySchemesCombo.getComponent().getPreferredSize());
 
     int height = mySchemesCombo.getComponent().getPreferredSize().height;
-    height += JBUI.scale(2) * 2;
     controlsPanel.setMaximumSize(new Dimension(controlsPanel.getMaximumSize().width, height));
     return controlsPanel;
   }
@@ -138,8 +137,8 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     JComponent toolbarComponent = toolbar.getComponent();
+    toolbarComponent.setBorder(JBUI.Borders.empty(3));
     toolbarActionGroup.add(new ShowSchemesActionsListAction(myActions.getActions(), toolbarComponent));
-    toolbarComponent.setBorder(JBUI.Borders.empty());
     return toolbarComponent;
   }
 
@@ -286,7 +285,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
 
     ShowSchemesActionsListAction(Collection<AnAction> actions, Component component) {
       myParentComponent = component;
-      myActionGroup = new DefaultActionGroup(actions.toArray(new AnAction[actions.size()]));
+      myActionGroup = new DefaultActionGroup(actions.toArray(AnAction.EMPTY_ARRAY));
     }
 
     @Override

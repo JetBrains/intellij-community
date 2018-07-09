@@ -40,11 +40,6 @@ public class PassThroughIdeFocusManager extends IdeFocusManager {
     return ActionCallback.DONE;
   }
 
-  @NotNull
-  public ActionCallback requestFocus(@NotNull FocusCommand command, boolean forced) {
-    return command.run();
-  }
-
   public JComponent getFocusTargetFor(@NotNull JComponent comp) {
     return comp;
   }
@@ -88,27 +83,6 @@ public class PassThroughIdeFocusManager extends IdeFocusManager {
     return true;
   }
 
-  @NotNull
-  @Override
-  public Expirable getTimestamp(boolean trackOnlyForcedCommands) {
-    return new Expirable() {
-      public boolean isExpired() {
-        return false;
-      }
-    };
-  }
-
-  @NotNull
-  @Override
-  public FocusRequestor getFurtherRequestor() {
-    return this;
-  }
-
-  @Override
-  public void revalidateFocus(@NotNull ExpirableRunnable runnable) {
-
-  }
-
   @Override
   public void setTypeaheadEnabled(boolean enabled) {
   }
@@ -135,11 +109,6 @@ public class PassThroughIdeFocusManager extends IdeFocusManager {
 
   @Override
   public void toFront(JComponent c) {
-  }
-
-  @Override
-  public boolean isFocusBeingTransferred() {
-    return false;
   }
 
   @Override

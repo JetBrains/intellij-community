@@ -78,7 +78,7 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     return RefactoringBundle.message("error.wrong.caret.position.method.or.class.name");
   }
 
-  private static void invoke(final PsiMethod method, final Project project, @Nullable final Editor editor) {
+  private static void invoke(@NotNull PsiMethod method, @NotNull Project project, @Nullable final Editor editor) {
     PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
     if (newMethod == null) return;
 
@@ -163,12 +163,14 @@ public class JavaChangeSignatureHandler implements ChangeSignatureHandler {
     //}
   }
 
+  @Override
   @Nullable
-  public PsiElement findTargetMember(PsiFile file, Editor editor) {
+  public PsiElement findTargetMember(@NotNull PsiFile file, @NotNull Editor editor) {
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     return findTargetMember(element);
   }
 
+  @Override
   public PsiElement findTargetMember(PsiElement element) {
     if (PsiTreeUtil.getParentOfType(element, PsiParameterList.class) != null) {
       return PsiTreeUtil.getParentOfType(element, PsiMethod.class);

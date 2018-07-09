@@ -80,7 +80,7 @@ public class SpockUnrollReferenceProvider extends PsiReferenceProvider {
       references.add(new SpockVariableReference(element, range, references, method));
     }
 
-    return references.toArray(new PsiReference[references.size()]);
+    return references.toArray(PsiReference.EMPTY_ARRAY);
   }
 
   private static class SpockVariableReference extends PsiReferenceBase<PsiElement> {

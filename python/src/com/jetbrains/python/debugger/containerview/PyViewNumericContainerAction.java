@@ -18,7 +18,6 @@ package com.jetbrains.python.debugger.containerview;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.PlatformUtils;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -44,7 +43,7 @@ public class PyViewNumericContainerAction extends XDebuggerTreeActionBase {
   }
 
   public static void showNumericViewer(Project project, PyDebugValue debugValue) {
-    PyDataView.getInstance(project).show(debugValue, PlatformUtils.isPyCharmPro());
+    PyDataView.getInstance(project).show(debugValue);
   }
 
   @Nullable

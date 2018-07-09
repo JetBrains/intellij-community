@@ -21,6 +21,9 @@ import com.siyeh.ipp.IPPTestCase;
 public class MakeCallChainIntoCallSequenceTest extends IPPTestCase {
 
   public void testBuilder() { doTest(); }
+  public void testBuilderIntoFinal() { doTest(); }
+  public void testBuilderStatic() { doTest(); }
+  public void testBuilderStaticUnqualified() { doTest(); }
   public void testTransformation() { assertIntentionNotAvailable();}
   //should be probably possible?
   public void testThisCollapse() { assertIntentionNotAvailable();}

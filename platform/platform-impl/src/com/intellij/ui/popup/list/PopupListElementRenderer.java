@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup.list;
 
 import com.intellij.icons.AllIcons;
@@ -23,7 +9,9 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListPopupStepEx;
+import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
@@ -34,7 +22,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
-  private final ListPopupImpl myPopup;
+  protected final ListPopupImpl myPopup;
   private JLabel myShortcutLabel;
 
   public PopupListElementRenderer(final ListPopupImpl aPopup) {
@@ -47,6 +35,11 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
       @Override
       public Icon getIconFor(E value) {
         return aPopup.getListStep().getIconFor(value);
+      }
+
+      @Override
+      public Icon getSelectedIconFor(E value) {
+        return aPopup.getListStep().getSelectedIconFor(value);
       }
 
       @Override
@@ -76,7 +69,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     createLabel();
     panel.add(myTextLabel, BorderLayout.CENTER);
     myShortcutLabel = new JLabel();
-    myShortcutLabel.setBorder(JBUI.Borders.empty(0, 0, 0, 3));
+    myShortcutLabel.setBorder(JBUI.Borders.emptyRight(3));
     Color color = UIManager.getColor("MenuItem.acceleratorForeground");
     myShortcutLabel.setForeground(color);
     panel.add(myShortcutLabel, BorderLayout.EAST);
@@ -88,15 +81,23 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     ListPopupStep<Object> step = myPopup.getListStep();
     boolean isSelectable = step.isSelectable(value);
     myTextLabel.setEnabled(isSelectable);
-    if (!isSelected && step instanceof BaseListPopupStep) {
-      Color bg = ((BaseListPopupStep)step).getBackgroundFor(value);
-      Color fg = ((BaseListPopupStep)step).getForegroundFor(value);
-      if (fg != null) myTextLabel.setForeground(fg);
-      if (bg != null) UIUtil.setBackgroundRecursively(myComponent, bg);
+    if (step instanceof BaseListPopupStep) {
+      Color bg = ((BaseListPopupStep<E>)step).getBackgroundFor(value);
+      Color fg = ((BaseListPopupStep<E>)step).getForegroundFor(value);
+      if (!isSelected && fg != null) myTextLabel.setForeground(fg);
+      if (!isSelected && bg != null) UIUtil.setBackgroundRecursively(myComponent, bg);
+      if (bg != null && mySeparatorComponent.isVisible() && myCurrentIndex > 0) {
+        E prevValue = list.getModel().getElementAt(myCurrentIndex - 1);
+        // separator between 2 colored items shall get color too
+        if (Comparing.equal(bg, ((BaseListPopupStep<E>)step).getBackgroundFor(prevValue))) {
+          myRendererComponent.setBackground(bg);
+        }
+      }
     }
 
     if (step.isMnemonicsNavigationEnabled()) {
-      final int pos = step.getMnemonicNavigationFilter().getMnemonicPos(value);
+      MnemonicNavigationFilter<Object> filter = step.getMnemonicNavigationFilter();
+      int pos = filter == null ? -1 : filter.getMnemonicPos(value);
       if (pos != -1) {
         String text = myTextLabel.getText();
         text = text.substring(0, pos) + text.substring(pos + 1);
@@ -124,6 +125,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
 
     if (myShortcutLabel != null) {
+      myShortcutLabel.setEnabled(isSelectable);
       myShortcutLabel.setText("");
       if (value instanceof ShortcutProvider) {
         ShortcutSet set = ((ShortcutProvider)value).getShortcut();

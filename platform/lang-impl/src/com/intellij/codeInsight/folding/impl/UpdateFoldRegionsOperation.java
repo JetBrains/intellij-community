@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.folding.impl;
 
@@ -50,6 +36,7 @@ class UpdateFoldRegionsOperation implements Runnable {
   private static final Logger LOG = Logger.getInstance(UpdateFoldRegionsOperation.class);
   private static final Key<Boolean> CAN_BE_REMOVED_WHEN_COLLAPSED = Key.create("canBeRemovedWhenCollapsed"); 
   static final Key<Boolean> COLLAPSED_BY_DEFAULT = Key.create("collapsedByDefault");
+  static final Key<String> SIGNATURE = Key.create("signature");
 
   private static final Comparator<PsiElement> COMPARE_BY_OFFSET_REVERSED = (element, element1) -> {
     int startOffsetDiff = element1.getTextRange().getStartOffset() - element.getTextRange().getStartOffset();
@@ -158,6 +145,7 @@ class UpdateFoldRegionsOperation implements Runnable {
         
       if (descriptor.canBeRemovedWhenCollapsed()) region.putUserData(CAN_BE_REMOVED_WHEN_COLLAPSED, Boolean.TRUE);
       region.putUserData(COLLAPSED_BY_DEFAULT, regionInfo.collapsedByDefault);
+      region.putUserData(SIGNATURE, regionInfo.signature);
 
       info.addRegion(region, smartPointerManager.createSmartPsiElementPointer(psi));
       newRegions.add(region);
@@ -275,7 +263,7 @@ class UpdateFoldRegionsOperation implements Runnable {
     Boolean storedCollapsedByDefault = region.getUserData(COLLAPSED_BY_DEFAULT);
     final Collection<FoldingUpdate.RegionInfo> regionInfos;
     if (element != null && !(regionInfos = myElementsToFoldMap.get(element)).isEmpty()) {
-      FoldingUpdate.RegionInfo[] array = regionInfos.toArray(new FoldingUpdate.RegionInfo[regionInfos.size()]);
+      FoldingUpdate.RegionInfo[] array = regionInfos.toArray(new FoldingUpdate.RegionInfo[0]);
       for (FoldingUpdate.RegionInfo regionInfo : array) {
         FoldingDescriptor descriptor = regionInfo.descriptor;
         TextRange range = descriptor.getRange();
@@ -303,7 +291,7 @@ class UpdateFoldRegionsOperation implements Runnable {
         return true;
       }
     }
-    else if (!forceKeepRegion && !(region.isValid() && info.isLightRegion(region))) {
+    else if (!forceKeepRegion && !(region.isValid() && region.getUserData(SIGNATURE) == null /* 'light' region */)) {
       return true;
     }
     return false;

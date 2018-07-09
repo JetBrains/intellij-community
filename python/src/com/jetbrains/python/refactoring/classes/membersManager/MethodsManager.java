@@ -94,7 +94,7 @@ class MethodsManager extends MembersManager<PyFunction> {
   }
 
   /**
-   * Creates abstract version of each method in each class (does not touch method itself as opposite to {@link #moveMethods(com.jetbrains.python.psi.PyClass, java.util.Collection, com.jetbrains.python.psi.PyClass...)})
+   * Creates abstract version of each method in each class (does not touch method itself as opposite to {@link #moveMethods(PyClass, Collection, boolean, PyClass...)})
    *
    * @param currentFunctions functions to make them abstract
    * @param to               classes where abstract method should be created
@@ -107,8 +107,7 @@ class MethodsManager extends MembersManager<PyFunction> {
       for (final PyClass destClass : to) {
         final PyFunctionBuilder functionBuilder = PyFunctionBuilder.copySignature(function, DECORATORS_MAY_BE_COPIED_TO_ABSTRACT);
         functionBuilder.decorate(PyNames.ABSTRACTMETHOD);
-        final LanguageLevel level = LanguageLevel.forElement(destClass);
-        PyClassRefactoringUtil.addMethods(destClass, false, functionBuilder.buildFunction(destClass.getProject(), level));
+        PyClassRefactoringUtil.addMethods(destClass, false, functionBuilder.buildFunction());
         classesToAddMetaAbc.add(destClass);
       }
     }

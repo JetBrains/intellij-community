@@ -1,8 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.ui;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.ui.Splitter;
@@ -12,13 +11,10 @@ import com.intellij.structuralsearch.UnsupportedPatternException;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.ui.*;
-import com.intellij.util.containers.hash.LinkedHashMap;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 
 @SuppressWarnings({"RefusedBequest"})
@@ -135,19 +131,15 @@ public class ReplaceDialog extends SearchDialog {
   }
 
   @Override
-  protected List<Variable> getVariablesFromListeners() {
-    List<Variable> vars = getVarsFrom(replaceCriteriaEdit);
-    List<Variable> searchVars = super.getVariablesFromListeners();
-    Map<String, Variable> varsMap = new LinkedHashMap<>(searchVars.size());
+  protected List<String> getVariablesFromListeners() {
+    final List<String> result = super.getVariablesFromListeners();
 
-    for(Variable var:searchVars) varsMap.put(var.getName(), var);
-    for(Variable var:vars) {
-      if (!varsMap.containsKey(var.getName())) {
-        String newVarName = var.getName() + ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX;
-        varsMap.put(newVarName, new Variable(newVarName, null, null, false, false));
+    for (String var : getVarsFrom(replaceCriteriaEdit)) {
+      if (!result.contains(var)) {
+        result.add(var + ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX);
       }
     }
-    return new ArrayList<>(varsMap.values());
+    return result;
   }
 
   @Override

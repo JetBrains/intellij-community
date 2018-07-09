@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing
 
 import com.google.common.base.Preconditions
@@ -36,6 +22,7 @@ import com.jetbrains.python.psi.PyQualifiedNameOwner
 import com.jetbrains.python.psi.PyUtil
 import com.jetbrains.python.psi.types.TypeEvalContext
 import com.jetbrains.python.run.PythonConfigurationFactoryBase
+import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.testing.AbstractPythonLegacyTestRunConfiguration.TestType
 import com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer
 import com.jetbrains.python.testing.nosetestLegacy.PythonNoseTestRunConfiguration
@@ -85,7 +72,7 @@ class PyTestLegacyInteropInitializer {
  * To be called when project initialized to copy old configs to new one
  */
 private fun projectInitialized(project: Project) {
-  assert(project.isInitialized, { "Project is not initialized yet" })
+  assert(project.isInitialized) { "Project is not initialized yet" }
 
   val manager = RunManager.getInstance(project)
   val configurations = factories.map { manager.getConfigurationTemplate(it) } + manager.allConfigurationsList
@@ -262,15 +249,15 @@ private abstract class LegacyConfigurationManager<
         val virtualFile = getVirtualFileByPath(legacyConfig.scriptName) ?: return
         val pyFile = virtualFile.asPyFile(legacyConfig.project) ?: return
         val qualifiedName = getElementFromConfig(pyFile)?.qualifiedName ?: return
-        newConfig.target.targetType = TestTargetType.PYTHON
+        newConfig.target.targetType = PyRunTargetVariant.PYTHON
         newConfig.target.target = qualifiedName
       }
       TestType.TEST_FOLDER -> {
-        newConfig.target.targetType = TestTargetType.PATH
+        newConfig.target.targetType = PyRunTargetVariant.PATH
         newConfig.target.target = legacyConfig.folderName
       }
       TestType.TEST_SCRIPT -> {
-        newConfig.target.targetType = TestTargetType.PATH
+        newConfig.target.targetType = PyRunTargetVariant.PATH
         newConfig.target.target = legacyConfig.scriptName
       }
       else -> {
@@ -297,7 +284,7 @@ private class LegacyConfigurationManagerPyTest(newConfig: PyTestConfiguration) :
     newConfig.additionalArguments = legacyConfig.params
 
     // Default is PATH
-    newConfig.target.targetType = TestTargetType.PATH
+    newConfig.target.targetType = PyRunTargetVariant.PATH
 
     val oldKeywords = legacyConfig.keywords
 
@@ -305,7 +292,7 @@ private class LegacyConfigurationManagerPyTest(newConfig: PyTestConfiguration) :
     if (virtualFile.isDirectory) {
       // If target is directory, then it can't point to any symbol
       newConfig.target.target = virtualFile.path
-      newConfig.target.targetType = TestTargetType.PATH
+      newConfig.target.targetType = PyRunTargetVariant.PATH
       newConfig.keywords = oldKeywords
       return
     }
@@ -318,7 +305,7 @@ private class LegacyConfigurationManagerPyTest(newConfig: PyTestConfiguration) :
       //Give up with interpreting
       newConfig.keywords = oldKeywords
       newConfig.target.target = script.virtualFile.path
-      newConfig.target.targetType = TestTargetType.PATH
+      newConfig.target.targetType = PyRunTargetVariant.PATH
       return
     }
     val classOrFunctionName = keywordsList[0]
@@ -329,13 +316,13 @@ private class LegacyConfigurationManagerPyTest(newConfig: PyTestConfiguration) :
                                         script.findTopLevelFunction(classOrFunctionName),
                                         PyQualifiedNameOwner::class.java) ?: return
       newConfig.target.target = classOrFunction.qualifiedName ?: return
-      newConfig.target.targetType = TestTargetType.PYTHON
+      newConfig.target.targetType = PyRunTargetVariant.PYTHON
     }
     if (keywordsList.size == 2) { // Class and method
       clazz ?: return
       val method = clazz.findMethodByName(keywordsList[1], true, TypeEvalContext.userInitiated(newConfig.project, script)) ?: return
       newConfig.target.target = method.qualifiedName ?: return
-      newConfig.target.targetType = TestTargetType.PYTHON
+      newConfig.target.targetType = PyRunTargetVariant.PYTHON
 
     }
 

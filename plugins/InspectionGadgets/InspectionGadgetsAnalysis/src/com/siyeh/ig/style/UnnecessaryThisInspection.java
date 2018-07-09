@@ -30,6 +30,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,13 +77,13 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
     @Override
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement thisToken = descriptor.getPsiElement();
-      final PsiReferenceExpression thisExpression = (PsiReferenceExpression)thisToken.getParent();
+      final PsiReferenceExpression thisExpression = (PsiReferenceExpression)PsiUtil.skipParenthesizedExprUp(thisToken.getParent());
       assert thisExpression != null;
       final String newExpression = thisExpression.getReferenceName();
       if (newExpression == null) {
         return;
       }
-      PsiReplacementUtil.replaceExpression(thisExpression, newExpression);
+      PsiReplacementUtil.replaceExpression(thisExpression, newExpression, new CommentTracker());
     }
   }
 
@@ -103,7 +104,7 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
       if (parameterList.getTypeArguments().length > 0) {
         return;
       }
-      final PsiExpression qualifierExpression = expression.getQualifierExpression();
+      final PsiExpression qualifierExpression = PsiUtil.skipParenthesizedExprDown(expression.getQualifierExpression());
       if (!(qualifierExpression instanceof PsiThisExpression)) {
         return;
       }

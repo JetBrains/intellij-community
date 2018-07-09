@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
@@ -165,7 +165,7 @@ public class JumpToObjectAction extends DebuggerAction{
     }
 
     @Override
-    public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+    public void contextAction(@NotNull SuspendContextImpl suspendContext) {
       try {
         doAction(calcPosition(myDescriptor, myDebugProcess));
       }

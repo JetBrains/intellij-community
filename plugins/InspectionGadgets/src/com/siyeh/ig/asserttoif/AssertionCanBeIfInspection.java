@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -91,14 +92,16 @@ public class AssertionCanBeIfInspection extends BaseInspection {
       final PsiAssertStatement assertStatement =
         element instanceof PsiKeyword ? (PsiAssertStatement)element.getParent() : (PsiAssertStatement)element;
       final PsiExpression condition = assertStatement.getAssertCondition();
-      @NonNls final StringBuilder newStatement =
-        new StringBuilder("if(").append(BoolUtils.getNegatedExpressionText(condition)).append(") throw new java.lang.AssertionError(");
+      CommentTracker tracker = new CommentTracker();
+      final StringBuilder newStatement = new StringBuilder("if(");
+      newStatement.append(BoolUtils.getNegatedExpressionText(condition, tracker));
+      newStatement.append(") throw new java.lang.AssertionError(");
       final PsiExpression description = assertStatement.getAssertDescription();
       if (description != null) {
-        newStatement.append(description.getText());
+        newStatement.append(tracker.text(description));
       }
       newStatement.append(");");
-      PsiReplacementUtil.replaceStatement(assertStatement, newStatement.toString());
+      PsiReplacementUtil.replaceStatement(assertStatement, newStatement.toString(), tracker);
     }
   }
 }

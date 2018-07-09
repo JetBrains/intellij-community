@@ -20,7 +20,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginNode;
-import com.intellij.internal.statistic.customUsageCollectors.ideSettings.IdeInitialConfigButtonUsages;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -54,7 +53,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardStep {
   private static final int COLS = 3;
-  private static final ExecutorService ourService = AppExecutorUtil.createBoundedApplicationPoolExecutor("CustomizeFeaturedPluginsStepPanel pool",4);
+  private static final ExecutorService ourService = AppExecutorUtil.createBoundedApplicationPoolExecutor(
+    "CustomizeFeaturedPluginsStepPanel Pool", 4);
 
   public final AtomicBoolean myCanceled = new AtomicBoolean(false);
   private final PluginGroups myPluginGroups;
@@ -204,7 +204,6 @@ public class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWizardSt
             public void run() {
               try {
                 indicator.start();
-                IdeInitialConfigButtonUsages.addDownloadedPlugin(descriptor.getPluginId().getIdString());
                 PluginDownloader downloader = PluginDownloader.createDownloader(descriptor);
                 downloader.prepareToInstall(indicator);
                 downloader.install();

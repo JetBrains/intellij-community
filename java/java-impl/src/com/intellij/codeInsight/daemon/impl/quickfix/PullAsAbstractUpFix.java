@@ -63,7 +63,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    return startElement instanceof PsiMethod && startElement.isValid() && ((PsiMethod)startElement).getContainingClass() != null;
+    return startElement instanceof PsiMethod && ((PsiMethod)startElement).getContainingClass() != null;
   }
 
   @Override
@@ -99,7 +99,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
         pullUp(method, containingClass, classesToPullUp.iterator().next());
       }
       else if (editor != null) {
-        NavigationUtil.getPsiElementPopup(classesToPullUp.toArray(new PsiClass[classesToPullUp.size()]), new PsiClassListCellRenderer(),
+        NavigationUtil.getPsiElementPopup(classesToPullUp.toArray(PsiClass.EMPTY_ARRAY), new PsiClassListCellRenderer(),
                                           "Choose super class",
                                           new PsiElementProcessor<PsiClass>() {
                                             @Override

@@ -61,7 +61,7 @@ public class PyFStringTest extends PyTestCase {
         builder.append(fstringLiteral.substring(lastBarOffset + 1));
         break;
       }
-      builder.append(fstringLiteral.substring(lastBarOffset + 1, nextOffset));
+      builder.append(fstringLiteral, lastBarOffset + 1, nextOffset);
       lastBarOffset = nextOffset;
       offsets.add(lastBarOffset - offsets.size());
     }

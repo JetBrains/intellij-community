@@ -17,7 +17,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/6/11
  */
 public class ResourcePatterns {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.model.java.impl.compiler.ResourcePatterns");
@@ -111,7 +110,7 @@ public class ResourcePatterns {
     if (slash >= 0) {
       dirPattern = wildcardPattern.substring(0, slash + 1);
       wildcardPattern = wildcardPattern.substring(slash + 1);
-      dirPattern = handleDirPattern(dirPattern);
+      dirPattern = optimizeDirPattern(dirPattern);
     }
 
     wildcardPattern = normalizeWildcards(wildcardPattern);
@@ -122,8 +121,7 @@ public class ResourcePatterns {
     return new CompiledPattern(compilePattern(wildcardPattern), dirCompiled, srcCompiled);
   }
 
-  @NotNull
-  public static String handleDirPattern(@NotNull String dirPattern) {
+  public static String optimizeDirPattern(String dirPattern) {
     if (!dirPattern.startsWith("/")) {
       dirPattern = "/" + dirPattern;
     }
@@ -138,7 +136,7 @@ public class ResourcePatterns {
     return dirPattern;
   }
 
-  public static String optimize(String wildcardPattern) {
+  private static String optimize(String wildcardPattern) {
     return wildcardPattern.replaceAll("(?:\\.\\*)+", ".*");
   }
 

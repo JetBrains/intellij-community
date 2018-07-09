@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -56,7 +42,6 @@ import com.intellij.util.StringSetSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.config.AbstractProperty;
 import com.intellij.util.config.ValueProperty;
-import com.intellij.util.containers.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -115,7 +100,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   private final List<AntBuildFileBase> myBuildFiles = new CopyOnWriteArrayList<>();
 
   private final Map<AntBuildFile, AntBuildModelBase> myModelToBuildFileMap = new HashMap<>();
-  private final Map<VirtualFile, VirtualFile> myAntFileToContextFileMap = new java.util.HashMap<>();
+  private final Map<VirtualFile, VirtualFile> myAntFileToContextFileMap = new HashMap<>();
   private final EventDispatcher<AntConfigurationListener> myEventDispatcher = EventDispatcher.create(AntConfigurationListener.class);
   private final StartupManager myStartupManager;
 
@@ -178,40 +163,34 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
 
   @Override
   public Element getState() {
-    try {
-      final Element state = new Element("state");
-      getProperties().writeExternal(state);
-      ApplicationManager.getApplication().runReadAction(() -> {
-        for (final AntBuildFileBase buildFile : myBuildFiles) {
-          final Element element = new Element(BUILD_FILE);
-          //noinspection ConstantConditions
-          element.setAttribute(URL, buildFile.getVirtualFile().getUrl());
-          buildFile.writeProperties(element);
-          saveEvents(element, buildFile);
-          state.addContent(element);
-        }
+    final Element state = new Element("state");
+    getProperties().writeExternal(state);
+    ApplicationManager.getApplication().runReadAction(() -> {
+      for (final AntBuildFileBase buildFile : myBuildFiles) {
+        final Element element = new Element(BUILD_FILE);
+        //noinspection ConstantConditions
+        element.setAttribute(URL, buildFile.getVirtualFile().getUrl());
+        buildFile.writeProperties(element);
+        saveEvents(element, buildFile);
+        state.addContent(element);
+      }
 
-        final List<VirtualFile> files = new ArrayList<>(myAntFileToContextFileMap.keySet());
-        // sort in order to minimize changes
-        Collections.sort(files, Comparator.comparing(VirtualFile::getUrl));
-        for (VirtualFile file : files) {
-          final Element element = new Element(CONTEXT_MAPPING);
-          final VirtualFile contextFile = myAntFileToContextFileMap.get(file);
-          element.setAttribute(URL, file.getUrl());
-          element.setAttribute(CONTEXT, contextFile.getUrl());
-          state.addContent(element);
-        }
-      });
-      return state;
-    }
-    catch (WriteExternalException e) {
-      LOG.error(e);
-      return null;
-    }
+      final List<VirtualFile> files = new ArrayList<>(myAntFileToContextFileMap.keySet());
+      // sort in order to minimize changes
+      Collections.sort(files, Comparator.comparing(VirtualFile::getUrl));
+      for (VirtualFile file : files) {
+        final Element element = new Element(CONTEXT_MAPPING);
+        final VirtualFile contextFile = myAntFileToContextFileMap.get(file);
+        element.setAttribute(URL, file.getUrl());
+        element.setAttribute(CONTEXT, contextFile.getUrl());
+        state.addContent(element);
+      }
+    });
+    return state;
   }
 
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     myIsInitialized = Boolean.FALSE;
 
     List<Pair<Element, String>> files = new ArrayList<>();
@@ -367,7 +346,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   @Override
   public AntBuildFile[] getBuildFiles() {
     //noinspection SuspiciousToArrayCall
-    return myBuildFiles.toArray(new AntBuildFileBase[myBuildFiles.size()]);
+    return myBuildFiles.toArray(new AntBuildFileBase[0]);
   }
 
   @Override
@@ -638,8 +617,9 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       final AntBuildModelBase model = (AntBuildModelBase)buildFile.getModel();
       String defaultTargetActionId = model.getDefaultTargetActionId();
       if (defaultTargetActionId != null) {
-        final TargetAction action =
-          new TargetAction(buildFile, TargetAction.DEFAULT_TARGET_NAME, new String[]{TargetAction.DEFAULT_TARGET_NAME}, null);
+        final TargetAction action = new TargetAction(
+          buildFile, TargetAction.DEFAULT_TARGET_NAME, Collections.singletonList(TargetAction.DEFAULT_TARGET_NAME), null
+        );
         actionList.add(new Pair<>(defaultTargetActionId, action));
       }
 
@@ -680,8 +660,9 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     for (final AntBuildTarget target : targets) {
       final String actionId = ((AntBuildTargetBase)target).getActionId();
       if (actionId != null) {
-        final TargetAction action =
-          new TargetAction(buildFile, target.getName(), new String[]{target.getName()}, target.getNotEmptyDescription());
+        final TargetAction action = new TargetAction(
+          buildFile, target.getName(), target.getTargetNames(), target.getNotEmptyDescription()
+        );
         actionList.add(new Pair<>(actionId, action));
       }
     }

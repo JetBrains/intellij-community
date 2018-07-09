@@ -62,7 +62,7 @@ public class FindDependencyUtil {
       analyzeFileDependencies(psiFile, precomputedDeps, usages);
     }
 
-    return usages.toArray(new UsageInfo[usages.size()]);
+    return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   public static UsageInfo[] findBackwardDependencies(final List<DependenciesBuilder> builders, final Set<PsiFile> searchIn, final Set<PsiFile> searchFor) {
@@ -90,7 +90,7 @@ public class FindDependencyUtil {
       analyzeFileDependencies(psiFile, searchFor, usages);
     }
 
-    return usages.toArray(new UsageInfo[usages.size()]);
+    return usages.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   private static void analyzeFileDependencies(PsiFile psiFile, final Set<PsiFile> searchFor, final List<UsageInfo> result) {

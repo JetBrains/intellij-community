@@ -30,10 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.Consumer;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.PairConsumer;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.Topic;
@@ -205,62 +202,69 @@ public class BackgroundTaskUtil {
   @NotNull
   @CalledInAny
   public static ProgressIndicator executeOnPooledThread(@NotNull Disposable parent, @NotNull Runnable runnable) {
-    ModalityState modalityState = ModalityState.defaultModalityState();
-    return runUnderDisposeAwareIndicator(runnable, parent, modalityState, true);
-  }
-
-  @CalledInAny
-  private static ProgressIndicator runUnderDisposeAwareIndicator(@NotNull Runnable task,
-                                                                 @NotNull Disposable parent,
-                                                                 @NotNull ModalityState modalityState,
-                                                                 boolean onPooledThread) {
-    ProgressIndicator indicator = new EmptyProgressIndicator(modalityState);
+    ProgressIndicator indicator = new EmptyProgressIndicator();
     indicator.start();
-    Runnable toRun = () -> {
+
+    CompletableFuture<?> future = CompletableFuture.runAsync(() -> {
+      ProgressManager.getInstance().runProcess(runnable, indicator);
+    }, AppExecutorUtil.getAppExecutorService());
+
+    Disposable disposable = () -> {
+      if (indicator.isRunning()) indicator.cancel();
       try {
-        ProgressManager.getInstance().runProcess(task, indicator);
+        future.get(1, TimeUnit.SECONDS);
       }
-      catch (ProcessCanceledException pce) {
-        // ignore: expected cancellation
+      catch (ExecutionException e) {
+        if (e.getCause() instanceof ProcessCanceledException) {
+          // ignore: expected cancellation
+        }
+        else {
+          LOG.error(e);
+        }
+      }
+      catch (InterruptedException | TimeoutException e) {
+        LOG.error(e);
       }
     };
 
-    if (onPooledThread) {
-      CompletableFuture<?> future = CompletableFuture.runAsync(toRun, AppExecutorUtil.getAppExecutorService());
-      Disposable disposable = () -> {
-        if (indicator.isRunning()) indicator.cancel();
-        try {
-          future.get(1, TimeUnit.SECONDS);
-        }
-        catch (InterruptedException | ExecutionException | TimeoutException e) {
-          LOG.error(e);
-        }
-      };
-
-      if (!registerIfParentNotDisposed(parent, disposable)) {
-        indicator.cancel();
-        return indicator;
-      }
-      future.whenComplete((o, e) -> Disposer.dispose(disposable));
+    if (!registerIfParentNotDisposed(parent, disposable)) {
+      indicator.cancel();
+      return indicator;
     }
-    else {
-      Disposable disposable = () -> {
-        if (indicator.isRunning()) indicator.cancel();
-      };
 
-      if (!registerIfParentNotDisposed(parent, disposable)) {
-        indicator.cancel();
-        return indicator;
-      }
+    future.whenComplete((o, e) -> Disposer.dispose(disposable));
 
-      try {
-        toRun.run();
-      }
-      finally {
-        Disposer.dispose(disposable);
-      }
-    }
     return indicator;
+  }
+
+  @CalledInAny
+  public static void runUnderDisposeAwareIndicator(@NotNull Disposable parent, @NotNull Runnable task) {
+    runUnderDisposeAwareIndicator(parent, () -> {
+      task.run();
+      return null;
+    });
+  }
+
+  @CalledInAny
+  public static <T> T runUnderDisposeAwareIndicator(@NotNull Disposable parent, @NotNull Computable<T> task) {
+    ProgressIndicator indicator = new EmptyProgressIndicator(ModalityState.defaultModalityState());
+    indicator.start();
+
+    Disposable disposable = () -> {
+      if (indicator.isRunning()) indicator.cancel();
+    };
+
+    if (!registerIfParentNotDisposed(parent, disposable)) {
+      indicator.cancel();
+      throw new ProcessCanceledException();
+    }
+
+    try {
+      return ProgressManager.getInstance().runProcess(task, indicator);
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
   }
 
   private static boolean registerIfParentNotDisposed(@NotNull Disposable parent, @NotNull Disposable disposable) {
@@ -275,11 +279,6 @@ public class BackgroundTaskUtil {
         return false;
       }
     });
-  }
-
-  @CalledInAny
-  public static void runUnderDisposeAwareIndicator(@NotNull Disposable parent, @NotNull Runnable task) {
-    runUnderDisposeAwareIndicator(task, parent, ModalityState.defaultModalityState(), false);
   }
 
   /**
@@ -316,8 +315,8 @@ public class BackgroundTaskUtil {
 
 
   private static class Helper<T> {
-    private static final Object INITIAL_STATE = new Object();
-    private static final Object SLOW_OPERATION_STATE = new Object();
+    private static final Object INITIAL_STATE = ObjectUtils.sentinel("INITIAL_STATE");
+    private static final Object SLOW_OPERATION_STATE = ObjectUtils.sentinel("SLOW_OPERATION_STATE");
 
     private final Semaphore mySemaphore = new Semaphore(0);
     private final AtomicReference<Object> myResultRef = new AtomicReference<>(INITIAL_STATE);

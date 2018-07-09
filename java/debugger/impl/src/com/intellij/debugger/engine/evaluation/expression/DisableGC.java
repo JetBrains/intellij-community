@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 9/30/10
  */
 public class DisableGC implements Evaluator {
   private final Evaluator myDelegate;

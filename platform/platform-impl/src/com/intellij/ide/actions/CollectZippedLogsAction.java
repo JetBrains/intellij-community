@@ -26,8 +26,10 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.settingsSummary.ProblemType;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -73,13 +75,18 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
   }
 
   @NotNull
-  private static File createZip(final Project project) throws IOException {
+  private static File createZip(@Nullable final Project project) throws IOException {
     File settingsTempFile = null;
     final File zippedLogsFile = FileUtil.createTempFile("logs-" + getDate(), ".zip");
     try (ZipOutputStream zipOutputStream = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zippedLogsFile)))) {
       ZipUtil.addFileOrDirRecursively(zipOutputStream, null, new File(PathManager.getLogPath()), "", null, null);
-      settingsTempFile = dumpSettingsToFile(project);
-      ZipUtil.addFileToZip(zipOutputStream, settingsTempFile, "settings.txt", null, null);
+      if (project != null) {
+        settingsTempFile = dumpSettingsToFile(project);
+        ZipUtil.addFileToZip(zipOutputStream, settingsTempFile, "settings.txt", null, null);
+      }
+      for (File javaErrorLog : getJavaErrorLogs()) {
+        ZipUtil.addFileToZip(zipOutputStream, javaErrorLog, javaErrorLog.getName(), null, null);
+      }
     }
     catch (final IOException exception) {
       //noinspection ResultOfMethodCallIgnored
@@ -95,8 +102,13 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
     return zippedLogsFile;
   }
 
+  private static File[] getJavaErrorLogs() {
+    return new File(SystemProperties.getUserHome())
+      .listFiles(file -> file.isFile() && file.getName().startsWith("java_error_in") && !file.getName().endsWith("hprof"));
+  }
+
   @NotNull
-  private static File dumpSettingsToFile(final Project project) throws IOException {
+  private static File dumpSettingsToFile(@NotNull final Project project) throws IOException {
     final File settingsTempFile = FileUtil.createTempFile("settings" + getDate(), ".txt");
     for (ProblemType problemType : ProblemType.EP_SETTINGS.getExtensions()) {
       String settingString = problemType.collectInfo(project);
@@ -111,7 +123,7 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
   }
 
   @Override
-  public void update(AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setText(getActionName());
   }

@@ -16,7 +16,6 @@
 package com.intellij.credentialStore.kdbx
 
 import org.bouncycastle.crypto.engines.AESEngine
-import org.bouncycastle.crypto.engines.AESFastEngine
 import org.bouncycastle.crypto.io.CipherInputStream
 import org.bouncycastle.crypto.io.CipherOutputStream
 import org.bouncycastle.crypto.modes.CBCBlockCipher
@@ -36,8 +35,7 @@ import java.util.*
  * It is a factory for encryption and decryption streams and contains a hash of its own serialization.
  * While KDBX streams are Little-Endian, data is passed to and from this class in standard Java byte order.
  * @author jo
- */
-/**
+
  * This UUID denotes that AES Cipher is in use. No other values are known.
  */
 private val AES_CIPHER = UUID.fromString("31C1F2E6-BF71-4350-BE58-05216AFC5AFF")
@@ -111,15 +109,15 @@ internal class KdbxHeader {
     if (incoming != AES_CIPHER) {
       throw IllegalStateException("Unknown Cipher UUID $incoming")
     }
-    this.cipherUuid = incoming
+    cipherUuid = incoming
   }
 
   fun setCompressionFlags(flags: Int) {
-    this.compressionFlags = CompressionFlags.values()[flags]
+    compressionFlags = CompressionFlags.values()[flags]
   }
 
   fun setInnerRandomStreamId(innerRandomStreamId: Int) {
-    this.protectedStreamAlgorithm = ProtectedStreamAlgorithm.values()[innerRandomStreamId]
+    protectedStreamAlgorithm = ProtectedStreamAlgorithm.values()[innerRandomStreamId]
   }
 }
 
@@ -150,9 +148,9 @@ fun sha256MessageDigest(): MessageDigest = MessageDigest.getInstance("SHA-256")
  */
 private fun getDecryptedInputStream(encryptedInputStream: InputStream, keyData: ByteArray, ivData: ByteArray): InputStream {
   val keyAndIV = ParametersWithIV(KeyParameter(keyData), ivData)
-  val pbbc = PaddedBufferedBlockCipher(CBCBlockCipher(AESFastEngine()))
-  pbbc.init(false, keyAndIV)
-  return CipherInputStream(encryptedInputStream, pbbc)
+  val cipher = PaddedBufferedBlockCipher(CBCBlockCipher(AESEngine()))
+  cipher.init(false, keyAndIV)
+  return CipherInputStream(encryptedInputStream, cipher)
 }
 
 /**
@@ -160,7 +158,7 @@ private fun getDecryptedInputStream(encryptedInputStream: InputStream, keyData: 
  */
 private fun getEncryptedOutputStream(decryptedOutputStream: OutputStream, keyData: ByteArray, ivData: ByteArray): OutputStream {
   val keyAndIV = ParametersWithIV(KeyParameter(keyData), ivData)
-  val pbbc = PaddedBufferedBlockCipher(CBCBlockCipher(AESFastEngine()))
-  pbbc.init(true, keyAndIV)
-  return CipherOutputStream(decryptedOutputStream, pbbc)
+  val cipher = PaddedBufferedBlockCipher(CBCBlockCipher(AESEngine()))
+  cipher.init(true, keyAndIV)
+  return CipherOutputStream(decryptedOutputStream, cipher)
 }

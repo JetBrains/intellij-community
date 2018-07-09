@@ -53,12 +53,14 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
     myNewSignature = newSignature;
   }
 
+  @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     LOG.assertTrue(elements.length == 1);
     LOG.assertTrue(elements[0] instanceof PsiClass);
     myClass = (PsiClass)elements[0];
   }
 
+  @NotNull
   protected String getCommandName() {
     return ChangeClassSignatureDialog.REFACTORING_NAME;
   }
@@ -110,7 +112,7 @@ public class ChangeClassSignatureProcessor extends BaseRefactoringProcessor {
         }
       }
     }
-    return result.toArray(new UsageInfo[result.size()]);
+    return result.toArray(UsageInfo.EMPTY_ARRAY);
   }
 
   protected void performRefactoring(@NotNull UsageInfo[] usages) {

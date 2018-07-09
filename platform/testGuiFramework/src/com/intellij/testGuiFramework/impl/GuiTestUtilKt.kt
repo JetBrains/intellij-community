@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.diagnostic.MessagePool
@@ -135,9 +121,9 @@ object GuiTestUtilKt {
       return child
     }
 
-    fun countChildren() = children.count()
+    fun countChildren(): Int = children.count()
 
-    fun isLeaf() = (children.count() == 0)
+    fun isLeaf(): Boolean = (children.count() == 0)
 
   }
 
@@ -241,8 +227,8 @@ object GuiTestUtilKt {
 
   }
 
-  fun <ComponentType : Component?> waitUntilGone(robot: Robot, timeoutInSeconds: Int = 30, root: Container? = null, matcher: GenericTypeMatcher<ComponentType>) {
-    return GuiTestUtil.waitUntilGone(robot, root, timeoutInSeconds, matcher)
+  fun <ComponentType : Component> waitUntilGone(robot: Robot, timeoutInSeconds: Int = 30, root: Container? = null, matcher: GenericTypeMatcher<ComponentType>) {
+    return GuiTestUtil.waitUntilGone(root, timeoutInSeconds, matcher)
   }
 
   fun GuiTestCase.waitProgressDialogUntilGone(dialogTitle: String, timeoutToAppearInSeconds: Int = 5, timeoutToGoneInSeconds: Int = 60) {
@@ -283,11 +269,11 @@ object GuiTestUtilKt {
   fun <ReturnType> computeOnEdtWithTry(query: () -> ReturnType?): ReturnType? {
     val result = GuiActionRunner.execute(object : GuiQuery<Pair<ReturnType?, Throwable?>>() {
       override fun executeInEDT(): kotlin.Pair<ReturnType?, Throwable?> {
-        try {
-          return Pair(query(), null)
+        return try {
+          Pair(query(), null)
         }
         catch (e: Exception) {
-          return Pair(null, e)
+          Pair(null, e)
         }
       }
     })
@@ -319,7 +305,7 @@ object GuiTestUtilKt {
     val freshErrorMessages = errorMessages.filter { it.date > afterDate }
     val errors = mutableListOf<Error>()
     for (errorMessage in freshErrorMessages) {
-      val messageBuilder = StringBuilder(errorMessage.message)
+      val messageBuilder = StringBuilder(errorMessage.message ?: "")
       val additionalInfo : String? = errorMessage.additionalInfo
       if (additionalInfo != null && additionalInfo.isNotEmpty())
         messageBuilder.append(System.getProperty("line.separator")).append("Additional Info: ").append(additionalInfo)

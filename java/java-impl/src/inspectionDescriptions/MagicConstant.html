@@ -1,0 +1,22 @@
+<html>
+<body>
+Report occurrences where usages of "magic" constants are preferred
+but other expressions are used instead. <br>
+E.g.
+
+<br> <br>
+
+<code>// bare literal used, warning:</code><br>
+<code><b>new </b> Font("Arial", <span style="background-color: yellow;"><b>2</b></span>)</code><br>
+
+<br>
+instead of<br> <br>
+
+<code>// "magic" constant used, good:</code><br>
+<code><b>new </b> Font("Arial", Font.<b>ITALIC</b>)</code><br>
+
+<br> <br>
+
+Please see <code>org.intellij.lang.annotations.MagicConstant</code> annotation description for details.
+</body>
+</html>

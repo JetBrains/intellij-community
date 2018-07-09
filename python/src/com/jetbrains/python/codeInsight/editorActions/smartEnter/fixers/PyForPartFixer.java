@@ -29,8 +29,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 /**
  * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
- * Date:   16.04.2010
- * Time:   16:03:43
  */
 public class PyForPartFixer extends PyFixer<PyForPart> {
   public PyForPartFixer() {

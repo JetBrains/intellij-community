@@ -1,22 +1,10 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.actionSystem.ex;
 
-
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
@@ -26,12 +14,12 @@ import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.util.Comparator;
 
-
 public abstract class ActionManagerEx extends ActionManager {
   public static ActionManagerEx getInstanceEx() {
     return (ActionManagerEx)getInstance();
   }
 
+  @NotNull
   public abstract ActionToolbar createActionToolbar(String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons);
 
   public abstract void fireBeforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event);
@@ -102,5 +90,10 @@ public abstract class ActionManagerEx extends ActionManager {
       fireBeforeActionPerformed(action, DataManager.getInstance().getDataContext(), e);
     }
   }
+
+  /**
+   * Allows to receive notifications when popup menus created from action groups are shown and hidden.
+   */
+  public abstract void addActionPopupMenuListener(ActionPopupMenuListener listener, Disposable parentDisposable);
 }
 

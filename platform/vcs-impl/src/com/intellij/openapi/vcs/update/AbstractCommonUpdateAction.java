@@ -55,8 +55,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.openapi.util.text.StringUtil.notNullize;
+import static com.intellij.openapi.util.text.StringUtil.nullize;
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION;
 import static com.intellij.util.ObjectUtils.notNull;
@@ -227,7 +229,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         }
       }
     }
-    return result.toArray(new FilePath[result.size()]);
+    return result.toArray(new FilePath[0]);
   }
 
   protected abstract boolean filterRootsBeforeAction();
@@ -359,7 +361,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
 
           // actual update
           UpdateSession updateSession =
-            updateEnvironment.updateDirectories(files.toArray(new FilePath[files.size()]), myUpdatedFiles, progressIndicator, refContext);
+            updateEnvironment.updateDirectories(files.toArray(new FilePath[0]), myUpdatedFiles, progressIndicator, refContext);
 
           myContextInfo.put(vcs, refContext.get());
           processed++;
@@ -420,8 +422,14 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
     }
 
     @NotNull
-    private Notification prepareNotification(@NotNull UpdateInfoTree tree, boolean someSessionWasCancelled) {
+    private Notification prepareNotification(@NotNull UpdateInfoTree tree,
+                                             boolean someSessionWasCancelled,
+                                             @NotNull List<UpdateSession> updateSessions) {
       int allFiles = getUpdatedFilesCount();
+      String additionalContent = nullize(updateSessions.stream().
+        map(UpdateSession::getAdditionalNotificationContent).
+        filter(Objects::nonNull).
+        collect(Collectors.joining(", ")));
 
       String title;
       String content;
@@ -432,9 +440,16 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         type = NotificationType.WARNING;
       }
       else {
-        title = allFiles + " Project " + pluralize("File", allFiles) + " Updated";
+        title = allFiles + " " + pluralize("File", allFiles) + " Updated";
         content = notNullize(prepareScopeUpdatedText(tree));
         type = NotificationType.INFORMATION;
+      }
+
+      if (additionalContent != null) {
+        if (!content.isEmpty()) {
+          content += "<br/>";
+        }
+        content += additionalContent;
       }
 
       return STANDARD_NOTIFICATION.createNotification(title, content, type, null);
@@ -551,7 +566,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
           final CommittedChangesCache cache = CommittedChangesCache.getInstance(myProject);
           cache.processUpdatedFiles(myUpdatedFiles, incomingChangeLists -> tree.setChangeLists(incomingChangeLists));
 
-          Notification notification = prepareNotification(tree, someSessionWasCancelled);
+          Notification notification = prepareNotification(tree, someSessionWasCancelled, myUpdateSessions);
           notification.addAction(new ViewUpdateInfoNotification(myProject, tree, "View", notification));
           VcsNotifier.getInstance(myProject).notify(notification);
         }

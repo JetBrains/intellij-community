@@ -22,7 +22,7 @@ import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 
 import java.text.MessageFormat;
 import java.util.Map;

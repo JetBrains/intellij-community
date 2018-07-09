@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -176,7 +176,7 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
   }
 
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     getSeverityRegistrar().readExternal(state);
   }
 
@@ -207,7 +207,7 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
   public InspectionProfileImpl getCurrentProfile() {
     initProfiles();
 
-    InspectionProfileImpl current = mySchemeManager.getCurrentScheme();
+    InspectionProfileImpl current = mySchemeManager.getActiveScheme();
     if (current != null) {
       return current;
     }
@@ -215,7 +215,7 @@ public class ApplicationInspectionProfileManager extends BaseInspectionProfileMa
     // use default as base, not random custom profile
     InspectionProfileImpl result = mySchemeManager.findSchemeByName(InspectionProfileKt.DEFAULT_PROFILE_NAME);
     if (result == null) {
-      InspectionProfileImpl profile = new InspectionProfileImpl(InspectionProfileKt.DEFAULT_PROFILE_NAME, InspectionToolRegistrar.getInstance(), this, null, null);
+      InspectionProfileImpl profile = new InspectionProfileImpl(InspectionProfileKt.DEFAULT_PROFILE_NAME);
       addProfile(profile);
       return profile;
     }

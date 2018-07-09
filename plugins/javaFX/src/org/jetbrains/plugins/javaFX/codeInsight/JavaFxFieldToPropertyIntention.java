@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.codeInsight;
 
 import com.intellij.codeInsight.intention.LowPriorityAction;
@@ -203,7 +204,7 @@ public class JavaFxFieldToPropertyIntention extends PsiElementBaseIntentionActio
       myField.setInitializer(newInitializer);
 
       final PsiType fieldType = myField.getType();
-      if (PsiDiamondTypeUtil.canCollapseToDiamond(newInitializer, newInitializer, fieldType)) {
+      if (PsiDiamondTypeUtil.canCollapseToDiamond(newInitializer, (PsiNewExpression)myField.getInitializer(), fieldType)) {
         final PsiJavaCodeReferenceElement classReference = newInitializer.getClassOrAnonymousClassReference();
         if (classReference != null) {
           PsiDiamondTypeUtil.replaceExplicitWithDiamond(classReference.getParameterList());

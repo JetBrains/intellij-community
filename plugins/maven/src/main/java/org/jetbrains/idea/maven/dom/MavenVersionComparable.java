@@ -102,7 +102,7 @@ public class MavenVersionComparable implements Comparable<MavenVersionComparable
      */
     private static final String RELEASE_VERSION_INDEX = String.valueOf(_QUALIFIERS.indexOf(""));
 
-    private String value;
+    private final String value;
 
     public StringItem(String value, boolean followedByDigit) {
       if (followedByDigit && value.length() == 1) {

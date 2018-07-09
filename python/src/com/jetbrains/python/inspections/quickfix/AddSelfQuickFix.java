@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Insert 'self' in a method that lacks any arguments
  * User: dcheryasov
- * Date: Nov 19, 2008
  */
 public class AddSelfQuickFix implements LocalQuickFix {
   private final String myParamName;

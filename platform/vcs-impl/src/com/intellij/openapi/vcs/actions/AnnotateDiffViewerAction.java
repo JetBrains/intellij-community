@@ -142,8 +142,7 @@ public class AnnotateDiffViewerAction {
     EventData data = collectEventData(e);
     assert data != null;
 
-    boolean annotationShown = data.annotator.isAnnotationShown();
-    if (annotationShown) {
+    if (!selected) {
       data.annotator.hideAnnotation();
     }
     else {
@@ -267,7 +266,7 @@ public class AnnotateDiffViewerAction {
     final AnnotationProvider annotationProvider = vcs.getAnnotationProvider();
     if (annotationProvider == null) return null;
 
-    FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(file);
+    FileStatus fileStatus = ChangeListManager.getInstance(project).getStatus(file);
     if (fileStatus == FileStatus.UNKNOWN || fileStatus == FileStatus.ADDED || fileStatus == FileStatus.IGNORED) {
       return null;
     }

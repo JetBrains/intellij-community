@@ -16,8 +16,8 @@
 package com.intellij.psi.impl.light;
 
 import com.intellij.psi.*;
-import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.SearchScope;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 

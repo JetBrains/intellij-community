@@ -43,7 +43,7 @@ public class PyIntroduceParameterTest extends PyIntroduceTestCase {
   }
 
   public void testNonLocal() {
-    doTestCannotPerform(PyBundle.message("refactoring.introduce.selection.error"), LanguageLevel.PYTHON32);
+    doTestCannotPerform(PyBundle.message("refactoring.introduce.selection.error"), LanguageLevel.PYTHON34);
   }
 
   public void testGlobal() {

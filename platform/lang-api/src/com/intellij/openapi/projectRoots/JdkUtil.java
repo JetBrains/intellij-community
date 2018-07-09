@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.execution.CantRunException;
@@ -23,7 +11,6 @@ import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
@@ -31,7 +18,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.JarUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
@@ -45,10 +31,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
 import java.util.*;
 import java.util.jar.Attributes;
-import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 /**
@@ -63,7 +49,6 @@ public class JdkUtil {
    */
   public static final String PROPERTY_DO_NOT_ESCAPE_CLASSPATH_URL = "idea.do.not.escape.classpath.url";
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.projectRoots.JdkUtil");
   private static final String WRAPPER_CLASS = "com.intellij.rt.execution.CommandLineWrapper";
 
   private JdkUtil() { }
@@ -105,17 +90,7 @@ public class JdkUtil {
   }
 
   public static boolean checkForJdk(@NotNull File homePath) {
-    File binPath = new File(homePath, "bin");
-    if (!binPath.exists()) return false;
-
-    FileFilter fileFilter = f -> {
-      if (f.isDirectory()) return false;
-      String name = FileUtil.getNameWithoutExtension(f);
-      return "javac".equals(name) || "javah".equals(name);
-    };
-    File[] children = binPath.listFiles(fileFilter);
-
-    return children != null && children.length >= 2 &&
+    return (new File(homePath, "bin/javac").isFile() || new File(homePath, "bin/javac.exe").isFile()) &&
            checkForRuntime(homePath.getAbsolutePath());
   }
 
@@ -219,9 +194,9 @@ public class JdkUtil {
                                        boolean dynamicVMOptions,
                                        boolean dynamicParameters) throws CantRunException {
     try {
-      File argFile = FileUtil.createTempFile("idea_arg_file", null);
+      File argFile = FileUtil.createTempFile("idea_arg_file" + + Math.abs(new Random().nextInt()), null);
 
-      try (PrintWriter writer = new PrintWriter(argFile)) {
+      try (PrintWriter writer = createOutputWriter(argFile)) {
         if (dynamicVMOptions) {
           for (String param : vmParameters.getList()) {
             writer.print(quoteArg(param));
@@ -304,10 +279,11 @@ public class JdkUtil {
                                                   boolean dynamicVMOptions,
                                                   boolean dynamicParameters) throws CantRunException {
     try {
+      int pseudoUniquePrefix = Math.abs(new Random().nextInt());
       File vmParamsFile = null;
       if (dynamicVMOptions) {
-        vmParamsFile = FileUtil.createTempFile("idea_vm_params", null);
-        try (PrintWriter writer = new PrintWriter(vmParamsFile)) {
+        vmParamsFile = FileUtil.createTempFile("idea_vm_params" + pseudoUniquePrefix, null);
+        try (PrintWriter writer = createOutputWriter(vmParamsFile)) {
           for (String param : vmParameters.getList()) {
             if (isUserDefinedProperty(param)) {
               writer.println(param);
@@ -326,17 +302,17 @@ public class JdkUtil {
 
       File appParamsFile = null;
       if (dynamicParameters) {
-        appParamsFile = FileUtil.createTempFile("idea_app_params", null);
-        try (PrintWriter writer = new PrintWriter(appParamsFile)) {
+        appParamsFile = FileUtil.createTempFile("idea_app_params" + pseudoUniquePrefix, null);
+        try (PrintWriter writer = createOutputWriter(appParamsFile)) {
           for (String parameter : javaParameters.getProgramParametersList().getList()) {
             writer.println(parameter);
           }
         }
       }
 
-      File classpathFile = FileUtil.createTempFile("idea_classpath", null);
+      File classpathFile = FileUtil.createTempFile("idea_classpath" + pseudoUniquePrefix, null);
       PathsList classPath = javaParameters.getClassPath();
-      try (PrintWriter writer = new PrintWriter(classpathFile)) {
+      try (PrintWriter writer = createOutputWriter(classpathFile)) {
         for (String path : classPath.getPathList()) {
           writer.println(path);
         }
@@ -376,6 +352,10 @@ public class JdkUtil {
     catch (IOException e) {
       throwUnableToCreateTempFile(e);
     }
+  }
+
+  private static PrintWriter createOutputWriter(File vmParamsFile) throws FileNotFoundException {
+    return new PrintWriter(new OutputStreamWriter(new FileOutputStream(vmParamsFile), StandardCharsets.UTF_8));
   }
 
   private static void setClasspathJarParams(GeneralCommandLine commandLine,
@@ -529,23 +509,9 @@ public class JdkUtil {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated to be removed in IDEA 2018 */
-  @Nullable
-  public static String getJarMainAttribute(@NotNull VirtualFile jarRoot, @NotNull Attributes.Name attribute) {
-    VirtualFile manifestFile = jarRoot.findFileByRelativePath(JarFile.MANIFEST_NAME);
-    if (manifestFile != null) {
-      try (InputStream stream = manifestFile.getInputStream()) {
-        return new Manifest(stream).getMainAttributes().getValue(attribute);
-      }
-      catch (IOException e) {
-        LOG.debug(e);
-      }
-    }
-
-    return null;
-  }
 
   /** @deprecated use {@link SimpleJavaParameters#toCommandLine()} (to be removed in IDEA 2018) */
+  @Deprecated
   public static GeneralCommandLine setupJVMCommandLine(final String exePath,
                                                        final SimpleJavaParameters javaParameters,
                                                        final boolean forceDynamicClasspath) {

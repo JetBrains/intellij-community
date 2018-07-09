@@ -51,10 +51,11 @@ public class TerminalSettingsPanel {
   private JPanel myProjectSettingsPanel;
   private JPanel myGlobalSettingsPanel;
   private JPanel myConfigurablesPanel;
+  private JBCheckBox myHighlightHyperlinks;
   private TerminalOptionsProvider myOptionsProvider;
   private TerminalProjectOptionsProvider myProjectOptionsProvider;
 
-  private java.util.List<UnnamedConfigurable> myConfigurables = Lists.newArrayList();
+  private final java.util.List<UnnamedConfigurable> myConfigurables = Lists.newArrayList();
 
   public JComponent createPanel(@NotNull TerminalOptionsProvider provider, @NotNull TerminalProjectOptionsProvider projectOptionsProvider) {
     myOptionsProvider = provider;
@@ -124,7 +125,8 @@ public class TerminalSettingsPanel {
            || (myCopyOnSelectionCheckBox.isSelected() != myOptionsProvider.copyOnSelection())
            || (myPasteOnMiddleButtonCheckBox.isSelected() != myOptionsProvider.pasteOnMiddleMouseButton())
            || (myOverrideIdeShortcuts.isSelected() != myOptionsProvider.overrideIdeShortcuts())
-           || (myShellIntegration.isSelected() != myOptionsProvider.shellIntegration()) ||
+           || (myShellIntegration.isSelected() != myOptionsProvider.shellIntegration())
+           || (myHighlightHyperlinks.isSelected() != myOptionsProvider.highlightHyperlinks()) ||
            myConfigurables.stream().anyMatch(c -> c.isModified());
   }
 
@@ -139,6 +141,7 @@ public class TerminalSettingsPanel {
     myOptionsProvider.setPasteOnMiddleMouseButton(myPasteOnMiddleButtonCheckBox.isSelected());
     myOptionsProvider.setOverrideIdeShortcuts(myOverrideIdeShortcuts.isSelected());
     myOptionsProvider.setShellIntegration(myShellIntegration.isSelected());
+    myOptionsProvider.setHighlightHyperlinks(myHighlightHyperlinks.isSelected());
     myConfigurables.forEach(c -> {
       try {
         c.apply();
@@ -160,6 +163,7 @@ public class TerminalSettingsPanel {
     myPasteOnMiddleButtonCheckBox.setSelected(myOptionsProvider.pasteOnMiddleMouseButton());
     myOverrideIdeShortcuts.setSelected(myOptionsProvider.overrideIdeShortcuts());
     myShellIntegration.setSelected(myOptionsProvider.shellIntegration());
+    myHighlightHyperlinks.setSelected(myOptionsProvider.highlightHyperlinks());
     myConfigurables.forEach(c -> c.reset());
   }
 

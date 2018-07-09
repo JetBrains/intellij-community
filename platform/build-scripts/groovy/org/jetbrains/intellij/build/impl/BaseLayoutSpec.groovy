@@ -26,27 +26,48 @@ class BaseLayoutSpec {
   }
 
   /**
+   * @deprecated use explicit resource name instead of boolean or null. To be removed in IDEA 2018.3.
+   */
+  void withModule(String moduleName, String relativeJarPath = "${moduleName}.jar", boolean localizableResourcesInCommonJar) {
+    if (localizableResourcesInCommonJar) {
+      withModule(moduleName, relativeJarPath)
+    } else {
+      withModule(moduleName, relativeJarPath, null)
+    }
+  }
+
+  /**
+   * Register an additional module to be included into the plugin distribution into a separate JAR file. Module-level libraries from
+   * {@code moduleName} with scopes 'Compile' and 'Runtime' will be also copied to the 'lib' directory of the plugin.
+   */
+  void withModule(String moduleName) {
+    layout.moduleJars.put("${BaseLayout.convertModuleNameToFileName(moduleName)}.jar", moduleName)
+  }
+
+  /**
    * Register an additional module to be included into the plugin distribution. If {@code relativeJarPath} doesn't contain '/' (i.e. the
    * JAR will be added to the plugin's classpath) this will also cause modules library from {@code moduleName} with scopes 'Compile' and
    * 'Runtime' to be copied to the 'lib' directory of the plugin.
    *
    * @param relativeJarPath target JAR path relative to 'lib' directory of the plugin; different modules may be packed into the same JAR,
    * but <strong>don't use this for new plugins</strong>; this parameter is temporary added to keep layout of old plugins.
-   * @param localizableResourcesInCommonJar if {@code true} the translatable resources from the module (messages, inspection descriptions, etc) will be
-   * placed into a separate 'resources_en.jar'. <strong>Do not use this for new plugins, this parameter is temporary added to keep layout of old plugins</strong>.
+   * @param localizableResourcesJar specifies relative path to the JAR where translatable resources from the module (messages, inspection descriptions, etc) will be
+   * placed. If {@code null}, the resources will be placed into the JAR specified by {@code relativeJarPath}. <strong>Do not use this for new plugins, this parameter is temporary added to keep layout of old plugins</strong>.
    */
-  void withModule(String moduleName, String relativeJarPath = "${moduleName}.jar", boolean localizableResourcesInCommonJar = true) {
-    if (localizableResourcesInCommonJar) {
-      layout.modulesWithLocalizableResourcesInCommonJar << moduleName
+  void withModule(String moduleName, String relativeJarPath, String localizableResourcesJar = "resources_en.jar") {
+    if (localizableResourcesJar != null) {
+      layout.localizableResourcesJars.put(moduleName, localizableResourcesJar)
     }
     layout.moduleJars.put(relativeJarPath, moduleName)
+    layout.explicitlySetJarPaths.add(relativeJarPath)
   }
 
   /**
-   * Include the project library to 'lib' directory of the plugin distribution
+   * Include the project library to 'lib' directory or its subdirectory of the plugin distribution
+   * @relativeOutputPath path relative to 'lib' plugin directory
    */
-  void withProjectLibrary(String libraryName) {
-    layout.includedProjectLibraries << libraryName
+  void withProjectLibrary(String libraryName, String relativeOutputPath = "") {
+    layout.includedProjectLibraries << new ProjectLibraryData(libraryName, relativeOutputPath)
   }
 
   /**

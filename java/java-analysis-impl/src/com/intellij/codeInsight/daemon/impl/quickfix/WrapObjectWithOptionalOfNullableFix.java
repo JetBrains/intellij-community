@@ -15,13 +15,12 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
-import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -51,7 +50,7 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix imple
   @NotNull
   @Override
   public String getText() {
-    if (myArgList.getExpressions().length == 1) {
+    if (myArgList.getExpressionCount() == 1) {
       return QuickFixBundle.message("wrap.with.optional.single.parameter.text");
     }
     else {
@@ -91,8 +90,7 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix imple
                                  @NotNull PsiFile file,
                                  @NotNull PsiElement startElement,
                                  @NotNull PsiElement endElement) {
-        return startElement.isValid() &&
-               startElement.getManager().isInProject(startElement) &&
+        return startElement.getManager().isInProject(startElement) &&
                PsiUtil.isLanguageLevel8OrHigher(startElement) && areConvertible(((PsiExpression) startElement).getType(), type);
       }
 
@@ -156,9 +154,9 @@ public class WrapObjectWithOptionalOfNullableFix extends MethodArgumentFix imple
         toCheckNullability = (PsiModifierListOwner)resolved;
       }
     }
-    final Nullness nullability = toCheckNullability == null ? Nullness.NOT_NULL : DfaPsiUtil
+    final Nullability nullability = toCheckNullability == null ? Nullability.NOT_NULL : DfaPsiUtil
       .getElementNullability(expression.getType(), toCheckNullability);
-    String methodName = nullability == Nullness.NOT_NULL ? "of" : "ofNullable";
+    String methodName = nullability == Nullability.NOT_NULL ? "of" : "ofNullable";
     final String newExpressionText = CommonClassNames.JAVA_UTIL_OPTIONAL + "." + methodName + "(" + expression.getText() + ")";
     return JavaPsiFacade.getElementFactory(project).createExpressionFromText(newExpressionText, expression);
   }

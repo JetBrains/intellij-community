@@ -28,7 +28,7 @@ public final class ZipShort implements Cloneable {
   private static final int BYTE_1_MASK = 0xFF00;
   private static final int BYTE_1_SHIFT = 8;
 
-  private int value;
+  private final int value;
 
   /**
    * Create instance from a number.
@@ -128,7 +128,7 @@ public final class ZipShort implements Cloneable {
    * @since 1.1
    */
   public boolean equals(Object o) {
-    if (o == null || !(o instanceof ZipShort)) {
+    if (!(o instanceof ZipShort)) {
       return false;
     }
     return value == ((ZipShort)o).getValue();

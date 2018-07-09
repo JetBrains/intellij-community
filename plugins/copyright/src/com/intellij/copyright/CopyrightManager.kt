@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.copyright
 
 import com.intellij.configurationStore.*
@@ -49,11 +47,11 @@ private const val MODULE = "module"
 
 private val LOG = Logger.getInstance(CopyrightManager::class.java)
 
-@State(name = "CopyrightManager", storages = arrayOf(Storage(value = "copyright/profiles_settings.xml", exclusive = true)))
+@State(name = "CopyrightManager", storages = [(Storage(value = "copyright/profiles_settings.xml", exclusive = true))])
 class CopyrightManager @JvmOverloads constructor(private val project: Project, schemeManagerFactory: SchemeManagerFactory, isSupportIprProjects: Boolean = true) : PersistentStateComponent<Element> {
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.service<CopyrightManager>()
+    fun getInstance(project: Project): CopyrightManager = project.service<CopyrightManager>()
   }
 
   private var defaultCopyrightName: String? = null
@@ -64,8 +62,8 @@ class CopyrightManager @JvmOverloads constructor(private val project: Project, s
       defaultCopyrightName = value?.name
     }
 
-  val scopeToCopyright = LinkedHashMap<String, String>()
-  val options = Options()
+  val scopeToCopyright: LinkedHashMap<String, String> = LinkedHashMap<String, String>()
+  val options: Options = Options()
 
   private val schemeWriter = { scheme: CopyrightProfile ->
     val element = scheme.writeScheme()
@@ -83,6 +81,15 @@ class CopyrightManager @JvmOverloads constructor(private val project: Project, s
     }
 
     override fun isSchemeFile(name: CharSequence) = !StringUtil.equals(name, "profiles_settings.xml")
+
+    override fun getSchemeKey(attributeProvider: Function<String, String?>, fileNameWithoutExtension: String): String {
+      val schemeKey = super.getSchemeKey(attributeProvider, fileNameWithoutExtension)
+      if (schemeKey != null) {
+        return schemeKey
+      }
+      LOG.warn("Name is not specified for scheme $fileNameWithoutExtension, file name will be used instead")
+      return fileNameWithoutExtension
+    }
   }, schemeNameToFileName = OLD_NAME_CONVERTER, streamProvider = schemeManagerIprProvider)
 
   init {
@@ -258,6 +265,9 @@ private class CopyrightLazySchemeWrapper(name: String,
     }
 
     element.deserializeInto(scheme)
+    // use effective name instead of probably missed from the serialized
+    // https://youtrack.jetbrains.com/v2/issue/IDEA-186546
+    scheme.profileName = name
 
     @Suppress("DEPRECATION")
     val allowReplaceKeyword = scheme.allowReplaceKeyword

@@ -12,7 +12,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -42,16 +41,16 @@ public class GrStubUtils {
 
   @NotNull
   public static String[] readStringArray(@NotNull StubInputStream dataStream) throws IOException {
-    return ArrayUtil.toStringArray(readSeq(dataStream, () -> StringRef.toString(dataStream.readName())));
+    return ArrayUtil.toStringArray(readSeq(dataStream, dataStream::readNameString));
   }
 
   public static void writeNullableString(StubOutputStream dataStream, @Nullable String typeText) throws IOException {
-    DataInputOutputUtil.writeNullable(dataStream, typeText, s -> dataStream.writeUTFFast(s));
+    DataInputOutputUtil.writeNullable(dataStream, typeText, dataStream::writeUTFFast);
   }
 
   @Nullable
   public static String readNullableString(StubInputStream dataStream) throws IOException {
-    return DataInputOutputUtil.readNullable(dataStream, () -> dataStream.readUTFFast());
+    return DataInputOutputUtil.readNullable(dataStream, dataStream::readUTFFast);
   }
 
   @Nullable
@@ -114,11 +113,11 @@ public class GrStubUtils {
 
   public static boolean isGroovyStaticMemberStub(StubElement<?> stub) {
     StubElement<?> modifierOwner = stub instanceof GrMethodStub ? stub : stub.getParentStub();
-    StubElement<GrModifierList> type = modifierOwner.findChildStubByType(GroovyElementTypes.MODIFIERS);
-    if (!(type instanceof GrModifierListStub)) {
+    GrModifierListStub type = modifierOwner.findChildStubByType(GroovyElementTypes.MODIFIERS);
+    if (type == null) {
       return false;
     }
-    int mask = ((GrModifierListStub)type).getModifiersFlags();
+    int mask = type.getModifiersFlags();
     if (hasMaskModifier(mask, PsiModifier.PRIVATE)) {
       return false;
     }

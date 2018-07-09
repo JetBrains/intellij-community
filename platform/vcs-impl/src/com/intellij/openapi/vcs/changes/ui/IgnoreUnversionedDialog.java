@@ -232,7 +232,7 @@ public class IgnoreUnversionedDialog extends DialogWrapper {
         }
       }
     }
-    return result.toArray(new IgnoredFileBean[result.size()]);
+    return result.toArray(new IgnoredFileBean[0]);
   }
 
   @Override @NonNls

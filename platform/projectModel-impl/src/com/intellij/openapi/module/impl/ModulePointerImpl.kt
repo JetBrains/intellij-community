@@ -38,7 +38,7 @@ class ModulePointerImpl : ModulePointer {
     this.lock = lock
   }
 
-  override fun getModule() = lock.read { module }
+  override fun getModule(): Module? = lock.read { module }
 
   override fun getModuleName(): String = lock.read { module?.name ?: moduleName!! }
 
@@ -57,5 +57,10 @@ class ModulePointerImpl : ModulePointer {
     this.module = null
   }
 
-  override fun toString() = "moduleName: $moduleName, module: $module"
+  internal fun renameUnresolved(newName: String) {
+    LOG.assertTrue(module == null)
+    moduleName = newName
+  }
+
+  override fun toString(): String = "moduleName: $moduleName, module: $module"
 }

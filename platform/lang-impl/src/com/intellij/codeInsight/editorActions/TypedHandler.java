@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -25,6 +11,7 @@ import com.intellij.codeInsight.highlighting.NontrivialBraceMatcher;
 import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,16 +19,20 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.ActionPlan;
+import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.editor.impl.DefaultRawTypedHandler;
+import com.intellij.openapi.editor.impl.EditorActionManagerImpl;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -99,7 +90,7 @@ public class TypedHandler extends TypedActionHandlerBase {
   }
 
   @NotNull
-  private static FileType getFileType(@NotNull PsiFile file, @NotNull Editor editor) {
+  static FileType getFileType(@NotNull PsiFile file, @NotNull Editor editor) {
     FileType fileType = file.getFileType();
     Language language = PsiUtilBase.getLanguageInEditor(editor, file.getProject());
     if (language != null && language != PlainTextLanguage.INSTANCE) {
@@ -137,6 +128,10 @@ public class TypedHandler extends TypedActionHandlerBase {
   @Override
   public void beforeExecute(@NotNull Editor editor, char c, @NotNull DataContext context, @NotNull ActionPlan plan) {
     if (COMPLEX_CHARS.contains(c) || Character.isSurrogate(c)) return;
+
+    for (TypedHandlerDelegate delegate : Extensions.getExtensions(TypedHandlerDelegate.EP_NAME)) {
+      if (!delegate.isImmediatePaintingEnabled(editor, c, context)) return;
+    }
 
     if (editor.isInsertMode()) {
       int offset = plan.getCaretOffset();
@@ -230,6 +225,10 @@ public class TypedHandler extends TypedActionHandlerBase {
       long modificationStampBeforeTyping = editor.getDocument().getModificationStamp();
       type(originalEditor, charTyped);
       AutoHardWrapHandler.getInstance().wrapLineIfNecessary(originalEditor, dataContext, modificationStampBeforeTyping);
+      
+      if (editor.isDisposed()) { // can be that injected editor disappear
+        return;
+      }
 
       if (('(' == charTyped || '[' == charTyped || '{' == charTyped) &&
           CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET &&
@@ -289,8 +288,7 @@ public class TypedHandler extends TypedActionHandlerBase {
     if (offset >= 0) {
       final PsiElement element = file.findElementAt(offset);
       if (element != null) {
-        final List<CompletionContributor> list = CompletionContributor.forLanguage(element.getLanguage());
-        for (CompletionContributor contributor : list) {
+        for (CompletionContributor contributor : CompletionContributor.forLanguageHonorDumbness(element.getLanguage(), file.getProject())) {
           if (contributor.invokeAutoPopup(element, charTyped)) {
             LOG.debug(contributor + " requested completion autopopup when typing '" + charTyped + "'");
             return true;
@@ -336,7 +334,8 @@ public class TypedHandler extends TypedActionHandlerBase {
     // even for uncommitted document try to retrieve injected fragment that has been there recently
     // we are assuming here that when user is (even furiously) typing, injected language would not change
     // and thus we can use its lexer to insert closing braces etc
-    for (DocumentWindow documentWindow : InjectedLanguageUtil.getCachedInjectedDocuments(oldFile)) {
+    List<DocumentWindow> injected = InjectedLanguageManager.getInstance(oldFile.getProject()).getCachedInjectedDocumentsInRange(oldFile, ProperTextRange.create(offset, offset));
+    for (DocumentWindow documentWindow : injected) {
       if (documentWindow.isValid() && documentWindow.containsRange(offset, offset)) {
         PsiFile injectedFile = PsiDocumentManager.getInstance(oldFile.getProject()).getPsiFile(documentWindow);
         if (injectedFile != null) {
@@ -403,6 +402,7 @@ public class TypedHandler extends TypedActionHandlerBase {
         throw new AssertionError("Unknown char "+lparenChar);
       }
       editor.getDocument().insertString(offset, text);
+      TabOutScopesTracker.getInstance().registerEmptyScope(editor, offset);
     }
   }
 
@@ -503,7 +503,7 @@ public class TypedHandler extends TypedActionHandlerBase {
       if (closingQuote != null && hasNonClosedLiterals(editor, quoteHandler, offset - 1)) {
         if (offset == document.getTextLength() ||
             !Character.isUnicodeIdentifierPart(document.getCharsSequence().charAt(offset))) { //any better heuristic or an API?
-          document.insertString(offset, closingQuote);
+          ((MultiCharQuoteHandler)quoteHandler).insertClosingQuote(editor, offset, closingQuote);
           return true;
         }
       }
@@ -513,6 +513,7 @@ public class TypedHandler extends TypedActionHandlerBase {
       if (offset == document.getTextLength() ||
           !Character.isUnicodeIdentifierPart(document.getCharsSequence().charAt(offset))) { //any better heuristic or an API?
         document.insertString(offset, String.valueOf(quote));
+        TabOutScopesTracker.getInstance().registerEmptyScope(editor, offset);
       }
     }
 
@@ -632,6 +633,9 @@ public class TypedHandler extends TypedActionHandlerBase {
         );
       }
       if (element.getNode() != null && isBrace) {
+        DefaultRawTypedHandler handler = ((EditorActionManagerImpl) EditorActionManager.getInstance()).getDefaultRawTypedHandler();
+        handler.beginUndoablePostProcessing();
+
         final int finalLBraceOffset = lBraceOffset;
         ApplicationManager.getApplication().runWriteAction(() -> {
           try{

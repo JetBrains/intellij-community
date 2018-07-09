@@ -32,13 +32,14 @@ import javax.swing.*;
 
 public class RepositoryLibrarySupportInModuleConfigurable extends FrameworkSupportInModuleConfigurable {
   @NotNull private final RepositoryLibraryDescription libraryDescription;
-  private RepositoryLibraryPropertiesEditor editor;
-  private RepositoryLibraryPropertiesModel model;
+  private final RepositoryLibraryPropertiesEditor editor;
+  private final RepositoryLibraryPropertiesModel model;
 
   public RepositoryLibrarySupportInModuleConfigurable(@Nullable Project project, @NotNull RepositoryLibraryDescription libraryDescription) {
     this.libraryDescription = libraryDescription;
     RepositoryLibraryProperties defaultProperties = libraryDescription.createDefaultProperties();
-    this.model = new RepositoryLibraryPropertiesModel(defaultProperties.getVersion(), false, false, defaultProperties.isIncludeTransitiveDependencies());
+    this.model = new RepositoryLibraryPropertiesModel(defaultProperties.getVersion(), false, false, defaultProperties.isIncludeTransitiveDependencies(),
+                                                      defaultProperties.getExcludedDependencies());
     editor = new RepositoryLibraryPropertiesEditor(project, model, libraryDescription);
   }
 

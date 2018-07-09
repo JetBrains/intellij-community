@@ -68,6 +68,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
                                   PyPsiUtils.strValue(docStringExpression),
                                   message,
                                   function.isAsync(),
+                                  function.isGenerator(),
                                   function.onlyRaisesNotImplementedError(),
                                   typeComment,
                                   annotationContent,
@@ -81,6 +82,7 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
     dataStream.writeUTFFast(StringUtil.notNullize(stub.getDocString()));
     dataStream.writeName(stub.getDeprecationMessage());
     dataStream.writeBoolean(stub.isAsync());
+    dataStream.writeBoolean(stub.isGenerator());
     dataStream.writeBoolean(stub.onlyRaisesNotImplementedError());
     dataStream.writeName(stub.getTypeComment());
     dataStream.writeName(stub.getAnnotation());
@@ -89,20 +91,22 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
   @Override
   @NotNull
   public PyFunctionStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
-    String name = StringRef.toString(dataStream.readName());
+    String name = dataStream.readNameString();
     String docString = dataStream.readUTFFast();
-    StringRef deprecationMessage = dataStream.readName();
+    String deprecationMessage = dataStream.readNameString();
     final boolean isAsync = dataStream.readBoolean();
+    final boolean isGenerator = dataStream.readBoolean();
     final boolean onlyRaisesNotImplementedError = dataStream.readBoolean();
-    final StringRef typeComment = dataStream.readName();
-    final StringRef annotationContent = dataStream.readName();
+    String typeComment = dataStream.readNameString();
+    String annotationContent = dataStream.readNameString();
     return new PyFunctionStubImpl(name,
                                   StringUtil.nullize(docString),
-                                  deprecationMessage == null ? null : deprecationMessage.getString(),
+                                  deprecationMessage,
                                   isAsync,
+                                  isGenerator,
                                   onlyRaisesNotImplementedError,
-                                  typeComment == null ? null : typeComment.getString(),
-                                  annotationContent == null ? null : annotationContent.getString(),
+                                  typeComment,
+                                  annotationContent,
                                   parentStub,
                                   getStubElementType());
   }

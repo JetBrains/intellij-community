@@ -46,7 +46,6 @@ import java.util.List;
 
 /**
  * @author anna
- * Date: 25-Mar-2008
  */
 public abstract class TypeMigrationDialog extends RefactoringDialog {
   private static final Logger LOG = Logger.getInstance(TypeMigrationDialog.class);
@@ -214,7 +213,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
         }
       }
       try {
-        final PsiExpression[] occurrences = expressions.toArray(new PsiExpression[expressions.size()]);
+        final PsiExpression[] occurrences = expressions.toArray(PsiExpression.EMPTY_ARRAY);
         final PsiType[] psiTypes = new TypeSelectorManagerImpl(project, myTypeCodeFragment.getType(), occurrences).getTypesForAll();
         if (psiTypes.length > 0) {
           final String[] history = new String[psiTypes.length];

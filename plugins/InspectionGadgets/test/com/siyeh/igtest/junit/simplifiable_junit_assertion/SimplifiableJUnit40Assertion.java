@@ -13,5 +13,10 @@ public class SimplifiableJUnit40Assertion {
         <warning descr="'assertFalse()' can be simplified to 'fail()'">assertFalse</warning>("foo", true);
         Boolean b = true;
         <warning descr="'assertTrue()' can be simplified to 'assertEquals()'">assertTrue</warning>(b == true);
+        int i1 = 0; int i2 = 0;
+        <warning descr="'assertFalse()' can be simplified to 'assertNotEquals()'">assertFalse</warning>(i1 == i2);
+        //difference with junit 5
+        org.junit.jupiter.api.Assertions.assertFalse(i1 == i2);
+        org.junit.jupiter.api.Assertions.<warning descr="'assertFalse()' can be simplified to 'assertNotEquals()'">assertFalse</warning>(new Object().equals(new Object()));
     }
 }

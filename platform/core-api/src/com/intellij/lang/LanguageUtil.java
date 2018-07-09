@@ -1,11 +1,13 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang;
 
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.FileViewProvider;
@@ -18,9 +20,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public final class LanguageUtil {
   private LanguageUtil() {
@@ -71,7 +72,7 @@ public final class LanguageUtil {
   @NotNull
   public static Language[] getLanguageDialects(@NotNull final Language base) {
     final List<Language> list = ContainerUtil.findAll(Language.getRegisteredLanguages(), language -> language.getBaseLanguage() == base);
-    return list.toArray(new Language[list.size()]);
+    return list.toArray(new Language[0]);
   }
 
   public static boolean isInTemplateLanguageFile(@Nullable final PsiElement element) {
@@ -134,5 +135,21 @@ public final class LanguageUtil {
       }
     }
     return provider.getBaseLanguage();
+  }
+
+  private static final Key<Collection<MetaLanguage>> MATCHING_LANGUAGES = Key.create("language.matching");
+
+  @NotNull
+  static Collection<MetaLanguage> matchingMetaLanguages(@NotNull Language language) {
+    if (!Extensions.getRootArea().hasExtensionPoint(MetaLanguage.EP_NAME)) {
+      return Collections.emptyList(); // don't cache
+    }
+
+    Collection<MetaLanguage> cached = language.getUserData(MATCHING_LANGUAGES);
+    if (cached != null) {
+      return cached;
+    }
+    Set<MetaLanguage> result = MetaLanguage.getAllMatchingMetaLanguages(language).collect(Collectors.toSet());
+    return language.putUserDataIfAbsent(MATCHING_LANGUAGES, result);
   }
 }

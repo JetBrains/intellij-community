@@ -44,7 +44,7 @@ public class FavoritesTreeUtil {
       FavoritesTreeNodeDescriptor treeNodeDescriptor = (FavoritesTreeNodeDescriptor)userObject;
       result.add(treeNodeDescriptor);
     }
-    return result.toArray(new FavoritesTreeNodeDescriptor[result.size()]);
+    return result.toArray(FavoritesTreeNodeDescriptor.EMPTY_ARRAY);
   }
 
   public static List<AbstractTreeNode> getLogicalPathToSelected(final Tree tree) {

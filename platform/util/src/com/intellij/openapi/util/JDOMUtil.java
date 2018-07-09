@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,11 +11,10 @@ import com.intellij.util.containers.StringInterner;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
-import com.intellij.util.text.StringFactory;
 import org.jdom.*;
 import org.jdom.filter.Filter;
 import org.jdom.input.SAXBuilder;
-import org.jdom.input.SAXHandler;
+import org.jdom.input.sax.SAXHandler;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.Contract;
@@ -134,13 +121,13 @@ public class JDOMUtil {
   }
 
   /**
-   * @deprecated Use Element.getChildren() directly
+   * @deprecated Use {@link Element#getChildren} instead
    */
   @NotNull
   @Deprecated
   public static Element[] getElements(@NotNull Element m) {
     List<Element> list = m.getChildren();
-    return list.toArray(new Element[list.size()]);
+    return list.toArray(new Element[0]);
   }
 
   /**
@@ -382,18 +369,6 @@ public class JDOMUtil {
     finally {
       writer.close();
     }
-  }
-
-  /**
-   * @deprecated Use {@link #writeDocument(Document, String)} or {@link #writeElement(Element)}}
-   */
-  @NotNull
-  @Deprecated
-  public static byte[] printDocument(@NotNull Document document, String lineSeparator) throws IOException {
-    CharArrayWriter writer = new CharArrayWriter();
-    writeDocument(document, writer, lineSeparator);
-
-    return StringFactory.createShared(writer.toCharArray()).getBytes(CharsetToolkit.UTF8_CHARSET);
   }
 
   @NotNull
@@ -708,7 +683,15 @@ public class JDOMUtil {
     return element == null || element.getAttributes().size() == attributeCount && element.getContent().isEmpty();
   }
 
-  public static void merge(@NotNull Element to, @NotNull Element from) {
+  @Nullable
+  public static Element merge(@Nullable Element to, @Nullable Element from) {
+    if (from == null) {
+      return to;
+    }
+    if (to == null) {
+      return from;
+    }
+
     for (Iterator<Element> iterator = from.getChildren().iterator(); iterator.hasNext(); ) {
       Element configuration = iterator.next();
       iterator.remove();
@@ -719,6 +702,7 @@ public class JDOMUtil {
       iterator.remove();
       to.setAttribute(attribute);
     }
+    return to;
   }
 
   @NotNull
@@ -728,6 +712,12 @@ public class JDOMUtil {
       iterator.remove();
 
       Element existingChild = to.getChild(child.getName());
+      if (existingChild != null && isEmpty(existingChild)) {
+        // replace empty tag
+        to.removeChild(child.getName());
+        existingChild = null;
+      }
+
       // if no children (e.g. `<module fileurl="value" />`), it means that element should be added as list item
       if (existingChild == null || existingChild.getChildren().isEmpty() || !isAttributesEqual(existingChild.getAttributes(), child.getAttributes(), false)) {
         to.addContent(child);

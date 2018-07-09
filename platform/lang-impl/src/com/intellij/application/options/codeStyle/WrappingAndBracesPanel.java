@@ -37,7 +37,7 @@ import java.util.function.Function;
 
 public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
 
-  private MultiMap<String, String> myGroupToFields = new MultiMap<>();
+  private final MultiMap<String, String> myGroupToFields = new MultiMap<>();
   private Map<String, SettingsGroup> myFieldNameToGroup;
   private final CommaSeparatedIntegersField mySoftMarginsEditor =
     new CommaSeparatedIntegersField(null, 0, CodeStyleConstraints.MAX_RIGHT_MARGIN, "Optional");
@@ -152,7 +152,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
 
   private static class SoftMarginsOption extends Option {
 
-    private Language myLanguage;
+    private final Language myLanguage;
 
     protected SoftMarginsOption(@NotNull Language language,
                                 @NotNull String optionName,

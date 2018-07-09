@@ -35,7 +35,6 @@ import java.util.stream.Stream;
 /**
  * Functions common to different implementors of PyCallExpression, with different base classes.
  * User: dcheryasov
- * Date: Dec 23, 2008 10:31:38 AM
  */
 public class PyCallExpressionHelper {
   private PyCallExpressionHelper() {
@@ -370,9 +369,9 @@ public class PyCallExpressionHelper {
     return false;
   }
 
-  public static boolean isQualifiedByInstance(@Nullable PyCallable resolved,
-                                              @NotNull PyExpression qualifier,
-                                              @NotNull TypeEvalContext context) {
+  private static boolean isQualifiedByInstance(@Nullable PyCallable resolved,
+                                               @NotNull PyExpression qualifier,
+                                               @NotNull TypeEvalContext context) {
     if (isQualifiedByClass(resolved, qualifier, context)) {
       return false;
     }
@@ -470,10 +469,7 @@ public class PyCallExpressionHelper {
           return PyUnionType.union(members);
         }
       }
-      if (callee == null) {
-        return null;
-      }
-      else {
+      if (callee != null) {
         final PyType type = context.getType(callee);
         if (type instanceof PyCallableType) {
           final PyCallableType callableType = (PyCallableType)type;
@@ -482,8 +478,8 @@ public class PyCallExpressionHelper {
         if (type instanceof PyUnionType) {
           return getCallResultTypeFromUnion(call, context, (PyUnionType)type);
         }
-        return null;
       }
+      return null;
     }
     finally {
       TypeEvalStack.evaluated(call);
@@ -521,9 +517,9 @@ public class PyCallExpressionHelper {
   @Nullable
   private static Ref<? extends PyType> getCallTargetReturnType(@NotNull PyCallExpression call, @NotNull PsiElement target,
                                                                @NotNull TypeEvalContext context) {
-    final PyType providedOverridingType = PyReferenceExpressionImpl.getReferenceTypeFromOverridingProviders(target, context, call);
-    if (providedOverridingType instanceof PyCallableType) {
-      return Ref.create(((PyCallableType)providedOverridingType).getCallType(context, call));
+    final Ref<PyType> providedOverridingType = PyReferenceExpressionImpl.getReferenceTypeFromOverridingProviders(target, context, call);
+    if (providedOverridingType != null && providedOverridingType.get() instanceof PyCallableType) {
+      return Ref.create(((PyCallableType)providedOverridingType.get()).getCallType(context, call));
     }
 
     PyClass cls = null;
@@ -569,9 +565,9 @@ public class PyCallExpressionHelper {
     if (cls != null) {
       return Ref.create(new PyClassTypeImpl(cls, false));
     }
-    final PyType providedType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(target, context, call);
-    if (providedType instanceof PyCallableType) {
-      return Ref.create(((PyCallableType)providedType).getCallType(context, call));
+    final Ref<PyType> providedType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(target, context, call);
+    if (providedType != null && providedType.get() instanceof PyCallableType) {
+      return Ref.create(((PyCallableType)providedType.get()).getCallType(context, call));
     }
     final Ref<PyType> propertyCallType = getPropertyCallType(call, target, context);
     if (propertyCallType != null) {
@@ -725,12 +721,15 @@ public class PyCallExpressionHelper {
     final List<PyCallableParameter> parameters = markedCallee.getCallableType().getParameters(context);
     if (parameters == null) return PyCallExpression.PyArgumentsMapping.empty(callExpression);
 
-    final List<PyCallableParameter> explicitParameters = dropImplicitParameters(parameters, markedCallee.getImplicitOffset());
+    final int safeImplicitOffset = Math.min(markedCallee.getImplicitOffset(), parameters.size());
+    final List<PyCallableParameter> explicitParameters = parameters.subList(safeImplicitOffset, parameters.size());
+    final List<PyCallableParameter> implicitParameters = parameters.subList(0, safeImplicitOffset);
     final List<PyExpression> arguments = Arrays.asList(argumentList.getArguments());
     final ArgumentMappingResults mappingResults = analyzeArguments(arguments, explicitParameters);
 
     return new PyCallExpression.PyArgumentsMapping(callExpression,
                                                    markedCallee,
+                                                   implicitParameters,
                                                    mappingResults.getMappedParameters(),
                                                    mappingResults.getUnmappedParameters(),
                                                    mappingResults.getUnmappedArguments(),
@@ -799,8 +798,8 @@ public class PyCallExpressionHelper {
     if (parameters == null) return PyCallExpression.PyArgumentsMapping.empty(callSite);
 
     final List<PyExpression> arguments = callSite.getArguments(callable);
-    final List<PyCallableParameter> explicitParameters =
-      filterExplicitParameters(parameters, callable, callSite, resolveContext);
+    final List<PyCallableParameter> explicitParameters = filterExplicitParameters(parameters, callable, callSite, resolveContext);
+    final List<PyCallableParameter> implicitParameters = parameters.subList(0, parameters.size() - explicitParameters.size());
 
     final ArgumentMappingResults mappingResults = analyzeArguments(arguments, explicitParameters);
 
@@ -809,6 +808,7 @@ public class PyCallExpressionHelper {
 
     return new PyCallExpression.PyArgumentsMapping(callSite,
                                                    markedCallee,
+                                                   implicitParameters,
                                                    mappingResults.getMappedParameters(),
                                                    mappingResults.getUnmappedParameters(),
                                                    mappingResults.getUnmappedArguments(),
@@ -1001,7 +1001,7 @@ public class PyCallExpressionHelper {
 
     return StreamEx
       .of(elements)
-      .groupingBy(element -> ScopeUtil.getScopeOwner(mapper.apply(element)))
+      .groupingBy(element -> Optional.ofNullable(ScopeUtil.getScopeOwner(mapper.apply(element))))
       .values()
       .stream()
       .flatMap(oneScopeElements -> takeOverloadsOtherwiseImplementations(oneScopeElements, mapper, context));
@@ -1035,7 +1035,14 @@ public class PyCallExpressionHelper {
       return elements.stream();
     }
 
-    return elements.stream().filter(element -> PyiUtil.isOverload(mapper.apply(element), context));
+    return elements
+      .stream()
+      .filter(
+        element -> {
+          final PsiElement mapped = mapper.apply(element);
+          return mapped != null && PyiUtil.isOverload(mapped, context);
+        }
+      );
   }
 
   public static class ArgumentMappingResults {

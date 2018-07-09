@@ -44,7 +44,6 @@ import java.util.regex.Pattern;
  * Adds appropriate first parameter to a freshly-typed method declaration.
  * <br/>
  * User: dcheryasov
- * Date: 11/29/10 12:44 AM
  */
 public class PyMethodNameTypedHandler extends TypedHandlerDelegate {
   private static final Pattern DEF_THEN_IDENTIFIER = Pattern.compile(".*\\bdef\\s+" + PyNames.IDENTIFIER_RE);

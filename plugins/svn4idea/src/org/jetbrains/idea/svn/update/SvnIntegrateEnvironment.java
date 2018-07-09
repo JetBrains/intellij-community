@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +23,8 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.integrate.MergeClient;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -96,8 +96,8 @@ public class SvnIntegrateEnvironment extends AbstractSvnUpdateIntegrateEnvironme
       }
 
       MergeClient client = myVcs.getFactory(root).createMergeClient();
-      SvnTarget source1 = SvnTarget.fromURL(info.getUrl1(), info.getRevision1());
-      SvnTarget source2 = SvnTarget.fromURL(info.getUrl2(), info.getRevision2());
+      Target source1 = Target.on(info.getUrl1(), info.getRevision1());
+      Target source2 = Target.on(info.getUrl2(), info.getRevision2());
 
       client.merge(source1, source2, root, svnConfig.getUpdateDepth(), svnConfig.isMergeDiffUseAncestry(), svnConfig.isMergeDryRun(), false, false,
                    svnConfig.getMergeOptions(), myHandler);

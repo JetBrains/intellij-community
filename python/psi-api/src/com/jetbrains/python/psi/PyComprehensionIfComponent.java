@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The "if" part of list comprehensions and generators.
  * User: dcheryasov
- * Date: Jul 31, 2008
  */
 public interface PyComprehensionIfComponent extends PyComprehensionComponent {
   @Nullable  

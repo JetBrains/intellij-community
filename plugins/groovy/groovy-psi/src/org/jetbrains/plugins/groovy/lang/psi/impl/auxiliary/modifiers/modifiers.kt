@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GrModifierListUtil")
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers
@@ -28,14 +14,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP
 import org.jetbrains.plugins.groovy.lang.psi.impl.findDeclaredDetachedValue
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil.isInterface
+import org.jetbrains.plugins.groovy.transformations.immutable.hasImmutableAnnotation
 
 private val visibilityModifiers = setOf(PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE)
 private val explicitVisibilityModifiersMask = GrModifierFlags.PUBLIC_MASK or GrModifierFlags.PRIVATE_MASK or GrModifierFlags.PROTECTED_MASK
@@ -92,6 +79,7 @@ private fun GrModifierList.isFinal(): Boolean {
   return when (owner) {
     is GrTypeDefinition -> owner.isFinalClass()
     is GrVariableDeclaration -> owner.isFinalField(this)
+    is GrEnumConstant -> true
     else -> false
   }
 }
@@ -104,7 +92,7 @@ private fun GrVariableDeclaration.isFinalField(modifierList: GrModifierList): Bo
   val containingClass = containingClass
   return isInterface(containingClass)
          || !modifierList.hasExplicitVisibilityModifiers()
-         && (containingClass?.modifierList?.let(PsiImplUtil::hasImmutableAnnotation) ?: false)
+         && (containingClass?.let(::hasImmutableAnnotation) ?: false)
 }
 
 private fun GrModifierList.isStatic(): Boolean {
@@ -112,9 +100,10 @@ private fun GrModifierList.isStatic(): Boolean {
   val containingClass = when (owner) {
     is GrTypeDefinition -> owner.containingClass
     is GrVariableDeclaration -> owner.containingClass
+    is GrEnumConstant -> return true
     else -> null
   }
-  return containingClass != null && isInterface(containingClass)
+  return containingClass != null && (owner is GrEnumTypeDefinition || isInterface(containingClass))
 }
 
 private fun GrModifierList.getImplicitVisiblity(): String? {
@@ -133,6 +122,7 @@ private fun GrModifierList.getImplicitVisiblity(): String? {
       if (isInterface(containingClass)) return PsiModifier.PUBLIC
       return if (hasPackageScope(containingClass, "FIELDS")) PsiModifier.PACKAGE_LOCAL else PsiModifier.PRIVATE
     }
+    is GrEnumConstant -> return PsiModifier.PUBLIC
     else -> return null
   }
 }

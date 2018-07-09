@@ -34,7 +34,7 @@ Groovy script
               PsiElement(int)('int')
             PsiWhiteSpace(' ')
             PsiElement(identifier)('x')
-          PsiElement(new line)('\n \n\n\n    ')
+        PsiElement(new line)('\n \n\n\n    ')
         PsiElement(->)('->')
         PsiElement(new line)('\n\n    ')
         Call expression

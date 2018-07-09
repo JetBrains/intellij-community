@@ -27,7 +27,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import org.intellij.lang.xpath.psi.impl.ResolveUtil;
 import org.intellij.lang.xpath.xslt.impl.XsltIncludeIndex;
@@ -67,7 +66,7 @@ class TemplateReference extends AttributeReference implements EmptyResolveMessag
         }
         return true;
       });
-      return targets.toArray(new ResolveResult[targets.size()]);
+      return targets.toArray(ResolveResult.EMPTY_ARRAY);
     }
     else {
       return ResolveResult.EMPTY_ARRAY;

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -10,7 +10,6 @@ import org.jdom.Verifier;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,12 +41,6 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
     incModificationCount();
   }
 
-  @TestOnly
-  @Deprecated
-  public static PropertiesComponentImpl create() {
-    return new PropertiesComponentImpl();
-  }
-
   @Override
   public Element getState() {
     Element parentNode = new Element("state");
@@ -66,7 +59,7 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
   }
 
   @Override
-  public void loadState(final Element parentNode) {
+  public void loadState(@NotNull final Element parentNode) {
     myMap.clear();
     for (Element e : parentNode.getChildren(ELEMENT_PROPERTY)) {
       String name = e.getAttributeValue(ATTRIBUTE_NAME);

@@ -17,7 +17,8 @@ package com.siyeh.ipp.chartostring;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NonNls;
 
@@ -43,42 +44,13 @@ class StringToCharPredicate implements PsiElementPredicate {
     if (value == null || value.length() != 1) {
       return false;
     }
-    return isInConcatenationContext(element);
+    return isInConcatenationContext(expression);
   }
 
-  private static boolean isInConcatenationContext(PsiElement element) {
-    final PsiElement parent = element.getParent();
-    if (parent instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression parentExpression =
-        (PsiPolyadicExpression)parent;
-      final PsiType parentType = parentExpression.getType();
-      if (parentType == null) {
-        return false;
-      }
-      final String parentTypeText = parentType.getCanonicalText();
-      if (!JAVA_LANG_STRING.equals(parentTypeText)) {
-        return false;
-      }
-      if (parentExpression.getOperationTokenType() != JavaTokenType.PLUS) {
-        return false;
-      }
-      final PsiExpression[] operands = parentExpression.getOperands();
-      final int index = ArrayUtil.indexOf(operands, element);
-      if (index > 0) {
-        for (int i = 0; i < index && i < operands.length; i++) {
-          final PsiType type = operands[i].getType();
-          if (type != null && type.equalsToText(JAVA_LANG_STRING)) {
-            return true;
-          }
-        }
-      }
-      else if (index == 0) {
-        final PsiType type = operands[index + 1].getType();
-        return type != null && type.equalsToText(JAVA_LANG_STRING);
-      }
-      return false;
-    }
-    else if (parent instanceof PsiAssignmentExpression) {
+  static boolean isInConcatenationContext(PsiExpression element) {
+    if (ExpressionUtils.isStringConcatenationOperand(element)) return true;
+    final PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
+    if (parent instanceof PsiAssignmentExpression) {
       final PsiAssignmentExpression parentExpression =
         (PsiAssignmentExpression)parent;
       final IElementType tokenType = parentExpression.getOperationTokenType();
@@ -138,12 +110,7 @@ class StringToCharPredicate implements PsiElementPredicate {
         final PsiElement method = methodExpression.resolve();
         return method != null;
       }
-      else {
-        return false;
-      }
     }
-    else {
-      return false;
-    }
+    return false;
   }
 }

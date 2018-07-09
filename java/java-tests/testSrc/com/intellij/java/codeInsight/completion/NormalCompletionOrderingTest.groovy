@@ -383,6 +383,8 @@ interface TxANotAnno {}
     final LookupImpl lookup = invokeCompletion("/../smartTypeSorting/JComponentAddNew.java")
     assertPreferredItems(0, "FooBean3", "JComponent", "Component")
     incUseCount(lookup, 2) //Component
+    assertPreferredItems(1, "Component", "FooBean3", "JComponent")
+    incUseCount(lookup, 0) //Component
     assertPreferredItems(0, "Component", "FooBean3", "JComponent")
   }
 
@@ -807,6 +809,58 @@ class Foo {
     myFixture.type('foo;\nbar(')
     myFixture.completeBasic()
     myFixture.assertPreferredCompletionItems 0, 'a', 'b', 'a, b'
+  }
+
+  void "test selecting static field after static method"() {
+    myFixture.configureByText 'a.java', 'class Foo { { System.<caret> } }'
+    myFixture.completeBasic()
+    myFixture.type('ex\n2);\n') // select 'exit'
+    
+    myFixture.type('System.')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'exit'
+    myFixture.type('ou\n;\n') // select 'out'
+
+    myFixture.type('System.')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'out', 'exit'    
+  }
+
+  void testPreferTypeToGeneratedMethod() {
+    checkPreferredItems 0, 'SomeClass', 'public SomeClass getZoo'
+  }
+
+  void testPreferPrimitiveTypeToGeneratedMethod() {
+    checkPreferredItems 0, 'boolean', 'public boolean isZoo', 'public boolean equals'
+  }
+
+  void testPreferExceptionsInCatch() {
+    myFixture.configureByText 'a.java', 'class Foo { { Enu<caret> } }'
+    myFixture.completeBasic()
+    myFixture.type('m\n') // select 'Enum'
+    myFixture.type('; try {} catch(E')
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'Exception', 'Error' 
+  }
+
+  void testPreferExceptionsInThrowsList() {
+    checkPreferredItems 0, 'IllegalStateException', 'IllegalAccessException', 'IllegalArgumentException'
+  }
+
+  void testPreferExceptionsInJavadocThrows() {
+    checkPreferredItems 0, 'IllegalArgumentException', 'IllegalAccessException', 'IllegalStateException'
+  }
+
+  void testPreferExpectedTypeArguments() {
+    checkPreferredItems 0, 'BlaOperation'
+  }
+
+  void testPreferFinalBeforeVariable() {
+    checkPreferredItems 0, 'final', 'find1'
+  }
+
+  void testDispreferMultiMethodInterfaceAfterNew() {
+    checkPreferredItems 1, 'Intf', 'IntfImpl'
   }
 
 }

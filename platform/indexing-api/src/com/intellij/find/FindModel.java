@@ -83,7 +83,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   private boolean isReplaceAll;
   private boolean isOpenNewTab;
   private boolean isOpenInNewTabEnabled;
-  private boolean isOpenNewTabVisible;
   private boolean isProjectScope = true;
   private boolean isFindAll;
   private boolean isFindAllEnabled;
@@ -156,7 +155,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     isReplaceAll = model.isReplaceAll;
     isOpenNewTab = model.isOpenNewTab;
     isOpenInNewTabEnabled = model.isOpenInNewTabEnabled;
-    isOpenNewTabVisible = model.isOpenNewTabVisible;
     isProjectScope = model.isProjectScope;
     directoryName = model.directoryName;
     isWithSubdirectories = model.isWithSubdirectories;
@@ -169,6 +167,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     isFindAll = model.isFindAll;
     searchContext = model.searchContext;
     isMultiline = model.isMultiline;
+    mySearchInProjectFiles = model.mySearchInProjectFiles;
     if (changed) {
       notifyObservers();
     }
@@ -194,7 +193,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     if (isMultipleFiles != findModel.isMultipleFiles) return false;
     if (isOpenInNewTabEnabled != findModel.isOpenInNewTabEnabled) return false;
     if (isOpenNewTab != findModel.isOpenNewTab) return false;
-    if (isOpenNewTabVisible != findModel.isOpenNewTabVisible) return false;
     if (isPreserveCase != findModel.isPreserveCase) return false;
     if (isProjectScope != findModel.isProjectScope) return false;
     if (isPromptOnReplace != findModel.isPromptOnReplace) return false;
@@ -237,7 +235,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     result = 31 * result + (isReplaceAll ? 1 : 0);
     result = 31 * result + (isOpenNewTab ? 1 : 0);
     result = 31 * result + (isOpenInNewTabEnabled ? 1 : 0);
-    result = 31 * result + (isOpenNewTabVisible ? 1 : 0);
     result = 31 * result + (isProjectScope ? 1 : 0);
     result = 31 * result + (isFindAll ? 1 : 0);
     result = 31 * result + (isFindAllEnabled ? 1 : 0);
@@ -565,25 +562,16 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
   }
 
   /**
-   * Gets the value indicating whether the Open in New Tab flag is visible for the operation.
-   *
-   * @return true if Open in New Tab is visible, false otherwise.
+   * @deprecated and not used anymore
    */
   public boolean isOpenInNewTabVisible() {
-    return isOpenNewTabVisible;
+    return true;
   }
 
   /**
-   * Sets the value indicating whether the Open in New Tab flag is enabled for the operation.
-   *
-   * @param showInNewTabVisible true if Open in New Tab is visible, false otherwise.
+   * @deprecated and not used anymore
    */
   public void setOpenInNewTabVisible(boolean showInNewTabVisible) {
-    boolean changed = showInNewTabVisible != isOpenNewTabVisible;
-    isOpenNewTabVisible = showInNewTabVisible;
-    if (changed) {
-      notifyObservers();
-    }
   }
 
   /**
@@ -686,7 +674,6 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
            "isReplaceAll =" + isReplaceAll + "\n" +
            "isOpenNewTab =" + isOpenNewTab + "\n" +
            "isOpenInNewTabEnabled =" + isOpenInNewTabEnabled + "\n" +
-           "isOpenNewTabVisible =" + isOpenNewTabVisible + "\n" +
            "isProjectScope =" + isProjectScope + "\n" +
            "directoryName =" + directoryName + "\n" +
            "isWithSubdirectories =" + isWithSubdirectories + "\n" +
@@ -734,11 +721,17 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    *
    * @param fileFilter the file name filter text.
    */
-  public void setFileFilter(String fileFilter) {
+  public void setFileFilter(@Nullable String fileFilter) {
     boolean changed = !StringUtil.equals(fileFilter, this.fileFilter);
     this.fileFilter = fileFilter;
     if (changed) {
       notifyObservers();
+    }
+    if (fileFilter != null) {
+      List<String> split = StringUtil.split(fileFilter, ",");
+      if (ContainerUtil.exists(split, s -> s.endsWith("*.iml") || s.endsWith("*.ipr") || s.endsWith("*.iws"))) {
+        setSearchInProjectFiles(true);
+      }
     }
   }
 

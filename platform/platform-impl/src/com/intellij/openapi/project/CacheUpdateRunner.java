@@ -46,9 +46,12 @@ public class CacheUpdateRunner {
   private static final int PROC_COUNT = Runtime.getRuntime().availableProcessors();
   public static final int DEFAULT_MAX_INDEXER_THREADS = 4;
 
-  public static void processFiles(ProgressIndicator indicator, Collection<VirtualFile> files, Project project, Consumer<FileContent> processor) {
+  public static void processFiles(@NotNull ProgressIndicator indicator,
+                                  @NotNull Collection<VirtualFile> files,
+                                  @NotNull Project project,
+                                  @NotNull Consumer<FileContent> processor) {
     indicator.checkCanceled();
-    final FileContentQueue queue = new FileContentQueue(files, indicator);
+    final FileContentQueue queue = new FileContentQueue(project, files, indicator);
     final double total = files.size();
     queue.startLoading();
 
@@ -57,7 +60,7 @@ public class CacheUpdateRunner {
       final AtomicInteger myNumberOfFilesProcessed = new AtomicInteger();
 
       @Override
-      public void processingStarted(VirtualFile virtualFile) {
+      public void processingStarted(@NotNull VirtualFile virtualFile) {
         indicator.checkCanceled();
         boolean added;
         synchronized (myFilesBeingProcessed) {
@@ -72,7 +75,7 @@ public class CacheUpdateRunner {
       }
 
       @Override
-      public void processingSuccessfullyFinished(VirtualFile virtualFile) {
+      public void processingSuccessfullyFinished(@NotNull VirtualFile virtualFile) {
         synchronized (myFilesBeingProcessed) {
           boolean removed = myFilesBeingProcessed.remove(virtualFile);
           assert removed;
@@ -94,8 +97,8 @@ public class CacheUpdateRunner {
   }
 
   interface ProgressUpdater {
-    void processingStarted(VirtualFile file);
-    void processingSuccessfullyFinished(VirtualFile file);
+    void processingStarted(@NotNull VirtualFile file);
+    void processingSuccessfullyFinished(@NotNull VirtualFile file);
   }
 
   private static boolean processSomeFilesWhileUserIsInactive(@NotNull FileContentQueue queue,
@@ -262,12 +265,13 @@ public class CacheUpdateRunner {
     }
 
     @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
-    private static void handleIndexingException(VirtualFile file, Throwable e) {
+    private static void handleIndexingException(@NotNull VirtualFile file, @NotNull Throwable e) {
       String message = "Error while indexing " + file.getPresentableUrl() + "\n" + "To reindex this file IDEA has to be restarted";
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         System.err.println(message);
         e.printStackTrace();
-      } else {
+      }
+      else {
         LOG.error(message, e);
       }
       file.putUserData(FAILED_TO_INDEX, Boolean.TRUE);

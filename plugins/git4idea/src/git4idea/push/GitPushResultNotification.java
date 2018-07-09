@@ -175,7 +175,7 @@ class GitPushResultNotification extends Notification {
         description = String.format("push %s to %s was rejected by remote", sourceBranch, targetBranch);
         break;
       case ERROR:
-        description = "failed with error: " + result.getError();
+        description = result.getError();
         break;
       default:
         LOG.error("Unexpected push result: " + result);

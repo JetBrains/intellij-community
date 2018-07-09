@@ -37,6 +37,7 @@ public class SingleStatementInBlockFixTest extends IGQuickFixesTestCase {
   public void testDoWhile() { doTest("do"); }
   public void testIfWithLoop() { doTest("if"); }
   public void testElseWithLoop() { doTest("else"); }
+  public void testTwoComments() { doTest("if"); }
 
   @Override
   protected void setUp() throws Exception {

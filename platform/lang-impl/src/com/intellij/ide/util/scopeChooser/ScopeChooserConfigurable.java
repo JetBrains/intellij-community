@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.scopeChooser;
 
@@ -33,11 +19,10 @@ import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.IconUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
-import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -198,8 +183,8 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
         sharedScopes.add(namedScope);
       }
     }
-    myLocalScopesManager.setScopes(localScopes.toArray(new NamedScope[localScopes.size()]));
-    mySharedScopesManager.setScopes(sharedScopes.toArray(new NamedScope[sharedScopes.size()]));
+    myLocalScopesManager.setScopes(localScopes.toArray(new NamedScope[0]));
+    mySharedScopesManager.setScopes(sharedScopes.toArray(new NamedScope[0]));
   }
 
   private void loadStateOrder() {
@@ -249,11 +234,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     new TreeSpeedSearch(myTree, treePath -> ((MyNode)treePath.getLastPathComponent()).getDisplayName(), true);
 
     myTree.getEmptyText().setText(IdeBundle.message("scopes.no.scoped"));
-  }
-
-  @Override
-  protected void processRemovedItems() {
-    //do nothing
   }
 
   @Override
@@ -321,11 +301,11 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   private void createScope(final boolean isLocal, String title, final PackageSet set) {
+    NamedScopesHolder holder = isLocal ? myLocalScopesManager : mySharedScopesManager;
     final String newName = Messages.showInputDialog(myTree, IdeBundle.message("add.scope.name.label"), title,
                                                     Messages.getInformationIcon(), createUniqueName(), new InputValidator() {
       @Override
       public boolean checkInput(String inputString) {
-        final NamedScopesHolder holder = isLocal ? myLocalScopesManager : mySharedScopesManager;
         for (NamedScope scope : holder.getPredefinedScopes()) {
           if (Comparing.strEqual(scope.getName(), inputString.trim())) {
             return false;
@@ -340,8 +320,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       }
     });
     if (newName != null) {
-      final NamedScope scope = new NamedScope(newName, set);
-      addNewScope(scope, isLocal);
+      addNewScope(holder.createScope(newName, set), isLocal);
     }
   }
 
@@ -427,7 +406,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     }
   }
 
-
   private class MyMoveAction extends AnAction {
     private final int myDirection;
 
@@ -471,10 +449,11 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     public void actionPerformed(AnActionEvent e) {
       NamedScope scope = (NamedScope)getSelectedObject();
       if (scope != null) {
-        final NamedScope newScope = scope.createCopy();
         final ScopeConfigurable configurable =
           (ScopeConfigurable)((MyNode)myTree.getSelectionPath().getLastPathComponent()).getConfigurable();
-        addNewScope(new NamedScope(createUniqueName(), newScope.getValue()), configurable.getHolder() == myLocalScopesManager);
+        NamedScopesHolder holder = configurable.getHolder();
+        PackageSet set = scope.getValue();
+        addNewScope(holder.createScope(createUniqueName(), set == null ? null : set.createCopy()), holder == myLocalScopesManager);
       }
     }
 
@@ -518,8 +497,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   }
 
   public static class ScopeChooserConfigurableState extends MasterDetailsState {
-    @Tag("order")
-    @AbstractCollection(surroundWithTag = false, elementTag = "scope", elementValueAttribute = "name")
+    @XCollection(propertyElementName = "order", elementName = "scope", valueAttributeName = "name")
     public List<String> myOrder = new ArrayList<>();
   }
 }

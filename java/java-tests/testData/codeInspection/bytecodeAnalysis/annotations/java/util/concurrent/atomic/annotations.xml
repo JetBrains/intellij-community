@@ -9,11 +9,6 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.util.concurrent.atomic.AtomicBoolean boolean get()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
     <item name='java.util.concurrent.atomic.AtomicBoolean java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
@@ -30,38 +25,18 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.util.concurrent.atomic.AtomicInteger double doubleValue()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.concurrent.atomic.AtomicInteger float floatValue()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.concurrent.atomic.AtomicInteger int get()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.concurrent.atomic.AtomicInteger int intValue()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
     <item name='java.util.concurrent.atomic.AtomicInteger java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.concurrent.atomic.AtomicInteger long longValue()'>
+    <item name='java.util.concurrent.atomic.AtomicIntegerArray AtomicIntegerArray(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.util.concurrent.atomic.AtomicIntegerArray AtomicIntegerArray(int)'>
+    <item name='java.util.concurrent.atomic.AtomicIntegerArray AtomicIntegerArray(int[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -96,6 +71,9 @@
         </annotation>
     </item>
     <item name='java.util.concurrent.atomic.AtomicIntegerFieldUpdater java.util.concurrent.atomic.AtomicIntegerFieldUpdater&lt;U&gt; newUpdater(java.lang.Class&lt;U&gt;, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.atomic.AtomicIntegerFieldUpdater java.util.concurrent.atomic.AtomicIntegerFieldUpdater&lt;U&gt; newUpdater(java.lang.Class&lt;U&gt;, java.lang.String) 0'>
@@ -143,38 +121,18 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
-    <item name='java.util.concurrent.atomic.AtomicLong double doubleValue()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.concurrent.atomic.AtomicLong float floatValue()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.concurrent.atomic.AtomicLong int intValue()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
     <item name='java.util.concurrent.atomic.AtomicLong java.lang.String toString()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.concurrent.atomic.AtomicLong long get()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.concurrent.atomic.AtomicLong long longValue()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
     <item name='java.util.concurrent.atomic.AtomicLongArray AtomicLongArray(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='java.util.concurrent.atomic.AtomicLongArray AtomicLongArray(long[])'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -227,6 +185,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.atomic.AtomicLongFieldUpdater java.util.concurrent.atomic.AtomicLongFieldUpdater&lt;U&gt; newUpdater(java.lang.Class&lt;U&gt;, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.atomic.AtomicLongFieldUpdater java.util.concurrent.atomic.AtomicLongFieldUpdater&lt;U&gt; newUpdater(java.lang.Class&lt;U&gt;, java.lang.String) 0'>
@@ -253,6 +214,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.atomic.AtomicLongFieldUpdater.LockedUpdater java.lang.RuntimeException accessCheckException(T)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.atomic.AtomicMarkableReference AtomicMarkableReference(V, boolean)'>
@@ -263,18 +227,8 @@
     <item name='java.util.concurrent.atomic.AtomicMarkableReference V get(boolean[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.concurrent.atomic.AtomicMarkableReference V getReference()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
     <item name='java.util.concurrent.atomic.AtomicMarkableReference boolean compareAndSet(V, V, boolean, boolean) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.util.concurrent.atomic.AtomicMarkableReference boolean isMarked()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
     </item>
     <item name='java.util.concurrent.atomic.AtomicMarkableReference.Pair Pair(T, boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -283,6 +237,7 @@
     </item>
     <item name='java.util.concurrent.atomic.AtomicMarkableReference.Pair java.util.concurrent.atomic.AtomicMarkableReference.Pair&lt;T&gt; of(T, boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -293,11 +248,6 @@
         </annotation>
     </item>
     <item name='java.util.concurrent.atomic.AtomicReference AtomicReference(V)'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
-    <item name='java.util.concurrent.atomic.AtomicReference V get()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
         </annotation>
@@ -350,6 +300,9 @@
         </annotation>
     </item>
     <item name='java.util.concurrent.atomic.AtomicReferenceFieldUpdater java.util.concurrent.atomic.AtomicReferenceFieldUpdater&lt;U,W&gt; newUpdater(java.lang.Class&lt;U&gt;, java.lang.Class&lt;W&gt;, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.atomic.AtomicReferenceFieldUpdater java.util.concurrent.atomic.AtomicReferenceFieldUpdater&lt;U,W&gt; newUpdater(java.lang.Class&lt;U&gt;, java.lang.Class&lt;W&gt;, java.lang.String) 0'>
@@ -410,18 +363,8 @@
     <item name='java.util.concurrent.atomic.AtomicStampedReference V get(int[]) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
-    <item name='java.util.concurrent.atomic.AtomicStampedReference V getReference()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
-    </item>
     <item name='java.util.concurrent.atomic.AtomicStampedReference boolean compareAndSet(V, V, int, int) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
-    </item>
-    <item name='java.util.concurrent.atomic.AtomicStampedReference int getStamp()'>
-        <annotation name='org.jetbrains.annotations.Contract'>
-            <val name="pure" val="true"/>
-        </annotation>
     </item>
     <item name='java.util.concurrent.atomic.AtomicStampedReference.Pair Pair(T, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -430,6 +373,7 @@
     </item>
     <item name='java.util.concurrent.atomic.AtomicStampedReference.Pair java.util.concurrent.atomic.AtomicStampedReference.Pair&lt;T&gt; of(T, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>

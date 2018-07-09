@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerManager;
@@ -22,18 +8,16 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.jdi.ThreadReferenceProxy;
 import com.intellij.debugger.engine.managerThread.SuspendContextCommand;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.rt.debugger.BatchEvaluatorServer;
-import com.intellij.util.containers.HashMap;
 import com.sun.jdi.*;
+import one.util.streamex.StreamEx;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class BatchEvaluator {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.BatchEvaluator");
@@ -160,11 +144,7 @@ public class BatchEvaluator {
   private boolean doEvaluateBatch(List<ToStringCommand> requests, EvaluationContext evaluationContext) {
     try {
       DebugProcess debugProcess = evaluationContext.getDebugProcess();
-      List<Value> values = new ArrayList<>();
-      for (ToStringCommand toStringCommand : requests) {
-        Value value = toStringCommand.getValue();
-        values.add(value instanceof ObjectReference ? ((ObjectReference)value) : value);
-      }
+      List<Value> values = StreamEx.of(requests).map(ToStringCommand::getValue).toList();
 
       ArrayType objectArrayClass = (ArrayType)debugProcess.findClass(
         evaluationContext,
@@ -174,18 +154,17 @@ public class BatchEvaluator {
         return false;
       }
 
-      ArrayReference argArray = debugProcess.newInstance(objectArrayClass, values.size());
-      ((SuspendContextImpl)evaluationContext.getSuspendContext()).keep(argArray); // to avoid ObjectCollectedException
+      ArrayReference argArray = DebuggerUtilsEx.mirrorOfArray(objectArrayClass, values.size(), evaluationContext);
       argArray.setValues(values);
       List argList = new ArrayList(1);
       argList.add(argArray);
       Value value = debugProcess.invokeMethod(evaluationContext, myBatchEvaluatorObject,
                                               myBatchEvaluatorMethod, argList);
       if (value instanceof ArrayReference) {
-        ((SuspendContextImpl)evaluationContext.getSuspendContext()).keep((ArrayReference)value); // to avoid ObjectCollectedException for both the array and its elements
+        evaluationContext.keep(value); // to avoid ObjectCollectedException for both the array and its elements
         final ArrayReference strings = (ArrayReference)value;
         final List<Value> allValuesArray = strings.getValues();
-        final Value[] allValues = allValuesArray.toArray(new Value[allValuesArray.size()]);
+        final Value[] allValues = allValuesArray.toArray(new Value[0]);
         int idx = 0;
         for (Iterator<ToStringCommand> iterator = requests.iterator(); iterator.hasNext(); idx++) {
           ToStringCommand request = iterator.next();

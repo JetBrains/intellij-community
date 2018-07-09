@@ -43,6 +43,7 @@ from _pydevd_frame_eval.pydevd_frame_eval_main import frame_eval_func, stop_fram
 from _pydevd_bundle.pydevd_utils import save_main_module
 from pydevd_concurrency_analyser.pydevd_concurrency_logger import ThreadingLogger, AsyncioLogger, send_message, cur_time
 from pydevd_concurrency_analyser.pydevd_thread_wrappers import wrap_threads
+from pydevd_file_utils import get_fullname, rPath
 
 
 __version_info__ = (1, 1, 1)
@@ -429,8 +430,8 @@ class PyDB:
         all_threads = threadingEnumerate()
         for t in all_threads:
             if getattr(t, 'is_pydev_daemon_thread', False):
-                pass # I.e.: skip the DummyThreads created from pydev daemon threads
-            elif hasattr(t, 'pydev_do_not_trace'):
+                pass  # I.e.: skip the DummyThreads created from pydev daemon threads
+            elif getattr(t, 'pydev_do_not_trace', None):
                 pass  # skip some other threads, i.e. ipython history saving thread from debug console
             else:
                 if t is thread_suspended_at_bp:
@@ -749,14 +750,9 @@ class PyDB:
 
             if curr_func_name == func_name:
                 line = next_line
-                if frame.f_lineno == line:
-                    stop = True
-                else:
-                    if frame.f_trace is None:
-                        frame.f_trace = self.trace_dispatch
-                    frame.f_lineno = line
-                    frame.f_trace = None
-                    stop = True
+                frame.f_trace = self.trace_dispatch
+                frame.f_lineno = line
+                stop = True
             else:
                 response_msg = "jump is available only within the bottom frame"
         return stop, old_line, response_msg
@@ -855,20 +851,21 @@ class PyDB:
                     info.pydev_message = ''
 
                 if stop:
-                    info.pydev_state = STATE_RUN
-                    # `f_line` should be assigned within a tracing function, so, we can't assign it here
-                    # for the frame evaluation debugger. For tracing debugger it will be assigned, but we should
-                    # revert the previous value, because both debuggers should behave the same way
-                    try:
-                        self.set_next_statement(frame, event, info.pydev_func_name, old_line)
-                    except:
-                        pass
+                    cmd = self.cmd_factory.make_thread_run_message(get_thread_id(thread), info.pydev_step_cmd)
+                    self.writer.add_command(cmd)
+                    if suspend_type == "trace":
+                        info.pydev_state = STATE_SUSPEND
+                        thread.stop_reason= CMD_SET_NEXT_STATEMENT
+                        self.do_wait_suspend(thread, frame, event, arg, "trace")
+                    else:
+                        info.pydev_step_stop = frame
+                    return
                 else:
                     info.pydev_step_cmd = -1
                     info.pydev_state = STATE_SUSPEND
                     thread.stop_reason = CMD_THREAD_SUSPEND
                     # return to the suspend state and wait for other command
-                    self.do_wait_suspend(thread, frame, event, arg, "trace", send_suspend_message=False)
+                    self.do_wait_suspend(thread, frame, event, arg, suspend_type, send_suspend_message=False)
                     return
 
         elif info.pydev_step_cmd == CMD_STEP_RETURN:
@@ -985,28 +982,12 @@ class PyDB:
         from _pydev_bundle.pydev_monkey import patch_thread_modules
         patch_thread_modules()
 
-    def get_fullname(self, mod_name):
-        if IS_PY3K:
-            import pkgutil
-        else:
-            from _pydev_imps import _pydev_pkgutil_old as pkgutil
-        try:
-            loader = pkgutil.get_loader(mod_name)
-        except:
-            return None
-        if loader is not None:
-            for attr in ("get_filename", "_get_filename"):
-                meth = getattr(loader, attr, None)
-                if meth is not None:
-                    return meth(mod_name)
-        return None
-
     def run(self, file, globals=None, locals=None, is_module=False, set_trace=True):
         module_name = None
         if is_module:
             file, _,  entry_point_fn = file.partition(':')
             module_name = file
-            filename = self.get_fullname(file)
+            filename = get_fullname(file)
             if filename is None:
                 sys.stderr.write("No module named %s\n" % file)
                 return
@@ -1049,7 +1030,7 @@ class PyDB:
                 # sys.path.insert(0, os.getcwd())
                 # Changed: it's not the local directory, but the directory of the file launched
                 # The file being run must be in the pythonpath (even if it was not before)
-                sys.path.insert(0, os.path.split(file)[0])
+                sys.path.insert(0, os.path.split(rPath(file))[0])
 
             while not self.ready_to_run:
                 time.sleep(0.1)  # busy wait until we receive run command

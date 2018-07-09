@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,7 +127,9 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
         if (overrideDefault) {
           return;
         }
-        accept |= methodsHaveSameReturnTypes(method, superMethod) && haveSameExceptionSignatures(method, superMethod);
+        accept |= methodsHaveSameReturnTypes(method, superMethod) &&
+                  haveSameExceptionSignatures(method, superMethod) &&
+                  method.isVarArgs() == superMethod.isVarArgs();
 
         if (ignoreJavaDoc && !haveSameJavaDoc(method, superMethod)) {
           return;
@@ -140,78 +142,75 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
         registerMethodError(method);
       }
     }
+  }
 
-    private boolean methodsHaveSameAnnotationsAndModifiers(PsiMethod method, PsiMethod superMethod) {
-      if (!MethodUtils.haveEquivalentModifierLists(method, superMethod)) {
+  public static boolean methodsHaveSameAnnotationsAndModifiers(PsiMethod method, PsiMethod superMethod) {
+    if (!MethodUtils.haveEquivalentModifierLists(method, superMethod)) {
+      return false;
+    }
+    final PsiParameter[] superParameters = superMethod.getParameterList().getParameters();
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    if (parameters.length != superParameters.length) {
+      return false;
+    }
+    for (int i = 0, length = superParameters.length; i < length; i++) {
+      if (!haveSameAnnotations(parameters[i], superParameters[i])) {
         return false;
       }
-      final PsiParameter[] superParameters = superMethod.getParameterList().getParameters();
-      final PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (parameters.length != superParameters.length) {
+    }
+    return true;
+  }
+
+  private static boolean haveSameAnnotations(PsiModifierListOwner owner1, PsiModifierListOwner owner2) {
+    final PsiModifierList modifierList = owner1.getModifierList();
+    final PsiModifierList superModifierList = owner2.getModifierList();
+    return (modifierList == null || superModifierList == null)
+           ? modifierList == superModifierList
+           : AnnotationUtil.equal(modifierList.getAnnotations(), superModifierList.getAnnotations());
+  }
+
+  static boolean haveSameJavaDoc(PsiMethod method, PsiMethod superMethod) {
+    final PsiDocComment superDocComment = superMethod.getDocComment();
+    final PsiDocComment docComment = method.getDocComment();
+    if (superDocComment == null) {
+      if (docComment != null) {
         return false;
       }
-      for (int i = 0, length = superParameters.length; i < length; i++) {
-        if (!haveSameAnnotations(parameters[i], superParameters[i])) {
-          return false;
-        }
-      }
-      return true;
-    }
-
-    private boolean haveSameAnnotations(PsiModifierListOwner owner1, PsiModifierListOwner owner2) {
-      final PsiModifierList modifierList = owner1.getModifierList();
-      final PsiModifierList superModifierList = owner2.getModifierList();
-      if (superModifierList == null) {
-        return modifierList == null;
-      } else if (modifierList == null) {
+    } else if (docComment != null) {
+      if (!superDocComment.getText().equals(docComment.getText())) {
         return false;
       }
-      return AnnotationUtil.equal(modifierList.getAnnotations(), superModifierList.getAnnotations());
     }
+    return true;
+  }
 
-    private boolean haveSameJavaDoc(PsiMethod method, PsiMethod superMethod) {
-      final PsiDocComment superDocComment = superMethod.getDocComment();
-      final PsiDocComment docComment = method.getDocComment();
-      if (superDocComment == null) {
-        if (docComment != null) {
-          return false;
-        }
-      } else if (docComment != null) {
-        if (!superDocComment.getText().equals(docComment.getText())) {
-          return false;
-        }
-      }
-      return true;
+  public static boolean haveSameExceptionSignatures(PsiMethod method1, PsiMethod method2) {
+    final PsiReferenceList list1 = method1.getThrowsList();
+    final PsiClassType[] exceptions1 = list1.getReferencedTypes();
+    final PsiReferenceList list2 = method2.getThrowsList();
+    final PsiClassType[] exceptions2 = list2.getReferencedTypes();
+    if (exceptions1.length != exceptions2.length) {
+      return false;
     }
-
-    private boolean haveSameExceptionSignatures(PsiMethod method1, PsiMethod method2) {
-      final PsiReferenceList list1 = method1.getThrowsList();
-      final PsiClassType[] exceptions1 = list1.getReferencedTypes();
-      final PsiReferenceList list2 = method2.getThrowsList();
-      final PsiClassType[] exceptions2 = list2.getReferencedTypes();
-      if (exceptions1.length != exceptions2.length) {
+    final Set<PsiClassType> set1 = new HashSet<>(Arrays.asList(exceptions1));
+    for (PsiClassType anException : exceptions2) {
+      if (!set1.contains(anException)) {
         return false;
       }
-      final Set<PsiClassType> set1 = new HashSet<>(Arrays.asList(exceptions1));
-      for (PsiClassType anException : exceptions2) {
-        if (!set1.contains(anException)) {
-          return false;
-        }
-      }
-      return true;
     }
+    return true;
+  }
 
-    private boolean methodsHaveSameReturnTypes(PsiMethod method1, PsiMethod method2) {
-      final PsiType type1 = method1.getReturnType();
-      if (type1 == null) {
-        return false;
-      }
-      final PsiClass superClass = method2.getContainingClass();
-      final PsiClass aClass = method1.getContainingClass();
-      if (aClass == null || superClass == null) return false;
-      final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
-      final PsiType type2 = method2.getReturnType();
-      return Comparing.equal(type1, substitutor.substitute(type2));
+  public static boolean methodsHaveSameReturnTypes(PsiMethod method1, PsiMethod method2) {
+    final PsiType type1 = method1.getReturnType();
+    if (type1 == null) {
+      return false;
     }
+    final PsiClass superClass = method2.getContainingClass();
+    final PsiClass aClass = method1.getContainingClass();
+    if (aClass == null || superClass == null) return false;
+    final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
+    final PsiType type2 = method2.getReturnType();
+    return Comparing.equal(type1, substitutor.substitute(type2));
   }
 }

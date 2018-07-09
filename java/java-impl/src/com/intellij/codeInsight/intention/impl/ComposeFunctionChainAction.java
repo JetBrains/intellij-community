@@ -35,7 +35,7 @@ public class ComposeFunctionChainAction extends PsiElementBaseIntentionAction {
       return false;
     }
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(call.getParent());
-    if (!(parent instanceof PsiExpressionList) || ((PsiExpressionList)parent).getExpressions().length != 1) return false;
+    if (!(parent instanceof PsiExpressionList) || ((PsiExpressionList)parent).getExpressionCount() != 1) return false;
 
     PsiElement gParent = parent.getParent();
     if (!(gParent instanceof PsiMethodCallExpression)) return false;

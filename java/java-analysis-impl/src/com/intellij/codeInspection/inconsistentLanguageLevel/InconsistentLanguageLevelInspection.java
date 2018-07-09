@@ -64,7 +64,8 @@ public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
           final CommonProblemDescriptor problemDescriptor = manager.createProblemDescriptor(
             "Module " + module.getName() + " with language level " + languageLevel +
             " depends on module " + dependantModule.getName() +" with language level " + dependantLanguageLevel,
-            new UnnecessaryModuleDependencyInspection.RemoveModuleDependencyFix(module, dependantModule),
+            module,
+            new UnnecessaryModuleDependencyInspection.RemoveModuleDependencyFix(dependantModule.getName()),
             (QuickFix)QuickFixFactory.getInstance().createShowModulePropertiesFix(module));
           return new CommonProblemDescriptor[] {problemDescriptor};
         }

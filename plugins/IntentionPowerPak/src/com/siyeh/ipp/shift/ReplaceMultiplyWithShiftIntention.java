@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@ package com.siyeh.ipp.shift;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -66,8 +66,7 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
     return new MultiplyByPowerOfTwoPredicate();
   }
 
-  public void processIntention(PsiElement element)
-    throws IncorrectOperationException {
+  public void processIntention(PsiElement element) {
     if (element instanceof PsiBinaryExpression) {
       replaceMultiplyOrDivideWithShift((PsiBinaryExpression)element);
     }
@@ -77,9 +76,7 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
     }
   }
 
-  private static void replaceMultiplyOrDivideAssignWithShiftAssign(
-    PsiAssignmentExpression expression)
-    throws IncorrectOperationException {
+  private static void replaceMultiplyOrDivideAssignWithShiftAssign(PsiAssignmentExpression expression) {
     final PsiExpression lhs = expression.getLExpression();
     final PsiExpression rhs = expression.getRExpression();
     final IElementType tokenType = expression.getOperationTokenType();
@@ -90,14 +87,12 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
     else {
       assignString = ">>=";
     }
-    final String expString =
-      lhs.getText() + assignString + ShiftUtils.getLogBase2(rhs);
-    PsiReplacementUtil.replaceExpression(expression, expString);
+    CommentTracker commentTracker = new CommentTracker();
+    final String expString = commentTracker.text(lhs) + assignString + ShiftUtils.getLogBase2(rhs);
+    PsiReplacementUtil.replaceExpression(expression, expString, commentTracker);
   }
 
-  private static void replaceMultiplyOrDivideWithShift(
-    PsiBinaryExpression expression)
-    throws IncorrectOperationException {
+  private static void replaceMultiplyOrDivideWithShift(PsiBinaryExpression expression) {
     final PsiExpression lhs = expression.getLOperand();
     final PsiExpression rhs = expression.getROperand();
     final IElementType tokenType = expression.getOperationTokenType();
@@ -126,6 +121,8 @@ public class ReplaceMultiplyWithShiftIntention extends MutablyNamedIntention {
         expString = '(' + expString + ')';
       }
     }
-    PsiReplacementUtil.replaceExpression(expression, expString);
+    CommentTracker commentTracker = new CommentTracker();
+    commentTracker.markUnchanged(lhs);
+    PsiReplacementUtil.replaceExpression(expression, expString, commentTracker);
   }
 }

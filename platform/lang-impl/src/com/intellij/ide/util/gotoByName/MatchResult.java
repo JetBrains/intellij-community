@@ -22,7 +22,7 @@ public class MatchResult {
   final int matchingDegree;
   final boolean startMatch;
 
-  MatchResult(String elementName, int matchingDegree, boolean startMatch) {
+  public MatchResult(String elementName, int matchingDegree, boolean startMatch) {
     this.elementName = elementName;
     this.matchingDegree = matchingDegree;
     this.startMatch = startMatch;

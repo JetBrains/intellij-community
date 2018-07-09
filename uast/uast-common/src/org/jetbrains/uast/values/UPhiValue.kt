@@ -19,11 +19,11 @@ class UPhiValue private constructor(val values: Set<UValue>) : UValueBase() {
 
   override val dependencies: Set<UDependency> = values.flatMapTo(linkedSetOf()) { it.dependencies }
 
-  override fun equals(other: Any?) = other is UPhiValue && values == other.values
+  override fun equals(other: Any?): Boolean = other is UPhiValue && values == other.values
 
-  override fun hashCode() = values.hashCode()
+  override fun hashCode(): Int = values.hashCode()
 
-  override fun toString() = values.joinToString(prefix = "Phi(", postfix = ")", separator = ", ")
+  override fun toString(): String = values.joinToString(prefix = "Phi(", postfix = ")", separator = ", ")
 
   companion object {
     private val PHI_LIMIT = 4
@@ -39,7 +39,7 @@ class UPhiValue private constructor(val values: Set<UValue>) : UValueBase() {
       return UPhiValue(flattenedValues)
     }
 
-    fun create(vararg values: UValue) = create(values.asIterable())
+    fun create(vararg values: UValue): UValue = create(values.asIterable())
   }
 }
 

@@ -275,6 +275,34 @@ public class Test {
 
   }
 
+  fun `test suppress for erroneous parameters`() {
+    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(false)
+    check("""
+public class Test {
+    void foo(String foo) {}
+    void foo(String foo, String bar) {}
+    void foo(String foo, String bar, String baz) {}
+
+    void test() {
+        foo("a"++"b"); // no hint
+    }
+}
+""")
+    JavaInlayParameterHintsProvider.getInstance().isShowForParamsWithSameType.set(true)
+    check("""
+public class Test {
+    void foo(String foo) {}
+    void foo(String foo, String bar) {}
+    void foo(String foo, String bar, String baz) {}
+
+    void test() {
+        foo(<hint text="foo:"/>"a"++"b");
+    }
+}
+""")
+
+  }
+
 
   fun `test ignored methods`() {
     check("""
@@ -1005,6 +1033,35 @@ class Test {
   }
   void check(int main2toMain) {}
   void www(int x86) {}
+}
+""")
+  }
+
+  fun `test unclear expression type setting true`() {
+    JavaInlayParameterHintsProvider.getInstance().isShowHintWhenExpressionTypeIsClear.set(true)
+    check("""
+class Test {
+  void main() {
+        String data = "asdad";
+        foo(<hint text="info:"/>data);
+  }
+
+  void foo(String info) {}
+}
+""")
+  }
+
+
+  fun `test unclear expression type setting false`() {
+    JavaInlayParameterHintsProvider.getInstance().isShowHintWhenExpressionTypeIsClear.set(false)
+    check("""
+class Test {
+  void main() {
+        String data = "asdad";
+        foo(data);
+  }
+
+  void foo(String info) {}
 }
 """)
   }

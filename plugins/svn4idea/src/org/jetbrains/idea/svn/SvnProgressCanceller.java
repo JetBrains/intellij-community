@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,13 +15,12 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.ProgressEvent;
 import org.jetbrains.idea.svn.api.ProgressTracker;
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNException;
 
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 
@@ -36,13 +35,15 @@ public class SvnProgressCanceller implements ProgressTracker {
     myIndicator = indicator;
   }
 
-  public void checkCancelled() throws SVNCancelException {
+  public void checkCancelled() throws ProcessCanceledException {
     ProgressIndicator indicator = chooseNotNull(myIndicator, ProgressManager.getInstance().getProgressIndicator());
-    if (indicator != null && indicator.isCanceled()) {
-      throw new SVNCancelException();
+
+    if (indicator != null) {
+      indicator.checkCanceled();
     }
   }
 
-  public void consume(final ProgressEvent event) {
+  @Override
+  public void consume(ProgressEvent event) {
   }
 }

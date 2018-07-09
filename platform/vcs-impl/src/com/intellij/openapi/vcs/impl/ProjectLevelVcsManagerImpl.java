@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
@@ -83,6 +69,8 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static java.util.Arrays.asList;
 
 @State(name = "ProjectLevelVcsManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx implements ProjectComponent, PersistentStateComponent<Element>, Disposable {
@@ -170,7 +158,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myContentRevisionCache = new ContentRevisionCache();
     myVcsFileListenerContextHelper = vcsFileListenerContextHelper;
     VcsListener vcsListener = () -> {
-      myVcsHistoryCache.clear();
+      myVcsHistoryCache.clearHistory();
       myVcsFileListenerContextHelper.possiblySwitchActivation(hasActiveVcss());
     };
     myExcludedIndex = excludedFileIndex;
@@ -246,7 +234,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         VcsRootChecker[] checkers = Extensions.getExtensions(VcsRootChecker.EXTENSION_POINT_NAME);
         if (checkers.length != 0) {
-          VcsRootScanner.start(myProject, checkers);
+          VcsRootScanner.start(myProject, asList(checkers));
         }
       }
     });
@@ -339,7 +327,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public VcsRoot getVcsRootObjectFor(@Nullable FilePath file) {
-    if (file == null || myProject.isDisposed()) return null;
+    if (file == null) return null;
 
     VirtualFile vFile = ChangesUtil.findValidParentAccurately(file);
     return vFile != null ? getVcsRootObjectFor(vFile) : null;
@@ -578,7 +566,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   }
 
   @Override
-  public void loadState(Element state) {
+  public void loadState(@NotNull Element state) {
     mySerialization.readExternalUtil(state, myOptionsAndConfirmations);
     final Attribute attribute = state.getAttribute(SETTINGS_EDITED_MANUALLY);
     if (attribute != null) {
@@ -684,7 +672,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         vcsRoots.add(new VcsRoot(vcs, root));
       }
     }
-    return vcsRoots.toArray(new VcsRoot[vcsRoots.size()]);
+    return vcsRoots.toArray(new VcsRoot[0]);
   }
 
   @Override

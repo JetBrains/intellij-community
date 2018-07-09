@@ -15,7 +15,7 @@ public class JavadocResolveTest extends DaemonAnalyzerTestCase {
   public void testSee3() { doTest(); }
   public void testPackageInfo() { doTest("/pkg/package-info.java"); }
   public void testBrokenPackageInfo() { doTest("/pkg1/package-info.java"); }
-  public void testModuleInfo() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest("/pkg/module-info.java"); }
+  public void testModuleInfo() { setLanguageLevel(LanguageLevel.JDK_1_9); doTest("/module-info.java"); }
 
   private void doTest() {
     doTest("/pkg/" + getTestName(false) + ".java");

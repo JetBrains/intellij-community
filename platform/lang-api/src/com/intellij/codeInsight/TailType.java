@@ -13,6 +13,7 @@
 // limitations under the License.
 package com.intellij.codeInsight;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.CaretModel;
@@ -22,7 +23,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.text.CharArrayUtil;
@@ -79,7 +79,6 @@ public abstract class TailType {
   };
 
   public static final TailType SEMICOLON = new CharTailType(';');
-  @Deprecated public static final TailType EXCLAMATION = new CharTailType('!');
 
   public static final TailType COMMA = new TailType(){
     @Override
@@ -99,10 +98,7 @@ public abstract class TailType {
   protected static CommonCodeStyleSettings getLocalCodeStyleSettings(Editor editor, int tailOffset) {
     final PsiFile psiFile = getFile(editor);
     Language language = PsiUtilCore.getLanguageAtOffset(psiFile, tailOffset);
-
-    final Project project = editor.getProject();
-    assert project != null;
-    return CodeStyleSettingsManager.getSettings(project).getCommonSettings(language);
+    return CodeStyle.getLanguageSettings(psiFile, language);
   }
 
   protected static FileType getFileType(Editor editor) {
@@ -175,7 +171,7 @@ public abstract class TailType {
   public static class TailTypeEQ extends TailType {
 
     protected boolean isSpaceAroundAssignmentOperators(Editor editor, int tailOffset) {
-      return CodeStyleSettingsManager.getSettings(editor.getProject()).SPACE_AROUND_ASSIGNMENT_OPERATORS;
+      return getLocalCodeStyleSettings(editor, tailOffset).SPACE_AROUND_ASSIGNMENT_OPERATORS;
     }
 
     @Override

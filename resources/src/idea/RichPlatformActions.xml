@@ -68,6 +68,11 @@
       <add-to-group group-id="ExportImportGroup" anchor="last"/>
     </action>
 
+    <action id="ConvertModuleGroupsToQualifiedNames" class="com.intellij.ide.actions.project.ConvertModuleGroupsToQualifiedNamesAction">
+      <add-to-group group-id="FileMainSettingsGroup" anchor="last"/>
+    </action>
+
+
     <!-- View -->
     <reference ref="DelegateMethods">
       <add-to-group group-id="CodeMenu" anchor="after" relative-to-action="ImplementMethods"/>
@@ -86,6 +91,7 @@
     <group id="InspectCodeGroup" text="Inspect Code Actions">
       <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
       <action id="CodeCleanup" class="com.intellij.codeInspection.actions.CodeCleanupAction"/>
+      <action id="SilentCodeCleanup" class="com.intellij.codeInspection.actions.SilentCodeCleanupAction" />
       <action id="RunInspection" class="com.intellij.codeInspection.actions.RunInspectionAction"/>
       <action id="PopupHector" class="com.intellij.codeInsight.daemon.impl.PopupHectorAction"/>
       <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
@@ -93,7 +99,9 @@
     </group>
 
     <group id="BuildMenu" popup="true">
-      <action id="CompileDirty" class="com.intellij.compiler.actions.CompileDirtyAction" icon="AllIcons.Actions.Compile"/>
+      <action id="CompileDirty" class="com.intellij.compiler.actions.CompileDirtyAction" icon="AllIcons.Actions.Compile">
+       <add-to-group group-id="TouchBarDefault" anchor="before" relative-to-action="RunConfiguration"/>
+      </action>
       <action id="MakeModule" class="com.intellij.compiler.actions.MakeModuleAction"/>
       <action id="Compile" class="com.intellij.compiler.actions.CompileAction"/>
       <separator/>
@@ -365,9 +373,9 @@
     <!-- ****************************************************************** -->
 
     <group id="WelcomeScreen.QuickStart.IDEA">
-      <action id="WelcomeScreen.CreateNewProject" class="com.intellij.ide.actions.NewProjectAction" icon="AllIcons.General.CreateNewProject"/>
-      <action id="WelcomeScreen.ImportProject" class="com.intellij.ide.actions.ImportProjectAction" icon="AllIcons.General.ImportProject"/>
-      <action id="WelcomeScreen.OpenProject" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.General.OpenProject"/>
+      <action id="WelcomeScreen.CreateNewProject" class="com.intellij.ide.actions.NewProjectAction" icon="AllIcons.Welcome.CreateNewProject"/>
+      <action id="WelcomeScreen.ImportProject" class="com.intellij.ide.actions.ImportProjectAction" icon="AllIcons.ToolbarDecorator.Import"/>
+      <action id="WelcomeScreen.OpenProject" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.Actions.Menu_open"/>
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </group>
 
@@ -408,5 +416,8 @@
       <add-to-group group-id="ToolsBasicGroup" anchor="after" relative-to-action="SaveFileAsTemplate"/>
     </group>
 
+    <action id="ChangesView.GroupBy.Module" text="Module" class="com.intellij.openapi.vcs.changes.actions.SetModuleChangesGroupingAction">
+      <add-to-group group-id="ChangesView.GroupBy"/>
+    </action>
   </actions>
 </idea-plugin>

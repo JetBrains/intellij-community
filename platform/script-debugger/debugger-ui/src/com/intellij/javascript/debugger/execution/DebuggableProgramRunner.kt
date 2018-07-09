@@ -50,7 +50,7 @@ open class DebuggableProgramRunner : AsyncProgramRunner<RunnerSettings>() {
     }
   }
 
-  override fun getRunnerId() = "debuggableProgram"
+  override fun getRunnerId(): String = "debuggableProgram"
 
   override fun canRun(executorId: String, profile: RunProfile): Boolean {
     return DefaultDebugExecutor.EXECUTOR_ID == executorId && profile is DebuggableRunConfiguration && profile.canRun(executorId, profile)
@@ -61,6 +61,6 @@ inline fun startSession(environment: ExecutionEnvironment, crossinline starter: 
   return XDebuggerManager.getInstance(environment.project).startSession(environment, xDebugProcessStarter(starter))
 }
 
-inline fun xDebugProcessStarter(crossinline starter: (session: XDebugSession) -> XDebugProcess) = object : XDebugProcessStarter() {
+inline fun xDebugProcessStarter(crossinline starter: (session: XDebugSession) -> XDebugProcess): XDebugProcessStarter = object : XDebugProcessStarter() {
   override fun start(session: XDebugSession) = starter(session)
 }

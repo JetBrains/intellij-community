@@ -17,10 +17,7 @@ package com.intellij.util.ui.accessibility;
 
 import org.jetbrains.annotations.NotNull;
 
-import javax.accessibility.*;
-import java.awt.*;
-import java.beans.PropertyChangeListener;
-import java.util.Locale;
+import javax.accessibility.AccessibleContext;
 
 /**
  * AccessibleContext implementation that delegates all calls to another context.
@@ -30,7 +27,7 @@ import java.util.Locale;
  * of the behavior can be overridden.
  */
 public class AccessibleContextDelegate extends AbstractAccessibleContextDelegate {
-  private AccessibleContext myContext;
+  private final AccessibleContext myContext;
 
   public AccessibleContextDelegate(@NotNull AccessibleContext context) {
     myContext = context;

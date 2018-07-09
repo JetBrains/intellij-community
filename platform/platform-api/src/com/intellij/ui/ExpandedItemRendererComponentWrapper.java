@@ -33,7 +33,8 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
   /**
    * @deprecated use {@link #wrap(Component)}} instead to create an instance
    */
-  public ExpandedItemRendererComponentWrapper(@NotNull final Component rendererComponent) {
+  @Deprecated
+  private ExpandedItemRendererComponentWrapper(@NotNull final Component rendererComponent) {
     add(rendererComponent);
     setOpaque(false);
     setLayout(new AbstractLayoutManager() {
@@ -65,7 +66,7 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
   }
 
   private static class MyComponent extends ExpandedItemRendererComponentWrapper implements Accessible {
-    private Accessible myAccessible;
+    private final Accessible myAccessible;
     private AccessibleContext myDefaultAccessibleContext;
 
     MyComponent(@NotNull Component comp, @NotNull Accessible accessible) {

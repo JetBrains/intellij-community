@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
@@ -25,15 +11,16 @@ import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -93,16 +80,6 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
   }
 
   @Override
-  @NotNull
-  public GrField[] getFields() {
-    GrField[] bodyFields = super.getFields();
-    GrEnumConstant[] enumConstants = getEnumConstants();
-    if (bodyFields.length == 0) return enumConstants;
-    if (enumConstants.length == 0) return bodyFields;
-    return ArrayUtil.mergeArrays(bodyFields, enumConstants);
-  }
-
-  @Override
   public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
                                      @NotNull ResolveState state,
                                      @Nullable PsiElement lastParent,
@@ -125,24 +102,25 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
       PsiMethod[] defMethods = new PsiMethod[4];
       final PsiManagerEx manager = getManager();
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(getProject());
+      final PsiClassType thisType = factory.createType(this);
       defMethods[0] = new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "values")
-        .setMethodReturnType(factory.createTypeFromText(CommonClassNames.JAVA_UTIL_COLLECTION + "<" + getName() + ">", this))
+        .setMethodReturnType(new PsiArrayType(thisType))
         .setContainingClass(this)
         .addModifier(PsiModifier.PUBLIC)
         .addModifier(PsiModifier.STATIC);
 
       defMethods[1] = new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "next")
-        .setMethodReturnType(factory.createType(this))
+        .setMethodReturnType(thisType)
         .setContainingClass(this)
         .addModifier(PsiModifier.PUBLIC);
 
       defMethods[2] = new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "previous")
-        .setMethodReturnType(factory.createType(this))
+        .setMethodReturnType(thisType)
         .setContainingClass(this)
         .addModifier(PsiModifier.PUBLIC);
 
       defMethods[3] = new LightMethodBuilder(manager, GroovyLanguage.INSTANCE, "valueOf")
-        .setMethodReturnType(factory.createType(this))
+        .setMethodReturnType(thisType)
         .setContainingClass(this)
         .addParameter("name", CommonClassNames.JAVA_LANG_STRING)
         .addModifier(PsiModifier.PUBLIC)
@@ -152,22 +130,40 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
     });
   }
 
+  @NotNull
   @Override
   public GrEnumConstant[] getEnumConstants() {
-    GrEnumConstantList list = getEnumConstantList();
-    if (list != null) return list.getEnumConstants();
-    return GrEnumConstant.EMPTY_ARRAY;
+    GrEnumDefinitionBody body = getBody();
+    return body == null ? GrEnumConstant.EMPTY_ARRAY : body.getEnumConstants();
   }
 
   @Override
   public GrEnumConstantList getEnumConstantList() {
     GrEnumDefinitionBody enumDefinitionBody = getBody();
-    if (enumDefinitionBody != null) return enumDefinitionBody.getEnumConstantList();
-    return null;
+    return enumDefinitionBody == null ? null : enumDefinitionBody.getEnumConstantList();
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitEnumDefinition(this);
+  }
+
+  @Override
+  public PsiElement add(@NotNull PsiElement psiElement) throws IncorrectOperationException {
+    if (!(psiElement instanceof GrEnumConstant)) return super.add(psiElement);
+    final GrTypeDefinitionBody body = getBody();
+    assert body != null;
+    GrEnumConstantList list = getEnumConstantList();
+    if (list != null) {
+      GrEnumConstant[] constants = list.getEnumConstants();
+      if (constants.length > 0) {
+        list.getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", null);
+        list.getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", null);
+        return list.add(psiElement);
+      }
+    }
+
+    PsiElement brace = body.getLBrace();
+    return body.addAfter(psiElement, brace);
   }
 }

@@ -70,9 +70,9 @@ public class ArrangementRuleAliasesListEditor extends NamedItemsListEditor<StdAr
   };
   private static final Equality<StdArrangementRuleAliasToken> COMPARER = (o1, o2) -> Comparing.equal(o1.getId(), o2.getId());
 
-  @NotNull private Set<String> myUsedTokenIds;
-  @NotNull private ArrangementStandardSettingsManager mySettingsManager;
-  @NotNull private ArrangementColorsProvider myColorsProvider;
+  @NotNull private final Set<String> myUsedTokenIds;
+  @NotNull private final ArrangementStandardSettingsManager mySettingsManager;
+  @NotNull private final ArrangementColorsProvider myColorsProvider;
 
   protected ArrangementRuleAliasesListEditor(@NotNull ArrangementStandardSettingsManager settingsManager,
                                              @NotNull ArrangementColorsProvider colorsProvider,

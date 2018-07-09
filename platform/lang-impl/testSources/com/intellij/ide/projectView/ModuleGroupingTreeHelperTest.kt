@@ -44,18 +44,44 @@ class ModuleGroupingTreeHelperTest: UsefulTestCase() {
   }
 
   fun `test disabled grouping`() {
-    createHelper(false).createModuleNodes("a.main")
+    createHelper(false).createModuleNodes("a.main", "a.util")
     assertTreeEqual("""
             -root
-             a.main""")
+             a.main
+             a.util""")
     createHelperFromTree(true).moveAllModuleNodesAndCheckResult("""
             -root
              -a
-              a.main""")
+              a.main
+              a.util""")
+  }
+
+  fun `test disabled grouping and compacting nodes`() {
+    createHelper(enableGrouping = false, compactGroupNodes = false).createModuleNodes("a.main", "a.util")
+    assertTreeEqual("""
+            -root
+             a.main
+             a.util""")
+    createHelperFromTree(enableGrouping = true, compactGroupNodes = false).moveAllModuleNodesAndCheckResult("""
+            -root
+             -a
+              a.main
+              a.util""")
   }
 
   fun `test single module`() {
     createHelper().createModuleNodes("a.main")
+    assertTreeEqual("""
+            -root
+             a.main""")
+
+    createHelperFromTree(false).moveAllModuleNodesAndCheckResult("""
+            -root
+             a.main""")
+  }
+
+  fun `test single module with disabled compacting`() {
+    createHelper(compactGroupNodes = false).createModuleNodes("a.main")
     assertTreeEqual("""
             -root
              -a
@@ -79,6 +105,56 @@ class ModuleGroupingTreeHelperTest: UsefulTestCase() {
             -root
              a.main
              a.util""")
+  }
+
+  fun `test two modules with common prefix`() {
+    createHelper().createModuleNodes("com.a.main", "com.a.util")
+    assertTreeEqual("""
+            -root
+             -a
+              com.a.main
+              com.a.util
+""")
+    createHelperFromTree(false).moveAllModuleNodesAndCheckResult("""
+            -root
+             com.a.main
+             com.a.util
+             """)
+
+  }
+
+  fun `test two modules with common prefix and parent module as a group`() {
+    createHelper().createModuleNodes("com.a.main", "com.a.util", "com.a")
+    assertTreeEqual("""
+            -root
+             -com.a
+              com.a.main
+              com.a.util
+""")
+    createHelperFromTree(false).moveAllModuleNodesAndCheckResult("""
+            -root
+             com.a
+             com.a.main
+             com.a.util
+             """)
+  }
+
+  fun `test create two nested groups`() {
+    createHelper().createModuleNodes("com.a.foo.bar", "com.a.baz", "com.a.foo.baz")
+    assertTreeEqual("""
+            -root
+             -a
+              com.a.baz
+              -foo
+               com.a.foo.bar
+               com.a.foo.baz
+""")
+    createHelperFromTree(false).moveAllModuleNodesAndCheckResult("""
+            -root
+             com.a.baz
+             com.a.foo.bar
+             com.a.foo.baz
+             """)
   }
 
   fun `test two groups`() {
@@ -118,7 +194,21 @@ class ModuleGroupingTreeHelperTest: UsefulTestCase() {
              a.tests""")
   }
 
-  fun `test move module node to new group`() {
+  fun `test module as a group with inner modules`() {
+    createHelper().createModuleNodes("com.foo", "com.foo.bar", "com.foo.baz.zoo1", "com.foo.baz.zoo2")
+    assertTreeEqual("""
+            -root
+             -com.foo
+              -baz
+               com.foo.baz.zoo1
+               com.foo.baz.zoo2
+              com.foo.bar
+""")
+  }
+
+
+
+  fun `test add prefix to module name`() {
     val nodes = createHelper().createModuleNodes("main", "util")
     assertTreeEqual("""
             -root
@@ -128,7 +218,23 @@ class ModuleGroupingTreeHelperTest: UsefulTestCase() {
     node.second.name = "a.main"
     moveModuleNodeToProperGroupAndCheckResult(node, """
                   -root
+                   a.main
+                   util""")
+  }
+
+  fun `test move module node to new group`() {
+    val nodes = createHelper().createModuleNodes("main", "util", "a.foo")
+    assertTreeEqual("""
+            -root
+             a.foo
+             main
+             util""")
+    val node = nodes.find { it.second.name == "main" }!!
+    node.second.name = "a.main"
+    moveModuleNodeToProperGroupAndCheckResult(node, """
+                  -root
                    -a
+                    a.foo
                     a.main
                    util""")
   }
@@ -157,6 +263,37 @@ class ModuleGroupingTreeHelperTest: UsefulTestCase() {
               a.main""")
   }
 
+  fun `test insert component into the middle of a module name`() {
+    val nodes = createHelper().createModuleNodes("a", "a.main")
+    val node = nodes.find { it.second.name == "a.main" }!!
+    node.second.name = "a.main.util"
+    moveModuleNodeToProperGroupAndCheckResult(node, """
+            -root
+             -a
+              a.main.util""")
+  }
+
+  fun `test move module node to child node`() {
+    val nodes = createHelper().createModuleNodes("a.main", "a.util")
+    val node = nodes.find { it.second.name == "a.util" }!!
+    node.second.name = "a.main.util"
+    moveModuleNodeToProperGroupAndCheckResult(node, """
+            -root
+             -a.main
+              a.main.util""")
+  }
+
+  fun `test remove component from the middle of a module name`() {
+    val nodes = createHelper().createModuleNodes("a.foo", "a.foo.bar.baz")
+    val node = nodes.find { it.second.name == "a.foo.bar.baz" }!!
+    node.second.name = "a.baz"
+    moveModuleNodeToProperGroupAndCheckResult(node, """
+            -root
+             -a
+              a.baz
+              a.foo""")
+  }
+
   fun `test module node become parent module`() {
     val nodes = createHelper().createModuleNodes("b", "a.main")
     val node = nodes.find { it.second.name == "b" }!!
@@ -173,16 +310,48 @@ class ModuleGroupingTreeHelperTest: UsefulTestCase() {
     node.second.name = "b"
     moveModuleNodeToProperGroupAndCheckResult(node, """
             -root
+             a.main
+             b""")
+  }
+
+  fun `test parent module become ordinary module with disabled compacting`() {
+    val nodes = createHelper(compactGroupNodes = false).createModuleNodes("a", "a.main")
+    val node = nodes.find { it.second.name == "a" }!!
+    node.second.name = "b"
+    moveModuleNodeToProperGroupAndCheckResult(node, """
+            -root
              -a
               a.main
+             b""", compactGroupNodes = false)
+  }
+
+  fun `test parent module become ordinary module but group remains`() {
+    val nodes = createHelper().createModuleNodes("a", "a.main", "a.util")
+    val node = nodes.find { it.second.name == "a" }!!
+    node.second.name = "b"
+    moveModuleNodeToProperGroupAndCheckResult(node, """
+            -root
+             -a
+              a.main
+              a.util
              b""")
   }
 
   fun `test do not move node if its group wasn't changed`() {
     val nodes = createHelper().createModuleNodes("a", "a.main")
     nodes.forEach {
-      val newNode = createHelperFromTree().moveModuleNodeToProperGroup(it.first, it.second, root, model, tree)
-      assertSame(it.first, newNode)
+      val node = it.first
+      val newNode = createHelperFromTree(nodeToBeMovedFilter = {it == node}).moveModuleNodeToProperGroup(node, it.second, root, model, tree)
+      assertSame(node, newNode)
+    }
+  }
+
+  fun `test do not move node if its virtual group wasn't changed`() {
+    val nodes = createHelper().createModuleNodes("a.util.foo", "a.main.bar")
+    nodes.forEach {
+      val node = it.first
+      val newNode = createHelperFromTree(nodeToBeMovedFilter = {it == node}).moveModuleNodeToProperGroup(node, it.second, root, model, tree)
+      assertSame(node, newNode)
     }
   }
 
@@ -212,6 +381,31 @@ class ModuleGroupingTreeHelperTest: UsefulTestCase() {
     helper.removeNode(nodes[0].first, root, model)
     assertTreeEqual("""
            -root
+            a.util
+            b
+""")
+
+    helper.removeNode(nodes[1].first, root, model)
+    assertTreeEqual("""
+           -root
+            b
+""")
+  }
+
+  fun `test remove module node with disabled compacting`() {
+    val helper = createHelper(compactGroupNodes = false)
+    val nodes = helper.createModuleNodes("a.main", "a.util", "b")
+    assertTreeEqual("""
+           -root
+            -a
+             a.main
+             a.util
+            b
+""")
+
+    helper.removeNode(nodes[0].first, root, model)
+    assertTreeEqual("""
+           -root
             -a
              a.util
             b
@@ -225,23 +419,25 @@ class ModuleGroupingTreeHelperTest: UsefulTestCase() {
   }
 
   private fun moveModuleNodeToProperGroupAndCheckResult(node: Pair<MockModuleTreeNode, MockModule>,
-                                                        expected: String) {
-    val helper = createHelperFromTree()
-    helper.checkConsistency()
+                                                        expected: String, compactGroupNodes: Boolean = true) {
+    val thisNode: (MockModuleTreeNode) -> Boolean = { it == node.first }
+    val helper = createHelperFromTree(nodeToBeMovedFilter = thisNode, compactGroupNodes = compactGroupNodes)
+    helper.checkConsistency(nodeToBeMovedFilter = thisNode)
     helper.moveModuleNodeToProperGroup(node.first, node.second, root, model, tree)
     assertTreeEqual(expected)
-    helper.checkConsistency()
+    helper.checkConsistency(nodeToBeMovedFilter = {false})
   }
 
   private fun ModuleGroupingTreeHelper<MockModule, MockModuleTreeNode>.moveAllModuleNodesAndCheckResult(expected: String) {
-    checkConsistency()
+    checkConsistency(nodeToBeMovedFilter = {true})
     moveAllModuleNodesToProperGroups(root, model)
     assertTreeEqual(expected)
-    checkConsistency()
+    checkConsistency(nodeToBeMovedFilter = {false})
   }
 
   private fun ModuleGroupingTreeHelper<MockModule, MockModuleTreeNode>.createModuleNodes(vararg names: String): List<Pair<MockModuleTreeNode, MockModule>> {
     val nodes = createModuleNodes(names.map { MockModule(it) }, root, model)
+    checkConsistency { false }
     return nodes.map { Pair(it, (it as MockModuleNode).module)}
   }
 
@@ -250,35 +446,61 @@ class ModuleGroupingTreeHelperTest: UsefulTestCase() {
     PlatformTestUtil.assertTreeEqual(tree, expected.trimIndent() + "\n")
   }
 
-  private fun createHelper(enableGrouping: Boolean = true): ModuleGroupingTreeHelper<MockModule, MockModuleTreeNode> {
-    return ModuleGroupingTreeHelper.forEmptyTree(enableGrouping, mockModuleGrouping, ::MockModuleGroupNode, ::MockModuleNode, nodeComparator)
+  private fun createHelper(enableGrouping: Boolean = true, compactGroupNodes: Boolean = true): ModuleGroupingTreeHelper<MockModule, MockModuleTreeNode> {
+    return ModuleGroupingTreeHelper.forEmptyTree(enableGrouping, MockModuleGrouping(compactGroupNodes), ::MockModuleGroupNode, ::MockModuleNode, nodeComparator)
   }
 
-  private fun createHelperFromTree(enableGrouping: Boolean = true): ModuleGroupingTreeHelper<MockModule, MockModuleTreeNode> {
+  private fun createHelperFromTree(enableGrouping: Boolean = true, compactGroupNodes: Boolean = true, nodeToBeMovedFilter: (MockModuleTreeNode) -> Boolean = {true}): ModuleGroupingTreeHelper<MockModule, MockModuleTreeNode> {
     return ModuleGroupingTreeHelper.forTree(root, { it.moduleGroup }, { (it as? MockModuleNode)?.module },
-                                            enableGrouping, mockModuleGrouping, ::MockModuleGroupNode, ::MockModuleNode, nodeComparator)
+                                            enableGrouping, MockModuleGrouping(compactGroupNodes), ::MockModuleGroupNode, ::MockModuleNode, nodeComparator,
+                                            nodeToBeMovedFilter)
   }
 
-  private fun ModuleGroupingTreeHelper<MockModule, MockModuleTreeNode>.checkConsistency() {
+  private fun ModuleGroupingTreeHelper<MockModule, MockModuleTreeNode>.checkConsistency(nodeToBeMovedFilter: (MockModuleTreeNode) -> Boolean) {
     val expectedNodeForGroup = HashMap<ModuleGroup, MockModuleTreeNode>(getNodeForGroupMap())
+    val expectedNodeVirtualGroupToChildNode = HashMap<ModuleGroup, MockModuleTreeNode>(getVirtualGroupToChildNodeMap())
     val expectedGroupByNode = HashMap<MockModuleTreeNode, ModuleGroup>(getGroupByNodeMap())
     val expectedModuleByNode = HashMap<MockModuleTreeNode, MockModule>(getModuleByNodeMap())
-    TreeUtil.traverse(root, { o ->
+    TreeUtil.treeNodeTraverser(root).postOrderDfsTraversal().forEach { o ->
       val node = o as MockModuleTreeNode
-      if (node == root) return@traverse true
-      TestCase.assertSame(node, expectedNodeForGroup[node.moduleGroup])
-      expectedNodeForGroup.remove(node.moduleGroup)
-      TestCase.assertEquals(node.moduleGroup, expectedGroupByNode[node])
-      expectedGroupByNode.remove(node)
+      if (node == root) return@forEach
       if (node is MockModuleNode) {
         TestCase.assertEquals(node.module, expectedModuleByNode[node])
         expectedModuleByNode.remove(node)
       }
-      true
-    })
+      if (!nodeToBeMovedFilter(node)) {
+        val parentGroupPath = when (node) {
+          is MockModuleNode -> MockModuleGrouping().getGroupPath(node.module)
+          is MockModuleGroupNode -> node.moduleGroup.groupPath.dropLast(1)
+          else -> emptyList()
+        }
+        for (i in parentGroupPath.size downTo 1) {
+          val parentGroup = ModuleGroup(parentGroupPath.subList(0, i))
+          val childNode = expectedNodeVirtualGroupToChildNode.remove(parentGroup)
+          if (childNode != null) {
+            TestCase.assertEquals(childNode, node)
+            TestCase.assertNull("There are both virtual and real nodes for '${parentGroup.qualifiedName}' group",
+                                expectedNodeForGroup[parentGroup])
+          }
+          else if (isGroupingEnabled()) {
+            TestCase.assertNotNull("There is no virtual or real node for '${parentGroup.qualifiedName}' group",
+                                   expectedNodeForGroup[parentGroup])
+            break
+          }
+        }
+      }
+      val moduleGroup = node.moduleGroup
+      TestCase.assertSame(node, expectedNodeForGroup[moduleGroup])
+      expectedNodeForGroup.remove(moduleGroup)
+      TestCase.assertEquals(moduleGroup, expectedGroupByNode[node])
+      expectedGroupByNode.remove(node)
+    }
     assertEmpty("Unexpected nodes in helper", expectedNodeForGroup.entries)
     assertEmpty("Unexpected groups in helper", expectedGroupByNode.entries)
     assertEmpty("Unexpected modules in helper", expectedModuleByNode.entries)
+    if (TreeUtil.treeNodeTraverser(root).none { nodeToBeMovedFilter(it as MockModuleTreeNode) }) {
+      assertEmpty("Unexpected virtual groups in helper", expectedNodeVirtualGroupToChildNode.entries)
+    }
   }
 }
 
@@ -289,14 +511,14 @@ private open class MockModuleTreeNode(userObject: Any, val text: String = userOb
   override fun toString() = text
 }
 
-private val mockModuleGrouping = object : ModuleGroupingImplementation<MockModule> {
+private class MockModuleGrouping(override val compactGroupNodes: Boolean = true) : ModuleGroupingImplementation<MockModule> {
   override fun getGroupPath(m: MockModule) = m.name.split('.').dropLast(1)
   override fun getModuleAsGroupPath(m: MockModule) = m.name.split('.')
 }
 private class MockModule(var name: String)
 
 private class MockModuleNode(val module: MockModule): MockModuleTreeNode(module, module.name) {
-  override val moduleGroup = ModuleGroup(mockModuleGrouping.getModuleAsGroupPath(module)!!)
+  override val moduleGroup = ModuleGroup(MockModuleGrouping().getModuleAsGroupPath(module))
 }
 
 private class MockModuleGroupNode(override val moduleGroup: ModuleGroup): MockModuleTreeNode(moduleGroup)

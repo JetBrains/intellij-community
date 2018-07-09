@@ -51,7 +51,7 @@ public class ShowByteCodeAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(false);
-    e.getPresentation().setIcon(AllIcons.Toolwindows.Documentation);
+    e.getPresentation().setIcon(AllIcons.Actions.Preview);
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       final PsiElement psiElement = getPsiElement(e.getDataContext(), project, e.getData(CommonDataKeys.EDITOR));
@@ -122,7 +122,7 @@ public class ShowByteCodeAction extends AnAction {
             Messages.showErrorDialog(project, "Unable to parse class file for '" + psiElementTitle + "'.", "Bytecode not Found");
             return;
           }
-          final ByteCodeViewerComponent component = new ByteCodeViewerComponent(project, null);
+          final ByteCodeViewerComponent component = new ByteCodeViewerComponent(project);
           component.setText(myByteCode, targetElement);
           Processor<JBPopup> pinCallback = popup -> {
             codeViewerManager.recreateToolWindow(targetElement, targetElement);
@@ -130,7 +130,7 @@ public class ShowByteCodeAction extends AnAction {
             return false;
           };
 
-          final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, null)
+          final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getEditorComponent())
             .setProject(project)
             .setDimensionServiceKey(project, ShowByteCodeAction.class.getName(), false)
             .setResizable(true)

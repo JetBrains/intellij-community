@@ -63,8 +63,6 @@ import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Oct 4, 2003
- *         Time: 6:54:57 PM
  */
 public class CommonContentEntriesEditor extends ModuleElementsEditor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.ui.configuration.ContentEntriesEditor");
@@ -420,7 +418,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
 
     public AddContentEntryAction() {
       super(ProjectBundle.message("module.paths.add.content.action"),
-            ProjectBundle.message("module.paths.add.content.action.description"), AllIcons.Modules.AddContentEntry);
+            ProjectBundle.message("module.paths.add.content.action.description"), AllIcons.General.Add);
       myDescriptor = new FileChooserDescriptor(false, true, true, false, true, true) {
         @Override
         public void validateSelectedFiles(VirtualFile[] files) throws Exception {

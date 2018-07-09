@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
@@ -26,6 +12,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.codeInspection.ui.InspectionResultsView;
+import com.intellij.codeInspection.ui.InspectionResultsViewComparator;
 import com.intellij.codeInspection.ui.InspectionTree;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
@@ -47,7 +34,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.ui.ClickListener;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.ui.JBUI;
@@ -73,7 +59,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
   }
 
   protected QuickFixAction(String text, @NotNull InspectionToolWrapper toolWrapper) {
-    this(text, AllIcons.Actions.CreateFromUsage, null, toolWrapper);
+    this(text, AllIcons.Actions.IntentionBulb, null, toolWrapper);
   }
 
   protected QuickFixAction(String text, Icon icon, KeyStroke keyStroke, @NotNull InspectionToolWrapper toolWrapper) {
@@ -122,21 +108,22 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     final InspectionResultsView view = getInvoker(e);
     final InspectionTree tree = view.getTree();
     try {
-      Ref<CommonProblemDescriptor[]> descriptors = Ref.create();
+      Ref<List<CommonProblemDescriptor[]>> descriptors = Ref.create();
       Set<VirtualFile> readOnlyFiles = new THashSet<>();
-      //TODO revise when jdk9 arrives. Until then this redundant cast is a workaround to compile under jdk9 b169
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ReadAction.run(() -> {
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         indicator.setText("Checking problem descriptors...");
-        descriptors.set(tree.getSelectedDescriptors(true, readOnlyFiles, false, false));
+        descriptors.set(tree.getSelectedDescriptorPacks(true, readOnlyFiles, false));
       }), InspectionsBundle.message("preparing.for.apply.fix"), true, e.getProject())) {
         return;
       }
-      if (isProblemDescriptorsAcceptable() && descriptors.get().length > 0) {
+      if (isProblemDescriptorsAcceptable() && descriptors.get().size() > 0) {
         doApplyFix(view.getProject(), descriptors.get(), readOnlyFiles, tree.getContext());
       } else {
         doApplyFix(getSelectedElements(view), view);
       }
+
+      view.getTree().removeSelectedProblems();
     } finally {
       view.setApplyingFix(false);
     }
@@ -149,10 +136,10 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
                           @NotNull Set<PsiElement> ignoredElements) {
   }
 
-  private void doApplyFix(@NotNull final Project project,
-                          @NotNull final CommonProblemDescriptor[] descriptors,
+  private void doApplyFix(@NotNull Project project,
+                          @NotNull List<CommonProblemDescriptor[]> descriptors,
                           @NotNull Set<VirtualFile> readOnlyFiles,
-                          @NotNull final GlobalInspectionContextImpl context) {
+                          @NotNull GlobalInspectionContextImpl context) {
     if (!FileModificationService.getInstance().prepareVirtualFilesForWrite(project, readOnlyFiles)) return;
     
     final RefManagerImpl refManager = (RefManagerImpl)context.getRefManager();
@@ -176,7 +163,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
   }
   
   protected void performFixesInBatch(@NotNull Project project,
-                                     @NotNull CommonProblemDescriptor[] descriptors,
+                                     @NotNull List<CommonProblemDescriptor[]> descriptors,
                                      @NotNull GlobalInspectionContextImpl context,
                                      Set<PsiElement> ignoredElements) {
     final String templatePresentationText = getTemplatePresentation().getText();
@@ -187,7 +174,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
       PerformFixesTask performFixesTask = new PerformFixesTask(project, descriptors, ignoredElements, context);
       if (startInWriteAction) {
         ((ApplicationImpl)ApplicationManager.getApplication())
-          .runWriteActionWithProgressInDispatchThread(templatePresentationText, project, null, null, performFixesTask::doRun);
+          .runWriteActionWithCancellableProgressInDispatchThread(templatePresentationText, project, null, performFixesTask::doRun);
       }
       else {
         final SequentialModalProgressTask progressTask =
@@ -247,34 +234,11 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
 
   @NotNull
   private static RefEntity[] getSelectedElements(InspectionResultsView view) {
-    if (view == null) return new RefElement[0];
-    List<RefEntity> selection = new ArrayList<>(Arrays.asList(view.getTree().getSelectedElements()));
+    if (view == null) return RefEntity.EMPTY_ELEMENTS_ARRAY;
+    RefEntity[] selection = view.getTree().getSelectedElements();
     PsiDocumentManager.getInstance(view.getProject()).commitAllDocuments();
-    Collections.sort(selection, (o1, o2) -> {
-      if (o1 instanceof RefElement && o2 instanceof RefElement) {
-        RefElement r1 = (RefElement)o1;
-        RefElement r2 = (RefElement)o2;
-        final PsiElement element1 = r1.getElement();
-        final PsiElement element2 = r2.getElement();
-        final PsiFile containingFile1 = element1.getContainingFile();
-        final PsiFile containingFile2 = element2.getContainingFile();
-        if (containingFile1 == containingFile2) {
-          int i1 = element1.getTextOffset();
-          int i2 = element2.getTextOffset();
-          return Integer.compare(i2, i1);
-        }
-        return containingFile1.getName().compareTo(containingFile2.getName());
-      }
-      if (o1 instanceof RefElement) {
-        return 1;
-      }
-      if (o2 instanceof RefElement) {
-        return -1;
-      }
-      return o1.getName().compareTo(o2.getName());
-    });
-
-    return selection.toArray(new RefEntity[selection.size()]);
+    Arrays.sort(selection, InspectionResultsViewComparator::compareEntities);
+    return selection;
   }
 
   private static void refreshViews(@NotNull Project project, @NotNull Set<PsiElement> resolvedElements, @NotNull InspectionToolWrapper toolWrapper) {
@@ -318,7 +282,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     final JButton button = new JButton(presentation.getText());
     Icon icon = presentation.getIcon();
     if (icon == null) {
-      icon = AllIcons.Actions.CreateFromUsage;
+      icon = AllIcons.Actions.IntentionBulb;
     }
     button.setEnabled(presentation.isEnabled());
     button.setIcon(IconLoader.getTransparentIcon(icon, 0.75f));
@@ -346,7 +310,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     private final Set<PsiElement> myIgnoredElements;
 
     PerformFixesTask(@NotNull Project project,
-                     @NotNull CommonProblemDescriptor[] descriptors,
+                     @NotNull List<CommonProblemDescriptor[]> descriptors,
                      @NotNull Set<PsiElement> ignoredElements,
                      @NotNull GlobalInspectionContextImpl context) {
       super(project, descriptors);

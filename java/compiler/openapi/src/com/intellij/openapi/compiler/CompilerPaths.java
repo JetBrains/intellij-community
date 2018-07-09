@@ -18,13 +18,13 @@ package com.intellij.openapi.compiler;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.CompilerModuleExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -105,19 +105,19 @@ public class CompilerPaths {
    */
   @Nullable
   public static String getModuleOutputPath(final Module module, boolean forTestClasses) {
-    final String outPathUrl;
-    final Application application = ApplicationManager.getApplication();
     final CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
     if (extension == null) {
       return null;
     }
+    final String outPathUrl;
+    final Application application = ApplicationManager.getApplication();
     if (forTestClasses) {
       if (application.isDispatchThread()) {
         final String url = extension.getCompilerOutputUrlForTests();
         outPathUrl = url != null ? url : extension.getCompilerOutputUrl();
       }
       else {
-        outPathUrl = application.runReadAction((Computable<String>)() -> {
+        outPathUrl = ReadAction.compute(() -> {
           final String url = extension.getCompilerOutputUrlForTests();
           return url != null ? url : extension.getCompilerOutputUrl();
         });
@@ -128,20 +128,10 @@ public class CompilerPaths {
         outPathUrl = extension.getCompilerOutputUrl();
       }
       else {
-        outPathUrl = application.runReadAction((Computable<String>)() -> extension.getCompilerOutputUrl());
+        outPathUrl = ReadAction.compute(() -> extension.getCompilerOutputUrl());
       }
     }
     return outPathUrl != null? VirtualFileManager.extractPath(outPathUrl) : null;
-  }
-
-  /**
-   * @return path to annotation-processors generated _production_ sources
-    Use {@link #getAnnotationProcessorsGenerationPath(Module, boolean)}
-   */
-  @Deprecated
-  @Nullable
-  public static String getAnnotationProcessorsGenerationPath(Module module) {
-    return getAnnotationProcessorsGenerationPath(module, false);
   }
 
   @Nullable

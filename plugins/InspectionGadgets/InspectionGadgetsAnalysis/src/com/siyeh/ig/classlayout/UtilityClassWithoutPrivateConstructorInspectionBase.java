@@ -27,7 +27,7 @@ public class UtilityClassWithoutPrivateConstructorInspectionBase extends BaseIns
     final PsiMethod[] constructors = aClass.getConstructors();
     for (final PsiMethod constructor : constructors) {
       final PsiParameterList params = constructor.getParameterList();
-      if (params.getParametersCount() == 0) {
+      if (params.isEmpty()) {
         return constructor;
       }
     }

@@ -78,6 +78,11 @@ public abstract class FilteredTraverserBase<T, Self extends FilteredTraverserBas
   }
 
   @NotNull
+  public final JBIterable<T> biOrderDfsTraversal() {
+    return traverse(TreeTraversal.BI_ORDER_DFS);
+  }
+
+  @NotNull
   public final JBIterable<T> preOrderDfsTraversal() {
     return traverse(TreeTraversal.PRE_ORDER_DFS);
   }

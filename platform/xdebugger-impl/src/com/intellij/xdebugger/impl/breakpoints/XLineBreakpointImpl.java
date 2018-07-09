@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
@@ -34,7 +19,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.DocumentUtil;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
@@ -42,6 +26,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,7 +36,6 @@ import java.awt.*;
 import java.awt.dnd.DnDConstants;
 import java.awt.dnd.DragSource;
 import java.io.File;
-import java.util.List;
 
 /**
  * @author nik
@@ -89,6 +73,11 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributes attributes = scheme.getAttributes(DebuggerColors.BREAKPOINT_ATTRIBUTES);
 
+    if (!isEnabled()) {
+      attributes = attributes.clone();
+      attributes.setBackgroundColor(null);
+    }
+
     RangeHighlighter highlighter = myHighlighter;
     if (highlighter != null &&
         (!highlighter.isValid()
@@ -106,8 +95,8 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
       TextRange range = myType.getHighlightRange(this);
       if (range != null && !range.isEmpty()) {
-        range = range.intersection(DocumentUtil.getLineTextRange(document, getLine()));
-        if (range != null && !range.isEmpty()) {
+        TextRange lineRange = DocumentUtil.getLineTextRange(document, getLine());
+        if (range.intersects(lineRange)) {
           highlighter = markupModel.addRangeHighlighter(range.getStartOffset(), range.getEndOffset(),
                                                         DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes,
                                                         HighlighterTargetArea.EXACT_RANGE);
@@ -141,7 +130,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
   }
 
   @Nullable
-  public Document getDocument() {
+  private Document getDocument() {
     VirtualFile file = getFile();
     if (file == null) return null;
     return FileDocumentManager.getInstance().getDocument(file);
@@ -239,8 +228,7 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       }
 
       public void remove() {
-        XBreakpointManager breakpointManager = XDebuggerManager.getInstance(getProject()).getBreakpointManager();
-        WriteAction.run(() -> breakpointManager.removeBreakpoint(XLineBreakpointImpl.this));
+        XDebuggerUtilImpl.removeBreakpointWithConfirmation(getProject(), XLineBreakpointImpl.this);
       }
 
       @Override
@@ -303,11 +291,6 @@ public class XLineBreakpointImpl<P extends XBreakpointProperties> extends XBreak
       myState.setTemporary(temporary);
       fireBreakpointChanged();
     }
-  }
-
-  @Override
-  protected List<? extends AnAction> getAdditionalPopupMenuActions(final XDebugSession session) {
-    return getType().getAdditionalPopupMenuActions(this, session);
   }
 
   @Override

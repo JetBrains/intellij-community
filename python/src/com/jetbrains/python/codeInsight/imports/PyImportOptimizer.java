@@ -16,6 +16,7 @@
 package com.jetbrains.python.codeInsight.imports;
 
 import com.google.common.collect.Ordering;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.lang.ImportOptimizer;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,9 +24,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -111,7 +114,7 @@ public class PyImportOptimizer implements ImportOptimizer {
 
     private ImportSorter(@NotNull PyFile file) {
       myFile = file;
-      myPySettings = CodeStyleSettingsManager.getSettings(myFile.getProject()).getCustomSettings(PyCodeStyleSettings.class);
+      myPySettings = CodeStyle.getCustomSettings(myFile, PyCodeStyleSettings.class);
       myImportBlock = myFile.getImportBlock();
       myGroups = new EnumMap<>(ImportPriority.class);
       for (ImportPriority priority : ImportPriority.values()) {
@@ -165,8 +168,7 @@ public class PyImportOptimizer implements ImportOptimizer {
     private List<PyImportStatementBase> transformImportStatements(@NotNull List<PyImportStatementBase> imports) {
       final List<PyImportStatementBase> result = new ArrayList<>();
 
-      final Project project = myFile.getProject();
-      final PyElementGenerator generator = PyElementGenerator.getInstance(project);
+      final PyElementGenerator generator = PyElementGenerator.getInstance(myFile.getProject());
       final LanguageLevel langLevel = LanguageLevel.forElement(myFile);
 
       for (PyImportStatementBase statement : imports) {
@@ -179,7 +181,7 @@ public class PyImportOptimizer implements ImportOptimizer {
               ContainerUtil.map(importElements, e -> generator.createImportStatement(langLevel, e.getText(), null));
             final PyImportStatement topmostImport;
             if (myPySettings.OPTIMIZE_IMPORTS_SORT_IMPORTS) {
-              topmostImport = Collections.min(newImports, AddImportHelper.getSameGroupImportsComparator(project));
+              topmostImport = Collections.min(newImports, AddImportHelper.getSameGroupImportsComparator(myFile));
             }
             else {
               topmostImport = newImports.get(0);
@@ -282,7 +284,7 @@ public class PyImportOptimizer implements ImportOptimizer {
         return false;
       }
       final Ordering<PyImportStatementBase> importOrdering =
-        Ordering.from(AddImportHelper.getSameGroupImportsComparator(myFile.getProject()));
+        Ordering.from(AddImportHelper.getSameGroupImportsComparator(myFile));
       return ContainerUtil.exists(myGroups.values(), imports -> !importOrdering.isOrdered(imports));
     }
 
@@ -294,7 +296,7 @@ public class PyImportOptimizer implements ImportOptimizer {
       if (myPySettings.OPTIMIZE_IMPORTS_SORT_IMPORTS) {
         for (ImportPriority priority : myGroups.keySet()) {
           final List<PyImportStatementBase> imports = myGroups.get(priority);
-          Collections.sort(imports, AddImportHelper.getSameGroupImportsComparator(myFile.getProject()));
+          Collections.sort(imports, AddImportHelper.getSameGroupImportsComparator(myFile));
           myGroups.put(priority, imports);
         }
       }

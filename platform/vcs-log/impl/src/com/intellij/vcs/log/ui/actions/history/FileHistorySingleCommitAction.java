@@ -21,11 +21,13 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.history.FileHistoryUi;
-import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +80,8 @@ public abstract class FileHistorySingleCommitAction extends AnAction implements 
       if (!details.isEmpty()) {
         performAction(project, ui, notNull(getFirstItem(details)), e);
       }
-    }, null);
+    }, t -> VcsBalloonProblemNotifier.showOverChangesView(project, "Could not load selected commits: " + t.getMessage(),
+                                                          MessageType.ERROR), null);
   }
 
   protected abstract void performAction(@NotNull Project project,

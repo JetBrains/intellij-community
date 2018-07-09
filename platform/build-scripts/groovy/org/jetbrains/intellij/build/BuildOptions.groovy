@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.util.SystemProperties
@@ -39,7 +25,7 @@ class BuildOptions {
   static final String OS_MAC = "mac"
   static final String OS_ALL = "all"
   /**
-   * If this value is set no distributions of the product will be produced, only {@link ProductModulesLayout#pluginModulesToPublish non-bundled plugins}
+   * If this value is set no distributions of the product will be produced, only {@link ProductModulesLayout#setPluginModulesToPublish non-bundled plugins}
    * will be built.
    */
   static final String OS_NONE = "none"
@@ -54,9 +40,11 @@ class BuildOptions {
   static final SOURCES_ARCHIVE_STEP = "sources_archive"
   static final SCRAMBLING_STEP = "scramble"
   static final NON_BUNDLED_PLUGINS_STEP = "non_bundled_plugins"
+  /** Build Maven artifacts for IDE modules. */
+  static final MAVEN_ARTIFACTS_STEP = "maven_artifacts"
   /** Build macOS artifacts. */
   static final MAC_ARTIFACTS_STEP = "mac_artifacts"
-  /** Build .dmg file for macOS. If skipped; only .sit archive will be produced. */
+  /** Build .dmg file for macOS. If skipped, only .sit archive will be produced. */
   static final MAC_DMG_STEP = "mac_dmg"
   /** Sign additional binary files in macOS distribution. */
   static final MAC_SIGN_STEP = "mac_sign"
@@ -78,6 +66,12 @@ class BuildOptions {
    * A build configuration should have "docker.version >= 17" in requirements.
    */
   boolean buildUnixSnaps = SystemProperties.getBooleanProperty("intellij.build.unix.snaps", false)
+
+  /**
+   * Image for snap package creation. Default is "snapcore/snapcraft:stable", but can be modified mostly due to problems
+   * with new versions of snapcraft.
+   */
+  String snapDockerImage = System.getProperty("intellij.build.snap.docker.image", "snapcore/snapcraft:stable")
 
   /**
    * Path to a zip file containing 'production' and 'test' directories with compiled classes of the project modules inside.

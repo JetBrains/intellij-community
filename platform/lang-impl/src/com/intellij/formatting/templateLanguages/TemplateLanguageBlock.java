@@ -30,8 +30,6 @@ import java.util.List;
 
 /**
  * @author Alexey Chmutov
- *         Date: Jun 26, 2009
- *         Time: 4:05:40 PM
  */
 public abstract class TemplateLanguageBlock extends AbstractBlock implements BlockWithParent {
   private final TemplateLanguageBlockFactory myBlockFactory;

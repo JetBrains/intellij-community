@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.diff;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,20 +12,14 @@ import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.api.ErrorCode;
+import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNErrorCode;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 
 import java.io.File;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
-/**
-* @author Konstantin Kolosovsky.
-*/
 public abstract class ElementWithBranchComparer {
 
   private static final Logger LOG = Logger.getInstance(ElementWithBranchComparer.class);
@@ -47,13 +27,13 @@ public abstract class ElementWithBranchComparer {
   @NotNull protected final Project myProject;
   @NotNull protected final SvnVcs myVcs;
   @NotNull protected final VirtualFile myVirtualFile;
-  @NotNull protected final String myBranchUrl;
+  @NotNull protected final Url myBranchUrl;
   protected final long myBranchRevision;
-  protected SVNURL myElementUrl;
+  protected Url myElementUrl;
 
   ElementWithBranchComparer(@NotNull Project project,
                             @NotNull VirtualFile virtualFile,
-                            @NotNull String branchUrl,
+                            @NotNull Url branchUrl,
                             long branchRevision) {
     myProject = project;
     myVcs = SvnVcs.getInstance(myProject);
@@ -76,12 +56,6 @@ public abstract class ElementWithBranchComparer {
             compare();
           }
         }
-        catch (SVNCancelException ex) {
-          ElementWithBranchComparer.this.onCancel();
-        }
-        catch (SVNException ex) {
-          reportException(new SvnBindException(ex));
-        }
         catch (SvnBindException ex) {
           reportException(ex);
         }
@@ -100,16 +74,13 @@ public abstract class ElementWithBranchComparer {
 
   protected abstract void showResult();
 
-  protected void onCancel() {
-  }
-
   public abstract String getTitle();
 
   @Nullable
-  protected SVNURL resolveElementUrl() throws SVNException {
+  protected Url resolveElementUrl() throws SvnBindException {
     final SvnFileUrlMapping urlMapping = myVcs.getSvnFileUrlMapping();
     final File file = virtualToIoFile(myVirtualFile);
-    final SVNURL fileUrl = urlMapping.getUrlForFile(file);
+    final Url fileUrl = urlMapping.getUrlForFile(file);
     if (fileUrl == null) {
       return null;
     }
@@ -119,21 +90,21 @@ public abstract class ElementWithBranchComparer {
       return null;
     }
 
-    final SVNURL thisBranchForUrl = SvnUtil.getBranchForUrl(myVcs, rootMixed.getVirtualFile(), fileUrl);
+    final Url thisBranchForUrl = SvnUtil.getBranchForUrl(myVcs, rootMixed.getVirtualFile(), fileUrl);
     if (thisBranchForUrl == null) {
       return null;
     }
 
-    final String relativePath = SVNPathUtil.getRelativePath(thisBranchForUrl.toString(), fileUrl.toString());
-    return SVNURL.parseURIEncoded(SVNPathUtil.append(myBranchUrl, relativePath));
+    String relativePath = SvnUtil.getRelativeUrl(thisBranchForUrl, fileUrl);
+    return myBranchUrl.appendPath(relativePath, false);
   }
 
   private void reportException(final SvnBindException e) {
-    if (e.contains(SVNErrorCode.RA_ILLEGAL_URL) ||
-        e.contains(SVNErrorCode.CLIENT_UNRELATED_RESOURCES) ||
-        e.contains(SVNErrorCode.RA_DAV_PATH_NOT_FOUND) ||
-        e.contains(SVNErrorCode.FS_NOT_FOUND) ||
-        e.contains(SVNErrorCode.ILLEGAL_TARGET)) {
+    if (e.contains(ErrorCode.RA_ILLEGAL_URL) ||
+        e.contains(ErrorCode.CLIENT_UNRELATED_RESOURCES) ||
+        e.contains(ErrorCode.RA_DAV_PATH_NOT_FOUND) ||
+        e.contains(ErrorCode.FS_NOT_FOUND) ||
+        e.contains(ErrorCode.ILLEGAL_TARGET)) {
       reportNotFound();
     }
     else {
@@ -151,7 +122,8 @@ public abstract class ElementWithBranchComparer {
 
   private void reportNotFound() {
     WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> Messages
-      .showMessageDialog(myProject, SvnBundle.message("compare.with.branch.location.error", myVirtualFile.getPresentableUrl(), myBranchUrl),
+      .showMessageDialog(myProject, SvnBundle
+                           .message("compare.with.branch.location.error", myVirtualFile.getPresentableUrl(), myBranchUrl.toDecodedString()),
                          SvnBundle.message("compare.with.branch.error.title"), Messages.getErrorIcon()), null, myProject);
   }
 }

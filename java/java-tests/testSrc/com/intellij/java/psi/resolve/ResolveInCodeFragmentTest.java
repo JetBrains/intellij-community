@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.java.psi.resolve;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -9,6 +11,8 @@ import com.intellij.psi.impl.search.JavaSourceFilterScope;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.ResolveTestCase;
+
+import java.util.function.Consumer;
 
 /**
  * @author max
@@ -49,35 +53,42 @@ public class ResolveInCodeFragmentTest extends ResolveTestCase {
   }
 
   public void testResolveFieldVsLocalWithVisiblityChecker() throws Exception {
-    PsiReference iRef = configure();
-
-    JavaCodeFragment codeFragment = JavaCodeFragmentFactory.getInstance(myProject).createExpressionCodeFragment(
-      "xxx", iRef.getElement(), null, true);
-    codeFragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
-
-    PsiElement[] fileContent = codeFragment.getChildren();
-    assertEquals(1, fileContent.length);
-    assertTrue(fileContent[0] instanceof PsiExpression);
-
-    PsiExpression expr = (PsiExpression) fileContent[0];
-    PsiElement resolve = ((PsiReferenceExpressionImpl)expr).resolve();
-    assertInstanceOf(resolve, PsiLocalVariable.class);
+    doTestResolveWithVisibilityChecker("xxx", e -> assertInstanceOf(e, PsiLocalVariable.class));
   }
 
   public void testResolveFieldVsParamWithVisiblityChecker() throws Exception {
+    doTestResolveWithVisibilityChecker("field", e -> assertInstanceOf(e, PsiParameter.class));
+  }
+
+  public void testResolveFieldInStaticInnerWithVisiblityChecker() throws Exception {
+    doTestResolveWithVisibilityChecker("field", e -> {
+      assertInstanceOf(e, PsiField.class);
+      assertEquals("Inner", ((PsiField)e).getContainingClass().getName());
+    });
+  }
+
+  public void testResolveFieldInInnerWithVisiblityChecker() throws Exception {
+    doTestResolveWithVisibilityChecker("field", e -> {
+      assertInstanceOf(e, PsiField.class);
+      assertEquals("Inner", ((PsiField)e).getContainingClass().getName());
+    });
+  }
+
+  private void doTestResolveWithVisibilityChecker(String field, Consumer<PsiElement> checker) throws Exception {
     PsiReference iRef = configure();
 
     JavaCodeFragment codeFragment = JavaCodeFragmentFactory.getInstance(myProject).createExpressionCodeFragment(
-      "field", iRef.getElement(), null, true);
+      field, iRef.getElement(), null, true);
     codeFragment.setVisibilityChecker(JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE);
 
     PsiElement[] fileContent = codeFragment.getChildren();
     assertEquals(1, fileContent.length);
     assertTrue(fileContent[0] instanceof PsiExpression);
 
-    PsiExpression expr = (PsiExpression) fileContent[0];
-    PsiElement resolve = ((PsiReferenceExpressionImpl)expr).resolve();
-    assertInstanceOf(resolve, PsiParameter.class);
+    PsiExpression expr = (PsiExpression)fileContent[0];
+    JavaResolveResult[] results = ((PsiReferenceExpressionImpl)expr).multiResolve(false);
+    assertSize(1, results);
+    checker.accept(results[0].getElement());
   }
 
   private PsiReference configure() throws Exception {

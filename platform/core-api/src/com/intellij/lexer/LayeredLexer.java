@@ -17,9 +17,10 @@ package com.intellij.lexer;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 
@@ -68,7 +69,7 @@ public class LayeredLexer extends DelegateLexer {
 
   private void activateLayerIfNecessary() {
     final IElementType baseTokenType = super.getTokenType();
-    myCurrentLayerLexer = myStartTokenToLayerLexer.get(baseTokenType);
+    myCurrentLayerLexer = findLayerLexer(baseTokenType);
     if (myCurrentLayerLexer != null) {
       myCurrentBaseTokenType = baseTokenType;
       myBaseTokenEnd = super.getTokenEnd();
@@ -77,6 +78,11 @@ public class LayeredLexer extends DelegateLexer {
         super.advance();
       }
     }
+  }
+
+  @Nullable
+  protected Lexer findLayerLexer(IElementType baseTokenType) {
+    return myStartTokenToLayerLexer.get(baseTokenType);
   }
 
   @Override
@@ -137,24 +143,21 @@ public class LayeredLexer extends DelegateLexer {
       }
       if (layerTokenType == null) {
         int tokenEnd = myCurrentLayerLexer.getTokenEnd();
-        if (!mySelfStoppingLexers.contains(myCurrentLayerLexer)) {
-          myCurrentLayerLexer = null;
+        boolean selfStopping = mySelfStoppingLexers.contains(myCurrentLayerLexer);
+        myCurrentLayerLexer = null;
+        if (!selfStopping) {
           super.advance();
-          activateLayerIfNecessary();
-        } else {
-          myCurrentLayerLexer = null;
-
           // In case when we have non-covered gap we should return left part as next token
-          if (tokenEnd != myBaseTokenEnd) {
-            myState = IN_LAYER_LEXER_FINISHED_STATE;
-            myLayerLeftPart = tokenEnd;
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("We've got not covered gap from layered lexer: " + activeLayerLexer +
-                        "\n on token: " + getBufferSequence().subSequence(myLayerLeftPart, myBaseTokenEnd));
-            }
-            return;
+        } else if (tokenEnd != myBaseTokenEnd) {
+          myState = IN_LAYER_LEXER_FINISHED_STATE;
+          myLayerLeftPart = tokenEnd;
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("We've got not covered gap from layered lexer: " + activeLayerLexer +
+                      "\n on token: " + getBufferSequence().subSequence(myLayerLeftPart, myBaseTokenEnd));
           }
+          return;
         }
+        activateLayerIfNecessary();
       }
     } else {
       super.advance();

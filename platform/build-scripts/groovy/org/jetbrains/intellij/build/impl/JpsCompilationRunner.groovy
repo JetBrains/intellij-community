@@ -73,11 +73,11 @@ class JpsCompilationRunner {
 
   void buildModules(List<JpsModule> modules) {
     Set<String> names = new LinkedHashSet<>()
-    context.messages.info("Collecting dependencies for ${modules.size()} modules")
+    context.messages.debug("Collecting dependencies for ${modules.size()} modules")
     for (JpsModule module : modules) {
       for (String dependency : getModuleDependencies(module, false)) {
         if (names.add(dependency)) {
-          context.messages.info(" adding $dependency required for $module.name")
+          context.messages.debug(" adding $dependency required for $module.name")
         }
       }
     }
@@ -100,9 +100,16 @@ class JpsCompilationRunner {
     runBuild(Collections.<String> emptySet(), true, [], false, false)
   }
 
+  /**
+   * @deprecated use {@link #buildArtifacts(java.util.Collection, boolean)} instead
+   */
   void buildArtifacts(Collection<String> artifactNames) {
+    buildArtifacts(artifactNames, true)
+  }
+
+  void buildArtifacts(Collection<String> artifactNames, boolean buildIncludedModules) {
     Set<JpsArtifact> artifacts = getArtifactsWithIncluded(artifactNames)
-    Set<String> modules = getModulesIncludedInArtifacts(artifacts)
+    Set<String> modules = buildIncludedModules ? getModulesIncludedInArtifacts(artifacts) : [] as Set<String>
     runBuild(modules, false, artifacts.collect {it.name}, false, false)
   }
 

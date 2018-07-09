@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import com.siyeh.ig.junit.AbstractTestClassNamingConvention
@@ -181,6 +167,13 @@ class A {
 
   void testBuiltInTypeInstantiation() { doTest() }
 
+  void 'test void array type'() {
+    testHighlighting '''\
+<error descr="Illegal type: 'void'">void</error>[] foo() {}
+<error descr="Illegal type: 'void'">void</error>[] bar = foo()
+'''
+  }
+
   void testSOEInFieldDeclarations() { doTest() }
 
   void testWrongAnnotation() { doTest() }
@@ -295,8 +288,6 @@ class Bar {{
   void testIncorrectEscaping() { doTest() }
 
   void testExtendingOwnInner() { doTest() }
-
-  void testRegexInCommandArg() { doTest() }
 
   void testJUnitConvention() {
     myFixture.addClass("package junit.framework; public class TestCase {}")
@@ -559,6 +550,14 @@ catch (NullPointerException | IOException e){}
 catch (ClassNotFoundException | <warning descr="Exception 'java.lang.NullPointerException' has already been caught">NullPointerException</warning> e){}
 ''')
   }
+
+  void testTryWithoutCatchFinally() { doTest() }
+
+  void testVariableDeclarationTypeParameters() { doTest() }
+
+  void testAnnotationFieldWithoutType() { doTest() }
+
+  void testVariableDeclarationDuplicateModifiers() { doTest() }
 
   void testCompileStatic() {
     myFixture.addClass('''\
@@ -1108,8 +1107,8 @@ class Foo {
 }
 
 def foo = new Foo()
-<error descr="Ambiguous code block">{
-}</error>
+{
+}
 
 def bar = (new Foo()
 {
@@ -1117,8 +1116,8 @@ def bar = (new Foo()
 
 def baz
 baz = new Foo()
-<error descr="Ambiguous code block">{
-}</error>
+{
+}
 
 baz = (new Foo()
 {
@@ -1129,16 +1128,16 @@ baz = (new Foo()
 })
 
 new Foo()
-<error descr="Ambiguous code block">{
-}</error>
+{
+}
 
 (new Foo()
 {
 })
 
 new Foo()
-<error descr="Ambiguous code block">{
-}</error> + 666
+{
+} + 666
 
 (new Foo()
 {
@@ -1153,8 +1152,8 @@ new Foo()
 } + 112)
 
 new Foo()
-<error descr="Ambiguous code block">{
-}</error>.getI()
+{
+}.getI()
 
 (new Foo()
 {
@@ -1166,8 +1165,8 @@ new Foo()
 
 def mm() {
     new Foo()
-    <error descr="Ambiguous code block">{
-    }</error>
+    {
+    }
 }
 
 def mm2() {
@@ -1193,8 +1192,8 @@ def mm4() {
     def foo() {
         // still error
         new Foo()
-        <error descr="Ambiguous code block">{
-        }</error>
+        {
+        }
     }
 })
 '''
@@ -1249,9 +1248,9 @@ foo(new Foo() {
     def a() {
         // still error
         new Foo()
-        <error descr="Ambiguous code block">{
+        {
 
-        }</error>
+        }
     }
 })
 '''
@@ -2056,15 +2055,6 @@ class Target {
     private static void callMe() {}
 }
 ''')
-  }
-
-  void 'test no exception for @Field annotation without variable'() {
-    testHighlighting '''\
-import groovy.transform.Field
-
-@Field
-def (,<error descr="Identifier expected">)</error> = []
-'''
   }
 
   void 'test no SOE in index property assignment with generic function'() {

@@ -18,6 +18,7 @@ package com.intellij.openapi.externalSystem.service.project.settings;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
+import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
 import com.intellij.compiler.options.CompilerUIConfigurable;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,6 +29,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
 import java.util.Arrays;
 import java.util.Map;
@@ -50,6 +52,8 @@ public class CompilerConfigurationHandler implements ConfigurationHandler {
     ApplicationManager.getApplication().invokeLater(() -> {
       final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
       final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(project);
+      final JpsJavaCompilerOptions javacConfiguration = JavacConfiguration.getOptions(project, JavacConfiguration.class);
+
 
       boolean changed = false;
       String resourcePatterns = getString(configurationMap, "resourcePatterns");
@@ -113,6 +117,39 @@ public class CompilerConfigurationHandler implements ConfigurationHandler {
         changed = true;
       }
 
+      Map<String, Object> javacOptions = getMap(configurationMap, "javacOptions");
+      if (javacOptions != null) {
+        Boolean preferTargetJDKCompiler = getBoolean(javacOptions, "preferTargetJDKCompiler");
+        if (preferTargetJDKCompiler != null && javacConfiguration.PREFER_TARGET_JDK_COMPILER != preferTargetJDKCompiler) {
+          javacConfiguration.PREFER_TARGET_JDK_COMPILER = preferTargetJDKCompiler;
+          changed = true;
+        }
+
+        String javacAdditionalOptions = getString(javacOptions, "javacAdditionalOptions");
+        if (javacAdditionalOptions != null && !javacConfiguration.ADDITIONAL_OPTIONS_STRING.equals(javacAdditionalOptions)) {
+          javacConfiguration.ADDITIONAL_OPTIONS_STRING = javacAdditionalOptions;
+          changed = true;
+        }
+
+        Boolean generateDebugInfo = getBoolean(javacOptions, "generateDebugInfo");
+        if (generateDebugInfo != null && javacConfiguration.DEBUGGING_INFO != generateDebugInfo) {
+          javacConfiguration.DEBUGGING_INFO = generateDebugInfo;
+          changed = true;
+        }
+
+        Boolean generateDeprecationWarnings = getBoolean(javacOptions, "generateDeprecationWarnings");
+        if (generateDeprecationWarnings != null && javacConfiguration.DEPRECATION != generateDeprecationWarnings) {
+          javacConfiguration.DEPRECATION = generateDeprecationWarnings;
+          changed = true;
+        }
+
+        Boolean generateNoWarnings = getBoolean(javacOptions, "generateNoWarnings");
+        if (generateNoWarnings != null && javacConfiguration.GENERATE_NO_WARNINGS != generateNoWarnings) {
+          javacConfiguration.GENERATE_NO_WARNINGS = generateNoWarnings;
+          changed = true;
+        }
+      }
+
       if (changed) {
         BuildManager.getInstance().clearState(project);
       }
@@ -125,6 +162,7 @@ public class CompilerConfigurationHandler implements ConfigurationHandler {
     return o instanceof Boolean ? (Boolean)o : null;
   }
 
+  @Nullable
   private static Number getNumber(Map map, String key) {
     Object o = map.get(key);
     return o instanceof Number ? (Number)o : null;
@@ -134,5 +172,11 @@ public class CompilerConfigurationHandler implements ConfigurationHandler {
   private static String getString(Map map, String key) {
     Object o = map.get(key);
     return o instanceof String ? (String)o : null;
+  }
+
+  @Nullable
+  private static Map<String, Object> getMap(@NotNull Map map, String key) {
+    Object o = map.get(key);
+    return o instanceof Map ? (Map)o : null;
   }
 }

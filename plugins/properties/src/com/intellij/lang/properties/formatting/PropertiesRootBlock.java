@@ -42,7 +42,7 @@ import java.util.List;
 public class PropertiesRootBlock extends AbstractBlock {
 
   private final CodeStyleSettings mySettings;
-  private Alignment mySeparatorAlignment;
+  private final Alignment mySeparatorAlignment;
 
   protected PropertiesRootBlock(@NotNull ASTNode node,
                                 CodeStyleSettings settings) {

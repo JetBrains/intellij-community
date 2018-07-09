@@ -24,7 +24,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 6/24/12
  */
 public abstract class AntDomClasspathComponent extends AntDomNamedElement implements AntDomClasspathElement {
 

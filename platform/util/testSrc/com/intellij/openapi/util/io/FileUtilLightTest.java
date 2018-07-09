@@ -231,4 +231,24 @@ public class FileUtilLightTest {
     assertFalse(FileUtil.containsWindowsShortName("C:/dir/file.~1"));
     assertFalse(FileUtil.containsWindowsShortName("C:/dir/file.ext~1"));
   }
+
+  @Test
+  public void windowsAbsolutePath() {
+    assertTrue(FileUtil.isWindowsAbsolutePath("C:\\Users"));
+    assertTrue(FileUtil.isWindowsAbsolutePath("C:/Users"));
+    assertTrue(FileUtil.isWindowsAbsolutePath("X:/Users"));
+    assertTrue(FileUtil.isWindowsAbsolutePath("X:/"));
+    assertTrue(FileUtil.isWindowsAbsolutePath("X:"));
+    assertTrue(FileUtil.isWindowsAbsolutePath("X:\\"));
+    assertTrue(FileUtil.isWindowsAbsolutePath("X:\\Users\\user.data.txt"));
+
+    assertFalse(FileUtil.isWindowsAbsolutePath(""));
+    assertFalse(FileUtil.isWindowsAbsolutePath("/"));
+    assertFalse(FileUtil.isWindowsAbsolutePath("/home"));
+    assertFalse(FileUtil.isWindowsAbsolutePath("C"));
+    assertFalse(FileUtil.isWindowsAbsolutePath("1"));
+    assertFalse(FileUtil.isWindowsAbsolutePath("1:"));
+    assertFalse(FileUtil.isWindowsAbsolutePath("C:C"));
+    assertFalse(FileUtil.isWindowsAbsolutePath("C?"));
+  }
 }

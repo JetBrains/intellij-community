@@ -2,7 +2,6 @@ package bug.test;
 
 /**
  * Created by IntelliJ IDEA.
- * Date: Dec 13, 2007
  * Time: 4:14:49 PM
  */
 public class BaseClass {

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
@@ -118,15 +117,13 @@ public class MavenArtifactDownloader {
 
     THashSet<String> dependencyTypesFromSettings = new THashSet<>();
 
-    AccessToken accessToken = ReadAction.start();
-    try {
-      if (myProject.isDisposed()) return result;
+    if (!ReadAction.compute(()->{
+
+      if (myProject.isDisposed()) return false;
 
       dependencyTypesFromSettings.addAll(MavenProjectsManager.getInstance(myProject).getImportingSettings().getDependencyTypesAsSet());
-    }
-    finally {
-      accessToken.finish();
-    }
+      return true;
+    })) return result;
 
     for (MavenProject eachProject : myMavenProjects) {
       List<MavenRemoteRepository> repositories = eachProject.getRemoteRepositories();

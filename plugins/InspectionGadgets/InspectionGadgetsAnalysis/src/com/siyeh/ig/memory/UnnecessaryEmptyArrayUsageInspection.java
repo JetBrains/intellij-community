@@ -22,6 +22,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.CollectionUtils;
 import com.siyeh.ig.psiutils.ConstructionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -65,9 +66,9 @@ public class UnnecessaryEmptyArrayUsageInspection extends BaseInspection {
                 PsiModifierList modifiers = field.getModifierList();
                 if (modifiers != null
                     && !typeClass.isEquivalentTo(PsiTreeUtil.findFirstParent(expression, (e) -> e instanceof PsiClass))
-                    && modifiers.hasModifierProperty(PsiModifier.FINAL)
                     && modifiers.hasModifierProperty(PsiModifier.PUBLIC)
-                    && ConstructionUtils.isEmptyArrayInitializer(field.getInitializer())) {
+                    && field.getType().equals(type)
+                    && CollectionUtils.isConstantEmptyArray(field)) {
                   registerError(expression, typeClass, field);
                   return;
                 }

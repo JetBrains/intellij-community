@@ -312,6 +312,7 @@ public class UnscrambleDialog extends DialogWrapper {
     StringBuilder builder = new StringBuilder(text.length());
 
     text = text.replaceAll("(\\S[ \\t\\x0B\\f\\r]+)(at\\s+)", "$1\n$2");
+    text = text.replaceAll("(\\\\n|\\\\r|\\\\t)+(at\\s+)", "\n$2");
     String[] lines = text.split("\n");
 
     boolean first = true;
@@ -457,6 +458,7 @@ public class UnscrambleDialog extends DialogWrapper {
 
   @Nullable
   private static String getExceptionAbbreviation(String line) {
+    line = StringUtil.trimStart(line.trim(), "Caused by: ");
     int lastDelimiter = 0;
     for (int j = 0; j < line.length(); j++) {
       char c = line.charAt(j);

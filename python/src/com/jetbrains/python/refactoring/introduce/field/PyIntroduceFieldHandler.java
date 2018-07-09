@@ -157,10 +157,9 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   @Override
   protected PsiElement addDeclaration(@NotNull PsiElement expression, @NotNull PsiElement declaration, @NotNull IntroduceOperation operation) {
     final PsiElement expr = expression instanceof PyClass ? expression : expression.getParent();    
-    PsiElement anchor = PyUtil.getContainingClassOrSelf(expr);
-    assert anchor instanceof PyClass;
-    final PyClass clazz = (PyClass)anchor;
-    final Project project = anchor.getProject();
+    PyClass clazz = PyUtil.getContainingClassOrSelf(expr);
+    assert clazz != null;
+    final Project project = clazz.getProject();
     if (operation.getInitPlace() == InitPlace.CONSTRUCTOR && !inConstructor(expression)) {
       return AddFieldQuickFix.addFieldToInit(project, clazz, "", new AddFieldDeclaration(declaration));
     } else if (operation.getInitPlace() == InitPlace.SET_UP) {
@@ -173,7 +172,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     final PsiElement expr = expression instanceof PyClass ? expression : expression.getParent();
     PyClass clazz = PyUtil.getContainingClassOrSelf(expr);
     final ScopeOwner current = ScopeUtil.getScopeOwner(expression);
-    if (clazz != null && current != null && current instanceof PyFunction) {
+    if (clazz != null && current instanceof PyFunction) {
       PyFunction init = clazz.findMethodByName(PyNames.INIT, false, null);
       if (current == init) {
         return true;
@@ -190,7 +189,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     }
     final PyFunctionBuilder builder = new PyFunctionBuilder(PythonUnitTestUtil.TESTCASE_SETUP_NAME, clazz);
     builder.parameter(PyNames.CANONICAL_SELF);
-    PyFunction setUp = builder.buildFunction(clazz.getProject(), LanguageLevel.getDefault());
+    PyFunction setUp = builder.buildFunction();
     final PyStatementList statements = clazz.getStatementList();
     final PsiElement anchor = statements.getFirstChild();
     setUp = (PyFunction)statements.addBefore(setUp, anchor);
@@ -335,7 +334,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
                                     IntroduceOperation operation,
                                     List<PsiElement> occurrences) {
       super(target, operation.getEditor(), operation.getProject(), "Introduce Field",
-            occurrences.toArray(new PsiElement[occurrences.size()]), null);
+            occurrences.toArray(PsiElement.EMPTY_ARRAY), null);
       myTarget = target;
       myOperation = operation;
       if (operation.getAvailableInitPlaces().size() > 1) {

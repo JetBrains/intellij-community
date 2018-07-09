@@ -76,7 +76,7 @@ public final class NavBarIdeView implements IdeView {
       })
       .filter(o -> o.isValid())
       .toList();
-    return dirs.isEmpty() ? PsiDirectory.EMPTY_ARRAY : dirs.toArray(new PsiDirectory[dirs.size()]);
+    return dirs.isEmpty() ? PsiDirectory.EMPTY_ARRAY : dirs.toArray(PsiDirectory.EMPTY_ARRAY);
   }
 
   @Override

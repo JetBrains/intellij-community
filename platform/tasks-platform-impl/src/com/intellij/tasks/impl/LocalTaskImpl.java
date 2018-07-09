@@ -213,7 +213,7 @@ public class LocalTaskImpl extends LocalTask {
 
   @NotNull
   @Property(surroundWithTag = false)
-  @AbstractCollection(surroundWithTag = false, elementTag="changelist")
+  @XCollection(elementName="changelist")
   public List<ChangeListInfo> getChangeLists() {
     return myChangeLists;
   }
@@ -239,7 +239,7 @@ public class LocalTaskImpl extends LocalTask {
   @NotNull
   @Override
   @Property(surroundWithTag = false)
-  @AbstractCollection(surroundWithTag = false, elementTag="branch")
+  @XCollection(elementName="branch")
   public List<BranchInfo> getBranches() {
     return myBranches;
   }
@@ -351,7 +351,7 @@ public class LocalTaskImpl extends LocalTask {
 
   @NotNull
   @Property(surroundWithTag = false)
-  @AbstractCollection(surroundWithTag = false, elementTag="workItem")
+  @XCollection(elementName = "workItem")
   @Override
   public List<WorkItem> getWorkItems() {
     return myWorkItems;

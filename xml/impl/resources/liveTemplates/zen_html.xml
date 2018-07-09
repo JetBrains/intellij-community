@@ -125,6 +125,14 @@
       <option name="JSP" value="true"/>
     </context>
   </template>
+  <template description="&lt;a href=&quot;tel:+...&quot;&gt;...&lt;/a&gt;" name="a:tel" toReformat="true" toShortenFQNames="true" value="&lt;a href=&quot;tel:+$VAR0$&quot;&gt;$END$&lt;/a&gt;">
+    <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
+    <context>
+      <option name="HTML_TEXT" value="true"/>
+      <option name="JSX_HTML" value="true"/>
+      <option name="JSP" value="true"/>
+    </context>
+  </template>
   <template description="&lt;abbr title=&quot;...&quot;&gt;...&lt;/abbr&gt;" name="abbr" toReformat="true" toShortenFQNames="true" value="&lt;abbr title=&quot;$VAR0$&quot;&gt;$END$&lt;/abbr&gt;">
     <variable alwaysStopAt="true" defaultValue="&quot;&quot;" expression="" name="VAR0"/>
     <context>

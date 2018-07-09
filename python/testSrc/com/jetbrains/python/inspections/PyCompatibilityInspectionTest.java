@@ -59,7 +59,7 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
   }
 
   public void testRaiseFrom() {
-    doTest(LanguageLevel.PYTHON32);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   public void testReprExpression() {
@@ -70,10 +70,6 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
     doTest(LanguageLevel.PYTHON27);
   }
 
-  public void testPyClass() {
-    doTest();
-  }
-
   public void testPrintStatement() {
     doTest();
   }
@@ -82,27 +78,15 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  public void testAssignmentStatement() {
-    doTest();
-  }
-
-  public void testTryExceptStatement() {
-    doTest();
-  }
-
   public void testImportElement() {
     doTest();
   }
 
   public void testCallExpression() {
-    doTest(LanguageLevel.PYTHON30);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   public void testBasestring() {
-    doTest();
-  }
-
-  public void testConditionalExpression() {
     doTest();
   }
 
@@ -112,17 +96,12 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
 
   // PY-7763
   public void testEllipsisAsStatementPy2() {
-    doTest(LanguageLevel.PYTHON33);
+    doTest(LanguageLevel.PYTHON34);
   }
 
   // PY-8606
   public void testEllipsisInSubscriptionPy2() {
-    doTest(LanguageLevel.PYTHON33);
-  }
-
-  // PY-11047
-  public void testRelativeImport() {
-    doTest();
+    doTest(LanguageLevel.PYTHON34);
   }
 
   // PY-15390
@@ -185,11 +164,6 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-16098
-  public void testWarningAboutAsyncAndAwaitInPy35() {
-    doTest(LanguageLevel.PYTHON35);
-  }
-
-  // PY-16098
   public void testWarningAboutAsyncAndAwaitInPy36() {
     doTest(LanguageLevel.PYTHON36);
   }
@@ -220,7 +194,12 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
 
   // PY-26510
   public void testTryFinallyEmptyRaisePy3() {
-    doTest(LanguageLevel.PYTHON30);
+    doTest(LanguageLevel.PYTHON34);
+  }
+
+  // PY-15360
+  public void testTrailingCommaAfterStarArgs() {
+    doTest(LanguageLevel.PYTHON34);
   }
 
   private void doTest(@NotNull LanguageLevel level) {

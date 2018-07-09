@@ -27,6 +27,9 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
@@ -113,7 +116,9 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   public PsiExpression[] getArrayDimensions() {
     PsiExpression[] expressions = getChildrenAsPsiElements(ElementType.ARRAY_DIMENSION_BIT_SET, PsiExpression.ARRAY_FACTORY);
     PsiExpression qualifier = getQualifier();
-    if (qualifier == null) {
+    if (qualifier == null ||
+        //invalid qualifier
+        !ElementType.ARRAY_DIMENSION_BIT_SET.contains(qualifier.getNode().getElementType())) {
       return expressions;
     }
     else {
@@ -135,7 +140,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   }
 
   public PsiPolyVariantCachingReference getConstructorFakeReference() {
-    return new PsiPolyVariantCachingReference() {
+    return CachedValuesManager.getCachedValue(this, () -> new CachedValueProvider.Result<>(new PsiPolyVariantCachingReference() {
       @Override
       @NotNull
       public JavaResolveResult[] resolveInner(boolean incompleteCode, @NotNull PsiFile containingFile) {
@@ -144,10 +149,11 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
           ASTNode argumentList = PsiImplUtil.skipWhitespaceAndComments(classRef.getTreeNext());
           if (argumentList != null && argumentList.getElementType() == JavaElementType.EXPRESSION_LIST) {
             final JavaPsiFacade facade = JavaPsiFacade.getInstance(containingFile.getProject());
-            PsiType aClass = facade.getElementFactory().createType((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(classRef));
-            return facade.getResolveHelper().multiResolveConstructor((PsiClassType)aClass,
-                                                                      (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
-                                                                      PsiNewExpressionImpl.this);
+            PsiClassType
+              aClass = facade.getElementFactory().createType((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(classRef));
+            return facade.getResolveHelper().multiResolveConstructor(aClass,
+                                                                     (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
+                                                                     PsiNewExpressionImpl.this);
           }
         }
         else{
@@ -155,21 +161,23 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
           if (anonymousClassElement != null) {
             final JavaPsiFacade facade = JavaPsiFacade.getInstance(containingFile.getProject());
             final PsiAnonymousClass anonymousClass = (PsiAnonymousClass)SourceTreeToPsiMap.treeElementToPsi(anonymousClassElement);
-            PsiType aClass = anonymousClass.getBaseClassType();
+            PsiClassType aClass = anonymousClass.getBaseClassType();
             ASTNode argumentList = anonymousClassElement.findChildByType(JavaElementType.EXPRESSION_LIST);
-            return facade.getResolveHelper().multiResolveConstructor((PsiClassType)aClass,
-                                                                      (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
-                                                                      anonymousClass);
+            return facade.getResolveHelper().multiResolveConstructor(aClass,
+                                                                     (PsiExpressionList)SourceTreeToPsiMap.treeElementToPsi(argumentList),
+                                                                     anonymousClass);
           }
         }
         return JavaResolveResult.EMPTY_ARRAY;
       }
 
+      @NotNull
       @Override
       public PsiElement getElement() {
         return PsiNewExpressionImpl.this;
       }
 
+      @NotNull
       @Override
       public TextRange getRangeInElement() {
         return null;
@@ -206,7 +214,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
       public boolean equals(Object obj) {
         return obj instanceof PsiPolyVariantCachingReference && getElement() == ((PsiReference)obj).getElement();
       }
-    };
+    }, PsiModificationTracker.MODIFICATION_COUNT));
   }
 
   @Override
@@ -327,7 +335,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JavaElementType.REFERENCE_PARAMETER_LIST) {

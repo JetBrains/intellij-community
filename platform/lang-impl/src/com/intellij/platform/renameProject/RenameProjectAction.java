@@ -16,7 +16,6 @@ import com.intellij.util.containers.ContainerUtil;
 
 /**
  * @author lene
- *         Date: 03.10.11
  */
 public class RenameProjectAction extends DumbAwareAction {
 

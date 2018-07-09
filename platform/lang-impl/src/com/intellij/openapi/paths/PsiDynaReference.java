@@ -64,6 +64,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
     if (!reference.isSoft()) mySoft = false;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
 
@@ -173,7 +174,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
       }
     }
 
-    return result.toArray(new ResolveResult[result.size()]);
+    return result.toArray(ResolveResult.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -216,7 +217,7 @@ public class PsiDynaReference<T extends PsiElement> extends PsiReferenceBase<T>
         ContainerUtil.addAll(list, ((LocalQuickFixProvider)ref).getQuickFixes());
       }
     }
-    return list.toArray(new LocalQuickFix[list.size()]);
+    return list.toArray(LocalQuickFix.EMPTY_ARRAY);
   }
 
   public String toString() {

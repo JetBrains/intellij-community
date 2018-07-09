@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -42,11 +28,19 @@ public class DefaultLanguageHighlighterColors {
   public static final TextAttributesKey LABEL = TextAttributesKey.createTextAttributesKey("DEFAULT_LABEL", IDENTIFIER);
   public static final TextAttributesKey CONSTANT = TextAttributesKey.createTextAttributesKey("DEFAULT_CONSTANT", IDENTIFIER);
   public static final TextAttributesKey LOCAL_VARIABLE = TextAttributesKey.createTextAttributesKey("DEFAULT_LOCAL_VARIABLE", IDENTIFIER);
+  /**
+   * @since 2018.2
+   */
+  public static final TextAttributesKey REASSIGNED_LOCAL_VARIABLE = TextAttributesKey.createTextAttributesKey("DEFAULT_REASSIGNED_LOCAL_VARIABLE", LOCAL_VARIABLE);
   public static final TextAttributesKey GLOBAL_VARIABLE = TextAttributesKey.createTextAttributesKey("DEFAULT_GLOBAL_VARIABLE", IDENTIFIER);
 
   public static final TextAttributesKey FUNCTION_DECLARATION = TextAttributesKey.createTextAttributesKey("DEFAULT_FUNCTION_DECLARATION", IDENTIFIER);
   public static final TextAttributesKey FUNCTION_CALL = TextAttributesKey.createTextAttributesKey("DEFAULT_FUNCTION_CALL", IDENTIFIER);
-  public static final TextAttributesKey PARAMETER = TextAttributesKey.createTextAttributesKey("DEFAULT_PARAMETER");
+  public static final TextAttributesKey PARAMETER = TextAttributesKey.createTextAttributesKey("DEFAULT_PARAMETER", IDENTIFIER);
+  /**
+   * @since 2018.2
+   */
+  public static final TextAttributesKey REASSIGNED_PARAMETER = TextAttributesKey.createTextAttributesKey("DEFAULT_REASSIGNED_PARAMETER", PARAMETER);
   public static final TextAttributesKey CLASS_NAME = TextAttributesKey.createTextAttributesKey("DEFAULT_CLASS_NAME", IDENTIFIER);
   public static final TextAttributesKey INTERFACE_NAME = TextAttributesKey.createTextAttributesKey("DEFAULT_INTERFACE_NAME", IDENTIFIER);
   public static final TextAttributesKey CLASS_REFERENCE = TextAttributesKey.createTextAttributesKey("DEFAULT_CLASS_REFERENCE", IDENTIFIER);
@@ -70,4 +64,5 @@ public class DefaultLanguageHighlighterColors {
   public static final TextAttributesKey MARKUP_ENTITY = TextAttributesKey.createTextAttributesKey("DEFAULT_ENTITY", IDENTIFIER);
   public static final TextAttributesKey INLINE_PARAMETER_HINT = TextAttributesKey.createTextAttributesKey("INLINE_PARAMETER_HINT");
   public static final TextAttributesKey INLINE_PARAMETER_HINT_HIGHLIGHTED = TextAttributesKey.createTextAttributesKey("INLINE_PARAMETER_HINT_HIGHLIGHTED");
+  public static final TextAttributesKey INLINE_PARAMETER_HINT_CURRENT = TextAttributesKey.createTextAttributesKey("INLINE_PARAMETER_HINT_CURRENT");
 }

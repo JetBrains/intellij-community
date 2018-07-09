@@ -47,7 +47,8 @@ public class CopyElementAction extends AnAction {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiElement[] elements;
 
-    PsiDirectory defaultTargetDirectory;
+    PsiElement targetPsiElement = LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
+    PsiDirectory defaultTargetDirectory = targetPsiElement instanceof PsiDirectory ? (PsiDirectory)targetPsiElement : null;
     if (editor != null) {
       PsiElement aElement = getTargetElement(editor, project);
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -56,10 +57,8 @@ public class CopyElementAction extends AnAction {
       if (aElement == null || !CopyHandler.canCopy(elements)) {
         elements = new PsiElement[]{file};
       }
-      defaultTargetDirectory = file.getContainingDirectory();
-    } else {
-      PsiElement element = LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
-      defaultTargetDirectory = element instanceof PsiDirectory ? (PsiDirectory)element : null;
+    }
+    else {
       elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     }
     doCopy(elements, defaultTargetDirectory);

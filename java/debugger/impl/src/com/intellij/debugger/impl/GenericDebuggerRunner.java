@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl;
 
 import com.intellij.debugger.DebugEnvironment;
@@ -84,7 +70,7 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
       return attachVirtualMachine(state, environment, connection, isPollConnection);
     }
     if (state instanceof PatchedRunnableState) {
-      final RemoteConnection connection = doPatch(new JavaParameters(), environment.getRunnerSettings());
+      final RemoteConnection connection = doPatch(new JavaParameters(), environment.getRunnerSettings(), true);
       return attachVirtualMachine(state, environment, connection, true);
     }
     if (state instanceof RemoteState) {
@@ -151,16 +137,18 @@ public class GenericDebuggerRunner extends JavaPatchableProgramRunner<GenericDeb
 
   @Override
   public void patch(JavaParameters javaParameters, RunnerSettings settings, RunProfile runProfile, final boolean beforeExecution) throws ExecutionException {
-    doPatch(javaParameters, settings);
+    doPatch(javaParameters, settings, beforeExecution);
     runCustomPatchers(javaParameters, Executor.EXECUTOR_EXTENSION_NAME.findExtension(DefaultDebugExecutor.class), runProfile);
   }
 
-  private static RemoteConnection doPatch(final JavaParameters javaParameters, final RunnerSettings settings) throws ExecutionException {
+  private static RemoteConnection doPatch(final JavaParameters javaParameters, final RunnerSettings settings, boolean beforeExecution)
+    throws ExecutionException {
     final GenericDebuggerRunnerSettings debuggerSettings = ((GenericDebuggerRunnerSettings)settings);
     if (StringUtil.isEmpty(debuggerSettings.getDebugPort())) {
       debuggerSettings.setDebugPort(DebuggerUtils.getInstance().findAvailableDebugAddress(debuggerSettings.getTransport() == DebuggerSettings.SOCKET_TRANSPORT));
     }
-    return DebuggerManagerImpl.createDebugParameters(javaParameters, debuggerSettings, false);
+    return DebuggerManagerImpl.createDebugParameters(javaParameters, debuggerSettings.LOCAL, debuggerSettings.getTransport(),
+                                                     debuggerSettings.getDebugPort(), false, beforeExecution);
   }
 
   @Override

@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.psi.AccessDirection;
 import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.PyQualifiedNameOwner;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
@@ -34,6 +35,18 @@ import java.util.Set;
  * @author yole
  */
 public interface PyType {
+
+  /**
+   * Returns the declaration element that can be used to refer to this type inside type hints. Normally, it's a symbol
+   * that can be imported to mentioned the type in type annotations and comments anywhere else.
+   * <p>
+   * Typical examples are target expressions in LHS of assignments in {@code TypeVar} and named tuple definitions, as well as
+   * class definitions themselves for plain class and generic types.
+   */
+  @Nullable
+  default PyQualifiedNameOwner getDeclarationElement() {
+    return null;
+  }
 
   /**
    * Resolves an attribute of type.

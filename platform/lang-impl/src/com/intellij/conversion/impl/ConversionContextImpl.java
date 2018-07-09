@@ -157,7 +157,7 @@ public class ConversionContextImpl implements ConversionContext {
       filePath = macros.substitute(filePath, true);
       files.add(new File(FileUtil.toSystemDependentName(filePath)));
     }
-    return files.toArray(new File[files.size()]);
+    return files.toArray(new File[0]);
   }
 
   @NotNull

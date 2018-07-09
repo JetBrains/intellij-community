@@ -147,7 +147,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
       }
     });
 
-    return items.toArray(new ProcessingItem[items.size()]);
+    return items.toArray(ProcessingItem.EMPTY_ARRAY);
   }
 
   public ProcessingItem[] process(final CompileContext context, final ProcessingItem[] items) {
@@ -216,7 +216,7 @@ public final class Form2SourceCompiler implements SourceInstrumentingCompiler{
     }
 
     CompilerUtil.refreshIOFiles(filesToRefresh);
-    return compiledItems.toArray(new ProcessingItem[compiledItems.size()]);
+    return compiledItems.toArray(ProcessingItem.EMPTY_ARRAY);
   }
 
   private static void addError(final CompileContext context, final FormErrorInfo e, final VirtualFile formFile) {

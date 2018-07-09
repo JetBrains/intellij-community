@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
 import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
@@ -70,7 +71,7 @@ public class JavaFxRedundantPropertyValueInspection extends XmlSuppressableInspe
         if (isEqualValue(tagClass, attributeValue, defaultValue, descriptor.getDeclaration())) {
           holder.registerProblem(attribute, "Attribute is redundant because it contains default value",
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                 new RemoveAttributeIntentionFix(attributeName, attribute));
+                                 new RemoveAttributeIntentionFix(attributeName));
         }
       }
 

@@ -30,6 +30,7 @@ import java.util.regex.Pattern;
  */
 public class ThreadDumpParser {
   private static final Pattern ourThreadStartPattern = Pattern.compile("^\\s*\"(.+)\".+(prio=\\d+ (?:os_prio=[^\\s]+ )?tid=[^\\s]+ nid=[^\\s]+|[Ii][Dd]=\\d+) ([^\\[]+)");
+  private static final Pattern ourForcedThreadStartPattern = Pattern.compile("^\\s*Thread (\\d+): \\(state = (.+)\\)");
   private static final Pattern ourYourkitThreadStartPattern = Pattern.compile("(?:\\s)*(.+) \\[([A-Z_, ]*)]");
   private static final Pattern ourYourkitThreadStartPattern2 = Pattern.compile("(.+) State: (.+) CPU usage on sample: .+");
   private static final Pattern ourThreadStatePattern = Pattern.compile("java\\.lang\\.Thread\\.State: (.+) \\((.+)\\)");
@@ -198,7 +199,12 @@ public class ThreadDumpParser {
       }
       return state;
     }
-    
+
+    m = ourForcedThreadStartPattern.matcher(line);
+    if (m.matches()) {
+      return new ThreadState(m.group(1), m.group(2));
+    }
+
     boolean daemon = line.contains(" [DAEMON]");
     if (daemon) {
       line = StringUtil.replace(line, " [DAEMON]", "");

@@ -284,12 +284,12 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     final MethodCandidatesProcessor
       processor = new MethodCandidatesProcessor(argumentList, argumentList.getContainingFile(), conflictResolvers, candidates) {
       @Override
-      protected boolean isAccepted(PsiMethod candidate) {
+      protected boolean isAccepted(@NotNull PsiMethod candidate) {
         return true;
       }
 
       @Override
-      protected PsiClass getContainingClass(PsiMethod method) {
+      protected PsiClass getContainingClass(@NotNull PsiMethod method) {
         return psiClass;
       }
 
@@ -428,7 +428,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     if (listOwner != null) {
       Collections.addAll(params, listOwner.getTypeParameters());
     }
-    return params.toArray(new PsiTypeParameter[params.size()]);
+    return params.toArray(PsiTypeParameter.EMPTY_ARRAY);
   }
 
 
@@ -471,7 +471,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
   public static boolean hasDefaultConstructor(@NotNull final PsiClass psiClass) {
     final PsiMethod[] constructors = psiClass.getConstructors();
     for (PsiMethod method : constructors) {
-      if (method.getParameterList().getParametersCount() == 0) return true;
+      if (method.getParameterList().isEmpty()) return true;
     }
     return constructors.length == 0;
   }

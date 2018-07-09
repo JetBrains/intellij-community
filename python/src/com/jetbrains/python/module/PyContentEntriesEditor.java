@@ -50,7 +50,7 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
   private final Module myModule;
   private Disposable myFilePointersDisposable;
   private MyContentEntryEditor myContentEntryEditor;
-  private FacetErrorPanel myWarningPanel;
+  private final FacetErrorPanel myWarningPanel;
 
   public PyContentEntriesEditor(Module module, ModuleConfigurationState moduleConfigurationState,
                                 boolean withBorders, JpsModuleSourceRootType<?>... rootTypes) {
@@ -73,7 +73,7 @@ public class PyContentEntriesEditor extends CommonContentEntriesEditor {
   @Override
   protected List<ContentEntry> addContentEntries(VirtualFile[] files) {
     List<ContentEntry> entries = super.addContentEntries(files);
-    addContentEntryPanels(entries.toArray(new ContentEntry[entries.size()]));
+    addContentEntryPanels(entries.toArray(new ContentEntry[0]));
     return entries;
   }
 

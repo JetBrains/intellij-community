@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.ui.frame;
 
+import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ObjectUtils;
@@ -34,13 +35,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.openapi.vcs.history.VcsHistoryUtil.getCommitDetailsFont;
 import static com.intellij.vcs.log.ui.frame.CommitPanel.getCommitDetailsBackground;
 
 public class ReferencesPanel extends JPanel {
   public static final int H_GAP = 4;
   protected static final int V_GAP = 0;
-  public static final int PADDING = 3;
 
   private final int myRefsLimit;
   @NotNull private List<VcsRef> myReferences;
@@ -59,6 +58,8 @@ public class ReferencesPanel extends JPanel {
   }
 
   public void setReferences(@NotNull List<VcsRef> references) {
+    if (myReferences.equals(references)) return;
+    
     myReferences = references;
 
     List<VcsRef> visibleReferences = (myRefsLimit > 0) ? myReferences.subList(0, Math.min(myReferences.size(), myRefsLimit)) : myReferences;
@@ -105,7 +106,7 @@ public class ReferencesPanel extends JPanel {
   }
 
   protected int getIconHeight() {
-    return getFontMetrics(getLabelsFont()).getHeight() + JBUI.scale(PADDING);
+    return getFontMetrics(getLabelsFont()).getHeight();
   }
 
   @NotNull
@@ -119,8 +120,8 @@ public class ReferencesPanel extends JPanel {
                             int refIndex, int height) {
     if (refIndex == 0) {
       Color color = type.getBackgroundColor();
-      return new LabelIcon(height, getBackground(),
-                           refs.size() > 1 ? new Color[]{color, color} : new Color[]{color});
+      return new LabelIcon(this, height, getBackground(),
+                           refs.size() > 1 ? ContainerUtil.newArrayList(color, color) : Collections.singletonList(color));
     }
     return null;
   }
@@ -137,12 +138,14 @@ public class ReferencesPanel extends JPanel {
     label.setFont(getLabelsFont());
     label.setIconTextGap(0);
     label.setHorizontalAlignment(SwingConstants.LEFT);
+    label.setVerticalTextPosition(SwingConstants.CENTER);
+    label.setCopyable(true);
     return label;
   }
 
   @NotNull
   protected Font getLabelsFont() {
-    return getCommitDetailsFont();
+    return FontUtil.getCommitMetadataFont();
   }
 
   @Override

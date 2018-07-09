@@ -15,9 +15,9 @@
  */
 package com.jetbrains.python.inspections.quickfix;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.actions.ConvertIndentsActionBase;
 import com.intellij.openapi.project.Project;
@@ -53,7 +53,7 @@ public class ConvertIndentsFix implements LocalQuickFix {
     PsiFile file = descriptor.getPsiElement().getContainingFile();
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document != null) {
-      int tabSize = CodeStyleFacade.getInstance(project).getIndentSize(file.getFileType());
+      int tabSize = CodeStyle.getIndentSize(file);
       TextRange allDoc = new TextRange(0, document.getTextLength());
       if (myToSpaces) {
         ConvertIndentsActionBase.convertIndentsToSpaces(document, tabSize, allDoc);

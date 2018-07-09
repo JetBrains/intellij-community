@@ -1,9 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
@@ -17,7 +18,6 @@ import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -25,7 +25,6 @@ import com.intellij.structuralsearch.impl.matcher.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.TopLevelMatchingHandler;
-import com.intellij.structuralsearch.impl.matcher.iterators.SingleNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
@@ -38,33 +37,34 @@ import com.intellij.util.SmartList;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.ref.SoftReference;
 import java.util.*;
+
+import static com.intellij.structuralsearch.impl.matcher.iterators.SingleNodeIterator.newSingleNodeIterator;
 
 /**
  * This class makes program structure tree matching:
  */
 public class Matcher {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.structuralsearch.impl.matcher.MatcherImpl");
+  static final Logger LOG = Logger.getInstance("#com.intellij.structuralsearch.impl.matcher.MatcherImpl");
 
   @SuppressWarnings("SSBasedInspection")
   private static final ThreadLocal<Set<String>> ourRecursionGuard = ThreadLocal.withInitial(() -> new HashSet<>());
 
   // project being worked on
-  private final Project project;
-  private final DumbService myDumbService;
+  final Project project;
+  final DumbService myDumbService;
 
   // context of matching
-  private final MatchContext matchContext;
+  final MatchContext matchContext;
   private boolean isTesting;
 
   // visitor to delegate the real work
   private final GlobalMatchingVisitor visitor = new GlobalMatchingVisitor();
-  private ProgressIndicator progress;
+  ProgressIndicator progress;
   private final TaskScheduler scheduler = new TaskScheduler();
 
-  private int totalFilesToScan;
-  private int scannedFilesCount;
+  int totalFilesToScan;
+  int scannedFilesCount;
 
   public Matcher(Project project) {
     this(project, null);
@@ -77,7 +77,7 @@ public class Matcher {
 
     if (matchOptions != null) {
       matchContext.setOptions(matchOptions);
-      cacheCompiledPattern(matchOptions, PatternCompiler.compilePattern(project, matchOptions));
+      matchContext.setPattern(PatternCompiler.compilePattern(project, matchOptions, false));
     }
     myDumbService = DumbService.getInstance(project);
   }
@@ -111,25 +111,8 @@ public class Matcher {
     }
   }
 
-  static class LastMatchData {
-    CompiledPattern lastPattern;
-    MatchOptions lastOptions;
-  }
-  private static SoftReference<LastMatchData> lastMatchData;
-
-  private static final Object lastMatchDataLock = new Object();
-
   public static void validate(Project project, MatchOptions options) {
-    final CompiledPattern pattern = PatternCompiler.compilePattern(project, options);
-    synchronized (lastMatchDataLock) {
-      final LastMatchData data = new LastMatchData();
-      data.lastPattern = pattern;
-      data.lastOptions = options;
-      lastMatchData = new SoftReference<>(data);
-    }
-    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
-    assert profile != null;
-    profile.checkSearchPattern(pattern);
+    PatternCompiler.compilePattern(project, options, true);
   }
 
   public static boolean checkIfShouldAttemptToMatch(MatchContext context, NodeIterator matchedNodes) {
@@ -180,7 +163,7 @@ public class Matcher {
       return false;
     }
     matchContext.setShouldRecursivelyMatch(false);
-    visitor.matchContext(new SingleNodeIterator(element));
+    visitor.matchContext(newSingleNodeIterator(element));
     return !sink.getMatches().isEmpty();
   }
 
@@ -193,8 +176,6 @@ public class Matcher {
                                 PsiElement psiFile,
                                 final PairProcessor<MatchResult, Configuration> processor) {
     if (psiFile == null) return;
-    LocalSearchScope scope = new LocalSearchScope(psiFile);
-
     matchContext.clear();
     matchContext.setMatcher(visitor);
 
@@ -214,7 +195,6 @@ public class Matcher {
         }
       )
     );
-    options.setScope(scope);
   }
 
   public void precompileOptions(List<Configuration> configurations, Map<Configuration, MatchContext> out) {
@@ -227,14 +207,14 @@ public class Matcher {
       final MatchOptions matchOptions = configuration.getMatchOptions();
       matchContext.setOptions(matchOptions);
 
-      ReadAction.run(() -> {
-        try {
-          final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, matchOptions);
-          matchContext.setPattern(compiledPattern);
-          out.put(configuration, matchContext);
-        }
-        catch (StructuralSearchException ignored) {}
-      });
+      try {
+        matchContext.setPattern(PatternCompiler.compilePattern(project, matchOptions, false));
+        out.put(configuration, matchContext);
+      }
+      catch (StructuralSearchException e) {
+        LOG.warn("Malformed structural search inspection pattern \"" + configuration.getName() + '"', e);
+        out.put(configuration, null);
+      }
     }
   }
 
@@ -243,7 +223,7 @@ public class Matcher {
    */
   public void findMatches(MatchResultSink sink, MatchOptions options) throws MalformedPatternException, UnsupportedPatternException {
     CompiledPattern compiledPattern = prepareMatching(sink, options);
-    if (compiledPattern== null) {
+    if (compiledPattern == null) {
       return;
     }
 
@@ -256,7 +236,7 @@ public class Matcher {
       final PsiElement[] elements = ((LocalSearchScope)options.getScope()).getScope();
 
       PsiElement parent = elements[0].getParent();
-      if (elements.length > 0 && matchContext.getPattern().getStrategy().continueMatching(parent != null ? parent : elements[0])) {
+      if (matchContext.getPattern().getStrategy().continueMatching(parent != null ? parent : elements[0])) {
         visitor.matchContext(new SsrFilteringNodeIterator(new ArrayBackedNodeIterator(elements)));
       }
       else {
@@ -318,43 +298,14 @@ public class Matcher {
   }
 
   private CompiledPattern prepareMatching(final MatchResultSink sink, final MatchOptions options) {
-    CompiledPattern savedPattern = null;
-
-    if (matchContext.getOptions() == options && matchContext.getPattern() != null &&
-        matchContext.getOptions().hashCode() == matchContext.getPattern().getOptionsHashStamp()) {
-      savedPattern = matchContext.getPattern();
-    }
-
     matchContext.clear();
     matchContext.setSink(new DuplicateFilteringResultSink(sink));
     matchContext.setOptions(options);
     matchContext.setMatcher(visitor);
+    matchContext.setPattern(PatternCompiler.compilePattern(project, options, false));
     visitor.setMatchContext(matchContext);
 
-    CompiledPattern compiledPattern = savedPattern;
-
-    if (compiledPattern == null) {
-
-      synchronized (lastMatchDataLock) {
-        final LastMatchData data = com.intellij.reference.SoftReference.dereference(lastMatchData);
-        if (data != null && options == data.lastOptions) {
-          compiledPattern = data.lastPattern;
-        }
-        lastMatchData = null;
-      }
-
-      if (compiledPattern==null) {
-        compiledPattern = ReadAction.compute(() -> PatternCompiler.compilePattern(project, options));
-      }
-    }
-
-    cacheCompiledPattern(options, compiledPattern);
-    return compiledPattern;
-  }
-
-  private void cacheCompiledPattern(final MatchOptions options, final CompiledPattern compiledPattern) {
-    matchContext.setPattern(compiledPattern);
-    compiledPattern.setOptionsHashStamp(options.hashCode());
+    return matchContext.getPattern();
   }
 
   /**
@@ -461,7 +412,7 @@ public class Matcher {
       tasks.add(runnable);
     }
 
-    private void executeNext() {
+    void executeNext() {
       while(!suspended && !ended) {
         if (tasks.isEmpty()) {
           ended = true;
@@ -485,7 +436,7 @@ public class Matcher {
       if (ended) clearSchedule();
     }
 
-    private void init() {
+    void init() {
       ended = false;
       suspended = false;
       PsiManager.getInstance(project).startBatchFilesProcessingMode();
@@ -507,19 +458,19 @@ public class Matcher {
    * Initiates the matching process for given element
    * @param element the current search tree element
    */
-  private void match(PsiElement element, final Language language) {
+  void match(@NotNull PsiElement element, final Language language) {
     final MatchingStrategy strategy = matchContext.getPattern().getStrategy();
 
     final Language elementLanguage = element.getLanguage();
     if (strategy.continueMatching(element) && elementLanguage.isKindOf(language)) {
-      visitor.matchContext(new SingleNodeIterator(element));
+      visitor.matchContext(newSingleNodeIterator(element));
       return;
     }
     for(PsiElement el=element.getFirstChild();el!=null;el=el.getNextSibling()) {
       match(el, language);
     }
     if (element instanceof PsiLanguageInjectionHost) {
-      InjectedLanguageUtil.enumerate(element, (injectedPsi, places) -> match(injectedPsi, language));
+      InjectedLanguageManager.getInstance(project).enumerate(element, (injectedPsi, places) -> match(injectedPsi, language));
     }
   }
 
@@ -583,7 +534,7 @@ public class Matcher {
 
     assert targetNode != null : "Could not match down up when no target node";
 
-    visitor.matchContext(new SingleNodeIterator(elementToStartMatching));
+    visitor.matchContext(newSingleNodeIterator(elementToStartMatching));
     matchContext.getSink().matchingFinished();
     return sink.getMatches();
   }
@@ -649,7 +600,7 @@ public class Matcher {
 
       ++scannedFilesCount;
 
-      if (files.size() == 0) return;
+      if (files.isEmpty()) return;
 
       final LanguageFileType fileType = (LanguageFileType)matchContext.getOptions().getFileType();
       final Language patternLanguage = fileType.getLanguage();

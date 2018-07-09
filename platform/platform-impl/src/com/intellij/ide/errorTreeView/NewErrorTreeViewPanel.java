@@ -1,23 +1,12 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.ide.errorTreeView;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
-import com.intellij.ide.actions.*;
+import com.intellij.ide.actions.CloseTabToolbarAction;
+import com.intellij.ide.actions.ExportToTextFileToolbarAction;
 import com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration;
 import com.intellij.ide.errorTreeView.impl.ErrorViewTextExporter;
 import com.intellij.openapi.actionSystem.*;
@@ -43,6 +32,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MutableErrorTreeView;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
@@ -79,7 +69,6 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   private ActionToolbar myLeftToolbar;
-  private ActionToolbar myRightToolbar;
   private final TreeExpander myTreeExpander = new MyTreeExpander();
   private final ExporterToTextFile myExporterToTextFile;
   protected Project myProject;
@@ -405,7 +394,13 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
       group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     }
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
+    group.add(myAutoScrollToSourceHandler.createToggleAction());
     addExtraPopupMenuActions(group);
+    group.addSeparator();
+    group.add(CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, this));
+    group.add(CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, this));
+    group.addSeparator();
+    group.add(new ExportToTextFileToolbarAction(myExporterToTextFile));
 
     ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.COMPILER_MESSAGES_POPUP, group);
     menu.getComponent().show(component, x, y);
@@ -521,6 +516,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
   }
 
   private JPanel createToolbarPanel(@Nullable Runnable rerunAction) {
+    DefaultActionGroup group = new DefaultActionGroup();
     AnAction closeMessageViewAction = new CloseTabToolbarAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
@@ -528,40 +524,32 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
       }
     };
 
-    DefaultActionGroup leftUpdateableActionGroup = new DefaultActionGroup();
     if (rerunAction != null) {
-      leftUpdateableActionGroup.add(new RerunAction(rerunAction, closeMessageViewAction));
+      group.add(new RerunAction(rerunAction, closeMessageViewAction));
     }
 
-    leftUpdateableActionGroup.add(new StopAction());
-    if (myCreateExitAction) {
-      leftUpdateableActionGroup.add(closeMessageViewAction);
+    group.add(new StopAction());
+    if (canHideWarnings()) {
+      group.addSeparator();
+      group.add(new HideWarningsAction());
     }
-    leftUpdateableActionGroup.add(new PreviousOccurenceToolbarAction(this));
-    leftUpdateableActionGroup.add(new NextOccurenceToolbarAction(this));
-    leftUpdateableActionGroup.add(new ExportToTextFileToolbarAction(myExporterToTextFile));
-    leftUpdateableActionGroup.add(new ContextHelpAction(myHelpId));
 
-    DefaultActionGroup rightUpdateableActionGroup = new DefaultActionGroup();
-    fillRightToolbarGroup(rightUpdateableActionGroup);
+    fillRightToolbarGroup(group);
 
-    JPanel toolbarPanel = new JPanel(new BorderLayout());
+    //if (myCreateExitAction) {
+    //  leftUpdateableActionGroup.add(closeMessageViewAction);
+    //}
+    //leftUpdateableActionGroup.add(new PreviousOccurenceToolbarAction(this));
+    //leftUpdateableActionGroup.add(new NextOccurenceToolbarAction(this));
+    //leftUpdateableActionGroup.add(new ExportToTextFileToolbarAction(myExporterToTextFile));
+
     ActionManager actionManager = ActionManager.getInstance();
-    myLeftToolbar = actionManager.createActionToolbar(ActionPlaces.COMPILER_MESSAGES_TOOLBAR, leftUpdateableActionGroup, false);
-    myRightToolbar = actionManager.createActionToolbar(ActionPlaces.COMPILER_MESSAGES_TOOLBAR, rightUpdateableActionGroup, false);
-    toolbarPanel.add(myLeftToolbar.getComponent(), BorderLayout.WEST);
-    toolbarPanel.add(myRightToolbar.getComponent(), BorderLayout.CENTER);
-
-    return toolbarPanel;
+    myLeftToolbar = actionManager.createActionToolbar(ActionPlaces.COMPILER_MESSAGES_TOOLBAR, group, false);
+    return JBUI.Panels.simplePanel(myLeftToolbar.getComponent());
   }
 
   protected void fillRightToolbarGroup(DefaultActionGroup group) {
-    group.add(CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, this));
-    group.add(CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, this));
-    if (canHideWarnings()) {
-      group.add(new HideWarningsAction());
-    }
-    group.add(myAutoScrollToSourceHandler.createToggleAction());
+
   }
 
   @Override
@@ -628,7 +616,6 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
         stopProcess();
       }
       myLeftToolbar.updateActionsImmediately();
-      myRightToolbar.updateActionsImmediately();
     }
 
     @Override

@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 25, 2004
  */
 public class AntProject extends Tag {
   public AntProject(@NonNls String name, @NonNls String defaultTarget) {

@@ -22,8 +22,8 @@
 21(22) element: PyAssignmentStatement
 22(23) element: PyBinaryExpression
 23(24) element: PyBinaryExpression
-24(25) READ ACCESS: collapse
-25(26) element: PyLambdaExpression
+24(25,26) READ ACCESS: collapse
+25(26,27) element: PyLambdaExpression
 26(27) element: PyLambdaExpression
 27(28) WRITE ACCESS: processFunc
 28(29) element: PyPrintStatement

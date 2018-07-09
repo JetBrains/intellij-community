@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.execution.ExecutionBundle
@@ -26,18 +12,14 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Conditions
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.*
-import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.JBList
 import com.intellij.ui.speedSearch.SpeedSearchUtil
-import com.intellij.util.containers.stream
-import com.intellij.util.ui.UIUtil
+import gnu.trove.THashSet
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
-import javax.swing.BorderFactory
 import javax.swing.JList
 import javax.swing.JPanel
 import javax.swing.event.ListDataEvent
@@ -57,7 +39,7 @@ internal class RunDashboardTypesPanel(private val myProject: Project) : JPanel(B
   private val list = JBList<ConfigurationType>(listModel)
 
   init {
-    val search = ListSpeedSearch(list, { it.displayName })
+    val search = ListSpeedSearch(list) { it.displayName }
     search.comparator = SpeedSearchComparator(false)
     list.visibleRowCount = 5
 
@@ -87,11 +69,6 @@ internal class RunDashboardTypesPanel(private val myProject: Project) : JPanel(B
 
     val listPanel = JPanel(BorderLayout())
     listPanel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER)
-    val descriptionLabel = JBLabel(ExecutionBundle.message("run.dashboard.configurable.types.panel.description")).apply {
-      border = BorderFactory.createEmptyBorder(TitledSeparator.TOP_INSET, 20, 0, 0)
-      componentStyle = UIUtil.ComponentStyle.SMALL
-    }
-    listPanel.add(descriptionLabel, BorderLayout.SOUTH)
 
     val hideableDecorator = object : HideableDecorator(this,
                                                        ExecutionBundle.message("run.dashboard.configurable.types.panel.title"),
@@ -121,15 +98,15 @@ internal class RunDashboardTypesPanel(private val myProject: Project) : JPanel(B
     val hiddenCount = allTypes.size - configurationTypes.size
 
     val actionGroup = DefaultActionGroup(null, false)
-    configurationTypes.forEach({
-                                 actionGroup.add(object : AnAction(it.displayName, null, it.icon) {
-                                   override fun actionPerformed(e: AnActionEvent?) {
-                                     listModel.add(it)
-                                     listModel.sort(IGNORE_CASE_DISPLAY_NAME_COMPARATOR)
-                                     list.selectedIndex = listModel.getElementIndex(it)
-                                   }
-                                 })
-                               })
+    configurationTypes.forEach {
+      actionGroup.add(object : AnAction(it.displayName, null, it.icon) {
+        override fun actionPerformed(e: AnActionEvent?) {
+          listModel.add(it)
+          listModel.sort(IGNORE_CASE_DISPLAY_NAME_COMPARATOR)
+          list.selectedIndex = listModel.getElementIndex(it)
+        }
+      })
+    }
     if (hiddenCount > 0) {
       actionGroup.add(object : AnAction(ExecutionBundle.message("show.irrelevant.configurations.action.name", hiddenCount)) {
         override fun actionPerformed(e: AnActionEvent?) {
@@ -153,7 +130,7 @@ internal class RunDashboardTypesPanel(private val myProject: Project) : JPanel(B
 
   private fun getTypesToShow(showApplicableTypesOnly: Boolean, allTypes: List<ConfigurationType>): List<ConfigurationType> {
     if (showApplicableTypesOnly) {
-      val applicableTypes = allTypes.filter { it.configurationFactories.stream().anyMatch { it.isApplicable(myProject) } }
+      val applicableTypes = allTypes.filter { it.configurationFactories.any { it.isApplicable(myProject) } }
       if (applicableTypes.size < (allTypes.size - 3)) {
         return applicableTypes
       }
@@ -177,7 +154,7 @@ internal class RunDashboardTypesPanel(private val myProject: Project) : JPanel(B
     })
   }
 
-  fun isModified() = !Comparing.equal(listModel.items.mapTo(HashSet(), { it.id }), RunDashboardManager.getInstance(myProject).types)
+  fun isModified() = listModel.items.mapTo(THashSet()) { it.id } != RunDashboardManager.getInstance(myProject).types
 
   fun reset() {
     listModel.removeAll()
@@ -188,8 +165,8 @@ internal class RunDashboardTypesPanel(private val myProject: Project) : JPanel(B
 
   fun apply() {
     val dashboardManager = RunDashboardManager.getInstance(myProject)
-    val types = listModel.items.mapTo(HashSet(), { it.id })
-    if (!Comparing.equal(types, dashboardManager.types)) {
+    val types = listModel.items.mapTo(THashSet()) { it.id }
+    if (types != dashboardManager.types) {
       dashboardManager.types = types
     }
   }

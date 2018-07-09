@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.view;
 
 import com.intellij.coverage.CoverageDataManager;
@@ -30,6 +16,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -42,11 +29,11 @@ import java.util.Map;
 public class CoverageViewManager implements PersistentStateComponent<CoverageViewManager.StateBean> {
   private static final Logger LOG = Logger.getInstance(CoverageViewManager.class);
   public static final String TOOLWINDOW_ID = "Coverage";
-  private Project myProject;
+  private final Project myProject;
   private final CoverageDataManager myDataManager;
-  private ContentManager myContentManager;
+  private final ContentManager myContentManager;
   private StateBean myStateBean = new StateBean();
-  private Map<String, CoverageView> myViews = new HashMap<>();
+  private final Map<String, CoverageView> myViews = new HashMap<>();
   private boolean myReady;
 
   public CoverageViewManager(Project project, ToolWindowManager toolWindowManager, CoverageDataManager dataManager) {
@@ -54,6 +41,7 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
     myDataManager = dataManager;
 
     ToolWindow toolWindow = toolWindowManager.registerToolWindow(TOOLWINDOW_ID, true, ToolWindowAnchor.RIGHT, myProject, true, true);
+    toolWindow.setHelpId(CoverageView.HELP_ID);
     toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowCoverage);
     myContentManager = toolWindow.getContentManager();
     new ContentManagerWatcher(toolWindow, myContentManager);
@@ -63,7 +51,7 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
     return myStateBean;
   }
 
-  public void loadState(StateBean state) {
+  public void loadState(@NotNull StateBean state) {
     myStateBean = state;
   }
 
@@ -99,6 +87,7 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
   void closeView(String displayName) {
     final CoverageView oldView = myViews.remove(displayName);
     if (oldView != null) {
+      oldView.saveSize();
       final Content content = myContentManager.getContent(oldView);
       final Runnable runnable = () -> {
         if (content != null) {
@@ -127,5 +116,6 @@ public class CoverageViewManager implements PersistentStateComponent<CoverageVie
     public boolean myFlattenPackages = false;
     public boolean myAutoScrollToSource = false;
     public boolean myAutoScrollFromSource = false;
+    public int myElementSize = JBUI.scale(200);
   }
 }

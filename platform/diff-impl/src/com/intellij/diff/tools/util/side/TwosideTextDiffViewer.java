@@ -82,6 +82,10 @@ public abstract class TwosideTextDiffViewer extends TwosideDiffViewer<TextEditor
     if (editable1 ^ editable2) {
       ProxyUndoRedoAction.register(getProject(), editable1 ? getEditor1() : getEditor2(), myPanel);
     }
+
+    for (Side side : Side.values()) {
+      DiffUtil.installLineConvertor(getEditor(side), getContent(side));
+    }
   }
 
   @Override

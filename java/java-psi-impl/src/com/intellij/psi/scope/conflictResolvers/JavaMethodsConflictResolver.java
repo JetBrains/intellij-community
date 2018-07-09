@@ -32,7 +32,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.FactoryMap;
-import com.intellij.util.containers.HashSet;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
@@ -151,7 +150,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     int conflictsCount = conflicts.size();
     // Specifics
     if (applicable) {
-      final CandidateInfo[] newConflictsArray = conflicts.toArray(new CandidateInfo[conflicts.size()]);
+      final CandidateInfo[] newConflictsArray = conflicts.toArray(CandidateInfo.EMPTY_ARRAY);
       for (int i = 1; i < conflictsCount; i++) {
         final CandidateInfo method = newConflictsArray[i];
         for (int j = 0; j < i; j++) {
@@ -209,21 +208,13 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     // in order for this to work
     Map<MethodSignature, CandidateInfo> signatures = new THashMap<>(conflicts.size());
     Set<PsiMethod> superMethods = new HashSet<>();
+    GlobalSearchScope resolveScope = myArgumentsList.getResolveScope();
     for (CandidateInfo conflict : conflicts) {
       final PsiMethod method = ((MethodCandidateInfo)conflict).getElement();
       final PsiClass containingClass = method.getContainingClass();
       final boolean isInterface = containingClass != null && containingClass.isInterface();
       for (HierarchicalMethodSignature methodSignature : method.getHierarchicalMethodSignature().getSuperSignatures()) {
-        final PsiMethod superMethod = methodSignature.getMethod();
-        if (!isInterface) {
-          superMethods.add(superMethod);
-        }
-        else {
-          final PsiClass aClass = superMethod.getContainingClass();
-          if (aClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
-            superMethods.add(superMethod);
-          }
-        }
+        collectCorrectedSuperMethods(methodSignature, resolveScope, isInterface, superMethods);
       }
     }
     for (int i = 0; i < conflicts.size(); i++) {
@@ -268,6 +259,29 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
             !existing.isAccessible()) { //prefer methods from outer class to inaccessible base class methods
           signatures.put(signature, info);
         }
+      }
+    }
+  }
+
+  private static void collectCorrectedSuperMethods(HierarchicalMethodSignature methodSignature,
+                                                   GlobalSearchScope resolveScope,
+                                                   boolean isInterface,
+                                                   Set<PsiMethod> superMethods) {
+    PsiMethod methodCandidate = methodSignature.getMethod();
+
+    PsiMethod superMethod = PsiSuperMethodUtil.correctMethodByScope(methodCandidate, resolveScope).orElse(null);
+    if (superMethod == null) {
+      for (HierarchicalMethodSignature signature : methodSignature.getSuperSignatures()) {
+        collectCorrectedSuperMethods(signature, resolveScope, isInterface, superMethods);
+      }
+    }
+    else if (!isInterface) {
+      superMethods.add(superMethod);
+    }
+    else {
+      final PsiClass aClass = superMethod.getContainingClass();
+      if (aClass != null && !CommonClassNames.JAVA_LANG_OBJECT.equals(aClass.getQualifiedName())) {
+        superMethods.add(superMethod);
       }
     }
   }
@@ -434,7 +448,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
   private int getActualParametersLength() {
     if (myActualParameterTypes == null) {
       LOG.assertTrue(myArgumentsList instanceof PsiExpressionList, myArgumentsList);
-      return ((PsiExpressionList)myArgumentsList).getExpressions().length;
+      return ((PsiExpressionList)myArgumentsList).getExpressionCount();
     }
     return myActualParameterTypes.length;
   }
@@ -587,7 +601,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       }
     }
 
-    if (class1 != class2) {
+    if (class1 != class2 && (method1.hasModifierProperty(PsiModifier.STATIC) || method2.hasModifierProperty(PsiModifier.STATIC))) {
       if (class2.isInheritor(class1, true)) {
         if (MethodSignatureUtil.isSubsignature(method1.getSignature(classSubstitutor1), method2.getSignature(classSubstitutor2))) {
           return Specifics.SECOND;
@@ -629,17 +643,14 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
         return InferenceSession.isMoreSpecific(method2, method1, siteSubstitutor1,  ((PsiExpressionList)myArgumentsList).getExpressions(), myArgumentsList, varargsPosition);
       }
     }
-    final PsiUtil.ApplicabilityChecker applicabilityChecker = new PsiUtil.ApplicabilityChecker() {
-      @Override
-      public boolean isApplicable(PsiType left, PsiType right, boolean allowUncheckedConversion, int argId) {
-        if (right instanceof PsiClassType) {
-          final PsiClass rightClass = ((PsiClassType)right).resolve();
-          if (rightClass instanceof PsiTypeParameter) {
-            right = new PsiImmediateClassType(rightClass, siteSubstitutor1);
-          }
+    final PsiUtil.ApplicabilityChecker applicabilityChecker = (left, right, allowUncheckedConversion, argId) -> {
+      if (right instanceof PsiClassType) {
+        final PsiClass rightClass = ((PsiClassType)right).resolve();
+        if (rightClass instanceof PsiTypeParameter) {
+          right = new PsiImmediateClassType(rightClass, siteSubstitutor1);
         }
-        return languageLevel.isAtLeast(LanguageLevel.JDK_1_8) ? isTypeMoreSpecific(left, right, argId) : TypeConversionUtil.isAssignable(left, right, allowUncheckedConversion);
       }
+      return languageLevel.isAtLeast(LanguageLevel.JDK_1_8) ? isTypeMoreSpecific(left, right, argId) : TypeConversionUtil.isAssignable(left, right, allowUncheckedConversion);
     };
     final int applicabilityLevel = PsiUtil.getApplicabilityLevel(method1, methodSubstitutor1, types2AtSite, languageLevel, false, varargsPosition, applicabilityChecker);
     return applicabilityLevel > MethodCandidateInfo.ApplicabilityLevel.NOT_APPLICABLE;

@@ -26,54 +26,52 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class DirElementInfo extends SmartPointerElementInfo {
+  @NotNull
   private final VirtualFile myVirtualFile;
+  @NotNull
   private final Project myProject;
 
 
-  public DirElementInfo(@NotNull PsiDirectory directory) {
+  DirElementInfo(@NotNull PsiDirectory directory) {
     myProject = directory.getProject();
     myVirtualFile = directory.getVirtualFile();
   }
 
   @Override
-  public PsiElement restoreElement() {
+  PsiElement restoreElement(@NotNull SmartPointerManagerImpl manager) {
     return SelfElementInfo.restoreDirectoryFromVirtual(myVirtualFile, myProject);
   }
 
   @Override
-  public PsiFile restoreFile() {
+  PsiFile restoreFile(@NotNull SmartPointerManagerImpl manager) {
     return null;
   }
 
   @Override
-  public int elementHashCode() {
+  int elementHashCode() {
     return myVirtualFile.hashCode();
   }
 
   @Override
-  public boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
+  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other,
+                                   @NotNull SmartPointerManagerImpl manager) {
     return other instanceof DirElementInfo && Comparing.equal(myVirtualFile, ((DirElementInfo)other).myVirtualFile);
-  }
-
-  @Override
-  public VirtualFile getVirtualFile() {
-    return myVirtualFile;
-  }
-
-  @Override
-  public Segment getRange() {
-    return null;
   }
 
   @NotNull
   @Override
-  public Project getProject() {
-    return myProject;
+  VirtualFile getVirtualFile() {
+    return myVirtualFile;
+  }
+
+  @Override
+  Segment getRange(@NotNull SmartPointerManagerImpl manager) {
+    return null;
   }
 
   @Nullable
   @Override
-  public Segment getPsiRange() {
+  Segment getPsiRange(@NotNull SmartPointerManagerImpl manager) {
     return null;
   }
 

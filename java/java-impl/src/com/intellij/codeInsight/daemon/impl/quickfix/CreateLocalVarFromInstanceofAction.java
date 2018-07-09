@@ -41,7 +41,7 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Contract;
+import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,7 +106,8 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
 
         final PsiTypeCastExpression typeCastExpression = (PsiTypeCastExpression)initializer;
         final PsiExpression operand = typeCastExpression.getOperand();
-        if (operand != null && !PsiEquivalenceUtil.areElementsEquivalent(operand, instanceOfExpression.getOperand())) continue;
+        if (operand != null &&
+            !EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(operand, instanceOfExpression.getOperand())) continue;
         PsiTypeElement castTypeElement = typeCastExpression.getCastType();
         if (castTypeElement == null) continue;
         PsiType castType = castTypeElement.getType();
@@ -431,7 +432,7 @@ public class CreateLocalVarFromInstanceofAction extends BaseIntentionAction {
     for (String name : suggestedNameInfo.names) {
       itemSet.add(LookupElementBuilder.create(name));
     }
-    final LookupElement[] lookupItems = itemSet.toArray(new LookupElement[itemSet.size()]);
+    final LookupElement[] lookupItems = itemSet.toArray(LookupElement.EMPTY_ARRAY);
     final Result result = suggestedNameInfo.names.length == 0 ? null : new TextResult(suggestedNameInfo.names[0]);
 
     Expression expr = new Expression() {

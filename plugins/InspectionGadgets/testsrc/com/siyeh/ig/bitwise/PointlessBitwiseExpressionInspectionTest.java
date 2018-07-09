@@ -25,9 +25,15 @@ public class PointlessBitwiseExpressionInspectionTest extends LightInspectionTes
     doTest();
   }
 
+  public void testPointlessBitwiseExpressionNoConstants() {
+    doTest();
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
-    return new PointlessBitwiseExpressionInspection();
+    PointlessBitwiseExpressionInspection inspection = new PointlessBitwiseExpressionInspection();
+    inspection.m_ignoreExpressionsContainingConstants = getTestName(false).endsWith("NoConstants");
+    return inspection;
   }
 }

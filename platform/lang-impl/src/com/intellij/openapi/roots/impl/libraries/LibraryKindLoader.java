@@ -25,7 +25,7 @@ public class LibraryKindLoader implements ApplicationComponent {
   @Override
   public void initComponent() {
     //todo[nik] this is temporary workaround for IDEA-98118: we need to initialize all library types to ensure that their kinds are created and registered in LibraryKind.ourAllKinds
-    //In order to properly fix the problem we should extract all UI-related methods from LibraryType to a separate class and move LibraryType to projectModel-impl module
+    //In order to properly fix the problem we should extract all UI-related methods from LibraryType to a separate class and move LibraryType to intellij.platform.projectModel.impl module
     LibraryType.EP_NAME.getExtensions();
   }
 }

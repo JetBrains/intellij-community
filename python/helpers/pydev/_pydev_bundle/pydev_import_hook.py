@@ -1,5 +1,5 @@
-
 import sys
+import traceback
 from types import ModuleType
 
 
@@ -15,18 +15,23 @@ class ImportHookManager(ModuleType):
     def do_import(self, name, *args, **kwargs):
         activate_func = None
         if name in self._modules_to_patch:
-            activate_func = self._modules_to_patch.pop(name)
+            activate_func = self._modules_to_patch[name]
 
         module = self._system_import(name, *args, **kwargs)
         try:
             if activate_func:
-                activate_func() #call activate function
+                succeeded = activate_func()
+                if succeeded and name in self._modules_to_patch:
+                    # Remove if only it was executed correctly
+                    self._modules_to_patch.pop(name)
         except:
             sys.stderr.write("Matplotlib support failed\n")
+            traceback.print_exc()
         return module
 
+
 if sys.version_info[0] >= 3:
-    import builtins # py3
+    import builtins  # py3
 else:
     import __builtin__ as builtins
 

@@ -1,7 +1,79 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
+  <item name='java.util.concurrent.BlockingDeque E element()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.BlockingDeque E poll(long, java.util.concurrent.TimeUnit)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.concurrent.BlockingDeque E pollFirst(long, java.util.concurrent.TimeUnit)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.concurrent.BlockingDeque E pollLast(long, java.util.concurrent.TimeUnit)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.util.concurrent.BlockingDeque E remove()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.BlockingDeque E take()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.BlockingDeque E takeFirst()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.BlockingDeque E takeLast()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.BlockingDeque boolean add(E) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.BlockingDeque boolean offer(E) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.BlockingDeque boolean offer(E, long, java.util.concurrent.TimeUnit) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.BlockingDeque boolean offerFirst(E) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.BlockingDeque boolean offerFirst(E, long, java.util.concurrent.TimeUnit) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.BlockingDeque boolean offerLast(E) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.BlockingDeque boolean offerLast(E, long, java.util.concurrent.TimeUnit) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.BlockingDeque void addFirst(E) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.BlockingDeque void addLast(E) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.BlockingDeque void push(E) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.BlockingDeque void put(E) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.BlockingDeque void putFirst(E) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.BlockingDeque void putLast(E) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.BlockingQueue E poll(long, java.util.concurrent.TimeUnit)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name="java.util.concurrent.BlockingQueue E poll(long, java.util.concurrent.TimeUnit) 1">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.concurrent.BlockingQueue E take()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.util.concurrent.BlockingQueue boolean add(E) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.concurrent.BlockingQueue boolean offer(E) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -14,6 +86,9 @@
   </item>
   <item name="java.util.concurrent.BlockingQueue int drainTo(java.util.Collection&lt;? super E&gt;, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='java.util.concurrent.BlockingQueue void put(E) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.concurrent.CompletableFuture java.util.concurrent.CompletableFuture&lt;java.lang.Void&gt; runAsync(java.lang.Runnable, java.util.concurrent.Executor)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>

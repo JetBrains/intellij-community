@@ -31,6 +31,7 @@ public abstract class CommandProcessor {
   /**
    * @deprecated use {@link #executeCommand(com.intellij.openapi.project.Project, java.lang.Runnable, java.lang.String, java.lang.Object)}
    */
+  @Deprecated
   public abstract void executeCommand(@NotNull Runnable runnable,
                                       @Nullable String name,
                                       @Nullable Object groupId);

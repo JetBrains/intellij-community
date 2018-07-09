@@ -22,7 +22,6 @@ import com.intellij.util.xml.GenericDomValue;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jun 24, 2010
  */
 public class AntDomDeclarationSearcher extends AbstractDomDeclarationSearcher {
 

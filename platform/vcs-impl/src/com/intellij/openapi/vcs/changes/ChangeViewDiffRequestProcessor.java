@@ -17,16 +17,21 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
+import com.intellij.diff.contents.DiffContent;
+import com.intellij.diff.contents.FileContent;
 import com.intellij.diff.impl.CacheDiffRequestProcessor;
+import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.ErrorDiffRequest;
 import com.intellij.diff.requests.LoadingDiffRequest;
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
@@ -83,6 +88,25 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     return producer.process(getContext(), indicator);
   }
 
+  @Nullable
+  @Override
+  protected DiffRequest loadRequestFast(@NotNull DiffRequestProducer provider) {
+    DiffRequest request = super.loadRequestFast(provider);
+    return isRequestValid(request) ? request : null;
+  }
+
+  private static boolean isRequestValid(@Nullable DiffRequest request) {
+    if (request instanceof ErrorDiffRequest) return false;
+    if (request instanceof ContentDiffRequest) {
+      for (DiffContent content : ((ContentDiffRequest)request).getContents()) {
+        // We compare CurrentContentRevision by their FilePath in cache map
+        // If file was removed and then created again - we should not reuse request with old invalidated VirtualFile
+        if (content instanceof FileContent && !((FileContent)content).getFile().isValid()) return false;
+      }
+    }
+    return true;
+  }
+
   //
   // Impl
   //
@@ -92,6 +116,11 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   public Project getProject() {
     //noinspection ConstantConditions
     return super.getProject();
+  }
+
+  @Override
+  public boolean isWindowFocused() {
+    return DiffUtil.isFocusedComponent(getProject(), getComponent());
   }
 
   //
@@ -118,30 +147,38 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
   @Override
   @CalledInAwt
-  public void refresh() {
+  public void refresh(boolean fromModelRefresh) {
     List<Wrapper> selectedChanges = getSelectedChanges();
 
-    if (selectedChanges.isEmpty()) {
-      myCurrentChange = null;
-      updateRequest();
-      return;
-    }
-
     Wrapper selectedChange = myCurrentChange != null ? ContainerUtil.find(selectedChanges, myCurrentChange) : null;
-    if (selectedChange == null) {
-      if (myCurrentChange != null && isFocused()) { // Do not automatically switch file if focused
-        if (selectedChanges.size() == 1 && getAllChanges().contains(myCurrentChange)) {
-          selectChange(myCurrentChange); // Restore selection if necessary
-        }
-        return;
+    if (fromModelRefresh &&
+        selectedChange == null &&
+        myCurrentChange != null &&
+        getContext().isWindowFocused() &&
+        getContext().isFocusedInWindow()) {
+      // Do not automatically switch focused viewer
+      if (selectedChanges.size() == 1 && getAllChanges().contains(myCurrentChange)) {
+        selectChange(myCurrentChange); // Restore selection if necessary
       }
-
-      myCurrentChange = selectedChanges.get(0);
-      updateRequest();
       return;
     }
 
-    myCurrentChange = selectedChange;
+    if (selectedChanges.isEmpty()) {
+      setCurrentChange(null);
+      return;
+    }
+
+    if (selectedChange == null) {
+      setCurrentChange(selectedChanges.get(0));
+      return;
+    }
+
+    setCurrentChange(selectedChange);
+  }
+
+  @CalledInAwt
+  public void setCurrentChange(@Nullable Wrapper change) {
+    myCurrentChange = change;
     updateRequest();
   }
 
@@ -247,6 +284,20 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
     @Nullable
     public abstract DiffRequestProducer createProducer(@Nullable Project project);
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (getClass() != o.getClass()) return false;
+
+      Wrapper wrapper = (Wrapper)o;
+      return Comparing.equal(getUserObject(), wrapper.getUserObject());
+    }
+
+    @Override
+    public int hashCode() {
+      return getUserObject().hashCode();
+    }
   }
 
   protected static class ChangeWrapper extends Wrapper {
@@ -259,7 +310,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     @NotNull
     @Override
     public Object getUserObject() {
-      return this.change;
+      return change;
     }
 
     @Nullable
@@ -286,7 +337,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
       if (getClass() != o.getClass()) return false;
 
       ChangeWrapper wrapper = (ChangeWrapper)o;
-      return wrapper.change.equals(change);
+      return ChangeListChange.HASHING_STRATEGY.equals(wrapper.change, change);
     }
 
     @Override
@@ -305,27 +356,13 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     @NotNull
     @Override
     public Object getUserObject() {
-      return this.file;
+      return file;
     }
 
     @Nullable
     @Override
     public DiffRequestProducer createProducer(@Nullable Project project) {
       return UnversionedDiffRequestProducer.create(project, file);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (getClass() != o.getClass()) return false;
-
-      UnversionedFileWrapper wrapper = (UnversionedFileWrapper)o;
-      return wrapper.file.equals(file);
-    }
-
-    @Override
-    public int hashCode() {
-      return file.hashCode();
     }
   }
 

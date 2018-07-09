@@ -26,12 +26,15 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.introduceParameterObject.IntroduceParameterObjectClassDescriptor;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -250,6 +253,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     final ParameterObjectBuilder beanClassBuilder = new ParameterObjectBuilder();
     beanClassBuilder.setVisibility(isCreateInnerClass() ? PsiModifier.PRIVATE : PsiModifier.PUBLIC);
     beanClassBuilder.setProject(method.getProject());
+    beanClassBuilder.setFile(method.getContainingFile());
     beanClassBuilder.setTypeArguments(getTypeParameters());
     beanClassBuilder.setClassName(getClassName());
     beanClassBuilder.setPackageName(getPackageName());
@@ -337,7 +341,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
         return;
       }
       final PsiElement assigned = ((PsiReference)lhs).resolve();
-      if (assigned == null || !(assigned instanceof PsiField)) {
+      if (!(assigned instanceof PsiField)) {
         return;
       }
       fieldAssigned = (PsiField)assigned;

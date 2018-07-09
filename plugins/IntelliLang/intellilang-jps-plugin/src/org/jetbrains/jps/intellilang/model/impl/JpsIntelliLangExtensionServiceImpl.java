@@ -7,7 +7,6 @@ import org.jetbrains.jps.model.JpsGlobal;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 11/29/12
  */
 public class JpsIntelliLangExtensionServiceImpl extends JpsIntelliLangExtensionService {
   @NotNull

@@ -1,6 +1,6 @@
 class NullLiteralAndInferredMethodContract {
   {
-    initExpressionConstraints(<warning descr="Passing 'null' argument to non annotated parameter">null</warning>);
+    initExpressionConstraints(<warning descr="Passing 'null' argument to non-annotated parameter">null</warning>);
   }
 
   public void initExpressionConstraints(Object parent) {

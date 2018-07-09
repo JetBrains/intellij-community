@@ -27,11 +27,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.status.Status;
 import org.jetbrains.idea.svn.status.StatusClient;
 import org.jetbrains.idea.svn.status.StatusType;
-import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.File;
 import java.util.Collections;
@@ -106,10 +106,10 @@ public class SvnTreeConflictResolver {
 
     if (status == null || StatusType.STATUS_UNVERSIONED.equals(status.getNodeStatus())) {
       revert(ioFile);
-      updateFile(ioFile, SVNRevision.HEAD);
+      updateFile(ioFile, Revision.HEAD);
     } else if (StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
       revert(ioFile);
-      updateFile(ioFile, SVNRevision.HEAD);
+      updateFile(ioFile, Revision.HEAD);
       FileUtil.delete(ioFile);
     } else {
       Set<File> usedToBeAdded = myPath.isDirectory() ? getDescendantsWithAddedStatus(ioFile) : ContainerUtil.newHashSet();
@@ -118,7 +118,7 @@ public class SvnTreeConflictResolver {
       for (File wasAdded : usedToBeAdded) {
         FileUtil.delete(wasAdded);
       }
-      updateFile(ioFile, SVNRevision.HEAD);
+      updateFile(ioFile, Revision.HEAD);
     }
   }
 
@@ -127,7 +127,7 @@ public class SvnTreeConflictResolver {
     final Set<File> result = ContainerUtil.newHashSet();
     StatusClient statusClient = myVcs.getFactory(ioFile).createStatusClient();
 
-    statusClient.doStatus(ioFile, SVNRevision.UNDEFINED, Depth.INFINITY, false, false, false, false, status -> {
+    statusClient.doStatus(ioFile, Revision.UNDEFINED, Depth.INFINITY, false, false, false, false, status -> {
       if (status != null && StatusType.STATUS_ADDED.equals(status.getNodeStatus())) {
         result.add(status.getFile());
       }
@@ -140,7 +140,7 @@ public class SvnTreeConflictResolver {
     myVcs.getFactory(file).createRevertClient().revert(Collections.singletonList(file), Depth.INFINITY, null);
   }
 
-  private void updateFile(@NotNull File file, @NotNull SVNRevision revision) throws SvnBindException {
+  private void updateFile(@NotNull File file, @NotNull Revision revision) throws SvnBindException {
     boolean useParentAsTarget = !file.exists();
     File target = useParentAsTarget ? file.getParentFile() : file;
 

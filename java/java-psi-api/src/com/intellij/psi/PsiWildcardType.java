@@ -72,14 +72,14 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
 
   @NotNull
   public static PsiWildcardType createSuper(@NotNull PsiManager manager, @NotNull PsiType bound) {
-    LOG.assertTrue(!(bound instanceof PsiWildcardType));
-    LOG.assertTrue(bound != PsiType.NULL);
+    LOG.assertTrue(!(bound instanceof PsiWildcardType) && bound != PsiType.NULL, bound);
     return new PsiWildcardType(manager, false, bound);
   }
 
   /**
    * @deprecated use {@link #annotate(TypeAnnotationProvider)} (to be removed in IDEA 18)
    */
+  @Deprecated
   public PsiWildcardType annotate(@NotNull final PsiAnnotation[] annotations) {
     return annotations.length == 0 ? this : new PsiWildcardType(this, TypeAnnotationProvider.Static.create(annotations));
   }
@@ -156,6 +156,7 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
     return myManager;
   }
 
+  @Override
   public boolean equals(Object o) {
     if (!(o instanceof PsiWildcardType)) return false;
 
@@ -163,12 +164,13 @@ public class PsiWildcardType extends PsiType.Stub implements JvmWildcardType {
     if (myBound == null && that.myBound != null) {
       return that.isExtends() && that.myBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
     }
-    else if (myBound != null && that.myBound == null) {
+    if (myBound != null && that.myBound == null) {
       return isExtends() && myBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT);
     }
     return myIsExtending == that.myIsExtending && Comparing.equal(myBound, that.myBound);
   }
 
+  @Override
   public int hashCode() {
     return (myIsExtending ? 1 : 0) + (myBound != null ? myBound.hashCode() : 0);
   }

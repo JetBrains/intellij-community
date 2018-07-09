@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.console;
 
 import com.google.common.collect.Maps;
@@ -22,7 +8,10 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.containers.ComparatorUtil;
-import com.intellij.util.xmlb.annotations.*;
+import com.intellij.util.xmlb.annotations.Attribute;
+import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.util.xmlb.annotations.XCollection;
+import com.intellij.util.xmlb.annotations.XMap;
 import com.jetbrains.python.run.AbstractPyCommonOptionsForm;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
 import com.jetbrains.python.run.PythonRunParams;
@@ -41,8 +30,9 @@ import java.util.Map;
   }
 )
 public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptions.State> {
-  private State myState = new State();
+  private final State myState = new State();
 
+  @NotNull
   public PyConsoleSettings getPythonConsoleSettings() {
     return myState.myPythonConsoleState;
   }
@@ -63,11 +53,11 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     myState.myShowVariablesByDefault = showVariableByDefault;
   }
 
-  public boolean isIpythonEnabled(){
+  public boolean isIpythonEnabled() {
     return myState.myIpythonEnabled;
   }
 
-  public void setIpythonEnabled(boolean enabled){
+  public void setIpythonEnabled(boolean enabled) {
     myState.myIpythonEnabled = enabled;
   }
 
@@ -81,7 +71,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
   }
 
   @Override
-  public void loadState(State state) {
+  public void loadState(@NotNull State state) {
     myState.myShowDebugConsoleByDefault = state.myShowDebugConsoleByDefault;
     myState.myShowVariablesByDefault = state.myShowVariablesByDefault;
     myState.myPythonConsoleState = state.myPythonConsoleState;
@@ -107,15 +97,15 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
     public boolean myPassParentEnvs = true;
     public String myWorkingDirectory = "";
     public boolean myAddContentRoots = true;
-    public boolean myAddSourceRoots;
+    public boolean myAddSourceRoots = true;
     @NotNull
     private PathMappingSettings myMappings = new PathMappingSettings();
     private boolean myUseSoftWraps = false;
 
-    public PyConsoleSettings(){
+    public PyConsoleSettings() {
     }
 
-    public PyConsoleSettings(String myCustomStartScript){
+    public PyConsoleSettings(String myCustomStartScript) {
       this.myCustomStartScript = myCustomStartScript;
     }
 
@@ -137,7 +127,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       return !ComparatorUtil.equalsNullable(mySdkHome, form.getSdkHome()) ||
              !myInterpreterOptions.equals(form.getInterpreterOptions()) ||
              !myEnvs.equals(form.getEnvs()) ||
-             myPassParentEnvs != form.isPassParentEnvs() || 
+             myPassParentEnvs != form.isPassParentEnvs() ||
              myUseModuleSdk != form.isUseModuleSdk() ||
              myAddContentRoots != form.shouldAddContentRoots() ||
              myAddSourceRoots != form.shouldAddSourceRoots()
@@ -199,10 +189,7 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       return myUseModuleSdk;
     }
 
-    @Tag("envs")
-    @Property(surroundWithTag = false)
-    @MapAnnotation(surroundWithTag = false, surroundKeyWithTag = false, keyAttributeName = "key",
-                   entryTagName = "env", valueAttributeName = "value", surroundValueWithTag = false)
+    @XMap(propertyElementName = "envs", entryTagName = "env")
     public Map<String, String> getEnvs() {
       return myEnvs;
     }
@@ -222,7 +209,8 @@ public class PyConsoleOptions implements PersistentStateComponent<PyConsoleOptio
       return myInterpreterOptions;
     }
 
-    @AbstractCollection(surroundWithTag = false)
+    @NotNull
+    @XCollection
     public PathMappingSettings getMappings() {
       return myMappings;
     }

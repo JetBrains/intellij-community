@@ -24,7 +24,7 @@ abstract class PyTreeChooserDialog<T : PsiNamedElement>(title: String,
                                                         classFilter: TreeChooser.Filter<T>?,
                                                         initialValue: T?)
   : AbstractTreeClassChooserDialog<T>(title, project, scope, clazz, classFilter, initialValue) {
-  override fun getSelectedFromTreeUserObject(node: DefaultMutableTreeNode?) = null
+  override fun getSelectedFromTreeUserObject(node: DefaultMutableTreeNode?): Nothing? = null
 
   override fun getClassesByName(name: String?, checkBoxState: Boolean, pattern: String?, searchScope: GlobalSearchScope?): MutableList<T> =
     findElements(name!!, searchScope!!).filter(filter::isAccepted).toMutableList()
@@ -36,6 +36,6 @@ class PyClassTreeChooserDialog(title: String, project: Project, scope: GlobalSea
                                initialClass: PyClass?)
   : PyTreeChooserDialog<PyClass>(title, PyClass::class.java, project, scope, classFilter, initialClass) {
 
-  override fun findElements(name: String, searchScope: GlobalSearchScope) = PyClassNameIndex.find(name, project, searchScope.isForceSearchingInLibrarySources)!!
-
+  override fun findElements(name: String, searchScope: GlobalSearchScope): Collection<PyClass> =
+    PyClassNameIndex.find(name, project, searchScope.isSearchInLibraries)!!
 }

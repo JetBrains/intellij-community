@@ -2,6 +2,9 @@ class Foo {
     public static void foo(){}
 }
 class FooImpl extends Foo {
+  {
+    foo();
+  }
 
 }
 class U {

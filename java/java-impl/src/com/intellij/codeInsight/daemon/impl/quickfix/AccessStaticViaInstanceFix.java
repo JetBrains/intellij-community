@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
@@ -32,7 +33,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.psiutils.BlockUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,24 +92,29 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
     if (containingClass == null) return;
     final PsiExpression qualifierExpression = myExpression.getQualifierExpression();
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
-    if (qualifierExpression != null) {
-      if (!checkSideEffects(project, containingClass, qualifierExpression, factory, myExpression,editor)) return;
-      WriteAction.run(() -> {
-        try {
-          PsiElement newQualifier = qualifierExpression.replace(factory.createReferenceExpression(containingClass));
-          PsiElement qualifiedWithClassName = myExpression.copy();
-          if (myExpression.getTypeParameters().length == 0 && !(containingClass.isInterface() && !containingClass.equals(PsiTreeUtil.getParentOfType(myExpression, PsiClass.class)))) {
-            newQualifier.delete();
-            if (myExpression.resolve() != myMember) {
-              myExpression.replace(qualifiedWithClassName);
-            }
+    if (qualifierExpression != null && !checkSideEffects(project, containingClass, qualifierExpression, factory, myExpression,editor)) return;
+    WriteAction.run(() -> {
+      try {
+        PsiElement newQualifier = factory.createReferenceExpression(containingClass);
+        if (qualifierExpression != null) {
+          newQualifier = qualifierExpression.replace(newQualifier);
+        }
+        else {
+          myExpression.setQualifierExpression((PsiExpression)newQualifier);
+          newQualifier = myExpression.getQualifierExpression();
+        }
+        PsiElement qualifiedWithClassName = myExpression.copy();
+        if (myExpression.getTypeParameters().length == 0 && !(containingClass.isInterface() && !containingClass.equals(PsiTreeUtil.getParentOfType(myExpression, PsiClass.class)))) {
+          newQualifier.delete();
+          if (myExpression.resolve() != myMember) {
+            myExpression.replace(qualifiedWithClassName);
           }
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      });
-    }
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    });
   }
 
   @Override

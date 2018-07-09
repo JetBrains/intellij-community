@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ProjectTopics;
@@ -21,7 +7,6 @@ import com.intellij.codeInsight.AttachSourcesProvider;
 import com.intellij.ide.highlighter.JavaClassFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -33,6 +18,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.LibrarySourceRootDetectorUtil;
@@ -47,7 +33,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.compiled.ClsParsingUtil;
@@ -55,7 +40,6 @@ import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,10 +47,7 @@ import javax.swing.*;
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Dmitry Avdeev
@@ -159,8 +140,10 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     }
     else {
       panel.createActionLabel(ProjectBundle.message("class.file.open.source.action"), () -> {
-        OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, sourceFile);
-        FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
+        if (sourceFile.isValid()) {
+          OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, sourceFile);
+          FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
+        }
       });
     }
 
@@ -177,9 +160,9 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
             int minor = stream.readUnsignedShort();
             int major = stream.readUnsignedShort();
             StringBuilder info = new StringBuilder().append("bytecode version: ").append(major).append('.').append(minor);
-            LanguageLevel level = ClsParsingUtil.getLanguageLevelByVersion(major);
-            if (level != null) {
-              info.append(" (").append(level == LanguageLevel.JDK_1_3 ? level.getName() + " or older" : level.getName()).append(')');
+            JavaSdkVersion sdkVersion = ClsParsingUtil.getJdkVersionByBytecode(major);
+            if (sdkVersion != null) {
+              info.append(" (Java ").append(sdkVersion.getDescription()).append(')');
             }
             return info.toString();
           }
@@ -245,14 +228,11 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
         modelsToCommit.add(model);
       }
       if (modelsToCommit.isEmpty()) return ActionCallback.REJECTED;
-      new WriteAction() {
-        @Override
-        protected void run(@NotNull final Result result) {
-          for (Library.ModifiableModel model : modelsToCommit) {
-            model.commit();
-          }
+      WriteAction.runAndWait(() -> {
+        for (Library.ModifiableModel model : modelsToCommit) {
+          model.commit();
         }
-      }.execute();
+      });
 
       return ActionCallback.DONE;
     }

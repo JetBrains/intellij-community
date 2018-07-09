@@ -43,7 +43,6 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -329,7 +328,7 @@ public abstract class AbstractLayoutCodeProcessor {
 
     final Ref<FutureTask<Boolean>> writeActionRunnable = new Ref<>();
     Runnable readAction = () -> {
-      if (!checkFileWritable(file)) return;
+      if (!file.isValid() || !checkFileWritable(file)) return;
       try{
         FutureTask<Boolean> writeTask = preprocessFile(file, myProcessChangedTextOnly);
         writeActionRunnable.set(writeTask);
@@ -347,14 +346,17 @@ public abstract class AbstractLayoutCodeProcessor {
       }
       catch (CancellationException ignored) {
       }
-      catch (ExecutionException e) {
-        if (e.getCause() instanceof IndexNotReadyException) {
-          throw (IndexNotReadyException)e.getCause();
-        }
-        LOG.error(e);
-      }
       catch (Exception e) {
-        LOG.error(e);
+        Throwable cause = e.getCause();
+        if (cause != null) {
+          if (cause instanceof IndexNotReadyException) {
+            throw (IndexNotReadyException)e.getCause();
+          }
+          LOG.error(getClass().getSimpleName() + " failure, see the stack trace", cause);
+        }
+        else {
+          LOG.error(e);
+        }
       }
     };
     runLayoutCodeProcess(readAction, writeAction);
@@ -388,6 +390,7 @@ public abstract class AbstractLayoutCodeProcessor {
   }
 
   private static boolean canBeFormatted(PsiFile file) {
+    if (!file.isValid()) return false;
     if (LanguageFormatting.INSTANCE.forContext(file) == null) {
       return false;
     }
@@ -541,8 +544,7 @@ public abstract class AbstractLayoutCodeProcessor {
     }
 
     private Boolean shouldProcessFile(PsiFile file) {
-      Computable<Boolean> computable = () -> file.isWritable() && canBeFormatted(file) && acceptedByFilters(file);
-      return ApplicationManager.getApplication().runReadAction(computable);
+      return ReadAction.compute(() -> file.isWritable() && canBeFormatted(file) && acceptedByFilters(file));
     }
 
     private void performFileProcessing(@NotNull PsiFile file) {

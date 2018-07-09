@@ -52,7 +52,6 @@ import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 15, 2003
  */
 public class ProjectConfigurable extends ProjectStructureElementConfigurable<Project> implements DetailsComponent.Facade {
 

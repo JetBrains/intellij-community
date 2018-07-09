@@ -28,6 +28,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		(	common.attrs
 		&	(	common.attrs.aria.role.separator
 			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.doc-pagebreak
 			)?
 		)
 	hr.inner =
@@ -99,6 +100,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 			|	common.attrs.aria.role.treeitem
 			|	common.attrs.aria.role.separator
 			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.doc-biblioentry
+			|	common.attrs.aria.role.doc-endnote
 			)?
 		)
 	li.inner =
@@ -186,6 +189,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	(	common.attrs.aria.implicit.list
 			|	common.attrs.aria.role.list
 			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.doc-glossary
 			)?
 		)
 	dl.inner =
@@ -263,17 +267,21 @@ datatypes w = "http://whattf.org/datatype-draft"
 ## Title or Explanatory Caption: <legend>
 
 	legend.elem =
-		element legend { legend.inner & legend.attrs }
+		element legend { legend.inner & legend.attrs } & nonW3C
 	legend.attrs =
 		(	common.attrs
 		)
 	legend.inner =
 		(	common.inner.phrasing
-		|	h1.elem
-		|	h2.elem
-		|	h3.elem
-		|	h4.elem
-		|	h5.elem
-		|	h6.elem
-		|	hgroup.elem
+		)
+	legend.elem.w3c =
+		element legend { legend.inner.w3c & legend.attrs } & W3Conly
+	legend.inner.w3c =
+		(	common.inner.phrasing
+		&	h1.elem*
+		&	h2.elem*
+		&	h3.elem*
+		&	h4.elem*
+		&	h5.elem*
+		&	h6.elem*
 		)

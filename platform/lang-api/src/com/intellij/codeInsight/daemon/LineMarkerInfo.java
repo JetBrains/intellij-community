@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon;
 
@@ -20,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -38,6 +25,7 @@ import java.awt.*;
 
 public class LineMarkerInfo<T extends PsiElement> {
   private static final Logger LOG = Logger.getInstance(LineMarkerInfo.class);
+
   protected final Icon myIcon;
   private final SmartPsiElementPointer<T> elementRef;
   public final int startOffset;
@@ -97,6 +85,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   /**
    * @deprecated use {@link LineMarkerInfo#LineMarkerInfo(PsiElement, TextRange, Icon, int, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment)} instead
    */
+  @Deprecated
   public LineMarkerInfo(@NotNull T element,
                         int startOffset,
                         Icon icon,
@@ -110,6 +99,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   /**
    * @deprecated use {@link LineMarkerInfo#LineMarkerInfo(PsiElement, TextRange, Icon, int, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment)} instead
    */
+  @Deprecated
   public LineMarkerInfo(@NotNull T element,
                         int startOffset,
                         Icon icon,
@@ -117,6 +107,11 @@ public class LineMarkerInfo<T extends PsiElement> {
                         @Nullable Function<? super T, String> tooltipProvider,
                         @Nullable GutterIconNavigationHandler<T> navHandler) {
     this(element, startOffset, icon, updatePass, tooltipProvider, navHandler, GutterIconRenderer.Alignment.RIGHT);
+  }
+
+  @Nullable
+  public Icon getIcon() {
+    return myIcon;
   }
 
   @Nullable
@@ -139,6 +134,11 @@ public class LineMarkerInfo<T extends PsiElement> {
 
   void setNavigateAction(@NotNull  AnAction navigateAction) {
     myNavigateAction = navigateAction;
+  }
+
+  @NotNull
+  public MarkupEditorFilter getEditorFilter() {
+    return MarkupEditorFilter.EMPTY;
   }
 
   @Nullable

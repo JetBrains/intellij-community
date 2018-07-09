@@ -22,6 +22,6 @@ UFile (package = ) [public class DoWhileInfinite {...]
                             UBlockExpression [{...}] = (var count = 0)
                                 UPostfixExpression (operator = ++) [count++] = (var count = 0)
                                     USimpleNameReferenceExpression (identifier = count) [count] = (var count = 0)
-                            UastEmptyExpression [UastEmptyExpression] = NON-EVALUATED
+                            UastEmptyExpression [UastEmptyExpression] = Undetermined
                 UReturnExpression [return count] = Nothing
                     USimpleNameReferenceExpression (identifier = count) [count] = (var count = 0)

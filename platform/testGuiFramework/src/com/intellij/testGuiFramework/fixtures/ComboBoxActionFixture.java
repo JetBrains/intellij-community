@@ -37,8 +37,8 @@ import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.junit.Assert.*;
 
 public class ComboBoxActionFixture {
-  @NotNull private Robot myRobot;
-  @NotNull private JButton myTarget;
+  @NotNull private final Robot myRobot;
+  @NotNull private final JButton myTarget;
   private static final Class<?> ourComboBoxButtonClass;
   static {
     Class<?> temp = null;
@@ -104,7 +104,7 @@ public class ComboBoxActionFixture {
           }
         });
       }
-    }, GuiTestUtil.SHORT_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
     comboBoxButtonFixture.click();
   }
 
@@ -127,7 +127,7 @@ public class ComboBoxActionFixture {
         }
         return false;
       }
-    }, GuiTestUtil.SHORT_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
 
     final Integer appIndex = execute(new GuiQuery<Integer>() {
       @Override

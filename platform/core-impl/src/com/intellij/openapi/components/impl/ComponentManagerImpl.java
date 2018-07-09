@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl;
 
 import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.StartupProgress;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.components.ComponentManager;
@@ -44,6 +32,7 @@ import com.intellij.util.messages.MessageBusFactory;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import com.intellij.util.pico.DefaultPicoContainer;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -85,10 +74,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     bootstrapPicoContainer(name);
   }
 
-  protected final void init(@Nullable ProgressIndicator progressIndicator) {
-    init(progressIndicator, null);
-  }
-
   protected final void init(@Nullable ProgressIndicator indicator, @Nullable Runnable componentsRegistered) {
     List<ComponentConfig> componentConfigs = getComponentConfigs(indicator);
     for (ComponentConfig config : componentConfigs) {
@@ -126,11 +111,9 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   @NotNull
   @Override
   public MessageBus getMessageBus() {
-    if (myDisposeCompleted || myDisposed) {
-      ProgressManager.checkCanceled();
-      throw new AssertionError("Already disposed");
+    if (myDisposed) {
+      throwAlreadyDisposed();
     }
-    assert myMessageBus != null : "Not initialized yet";
     return myMessageBus;
   }
 
@@ -159,23 +142,14 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @Override
   public final <T> T getComponent(@NotNull Class<T> interfaceClass) {
-    if (myDisposeCompleted) {
-      ProgressManager.checkCanceled();
-      throw new AssertionError("Already disposed: " + this);
-    }
-
-    ComponentAdapter adapter = getPicoContainer().getComponentAdapter(interfaceClass);
+    MutablePicoContainer picoContainer = getPicoContainer();
+    ComponentAdapter adapter = picoContainer.getComponentAdapter(interfaceClass);
     if (!(adapter instanceof ComponentConfigComponentAdapter)) {
       return null;
     }
 
-    if (myDisposed) {
-      // getComponent could be called during some component.dispose() call, in this case we don't attempt to instantiate component
-      //noinspection unchecked
-      return (T)((ComponentConfigComponentAdapter)adapter).myInitializedComponentInstance;
-    }
     //noinspection unchecked
-    return (T)adapter.getComponentInstance(getPicoContainer());
+    return (T)adapter.getComponentInstance(picoContainer);
   }
 
   @Override
@@ -199,9 +173,14 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   @TestOnly
   public void registerComponentImplementation(@NotNull Class<?> componentKey, @NotNull Class<?> componentImplementation) {
+    registerComponentImplementation(componentKey, componentImplementation, false);
+  }
+
+  @TestOnly
+  public void registerComponentImplementation(@NotNull Class<?> componentKey, @NotNull Class<?> componentImplementation, boolean shouldBeRegistered) {
     MutablePicoContainer picoContainer = getPicoContainer();
     ComponentConfigComponentAdapter adapter = (ComponentConfigComponentAdapter)picoContainer.unregisterComponent(componentKey);
-    LOG.assertTrue(adapter != null);
+    if (shouldBeRegistered) LOG.assertTrue(adapter != null);
     picoContainer.registerComponent(new ComponentConfigComponentAdapter(componentKey, componentImplementation, null, false));
   }
 
@@ -253,10 +232,17 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   public MutablePicoContainer getPicoContainer() {
     MutablePicoContainer container = myPicoContainer;
     if (container == null || myDisposeCompleted) {
-      ProgressManager.checkCanceled();
-      throw new AssertionError("Already disposed: "+toString());
+      throwAlreadyDisposed();
     }
     return container;
+  }
+
+  @Contract("->fail")
+  private void throwAlreadyDisposed() {
+    ReadAction.run(() -> {
+      ProgressManager.checkCanceled();
+      throw new AssertionError("Already disposed: " + this);
+    });
   }
 
   @NotNull
@@ -297,7 +283,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     ArrayList<ComponentConfig> componentConfigs = new ArrayList<>();
     boolean isDefaultProject = this instanceof Project && ((Project)this).isDefault();
     boolean headless = ApplicationManager.getApplication().isHeadlessEnvironment();
-    for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins((message, progress) -> indicator.setFraction(progress))) {
+    StartupProgress startupProgress = null;
+    if (indicator != null) {
+      startupProgress = (message, progress) -> indicator.setFraction(progress);
+    }
+    for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins(startupProgress)) {
       if (PluginManagerCore.shouldSkipPlugin(plugin)) {
         continue;
       }
@@ -452,7 +442,8 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     @Override
     public Object getComponentInstance(PicoContainer picoContainer) throws PicoInitializationException, PicoIntrospectionException, ProcessCanceledException {
       Object instance = myInitializedComponentInstance;
-      if (instance != null) {
+      // getComponent could be called during some component.dispose() call, in this case we don't attempt to instantiate component
+      if (instance != null || myDisposed) {
         return instance;
       }
 

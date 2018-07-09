@@ -81,7 +81,7 @@ public class WhiteSpace {
    * the first white space.
    * <p/>
    * <b>Note:</b> {@link #getEndOffset() end offset} value is the same as the {@link #getStartOffset() start offset} for
-   * the newly constructed object. {@link #append(int, FormattingDocumentModel, CommonCodeStyleSettings.IndentOptions)} should be
+   * the newly constructed object. {@link #changeEndOffset(int, FormattingDocumentModel, CommonCodeStyleSettings.IndentOptions)} should be
    * called in order to apply desired end offset.
    *
    * @param startOffset       start offset to use
@@ -508,7 +508,7 @@ public class WhiteSpace {
   /**
    * Allows to get information if current object contained line feed(s) initially. It's considered to contain them if
    * line feeds were found at the target text document fragment after
-   * new {@link #append(int, FormattingDocumentModel, CommonCodeStyleSettings.IndentOptions) end offset appliance}.
+   * new {@link #changeEndOffset(int, FormattingDocumentModel, CommonCodeStyleSettings.IndentOptions)}  end offset appliance}.
    *
    * @return    {@code true} if current object contained line feeds initially; {@code false} otherwise
    */
@@ -521,7 +521,7 @@ public class WhiteSpace {
    * Tries to ensure that number of line feeds and white spaces managed by the given {@link WhiteSpace} object is the
    * same as the one defined by the given {@code 'spacing'} object.
    * <p/>
-   * This method may be considered a shortcut for calling {@link #arrangeLineFeeds(SpacingImpl, FormatProcessor)} and
+   * This method may be considered a shortcut for calling {@link #arrangeLineFeeds(SpacingImpl, BlockRangesMap)} and
    * {@link #arrangeSpaces(SpacingImpl)}.
    */
   public void removeLineFeeds(final SpacingImpl spacing, final BlockRangesMap helper) {
@@ -670,7 +670,7 @@ public class WhiteSpace {
       }
     }
     result.add(currentLine);
-    return result.toArray(new CharSequence[result.size()]);
+    return result.toArray(new CharSequence[0]);
   }
 
   /**

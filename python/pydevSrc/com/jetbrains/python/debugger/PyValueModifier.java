@@ -1,6 +1,7 @@
 package com.jetbrains.python.debugger;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.xdebugger.XExpression;
 import com.intellij.xdebugger.frame.XValueModifier;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,10 +17,10 @@ public class PyValueModifier extends XValueModifier {
   }
 
   @Override
-  public void setValue(@NotNull final String expression, @NotNull final XModificationCallback callback) {
+  public void setValue(@NotNull final XExpression expression, @NotNull final XModificationCallback callback) {
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       try {
-        myDebugProcess.changeVariable(myVariable, expression);
+        myDebugProcess.changeVariable(myVariable, expression.getExpression());
         callback.valueModified();
       }
       catch (PyDebuggerException e) {

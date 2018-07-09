@@ -17,7 +17,6 @@ package org.jetbrains.plugins.github;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
-import org.jetbrains.plugins.github.api.GithubConnection;
 import org.jetbrains.plugins.github.api.data.GithubRepo;
 import org.jetbrains.plugins.github.test.GithubTest;
 
@@ -33,13 +32,12 @@ public class GithubRequestQueringTest extends GithubTest {
 
   @Override
   protected void beforeTest() {
-    assumeNotNull(myLogin2);
+    assumeNotNull(myAccount2);
   }
 
   public void testPagination() throws Throwable {
-    GithubConnection connection = new GithubConnection(myGitHubSettings.getAuthData(), true);
-    try {
-      List<GithubRepo> availableRepos = GithubApiUtil.getUserRepos(connection, myLogin2);
+    myApiTaskExecutor.execute(myAccount2, c -> {
+      List<GithubRepo> availableRepos = GithubApiUtil.getUserRepos(c, myUsername2);
       List<String> realData = new ArrayList<>();
       for (GithubRepo info : availableRepos) {
         realData.add(info.getName());
@@ -51,14 +49,12 @@ public class GithubRequestQueringTest extends GithubTest {
       }
 
       assertContainsElements(realData, expectedData);
-    }
-    finally {
-      connection.close();
-    }
+      return null;
+    });
   }
 
   public void testOwnRepos() throws Throwable {
-    List<GithubRepo> result = GithubApiUtil.getUserRepos(new GithubConnection(myAuth));
+    List<GithubRepo> result = myApiTaskExecutor.execute(myAccount, c -> GithubApiUtil.getUserRepos(c));
 
     assertTrue(ContainerUtil.exists(result, (it) -> it.getName().equals("example")));
     assertTrue(ContainerUtil.exists(result, (it) -> it.getName().equals("PullRequestTest")));
@@ -66,7 +62,7 @@ public class GithubRequestQueringTest extends GithubTest {
   }
 
   public void testAllRepos() throws Throwable {
-    List<GithubRepo> result = GithubApiUtil.getUserRepos(new GithubConnection(myAuth), true);
+    List<GithubRepo> result = myApiTaskExecutor.execute(myAccount, c -> GithubApiUtil.getUserRepos(c, true));
 
     assertTrue(ContainerUtil.exists(result, (it) -> it.getName().equals("example")));
     assertTrue(ContainerUtil.exists(result, (it) -> it.getName().equals("PullRequestTest")));

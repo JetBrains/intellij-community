@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Maxim.Medvedev
- *         Date: Apr 17, 2009 5:49:35 PM
  */
 class IntroduceParameterTest extends LightCodeInsightFixtureTestCase {
   final String getBasePath() {

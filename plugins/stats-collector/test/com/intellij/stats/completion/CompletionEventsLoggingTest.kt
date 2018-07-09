@@ -17,8 +17,8 @@ package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.stats.events.completion.Action.*
-import com.intellij.stats.events.completion.ExplicitSelectEvent
+import com.intellij.stats.completion.Action.*
+import com.intellij.stats.completion.events.ExplicitSelectEvent
 import org.assertj.core.api.Assertions.assertThat
 
 

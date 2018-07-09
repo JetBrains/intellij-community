@@ -18,7 +18,10 @@ package com.intellij.execution.testframework.ui;
 import com.intellij.execution.testframework.AbstractTestProxy;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.TestFrameworkRunningModel;
-import com.intellij.ide.util.treeView.*;
+import com.intellij.ide.util.treeView.AbstractTreeBuilder;
+import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.ide.util.treeView.AlphaComparator;
+import com.intellij.ide.util.treeView.IndexComparator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.util.Comparing;
@@ -54,10 +57,6 @@ public abstract class AbstractTestTreeBuilder extends AbstractTreeBuilder {
       current = current.getParent();
     }
     while (current != null);
-  }
-
-  protected boolean isAlwaysShowPlus(final NodeDescriptor descriptor) {
-    return false;
   }
 
   @NotNull

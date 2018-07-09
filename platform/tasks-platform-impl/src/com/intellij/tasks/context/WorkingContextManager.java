@@ -120,9 +120,7 @@ public class WorkingContextManager {
 
 
   private synchronized void saveContext(@Nullable String entryName, String zipPostfix, @Nullable String comment) {
-    JBZipFile archive = null;
-    try {
-      archive = getTasksArchive(zipPostfix);
+    try (JBZipFile archive = getTasksArchive(zipPostfix)) {
       if (entryName == null) {
         int i = archive.getEntries().size();
         do {
@@ -140,9 +138,6 @@ public class WorkingContextManager {
     }
     catch (IOException e) {
       LOG.error(e);
-    }
-    finally {
-      closeArchive(archive);
     }
   }
 
@@ -189,9 +184,7 @@ public class WorkingContextManager {
   }
 
   private synchronized boolean doEntryAction(String zipPostfix, String entryName, ThrowableConsumer<JBZipEntry, Exception> action) {
-    JBZipFile archive = null;
-    try {
-      archive = getTasksArchive(zipPostfix);
+    try (JBZipFile archive = getTasksArchive(zipPostfix)) {
       JBZipEntry entry = archive.getEntry(StringUtil.startsWithChar(entryName, '/') ? entryName : "/" + entryName);
       if (entry != null) {
         action.consume(entry);
@@ -201,21 +194,7 @@ public class WorkingContextManager {
     catch (Exception e) {
       LOG.error(e);
     }
-    finally {
-      closeArchive(archive);
-    }
     return false;
-  }
-
-  private static void closeArchive(JBZipFile archive) {
-    if (archive != null) {
-      try {
-        archive.close();
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
   }
 
   public List<ContextInfo> getContextHistory() {
@@ -223,18 +202,13 @@ public class WorkingContextManager {
   }
 
   private synchronized List<ContextInfo> getContextHistory(String zipPostfix) {
-    JBZipFile archive = null;
-    try {
-      archive = getTasksArchive(zipPostfix);
+    try (JBZipFile archive = getTasksArchive(zipPostfix)) {
       List<JBZipEntry> entries = archive.getEntries();
       return ContainerUtil.mapNotNull(entries, (NullableFunction<JBZipEntry, ContextInfo>)entry -> entry.getName().startsWith("/context") ? new ContextInfo(entry.getName(), entry.getTime(), entry.getComment()) : null);
     }
     catch (Exception e) {
       LOG.error(e);
       return Collections.emptyList();
-    }
-    finally {
-      closeArchive(archive);
     }
   }
 
@@ -251,9 +225,7 @@ public class WorkingContextManager {
   }
 
   private void removeContext(String name, String postfix) {
-    JBZipFile archive = null;
-    try {
-      archive = getTasksArchive(postfix);
+    try (JBZipFile archive = getTasksArchive(postfix)) {
       JBZipEntry entry = archive.getEntry(name);
       if (entry != null) {
         archive.eraseEntry(entry);
@@ -261,9 +233,6 @@ public class WorkingContextManager {
     }
     catch (IOException e) {
       LOG.error(e);
-    }
-    finally {
-      closeArchive(archive);
     }
   }
 
@@ -273,12 +242,10 @@ public class WorkingContextManager {
   }
 
   private synchronized void pack(int max, int delta, String zipPostfix) {
-    JBZipFile archive = null;
-    try {
-      archive = getTasksArchive(zipPostfix);
+    try (JBZipFile archive = getTasksArchive(zipPostfix)) {
       List<JBZipEntry> entries = archive.getEntries();
       if (entries.size() > max + delta) {
-        JBZipEntry[] array = entries.toArray(new JBZipEntry[entries.size()]);
+        JBZipEntry[] array = entries.toArray(new JBZipEntry[0]);
         Arrays.sort(array, ENTRY_COMPARATOR);
         for (int i = array.length - 1; i >= max; i--) {
           archive.eraseEntry(array[i]);
@@ -287,9 +254,6 @@ public class WorkingContextManager {
     }
     catch (IOException e) {
       LOG.error(e);
-    }
-    finally {
-      closeArchive(archive);
     }
   }
 

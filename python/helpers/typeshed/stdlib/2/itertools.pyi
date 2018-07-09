@@ -38,10 +38,10 @@ def groupby(iterable: Iterable[_T],
             key: Callable[[_T], _S]) -> Iterator[Tuple[_S, Iterator[_T]]]: ...
 
 @overload
-def islice(iterable: Iterable[_T], stop: int) -> Iterator[_T]: ...
+def islice(iterable: Iterable[_T], stop: Optional[int]) -> Iterator[_T]: ...
 @overload
 def islice(iterable: Iterable[_T], start: Optional[int], stop: Optional[int],
-           step: int = ...) -> Iterator[_T]: ...
+           step: Optional[int] = ...) -> Iterator[_T]: ...
 
 _T1 = TypeVar('_T1')
 _T2 = TypeVar('_T2')
@@ -55,7 +55,33 @@ def imap(func: Callable[[_T1], _S], iter1: Iterable[_T1]) -> Iterator[_S]: ...
 @overload
 def imap(func: Callable[[_T1, _T2], _S],
         iter1: Iterable[_T1],
-        iter2: Iterable[_T2]) -> Iterator[_S]: ...  # TODO more than two iterables
+        iter2: Iterable[_T2]) -> Iterator[_S]: ...
+@overload
+def imap(func: Callable[[_T1, _T2, _T3], _S],
+         iter1: Iterable[_T1], iter2: Iterable[_T2],
+         iter3: Iterable[_T3]) -> Iterator[_S]: ...
+
+@overload
+def imap(func: Callable[[_T1, _T2, _T3, _T4], _S],
+         iter1: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3],
+         iter4: Iterable[_T4]) -> Iterator[_S]: ...
+
+@overload
+def imap(func: Callable[[_T1, _T2, _T3, _T4, _T5], _S],
+         iter1: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3],
+         iter4: Iterable[_T4], iter5: Iterable[_T5]) -> Iterator[_S]: ...
+
+@overload
+def imap(func: Callable[[_T1, _T2, _T3, _T4, _T5, _T6], _S],
+         iter1: Iterable[_T1], iter2: Iterable[_T2], iter3: Iterable[_T3],
+         iter4: Iterable[_T4], iter5: Iterable[_T5],
+         iter6: Iterable[_T6]) -> Iterator[_S]: ...
+
+@overload
+def imap(func: Callable[..., _S],
+         iter1: Iterable[Any], iter2: Iterable[Any], iter3: Iterable[Any],
+         iter4: Iterable[Any], iter5: Iterable[Any], iter6: Iterable[Any],
+         iter7: Iterable[Any], *iterables: Iterable[Any]) -> Iterator[_S]: ...
 
 def starmap(func: Any, iterable: Iterable[Any]) -> Iterator[Any]: ...
 def takewhile(predicate: Callable[[_T], Any],
@@ -127,9 +153,10 @@ def product(iter1: Iterable[Any],
             iter4: Iterable[Any],
             iter5: Iterable[Any],
             iter6: Iterable[Any],
-            iter7: Iterable[Any], *iterables: Iterable) -> Iterator[Tuple]: ...
+            iter7: Iterable[Any],
+            *iterables: Iterable[Any]) -> Iterator[Tuple[Any, ...]]: ...
 @overload
-def product(*iter: Iterable[_T], repeat: int) -> Iterator[Tuple[_T, ...]]: ...
+def product(*iterables: Iterable[Any], repeat: int) -> Iterator[Tuple[Any, ...]]: ...
 
 def permutations(iterable: Iterable[_T],
                  r: int = ...) -> Iterator[Sequence[_T]]: ...

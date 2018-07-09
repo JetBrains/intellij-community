@@ -26,6 +26,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -57,6 +59,7 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
   private final NotNullLazyValue<PsiMethodWithOverridingPercentMember[]> myLazyElementsWithPercent;
   private final boolean myToImplement;
   private final Project myProject;
+  private final PsiFile myFile;
   private boolean myMerge;
   private boolean mySortedByOverriding;
 
@@ -66,6 +69,7 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
                                                           final Collection<CandidateInfo> candidates,
                                                           final Collection<CandidateInfo> secondary) {
     final Project project = aClass.getProject();
+    final PsiFile file = aClass.getContainingFile();
     if (candidates.isEmpty() && secondary.isEmpty()) return null;
 
     final PsiMethodMember[] onlyPrimary = convertToMethodMembers(candidates);
@@ -90,7 +94,7 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
     final boolean overrideVisible = languageLevel.isAtLeast(LanguageLevel.JDK_1_6) || languageLevel.equals(LanguageLevel.JDK_1_5) && !toImplement;
 
     final JavaOverrideImplementMemberChooser javaOverrideImplementMemberChooser =
-      new JavaOverrideImplementMemberChooser(all, onlyPrimary, lazyElementsWithPercent, project, overrideVisible,
+      new JavaOverrideImplementMemberChooser(file, all, onlyPrimary, lazyElementsWithPercent, project, overrideVisible,
                                              merge, toImplement, PropertiesComponent.getInstance(project)
         .getBoolean(PROP_OVERRIDING_SORTED_OVERRIDE_IMPLEMENT));
     javaOverrideImplementMemberChooser.setTitle(getChooserTitle(toImplement, merge));
@@ -115,7 +119,8 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
     return javaOverrideImplementMemberChooser;
   }
 
-  private JavaOverrideImplementMemberChooser(final PsiMethodMember[] allElements,
+  private JavaOverrideImplementMemberChooser(final @NotNull PsiFile file,
+                                             final PsiMethodMember[] allElements,
                                              final PsiMethodMember[] onlyPrimaryElements,
                                              final NotNullLazyValue<PsiMethodWithOverridingPercentMember[]> lazyElementsWithPercent,
                                              final @NotNull Project project,
@@ -128,6 +133,7 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
     myOnlyPrimaryElements = onlyPrimaryElements;
     myLazyElementsWithPercent = lazyElementsWithPercent;
     myProject = project;
+    myFile = file;
     myMerge = merge;
     myToImplement = toImplement;
     mySortedByOverriding = sortedByOverriding;
@@ -188,6 +194,11 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
     return ContainerUtil.map2Array(candidates, PsiMethodMember.class, s -> new PsiMethodMember(s));
   }
 
+  @Override
+  protected boolean isInsertOverrideAnnotationSelected() {
+    return JavaCodeStyleSettings.getInstance(myFile).INSERT_OVERRIDE_ANNOTATION;
+  }
+
   private class MySortByOverridingAction extends ToggleAction {
     public MySortByOverridingAction() {
       super(SORT_METHODS_BY_PERCENT_DESCRIPTION, SORT_METHODS_BY_PERCENT_DESCRIPTION, AllIcons.ObjectBrowser.SortedByUsage);
@@ -212,7 +223,7 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
       }
       else {
         final PsiMethodMember[] elementsToRender = myMerge ? myAllElements : myOnlyPrimaryElements;
-        resetElementsWithDefaultComparator(elementsToRender, true);
+        resetElementsWithDefaultComparator(elementsToRender);
       }
     }
   }

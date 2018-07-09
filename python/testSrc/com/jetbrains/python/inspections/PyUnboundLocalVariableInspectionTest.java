@@ -44,7 +44,7 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
 
   // PY-1408
   public void testUnboundExceptAs() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doTest());
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest());
   }
 
   // PY-1434
@@ -84,7 +84,7 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
 
   // PY-3603
   public void testUnboundNonLocal() {
-    runWithLanguageLevel(LanguageLevel.PYTHON33, () -> doTest());
+    runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doTest());
   }
 
   // PY-3671
@@ -177,6 +177,11 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-13919
+  public void testRaiseInsideWith() {
+    doTest();
+  }
+
   // PY-6114
   public void testUnboundUnreachable() {
     doTest();
@@ -189,6 +194,35 @@ public class PyUnboundLocalVariableInspectionTest extends PyInspectionTestCase {
 
   public void testWhileOneBreak() {
     doTest();
+  }
+
+  // PY-14840
+  // PY-22003
+  public void testPositiveIteration() {
+    doTest();
+  }
+
+  public void testTooLargeToAnalyze() {
+    doTest();
+  }
+
+  public void testForwardReferenceInAnnotations() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, () -> doTest());
+  }
+
+  // PY-23003
+  public void testAccessInNestedLoop() {
+    doTestByText(
+      "for file in ['test_file']:\n" +
+      "    for line in f:\n" +
+      "        if a:\n" +
+      "            block = True\n" +
+      "        elif <warning descr=\"Name 'block' can be not defined\">block</warning> and b:\n" +
+      "            block = False\n" +
+      "        else:\n" +
+      "            print(line)\n" +
+      "    print(block)"
+    );
   }
 
   @NotNull

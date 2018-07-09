@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInspection.ui.actions;
 
@@ -33,11 +21,12 @@ public class QuickFixesViewActionGroup extends ActionGroup {
   @NotNull
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
-    final InspectionResultsView view = getView(e);
+    InspectionResultsView view = getView(e);
     if (view == null || InvokeQuickFixAction.cantApplyFixes(view)) return AnAction.EMPTY_ARRAY;
     InspectionToolWrapper toolWrapper = view.getTree().getSelectedToolWrapper(true);
     if (toolWrapper == null) return AnAction.EMPTY_ARRAY;
-    final QuickFixAction[] quickFixes = view.getProvider().getQuickFixes(toolWrapper, view.getTree());
-    return quickFixes.length == 0 ? AnAction.EMPTY_ARRAY : quickFixes;
+    QuickFixAction[] quickFixes = view.getProvider().getCommonQuickFixes(toolWrapper, view.getTree());
+    if (quickFixes.length != 0) return quickFixes;
+    return view.getProvider().getPartialQuickFixes(toolWrapper, view.getTree());
   }
 }

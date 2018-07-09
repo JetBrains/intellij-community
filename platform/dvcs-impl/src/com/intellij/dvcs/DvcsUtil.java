@@ -53,6 +53,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.TimedVcsCommit;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.intellij.images.editor.ImageFileEditor;
@@ -72,8 +73,6 @@ public class DvcsUtil {
 
   private static final Logger LOGGER = Logger.getInstance(DvcsUtil.class);
   private static final int IO_RETRIES = 3; // number of retries before fail if an IOException happens during file read.
-  private static final int SHORT_HASH_LENGTH = 8;
-  private static final int LONG_HASH_LENGTH = 40;
 
   /**
    * Comparator for virtual files by name
@@ -179,13 +178,13 @@ public class DvcsUtil {
 
   @NotNull
   public static String getShortHash(@NotNull String hash) {
-    if (hash.length() < SHORT_HASH_LENGTH) {
+    if (hash.length() < VcsLogUtil.SHORT_HASH_LENGTH) {
       LOG.debug("Unexpectedly short hash: [" + hash + "]");
     }
-    if (hash.length() > LONG_HASH_LENGTH) {
+    if (hash.length() > VcsLogUtil.FULL_HASH_LENGTH) {
       LOG.debug("Unexpectedly long hash: [" + hash + "]");
     }
-    return hash.substring(0, Math.min(SHORT_HASH_LENGTH, hash.length()));
+    return VcsLogUtil.getShortHash(hash);
   }
 
   @NotNull
@@ -195,7 +194,12 @@ public class DvcsUtil {
 
   @NotNull
   public static AccessToken workingTreeChangeStarted(@NotNull Project project) {
-    BackgroundTaskUtil.syncPublisher(BatchFileChangeListener.TOPIC).batchChangeStarted(project);
+    return workingTreeChangeStarted(project, null);
+  }
+
+  @NotNull
+  public static AccessToken workingTreeChangeStarted(@NotNull Project project, @Nullable String activityName) {
+    BackgroundTaskUtil.syncPublisher(BatchFileChangeListener.TOPIC).batchChangeStarted(project, activityName);
     return new AccessToken() {
       @Override
       public void finish() {
@@ -466,7 +470,8 @@ public class DvcsUtil {
 
   @NotNull
   public static String joinShortNames(@NotNull Collection<? extends Repository> repositories, int limit) {
-    return joinWithAnd(ContainerUtil.map(repositories, (Function<Repository, String>)repository -> getShortRepositoryName(repository)), limit);
+    return joinWithAnd(ContainerUtil.map(repositories, (Function<Repository, String>)repository -> getShortRepositoryName(repository)),
+                       limit);
   }
 
   @NotNull

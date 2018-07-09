@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.extractMethodObject;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -84,6 +85,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   private Runnable myCopyMethodToInner;
   private final UniqueNameGenerator myFieldNameGenerator = new UniqueNameGenerator();
   private String myResultFieldName = null;
+  private final CodeStyleSettings myStyleSettings;
 
   private static final Key<Boolean> GENERATED_RETURN = new Key<>("GENERATED_RETURN");
 
@@ -92,6 +94,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     myInnerClassName = innerClassName;
     myExtractProcessor = new MyExtractMethodProcessor(project, editor, elements, null, REFACTORING_NAME, innerClassName, HelpID.EXTRACT_METHOD_OBJECT);
     myElementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    myStyleSettings = editor != null ? CodeStyle.getSettings(editor) :
+                      CodeStyle.getSettings(elements[0].getContainingFile());
   }
 
   @NotNull
@@ -144,7 +148,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         }
       }
     }
-    UsageInfo[] usageInfos = result.toArray(new UsageInfo[result.size()]);
+    UsageInfo[] usageInfos = result.toArray(UsageInfo.EMPTY_ARRAY);
     return UsageViewUtil.removeDuplicatedUsages(usageInfos);
   }
 
@@ -489,9 +493,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
     final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
     if (staticqualifier != null) {
-      newReplacement = argumentList.getExpressions().length > 0
-                       ? "new " + staticqualifier + inferredTypeArguments + argumentList.getText() + "."
-                       : staticqualifier + ".";
+      newReplacement = argumentList.isEmpty() ? staticqualifier + "." :
+                       "new " + staticqualifier + inferredTypeArguments + argumentList.getText() + ".";
     } else {
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
       final String qualifier = qualifierExpression != null ? qualifierExpression.getText() + "." : "";
@@ -524,6 +527,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     return "";
   }
 
+  @NotNull
   protected String getCommandName() {
     return REFACTORING_NAME;
   }
@@ -598,7 +602,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
   }
 
   private boolean notHasGeneratedFields() {
-    return !myMultipleExitPoints && getMethod().getParameterList().getParametersCount() == 0;
+    return !myMultipleExitPoints && getMethod().getParameterList().isEmpty();
   }
 
   private void createInnerClassConstructor(final PsiParameter[] parameters) throws IncorrectOperationException {
@@ -610,7 +614,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       final String parameterName = parameter.getName();
       LOG.assertTrue(parameterName != null);
       PsiParameter parm = myElementFactory.createParameter(parameterName, parameter.getType());
-      if (CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
+      if (myStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS) {
         final PsiModifierList modifierList = parm.getModifierList();
         LOG.assertTrue(modifierList != null);
         modifierList.setModifierProperty(PsiModifier.FINAL, true);
@@ -637,9 +641,9 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
 
       final PsiModifierList modifierList = field.getModifierList();
       LOG.assertTrue(modifierList != null);
-      final NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
-      if (manager.isNullable(parameter, false)) {
-        modifierList.addAfter(myElementFactory.createAnnotationFromText("@" + manager.getDefaultNullable(), field), null);
+      if (NullableNotNullManager.isNullable(parameter)) {
+        final String annotationName = NullableNotNullManager.getInstance(myProject).getDefaultNullable();
+        modifierList.addAfter(myElementFactory.createAnnotationFromText("@" + annotationName, field), null);
       }
       modifierList.setModifierProperty(PsiModifier.FINAL, isFinal);
 
@@ -745,6 +749,18 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
     }
 
     @Override
+    protected void initDuplicates() {
+      myDuplicates = Optional.ofNullable(getExactDuplicatesFinder())
+                             .map(finder -> finder.findDuplicates(myTargetClass))
+                             .orElse(new ArrayList<>());
+    }
+
+    @Override
+    public boolean initParametrizedDuplicates(boolean showDialog) {
+      return false;
+    }
+
+    @Override
     protected boolean insertNotNullCheckIfPossible() {
       return false;
     }
@@ -817,10 +833,6 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
       PsiExpression expression = processMethodDeclaration(methodCallExpression.getArgumentList());
 
       return methodCallExpression.replace(expression);
-    }
-
-    public PsiVariable[] getOutputVariables() {
-      return myOutputVariables;
     }
 
     @Override

@@ -50,8 +50,7 @@ import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.text.UniqueNameGenerator;
 import gnu.trove.THashMap;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
@@ -361,22 +360,22 @@ public class RefactoringUtil {
     PsiType typeByExpression = getTypeByExpression(expr, factory);
     PsiType type = typeByExpression;
     final boolean isFunctionalType = LambdaUtil.notInferredType(type);
-    final boolean isDenotable = PsiTypesUtil.isDenotableType(expr.getType());
-    if (type != null && !isFunctionalType && isDenotable) {
+    PsiType exprType = expr.getType();
+    final boolean detectConjunct = exprType instanceof PsiIntersectionType ||
+                                   exprType instanceof PsiWildcardType && ((PsiWildcardType)exprType).getBound() instanceof PsiIntersectionType ||
+                                   exprType instanceof PsiCapturedWildcardType && ((PsiCapturedWildcardType)exprType).getUpperBound() instanceof PsiIntersectionType;
+    if (type != null && !isFunctionalType && !detectConjunct) {
       return type;
     }
     ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(expr, false);
-    if (expectedTypes.length == 1 || (isFunctionalType || !isDenotable)&& expectedTypes.length > 0 ) {
-      if (typeByExpression != null && Arrays.stream(expectedTypes).anyMatch(typeInfo -> typeInfo.getType().equals(typeByExpression))) {
+    if (expectedTypes.length == 1 || (isFunctionalType || detectConjunct) && expectedTypes.length > 0 ) {
+      if (typeByExpression != null && Arrays.stream(expectedTypes).anyMatch(typeInfo -> typeByExpression.isAssignableFrom(typeInfo.getType()))) {
         return type;
       }
       type = expectedTypes[0].getType();
       if (!type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) return type;
     }
-    if (!isDenotable) {
-      return type;
-    }
-    return null;
+    return detectConjunct ? type : null;
   }
 
   public static PsiType getTypeByExpression(PsiExpression expr) {
@@ -394,6 +393,9 @@ public class RefactoringUtil {
       ExpectedTypeInfo[] infos = ExpectedTypesProvider.getExpectedTypes(expr, false);
       if (infos.length == 1) {
         type = infos[0].getType();
+        if (type instanceof PsiPrimitiveType) {
+          type = ((PsiPrimitiveType)type).getBoxedType(expr);
+        }
       }
       else {
         type = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, expr.getResolveScope());
@@ -756,7 +758,7 @@ public class RefactoringUtil {
   private static PsiMethod findDefaultConstructor(final PsiClass aClass) {
     final PsiMethod[] constructors = aClass.getConstructors();
     for (PsiMethod constructor : constructors) {
-      if (constructor.getParameterList().getParametersCount() == 0) return constructor;
+      if (constructor.getParameterList().isEmpty()) return constructor;
     }
 
     return null;
@@ -807,6 +809,34 @@ public class RefactoringUtil {
     for (PsiElement element : replacement.keySet()) {
       if (element.isValid()) {
         element.replace(replacement.get(element));
+      }
+    }
+  }
+
+  public static void renameConflictingTypeParameters(PsiMember memberCopy, PsiClass targetClass) {
+    if (memberCopy instanceof PsiTypeParameterListOwner && !memberCopy.hasModifierProperty(PsiModifier.STATIC)) {
+      UniqueNameGenerator nameGenerator = new UniqueNameGenerator();
+      PsiUtil.typeParametersIterable(targetClass).forEach(param -> {
+        String paramName = param.getName();
+        if (paramName != null) {
+          nameGenerator.addExistingName(paramName);
+        }
+      });
+
+      PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(memberCopy.getProject());
+      for (PsiTypeParameter parameter : ((PsiTypeParameterListOwner)memberCopy).getTypeParameters()) {
+        String parameterName = parameter.getName();
+        if (parameterName == null) continue;
+        if (!nameGenerator.isUnique(parameterName)) {
+          substitutor = substitutor.put(parameter, PsiSubstitutor.EMPTY.substitute(factory.createTypeParameter(nameGenerator.generateUniqueName(parameterName), PsiClassType.EMPTY_ARRAY)));
+        }
+      }
+      if (!PsiSubstitutor.EMPTY.equals(substitutor)) {
+        replaceMovedMemberTypeParameters(memberCopy, PsiUtil.typeParametersIterable((PsiTypeParameterListOwner)memberCopy), substitutor, factory);//rename usages in the method
+        for (Map.Entry<PsiTypeParameter, PsiType> entry : substitutor.getSubstitutionMap().entrySet()) {
+          entry.getKey().setName(entry.getValue().getCanonicalText()); //rename declaration after all usages renamed
+        }
       }
     }
   }
@@ -889,15 +919,12 @@ public class RefactoringUtil {
       final PsiElement invalidBody = lambdaExpression.getBody();
       if (invalidBody == null) return declaration;
 
-      final PsiLambdaExpression expressionFromText = (PsiLambdaExpression)elementFactory
-        .createExpressionFromText(lambdaExpression.getParameterList().getText() + " -> {}", lambdaExpression.getParent());
+      String lambdaParamListWithArrowAndComments = lambdaExpression.getText()
+        .substring(0, (declaration.isPhysical() ? declaration : invalidBody).getStartOffsetInParent());
+      final PsiLambdaExpression expressionFromText = (PsiLambdaExpression)elementFactory.createExpressionFromText(lambdaParamListWithArrowAndComments + "{}", lambdaExpression.getParent());
       PsiCodeBlock newBody = (PsiCodeBlock)expressionFromText.getBody();
       LOG.assertTrue(newBody != null);
       newBody.add(declaration);
-
-      lambdaExpression =
-        (PsiLambdaExpression)lambdaExpression.replace(elementFactory.createExpressionFromText(
-          lambdaExpression.getParameterList().getText() + " -> " + invalidBody.getText(), lambdaExpression));
 
       final PsiElement lambdaExpressionBody = lambdaExpression.getBody();
       LOG.assertTrue(lambdaExpressionBody != null);
@@ -1045,7 +1072,10 @@ public class RefactoringUtil {
       assignment = (PsiExpressionStatement)body.addAfter(assignment, anchor);
       PsiExpression fieldInitializer = ((PsiField)copy).getInitializer();
       if (fieldInitializer instanceof PsiArrayInitializerExpression) {
-        fieldInitializer = createNewExpressionFromArrayInitializer((PsiArrayInitializerExpression)fieldInitializer, field.getType());
+        PsiType fieldType = field.getType();
+        if (fieldType instanceof PsiArrayType) {
+          fieldInitializer = createNewExpressionFromArrayInitializer((PsiArrayInitializerExpression)fieldInitializer, fieldType);
+        }
       }
       PsiExpression rExpression = ((PsiAssignmentExpression)assignment.getExpression()).getRExpression();
       assert fieldInitializer != null;
@@ -1387,7 +1417,7 @@ public class RefactoringUtil {
       used.retainAll(Arrays.asList(fromList.getTypeParameters()));
     }
 
-    PsiTypeParameter[] typeParameters = used.toArray(new PsiTypeParameter[used.size()]);
+    PsiTypeParameter[] typeParameters = used.toArray(PsiTypeParameter.EMPTY_ARRAY);
 
     Arrays.sort(typeParameters, Comparator.comparingInt(tp -> tp.getTextRange().getStartOffset()));
 

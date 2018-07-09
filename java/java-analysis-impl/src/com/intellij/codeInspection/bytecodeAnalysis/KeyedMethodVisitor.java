@@ -46,12 +46,12 @@ abstract class KeyedMethodVisitor extends ClassVisitor {
   @Override
   public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
     MethodNode node = new MethodNode(Opcodes.API_VERSION, access, name, desc, signature, exceptions);
-    Method method = new Method(className, node.name, node.desc);
+    Member method = new Member(className, node.name, node.desc);
     boolean stable = stableClass || (node.access & STABLE_FLAGS) != 0 || "<init>".equals(node.name);
 
     return visitMethod(node, method, new EKey(method, Out, stable));
   }
 
   @Nullable
-  abstract MethodVisitor visitMethod(final MethodNode node, Method method, final EKey key);
+  abstract MethodVisitor visitMethod(final MethodNode node, Member method, final EKey key);
 }

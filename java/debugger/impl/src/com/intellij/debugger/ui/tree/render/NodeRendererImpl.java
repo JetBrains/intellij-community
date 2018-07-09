@@ -38,7 +38,6 @@ import javax.swing.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Feb 9, 2005
  */
 public abstract class NodeRendererImpl implements NodeRenderer{
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.NodeRendererImpl");
@@ -113,9 +112,8 @@ public abstract class NodeRendererImpl implements NodeRenderer{
       return cloned;
     }
     catch (CloneNotSupportedException e) {
-      LOG.error(e);
+      throw new RuntimeException(e); 
     }
-    return null;
   }
 
   @Override

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
@@ -36,7 +22,7 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   }
 
   public void testDecoratorsPy3K() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   // PY-19130
@@ -80,7 +66,7 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   }
   
   public void testPy1268() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
   
   public void testInstanceMethodAsLambda() {
@@ -155,7 +141,7 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   }
 
   public void testPy3k() {
-    runWithLanguageLevel(LanguageLevel.PYTHON30, this::doTest);
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
   @NotNull
@@ -326,5 +312,44 @@ public class PyArgumentListInspectionTest extends PyInspectionTestCase {
   // PY-16968
   public void testKwargsAgainstKeywordOnly() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-26023
+  public void testAbstractMethod() {
+    runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
+  }
+
+  // PY-27148
+  public void testCollectionsNamedTupleReplace() {
+    doTest();
+  }
+
+  // PY-27148
+  public void testTypingNamedTupleReplace() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
+  }
+
+  // PY-27398
+  public void testInitializingDataclass() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
+
+  // PY-28957
+  public void testDataclassesReplace() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
+
+  public void testInitializingImportedTypingNamedTupleInheritor() {
+    runWithLanguageLevel(LanguageLevel.PYTHON37, this::doMultiFileTest);
+  }
+
+  // PY-25497
+  public void testObjectMethodInPossiblyInheritanceChain() {
+    doTest();
+  }
+
+  // PY-28127
+  public void testInitializingTypeVar() {
+    doTest();
   }
 }

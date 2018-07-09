@@ -15,8 +15,8 @@
  */
 package com.siyeh.ig.threading;
 
+import com.intellij.codeInsight.ExpressionUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -81,7 +81,7 @@ public class NonAtomicOperationOnVolatileFieldInspection extends BaseInspection 
       rhs.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
         public void visitReferenceExpression(PsiReferenceExpression reference) {
-          if (reference.isReferenceTo(volatileField) && ControlFlowUtil.isUnqualified(reference)) {
+          if (reference.isReferenceTo(volatileField) && ExpressionUtil.isEffectivelyUnqualified(reference)) {
             stopWalking();
             final PsiElement referenceNameElement = ((PsiJavaCodeReferenceElement)lhs).getReferenceNameElement();
             if (referenceNameElement != null) {
@@ -117,7 +117,7 @@ public class NonAtomicOperationOnVolatileFieldInspection extends BaseInspection 
         return null;
       }
       final PsiReferenceExpression reference = (PsiReferenceExpression)expression;
-      if (!ControlFlowUtil.isUnqualified(reference)) {
+      if (!ExpressionUtil.isEffectivelyUnqualified(reference)) {
         return null;
       }
       final PsiElement referent = reference.resolve();

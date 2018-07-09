@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/26/13
  */
 public interface BreakpointStepMethodFilter extends MethodFilter{
   @Nullable

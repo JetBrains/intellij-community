@@ -28,7 +28,7 @@ public class CommandLineTokenizer extends StringTokenizer {
 
     private static final String DEFAULT_DELIMITERS = " \t\n\r\f";
     // keep source level 1.4
-    private List myTokens = new ArrayList();
+    private final List myTokens = new ArrayList();
     private int myCurrentToken = 0;
     private boolean myHandleEscapedWhitespaces = false;
 
@@ -39,15 +39,6 @@ public class CommandLineTokenizer extends StringTokenizer {
     public CommandLineTokenizer(String str, boolean handleEscapedWhitespaces) {
         super(str, DEFAULT_DELIMITERS, true);
         myHandleEscapedWhitespaces = handleEscapedWhitespaces;
-        parseTokens();
-    }
-
-    /**
-     * @deprecated Do not pass custom delimiters to the CommandLineTokenizer as it may break its logic
-     */
-    @Deprecated()
-    public CommandLineTokenizer(String str, String delim) {
-        super(str, delim, true);
         parseTokens();
     }
 
@@ -105,7 +96,7 @@ public class CommandLineTokenizer extends StringTokenizer {
             while ((i = nextToken.indexOf('"')) >= 0) {
                 boolean isEscapedQuote = isEscapedAtPos(nextToken, i);
                 if (!isEscapedQuote) quotationMarks++;
-                buffer.append(nextToken.substring(0, isEscapedQuote ? i - 1 : i));
+                buffer.append(nextToken, 0, isEscapedQuote ? i - 1 : i);
                 if (isEscapedQuote) buffer.append('"');
                 nextToken = nextToken.substring(i + 1);
             }
@@ -113,7 +104,7 @@ public class CommandLineTokenizer extends StringTokenizer {
             boolean isEscapedWhitespace = false;
             if (myHandleEscapedWhitespaces && quotationMarks == 0 && nextToken.endsWith("\\") && super.hasMoreTokens()) {
               isEscapedWhitespace = true;
-              buffer.append(nextToken.substring(0, nextToken.length() - 1));
+              buffer.append(nextToken, 0, nextToken.length() - 1);
               buffer.append(super.nextToken());
             }
             else {

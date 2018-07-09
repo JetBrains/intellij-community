@@ -82,7 +82,7 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
   }
 
   @Override
-  public final int getChildRole(ASTNode child) {
+  public final int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JavaElementType.JAVA_CODE_REFERENCE) {
@@ -170,11 +170,13 @@ public class PsiImportStaticReferenceElementImpl extends CompositePsiElement imp
     return childByRole.getText();
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     TreeElement nameChild = (TreeElement)findChildByRole(ChildRole.REFERENCE_NAME);

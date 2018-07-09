@@ -212,4 +212,9 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
     TextAttributes getDefaultAttributes(TextAttributesKey key);
   }
 
+  /**
+   * @deprecated For internal use only.
+   */
+  @Deprecated static final
+  TextAttributesKey DUMMY_DEPRECATED_ATTRIBUTES = createTextAttributesKey("__deprecated__");
 }

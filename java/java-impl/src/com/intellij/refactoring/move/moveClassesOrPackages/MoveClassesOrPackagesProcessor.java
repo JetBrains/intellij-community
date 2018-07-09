@@ -16,6 +16,7 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.EditorHelper;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -43,6 +44,7 @@ import com.intellij.refactoring.listeners.RefactoringEventData;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.MoveClassesOrPackagesCallback;
 import com.intellij.refactoring.move.MoveMultipleElementsViewDescriptor;
+import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classRefs.ClassInstanceScanner;
@@ -52,7 +54,6 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,9 +88,15 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     for (PsiElement element : elements) {
       PsiUtilCore.ensureValid(element);
       if (element instanceof PsiClassOwner) {
-        for (PsiClass aClass : ((PsiClassOwner)element).getClasses()) {
-          PsiUtilCore.ensureValid(aClass);
-          toMove.add(aClass);
+        PsiClass[] classes = ((PsiClassOwner)element).getClasses();
+        if (classes.length > 0) {
+          for (PsiClass aClass : classes) {
+            PsiUtilCore.ensureValid(aClass);
+            toMove.add(aClass);
+          }
+        }
+        else {
+          toMove.add(element);
         }
       } else {
         toMove.add(element);
@@ -186,12 +193,12 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       }
     }
     myMoveDestination.analyzeModuleConflicts(Arrays.asList(myElementsToMove), myConflicts,
-                                             allUsages.toArray(new UsageInfo[allUsages.size()]));
-    final UsageInfo[] usageInfos = allUsages.toArray(new UsageInfo[allUsages.size()]);
+                                             allUsages.toArray(UsageInfo.EMPTY_ARRAY));
+    final UsageInfo[] usageInfos = allUsages.toArray(UsageInfo.EMPTY_ARRAY);
     detectPackageLocalsMoved(usageInfos, myConflicts);
     detectPackageLocalsUsed(myConflicts, myElementsToMove, myTargetPackage);
     allUsages.removeAll(usagesToSkip);
-    return UsageViewUtil.removeDuplicatedUsages(allUsages.toArray(new UsageInfo[allUsages.size()]));
+    return UsageViewUtil.removeDuplicatedUsages(allUsages.toArray(UsageInfo.EMPTY_ARRAY));
   }
 
   public List<PsiElement> getElements() {
@@ -402,7 +409,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
             }
           }
         }
-        return result.toArray(new PsiReference[result.size()]);
+        return result.toArray(PsiReference.EMPTY_ARRAY);
       }
     };
     referenceScanner.processReferences(new ClassInstanceScanner(aClass, instanceReferenceVisitor));
@@ -418,6 +425,9 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     else if (element instanceof PsiPackage) {
       return StringUtil.getQualifiedName(qualifiedName, ((PsiPackage)element).getName());
     }
+    else if (element instanceof PsiClassOwner) {
+      return ((PsiClassOwner)element).getName();
+    }
     else {
       LOG.assertTrue(false);
       return null;
@@ -432,17 +442,22 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     else if (element instanceof PsiPackage) {
       return ((PsiPackage)element).getQualifiedName();
     }
+    else if (element instanceof PsiClassOwner) {
+      return ((PsiClassOwner)element).getName();
+    }
     else {
       LOG.assertTrue(false);
       return null;
     }
   }
 
+  @Override
   protected void refreshElements(@NotNull PsiElement[] elements) {
     LOG.assertTrue(elements.length == myElementsToMove.length);
     System.arraycopy(elements, 0, myElementsToMove, 0, elements.length);
   }
 
+  @Override
   protected boolean isPreviewUsages(@NotNull UsageInfo[] usages) {
     if (UsageViewUtil.reportNonRegularUsages(usages, myProject)) {
       return true;
@@ -515,7 +530,24 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
           final PsiClass newElement = MoveClassesOrPackagesUtil.doMoveClass(psiClass, myMoveDestination.getTargetDirectory(element.getContainingFile()), allClasses.get(psiClass));
           oldToNewElementsMapping.put(element, newElement);
           element = newElement;
-        } else {
+        }
+        else if (element instanceof PsiClassOwner) {
+          PsiDirectory directory = myMoveDestination.getTargetDirectory(element.getContainingFile());
+          MoveFilesOrDirectoriesUtil.doMoveFile((PsiClassOwner)element, directory);
+          PsiFile newElement = directory.findFile(((PsiClassOwner)element).getName());
+          LOG.assertTrue(newElement != null);
+          final PsiPackage newPackage = JavaDirectoryService.getInstance().getPackage(directory);
+          if (newPackage != null) {
+            String qualifiedName = newPackage.getQualifiedName();
+            if (!Comparing.strEqual(qualifiedName, ((PsiClassOwner)newElement).getPackageName()) &&
+                (qualifiedName.isEmpty() || PsiNameHelper.getInstance(myProject).isQualifiedName(qualifiedName))) {
+              ((PsiClassOwner)newElement).setPackageName(qualifiedName);
+            }
+          }
+          oldToNewElementsMapping.put(element, newElement);
+          element = newElement;
+        }
+        else {
           LOG.error("Unexpected element to move: " + element);
         }
         elementListener.elementMoved(element);
@@ -531,7 +563,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
       }
 
       if (myOpenInEditor) {
-        EditorHelper.openFilesInEditor(myElementsToMove);
+        ApplicationManager.getApplication().invokeLater(() -> EditorHelper.openFilesInEditor(Arrays.stream(myElementsToMove).filter(PsiElement::isValid).toArray(PsiElement[]::new)));
       }
     }
     catch (IncorrectOperationException e) {
@@ -540,6 +572,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
   }
 
+    @Override
     protected void performPsiSpoilingRefactoring() {
     RenameUtil.renameNonCodeUsages(myProject, myNonCodeUsages);
     if (myMoveCallback != null) {
@@ -550,6 +583,7 @@ public class MoveClassesOrPackagesProcessor extends BaseRefactoringProcessor {
     }
   }
 
+  @NotNull
   protected String getCommandName() {
     String elements = RefactoringUIUtil.calculatePsiElementDescriptionList(myElementsToMove);
     String target = myTargetPackage.getQualifiedName();

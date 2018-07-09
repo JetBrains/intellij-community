@@ -3,9 +3,7 @@ import sys
 
 from _pydevd_bundle.pydevd_constants import IS_PYCHARM
 
-IS_PY36 = False
-if sys.version_info[0] == 3 and sys.version_info[1] == 6:
-    IS_PY36 = True
+IS_PY36_OR_GREATER = sys.version_info >= (3, 6)
 
 frame_eval_func = None
 stop_frame_eval = None
@@ -19,7 +17,7 @@ if USE_FRAME_EVAL == 'NO':
     frame_eval_func, stop_frame_eval = None, None
 
 else:
-    if IS_PY36:
+    if IS_PY36_OR_GREATER:
         try:
             from _pydevd_frame_eval.pydevd_frame_eval_cython_wrapper import frame_eval_func, stop_frame_eval, enable_cache_frames_without_breaks, \
                 dummy_trace_dispatch

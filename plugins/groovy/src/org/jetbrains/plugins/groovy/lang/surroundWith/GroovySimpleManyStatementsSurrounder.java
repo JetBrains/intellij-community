@@ -27,7 +27,6 @@ import com.intellij.openapi.util.TextRange;
  * This is a base class for simple "Many Statement" surrounds, such as with() and shouldFail().
  *
  * User: Hamlet D'Arcy
- * Date: Mar 18, 2009
  */
 public abstract class GroovySimpleManyStatementsSurrounder extends GroovyManyStatementsSurrounder {
   @Override

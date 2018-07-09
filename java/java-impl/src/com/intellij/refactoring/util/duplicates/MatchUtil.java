@@ -92,7 +92,7 @@ public class MatchUtil {
     final List<ParameterInfoImpl> newParameters = patchParams(match.myChangedParams, psiMethod);
     final ChangeSignatureProcessor csp = new ChangeSignatureProcessor(psiMethod.getProject(), psiMethod, false, null, psiMethod.getName(),
                                                                       expressionType != null ? expressionType : psiMethod.getReturnType(),
-                                                                      newParameters.toArray(new ParameterInfoImpl[newParameters.size()]));
+                                                                      newParameters.toArray(new ParameterInfoImpl[0]));
 
     csp.run();
   }

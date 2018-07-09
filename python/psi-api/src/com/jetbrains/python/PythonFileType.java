@@ -47,7 +47,7 @@ public class PythonFileType extends LanguageFileType {
   private static final Pattern ENCODING_PATTERN = Pattern.compile("coding[:=]\\s*([-\\w.]+)");
   public static final int MAX_CHARSET_ENCODING_LINE = 2;
 
-  public static PythonFileType INSTANCE = new PythonFileType();
+  public static final PythonFileType INSTANCE = new PythonFileType();
 
   public PythonFileType() {
     this(PythonLanguage.INSTANCE);
@@ -64,7 +64,7 @@ public class PythonFileType extends LanguageFileType {
 
   @NotNull
   public String getDescription() {
-    return "Python files";
+    return "Python";
   }
 
   @Override

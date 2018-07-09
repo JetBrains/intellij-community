@@ -489,7 +489,10 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
                     "<div class=\"multiline\" foo=\"1\"\n" +
                     "          bar=\"2\"></div>\n" +
                     "<div class=\"selfClosingMultiline\" foo=\"1\" bar=\"2\"\n" +
-                    "/>\n";
+                    "/>\n" +
+                    "<!--void tags-->\n" +
+                    "<input type=\"button\" value=\"Ok\">\n" +
+                    "<br>\n";
     doTextTest(
       source,
       "<div class=\"singleline\" foo=\"1\" bar=\"2\"/>\n" +
@@ -500,7 +503,10 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
       "></div>\n" +
       "<div\n" +
       "        class=\"selfClosingMultiline\" foo=\"1\" bar=\"2\"\n" +
-      "/>\n");
+      "/>\n" +
+      "<!--void tags-->\n" +
+      "<input type=\"button\" value=\"Ok\">\n" +
+      "<br>\n");
     settings.HTML_SPACE_INSIDE_EMPTY_TAG = true;
     doTextTest(
       source,
@@ -512,7 +518,10 @@ public class HtmlFormatterTest extends XmlFormatterTestBase {
       "></div>\n" +
       "<div\n" +
       "        class=\"selfClosingMultiline\" foo=\"1\" bar=\"2\"\n" +
-      "/>\n");
+      "/>\n" +
+      "<!--void tags-->\n" +
+      "<input type=\"button\" value=\"Ok\">\n" +
+      "<br>\n");
   }
 
   @NotNull

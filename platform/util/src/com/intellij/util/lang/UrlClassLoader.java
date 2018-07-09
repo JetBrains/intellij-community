@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.openapi.application.PathManager;
@@ -46,7 +32,7 @@ public class UrlClassLoader extends ClassLoader {
   private static final Set<Class<?>> ourParallelCapableLoaders;
   static {
     boolean capable =
-      SystemInfo.isJavaVersionAtLeast("1.7") && !SystemInfo.isIbmJvm && SystemProperties.getBooleanProperty("use.parallel.class.loading", true);
+      SystemInfo.isJavaVersionAtLeast(7, 0, 0) && !SystemInfo.isIbmJvm && SystemProperties.getBooleanProperty("use.parallel.class.loading", true);
     if (capable) {
       ourParallelCapableLoaders = Collections.synchronizedSet(new HashSet<Class<?>>());
       try {
@@ -106,6 +92,7 @@ public class UrlClassLoader extends ClassLoader {
     private boolean myAcceptUnescaped;
     private boolean myPreload = true;
     private boolean myAllowBootstrapResources;
+    private boolean myErrorOnMissingJar = true;
     @Nullable private CachePoolImpl myCachePool;
     @Nullable private CachingCondition myCachingCondition;
 
@@ -151,11 +138,7 @@ public class UrlClassLoader extends ClassLoader {
     public Builder allowUnescaped() { myAcceptUnescaped = true; return this; }
     public Builder noPreload() { myPreload = false; return this; }
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
-
-    /** @deprecated use {@link #allowUnescaped()} (to be removed in IDEA 2018) */
-    public Builder allowUnescaped(boolean acceptUnescaped) { myAcceptUnescaped = acceptUnescaped; return this; }
-    /** @deprecated use {@link #noPreload()} (to be removed in IDEA 2018) */
-    public Builder preload(boolean preload) { myPreload = preload; return this; }
+    public Builder setLogErrorOnMissingJar(boolean log) {myErrorOnMissingJar = log; return this; }
 
     public UrlClassLoader get() { return new UrlClassLoader(this); }
   }
@@ -170,6 +153,7 @@ public class UrlClassLoader extends ClassLoader {
   private final boolean myAllowBootstrapResources;
 
   /** @deprecated use {@link #build()}, left for compatibility with java.system.class.loader setting */
+  @Deprecated
   public UrlClassLoader(@NotNull ClassLoader parent) {
     this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache()
            .usePersistentClasspathIndexForLocalClassDirectories());
@@ -191,7 +175,8 @@ public class UrlClassLoader extends ClassLoader {
   @NotNull
   protected final ClassPath createClassPath(@NotNull Builder builder) {
     return new ClassPath(myURLs, builder.myLockJars, builder.myUseCache, builder.myAcceptUnescaped, builder.myPreload,
-                                builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition);
+                                builder.myUsePersistentClasspathIndex, builder.myCachePool, builder.myCachingCondition,
+                                builder.myErrorOnMissingJar);
   }
 
   public static URL internProtocol(@NotNull URL url) {
@@ -230,7 +215,7 @@ public class UrlClassLoader extends ClassLoader {
 
   @Override
   protected Class findClass(final String name) throws ClassNotFoundException {
-    Resource res = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION, false);
+    Resource res = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION);
     if (res == null) {
       throw new ClassNotFoundException(name);
     }
@@ -245,7 +230,7 @@ public class UrlClassLoader extends ClassLoader {
 
   @Nullable
   protected Class _findClass(@NotNull String name) {
-    Resource res = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION, false);
+    Resource res = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION);
     if (res == null) {
       return null;
     }
@@ -298,9 +283,9 @@ public class UrlClassLoader extends ClassLoader {
   @Nullable
   private Resource findResourceImpl(String name) {
     String n = FileUtil.toCanonicalUriPath(name);
-    Resource resource = getClassPath().getResource(n, true);
+    Resource resource = getClassPath().getResource(n);
     if (resource == null && n.startsWith("/")) { // compatibility with existing code, non-standard classloader behavior
-      resource = getClassPath().getResource(n.substring(1), true);
+      resource = getClassPath().getResource(n.substring(1));
     }
     return resource;
   }
@@ -322,7 +307,7 @@ public class UrlClassLoader extends ClassLoader {
 
   @Override
   protected Enumeration<URL> findResources(String name) throws IOException {
-    return getClassPath().getResources(name, true);
+    return getClassPath().getResources(name);
   }
 
   public static void loadPlatformLibrary(@NotNull String libName) {

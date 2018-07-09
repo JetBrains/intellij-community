@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.preview.impl;
 
 import com.intellij.icons.AllIcons;
@@ -66,15 +52,15 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
   private Content myEmptyStateContent;
   private final JPanel myEmptyStatePanel;
 
-  private ArrayList<PreviewInfo> myHistory = new ArrayList<>();
+  private final ArrayList<PreviewInfo> myHistory = new ArrayList<>();
 
 
-  private TreeSet<PreviewPanelProvider> myProviders = new TreeSet<>((o1, o2) -> {
+  private final TreeSet<PreviewPanelProvider> myProviders = new TreeSet<>((o1, o2) -> {
     int result = Float.compare(o1.getMenuOrder(), o2.getMenuOrder());
     return result != 0 ? result : o1.toString().compareTo(o2.toString());
   });
-  private Set<PreviewProviderId> myActiveProviderIds = new HashSet<>();
-  private Set<PreviewProviderId> myLockedProviderIds = new HashSet<>();
+  private final Set<PreviewProviderId> myActiveProviderIds = new HashSet<>();
+  private final Set<PreviewProviderId> myLockedProviderIds = new HashSet<>();
   private boolean myInnerSelectionChange;
 
   private static boolean isAvailable() {
@@ -108,7 +94,7 @@ public class PreviewManagerImpl implements PreviewManager, PersistentStateCompon
   }
 
   @Override
-  public void loadState(PreviewManagerState state) {
+  public void loadState(@NotNull PreviewManagerState state) {
     if (state == null) return;
     for (Map.Entry<String, Boolean> entry : state.myArtifactFilesMap.entrySet()) {
       if (!entry.getValue()) {

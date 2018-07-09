@@ -22,7 +22,6 @@ import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 6/29/12
  */
 public class LogParser {
 
@@ -33,8 +32,7 @@ public class LogParser {
 
     long totalTime = 0L;
     int totalFileCount = 0;
-    final BufferedReader reader = new BufferedReader(new FileReader(new File(logPath)));
-    try {
+    try (BufferedReader reader = new BufferedReader(new FileReader(new File(logPath)))) {
       String line = reader.readLine();
       while (line != null) {
         if (line.contains(COMPILING_START_STR)) {
@@ -65,9 +63,6 @@ public class LogParser {
         }
         line = reader.readLine();
       }
-    }
-    finally {
-      reader.close();
     }
 
     long millis = totalTime % 1000;

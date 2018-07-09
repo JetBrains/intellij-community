@@ -70,7 +70,7 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
         PsiElement element = psiReference.getElement();
         PsiElement parent = element.getParent();
         if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiMethodCallExpression) {
-          if (((PsiExpressionList)parent).getExpressions().length == 1) {
+          if (((PsiExpressionList)parent).getExpressionCount() == 1) {
             occurrences.add(parent.getParent());
             containingFiles.add(element.getContainingFile());
             return true;
@@ -102,17 +102,14 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
     final RefactoringEventData data = new RefactoringEventData();
     data.addElement(psiElement.copy());
 
-    new WriteCommandAction.Simple(project, REFACTORING_NAME, containingFiles.toArray(new PsiFile[containingFiles.size()])) {
-      @Override
-      protected void run() throws Throwable {
-        project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(REFACTORING_ID, data);
-        PsiLiteral stringLiteral = (PsiLiteral)JavaPsiFacade.getInstance(getProject()).getElementFactory().
-          createExpressionFromText("\"" + StringUtil.escapeStringCharacters(propertyValue) + "\"", null);
-        for (PsiElement occurrence : occurrences) {
-          occurrence.replace(stringLiteral.copy());
-        }
-        project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_ID, null);
+    WriteCommandAction.writeCommandAction(project, containingFiles.toArray(PsiFile.EMPTY_ARRAY)).withName(REFACTORING_NAME).run(() -> {
+      project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(REFACTORING_ID, data);
+      PsiLiteral stringLiteral = (PsiLiteral)JavaPsiFacade.getInstance(project).getElementFactory().
+        createExpressionFromText("\"" + StringUtil.escapeStringCharacters(propertyValue) + "\"", null);
+      for (PsiElement occurrence : occurrences) {
+        occurrence.replace(stringLiteral.copy());
       }
-    }.execute();
+      project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_ID, null);
+    });
   }
 }

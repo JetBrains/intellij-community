@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.ide.DataManager;
@@ -23,6 +9,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.NotNullFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -225,38 +212,39 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
 
         @Override
         public void actionPerformed(ActionEvent e) {
-          ArrayList<String> selected = new ArrayList<>();
-          JBList list = JBList.this;
-          ListCellRenderer renderer = list.getCellRenderer();
-          if (renderer != null) {
-            for (int index : getSelectedIndices()) {
-              Object value = list.getModel().getElementAt(index);
-              //noinspection unchecked
-              Component c = renderer.getListCellRendererComponent(list, value, index, true, true);
-              SimpleColoredComponent coloredComponent = null;
-              if (c instanceof JComponent) {
-                coloredComponent = UIUtil.findComponentOfType((JComponent)c, SimpleColoredComponent.class);
-              }
-              if (coloredComponent != null) {
-                selected.add(coloredComponent.toString());
-              }
-              else if (c instanceof JTextComponent) {
-                selected.add(((JTextComponent)c).getText());
-              }
-              else if (value != null) {
-                selected.add(value.toString());
-              }
-            }
-          }
-
-          if (selected.size() > 0) {
-            String text = StringUtil.join(selected, " ");
-            CopyPasteManager.getInstance().setContents(new StringSelection(text));
-          }
+          doCopyToClipboardAction();
         }
       };
       getActionMap().put("copy", newCopy);
     }
+  }
+
+  protected void doCopyToClipboardAction() {
+    ArrayList<String> selected = new ArrayList<>();
+    for (int index : getSelectedIndices()) {
+      E value = getModel().getElementAt(index);
+      String text = itemToText(index, value);
+      ContainerUtil.addIfNotNull(selected, text);
+    }
+
+    if (selected.size() > 0) {
+      String text = StringUtil.join(selected, "\n");
+      CopyPasteManager.getInstance().setContents(new StringSelection(text));
+    }
+  }
+
+  @Nullable
+  private String itemToText(int index, E value) {
+    ListCellRenderer renderer = getCellRenderer();
+    //noinspection unchecked
+    Component c = renderer == null ? null : renderer.getListCellRendererComponent(this, value, index, true, true);
+    SimpleColoredComponent coloredComponent = null;
+    if (c instanceof JComponent) {
+      coloredComponent = UIUtil.findComponentOfType((JComponent)c, SimpleColoredComponent.class);
+    }
+    return coloredComponent != null ? coloredComponent.getCharSequence(true).toString() :
+           c instanceof JTextComponent ? ((JTextComponent)c).getText() :
+           value != null ? value.toString() : null;
   }
 
   public boolean isEmpty() {
@@ -306,31 +294,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
   }
 
   public <T> void installCellRenderer(@NotNull final NotNullFunction<T, JComponent> fun) {
-    setCellRenderer(new DefaultListCellRenderer() {
-      @NotNull
-      @Override
-      public Component getListCellRendererComponent(@NotNull JList list,
-                                                    Object value,
-                                                    int index,
-                                                    boolean isSelected,
-                                                    boolean cellHasFocus) {
-        @SuppressWarnings({"unchecked"})
-        final JComponent comp = fun.fun((T)value);
-        comp.setOpaque(true);
-        if (isSelected) {
-          comp.setBackground(list.getSelectionBackground());
-          comp.setForeground(list.getSelectionForeground());
-        }
-        else {
-          comp.setBackground(list.getBackground());
-          comp.setForeground(list.getForeground());
-        }
-        for (JLabel label : UIUtil.findComponentsOfType(comp, JLabel.class)) {
-          label.setForeground(UIUtil.getListForeground(isSelected));
-        }
-        return comp;
-      }
-    });
+    setCellRenderer(new SelectionAwareListCellRenderer<>(fun));
   }
 
   public void setDataProvider(@NotNull DataProvider provider) {

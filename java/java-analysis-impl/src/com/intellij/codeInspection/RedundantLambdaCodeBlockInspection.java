@@ -44,24 +44,24 @@ public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalIns
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     return new JavaElementVisitor() {
       @Override
       public void visitLambdaExpression(PsiLambdaExpression expression) {
-        super.visitLambdaExpression(expression);
-        if (PsiUtil.isLanguageLevel8OrHigher(expression)) {
-          final PsiElement body = expression.getBody();
-          final PsiExpression psiExpression = isCodeBlockRedundant(body);
-          if (psiExpression != null) {
-            final PsiElement errorElement;
-            final PsiElement parent = psiExpression.getParent();
-            if (parent instanceof PsiReturnStatement) {
-              errorElement = parent.getFirstChild();
-            } else {
-              errorElement = body.getFirstChild();
-            }
-            holder.registerProblem(errorElement, "Statement lambda can be replaced with expression lambda",
-                                   ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithExprFix());
+        final PsiElement body = expression.getBody();
+        final PsiExpression psiExpression = isCodeBlockRedundant(body);
+        if (psiExpression != null) {
+          final PsiElement errorElement;
+          final PsiElement parent = psiExpression.getParent();
+          if (parent instanceof PsiReturnStatement) {
+            errorElement = parent.getFirstChild();
+          } else {
+            errorElement = body.getFirstChild();
           }
+          holder.registerProblem(errorElement, "Statement lambda can be replaced with expression lambda",
+                                 ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithExprFix());
         }
       }
     };
@@ -71,24 +71,9 @@ public class RedundantLambdaCodeBlockInspection extends AbstractBaseJavaLocalIns
     if (body instanceof PsiCodeBlock) {
       PsiExpression psiExpression = LambdaUtil.extractSingleExpressionFromBody(body);
       if (psiExpression != null && !findCommentsOutsideExpression(body, psiExpression)) {
-        if (LambdaUtil.isExpressionStatementExpression(psiExpression)) {
-          final PsiCall call = LambdaUtil.treeWalkUp(body);
-          PsiMethod oldTarget;
-          if (call != null && (oldTarget = call.resolveMethod()) != null) {
-            final int offsetInTopCall = body.getTextRange().getStartOffset() - call.getTextRange().getStartOffset();
-            PsiCall copyCall = LambdaUtil.copyTopLevelCall(call);
-            if (copyCall == null) return null;
-            final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(copyCall.findElementAt(offsetInTopCall), PsiCodeBlock.class);
-            if (codeBlock != null) {
-              final PsiElement parent = codeBlock.getParent();
-              if (parent instanceof PsiLambdaExpression) {
-                codeBlock.replace(psiExpression);
-                if (copyCall.resolveMethod() != oldTarget || ((PsiLambdaExpression)parent).getFunctionalInterfaceType() == null) {
-                  return null;
-                }
-              }
-            }
-          }
+        if (LambdaUtil.isExpressionStatementExpression(psiExpression) &&
+            !LambdaUtil.isSafeLambdaBodyReplacement((PsiLambdaExpression)body.getParent(), () -> psiExpression)) {
+          return null;
         }
         return psiExpression;
       }

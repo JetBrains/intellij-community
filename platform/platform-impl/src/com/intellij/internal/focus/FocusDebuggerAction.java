@@ -18,16 +18,22 @@ package com.intellij.internal.focus;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.AWTEventListener;
 import java.awt.event.FocusEvent;
+import java.util.Arrays;
+import java.util.function.Consumer;
 
 /**
  * @author spleaner
@@ -64,15 +70,49 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
     }
   }
 
-  private static class FocusDrawer extends Thread implements AWTEventListener {
+  private static class FocusDrawer extends Thread implements AWTEventListener, ApplicationActivationListener {
     private Component myCurrent;
     private Component myPrevious;
     private boolean myTemporary;
 
     private boolean myRunning = true;
 
+    enum ApplicationState {
+      ACTIVE, DELAYED, INACTIVE, UNKNOWN;
+
+      public Color getColor() {
+        switch (this) {
+          case ACTIVE:
+            return JBColor.green;
+          case DELAYED:
+            return JBColor.yellow;
+          case INACTIVE:
+            return JBColor.red;
+          case UNKNOWN:
+            return JBColor.gray;
+        }
+        throw new RuntimeException("Unknown application state");
+      }
+    }
+
+    private ApplicationState myApplicationState = ApplicationState.UNKNOWN;
+
     public FocusDrawer() {
       super("focus debugger");
+      Application app = ApplicationManager.getApplication();
+      app.getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, this);
+    }
+
+    public void applicationActivated(IdeFrame ideFrame) {
+      myApplicationState = ApplicationState.ACTIVE;
+    }
+
+    public void applicationDeactivated(IdeFrame ideFrame) {
+      myApplicationState = ApplicationState.INACTIVE;
+    }
+
+    public void delayedApplicationDeactivated(IdeFrame ideFrame) {
+      myApplicationState = ApplicationState.DELAYED;
     }
 
     public void setRunning(final boolean running) {
@@ -136,6 +176,14 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
             if (previousFocusGraphics != null) previousFocusGraphics.dispose();
           }
         }
+        Util.drawOnActiveFrameGraphics(g -> {
+          g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+          g.setColor(myApplicationState.getColor());
+          g.fillOval(5,5, 10, 10);
+          g.setColor(JBColor.black);
+          g.setStroke(new BasicStroke(2));
+          g.drawOval(5,5, 10, 10);
+        });
       }
     }
 
@@ -158,6 +206,31 @@ public class FocusDebuggerAction extends AnAction implements DumbAware {
           default:
             break;
         }
+        Util.drawOnActiveFrameGraphics(g -> {
+          g.setColor(myApplicationState.getColor());
+          g.fillOval(5,5, 10, 10);
+          g.setColor(JBColor.black);
+          g.setStroke(new BasicStroke(2));
+          g.drawOval(5,5, 10, 10);
+          g.setColor(myApplicationState.getColor());
+          g.fillOval(5,5, 10, 10);
+        });
+        Arrays.stream(Window.getOwnerlessWindows()).
+          filter(window -> window instanceof RootPaneContainer).
+          map(window -> (RootPaneContainer)window).
+          filter(f -> f.getRootPane() != null).
+          filter(window -> window.getRootPane() != null).
+          map(window -> (window).getGlassPane()).
+          map(jGlassPane -> jGlassPane.getGraphics()).
+          filter(g -> g != null).
+          forEach(graphics -> {
+            Graphics2D glassPaneGraphics = ((Graphics2D)graphics.create());
+            try {
+
+            } finally {
+              glassPaneGraphics.dispose();
+            }
+          });
       }
     }
   }

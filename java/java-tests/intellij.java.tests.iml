@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module relativePaths="true" type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/testSrc" isTestSource="true" />
+      <excludeFolder url="file://$MODULE_DIR$/testSrc/com/intellij/java/codeInspection/bytecodeAnalysis/precompiledData" />
+    </content>
+    <content url="file://$MODULE_DIR$/../../plugins/InspectionGadgets/testsrc">
+      <sourceFolder url="file://$MODULE_DIR$/../../plugins/InspectionGadgets/testsrc" isTestSource="true" />
+    </content>
+    <content url="file://$MODULE_DIR$/../../plugins/IntentionPowerPak/testSrc">
+      <sourceFolder url="file://$MODULE_DIR$/../../plugins/IntentionPowerPak/testSrc" isTestSource="true" />
+    </content>
+    <content url="file://$MODULE_DIR$/../../plugins/generate-tostring/testSrc">
+      <sourceFolder url="file://$MODULE_DIR$/../../plugins/generate-tostring/testSrc" isTestSource="true" />
+    </content>
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="intellij.java.testFramework" />
+    <orderEntry type="module" module-name="intellij.java.impl" />
+    <orderEntry type="module" module-name="intellij.java.ui" />
+    <orderEntry type="module" module-name="intellij.idea.community.resources" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.java.execution.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="module" module-name="intellij.java.i18n" exported="" />
+    <orderEntry type="module" module-name="intellij.java.compiler.impl" />
+    <orderEntry type="library" name="ASM" level="project" />
+    <orderEntry type="module" module-name="intellij.java.compiler.instrumentationUtil" />
+    <orderEntry type="library" name="Groovy" level="project" />
+    <orderEntry type="module" module-name="intellij.java.langInjection" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.xml.langInjection" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.junit" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.testng" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.guiForms.designer" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.eclipse" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.execution" />
+    <orderEntry type="module" module-name="intellij.platform.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.indexing" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem.impl" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.junit.rt" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.properties.psi" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.decompiler" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.regexp" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.spellchecker" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.util.tests" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
+    <orderEntry type="module" module-name="intellij.groovy" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.lang.tests" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="mockito" level="project" />
+    <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
+    <orderEntry type="module" module-name="intellij.xml.analysis.impl" />
+    <orderEntry type="module" module-name="intellij.xml.psi.impl" />
+    <orderEntry type="library" scope="TEST" name="KotlinTest" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.builtInServer" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.copyright" scope="TEST" />
+  </component>
+</module>

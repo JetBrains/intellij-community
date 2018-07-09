@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
@@ -24,7 +25,6 @@ import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashSet;
@@ -123,7 +123,7 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
 
     int start = CharArrayUtil.shiftForward(context.getDocument().getCharsSequence(), context.getStartOffset(), " \t\n");
     if (shouldParenthesizeQualifier(context.getFile(), start, qualifierContext.getTailOffset())) {
-      final String space = CodeStyleSettingsManager.getSettings(qualifierContext.getProject()).SPACE_WITHIN_PARENTHESES ? " " : "";
+      final String space = CodeStyle.getLanguageSettings(context.getFile()).SPACE_WITHIN_PARENTHESES ? " " : "";
       document.insertString(start, "(" + space);
       document.insertString(qualifierContext.getTailOffset(), space + ")");
     }

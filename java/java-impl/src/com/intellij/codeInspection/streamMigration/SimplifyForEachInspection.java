@@ -19,6 +19,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -137,7 +138,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
     }
 
     @Override
-    String createReplacement() {
+    String createReplacement(CommentTracker ct) {
       return myExpression.getText() + (myIsCollectionForEach? ".stream()" : "");
     }
 
@@ -233,7 +234,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
       if (simplifyForEachContext == null) return;
       PsiElement result = simplifyForEachContext.migrate();
       if (result == null) return;
-      MigrateToStreamFix.simplifyAndFormat(project, result);
+      MigrateToStreamFix.simplify(project, result);
     }
   }
 
@@ -258,7 +259,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
       PsiElement lambdaBody = lambda.getBody();
       if (lambdaBody == null) return null;
       PsiExpressionList parameters = tryCast(PsiUtil.skipParenthesizedExprUp(lambda.getParent()), PsiExpressionList.class);
-      if (parameters == null || parameters.getExpressions().length != 1) return null;
+      if (parameters == null || parameters.getExpressionCount() != 1) return null;
       PsiMethodCallExpression call = tryCast(parameters.getParent(), PsiMethodCallExpression.class);
       SimplifyForEachContext simplifyForEachContext = SimplifyForEachContext.from(call);
       if (simplifyForEachContext == null || simplifyForEachContext.myMigration instanceof ForEachMigration) return null;
@@ -273,7 +274,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
       if (simplifyForEachContext != null) {
         PsiElement result = simplifyForEachContext.migrate();
         if (result != null) {
-          MigrateToStreamFix.simplifyAndFormat(project, result);
+          MigrateToStreamFix.simplify(project, result);
         }
       }
     }

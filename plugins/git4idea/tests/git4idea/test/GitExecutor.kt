@@ -22,7 +22,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.Executor.*
 import com.intellij.testFramework.vcs.ExecutableHelper
-import com.intellij.vcs.log.impl.VcsLogUtil
+import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.commands.Git
 import git4idea.commands.GitLineHandler
 import git4idea.commands.getGitCommandInstance
@@ -40,11 +40,12 @@ fun git(project: Project, command: String, ignoreNonZeroExitCode: Boolean = fals
   val workingDir = ourCurrentDir()
   val split = splitCommandInParameters(command)
   val handler = GitLineHandler(project, workingDir, getGitCommandInstance(split[0]))
+  handler.setWithMediator(false)
   handler.addParameters(split.subList(1, split.size))
 
   val result = Git.getInstance().runCommand(handler)
   if (result.exitCode != 0 && !ignoreNonZeroExitCode) {
-    throw IllegalStateException("Command [$command] failed with exit code ${result.exitCode}")
+    throw IllegalStateException("Command [$command] failed with exit code ${result.exitCode}\n${result.output}\n${result.errorOutput}")
   }
   return result.errorOutputAsJoinedString + result.outputAsJoinedString
 }
@@ -73,7 +74,6 @@ fun GitPlatformTest.checkout(vararg params: String) = checkout(project, *params)
 private fun checkout(project: Project, vararg params: String) = git(project, "checkout ${params.joinToString(" ")}")
 
 fun GitRepository.checkoutNew(branchName: String, startPoint: String = "") = cd { checkoutNew(project, branchName, startPoint) }
-fun GitPlatformTest.checkoutNew(branchName: String, startPoint: String = "") = checkoutNew(project, branchName, startPoint)
 private fun checkoutNew(project: Project, branchName: String, startPoint: String) =
   git(project, "checkout -b $branchName $startPoint")
 
@@ -102,7 +102,6 @@ private fun tacp(project: Project, file: String): String {
 }
 
 fun GitRepository.appendAndCommit(file: String, additionalContent: String) = cd { appendAndCommit(project, file, additionalContent) }
-fun GitPlatformTest.appendAndCommit(file: String, additionalContent: String) = appendAndCommit(project, file, additionalContent)
 private fun appendAndCommit(project: Project, file: String, additionalContent: String): String {
   append(file, additionalContent)
   add(project, file)
@@ -122,7 +121,15 @@ private fun last(project: Project) = git(project, "log -1 --pretty=%H")
 
 fun GitRepository.lastMessage() = cd { lastMessage(project) }
 fun GitPlatformTest.lastMessage() = lastMessage(project)
-private fun lastMessage(project: Project) = git(project, "log -1 --pretty=%B")
+private fun lastMessage(project: Project) = message(project, "HEAD")
+
+fun GitRepository.lastAuthorTime() = cd { lastAuthorTime(project) }
+fun GitPlatformTest.lastAuthorTime() = lastAuthorTime(project)
+private fun lastAuthorTime(project: Project) = git(project, "log -1 --pretty=%at")
+
+fun GitRepository.message(revision: String) = cd { message(project, revision)}
+private fun message(project: Project, revision: String) =
+  git(project, "log $revision --no-walk --pretty=${getPrettyFormatTagForFullCommitMessage(project)}")
 
 fun GitRepository.log(vararg params: String) = cd { log(project, *params) }
 fun GitPlatformTest.log(vararg params: String) = log(project, *params)
@@ -207,4 +214,12 @@ internal class TestFile internal constructor(val repo: GitRepository, val file: 
   fun exists() = file.exists()
 
   fun read() = FileUtil.loadFile(file)
+
+  fun cat(): String = FileUtil.loadFile(file)
+
+  fun prepend(content: String): TestFile {
+    val previousContent = cat()
+    FileUtil.writeToFile(file, content + previousContent)
+    return this
+  }
 }

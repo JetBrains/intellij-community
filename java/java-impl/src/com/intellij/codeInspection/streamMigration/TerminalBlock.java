@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,7 +15,10 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 
 import static com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.*;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -296,7 +285,7 @@ class TerminalBlock {
       if (var == null || !ExpressionUtils.isZero(var.getInitializer()) || ReferencesSearch.search(var).findAll().size() != 1) return this;
     }
     PsiExpression limit = flipped ? binOp.getLOperand() : binOp.getROperand();
-    if(!ExpressionUtils.isSimpleExpression(limit) || VariableAccessUtils.variableIsUsed(myVariable, limit)) return this;
+    if(!ExpressionUtils.isSafelyRecomputableExpression(limit) || VariableAccessUtils.variableIsUsed(myVariable, limit)) return this;
     PsiType type = limit.getType();
     if(!PsiType.INT.equals(type) && !PsiType.LONG.equals(type)) return this;
     if(countExpression instanceof PsiPostfixExpression) {
@@ -329,8 +318,7 @@ class TerminalBlock {
     PsiNewExpression initializer = tryCast(var.getInitializer(), PsiNewExpression.class);
     if (initializer == null) return null;
     PsiExpressionList argumentList = initializer.getArgumentList();
-    if (argumentList == null ||
-        argumentList.getExpressions().length != 0 ||
+    if (argumentList == null || !argumentList.isEmpty() ||
         ControlFlowUtils.getInitializerUsageStatus(var, getStreamSourceStatement()) == ControlFlowUtils.InitializerUsageStatus.UNKNOWN) {
       return null;
     }
@@ -460,16 +448,17 @@ class TerminalBlock {
   /**
    * Converts this TerminalBlock to PsiElement (either PsiStatement or PsiCodeBlock)
    *
+   * @param ct CommentTracker to mark statements as unchanged
    * @param factory factory to use to create new element if necessary
    * @return the PsiElement
    */
-  PsiElement convertToElement(PsiElementFactory factory) {
+  PsiElement convertToElement(CommentTracker ct, PsiElementFactory factory) {
     if (myStatements.length == 1) {
       return myStatements[0];
     }
     PsiCodeBlock block = factory.createCodeBlock();
     for (PsiStatement statement : myStatements) {
-      block.add(statement);
+      block.add(ct.markUnchanged(statement));
     }
     return block;
   }
@@ -492,15 +481,15 @@ class TerminalBlock {
     }
   }
 
-  String generate() {
-    return generate(false);
+  String generate(CommentTracker ct) {
+    return generate(ct, false);
   }
 
-  String generate(boolean noStreamForEmpty) {
+  String generate(CommentTracker ct, boolean noStreamForEmpty) {
     if(noStreamForEmpty && myOperations.length == 1 && myOperations[0] instanceof CollectionStream) {
       return ParenthesesUtils.getText(myOperations[0].getExpression(), ParenthesesUtils.POSTFIX_PRECEDENCE);
     }
-    return StreamEx.of(myOperations).map(Operation::createReplacement).joining();
+    return StreamEx.of(myOperations).map(operation -> operation.createReplacement(ct)).joining();
   }
 
   @NotNull

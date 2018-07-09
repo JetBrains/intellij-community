@@ -52,7 +52,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 29, 2004
  */
 public class GenerateAntBuildDialog extends DialogWrapper {
   private JPanel myPanel;

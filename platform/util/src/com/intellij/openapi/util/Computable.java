@@ -58,27 +58,4 @@ public interface Computable <T> {
       return myValue;
     }
   }
-
-  /**
-   * @deprecated Use {@link NullableLazyValue}::getValue instead
-   */
-  @Deprecated
-  abstract class NullableCachedComputable<T> implements NullableComputable<T> {
-    private static final Object NULL_VALUE = new Object();
-    private Object myValue;
-
-    @Nullable
-    protected abstract T internalCompute();
-
-    @Nullable
-    @Override
-    public final T compute() {
-      if (myValue == null) {
-        final T value = internalCompute();
-        myValue = value != null ? value : NULL_VALUE;
-      }
-      //noinspection unchecked
-      return myValue != NULL_VALUE ? (T)myValue : null;
-    }
-  }
 }

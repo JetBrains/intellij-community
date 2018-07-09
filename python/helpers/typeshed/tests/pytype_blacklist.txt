@@ -7,35 +7,11 @@ stdlib/2/builtins.pyi
 stdlib/2/typing.pyi
 stdlib/3/builtins.pyi
 stdlib/3/typing.pyi
+stdlib/3/collections/__init__.pyi # parse only
 
-# Because of 'from . import path':
-stdlib/2/os/__init__.pyi
-stdlib/3/os/__init__.pyi
+# builtins not found
+stdlib/2/os/__init__.pyi # parse only
 
-# We've not been running the pytype tests under Python 3, for quite a while.
-# The below are files that have regressed and need fixing:
-stdlib/3/collections/__init__.pyi
-stdlib/3/collections/abc.pyi
-stdlib/3/concurrent/futures/__init__.pyi
-stdlib/3/concurrent/futures/_base.pyi
-stdlib/3/concurrent/futures/process.pyi
-stdlib/3/concurrent/futures/thread.pyi
-stdlib/3/http/__init__.pyi
-stdlib/3/http/cookiejar.pyi
-stdlib/3/inspect.pyi
-stdlib/3/json/__init__.pyi
-stdlib/3/ssl.pyi
-stdlib/3/subprocess.pyi
-stdlib/3/sys.pyi
-stdlib/3/textwrap.pyi
-stdlib/3/time.pyi
-stdlib/3/types.pyi
-stdlib/3/unittest/__init__.pyi
-stdlib/3/wsgiref/types.pyi
-stdlib/3.4/asyncio/events.pyi
-stdlib/3.4/asyncio/futures.pyi
-stdlib/3.4/asyncio/locks.pyi
-stdlib/3.4/asyncio/queues.pyi
-stdlib/3.4/asyncio/streams.pyi
-stdlib/3.4/asyncio/subprocess.pyi
+# pytype doesn't yet support aliases with implicit type parameters
+# (e.g., here, FutureT = Future[T])
 stdlib/3.4/asyncio/tasks.pyi

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.util.containers.ObjectIntHashMap
@@ -48,19 +48,19 @@ internal class BinaryXmlWriter(private val out: DataOutputStream) {
 
     val content = element.content
     for (item in content) {
-      if (item is Element) {
-        out.writeByte(TypeMarker.ELEMENT.ordinal)
-        writeElement(item)
-      }
-      else if (item is Text) {
-        if (!isAllWhitespace(item)) {
+      when (item) {
+        is Element -> {
+          out.writeByte(TypeMarker.ELEMENT.ordinal)
+          writeElement(item)
+        }
+        is CDATA -> {
+          out.writeByte(TypeMarker.CDATA.ordinal)
+          writeString(item.text)
+        }
+        is Text -> if (!isAllWhitespace(item)) {
           out.writeByte(TypeMarker.TEXT.ordinal)
           writeString(item.text)
         }
-      }
-      else if (item is CDATA) {
-        out.writeByte(TypeMarker.CDATA.ordinal)
-        writeString(item.text)
       }
     }
     out.writeByte(TypeMarker.ELEMENT_END.ordinal)
@@ -108,13 +108,7 @@ internal class BinaryXmlWriter(private val out: DataOutputStream) {
     }
   }
 
-  private fun isAllWhitespace(obj: Content): Boolean {
-    val str = (obj as? Text)?.text ?: return false
-    for (i in 0 until str.length) {
-      if (!Verifier.isXMLWhitespace(str[i])) {
-        return false
-      }
-    }
-    return true
+  private fun isAllWhitespace(obj: Text): Boolean {
+    return obj.text?.all { Verifier.isXMLWhitespace(it) } ?: return true
   }
 }

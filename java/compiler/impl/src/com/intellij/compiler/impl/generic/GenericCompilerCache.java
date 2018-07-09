@@ -36,7 +36,7 @@ import java.io.IOException;
 public class GenericCompilerCache<Key, SourceState, OutputState> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.generic.GenericCompilerCache");
   private PersistentHashMap<KeyAndTargetData<Key>, PersistentStateData<SourceState, OutputState>> myPersistentMap;
-  private File myCacheFile;
+  private final File myCacheFile;
   private final GenericCompiler<Key, SourceState, OutputState> myCompiler;
 
   public GenericCompilerCache(GenericCompiler<Key, SourceState, OutputState> compiler, final File compilerCacheDir) throws IOException {
@@ -149,8 +149,8 @@ public class GenericCompilerCache<Key, SourceState, OutputState> {
   }
 
   private class PersistentStateDataExternalizer implements DataExternalizer<PersistentStateData<SourceState, OutputState>> {
-    private DataExternalizer<SourceState> mySourceStateExternalizer;
-    private DataExternalizer<OutputState> myOutputStateExternalizer;
+    private final DataExternalizer<SourceState> mySourceStateExternalizer;
+    private final DataExternalizer<OutputState> myOutputStateExternalizer;
 
     public PersistentStateDataExternalizer(GenericCompiler<Key,SourceState,OutputState> compiler) {
       mySourceStateExternalizer = compiler.getSourceStateExternalizer();

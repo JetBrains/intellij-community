@@ -6,11 +6,11 @@ import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Nls;
@@ -18,16 +18,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Predicate;
 
-/**
- * @author Tagir Valeev
- */
 public class Java8ArraySetAllInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(Java8ArraySetAllInspection.class);
 
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
-    if (!PsiUtil.isLanguageLevel8OrHigher(holder.getFile())) {
+    if (!JavaFeature.ADVANCED_COLLECTIONS_API.isFeatureSupported(holder.getFile())) {
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
@@ -35,7 +32,7 @@ public class Java8ArraySetAllInspection extends AbstractBaseJavaLocalInspectionT
       public void visitForStatement(PsiForStatement statement) {
         super.visitForStatement(statement);
         CountingLoop loop = CountingLoop.from(statement);
-        if (loop == null || loop.isIncluding()) return;
+        if (loop == null || loop.isIncluding() || loop.isDescending()) return;
         IndexedContainer container = IndexedContainer.fromLengthExpression(loop.getBound());
         if (container == null || !(container.getQualifier().getType() instanceof PsiArrayType)) return;
         if (!StreamApiUtil.isSupportedStreamElement(container.getElementType())) return;

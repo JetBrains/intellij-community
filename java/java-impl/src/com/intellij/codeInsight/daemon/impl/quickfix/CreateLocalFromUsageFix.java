@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -56,7 +55,20 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
   protected boolean isAvailableImpl(int offset) {
     if (!super.isAvailableImpl(offset)) return false;
     if(myReferenceExpression.isQualified()) return false;
-    return PsiTreeUtil.getParentOfType(myReferenceExpression, PsiCodeBlock.class) != null;
+    if (PsiTreeUtil.getParentOfType(myReferenceExpression, PsiCodeBlock.class) != null) {
+      PsiStatement anchor = getAnchor(myReferenceExpression);
+      if (anchor instanceof PsiExpressionStatement) {
+        PsiExpression expression = ((PsiExpressionStatement)anchor).getExpression();
+        if (expression instanceof PsiMethodCallExpression) {
+          PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
+          if (method != null && method.isConstructor()) { //this or super call
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+    return false;
   }
 
   @Override
@@ -113,7 +125,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
 
     PsiVariable var = (PsiVariable)decl.getDeclaredElements()[0];
     boolean isFinal =
-      CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS &&
+      JavaCodeStyleSettings.getInstance(targetFile).GENERATE_FINAL_LOCALS &&
       !CreateFromUsageUtils.isAccessedForWriting(expressions);
     PsiUtil.setModifierProperty(var, PsiModifier.FINAL, isFinal);
 
@@ -154,7 +166,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     return false;
   }
 
-  private static PsiStatement getAnchor(PsiExpression[] expressionOccurences) {
+  private static PsiStatement getAnchor(PsiExpression... expressionOccurences) {
     PsiElement parent = expressionOccurences[0];
     int minOffset = expressionOccurences[0].getTextRange().getStartOffset();
     for (int i = 1; i < expressionOccurences.length; i++) {
@@ -164,7 +176,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
     }
 
     final PsiCodeBlock block = PsiTreeUtil.getParentOfType(parent, PsiCodeBlock.class, false);
-    LOG.assertTrue(block != null && block.getStatements().length > 0, "block: " + block +"; parent: " + parent);
+    LOG.assertTrue(block != null && !block.isEmpty(), "block: " + block +"; parent: " + parent);
     PsiStatement[] statements = block.getStatements();
     for (int i = 1; i < statements.length; i++) {
       if (statements[i].getTextRange().getStartOffset() > minOffset) return statements[i-1];

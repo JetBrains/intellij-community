@@ -16,18 +16,13 @@
 package com.intellij.ide;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexUtil;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.util.PlatformIcons;
 
 import javax.swing.*;
@@ -42,17 +37,6 @@ public class JavaFileIconPatcher implements FileIconPatcher {
       return baseIcon;
     }
 
-    Icon icon = replaceIcon(file, flags, project, baseIcon);
-
-    final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    if (fileIndex.isInSource(file) && CompilerManager.getInstance(project).isExcludedFromCompilation(file)) {
-      return new LayeredIcon(icon, PlatformIcons.EXCLUDED_FROM_COMPILE_ICON);
-    }
-
-    return icon;
-  }
-
-  private static Icon replaceIcon(VirtualFile file, @Iconable.IconFlags int flags, Project project, Icon baseIcon) {
     FileType fileType = file.getFileType();
     if (fileType == StdFileTypes.JAVA && !FileIndexUtil.isJavaSourceFile(project, file)) {
       return PlatformIcons.JAVA_OUTSIDE_SOURCE_ICON;

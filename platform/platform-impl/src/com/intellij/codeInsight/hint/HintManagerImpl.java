@@ -32,7 +32,6 @@ import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
-import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -48,10 +47,11 @@ public class HintManagerImpl extends HintManager implements Disposable {
   private final AnActionListener myAnActionListener;
   private final MyEditorManagerListener myEditorManagerListener;
   private final EditorMouseAdapter myEditorMouseListener;
-  private final FocusListener myEditorFocusListener;
+
   private final DocumentListener myEditorDocumentListener;
   private final VisibleAreaListener myVisibleAreaListener;
   private final CaretListener myCaretMoveListener;
+  private final SelectionListener mySelectionListener;
 
   private LightweightHint myQuestionHint;
   private QuestionAction myQuestionAction;
@@ -102,6 +102,13 @@ public class HintManagerImpl extends HintManager implements Disposable {
       }
     };
 
+    mySelectionListener = new SelectionListener() {
+      @Override
+      public void selectionChanged(SelectionEvent e) {
+        hideHints(HIDE_BY_CARET_MOVE, false, false);
+      }
+    };
+
     final MyProjectManagerListener projectManagerListener = new MyProjectManagerListener();
     for (Project project : projectManager.getOpenProjects()) {
       projectManagerListener.projectOpened(project);
@@ -122,37 +129,6 @@ public class HintManagerImpl extends HintManager implements Disposable {
           e.getOldRectangle().x != e.getNewRectangle().x ||
           e.getOldRectangle().y != e.getNewRectangle().y) {
         hideHints(HIDE_BY_SCROLLING, false, false);
-      }
-    };
-
-    myEditorFocusListener = new FocusAdapter() {
-      @Override
-      public void focusLost(final FocusEvent e) {
-        //if (UIUtil.isFocusProxy(e.getOppositeComponent())) return;
-        myHideAlarm.addRequest(new Runnable() {
-          private boolean myNotFocused; // previous focus state
-
-          @Override
-          public void run() {
-            // see implementation here: com.intellij.ui.popup.AbstractPopup.isFocused(java.awt.Component[])
-            // the following method may return null while switching focus between popups:
-            // KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner()
-            // http://docs.oracle.com/javase/7/docs/webnotes/tsg/TSG-Desktop/html/awt.html#gdabn
-            boolean notFocused = !JBPopupFactory.getInstance().isChildPopupFocused(e.getComponent());
-            if (myNotFocused && notFocused) {
-              // hide all hints if a child popup is not focused now
-              // and if it was not focused 200 milliseconds ago
-              hideAllHints();
-            }
-            // TODO: find a way to replace this hack with com.intellij.openapi.wm.IdeFocusManager
-            myNotFocused = notFocused;
-          }
-        }, 200);
-      }
-
-      @Override
-      public void focusGained(FocusEvent e) {
-        myHideAlarm.cancelAllRequests();
       }
     };
 
@@ -199,7 +175,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
 
   @NotNull
   private HintInfo[] getHintsStackArray() {
-    return myHintsStack.toArray(new HintInfo[myHintsStack.size()]);
+    return myHintsStack.toArray(new HintInfo[0]);
   }
 
   public boolean performCurrentQuestionAction() {
@@ -877,19 +853,19 @@ public class HintManagerImpl extends HintManager implements Disposable {
     if (myLastEditor != editor) {
       if (myLastEditor != null) {
         myLastEditor.removeEditorMouseListener(myEditorMouseListener);
-        myLastEditor.getContentComponent().removeFocusListener(myEditorFocusListener);
         myLastEditor.getDocument().removeDocumentListener(myEditorDocumentListener);
         myLastEditor.getScrollingModel().removeVisibleAreaListener(myVisibleAreaListener);
         myLastEditor.getCaretModel().removeCaretListener(myCaretMoveListener);
+        myLastEditor.getSelectionModel().removeSelectionListener(mySelectionListener);
       }
 
       myLastEditor = editor;
       if (myLastEditor != null) {
         myLastEditor.addEditorMouseListener(myEditorMouseListener);
-        myLastEditor.getContentComponent().addFocusListener(myEditorFocusListener);
         myLastEditor.getDocument().addDocumentListener(myEditorDocumentListener);
         myLastEditor.getScrollingModel().addVisibleAreaListener(myVisibleAreaListener);
         myLastEditor.getCaretModel().addCaretListener(myCaretMoveListener);
+        myLastEditor.getSelectionModel().addSelectionListener(mySelectionListener);
       }
     }
   }

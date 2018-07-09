@@ -32,6 +32,11 @@ public interface TypeAnnotationProvider {
     public PsiAnnotation[] getAnnotations() {
       return PsiAnnotation.EMPTY_ARRAY;
     }
+
+    @Override
+    public String toString() {
+      return "EMPTY";
+    }
   };
 
   @NotNull

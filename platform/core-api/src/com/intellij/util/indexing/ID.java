@@ -28,7 +28,6 @@ import java.io.*;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Feb 12, 2008
  */
 public class ID<K, V> extends IndexId<K,V> {
   private static final IntObjectMap<ID> ourRegistry = ContainerUtil.createConcurrentIntObjectMap();
@@ -42,14 +41,11 @@ public class ID<K, V> extends IndexId<K,V> {
     try {
       TObjectIntHashMap<String> nameToIdRegistry = new TObjectIntHashMap<>();
       try (BufferedReader reader = new BufferedReader(new FileReader(indices))) {
-        int cnt = 0;
-        do {
-          cnt++;
+        for (int cnt = 1; ; cnt++) {
           final String name = reader.readLine();
           if (name == null) break;
           nameToIdRegistry.put(name, cnt);
         }
-        while (true);
       }
 
       synchronized (ourNameToIdRegistry) {
@@ -68,12 +64,13 @@ public class ID<K, V> extends IndexId<K,V> {
     }
   }
 
+  @NotNull
   private static File getEnumFile() {
     final File indexFolder = PathManager.getIndexRoot();
     return new File(indexFolder, "indices.enum");
   }
 
-  protected ID(String name) {
+  protected ID(@NotNull String name) {
     super(name);
     myUniqueId = stringToId(name);
 
@@ -81,14 +78,14 @@ public class ID<K, V> extends IndexId<K,V> {
     assert old == null : "ID with name '" + name + "' is already registered";
   }
 
-  private static short stringToId(String name) {
+  private static short stringToId(@NotNull String name) {
     synchronized (ourNameToIdRegistry) {
       if (ourNameToIdRegistry.containsKey(name)) {
         return (short)ourNameToIdRegistry.get(name);
       }
 
       int n = ourNameToIdRegistry.size() + 1;
-      assert n <= MAX_NUMBER_OF_INDICES : "Number of indices exceeded";
+      assert n <= MAX_NUMBER_OF_INDICES : "Number of indices exceeded: "+n;
 
       ourNameToIdRegistry.put(name, n);
       writeEnumFile();
@@ -96,7 +93,7 @@ public class ID<K, V> extends IndexId<K,V> {
     }
   }
 
-  public static void reinitializeDiskStorage() {
+  static void reinitializeDiskStorage() {
     synchronized (ourNameToIdRegistry) {
       writeEnumFile();
     }
@@ -127,7 +124,7 @@ public class ID<K, V> extends IndexId<K,V> {
   @NotNull
   public static <K, V> ID<K, V> create(@NonNls @NotNull String name) {
     final ID<K, V> found = findByName(name);
-    return found != null ? found : new ID<>(name);
+    return found == null ? new ID<>(name) : found;
   }
 
   @Nullable
@@ -135,13 +132,15 @@ public class ID<K, V> extends IndexId<K,V> {
     return (ID<K, V>)findById(stringToId(name));
   }
 
+  @Override
   public int hashCode() {
-    return (int)myUniqueId;
+    return myUniqueId;
   }
 
   /**
    * Consider to use {@link ID#getName()} instead of this method
    */
+  @Override
   public String toString() {
     return getName();
   }

@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInspection;
 
@@ -24,6 +12,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -33,11 +22,11 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.regex.Matcher;
@@ -97,24 +86,8 @@ public class JavaSuppressionUtil {
     if (attributes.length == 0) {
       return Collections.emptyList();
     }
-    final PsiAnnotationMemberValue attributeValue = attributes[0].getValue();
-    Collection<String> result = new ArrayList<>();
-    if (attributeValue instanceof PsiArrayInitializerMemberValue) {
-      final PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)attributeValue).getInitializers();
-      for (PsiAnnotationMemberValue annotationMemberValue : initializers) {
-        final String id = getInspectionIdSuppressedInAnnotationAttribute(annotationMemberValue);
-        if (id != null) {
-          result.add(id);
-        }
-      }
-    }
-    else {
-      final String id = getInspectionIdSuppressedInAnnotationAttribute(attributeValue);
-      if (id != null) {
-        result.add(id);
-      }
-    }
-    return result;
+    return ContainerUtil.mapNotNull(AnnotationUtil.arrayAttributeValues(attributes[0].getValue()),
+                                    JavaSuppressionUtil::getInspectionIdSuppressedInAnnotationAttribute);
   }
 
   public static PsiElement getElementMemberSuppressedIn(@NotNull PsiJavaDocumentedElement owner, @NotNull String inspectionToolID) {
@@ -317,17 +290,10 @@ public class JavaSuppressionUtil {
     if (module == null) return false;
     final Sdk jdk = ModuleRootManager.getInstance(module).getSdk();
     if (jdk == null) return false;
-    JavaSdkVersion version = getVersion(jdk);
+    final JavaSdkVersion version = JavaSdkVersionUtil.getJavaSdkVersion(jdk);
     if (version == null) return false;
     final boolean is_1_5 = version.isAtLeast(JavaSdkVersion.JDK_1_5);
     return DaemonCodeAnalyzerSettings.getInstance().isSuppressWarnings() && is_1_5 && PsiUtil.isLanguageLevel5OrHigher(file);
-  }
-
-  @Nullable
-  private static JavaSdkVersion getVersion(@NotNull Sdk sdk) {
-    String version = sdk.getVersionString();
-    if (version == null) return null;
-    return JavaSdkVersion.fromVersionString(version);
   }
 
   @Nullable

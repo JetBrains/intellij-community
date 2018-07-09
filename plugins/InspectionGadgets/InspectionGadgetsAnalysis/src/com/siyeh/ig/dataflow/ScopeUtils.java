@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2014 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,11 +18,10 @@ package com.siyeh.ig.dataflow;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.PsiElementOrderComparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.List;
 
 class ScopeUtils {
 
@@ -58,15 +57,14 @@ class ScopeUtils {
   }
 
   @Nullable
-  public static PsiElement getCommonParent(@NotNull PsiElement[] referenceElements) {
-    Arrays.sort(referenceElements, PsiElementOrderComparator.getInstance());
+  public static PsiElement getCommonParent(@NotNull List<? extends PsiElement> referenceElements) {
     PsiElement commonParent = null;
     for (PsiElement referenceElement : referenceElements) {
-      final PsiElement parent = PsiTreeUtil.getParentOfType(referenceElement, PsiCodeBlock.class, PsiForStatement.class);
+      final PsiElement parent = PsiTreeUtil.getParentOfType(referenceElement, PsiCodeBlock.class, PsiForStatement.class, PsiTryStatement.class);
       if (parent != null && commonParent != null) {
         if (!commonParent.equals(parent)) {
           commonParent = PsiTreeUtil.findCommonParent(commonParent, parent);
-          commonParent = PsiTreeUtil.getNonStrictParentOfType(commonParent, PsiCodeBlock.class, PsiForStatement.class);
+          commonParent = PsiTreeUtil.getNonStrictParentOfType(commonParent, PsiCodeBlock.class, PsiForStatement.class, PsiTryStatement.class);
         }
       }
       else {
@@ -74,12 +72,17 @@ class ScopeUtils {
       }
     }
 
+    // don't narrow inside resource variable, only resource expression
+    if (commonParent instanceof PsiTryStatement && !(referenceElements.get(0).getParent() instanceof PsiResourceExpression)) {
+      commonParent = PsiTreeUtil.getParentOfType(commonParent, PsiCodeBlock.class, PsiForStatement.class);
+    }
+
     // make common parent may only be for-statement if first reference is
     // the initialization of the for statement or the initialization is
     // empty.
     if (commonParent instanceof PsiForStatement) {
       final PsiForStatement forStatement = (PsiForStatement)commonParent;
-      final PsiElement referenceElement = referenceElements[0];
+      final PsiElement referenceElement = referenceElements.get(0);
       final PsiStatement initialization = forStatement.getInitialization();
       if (!(initialization instanceof PsiEmptyStatement)) {
         if (initialization instanceof PsiExpressionStatement) {
@@ -107,12 +110,12 @@ class ScopeUtils {
     if (commonParent != null) {
       final PsiElement parent = commonParent.getParent();
       if (parent instanceof PsiSwitchStatement) {
-        if (referenceElements.length > 1) {
-          commonParent = PsiTreeUtil.getParentOfType(parent, PsiCodeBlock.class, false);
+        if (referenceElements.size() > 1) {
+          return PsiTreeUtil.getParentOfType(parent, PsiCodeBlock.class, false);
         }
-        else if (PsiTreeUtil.getParentOfType(referenceElements[0], PsiSwitchLabelStatement.class, true, PsiCodeBlock.class) != null) {
+        else if (PsiTreeUtil.getParentOfType(referenceElements.get(0), PsiSwitchLabelStatement.class, true, PsiCodeBlock.class) != null) {
           // reference is a switch label
-          commonParent = PsiTreeUtil.getParentOfType(parent, PsiCodeBlock.class, false);
+          return PsiTreeUtil.getParentOfType(parent, PsiCodeBlock.class, false);
         }
       }
     }

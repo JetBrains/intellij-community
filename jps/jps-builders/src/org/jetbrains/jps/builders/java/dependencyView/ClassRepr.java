@@ -29,7 +29,6 @@ import java.util.*;
 
 /**
  * @author: db
- * Date: 01.02.11
  */
 public class ClassRepr extends ClassFileRepr {
   private final TypeRepr.ClassType mySuperClass;
@@ -366,7 +365,7 @@ public class ClassRepr extends ClassFileRepr {
     stream.println(mySuperClass == null ? "<null>" : mySuperClass.getDescr(context));
 
     stream.print("      Interfaces : ");
-    final TypeRepr.AbstractType[] is = myInterfaces.toArray(new TypeRepr.AbstractType[myInterfaces.size()]);
+    final TypeRepr.AbstractType[] is = myInterfaces.toArray(TypeRepr.AbstractType.EMPTY_TYPE_ARRAY);
     Arrays.sort(is, Comparator.comparing(o -> o.getDescr(context)));
     for (final TypeRepr.AbstractType t : is) {
       stream.print(t.getDescr(context));
@@ -375,7 +374,7 @@ public class ClassRepr extends ClassFileRepr {
     stream.println();
 
     stream.print("      Targets    : ");
-    final ElemType[] es = myAnnotationTargets.toArray(new ElemType[myAnnotationTargets.size()]);
+    final ElemType[] es = myAnnotationTargets.toArray(new ElemType[0]);
     Arrays.sort(es);
     for (final ElemType e : es) {
       stream.print(e);
@@ -395,7 +394,7 @@ public class ClassRepr extends ClassFileRepr {
     stream.println(myIsAnonymous);
 
     stream.println("      Fields:");
-    final FieldRepr[] fs = myFields.toArray(new FieldRepr[myFields.size()]);
+    final FieldRepr[] fs = myFields.toArray(new FieldRepr[0]);
     Arrays.sort(fs, (o1, o2) -> {
       if (o1.name == o2.name) {
         return o1.myType.getDescr(context).compareTo(o2.myType.getDescr(context));
@@ -409,7 +408,7 @@ public class ClassRepr extends ClassFileRepr {
     stream.println("      End Of Fields");
 
     stream.println("      Methods:");
-    final MethodRepr[] ms = myMethods.toArray(new MethodRepr[myMethods.size()]);
+    final MethodRepr[] ms = myMethods.toArray(new MethodRepr[0]);
     Arrays.sort(ms, (o1, o2) -> {
       if (o1.name == o2.name) {
         final String d1 = o1.myType.getDescr(context);

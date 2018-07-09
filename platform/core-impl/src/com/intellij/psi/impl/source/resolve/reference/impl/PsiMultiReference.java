@@ -21,7 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,11 +75,13 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     return myReferences[0];
   }
 
+  @NotNull
   @Override
   public PsiElement getElement(){
     return myElement;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     TextRange range = getRangeInElementIfSameForAll();
@@ -201,7 +203,7 @@ public class PsiMultiReference implements PsiPolyVariantReference {
       result.add(selfReference); // if i the only one starring at the sun
     }
 
-    return result.toArray(new ResolveResult[result.size()]);
+    return result.toArray(ResolveResult.EMPTY_ARRAY);
   }
 
   @Override

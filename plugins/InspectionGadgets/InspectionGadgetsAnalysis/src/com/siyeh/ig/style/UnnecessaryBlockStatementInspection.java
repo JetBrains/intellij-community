@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.style;
 
+import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
@@ -25,7 +26,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.DeclarationSearchUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -120,8 +120,8 @@ public class UnnecessaryBlockStatementInspection extends BaseInspection implemen
         return;
       }
       final PsiCodeBlock parentBlock = (PsiCodeBlock)parent;
-      if (parentBlock.getStatements().length > 1 &&
-          DeclarationSearchUtils.containsConflictingDeclarations(codeBlock, parentBlock)) {
+      if (parentBlock.getStatementCount() > 1 &&
+          BlockUtils.containsConflictingDeclarations(codeBlock, parentBlock)) {
         return;
       }
       registerError(brace);

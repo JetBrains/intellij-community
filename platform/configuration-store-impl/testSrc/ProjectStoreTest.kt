@@ -66,7 +66,7 @@ internal class ProjectStoreTest {
   data class TestState(var value: String = "default")
 
   @Test fun directoryBasedStorage() {
-    loadAndUseProject(tempDirManager, {
+    loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
       it.path
     }) { project ->
@@ -75,17 +75,17 @@ internal class ProjectStoreTest {
       assertThat(project.basePath).isEqualTo(PathUtil.getParentPath((PathUtil.getParentPath(project.projectFilePath!!))))
 
       // test reload on external change
-      val file = Paths.get(project.stateStore.stateStorageManager.expandMacros(PROJECT_FILE))
+      val file = Paths.get(project.stateStore.storageManager.expandMacros(PROJECT_FILE))
       file.write(file.readText().replace("""<option name="value" value="foo" />""", """<option name="value" value="newValue" />"""))
 
       project.baseDir.refresh(false, true)
       (ProjectManager.getInstance() as StoreAwareProjectManager).flushChangedProjectFileAlarm()
 
       assertThat(testComponent.state).isEqualTo(TestState("newValue"))
-      
+
       testComponent.state!!.value = "s".repeat(FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1024)
       project.saveStore()
-      
+
       // we should save twice (first call - virtual file size is not yet set)
       testComponent.state!!.value = "b".repeat(FileUtilRt.LARGE_FOR_CONTENT_LOADING + 1024)
       project.saveStore()
@@ -93,7 +93,7 @@ internal class ProjectStoreTest {
   }
 
   @Test fun fileBasedStorage() {
-    loadAndUseProject(tempDirManager, { it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", iprFileContent).path }) { project ->
+    loadAndUseProjectInLoadComponentStateMode(tempDirManager, { it.writeChild("test${ProjectFileType.DOT_DEFAULT_EXTENSION}", iprFileContent).path }) { project ->
       test(project)
 
       assertThat(project.basePath).isEqualTo(PathUtil.getParentPath(project.projectFilePath!!))
@@ -101,7 +101,7 @@ internal class ProjectStoreTest {
   }
 
   @Test fun saveProjectName() {
-    loadAndUseProject(tempDirManager, {
+    loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
       it.path
     }) { project ->
@@ -121,7 +121,7 @@ internal class ProjectStoreTest {
 
   @Test fun `saved project name must be not removed just on open`() {
     val name = "saved project name must be not removed just on open"
-    loadAndUseProject(tempDirManager, {
+    loadAndUseProjectInLoadComponentStateMode(tempDirManager, {
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/misc.xml", iprFileContent)
       it.writeChild("${Project.DIRECTORY_STORE_FOLDER}/.name", name)
       it.path
@@ -154,12 +154,12 @@ internal class ProjectStoreTest {
     testComponent.state!!.value = "foo"
     project.saveStore()
 
-    val file = Paths.get(project.stateStore.stateStorageManager.expandMacros(PROJECT_FILE))
+    val file = Paths.get(project.stateStore.storageManager.expandMacros(PROJECT_FILE))
     assertThat(file).isRegularFile()
     // test exact string - xml prolog, line separators, indentation and so on must be exactly the same
     // todo get rid of default component states here
     assertThat(file.readText()).startsWith(iprFileContent.replace("customValue", "foo").replace("</project>", ""))
-    
+
     return testComponent
   }
 }

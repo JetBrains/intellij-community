@@ -33,7 +33,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
 * @author Eugene Zhuravlev
-*         Date: 9/12/12
 */
 class ExcludeFromCompileAction extends AnAction {
   private final Project myProject;

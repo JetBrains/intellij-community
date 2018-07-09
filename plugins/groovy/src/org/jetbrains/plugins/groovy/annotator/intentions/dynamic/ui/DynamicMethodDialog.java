@@ -110,11 +110,6 @@ public class DynamicMethodDialog extends DynamicDialog {
     }
 
     @Override
-    public boolean isCellEditable(ParamInfo stringPsiTypeMyPair) {
-      return false;
-    }
-
-    @Override
     public void setValue(ParamInfo pair, String value) {
       PsiType type;
       try {

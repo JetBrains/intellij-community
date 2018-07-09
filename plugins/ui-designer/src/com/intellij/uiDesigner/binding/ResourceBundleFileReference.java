@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 5, 2005
  */
 public final class ResourceBundleFileReference extends ReferenceInForm {
   private static final Logger LOG = Logger.getInstance("#com.intellij.uiDesigner.ResourceBundleFileReference");

@@ -16,7 +16,7 @@
 package com.intellij.openapi.util.registry;
 
 import com.intellij.util.ConcurrencyUtil;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;

@@ -178,7 +178,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
           files.add(element);
         }
       }
-      CopyFilesOrDirectoriesHandler.copyAsFiles(files.toArray(new PsiElement[files.size()]), defaultTargetDirectory, project);
+      CopyFilesOrDirectoriesHandler.copyAsFiles(files.toArray(PsiElement.EMPTY_ARRAY), defaultTargetDirectory, project);
       return;
     }
     Object targetDirectory = null;
@@ -284,7 +284,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
             for (PsiFile file : files) {
               CopyHandler.updateSelectionInActiveProjectView(file, project, selectInActivePanel);
             }
-            EditorHelper.openFilesInEditor(files.toArray(new PsiFile[files.size()]));
+            EditorHelper.openFilesInEditor(files.toArray(PsiFile.EMPTY_ARRAY));
           }
         }
       }
@@ -404,7 +404,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
       }
     });
 
-    new OptimizeImportsProcessor(project, createdFiles.toArray(new PsiFile[createdFiles.size()]), null).run();
+    new OptimizeImportsProcessor(project, createdFiles.toArray(PsiFile.EMPTY_ARRAY), null).run();
     return createdFiles;
   }
 
@@ -533,7 +533,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
         }
         buffer.add(aClass);
       }
-      return buffer.toArray(new PsiClass[buffer.size()]);
+      return buffer.toArray(PsiClass.EMPTY_ARRAY);
     }
     return element instanceof PsiClass ? new PsiClass[]{(PsiClass)element} : null;
   }

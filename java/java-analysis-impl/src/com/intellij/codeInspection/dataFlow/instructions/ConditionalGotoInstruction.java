@@ -40,7 +40,7 @@ public class ConditionalGotoInstruction extends BranchingInstruction implements 
   }
 
   public String toString() {
-    return (isNegated() ? "!":"") + "cond?_goto " + getOffset();
+    return "IF_" + (isNegated() ? "NE" : "EQ") + " " + getOffset();
   }
 
   @Override
@@ -50,11 +50,6 @@ public class ConditionalGotoInstruction extends BranchingInstruction implements 
 
   @Override
   public void setOffset(final int offset) {
-    myOffset = new ControlFlow.ControlFlowOffset() {
-      @Override
-      public int getInstructionOffset() {
-        return offset;
-      }
-    };
+    myOffset = new ControlFlow.FixedOffset(offset);
   }
 }

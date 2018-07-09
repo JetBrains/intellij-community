@@ -29,7 +29,6 @@ import java.util.Set;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 19, 2007
  */
 @SkipSlowTestLocally
 public class PersistentMapPerformanceTest extends PersistentMapTestBase {
@@ -61,15 +60,15 @@ public class PersistentMapPerformanceTest extends PersistentMapTestBase {
     throws IOException {
     File file = FileUtil.createTempFile("persistent", "map");
     FileUtil.createParentDirs(file);
-    PersistentHashMap<T, String> map = null;
 
-    try {
-      map = constructor.createMap(file);
+    try(PersistentHashMap<T, String> map = constructor.createMap(file)) {
       for (int i = 0; i < 12000; i++) {
         setter.putValue(map, i, StringUtil.repeat("0123456789", 10000));
       }
-      map.close();
+    }
 
+    PersistentHashMap<T, String> map = null;
+    try {
       map = constructor.createMap(file);
       long len = 0;
       for (T key : map.getAllKeysWithExistingMapping()) {

@@ -18,6 +18,7 @@ package com.jetbrains.python.sdk.add
 import com.intellij.execution.ExecutionException
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -26,20 +27,18 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.util.PathUtil
-import com.intellij.util.SystemProperties
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.sdk.*
 import icons.PythonIcons
 import org.jetbrains.annotations.SystemIndependent
 import java.awt.BorderLayout
-import java.io.File
 import javax.swing.Icon
 import javax.swing.event.DocumentEvent
 
@@ -47,9 +46,10 @@ import javax.swing.event.DocumentEvent
  * @author vlan
  */
 class PyAddNewVirtualEnvPanel(private val project: Project?,
+                              private val module: Module?,
                               private val existingSdks: List<Sdk>,
                               newProjectPath: String?) : PyAddNewEnvPanel() {
-  override val envName = "Virtualenv"
+  override val envName: String = "Virtualenv"
 
   override var newProjectPath: String? = newProjectPath
     set(value) {
@@ -60,7 +60,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
   val path: String
     get() = pathField.text.trim()
 
-  override val panelName = "New environment"
+  override val panelName: String = "New environment"
   override val icon: Icon = PythonIcons.Python.Virtualenv
   private val baseSdkField = PySdkPathChoosingComboBox(findBaseSdks(existingSdks), null).apply {
     val preferredSdkPath = PySdkSettings.instance.preferredVirtualEnvBaseSdk
@@ -74,10 +74,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
     }
   }
   private val pathField = TextFieldWithBrowseButton().apply {
-    val defaultBasePath = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectBasePath))
-    val parentPath = PathUtil.getParentPath(defaultBasePath)
-    val fileName = PathUtil.getFileName(defaultBasePath)
-    text = FileUtil.findSequentNonexistentFile(File(parentPath), fileName, "").path
+    text = FileUtil.toSystemDependentName(PySdkSettings.instance.getPreferredVirtualEnvBasePath(projectBasePath))
     addBrowseFolderListener("Select Location for Virtual Environment", null, project,
                             FileChooserDescriptorFactory.createSingleFolderDescriptor())
   }
@@ -95,10 +92,9 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
     add(formPanel, BorderLayout.NORTH)
   }
 
-  override fun validateAll() =
-    listOf(validateEmptyOrNonExistingDirectoryLocation(pathField),
-           validateSdkComboBox(baseSdkField))
-      .filterNotNull()
+  override fun validateAll(): List<ValidationInfo> =
+    listOfNotNull(validateEnvironmentDirectoryLocation(pathField),
+                  validateSdkComboBox(baseSdkField))
 
   override fun getOrCreateSdk(): Sdk? {
     val root = pathField.text
@@ -111,10 +107,10 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
       }
     }
     val shared = makeSharedField.isSelected
-    val associatedPath = if (!shared) newProjectPath ?: project?.basePath else null
-    val sdk = createSdkByGenerateTask(task, existingSdks, baseSdkField.selectedSdk, associatedPath) ?: return null
+    val associatedPath = if (!shared) projectBasePath else null
+    val sdk = createSdkByGenerateTask(task, existingSdks, baseSdkField.selectedSdk, associatedPath, null) ?: return null
     if (!shared) {
-      sdk.associateWithProject(project, newProjectPath != null)
+      sdk.associateWithModule(module, newProjectPath)
     }
     excludeDirectoryFromProject(root, project)
     with(PySdkSettings.instance) {
@@ -152,9 +148,6 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
     }
   }
 
-  private val projectBasePath: @SystemIndependent String
-    get() = newProjectPath ?: project?.basePath ?: userHome
-
-  private val userHome: @SystemIndependent String
-    get() = FileUtil.toSystemIndependentName(SystemProperties.getUserHome())
+  private val projectBasePath: @SystemIndependent String?
+    get() = newProjectPath ?: module?.basePath ?: project?.basePath
 }

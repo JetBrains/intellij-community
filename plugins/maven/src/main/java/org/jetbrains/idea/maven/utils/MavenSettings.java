@@ -94,7 +94,7 @@ public class MavenSettings implements SearchableConfigurable.Parent {
   @NotNull
   @Override
   public Configurable[] getConfigurables() {
-    return myChildren.toArray(new Configurable[myChildren.size()]);
+    return myChildren.toArray(new Configurable[0]);
   }
 
   @Override

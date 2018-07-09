@@ -19,6 +19,7 @@ import com.intellij.lang.properties.editor.PropertiesGroupingStructureViewCompon
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.psi.impl.PropertiesFileImpl;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 
@@ -29,7 +30,7 @@ public class PropertiesFileStructureViewComponent extends PropertiesGroupingStru
   private final PropertiesFile myPropertiesFile;
 
   public PropertiesFileStructureViewComponent(Project project, PropertiesFileImpl propertiesFile, FileEditor editor) {
-    super(project, editor, new PropertiesFileStructureViewModel(propertiesFile));
+    super(project, editor, new PropertiesFileStructureViewModel(propertiesFile, EditorUtil.getEditorEx(editor)));
     myPropertiesFile = propertiesFile;
   }
 

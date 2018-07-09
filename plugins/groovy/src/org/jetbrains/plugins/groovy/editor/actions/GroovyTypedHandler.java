@@ -17,8 +17,8 @@ package org.jetbrains.plugins.groovy.editor.actions;
 
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.editorActions.JavaTypedHandler;
 import com.intellij.codeInsight.editorActions.TypedHandlerDelegate;
+import com.intellij.codeInsight.editorActions.TypedHandlerUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
@@ -53,7 +53,7 @@ public class GroovyTypedHandler extends TypedHandlerDelegate {
 
     if ('>' == c) {
       if (file instanceof GroovyFile && CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET) {
-        if (JavaTypedHandler.handleJavaGT(editor, GroovyTokenTypes.mLT, GroovyTokenTypes.mGT, INVALID_INSIDE_REFERENCE)) return Result.STOP;
+        if (TypedHandlerUtil.handleGenericGT(editor, GroovyTokenTypes.mLT, GroovyTokenTypes.mGT, INVALID_INSIDE_REFERENCE)) return Result.STOP;
       }
     }
 
@@ -92,7 +92,7 @@ public class GroovyTypedHandler extends TypedHandlerDelegate {
   public Result charTyped(final char c, @NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     if (myJavaLTTyped) {
       myJavaLTTyped = false;
-      JavaTypedHandler.handleAfterJavaLT(editor, GroovyTokenTypes.mLT, GroovyTokenTypes.mGT, INVALID_INSIDE_REFERENCE);
+      TypedHandlerUtil.handleAfterGenericLT(editor, GroovyTokenTypes.mLT, GroovyTokenTypes.mGT, INVALID_INSIDE_REFERENCE);
       return Result.STOP;
     }
     return Result.CONTINUE;
@@ -102,8 +102,6 @@ public class GroovyTypedHandler extends TypedHandlerDelegate {
     HighlighterIterator iterator = ((EditorEx) editor).getHighlighter().createIterator(offset);
     if (iterator.atEnd()) return false;
     if (iterator.getStart() > 0) iterator.retreat();
-    return JavaTypedHandler.isClassLikeIdentifier(offset, editor, iterator, GroovyTokenTypes.mIDENT);
+    return TypedHandlerUtil.isClassLikeIdentifier(offset, editor, iterator, GroovyTokenTypes.mIDENT);
   }
-
-
 }

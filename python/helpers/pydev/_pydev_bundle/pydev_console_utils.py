@@ -6,8 +6,7 @@ from  _pydev_bundle._pydev_calltip_util import get_description
 from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle import pydevd_xml
-from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
-from _pydevd_bundle.pydevd_utils import to_string
+from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items, NEXT_VALUE_SEPARATOR
 
 try:
     import cStringIO as StringIO #may not always be available @UnusedImport
@@ -93,6 +92,10 @@ class BaseStdIn:
     def close(self, *args, **kwargs):
         pass  # expected in StdIn
 
+    def __iter__(self):
+        # BaseStdIn would not be considered as Iterable in Python 3 without explicit `__iter__` implementation
+        return self.original_stdin.__iter__()
+
     def __getattr__(self, item):
         # it's called if the attribute wasn't found
         if hasattr(self.original_stdin, item):
@@ -174,19 +177,29 @@ class CodeFragment:
 # BaseInterpreterInterface
 # =======================================================================================================================
 class BaseInterpreterInterface:
-    def __init__(self, mainThread):
+    def __init__(self, mainThread, connect_status_queue=None):
         self.mainThread = mainThread
         self.interruptable = False
         self.exec_queue = _queue.Queue(0)
         self.buffer = None
         self.banner_shown = False
-        self.default_banner = ''
+        self.connect_status_queue = connect_status_queue
+        self.mpl_modules_for_patching = {}
+        self.init_mpl_modules_for_patching()
 
     def build_banner(self):
         return 'print({0})\n'.format(repr(self.get_greeting_msg()))
 
     def get_greeting_msg(self):
         return 'PyDev console: starting.\n'
+
+    def init_mpl_modules_for_patching(self):
+        from pydev_ipython.matplotlibtools import activate_matplotlib, activate_pylab, activate_pyplot
+        self.mpl_modules_for_patching = {
+            "matplotlib": lambda: activate_matplotlib(self.enableGui),
+            "matplotlib.pyplot": activate_pyplot,
+            "pylab": activate_pylab
+        }
 
     def need_more_for_code(self, source):
         # PyDev-502: PyDev 3.9 F2 doesn't support backslash continuations
@@ -470,14 +483,13 @@ class BaseInterpreterInterface:
     def getVariable(self, attributes):
         xml = StringIO.StringIO()
         xml.write("<xml>")
-        valDict = pydevd_vars.resolve_var(self.get_namespace(), attributes)
-        if valDict is None:
-            valDict = {}
+        val_dict = pydevd_vars.resolve_compound_var_object_fields(self.get_namespace(), attributes)
+        if val_dict is None:
+            val_dict = {}
 
-        keys = valDict.keys()
-
+        keys = val_dict.keys()
         for k in keys:
-            val = valDict[k]
+            val = val_dict[k]
             evaluate_full_value = pydevd_xml.should_evaluate_full_value(val)
             xml.write(pydevd_vars.var_to_xml(val, k, evaluate_full_value=evaluate_full_value))
 
@@ -498,14 +510,34 @@ class BaseInterpreterInterface:
         xml.write("</xml>")
         return xml.getvalue()
 
-    def loadFullValue(self, expressions):
-        xml = StringIO.StringIO()
-        xml.write("<xml>")
-        for expression in expressions:
-            result = pydevd_vars.eval_in_context(expression, self.get_namespace(), self.get_namespace())
-            xml.write(pydevd_vars.var_to_xml(result, expression, evaluate_full_value=True))
-        xml.write("</xml>")
-        return xml.getvalue()
+    def loadFullValue(self, seq, scope_attrs):
+        """
+        Evaluate full value for async Console variables in a separate thread and send results to IDE side
+        :param seq: id of command
+        :param scope_attrs: a sequence of variables with their attributes separated by NEXT_VALUE_SEPARATOR
+        (i.e.: obj\tattr1\tattr2NEXT_VALUE_SEPARATORobj2\attr1\tattr2)
+        :return:
+        """
+        frame_variables = self.get_namespace()
+        var_objects = []
+        vars = scope_attrs.split(NEXT_VALUE_SEPARATOR)
+        for var_attrs in vars:
+            if '\t' in var_attrs:
+                name, attrs = var_attrs.split('\t', 1)
+
+            else:
+                name = var_attrs
+                attrs = None
+            if name in frame_variables.keys():
+                var_object = pydevd_vars.resolve_var_object(frame_variables[name], attrs)
+                var_objects.append((var_object, name))
+            else:
+                var_object = pydevd_vars.eval_in_context(name, frame_variables, frame_variables)
+                var_objects.append((var_object, name))
+
+        from _pydevd_bundle.pydevd_comm import GetValueAsyncThreadConsole
+        t = GetValueAsyncThreadConsole(self.get_server(), seq, var_objects)
+        t.start()
 
     def changeVariable(self, attr, value):
         def do_change_variable():
@@ -541,8 +573,16 @@ class BaseInterpreterInterface:
         env_key = "PYDEVD_EXTRA_ENVS"
         if env_key in debugger_options:
             for (env_name, value) in dict_iter_items(debugger_options[env_key]):
-                os.environ[env_name] = value
+                existing_value = os.environ.get(env_name, None)
+                if existing_value:
+                    os.environ[env_name] = "%s%c%s" % (existing_value, os.path.pathsep, value)
+                else:
+                    os.environ[env_name] = value
+                if env_name == "PYTHONPATH":
+                    sys.path.append(value)
+
             del debugger_options[env_key]
+
         def do_connect_to_debugger():
             try:
                 # Try to import the packages needed to attach the debugger
@@ -585,6 +625,14 @@ class BaseInterpreterInterface:
         self.exec_queue.put(do_connect_to_debugger)
 
         return ('connect complete',)
+
+    def handshake(self):
+        if self.connect_status_queue is not None:
+            self.connect_status_queue.put(True)
+        return "PyCharm"
+
+    def get_connect_status_queue(self):
+        return self.connect_status_queue
 
     def hello(self, input_str):
         # Don't care what the input string is

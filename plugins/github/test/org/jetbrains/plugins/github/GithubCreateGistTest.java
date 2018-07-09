@@ -19,8 +19,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent;
-import org.jetbrains.plugins.github.util.GithubAuthData;
-import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
 
 import java.util.Collections;
 import java.util.List;
@@ -34,7 +32,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
   public void testSimple() {
     List<FileContent> expected = createContent();
 
-    String url = GithubCreateGistAction.createGist(myProject, getAuthDataHolder(), myIndicator, expected, true, GIST_DESCRIPTION, null);
+    String url = GithubCreateGistAction.createGist(myProject, myIndicator, myAccount, expected, true, GIST_DESCRIPTION, null);
     assertNotNull(url);
     GIST_ID = url.substring(url.lastIndexOf('/') + 1);
 
@@ -45,31 +43,11 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
     checkGistContent(expected);
   }
 
-  public void testAnonymous() {
-    List<FileContent> expected = createContent();
-
-    String url = GithubCreateGistAction
-      .createGist(myProject, new GithubAuthDataHolder(GithubAuthData.createAnonymous(myHost)), myIndicator, expected, true,
-                  GIST_DESCRIPTION, null);
-    assertNotNull(url);
-    GIST_ID = url.substring(url.lastIndexOf('/') + 1);
-
-    checkGistExists();
-    checkGistAnonymous();
-    checkGistSecret();
-    checkGistDescription(GIST_DESCRIPTION);
-    checkGistContent(expected);
-
-    // anonymous gists - undeletable
-    GIST_ID = null;
-    GIST = null;
-  }
-
   public void testUnusedFilenameField() {
     List<FileContent> expected = createContent();
 
     String url =
-      GithubCreateGistAction.createGist(myProject, getAuthDataHolder(), myIndicator, expected, true, GIST_DESCRIPTION, "filename");
+      GithubCreateGistAction.createGist(myProject, myIndicator, myAccount, expected, true, GIST_DESCRIPTION, "filename");
     assertNotNull(url);
     GIST_ID = url.substring(url.lastIndexOf('/') + 1);
 
@@ -85,7 +63,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
     List<FileContent> expected = Collections.singletonList(new FileContent("filename", "file.txt content"));
 
     String url =
-      GithubCreateGistAction.createGist(myProject, getAuthDataHolder(), myIndicator, content, true, GIST_DESCRIPTION, "filename");
+      GithubCreateGistAction.createGist(myProject, myIndicator, myAccount, content, true, GIST_DESCRIPTION, "filename");
     assertNotNull(url);
     GIST_ID = url.substring(url.lastIndexOf('/') + 1);
 
@@ -99,7 +77,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
   public void testPublic() {
     List<FileContent> expected = createContent();
 
-    String url = GithubCreateGistAction.createGist(myProject, getAuthDataHolder(), myIndicator, expected, false, GIST_DESCRIPTION, null);
+    String url = GithubCreateGistAction.createGist(myProject, myIndicator, myAccount, expected, false, GIST_DESCRIPTION, null);
     assertNotNull(url);
     GIST_ID = url.substring(url.lastIndexOf('/') + 1);
 
@@ -113,7 +91,7 @@ public class GithubCreateGistTest extends GithubCreateGistTestBase {
   public void testEmpty() {
     List<FileContent> expected = Collections.emptyList();
 
-    String url = GithubCreateGistAction.createGist(myProject, getAuthDataHolder(), myIndicator, expected, true, GIST_DESCRIPTION, null);
+    String url = GithubCreateGistAction.createGist(myProject, myIndicator, myAccount, expected, true, GIST_DESCRIPTION, null);
     assertNull("Gist was created", url);
 
     checkNotification(NotificationType.WARNING, "Can't create Gist", "Can't create empty gist");

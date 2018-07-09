@@ -21,6 +21,7 @@ import com.intellij.testGuiFramework.recorder.actions.PerformScriptAction
 import java.io.File
 import java.net.URL
 import java.nio.file.Paths
+import java.util.jar.JarFile
 
 object KotlinCompileUtil {
 
@@ -44,11 +45,24 @@ object KotlinCompileUtil {
       return urls.toList()
     }
 
-    var list: List<URL> = (ServiceManager::class.java.classLoader.forcedUrls()
-                           + PerformScriptAction::class.java.classLoader.forcedUrls())
+    val set = mutableSetOf<URL>()
+    set.addAll(ServiceManager::class.java.classLoader.forcedUrls())
+    set.addAll(PerformScriptAction::class.java.classLoader.forcedUrls())
     if (!ApplicationManager.getApplication().isUnitTestMode)
-      list += ServiceManager::class.java.classLoader.forcedBaseUrls()
-    return list
+      set.addAll(ServiceManager::class.java.classLoader.forcedBaseUrls())
+    expandClasspathInJar(set)
+    return set.toList()
+  }
+
+  private fun expandClasspathInJar(setOfUrls: MutableSet<URL>) {
+    val classpathUrl = setOfUrls.firstOrNull{Regex("classpath\\d*.jar").containsMatchIn(it.path) || it.path.endsWith("pathing.jar")}
+    if (classpathUrl != null) {
+      val classpathFile = Paths.get(classpathUrl.toURI()).toFile()
+      val classpathLine = JarFile(classpathFile).manifest.mainAttributes.getValue("Class-Path")
+      val classpathList = classpathLine.split(" ").filter { it.startsWith("file") }.map { URL(it) }
+      setOfUrls.addAll(classpathList)
+      setOfUrls.remove(classpathUrl)
+    }
   }
 
   private fun URL.getParentURL() = File(this.file).parentFile.toURI().toURL()!!
@@ -67,8 +81,8 @@ object KotlinCompileUtil {
 
   private fun ClassLoader.forcedBaseUrls(): List<URL> {
     try {
-      return ((this.javaClass.getMethod("getBaseUrls").invoke(this) as? List<*>)!!.
-        filter { it is URL && it.protocol == "file" && !it.file.endsWith("jar!") }) as List<URL>
+      return ((this.javaClass.getMethod("getBaseUrls").invoke(
+        this) as? List<*>)!!.filter { it is URL && it.protocol == "file" && !it.file.endsWith("jar!") }) as List<URL>
 
     }
     catch (e: NoSuchMethodException) {

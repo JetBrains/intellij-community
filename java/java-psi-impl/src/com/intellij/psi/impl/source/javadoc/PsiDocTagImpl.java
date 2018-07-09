@@ -77,7 +77,7 @@ public class PsiDocTagImpl extends CompositePsiElement implements PsiDocTag, Con
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     assert child.getTreeParent() == this : child.getTreeParent();
     IElementType i = child.getElementType();
     if (i == DOC_TAG_NAME) {

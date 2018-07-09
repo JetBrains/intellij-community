@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.diff.DiffDialogHints;
@@ -36,6 +22,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
@@ -91,7 +78,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
 
   private final List<AbstractFilePatchInProgress> myPatches;
   private final List<ShelvedBinaryFilePatch> myBinaryShelvedPatches;
-  @NotNull private EditorNotificationPanel myErrorNotificationPanel;
+  @NotNull private final EditorNotificationPanel myErrorNotificationPanel;
   @NotNull private final MyChangeTreeList myChangesTreeList;
   @Nullable private final Collection<Change> myPreselectedChanges;
   private final boolean myUseProjectRootAsPredefinedBase;
@@ -228,7 +215,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         final int inapplicable = myInfoCalculator.getInapplicable();
         if (inapplicable > 0) {
           appendSpace();
-          appendText(inapplicable, inapplicable, FileStatus.MERGED_WITH_CONFLICTS, "Missing Base:");
+          append(inapplicable, FileStatus.MERGED_WITH_CONFLICTS, "missing base");
         }
       }
     };
@@ -253,9 +240,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
           syncUpdatePatchFileAndScheduleReloadIfNeeded(event.getFile());
         }
       };
-      final VirtualFileManager fileManager = VirtualFileManager.getInstance();
-      fileManager.addVirtualFileListener(myListener);
-      Disposer.register(getDisposable(), () -> fileManager.removeVirtualFileListener(myListener));
+      VirtualFileManager.getInstance().addVirtualFileListener(myListener, getDisposable());
     }
     updateOkActions();
   }
@@ -318,7 +303,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
     actions.add(getCancelAction());
     actions.add(getHelpAction());
-    return actions.toArray(new Action[actions.size()]);
+    return actions.toArray(new Action[0]);
   }
 
   @CalledInAwt
@@ -394,7 +379,10 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       if (author != null) {
         myChangeListChooser.setData(new ChangeListData(author));
       }
-      List<FilePatch> filePatches = myReader != null ? ContainerUtil.newArrayList(myReader.getAllPatches()) : Collections.emptyList();
+      List<FilePatch> filePatches = ContainerUtil.newArrayList();
+      if (myReader != null) {
+        filePatches.addAll(myReader.getAllPatches());
+      }
       if (!ContainerUtil.isEmpty(myBinaryShelvedPatches)) {
         filePatches.addAll(myBinaryShelvedPatches);
       }
@@ -520,30 +508,31 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       final GridBagConstraints gb = createConstraints();
 
       final DefaultActionGroup group = new DefaultActionGroup();
-      final AnAction[] treeActions = myChangesTreeList.getTreeActions();
-      group.addAll(treeActions);
-      group.add(new MapDirectory());
 
       final MyShowDiff diffAction = new MyShowDiff();
       diffAction.registerCustomShortcutSet(CommonShortcuts.getDiff(), getRootPane());
       group.add(diffAction);
 
+      group.add(new MapDirectory());
       group.add(new StripUp());
       group.add(new StripDown());
       group.add(new ResetStrip());
       group.add(new ZeroStrip());
       if (myCanChangePatchFile) {
-        group.add(new AnAction("Refresh", "Refresh", AllIcons.Actions.Refresh) {
+        group.add(new DumbAwareAction("Refresh", "Refresh", AllIcons.Actions.Refresh) {
           @Override
           public void actionPerformed(AnActionEvent e) {
             syncUpdatePatchFileAndScheduleReloadIfNeeded(null);
           }
         });
       }
+      group.add(Separator.getInstance());
+      group.add(ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP));
 
       final ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("APPLY_PATCH", group, true);
+      TreeActionsToolbarPanel toolbarPanel = new TreeActionsToolbarPanel(toolbar, myChangesTreeList);
       gb.fill = GridBagConstraints.HORIZONTAL;
-      treePanel.add(toolbar.getComponent(), gb);
+      treePanel.add(toolbarPanel, gb);
 
       ++gb.gridy;
       gb.weighty = 1;
@@ -597,7 +586,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     @NotNull
     @Override
     protected DefaultTreeModel buildTreeModel(@NotNull List<AbstractFilePatchInProgress.PatchChange> changes) {
-      return TreeModelBuilder.buildFromChanges(myProject, isShowFlatten(), changes, myChangeNodeDecorator);
+      return TreeModelBuilder.buildFromChanges(myProject, getGrouping(), changes, myChangeNodeDecorator);
     }
 
     @Override
@@ -634,7 +623,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private class MapDirectory extends AnAction {
+  private class MapDirectory extends DumbAwareAction {
     private final NewBaseSelector myNewBaseSelector;
 
     private MapDirectory() {
@@ -692,7 +681,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       myChangesTreeList.expandAll();
     }
     myChangesTreeList.repaint();
-    if ((!doInitCheck) && patchesToSelect != null) {
+    if (!doInitCheck) {
       final List<AbstractFilePatchInProgress.PatchChange> toSelect =
         new ArrayList<>(patchesToSelect.size());
       for (AbstractFilePatchInProgress.PatchChange change : changes) {
@@ -985,7 +974,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
         component.append(text, SimpleTextAttributes.GRAY_ATTRIBUTES);
         if (!patchInProgress.baseExistsOrAdded()) {
           component.append("  ");
-          component.append("Select missing base", new SimpleTextAttributes(STYLE_PLAIN, UI.getColor("link.foreground")),
+          component.append("Select missing base", new SimpleTextAttributes(STYLE_PLAIN, JBColor.link()),
                            (Runnable)myChangesTreeList::handleInvalidChangesAndToggle);
         }
         else {
@@ -1026,7 +1015,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     runExecutor(myCallback);
   }
 
-  private class ZeroStrip extends AnAction {
+  private class ZeroStrip extends DumbAwareAction {
     private ZeroStrip() {
       super("Remove Directories", "Remove Directories", AllIcons.Vcs.StripNull);
     }
@@ -1041,7 +1030,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private class StripDown extends AnAction {
+  private class StripDown extends DumbAwareAction {
     private StripDown() {
       super("Restore Directory", "Restore Directory", AllIcons.Vcs.StripDown);
     }
@@ -1071,7 +1060,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private class StripUp extends AnAction {
+  private class StripUp extends DumbAwareAction {
     private StripUp() {
       super("Strip Directory", "Strip Directory", AllIcons.Vcs.StripUp);
     }
@@ -1101,7 +1090,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private class ResetStrip extends AnAction {
+  private class ResetStrip extends DumbAwareAction {
     private ResetStrip() {
       super("Reset Directories", "Reset Directories", AllIcons.Vcs.ResetStrip);
     }
@@ -1116,7 +1105,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     }
   }
 
-  private class MyShowDiff extends AnAction {
+  private class MyShowDiff extends DumbAwareAction {
     private final MyChangeComparator myMyChangeComparator;
 
     private MyShowDiff() {
@@ -1207,7 +1196,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       return new ChangeGoToChangePopupAction<MyDiffRequestChain>(this, getIndex()) {
         @NotNull
         @Override
-        protected DefaultTreeModel buildTreeModel(@NotNull Project project, boolean showFlatten) {
+        protected DefaultTreeModel buildTreeModel(@NotNull Project project, @NotNull ChangesGroupingPolicyFactory grouping) {
           List<TreeModelBuilder.GenericNodeData> nodesData = new ArrayList<>();
           for (int i = 0; i < myChanges.size(); i++) {
             Change change = myChanges.get(i);
@@ -1216,7 +1205,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
             nodesData.add(new TreeModelBuilder.GenericNodeData(filePath, fileStatus, i));
           }
 
-          TreeModelBuilder builder = new TreeModelBuilder(project, showFlatten);
+          TreeModelBuilder builder = new TreeModelBuilder(project, grouping);
           builder.setGenericNodes(nodesData, null);
           return builder.build();
         }

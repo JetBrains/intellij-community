@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local
 
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -13,6 +13,12 @@ import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.impl.local.FileWatcher
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl
 import com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl
+import com.intellij.openapi.vfs.local.FileWatcherTestUtil.INTER_RESPONSE_DELAY
+import com.intellij.openapi.vfs.local.FileWatcherTestUtil.NATIVE_PROCESS_DELAY
+import com.intellij.openapi.vfs.local.FileWatcherTestUtil.SHORT_PROCESS_DELAY
+import com.intellij.openapi.vfs.local.FileWatcherTestUtil.shutdown
+import com.intellij.openapi.vfs.local.FileWatcherTestUtil.startup
+import com.intellij.openapi.vfs.local.FileWatcherTestUtil.wait
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.testFramework.PlatformTestUtil
@@ -31,6 +37,9 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
+import java.lang.IllegalStateException
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.test.assertEquals
@@ -41,14 +50,6 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   //<editor-fold desc="Set up / tear down">
 
   private val LOG: Logger by lazy { Logger.getInstance(NativeFileWatcherImpl::class.java) }
-
-  private val START_STOP_DELAY = 10000L      // time to wait for the watcher spin up/down
-  private val INTER_RESPONSE_DELAY = 500L    // time to wait for a next event in a sequence
-  private val NATIVE_PROCESS_DELAY = 60000L  // time to wait for a native watcher response
-  private val SHORT_PROCESS_DELAY = 5000L    // time to wait when no native watcher response is expected
-
-  private val UNICODE_NAME_1 = "Úñíçødê"
-  private val UNICODE_NAME_2 = "Юникоде"
 
   @Rule @JvmField val tempDir = TempDirectory()
 
@@ -74,14 +75,13 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     watcher = (fs as LocalFileSystemImpl).fileWatcher
     assertFalse(watcher.isOperational)
     watchedPaths += tempDir.root.path
-    watcher.startup { path ->
-      if (path == FileWatcher.RESET || path != FileWatcher.OTHER && watchedPaths.any { path.startsWith(it) }) {
+    startup(watcher) { path ->
+      if (path === FileWatcher.RESET || path !== FileWatcher.OTHER && watchedPaths.any { path.startsWith(it) }) {
         alarm.cancelAllRequests()
         alarm.addRequest({ watcherEvents.up() }, INTER_RESPONSE_DELAY)
         if (path == FileWatcher.RESET) resetHappened.set(true)
       }
     }
-    wait { !watcher.isOperational }
 
     LOG.debug("================== setting up " + getTestName(false) + " ==================")
   }
@@ -89,8 +89,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   @After fun tearDown() {
     LOG.debug("================== tearing down " + getTestName(false) + " ==================")
 
-    watcher.shutdown()
-    wait { watcher.isOperational }
+    shutdown(watcher)
 
     runInEdtAndWait {
       runWriteAction { root.delete(this) }
@@ -178,8 +177,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     watch(top, false)
     watch(sub, true)
     assertEvents(
-        { arrayOf(watchedFile1, watchedFile2, unwatchedFile).forEach { it.writeText("new content") } },
-        mapOf(watchedFile1 to 'U', watchedFile2 to 'U'))
+      { arrayOf(watchedFile1, watchedFile2, unwatchedFile).forEach { it.writeText("new content") } },
+      mapOf(watchedFile1 to 'U', watchedFile2 to 'U'))
   }
 
   @Test fun testIncorrectPath() {
@@ -188,7 +187,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val pseudoDir = File(file, "sub/zip")
     refresh(root)
 
-    watch(pseudoDir, false)
+    val checkRoots = if (SystemInfo.isLinux) WatchStatus.CHECK_NOT_WATCHED else WatchStatus.CHECK_WATCHED
+    watch(pseudoDir, false, checkRoots = checkRoots)
     assertEvents({ file.writeText("new content") }, mapOf(), SHORT_PROCESS_DELAY)
   }
 
@@ -205,33 +205,34 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     watch(sub)
     watch(side)
     assertEvents(
-        { arrayOf(subFile, sideFile).forEach { it.writeText("first content") } },
-        mapOf(subFile to 'U', sideFile to 'U'))
+      { arrayOf(subFile, sideFile).forEach { it.writeText("first content") } },
+      mapOf(subFile to 'U', sideFile to 'U'))
 
     assertEvents(
-        { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("new content") } },
-        mapOf(subFile to 'U', sideFile to 'U'))
+      { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("new content") } },
+      mapOf(subFile to 'U', sideFile to 'U'))
 
     val requestForTopDir = watch(top)
     assertEvents(
-        { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("newer content") } },
-        mapOf(topFile to 'U', subFile to 'U', sideFile to 'U'))
+      { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("newer content") } },
+      mapOf(topFile to 'U', subFile to 'U', sideFile to 'U'))
     unwatch(requestForTopDir)
 
     assertEvents(
-        { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("newest content") } },
-        mapOf(subFile to 'U', sideFile to 'U'))
+      { arrayOf(topFile, subFile, sideFile).forEach { it.writeText("newest content") } },
+      mapOf(subFile to 'U', sideFile to 'U'))
 
     assertEvents(
-        { arrayOf(topFile, subFile, sideFile).forEach { it.delete() } },
-        mapOf(topFile to 'D', subFile to 'D', sideFile to 'D'))
+      { arrayOf(topFile, subFile, sideFile).forEach { it.delete() } },
+      mapOf(topFile to 'D', subFile to 'D', sideFile to 'D'))
   }
 
   // ensure that flat roots set via symbolic paths behave correctly and do not report dirty files returned from other recursive roots
   @Test fun testSymbolicLinkIntoFlatRoot() {
     val root = tempDir.newFolder("root")
     val cDir = tempDir.newFolder("root/A/B/C")
-    val aLink = IoTestUtil.createSymLink("${root.path}/A", "${root.path}/aLink")
+    val aLink = File(root, "aLink")
+    Files.createSymbolicLink(aLink.toPath(), Paths.get("${root.path}/A"))
     val flatWatchedFile = tempDir.newFile("root/aLink/test.txt")
     val fileOutsideFlatWatchRoot = tempDir.newFile("root/A/B/C/test.txt")
     refresh(root)
@@ -245,8 +246,10 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   @Test fun testMultipleSymbolicLinkPathsToFile() {
     val root = tempDir.newFolder("root")
     val file = tempDir.newFile("root/A/B/C/test.txt")
-    val bLink = IoTestUtil.createSymLink("${root.path}/A/B", "${root.path}/bLink")
-    val cLink = IoTestUtil.createSymLink("${root.path}/A/B/C", "${root.path}/cLink")
+    val bLink = File(root, "bLink")
+    Files.createSymbolicLink(bLink.toPath(), Paths.get("${root.path}/A/B"))
+    val cLink = File(root, "cLink")
+    Files.createSymbolicLink(cLink.toPath(), Paths.get("${root.path}/A/B/C"))
     refresh(root)
     val bFilePath = File(bLink.path, "C/${file.name}")
     val cFilePath = File(cLink.path, file.name)
@@ -258,14 +261,60 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assertEvents({ file.writeText("re-creation") }, mapOf(bFilePath to 'C', cFilePath to 'C'))
   }
 
-  @Test fun testSymbolicLinkAboveWatchRoot() {
+  @Test fun testSymbolicLinkWatchRoot() {
     val top = tempDir.newFolder("top")
     val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
-    val link = IoTestUtil.createSymLink("${top.path}/dir1/dir2", "${top.path}/link")
+    val link = Files.createSymbolicLink(Paths.get(top.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
     val fileLink = File(top, "link/dir3/test.txt")
     refresh(top)
 
     watch(link)
+    assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
+    assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
+    assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
+  }
+
+  @Test fun testSymbolicLinkAboveWatchRoot() {
+    val top = tempDir.newFolder("top")
+    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
+    val link = Files.createSymbolicLink(Paths.get(top.path, "link"), Paths.get("${top.path}/dir1/dir2")).toFile()
+    val watchRoot = File(link, "dir3")
+    val fileLink = File(watchRoot, file.name)
+    refresh(top)
+
+    watch(watchRoot)
+    assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
+    assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
+    assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
+  }
+
+  @Test fun testJunctionWatchRoot() {
+    assumeTrue(SystemInfo.isWindows)
+
+    val top = tempDir.newFolder("top")
+    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
+    val junction = IoTestUtil.createJunction("${top.path}/dir1/dir2", "${top}/link")
+    val fileLink = File(top, "link/dir3/test.txt")
+    refresh(top)
+
+    watch(junction)
+    assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
+    assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
+    assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
+  }
+
+  @Test fun testJunctionAboveWatchRoot() {
+    assumeTrue(SystemInfo.isWindows)
+
+    val top = tempDir.newFolder("top")
+    val file = tempDir.newFile("top/dir1/dir2/dir3/test.txt")
+    IoTestUtil.createJunction("${top.path}/dir1/dir2", "${top}/link")
+    val watchRoot = File(top, "link/dir3")
+    val fileLink = File(watchRoot, file.name)
+    refresh(top)
+
+    watch(watchRoot)
+
     assertEvents({ file.writeText("new content") }, mapOf(fileLink to 'U'))
     assertEvents({ file.delete() }, mapOf(fileLink to 'D'))
     assertEvents({ file.writeText("re-creation") }, mapOf(fileLink to 'C'))
@@ -346,8 +395,8 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     watch(root)
     assertEvents(
-        { dir.deleteRecursively(); dir.mkdir(); arrayOf(file1, file2).forEach { it.writeText("text") } },
-        mapOf(file1 to 'U', file2 to 'U'))
+      { dir.deleteRecursively(); dir.mkdir(); arrayOf(file1, file2).forEach { it.writeText("text") } },
+      mapOf(file1 to 'U', file2 to 'U'))
   }
 
   @Test fun testWatchRootRecreation() {
@@ -358,12 +407,12 @@ class FileWatcherTest : BareTestFixtureTestCase() {
 
     watch(root)
     assertEvents(
-        {
-          root.deleteRecursively(); root.mkdir()
-          if (SystemInfo.isLinux) TimeoutUtil.sleep(1500)  // implementation specific
-          arrayOf(file1, file2).forEach { it.writeText("text") }
-        },
-        mapOf(file1 to 'U', file2 to 'U'))
+      {
+        root.deleteRecursively(); root.mkdir()
+        if (SystemInfo.isLinux) TimeoutUtil.sleep(1500)  // implementation specific
+        arrayOf(file1, file2).forEach { it.writeText("text") }
+      },
+      mapOf(file1 to 'U', file2 to 'U'))
   }
 
   @Test fun testWatchNonExistingRoot() {
@@ -397,13 +446,14 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     val file2 = tempDir.newFile("top/root/2.txt")
     refresh(top)
     val fsRoot = File(if (SystemInfo.isUnix) "/" else top.path.substring(0, 3))
-    assertTrue(fsRoot.exists(), "can't guess root of " + top)
+    assertTrue(fsRoot.exists(), "can't guess root of $top")
 
     val request = watch(root)
     assertEvents({ arrayOf(file1, file2).forEach { it.writeText("new content") } }, mapOf(file2 to 'U'))
 
-    val rootRequest = watch(fsRoot)
-    assertEvents({ arrayOf(file1, file2).forEach { it.writeText("12345") } }, mapOf(file1 to 'U', file2 to 'U'), SHORT_PROCESS_DELAY, true)
+    val checkRoots = if (SystemInfo.isLinux) WatchStatus.CHECK_NOT_WATCHED else WatchStatus.CHECK_WATCHED
+    val rootRequest = watch(fsRoot, checkRoots = checkRoots)
+    assertEvents({ arrayOf(file1, file2).forEach { it.writeText("12345") } }, mapOf(file1 to 'U', file2 to 'U'), SHORT_PROCESS_DELAY)
     unwatch(rootRequest)
 
     assertEvents({ arrayOf(file1, file2).forEach { it.writeText("") } }, mapOf(file2 to 'U'))
@@ -431,7 +481,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     refresh(root)
 
     watch(root)
-    assertEvents({ IoTestUtil.setHidden(file.path, true) }, mapOf(file to 'P'))
+    assertEvents({ Files.setAttribute(file.toPath(), "dos:hidden", true) }, mapOf(file to 'P'))
   }
 
   @Test fun testFileCaseChange() {
@@ -447,14 +497,17 @@ class FileWatcherTest : BareTestFixtureTestCase() {
   }
 
   // tests the same scenarios with an active file watcher (prevents explicit marking of refreshed paths)
-  @Test fun testPartialRefresh() = LocalFileSystemTest.doTestPartialRefresh(tempDir.newFolder("top"))
-  @Test fun testInterruptedRefresh() = LocalFileSystemTest.doTestInterruptedRefresh(tempDir.newFolder("top"))
-  @Test fun testRefreshAndFindFile() = LocalFileSystemTest.doTestRefreshAndFindFile(tempDir.newFolder("top"))
-  @Test fun testRefreshEquality() = LocalFileSystemTest.doTestRefreshEquality(tempDir.newFolder("top"))
+  @Test fun testPartialRefresh(): Unit = LocalFileSystemTest.doTestPartialRefresh(tempDir.newFolder("top"))
+  @Test fun testInterruptedRefresh(): Unit = LocalFileSystemTest.doTestInterruptedRefresh(tempDir.newFolder("top"))
+  @Test fun testRefreshAndFindFile(): Unit = LocalFileSystemTest.doTestRefreshAndFindFile(tempDir.newFolder("top"))
+  @Test fun testRefreshEquality(): Unit = LocalFileSystemTest.doTestRefreshEquality(tempDir.newFolder("top"))
 
   @Test fun testUnicodePaths() {
-    val root = tempDir.newFolder(UNICODE_NAME_1)
-    val file = tempDir.newFile("${UNICODE_NAME_1}/${UNICODE_NAME_2}.txt")
+    val name = IoTestUtil.getUnicodeName()
+    assumeTrue(name != null)
+
+    val root = tempDir.newFolder(name)
+    val file = tempDir.newFile("${name}/${name}.txt")
     refresh(root)
     watch(root)
 
@@ -518,30 +571,31 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assertThat(VfsTestUtil.print(VfsTestUtil.getEvents { vFile.refresh(false, false) })).containsOnly("U : ${vFile.path}")
   }
 
-  //<editor-fold desc="Helpers">
-
-  private fun wait(timeout: Long = START_STOP_DELAY, condition: () -> Boolean) {
-    val stopAt = System.currentTimeMillis() + timeout
-    while (condition()) {
-      assertTrue(System.currentTimeMillis() < stopAt, "operation timed out")
-      TimeoutUtil.sleep(10)
-    }
+  @Test fun testUncRoot() {
+    assumeTrue(SystemInfo.isWindows)
+    watch(File("\\\\SRV\\share\\path"), checkRoots = WatchStatus.CHECK_NOT_WATCHED)
   }
 
-  private fun watch(file: File, recursive: Boolean = true): LocalFileSystem.WatchRequest {
-    val request = fs.addRootToWatch(file.path, recursive)!!
-    wait { watcher.isSettingRoots }
+  //<editor-fold desc="Helpers">
+  private enum class WatchStatus { CHECK_WATCHED, CHECK_NOT_WATCHED, DO_NOT_CHECK }
+
+  private fun watch(file: File, recursive: Boolean = true, checkRoots: WatchStatus = WatchStatus.CHECK_WATCHED): LocalFileSystem.WatchRequest {
+    val request = FileWatcherTestUtil.watch(watcher, file, recursive)
+    @Suppress("NON_EXHAUSTIVE_WHEN")
+    when (checkRoots) {
+      WatchStatus.CHECK_WATCHED -> assertThat(watcher.manualWatchRoots).doesNotContain(file.path)
+      WatchStatus.CHECK_NOT_WATCHED -> assertThat(watcher.manualWatchRoots).contains(file.path)
+    }
     return request
   }
 
   private fun unwatch(request: LocalFileSystem.WatchRequest) {
-    fs.removeWatchedRoot(request)
-    wait { watcher.isSettingRoots }
+    FileWatcherTestUtil.unwatch(watcher, request)
     fs.refresh(false)
   }
 
   private fun refresh(file: File): VirtualFile {
-    val vFile = fs.refreshAndFindFileByIoFile(file)!!
+    val vFile = fs.refreshAndFindFileByIoFile(file) ?: throw IllegalStateException("can't get '${file.path}' into VFS")
     VfsUtilCore.visitChildrenRecursively(vFile, object : VirtualFileVisitor<Any>() {
       override fun visitFile(file: VirtualFile): Boolean { file.children; return true }
     })
@@ -549,7 +603,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     return vFile
   }
 
-  private fun assertEvents(action: () -> Unit, expectedOps: Map<File, Char>, timeout: Long = NATIVE_PROCESS_DELAY, filter: Boolean = false) {
+  private fun assertEvents(action: () -> Unit, expectedOps: Map<File, Char>, timeout: Long = NATIVE_PROCESS_DELAY) {
     LOG.debug("** waiting for ${expectedOps}")
     watcherEvents.down()
     alarm.cancelAllRequests()
@@ -564,7 +618,7 @@ class FileWatcherTest : BareTestFixtureTestCase() {
     assumeFalse("reset happened", resetHappened.get())
     LOG.debug("** done waiting")
 
-    val events = VfsTestUtil.getEvents { fs.refresh(false) }.filter { !filter || !FileUtil.startsWith(it.path, PathManager.getSystemPath()) }
+    val events = VfsTestUtil.getEvents { fs.refresh(false) }.filter { !FileUtil.startsWith(it.path, PathManager.getSystemPath()) }
 
     val expected = expectedOps.entries.map { "${it.value} : ${FileUtil.toSystemIndependentName(it.key.path)}" }.sorted()
     val actual = VfsTestUtil.print(events).sorted()

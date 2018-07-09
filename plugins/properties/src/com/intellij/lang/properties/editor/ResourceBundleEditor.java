@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang.properties.editor;
 
@@ -120,13 +106,13 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   private final Set<VirtualFile> myBackSlashPressed     = new THashSet<>();
   private final Alarm               mySelectionChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  private JPanel              myValuesPanel;
-  private JPanel              myStructureViewPanel;
+  private final JPanel              myValuesPanel;
+  private final JPanel              myStructureViewPanel;
   private volatile boolean    myDisposed;
   private ResourceBundleEditorFileListener myVfsListener;
   private Editor              mySelectedEditor;
   private String              myPropertyToSelectWhenVisible;
-  private ResourceBundleEditorHighlighter myHighlighter;
+  private final ResourceBundleEditorHighlighter myHighlighter;
 
   public ResourceBundleEditor(@NotNull ResourceBundle resourceBundle) {
     myProject = resourceBundle.getProject();
@@ -159,6 +145,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         // filter out temp unselect/select events
         if (getSelectedElementIfOnlyOne() instanceof ResourceBundleFileStructureViewElement) {
           ((CardLayout)myValuesPanel.getLayout()).show(myValuesPanel, NO_PROPERTY_SELECTED);
+          writePreviouslySelectedPropertyValue(e);
           selectedPropertiesFile = null;
           selectedProperty = null;
           return;
@@ -167,19 +154,21 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
         if (Comparing.equal(e.getNewLeadSelectionPath(), e.getOldLeadSelectionPath()) || getSelectedProperty() == null) return;
         if (!arePropertiesEquivalent(selectedProperty, getSelectedProperty()) ||
             !Comparing.equal(selectedPropertiesFile, getSelectedPropertiesFile())) {
-
-          if (selectedProperty != null && e.getOldLeadSelectionPath() != null) {
-            for (Map.Entry<VirtualFile, EditorEx> entry : myEditors.entrySet()) {
-              if (entry.getValue() == mySelectedEditor) {
-                writeEditorPropertyValue(selectedProperty.getName(), mySelectedEditor, entry.getKey());
-                break;
-              }
-            }
-          }
-
+          writePreviouslySelectedPropertyValue(e);
           selectedProperty = getSelectedProperty();
           selectedPropertiesFile = getSelectedPropertiesFile();
           selectionChanged();
+        }
+      }
+
+      private void writePreviouslySelectedPropertyValue(TreeSelectionEvent e) {
+        if (selectedProperty != null && e.getOldLeadSelectionPath() != null) {
+          for (Map.Entry<VirtualFile, EditorEx> entry : myEditors.entrySet()) {
+            if (entry.getValue() == mySelectedEditor) {
+              writeEditorPropertyValue(selectedProperty.getName(), mySelectedEditor, entry.getKey());
+              break;
+            }
+          }
         }
       }
 
@@ -205,8 +194,11 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     TreeElement[] children = myStructureViewComponent.getTreeModel().getRoot().getChildren();
     if (children.length != 0) {
       TreeElement child = children[0];
-      String propName = ((ResourceBundlePropertyStructureViewElement)child).getProperty().getUnescapedKey();
-      setState(new ResourceBundleEditorState(propName));
+      IProperty property = ((ResourceBundlePropertyStructureViewElement)child).getProperty();
+      if (property != null) {
+        String propName = property.getUnescapedKey();
+        setState(new ResourceBundleEditorState(propName));
+      }
     }
     myDataProviderPanel = new DataProviderPanel(splitPanel);
 
@@ -302,17 +294,14 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
     while (!toCheck.isEmpty()) {
       TreeElement element = toCheck.pop();
       PsiElement value = element instanceof ResourceBundlePropertyStructureViewElement
-                     ? ((ResourceBundlePropertyStructureViewElement)element).getProperty().getPsiElement()
+                     ? ((ResourceBundlePropertyStructureViewElement)element).getPsiElement()
                      : null;
-      if (value != null) {
-        final IProperty property = PropertiesImplUtil.getProperty(value);
-        if (propertyName.equals(property.getUnescapedKey())) {
-          myStructureViewComponent.select(property, true);
-          selectionChanged();
-          return;
-        }
-      }
-      else {
+      final IProperty property = PropertiesImplUtil.getProperty(value);
+      if (property != null && propertyName.equals(property.getUnescapedKey())) {
+        myStructureViewComponent.select(property, true);
+        selectionChanged();
+        return;
+      } else {
         for (TreeElement treeElement : element.getChildren()) {
           toCheck.push(treeElement);
         }
@@ -450,7 +439,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
 
       String title = propertiesFile.getName();
       title += PropertiesUtil.getPresentableLocale(propertiesFile.getLocale());
-      JComponent comp = new JPanel(new BorderLayout()) {
+      JPanel comp = new JPanel(new BorderLayout()) {
         @Override
         public Dimension getPreferredSize() {
           Insets insets = getBorder().getBorderInsets(this);
@@ -459,7 +448,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
       };
       comp.add(editor.getComponent(), BorderLayout.CENTER);
       comp.setBorder(IdeBorderFactory.createTitledBorder(title, false));
-      myTitledPanels.put(propertiesFile.getVirtualFile(), (JPanel)comp);
+      myTitledPanels.put(propertiesFile.getVirtualFile(), comp);
 
       valuesPanelComponent.add(comp, gc);
     }

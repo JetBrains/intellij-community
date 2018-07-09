@@ -18,7 +18,6 @@ package com.jetbrains.python.buildout;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.facet.ProjectFacetManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -33,7 +32,6 @@ import java.io.File;
 /**
  * Detects and configures a buildout facet.
  * User: dcheryasov
- * Date: Jul 26, 2010 6:10:39 PM
  */
 public class BuildoutFacetConfigurator implements DirectoryProjectConfigurator {
   @Override
@@ -67,11 +65,7 @@ public class BuildoutFacetConfigurator implements DirectoryProjectConfigurator {
     BuildoutFacet facet = facetManager.createFacet(facetType, facetType.getDefaultFacetName(), config, null);
     model.addFacet(facet);
 
-    new WriteAction() {
-      protected void run(@NotNull final Result result) throws Throwable {
-        model.commit();
-      }
-    }.execute();
+    WriteAction.run(() -> model.commit());
     facet.updatePaths();
     BuildoutFacet.attachLibrary(module);
   }

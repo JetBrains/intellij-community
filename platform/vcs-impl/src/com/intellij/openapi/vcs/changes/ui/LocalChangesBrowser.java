@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.Disposable;
@@ -21,7 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,9 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultTreeModel;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class LocalChangesBrowser extends ChangesBrowserBase implements Disposable {
   @NotNull private final ToggleChangeDiffAction myToggleChangeDiffAction;
@@ -44,20 +28,15 @@ public class LocalChangesBrowser extends ChangesBrowserBase implements Disposabl
 
     myToggleChangeDiffAction = new ToggleChangeDiffAction();
 
-    installChangeListListener();
+    ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
     init();
 
+    myViewer.setInclusionHashingStrategy(ChangeListChange.HASHING_STRATEGY);
     myViewer.rebuildTree();
   }
 
   @Override
   public void dispose() {
-  }
-
-  private void installChangeListListener() {
-    ChangeListAdapter changeListListener = new MyChangeListListener();
-    ChangeListManager.getInstance(myProject).addChangeListListener(changeListListener);
-    Disposer.register(this, () -> ChangeListManager.getInstance(myProject).removeChangeListListener(changeListListener));
   }
 
   @NotNull
@@ -72,18 +51,37 @@ public class LocalChangesBrowser extends ChangesBrowserBase implements Disposabl
 
   @NotNull
   @Override
-  protected DefaultTreeModel buildTreeModel(boolean showFlatten) {
+  protected DefaultTreeModel buildTreeModel() {
     List<LocalChangeList> lists = ChangeListManager.getInstance(myProject).getChangeLists();
     if (myChangeListNames != null) {
       lists = ContainerUtil.filter(lists, list -> myChangeListNames.contains(list.getName()));
     }
 
-    return TreeModelBuilder.buildFromChangeLists(myProject, showFlatten, lists);
+    return TreeModelBuilder.buildFromChangeLists(myProject, getGrouping(), lists, Registry.is("vcs.skip.single.default.changelist"));
   }
 
 
   public void setIncludedChanges(@NotNull Collection<? extends Change> changes) {
-    myViewer.setIncludedChanges(changes);
+    List<Change> changesToInclude = new ArrayList<>(changes);
+
+    Set<Change> otherChanges = new HashSet<>();
+    for (Change change : changes) {
+      if (!(change instanceof ChangeListChange)) {
+        otherChanges.add(change);
+      }
+    }
+
+    // include all related ChangeListChange by a simple Change
+    if (!otherChanges.isEmpty()) {
+      for (Change change : getAllChanges()) {
+        if (change instanceof ChangeListChange &&
+            otherChanges.contains(change)) {
+          changesToInclude.add(change);
+        }
+      }
+    }
+
+    myViewer.setIncludedChanges(changesToInclude);
   }
 
   public List<Change> getAllChanges() {
@@ -149,32 +147,8 @@ public class LocalChangesBrowser extends ChangesBrowserBase implements Disposabl
       });
     }
 
-    public void changeListAdded(ChangeList list) {
-      doUpdate();
-    }
-
     @Override
-    public void changeListRemoved(ChangeList list) {
-      doUpdate();
-    }
-
-    @Override
-    public void changeListRenamed(ChangeList list, String oldName) {
-      doUpdate();
-    }
-
-    @Override
-    public void changesRemoved(Collection<Change> changes, ChangeList fromList) {
-      doUpdate();
-    }
-
-    @Override
-    public void changesAdded(Collection<Change> changes, ChangeList toList) {
-      doUpdate();
-    }
-
-    @Override
-    public void changesMoved(Collection<Change> changes, ChangeList fromList, ChangeList toList) {
+    public void changeListsChanged() {
       doUpdate();
     }
   }

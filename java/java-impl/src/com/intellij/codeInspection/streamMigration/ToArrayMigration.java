@@ -20,15 +20,13 @@ import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection.
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-/**
- * @author Tagir Valeev
- */
 public class ToArrayMigration extends BaseStreamApiMigration {
   protected ToArrayMigration(boolean shouldWarn) {
     super(shouldWarn, "toArray");
@@ -59,8 +57,9 @@ public class ToArrayMigration extends BaseStreamApiMigration {
     } else {
       supplier = arrayType.getCanonicalText()+"::new";
     }
+    CommentTracker ct = new CommentTracker();
     MapOp mapping = new MapOp(rValue, tb.getVariable(), assignment.getType());
-    String replacementText = loop.withBound(dimension).createReplacement() + mapping.createReplacement() + ".toArray(" + supplier + ")";
-    return replaceInitializer(tb.getStreamSourceStatement(), arrayVariable, initializer, replacementText, status);
+    String replacementText = loop.withBound(dimension).createReplacement(ct) + mapping.createReplacement(ct) + ".toArray(" + supplier + ")";
+    return replaceInitializer(tb.getStreamSourceStatement(), arrayVariable, initializer, replacementText, status, ct);
   }
 }

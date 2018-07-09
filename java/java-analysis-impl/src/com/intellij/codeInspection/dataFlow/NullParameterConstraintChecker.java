@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.instructions.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
@@ -52,7 +39,7 @@ class NullParameterConstraintChecker extends DataFlowRunner {
   private final Set<PsiParameter> myParametersWithSuccessfulExecutionInNotNullState;
 
   private NullParameterConstraintChecker(Collection<PsiParameter> parameters) {
-    super(false, true);
+    super(false, null);
     myPossiblyViolatedParameters = new THashSet<>(parameters);
     myParametersWithSuccessfulExecutionInNotNullState = new THashSet<>();
     myUsedParameters = new THashSet<>();
@@ -67,8 +54,7 @@ class NullParameterConstraintChecker extends DataFlowRunner {
     for (int index = 0; index < parameters.length; index++) {
       PsiParameter parameter = parameters[index];
       if (!(parameter.getType() instanceof PsiPrimitiveType) &&
-          !NullableNotNullManager.isNotNull(parameter) &&
-          !NullableNotNullManager.isNullable(parameter) &&
+          NullableNotNullManager.getNullability(parameter) == Nullability.UNKNOWN &&
           JavaNullMethodArgumentUtil.hasNullArgument(method, index)) {
         nullableParameters.add(parameter);
       }
@@ -111,8 +97,8 @@ class NullParameterConstraintChecker extends DataFlowRunner {
 
     if (instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException()) {
       DfaMemoryState memState = instructionState.getMemoryState();
-      for (PsiParameter parameter : myPossiblyViolatedParameters.toArray(new PsiParameter[myPossiblyViolatedParameters.size()])) {
-        final DfaVariableValue dfaVar = getFactory().getVarFactory().createVariableValue(parameter, false);
+      for (PsiParameter parameter : myPossiblyViolatedParameters.toArray(PsiParameter.EMPTY_ARRAY)) {
+        final DfaVariableValue dfaVar = getFactory().getVarFactory().createVariableValue(parameter);
         if (memState.isNotNull(dfaVar)) {
           myParametersWithSuccessfulExecutionInNotNullState.add(parameter);
         }
@@ -136,7 +122,7 @@ class NullParameterConstraintChecker extends DataFlowRunner {
     protected MyDfaMemoryState(DfaValueFactory factory) {
       super(factory);
       for (PsiParameter parameter : myPossiblyViolatedParameters) {
-        setVariableState(getFactory().getVarFactory().createVariableValue(parameter, false),
+        setVariableState(getFactory().getVarFactory().createVariableValue(parameter),
                          new DfaVariableState(DfaFactMap.EMPTY.with(DfaFactType.CAN_BE_NULL, true)));
       }
     }

@@ -32,23 +32,23 @@ import org.jetbrains.annotations.Nullable;
 public class PsiNavigationSupportImpl extends PsiNavigationSupport {
   @Nullable
   @Override
-  public Navigatable getDescriptor(PsiElement element) {
+  public Navigatable getDescriptor(@NotNull PsiElement element) {
     return EditSourceUtil.getDescriptor(element);
   }
 
   @NotNull
   @Override
-  public Navigatable createNavigatable(Project project, VirtualFile vFile, int offset) {
+  public Navigatable createNavigatable(@NotNull Project project, @NotNull VirtualFile vFile, int offset) {
     return new OpenFileDescriptor(project, vFile, offset);
   }
 
   @Override
-  public boolean canNavigate(PsiElement element) {
+  public boolean canNavigate(@NotNull PsiElement element) {
     return EditSourceUtil.canNavigate(element);
   }
 
   @Override
-  public void navigateToDirectory(PsiDirectory psiDirectory, boolean requestFocus) {
+  public void navigateToDirectory(@NotNull PsiDirectory psiDirectory, boolean requestFocus) {
     ProjectViewSelectInTarget.select(psiDirectory.getProject(), this, ProjectViewPane.ID, null, psiDirectory.getVirtualFile(), requestFocus);
   }
 }

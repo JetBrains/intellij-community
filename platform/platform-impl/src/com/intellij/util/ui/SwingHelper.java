@@ -17,6 +17,7 @@ package com.intellij.util.ui;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -33,6 +34,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkLabel;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton;
 import com.intellij.ui.components.ComponentsKt;
@@ -100,7 +102,7 @@ public class SwingHelper {
 
   @NotNull
   public static JPanel newVerticalPanel(float childAlignmentX, @NotNull Collection<Component> children) {
-    return newVerticalPanel(childAlignmentX, children.toArray(new Component[children.size()]));
+    return newVerticalPanel(childAlignmentX, children.toArray(new Component[0]));
   }
 
   /**
@@ -610,6 +612,7 @@ public class SwingHelper {
     else {
       textPane = new JEditorPane();
     }
+    UISettings.setupComponentAntialiasing(textPane);
     textPane.setFont(font != null ? font : UIUtil.getLabelFont());
     textPane.setEditorKit(UIUtil.getHTMLEditorKit());
     textPane.setEditable(false);
@@ -628,7 +631,7 @@ public class SwingHelper {
                              @NotNull String bodyInnerHtml,
                              @Nullable Color foregroundColor) {
     editorPane.setText(buildHtml(
-      UIUtil.getCssFontDeclaration(editorPane.getFont(), foregroundColor, null, null),
+      UIUtil.getCssFontDeclaration(editorPane.getFont(), foregroundColor, JBColor.link(), null),
       bodyInnerHtml
     ));
   }
@@ -756,7 +759,7 @@ public class SwingHelper {
     disabledHtml = disabledHtml == null ? innerHtml : disabledHtml;
     final Font font = UIUtil.getLabelFont();
     String html = buildHtml(
-      UIUtil.getCssFontDeclaration(font, UIUtil.getInactiveTextColor(), null, null),
+      UIUtil.getCssFontDeclaration(font, UIUtil.getActiveTextColor(), null, null),
       innerHtml
     );
     String disabled = buildHtml(

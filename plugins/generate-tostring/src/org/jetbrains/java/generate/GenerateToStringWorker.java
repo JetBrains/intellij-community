@@ -24,7 +24,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.VisualPosition;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -74,12 +73,7 @@ public class GenerateToStringWorker {
                                          Map<String, String> params,
                                          TemplateResource template) throws IncorrectOperationException, GenerateCodeException {
     // generate code using velocity
-    String body = GenerationUtil.velocityGenerateCode(clazz, selectedMembers, params, template.getMethodBody(), config.getSortElements(), config.isUseFullyQualifiedName());
-    if (logger.isDebugEnabled()) logger.debug("Method body generated from Velocity:\n" + body);
-
-    // fix weird linebreak problem in IDEA #3296 and later
-    body = StringUtil.convertLineSeparators(body);
-
+    String evaluatedText = GenerationUtil.velocityGenerateCode(clazz, selectedMembers, params, template.getTemplate(), config.getSortElements(), config.isUseFullyQualifiedName());
     // create psi newMethod named toString()
     final JVMElementFactory topLevelFactory = JVMElementFactories.getFactory(clazz.getLanguage(), clazz.getProject());
     if (topLevelFactory == null) {
@@ -87,9 +81,11 @@ public class GenerateToStringWorker {
     }
     PsiMethod newMethod;
     try {
-      newMethod = topLevelFactory.createMethodFromText(template.getMethodSignature() + " { " + body + " }", clazz);
+      newMethod = topLevelFactory.createMethodFromText(evaluatedText, clazz);
       CodeStyleManager.getInstance(clazz.getProject()).reformat(newMethod);
-    } catch (IncorrectOperationException ignore) {
+    }
+    catch (IncorrectOperationException e) {
+      logger.info(e);
       HintManager.getInstance().showErrorHint(editor, "'toString()' method could not be created from template '" +
                                                       template.getFileName() + '\'');
       return null;
@@ -165,9 +161,10 @@ public class GenerateToStringWorker {
   protected ConflictResolutionPolicy exitsMethodDialog(TemplateResource template) {
     final DuplicationPolicy dupPolicy = config.getReplaceDialogInitialOption();
     if (dupPolicy == DuplicationPolicy.ASK) {
-      PsiMethod existingMethod = PsiAdapter.findMethodByName(clazz, template.getTargetMethodName());
+      String targetMethodName = template.getTargetMethodName(clazz);
+      PsiMethod existingMethod = targetMethodName != null ? PsiAdapter.findMethodByName(clazz, targetMethodName) : null;
       if (existingMethod != null) {
-        return MethodExistsDialog.showDialog(template.getTargetMethodName());
+        return MethodExistsDialog.showDialog(targetMethodName);
       }
     }
     else if (dupPolicy == DuplicationPolicy.REPLACE) {
@@ -185,7 +182,9 @@ public class GenerateToStringWorker {
    * @param template the template to use
    */
   private void beforeCreateToStringMethod(Map<String, String> params, TemplateResource template) {
-    PsiMethod existingMethod = PsiAdapter.findMethodByName(clazz, template.getTargetMethodName()); // find the existing method
+    String targetMethodName = template.getTargetMethodName(clazz);
+    if (targetMethodName == null) return;
+    PsiMethod existingMethod = PsiAdapter.findMethodByName(clazz, targetMethodName); // find the existing method
     if (existingMethod != null && existingMethod.getDocComment() != null) {
       PsiDocComment doc = existingMethod.getDocComment();
       if (doc != null) {

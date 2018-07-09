@@ -74,7 +74,7 @@ public class ProjectViewContextProvider extends WorkingContextProvider {
     for (AbstractProjectViewPane pane : myPanes) {
       JTree tree = pane.getTree();
       if (tree != null) {
-        TreeUtil.collapseAll(tree, -1);
+        TreeUtil.collapseAll(tree, 0);
       }
     }
   }

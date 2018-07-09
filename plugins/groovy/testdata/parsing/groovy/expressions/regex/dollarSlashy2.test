@@ -19,13 +19,13 @@ Groovy script
       PsiWhiteSpace(' ')
       Compound regular expression
         PsiElement($/ regex begin)('$/')
-        GrStringContentImpl(GString content element)
+        GrStringContentImpl(STRING_CONTENT)
           PsiElement($/ regex content)('\n    Hello ')
         GString injection
           PsiElement($)('$')
           Reference expression
             PsiElement(identifier)('name')
-        GrStringContentImpl(GString content element)
+        GrStringContentImpl(STRING_CONTENT)
           PsiElement($/ regex content)(',\n    today we're ')
         GString injection
           PsiElement($)('$')
@@ -36,6 +36,6 @@ Groovy script
             Reference expression
               PsiElement(identifier)('date')
             PsiElement(})('}')
-        GrStringContentImpl(GString content element)
+        GrStringContentImpl(STRING_CONTENT)
           PsiElement($/ regex content)('\n    $ dollar-sign\n    $$ dollar-sign\n    \ backslash\n    / slash\n    $/ slash')
         PsiElement($/ regex end)('/$')

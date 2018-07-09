@@ -27,7 +27,6 @@ import java.net.URL;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 3/28/11
  */
 public class DefaultTemplate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.fileTemplates.impl.DefaultTemplate");

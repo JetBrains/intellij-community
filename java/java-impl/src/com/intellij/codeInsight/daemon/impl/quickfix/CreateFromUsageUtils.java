@@ -25,6 +25,7 @@ import com.intellij.codeInsight.intention.impl.CreateClassDialog;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeInsight.template.ExpressionUtil;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.FileTemplateUtil;
@@ -55,6 +56,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
@@ -115,7 +117,7 @@ public class CreateFromUsageUtils {
     if (argList == null) return false;
     if (candidate == null) {
       return targetClass != null && !targetClass.isInterface() && !(targetClass instanceof PsiTypeParameter) &&
-             !(argList.getExpressions().length == 0 && targetClass.getConstructors().length == 0);
+             !(argList.isEmpty() && targetClass.getConstructors().length == 0);
     }
     else {
       return !PsiUtil.isApplicable(candidate, PsiSubstitutor.EMPTY, argList);
@@ -260,7 +262,7 @@ public class CreateFromUsageUtils {
 
     GuessTypeParameters guesser = new GuessTypeParameters(project, JavaPsiFacade.getElementFactory(project), builder, substitutor);
 
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(psiManager);
+    PostprocessReformattingAspect postprocessReformattingAspect = PostprocessReformattingAspect.getInstance(project);
     final PsiClass containingClass = method.getContainingClass();
     final boolean isInterface = containingClass != null && containingClass.isInterface();
     //255 is the maximum number of method parameters
@@ -290,7 +292,7 @@ public class CreateFromUsageUtils {
         if (isInterface) {
           PsiUtil.setModifierProperty(param, PsiModifier.FINAL, false);
         }
-        parameter = codeStyleManager.performActionWithFormatterDisabled(() -> (PsiParameter) parameterList.add(param));
+        parameter = postprocessReformattingAspect.postponeFormattingInside(() -> (PsiParameter) parameterList.add(param));
       } else {
         parameter = parameterList.getParameters()[i];
       }
@@ -498,7 +500,8 @@ public class CreateFromUsageUtils {
     final List<PsiReferenceExpression> result = new ArrayList<>();
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expr) {
-        if (expression instanceof PsiReferenceExpression) {
+        if (expression instanceof PsiReferenceExpression && 
+            (expr.getParent() instanceof PsiMethodCallExpression == expression.getParent() instanceof PsiMethodCallExpression)) {
           if (Comparing.equal(expr.getReferenceName(), ((PsiReferenceExpression)expression).getReferenceName()) && !isValidReference(expr, false)) {
             result.add(expr);
           }
@@ -520,7 +523,7 @@ public class CreateFromUsageUtils {
     if (parent != null) {
       parent.accept(visitor);
     }
-    return result.toArray(new PsiReferenceExpression[result.size()]);
+    return result.toArray(new PsiReferenceExpression[0]);
   }
 
   @NotNull
@@ -578,7 +581,7 @@ public class CreateFromUsageUtils {
       }
     }
 
-    return result.toArray(new PsiVariable[result.size()]);
+    return result.toArray(new PsiVariable[0]);
   }
 
   private static void getExpectedInformation(final PsiExpression expression,
@@ -600,7 +603,7 @@ public class CreateFromUsageUtils {
         if (someExpectedTypes.length > 0) {
           Comparator<ExpectedTypeInfo> comparator = expectedTypesComparator;
           if (expressionList != null) {
-            int argCount = expressionList.getExpressions().length;
+            int argCount = expressionList.getExpressionCount();
             Comparator<ExpectedTypeInfo> mostSuitableMethodComparator =
               Comparator.comparingInt(typeInfo -> typeInfo.getCalledMethod().getParameterList().getParametersCount() == argCount ? 0 : 1);
             comparator = mostSuitableMethodComparator.thenComparing(comparator);
@@ -702,7 +705,7 @@ public class CreateFromUsageUtils {
       for (ExpectedTypeInfo[] aTypesList : typesList) {
         ContainerUtil.addAll(union, (ExpectedTypeInfo[])aTypesList);
       }
-      expectedTypes = union.toArray(new ExpectedTypeInfo[union.size()]);
+      expectedTypes = union.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
 
     if (expectedTypes.length == 0) {
@@ -754,7 +757,7 @@ public class CreateFromUsageUtils {
       for (ExpectedTypeInfo[] aTypesList : typesList) {
         ContainerUtil.addAll(union, (ExpectedTypeInfo[])aTypesList);
       }
-      expectedTypes = union.toArray(new ExpectedTypeInfo[union.size()]);
+      expectedTypes = union.toArray(ExpectedTypeInfo.EMPTY_ARRAY);
     }
 
     if (expectedTypes.length == 0) {
@@ -802,9 +805,7 @@ public class CreateFromUsageUtils {
 
       PsiType[] types = ExpectedTypesProvider.processExpectedTypes(expectedTypes, visitor, manager.getProject());
       if (types.length == 0) {
-        return allowVoidType
-               ? new PsiType[]{PsiType.VOID}
-               : new PsiType[]{PsiType.getJavaLangObject(manager, resolveScope)};
+        return Arrays.stream(expectedTypes).map(type -> type.getType()).toArray(PsiType[]::new);
       }
 
       return types;
@@ -846,7 +847,7 @@ public class CreateFromUsageUtils {
     }
 
     if (!l.isEmpty()) {
-      types.add(l.toArray(new ExpectedTypeInfo[l.size()]));
+      types.add(l.toArray(ExpectedTypeInfo.EMPTY_ARRAY));
     }
   }
 
@@ -1059,7 +1060,7 @@ public class CreateFromUsageUtils {
         }
       }
 
-      return set.toArray(new LookupElement[set.size()]);
+      return set.toArray(LookupElement.EMPTY_ARRAY);
     }
   }
 }

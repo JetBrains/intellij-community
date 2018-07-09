@@ -61,7 +61,7 @@ public class CompressedAppendableFile {
   static final String INCOMPLETE_CHUNK_LENGTH_FILE_EXTENSION = ".s";
 
   public CompressedAppendableFile(File file) {
-    this(file, PersistentBTreeEnumerator.PAGE_SIZE);
+    this(file, 32768);
   }
 
   private CompressedAppendableFile(File file, int bufferSize) {
@@ -265,16 +265,22 @@ public class CompressedAppendableFile {
     append(buffer, size);
   }
 
-  public synchronized void append(byte[] buffer, int size) throws IOException {
+  public void append(byte[] buffer, int size) throws IOException {
+    append(buffer, 0, size);
+  }
+
+  public synchronized void append(byte[] buffer, int offset, int size) throws IOException {
     if (size == 0) return;
 
     if (myNextChunkBuffer == null) loadAppendBuffer();
-    int newBufferSize = calcBufferSize(myBufferPosition + size);
-    if (newBufferSize != myNextChunkBuffer.length) {
-      myNextChunkBuffer = Arrays.copyOf(myNextChunkBuffer, newBufferSize);
+    if (myNextChunkBuffer.length != myAppendBufferLength && myBufferPosition + size >= myNextChunkBuffer.length) {
+      int newBufferSize = calcBufferSize(myBufferPosition + size);
+      if (newBufferSize != myNextChunkBuffer.length) {
+        myNextChunkBuffer = Arrays.copyOf(myNextChunkBuffer, newBufferSize);
+      }
     }
 
-    int bufferPosition = 0;
+    int bufferPosition = offset;
     int sizeToWrite = size;
 
     while (sizeToWrite > 0) {
@@ -371,7 +377,7 @@ public class CompressedAppendableFile {
 
   @NotNull
   protected byte[] decompress(DataInputStream keysStream) throws IOException {
-    return CompressionUtil.readCompressedWithoutOriginalBufferLength(keysStream);
+    return CompressionUtil.readCompressedWithoutOriginalBufferLength(keysStream, myAppendBufferLength);
   }
 
   protected void saveChunk(BufferExposingByteArrayOutputStream compressedChunk, long endOfFileOffset) throws IOException {

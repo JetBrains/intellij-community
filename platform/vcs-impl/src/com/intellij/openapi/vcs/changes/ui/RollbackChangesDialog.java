@@ -50,7 +50,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   private final JCheckBox myDeleteLocallyAddedFiles;
   private final ChangeInfoCalculator myInfoCalculator;
   private final CommitLegendPanel myCommitLegendPanel;
-  private Runnable myListChangeListener;
+  private final Runnable myListChangeListener;
   private String myOperationName;
 
   public static void rollbackChanges(final Project project, final Collection<Change> changes) {
@@ -61,11 +61,10 @@ public class RollbackChangesDialog extends DialogWrapper {
       return;
     }
 
-    final ArrayList<Change> validChanges = new ArrayList<>();
     final Set<LocalChangeList> lists = new THashSet<>();
-    lists.addAll(manager.getInvolvedListsFilterChanges(changes, validChanges));
+    lists.addAll(manager.getAffectedLists(changes));
 
-    new RollbackChangesDialog(project, ContainerUtil.newArrayList(lists), validChanges).show();
+    new RollbackChangesDialog(project, ContainerUtil.newArrayList(lists), new ArrayList<>(changes)).show();
   }
 
   public static void rollbackChanges(final Project project, final LocalChangeList changeList) {
@@ -146,8 +145,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   protected void doOKAction() {
     super.doOKAction();
     RollbackWorker worker = new RollbackWorker(myProject, myOperationName, myInvokedFromModalContext);
-    worker.doRollback(myBrowser.getIncludedChanges(), myDeleteLocallyAddedFiles.isSelected(),
-                      null, null);
+    worker.doRollback(myBrowser.getIncludedChanges(), myDeleteLocallyAddedFiles.isSelected());
   }
 
   @Nullable

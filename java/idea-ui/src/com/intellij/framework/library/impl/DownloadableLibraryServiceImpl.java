@@ -42,7 +42,7 @@ public class DownloadableLibraryServiceImpl extends DownloadableLibraryService {
   @Override
   public DownloadableLibraryDescription createLibraryDescription(@NotNull String groupId, @NotNull final URL... localUrls) {
     return new LibraryVersionsFetcher(groupId, localUrls) {
-      //todo[nik] pull up this method after moving corresponding API to lang-api
+      //todo[nik] pull up this method after moving corresponding API to intellij.platform.lang
       @NotNull
       protected FrameworkAvailabilityCondition createAvailabilityCondition(Artifact version) {
         RequiredFrameworkVersion groupVersion = version.getRequiredFrameworkVersion();

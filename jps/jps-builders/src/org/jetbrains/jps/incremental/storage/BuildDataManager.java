@@ -22,6 +22,7 @@ import com.intellij.util.io.PersistentHashMapValueStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.impl.storage.BuildTargetStorages;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
@@ -40,15 +41,16 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 10/7/11
  */
 public class BuildDataManager implements StorageOwner {
-  private static final int VERSION = 33 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1:0);
+  private static final int VERSION = 36 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1:0);
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.storage.BuildDataManager");
   private static final String SRC_TO_FORM_STORAGE = "src-form";
+  private static final String SRC_TO_OUTPUT_STORAGE = "src-out";
   private static final String OUT_TARGET_STORAGE = "out-target";
   private static final String MAPPINGS_STORAGE = "mappings";
   private static final int CONCURRENCY_LEVEL = BuildRunner.PARALLEL_BUILD_ENABLED? IncProjectBuilder.MAX_BUILDER_THREADS : 1;
+  private static final String SRC_TO_OUTPUT_FILE_NAME = "data";
 
   private final ConcurrentMap<BuildTarget<?>, AtomicNotNullLazyValue<SourceToOutputMappingImpl>> mySourceToOutputs =
     new ConcurrentHashMap<>(16, 0.75f, CONCURRENCY_LEVEL);
@@ -94,7 +96,7 @@ public class BuildDataManager implements StorageOwner {
     AtomicNotNullLazyValue<V> create(K key);
   }
 
-  private LazyValueFactory<BuildTarget<?>,SourceToOutputMappingImpl> SOURCE_OUTPUT_MAPPING_VALUE_FACTORY = new LazyValueFactory<BuildTarget<?>, SourceToOutputMappingImpl>() {
+  private final LazyValueFactory<BuildTarget<?>,SourceToOutputMappingImpl> SOURCE_OUTPUT_MAPPING_VALUE_FACTORY = new LazyValueFactory<BuildTarget<?>, SourceToOutputMappingImpl>() {
     @Override
     public AtomicNotNullLazyValue<SourceToOutputMappingImpl> create(final BuildTarget<?> key) {
       return new AtomicNotNullLazyValue<SourceToOutputMappingImpl>() {
@@ -102,7 +104,7 @@ public class BuildDataManager implements StorageOwner {
         @Override
         protected SourceToOutputMappingImpl compute() {
           try {
-            return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(key), "data"));
+            return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(key), SRC_TO_OUTPUT_FILE_NAME));
           }
           catch (IOException e) {
             throw new BuildDataCorruptedException(e);
@@ -112,7 +114,7 @@ public class BuildDataManager implements StorageOwner {
     }
   };
   
-  private LazyValueFactory<BuildTarget<?>,BuildTargetStorages> TARGET_STORAGES_VALUE_FACTORY = new LazyValueFactory<BuildTarget<?>, BuildTargetStorages>() {
+  private final LazyValueFactory<BuildTarget<?>,BuildTargetStorages> TARGET_STORAGES_VALUE_FACTORY = new LazyValueFactory<BuildTarget<?>, BuildTargetStorages>() {
     @Override
     public AtomicNotNullLazyValue<BuildTargetStorages> create(final BuildTarget<?> target) {
       return new AtomicNotNullLazyValue<BuildTargetStorages>() {
@@ -146,6 +148,10 @@ public class BuildDataManager implements StorageOwner {
     final SourceToOutputMappingImpl sourceToOutputMapping = fetchValue(mySourceToOutputs, target, SOURCE_OUTPUT_MAPPING_VALUE_FACTORY);
     final int buildTargetId = myTargetsState.getBuildTargetId(target);
     return new SourceToOutputMappingWrapper(sourceToOutputMapping, buildTargetId);
+  }
+
+  public SourceToOutputMappingImpl createSourceToOutputMapForStaleTarget(BuildTargetType<?> targetType, String targetId) throws IOException {
+    return new SourceToOutputMappingImpl(new File(getSourceToOutputMapRoot(targetType, targetId), SRC_TO_OUTPUT_FILE_NAME));
   }
 
   @NotNull
@@ -328,7 +334,11 @@ public class BuildDataManager implements StorageOwner {
   }
   
   private File getSourceToOutputMapRoot(BuildTarget<?> target) {
-    return new File(myDataPaths.getTargetDataRoot(target), "src-out");
+    return new File(myDataPaths.getTargetDataRoot(target), SRC_TO_OUTPUT_STORAGE);
+  }
+
+  private File getSourceToOutputMapRoot(BuildTargetType<?> targetType, String targetId) {
+    return new File(myDataPaths.getTargetDataRoot(targetType, targetId), SRC_TO_OUTPUT_STORAGE);
   }
 
   private File getSourceToFormsRoot() {
@@ -373,16 +383,10 @@ public class BuildDataManager implements StorageOwner {
     if (cached != null) {
       return cached;
     }
-    try {
-      final DataInputStream is = new DataInputStream(new FileInputStream(myVersionFile));
-      try {
-        final boolean diff = is.readInt() != VERSION;
-        myVersionDiffers = diff;
-        return diff;
-      }
-      finally {
-        is.close();
-      }
+    try (DataInputStream is = new DataInputStream(new FileInputStream(myVersionFile))) {
+      final boolean diff = is.readInt() != VERSION;
+      myVersionDiffers = diff;
+      return diff;
     }
     catch (FileNotFoundException ignored) {
       return false; // treat it as a new dir

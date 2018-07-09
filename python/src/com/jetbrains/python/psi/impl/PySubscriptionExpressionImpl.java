@@ -79,7 +79,7 @@ public class PySubscriptionExpressionImpl extends PyElementImpl implements PySub
     if (type instanceof PyTupleType) {
       final PyTupleType tupleType = (PyTupleType)type;
       return Optional
-        .ofNullable(PyConstantExpressionEvaluator.evaluate(indexExpression))
+        .ofNullable(new PyEvaluator().evaluate(indexExpression))
         .map(value -> PyUtil.as(value, Integer.class))
         .map(tupleType::getElementType)
         .orElse(null);

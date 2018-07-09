@@ -137,6 +137,11 @@ public class IpnbCommandLineState extends PythonCommandLineState {
           myConfiguration.setToken(text.substring(text.indexOf(token) + token.length()).trim());
         }
       }
+
+      @Override
+      public void processTerminated(@NotNull ProcessEvent event) {
+        myConfiguration.setToken(null);
+      }
     });
   }
 }

@@ -17,10 +17,13 @@ package com.intellij.java.propertyBased;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.propertyBased.IntentionPolicy;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author peter
@@ -49,15 +52,64 @@ class JavaIntentionPolicy extends IntentionPolicy {
   protected static boolean mayBreakCompilation(String actionText) {
     return actionText.startsWith("Flip") || // doesn't care about compilability
            actionText.startsWith("Convert to string literal") || // can produce uncompilable code by design
+           actionText.startsWith("Replace string literal with character") || // can produce uncompilable code by design
            actionText.startsWith("Detail exceptions") || // can produce uncompilable code if 'catch' section contains 'instanceof's
            actionText.startsWith("Insert call to super method") || // super method can declare checked exceptions, unexpected at this point
            actionText.startsWith("Cast to ") || // produces uncompilable code by design
            actionText.startsWith("Unwrap 'else' branch (changes semantics)") || // might produce code with final variables are initialized several times
            actionText.startsWith("Create missing 'switch' branches") || // if all existing branches do 'return something', we don't automatically generate compilable code for new branches
            actionText.matches("Make .* default") || // can make interface non-functional and its lambdas incorrect
-           actionText.startsWith("Unimplement"); // e.g. leaves red references to the former superclass methods
+           actionText.startsWith("Unimplement") || // e.g. leaves red references to the former superclass methods
+           actionText.equals("Make 'static'") || // from Non-'static' initializer inspection; it does not care if initializer refers instance members, see IDEA-195165
+           actionText.equals("Split into declaration and initialization") || // TODO: remove when IDEA-179081 is fixed
+           actionText.equals("Replace with 'while'") || // TODO: remove when IDEA-195157 is fixed
+           actionText.equals("Randomly change 'serialVersionUID' initializer"); // TODO: remove when IDEA-195234 is fixed
   }
 
+}
+
+class JavaCommentingStrategy extends JavaIntentionPolicy {
+  @Override
+  public boolean checkComments(IntentionAction intention) {
+    String intentionText = intention.getText();
+    boolean commentChangingActions = intentionText.startsWith("Replace with end-of-line comment") ||
+                                     intentionText.startsWith("Replace with block comment") ||
+                                     intentionText.startsWith("Remove //noinspection") ||
+                                     intentionText.startsWith("Unwrap 'if' statement") || //remove ifs content
+                                     intentionText.startsWith("Remove 'if' statement") || //remove content of the if with everything inside
+                                     intentionText.startsWith("Unimplement Class") || intentionText.startsWith("Unimplement Interface") || //remove methods in batch
+                                     intentionText.startsWith("Suppress with 'NON-NLS' comment") ||
+                                     intentionText.startsWith("Move comment to separate line") || //merge comments on same line
+                                     intentionText.startsWith("Remove redundant arguments to call") || //removes arg with all comments inside
+                                     intentionText.startsWith("Convert to 'enum'") || //removes constructor with javadoc?
+                                     intentionText.startsWith("Remove redundant constructor") ||
+                                     intentionText.startsWith("Remove block marker comments") ||
+                                     intentionText.startsWith("Remove redundant method") ||
+                                     intentionText.startsWith("Delete unnecessary import") ||
+                                     intentionText.startsWith("Delete empty class initializer") ||
+                                     intentionText.startsWith("Replace with 'throws Exception'") ||
+                                     intentionText.startsWith("Replace unicode escape with character") ||
+                                     intentionText.startsWith("Remove 'serialVersionUID' field") ||
+                                     intentionText.startsWith("Remove unnecessary") ||
+                                     intentionText.startsWith("Remove 'try-finally' block") ||
+                                     intentionText.startsWith("Qualify with outer class") || // may change links in javadoc
+                                     intentionText.contains("'ordering inconsistent with equals'") || //javadoc will be changed
+                                     intentionText.matches("Simplify '.*' to .*") ||
+                                     intentionText.matches("Move '.*' to Javadoc ''@throws'' tag") ||
+                                     intentionText.matches("Remove '.*' from '.*' throws list")
+      ;
+    return !commentChangingActions;
+  }
+
+  @Override
+  public boolean trackComment(PsiComment comment) {
+    return PsiTreeUtil.getParentOfType(comment, PsiImportList.class) == null;
+  }
+
+  @Override
+  public boolean mayBreakCode(@NotNull IntentionAction action, @NotNull Editor editor, @NotNull PsiFile file) {
+    return true;
+  }
 }
 
 class JavaGreenIntentionPolicy extends JavaIntentionPolicy {
@@ -65,5 +117,88 @@ class JavaGreenIntentionPolicy extends JavaIntentionPolicy {
   @Override
   protected boolean shouldSkipIntention(@NotNull String actionText) {
     return super.shouldSkipIntention(actionText) || mayBreakCompilation(actionText);
+  }
+}
+
+class JavaParenthesesPolicy extends JavaIntentionPolicy {
+
+  @Override
+  protected boolean shouldSkipIntention(@NotNull String actionText) {
+    return actionText.equals("Add clarifying parentheses") ||
+           actionText.equals("Remove unnecessary parentheses") ||
+           // TODO: fix and remove exception after merging dfa_refactoring branch
+           actionText.matches("Replace with '(true|false|null)'") ||
+           // TODO: Remove when IDEA-195015 is fixed
+           actionText.equals("Sort content") ||
+           actionText.matches("Simplify '\\(+(true|false)\\)+' to \\1") ||
+           // Parenthesizing sub-expression causes cutting the action name at different position, so name changes significantly
+           actionText.matches("Compute constant value of '.+'") ||
+           actionText.matches("Replace '-\\(+(.+)\\)' with constant value '-\\1'") ||
+           // TODO: Remove when IDEA-195235 is fixed
+           actionText.matches("Suppress .+ in injection") ||
+           super.shouldSkipIntention(actionText);
+  }
+
+  @Override
+  protected boolean shouldSkipByFamilyName(@NotNull String familyName) {
+    return // if((a && b)) -- extract "a" doesn't work, seems legit, remove parentheses first
+      familyName.equals("Extract If Condition") ||
+      // TODO: sometimes DFA warning issued for parenthesized expression: fix and remove exception after merging dfa_refactoring branch
+      familyName.equals("Simplify boolean expression");
+  }
+
+  @NotNull
+  @Override
+  public List<PsiElement> getElementsToWrap(@NotNull PsiElement element) {
+    List<PsiElement> result = new ArrayList<>();
+    while (true) {
+      PsiExpression expression = PsiTreeUtil.getNonStrictParentOfType(element, PsiExpression.class);
+      if (expression == null) break;
+      while (shouldParenthesizeParent(expression)) {
+        expression = (PsiExpression)expression.getParent();
+      }
+      PsiElement parent = expression.getParent();
+      if (parent instanceof PsiExpressionStatement ||
+          parent instanceof PsiNameValuePair ||
+          parent instanceof PsiArrayInitializerMemberValue ||
+          parent instanceof PsiSwitchLabelStatement) {
+        break;
+      }
+      if (parent instanceof PsiVariable && expression instanceof PsiArrayInitializerExpression) break;
+      result.add(expression);
+      element = expression.getParent();
+    }
+    return result;
+  }
+
+  @NotNull
+  @Override
+  public String getWrapPrefix() {
+    return "(";
+  }
+
+  @Override
+  public String getWrapSuffix() {
+    return ")";
+  }
+
+  private static boolean shouldParenthesizeParent(PsiExpression expression) {
+    PsiElement parent = expression.getParent();
+    if (parent instanceof PsiCallExpression) {
+      return true;
+    }
+    if (expression instanceof PsiReferenceExpression && parent instanceof PsiReferenceExpression) {
+      PsiElement target = ((PsiReferenceExpression)expression).resolve();
+      if (target instanceof PsiPackage || target instanceof PsiClass) {
+        return true;
+      }
+    }
+    if (expression instanceof PsiArrayInitializerExpression && parent instanceof PsiArrayInitializerExpression) {
+      return true;
+    }
+    if (expression instanceof PsiSuperExpression) {
+      return true;
+    }
+    return false;
   }
 }

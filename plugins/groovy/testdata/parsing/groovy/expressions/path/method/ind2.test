@@ -8,5 +8,5 @@ Groovy script
       PsiElement([)('[')
       Literal
         PsiElement(string)(''name'')
-      PsiErrorElement:']' expected
+      PsiErrorElement:',' or ']' expected
         <empty list>

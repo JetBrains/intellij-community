@@ -83,7 +83,7 @@ public class JUnit46ClassesRequestBuilder {
         nonSuiteClasses.add(aClass);
       }
     }
-    runners.addAll(new AllDefaultPossibilitiesBuilder(false).runners(null, (Class[])nonSuiteClasses.toArray(new Class[nonSuiteClasses.size()])));
+    runners.addAll(new AllDefaultPossibilitiesBuilder(false).runners(null, (Class[])nonSuiteClasses.toArray(new Class[0])));
     return runners;
   }
 

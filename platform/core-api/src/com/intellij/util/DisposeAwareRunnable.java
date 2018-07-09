@@ -29,42 +29,46 @@ import java.lang.ref.WeakReference;
 /**
  * @author Sergey Evdokimov
  */
-public class DisposeAwareRunnable extends WeakReference<Object> implements Runnable {
+public class DisposeAwareRunnable<T extends Runnable> extends WeakReference<Object> implements Runnable {
+  protected final T myDelegate;
 
-  protected final Runnable myDelegate;
+  private DisposeAwareRunnable(@NotNull T delegate, @NotNull Object disposable) {
+    super(disposable);
+    myDelegate = delegate;
+    assert disposable instanceof PsiElement || disposable instanceof ComponentManager : "Unknown type of "+disposable;
+  }
 
+  @NotNull
   public static Runnable create(@NotNull Runnable delegate, @Nullable PsiElement disposable) {
     return create(delegate, (Object)disposable);
   }
 
+  @NotNull
   public static Runnable create(@NotNull Runnable delegate, @Nullable Project disposable) {
     return create(delegate, (Object)disposable);
   }
 
+  @NotNull
   public static Runnable create(@NotNull Runnable delegate, @Nullable Module disposable) {
     return create(delegate, (Object)disposable);
   }
 
+  @NotNull
   private static Runnable create(@NotNull Runnable delegate, @Nullable Object disposable) {
     if (disposable == null) {
       return delegate;
     }
 
+    //noinspection SSBasedInspection
     if (delegate instanceof DumbAware) {
-      return new DumbAwareRunnable(delegate, disposable);
+      return DumbAwareRunnable.create((Runnable & DumbAware)delegate, disposable);
     }
 
     if (delegate instanceof PossiblyDumbAware) {
-      return new PossiblyDumbAwareRunnable(delegate, disposable);
+      return PossiblyDumbAwareRunnable.create((Runnable & PossiblyDumbAware)delegate, disposable);
     }
 
-    return new DisposeAwareRunnable(delegate, disposable);
-  }
-
-  private DisposeAwareRunnable(@NotNull Runnable delegate, @NotNull Object disposable) {
-    super(disposable);
-    myDelegate = delegate;
-    assert disposable instanceof PsiElement || disposable instanceof ComponentManager : "Unknown type of "+disposable;
+    return new DisposeAwareRunnable<>(delegate, disposable);
   }
 
   @Override
@@ -82,20 +86,28 @@ public class DisposeAwareRunnable extends WeakReference<Object> implements Runna
     myDelegate.run();
   }
 
-  private static class DumbAwareRunnable extends DisposeAwareRunnable implements DumbAware {
-    DumbAwareRunnable(Runnable delegate, Object disposable) {
+  private static class DumbAwareRunnable<T extends Runnable & DumbAware> extends DisposeAwareRunnable<T> implements DumbAware {
+    @NotNull
+    private static <T extends Runnable & DumbAware> DumbAwareRunnable<T> create(@NotNull T delegate, Object o) {
+      return new DumbAwareRunnable<>(delegate, o);
+    }
+    private DumbAwareRunnable(@NotNull T delegate, Object disposable) {
       super(delegate, disposable);
     }
   }
 
-  private static class PossiblyDumbAwareRunnable extends DisposeAwareRunnable implements PossiblyDumbAware {
-    PossiblyDumbAwareRunnable(Runnable delegate, Object disposable) {
+  private static class PossiblyDumbAwareRunnable<T extends Runnable & PossiblyDumbAware> extends DisposeAwareRunnable<T> implements PossiblyDumbAware {
+    @NotNull
+    private static <T extends Runnable & PossiblyDumbAware> PossiblyDumbAwareRunnable<T> create(@NotNull T delegate, Object o) {
+      return new PossiblyDumbAwareRunnable<>(delegate, o);
+    }
+    private PossiblyDumbAwareRunnable(T delegate, Object disposable) {
       super(delegate, disposable);
     }
 
     @Override
     public boolean isDumbAware() {
-      return ((PossiblyDumbAware)myDelegate).isDumbAware();
+      return myDelegate.isDumbAware();
     }
   }
 }

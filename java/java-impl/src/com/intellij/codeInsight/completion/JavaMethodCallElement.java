@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.AutoPopupController;
@@ -16,6 +16,7 @@ import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.CaretModel;
@@ -247,7 +248,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
   }
 
   public static boolean startArgumentLiveTemplate(InsertionContext context, PsiMethod method) {
-    if (method.getParameterList().getParametersCount() == 0 ||
+    if (method.getParameterList().isEmpty() ||
         context.getCompletionChar() == Lookup.COMPLETE_STATEMENT_SELECT_CHAR ||
         !ParameterInfoController.areParameterTemplatesEnabledOnCompletion()) {
       return false;
@@ -257,7 +258,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     context.commitDocument();
     PsiCall call = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiCall.class, false);
     PsiExpressionList argList = call == null ? null : call.getArgumentList();
-    if (argList == null || argList.getExpressions().length > 0) {
+    if (argList == null || !argList.isEmpty()) {
       return false;
     }
 
@@ -299,20 +300,27 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     }
 
     Editor editor = context.getEditor();
+    if (editor instanceof EditorWindow) return;
+
+    Project project = context.getProject();
+    Document document = editor.getDocument();
+    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+
+    int limit = getCompletionHintsLimit();
+
     CaretModel caretModel = editor.getCaretModel();
     int offset = caretModel.getOffset();
     int braceOffset = offset - 1;
-    int numberOfCommas = parametersCount - 1;
-    if (parametersCount > 1 && PsiImplUtil.isVarArgs(method)) numberOfCommas--;
-    String commas = StringUtil.repeat(", ", numberOfCommas);
+    int numberOfParametersToDisplay = parametersCount > 1 && PsiImplUtil.isVarArgs(method) ? parametersCount - 1 : parametersCount;
+    int numberOfCommas = Math.min(numberOfParametersToDisplay, limit) - 1;
+    String commas = Registry.is("editor.completion.hints.virtual.comma") ? "" : StringUtil.repeat(", ", numberOfCommas);
     editor.getDocument().insertString(offset, commas);
 
-    Project project = context.getProject();
-    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+    PsiDocumentManager.getInstance(project).commitDocument(document);
     MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
     ShowParameterInfoContext infoContext = new ShowParameterInfoContext(editor, project, context.getFile(), braceOffset, braceOffset);
     if (handler.findElementForParameterInfo(infoContext) == null) {
-      editor.getDocument().deleteString(offset, offset + commas.length());
+      document.deleteString(offset, offset + commas.length());
       return;
     }
 
@@ -322,11 +330,22 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     Disposable hintsDisposal = () -> setCompletionMode(methodCall, false);
     if (Disposer.isDisposed(controller)) {
       Disposer.dispose(hintsDisposal);
-      editor.getDocument().deleteString(offset, offset + commas.length());
+      document.deleteString(offset, offset + commas.length());
     }
     else {
       ParameterHintsPass.syncUpdate(methodCall, editor);
       Disposer.register(controller, hintsDisposal);
+    }
+  }
+
+  public static int getCompletionHintsLimit() {
+    return Math.max(1, Registry.intValue("editor.completion.hints.per.call.limit"));
+  }
+
+  public static void setCompletionModeIfNotSet(@NotNull PsiCall expression, @NotNull Disposable disposable) {
+    if (!isCompletionMode(expression)) {
+      setCompletionMode(expression, true);
+      Disposer.register(disposable, () -> setCompletionMode(expression, false));
     }
   }
 

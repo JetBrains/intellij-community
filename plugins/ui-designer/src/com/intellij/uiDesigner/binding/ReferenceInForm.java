@@ -29,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jul 5, 2005
  */
 public abstract class ReferenceInForm implements PsiReference {
   protected final PsiPlainTextFile myFile;
@@ -41,6 +40,7 @@ public abstract class ReferenceInForm implements PsiReference {
     myRangeMarker = document.createRangeMarker(range);
   }
 
+  @NotNull
   public PsiElement getElement() {
     return myFile;
   }
@@ -54,6 +54,7 @@ public abstract class ReferenceInForm implements PsiReference {
     return myFile;
   }
 
+  @NotNull
   public TextRange getRangeInElement() {
     return TextRange.create(myRangeMarker);
   }

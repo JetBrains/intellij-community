@@ -28,6 +28,11 @@ abstract class WindowsDistributionCustomizer {
   String icoPath
 
   /**
+   * Path to ico file for EAP builds (if {@code null} {@link #icoPath} will be used)
+   */
+  String icoPathForEAP = null
+
+  /**
    * If {@code true} *.bat files (productName.bat and inspect.bat) will be included into the distribution
    */
   boolean includeBatchLaunchers = true
@@ -63,7 +68,7 @@ abstract class WindowsDistributionCustomizer {
   String installerImagesPath
 
   /**
-   * List of file extensions (starting with dot) which installer will suggest to associate with the product
+   * List of file extensions (without leading dot) which installer will suggest to associate with the product
    */
   List<String> fileAssociations = []
 
@@ -73,7 +78,8 @@ abstract class WindowsDistributionCustomizer {
   List<String> customNsiConfigurationFiles = []
 
   /**
-   * Path to silent.config which contains set of properties to manage UI options to install product in silent mode
+   * Path to a file which contains set of properties to manage UI options when installing the product in silent mode. If {@code null}
+   * the default platform/build-scripts/resources/win/nsis/silent.config will be used.
    */
   String silentInstallationConfig = null
 

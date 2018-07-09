@@ -32,19 +32,12 @@
               <columns value="6"/>
             </properties>
           </component>
-          <scrollpane id="80db7" class="com.intellij.ui.components.JBScrollPane">
+          <component id="87e" class="com.intellij.ui.EditorTextField" binding="myDescriptionArea" custom-create="true">
             <constraints>
               <grid row="1" column="1" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
-            <border type="none"/>
-            <children>
-              <component id="87e" class="com.intellij.ui.EditorTextField" binding="myDescriptionArea" custom-create="true">
-                <constraints/>
-                <properties/>
-              </component>
-            </children>
-          </scrollpane>
+          </component>
           <component id="d6e35" class="javax.swing.JLabel">
             <constraints>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="2" use-parent-layout="false"/>
@@ -53,19 +46,12 @@
               <text value="Description:"/>
             </properties>
           </component>
-          <scrollpane id="c034f" class="com.intellij.ui.components.JBScrollPane">
+          <component id="e20d2" class="com.intellij.ui.EditorTextField" binding="myChangeNotesArea" custom-create="true">
             <constraints>
               <grid row="2" column="1" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
-            <border type="none"/>
-            <children>
-              <component id="e20d2" class="com.intellij.ui.EditorTextField" binding="myChangeNotesArea" custom-create="true">
-                <constraints/>
-                <properties/>
-              </component>
-            </children>
-          </scrollpane>
+          </component>
           <component id="795b5" class="javax.swing.JLabel">
             <constraints>
               <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="2" use-parent-layout="false"/>

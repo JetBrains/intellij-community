@@ -159,6 +159,6 @@ public class MavenFilteredPropertyPsiReferenceProvider extends PsiReferenceProvi
       res.add(new MavenFilteredPropertyPsiReference(mavenProject, element, propertyName, range));
     }
 
-    return res == null ? PsiReference.EMPTY_ARRAY : res.toArray(new PsiReference[res.size()]);
+    return res == null ? PsiReference.EMPTY_ARRAY : res.toArray(PsiReference.EMPTY_ARRAY);
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebuggerUtils;
@@ -28,6 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.TextViewer;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -81,7 +68,7 @@ public class ViewTextAction extends XFetchValueActionBase {
     if (selectedNodes.size() == 1) {
       XValueNodeImpl node = selectedNodes.get(0);
       XValue container = node.getValueContainer();
-      if (container instanceof JavaValue && ((JavaValue)container).getDescriptor().isString() && container.getModifier() != null) {
+      if (container instanceof JavaValue && container.getModifier() != null && ((JavaValue)container).getDescriptor().isString()) {
         return node;
       }
     }
@@ -131,7 +118,8 @@ public class ViewTextAction extends XFetchValueActionBase {
     protected void doOKAction() {
       if (myStringNode != null) {
         DebuggerUIUtil.setTreeNodeValue(myStringNode,
-                                        StringUtil.wrapWithDoubleQuote(DebuggerUtils.translateStringValue(myTextViewer.getText())),
+                                        XExpressionImpl.fromText(
+                                          StringUtil.wrapWithDoubleQuote(DebuggerUtils.translateStringValue(myTextViewer.getText()))),
                                         errorMessage -> Messages.showErrorDialog(myStringNode.getTree(), errorMessage));
       }
       super.doOKAction();

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiIntersectionType
@@ -193,7 +193,9 @@ class TypeInferenceTest extends TypeInferenceTestBase {
   }
 
   void testSafeInvocationInClassQualifier() {
-    assertTypeEquals("java.lang.Class", "SafeInvocationInClassQualifier.groovy")
+    final PsiReference ref = configureByFile(getTestName(true) + "/SafeInvocationInClassQualifier.groovy")
+    assertInstanceOf(ref, GrReferenceExpression.class)
+    assertNull(((GrReferenceExpression)ref).type)
   }
 
   void testReturnTypeFromMethodClosure() {
@@ -250,7 +252,7 @@ map['i'] += 2
   }
 
   void testAllTypeParamsAreSubstituted() {
-    assertTypeEquals('java.util.Map', 'a.groovy')
+    assertTypeEquals('java.util.Map<java.lang.Object,java.lang.Object>', 'a.groovy')
   }
 
   void testDiamond() {
@@ -464,6 +466,15 @@ def bar(oo) {
 ''', null)
   }
 
+  void testNegatedInstanceOfInferring1() {
+    doTest('''\
+def bar(oo) {
+  boolean b = oo !instanceof String || oo != null
+  o<caret>o
+}
+''', null)
+  }
+
   void testInstanceOfInferring2() {
     doTest('''\
 def bar(oo) {
@@ -471,6 +482,15 @@ def bar(oo) {
   oo
 }
 ''', null)
+  }
+
+  void testNegatedInstanceOfInferring2() {
+    doTest('''\
+def bar(oo) {
+  boolean b = oo !instanceof String || o<caret>o != null
+  oo
+}
+''', JAVA_LANG_STRING)
   }
 
   void testInstanceOfInferring3() {
@@ -482,10 +502,28 @@ def bar(oo) {
 ''', String.canonicalName)
   }
 
+  void testNegatedInstanceOfInferring3() {
+    doTest('''\
+def bar(oo) {
+  boolean b = oo !instanceof String && o<caret>o != null
+  oo
+}
+''', null)
+  }
+
   void testInstanceOfInferring4() {
     doTest('''\
 def bar(oo) {
   boolean b = oo instanceof String && oo != null
+  o<caret>o
+}
+''', null)
+  }
+
+  void testNegatedInstanceOfInferring4() {
+    doTest('''\
+def bar(oo) {
+  boolean b = oo !instanceof String && oo != null
   o<caret>o
 }
 ''', null)
@@ -505,10 +543,35 @@ def foo(def oo) {
 ''', null)
   }
 
+  void testNegatedInstanceOfInferring5() {
+    doTest('''\
+def foo(def oo) {
+  if (oo !instanceof String || oo !instanceof CharSequence) {
+    oo
+  }
+  else {
+    o<caret>o
+  }
+
+}
+''', JAVA_LANG_STRING)
+  }
+
   void testInstanceOfInferring6() {
     doTest('''\
 def foo(bar) {
   if (!(bar instanceof String) && bar instanceof Runnable) {
+    ba<caret>r
+  }
+}''', 'java.lang.Runnable')
+  }
+
+  void testNegatedInstanceOfInferring6() {
+    doTest('''\
+def foo(bar) {
+  if (!(bar !instanceof String) || bar !instanceof Runnable) {
+    
+  } else {
     ba<caret>r
   }
 }''', 'java.lang.Runnable')
@@ -519,6 +582,14 @@ def foo(bar) {
 def foo(ii) {
   if (ii in String)
     print i<caret>i
+}''', 'java.lang.String'
+  }
+
+  void testNegatedInString() {
+    doTest '''\
+def foo(ii) {
+  if (ii !in String) {}
+  else print i<caret>i
 }''', 'java.lang.String'
   }
 
@@ -740,6 +811,37 @@ def foo(List list) {
     doExprTest 'int[][1].class', 'java.lang.Class<java.lang.Object>'
   }
 
+
+  void testClassReference() {
+    doExprTest '[].class', "java.lang.Class<java.util.List>"
+    doExprTest '1.class', 'java.lang.Class<java.lang.Integer>'
+    doExprTest 'String.valueOf(1).class', 'java.lang.Class<java.lang.String>'
+
+    doCSExprTest '[].class', "java.lang.Class<java.util.List>"
+    doCSExprTest '1.class', 'java.lang.Class<java.lang.Integer>'
+    doCSExprTest 'String.valueOf(1).class', 'java.lang.Class<java.lang.String>'
+  }
+
+  void testMapClassReference() {
+    doExprTest '[:].class', null
+    doExprTest '[class : 1].class', 'java.lang.Integer'
+    doExprTest 'new HashMap<String, List<String>>().class', 'java.util.List<java.lang.String>'
+    doExprTest 'new HashMap().class', null
+
+    doCSExprTest '[:].class', null
+    doCSExprTest '[class : 1].class', 'java.lang.Integer'
+    doCSExprTest 'new HashMap<String, List<String>>().class', 'java.util.List<java.lang.String>'
+    doCSExprTest 'new HashMap().class', null
+  }
+
+  void testUnknownClass() {
+    doExprTest 'a.class', null
+    doCSExprTest 'a.class', 'java.lang.Class'
+
+    doExprTest 'a().class', null
+    doCSExprTest 'a().class', 'java.lang.Class'
+  }
+
   void 'test list literal type'() {
     doExprTest '[]', 'java.util.List'
     doExprTest '[null]', 'java.util.List'
@@ -757,6 +859,13 @@ def foo(List list) {
     doExprTest "[foo: null]", "java.util.LinkedHashMap<java.lang.String, null>"
     doExprTest "[(null): 'foo', bar: null]", "java.util.LinkedHashMap<java.lang.String, java.lang.String>"
     doExprTest "[foo: 'bar', 2: 'goo']", "java.util.LinkedHashMap<java.io.Serializable, java.lang.String>"
+  }
+
+  void 'test recursive literal types'() {
+    doExprTest 'def foo() { [foo()] }\nfoo()', "java.util.List<java.util.List>"
+    doExprTest 'def foo() { [new Object(), foo()] }\nfoo()', "java.util.List<java.lang.Object>"
+    doExprTest 'def foo() { [someKey1: foo()] }\nfoo()', "java.util.LinkedHashMap<java.lang.String, java.util.LinkedHashMap>"
+    doExprTest 'def foo() { [someKey0: new Object(), someKey1: foo()] }\nfoo()', "java.util.LinkedHashMap<java.lang.String, java.lang.Object>"
   }
 
   void 'test range literal type'() {
@@ -813,5 +922,25 @@ def bar() {
     l<caret>l
 }
 ''', 'java.util.List<java.util.List<java.io.Serializable>>'
+  }
+
+  void 'test enum values() type'() {
+    doExprTest 'enum E {}; E.values()', 'E[]'
+  }
+
+  void 'test closure owner type'() {
+    doTest '''\
+class W {
+  def c = {
+    <caret>owner
+  }
+}
+''', 'W'
+  }
+
+  void 'test elvis assignment'() {
+    doExprTest 'def a; a ?= "hello"', 'java.lang.String'
+    doExprTest 'def a = ""; a ?= null', 'java.lang.String'
+    doExprTest 'def a = "s"; a ?= 1', '[java.io.Serializable,java.lang.Comparable<? extends java.io.Serializable>]'
   }
 }

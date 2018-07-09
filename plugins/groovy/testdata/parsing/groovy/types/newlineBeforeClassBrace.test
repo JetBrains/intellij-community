@@ -15,11 +15,11 @@ Groovy script
         Type extends bounds list
           <empty list>
       PsiElement(>)('>')
-    PsiElement(new line)('\n')
     Extends clause
       <empty list>
     Implements clause
       <empty list>
+    PsiElement(new line)('\n')
     Type definition body
       PsiElement({)('{')
       PsiWhiteSpace(' ')

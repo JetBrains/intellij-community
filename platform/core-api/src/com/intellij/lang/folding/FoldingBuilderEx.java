@@ -46,6 +46,7 @@ public abstract class FoldingBuilderEx implements FoldingBuilder {
   @NotNull
   public abstract FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick);
 
+  @Override
   @NotNull
   public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode node, @NotNull Document document) {
     return buildFoldRegions(node.getPsi(), document, false);
@@ -71,5 +72,6 @@ public abstract class FoldingBuilderEx implements FoldingBuilder {
    * @param node the node for which the collapsed state is requested.
    * @return true if the region is collapsed by default, false otherwise.
    */
+  @Override
   public abstract boolean isCollapsedByDefault(@NotNull ASTNode node);
 }

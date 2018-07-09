@@ -69,8 +69,6 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
   }
 
   public void invoke(@NotNull final Project project, Editor editor, final PsiFile file, DataContext dataContext) {
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, file)) return;
-
     final int offset = editor.getCaretModel().getOffset();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     final PsiAnonymousClass anonymousClass = findAnonymousClass(file, offset);
@@ -98,11 +96,19 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
 
     PsiClassType baseRef = myAnonClass.getBaseClassType();
 
-    if (baseRef.resolve() == null) {
+    PsiClass baseClass = baseRef.resolve();
+    if (baseClass == null) {
       String message = RefactoringBundle.message("error.cannot.resolve", baseRef.getCanonicalText());
       showErrorMessage(editor, message);
       return;
     }
+    
+    if (PsiUtil.isLocalClass(baseClass)) {
+      String message = RefactoringBundle.message("error.not.supported.for.local", REFACTORING_NAME);
+      showErrorMessage(editor, message);
+      return;
+    }
+    
     PsiElement targetContainer = findTargetContainer(myAnonClass);
     if (FileTypeUtils.isInServerPageFile(targetContainer) && targetContainer instanceof PsiFile) {
       String message = RefactoringBundle.message("error.not.supported.for.jsp", REFACTORING_NAME);
@@ -116,7 +122,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
 
     Map<PsiVariable,VariableInfo> variableInfoMap = new LinkedHashMap<>();
     collectUsedVariables(variableInfoMap, myAnonClass);
-    final VariableInfo[] infos = variableInfoMap.values().toArray(new VariableInfo[variableInfoMap.values().size()]);
+    final VariableInfo[] infos = variableInfoMap.values().toArray(new VariableInfo[0]);
     myVariableInfos = infos;
     Arrays.sort(myVariableInfos, (o1, o2) -> {
       final PsiType type1 = o1.variable.getType();
@@ -171,13 +177,12 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
     myTargetClass.add(aClass);
 
     PsiNewExpression newExpr = (PsiNewExpression) myAnonClass.getParent();
-    @NonNls StringBuffer buf = new StringBuffer();
+    @NonNls StringBuilder buf = new StringBuilder();
     buf.append("new ");
     buf.append(aClass.getName());
     if (!myTypeParametersToCreate.isEmpty()) {
       buf.append("<");
       int idx = 0;
-      //noinspection ForLoopThatDoesntUseLoopVariable
       for (Iterator<PsiTypeParameter> it = myTypeParametersToCreate.iterator(); it.hasNext();  idx++) {
         if (idx > 0) buf.append(", ");
         String typeParamName = it.next().getName();
@@ -401,7 +406,7 @@ public class AnonymousToInnerHandler implements RefactoringActionHandler {
       }
     }
 
-    Collections.sort(toAdd, (e1, e2) -> e1.getTextRange().getStartOffset() - e2.getTextRange().getStartOffset());
+    toAdd.sort(Comparator.comparingInt(e -> e.getTextRange().getStartOffset()));
 
     for (PsiElement element : toAdd) {
       if (element instanceof PsiClassInitializer) {

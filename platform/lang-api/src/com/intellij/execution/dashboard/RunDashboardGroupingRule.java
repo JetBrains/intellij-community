@@ -24,26 +24,14 @@ import java.util.Comparator;
 
 /**
  * Action for grouping items in a run dashboard tree.
+ * Grouping rules are applied to dashboard nodes according to their order defined in plug-in configuration.
  *
  * @author konstantin.aleev
  */
 public interface RunDashboardGroupingRule extends TreeAction {
   ExtensionPointName<RunDashboardGroupingRule> EP_NAME = ExtensionPointName.create("com.intellij.runDashboardGroupingRule");
 
-  Comparator<RunDashboardGroupingRule> PRIORITY_COMPARATOR = (o1, o2) -> {
-    final int res = o2.getPriority() - o1.getPriority();
-    return res != 0 ? res : (o1.getName().compareTo(o2.getName()));
-  };
-
   Comparator<RunDashboardGroup> GROUP_NAME_COMPARATOR = Comparator.comparing(RunDashboardGroup::getName);
-
-  /**
-   * Grouping rules are ordered and applied to dashboard nodes according to their priority.
-   * The higher the priority, the higher groups produced by this rule are presented in the dashboard tree.
-   *
-   * @return rule's priority.
-   */
-  int getPriority();
 
   /**
    * @return {@code true} if grouping rule should always be applied to dashboard nodes.
@@ -64,12 +52,5 @@ public interface RunDashboardGroupingRule extends TreeAction {
 
   default Comparator<RunDashboardGroup> getGroupComparator() {
     return GROUP_NAME_COMPARATOR;
-  }
-
-  interface Priorities {
-    int BY_RUN_CONFIG = 200;
-    int BY_FOLDER = 400;
-    int BY_STATUS = 800;
-    int BY_TYPE = 1000;
   }
 }

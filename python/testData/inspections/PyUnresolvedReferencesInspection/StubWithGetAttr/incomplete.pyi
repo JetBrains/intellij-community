@@ -1,0 +1,6 @@
+from typing import Any
+
+
+def c() -> int: ...
+
+def __getattr__(name) -> Any: ...

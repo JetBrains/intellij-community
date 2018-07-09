@@ -30,7 +30,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Jan 17, 2005
  */
 public class UsageInfoToUsageConverter {
   private UsageInfoToUsageConverter() {

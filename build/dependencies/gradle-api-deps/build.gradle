@@ -1,0 +1,182 @@
+import org.gradle.tooling.GradleConnector
+
+plugins {
+  id "base"
+  id "maven-publish"
+  id "com.jfrog.bintray" version "1.7.3"
+}
+
+def intelliJDepsGroupId = 'org.jetbrains.intellij.deps'
+def gradleApiArtifactId = 'gradle-api'
+def gradleApiImplDepArtifactId = 'gradle-api-impldep'
+def gradleWrapperArtifactId = 'gradle-wrapper'
+def gradleLauncherArtifactId = 'gradle-launcher'
+
+def gradleWrapperFileName = "gradle-wrapper.jar"
+def gradleLauncherFileName = "gradle-launcher-${gradleApiVersion}.jar"
+
+def gradleApiDepsDir = new File(buildDir, "tmp/gradleApiExpanded/$gradleApiVersion/build")
+
+task expandGradleApiJar() {
+  doLast {
+    if (GradleVersion.version(gradleApiVersion) < GradleVersion.version("3.0")) {
+      throw new GradleException(
+        "Gradle version 3.0+ is required. Current version is $gradleApiVersion. " +
+        "Please set the 'gradleApiVersion' property at gradle.properties or using -P option.")
+    }
+    def projectDir = new File(buildDir, "tmp/gradleApiExpanded/$gradleApiVersion")
+    projectDir.mkdirs()
+
+    // prevent discovering of the settings.gradle file from the parent dir
+    new File(projectDir, 'settings.gradle').createNewFile()
+    new File(projectDir, 'build.gradle').withWriter { writer ->
+      writer << """
+defaultTasks 'setupGradleApiDeps'
+
+configurations {
+  gradleApiDeps
+}
+
+dependencies {
+  gradleApiDeps gradleApi()
+}
+
+task setupGradleApiDeps(dependsOn: configurations.gradleApiDeps, type: Sync) {
+  from new File(project.gradle.getGradleHomeDir(), 'lib/${gradleLauncherFileName}')
+  from zipTree(configurations.gradleApiDeps.files.find {it.name == "gradle-api-${gradleApiVersion}.jar"})
+  into '${gradleApiDepsDir.path.replace("\\","\\\\")}'
+
+  include '${gradleWrapperFileName}'
+  include '${gradleLauncherFileName}'
+  include 'org/gradle/**'
+  include 'net/rubygrapefruit/**'
+  include 'META-INF/native/**'
+  include 'META-INF/gradle-plugins/**'
+  include 'META-INF/services/org.gradle.*'
+}
+"""
+    }
+
+    def connection = GradleConnector.newConnector()
+      .useGradleVersion(gradleApiVersion)
+      .forProjectDirectory(projectDir)
+      .connect()
+    try {
+      def buildLauncher = connection.newBuild()
+      buildLauncher.withArguments("--stacktrace")
+      if (logging.level == LogLevel.INFO) {
+        buildLauncher.withArguments("--info")
+      }
+      if (logging.level == LogLevel.DEBUG) {
+        buildLauncher.withArguments("--debug")
+      }
+      buildLauncher.run()
+      assert new File(gradleApiDepsDir, "org/gradle/internal/impldep").isDirectory()
+      assert new File(gradleApiDepsDir, gradleWrapperFileName).isFile()
+      assert new File(gradleApiDepsDir, gradleLauncherFileName).isFile()
+    }
+    finally {
+      connection.close()
+    }
+  }
+}
+
+task gradleApiJar(type: Zip, dependsOn: expandGradleApiJar) {
+  extension 'jar'
+  baseName gradleApiArtifactId
+  version gradleApiVersion
+
+  from gradleApiDepsDir
+  exclude 'org/gradle/internal/impldep/**'
+  exclude 'org/gradle/wrapper/**'
+  exclude gradleWrapperFileName
+  exclude gradleLauncherFileName
+}
+
+task gradleApiImplDepJar(type: Zip, dependsOn: expandGradleApiJar) {
+  extension 'jar'
+  baseName gradleApiImplDepArtifactId
+  version gradleApiVersion
+
+  from gradleApiDepsDir
+  include 'org/gradle/internal/impldep/**'
+}
+
+publishing {
+  publications {
+    gradleApi(MavenPublication) {
+      groupId intelliJDepsGroupId
+      artifactId gradleApiArtifactId
+      version gradleApiVersion
+      pom.withXml {
+        def dependencies = asNode().appendNode('dependencies')
+
+        def apiImplDep = dependencies.appendNode("dependency")
+        apiImplDep.appendNode('groupId', intelliJDepsGroupId)
+        apiImplDep.appendNode('artifactId', gradleApiImplDepArtifactId)
+        apiImplDep.appendNode('version', gradleApiVersion)
+
+        def wrapper = dependencies.appendNode("dependency")
+        wrapper.appendNode('groupId', intelliJDepsGroupId)
+        wrapper.appendNode('artifactId', gradleWrapperArtifactId)
+        wrapper.appendNode('version', gradleApiVersion)
+
+        def launcher = dependencies.appendNode("dependency")
+        launcher.appendNode('groupId', intelliJDepsGroupId)
+        launcher.appendNode('artifactId', gradleLauncherArtifactId)
+        launcher.appendNode('version', gradleApiVersion)
+      }
+
+      artifact gradleApiJar
+    }
+    gradleApiImplDep(MavenPublication) {
+      groupId intelliJDepsGroupId
+      artifactId gradleApiImplDepArtifactId
+      version gradleApiVersion
+
+      artifact gradleApiImplDepJar
+    }
+    gradleWrapper(MavenPublication) {
+      groupId intelliJDepsGroupId
+      artifactId gradleWrapperArtifactId
+      version gradleApiVersion
+
+      artifact(new File(gradleApiDepsDir, gradleWrapperFileName)) {
+        builtBy expandGradleApiJar
+      }
+    }
+    gradleLauncher(MavenPublication) {
+      groupId intelliJDepsGroupId
+      artifactId gradleLauncherArtifactId
+      version gradleApiVersion
+
+      artifact(new File(gradleApiDepsDir, gradleLauncherFileName)) {
+        builtBy expandGradleApiJar
+      }
+    }
+  }
+}
+
+task publishGradleApiToMavenLocal
+publishGradleApiToMavenLocal.dependsOn tasks.withType(PublishToMavenLocal).matching { it.name.startsWith('publishGradle') }
+task publishGradleApiToMavenRepository
+publishGradleApiToMavenRepository.dependsOn tasks.withType(PublishToMavenRepository).matching { it.name.startsWith('publishGradle') }
+
+bintray {
+  user = System.getenv('BINTRAY_JETBRAINS_TEAMCITY_UPLOADER_USER')
+  key = System.getenv('BINTRAY_JETBRAINS_TEAMCITY_UPLOADER_API_KEY')
+
+  publish = true
+
+  pkg {
+    repo = 'intellij-third-party-dependencies'
+    name = 'gradle-api'
+    userOrg = 'jetbrains'
+
+    version {
+      name = gradleApiVersion
+    }
+  }
+
+  publications = ['gradleApi', 'gradleApiImplDep', 'gradleWrapper', 'gradleLauncher']
+}

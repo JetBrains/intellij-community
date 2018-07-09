@@ -98,6 +98,7 @@ public abstract class ModuleLevelBuilder extends Builder {
   /**
    * @deprecated use {@link org.jetbrains.jps.builders.java.JavaBuilderExtension#shouldHonorFileEncodingForCompilation(java.io.File)} instead
    */
+  @Deprecated
   public boolean shouldHonorFileEncodingForCompilation(File file) {
     return false;
   }

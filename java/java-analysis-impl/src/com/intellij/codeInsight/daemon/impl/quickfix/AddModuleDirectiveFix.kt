@@ -9,19 +9,19 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil
 
 abstract class AddModuleDirectiveFix(module: PsiJavaModule) : LocalQuickFixAndIntentionActionOnPsiElement(module) {
-  override fun getFamilyName() = QuickFixBundle.message("module.info.add.directive.family.name")
+  override fun getFamilyName(): String = QuickFixBundle.message("module.info.add.directive.family.name")
 
-  override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement) =
+  override fun isAvailable(project: Project, file: PsiFile, startElement: PsiElement, endElement: PsiElement): Boolean =
     startElement is PsiJavaModule && PsiUtil.isLanguageLevel9OrHigher(file) && startElement.getManager().isInProject(startElement)
 
-  override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) =
+  override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement): Unit =
     invoke(project, file, editor, startElement as PsiJavaModule)
 
   protected abstract fun invoke(project: Project, file: PsiFile, editor: Editor?, module: PsiJavaModule)
 }
 
 class AddRequiresDirectiveFix(module: PsiJavaModule, private val requiredName: String) : AddModuleDirectiveFix(module) {
-  override fun getText() = QuickFixBundle.message("module.info.add.requires.name", requiredName)
+  override fun getText(): String = QuickFixBundle.message("module.info.add.requires.name", requiredName)
 
   override fun invoke(project: Project, file: PsiFile, editor: Editor?, module: PsiJavaModule) {
     if (module.requires.find { requiredName == it.moduleName } == null) {
@@ -33,18 +33,28 @@ class AddRequiresDirectiveFix(module: PsiJavaModule, private val requiredName: S
 class AddExportsDirectiveFix(module: PsiJavaModule,
                              private val packageName: String,
                              private val targetName: String) : AddModuleDirectiveFix(module) {
-  override fun getText() = QuickFixBundle.message("module.info.add.exports.name", packageName)
+  override fun getText(): String = QuickFixBundle.message("module.info.add.exports.name", packageName)
 
   override fun invoke(project: Project, file: PsiFile, editor: Editor?, module: PsiJavaModule) {
     val existing = module.exports.find { packageName == it.packageName }
     if (existing == null) {
       PsiUtil.addModuleStatement(module, PsiKeyword.EXPORTS + ' ' + packageName)
     }
-    else {
+    else if (!targetName.isEmpty()) {
       val targets = existing.moduleReferences.map { it.referenceText }
       if (!targets.isEmpty() && targetName !in targets) {
         existing.add(PsiElementFactory.SERVICE.getInstance(project).createModuleReferenceFromText(targetName))
       }
+    }
+  }
+}
+
+class AddUsesDirectiveFix(module: PsiJavaModule, private val svcName: String) : AddModuleDirectiveFix(module) {
+  override fun getText(): String = QuickFixBundle.message("module.info.add.uses.name", svcName)
+
+  override fun invoke(project: Project, file: PsiFile, editor: Editor?, module: PsiJavaModule) {
+    if (module.uses.find { svcName == it.classReference?.qualifiedName } == null) {
+      PsiUtil.addModuleStatement(module, PsiKeyword.USES + ' ' + svcName)
     }
   }
 }

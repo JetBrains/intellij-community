@@ -16,7 +16,6 @@
 package com.intellij.ui.mac.foundation;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.HashMap;
 import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
 import org.jetbrains.annotations.NotNull;
@@ -24,14 +23,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author spleaner
- * @see http://developer.apple.com/documentation/Cocoa/Reference/ObjCRuntimeRef/Reference/reference.html
+ * see <a href="http://developer.apple.com/documentation/Cocoa/Reference/ObjCRuntimeRef/Reference/reference.html">Documentation</a>
  */
 public class Foundation {
   private static final FoundationLibrary myFoundationLibrary;

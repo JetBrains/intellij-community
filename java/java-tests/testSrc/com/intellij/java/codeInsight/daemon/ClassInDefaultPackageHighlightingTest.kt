@@ -41,7 +41,7 @@ class ClassInDefaultPackageHighlightingTest : LightCodeInsightFixtureTestCase() 
     doTest("""
         class Test {{
           new conflict();
-          new conflict.C();
+          new conflict.<error descr="Cannot resolve symbol 'C'">C</error>();
         }}""".trimIndent())
   }
 

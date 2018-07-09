@@ -21,7 +21,6 @@ import com.intellij.ide.diff.DiffType;
 import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.SortedList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +29,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 
 import static com.intellij.ide.diff.DiffType.ERROR;
 
@@ -48,14 +48,13 @@ public class DTree {
   private boolean myExpanded = true;
   @Nullable private final DTree myParent;
   private HashMap<String, DTree> myChildren;
-  private String myName;
+  private final String myName;
   private final boolean isContainer;
   private SortedList<DTree> myChildrenList;
   private DiffElement<?> mySource;
   private DiffElement<?> myTarget;
   private DiffType myType;
   private boolean myVisible = true;
-  private String mySeparator = null;
   private String myPath = null;
 
   public DTree(@Nullable DTree parent, @NotNull String name, boolean container) {
@@ -74,12 +73,15 @@ public class DTree {
     return myChildrenList;
   }
 
-  public DTree addChild(@NotNull DiffElement element, boolean source) {
+  public DTree addChild(@NotNull DiffElement element, boolean source, String replacementName) {
     init();
     myChildrenList = null;
     final DTree node;
     final String name = element.getName();
-    if (myChildren.containsKey(name)) {
+    if (replacementName != null && myChildren.containsKey(replacementName)) {
+      node = myChildren.get(replacementName);
+    }
+    else if (myChildren.containsKey(name)) {
       node = myChildren.get(name);
     } else {
       node = new DTree(this, name, element.isContainer());
@@ -155,22 +157,26 @@ public class DTree {
         tree.setType(DiffType.SOURCE);
       } else {
         assert src != null;
-        boolean equals;
-        switch (settings.compareMode) {
-          case CONTENT:
-            equals = isEqualContents(src, trg);
-            break;
-          case TEXT:
-            equals = isEqualContentsAsText(src, trg);
-            break;
-          case SIZE:
-            equals = isEqualSizes(src, trg);
-            break;
-          case TIMESTAMP:
-            equals = isEqualTimestamps(src, trg, settings);
-            break;
-          default:
-            throw new IllegalStateException(settings.compareMode.name());
+        Boolean equals = null;
+        if (src instanceof ComparableDiffElement) equals = ((ComparableDiffElement)src).isContentEqual(trg);
+        if (equals == null && trg instanceof ComparableDiffElement) equals = ((ComparableDiffElement)trg).isContentEqual(src);
+        if (equals == null) {
+          switch (settings.compareMode) {
+            case CONTENT:
+              equals = isEqualContents(src, trg);
+              break;
+            case TEXT:
+              equals = isEqualContentsAsText(src, trg);
+              break;
+            case SIZE:
+              equals = isEqualSizes(src, trg);
+              break;
+            case TIMESTAMP:
+              equals = isEqualTimestamps(src, trg, settings);
+              break;
+            default:
+              throw new IllegalStateException(settings.compareMode.name());
+          }
         }
         tree.setType(equals ? DiffType.EQUAL : DiffType.CHANGED);
       }
@@ -302,18 +308,11 @@ public class DTree {
     if (myPath == null) {
       final DTree parent = getParent();
       if (parent != null) {
-        myPath = parent.getPath() + getName() + (isContainer ? getSeparator() : "");
+        myPath = parent.getPath() + getName() + (isContainer ? DiffElement.getSeparator() : "");
       } else {
-        myPath = getName() + (isContainer ? getSeparator() : "");
+        myPath = getName() + (isContainer ? DiffElement.getSeparator() : "");
       }
     }
     return myPath;
-  }
-
-  private String getSeparator() {
-    if (mySeparator == null) {
-      mySeparator = mySource != null ? mySource.getSeparator() : myTarget != null ? myTarget.getSeparator() : "";
-    }
-    return mySeparator;
   }
 }

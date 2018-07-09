@@ -15,16 +15,27 @@
  */
 package com.intellij.testFramework.vcs;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.testFramework.TestLoggerFactory;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 import org.junit.runner.Description;
 
 public abstract class AbstractJunitVcsTestCase extends AbstractVcsTestCase {
+  static {
+    Logger.setFactory(TestLoggerFactory.class);
+  }
+
   @Rule
   public TestName name= new TestName(){
     @Override
+    protected void succeeded(Description description) {
+      TestLoggerFactory.onTestFinished(true);
+    }
+
+    @Override
     protected void failed(Throwable e, Description description) {
-      AbstractJunitVcsTestCase.this.failed(e, description);
+      TestLoggerFactory.onTestFinished(false);
     }
   };
 
@@ -32,6 +43,4 @@ public abstract class AbstractJunitVcsTestCase extends AbstractVcsTestCase {
     return name.getMethodName();
   }
 
-  protected void failed(Throwable e, Description description) {
-  }
 }

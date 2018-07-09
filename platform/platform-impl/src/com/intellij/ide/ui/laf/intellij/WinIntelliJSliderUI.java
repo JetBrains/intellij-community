@@ -183,7 +183,7 @@ public class WinIntelliJSliderUI extends BasicSliderUI {
     try {
       g2.translate(thumbRect.x, thumbRect.y);
 
-      Path2D thumb = new Path2D.Double(Path2D.WIND_NON_ZERO);
+      Path2D thumb = new Path2D.Float(Path2D.WIND_NON_ZERO);
 
       if (slider.getOrientation() == SwingConstants.VERTICAL) {
         if (slider.getComponentOrientation().isLeftToRight()) {

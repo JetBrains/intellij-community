@@ -20,7 +20,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import hg4idea.test.HgExecutor;
 import hg4idea.test.HgPlatformTest;
@@ -34,6 +33,7 @@ import java.io.File;
 import static com.intellij.openapi.vcs.Executor.cd;
 import static com.intellij.openapi.vcs.Executor.touch;
 import static hg4idea.test.HgExecutor.hg;
+import static org.zmlx.hg4idea.util.HgUtil.DOT_HG;
 
 public class HgTaskBranchesTest extends TaskBranchesTest {
 
@@ -60,8 +60,10 @@ public class HgTaskBranchesTest extends TaskBranchesTest {
     HgVcs hgVcs = HgVcs.getInstance(myProject);
     assert hgVcs != null;
     vcsManager.setDirectoryMapping(root, HgVcs.VCS_NAME);
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(root));
-    HgRepository repository = HgUtil.getRepositoryManager(myProject).getRepositoryForRoot(file);
+    assertNotNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(root, DOT_HG)));
+
+    HgRepository repository =
+      HgUtil.getRepositoryManager(myProject).getRepositoryForRoot(LocalFileSystem.getInstance().findFileByIoFile(new File(root)));
     assertNotNull("Couldn't find repository for root " + root, repository);
     return repository;
   }

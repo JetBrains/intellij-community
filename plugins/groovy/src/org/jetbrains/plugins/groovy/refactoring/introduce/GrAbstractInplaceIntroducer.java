@@ -159,12 +159,6 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
   }
 
   @Override
-  protected void moveOffsetAfter(boolean success) {
-    super.moveOffsetAfter(success);
-
-  }
-
-  @Override
   protected void performIntroduce() {
     runRefactoring(new IntroduceContextAdapter(), getSettings(), true);
   }

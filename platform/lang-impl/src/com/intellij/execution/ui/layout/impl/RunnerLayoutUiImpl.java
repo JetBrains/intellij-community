@@ -85,21 +85,15 @@ public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, La
 
   @NotNull
   @Override
-  public LayoutStateDefaults initFocusContent(@NotNull final String id, @NotNull final String condition) {
-    return initFocusContent(id, condition, new LayoutAttractionPolicy.FocusOnce());
-  }
-
-  @NotNull
-  @Override
-  public LayoutStateDefaults initFocusContent(@NotNull final String id, @NotNull final String condition, @NotNull final LayoutAttractionPolicy policy) {
-    getLayout().setDefaultToFocus(id, condition, policy);
+  public LayoutStateDefaults initContentAttraction(@NotNull String contentId, @NotNull String condition, @NotNull LayoutAttractionPolicy policy) {
+    getLayout().setDefaultToFocus(contentId, condition, policy);
     return this;
   }
 
   @NotNull
   @Override
-  public LayoutStateDefaults clearFocusContent(@NotNull String condition) {
-    getLayout().clearDefaultToFocus(condition);
+  public LayoutStateDefaults cancelContentAttraction(@NotNull String condition) {
+    getLayout().cancelDefaultFocusBy(condition);
     return this;
   }
 

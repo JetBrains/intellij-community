@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /* -*-mode:java; c-basic-offset:2; -*- */
 
@@ -33,7 +19,6 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.JBHiDPIScaledImage;
-import com.intellij.util.RetinaImage;
 import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.model.StyleState;
@@ -79,12 +64,12 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     "GotoBookmark7",
     "GotoBookmark8",
     "GotoBookmark9",
-    
+
     "GotoAction",
     "GotoFile",
     "GotoClass",
     "GotoSymbol",
-    
+
     "ShowSettings",
     "RecentFiles",
     "Switcher"
@@ -143,6 +128,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   @Override
   public boolean dispatch(@NotNull AWTEvent e) {
     if (e instanceof KeyEvent && !skipKeyEvent((KeyEvent)e)) {
+      IdeEventQueue.getInstance().flushDelayedKeyEvents();
       dispatchEvent(e);
       return true;
     }
@@ -214,9 +200,6 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
       newG.drawImage(img, 2 * dx1, 2 * dy1, 2 * dx2, 2 * dy2, sx1 * 2, sy1 * 2, sx2 * 2, sy2 * 2, observer);
       newG.scale(1, 1);
       newG.dispose();
-    }
-    else if (RetinaImage.isAppleHiDPIScaledImage(image)) {
-      g.drawImage(image, dx1, dy1, dx2, dy2, sx1 * 2, sy1 * 2, sx2 * 2, sy2 * 2, observer);
     }
     else {
       g.drawImage(image, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, observer);

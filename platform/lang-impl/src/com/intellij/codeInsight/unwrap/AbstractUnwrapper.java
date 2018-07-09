@@ -103,7 +103,7 @@ public abstract class AbstractUnwrapper<C extends AbstractUnwrapper.AbstractCont
 
       PsiElement toExtract = first;
       if (myIsEffective) {
-        toExtract = from.getParent().addRangeBefore(first, last, from);
+        toExtract = addRangeBefore(first, last, from.getParent(), from);
       }
 
       do {
@@ -114,6 +114,22 @@ public abstract class AbstractUnwrapper<C extends AbstractUnwrapper.AbstractCont
         first = first.getNextSibling();
       }
       while (first != null && first.getPrevSibling() != last);
+    }
+
+    /**
+     * Adds range [first, last] before anchor under parent.
+     *
+     * @param first
+     * @param last
+     * @param parent
+     * @param anchor
+     * @return the first child element which was actually added
+     */
+    protected PsiElement addRangeBefore(@NotNull PsiElement first,
+                                        @NotNull PsiElement last,
+                                        @NotNull PsiElement parent,
+                                        @NotNull PsiElement anchor) throws IncorrectOperationException {
+      return parent.addRangeBefore(first, last, anchor);
     }
 
     public void delete(PsiElement e) throws IncorrectOperationException {

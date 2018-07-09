@@ -1,0 +1,5 @@
+public class Foo {
+  void m(boolean b) {
+    <spot>b</spot>$key
+  }
+}

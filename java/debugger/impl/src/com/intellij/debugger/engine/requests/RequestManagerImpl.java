@@ -1,4 +1,6 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.debugger.engine.requests;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -6,6 +8,7 @@ import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.debugger.jdi.JvmtiError;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.requests.RequestManager;
 import com.intellij.debugger.requests.Requestor;
@@ -15,11 +18,10 @@ import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.classFilter.ClassFilter;
-import com.intellij.util.containers.HashMap;
+import java.util.HashMap;
 import com.sun.jdi.*;
 import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.request.*;
@@ -29,8 +31,6 @@ import java.util.*;
 
 /**
  * @author lex
- * Date: May 6, 2003
- * Time: 5:32:38 PM
  */
 public class RequestManagerImpl extends DebugProcessAdapterImpl implements RequestManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.RequestManagerImpl");
@@ -279,7 +279,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       }
       catch (InternalException e) {
         //noinspection StatementWithEmptyBody
-        if (e.errorCode() == 41) {
+        if (e.errorCode() == JvmtiError.NOT_FOUND) {
           //event request not found
           //there could be no requests after hotswap
         }
@@ -339,9 +339,9 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       request.enable();
     } catch (InternalException e) {
       switch (e.errorCode()) {
-        case 40 /* DUPLICATE */ : LOG.info(e); break;
+        case JvmtiError.DUPLICATE : LOG.info(e); break;
 
-        case 41 /* NOT_FOUND */ : break;
+        case JvmtiError.NOT_FOUND : break;
         //event request not found
         //there could be no requests after hotswap
 
@@ -366,13 +366,8 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   public boolean isVerified(Requestor requestor) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    for (EventRequest request : findRequests(requestor)) {
-      /*ClassPrepareRequest is added in any case, so do not count it*/
-      if (!(request instanceof ClassPrepareRequest)) {
-        return true;
-      }
-    }
-    return false;
+    //ClassPrepareRequest is added in any case, so do not count it
+    return findRequests(requestor).stream().anyMatch(r -> !(r instanceof ClassPrepareRequest));
   }
 
   public void processDetached(DebugProcessImpl process, boolean closedByUser) {

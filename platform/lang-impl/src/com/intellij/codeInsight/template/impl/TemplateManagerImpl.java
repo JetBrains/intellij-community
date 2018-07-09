@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.event.EditorFactoryListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.CachedValueProvider;
@@ -41,7 +42,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -52,12 +53,14 @@ import java.util.concurrent.ConcurrentMap;
 public class TemplateManagerImpl extends TemplateManager implements Disposable {
   private static final TemplateContextType[] ourContextTypes = Extensions.getExtensions(TemplateContextType.EP_NAME);
   private final Project myProject;
+  private final MessageBus myMessageBus;
   private boolean myTemplateTesting;
 
   private static final Key<TemplateState> TEMPLATE_STATE_KEY = Key.create("TEMPLATE_STATE_KEY");
 
-  public TemplateManagerImpl(Project project) {
+  public TemplateManagerImpl(Project project, MessageBus messageBus) {
     myProject = project;
+    myMessageBus = messageBus;
     final EditorFactoryListener myEditorFactoryListener = new EditorFactoryAdapter() {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
@@ -77,15 +80,6 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
   @Override
   public void dispose() {
 
-  }
-
-  /**
-   * @deprecated Use {@link #setTemplateTesting(Project, Disposable)} instead
-   */
-  @TestOnly
-  @Deprecated
-  public void setTemplateTesting(final boolean templateTesting) {
-    myTemplateTesting = templateTesting;
   }
 
   @TestOnly
@@ -186,6 +180,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
         editor.getSelectionModel().removeSelection();
       }
       templateState.start((TemplateImpl)template, processor, predefinedVarValues);
+      fireTemplateStarted(templateState);
     };
     if (inSeparateCommand) {
       CommandProcessor.getInstance().executeCommand(myProject, r, CodeInsightBundle.message("insert.code.template.command"), null);
@@ -259,7 +254,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
     }
 
     PsiFile file = PsiUtilBase.getPsiFileInEditor(editor, myProject);
-    if (file == null) return null;
+    if (file == null || file instanceof PsiCompiledElement) return null;
 
     Map<TemplateImpl, String> template2argument = findMatchingTemplates(file, editor, shortcutChar, TemplateSettings.getInstance());
 
@@ -446,7 +441,12 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
         predefinedVarValues.put(TemplateImpl.ARG, argument);
       }
       templateState.start(template, processor, predefinedVarValues);
+      fireTemplateStarted(templateState);
     }, CodeInsightBundle.message("insert.code.template.command"), null);
+  }
+
+  private void fireTemplateStarted(TemplateState templateState) {
+    myMessageBus.syncPublisher(TEMPLATE_STARTED_TOPIC).templateStarted(templateState);
   }
 
   private static List<TemplateImpl> filterApplicableCandidates(PsiFile file, int caretOffset, List<TemplateImpl> candidates) {

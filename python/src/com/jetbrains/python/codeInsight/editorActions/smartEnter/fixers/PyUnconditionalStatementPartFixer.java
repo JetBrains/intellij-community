@@ -17,8 +17,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 /**
  * Created by IntelliJ IDEA.
  * Author: Alexey.Ivanov
- * Date:   16.04.2010
- * Time:   14:25:20
  */
 public class PyUnconditionalStatementPartFixer extends PyFixer<PyElement> {
   public PyUnconditionalStatementPartFixer() {

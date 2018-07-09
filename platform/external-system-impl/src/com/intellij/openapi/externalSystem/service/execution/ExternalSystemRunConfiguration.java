@@ -1,9 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.intellij.openapi.externalSystem.service.execution;
 
 import com.intellij.build.*;
 import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.impl.FailureResultImpl;
+import com.intellij.build.events.FailureResult;
 import com.intellij.build.events.impl.FinishBuildEventImpl;
 import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.build.events.impl.SuccessResultImpl;
@@ -21,6 +23,8 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.FakeRerunAction;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
+import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
@@ -46,6 +50,7 @@ import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskEx
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemExecuteTaskTask;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
@@ -58,7 +63,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
@@ -75,8 +79,12 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.util.List;
 
+import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DEBUG_FORK_SOCKET_PARAM;
+import static com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper.DEBUG_SETUP_PREFIX;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.convert;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getConsoleManagerFor;
 
@@ -84,12 +92,14 @@ import static com.intellij.openapi.externalSystem.util.ExternalSystemUtil.getCon
  * @author Denis Zhdanov
  * @since 23.05.13 18:30
  */
-public class ExternalSystemRunConfiguration extends LocatableConfigurationBase implements SearchScopeProvidingRunProfile {
+public class ExternalSystemRunConfiguration extends LocatableConfigurationBase implements SearchScopeProvidingRunProfile,
+                                                                                          SMRunnerConsolePropertiesProvider {
   public static final Key<InputStream> RUN_INPUT_KEY = Key.create("RUN_INPUT_KEY");
   public static final Key<Class<? extends BuildProgressListener>> PROGRESS_LISTENER_KEY = Key.create("PROGRESS_LISTENER_KEY");
 
   private static final Logger LOG = Logger.getInstance(ExternalSystemRunConfiguration.class);
   private ExternalSystemTaskExecutionSettings mySettings = new ExternalSystemTaskExecutionSettings();
+  private static final boolean DISABLE_FORK_DEBUGGER = Boolean.getBoolean("external.system.disable.fork.debugger");
 
   public ExternalSystemRunConfiguration(@NotNull ProjectSystemId externalSystemId,
                                         Project project,
@@ -121,17 +131,20 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
   }
 
   @Override
-  public void readExternal(Element element) throws InvalidDataException {
+  public void readExternal(@NotNull Element element) throws InvalidDataException {
     super.readExternal(element);
     Element e = element.getChild(ExternalSystemTaskExecutionSettings.TAG_NAME);
     if (e != null) {
       mySettings = XmlSerializer.deserialize(e, ExternalSystemTaskExecutionSettings.class);
     }
-    JavaRunConfigurationExtensionManager.getInstance().readExternal(this, element);
+    JavaRunConfigurationExtensionManager javaRunConfigurationExtensionManager = JavaRunConfigurationExtensionManager.getInstance();
+    if (javaRunConfigurationExtensionManager != null) {
+      javaRunConfigurationExtensionManager.readExternal(this, element);
+    }
   }
 
   @Override
-  public void writeExternal(Element element) throws WriteExternalException {
+  public void writeExternal(@NotNull Element element) throws WriteExternalException {
     super.writeExternal(element);
     element.addContent(XmlSerializer.serialize(mySettings, new SerializationFilter() {
       @Override
@@ -147,7 +160,10 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         }
       }
     }));
-    JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
+    JavaRunConfigurationExtensionManager javaRunConfigurationExtensionManager = JavaRunConfigurationExtensionManager.getInstance();
+    if (javaRunConfigurationExtensionManager != null) {
+      javaRunConfigurationExtensionManager.writeExternal(this, element);
+    }
   }
 
   @NotNull
@@ -159,8 +175,12 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
   @Override
   public SettingsEditor<ExternalSystemRunConfiguration> getConfigurationEditor() {
     SettingsEditorGroup<ExternalSystemRunConfiguration> group = new SettingsEditorGroup<>();
-    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"), new ExternalSystemRunConfigurationEditor(getProject(), mySettings.getExternalSystemId()));
-    JavaRunConfigurationExtensionManager.getInstance().appendEditors(this, group);
+    group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"),
+                    new ExternalSystemRunConfigurationEditor(getProject(), mySettings.getExternalSystemId()));
+    JavaRunConfigurationExtensionManager javaRunConfigurationExtensionManager = JavaRunConfigurationExtensionManager.getInstance();
+    if (javaRunConfigurationExtensionManager != null) {
+      javaRunConfigurationExtensionManager.appendEditors(this, group);
+    }
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
     return group;
   }
@@ -194,6 +214,16 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     return scope;
   }
 
+  @Override
+  public SMTRunnerConsoleProperties createTestConsoleProperties(Executor executor) {
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(mySettings.getExternalSystemId());
+    if (manager != null) {
+      Object testConsoleProperties = manager.createTestConsoleProperties(getProject(), executor, this);
+      return testConsoleProperties instanceof SMTRunnerConsoleProperties ? (SMTRunnerConsoleProperties)testConsoleProperties : null;
+    }
+    return null;
+  }
+
   public static class MyRunnableState extends UserDataHolderBase implements RunProfileState {
 
     @NotNull private final ExternalSystemTaskExecutionSettings mySettings;
@@ -203,6 +233,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     @Nullable private RunContentDescriptor myContentDescriptor;
 
     private final int myDebugPort;
+    private ServerSocket myForkSocket = null;
 
     public MyRunnableState(@NotNull ExternalSystemTaskExecutionSettings settings,
                            @NotNull Project project,
@@ -234,37 +265,24 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     }
 
     @Nullable
+    public ServerSocket getForkSocket() {
+      if (myForkSocket == null && !DISABLE_FORK_DEBUGGER) {
+        try {
+          myForkSocket = new ServerSocket(0, 0, InetAddress.getByName("127.0.0.1"));
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
+      }
+      return myForkSocket;
+    }
+
+    @Nullable
     @Override
     public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
       if (myProject.isDisposed()) return null;
 
-      if (mySettings.getTaskNames().isEmpty()) {
-        throw new ExecutionException(ExternalSystemBundle.message("run.error.undefined.task"));
-      }
-
-      final JavaParameters extensionsJP = new JavaParameters();
-      final RunConfigurationExtension[] extensions = Extensions.getExtensions(RunConfigurationExtension.EP_NAME);
-      for (RunConfigurationExtension ext : extensions) {
-        ext.updateJavaParameters(myConfiguration, extensionsJP, myEnv.getRunnerSettings());
-      }
-
-      String jvmAgentSetup;
-      if (myDebugPort > 0) {
-        jvmAgentSetup = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=" + myDebugPort;
-      } else {
-        ParametersList parametersList = extensionsJP.getVMParametersList();
-        final ParametersList data = myEnv.getUserData(ExternalSystemTaskExecutionSettings.JVM_AGENT_SETUP_KEY);
-        if (data != null) {
-          parametersList.addAll(data.getList());
-        }
-        for (String parameter : parametersList.getList()) {
-          if (parameter.startsWith("-agentlib:")) continue;
-          if (parameter.startsWith("-agentpath:")) continue;
-          if (parameter.startsWith("-javaagent:")) continue;
-          throw new ExecutionException(ExternalSystemBundle.message("run.invalid.jvm.agent.configuration", parameter));
-        }
-        jvmAgentSetup = parametersList.getParametersString();
-      }
+      String jvmAgentSetup = getJvmAgentSetup();
 
       ApplicationManager.getApplication().assertIsDispatchThread();
       FileDocumentManager.getInstance().saveAllDocuments();
@@ -302,7 +320,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
 
       List<BuildOutputParser> buildOutputParsers = new SmartList<>();
       for (ExternalSystemOutputParserProvider outputParserProvider : ExternalSystemOutputParserProvider.EP_NAME.getExtensions()) {
-        if(task.getExternalSystemId().equals(outputParserProvider.getExternalSystemId())) {
+        if (task.getExternalSystemId().equals(outputParserProvider.getExternalSystemId())) {
           buildOutputParsers.addAll(outputParserProvider.getBuildOutputParsers(task));
         }
       }
@@ -312,18 +330,20 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         progressListener == null || buildOutputParsers.isEmpty() ? null :
         new BuildOutputInstantReaderImpl(task.getId(), progressListener, buildOutputParsers);
 
-      JavaRunConfigurationExtensionManager.getInstance().attachExtensionsToProcess(myConfiguration, processHandler, myEnv.getRunnerSettings());
+      JavaRunConfigurationExtensionManager javaRunConfigurationExtensionManager = JavaRunConfigurationExtensionManager.getInstance();
+      if (javaRunConfigurationExtensionManager != null) {
+        javaRunConfigurationExtensionManager.attachExtensionsToProcess(myConfiguration, processHandler, myEnv.getRunnerSettings());
+      }
 
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         final String startDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
         final String greeting;
+        final String settingsDescription = StringUtil.isEmpty(mySettings.toString()) ? "" : String.format(" '%s'", mySettings.toString());
         if (mySettings.getTaskNames().size() > 1) {
-          greeting = ExternalSystemBundle
-            .message("run.text.starting.multiple.task", startDateTime, mySettings.toString()) + "\n";
+          greeting = ExternalSystemBundle.message("run.text.starting.multiple.task", startDateTime, settingsDescription) + "\n";
         }
         else {
-          greeting =
-            ExternalSystemBundle.message("run.text.starting.single.task", startDateTime, mySettings.toString()) + "\n";
+          greeting = ExternalSystemBundle.message("run.text.starting.single.task", startDateTime, settingsDescription) + "\n";
         }
         ExternalSystemTaskNotificationListenerAdapter taskListener = new ExternalSystemTaskNotificationListenerAdapter() {
 
@@ -367,13 +387,13 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
 
           @Override
           public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
+            FailureResult failureResult =
+              ExternalSystemUtil.createFailureResult(executionName + " failed", e, id.getProjectSystemId(), myProject);
             if (progressListener != null) {
               progressListener.onEvent(new FinishBuildEventImpl(
-                id, null, System.currentTimeMillis(), "failed", new FailureResultImpl(e)));
+                id, null, System.currentTimeMillis(), "failed", failureResult));
             }
-            String exceptionMessage = ExceptionUtil.getMessage(e);
-            String text = exceptionMessage == null ? e.toString() : exceptionMessage;
-            processHandler.notifyTextAvailable(text + '\n', ProcessOutputTypes.STDERR);
+            ExternalSystemUtil.printFailure(e, failureResult, consoleView, processHandler);
             processHandler.notifyProcessTerminated(1);
           }
 
@@ -398,12 +418,10 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
             final String endDateTime = DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
             final String farewell;
             if (mySettings.getTaskNames().size() > 1) {
-              farewell = ExternalSystemBundle
-                .message("run.text.ended.multiple.task", endDateTime, mySettings.toString());
+              farewell = ExternalSystemBundle.message("run.text.ended.multiple.task", endDateTime, settingsDescription);
             }
             else {
-              farewell =
-                ExternalSystemBundle.message("run.text.ended.single.task", endDateTime, mySettings.toString());
+              farewell = ExternalSystemBundle.message("run.text.ended.single.task", endDateTime, settingsDescription);
             }
             processHandler.notifyTextAvailable(farewell + "\n", ProcessOutputTypes.SYSTEM);
             foldGreetingOrFarewell(consoleView, farewell, false);
@@ -420,7 +438,45 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       if (executionConsole instanceof BuildView) {
         actions = ((BuildView)executionConsole).getSwitchActions();
       }
-      return new DefaultExecutionResult(executionConsole, processHandler, actions);
+      DefaultExecutionResult executionResult = new DefaultExecutionResult(executionConsole, processHandler, actions);
+      executionResult.setRestartActions(restartActions);
+      return executionResult;
+    }
+
+    @Nullable
+    private String getJvmAgentSetup() throws ExecutionException {
+      // todo [Vlad, IDEA-187832]: extract to `external-system-java` module
+      if(!ExternalSystemApiUtil.isJavaCompatibleIde()) return null;
+
+      final JavaParameters extensionsJP = new JavaParameters();
+      final RunConfigurationExtension[] extensions = Extensions.getExtensions(RunConfigurationExtension.EP_NAME);
+      for (RunConfigurationExtension ext : extensions) {
+        ext.updateJavaParameters(myConfiguration, extensionsJP, myEnv.getRunnerSettings());
+      }
+
+      String jvmAgentSetup;
+
+      if (myDebugPort > 0) {
+        jvmAgentSetup = DEBUG_SETUP_PREFIX + myDebugPort;
+        if (getForkSocket() != null) {
+          jvmAgentSetup += (" " + DEBUG_FORK_SOCKET_PARAM + getForkSocket().getLocalPort());
+        }
+      }
+      else {
+        ParametersList parametersList = extensionsJP.getVMParametersList();
+        final ParametersList data = myEnv.getUserData(ExternalSystemTaskExecutionSettings.JVM_AGENT_SETUP_KEY);
+        if (data != null) {
+          parametersList.addAll(data.getList());
+        }
+        for (String parameter : parametersList.getList()) {
+          if (parameter.startsWith("-agentlib:")) continue;
+          if (parameter.startsWith("-agentpath:")) continue;
+          if (parameter.startsWith("-javaagent:")) continue;
+          throw new ExecutionException(ExternalSystemBundle.message("run.invalid.jvm.agent.configuration", parameter));
+        }
+        jvmAgentSetup = parametersList.getParametersString();
+      }
+      return jvmAgentSetup;
     }
 
     private BuildProgressListener createBuildView(ExternalSystemTaskId id,
@@ -481,7 +537,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     }
     if (consoleViewImpl != null) {
       consoleViewImpl.performWhenNoDeferredOutput(() -> {
-        if(!ApplicationManager.getApplication().isDispatchThread()) return;
+        if (!ApplicationManager.getApplication().isDispatchThread()) return;
 
         Document document = consoleViewImpl.getEditor().getDocument();
         int line = isGreeting ? 0 : document.getLineCount() - 2;

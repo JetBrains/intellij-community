@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -20,6 +6,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * We don't use roaming type PER_OS - path macros is enough ($USER_HOME$/Dropbox for example)
@@ -34,6 +21,7 @@ public class VcsApplicationSettings implements PersistentStateComponent<VcsAppli
   public boolean SHOW_LST_GUTTER_MARKERS = true;
   public boolean SHOW_LST_WORD_DIFFERENCES = true;
   public boolean DETECT_PATCH_ON_THE_FLY = false;
+  public boolean ENABLE_PARTIAL_CHANGELISTS = true;
 
   public static VcsApplicationSettings getInstance() {
     return ServiceManager.getService(VcsApplicationSettings.class);
@@ -45,7 +33,7 @@ public class VcsApplicationSettings implements PersistentStateComponent<VcsAppli
   }
 
   @Override
-  public void loadState(VcsApplicationSettings state) {
+  public void loadState(@NotNull VcsApplicationSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }
 }

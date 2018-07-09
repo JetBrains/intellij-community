@@ -57,9 +57,4 @@ public class BaseTestProxyNodeDescriptor<T extends AbstractTestProxy> extends No
   public T getElement() {
     return myTestProxy;
   }
-
-  @Override
-  public String toString() {
-    return myName;
-  }
 }

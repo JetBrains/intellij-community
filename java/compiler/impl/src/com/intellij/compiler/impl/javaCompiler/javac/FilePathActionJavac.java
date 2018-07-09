@@ -27,7 +27,6 @@ import java.util.regex.Pattern;
 
 /**
  * @author Eugene Zhuravlev              
- *         Date: Sep 14, 2005
  */
 public class FilePathActionJavac extends JavacParserAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.impl.javaCompiler.javac.FilePathActionJavac");

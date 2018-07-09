@@ -287,7 +287,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
       for (String actionName : myActionNames) {
         namedActions.add(createAction(actionName));
       }
-      return namedActions.toArray(new AnAction[namedActions.size()]);
+      return namedActions.toArray(AnAction.EMPTY_ARRAY);
     }
 
     @NotNull
@@ -296,7 +296,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   
   private class ImportAction extends DumbAwareAction {
 
-    private String myImporterName;
+    private final String myImporterName;
 
     public ImportAction(@NotNull String importerName, @NotNull String importerText) {
       super(importerText);
@@ -311,7 +311,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   }
   
   private class ExportAction extends DumbAwareAction {
-    private String myExporterName;
+    private final String myExporterName;
 
     public ExportAction(@NotNull String exporterName, @NotNull String exporterText) {
       super(exporterText);
@@ -400,16 +400,12 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
           try {
             Object finalConfig = config;
             WriteAction.run(() -> {
-              OutputStream outputStream = targetFile.getOutputStream(this);
-              try {
+              try (OutputStream outputStream = targetFile.getOutputStream(this)) {
                 if (exporter instanceof ConfigurableSchemeExporter) {
                   //noinspection unchecked
                   ((ConfigurableSchemeExporter)exporter).exportScheme(scheme, outputStream, finalConfig);
                 }
                 exporter.exportScheme(scheme, outputStream);
-              }
-              finally {
-                outputStream.close();
               }
             });
             message = ApplicationBundle

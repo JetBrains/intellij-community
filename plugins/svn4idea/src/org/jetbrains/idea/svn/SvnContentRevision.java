@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2014 JetBrains s.r.o.
+ * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,23 +26,23 @@ import com.intellij.openapi.vcs.impl.CurrentRevisionProvider;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.status.Status;
-import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.io.IOException;
 
 public class SvnContentRevision extends SvnBaseContentRevision implements ByteBackedContentRevision {
 
-  @NotNull private final SVNRevision myRevision;
+  @NotNull private final Revision myRevision;
   /**
-   * this flag is necessary since SVN would not do remote request only if constant SVNRevision.BASE
+   * this flag is necessary since SVN would not do remote request only if constant Revision.BASE
    * -> usual current revision content class can't be used
    */
   private final boolean myUseBaseRevision;
 
-  protected SvnContentRevision(@NotNull SvnVcs vcs, @NotNull FilePath file, @NotNull SVNRevision revision, boolean useBaseRevision) {
+  protected SvnContentRevision(@NotNull SvnVcs vcs, @NotNull FilePath file, @NotNull Revision revision, boolean useBaseRevision) {
     super(vcs, file);
     myRevision = revision;
     myUseBaseRevision = useBaseRevision;
@@ -50,12 +50,12 @@ public class SvnContentRevision extends SvnBaseContentRevision implements ByteBa
 
   @NotNull
   public static SvnContentRevision createBaseRevision(@NotNull SvnVcs vcs, @NotNull FilePath file, @NotNull Status status) {
-    SVNRevision revision = status.getRevision().isValid() ? status.getRevision() : status.getCommittedRevision();
+    Revision revision = status.getRevision().isValid() ? status.getRevision() : status.getCommittedRevision();
     return createBaseRevision(vcs, file, revision);
   }
 
   @NotNull
-  public static SvnContentRevision createBaseRevision(@NotNull SvnVcs vcs, @NotNull FilePath file, @NotNull SVNRevision revision) {
+  public static SvnContentRevision createBaseRevision(@NotNull SvnVcs vcs, @NotNull FilePath file, @NotNull Revision revision) {
     if (file.getFileType().isBinary()) {
       return new SvnBinaryContentRevision(vcs, file, revision, true);
     }
@@ -63,7 +63,7 @@ public class SvnContentRevision extends SvnBaseContentRevision implements ByteBa
   }
 
   @NotNull
-  public static SvnContentRevision createRemote(@NotNull SvnVcs vcs, @NotNull FilePath file, @NotNull SVNRevision revision) {
+  public static SvnContentRevision createRemote(@NotNull SvnVcs vcs, @NotNull FilePath file, @NotNull Revision revision) {
     if (file.getFileType().isBinary()) {
       return new SvnBinaryContentRevision(vcs, file, revision, false);
     }
@@ -109,8 +109,8 @@ public class SvnContentRevision extends SvnBaseContentRevision implements ByteBa
     if (lock.exists()) {
       throw new VcsException("Can not access file base revision contents: administrative area is locked");
     }
-    return SvnUtil.getFileContents(myVcs, SvnTarget.fromFile(file), myUseBaseRevision ? SVNRevision.BASE : myRevision,
-                                   SVNRevision.UNDEFINED);
+    return SvnUtil.getFileContents(myVcs, Target.on(file), myUseBaseRevision ? Revision.BASE : myRevision,
+                                   Revision.UNDEFINED);
   }
 
   @NotNull

@@ -50,7 +50,6 @@ import static com.jetbrains.python.psi.PyUtil.sure;
  * Adds a missing top-level function to a module.
  * <br/>
  * User: dcheryasov
- * Date: Sep 15, 2010 4:34:23 PM
  * @see AddMethodQuickFix AddMethodQuickFix
  */
 public class AddFunctionQuickFix  implements LocalQuickFix {
@@ -124,7 +123,7 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
       // else: no arglist, use empty args
 
       WriteAction.run(() -> {
-        PyFunction function = builder.buildFunction(project, LanguageLevel.forElement(file));
+        PyFunction function = builder.buildFunction();
 
         // add to the bottom
         function = (PyFunction) file.add(function);

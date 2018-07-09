@@ -32,7 +32,6 @@ import java.util.*;
 
 /**
  * @author: db
- * Date: 31.01.11
  */
 class ClassfileAnalyzer {
   private final static Logger LOG = Logger.getInstance("#org.jetbrains.jps.builders.java.dependencyView.ClassfileAnalyzer");

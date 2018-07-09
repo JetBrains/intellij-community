@@ -28,8 +28,6 @@ import java.util.Set;
 
 /**
 * @author irengrig
-*         Date: 2/7/11
-*         Time: 10:40 AM
  *
  * We can have only limited number of nodes selected in a tree;
  * and children of selected nodes (any level) cannot change their state

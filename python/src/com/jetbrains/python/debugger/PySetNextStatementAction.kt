@@ -63,15 +63,16 @@ class PySetNextStatementAction : XDebuggerActionBase(true) {
       }
 
       override fun isEnabled(project: Project, event: AnActionEvent): Boolean {
-        return super.isEnabled(project, event) && PyDebugSupportUtils.isPythonConfigurationSelected(project)
+        return super.isEnabled(project, event) && PyDebugSupportUtils.isCurrentPythonDebugProcess(project)
       }
     }
   }
 
-  override fun getHandler(debuggerSupport: DebuggerSupport) = setNextStatementActionHandler
+  override fun getHandler(debuggerSupport: DebuggerSupport): XDebuggerSuspendedActionHandler = setNextStatementActionHandler
 
   override fun isHidden(event: AnActionEvent): Boolean {
-    return !PyDebugSupportUtils.isPythonConfigurationSelected(event.getData(CommonDataKeys.PROJECT))
+    val project = event.getData(CommonDataKeys.PROJECT)
+    return project == null || !PyDebugSupportUtils.isCurrentPythonDebugProcess(project)
   }
 
   companion object {

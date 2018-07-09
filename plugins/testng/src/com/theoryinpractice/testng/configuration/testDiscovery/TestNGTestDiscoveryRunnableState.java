@@ -58,7 +58,7 @@ public class TestNGTestDiscoveryRunnableState extends TestNGRunnableState {
         final Pair<String, String> position = data.TEST_OBJECT.equals(TestType.SOURCE.getType())
                                               ? Pair.create(data.getMainClassName(), data.getMethodName()) : null;
         final Set<String> patterns = TestDiscoverySearchHelper
-          .search(getProject(), position, data.getChangeList(), getConfiguration().getFrameworkPrefix());
+          .search(getProject(), position, data.getChangeList(), getConfiguration().getTestFrameworkId());
         final Module module = getConfiguration().getConfigurationModule().getModule();
         final GlobalSearchScope searchScope =
           module != null ? GlobalSearchScope.moduleWithDependenciesScope(module) : GlobalSearchScope.projectScope(getProject());

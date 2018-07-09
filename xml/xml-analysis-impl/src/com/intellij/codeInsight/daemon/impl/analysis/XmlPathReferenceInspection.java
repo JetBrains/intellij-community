@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 9/3/12
  */
 public class XmlPathReferenceInspection extends XmlSuppressableInspectionTool {
   @NotNull

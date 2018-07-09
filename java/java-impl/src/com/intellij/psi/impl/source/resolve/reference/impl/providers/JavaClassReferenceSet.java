@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiUtil;
@@ -189,7 +190,7 @@ public class JavaClassReferenceSet {
       }
     }
 
-    myReferences = referencesList.toArray(new JavaClassReference[referencesList.size()]);
+    myReferences = referencesList.toArray(new JavaClassReference[0]);
   }
 
   private static int skipSpaces(int pos, int max, @NotNull String str, boolean allowSpaces) {
@@ -246,7 +247,8 @@ public class JavaClassReferenceSet {
   public boolean canReferencePackage(int index) {
     if (index == myReferences.length - 1) return false;
     String text = getElement().getText();
-    return text.charAt(myReferences[index].getRangeInElement().getEndOffset()) != DOLLAR;
+    int endOffset = myReferences[index].getRangeInElement().getEndOffset();
+    return !StringUtil.isChar(text, endOffset, DOLLAR);
   }
 
   public boolean isSoft() {

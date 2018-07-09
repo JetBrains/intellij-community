@@ -16,7 +16,10 @@
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
@@ -50,7 +53,7 @@ public interface ScopeInfo {
           }
         }
       }
-      return result.toArray(new FilePath[result.size()]);
+      return result.toArray(new FilePath[0]);
     }
   };
 

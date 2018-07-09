@@ -188,10 +188,17 @@ public abstract class ModuleManager extends SimpleModificationTracker {
   @Nullable
   public abstract UnloadedModuleDescription getUnloadedModuleDescription(@NotNull String moduleName);
 
+  @NotNull
+  public abstract ModuleGrouper getModuleGrouper(@Nullable ModifiableModuleModel model);
+
   /**
    * Specify list of modules which will be unloaded from the project.
    * @see UnloadedModuleDescription
    */
   @ApiStatus.Experimental
   public abstract void setUnloadedModules(@NotNull List<String> unloadedModuleNames);
+
+  @ApiStatus.Experimental
+  public void removeUnloadedModules(@NotNull Collection<UnloadedModuleDescription> unloadedModules) {
+  }
 }

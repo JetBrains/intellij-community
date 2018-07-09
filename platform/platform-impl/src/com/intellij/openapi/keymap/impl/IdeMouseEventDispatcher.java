@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -33,7 +19,6 @@ import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -43,10 +28,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 import static com.intellij.Patches.JDK_BUG_ID_8147994;
 import static java.awt.event.MouseEvent.*;
@@ -242,6 +225,10 @@ public final class IdeMouseEventDispatcher {
       return false; // forward mouse processing to the special shortcut panel
     }
 
+    if (doVerticalDiagramScrolling(c, e)) {
+      return true;
+    }
+
     if (isHorizontalScrolling(c, e)) {
       boolean done = doHorizontalScrolling(c, (MouseWheelEvent)e);
       if (done) return true;
@@ -258,7 +245,7 @@ public final class IdeMouseEventDispatcher {
     fillActionsList(c, shortcut, IdeKeyEventDispatcher.isModalContext(c));
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     if (actionManager != null) {
-      AnAction[] actions = myActions.toArray(new AnAction[myActions.size()]);
+      AnAction[] actions = myActions.toArray(AnAction.EMPTY_ARRAY);
       for (AnAction action : actions) {
         DataContext dataContext = DataManager.getInstance().getDataContext(c);
         Presentation presentation = myPresentationFactory.getPresentation(action);
@@ -274,6 +261,7 @@ public final class IdeMouseEventDispatcher {
           ActionUtil.performActionDumbAware(action, actionEvent);
           actionManager.fireAfterActionPerformed(action, dataContext, actionEvent);
           e.consume();
+          break;
         }
       }
     }
@@ -310,6 +298,43 @@ public final class IdeMouseEventDispatcher {
       return true;
     }
     return false;
+  }
+
+  private static boolean doVerticalDiagramScrolling(@Nullable Component component, @NotNull MouseEvent event) {
+    if (component != null && event instanceof MouseWheelEvent && isDiagramViewComponent(component.getParent())) {
+      MouseWheelEvent mwe = (MouseWheelEvent)event;
+      if (!mwe.isShiftDown() && mwe.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL && JBScrollPane.isScrollEvent(mwe)) {
+        JScrollBar scrollBar = findVerticalScrollBar(component);
+        if (scrollBar != null) {
+          scrollBar.setValue(scrollBar.getValue() + getScrollAmount(mwe, scrollBar));
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  @Nullable
+  private static JScrollBar findVerticalScrollBar(@Nullable Component component) {
+    if (component == null) {
+      return null;
+    }
+    if (component instanceof JScrollPane) {
+      JScrollBar scrollBar = ((JScrollPane)component).getVerticalScrollBar();
+      return scrollBar != null && scrollBar.isVisible() ? scrollBar : null;
+    }
+    if (isDiagramViewComponent(component)) {
+      JComponent view = (JComponent)component;
+      for (int i = 0; i < view.getComponentCount(); i++) {
+        if (view.getComponent(i) instanceof JScrollBar) {
+          JScrollBar scrollBar = (JScrollBar)view.getComponent(i);
+          if (scrollBar.getOrientation() == Adjustable.VERTICAL) {
+            return scrollBar.isVisible() ? scrollBar : null;
+          }
+        }
+      }
+    }
+    return findVerticalScrollBar(component.getParent());
   }
 
   public void resetHorScrollingTracker() {
@@ -355,8 +380,9 @@ public final class IdeMouseEventDispatcher {
     return findHorizontalScrollBar(c.getParent());
   }
 
-  private static boolean isDiagramViewComponent(Component c) {
-    return c != null && "y.view.Graph2DView".equals(c.getClass().getName());
+  private static boolean isDiagramViewComponent(@Nullable Component component) {
+    // in production yfiles classes is obfuscated
+    return UIUtil.isClientPropertyTrue(component, "Diagram-View-Component-Key");
   }
 
   public void blockNextEvents(@NotNull MouseEvent e, @NotNull IdeEventQueue.BlockMode blockMode) {

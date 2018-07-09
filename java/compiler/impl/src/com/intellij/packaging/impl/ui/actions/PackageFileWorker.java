@@ -20,7 +20,6 @@ import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -81,19 +80,16 @@ public class PackageFileWorker {
         try {
           for (final VirtualFile file : files) {
             indicator.checkCanceled();
-            new ReadAction() {
-              @Override
-              protected void run(@NotNull final Result result) {
-                try {
-                  packageFile(file, project, artifacts, packIntoArchives);
-                }
-                catch (IOException e) {
-                  LOG.info(e);
-                  String message = CompilerBundle.message("message.tect.package.file.io.error", e.toString());
-                  Notifications.Bus.notify(new Notification("Package File", "Cannot package file", message, NotificationType.ERROR));
-                }
+            ReadAction.run(() -> {
+              try {
+                packageFile(file, project, artifacts, packIntoArchives);
               }
-            }.execute();
+              catch (IOException e) {
+                LOG.info(e);
+                String message = CompilerBundle.message("message.tect.package.file.io.error", e.toString());
+                Notifications.Bus.notify(new Notification("Package File", "Cannot package file", message, NotificationType.ERROR));
+              }
+            });
             callback.setDone();
           }
         }
@@ -163,14 +159,11 @@ public class PackageFileWorker {
     final File archiveFile = new File(archivePath);
     if (parents.isEmpty()) {
       LOG.debug("  adding to archive " + archivePath);
-      JBZipFile file = getOrCreateZipFile(archiveFile);
-      try {
-        final String fullPathInArchive = DeploymentUtil.trimForwardSlashes(DeploymentUtil.appendToPath(pathInArchive, myRelativeOutputPath));
+      try (JBZipFile file = getOrCreateZipFile(archiveFile)) {
+        final String fullPathInArchive =
+          DeploymentUtil.trimForwardSlashes(DeploymentUtil.appendToPath(pathInArchive, myRelativeOutputPath));
         final JBZipEntry entry = file.getOrCreateEntry(fullPathInArchive);
         entry.setDataFromFile(myFile);
-      }
-      finally {
-        file.close();
       }
       return;
     }
@@ -179,8 +172,7 @@ public class PackageFileWorker {
     final String nextPathInArchive = DeploymentUtil.trimForwardSlashes(DeploymentUtil.appendToPath(pathInArchive, element.getName()));
     final List<CompositePackagingElement<?>> parentsTrail = parents.subList(1, parents.size());
     if (element instanceof ArchivePackagingElement) {
-      JBZipFile zipFile = getOrCreateZipFile(archiveFile);
-      try {
+      try (JBZipFile zipFile = getOrCreateZipFile(archiveFile)) {
         final JBZipEntry entry = zipFile.getOrCreateEntry(nextPathInArchive);
         LOG.debug("  extracting to temp file: " + nextPathInArchive + " from " + archivePath);
         final File tempFile = FileUtil.createTempFile("packageFile" + FileUtil.sanitizeFileName(nextPathInArchive),
@@ -193,9 +185,6 @@ public class PackageFileWorker {
         packFile(FileUtil.toSystemIndependentName(tempFile.getAbsolutePath()), "", parentsTrail);
         entry.setDataFromFile(tempFile);
         FileUtil.delete(tempFile);
-      }
-      finally {
-        zipFile.close();
       }
     }
     else {

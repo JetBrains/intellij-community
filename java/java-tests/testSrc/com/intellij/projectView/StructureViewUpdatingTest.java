@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.projectView;
 
@@ -54,7 +42,7 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
     FileEditor[] fileEditors = fileEditorManager.openFile(virtualFile, false);
     FileEditor fileEditor = fileEditors[0];
     StructureViewComponent svc = (StructureViewComponent)fileEditor.getStructureViewBuilder()
-      .createStructureView(fileEditor, myProject);
+                                                                   .createStructureView(fileEditor, myProject);
     Disposer.register(getTestRootDisposable(), svc);
     fileEditorManager.closeFile(virtualFile);
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiClass.getContainingFile());
@@ -78,13 +66,10 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
       "  myField1: boolean\n" +
       "  myField2: boolean\n");
 
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        int offset = document.getLineStartOffset(5);
-        document.insertString(offset, "    boolean myNewField = false;\n");
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      int offset = document.getLineStartOffset(5);
+      document.insertString(offset, "    boolean myNewField = false;\n");
+    });
 
     PsiDocumentManager.getInstance(myProject).commitDocument(document);
 
@@ -137,6 +122,7 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
 
     svc.select(innerClassField, true);
 
+    PlatformTestUtil.waitWhileBusy(svc.getTree());
     PlatformTestUtil.assertTreeEqual(
       svc.getTree(),
       "-Class2.java\n" +

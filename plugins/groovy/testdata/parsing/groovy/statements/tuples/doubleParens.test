@@ -3,7 +3,7 @@ def ((a))
 Groovy script
   Modifiers
     PsiElement(def)('def')
-  PsiErrorElement:Identifier expected
+  PsiErrorElement:identifier expected, got '('
     <empty list>
   PsiWhiteSpace(' ')
   Parenthesized expression

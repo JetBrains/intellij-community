@@ -58,7 +58,10 @@ class Constants {
   static final Object C10 = get();
   static final Object C11 = get();
 
-  static Object get() {return new Object();}
+  static Object get() {
+    System.out.println();
+    return new Object();
+  }
 }
 
 class <weak_warning descr="Class initializer is too complex to analyze by data flow algorithm">TooComplexInitializer</weak_warning> {

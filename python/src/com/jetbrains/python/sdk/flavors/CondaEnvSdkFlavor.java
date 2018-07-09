@@ -17,12 +17,15 @@ package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
+import com.jetbrains.python.packaging.PyCondaPackageService;
 import com.jetbrains.python.sdk.PythonSdkType;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemDependent;
 
 import javax.swing.*;
 import java.io.File;
@@ -76,7 +79,19 @@ public class CondaEnvSdkFlavor extends CPythonSdkFlavor {
         }
       }
     }
+    addEnvsFolder(roots, findPreferredCondaEnvsFolder());
     return roots;
+  }
+
+  @Nullable
+  private static VirtualFile findPreferredCondaEnvsFolder() {
+    @SystemDependent final String path = PyCondaPackageService.getInstance().PREFERRED_CONDA_PATH;
+    if (path == null) return null;
+    final VirtualFile conda = StandardFileSystems.local().findFileByPath(path);
+    if (conda == null) return null;
+    final VirtualFile binFolder = conda.getParent();
+    if (binFolder == null) return null;
+    return binFolder.getParent();
   }
 
   private static void addEnvsFolder(@NotNull final List<VirtualFile> roots, @Nullable final VirtualFile condaFolder) {

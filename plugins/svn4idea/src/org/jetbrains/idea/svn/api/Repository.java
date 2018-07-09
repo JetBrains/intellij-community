@@ -1,21 +1,21 @@
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.api;
 
 import org.jetbrains.annotations.NotNull;
-import org.tmatesoft.svn.core.SVNURL;
 
 /**
  * @author Konstantin Kolosovsky.
  */
 public class Repository {
 
-  @NotNull private final SVNURL myUrl;
+  @NotNull private final Url myUrl;
 
-  public Repository(@NotNull SVNURL url) {
+  public Repository(@NotNull Url url) {
     myUrl = url;
   }
 
   @NotNull
-  public SVNURL getUrl() {
+  public Url getUrl() {
     return myUrl;
   }
 }

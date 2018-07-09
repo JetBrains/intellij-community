@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
 import com.intellij.notification.NotificationDisplayType;
@@ -84,7 +70,7 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
       if (group.getDisplayId().startsWith(LIGHTWEIGHT_PREFIX)) continue;
       settings.add(getSettings(group.getDisplayId()));
     }
-    NotificationSettings[] result = settings.toArray(new NotificationSettings[settings.size()]);
+    NotificationSettings[] result = settings.toArray(new NotificationSettings[0]);
     Arrays.sort(result, NOTIFICATION_SETTINGS_COMPARATOR);
     return result;
   }
@@ -186,7 +172,7 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
   public synchronized Element getState() {
     Element element = new Element("NotificationsConfiguration");
 
-    NotificationSettings[] sortedNotifications = myIdToSettingsMap.values().toArray(new NotificationSettings[myIdToSettingsMap.size()]);
+    NotificationSettings[] sortedNotifications = myIdToSettingsMap.values().toArray(new NotificationSettings[0]);
     Arrays.sort(sortedNotifications, NOTIFICATION_SETTINGS_COMPARATOR);
     for (NotificationSettings settings : sortedNotifications) {
       element.addContent(settings.save());
@@ -206,7 +192,7 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
   }
 
   @Override
-  public synchronized void loadState(final Element state) {
+  public synchronized void loadState(@NotNull final Element state) {
     myIdToSettingsMap.clear();
     for (Element child : state.getChildren("notification")) {
       final NotificationSettings settings = NotificationSettings.load(child);

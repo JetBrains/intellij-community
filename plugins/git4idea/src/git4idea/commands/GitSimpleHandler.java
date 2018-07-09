@@ -26,6 +26,8 @@ import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.HashSet;
 
 /**
  * Simple Git handler that accumulates stdout and stderr and has nothing on stdin.
@@ -33,7 +35,10 @@ import java.io.File;
  * <p/>
  * The class also includes a number of static utility methods that represent some
  * simple commands.
+ *
+ * @deprecated use {@link Git} and {@link GitLineHandler}
  */
+@Deprecated
 public class GitSimpleHandler extends GitTextHandler {
 
   public static final String DURING_EXECUTING_ERROR_MESSAGE = "during executing";
@@ -54,6 +59,10 @@ public class GitSimpleHandler extends GitTextHandler {
    * Reminder of the last stdout line
    */
   private final StringBuilder myStdoutLine = new StringBuilder();
+  /**
+   * Error codes that are ignored for the handler
+   */
+  private final HashSet<Integer> myIgnoredErrorCodes = new HashSet<>();
 
   /**
    * A constructor
@@ -83,16 +92,13 @@ public class GitSimpleHandler extends GitTextHandler {
    * {@inheritDoc}
    */
   protected void processTerminated(final int exitCode) {
-    if (myVcs == null) { return; }
     String stdout = myStdoutLine.toString();
     String stderr = myStderrLine.toString();
     if (!isStdoutSuppressed() && !StringUtil.isEmptyOrSpaces(stdout)) {
-      myVcs.showMessages(stdout);
       LOG.info(stdout.trim());
       myStdoutLine.setLength(0);
     }
     else if (!isStderrSuppressed() && !StringUtil.isEmptyOrSpaces(stderr)) {
-      myVcs.showErrorMessages(stderr);
       LOG.info(stderr.trim());
       myStderrLine.setLength(0);
     }
@@ -105,15 +111,8 @@ public class GitSimpleHandler extends GitTextHandler {
   /**
    * For silent handlers, print out everything
    */
+  @Deprecated
   public void unsilence() {
-    if (myVcs == null) { return; }
-    myVcs.showCommandLine(printableCommandLine());
-    if (myStderr.length() != 0) {
-      myVcs.showErrorMessages(myStderr.toString());
-    }
-    if (myStdout.length() != 0) {
-      myVcs.showMessages(myStdout.toString());
-    }
   }
 
   /**
@@ -137,7 +136,7 @@ public class GitSimpleHandler extends GitTextHandler {
       return;
     }
     entire.append(text);
-    if (myVcs == null || (suppressed && !LOG.isDebugEnabled())) {
+    if (suppressed && !LOG.isDebugEnabled()) {
       return;
     }
     int last = lineRest.length() > 0 ? lineRest.charAt(lineRest.length() - 1) : -1;
@@ -155,7 +154,7 @@ public class GitSimpleHandler extends GitTextHandler {
         if (last != '\r' || savedPos != i) {
           String line;
           if (lineRest.length() == 0) {
-            line = lineRest.append(text.substring(start, savedPos)).toString();
+            line = lineRest.append(text, start, savedPos).toString();
             lineRest.setLength(0);
           }
           else {
@@ -164,12 +163,6 @@ public class GitSimpleHandler extends GitTextHandler {
           if (!StringUtil.isEmptyOrSpaces(line)) {
             if (!suppressed) {
               LOG.info(line.trim());
-              if (ProcessOutputTypes.STDOUT == outputType) {
-                myVcs.showMessages(line);
-              }
-              else if (ProcessOutputTypes.STDERR == outputType) {
-                myVcs.showErrorMessages(line);
-              }
             }
             else {
               LOG.debug(line.trim());
@@ -206,9 +199,6 @@ public class GitSimpleHandler extends GitTextHandler {
    * @throws VcsException exception if process failed to start.
    */
   public String run() throws VcsException {
-    if (isRemote()) {
-      throw new IllegalStateException("Commands that require remote access could not be run using this method");
-    }
     Ref<VcsException> exRef = Ref.create();
     Ref<String> resultRef = Ref.create();
     addListener(new GitHandlerListener() {
@@ -238,7 +228,12 @@ public class GitSimpleHandler extends GitTextHandler {
           new VcsException("Process failed to start (" + myCommandLine.getCommandLineString() + "): " + exception.toString(), exception));
       }
     });
-    runInCurrentThread(null);
+    try {
+      runInCurrentThread();
+    }
+    catch (IOException e) {
+      exRef.set(new VcsException(e.getMessage(), e));
+    }
     if (!exRef.isNull()) {
       throw new VcsException(exRef.get().getMessage() + " " + DURING_EXECUTING_ERROR_MESSAGE + " " + printableCommandLine(), exRef.get());
     }
@@ -246,5 +241,24 @@ public class GitSimpleHandler extends GitTextHandler {
       throw new VcsException("The git command returned null: " + printableCommandLine());
     }
     return resultRef.get();
+  }
+
+  /**
+   * Add error code to ignored list
+   *
+   * @param code the code to ignore
+   */
+  public void ignoreErrorCode(int code) {
+    myIgnoredErrorCodes.add(code);
+  }
+
+  /**
+   * Check if error code should be ignored
+   *
+   * @param code a code to check
+   * @return true if error code is ignorable
+   */
+  public boolean isIgnoredErrorCode(int code) {
+    return myIgnoredErrorCodes.contains(code);
   }
 }

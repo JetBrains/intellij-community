@@ -23,7 +23,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 10/31/12
  */
 public class ModuleImportProvider extends ProjectImportProvider {
 
@@ -44,11 +43,6 @@ public class ModuleImportProvider extends ProjectImportProvider {
   @Override
   public boolean canCreateNewProject() {
     return false;
-  }
-
-  @Override
-  public ModuleWizardStep[] createSteps(WizardContext context) {
-    return ModuleWizardStep.EMPTY_ARRAY;
   }
 
   @Nullable

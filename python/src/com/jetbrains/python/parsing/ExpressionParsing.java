@@ -305,7 +305,8 @@ public class ExpressionParsing extends Parsing {
       else {
         final PsiBuilder.Marker err = myBuilder.mark();
         boolean empty = true;
-        while (myBuilder.getTokenType() != PyTokenTypes.RPAR &&
+        while (!myBuilder.eof() &&
+               myBuilder.getTokenType() != PyTokenTypes.RPAR &&
                myBuilder.getTokenType() != PyTokenTypes.LINE_BREAK &&
                myBuilder.getTokenType() != PyTokenTypes.STATEMENT_BREAK) {
           myBuilder.advanceLexer();
@@ -438,8 +439,8 @@ public class ExpressionParsing extends Parsing {
     return false;
   }
 
-  private static TokenSet BRACKET_OR_COMMA = TokenSet.create(PyTokenTypes.RBRACKET, PyTokenTypes.COMMA);
-  private static TokenSet BRACKET_COLON_COMMA = TokenSet.create(PyTokenTypes.RBRACKET, PyTokenTypes.COLON, PyTokenTypes.COMMA);
+  private static final TokenSet BRACKET_OR_COMMA = TokenSet.create(PyTokenTypes.RBRACKET, PyTokenTypes.COMMA);
+  private static final TokenSet BRACKET_COLON_COMMA = TokenSet.create(PyTokenTypes.RBRACKET, PyTokenTypes.COLON, PyTokenTypes.COMMA);
 
   public void parseSliceEnd(PsiBuilder.Marker exprStart, PsiBuilder.Marker sliceItemStart) {
     myBuilder.advanceLexer();

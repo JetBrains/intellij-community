@@ -1,29 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
-import com.intellij.ide.PrivacyPolicy
+import com.intellij.ide.gdpr.EndUserAgreement
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
+import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.button
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.dialog
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.radioButton
+import com.intellij.testGuiFramework.impl.FirstStart.Utils.waitFrame
 import com.intellij.testGuiFramework.launcher.ide.IdeType
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
@@ -43,10 +31,7 @@ import java.awt.Frame
 import java.io.File
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
-import javax.swing.JButton
-import javax.swing.JCheckBox
-import javax.swing.JDialog
-import javax.swing.JRadioButton
+import javax.swing.*
 import kotlin.concurrent.thread
 
 /**
@@ -56,11 +41,11 @@ abstract class FirstStart(val ideType: IdeType) {
 
   private val FIRST_START_ROBOT_THREAD = "First Start Robot Thread"
 
-  protected val LOG = Logger.getInstance(this.javaClass.name)
+  private val LOG = Logger.getInstance(this.javaClass.name)
 
   val myRobot: Robot
 
-  val robotThread: Thread = thread(start = false, name = FIRST_START_ROBOT_THREAD) {
+  private val robotThread: Thread = thread(start = false, name = FIRST_START_ROBOT_THREAD) {
     try {
       completeFirstStart()
     }
@@ -73,7 +58,10 @@ abstract class FirstStart(val ideType: IdeType) {
           takeScreenshot(e)
           throw exceptionWithHierarchy(e)
         }
-        else -> throw e
+        else -> {
+          takeScreenshot(e)
+          throw e
+        }
       }
     }
   }
@@ -101,31 +89,28 @@ abstract class FirstStart(val ideType: IdeType) {
   }
 
   companion object {
-    var DEFAULT_TIMEOUT: Long = GuiTestCase().defaultTimeout
-
-    fun guessIdeAndStartRobot() {
-      val firstStartClass = System.getProperty("idea.gui.test.first.start.class")
-      val firstStart = Class.forName(firstStartClass).newInstance() as FirstStart
-      firstStart.completeInstallation()
-    }
+    var DEFAULT_TIMEOUT: Long = defaultTimeout
   }
 
-  protected abstract fun completeFirstStart()
-
-  private fun awtIsNotStarted()
-    = !(Thread.getAllStackTraces().keys.any { thread -> thread.name.toLowerCase().contains("awt") })
+  private fun completeFirstStart() {
+      completeInstallation()
+      acceptAgreement()
+      acceptDataSharing()
+      evaluateLicense(ideType.name, myRobot)
+      customizeIde()
+      waitWelcomeFrameAndClose()
+  }
 
   private val checkIsFrameFunction: (Frame) -> Boolean
     get() {
-      val checkIsFrame: (Frame) -> Boolean = { frame ->
+      return { frame ->
         frame.javaClass.simpleName == "FlatWelcomeFrame"
         && frame.isShowing
         && frame.isEnabled
       }
-      return checkIsFrame
     }
 
-  protected fun waitWelcomeFrameAndClose() {
+  private fun waitWelcomeFrameAndClose() {
     waitWelcomeFrame()
     LOG.info("Closing Welcome Frame")
     val welcomeFrame = Frame.getFrames().find(checkIsFrameFunction)
@@ -138,31 +123,48 @@ abstract class FirstStart(val ideType: IdeType) {
     }, Timeout.timeout(180, TimeUnit.SECONDS))
   }
 
-  protected fun waitWelcomeFrame() {
+  private fun waitWelcomeFrame() {
     LOG.info("Waiting for a Welcome Frame")
     Pause.pause(object : Condition("Welcome Frame to show up") {
       override fun test() = Frame.getFrames().any { checkIsFrameFunction(it) }
     }, Timeout.timeout(180, TimeUnit.SECONDS))
   }
 
-  protected fun acceptAgreement() {
-    if (!needToShowAgreement()) return
-    with(myRobot) {
-      val policyAgreementTitle = "Privacy Policy Agreement"
+  private fun findPrivacyPolicyDialogOrLicenseAgreement(): JDialog {
+    return GuiTestUtilKt.withPauseWhenNull(120) {
       try {
-        LOG.info("Waiting for '$policyAgreementTitle' dialog")
-        with(JDialogFixture.findByPartOfTitle(myRobot, policyAgreementTitle, Timeout.timeout(2, TimeUnit.MINUTES))) {
-          LOG.info("Accept '$policyAgreementTitle' dialog")
-          button("Accept").click()
-        }
+        myRobot.finder().find {
+          it is JDialog && (it.title.contains("License Agreement") || it.title.contains("Privacy Policy"))
+        } as JDialog
       }
-      catch (e: WaitTimedOutError) {
-        LOG.error("'$policyAgreementTitle' dialog hasn't been shown. Check registry...")
+      catch (cle: ComponentLookupException) {
+        null
       }
     }
   }
 
-  protected fun completeInstallation() {
+  private fun acceptAgreement() {
+    if (!needToShowAgreement()) return
+    with(myRobot) {
+      try {
+        LOG.info("Waiting for License Agreement/Privacy Policy dialog")
+        findPrivacyPolicyDialogOrLicenseAgreement()
+        with(JDialogFixture(myRobot, findPrivacyPolicyDialogOrLicenseAgreement())) {
+          click()
+          while (!button("Accept").isEnabled) {
+            scroll(10)
+          }
+          LOG.info("Accept License Agreement/Privacy Policy dialog")
+          button("Accept").click()
+        }
+      }
+      catch (e: WaitTimedOutError) {
+        LOG.warn("'License Agreement/Privacy Policy dialog hasn't been shown. Check registry...")
+      }
+    }
+  }
+
+  private fun completeInstallation() {
     if (!needToShowCompleteInstallation()) return
     with(myRobot) {
       val title = "Complete Installation"
@@ -175,7 +177,23 @@ abstract class FirstStart(val ideType: IdeType) {
     }
   }
 
-  protected fun customizeIde(ideName: String = ideType.name) {
+  private fun acceptDataSharing() {
+    with(myRobot) {
+      LOG.info("Accepting Data Sharing")
+      val title = "Data Sharing"
+      try {
+        dialog(title, timeoutSeconds = 5)
+        button("Send Usage Statistics").click()
+        LOG.info("Data sharing accepted")
+      }
+      catch (e: WaitTimedOutError) {
+        LOG.info("Data sharing dialog hasn't been shown")
+        return
+      }
+    }
+  }
+
+  private fun customizeIde(ideName: String = ideType.name) {
     if (!needToShowCustomizeWizard()) return
     with(myRobot) {
       val title = "Customize $ideName"
@@ -187,16 +205,37 @@ abstract class FirstStart(val ideType: IdeType) {
     }
   }
 
-  protected fun needToShowAgreement(): Boolean {
-    val policy = PrivacyPolicy.getContent()
-    return !PrivacyPolicy.isVersionAccepted(policy.getFirst())
+  private fun evaluateLicense(ideName: String, robot: Robot) {
+    with(robot) {
+      val licenseActivationFrameTitle = "$ideName License Activation"
+      LOG.info("Waiting for '$licenseActivationFrameTitle' dialog")
+      try {
+        waitFrame(licenseActivationFrameTitle) { it == licenseActivationFrameTitle }
+        radioButton("Evaluate for free").select()
+        val evaluateButton = button("Evaluate")
+        GuiTestUtilKt.waitUntil("activate button will be enabled") { evaluateButton.isEnabled }
+        LOG.info("Click '${evaluateButton.text()}'")
+        evaluateButton.click()
+
+        dialog(10) { it.startsWith("License Agreement for") }
+        button("Accept").click()
+      }
+      catch (waitTimedOutError: WaitTimedOutError) {
+        LOG.info("No License Activation dialog has been found")
+      }
+    }
   }
 
-  protected fun needToShowCompleteInstallation(): Boolean {
+  private fun needToShowAgreement(): Boolean {
+    val agreement = EndUserAgreement.getLatestDocument()
+    return !agreement.isAccepted
+  }
+
+  private fun needToShowCompleteInstallation(): Boolean {
     return newConfigFolder
   }
 
-  protected fun needToShowCustomizeWizard(): Boolean {
+  private fun needToShowCustomizeWizard(): Boolean {
     return (newConfigFolder && !ConfigImportHelper.isConfigImported())
   }
 
@@ -207,6 +246,14 @@ abstract class FirstStart(val ideType: IdeType) {
       }
       return JDialogFixture(this, jDialog)
     }
+
+    fun Robot.dialog(timeoutSeconds: Long = DEFAULT_TIMEOUT, titleMatcher: (String) -> Boolean): JDialogFixture {
+      val jDialog = waitUntilFound(this, null, JDialog::class.java, timeoutSeconds) { dialog ->
+        titleMatcher(dialog.title)
+      }
+      return JDialogFixture(this, jDialog)
+    }
+
 
     fun Robot.radioButton(text: String, timeoutSeconds: Long = DEFAULT_TIMEOUT): JRadioButtonFixture {
       val jRadioButton = waitUntilFound(this, null, JRadioButton::class.java, timeoutSeconds) { radioButton ->
@@ -227,6 +274,11 @@ abstract class FirstStart(val ideType: IdeType) {
         checkBox.text == text && checkBox.isShowing && checkBox.isEnabled
       }
       return JCheckBoxFixture(this, jCheckBox)
+    }
+
+    fun Robot.waitFrame(title: String, timeoutInSeconds: Int = 10, titleMatching: (String) -> Boolean) {
+      GuiTestUtilKt.waitUntil("frame with title '$title' will appear",
+                              timeoutInSeconds) { this.hierarchy().roots().any { it is JFrame && titleMatching(it.title) } }
     }
 
     fun <ComponentType : Component> waitUntilFound(myRobot: Robot,

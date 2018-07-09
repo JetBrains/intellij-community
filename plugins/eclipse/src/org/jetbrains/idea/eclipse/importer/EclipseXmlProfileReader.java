@@ -32,7 +32,7 @@ import java.io.InputStream;
  */
 public class EclipseXmlProfileReader extends DefaultHandler implements EclipseXmlProfileElements {
 
-  private OptionHandler myOptionHandler;
+  private final OptionHandler myOptionHandler;
 
   protected EclipseXmlProfileReader(OptionHandler optionHandler) {
     myOptionHandler = optionHandler;

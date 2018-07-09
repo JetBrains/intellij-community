@@ -32,7 +32,6 @@ import java.awt.event.ItemListener;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 30, 2004
  */
 public class RmicConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private JPanel myPanel;
@@ -113,8 +112,4 @@ public class RmicConfigurable implements SearchableConfigurable, Configurable.No
     myCbGenerateNoWarnings.setSelected(myRmicSettings.GENERATE_NO_WARNINGS);
     myAdditionalOptionsField.setText(myRmicSettings.ADDITIONAL_OPTIONS_STRING);
   }
-
-  public void disposeUIResources() {
-  }
-
 }

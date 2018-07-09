@@ -79,6 +79,9 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
         }
       });
     PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(Boolean.TRUE);
+    if (myKeyIsUniqueForIndexedFile) {
+      PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
+    }
     try {
       map = new ValueContainerMap<Key, Value>(getStorageFile(), myKeyDescriptor, myDataExternalizer, myKeyIsUniqueForIndexedFile) {
         @Override
@@ -89,6 +92,9 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
     } finally {
       PersistentHashMapValueStorage.CreationTimeOptions.EXCEPTIONAL_IO_CANCELLATION.set(null);
       PersistentHashMapValueStorage.CreationTimeOptions.COMPACT_CHUNKS_WITH_VALUE_DESERIALIZATION.set(null);
+      if (myKeyIsUniqueForIndexedFile) {
+        PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
+      }
     }
     myCache = new SLRUCache<Key, ChangeTrackingValueContainer<Value>>(myCacheSize, (int)(Math.ceil(myCacheSize * 0.25)) /* 25% from the main cache size*/) {
       @Override
@@ -139,7 +145,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
 
   @NotNull
   private File getStorageFile() {
-    return new File(myBaseStorageFile.getPath() + ".storage");
+    return getIndexStorageFile(myBaseStorageFile);
   }
 
   @Override
@@ -299,5 +305,10 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
   @TestOnly
   public PersistentMap<Key, UpdatableValueContainer<Value>> getIndexMap() {
     return myMap;
+  }
+
+  @NotNull
+  public static File getIndexStorageFile(@NotNull File baseFile) {
+    return new File(baseFile.getPath() + ".storage");
   }
 }

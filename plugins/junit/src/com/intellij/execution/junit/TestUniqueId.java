@@ -17,7 +17,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 
@@ -58,7 +57,7 @@ public class TestUniqueId extends TestObject {
       }
       else {
         PsiClass containingClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
-        if (containingClass != null && TestFrameworks.detectFramework(containingClass) == null) {
+        if (containingClass == null || TestFrameworks.detectFramework(containingClass) == null) {
           return nodeId;
         }
       }
@@ -72,12 +71,6 @@ public class TestUniqueId extends TestObject {
       }
     }
     return null;
-  }
-
-  @NotNull
-  @Override
-  protected String getForkMode() {
-    return super.getForkMode();
   }
 
   @Override

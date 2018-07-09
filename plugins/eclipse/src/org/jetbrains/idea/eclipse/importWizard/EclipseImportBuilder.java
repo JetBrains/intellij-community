@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.eclipse.importWizard;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -55,7 +56,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
-import com.intellij.util.containers.HashMap;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import icons.EclipseIcons;
@@ -69,6 +70,7 @@ import org.jetbrains.idea.eclipse.EclipseXml;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.conversion.EclipseClasspathReader;
 import org.jetbrains.idea.eclipse.conversion.EclipseUserLibrariesHelper;
+import org.jetbrains.idea.eclipse.importer.EclipseProjectCodeStyleData;
 import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer;
 
 import javax.swing.*;
@@ -87,6 +89,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     public boolean openModuleSettings;
     public Options converterOptions = new Options();
     public Set<String> existingModuleNames;
+    public @Nullable EclipseProjectCodeStyleData codeStyleData;
   }
 
   private Parameters parameters;
@@ -385,11 +388,30 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       }
     }
 
+    setupProjectCodeStyle(project, message);
+
     if (message.length() > 0) {
       Messages.showErrorDialog(project, message.toString(), getTitle());
     }
 
     return result;
+  }
+
+
+  private void setupProjectCodeStyle(@NotNull Project project, @NotNull StringBuilder messageBuilder) {
+    try {
+      EclipseProjectCodeStyleData codeStyleData = getParameters().codeStyleData;
+      if (codeStyleData != null) {
+        CodeStyleSettings projectSettings = codeStyleData.importCodeStyle();
+        if (projectSettings != null) {
+          CodeStyle.setMainProjectSettings(project, projectSettings);
+        }
+      }
+    }
+    catch (Exception e) {
+      if (messageBuilder.length() > 0) messageBuilder.append('\n');
+      messageBuilder.append("Error while importing project code style: ").append(e.getMessage());
+    }
   }
 
   private static void scheduleNaturesImporting(@NotNull final Project project,

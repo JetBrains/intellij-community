@@ -21,7 +21,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.ui.popup.IdePopupEventDispatcher;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -145,15 +145,11 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
     return ourActiveWizardRoot;
   }
 
-  public static boolean isWizardShowing() {
-    return ourActiveWizardRoot != null;
-  }
-
   public Component getComponent() {
     return ourShowingStep != null ? ourShowingStep.getContent() : null;
   }
 
-  @Nullable
+  @NotNull
   @Override
   public Stream<JBPopup> getPopupStream() {
     return Stream.of(ourActiveWizardRoot);
@@ -178,8 +174,6 @@ public class PopupDispatcher implements AWTEventListener, KeyEventDispatcher, Id
   }
 
   public boolean close() {
-    final String s = "sdfsf";
-
     return disposeActiveWizard();
   }
 

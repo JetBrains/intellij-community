@@ -58,11 +58,11 @@ class WebBrowserServiceImpl : WebBrowserService() {
     }
 
     @JvmStatic
-    fun getDebuggableUrl(context: PsiElement?) = ContainerUtil.getFirstItem(getDebuggableUrls(context))
+    fun getDebuggableUrl(context: PsiElement?): Url? = ContainerUtil.getFirstItem(getDebuggableUrls(context))
   }
 
   override fun getUrlsToOpen(request: OpenInBrowserRequest, preferLocalUrl: Boolean): Collection<Url> {
-    val isHtmlOrXml = WebBrowserService.isHtmlOrXmlFile(request.file.viewProvider.baseLanguage)
+    val isHtmlOrXml = WebBrowserService.isHtmlOrXmlFile(request.file)
     if (!preferLocalUrl || !isHtmlOrXml) {
       val dumbService = DumbService.getInstance(request.project)
       for (urlProvider in WebBrowserUrlProvider.EP_NAME.extensions) {

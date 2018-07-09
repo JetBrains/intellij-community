@@ -79,7 +79,7 @@ public final class SpellingPopupActionGroup extends ActionGroup {
       }
       first.addAll(last);
       if (first.size() > 0) {
-        return first.toArray(new AnAction[first.size()]);
+        return first.toArray(AnAction.EMPTY_ARRAY);
       }
     }
 

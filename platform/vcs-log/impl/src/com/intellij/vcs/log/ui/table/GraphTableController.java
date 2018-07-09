@@ -20,7 +20,6 @@ import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
-import com.intellij.ui.HintHint;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.ui.JBUI;
 import com.intellij.vcs.log.CommitId;
@@ -32,13 +31,14 @@ import com.intellij.vcs.log.graph.NodePrintElement;
 import com.intellij.vcs.log.graph.PrintElement;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.impl.VcsLogUtil;
+import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.util.VcsLogUiUtil;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.paint.PositionUtil;
-import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.frame.CommitPanel;
+import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRenderer;
 import com.intellij.vcs.log.ui.render.SimpleColoredComponentLinkMouseListener;
 import com.intellij.vcs.log.util.VcsUserUtil;
@@ -60,19 +60,23 @@ import static com.intellij.vcs.log.ui.table.GraphTableModel.*;
  */
 public class GraphTableController {
   @NotNull private final VcsLogGraphTable myTable;
-  @NotNull private final AbstractVcsLogUi myUi;
   @NotNull private final VcsLogData myLogData;
+  @NotNull private final VcsLogUiProperties myProperties;
+  @NotNull private final VcsLogColorManager myColorManager;
   @NotNull private final GraphCellPainter myGraphCellPainter;
   @NotNull private final GraphCommitCellRenderer myCommitRenderer;
 
-  public GraphTableController(@NotNull VcsLogGraphTable table,
-                              @NotNull AbstractVcsLogUi ui,
-                              @NotNull VcsLogData logData,
+  public GraphTableController(@NotNull VcsLogData logData,
+                              @NotNull VcsLogColorManager colorManager,
+                              @NotNull VcsLogUiProperties properties,
+                              @NotNull VcsLogGraphTable table,
                               @NotNull GraphCellPainter graphCellPainter,
                               @NotNull GraphCommitCellRenderer commitRenderer) {
     myTable = table;
-    myUi = ui;
     myLogData = logData;
+    myProperties = properties;
+    myColorManager = colorManager;
+
     myGraphCellPainter = graphCellPainter;
     myCommitRenderer = commitRenderer;
 
@@ -169,7 +173,7 @@ public class GraphTableController {
       CommitId commitId = myLogData.getCommitId(commit);
       if (commitId != null) {
         balloonText = "Jump to commit" + " " + commitId.getHash().toShortString();
-        if (myUi.isMultipleRoots()) {
+        if (myColorManager.isMultipleRoots()) {
           balloonText += " in " + commitId.getRoot().getName();
         }
       }
@@ -179,18 +183,14 @@ public class GraphTableController {
                     StringUtil.shortenTextWithEllipsis(details.getSubject(), 50, 0, "...") +
                     "\"</b> by " +
                     VcsUserUtil.getShortPresentation(details.getAuthor()) +
-                    CommitPanel.formatDateTime(details.getAuthorTime());
+                    CommitPresentationUtil.formatDateTime(details.getAuthorTime());
     }
     return balloonText;
   }
 
   private void showToolTip(@NotNull String text, @NotNull MouseEvent e) {
     // standard tooltip does not allow to customize its location, and locating tooltip above can obscure some important info
-    Point point = new Point(e.getX() + 5, e.getY());
-
-    JEditorPane tipComponent = IdeTooltipManager.initPane(text, new HintHint(myTable, point).setAwtTooltip(true), null);
-    IdeTooltip tooltip = new IdeTooltip(myTable, point, new Wrapper(tipComponent)).setPreferredPosition(Balloon.Position.atRight);
-    IdeTooltipManager.getInstance().show(tooltip, false);
+    VcsLogUiUtil.showTooltip(myTable, new Point(e.getX() + 5, e.getY()), Balloon.Position.atRight, text);
   }
 
   private void showOrHideCommitTooltip(int row, int column, @NotNull MouseEvent e) {
@@ -223,10 +223,9 @@ public class GraphTableController {
   }
 
   private void performRootColumnAction() {
-    VcsLogUiProperties properties = myUi.getProperties();
-    if (myUi.isMultipleRoots() && properties.exists(MainVcsLogUiProperties.SHOW_ROOT_NAMES)) {
+    if (myColorManager.isMultipleRoots() && myProperties.exists(CommonUiProperties.SHOW_ROOT_NAMES)) {
       VcsLogUtil.triggerUsage("RootColumnClick");
-      properties.set(MainVcsLogUiProperties.SHOW_ROOT_NAMES, !properties.get(MainVcsLogUiProperties.SHOW_ROOT_NAMES));
+      myProperties.set(CommonUiProperties.SHOW_ROOT_NAMES, !myProperties.get(CommonUiProperties.SHOW_ROOT_NAMES));
     }
   }
 

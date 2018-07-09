@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.util.PathUtilRt;
-import com.intellij.util.containers.HashSet;
+import java.util.HashSet;
 import com.intellij.util.graph.Graph;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -105,7 +105,7 @@ public class ModuleUtilCore {
         for (OrderEntry orderEntry : orderEntries) {
           modules.add(orderEntry.getOwnerModule());
         }
-        final Module[] candidates = modules.toArray(new Module[modules.size()]);
+        final Module[] candidates = modules.toArray(Module.EMPTY_ARRAY);
         Arrays.sort(candidates, ModuleManager.getInstance(project).moduleDependencyComparator());
         return candidates[0];
       }

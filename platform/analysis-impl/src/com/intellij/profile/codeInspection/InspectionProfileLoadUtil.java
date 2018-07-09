@@ -17,6 +17,7 @@ package com.intellij.profile.codeInspection;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolRegistrar;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.JdomKt;
@@ -24,9 +25,10 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.function.Supplier;
 
 public class InspectionProfileLoadUtil {
   private static String getProfileName(@NotNull Path file, @NotNull Element element) {
@@ -37,21 +39,9 @@ public class InspectionProfileLoadUtil {
       }
     }
     if (name == null) {
-      //noinspection deprecation
       name = element.getAttributeValue("profile_name");
     }
     return name != null ? name : FileUtilRt.getNameWithoutExtension(file.getFileName().toString());
-  }
-
-  /**
-   * @deprecated Please use load(file: Path, ...)
-   */
-  @NotNull
-  @Deprecated
-  public static InspectionProfileImpl load(@NotNull File file,
-                                           @NotNull InspectionToolRegistrar registrar,
-                                           @NotNull InspectionProfileManager profileManager) throws JDOMException, IOException, InvalidDataException {
-    return load(file.toPath(), registrar, profileManager);
   }
 
   @NotNull
@@ -59,7 +49,16 @@ public class InspectionProfileLoadUtil {
                                            @NotNull InspectionToolRegistrar registrar,
                                            @NotNull InspectionProfileManager profileManager) throws JDOMException, IOException, InvalidDataException {
     Element element = JdomKt.loadElement(file);
-    InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(file, element), registrar,
+    String profileName = getProfileName(file, element);
+    return load(element, profileName, registrar, profileManager);
+  }
+
+  @NotNull
+  public static InspectionProfileImpl load(@NotNull Element element,
+                                           @NotNull String name,
+                                           @NotNull Supplier<List<InspectionToolWrapper>> registrar,
+                                           @NotNull InspectionProfileManager profileManager) throws JDOMException, IOException, InvalidDataException {
+    InspectionProfileImpl profile = new InspectionProfileImpl(name, registrar,
                                                               (BaseInspectionProfileManager)profileManager);
     final Element profileElement = element.getChild("profile");
     if (profileElement != null) {

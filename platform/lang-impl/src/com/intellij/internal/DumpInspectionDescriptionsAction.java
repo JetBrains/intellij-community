@@ -40,7 +40,6 @@ import java.util.Map;
 
 /**
  * @author stathik
- * Date: Nov 6, 2003
  */
 public class DumpInspectionDescriptionsAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.internal.DumpInspectionDescriptionsAction");
@@ -135,15 +134,9 @@ public class DumpInspectionDescriptionsAction extends AnAction implements DumbAw
   }
 
   private static boolean doDump(final File file, final Processor processor) {
-    try {
-      final BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-      try {
-        processor.process(writer);
-        return true;
-      }
-      finally {
-        writer.close();
-      }
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+      processor.process(writer);
+      return true;
     }
     catch (Exception e) {
       LOG.error(e);

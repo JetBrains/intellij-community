@@ -45,7 +45,7 @@ public abstract class IntentionManager  {
   public static final Key<Boolean> SHOW_INTENTION_OPTIONS_KEY = Key.create("SHOW_INTENTION_OPTIONS_KEY");
 
   /**
-   * @deprecated Use {@link #getInstance()} unstead.
+   * @deprecated Use {@link #getInstance()} instead.
    * Returns instance of {@code IntentionManager} for given project.
    *
    * @param project the project for which the instance is returned.
@@ -102,22 +102,6 @@ public abstract class IntentionManager  {
    */
   public abstract void registerIntentionAndMetaData(@NotNull IntentionAction action, @NotNull String... category);
 
-  /**
-   * @deprecated custom directory name causes problem with internationalization of intention descriptions.
-   * Register intention class via extension point {@link IntentionManager#EP_INTENTION_ACTIONS} instead.
-   */
-  @Deprecated
-  public abstract void registerIntentionAndMetaData(@NotNull IntentionAction action,
-                                                    @NotNull String[] category,
-                                                    @NotNull String descriptionDirectoryName);
-
-  public abstract void registerIntentionAndMetaData(@NotNull IntentionAction action,
-                                                    @NotNull String[] category,
-                                                    @NotNull String description,
-                                                    @NotNull String exampleFileExtension,
-                                                    @NotNull String[] exampleTextBefore,
-                                                    @NotNull String[] exampleTextAfter);
-
   public abstract void unregisterIntention(@NotNull IntentionAction intentionAction);
 
   /**
@@ -132,7 +116,7 @@ public abstract class IntentionManager  {
    * @return "Fix all '' inspections problems for a file" intention if toolWrapper is local inspection or simple global one
    */
   @Nullable
-  public abstract IntentionAction createFixAllIntention(InspectionToolWrapper toolWrapper, IntentionAction action);
+  public abstract IntentionAction createFixAllIntention(@NotNull InspectionToolWrapper toolWrapper, @NotNull IntentionAction action);
 
   /**
    * @return intention to start code cleanup on file

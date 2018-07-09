@@ -77,7 +77,7 @@ public class UnsupportedFeatures extends CompatibilityVisitor {
 
   @NotNull
   private static IntentionAction createIntention(@NotNull PsiElement node, @NotNull String message, @NotNull LocalQuickFix localQuickFix) {
-    return createIntention(node, node.getTextRange(), message, localQuickFix);
+    return createIntention(node, null, message, localQuickFix);
   }
 
   @NotNull

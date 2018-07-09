@@ -54,7 +54,6 @@ import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 21-Jun-16
  */
 public class DependencyResolvingBuilder extends ModuleLevelBuilder{
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.dependencies.DependencyResolvingBuilder");
@@ -148,7 +147,8 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
               context.processMessage(new ProgressMessage("Resolving '" + lib.getName() + "' library..."));
               LOG.debug("Downloading missing files for " + lib.getName() + " library: " + required);
               final Collection<File> resolved = repoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(),
-                                                                              descriptor.getVersion(), descriptor.isIncludeTransitiveDependencies());
+                                                                              descriptor.getVersion(), descriptor.isIncludeTransitiveDependencies(),
+                                                                              descriptor.getExcludedDependencies());
               if (!resolved.isEmpty()) {
                 syncPaths(required, resolved);
               }

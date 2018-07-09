@@ -1,0 +1,19 @@
+package pkg;
+
+class TestSuperInner extends TestSuperInnerBase {
+   protected abstract class Inner2 extends TestSuperInnerBase.Inner {
+      protected Inner2() {
+         super();// 4
+      }
+   }
+}
+
+class 'pkg/TestSuperInner$Inner2' {
+   method '<init> (Lpkg/TestSuperInner;)V' {
+      7      5
+      a      6
+   }
+}
+
+Lines mapping:
+4 <-> 6

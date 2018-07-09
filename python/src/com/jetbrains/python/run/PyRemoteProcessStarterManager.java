@@ -17,11 +17,11 @@ package com.jetbrains.python.run;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.remote.PyRemotePathMapper;
-import com.jetbrains.python.remote.PyRemoteProcessHandlerBase;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalDataBase;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import org.jetbrains.annotations.NotNull;
@@ -38,12 +38,21 @@ public interface PyRemoteProcessStarterManager {
   boolean supports(@NotNull PyRemoteSdkAdditionalDataBase sdkAdditionalData);
 
   @NotNull
-  PyRemoteProcessHandlerBase startRemoteProcess(@Nullable Project project,
-                                                @NotNull GeneralCommandLine commandLine,
-                                                @NotNull PythonRemoteInterpreterManager manager,
-                                                @NotNull PyRemoteSdkAdditionalDataBase sdkAdditionalData,
-                                                @NotNull PyRemotePathMapper pathMapper) throws ExecutionException, InterruptedException;
+  ProcessHandler startRemoteProcess(@Nullable Project project,
+                                    @NotNull GeneralCommandLine commandLine,
+                                    @NotNull PythonRemoteInterpreterManager manager,
+                                    @NotNull PyRemoteSdkAdditionalDataBase sdkAdditionalData,
+                                    @NotNull PyRemotePathMapper pathMapper) throws ExecutionException, InterruptedException;
 
+  /**
+   * Please <b>do not use</b> in new code. Consider introducing a separate
+   * extension point with implementations for different
+   * {@link com.intellij.remote.CredentialsType} using
+   * {@link PyRemoteSdkAdditionalDataBase#switchOnConnectionType(com.intellij.remote.ext.CredentialsCase[])}.
+   *
+   * @deprecated <b>do not use</b> in new code
+   */
+  @Deprecated
   @NotNull
   ProcessOutput executeRemoteProcess(@Nullable Project project,
                                      @NotNull String[] command,
@@ -52,6 +61,15 @@ public interface PyRemoteProcessStarterManager {
                                      @NotNull PyRemoteSdkAdditionalDataBase sdkAdditionalData,
                                      @NotNull PyRemotePathMapper pathMapper, boolean askForSudo, boolean checkHelpers) throws ExecutionException, InterruptedException;
 
+  /**
+   * Please <b>do not use</b> in new code. Consider introducing a separate
+   * extension point with implementations for different
+   * {@link com.intellij.remote.CredentialsType} using
+   * {@link PyRemoteSdkAdditionalDataBase#switchOnConnectionType(com.intellij.remote.ext.CredentialsCase[])}.
+   *
+   * @deprecated <b>do not use</b> in new code
+   */
+  @Deprecated
   default ProcessOutput executeRemoteProcess(@Nullable Project project,
                                             @NotNull String[] command,
                                             @Nullable String workingDir,

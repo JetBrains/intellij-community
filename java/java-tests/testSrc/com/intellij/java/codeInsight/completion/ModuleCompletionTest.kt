@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
@@ -31,7 +31,8 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   fun testStatementsAfterStatement() = variants("module M { requires X; <caret> }", "requires", "exports", "opens", "uses", "provides")
   fun testStatementsUnambiguous() = complete("module M { requires X; ex<caret> }", "module M { requires X; exports <caret> }")
 
-  fun testRequiresBare() = variants("module M { requires <caret>", "transitive", "static", "M2", "java.base", "lib.multi.release", "lib.named")
+  fun testRequiresBare() =
+    variants("module M { requires <caret>", "transitive", "static", "M2", "java.base", "lib.multi.release", "lib.named", "lib.auto", "lib.claimed")
   fun testRequiresTransitive() = complete("module M { requires tr<caret> }", "module M { requires transitive <caret> }")
   fun testRequiresSimpleName() = complete("module M { requires M<caret> }", "module M { requires M2;<caret> }")
   fun testRequiresQualifiedName() = complete("module M { requires lib.m<caret> }", "module M { requires lib.multi.release;<caret> }")
@@ -69,6 +70,14 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     myFixture.configureByText("test.java", "import pkg.m2.<caret>")
     myFixture.completeBasic()
     assertThat(myFixture.lookupElementStrings).containsExactly("*", "C2")  // no 'C2Impl'
+  }
+
+  fun testTypeParameter() {
+    addFile("module-info.java", "module M { }")
+    addTestFile("whatever/test.txt", "-")
+    myFixture.configureByText("test.java", "package whatever;\nclass Foo<TParam> { TPar<caret> p; }")
+    myFixture.completeBasic()
+    myFixture.checkResult("package whatever;\nclass Foo<TParam> { TParam<caret> p; }")
   }
 
   //<editor-fold desc="Helpers.">

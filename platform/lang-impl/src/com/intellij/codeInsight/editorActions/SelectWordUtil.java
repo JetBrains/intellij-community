@@ -49,19 +49,11 @@ public class SelectWordUtil {
   private SelectWordUtil() {
   }
 
-  /**
-   * @see ExtendWordSelectionHandler#EP_NAME
-   */
-  @Deprecated
-  public static void registerSelectioner(ExtendWordSelectionHandler selectioner) {
-    SELECTIONERS = ArrayUtil.append(SELECTIONERS, selectioner);
-  }
-
   static ExtendWordSelectionHandler[] getExtendWordSelectionHandlers() {
     if (!ourExtensionsLoaded) {
       ourExtensionsLoaded = true;
       for (ExtendWordSelectionHandler handler : Extensions.getExtensions(ExtendWordSelectionHandler.EP_NAME)) {
-        registerSelectioner(handler);        
+        SELECTIONERS = ArrayUtil.append(SELECTIONERS, handler);
       }
     }
     return SELECTIONERS;

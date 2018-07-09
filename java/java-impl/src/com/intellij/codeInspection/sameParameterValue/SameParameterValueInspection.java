@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.sameParameterValue;
 
 import com.intellij.codeInspection.InspectionsBundle;
@@ -21,13 +7,16 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.unusedSymbol.VisibilityModifierChooser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
@@ -43,8 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -76,20 +64,21 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
     private final String myValue;
     private final String myParameterName;
 
-    private InlineParameterValueFix(final String parameterName, final String value) {
+    private InlineParameterValueFix(String parameterName, String value) {
       myValue = value;
       myParameterName = parameterName;
     }
 
     @Override
     public String toString() {
-      return getParamName() + " " + getValue();
+      return getParamName() + " " + myValue;
     }
 
     @Override
     @NotNull
     public String getName() {
-      return InspectionsBundle.message("inspection.same.parameter.fix.name", myParameterName, StringUtil.unquoteString(myValue));
+      return InspectionsBundle
+        .message("inspection.same.parameter.fix.name", myParameterName, StringUtil.unquoteString(myValue));
     }
 
     @Override
@@ -114,11 +103,12 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
         }
       }
       if (parameter == null) return;
-      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, parameter)) return;
+     
 
       final PsiExpression defToInline;
       try {
-        defToInline = JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(myValue, parameter);
+        defToInline = JavaPsiFacade.getInstance(project).getElementFactory()
+                                   .createExpressionFromText(myValue, parameter);
       }
       catch (IncorrectOperationException e) {
         return;
@@ -134,36 +124,61 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
 
     public static void inlineSameParameterValue(final PsiMethod method, final PsiParameter parameter, final PsiExpression defToInline) {
       final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-      JavaSafeDeleteProcessor.collectMethodConflicts(conflicts, method, parameter);
+      Collection<PsiMethod> methods = new ArrayList<>();
+      methods.add(method);
+      Project project = method.getProject();
+      if (!ProgressManager.getInstance()
+        .runProcessWithProgressSynchronously(() -> { methods.addAll(OverridingMethodsSearch.search(method).findAll()); },
+                                             "Search for Overriding Methods...", true, project)) {
+        return;
+      }
+      if (!CommonRefactoringUtil.checkReadOnlyStatus(project, methods, true)) return;
+
+      int parameterIndex = method.getParameterList().getParameterIndex(parameter);
+      Map<PsiParameter, Collection<PsiReference>> paramsToInline = new HashMap<>();
+      for (PsiMethod psiMethod : methods) {
+        PsiParameter psiParameter = psiMethod.getParameterList().getParameters()[parameterIndex];
+        JavaSafeDeleteProcessor.collectMethodConflicts(conflicts, psiMethod, psiParameter);
+        final Collection<PsiReference> refsToInline = ReferencesSearch.search(psiParameter).findAll();
+        for (PsiReference reference : refsToInline) {
+          PsiElement referenceElement = reference.getElement();
+          if (referenceElement instanceof PsiExpression && PsiUtil.isAccessedForWriting((PsiExpression)referenceElement)) {
+            conflicts.putValue(referenceElement, "Parameter has write usages. Inline is not supported");
+            break;
+          }
+        }
+        paramsToInline.put(psiParameter, refsToInline);
+      }
       if (!conflicts.isEmpty()) {
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           if (!BaseRefactoringProcessor.ConflictsInTestsException.isTestIgnore()) {
             throw new BaseRefactoringProcessor.ConflictsInTestsException(conflicts.values());
           }
         }
-        else if (!new ConflictsDialog(parameter.getProject(), conflicts).showAndGet()) {
+        else if (!new ConflictsDialog(project, conflicts).showAndGet()) {
           return;
         }
       }
 
-      final Collection<PsiReference> refsToInline = ReferencesSearch.search(parameter).findAll();
-
       ApplicationManager.getApplication().runWriteAction(() -> {
-        try {
-          PsiExpression[] exprs = new PsiExpression[refsToInline.size()];
-          int idx = 0;
-          for (PsiReference reference : refsToInline) {
-            if (reference instanceof PsiJavaCodeReferenceElement) {
-              exprs[idx++] = InlineUtil.inlineVariable(parameter, defToInline, (PsiJavaCodeReferenceElement)reference);
+        for (Map.Entry<PsiParameter, Collection<PsiReference>> entry : paramsToInline.entrySet()) {
+          Collection<PsiReference> refsToInline = entry.getValue();
+          try {
+            PsiExpression[] exprs = new PsiExpression[refsToInline.size()];
+            int idx = 0;
+            for (PsiReference reference : refsToInline) {
+              if (reference instanceof PsiJavaCodeReferenceElement) {
+                exprs[idx++] = InlineUtil.inlineVariable(entry.getKey(), defToInline, (PsiJavaCodeReferenceElement)reference);
+              }
+            }
+
+            for (final PsiExpression expr : exprs) {
+              if (expr != null) InlineUtil.tryToInlineArrayCreationForVarargs(expr);
             }
           }
-
-          for (final PsiExpression expr : exprs) {
-            if (expr != null) InlineUtil.tryToInlineArrayCreationForVarargs(expr);
+          catch (IncorrectOperationException e) {
+            LOG.error(e);
           }
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
         }
       });
 
@@ -183,11 +198,7 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
       }
 
       new ChangeSignatureProcessor(method.getProject(), method, false, null, method.getName(), method.getReturnType(),
-                                   psiParameters.toArray(new ParameterInfoImpl[psiParameters.size()])).run();
-    }
-
-    public String getValue() {
-      return myValue;
+                                   psiParameters.toArray(new ParameterInfoImpl[0])).run();
     }
 
     public String getParamName() {

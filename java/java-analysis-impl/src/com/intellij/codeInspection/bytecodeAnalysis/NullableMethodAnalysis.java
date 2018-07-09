@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.AnalyzerExt;
@@ -119,9 +105,7 @@ interface NullableMethodAnalysisData {
 
 class NullableMethodAnalysis {
 
-  static Result FinalNull = new Final(Value.Null);
-  static Result FinalBot = new Final(Value.Bot);
-  static BasicValue lNull = new LabeledNull(0);
+  static final BasicValue lNull = new LabeledNull(0);
 
   static Result analyze(MethodNode methodNode, boolean[] origins, boolean jsr) throws AnalyzerException {
     InsnList insns = methodNode.instructions;
@@ -143,7 +127,7 @@ class NullableMethodAnalysis {
       }
     }
     if (result instanceof LabeledNull) {
-      return FinalNull;
+      return Value.Null;
     }
     if (result instanceof Calls) {
       Calls calls = ((Calls)result);
@@ -163,7 +147,7 @@ class NullableMethodAnalysis {
         }
       }
     }
-    return FinalBot;
+    return Value.Bot;
   }
 
   @NotNull
@@ -221,6 +205,7 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
   int notNullNull;
 
   NullableMethodInterpreter(InsnList insns, boolean[] origins, int[] originsMapping) {
+    super(Opcodes.API_VERSION);
     this.insns = insns;
     this.origins = origins;
     this.originsMapping = originsMapping;
@@ -304,8 +289,7 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
   }
 
   @Override
-  public BasicValue ternaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2, BasicValue value3)
-    throws AnalyzerException {
+  public BasicValue ternaryOperation(AbstractInsnNode insn, BasicValue value1, BasicValue value2, BasicValue value3) {
     if (value1 instanceof Calls) {
       delta = ((Calls)value1).mergedLabels;
     }
@@ -341,7 +325,7 @@ class NullableMethodInterpreter extends BasicInterpreter implements InterpreterE
         if (origins[insnIndex]) {
           boolean stable = opCode == INVOKESTATIC || opCode == INVOKESPECIAL;
           MethodInsnNode mNode = ((MethodInsnNode)insn);
-          Method method = new Method(mNode.owner, mNode.name, mNode.desc);
+          Member method = new Member(mNode.owner, mNode.name, mNode.desc);
           int label = 1 << originsMapping[insnIndex];
           if (keys[insnIndex] == null) {
             keys[insnIndex] = new EKey(method, Direction.NullableOut, stable);

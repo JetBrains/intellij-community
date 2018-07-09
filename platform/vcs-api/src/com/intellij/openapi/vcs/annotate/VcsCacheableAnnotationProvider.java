@@ -22,8 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * @author irengrig
- *         Date: 3/17/11
- *         Time: 4:58 PM
  */
 public interface VcsCacheableAnnotationProvider {
   VcsAnnotation createCacheable(final FileAnnotation fileAnnotation);

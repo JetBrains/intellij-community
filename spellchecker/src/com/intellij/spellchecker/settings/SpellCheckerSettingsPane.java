@@ -1,153 +1,154 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.settings;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.profile.codeInspection.ui.ErrorsConfigurable;
 import com.intellij.spellchecker.SpellCheckerManager;
-import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
-import com.intellij.spellchecker.util.SPFileUtil;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.spellchecker.util.Strings;
 import com.intellij.ui.AddDeleteListPanel;
+import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.OptionalChooserComponent;
-import com.intellij.ui.PathsChooserComponent;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
-import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.util.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import static com.intellij.ide.plugins.PluginManager.isPluginInstalled;
+import static com.intellij.openapi.extensions.PluginId.getId;
+import static com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel.APP;
+import static com.intellij.spellchecker.SpellCheckerManager.DictionaryLevel.PROJECT;
+import static javax.swing.event.HyperlinkEvent.EventType.ACTIVATED;
 
 public class SpellCheckerSettingsPane implements Disposable {
+
+  public static final int MIN_CORRECTIONS = 1;
+  public static final int MAX_CORRECTIONS = 15;
   private JPanel root;
   private JPanel linkContainer;
-  private JPanel panelForDictionaryChooser;
+  private JPanel myPanelForBundledDictionaries;
   private JPanel panelForAcceptedWords;
-  private JPanel panelForFolderChooser;
-  private OptionalChooserComponent<String> optionalChooserComponent;
-  private PathsChooserComponent pathsChooserComponent;
-  private final List<Pair<String, Boolean>> allDictionaries = new ArrayList<>();
-  private final List<String> dictionariesFolders = new ArrayList<>();
-  private final List<String> removedDictionaries = new ArrayList<>();
+  private JPanel myPanelForCustomDictionaries;
+  private JSpinner myMaxCorrectionsSpinner;
+  private JBLabel myAddDictionaryLabel;
+  private JBCheckBox myUseSingleDictionary;
+  private ComboBox<String> myDictionariesComboBox;
+  private JPanel myAdvancedSettingsPanel;
+  private JPanel myAdvancedSettingsPlaceHolder;
+  private final OptionalChooserComponent<String> myBundledDictionariesChooserComponent;
+  private final CustomDictionariesPanel myDictionariesPanel;
+  private final List<Pair<String, Boolean>> bundledDictionaries = new ArrayList<>();
   private final WordsPanel wordsPanel;
   private final SpellCheckerManager manager;
   private final SpellCheckerSettings settings;
+  private final HideableDecorator decorator;
 
   public SpellCheckerSettingsPane(SpellCheckerSettings settings, final Project project) {
     this.settings = settings;
     manager = SpellCheckerManager.getInstance(project);
     HyperlinkLabel link = new HyperlinkLabel(SpellCheckerBundle.message("link.to.inspection.settings"));
-    link.addHyperlinkListener(new HyperlinkListener() {
-      public void hyperlinkUpdate(final HyperlinkEvent e) {
-        if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext());
-          if (allSettings != null) {
-            final ErrorsConfigurable errorsConfigurable = allSettings.find(ErrorsConfigurable.class);
-            if (errorsConfigurable != null) {
-              allSettings.select(errorsConfigurable).doWhenDone(
-                () -> errorsConfigurable.selectInspectionTool(SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME));
-            }
+    link.addHyperlinkListener(e -> {
+      if (e.getEventType() == ACTIVATED) {
+        Settings allSettings = Settings.KEY.getData(DataManager.getInstance().getDataContext());
+        if (allSettings != null) {
+          final ErrorsConfigurable errorsConfigurable = allSettings.find(ErrorsConfigurable.class);
+          if (errorsConfigurable != null) {
+            allSettings.select(errorsConfigurable).doWhenDone(
+              () -> errorsConfigurable.selectInspectionTool(SpellCheckingInspection.SPELL_CHECKING_INSPECTION_TOOL_NAME));
           }
         }
       }
     });
+    myUseSingleDictionary.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myDictionariesComboBox.setEnabled(myUseSingleDictionary.isSelected());
+      }
+    });
+    myAddDictionaryLabel.setText(SpellCheckerBundle.message("add.dictionary.description") + getHunspellDescription());
+    myMaxCorrectionsSpinner.setModel(new SpinnerNumberModel(1, MIN_CORRECTIONS, MAX_CORRECTIONS, 1));
+    myDictionariesComboBox.addItem(APP.getName());
+    myDictionariesComboBox.addItem(PROJECT.getName());
     linkContainer.setLayout(new BorderLayout());
     linkContainer.add(link);
 
     // Fill in all the dictionaries folders (not implemented yet) and enabled dictionaries
-    fillAllDictionaries();
+    fillBundledDictionaries();
 
+    myDictionariesPanel = new CustomDictionariesPanel(settings, project, manager);
+    myPanelForCustomDictionaries.setLayout(new BorderLayout());
+    myPanelForCustomDictionaries.add(myDictionariesPanel, BorderLayout.CENTER);
 
-    pathsChooserComponent = new PathsChooserComponent(dictionariesFolders, new PathsChooserComponent.PathProcessor() {
-      public boolean addPath(List<String> paths, String path) {
-        if (paths.contains(path)) {
-          final String title = SpellCheckerBundle.message("add.directory.title");
-          final String msg = SpellCheckerBundle.message("directory.is.already.included");
-          Messages.showErrorDialog(root, msg, title);
-          return false;
-        }
-        paths.add(path);
-
-        final ArrayList<Pair<String, Boolean>> currentDictionaries = optionalChooserComponent.getCurrentModel();
-        SPFileUtil.processFilesRecursively(path, s -> currentDictionaries.add(Pair.create(s, true)));
-        optionalChooserComponent.refresh();
-        return true;
-      }
-
-      public boolean removePath(List<String> paths, String path) {
-        if (paths.remove(path)) {
-          final ArrayList<Pair<String, Boolean>> result = new ArrayList<>();
-          final ArrayList<Pair<String, Boolean>> currentDictionaries = optionalChooserComponent.getCurrentModel();
-          for (Pair<String, Boolean> pair : currentDictionaries) {
-            if (!pair.first.startsWith(FileUtil.toSystemDependentName(path))) {
-              result.add(pair);
-            } else {
-              removedDictionaries.add(pair.first);
-            }
-          }
-          currentDictionaries.clear();
-          currentDictionaries.addAll(result);
-          optionalChooserComponent.refresh();
-          return true;
-        }
-        return false;
-      }
-    }, project);
-    panelForFolderChooser.setLayout(new BorderLayout());
-    panelForFolderChooser.add(pathsChooserComponent.getContentPane(), BorderLayout.CENTER);
-    pathsChooserComponent.getEmptyText().setText(SpellCheckerBundle.message("no.custom.folders"));
-
-    optionalChooserComponent = new OptionalChooserComponent<String>(allDictionaries) {
+    myBundledDictionariesChooserComponent = new OptionalChooserComponent<String>(bundledDictionaries) {
       @Override
       public JCheckBox createCheckBox(String path, boolean checked) {
-        if (isUserDictionary(path)) {
-          path = FileUtil.toSystemIndependentName(path);
-          final int i = path.lastIndexOf('/');
-          if (i != -1) {
-            final String name = path.substring(i + 1);
-            return new JCheckBox("[user] " + name, checked);
+        return new JCheckBox(FileUtil.toSystemDependentName(path), checked);
+      }
+
+      @Override
+      public void apply() {
+        super.apply();
+        final HashSet<String> bundledDisabledDictionaries = new HashSet<>();
+        for (Pair<String, Boolean> pair : bundledDictionaries) {
+          if (!pair.second) {
+            bundledDisabledDictionaries.add(pair.first);
           }
         }
-        return new JCheckBox("[bundled] " + FileUtil.toSystemDependentName(path), checked);
+        settings.setBundledDisabledDictionariesPaths(bundledDisabledDictionaries);
+      }
+
+      @Override
+      public void reset() {
+        super.reset();
+        fillBundledDictionaries();
       }
     };
 
-    panelForDictionaryChooser.setLayout(new BorderLayout());
-    panelForDictionaryChooser.add(optionalChooserComponent.getContentPane(), BorderLayout.CENTER);
-    optionalChooserComponent.getEmptyText().setText(SpellCheckerBundle.message("no.dictionaries"));
+    myPanelForBundledDictionaries.setLayout(new BorderLayout());
+    myPanelForBundledDictionaries.add(myBundledDictionariesChooserComponent.getContentPane(), BorderLayout.CENTER);
+    myBundledDictionariesChooserComponent.getEmptyText().setText(SpellCheckerBundle.message("no.dictionaries"));
 
 
     wordsPanel = new WordsPanel(manager);
     panelForAcceptedWords.setLayout(new BorderLayout());
     panelForAcceptedWords.add(wordsPanel, BorderLayout.CENTER);
+    decorator = new HideableDecorator(myAdvancedSettingsPlaceHolder, SpellCheckerBundle.message("advanced.settings"), false);
+    decorator.setContentComponent(myAdvancedSettingsPanel);
+    decorator.setOn(!settings.isDefaultAdvancedSettings());
+  }
 
+  private static String getHunspellDescription() {
+    final PluginId hunspellId = getId("hunspell");
+    final IdeaPluginDescriptor ideaPluginDescriptor = PluginManager.getPlugin(hunspellId);
+    if (isPluginInstalled(hunspellId) && ideaPluginDescriptor != null && ideaPluginDescriptor.isEnabled()) {
+      return ", " + SpellCheckerBundle.message("hunspell.description");
+    }
+    else {
+      return "";
+    }
   }
 
   public JComponent getPane() {
@@ -155,74 +156,56 @@ public class SpellCheckerSettingsPane implements Disposable {
   }
 
   public boolean isModified() {
-    return wordsPanel.isModified() || optionalChooserComponent.isModified() || pathsChooserComponent.isModified();
+    return wordsPanel.isModified() ||
+           myBundledDictionariesChooserComponent.isModified() ||
+           myDictionariesPanel.isModified() ||
+           settings.getCorrectionsLimit() != getLimit() ||
+           settings.isUseSingleDictionaryToSave() != myUseSingleDictionary.isSelected() ||
+           (settings.isUseSingleDictionaryToSave() && settings.getDictionaryToSave() != myDictionariesComboBox.getSelectedItem());
   }
 
   public void apply() throws ConfigurationException {
     if (wordsPanel.isModified()){
      manager.updateUserDictionary(wordsPanel.getWords());
     }
-    if (!optionalChooserComponent.isModified() && !pathsChooserComponent.isModified()){
+    if (settings.getCorrectionsLimit() != getLimit()) {
+      settings.setCorrectionsLimit(getLimit());
+    }
+    if (settings.isUseSingleDictionaryToSave() != myUseSingleDictionary.isSelected()) {
+      settings.setUseSingleDictionaryToSave(myUseSingleDictionary.isSelected());
+    }
+    if (myUseSingleDictionary.isSelected() && settings.getDictionaryToSave() != myDictionariesComboBox.getSelectedItem()) {
+      settings.setDictionaryToSave((String)myDictionariesComboBox.getSelectedItem());
+    }
+    SpellCheckerManager.restartInspections();
+    if (!myBundledDictionariesChooserComponent.isModified() && !myDictionariesPanel.isModified()){
       return;
     }
 
-    optionalChooserComponent.apply();
-    pathsChooserComponent.apply();
-    settings.setDictionaryFoldersPaths(pathsChooserComponent.getValues());
+    myBundledDictionariesChooserComponent.apply();
+    myDictionariesPanel.apply();
 
-    final HashSet<String> disabledDictionaries = new HashSet<>();
-    final HashSet<String> bundledDisabledDictionaries = new HashSet<>();
-    for (Pair<String, Boolean> pair : allDictionaries) {
-      if (!pair.second) {
-        final String scriptPath = pair.first;
-        if (isUserDictionary(scriptPath)) {
-          disabledDictionaries.add(scriptPath);
-        }
-        else {
-          bundledDisabledDictionaries.add(scriptPath);
-        }
-      }
-
-    }
-    settings.setDisabledDictionariesPaths(disabledDictionaries);
-    settings.setBundledDisabledDictionariesPaths(bundledDisabledDictionaries);
-
-    manager.updateBundledDictionaries(removedDictionaries);
+    manager.updateBundledDictionaries(myDictionariesPanel.getRemovedDictionaries());
   }
 
-  private boolean isUserDictionary(final String dictionary) {
-    boolean isUserDictionary = false;
-    for (String dictionaryFolder : pathsChooserComponent.getValues()) {
-      if (FileUtil.toSystemIndependentName(dictionary).startsWith(dictionaryFolder)) {
-        isUserDictionary = true;
-        break;
-      }
-    }
-    return isUserDictionary;
-
+  private int getLimit() {
+    return ((SpinnerNumberModel)myMaxCorrectionsSpinner.getModel()).getNumber().intValue();
   }
 
   public void reset() {
-    pathsChooserComponent.reset();
-    fillAllDictionaries();
-    optionalChooserComponent.reset();
-    removedDictionaries.clear();
+    myMaxCorrectionsSpinner.setValue(settings.getCorrectionsLimit());
+    myUseSingleDictionary.setSelected(settings.isUseSingleDictionaryToSave());
+    myDictionariesComboBox.setSelectedItem(settings.getDictionaryToSave());
+    myDictionariesComboBox.setEnabled(myUseSingleDictionary.isSelected());
+    myDictionariesPanel.reset();
+    myBundledDictionariesChooserComponent.reset();
   }
 
 
-  private void fillAllDictionaries() {
-    dictionariesFolders.clear();
-    dictionariesFolders.addAll(settings.getDictionaryFoldersPaths());
-    allDictionaries.clear();
+  private void fillBundledDictionaries() {
+    bundledDictionaries.clear();
     for (String dictionary : SpellCheckerManager.getBundledDictionaries()) {
-      allDictionaries.add(Pair.create(dictionary, !settings.getBundledDisabledDictionariesPaths().contains(dictionary)));
-    }
-
-    // user
-    //todo [shkate]: refactoring  - SpellCheckerManager contains the same code withing reloadConfiguration()
-    final Set<String> disabledDictionaries = settings.getDisabledDictionariesPaths();
-    for (String folder : dictionariesFolders) {
-      SPFileUtil.processFilesRecursively(folder, s -> allDictionaries.add(Pair.create(s, !disabledDictionaries.contains(s))));
+      bundledDictionaries.add(Pair.create(dictionary, !settings.getBundledDisabledDictionariesPaths().contains(dictionary)));
     }
   }
 
@@ -233,31 +216,12 @@ public class SpellCheckerSettingsPane implements Disposable {
     }
   }
 
-  public static final class WordDescriber {
-    private final EditableDictionary dictionary;
-
-    public WordDescriber(EditableDictionary dictionary) {
-      this.dictionary = dictionary;
-    }
-
-    @NotNull
-    public List<String> process() {
-      if (this.dictionary == null) {
-        return new ArrayList<>();
-      }
-      Set<String> words = this.dictionary.getEditableWords();
-      List<String> result = new ArrayList<>();
-      result.addAll(words);
-      Collections.sort(result);
-      return result;
-    }
-  }
 
   private static final class WordsPanel extends AddDeleteListPanel<String> implements Disposable {
     private final SpellCheckerManager manager;
 
     private WordsPanel(SpellCheckerManager manager) {
-      super(null, new WordDescriber(manager.getUserDictionary()).process());
+      super(null, ContainerUtil.sorted(manager.getUserDictionaryWords()));
       this.manager = manager;
       getEmptyText().setText(SpellCheckerBundle.message("no.words"));
     }
@@ -291,11 +255,11 @@ public class SpellCheckerSettingsPane implements Disposable {
       myListModel.removeAllElements();
     }
 
-    @Nullable
+    @NotNull
     public List<String> getWords() {
       Object[] pairs = getListItems();
       if (pairs == null) {
-        return null;
+        return new ArrayList<>();
       }
       List<String> words = new ArrayList<>();
       for (Object pair : pairs) {
@@ -306,16 +270,11 @@ public class SpellCheckerSettingsPane implements Disposable {
 
     public boolean isModified() {
       List<String> newWords = getWords();
-      Set<String> words = manager.getUserDictionary().getEditableWords();
-      if (newWords == null) {
-        return false;
-      }
+      Set<String> words = manager.getUserDictionaryWords();
       if (newWords.size() != words.size()) {
         return true;
       }
       return !(words.containsAll(newWords) && newWords.containsAll(words));
     }
   }
-
-
 }

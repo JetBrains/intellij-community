@@ -27,7 +27,6 @@ import com.intellij.openapi.fileTypes.impl.FileTypeRenderer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -85,7 +84,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
     private TextFieldWithBrowseButton myOutputFile;
     private JCheckBox myOpenOutputFile;
     private JCheckBox myOpenInBrowser;
-    private JBTable myParameters;
+    private final JBTable myParameters;
 
     private ButtonGroup myOutputOptions;
     private JBRadioButton myShowInConsole;
@@ -362,16 +361,14 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
           if (fileType instanceof LanguageFileType) {
             final SyntaxHighlighter sh =
               SyntaxHighlighterFactory.getSyntaxHighlighter(((LanguageFileType)fileType).getLanguage(), project, null);
-            if (sh != null) {
-              v.add(fileType);
-            }
+            v.add(fileType);
           }
         }
         catch (Throwable e) {
           Logger.getInstance(XsltRunSettingsEditor.class.getName()).info("Encountered incompatible FileType: " + fileType.getName(), e);
         }
       }
-      Collections.sort(v, (o1, o2) -> o1.getDescription().compareTo(o2.getDescription()));
+      Collections.sort(v, Comparator.comparing(FileType::getDescription));
 
       // off
       v.insertElementAt(null, 0);
@@ -471,7 +468,6 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
 
     private static void setSelectedIndex(ButtonGroup group, int i) {
       final Enumeration<AbstractButton> buttons = group.getElements();
-      //noinspection ForLoopThatDoesntUseLoopVariable
       for (int j = 0; buttons.hasMoreElements(); j++) {
         group.setSelected(buttons.nextElement().getModel(), i == j);
       }
@@ -481,7 +477,6 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
       final ButtonModel selection = group.getSelection();
       if (selection == null) return -1;
       final Enumeration<AbstractButton> buttons = group.getElements();
-      //noinspection ForLoopThatDoesntUseLoopVariable
       for (int i = 0; buttons.hasMoreElements(); i++) {
         final AbstractButton button = buttons.nextElement();
         if (group.isSelected(button.getModel())) return i;
@@ -598,7 +593,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration> {
     myEditor.resetFrom(s);
   }
 
-  protected void applyEditorTo(@NotNull XsltRunConfiguration s) throws ConfigurationException {
+  protected void applyEditorTo(@NotNull XsltRunConfiguration s) {
     myEditor.applyTo(s);
   }
 

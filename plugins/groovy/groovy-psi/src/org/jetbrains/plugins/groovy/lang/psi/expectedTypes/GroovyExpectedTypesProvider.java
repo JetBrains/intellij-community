@@ -85,7 +85,7 @@ public class GroovyExpectedTypesProvider {
 
         if (!custom.isEmpty()) {
           custom.addAll(0, Arrays.asList(result));
-          return custom.toArray(new TypeConstraint[custom.size()]);
+          return custom.toArray(TypeConstraint.EMPTY_ARRAY);
         }
 
         return result;
@@ -150,7 +150,7 @@ public class GroovyExpectedTypesProvider {
 
     private static boolean resolvesToDefaultConstructor(GrCall call) {
       PsiMethod method = call.resolveMethod();
-      if (method != null && method.isConstructor() && method.getParameterList().getParametersCount() == 0) return true;
+      if (method != null && method.isConstructor() && method.getParameterList().isEmpty()) return true;
 
       if (call instanceof GrConstructorCall) {
         PsiElement resolved = PsiImplUtil.extractUniqueResult(((GrConstructorCall)call).multiResolveClass()).getElement();
@@ -357,7 +357,7 @@ public class GroovyExpectedTypesProvider {
         }
       }
       if (!constraints.isEmpty()) {
-        myResult = constraints.toArray(new TypeConstraint[constraints.size()]);
+        myResult = constraints.toArray(TypeConstraint.EMPTY_ARRAY);
       }
     }
 

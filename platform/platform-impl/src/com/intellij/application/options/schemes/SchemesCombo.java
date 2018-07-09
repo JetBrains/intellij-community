@@ -18,7 +18,9 @@ package com.intellij.application.options.schemes;
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeManager;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.ui.*;
+import com.intellij.ui.ColoredListCellRenderer;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -95,7 +97,7 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
   }
 
   static class MySchemeListItem<T extends Scheme> {
-    private @Nullable T myScheme;
+    private @Nullable final T myScheme;
 
     public MySchemeListItem(@Nullable T scheme) {
       myScheme = scheme;
@@ -173,7 +175,7 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
 
   private class MySeparatorItem extends MySchemeListItem<T> {
 
-    private String myTitle;
+    private final String myTitle;
 
     public MySeparatorItem(@NotNull String title) {
       super(null);

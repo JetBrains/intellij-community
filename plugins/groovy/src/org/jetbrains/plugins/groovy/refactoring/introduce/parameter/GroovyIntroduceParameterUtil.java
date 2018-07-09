@@ -343,7 +343,7 @@ public class GroovyIntroduceParameterUtil {
         }
         return true;
       });
-      return list.toArray(new PsiElement[list.size()]);
+      return list.toArray(PsiElement.EMPTY_ARRAY);
     }
   }
 

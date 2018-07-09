@@ -420,3 +420,20 @@ def get_abs_path_real_path_and_base_from_frame(frame):
         # Also cache based on the frame.f_code.co_filename (if we had it inside build/bdist it can make a difference).
         NORM_PATHS_AND_BASE_CONTAINER[frame.f_code.co_filename] = ret
         return ret
+
+
+def get_fullname(mod_name):
+    if IS_PY3K:
+        import pkgutil
+    else:
+        from _pydev_imps import _pydev_pkgutil_old as pkgutil
+    try:
+        loader = pkgutil.get_loader(mod_name)
+    except:
+        return None
+    if loader is not None:
+        for attr in ("get_filename", "_get_filename"):
+            meth = getattr(loader, attr, None)
+            if meth is not None:
+                return meth(mod_name)
+    return None

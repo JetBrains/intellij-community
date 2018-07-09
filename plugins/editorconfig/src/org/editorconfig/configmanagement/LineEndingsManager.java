@@ -1,9 +1,10 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
@@ -27,7 +28,7 @@ import java.util.Locale;
 /**
  * @author Dennis.Ushakov
  */
-public class LineEndingsManager extends FileDocumentManagerAdapter {
+public class LineEndingsManager implements FileDocumentManagerListener {
   // Handles the following EditorConfig settings:
   public static final String lineEndingsKey = "end_of_line";
 

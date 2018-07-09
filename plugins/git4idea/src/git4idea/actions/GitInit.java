@@ -54,7 +54,7 @@ public class GitInit extends DumbAwareAction {
     fcd.setDescription(GitBundle.getString("init.destination.directory.description"));
     fcd.setHideIgnored(false);
     VirtualFile baseDir = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    if (baseDir == null) {
+    if (baseDir == null || !baseDir.isDirectory()) {
       baseDir = project.getBaseDir();
     }
     doInit(project, fcd, baseDir);
@@ -72,9 +72,7 @@ public class GitInit extends DumbAwareAction {
 
       GitCommandResult result = Git.getInstance().init(project, root);
       if (!result.success()) {
-        if (GitVcs.getInstance(project).getExecutableValidator().checkExecutableAndNotifyIfNeeded()) {
-          VcsNotifier.getInstance(project).notifyError("Git Init Failed", result.getErrorOutputAsHtmlString());
-        }
+        VcsNotifier.getInstance(project).notifyError("Git Init Failed", result.getErrorOutputAsHtmlString());
         return;
       }
 

@@ -34,7 +34,6 @@ import java.awt.*;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 9/26/12
  */
 public class ProjectSettingsStep extends ModuleWizardStep implements SettingsStep {
 
@@ -220,6 +219,13 @@ public class ProjectSettingsStep extends ModuleWizardStep implements SettingsSte
   @NotNull
   public JTextField getModuleNameField() {
     return getNameComponent();
+  }
+
+  @Nullable
+  @Override
+  public ModuleNameLocationSettings getModuleNameLocationSettings() {
+    return myWizardContext.isCreatingNewProject() ? new NewProjectNameLocationSettings(myNamePathComponent, myModuleNameLocationComponent)
+                                                  : myModuleNameLocationComponent;
   }
 
   @TestOnly

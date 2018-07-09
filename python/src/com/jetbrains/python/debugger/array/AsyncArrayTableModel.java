@@ -44,8 +44,8 @@ public class AsyncArrayTableModel extends AbstractTableModel {
   private static final int CHUNK_ROW_SIZE = 30;
   public static final String EMPTY_CELL_VALUE = "";
 
-  private int myRows;
-  private int myColumns;
+  private final int myRows;
+  private final int myColumns;
   private final PyDataViewerPanel myDataProvider;
 
 
@@ -54,7 +54,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
 
   private PyDebugValue myDebugValue;
   private final DataViewStrategy myStrategy;
-  private LoadingCache<Pair<Integer, Integer>, ListenableFuture<ArrayChunk>> myChunkCache = CacheBuilder.newBuilder().build(
+  private final LoadingCache<Pair<Integer, Integer>, ListenableFuture<ArrayChunk>> myChunkCache = CacheBuilder.newBuilder().build(
     new CacheLoader<Pair<Integer, Integer>, ListenableFuture<ArrayChunk>>() {
       @Override
       public ListenableFuture<ArrayChunk> load(@NotNull final Pair<Integer, Integer> key) throws Exception {

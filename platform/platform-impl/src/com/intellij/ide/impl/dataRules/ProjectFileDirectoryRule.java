@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Feb 10, 2004
  */
 public class ProjectFileDirectoryRule implements GetDataRule {
   public Object getData(DataProvider dataProvider) {

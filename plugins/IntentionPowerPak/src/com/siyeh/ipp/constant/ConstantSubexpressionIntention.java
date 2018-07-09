@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.PsiPolyadicExpression;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -42,11 +42,13 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
     final PsiJavaToken token;
     if (element instanceof PsiJavaToken) {
       token = (PsiJavaToken)element;
-    } else {
+    }
+    else {
       final PsiElement prevSibling = element.getPrevSibling();
       if (prevSibling instanceof PsiJavaToken) {
         token = (PsiJavaToken)prevSibling;
-      } else {
+      }
+      else {
         throw new AssertionError();
       }
     }
@@ -57,15 +59,17 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) {
     final PsiJavaToken token;
     if (element instanceof PsiJavaToken) {
       token = (PsiJavaToken)element;
-    } else {
+    }
+    else {
       final PsiElement prevSibling = element.getPrevSibling();
       if (prevSibling instanceof PsiJavaToken) {
         token = (PsiJavaToken)prevSibling;
-      } else {
+      }
+      else {
         throw new AssertionError();
       }
     }
@@ -79,6 +83,7 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
     final PsiExpression[] operands = polyadicExpression.getOperands();
     PsiExpression prevOperand = null;
     PsiJavaToken prevToken = null;
+    CommentTracker commentTracker = new CommentTracker();
     for (PsiExpression operand : operands) {
       final PsiJavaToken currentToken = polyadicExpression.getTokenBeforeOperand(operand);
       if (token == currentToken) {
@@ -90,7 +95,8 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
         }
         if (value instanceof Long) {
           newExpressionText.append(value).append('L');
-        } else if (value instanceof Double) {
+        }
+        else if (value instanceof Double) {
           final double v = ((Double)value).doubleValue();
           if (Double.isNaN(v)) {
             newExpressionText.append("java.lang.Double.NaN");
@@ -123,17 +129,19 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
           else {
             newExpressionText.append(Float.toString(v)).append('f');
           }
-        } else {
+        }
+        else {
           newExpressionText.append(value);
         }
         prevOperand = null;
         prevToken = null;
-      } else {
+      }
+      else {
         if (prevToken != null) {
           newExpressionText.append(prevToken.getText());
         }
         if (prevOperand != null) {
-          newExpressionText.append(prevOperand.getText());
+          newExpressionText.append(commentTracker.text(prevOperand));
         }
         prevOperand = operand;
         prevToken = currentToken;
@@ -143,8 +151,9 @@ public class ConstantSubexpressionIntention extends MutablyNamedIntention {
       newExpressionText.append(prevToken.getText());
     }
     if (prevOperand != null) {
-      newExpressionText.append(prevOperand.getText());
+      newExpressionText.append(commentTracker.text(prevOperand));
     }
-    PsiReplacementUtil.replaceExpression(polyadicExpression, newExpressionText.toString());
+
+    PsiReplacementUtil.replaceExpression(polyadicExpression, newExpressionText.toString(), commentTracker);
   }
 }

@@ -29,9 +29,9 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
 
   public static final String RESULT_STATUS_PENDING = "pending";
 
-  private Appendable appendable;
+  private final Appendable appendable;
 
-  private Queue<String> queue;
+  private final Queue<String> queue;
 
   private String uri;
   private String currentFeatureName;
@@ -42,7 +42,7 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
 
   private Scenario currentScenario;
 
-  private Queue<Step> currentSteps;
+  private final Queue<Step> currentSteps;
 
   @SuppressWarnings("UnusedDeclaration")
   public CucumberJvmSMFormatter(Appendable appendable) {
@@ -224,10 +224,10 @@ public class CucumberJvmSMFormatter implements Formatter, Reporter {
   public void uri(String s) {
     String currentDir = System.getProperty("org.jetbrains.run.directory");
     if (currentDir != null) {
-      uri = currentDir + File.separator + s;
+      uri = FILE_RESOURCE_PREFIX + currentDir + File.separator + s;
     }
     else {
-      uri = s;
+      uri = FILE_RESOURCE_PREFIX + s;
     }
   }
 

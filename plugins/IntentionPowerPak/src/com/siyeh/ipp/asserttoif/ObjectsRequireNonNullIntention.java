@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,15 @@
 package com.siyeh.ipp.asserttoif;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.NullabilityAnnotationInfo;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -53,6 +56,7 @@ public class ObjectsRequireNonNullIntention extends Intention {
     final PsiVariable variable = (PsiVariable)target;
     final List<String> notNulls = NullableNotNullManager.getInstance(element.getProject()).getNotNulls();
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(variable, notNulls);
+    final CommentTracker commentTracker = new CommentTracker();
     if (annotation == null) {
       final PsiStatement referenceStatement = PsiTreeUtil.getParentOfType(referenceExpression, PsiStatement.class);
       if (referenceStatement == null) {
@@ -78,10 +82,11 @@ public class ObjectsRequireNonNullIntention extends Intention {
       if (statementToDelete == null) {
         return;
       }
-      statementToDelete.delete();
+      commentTracker.delete(statementToDelete);
     }
     PsiReplacementUtil.replaceExpressionAndShorten(referenceExpression,
-                                                   "java.util.Objects.requireNonNull(" + referenceExpression.getText() + ")");
+                                                   "java.util.Objects.requireNonNull(" + commentTracker.text(referenceExpression) + ")",
+                                                   commentTracker);
   }
 
   private static class NullCheckedAssignmentPredicate implements PsiElementPredicate {
@@ -106,8 +111,9 @@ public class ObjectsRequireNonNullIntention extends Intention {
       if (ClassUtils.findClass("java.util.Objects", element) == null) {
         return false;
       }
-      final PsiAnnotation annotation = NullableNotNullManager.getInstance(variable.getProject()).getNotNullAnnotation(variable, true);
-      if (annotation != null && !AnnotationUtil.isExternalAnnotation(annotation) && !AnnotationUtil.isInferredAnnotation(annotation)) {
+      final NullabilityAnnotationInfo info =
+        NullableNotNullManager.getInstance(variable.getProject()).findEffectiveNullabilityInfo(variable);
+      if (info != null && info.getNullability() == Nullability.NOT_NULL && !info.isExternal() && !info.isInferred()) {
         return true;
       }
       final PsiStatement referenceStatement = PsiTreeUtil.getParentOfType(referenceExpression, PsiStatement.class);

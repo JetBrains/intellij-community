@@ -35,8 +35,6 @@ import java.util.*;
 
 /**
  * @author irengrig
- *         Date: 2/21/11
- *         Time: 5:14 PM
  */
 public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
   public static final TodoItem[] EMPTY_ITEMS = new TodoItem[0];
@@ -48,24 +46,24 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
   private final ChangeListManager myChangeListManager;
 
   public CustomChangelistTodosTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project, final String title,
-                                          final List<TodoItem> list) {
+                                          final Collection<TodoItem> todoItems) {
     super(tree, treeModel, project);
     myProject = project;
     myTitle = title;
     myMap = new MultiMap<>();
     myIncludedFiles = new HashSet<>();
     myChangeListManager = ChangeListManager.getInstance(myProject);
-    initMap(list);
+    initMap(todoItems);
     initHelper();
   }
 
-  private void initMap(List<TodoItem> list) {
-    buildMap(list);
+  private void initMap(Collection<TodoItem> todoItems) {
+    buildMap(todoItems);
     myIncludedFiles.addAll(myMap.keySet());
   }
 
-  private void buildMap(List<TodoItem> list) {
-    for (TodoItem todoItem : list) {
+  private void buildMap(Collection<TodoItem> todoItems) {
+    for (TodoItem todoItem : todoItems) {
       myMap.putValue(todoItem.getFile(), todoItem);
     }
   }
@@ -99,7 +97,7 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
         buildMap(worker.inOneList());
 
         final Set<PsiFile> files = myMap.keySet();
-        return files.toArray(new PsiFile[files.size()]);
+        return files.toArray(PsiFile.EMPTY_ARRAY);
       }
 
       @NotNull
@@ -134,7 +132,7 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
             result.add(todoItem);
           }
         }
-        return result.isEmpty() ? EMPTY_ITEMS : result.toArray(new TodoItem[result.size()]);
+        return result.isEmpty() ? EMPTY_ITEMS : result.toArray(new TodoItem[0]);
       }
 
       @Override
@@ -160,7 +158,7 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
         final TodoCheckinHandlerWorker
           worker = new TodoCheckinHandlerWorker(myProject, Collections.singletonList(change), todoFilter);
         worker.execute();
-        final List<TodoItem> todoItems = worker.inOneList();
+        final Collection<TodoItem> todoItems = worker.inOneList();
         if (todoItems != null && ! todoItems.isEmpty()) {
           for (TodoItem todoItem : todoItems) {
             myMap.putValue(file, todoItem);
@@ -169,7 +167,7 @@ public class CustomChangelistTodosTreeBuilder extends TodoTreeBuilder {
       }
     }
     final Collection<TodoItem> todoItems = myMap.get(file);
-    return todoItems == null || todoItems.isEmpty() ? EMPTY_ITEMS : todoItems.toArray(new TodoItem[todoItems.size()]);
+    return todoItems == null || todoItems.isEmpty() ? EMPTY_ITEMS : todoItems.toArray(new TodoItem[0]);
   }
 
   @NotNull

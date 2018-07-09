@@ -45,10 +45,10 @@ public class EqualsWithItselfInspection extends BaseInspection {
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new EqualsWithIfSelfVisitor();
+    return new EqualsWithItselfVisitor();
   }
 
-  private static class EqualsWithIfSelfVisitor extends BaseInspectionVisitor {
+  private static class EqualsWithItselfVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {

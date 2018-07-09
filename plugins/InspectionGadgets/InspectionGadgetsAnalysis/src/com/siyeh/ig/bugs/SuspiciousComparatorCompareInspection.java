@@ -24,6 +24,8 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -96,6 +98,14 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
         PsiStatement statement = ControlFlowUtils.getOnlyStatementInBlock((PsiCodeBlock)body);
         if (statement instanceof PsiReturnStatement && ExpressionUtils.isZero(((PsiReturnStatement)statement).getReturnValue())) return;
       }
+      PsiMethodCallExpression soleCall = ObjectUtils.tryCast(LambdaUtil.extractSingleExpressionFromBody(body), PsiMethodCallExpression.class);
+      if (soleCall != null) {
+        PsiMethod method = soleCall.resolveMethod();
+        if (method != null) {
+          MethodContract contract = ContainerUtil.getOnlyItem(JavaMethodContractUtil.getMethodCallContracts(method, soleCall));
+          if (contract != null && contract.isTrivial() && contract.getReturnValue().isFail()) return;
+        }
+      }
       PsiParameter[] parameters = parameterList.getParameters();
       checkParameterList(parameters, body);
       checkReflexivity(parameters, body);
@@ -111,13 +121,13 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
     }
 
     private void checkReflexivity(PsiParameter[] parameters, PsiElement body) {
-      StandardDataFlowRunner runner = new StandardDataFlowRunner(false, true) {
+      StandardDataFlowRunner runner = new StandardDataFlowRunner(false, body) {
         @NotNull
         @Override
         protected DfaMemoryState createMemoryState() {
           DfaMemoryState state = super.createMemoryState();
-          DfaVariableValue var1 = getFactory().getVarFactory().createVariableValue(parameters[0], false);
-          DfaVariableValue var2 = getFactory().getVarFactory().createVariableValue(parameters[1], false);
+          DfaVariableValue var1 = getFactory().getVarFactory().createVariableValue(parameters[0]);
+          DfaVariableValue var2 = getFactory().getVarFactory().createVariableValue(parameters[1]);
           DfaValue condition = getFactory().createCondition(var1, DfaRelationValue.RelationType.EQ, var2);
           state.applyCondition(condition);
           return state;

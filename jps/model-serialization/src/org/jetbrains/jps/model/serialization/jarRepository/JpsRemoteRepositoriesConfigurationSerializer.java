@@ -28,7 +28,6 @@ import java.util.List;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: 25-Apr-17
  */
 public class JpsRemoteRepositoriesConfigurationSerializer extends JpsProjectExtensionSerializer {
   private static final String ELEMENT_TAG = "remote-repository";

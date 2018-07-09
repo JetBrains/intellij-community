@@ -46,11 +46,13 @@ public class EncodingReference implements PsiReference, EmptyResolveMessageProvi
     myRangeInElement = rangeInElement;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return myElement;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return myRangeInElement;
@@ -94,7 +96,7 @@ public class EncodingReference implements PsiReference, EmptyResolveMessageProvi
     for (Charset charset : charsets) {
       suggestions.add(LookupElementBuilder.create(charset.name()).withCaseSensitivity(false));
     }
-    return suggestions.toArray(new LookupElement[suggestions.size()]);
+    return suggestions.toArray(LookupElement.EMPTY_ARRAY);
   }
 
   @Override

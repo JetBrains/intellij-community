@@ -1,17 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.codeInsight.hints
 
@@ -24,6 +12,7 @@ import com.intellij.codeInsight.hints.settings.ParameterNameHintsConfigurable
 import com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.Language
 import com.intellij.notification.Notification
@@ -57,13 +46,13 @@ class ShowSettingsWithAddedPattern : AnAction() {
     
     val offset = editor.caretModel.offset
     val info = getHintInfoFromProvider(offset, file, editor) ?: return
-    
-    val text = when (info) {
-      is HintInfo.OptionInfo -> "Show Hints Settings..."
-      is HintInfo.MethodInfo -> CodeInsightBundle.message("inlay.hints.show.settings", info.getMethodName()) 
+
+    if (info is HintInfo.MethodInfo) {
+      e.presentation.setText(CodeInsightBundle.message("inlay.hints.show.settings", info.getMethodName()), false)
     }
-    
-    e.presentation.setText(text, false)
+    else {
+      e.presentation.isVisible = false
+    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -87,8 +76,24 @@ class ShowSettingsWithAddedPattern : AnAction() {
   }
 }
 
+class ShowParameterHintsSettings : AnAction() {
+  override fun actionPerformed(e: AnActionEvent) {
+    val file = CommonDataKeys.PSI_FILE.getData(e.dataContext) ?: return
+    val editor = CommonDataKeys.EDITOR.getData(e.dataContext) ?: return
 
-class BlacklistCurrentMethodIntention : IntentionAction, HighPriorityAction {
+    val fileLanguage = file.language.baseLanguage ?: file.language
+    InlayParameterHintsExtension.forLanguage(fileLanguage) ?: return
+
+    val offset = editor.caretModel.offset
+    val info = getHintInfoFromProvider(offset, file, editor) ?: return
+
+    val selectedLanguage = (info as? HintInfo.MethodInfo)?.language ?: fileLanguage
+    val dialog = ParameterNameHintsConfigurable(selectedLanguage, null)
+    dialog.show()
+  }
+}
+
+class BlacklistCurrentMethodIntention : IntentionAction, LowPriorityAction {
   companion object {
     private val presentableText = CodeInsightBundle.message("inlay.hints.blacklist.method")
     private val presentableFamilyName = CodeInsightBundle.message("inlay.hints.intention.family.name")
@@ -156,11 +161,11 @@ class BlacklistCurrentMethodIntention : IntentionAction, HighPriorityAction {
     refreshAllOpenEditors()
   }
 
-  override fun startInWriteAction() = false
+  override fun startInWriteAction(): Boolean = false
 }
 
 
-class DisableCustomHintsOption: IntentionAction, HighPriorityAction {
+class DisableCustomHintsOption: IntentionAction, LowPriorityAction {
   companion object {
     private val presentableFamilyName = CodeInsightBundle.message("inlay.hints.intention.family.name")
   }
@@ -199,7 +204,7 @@ class DisableCustomHintsOption: IntentionAction, HighPriorityAction {
     refreshAllOpenEditors()
   }
 
-  override fun startInWriteAction() = false
+  override fun startInWriteAction(): Boolean = false
 }
 
 class EnableCustomHintsOption: IntentionAction, HighPriorityAction {
@@ -247,7 +252,7 @@ class EnableCustomHintsOption: IntentionAction, HighPriorityAction {
     refreshAllOpenEditors()
   }
 
-  override fun startInWriteAction() = false
+  override fun startInWriteAction(): Boolean = false
 
 }
 
@@ -333,7 +338,7 @@ fun PsiElement.isOwnsInlayInEditor(editor: Editor): Boolean {
 }
 
 
-fun MethodInfo.toPattern() = this.fullyQualifiedName + '(' + this.paramNames.joinToString(",") + ')'
+fun MethodInfo.toPattern(): String = this.fullyQualifiedName + '(' + this.paramNames.joinToString(",") + ')'
 
 
 private fun String.capitalize() = StringUtil.capitalizeWords(this, true)

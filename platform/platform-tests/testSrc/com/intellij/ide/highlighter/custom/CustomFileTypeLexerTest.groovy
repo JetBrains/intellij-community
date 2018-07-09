@@ -272,6 +272,34 @@ MULTI_LINE_COMMENT ('/* a\\n *bc */')
     doTest createJavaSyntaxTable(), "//", 'LINE_COMMENT (\'//\')\n'
   }
 
+  void "test block comment start overrides line comment start"() {
+    def table = new SyntaxTable()
+    table.lineComment = '#'
+    table.startComment = '#{'
+    table.endComment = '}#'
+    doTest table, "#{ \nblock\n }#\n# line\nid", '''\
+MULTI_LINE_COMMENT ('#{ \\nblock\\n }#')
+WHITESPACE ('\\n')
+LINE_COMMENT ('# line')
+WHITESPACE ('\\n')
+IDENTIFIER ('id')
+'''
+  }
+
+  void "test line comment start overrides block comment start"() {
+    def table = new SyntaxTable()
+    table.lineComment = '##'
+    table.startComment = '#'
+    table.endComment = '/#'
+    doTest table, "#\nblock\n/#\n## line\nid", '''\
+MULTI_LINE_COMMENT ('#\\nblock\\n/#')
+WHITESPACE ('\\n')
+LINE_COMMENT ('## line')
+WHITESPACE ('\\n')
+IDENTIFIER ('id')
+'''
+  }
+
   void testEmpty() {
     doTest createJavaSyntaxTable(), "", ''
   }
@@ -398,8 +426,10 @@ CHARACTER (')')
     table.addKeyword2("d#")
     table.addKeyword2("e")
     table.addKeyword2("foo{}")
+    table.addKeyword3("foldl")
     table.addKeyword3("foldl'")
-    doTest table, "a* b-c d# e- e foo{} : foldl' foo", '''\
+    def text = "a* b-c d# e- e foo{} : foldl' foo"
+    def expected = '''\
 KEYWORD_1 ('a*')
 WHITESPACE (' ')
 KEYWORD_1 ('b-c')
@@ -419,6 +449,8 @@ KEYWORD_3 ('foldl'')
 WHITESPACE (' ')
 IDENTIFIER ('foo')
 '''
+    doTest(new CustomFileTypeLexer(table), text, expected)
+    doTest(new CustomFileHighlighter(table).highlightingLexer, text, expected)
   }
 
   void testWordsScanner() {
@@ -492,7 +524,7 @@ NUMBER ('0yabc0')
     
     CharSequence bombed = new SlowCharSequence(text)
     ThrowableRunnable cl = { LexerTestCase.printTokens(bombed, 0, new CustomFileTypeLexer(table)) } as ThrowableRunnable
-    PlatformTestUtil.startPerformanceTest(name, 4500, cl).assertTiming()
+    PlatformTestUtil.startPerformanceTest(name, 5_000, cl).assertTiming()
   }
 
 }

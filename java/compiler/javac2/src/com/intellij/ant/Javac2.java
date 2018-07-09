@@ -40,7 +40,7 @@ public class Javac2 extends Javac {
   private List myNestedFormPathList;
   private boolean instrumentNotNull = true;
   private String myNotNullAnnotations = "org.jetbrains.annotations.NotNull";
-  private List<Regexp> myClassFilterAnnotationRegexpList = new ArrayList<Regexp>(0);
+  private final List<Regexp> myClassFilterAnnotationRegexpList = new ArrayList<Regexp>(0);
 
   public Javac2() {
   }
@@ -380,17 +380,17 @@ public class Javac2 extends Javac {
     if (getIncludeantruntime()) {
       cp.addExisting(cp.concatSystemClasspath("last"));
     }
-    boolean shouldInclude = getIncludejavaruntime();
-    if (!shouldInclude) {
+    boolean shouldIncludeJavaRuntime = getIncludejavaruntime();
+    if (!shouldIncludeJavaRuntime) {
       if (project != null) {
         final String propValue = project.getProperty(PROPERTY_INSTRUMENTATION_INCLUDE_JAVA_RUNTIME);
-        shouldInclude = !("false".equalsIgnoreCase(propValue) || "no".equalsIgnoreCase(propValue));
+        shouldIncludeJavaRuntime = !("false".equalsIgnoreCase(propValue) || "no".equalsIgnoreCase(propValue));
       }
       else {
-        shouldInclude = true;
+        shouldIncludeJavaRuntime = true;
       }
     }
-    if (shouldInclude) {
+    if (shouldIncludeJavaRuntime) {
       cp.addJavaRuntime();
     }
 
@@ -407,13 +407,27 @@ public class Javac2 extends Javac {
     log("classpath=" + classPath, Project.MSG_VERBOSE);
 
     try {
-      return createInstrumentationClassFinder(classPath);
+      return createInstrumentationClassFinder(classPath, shouldIncludeJavaRuntime);
     }
     catch (MalformedURLException e) {
       fireError(e.getMessage());
       return null;
     }
   }
+
+  private static URL tryGetJrtURL() {
+    final String home = System.getProperty("java.home");
+    if (new File(home, "lib/jrt-fs.jar").isFile()) {
+      // this is a modular jdk where platform classes are stored in a jrt-fs image
+      try {
+        return InstrumentationClassFinder.createJDKPlatformUrl(home);
+      }
+      catch (MalformedURLException ignored) {
+      }
+    }
+    return null;
+  }
+
 
   /**
    * Append path to class path if the appened path is not empty and is not null
@@ -558,13 +572,19 @@ public class Javac2 extends Javac {
     }
   }
 
-  private static InstrumentationClassFinder createInstrumentationClassFinder(final String classPath) throws MalformedURLException {
+  private static InstrumentationClassFinder createInstrumentationClassFinder(final String classPath, boolean shouldIncludeJavaRuntime) throws MalformedURLException {
     final ArrayList urls = new ArrayList();
+    if (shouldIncludeJavaRuntime) {
+      final URL jrt = tryGetJrtURL();
+      if (jrt != null) {
+        urls.add(jrt);
+      }
+    }
     for (StringTokenizer tokenizer = new StringTokenizer(classPath, File.pathSeparator); tokenizer.hasMoreTokens();) {
       final String s = tokenizer.nextToken();
       urls.add(new File(s).toURI().toURL());
     }
-    final URL[] urlsArr = (URL[])urls.toArray(new URL[urls.size()]);
+    final URL[] urlsArr = (URL[])urls.toArray(new URL[0]);
     return new InstrumentationClassFinder(urlsArr);
   }
 

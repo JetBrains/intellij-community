@@ -26,9 +26,11 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.*;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -41,6 +43,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -78,9 +81,10 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
     final Module module = file != null ? ModuleUtilCore.findModuleForPsiElement(file) : null;
     AnalysisScope analysisScope = new AnalysisScope(project);
     if (file != null) {
-      final VirtualFile virtualFile = file.getVirtualFile();
+      PsiFile topLevelFile = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
+      final VirtualFile virtualFile = topLevelFile.getVirtualFile();
       if (file.isPhysical() && virtualFile != null && virtualFile.isInLocalFileSystem()) {
-        analysisScope = new AnalysisScope(file);
+        analysisScope = new AnalysisScope(topLevelFile);
       }
     }
 
@@ -94,11 +98,9 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
                                                  @NotNull Project project) {
     final BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(
       AnalysisScopeBundle.message("specify.analysis.scope", InspectionsBundle.message("inspection.action.title")),
-      AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")),
-      project,
-      customScope,
-      module,
-      true, AnalysisUIOptions.getInstance(project), context);
+      AnalysisScopeBundle.message("analysis.scope.title", InspectionsBundle.message("inspection.action.noun")), project, BaseAnalysisActionDialog.standardItems(
+      project, customScope, module, context),
+      AnalysisUIOptions.getInstance(project), true, ModuleUtil.isSupportedRootType(project, JavaSourceRootType.TEST_SOURCE));
     if (!dlg.showAndGet()) {
       return;
     }

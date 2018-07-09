@@ -24,7 +24,6 @@ import com.intellij.psi.search.PsiElementProcessorAdapter;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +46,7 @@ public class RefactoringHierarchyUtil {
     while (parent != null) {
       //noinspection SuspiciousMethodCalls
       if (membersToMove.contains(parent)) return true;
-      if (parent instanceof PsiModifierList) return false; //see IDEADEV-12448
+      if (parent instanceof PsiModifierList && (targetClass == null || targetClass.getModifierList() == parent)) return false; //see IDEADEV-12448
       if (parent instanceof PsiClass && targetClass != null) {
         if (targetClass.equals(parent)) return true;
         if (includeSubclasses && ((PsiClass) parent).isInheritor(targetClass, true)) return true;
@@ -197,7 +196,7 @@ public class RefactoringHierarchyUtil {
         }
       }
     }
-    return result.toArray(new PsiClass[result.size()]);
+    return result.toArray(PsiClass.EMPTY_ARRAY);
   }
 
   private static void _findImplementingClasses(PsiClass anInterface, final Set<PsiClass> visited, final Collection<PsiClass> result) {

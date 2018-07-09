@@ -23,14 +23,12 @@ import com.intellij.util.io.DataInputOutputUtil;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.DataOutput;
 import java.io.IOException;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 20, 2007
  */
 public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>{
   // there is no volatile as we modify under write lock and read under read lock
@@ -38,7 +36,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
   private TIntHashSet myInvalidated;
   private volatile ValueContainerImpl<Value> myMerged;
   private final Initializer<Value> myInitializer;
-
+  
   public interface Initializer<T> extends Computable<ValueContainer<T>> {
     Object getLock();
   }
@@ -69,6 +67,14 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
 
     if (myInvalidated == null) myInvalidated = new TIntHashSet(1);
     myInvalidated.add(inputId);
+  }
+
+  // Resets diff of index value for particular fileId
+  public void dropAssociatedValue(int inputId) {
+    myMerged = null;
+
+    if (myAdded != null) myAdded.removeAssociatedValue(inputId);
+    if (myInvalidated != null) myInvalidated.remove(inputId);
   }
 
   @Override
@@ -158,11 +164,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
            (myInvalidated != null && !myInvalidated.isEmpty()) ||
            needsCompacting();
   }
-
-  public @Nullable UpdatableValueContainer<Value> getAddedDelta() {
-    return myAdded;
-  }
-
+  
   @Override
   public void saveTo(DataOutput out, DataExternalizer<Value> externalizer) throws IOException {
     if (needsCompacting()) {
@@ -175,7 +177,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
         }
       }
 
-      final UpdatableValueContainer<Value> toAppend = getAddedDelta();
+      final UpdatableValueContainer<Value> toAppend = myAdded;
       if (toAppend != null && toAppend.size() > 0) {
         toAppend.saveTo(out, externalizer);
       }

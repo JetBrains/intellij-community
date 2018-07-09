@@ -1,22 +1,29 @@
+/*
+ * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ */
 package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
+import com.jetbrains.LoggingRule;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.tools.sdkTools.PySdkTools;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.net.URL;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -26,18 +33,35 @@ import java.util.Set;
 public class PyEnvTaskRunner {
   private static final Logger LOG = Logger.getInstance(PyEnvTaskRunner.class);
   private final List<String> myRoots;
+  @Nullable
+  private final LoggingRule myLoggingRule;
 
-  public PyEnvTaskRunner(List<String> roots) {
+  /**
+   * @param loggingRule to be passed by {@link PyEnvTestCase}.
+   *                    {@link LoggingRule#startLogging(Disposable, Iterable)} will be called
+   *                    if task has {@link PyExecutionFixtureTestTask#getClassesToEnableDebug()}
+   */
+  public PyEnvTaskRunner(List<String> roots, @Nullable final LoggingRule loggingRule) {
     myRoots = roots;
+    myLoggingRule = loggingRule;
   }
 
-  // todo: doc
-  public void runTask(PyTestTask testTask, String testName, @NotNull final String... tagsRequiedByTest) {
+  /**
+   * Runs test on all interpreters.
+   *
+   * @param skipOnFlavors optional array of flavors of interpreters to skip
+   *
+   * @param tagsRequiredByTest optional array of tags to run tests on interpreters with these tags only
+   */
+  public void runTask(@NotNull final PyTestTask testTask,
+                      @NotNull final String testName,
+                      @Nullable final Class<? extends PythonSdkFlavor>[] skipOnFlavors,
+                      @NotNull final String... tagsRequiredByTest) {
     boolean wasExecuted = false;
 
     List<String> passedRoots = Lists.newArrayList();
 
-    final Set<String> requiredTags = Sets.union(testTask.getTags(), Sets.newHashSet(tagsRequiedByTest));
+    final Set<String> requiredTags = Sets.union(testTask.getTags(), Sets.newHashSet(tagsRequiredByTest));
 
     final Set<String> tagsToCover = null;
 
@@ -71,37 +95,53 @@ public class PyEnvTaskRunner {
         else {
           testTask.useNormalTimeout();
         }
-        final String executable = getExecutable(root, testTask);
-        if (executable == null) {
-          throw new RuntimeException("Cannot find Python interpreter in " + root);
-        }
-        final Sdk sdk = createSdkByExecutable(executable);
+        final String executable = PythonSdkType.getPythonExecutable(root);
+        assert executable != null : "No executable in " + root;
 
-        /**
-         * Skipping test if {@link PyTestTask} reports it does not support this language level
+        final Sdk sdk = getSdk(executable, testTask);
+        if (skipOnFlavors != null) {
+          final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(sdk);
+          if (Arrays.stream(skipOnFlavors).anyMatch((o) -> o.isInstance(flavor))) {
+            LOG.warn("Skipping flavor " + flavor.toString());
+            continue;
+          }
+        }
+
+        /*
+          Skipping test if {@link PyTestTask} reports it does not support this language level
          */
         final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
         if (testTask.isLanguageLevelSupported(languageLevel)) {
-          testTask.runTestOn(executable);
+
+          if (myLoggingRule != null) {
+            final PyExecutionFixtureTestTask execTask = ObjectUtils.tryCast(testTask, PyExecutionFixtureTestTask.class);
+            if (execTask != null) {
+              // Fill be disabled automatically on project dispose
+              myLoggingRule.startLogging(execTask.getProject(), execTask.getClassesToEnableDebug());
+            }
+          }
+
+
+          testTask.runTestOn(executable, sdk);
+
           passedRoots.add(root);
         }
         else {
           LOG.warn(String.format("Skipping root %s", root));
         }
       }
-      catch (final Throwable e) {
-        // Direct output of enteredTheMatrix may break idea or TC since can't distinguish test output from real test result
-        // Exception is thrown anyway, so we escape message before logging
-        if (e.getMessage().contains("enteredTheMatrix")) {
-          // .error( may lead to new exception with out of stacktrace.
-          LOG.warn(PyEnvTestCase.escapeTestMessage(e.getMessage()));
-        }
-        else {
-          LOG.error(e);
-        }
-        throw new RuntimeException(
-          PyEnvTestCase.joinStrings(passedRoots, "Tests passed environments: ") + "Test failed on " + getEnvType() + " environment " + root,
-          e);
+      catch (final RuntimeException | Error ex) {
+        // Runtime and error are logged including environment info
+        LOG.warn(joinStrings(passedRoots, "Tests passed environments: ") +
+                 "Test failed on " +
+                 getEnvType() +
+                 " environment " +
+                 root);
+        throw ex;
+      }
+      catch (final Exception e) {
+        // Exception can't be thrown with out of
+        throw new PyEnvWrappingException(e);
       }
       finally {
         try {
@@ -109,7 +149,7 @@ public class PyEnvTaskRunner {
           // thread leaks, and blocked main thread is considered as leaked
           testTask.tearDown();
         }
-        catch (Exception e) {
+        catch (final Exception e) {
           throw new RuntimeException("Couldn't tear down task", e);
         }
       }
@@ -119,9 +159,9 @@ public class PyEnvTaskRunner {
       throw new RuntimeException("test" +
                                  testName +
                                  " was not executed.\n" +
-                                 PyEnvTestCase.joinStrings(myRoots, "All roots: ") +
+                                 joinStrings(myRoots, "All roots: ") +
                                  "\n" +
-                                 PyEnvTestCase.joinStrings(testTask.getTags(), "Required tags in tags.txt in root: "));
+                                 joinStrings(testTask.getTags(), "Required tags in tags.txt in root: "));
     }
   }
 
@@ -135,29 +175,25 @@ public class PyEnvTaskRunner {
     return false;
   }
 
-  /**
-   * Create SDK by path to python exectuable
-   *
-   * @param executable path executable
-   * @return sdk or null if there is no sdk on this path
-   * @throws InvalidSdkException bad sdk
-   */
-  @Nullable
-  private static Sdk createSdkByExecutable(@NotNull final String executable) throws InvalidSdkException, IOException {
-    final URL rootUrl = new URL(String.format("file:///%s", executable));
-    final VirtualFile url = VfsUtil.findFileByURL(rootUrl);
-    if (url == null) {
-      return null;
-    }
-    return PySdkTools.createTempSdk(url, SdkCreationType.EMPTY_SDK, null);
-  }
 
   protected boolean shouldRun(String root, PyTestTask task) {
     return true;
   }
 
-  protected String getExecutable(String root, PyTestTask testTask) {
-    return PythonSdkType.getPythonExecutable(root);
+  /**
+   * Get SDK by executable*
+   */
+  @NotNull
+  protected Sdk getSdk(@NotNull final String executable, @NotNull final PyTestTask testTask) {
+    try {
+      final URL rootUrl = new URL(String.format("file:///%s", executable));
+      final VirtualFile url = VfsUtil.findFileByURL(rootUrl);
+      assert url != null : "No file " + rootUrl;
+      return PySdkTools.createTempSdk(url, SdkCreationType.EMPTY_SDK, null);
+    }
+    catch (Exception ex) {
+      throw new RuntimeException(ex);
+    }
   }
 
   protected String getEnvType() {
@@ -189,5 +225,10 @@ public class PyEnvTaskRunner {
 
   public static boolean isJython(@NotNull String sdkHome) {
     return sdkHome.toLowerCase().contains("jython");
+  }
+
+  @NotNull
+  private static String joinStrings(final Collection<String> roots, final String rootsName) {
+    return !roots.isEmpty() ? rootsName + StringUtil.join(roots, ", ") + "\n" : "";
   }
 }

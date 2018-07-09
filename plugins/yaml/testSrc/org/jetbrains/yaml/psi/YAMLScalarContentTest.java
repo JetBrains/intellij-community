@@ -34,6 +34,14 @@ public class YAMLScalarContentTest extends LightPlatformCodeInsightFixtureTestCa
     doTest();
   }
 
+  public void testPlainScalarBigFirstLineIndent1() {
+    doTest();
+  }
+
+  public void testPlainScalarBigFirstLineIndent2() {
+    doTest();
+  }
+
   public void testLiteralStyle1() {
     doTest();
   }
@@ -43,6 +51,37 @@ public class YAMLScalarContentTest extends LightPlatformCodeInsightFixtureTestCa
   }
 
   public void testLiteralStyle3() {
+    doTest();
+  }
+
+  // Test presence of comment in literal style block scalar header
+  public void testLiteralStyleCommentInHeader() {
+    doTest();
+  }
+
+  // Test scalar value in case of invalid symbols in literal style block scalar header
+  // Now invalid symbols will be ignored in scalar value calculation
+  public void testLiteralStyleHeaderError() {
+    doTest();
+  }
+
+  // Test indentation indicator in literal style block scalar header
+  public void testLiteralStyleExplicitIndent() {
+    doTest();
+  }
+
+  // Test strip literal block scalar chomping indicator
+  public void testLiteralStyleStrip() {
+    doTest();
+  }
+
+  // Test keep literal block scalar chomping indicator
+  public void testLiteralStyleKeep() {
+    doTest();
+  }
+
+  // Test empty literal style scalar
+  public void testLiteralStyleEmpty() {
     doTest();
   }
 
@@ -71,6 +110,37 @@ public class YAMLScalarContentTest extends LightPlatformCodeInsightFixtureTestCa
   }
 
   public void testFoldedStyle6() {
+    doTest();
+  }
+
+  // Test presence of comment in folded style block scalar header
+  public void testFoldedStyleCommentInHeader() {
+    doTest();
+  }
+
+  // Test scalar value in case of invalid symbols in literal style block scalar header
+  // Now invalid symbols will be ignored in scalar value calculation
+  public void testFoldedStyleHeaderError() {
+    doTest();
+  }
+
+  // Test indentation indicator in folded style block scalar header
+  public void testFoldedStyleExplicitIndent() {
+    doTest();
+  }
+
+  // Test strip folded block scalar chomping indicator
+  public void testFoldedStyleStrip() {
+    doTest();
+  }
+
+  // Test keep folded block scalar chomping indicator
+  public void testFoldedStyleKeep() {
+    doTest();
+  }
+
+  // Test empty folded style scalar
+  public void testFoldedStyleEmpty() {
     doTest();
   }
 

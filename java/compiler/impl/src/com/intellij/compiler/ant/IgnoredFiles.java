@@ -25,7 +25,6 @@ import java.util.StringTokenizer;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Mar 19, 2004
  */
 public class IgnoredFiles extends Generator{
   private final PatternSet myPatternSet;

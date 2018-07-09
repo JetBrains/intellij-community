@@ -54,5 +54,8 @@
     <localInspection groupName="RegExp" language="RegExp" shortName="RegExpRedundantEscape"
                      displayName="Redundant character escape" enabledByDefault="true" level="WARNING"
                      implementationClass="org.intellij.lang.regexp.inspection.RedundantEscapeInspection"/>
+    <localInspection groupName="RegExp" language="RegExp" shortName="RegExpUnexpectedAnchor"
+                     displayName="Begin or end anchor in unexpected position" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.intellij.lang.regexp.inspection.UnexpectedAnchorInspection"/>
   </extensions>
 </idea-plugin>

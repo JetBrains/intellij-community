@@ -16,8 +16,8 @@
 
 package com.intellij.usages.impl;
 
+import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageContextPanel;
@@ -59,16 +59,7 @@ public abstract class UsageContextPanelBase extends JBPanelWithEmptyText impleme
 
   @Override
   public final void updateLayout(@Nullable final List<UsageInfo> infos) {
-    PsiDocumentManager pdm = PsiDocumentManager.getInstance(myProject);
-    if (!pdm.hasUncommitedDocuments()) {
-      updateLayoutLater(infos);
-    } else {
-      pdm.performLaterWhenAllCommitted(() -> {
-        if (isDisposed || myProject.isDisposed()) return;
-        updateLayoutLater(infos);
-      });
-    }
-
+    AppUIExecutor.onUiThread().withDocumentsCommitted(myProject).expireWith(this).execute(() -> updateLayoutLater(infos));
   }
 
   protected abstract void updateLayoutLater(@Nullable List<UsageInfo> infos);

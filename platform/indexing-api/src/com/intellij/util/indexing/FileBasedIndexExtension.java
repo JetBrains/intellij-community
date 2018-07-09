@@ -25,12 +25,11 @@ import java.util.Collections;
 
 /**
  * @author Eugene Zhuravlev
- *         Date: Dec 26, 2007
  * V class MUST have equals / hashcode properly defined!!!
  */
 public abstract class FileBasedIndexExtension<K, V> extends IndexExtension<K, V, FileContent>{
   public static final ExtensionPointName<FileBasedIndexExtension> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.fileBasedIndex");
-  public static final int DEFAULT_CACHE_SIZE = 1024;
+  private static final int DEFAULT_CACHE_SIZE = 1024;
 
   @NotNull
   @Override

@@ -1,8 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.streamMigration.CollectMigration.CollectTerminal;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -10,12 +11,14 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -28,6 +31,9 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
     CallMatcher.anyOf(
       CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toList", "toSet").parameterCount(0),
       CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toCollection").parameterCount(1));
+
+  @SuppressWarnings("PublicField")
+  public boolean myStrictMode = false;
 
   private static class StreamCollectChain extends CollectTerminal {
     final PsiMethodCallExpression myCollector;
@@ -42,14 +48,14 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    String generateIntermediate() {
+    String generateIntermediate(CommentTracker ct) {
       PsiExpression qualifier = myChain.getMethodExpression().getQualifierExpression();
-      return Objects.requireNonNull(qualifier).getText();
+      return ct.text(Objects.requireNonNull(qualifier));
     }
 
     @Override
-    String generateTerminal() {
-      return ".collect(" + myCollector.getText() + ")";
+    String generateTerminal(CommentTracker ct, boolean strictMode) {
+      return ".collect(" + ct.text(myCollector) + ")";
     }
 
     private static PsiClass resolveClassCreatedByFunction(PsiExpression function) {
@@ -64,7 +70,7 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
         PsiExpression body = LambdaUtil.extractSingleExpressionFromBody(((PsiLambdaExpression)function).getBody());
         PsiNewExpression newExpression = tryCast(PsiUtil.skipParenthesizedExprDown(body), PsiNewExpression.class);
         if (newExpression != null && newExpression.getAnonymousClass() == null && newExpression.getQualifier() == null &&
-            newExpression.getArgumentList() != null && newExpression.getArgumentList().getExpressions().length == 0) {
+            newExpression.getArgumentList() != null && newExpression.getArgumentList().isEmpty()) {
           PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
           if (classReference != null) {
             return tryCast(classReference.resolve(), PsiClass.class);
@@ -106,6 +112,13 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
     }
   }
 
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionsBundle.message("inspection.fuse.stream.operations.option.strict.mode"), this,
+                                          "myStrictMode");
+  }
+
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
@@ -128,7 +141,7 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
               .flatMap(Function.identity()).skip(1).joining();
             holder.registerProblem(nameElement,
                                    InspectionsBundle.message("inspection.fuse.stream.operations.message", fusedSteps),
-                                   new FuseStreamOperationsFix(fusedSteps));
+                                   new FuseStreamOperationsFix(fusedSteps, myStrictMode));
           }
         }
       }
@@ -160,10 +173,12 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
   }
 
   private static class FuseStreamOperationsFix implements LocalQuickFix {
-    private String myFusedSteps;
+    private final String myFusedSteps;
+    private final boolean myStrictMode;
 
-    public FuseStreamOperationsFix(String fusedSteps) {
+    FuseStreamOperationsFix(String fusedSteps, boolean strictMode) {
       myFusedSteps = fusedSteps;
+      myStrictMode = strictMode;
     }
 
     @Nls
@@ -184,21 +199,21 @@ public class FuseStreamOperationsInspection extends AbstractBaseJavaLocalInspect
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiMethodCallExpression chain = PsiTreeUtil.getParentOfType(descriptor.getStartElement(), PsiMethodCallExpression.class);
       if (chain == null) return;
-      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
       CollectTerminal terminal = extractTerminal(chain);
       if (terminal == null) return;
-      String stream = terminal.generateIntermediate() + terminal.generateTerminal();
+      CommentTracker ct = new CommentTracker();
+      String stream = terminal.generateIntermediate(ct) + terminal.generateTerminal(ct, myStrictMode);
       PsiElement toReplace = terminal.getElementToReplace();
       PsiElement result;
+      terminal.cleanUp(ct);
       if (toReplace != null) {
-        result = toReplace.replace(factory.createExpressionFromText(stream, toReplace));
+        result = ct.replaceAndRestoreComments(toReplace, stream);
       }
       else {
         PsiVariable variable = Objects.requireNonNull(terminal.getTargetVariable());
         PsiExpression initializer = Objects.requireNonNull(variable.getInitializer());
-        result = initializer.replace(factory.createExpressionFromText(stream, initializer));
+        result = ct.replaceAndRestoreComments(initializer, stream);
       }
-      terminal.cleanUp();
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
     }
   }

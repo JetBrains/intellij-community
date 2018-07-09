@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.highlighting;
 
@@ -32,6 +18,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -43,19 +30,19 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.BitUtil;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class HighlightManagerImpl extends HighlightManager {
   private final Project myProject;
 
-  public HighlightManagerImpl(Project project) {
+  public HighlightManagerImpl(Project project, ActionManagerEx actionManagerEx, final EditorFactory editorFactory) {
     myProject = project;
-    ActionManagerEx.getInstanceEx().addAnActionListener(new MyAnActionListener(), myProject);
+    actionManagerEx.addAnActionListener(new MyAnActionListener(), myProject);
 
     DocumentListener documentListener = new DocumentListener() {
       @Override
@@ -81,12 +68,14 @@ public class HighlightManagerImpl extends HighlightManager {
         }
       }
     };
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(documentListener, myProject);
+    editorFactory.getEventMulticaster().addDocumentListener(documentListener, myProject);
   }
 
   @Nullable
-  public Map<RangeHighlighter, HighlightInfo> getHighlightInfoMap(@NotNull Editor editor, boolean toCreate) {
-    if (editor instanceof EditorWindow) return getHighlightInfoMap(((EditorWindow)editor).getDelegate(), toCreate);
+  private Map<RangeHighlighter, HighlightInfo> getHighlightInfoMap(@NotNull Editor editor, boolean toCreate) {
+    if (editor instanceof EditorWindow) {
+      editor = ((EditorWindow)editor).getDelegate();
+    }
     Map<RangeHighlighter, HighlightInfo> map = editor.getUserData(HIGHLIGHT_INFO_MAP_KEY);
     if (map == null && toCreate) {
       map = ((UserDataHolderEx)editor).putUserDataIfAbsent(HIGHLIGHT_INFO_MAP_KEY, new HashMap<>());
@@ -103,7 +92,7 @@ public class HighlightManagerImpl extends HighlightManager {
       HighlightInfo info = entry.getValue();
       if (info.editor.equals(editor)) set.add(entry.getKey());
     }
-    return set.toArray(new RangeHighlighter[set.size()]);
+    return set.toArray(RangeHighlighter.EMPTY_ARRAY);
   }
 
   private RangeHighlighter addSegmentHighlighter(@NotNull Editor editor, int startOffset, int endOffset, TextAttributes attributes, @HideFlags int flags) {
@@ -140,7 +129,7 @@ public class HighlightManagerImpl extends HighlightManager {
     if (hideByTextChange) {
       flags |= HIDE_BY_TEXT_CHANGE;
     }
-    Color scrollmarkColor = getScrollMarkColor(attributes, editor.getColorsScheme());
+    Color scrollMarkColor = getScrollMarkColor(attributes, editor.getColorsScheme());
 
     int oldOffset = editor.getCaretModel().getOffset();
     int horizontalScrollOffset = editor.getScrollingModel().getHorizontalScrollOffset();
@@ -155,7 +144,7 @@ public class HighlightManagerImpl extends HighlightManager {
       // each reference can reside in its own injected editor
       Editor textEditor = InjectedLanguageUtil.openEditorFor(containingFile, project);
       if (textEditor != null) {
-        addOccurrenceHighlight(textEditor, start, end, attributes, flags, outHighlighters, scrollmarkColor);
+        addOccurrenceHighlight(textEditor, start, end, attributes, flags, outHighlighters, scrollMarkColor);
       }
     }
     editor.getCaretModel().moveToOffset(oldOffset);
@@ -165,28 +154,20 @@ public class HighlightManagerImpl extends HighlightManager {
   }
 
   @Override
-  public void addElementsOccurrenceHighlights(@NotNull Editor editor,
-                                              @NotNull PsiElement[] elements,
-                                              @NotNull TextAttributes attributes,
-                                              boolean hideByTextChange,
-                                              Collection<RangeHighlighter> outHighlighters) {
-    addOccurrenceHighlights(editor, elements, attributes, hideByTextChange, outHighlighters);
-  }
-
-  @Override
   public void addOccurrenceHighlight(@NotNull Editor editor,
                                      int start,
                                      int end,
                                      TextAttributes attributes,
                                      int flags,
                                      Collection<RangeHighlighter> outHighlighters,
-                                     Color scrollmarkColor) {
+                                     Color scrollMarkColor) {
     RangeHighlighter highlighter = addSegmentHighlighter(editor, start, end, attributes, flags);
+    if (highlighter instanceof RangeHighlighterEx) ((RangeHighlighterEx)highlighter).setVisibleIfFolded(true);
     if (outHighlighters != null) {
       outHighlighters.add(highlighter);
     }
-    if (scrollmarkColor != null) {
-      highlighter.setErrorStripeMarkColor(scrollmarkColor);
+    if (scrollMarkColor != null) {
+      highlighter.setErrorStripeMarkColor(scrollMarkColor);
     }
   }
 
@@ -216,9 +197,9 @@ public class HighlightManagerImpl extends HighlightManager {
       flags |= HIDE_BY_ANY_KEY;
     }
 
-    Color scrollmarkColor = getScrollMarkColor(attributes, editor.getColorsScheme());
+    Color scrollMarkColor = getScrollMarkColor(attributes, editor.getColorsScheme());
 
-    addOccurrenceHighlight(editor, startOffset, endOffset, attributes, flags, highlighters, scrollmarkColor);
+    addOccurrenceHighlight(editor, startOffset, endOffset, attributes, flags, highlighters, scrollMarkColor);
   }
 
   @Override
@@ -233,7 +214,7 @@ public class HighlightManagerImpl extends HighlightManager {
       flags |= HIDE_BY_TEXT_CHANGE;
     }
 
-    Color scrollmarkColor = getScrollMarkColor(attributes, editor.getColorsScheme());
+    Color scrollMarkColor = getScrollMarkColor(attributes, editor.getColorsScheme());
     if (editor instanceof EditorWindow) {
       editor = ((EditorWindow)editor).getDelegate();
     }
@@ -244,7 +225,7 @@ public class HighlightManagerImpl extends HighlightManager {
       addOccurrenceHighlight(editor,
                              trimOffsetToDocumentSize(editor, range.getStartOffset()), 
                              trimOffsetToDocumentSize(editor, range.getEndOffset()), 
-                             attributes, flags, outHighlighters, scrollmarkColor);
+                             attributes, flags, outHighlighters, scrollMarkColor);
     }
   }
 
@@ -269,7 +250,7 @@ public class HighlightManagerImpl extends HighlightManager {
     if (map == null) return false;
 
     boolean done = false;
-    ArrayList<RangeHighlighter> highlightersToRemove = new ArrayList<>();
+    List<RangeHighlighter> highlightersToRemove = new ArrayList<>();
     for (RangeHighlighter highlighter : map.keySet()) {
       HighlightInfo info = map.get(highlighter);
       if (!info.editor.equals(editor)) continue;
@@ -286,15 +267,23 @@ public class HighlightManagerImpl extends HighlightManager {
     return done;
   }
 
+  boolean hasHideByEscapeHighlighters(@NotNull Editor editor) {
+    Map<RangeHighlighter, HighlightInfo> map = getHighlightInfoMap(editor, false);
+    if (map != null) {
+      for (HighlightInfo info : map.values()) {
+        if (!info.editor.equals(editor)) continue;
+        if ((info.flags & HIDE_BY_ESCAPE) != 0) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   private class MyAnActionListener implements AnActionListener {
     @Override
     public void beforeActionPerformed(AnAction action, final DataContext dataContext, AnActionEvent event) {
       requestHideHighlights(dataContext);
-    }
-
-
-    @Override
-    public void afterActionPerformed(final AnAction action, final DataContext dataContext, AnActionEvent event) {
     }
 
     @Override
@@ -302,7 +291,7 @@ public class HighlightManagerImpl extends HighlightManager {
       requestHideHighlights(dataContext);
     }
 
-    private void requestHideHighlights(final DataContext dataContext) {
+    private void requestHideHighlights(@NotNull DataContext dataContext) {
       final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       if (editor == null) return;
       hideHighlights(editor, HIDE_BY_ANY_KEY);
@@ -312,7 +301,7 @@ public class HighlightManagerImpl extends HighlightManager {
 
   private final Key<Map<RangeHighlighter, HighlightInfo>> HIGHLIGHT_INFO_MAP_KEY = Key.create("HIGHLIGHT_INFO_MAP_KEY");
 
-  static class HighlightInfo {
+  private static class HighlightInfo {
     final Editor editor;
     @HideFlags final int flags;
 
@@ -321,6 +310,4 @@ public class HighlightManagerImpl extends HighlightManager {
       this.flags = flags;
     }
   }
-
-
 }

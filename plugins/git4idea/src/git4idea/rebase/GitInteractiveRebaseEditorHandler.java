@@ -39,6 +39,7 @@ import static com.intellij.CommonBundle.getCancelButtonText;
 import static com.intellij.CommonBundle.getOkButtonText;
 import static com.intellij.openapi.ui.Messages.getQuestionIcon;
 import static com.intellij.openapi.util.text.StringUtil.splitByLinesKeepSeparators;
+import static com.intellij.openapi.util.text.StringUtil.trimLeading;
 import static git4idea.DialogManager.showOkCancelDialog;
 import static git4idea.rebase.GitRebaseEditorMain.ERROR_EXIT_CODE;
 
@@ -61,7 +62,8 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
    */
   protected boolean myRebaseEditorShown = false;
 
-  private boolean myEditorCancelled;
+  private boolean myCommitListCancelled;
+  private boolean myUnstructuredEditorCancelled;
 
   public GitInteractiveRebaseEditorHandler(@NotNull GitRebaseEditorService service, @NotNull Project project, @NotNull VirtualFile root) {
     myService = service;
@@ -74,8 +76,8 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
     ensureOpen();
     try {
       if (myRebaseEditorShown) {
-        myEditorCancelled = !handleUnstructuredEditor(path);
-        return 0;
+        myUnstructuredEditorCancelled = !handleUnstructuredEditor(path);
+        return myUnstructuredEditorCancelled ? ERROR_EXIT_CODE : 0;
       }
       else {
         setRebaseEditorShown();
@@ -84,7 +86,7 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
           return 0;
         }
         else {
-          myEditorCancelled = true;
+          myCommitListCancelled = true;
           return ERROR_EXIT_CODE;
         }
       }
@@ -98,7 +100,7 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
   protected boolean handleUnstructuredEditor(@NotNull String path) throws IOException {
     String encoding = GitConfigUtil.getCommitEncoding(myProject, myRoot);
     File file = new File(path);
-    String initialText = ignoreComments(FileUtil.loadFile(file, encoding));
+    String initialText = trimLeading(ignoreComments(FileUtil.loadFile(file, encoding)));
 
     String newText = showUnstructuredEditor(initialText);
     if (newText == null) {
@@ -203,7 +205,12 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
   }
 
   @Override
-  public boolean wasEditorCancelled() {
-    return myEditorCancelled;
+  public boolean wasCommitListEditorCancelled() {
+    return myCommitListCancelled;
+  }
+
+  @Override
+  public boolean wasUnstructuredEditorCancelled() {
+    return myUnstructuredEditorCancelled;
   }
 }

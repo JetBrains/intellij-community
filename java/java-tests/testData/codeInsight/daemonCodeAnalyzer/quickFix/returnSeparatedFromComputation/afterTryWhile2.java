@@ -1,11 +1,10 @@
 // "Move 'return' closer to computation of the value of 'r'" "true"
 class T {
     String f(String p) {
-        String r = null;
         try {
             while (true) {
                 String n = next();
-                if (n != null) return r;
+                if (n != null) return null;
                 if ("@".eqals(n)) {
                     String t = n.toLowerCase();
                     if (t.equals(p)) {

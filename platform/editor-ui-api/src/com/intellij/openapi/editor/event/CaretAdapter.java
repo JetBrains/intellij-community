@@ -16,7 +16,7 @@
 package com.intellij.openapi.editor.event;
 
 /**
- * @deprecated Use CaretListener
+ * @deprecated Use {@link CaretListener} instead
  */
 @Deprecated
 public abstract class CaretAdapter implements CaretListener {

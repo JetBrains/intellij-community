@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -27,6 +13,7 @@ import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.Query;
 import com.siyeh.HardcodedMethodConstants;
 import one.util.streamex.StreamEx;
@@ -42,6 +29,14 @@ import java.util.regex.Pattern;
 public class MethodUtils {
 
   private MethodUtils() {}
+
+  public static boolean isCopyConstructor(@Nullable PsiMethod constructor) {
+    if (constructor == null || !constructor.isConstructor()) {
+      return false;
+    }
+    final PsiParameter[] parameters = constructor.getParameterList().getParameters();
+    return parameters.length == 1 && constructor.getContainingClass() == PsiUtil.resolveClassInClassTypeOnly(parameters[0].getType());
+  }
 
   @Contract("null -> false")
   public static boolean isComparatorCompare(@Nullable PsiMethod method) {
@@ -330,14 +325,7 @@ public class MethodUtils {
       }
       else if (statement instanceof PsiExpressionStatement) {
         final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
-        final PsiExpression expression = expressionStatement.getExpression();
-        if (!(expression instanceof PsiMethodCallExpression)) {
-          return false;
-        }
-        final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
-        final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
-        if (!PsiKeyword.SUPER.equals(methodExpression.getText())) {
-          // constructor super call
+        if (!JavaPsiConstructorUtil.isSuperConstructorCall(expressionStatement.getExpression())) {
           return false;
         }
       }
@@ -393,13 +381,6 @@ public class MethodUtils {
     final PsiReturnStatement returnStatement = (PsiReturnStatement)lastStatement;
     final PsiExpression returnValue = returnStatement.getReturnValue();
     return returnValue instanceof PsiThisExpression;
-  }
-
-  @Contract("null -> false")
-  public static boolean isStringLength(@Nullable PsiMethod method) {
-    if (method == null || !method.getName().equals("length") || method.getParameterList().getParametersCount() != 0) return false;
-    PsiClass aClass = method.getContainingClass();
-    return aClass != null && CommonClassNames.JAVA_LANG_STRING.equals(aClass.getQualifiedName());
   }
 
   public static boolean haveEquivalentModifierLists(PsiMethod method, PsiMethod superMethod) {

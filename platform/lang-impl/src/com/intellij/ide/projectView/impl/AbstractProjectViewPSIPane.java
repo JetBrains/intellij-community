@@ -77,7 +77,12 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
 
   @Override
   public JComponent createComponent() {
-    if (myComponent != null) return myComponent;
+    if (myComponent != null) {
+      if (myTree != null) {
+        myTree.updateUI();
+      }
+      return myComponent;
+    }
 
     DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(null);
     DefaultTreeModel treeModel = new DefaultTreeModel(rootNode);
@@ -151,7 +156,6 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     myTree.setRootVisible(false);
     myTree.setShowsRootHandles(true);
     myTree.expandPath(new TreePath(myTree.getModel().getRoot()));
-    myTree.setSelectionPath(new TreePath(myTree.getModel().getRoot()));
 
     EditSourceOnDoubleClickHandler.install(myTree);
 

@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.util.Condition;
 import com.intellij.ui.popup.PopupFactoryImpl;
@@ -66,17 +67,31 @@ public class FlatSpeedSearchPopup extends PopupFactoryImpl.ActionGroupPopup {
     return action instanceof SpeedsearchAction;
   }
 
+  protected static <T> T getSpecificAction(Object value, @NotNull Class<T> clazz) {
+    if (value instanceof PopupFactoryImpl.ActionItem) {
+      AnAction action = ((PopupFactoryImpl.ActionItem)value).getAction();
+      if (clazz.isInstance(action)) {
+        return clazz.cast(action);
+      }
+      else if (action instanceof EmptyAction.MyDelegatingActionGroup) {
+        ActionGroup group = ((EmptyAction.MyDelegatingActionGroup)action).getDelegate();
+        return clazz.isInstance(group) ? clazz.cast(group) : null;
+      }
+    }
+    return null;
+  }
+
   public interface SpeedsearchAction {
   }
 
-  private static class MySpeedSearchAction extends EmptyAction.MyDelegatingAction implements SpeedsearchAction {
+  private static class MySpeedSearchAction extends EmptyAction.MyDelegatingAction implements SpeedsearchAction, DumbAware {
 
     public MySpeedSearchAction(@NotNull AnAction action) {
       super(action);
     }
   }
 
-  private static class MySpeedSearchActionGroup extends EmptyAction.MyDelegatingActionGroup implements SpeedsearchAction {
+  private static class MySpeedSearchActionGroup extends EmptyAction.MyDelegatingActionGroup implements SpeedsearchAction, DumbAware {
     public MySpeedSearchActionGroup(@NotNull ActionGroup actionGroup) {
       super(actionGroup);
     }

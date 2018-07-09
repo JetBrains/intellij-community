@@ -22,6 +22,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 public interface Dictionary {
+
+  default void getSuggestions(@NotNull String word, @NotNull Consumer<String> consumer) {}
+
   @NotNull
   String getName();
 

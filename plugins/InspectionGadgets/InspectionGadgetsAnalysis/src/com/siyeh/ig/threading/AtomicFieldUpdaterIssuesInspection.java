@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.threading;
 
 import com.intellij.psi.*;
@@ -148,18 +134,14 @@ public class AtomicFieldUpdaterIssuesInspection extends BaseInspection {
       else if (field.hasModifierProperty(PsiModifier.STATIC)) {
         registerError(lastArgument, InspectionGadgetsBundle.message("field.has.static.modifier.problem.descriptor", fieldName));
       }
-      else if (!field.hasModifierProperty(PsiModifier.PUBLIC)) {
-        if (ClassUtils.getContainingClass(expression) != field.getContainingClass()) {
-          if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
-            registerError(lastArgument, InspectionGadgetsBundle.message("private.field.not.accessible.problem.descriptor", fieldName));
-          }
+      else if (!field.hasModifierProperty(PsiModifier.PUBLIC) && ClassUtils.getContainingClass(expression) != field.getContainingClass()) {
+        if (field.hasModifierProperty(PsiModifier.PRIVATE)) {
+          registerError(lastArgument, InspectionGadgetsBundle.message("private.field.not.accessible.problem.descriptor", fieldName));
         }
         else if (!ClassUtils.inSamePackage(expression, field)) {
           if (field.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
             registerError(lastArgument, InspectionGadgetsBundle.message("package.local.field.not.accessible", fieldName));
           }
-        }
-        else {
           final PsiClass expressionClass = ClassUtils.getContainingClass(expression);
           final PsiClass fieldClass = field.getContainingClass();
           if (expressionClass != null && fieldClass != null && !expressionClass.isInheritor(fieldClass, true)) {

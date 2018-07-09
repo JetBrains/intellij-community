@@ -24,6 +24,20 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
     settings.isAutoCommitOnCherryPick = true
   }
 
+  fun `test cherry-pick from protected branch should add suffix by default`() {
+    branch("feature")
+    val commit = file("c.txt").create().addCommit("fix #1").hash()
+    git("update-ref refs/remotes/origin/master HEAD")
+    checkout("feature")
+
+    cherryPick(commit)
+
+    assertSuccessfulNotification("Cherry-pick successful", "${shortHash(commit)} fix #1")
+    assertLastMessage("fix #1\n\n(cherry picked from commit ${commit})")
+    changeListManager.waitScheduledChangelistDeletions()
+    changeListManager.assertOnlyDefaultChangelist()
+  }
+
   fun `test simple cherry-pick`() {
     branch("feature")
     val commit = file("c.txt").create().addCommit("fix #1").hash()
@@ -32,7 +46,8 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
     cherryPick(commit)
 
     assertSuccessfulNotification("Cherry-pick successful", "${shortHash(commit)} fix #1")
-    assertLastMessage("fix #1\n\n(cherry picked from commit ${commit})")
+    assertLastMessage("fix #1")
+    changeListManager.waitScheduledChangelistDeletions()
     changeListManager.assertOnlyDefaultChangelist()
   }
 
@@ -55,7 +70,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
     cherryPick(commit)
 
     `assert merge dialog was shown`()
-    changeListManager.assertChangeListExists("on_master\n\n(cherry picked from commit ${shortHash(commit)})")
+    changeListManager.assertChangeListExists("on_master")
     assertWarningNotification("Cherry-picked with conflicts", """
       ${shortHash(commit)} on_master
       Unresolved conflicts remain in the working tree. <a href='resolve'>Resolve them.<a/>
@@ -74,7 +89,8 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
     cherryPick(commit)
 
     `assert merge dialog was shown`()
-    changeListManager.assertChangeListExists("on_master\n\n(cherry picked from commit ${shortHash(commit)})")
+    `assert commit dialog was shown`()
+    changeListManager.assertChangeListExists("on_master")
     assertNoNotification()
   }
 
@@ -86,13 +102,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
 
     cherryPick(commit1, commit2)
 
-    assertLogMessages("""
-      fix #2
-
-      (cherry picked from commit $commit2)""", """
-      fix #1
-
-      (cherry picked from commit $commit1)""")
+    assertLogMessages("fix #2", "fix #1")
     assertSuccessfulNotification("Cherry-pick successful","""
       ${shortHash(commit1)} fix #1
       ${shortHash(commit2)} fix #2
@@ -134,13 +144,13 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
     cherryPick(commit1, commit2, commit3)
 
     `assert merge dialog was shown`()
-    assertLastMessage("fix #1\n\n(cherry picked from commit $commit1)")
+    assertLastMessage("fix #1")
   }
 
   // IDEA-73548
   fun `test nothing to commit`() {
     val commit = file("c.txt").create().addCommit("fix #1").hash()
-    checkoutNew("feature")
+    repo.checkoutNew("feature")
 
     cherryPick(commit)
 
@@ -151,7 +161,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
   // IDEA-73548
   fun `test several commits one of which have already been applied`() {
     file("common.txt").create("common content\n").addCommit("common file")
-    checkoutNew("feature")
+    repo.checkoutNew("feature")
     val commit1 = file("a.txt").create("initial\n").addCommit("fix #1").hash()
     val emptyCommit = file("common.txt").append("more to common\n").addCommit("to common").hash()
     val commit3 = file("a.txt").append("more\n").addCommit("fix #2").hash()
@@ -160,15 +170,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
 
     cherryPick(commit1, emptyCommit, commit3)
 
-    assertLogMessages(
-      """
-      fix #2
-
-      (cherry picked from commit $commit3)""",
-      """
-      fix #1
-
-      (cherry picked from commit $commit1)""")
+    assertLogMessages("fix #2", "fix #1")
     assertSuccessfulNotification("Cherry-picked 2 commits from 3","""
       ${shortHash(commit1)} fix #1
       ${shortHash(commit3)} fix #2

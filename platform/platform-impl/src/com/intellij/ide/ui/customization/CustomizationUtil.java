@@ -49,10 +49,12 @@ public class CustomizationUtil {
   public static ActionGroup correctActionGroup(final ActionGroup group,
                                                final CustomActionsSchema schema,
                                                final String defaultGroupName,
-                                               final String rootGroupName) {
-    if (!schema.isCorrectActionGroup(group, defaultGroupName)){
-       return group;
-     }
+                                               final String rootGroupName,
+                                               boolean force) {
+    if (!force && !schema.isCorrectActionGroup(group, defaultGroupName)) {
+      return group;
+    }
+
     String text = group.getTemplatePresentation().getText();
     final int mnemonic = group.getTemplatePresentation().getMnemonic();
     if (text != null) {
@@ -64,7 +66,7 @@ public class CustomizationUtil {
       }
     }
 
-    return new CustomisedActionGroup(text, group.isPopup(), group, schema, defaultGroupName, rootGroupName);
+    return new CustomisedActionGroup(text, group, schema, defaultGroupName, rootGroupName);
   }
 
 
@@ -112,12 +114,12 @@ public class CustomizationUtil {
     for (int i = 0; i < reorderedChildren.size(); i++) {
       if (reorderedChildren.get(i) instanceof ActionGroup) {
         final ActionGroup groupToCorrect = (ActionGroup)reorderedChildren.get(i);
-        final AnAction correctedAction = correctActionGroup(groupToCorrect, schema, "", rootGroupName);
+        final AnAction correctedAction = correctActionGroup(groupToCorrect, schema, "", rootGroupName, false);
         reorderedChildren.set(i, correctedAction);
       }
     }
 
-    return reorderedChildren.toArray(new AnAction[reorderedChildren.size()]);
+    return reorderedChildren.toArray(AnAction.EMPTY_ARRAY);
   }
 
   public static void optimizeSchema(final JTree tree, final CustomActionsSchema schema) {
@@ -272,13 +274,19 @@ public class CustomizationUtil {
       url.setComponent(userObject instanceof Pair ? ((Pair)userObject).first : userObject);
       result.add(url);
     }
-    return result.toArray(new ActionUrl[result.size()]);
+    return result.toArray(new ActionUrl[0]);
   }
 
   @NotNull
   public static MouseListener installPopupHandler(JComponent component, @NotNull String groupId, String place) {
-    ActionManager actionManager = ActionManager.getInstance();
-    ActionGroup group = (ActionGroup)actionManager.getAction(groupId);
-    return PopupHandler.installPopupHandler(component, group, place, actionManager);
+    return PopupHandler.installPopupHandler(
+      component, new ActionGroup() {
+        @NotNull
+        @Override
+        public AnAction[] getChildren(@Nullable AnActionEvent e) {
+          ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(groupId);
+          return group == null ? EMPTY_ARRAY : group.getChildren(e);
+        }
+      }, place, ActionManager.getInstance(), null);
   }
 }

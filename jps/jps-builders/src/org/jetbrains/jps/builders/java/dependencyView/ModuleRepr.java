@@ -15,7 +15,6 @@ import java.util.*;
 
 /**
  * @author Eugene Zhuravlev
- * Date: 30-Sep-17
  */
 public class ModuleRepr extends ClassFileRepr{
   private final int myVersion;

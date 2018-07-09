@@ -35,9 +35,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.FileIndentOptionsProvider;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
@@ -60,7 +58,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-import static com.intellij.psi.codeStyle.CodeStyleSettings.*;
+import static com.intellij.psi.codeStyle.CodeStyleSettings.MAX_RIGHT_MARGIN;
 
 public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   @SuppressWarnings("UnusedDeclaration")
@@ -87,7 +85,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private JPanel myMarkerOptionsPanel;
   private JPanel myAdditionalSettingsPanel;
   private JCheckBox myAutodetectIndentsBox;
-  private JCheckBox myShowDetectedIndentNotification;
   private JPanel myIndentsDetectionPanel;
   private CommaSeparatedIntegersField myVisualGuides;
   private JBLabel myVisualGuidesHint;
@@ -119,14 +116,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       }
     });
 
-    myAutodetectIndentsBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        boolean isDetectIndent = myAutodetectIndentsBox.isSelected();
-        myShowDetectedIndentNotification.setEnabled(isDetectIndent);
-      }
-    });
-
     myIndentsDetectionPanel
       .setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.code.style.general.indents.detection")));
 
@@ -151,11 +140,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myLineSeparatorHint.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
 
     myMarkersPanel.setBorder(JBUI.Borders.emptyLeft(30));
-  }
-
-  @Override
-  protected void somethingChanged() {
-    super.somethingChanged();
   }
 
 
@@ -197,9 +181,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     settings.setFormatterOnPattern(compilePattern(settings, myFormatterOnTagField, settings.FORMATTER_ON_TAG));
 
     settings.AUTODETECT_INDENTS = myAutodetectIndentsBox.isSelected();
-    if (myShowDetectedIndentNotification.isEnabled()) {
-      FileIndentOptionsProvider.setShowNotification(myShowDetectedIndentNotification.isSelected());
-    }
 
     for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
       option.apply(settings);
@@ -277,12 +258,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
     if (settings.AUTODETECT_INDENTS != myAutodetectIndentsBox.isSelected()) return true;
 
-    if (myShowDetectedIndentNotification.isEnabled()
-        && FileIndentOptionsProvider.isShowNotification() != myShowDetectedIndentNotification.isSelected())
-    {
-      return true;
-    }
-
     return false;
   }
 
@@ -321,8 +296,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     setFormatterTagControlsEnabled(settings.FORMATTER_TAGS_ENABLED);
 
     myAutodetectIndentsBox.setSelected(settings.AUTODETECT_INDENTS);
-    myShowDetectedIndentNotification.setEnabled(myAutodetectIndentsBox.isSelected());
-    myShowDetectedIndentNotification.setSelected(FileIndentOptionsProvider.isShowNotification());
 
     for (GeneralCodeStyleOptionsProvider option : myAdditionalOptions) {
       option.reset(settings);
@@ -345,10 +318,6 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     return EditorHighlighterFactory.getInstance().createEditorHighlighter(getFileType(), scheme, null);
   }
 
-  @Override
-  protected void prepareForReformat(final PsiFile psiFile) {
-  }
-
 
   @Override
   public Language getDefaultLanguage() {
@@ -357,7 +326,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
   private static void showError(final JTextField field, final String message) {
     BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
-      .createHtmlTextBalloonBuilder(message, MessageType.ERROR.getDefaultIcon(), MessageType.ERROR.getPopupBackground(), null);
+      .createHtmlTextBalloonBuilder(message, MessageType.ERROR, null);
     balloonBuilder.setFadeoutTime(1500);
     final Balloon balloon = balloonBuilder.createBalloon();
     final Rectangle rect = field.getBounds();

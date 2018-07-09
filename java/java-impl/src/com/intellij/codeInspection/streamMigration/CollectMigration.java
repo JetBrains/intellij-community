@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -48,9 +35,6 @@ import static com.siyeh.ig.psiutils.ControlFlowUtils.getInitializerUsageStatus;
 import static com.siyeh.ig.psiutils.Java8MigrationUtils.MapCheckCondition.fromConditional;
 import static com.siyeh.ig.psiutils.Java8MigrationUtils.extractLambdaCandidate;
 
-/**
- * @author Tagir Valeev
- */
 class CollectMigration extends BaseStreamApiMigration {
   private static final Logger LOG = Logger.getInstance(CollectMigration.class);
 
@@ -79,23 +63,23 @@ class CollectMigration extends BaseStreamApiMigration {
   @Override
   PsiElement migrate(@NotNull Project project, @NotNull PsiElement body, @NotNull TerminalBlock tb) {
     PsiStatement loopStatement = tb.getStreamSourceStatement();
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     CollectTerminal terminal = extractCollectTerminal(tb, null);
     if (terminal == null) return null;
-    String stream = tb.generate() + terminal.generateIntermediate() + terminal.generateTerminal();
+    CommentTracker ct = new CommentTracker();
+    String stream = tb.generate(ct) + terminal.generateIntermediate(ct) + terminal.generateTerminal(ct, false);
     PsiElement toReplace = terminal.getElementToReplace();
-    restoreComments(loopStatement, body);
     PsiElement result;
     if (toReplace != null) {
-      result = toReplace.replace(factory.createExpressionFromText(stream, toReplace));
-      removeLoop(loopStatement);
+      result = ct.replace(toReplace, stream);
+      terminal.cleanUp(ct);
+      removeLoop(ct, loopStatement);
     }
     else {
       PsiVariable variable = terminal.getTargetVariable();
       LOG.assertTrue(variable != null);
-      result = replaceInitializer(loopStatement, variable, variable.getInitializer(), stream, terminal.getStatus());
+      terminal.cleanUp(ct);
+      result = replaceInitializer(loopStatement, variable, variable.getInitializer(), stream, terminal.getStatus(), ct);
     }
-    terminal.cleanUp();
     return result;
   }
 
@@ -150,7 +134,7 @@ class CollectMigration extends BaseStreamApiMigration {
   static CollectTerminal includePostStatements(@NotNull CollectTerminal terminal, @Nullable PsiElement nextElement) {
     if (nextElement == null) return terminal;
     List<BiFunction<CollectTerminal, PsiElement, CollectTerminal>> wrappers =
-      Arrays.asList(SortingTerminal::tryWrap, ToArrayTerminal::tryWrap, NewListTerminal::tryWrap);
+      Arrays.asList(SortingTerminal::tryWrap, ToArrayTerminal::tryWrap, NewListTerminal::tryWrap, UnmodifiableTerminal::tryWrap);
     while (true) {
       CollectTerminal wrapped = null;
       for (BiFunction<CollectTerminal, PsiElement, CollectTerminal> wrapper : wrappers) {
@@ -193,7 +177,7 @@ class CollectMigration extends BaseStreamApiMigration {
     @Nullable
     PsiLocalVariable getTargetVariable() { return myTargetVariable; }
 
-    abstract String generateIntermediate();
+    abstract String generateIntermediate(CommentTracker ct);
 
     StreamEx<? extends PsiExpression> targetReferences() {
       List<PsiElement> usedElements = usedElements().toList();
@@ -215,7 +199,13 @@ class CollectMigration extends BaseStreamApiMigration {
       return INTERMEDIATE_STEPS.get(aClass.getQualifiedName());
     }
 
-    abstract String generateTerminal();
+    /**
+     * Generate terminal stream call starting with '.' (e.g. {@code ".collect(java.util.stream.Collectors.toList())"}
+     * @param ct comment tracker to use
+     * @param strictMode if true, toList/toSet collectors will not be used to replace ArrayList/HashSet
+     * @return generated call
+     */
+    abstract String generateTerminal(CommentTracker ct, boolean strictMode);
 
     StreamEx<PsiElement> usedElements() {
       return StreamEx.ofNullable(myLoop);
@@ -227,10 +217,10 @@ class CollectMigration extends BaseStreamApiMigration {
 
     public InitializerUsageStatus getStatus() { return myStatus; }
 
-    void cleanUp() {}
+    void cleanUp(CommentTracker ct) {}
 
     boolean isTrivial() {
-      return generateIntermediate().isEmpty();
+      return generateIntermediate(new CommentTracker()).isEmpty();
     }
   }
 
@@ -272,20 +262,20 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     @Override
-    public String generateIntermediate() {
+    public String generateIntermediate(CommentTracker ct) {
       PsiType addedType = getAddedElementType(myAddCall);
       PsiExpression mapping = getMapping();
       if (addedType == null) addedType = mapping.getType();
-      return StreamRefactoringUtil.generateMapOperation(myElement, addedType, mapping);
+      return StreamRefactoringUtil.generateMapOperation(myElement, addedType, ct.markUnchanged(mapping));
     }
 
-    public String generateCollector() {
-      return getCollectionCollector(myInitializer, myTargetType);
+    String generateCollector(CommentTracker ct, boolean strictMode) {
+      return getCollectionCollector(ct, myInitializer, myTargetType, strictMode);
     }
 
     @Override
-    public String generateTerminal() {
-      return ".collect(" + generateCollector() + ")";
+    public String generateTerminal(CommentTracker ct, boolean strictMode) {
+      return ".collect(" + generateCollector(ct, strictMode) + ")";
     }
 
     @Nullable
@@ -300,11 +290,7 @@ class CollectMigration extends BaseStreamApiMigration {
         AddingTerminal terminal = new AddingTerminal(variable, tb.getVariable(), call, tb.getStreamSourceStatement(), status);
         if (count == null) return terminal;
         // like "list.add(x); if(list.size() >= limit) break;"
-        if (!(count instanceof PsiMethodCallExpression)) return null;
-        PsiMethodCallExpression sizeCall = (PsiMethodCallExpression)count;
-        PsiExpression sizeQualifier = sizeCall.getMethodExpression().getQualifierExpression();
-        if (isCallOf(sizeCall, CommonClassNames.JAVA_UTIL_COLLECTION, "size") &&
-            EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(sizeQualifier, qualifierExpression) &&
+        if (CollectionUtils.isCollectionOrMapSize(count, qualifierExpression) &&
             InheritanceUtil.isInheritor(PsiUtil.resolveClassInClassTypeOnly(variable.getType()), CommonClassNames.JAVA_UTIL_LIST)) {
           return terminal;
         }
@@ -314,18 +300,18 @@ class CollectMigration extends BaseStreamApiMigration {
   }
 
   @NotNull
-  private static String getCollectionCollector(PsiExpression initializer, PsiType type) {
+  private static String getCollectionCollector(CommentTracker ct, PsiExpression initializer, PsiType type, boolean strictMode) {
     String collector;
     PsiType initializerType = initializer.getType();
     PsiClassType rawType = initializerType instanceof PsiClassType ? ((PsiClassType)initializerType).rawType() : null;
     PsiClassType rawVarType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : null;
-    if (rawType != null && rawVarType != null &&
+    if (!strictMode && rawType != null && rawVarType != null &&
         rawType.equalsToText(CommonClassNames.JAVA_UTIL_ARRAY_LIST) &&
         (rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_LIST) || rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_COLLECTION)) &&
         !ConstructionUtils.isCustomizedEmptyCollectionInitializer(initializer)) {
       collector = "toList()";
     }
-    else if (rawType != null && rawVarType != null &&
+    else if (!strictMode && rawType != null && rawVarType != null &&
              rawType.equalsToText(CommonClassNames.JAVA_UTIL_HASH_SET) &&
              (rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_SET) || rawVarType.equalsToText(CommonClassNames.JAVA_UTIL_COLLECTION)) &&
              !ConstructionUtils.isCustomizedEmptyCollectionInitializer(initializer)) {
@@ -333,7 +319,7 @@ class CollectMigration extends BaseStreamApiMigration {
     }
     else {
       PsiExpression copy = JavaPsiFacade.getElementFactory(initializer.getProject())
-        .createExpressionFromText(initializer.getText(), initializer);
+        .createExpressionFromText(ct.text(initializer), initializer);
       if (copy instanceof PsiNewExpression) {
         PsiExpressionList argumentList = ((PsiNewExpression)copy).getArgumentList();
         if (argumentList != null) {
@@ -361,7 +347,7 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     @Override
-    public String generateIntermediate() {
+    public String generateIntermediate(CommentTracker ct) {
       PsiType[] typeParameters = myAddAllCall.getMethodExpression().getTypeParameters();
       String generic = "";
       if(typeParameters.length == 1) {
@@ -370,7 +356,7 @@ class CollectMigration extends BaseStreamApiMigration {
       String method = MethodCallUtils.isVarArgCall(myAddAllCall) ? CommonClassNames.JAVA_UTIL_STREAM_STREAM + "." + generic + "of"
                                                                  : CommonClassNames.JAVA_UTIL_ARRAYS + "." + generic + "stream";
       String lambda = myElement.getName() + "->" + method + "(" +
-                      StreamEx.of(myAddAllCall.getArgumentList().getExpressions()).skip(1).map(PsiExpression::getText).joining(",") + ")";
+                      StreamEx.of(myAddAllCall.getArgumentList().getExpressions()).skip(1).map(ct::text).joining(",") + ")";
       return myElement.getType() instanceof PsiPrimitiveType ?
              ".mapToObj(" + lambda + ").flatMap("+ CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION+".identity())" :
              ".flatMap(" + lambda + ")";
@@ -416,27 +402,27 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     @Override
-    String generateIntermediate() {
+    String generateIntermediate(CommentTracker ct) {
       return myDownstream.myElement.getType() instanceof PsiPrimitiveType ? ".boxed()" : "";
     }
 
     @Override
-    public String generateTerminal() {
-      String downstreamCollector = myDownstream.generateCollector();
+    public String generateTerminal(CommentTracker ct, boolean strictMode) {
+      String downstreamCollector = myDownstream.generateCollector(ct, strictMode);
       PsiVariable elementVariable = myDownstream.getElementVariable();
       if (!ExpressionUtils.isReferenceTo(myDownstream.getMapping(), myDownstream.getElementVariable())) {
         downstreamCollector = CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + ".mapping(" +
-                              myDownstream.getElementVariable().getName() + "->" + myDownstream.getMapping().getText() + "," +
+                              myDownstream.getElementVariable().getName() + "->" + ct.text(myDownstream.getMapping()) + "," +
                               downstreamCollector + ")";
       }
       StringBuilder builder = new StringBuilder();
       builder.append(".collect(" + CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + ".groupingBy(")
-        .append(LambdaUtil.createLambda(elementVariable, myKeyExpression));
+        .append(ct.lambdaText(elementVariable, myKeyExpression));
       PsiLocalVariable variable = Objects.requireNonNull(getTargetVariable());
       PsiExpression initializer = variable.getInitializer();
       LOG.assertTrue(initializer != null);
       if (!isHashMap(variable)) {
-        builder.append(",()->").append(initializer.getText()).append(",").append(downstreamCollector);
+        builder.append(",()->").append(ct.text(initializer)).append(",").append(downstreamCollector);
       }
       else if (!(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + "." + "toList()").equals(downstreamCollector)) {
         builder.append(",").append(downstreamCollector);
@@ -592,12 +578,16 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     @Override
-    String generateIntermediate() {
+    String generateIntermediate(CommentTracker ct) {
       return myElementVariable.getType() instanceof PsiPrimitiveType ? ".boxed()" : "";
     }
 
     @Override
-    public String generateTerminal() {
+    public String generateTerminal(CommentTracker ct, boolean strictMode) {
+      return generateTerminal(ct, "toMap");
+    }
+
+    public String generateTerminal(CommentTracker ct, final String collectorName) {
       PsiExpression[] args = myMapUpdateCall.getArgumentList().getExpressions();
       LOG.assertTrue(args.length >= 2);
       String methodName = myMapUpdateCall.getMethodExpression().getReferenceName();
@@ -616,20 +606,20 @@ class CollectMigration extends BaseStreamApiMigration {
           break;
         case "merge":
           LOG.assertTrue(args.length == 3);
-          merger = args[2].getText();
+          merger = ct.text(args[2]);
           break;
         default:
           return null;
       }
-      StringBuilder collector = new StringBuilder(".collect(" + CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + ".toMap(");
-      collector.append(LambdaUtil.createLambda(myElementVariable, args[0])).append(',')
-        .append(LambdaUtil.createLambda(myElementVariable, args[1])).append(',')
+      StringBuilder collector = new StringBuilder(".collect(" + CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + "." + collectorName + "(");
+      collector.append(ct.lambdaText(myElementVariable, args[0])).append(',')
+        .append(ct.lambdaText(myElementVariable, args[1])).append(',')
         .append(merger);
       PsiLocalVariable variable = Objects.requireNonNull(getTargetVariable());
       PsiExpression initializer = variable.getInitializer();
       LOG.assertTrue(initializer != null);
-      if (!isHashMap(variable)) {
-        collector.append(",()->").append(initializer.getText());
+      if ("toMap".equals(collectorName) && !isHashMap(variable)) {
+        collector.append(",()->").append(ct.text(initializer));
       }
       collector.append("))");
       return collector.toString();
@@ -665,14 +655,14 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     @Override
-    public String generateIntermediate() {
-      return myDownstream.generateIntermediate() + ".sorted("
-             + (myComparator == null ? "" : myComparator.getText()) + ")";
+    public String generateIntermediate(CommentTracker ct) {
+      return myDownstream.generateIntermediate(ct) + ".sorted("
+             + (myComparator == null ? "" : ct.text(myComparator)) + ")";
     }
 
     @Override
-    public String generateTerminal() {
-      return myDownstream.generateTerminal();
+    public String generateTerminal(CommentTracker ct, boolean strictMode) {
+      return myDownstream.generateTerminal(ct, strictMode);
     }
 
     @Override
@@ -681,9 +671,9 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     @Override
-    public void cleanUp() {
-      myDownstream.cleanUp();
-      myStatement.delete();
+    public void cleanUp(CommentTracker ct) {
+      myDownstream.cleanUp(ct);
+      ct.delete(myStatement);
     }
 
     @Override
@@ -760,17 +750,17 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     @Override
-    public String generateIntermediate() {
-      return myUpstream.generateIntermediate() + myIntermediate;
+    public String generateIntermediate(CommentTracker ct) {
+      return myUpstream.generateIntermediate(ct) + myIntermediate;
     }
 
     @Override
-    public void cleanUp() {
+    public void cleanUp(CommentTracker ct) {
       PsiLocalVariable variable = myUpstream.getTargetVariable();
       if (variable != null && myUpstream.getStatus() != ControlFlowUtils.InitializerUsageStatus.AT_WANTED_PLACE) {
-        variable.delete();
+        ct.delete(variable);
       }
-      myUpstream.cleanUp();
+      myUpstream.cleanUp(ct);
     }
   }
 
@@ -792,7 +782,7 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     @Override
-    public String generateTerminal() {
+    public String generateTerminal(CommentTracker ct, boolean strictMode) {
       return ".toArray(" + mySupplier + ")";
     }
 
@@ -825,13 +815,13 @@ class CollectMigration extends BaseStreamApiMigration {
         return null;
       }
       PsiLocalVariable var = tryCast(PsiUtil.skipParenthesizedExprUp(toArrayCandidate.getParent()), PsiLocalVariable.class);
-      String supplier = extractSupplier(toArrayCandidate, terminal);
+      String supplier = extractSupplier(toArrayCandidate);
       if (supplier == null) return null;
       return new ToArrayTerminal(terminal, var, intermediateSteps, toArrayCandidate, supplier);
     }
 
     @Nullable
-    static String extractSupplier(PsiMethodCallExpression toArrayCandidate, CollectTerminal terminal) {
+    static String extractSupplier(PsiMethodCallExpression toArrayCandidate) {
       // collection.toArray() or collection.toArray(new Type[0]) or collection.toArray(new Type[collection.size()]);
       PsiExpression[] args = toArrayCandidate.getArgumentList().getExpressions();
       if (args.length == 0) return "";
@@ -842,13 +832,12 @@ class CollectMigration extends BaseStreamApiMigration {
       String name = arrayType.getCanonicalText();
       PsiExpression[] dimensions = newArray.getArrayDimensions();
       if (dimensions.length != 1) return null;
-      if (ExpressionUtils.isZero(dimensions[0])) return name+"::new";
-      if (!(dimensions[0] instanceof PsiMethodCallExpression)) return null;
-      PsiMethodCallExpression maybeSizeCall = (PsiMethodCallExpression)dimensions[0];
-      if (!isCallOf(maybeSizeCall, CommonClassNames.JAVA_UTIL_COLLECTION, "size")) return null;
-      PsiExpression sizeQualifier = maybeSizeCall.getMethodExpression().getQualifierExpression();
-      if (!terminal.isTargetReference(sizeQualifier)) return null;
-      return name+"::new";
+      PsiExpression qualifier = toArrayCandidate.getMethodExpression().getQualifierExpression();
+      if (ExpressionUtils.isZero(dimensions[0]) ||
+          (qualifier != null && CollectionUtils.isCollectionOrMapSize(dimensions[0], qualifier))) {
+        return name + "::new";
+      }
+      return null;
     }
   }
 
@@ -865,8 +854,8 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     @Override
-    public String generateTerminal() {
-      return ".collect(" + getCollectionCollector(myCreateExpression, myResultType) + ")";
+    public String generateTerminal(CommentTracker ct, boolean strictMode) {
+      return ".collect(" + getCollectionCollector(ct, ct.markUnchanged(myCreateExpression), myResultType, strictMode) + ")";
     }
 
     @Override
@@ -881,6 +870,111 @@ class CollectMigration extends BaseStreamApiMigration {
       String intermediateSteps = terminal.getIntermediateStepsFromCollection();
       if (intermediateSteps == null) return null;
 
+      WrapperCandidate candidate = WrapperCandidate.tryExtract(terminal, element);
+      if (candidate == null) return null;
+      if (!(candidate.myCandidate instanceof PsiNewExpression)) return null;
+      if (!InheritanceUtil.isInheritor(candidate.myType, CommonClassNames.JAVA_UTIL_COLLECTION)) return null;
+      PsiNewExpression newExpression = (PsiNewExpression)candidate.myCandidate;
+      PsiExpressionList argumentList = newExpression.getArgumentList();
+      if (argumentList == null) return null;
+      PsiExpression[] args = argumentList.getExpressions();
+      if (args.length != 1 || !terminal.isTargetReference(args[0])) return null;
+      return new NewListTerminal(terminal, candidate.myVar, intermediateSteps, newExpression, candidate.myType);
+    }
+  }
+
+  static class UnmodifiableTerminal extends RecreateTerminal {
+    private static final Map<String, String> TYPE_TO_UNMODIFIABLE_WRAPPER = EntryStream.of(
+      CommonClassNames.JAVA_UTIL_ARRAY_LIST, "toUnmodifiableList",
+      "java.util.LinkedList", "toUnmodifiableList",
+      CommonClassNames.JAVA_UTIL_HASH_SET, "toUnmodifiableSet",
+      CommonClassNames.JAVA_UTIL_HASH_MAP, "toUnmodifiableMap"
+    ).toMap();
+
+    private static final CallMatcher UNMODIFIABLE_WRAPPER = CallMatcher.staticCall(
+      CommonClassNames.JAVA_UTIL_COLLECTIONS,
+      "unmodifiableList", "unmodifiableSet", "unmodifiableCollection", "unmodifiableMap").parameterCount(1);
+
+    private static final CallMatcher STREAM_COLLECT =
+      CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "collect").parameterTypes("java.util.stream.Collector");
+    private static final CallMatcher TO_LIST =
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toList").parameterCount(0);
+    private static final CallMatcher TO_SET =
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toSet").parameterCount(0);
+
+    private final String myUnmodifiableCollector;
+
+    UnmodifiableTerminal(CollectTerminal upstream,
+                         PsiLocalVariable variable,
+                         PsiMethodCallExpression unmodifiableExpression,
+                         String unmodifiableCollector) {
+      super(upstream, variable, "", unmodifiableExpression);
+      myUnmodifiableCollector = unmodifiableCollector;
+    }
+
+    @Override
+    public String generateTerminal(CommentTracker ct, boolean strictMode) {
+      if (myUpstream instanceof ToMapTerminal) {
+        return ((ToMapTerminal)myUpstream).generateTerminal(ct, myUnmodifiableCollector);
+      }
+      return ".collect(" + CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS + "." + myUnmodifiableCollector + "())";
+    }
+
+    @Override
+    StreamEx<String> fusedElements() {
+      String reference = ((PsiMethodCallExpression)myCreateExpression).getMethodExpression().getReferenceName();
+      return myUpstream.fusedElements().append(reference);
+    }
+
+    @Nullable
+    public static UnmodifiableTerminal tryWrap(CollectTerminal terminal, PsiElement element) {
+      if (PsiUtil.getLanguageLevel(element).isLessThan(LanguageLevel.JDK_10)) return null;
+      if (terminal.getStatus() == ControlFlowUtils.InitializerUsageStatus.UNKNOWN) return null;
+
+      WrapperCandidate candidate = WrapperCandidate.tryExtract(terminal, element);
+      if (candidate == null) return null;
+      if (!(candidate.myCandidate instanceof PsiMethodCallExpression)) return null;
+      PsiMethodCallExpression wrapCall = (PsiMethodCallExpression)candidate.myCandidate;
+      if (!UNMODIFIABLE_WRAPPER.test(wrapCall)) return null;
+      PsiExpression arg = wrapCall.getArgumentList().getExpressions()[0];
+      if (!terminal.isTargetReference(arg)) return null;
+      if (terminal.getTargetVariable() != null) {
+        arg = terminal.getTargetVariable().getInitializer();
+      }
+      if (arg == null) return null;
+      PsiClassType targetType = tryCast(arg.getType(), PsiClassType.class);
+      if (targetType == null) return null;
+      String collector = TYPE_TO_UNMODIFIABLE_WRAPPER.get(targetType.rawType().getCanonicalText());
+      if (collector == null) {
+        if (!(arg instanceof PsiMethodCallExpression)) return null;
+        PsiMethodCallExpression argCall = (PsiMethodCallExpression)arg;
+        if (!STREAM_COLLECT.test(argCall)) return null;
+        PsiExpression previousCollector = argCall.getArgumentList().getExpressions()[0];
+        if (TO_LIST.matches(previousCollector)) {
+          collector = "toUnmodifiableList";
+        } else if (TO_SET.matches(previousCollector)) {
+          collector = "toUnmodifiableSet";
+        } else {
+          return null;
+        }
+      }
+      return new UnmodifiableTerminal(terminal, candidate.myVar, wrapCall, collector);
+    }
+  }
+
+  private static class WrapperCandidate {
+    private final PsiExpression myCandidate;
+    private final PsiType myType;
+    private final PsiLocalVariable myVar;
+
+    public WrapperCandidate(PsiExpression candidate, PsiType type, PsiLocalVariable var) {
+      myCandidate = candidate;
+      myType = type;
+      myVar = var;
+    }
+
+    @Nullable
+    static WrapperCandidate tryExtract(CollectTerminal terminal, PsiElement element) {
       PsiExpression candidate;
       PsiType type;
       PsiLocalVariable var = null;
@@ -908,14 +1002,7 @@ class CollectMigration extends BaseStreamApiMigration {
           return null;
         }
       }
-      if (!(candidate instanceof PsiNewExpression)) return null;
-      if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_UTIL_COLLECTION)) return null;
-      PsiNewExpression newExpression = (PsiNewExpression)candidate;
-      PsiExpressionList argumentList = newExpression.getArgumentList();
-      if (argumentList == null) return null;
-      PsiExpression[] args = argumentList.getExpressions();
-      if (args.length != 1 || !terminal.isTargetReference(args[0])) return null;
-      return new NewListTerminal(terminal, var, intermediateSteps, newExpression, type);
+      return new WrapperCandidate(candidate, type, var);
     }
   }
 }

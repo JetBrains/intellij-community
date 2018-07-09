@@ -132,7 +132,7 @@ public class TestCaseWithNoTestMethodsInspection extends BaseInspection {
 
       if (!nestedTestFrameworks.isEmpty()) {
         for (PsiClass innerClass : aClass.getInnerClasses()) {
-          if (innerClass.hasModifierProperty(PsiModifier.STATIC) &&
+          if (!innerClass.hasModifierProperty(PsiModifier.STATIC) &&
               hasTestMethods(innerClass, nestedTestFrameworks, nestedTestFrameworks, false)) {
             return true;
           }

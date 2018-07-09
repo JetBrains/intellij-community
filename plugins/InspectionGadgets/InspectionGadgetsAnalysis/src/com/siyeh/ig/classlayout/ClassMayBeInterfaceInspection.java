@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,7 +117,11 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
           continue;
         }
         PsiUtil.setModifierProperty(method, PsiModifier.PUBLIC, false);
-        if (method.hasModifierProperty(PsiModifier.STATIC) || method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+        if (method.hasModifierProperty(PsiModifier.STATIC)) {
+          continue;
+        }
+        else if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          PsiUtil.setModifierProperty(method, PsiModifier.ABSTRACT, false); // redundant modifier
           continue;
         }
         PsiUtil.setModifierProperty(method, PsiModifier.DEFAULT, true);
@@ -197,7 +201,7 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
     return new ClassMayBeInterfaceVisitor();
   }
 
-  private static boolean isEmptyConstructor(@NotNull PsiMethod method) {
+  static boolean isEmptyConstructor(@NotNull PsiMethod method) {
     return method.isConstructor() && MethodUtils.isTrivial(method, false);
   }
 
@@ -261,11 +265,16 @@ public class ClassMayBeInterfaceInspection extends BaseInspection {
         if (isEmptyConstructor(method)) {
           continue;
         }
-        if (!method.hasModifierProperty(PsiModifier.ABSTRACT) &&
-            (!reportClassesWithNonAbstractMethods || !PsiUtil.isLanguageLevel8OrHigher(aClass))) {
-          return false;
+        if (!method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+          if (MethodUtils.isToString(method) || MethodUtils.isHashCode(method) || MethodUtils.isEquals(method)) {
+            // can't have default methods overriding Object methods.
+            return false;
+          }
+          if (!reportClassesWithNonAbstractMethods || !PsiUtil.isLanguageLevel8OrHigher(aClass)) {
+            return false;
+          }
         }
-        else if (!method.hasModifierProperty(PsiModifier.PUBLIC) || method.hasModifierProperty(PsiModifier.FINAL)) {
+        if (!method.hasModifierProperty(PsiModifier.PUBLIC) || method.hasModifierProperty(PsiModifier.FINAL)) {
           return false;
         }
       }
