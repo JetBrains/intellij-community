@@ -230,6 +230,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
               });
               myConsoleView = (SMTRunnerConsoleView)descriptor.getExecutionConsole();
               myTestProxy = myConsoleView.getResultsViewer().getTestsRootNode();
+              Disposer.register(myFixture.getProject(), myTestProxy);
               myConsoleView.getResultsViewer().addEventsListener(new TestResultsViewer.SMEventsAdapter() {
                 @Override
                 public void onTestingFinished(TestResultsViewer sender) {
