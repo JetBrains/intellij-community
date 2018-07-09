@@ -28,7 +28,6 @@ import sun.awt.SunToolkit;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.awt.event.InvocationEvent;
 import java.util.Objects;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +40,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class PotemkinProgress extends ProgressWindow implements PingProgress {
   private long myLastUiUpdate = System.currentTimeMillis();
-  private final LinkedBlockingQueue<AWTEvent> myEventQueue = new LinkedBlockingQueue<>();
+  private final LinkedBlockingQueue<InputEvent> myEventQueue = new LinkedBlockingQueue<>();
 
   public PotemkinProgress(@NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent, @Nullable String cancelText) {
     super(cancelText != null,false, project, parentComponent, cancelText);
@@ -52,19 +51,12 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
 
   private void startStealingInputEvents() {
     IdeEventQueue.getInstance().addPostEventListener(event -> {
-      if (event instanceof InputEvent || isUrgentInvocationEvent(event)) {
-        myEventQueue.offer(event);
+      if (event instanceof InputEvent) {
+        myEventQueue.offer((InputEvent)event);
         return true;
       }
       return false;
     }, this);
-  }
-
-  private static boolean isUrgentInvocationEvent(AWTEvent event) {
-    // LWCToolkit does invokeAndWait which blocks native event processing until finished. The OS considers that blockage to be
-    // app freeze, stops rendering UI and shows beach-ball cursor. We want the UI to act (almost) normally in write-action progresses,
-    // so we let these specific events to be dispatched, hoping they wouldn't access project/code model.
-    return event instanceof InvocationEvent && event.toString().contains("sun.lwawt.macosx.LWCToolkit");
   }
 
   @NotNull
@@ -88,14 +80,10 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
     SunToolkit.flushPendingEvents();
     try {
       while (true) {
-        AWTEvent event = myEventQueue.poll(timeoutMs, TimeUnit.MILLISECONDS);
+        InputEvent event = myEventQueue.poll(timeoutMs, TimeUnit.MILLISECONDS);
         if (event == null) return;
 
-        if (event instanceof InputEvent) {
-          dispatchInputEvent((InputEvent)event);
-        } else {
-          ((InvocationEvent) event).dispatch();
-        }
+        dispatchInputEvent(event);
       }
     }
     catch (InterruptedException e) {
