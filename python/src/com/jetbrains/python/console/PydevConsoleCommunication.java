@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
 import static com.jetbrains.python.console.PydevConsoleCommunicationUtil.*;
 
 /**
- * Communication with Xml-rpc with the client.
+ * Communication with Python console backend using Thrift services.
  *
  * @author Fabio
  */
