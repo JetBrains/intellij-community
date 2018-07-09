@@ -1,9 +1,9 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
+import com.google.common.collect.Iterables;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -11,7 +11,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
 
@@ -113,18 +116,7 @@ public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
     if (o == null || getClass() != o.getClass()) return false;
 
     final RecursiveFileHolder that = (RecursiveFileHolder)o;
-    if (myMap.size() != that.myMap.size()) return false;
-    final Iterator<Map.Entry<VirtualFile, T>> it1 = myMap.entrySet().iterator();
-    final Iterator<Map.Entry<VirtualFile, T>> it2 = that.myMap.entrySet().iterator();
-
-    while (it1.hasNext()) {
-      if (! it2.hasNext()) return false;
-      Map.Entry<VirtualFile, T> next1 = it1.next();
-      Map.Entry<VirtualFile, T> next2 = it2.next();
-      if (! Comparing.equal(next1.getKey(), next2.getKey()) || ! Comparing.equal(next1.getValue(), next2.getValue())) return false;
-    }
-
-    return true;
+    return Iterables.elementsEqual(myMap.entrySet(), that.myMap.entrySet());
   }
 
   public int hashCode() {
