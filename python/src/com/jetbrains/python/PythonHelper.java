@@ -42,7 +42,7 @@ public enum PythonHelper implements HelperPackage {
 
   COVERAGEPY("coveragepy", ""),
   COVERAGE("coverage_runner", "run_coverage"),
-  DEBUGGER("pydev", "pydevd"),
+  DEBUGGER("pydev", "pydevd", HelperDependency.THRIFTPY),
 
   ATTACH_DEBUGGER("pydev/pydevd_attach_to_process/attach_pydevd.py"),
 
