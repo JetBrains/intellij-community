@@ -15,7 +15,11 @@
  */
 package com.intellij.testFramework.propertyBased;
 
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.IntentionActionDelegate;
+import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryException;
@@ -31,7 +35,9 @@ import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
@@ -284,6 +290,38 @@ public class MadTestingUtil {
 
   public static boolean containsErrorElements(FileViewProvider viewProvider) {
     return ContainerUtil.exists(viewProvider.getAllFiles(), file -> SyntaxTraverser.psiTraverser(file).filter(PsiErrorElement.class).isNotEmpty());
+  }
+
+  @NotNull
+  public static String getPositionDescription(int offset, Document document) {
+    int line = document.getLineNumber(offset);
+    int start = document.getLineStartOffset(line);
+    int end = document.getLineEndOffset(line);
+    int column = offset - start;
+    String prefix = document.getText(new TextRange(start, offset)).trim();
+    if (prefix.length() > 30) {
+      prefix = "..." + prefix.substring(prefix.length() - 30);
+    }
+    String suffix = StringUtil.shortenTextWithEllipsis(document.getText(new TextRange(offset, end)), 30, 0);
+    String text = prefix + "|" + suffix;
+    return offset + "(" + line + ":" + column + ") [" + text + "]";
+  }
+
+  @NotNull
+  static String getIntentionDescription(IntentionAction result) {
+    IntentionAction actual = result;
+    while(actual instanceof IntentionActionDelegate) {
+      actual = ((IntentionActionDelegate)actual).getDelegate();
+    }
+    String text = actual.getText();
+    String family = actual.getFamilyName();
+    Class<?> aClass = actual.getClass();
+    if (actual instanceof QuickFixWrapper) {
+      LocalQuickFix fix = ((QuickFixWrapper)actual).getFix();
+      family = fix.getFamilyName();
+      aClass = fix.getClass();
+    }
+    return "'" + text + "' (family: '" + family + "'; class: '" + aClass.getName() + "')";
   }
 
   private static class FileGenerator implements Function<DataStructure, File> {

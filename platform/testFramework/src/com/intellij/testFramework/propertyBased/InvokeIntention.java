@@ -61,7 +61,8 @@ public class InvokeIntention extends ActionOnFile {
 
   @Override
   public void performCommand(@NotNull Environment env) {
-    int offset = generateDocOffset(env, "Go to offset %s and run daemon");
+    int offset = generateDocOffset(env, null);
+    env.logMessage("Go to " + MadTestingUtil.getPositionDescription(offset, getDocument()));
 
     doInvokeIntention(offset, env);
   }
@@ -74,7 +75,7 @@ public class InvokeIntention extends ActionOnFile {
     }
 
     IntentionAction result = env.generateValue(Generator.sampledFrom(actions).noShrink(), null);
-    env.logMessage("Invoke intention '" + result.getText() + "'");
+    env.logMessage("Invoke intention " + MadTestingUtil.getIntentionDescription(result));
     return result;
   }
 
@@ -185,7 +186,7 @@ public class InvokeIntention extends ActionOnFile {
     String text = elementToWrap.getText();
     String prefix = myPolicy.getWrapPrefix();
     String suffix = myPolicy.getWrapSuffix();
-    env.logMessage("Wrap '" + StringUtil.shortenTextWithEllipsis(text.replace('\n', ' '), 50, 10) +
+    env.logMessage("Wrap '" + StringUtil.shortenTextWithEllipsis(text.replaceAll("\\s+", " "), 50, 10) +
                    "' with '" + prefix + "..." + suffix + "' and rerun daemon");
     TextRange range = elementToWrap.getTextRange();
     PsiFile file = currentElement.getContainingFile();
