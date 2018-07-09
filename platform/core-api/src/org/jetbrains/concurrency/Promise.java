@@ -143,9 +143,4 @@ public interface Promise<T> {
   default boolean isSucceeded() {
     return getState() == State.SUCCEEDED;
   }
-
-  interface CompletablePromise<T> extends Promise<T> {
-    void setResult(@Nullable T t);
-    boolean setError(@NotNull Throwable error);
-  }
 }

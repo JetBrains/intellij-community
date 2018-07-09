@@ -7,7 +7,7 @@ import org.jetbrains.concurrency.Promise.State
 import java.util.concurrent.*
 import java.util.function.Consumer
 
-open class AsyncPromise<T> : CancellablePromise<T>, Promise.CompletablePromise<T> {
+open class AsyncPromise<T> : CancellablePromise<T>, InternalPromiseUtil.CompletablePromise<T> {
   private val f: CompletableFuture<T>
 
   constructor() {

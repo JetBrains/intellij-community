@@ -41,9 +41,9 @@ class DonePromise<T> extends InternalPromiseUtil.BasePromise<T> {
       //noinspection unchecked
       ((InternalPromiseUtil.PromiseImpl<T>)child)._setValue(value);
     }
-    else if (child instanceof Promise.CompletablePromise) {
+    else if (child instanceof InternalPromiseUtil.CompletablePromise) {
       //noinspection unchecked
-      ((CompletablePromise<T>)child).setResult(value.result);
+      ((InternalPromiseUtil.CompletablePromise<T>)child).setResult(value.result);
     }
     return this;
   }
