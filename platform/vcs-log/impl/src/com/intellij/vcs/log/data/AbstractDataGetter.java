@@ -109,11 +109,6 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
   }
 
   @Override
-  public void loadCommitsData(@NotNull List<Integer> hashes, @NotNull Consumer<List<T>> consumer, @Nullable ProgressIndicator indicator) {
-    assert EventQueue.isDispatchThread();
-    loadCommitsData(hashes, consumer, Consumer.EMPTY_CONSUMER, indicator);
-  }
-
   public void loadCommitsData(@NotNull List<Integer> hashes, @NotNull Consumer<List<T>> consumer,
                               @NotNull Consumer<Throwable> errorConsumer, @Nullable ProgressIndicator indicator) {
     assert EventQueue.isDispatchThread();
