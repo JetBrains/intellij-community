@@ -85,7 +85,7 @@ public abstract class DiffContent {
   public abstract FileType getContentType();
 
   /**
-   * @return Binary represntation of content.
+   * @return Binary representation of content.
    *         Should not be null if {@link #getFile()} returns existing not directory file
    * @throws java.io.IOException
    */

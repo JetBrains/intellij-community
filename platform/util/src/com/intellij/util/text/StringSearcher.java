@@ -32,7 +32,7 @@ public class StringSearcher {
   private final int myPatternLength;
   private final int[] mySearchTable = new int[128];
   private final boolean myCaseSensitive;
-  private final boolean myLowecaseTransform;
+  private final boolean myLowercaseTransform;
   private final boolean myForwardDirection;
   private final boolean myJavaIdentifier;
   private final boolean myHandleEscapeSequences;
@@ -61,10 +61,10 @@ public class StringSearcher {
     myForwardDirection = forwardDirection;
     char[] chars = myCaseSensitive ? myPattern.toCharArray() : myPattern.toLowerCase(Locale.US).toCharArray();
     if (chars.length != myPattern.length()) {
-      myLowecaseTransform = false;
+      myLowercaseTransform = false;
       chars = myPattern.toUpperCase(Locale.US).toCharArray();
     } else {
-      myLowecaseTransform = true;
+      myLowercaseTransform = true;
     }
     myPatternArray = chars;
     myPatternLength = myPatternArray.length;
@@ -203,7 +203,7 @@ public class StringSearcher {
     if (myCaseSensitive) {
       return lastChar;
     }
-    return myLowecaseTransform ? StringUtil.toLowerCase(lastChar) : StringUtil.toUpperCase(lastChar);
+    return myLowercaseTransform ? StringUtil.toLowerCase(lastChar) : StringUtil.toUpperCase(lastChar);
   }
 
   private boolean isSameChar(char charInPattern, char charInText) {
@@ -227,7 +227,7 @@ public class StringSearcher {
     StringSearcher searcher = (StringSearcher)o;
 
     if (myCaseSensitive != searcher.myCaseSensitive) return false;
-    if (myLowecaseTransform != searcher.myLowecaseTransform) return false;
+    if (myLowercaseTransform != searcher.myLowercaseTransform) return false;
     if (myForwardDirection != searcher.myForwardDirection) return false;
     if (myJavaIdentifier != searcher.myJavaIdentifier) return false;
     if (myHandleEscapeSequences != searcher.myHandleEscapeSequences) return false;
@@ -238,7 +238,7 @@ public class StringSearcher {
   public int hashCode() {
     int result = myPattern.hashCode();
     result = 31 * result + (myCaseSensitive ? 1 : 0);
-    result = 31 * result + (myLowecaseTransform ? 1 : 0);
+    result = 31 * result + (myLowercaseTransform ? 1 : 0);
     result = 31 * result + (myForwardDirection ? 1 : 0);
     result = 31 * result + (myJavaIdentifier ? 1 : 0);
     result = 31 * result + (myHandleEscapeSequences ? 1 : 0);

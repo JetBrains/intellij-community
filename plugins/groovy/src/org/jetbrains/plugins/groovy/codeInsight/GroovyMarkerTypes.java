@@ -191,8 +191,8 @@ public class GroovyMarkerTypes {
 
       }
     });
-  public static final MarkerType GR_OVERRIDEN_METHOD = new MarkerType("GR_OVERRIDEN_METHOD",
-                                                                      (NullableFunction<PsiElement, String>)element -> {
+  public static final MarkerType GR_OVERRIDDEN_METHOD = new MarkerType("GR_OVERRIDEN_METHOD",
+                                                                       (NullableFunction<PsiElement, String>)element -> {
                                                                         PsiElement parent = element.getParent();
                                                                         if (!(parent instanceof GrMethod)) return null;
                                                                         GrMethod method = (GrMethod)parent;

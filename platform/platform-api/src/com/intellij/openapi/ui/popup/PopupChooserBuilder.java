@@ -481,8 +481,8 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   }
 
   @Override
-  public PopupChooserBuilder<T> setSettingButton(Component abutton) {
-    mySettingsButtons = abutton;
+  public PopupChooserBuilder<T> setSettingButton(Component button) {
+    mySettingsButtons = button;
     return this;
   }
 

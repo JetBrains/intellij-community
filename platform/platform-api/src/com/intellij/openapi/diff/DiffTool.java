@@ -57,7 +57,7 @@ public interface DiffTool {
   void show(DiffRequest request);
 
   /**
-   * @return true if this tool can comare given contents
+   * @return true if this tool can compare given contents
    */
   boolean canShow(DiffRequest request);
 

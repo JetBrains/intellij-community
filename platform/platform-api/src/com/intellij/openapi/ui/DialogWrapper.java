@@ -1408,14 +1408,17 @@ public abstract class DialogWrapper {
     }
   }
 
+  @Deprecated
   protected boolean isNorthStrictedToPreferredSize() {
     return true;
   }
 
+  @Deprecated
   protected boolean isCenterStrictedToPreferredSize() {
     return false;
   }
 
+  @Deprecated
   protected boolean isSouthStrictedToPreferredSize() {
     return true;
   }

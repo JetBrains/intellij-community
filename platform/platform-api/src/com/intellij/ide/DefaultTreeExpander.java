@@ -46,9 +46,9 @@ public class DefaultTreeExpander implements TreeExpander {
   }
 
   private void showSelectionCentered() {
-    final int[] rowz = myTree.getSelectionRows();
-    if (rowz != null && rowz.length > 0) {
-      TreeUtil.showRowCentered(myTree, rowz[0], false);
+    int[] rows = myTree.getSelectionRows();
+    if (rows != null && rows.length > 0) {
+      TreeUtil.showRowCentered(myTree, rows[0], false);
     }
   }
 

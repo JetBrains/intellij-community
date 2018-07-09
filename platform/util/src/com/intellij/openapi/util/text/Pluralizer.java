@@ -52,6 +52,7 @@ import static com.intellij.openapi.util.text.StringUtil.notNullize;
  * (a java implementation: https://github.com/atteo/evo-inflector)
  *
  * @author gregsh
+ * @noinspection SpellCheckingInspection
  */
 class Pluralizer {
 

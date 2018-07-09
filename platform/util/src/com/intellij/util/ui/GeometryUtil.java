@@ -242,11 +242,11 @@ public class GeometryUtil implements SwingConstants {
     }
   }
 
-  public static int getClosestToLineRectangleCorner(Rectangle aRectange, Line2D aSegment) {
-    Point northWest = new OrientedPoint(aRectange.getX(), aRectange.getY(), NORTH_WEST);
-    Point northEast = new OrientedPoint(aRectange.getMaxX(), aRectange.getY(), NORTH_EAST);
-    Point southEast = new OrientedPoint(aRectange.getMaxX(), aRectange.getMaxY(), SOUTH_EAST);
-    Point southWest = new OrientedPoint(aRectange.getX(), aRectange.getMaxY(), SOUTH_WEST);
+  public static int getClosestToLineRectangleCorner(Rectangle aRectangle, Line2D aSegment) {
+    Point northWest = new OrientedPoint(aRectangle.getX(), aRectangle.getY(), NORTH_WEST);
+    Point northEast = new OrientedPoint(aRectangle.getMaxX(), aRectangle.getY(), NORTH_EAST);
+    Point southEast = new OrientedPoint(aRectangle.getMaxX(), aRectangle.getMaxY(), SOUTH_EAST);
+    Point southWest = new OrientedPoint(aRectangle.getX(), aRectangle.getMaxY(), SOUTH_WEST);
 
     TreeMap sorter = new TreeMap();
 
@@ -260,10 +260,10 @@ public class GeometryUtil implements SwingConstants {
   }
 
   private static Double getDistance(Line2D aSegment, Point aPoint) {
-    double lenght1 = getLineLength(aSegment.getX1(), aSegment.getY1(), aPoint.getX(), aPoint.getY());
-    double lenght2 = getLineLength(aSegment.getX2(), aSegment.getY2(), aPoint.getX(), aPoint.getY());
+    double length1 = getLineLength(aSegment.getX1(), aSegment.getY1(), aPoint.getX(), aPoint.getY());
+    double length2 = getLineLength(aSegment.getX2(), aSegment.getY2(), aPoint.getX(), aPoint.getY());
 
-    return new Double(lenght1 + lenght2);
+    return new Double(length1 + length2);
   }
 
   public static double getLineLength(double aX1, double aY1, double aX2, double aY2) {

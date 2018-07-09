@@ -152,7 +152,7 @@ public class SimpleContent extends DiffContent {
   }
 
   /**
-   * @param bytes    binary text representaion
+   * @param bytes    binary text representation
    * @param charset  name of charset. If null IDE default charset will be used
    * @param fileType content type. If null file name will be used to select file type
    * @return content representing bytes as text
