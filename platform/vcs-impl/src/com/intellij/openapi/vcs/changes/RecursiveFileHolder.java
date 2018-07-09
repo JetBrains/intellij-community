@@ -12,20 +12,20 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.NavigableSet;
+import java.util.TreeSet;
 
 public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
 
   private final Project myProject;
   private final HolderType myHolderType;
-  private final TreeMap<VirtualFile, T> myMap;
-  private final TreeMap<VirtualFile, T> myDirMap;
+  private final TreeSet<VirtualFile> myMap;
+  private final TreeSet<VirtualFile> myDirMap;
 
   public RecursiveFileHolder(final Project project, final HolderType holderType) {
     myProject = project;
-    myMap = new TreeMap<>(FilePathComparator.getInstance());
-    myDirMap = new TreeMap<>(FilePathComparator.getInstance());
+    myMap = new TreeSet<>(FilePathComparator.getInstance());
+    myDirMap = new TreeSet<>(FilePathComparator.getInstance());
     myHolderType = holderType;
   }
 
@@ -47,9 +47,9 @@ public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
   @Override
   public void addFile(@NotNull final VirtualFile file) {
     if (! containsFile(file)) {
-      myMap.put(file, null);
+      myMap.add(file);
       if (file.isDirectory()) {
-        myDirMap.put(file, null);
+        myDirMap.add(file);
       }
     }
   }
@@ -57,18 +57,18 @@ public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
   @Override
   public RecursiveFileHolder copy() {
     final RecursiveFileHolder<T> copyHolder = new RecursiveFileHolder<>(myProject, myHolderType);
-    copyHolder.myMap.putAll(myMap);
-    copyHolder.myDirMap.putAll(myDirMap);
+    copyHolder.myMap.addAll(myMap);
+    copyHolder.myDirMap.addAll(myDirMap);
     return copyHolder;
   }
 
   @Override
   public boolean containsFile(@NotNull final VirtualFile file) {
-    if (myMap.containsKey(file)) return true;
-    final VirtualFile floor = myDirMap.floorKey(file);
+    if (myMap.contains(file)) return true;
+    final VirtualFile floor = myDirMap.floor(file);
     if (floor == null) return false;
-    final SortedMap<VirtualFile, T> floorMap = myDirMap.headMap(floor, true);
-    for (VirtualFile parent : floorMap.keySet()) {
+    final NavigableSet<VirtualFile> floorMap = myDirMap.headSet(floor, true);
+    for (VirtualFile parent : floorMap) {
       if (VfsUtilCore.isAncestor(parent, file, false)) {
         return true;
       }
@@ -79,13 +79,13 @@ public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
   @Override
   @NotNull
   public Collection<VirtualFile> values() {
-    return myMap.keySet();
+    return myMap;
   }
 
   @Override
   public void cleanAndAdjustScope(@NotNull final VcsModifiableDirtyScope scope) {
     if (myProject.isDisposed()) return;
-    final Iterator<VirtualFile> iterator = myMap.keySet().iterator();
+    final Iterator<VirtualFile> iterator = myMap.iterator();
     while (iterator.hasNext()) {
       final VirtualFile file = iterator.next();
       if (isFileDirty(scope, file)) {
@@ -108,7 +108,7 @@ public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
     if (o == null || getClass() != o.getClass()) return false;
 
     final RecursiveFileHolder that = (RecursiveFileHolder)o;
-    return Iterables.elementsEqual(myMap.entrySet(), that.myMap.entrySet());
+    return Iterables.elementsEqual(myMap, that.myMap);
   }
 
   public int hashCode() {
