@@ -6,12 +6,8 @@ import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckboxTreeBase;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import org.eclipse.aether.artifact.Artifact;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,14 +55,10 @@ class DependencyExclusionEditor {
   public Set<String> selectExcludedDependencies(List<String> excludedDependencies) {
     uncheckExcludedNodes(myRootNode, new HashSet<>(excludedDependencies), false);
     TreeUtil.expandAll(myDependenciesTree);
-    JPanel panel =
-      JBUI.Panels.simplePanel(0, UIUtil.DEFAULT_VGAP)
-                 .addToCenter(new JBScrollPane(myDependenciesTree))
-                 .addToTop(new JBLabel(XmlStringUtil.wrapInHtml("Specify which transitive dependencies should be included into the library.")));
     DialogBuilder dialogBuilder =
       new DialogBuilder(myMainPanel)
-        .title("Configure Transitive Dependencies")
-        .centerPanel(panel);
+        .title("Include Transitive Dependencies")
+        .centerPanel(new JBScrollPane(myDependenciesTree));
     dialogBuilder.setPreferredFocusComponent(myDependenciesTree);
 
     if (dialogBuilder.showAndGet()) {
