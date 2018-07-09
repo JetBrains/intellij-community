@@ -263,7 +263,7 @@ def frame_vars_to_struct(frame_f_locals, hidden_ns=None):
     return return_values + values
 
 
-def var_to_struct(val, name, doTrim=True, additional_in_xml='', evaluate_full_value=True):
+def var_to_struct(val, name, do_trim=True, evaluate_full_value=True):
     """ single variable or dictionary to Thrift struct representation """
 
     debug_value = console_thrift.DebugValue()
@@ -315,7 +315,7 @@ def var_to_struct(val, name, doTrim=True, additional_in_xml='', evaluate_full_va
 
     if value:
         # cannot be too big... communication may not handle it.
-        if len(value) > MAXIMUM_VARIABLE_REPRESENTATION_SIZE and doTrim:
+        if len(value) > MAXIMUM_VARIABLE_REPRESENTATION_SIZE and do_trim:
             value = value[0:MAXIMUM_VARIABLE_REPRESENTATION_SIZE]
             value += '...'
 
@@ -343,8 +343,8 @@ def var_to_struct(val, name, doTrim=True, additional_in_xml='', evaluate_full_va
     return debug_value
 
 
-def var_to_str(val, doTrim=True, evaluate_full_value=True):
-    struct = var_to_struct(val, '', doTrim, '', evaluate_full_value)
+def var_to_str(val, do_trim=True, evaluate_full_value=True):
+    struct = var_to_struct(val, '', do_trim, evaluate_full_value)
     return struct.value
 
 
