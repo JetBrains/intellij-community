@@ -185,14 +185,6 @@ public class MultipleFileMergeDialog extends DialogWrapper {
     });
   }
 
-  @Override
-  public void doCancelAction() {
-    if (!myProcessedFiles.isEmpty()) {
-      myProvider.mergeDone(myProcessedFiles);
-    }
-    super.doCancelAction();
-  }
-
   private void updateButtonState() {
     boolean haveSelection = myTable.getSelectedRowCount() > 0;
     boolean haveUnmergeableFiles = false;
