@@ -142,9 +142,12 @@ public class GotoImplementationHandler extends GotoTargetHandler {
 
     ImplementationsUpdaterTask(@NotNull GotoData gotoData, @NotNull Editor editor, int offset, final PsiReference reference) {
       super(gotoData.source.getProject(), ImplementationSearcher.SEARCHING_FOR_IMPLEMENTATIONS,
-            createComparatorWrapper(Comparator.comparing((Function<PsiElement, Comparable>)e1 -> {
-              return getRenderer(e1, gotoData).getComparingObject(e1);
-            })));
+            createComparatorWrapper(Comparator.comparing(new Function<PsiElement, Comparable>() {
+                @Override
+                public Comparable apply(PsiElement e1) {
+                  return getRenderer(e1, gotoData).getComparingObject(e1);
+                }
+              })));
       myEditor = editor;
       myOffset = offset;
       myGotoData = gotoData;
