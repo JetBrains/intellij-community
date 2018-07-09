@@ -10,7 +10,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.formatter.blocks.ClosureBodyBlock;
-import org.jetbrains.plugins.groovy.formatter.blocks.GrLabelBlock;
 import org.jetbrains.plugins.groovy.formatter.blocks.GroovyBlock;
 import org.jetbrains.plugins.groovy.lang.groovydoc.lexer.GroovyDocTokenTypes;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
@@ -86,12 +85,6 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
       else if (myChildType != GroovyTokenTypes.mLCURLY && myChildType != GroovyTokenTypes.mRCURLY) {
         return getNormalIndent();
       }
-    }
-    if (parentBlock instanceof GrLabelBlock) {
-      ASTNode first = parentBlock.getNode().getFirstChildNode();
-      return child == first
-             ? getNoneIndent()
-             : getLabelIndent();
     }
 
     if (GSTRING_TOKENS_INNER.contains(myChildType)) {
