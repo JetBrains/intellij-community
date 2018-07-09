@@ -38,10 +38,6 @@ public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
     myDirMap.clear();
   }
 
-  protected Collection<VirtualFile> keys() {
-    return myMap.keySet();
-  }
-
   @Override
   public void notifyVcsStarted(AbstractVcs scope) {
   }
@@ -99,7 +95,7 @@ public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
   @Override
   public void cleanAndAdjustScope(@NotNull final VcsModifiableDirtyScope scope) {
     if (myProject.isDisposed()) return;
-    final Iterator<VirtualFile> iterator = keys().iterator();
+    final Iterator<VirtualFile> iterator = myMap.keySet().iterator();
     while (iterator.hasNext()) {
       final VirtualFile file = iterator.next();
       if (isFileDirty(scope, file)) {
