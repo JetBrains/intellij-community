@@ -637,7 +637,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     if (arrayType == null || !StreamApiUtil.isSupportedStreamElement(arrayType.getComponentType())) return null;
     PsiExpression dimension = ArrayUtil.getFirstElement(initializer.getArrayDimensions());
     if (dimension == null) return null;
-    PsiExpression bound = loop.myBound;
+    PsiExpression bound = PsiUtil.skipParenthesizedExprDown(loop.myBound);
     if (!isArrayLength(arrayVariable, dimension, bound)) return null;
     if (VariableAccessUtils.variableIsUsed(arrayVariable, assignment.getRExpression())) return null;
     return arrayVariable;
