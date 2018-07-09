@@ -40,6 +40,7 @@ public abstract class NullableNotNullManager {
     "edu.umd.cs.findbugs.annotations.Nullable",
     "android.support.annotation.Nullable",
     "androidx.annotation.Nullable",
+    "androidx.annotation.RecentlyNullable",
     "org.checkerframework.checker.nullness.qual.Nullable",
     "org.checkerframework.checker.nullness.compatqual.NullableDecl",
     "org.checkerframework.checker.nullness.compatqual.NullableType"
@@ -51,6 +52,7 @@ public abstract class NullableNotNullManager {
     "edu.umd.cs.findbugs.annotations.NonNull",
     "android.support.annotation.NonNull",
     "androidx.annotation.NonNull",
+    "androidx.annotation.RecentlyNonNull",
     "org.checkerframework.checker.nullness.qual.NonNull",
     "org.checkerframework.checker.nullness.compatqual.NonNullDecl",
     "org.checkerframework.checker.nullness.compatqual.NonNullType"
