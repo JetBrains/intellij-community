@@ -33,8 +33,7 @@ public abstract class PyTestTask {
    * Each inheritor may do anything on edt, but should call parent *after all* on main thread
    */
   public void tearDown() throws Exception {
-    LeakHunter.checkNonDefaultProjectLeak();
-    LeakHunter.checkProjectLeak();
+
   }
 
   /**
