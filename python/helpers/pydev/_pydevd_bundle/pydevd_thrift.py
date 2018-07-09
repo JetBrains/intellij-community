@@ -225,11 +225,9 @@ def should_evaluate_full_value(val):
 
 
 def frame_vars_to_struct(frame_f_locals, hidden_ns=None):
-    """ dumps frame variables to XML
-    <var name="var_name" scope="local" type="type" value="value"/>
+    """Returns frame variables as the list of `DebugValue` structures
     """
     values = []
-    # xml = ""
 
     keys = dict_keys(frame_f_locals)
     if hasattr(keys, 'sort'):
@@ -238,7 +236,6 @@ def frame_vars_to_struct(frame_f_locals, hidden_ns=None):
         keys = sorted(keys)  # Jython 2.1 does not have it
 
     return_values = []
-    # return_values_xml = ''
 
     for k in keys:
         try:
@@ -250,26 +247,20 @@ def frame_vars_to_struct(frame_f_locals, hidden_ns=None):
                     value = var_to_struct(val, name)
                     value.isRetVal = True
                     return_values.append(value)
-                    # return_values_xml += var_to_xml(val, name, additional_in_xml=' isRetVal="True"')
-
             else:
                 if hidden_ns is not None and k in hidden_ns:
                     value = var_to_struct(v, str(k), evaluate_full_value=eval_full_val)
                     value.isIPythonHidden = True
                     values.append(value)
-                    # xml += var_to_xml(v, str(k), additional_in_xml=' isIPythonHidden="True"',
-                    #                   evaluate_full_value=eval_full_val)
                 else:
                     value = var_to_struct(v, str(k), evaluate_full_value=eval_full_val)
                     values.append(value)
-                    # xml += var_to_xml(v, str(k), evaluate_full_value=eval_full_val)
         except Exception:
             traceback.print_exc()
             pydev_log.error("Unexpected error, recovered safely.\n")
 
     # Show return values as the first entry.
     return return_values + values
-    # return return_values_xml + xml
 
 
 def var_to_struct(val, name, doTrim=True, additional_in_xml='', evaluate_full_value=True):
@@ -318,14 +309,9 @@ def var_to_struct(val, name, doTrim=True, additional_in_xml='', evaluate_full_va
 
     debug_value.name = name
     debug_value.type = typeName
-    # xml = '<var name="%s" type="%s" ' % (make_valid_xml_value(name), make_valid_xml_value(typeName))
 
     if type_qualifier:
         debug_value.qualifier = type_qualifier
-        # xml_qualifier = 'qualifier="%s"' % make_valid_xml_value(type_qualifier)
-    else:
-        pass
-        # xml_qualifier = ''
 
     if value:
         # cannot be too big... communication may not handle it.
@@ -345,24 +331,16 @@ def var_to_struct(val, name, doTrim=True, additional_in_xml='', evaluate_full_va
             pass
 
         debug_value.value = value
-        # xml_value = ' value="%s"' % (make_valid_xml_value(quote(value, '/>_= ')))
-    else:
-        pass
-        # xml_value = ''
 
     if is_exception_on_eval:
         debug_value.isErrorOnEval = True
-        # xml_container = ' isErrorOnEval="True"'
     else:
         if resolver is not None:
             debug_value.isContainer = True
-            # xml_container = ' isContainer="True"'
         else:
             pass
-            # xml_container = ''
 
     return debug_value
-    # return ''.join((xml, xml_qualifier, xml_value, xml_container, additional_in_xml, ' />\n'))
 
 
 def var_to_str(val, doTrim=True, evaluate_full_value=True):
@@ -373,9 +351,9 @@ def var_to_str(val, doTrim=True, evaluate_full_value=True):
 # from pydevd_vars.py
 
 def array_to_thrift_struct(array, name, roffset, coffset, rows, cols, format):
-    # returns `GetArrayResponse`
+    """
+    """
 
-    # array, xml, r, c, f = array_to_meta_xml(array, name, format)
     array, array_chunk, r, c, f = array_to_meta_thrift_struct(array, name, format)
     format = '%' + f
     if rows == -1 and cols == -1:
@@ -414,7 +392,7 @@ def array_to_thrift_struct(array, name, roffset, coffset, rows, cols, format):
         else:
             value = array[row][col]
         return value
-    # xml += array_data_to_xml(rows, cols, lambda r: (get_value(r, c) for c in range(cols)))
+
     array_chunk.data = array_data_to_thrift_struct(rows, cols, lambda r: (get_value(r, c) for c in range(cols)))
     return array_chunk
 
@@ -476,7 +454,6 @@ def array_to_meta_thrift_struct(array, name, format):
     bounds = (0, 0)
     if type in "biufc":
         bounds = (array.min(), array.max())
-    # return array, slice_to_xml(slice, rows, cols, format, type, bounds), rows, cols, format
     array_chunk = console_thrift.GetArrayResponse()
     array_chunk.slice = slice
     array_chunk.rows = rows
@@ -484,7 +461,6 @@ def array_to_meta_thrift_struct(array, name, format):
     array_chunk.format = format
     array_chunk.type = type
     array_chunk.bounds = bounds
-    # return array, slice_to_xml(slice, rows, cols, format, type, bounds), rows, cols, format
     return array, array_chunk, rows, cols, format
 
 
@@ -503,7 +479,6 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
     dim = len(df.axes)
     num_rows = df.shape[0]
     num_cols = df.shape[1] if dim > 1 else 1
-    # xml = slice_to_xml(name, num_rows, num_cols, "", "", (0, 0))
     array_chunk = console_thrift.GetArrayResponse()
     array_chunk.slice = name
     array_chunk.rows = num_rows
@@ -543,36 +518,27 @@ def dataframe_to_thrift_struct(df, name, roffset, coffset, rows, cols, format):
     def col_to_format(c):
         return format if dtypes[c] == 'f' and format else array_default_format(dtypes[c])
 
-    # xml += header_data_to_xml(rows, cols, dtypes, col_bounds, col_to_format, df, dim)
     array_chunk.headers = header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, df, dim)
-    # xml += array_data_to_xml(rows, cols, lambda r: (("%" + col_to_format(c)) % (df.iat[r, c] if dim > 1 else df.iat[r])
-    #                                                 for c in range(cols)))
-    array_chunk.data = array_data_to_thrift_struct(rows, cols, lambda r: (("%" + col_to_format(c)) % (df.iat[r, c] if dim > 1 else df.iat[r])
-                                                                          for c in range(cols)))
-    # return xml
+    array_chunk.data = array_data_to_thrift_struct(rows, cols,
+                                                   lambda r: (("%" + col_to_format(c)) % (df.iat[r, c] if dim > 1 else df.iat[r])
+                                                              for c in range(cols)))
     return array_chunk
 
 
 def array_data_to_thrift_struct(rows, cols, get_row):
     array_data = console_thrift.ArrayData()
-    # xml = "<arraydata rows=\"%s\" cols=\"%s\"/>\n" % (rows, cols)
     array_data.rows = rows
     array_data.cols = cols
     # `ArrayData.data`
     data = []
     for row in range(rows):
-        # xml += "<row index=\"%s\"/>\n" % to_string(row)
-        # for value in get_row(row):
-        #     xml += var_to_xml(value, '')
         data.append([var_to_str(value) for value in get_row(row)])
 
     array_data.data = data
-    # return xml
     return array_data
 
 
 def header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, df, dim):
-    # xml = "<headerdata rows=\"%s\" cols=\"%s\">\n" % (rows, cols)
     array_headers = console_thrift.ArrayHeaders()
     col_headers = []
     for col in range(cols):
@@ -593,19 +559,20 @@ def header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, 
         row_header.index = row
         row_header.label = get_label(df.axes[0].values[row])
         row_headers.append(row_header)
-        # xml += "<rowheader index=\"%s\" label = \"%s\"/>\n" % (str(row), get_label(df.axes[0].values[row]))
-    # xml += "</headerdata>\n"
     array_headers.colHeaders = col_headers
     array_headers.rowHeaders = row_headers
-    # return xml
     return array_headers
 
 
-TYPE_TO_THRIFT_STRUCT_CONVERTERS = {"ndarray": array_to_thrift_struct, "DataFrame": dataframe_to_thrift_struct, "Series": dataframe_to_thrift_struct}
+TYPE_TO_THRIFT_STRUCT_CONVERTERS = {"ndarray": array_to_thrift_struct, "DataFrame": dataframe_to_thrift_struct,
+                                    "Series": dataframe_to_thrift_struct}
 
 
 def table_like_struct_to_thrift_struct(array, name, roffset, coffset, rows, cols, format):
-    # returns `GetArrayResponse`
+    """Returns `GetArrayResponse` structure for table-like structure
+
+    The `array` might be either `numpy.ndarray`, `pandas.DataFrame` or `pandas.Series`.
+    """
     _, type_name, _ = get_type(array)
     if type_name in TYPE_TO_THRIFT_STRUCT_CONVERTERS:
         return TYPE_TO_THRIFT_STRUCT_CONVERTERS[type_name](array, name, roffset, coffset, rows, cols, format)
