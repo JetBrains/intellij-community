@@ -106,7 +106,7 @@ typedef string AttributeDescription
 
 typedef list<DebugValue> DebugValues
 
-service PythonConsole {
+service PythonConsoleBackendService {
   /**
    * Returns `true` if Python console script needs more code to evaluate it.
    * Returns `false` if the code is scheduled for evaluation.
@@ -160,12 +160,12 @@ service PythonConsole {
   GetArrayResponse getArray(1: string vars, 2: i32 rowOffset, 3: i32 colOffset, 4: i32 rows, 5: i32 cols, 6: string format),
 
   /**
-   * The result is returned asyncronously with `IDE.returnFullValue`.
+   * The result is returned asyncronously with `PythonConsoleFrontendService.returnFullValue`.
    */
   void loadFullValue(1: LoadFullValueRequestSeq seq, 2: list<string> variables),
 }
 
-service IDE {
+service PythonConsoleFrontendService {
   void notifyFinished(1: bool needsMoreInput),
 
   string requestInput(1: string path),
@@ -175,7 +175,7 @@ service IDE {
   void showConsole(),
 
   /**
-   * Returns the result for `PythonConsole.loadFullValue`.
+   * Returns the result for `PythonConsoleBackendService.loadFullValue`.
    */
   void returnFullValue(1: LoadFullValueRequestSeq requestSeq, 2: list<DebugValue> response),
 

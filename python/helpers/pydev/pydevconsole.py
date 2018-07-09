@@ -282,8 +282,8 @@ def start_server(port):
 
     enable_thrift_logging()
 
-    server_service = console_thrift.PythonConsole
-    client_service = console_thrift.IDE
+    server_service = console_thrift.PythonConsoleBackendService
+    client_service = console_thrift.PythonConsoleFrontendService
 
     # 1. Start Python console server
 
@@ -315,7 +315,7 @@ def start_client(host, port):
 
     enable_thrift_logging()
 
-    client_service = console_thrift.IDE
+    client_service = console_thrift.PythonConsoleFrontendService
 
     client, server_transport = make_rpc_client(client_service, host, port)
 
@@ -328,7 +328,7 @@ def start_client(host, port):
     # # Tell UMD the proper default namespace
     # _set_globals_function(interpreter.get_namespace)
 
-    server_service = console_thrift.PythonConsole
+    server_service = console_thrift.PythonConsoleBackendService
 
     # `InterpreterInterface` implements all methods required for the handler
     server_handler = interpreter
