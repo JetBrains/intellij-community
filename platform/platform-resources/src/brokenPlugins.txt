@@ -100,3 +100,4 @@ com.intellij.stats.completion 0.0.41 0.0.42 0.0.49 0.0.519 0.0.536 0.0.537 0.0.5
 com.huawei.ide 1.0
 Retrotranslator 0.2.5
 ImportCost 1.0.5
+intellij.prettierJS 182.2757.12 182.2371.6
