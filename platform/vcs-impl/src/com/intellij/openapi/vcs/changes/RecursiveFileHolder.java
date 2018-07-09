@@ -5,7 +5,6 @@ import com.google.common.collect.Iterables;
 import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
@@ -18,15 +17,13 @@ import java.util.TreeMap;
 
 public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
 
-  protected final Project myProject;
-  protected final ProjectLevelVcsManager myVcsManager;
-  protected final HolderType myHolderType;
-  protected final TreeMap<VirtualFile, T> myMap;
-  protected final TreeMap<VirtualFile, T> myDirMap;
+  private final Project myProject;
+  private final HolderType myHolderType;
+  private final TreeMap<VirtualFile, T> myMap;
+  private final TreeMap<VirtualFile, T> myDirMap;
 
   public RecursiveFileHolder(final Project project, final HolderType holderType) {
     myProject = project;
-    myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myMap = new TreeMap<>(FilePathComparator.getInstance());
     myDirMap = new TreeMap<>(FilePathComparator.getInstance());
     myHolderType = holderType;
@@ -54,13 +51,6 @@ public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
       if (file.isDirectory()) {
         myDirMap.put(file, null);
       }
-    }
-  }
-
-  public void removeFile(@NotNull final VirtualFile file) {
-    myMap.remove(file);
-    if (file.isDirectory()) {
-      myDirMap.remove(file);
     }
   }
 
@@ -104,7 +94,7 @@ public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
     }
   }
 
-  protected boolean isFileDirty(final VcsDirtyScope scope, final VirtualFile file) {
+  private static boolean isFileDirty(final VcsDirtyScope scope, final VirtualFile file) {
     if (!file.isValid()) return true;
     final AbstractVcs[] vcsArr = new AbstractVcs[1];
     if (scope.belongsTo(VcsUtil.getFilePath(file), vcs -> vcsArr[0] = vcs)) {
