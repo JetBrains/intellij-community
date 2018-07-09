@@ -87,6 +87,12 @@ public class GroovyWrappingProcessor {
       return createNoneWrap();
     }
 
+    if (myParentType == ARGUMENT_LIST) {
+      if (childType == T_LBRACK || childType == T_RBRACK) {
+        return createNoneWrap();
+      }
+    }
+
     if (myParentType == GroovyElementTypes.EXTENDS_CLAUSE || myParentType == GroovyElementTypes.IMPLEMENTS_CLAUSE) {
       if (childType == GroovyTokenTypes.kEXTENDS || childType == GroovyTokenTypes.kIMPLEMENTS) {
         return Wrap.createWrap(mySettings.EXTENDS_KEYWORD_WRAP, true);
