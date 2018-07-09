@@ -288,7 +288,7 @@ def start_server(port):
     # 1. Start Python console server
 
 
-    interpreter = InterpreterInterface(threading.currentThread(), None, None)
+    interpreter = InterpreterInterface(threading.currentThread(), None, rpc_client=client_service)
 
     # `InterpreterInterface` implements all methods required for the handler
     server_handler = interpreter
@@ -319,7 +319,7 @@ def start_client(host, port):
 
     client, server_transport = make_rpc_client(client_service, host, port)
 
-    interpreter = InterpreterInterface(threading.currentThread(), None, client)
+    interpreter = InterpreterInterface(threading.currentThread(), rpc_client=client)
 
     # we do not need to start the server in a new thread because it does not need to accept a client connection, it already has it
 
