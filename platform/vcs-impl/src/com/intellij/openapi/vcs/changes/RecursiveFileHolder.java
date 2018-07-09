@@ -15,7 +15,7 @@ import java.util.Iterator;
 import java.util.NavigableSet;
 import java.util.TreeSet;
 
-public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
+public class RecursiveFileHolder implements IgnoredFilesHolder {
 
   private final Project myProject;
   private final HolderType myHolderType;
@@ -56,7 +56,7 @@ public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
 
   @Override
   public RecursiveFileHolder copy() {
-    final RecursiveFileHolder<T> copyHolder = new RecursiveFileHolder<>(myProject, myHolderType);
+    final RecursiveFileHolder copyHolder = new RecursiveFileHolder(myProject, myHolderType);
     copyHolder.myMap.addAll(myMap);
     copyHolder.myDirMap.addAll(myDirMap);
     return copyHolder;
