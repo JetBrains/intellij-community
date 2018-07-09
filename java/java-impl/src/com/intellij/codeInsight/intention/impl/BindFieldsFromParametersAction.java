@@ -67,10 +67,11 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
       for (PsiParameter parameter : parameters) {
         params.add(SmartPointerManager.getInstance(project).createSmartPsiElementPointer(parameter));
       }
-      if (params.isEmpty()) return false;
       if (params.size() == 1 && psiParameter != null) return false;
+      Iterator<SmartPsiElementPointer<PsiParameter>> iterator = params.iterator();
+      if (!iterator.hasNext()) return false;
       if (psiParameter == null) {
-        psiParameter = params.iterator().next().getElement();
+        psiParameter = iterator.next().getElement();
         LOG.assertTrue(psiParameter != null);
       }
 
