@@ -174,7 +174,10 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitArgumentList(@NotNull GrArgumentList list) {
-    if (myChildType != GroovyTokenTypes.mLPAREN && myChildType != GroovyTokenTypes.mRPAREN) {
+    if (myChildType != T_LPAREN &&
+        myChildType != T_RPAREN &&
+        myChildType != T_LBRACK &&
+        myChildType != T_RBRACK) {
       myResult = getContinuationWithoutFirstIndent();
     }
   }
