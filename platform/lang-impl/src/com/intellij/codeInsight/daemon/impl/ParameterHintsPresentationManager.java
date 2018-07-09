@@ -105,7 +105,6 @@ public class ParameterHintsPresentationManager implements Disposable {
     MyRenderer renderer = (MyRenderer)hint.getRenderer();
     renderer.update(editor, newText, useAnimation);
     hint.updateSize();
-    hint.repaint();
     if (useAnimation) scheduleRendererUpdate(editor, hint);
   }
 

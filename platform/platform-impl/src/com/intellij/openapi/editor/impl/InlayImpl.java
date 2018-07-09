@@ -38,7 +38,12 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
   public void updateSize() {
     int oldWidth = myWidthInPixels;
     doUpdateSize();
-    if (oldWidth != myWidthInPixels) myEditor.getInlayModel().notifyChanged(this);
+    if (oldWidth != myWidthInPixels) {
+      myEditor.getInlayModel().notifyChanged(this);
+    }
+    else {
+      repaint();
+    }
   }
 
   @Override
