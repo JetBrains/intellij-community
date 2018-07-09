@@ -242,8 +242,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
   @NotNull
   private static ParameterClassMember[] sortByParameterIndex(@NotNull ParameterClassMember[] members, @NotNull PsiMethod method) {
     final PsiParameterList parameterList = method.getParameterList();
-    Arrays.sort(members, (o1, o2) -> parameterList.getParameterIndex(o1.getParameter()) -
-                                 parameterList.getParameterIndex(o2.getParameter()));
+    Arrays.sort(members, Comparator.comparingInt(o -> parameterList.getParameterIndex(o.getParameter())));
     return members;
   }
 
