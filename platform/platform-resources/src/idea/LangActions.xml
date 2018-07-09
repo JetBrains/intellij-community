@@ -1146,21 +1146,23 @@
         <reference ref="Stop"/>
         <separator text="type.small"/>
         <reference ref="XDebugger.MuteBreakpoints"/>
-        <separator text="type.large"/>
+        <separator text="type.flexible"/>
         <group id="TouchBarDebug.StepButtons" compact="true">
           <reference ref="StepOver"/>
           <reference ref="StepInto"/>
           <reference ref="StepOut"/>
         </group>
+        <separator text="type.small"/>
         <group id="TouchBarDebug_alt" text="Debugger with Alt key">
           <reference ref="ViewBreakpoints"/>
           <separator text="type.flexible"/>
           <group id="TouchBarDebug.ForceStepButtons" compact="true">
+            <reference ref="RunToCursor"/>
             <reference ref="ForceStepOver"/>
             <reference ref="ForceStepInto"/>
             <reference ref="SmartStepInto"/>
-            <reference ref="RunToCursor"/>
           </group>
+          <separator text="type.small"/>
         </group>
       </group>
     </group>
