@@ -17,7 +17,6 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomePopupAction;
@@ -254,8 +253,9 @@ class BuildUtils {
     final ModalityState ms = app != null ? LaterInvocator.getCurrentModalityState() : null;
 
     final TBItemScrubber scrub = result.addScrubber();
-    @NotNull ListPopupStep listPopupStep = listPopup.getListStep();
-    for (Object obj : listPopupStep.getValues()) {
+    final @NotNull ListPopupStep listPopupStep = listPopup.getListStep();
+    final @NotNull List stepValues = listPopupStep.getValues();
+    for (Object obj : stepValues) {
       final Icon ic = listPopupStep.getIconFor(obj);
       String txt = listPopupStep.getTextFor(obj);
 
@@ -267,7 +267,10 @@ class BuildUtils {
       }
 
       final Runnable edtAction = () -> {
-        listPopup.getList().setSelectedValue(obj, false);
+        if (obj != null)
+          listPopup.getList().setSelectedValue(obj, false);
+        else
+          listPopup.getList().setSelectedIndex(stepValues.indexOf(obj));
         listPopup.handleSelect(true);
       };
 
