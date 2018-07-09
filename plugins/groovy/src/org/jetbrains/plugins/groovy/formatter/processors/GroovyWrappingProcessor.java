@@ -93,6 +93,12 @@ public class GroovyWrappingProcessor {
       }
     }
 
+    if (myParentType == APPLICATION_ARGUMENT_LIST) {
+      if (myNode.getFirstChildNode() == childNode) {
+        return createNoneWrap();
+      }
+    }
+
     if (myParentType == GroovyElementTypes.EXTENDS_CLAUSE || myParentType == GroovyElementTypes.IMPLEMENTS_CLAUSE) {
       if (childType == GroovyTokenTypes.kEXTENDS || childType == GroovyTokenTypes.kIMPLEMENTS) {
         return Wrap.createWrap(mySettings.EXTENDS_KEYWORD_WRAP, true);
@@ -201,7 +207,7 @@ public class GroovyWrappingProcessor {
 
     if (myParentType == GroovyElementTypes.ARGUMENTS || myParentType == GroovyElementTypes.COMMAND_ARGUMENTS) {
       myUsedDefaultWrap = true;
-      return Wrap.createWrap(mySettings.CALL_PARAMETERS_WRAP, false);
+      return Wrap.createWrap(mySettings.CALL_PARAMETERS_WRAP, myParentType == GroovyElementTypes.COMMAND_ARGUMENTS);
     }
 
     if (myParentType == TRY_RESOURCE_LIST) {
