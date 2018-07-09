@@ -10,10 +10,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SearchTextField;
-import com.intellij.ui.awt.RelativePoint;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -104,6 +101,8 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
                               .addUserData("SIMPLE_WINDOW")
                               .setResizable(true)
                               .setMovable(true)
+                              .setDimensionServiceKey(project, LOCATION_SETTINGS_KEY, true)
+                              .setLocateWithinScreenBounds(false)
                               .createPopup();
     Disposer.register(myBalloon, mySearchEverywhereUI);
     myBalloon.pack(true, true);
@@ -111,26 +110,11 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     myProject.putUserData(SEARCH_EVERYWHERE_POPUP, myBalloon);
     Disposer.register(myBalloon, () -> myProject.putUserData(SEARCH_EVERYWHERE_POPUP, null));
 
-    DimensionService service = DimensionService.getInstance();
-    Dimension savedSize = service.getSize(LOCATION_SETTINGS_KEY);
-    if (savedSize != null) {
-      myBalloon.setSize(savedSize);
-    }
-
-    Component topLevelParent = getTopLevelParent();
-    if (topLevelParent == null) {
+    if (project != null) {
+      myBalloon.showCenteredInCurrentWindow(project);
+    } else {
       myBalloon.showInFocusCenter();
-      return;
     }
-
-    Point savedLocation = DimensionService.getInstance().getLocation(LOCATION_SETTINGS_KEY);
-    if (savedLocation != null) {
-      SwingUtilities.convertPointFromScreen(savedLocation, topLevelParent);
-      myBalloon.show(new RelativePoint(topLevelParent, savedLocation));
-      return;
-    }
-
-    myBalloon.showInCenterOf(topLevelParent);
   }
 
   @Override
@@ -162,14 +146,6 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   public void setShowNonProjectItems(boolean show) {
     checkIsShown();
     mySearchEverywhereUI.setUseNonProjectItems(show);
-  }
-
-  @Nullable
-  private Component getTopLevelParent() {
-    final Window window = myProject != null
-                          ? WindowManager.getInstance().suggestParentWindow(myProject)
-                          : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-    return UIUtil.findUltimateParent(window);
   }
 
   private SearchEverywhereUI createView(Project project,
