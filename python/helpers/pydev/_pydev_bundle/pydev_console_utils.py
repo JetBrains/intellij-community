@@ -27,6 +27,8 @@ COMPLETION_OPTION_TYPES = {
     _pydev_imports_tipper.TYPE_ATTR: console_thrift.CompletionOptionType.ATTR,
     _pydev_imports_tipper.TYPE_BUILTIN: console_thrift.CompletionOptionType.BUILTIN,
     _pydev_imports_tipper.TYPE_PARAM: console_thrift.CompletionOptionType.PARAM,
+    _pydev_imports_tipper.TYPE_IPYTHON: console_thrift.CompletionOptionType.IPYTHON,
+    _pydev_imports_tipper.TYPE_IPYTHON_MAGIC: console_thrift.CompletionOptionType.IPYTHON_MAGIC,
 }
 
 

@@ -16,7 +16,9 @@ public enum CompletionOptionType implements org.apache.thrift.TEnum {
   FUNCTION(2),
   ATTR(3),
   BUILTIN(4),
-  PARAM(5);
+  PARAM(5),
+  IPYTHON(11),
+  IPYTHON_MAGIC(12);
 
   private final int value;
 
@@ -49,6 +51,10 @@ public enum CompletionOptionType implements org.apache.thrift.TEnum {
         return BUILTIN;
       case 5:
         return PARAM;
+      case 11:
+        return IPYTHON;
+      case 12:
+        return IPYTHON_MAGIC;
       default:
         return null;
     }

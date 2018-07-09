@@ -87,6 +87,8 @@ enum CompletionOptionType {
   ATTR = 3,
   BUILTIN = 4,
   PARAM = 5,
+  IPYTHON = 11,
+  IPYTHON_MAGIC = 12
 }
 
 struct CompletionOption {
