@@ -210,14 +210,20 @@ fun UElement.asRecursiveLogString(render: (UElement) -> String = { it.asLogStrin
  * or companion object's containing class if the given method is main method annotated with [kotlin.jvm.JvmStatic] in companion object,
  * otherwise *null*.
  */
-fun findMainClass(mainMethod: UMethod): PsiClass? {
-  val psiMethod = mainMethod.javaPsi
-  if ("main" != psiMethod.name) return null
-  var mainClassCandidate = psiMethod.containingClass ?: return null
-  if (PsiMethodUtil.isMainMethod(psiMethod)) return mainClassCandidate
+fun getMainMethodClass(uMainMethod: UMethod): PsiClass? {
+  if ("main" != uMainMethod.name) return null
+  val containingClass = uMainMethod.uastParent as? UClass ?: return null
+  val mainMethod = uMainMethod.javaPsi
+  if (PsiMethodUtil.isMainMethod(mainMethod)) return containingClass.javaPsi
 
   // Check for @JvmStatic main method in companion object
-  mainClassCandidate = mainClassCandidate.containingClass ?: return null
-  val mainInClass = PsiMethodUtil.findMainInClass(mainClassCandidate)
-  return if (psiMethod.manager.areElementsEquivalent(psiMethod, mainInClass)) mainClassCandidate else null
+  val parentClassForCompanionObject = (containingClass.uastParent as? UClass)?.javaPsi ?: return null
+
+  val mainInClass = PsiMethodUtil.findMainInClass(parentClassForCompanionObject)
+
+  if (mainMethod.manager.areElementsEquivalent(mainMethod, mainInClass)) {
+    return parentClassForCompanionObject
+  }
+
+  return null
 }
