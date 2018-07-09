@@ -45,16 +45,16 @@ interface PythonConsoleRemoteProcessCreator<T> {
 }
 
 data class RemoteConsoleProcessData(val remoteProcessHandlerBase: ProcessHandler,
-                                    val pydevConsoleCommunication: PydevRemoteConsoleCommunication,
+                                    val pydevConsoleCommunication: PydevConsoleCommunication,
                                     val commandLine: String?,
                                     val process: Process,
                                     val socketProvider: PyRemoteSocketToLocalHostProvider) {
   constructor(remoteProcessHandlerBase: PyRemoteProcessHandlerBase,
-              pydevConsoleCommunication: PydevRemoteConsoleCommunication) : this(remoteProcessHandlerBase = remoteProcessHandlerBase,
-                                                                                 pydevConsoleCommunication = pydevConsoleCommunication,
-                                                                                 commandLine = remoteProcessHandlerBase.commandLine,
-                                                                                 process = remoteProcessHandlerBase.process,
-                                                                                 socketProvider = remoteProcessHandlerBase.remoteSocketToLocalHostProvider)
+              pydevConsoleCommunication: PydevConsoleCommunication) : this(remoteProcessHandlerBase = remoteProcessHandlerBase,
+                                                                           pydevConsoleCommunication = pydevConsoleCommunication,
+                                                                           commandLine = remoteProcessHandlerBase.commandLine,
+                                                                           process = remoteProcessHandlerBase.process,
+                                                                           socketProvider = remoteProcessHandlerBase.remoteSocketToLocalHostProvider)
 }
 
 @Throws(ExecutionException::class)
