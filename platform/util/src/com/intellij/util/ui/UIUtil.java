@@ -2396,16 +2396,23 @@ public class UIUtil {
   /** @see #pump() */
   @TestOnly
   public static void dispatchAllInvocationEvents() {
-    //noinspection StatementWithEmptyBody
-    while(dispatchInvocationEvent());
+    for (int i = 1; ; i++) {
+      AWTEvent event = dispatchInvocationEvent();
+      if (event == null) break;
+
+      if (i % 10000 == 0) {
+        //noinspection UseOfSystemOutOrSystemErr
+        System.out.println("Suspiciously many (" + i + ") AWT events, last dispatched " + event);
+      }
+    }
   }
 
   @TestOnly
-  public static boolean dispatchInvocationEvent() {
+  public static AWTEvent dispatchInvocationEvent() {
     assert EdtInvocationManager.getInstance().isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
     final EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     AWTEvent event = eventQueue.peekEvent();
-    if (event == null) return false;
+    if (event == null) return null;
     try {
       event = eventQueue.getNextEvent();
       if (event instanceof InvocationEvent) {
@@ -2418,7 +2425,7 @@ public class UIUtil {
     catch (Exception e) {
       LOG.error(e);
     }
-    return true;
+    return event;
   }
 
   private static Thread getEventQueueThread() {
