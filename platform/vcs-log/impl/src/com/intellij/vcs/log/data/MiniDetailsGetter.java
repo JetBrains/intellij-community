@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
 import com.intellij.vcs.log.VcsLogProvider;
-import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.data.index.IndexedDetails;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
@@ -21,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 
-public class MiniDetailsGetter extends AbstractDataGetter<VcsShortCommitDetails> {
+public class MiniDetailsGetter extends AbstractDataGetter<VcsCommitMetadata> {
 
   @NotNull private final TopCommitsCache myTopCommitsDetailsCache;
   @NotNull private final VcsLogObjectsFactory myFactory;
@@ -39,26 +38,26 @@ public class MiniDetailsGetter extends AbstractDataGetter<VcsShortCommitDetails>
 
   @Nullable
   @Override
-  protected VcsShortCommitDetails getFromAdditionalCache(int commitId) {
+  protected VcsCommitMetadata getFromAdditionalCache(int commitId) {
     return myTopCommitsDetailsCache.get(commitId);
   }
 
   @NotNull
   @Override
-  protected List<? extends VcsShortCommitDetails> readDetails(@NotNull VcsLogProvider logProvider, @NotNull VirtualFile root,
-                                                              @NotNull List<String> hashes) throws VcsException {
+  protected List<? extends VcsCommitMetadata> readDetails(@NotNull VcsLogProvider logProvider, @NotNull VirtualFile root,
+                                                          @NotNull List<String> hashes) throws VcsException {
     return logProvider.readShortDetails(root, hashes);
   }
 
   @NotNull
   @Override
-  public TIntObjectHashMap<VcsShortCommitDetails> preLoadCommitData(@NotNull TIntHashSet commits) throws VcsException {
+  public TIntObjectHashMap<VcsCommitMetadata> preLoadCommitData(@NotNull TIntHashSet commits) throws VcsException {
     IndexDataGetter dataGetter = myIndex.getDataGetter();
     if (dataGetter == null) return super.preLoadCommitData(commits);
 
     TIntHashSet notIndexed = new TIntHashSet();
 
-    TIntObjectHashMap<VcsShortCommitDetails> result = TroveUtil.map2MapNotNull(commits, commit -> {
+    TIntObjectHashMap<VcsCommitMetadata> result = TroveUtil.map2MapNotNull(commits, commit -> {
       VcsCommitMetadata metadata = IndexedDetails.createMetadata(commit, dataGetter, myStorage, myFactory);
       if (metadata == null) notIndexed.add(commit);
       return metadata;

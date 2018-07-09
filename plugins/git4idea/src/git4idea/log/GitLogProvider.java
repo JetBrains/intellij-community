@@ -353,7 +353,7 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsShortCommitDetails> readShortDetails(@NotNull final VirtualFile root, @NotNull List<String> hashes)
+  public List<? extends VcsCommitMetadata> readShortDetails(@NotNull final VirtualFile root, @NotNull List<String> hashes)
     throws VcsException {
     return GitLogUtil.collectShortDetails(myProject, myVcs, root, hashes);
   }
