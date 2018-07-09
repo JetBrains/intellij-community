@@ -15,10 +15,11 @@ import java.util.List;
 class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
   private static final Key<Integer> ORDER_KEY = Key.create("inlay.order.key");
 
+  static boolean ourPutAtBeginningOfMergedIntervals; // editor only supports documents that change in EDT, so we can use a static field here
+
   @NotNull
   private final EditorImpl myEditor;
   private final boolean myRelatedToPrecedingText;
-  final int myOriginalOffset; // used for sorting of inlays, if they ever get merged into same offset after document modification
   int myOffsetBeforeDisposal = -1;
   private int myWidthInPixels;
   @NotNull
@@ -28,7 +29,6 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
     super(editor.getDocument(), offset, offset, false);
     myEditor = editor;
     myRelatedToPrecedingText = relatesToPreceedingText;
-    myOriginalOffset = offset;
     myRenderer = renderer;
     doUpdateSize();
     myEditor.getInlayModel().myInlayTree.addInterval(this, offset, offset, false, false, relatesToPreceedingText, 0);
@@ -58,6 +58,8 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
 
   @Override
   protected void changedUpdateImpl(@NotNull DocumentEvent e) {
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
+    ourPutAtBeginningOfMergedIntervals = intervalStart() == e.getOffset();
     super.changedUpdateImpl(e);
     if (isValid() && DocumentUtil.isInsideSurrogatePair(getDocument(), intervalStart())) {
       invalidate(e);
@@ -66,6 +68,8 @@ class InlayImpl extends RangeMarkerImpl implements Inlay, Getter<InlayImpl> {
 
   @Override
   protected void onReTarget(int startOffset, int endOffset, int destOffset) {
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
+    ourPutAtBeginningOfMergedIntervals = intervalStart() == endOffset;
     if (DocumentUtil.isInsideSurrogatePair(getDocument(), getOffset())) {
       myEditor.getInlayModel().myMoveInProgress = true;
       try {
