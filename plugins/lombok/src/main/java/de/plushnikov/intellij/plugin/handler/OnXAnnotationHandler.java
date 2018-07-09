@@ -14,14 +14,11 @@ import java.util.regex.Pattern;
 
 public class OnXAnnotationHandler {
   private static final Pattern UNDERSCORES = Pattern.compile("__*");
-  private static final Pattern CANNOT_RESOLVE_UNDERSCORES_MESSAGE = Pattern.compile("Cannot resolve symbol '__*'");
+  private static final Pattern CANNOT_RESOLVE_SYMBOL_UNDERSCORES_MESSAGE = Pattern.compile("Cannot resolve symbol '__*'");
+  private static final Pattern CANNOT_RESOLVE_METHOD_UNDERSCORES_MESSAGE = Pattern.compile("Cannot resolve method '(onMethod|onConstructor|onParam)_+'");
 
   private static final String ANNOTATION_TYPE_EXPECTED = "Annotation type expected";
   private static final String CANNOT_FIND_METHOD_VALUE_MESSAGE = "Cannot find method 'value'";
-
-  private static final String CANNOT_RESOLVE_METHOD_ON_METHOD_MESSAGE = "Cannot resolve method 'onMethod_'";
-  private static final String CANNOT_RESOLVE_METHOD_ON_CONSTRUCTOR_MESSAGE = "Cannot resolve method 'onConstructor_'";
-  private static final String CANNOT_RESOLVE_METHOD_ON_PARAM_MESSAGE = "Cannot resolve method 'onParam_'";
 
   private static final Collection<String> ONXABLE_ANNOTATIONS = Arrays.asList(
     "lombok.Getter",
@@ -35,19 +32,14 @@ public class OnXAnnotationHandler {
   private static final Collection<String> ONX_PARAMETERS = Arrays.asList(
     "onConstructor",
     "onMethod",
-    "onParam",
-    "onConstructor_",
-    "onMethod_",
-    "onParam_"
+    "onParam"
   );
 
   public static boolean isOnXParameterAnnotation(HighlightInfo highlightInfo, PsiFile file) {
     final String description = StringUtil.notNullize(highlightInfo.getDescription());
     if (!(ANNOTATION_TYPE_EXPECTED.equals(description)
-      || CANNOT_RESOLVE_UNDERSCORES_MESSAGE.matcher(description).matches()
-      || CANNOT_RESOLVE_METHOD_ON_METHOD_MESSAGE.equals(description)
-      || CANNOT_RESOLVE_METHOD_ON_CONSTRUCTOR_MESSAGE.equals(description)
-      || CANNOT_RESOLVE_METHOD_ON_PARAM_MESSAGE.equals(description))) {
+      || CANNOT_RESOLVE_SYMBOL_UNDERSCORES_MESSAGE.matcher(description).matches()
+      || CANNOT_RESOLVE_METHOD_UNDERSCORES_MESSAGE.matcher(description).matches())) {
       return false;
     }
 
@@ -59,6 +51,9 @@ public class OnXAnnotationHandler {
     }
 
     String parameterName = nameValuePair.getName();
+    if (null != parameterName && parameterName.contains("_")) {
+      parameterName = parameterName.substring(0, parameterName.indexOf('_'));
+    }
     if (!ONX_PARAMETERS.contains(parameterName)) {
       return false;
     }

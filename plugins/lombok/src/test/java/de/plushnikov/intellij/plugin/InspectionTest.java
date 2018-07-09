@@ -30,27 +30,27 @@ public class InspectionTest extends InspectionTestCase {
     doTest(getTestName(true), new LombokInspection());
   }
 
-  public void testIssue37() throws Exception {
+  public void testIssue37() {
     doTest();
   }
 
-  public void testDataEqualsAndHashCodeOverride() throws Exception {
+  public void testDataEqualsAndHashCodeOverride() {
     doTest();
   }
 
-  public void testEqualsAndHashCodeCallSuper() throws Exception {
+  public void testEqualsAndHashCodeCallSuper() {
     doTest();
   }
 
-  public void testEqualsAndHashCodeCallSuperConfigSkip() throws Exception {
+  public void testEqualsAndHashCodeCallSuperConfigSkip() {
     doTest();
   }
 
-  public void testValInspection() throws Exception {
+  public void testValInspection() {
     doTest();
   }
 
-  public void testSetterOnFinalField() throws Exception {
+  public void testSetterOnFinalField() {
     doTest();
   }
 
