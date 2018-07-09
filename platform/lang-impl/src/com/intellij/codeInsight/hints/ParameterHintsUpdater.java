@@ -68,13 +68,10 @@ public class ParameterHintsUpdater {
     myEditor.putUserData(HINT_REMOVAL_DELAYED, Boolean.FALSE);
 
     List<InlayUpdateInfo> updates = ContainerUtil.newArrayList();
-    ParameterHintsPresentationManager presentationManager = ParameterHintsPresentationManager.getInstance();
-    
+
     editorHints.forEach(editorHint -> {
       int offset = editorHint.getOffset();
-      String presentationText = presentationManager.getHintText(editorHint);
-      ParameterHintsPass.HintData newHint = findAndRemoveMatchingHint(offset, presentationText, editorHint.isRelatedToPrecedingText(), 
-                                                                      myNewHints);
+      ParameterHintsPass.HintData newHint = findAndRemoveMatchingHint(offset, editorHint.isRelatedToPrecedingText(), myNewHints);
       String newText = newHint == null ? null : newHint.presentationText;
       if (!myForceImmediateUpdate && delayRemoval(editorHint)) {
         myEditor.putUserData(HINT_REMOVAL_DELAYED, Boolean.TRUE);
@@ -99,25 +96,18 @@ public class ParameterHintsUpdater {
   }
 
   @Nullable
-  private static ParameterHintsPass.HintData findAndRemoveMatchingHint(int offset, String presentationText, boolean relatesToPrecedingText, 
+  private static ParameterHintsPass.HintData findAndRemoveMatchingHint(int offset, boolean relatesToPrecedingText,
                                                                        TIntObjectHashMap<List<ParameterHintsPass.HintData>> data) {
     List<ParameterHintsPass.HintData> newHintList = data.get(offset);
     ParameterHintsPass.HintData newHint = null;
     if (newHintList != null) {
-      ParameterHintsPass.HintData lastHint = null;
       for (Iterator<ParameterHintsPass.HintData> iterator = newHintList.iterator(); iterator.hasNext(); ) {
         ParameterHintsPass.HintData hint = iterator.next();
-        if (hint.relatesToPrecedingText != relatesToPrecedingText) continue;
-        lastHint = hint;
-        if (Objects.equals(lastHint.presentationText, presentationText)) {
-          newHint = lastHint;
+        if (hint.relatesToPrecedingText == relatesToPrecedingText) {
+          newHint = hint;
           iterator.remove();
           break;
         }
-      }
-      if (newHint == null && lastHint != null) {
-        newHint = lastHint;
-        newHintList.remove(lastHint);
       }
       if (newHintList.isEmpty()) data.remove(offset);
     }
