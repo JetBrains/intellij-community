@@ -73,7 +73,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   /**
    * Thrift RPC client for sending messages to the server.
    */
-  private PythonConsole.Iface myClient;
+  private PythonConsoleBackendService.Iface myClient;
 
   /**
    * This is the server responsible for giving input to a raw_input() requested.
@@ -121,8 +121,9 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   }
 
   public void startServer(int port) throws InterruptedException {
-    IDEHandler serverHandler = new IDEHandler();
-    IDE.Processor<IDE.Iface> serverProcessor = new IDE.Processor<>(serverHandler);
+    PythonConsoleFrontendHandler serverHandler = new PythonConsoleFrontendHandler();
+    PythonConsoleFrontendService.Processor<PythonConsoleFrontendService.Iface> serverProcessor =
+      new PythonConsoleFrontendService.Processor<>(serverHandler);
     //noinspection IOResourceOpenedButNotSafelyClosed
     TNettyServerTransport serverTransport = new TNettyServerTransport(port);
     TThreadPoolServer server = new TThreadPoolServer(
@@ -134,7 +135,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       TTransport clientTransport = serverTransport.getReverseTransport();
       TBinaryProtocol clientProtocol = new TBinaryProtocol(clientTransport);
-      PythonConsole.Client client = new PythonConsole.Client(clientProtocol);
+      PythonConsoleBackendService.Client client = new PythonConsoleBackendService.Client(clientProtocol);
 
       this.myServer = server;
       this.myClient = PythonConsoleClientUtil.synchronizedPythonConsoleClient(PydevConsoleCommunication.class.getClassLoader(), client);
@@ -158,12 +159,13 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       clientTransport.open();
 
       TBinaryProtocol clientProtocol = new TBinaryProtocol(clientTransport);
-      PythonConsole.Client client = new PythonConsole.Client(clientProtocol);
+      PythonConsoleBackendService.Client client = new PythonConsoleBackendService.Client(clientProtocol);
 
       TServerTransport serverTransport = clientTransport.getServerTransport();
 
-      IDEHandler serverHandler = new IDEHandler();
-      IDE.Processor<IDE.Iface> serverProcessor = new IDE.Processor<>(serverHandler);
+      PythonConsoleFrontendHandler serverHandler = new PythonConsoleFrontendHandler();
+      PythonConsoleFrontendService.Processor<PythonConsoleFrontendService.Iface> serverProcessor =
+        new PythonConsoleFrontendService.Processor<>(serverHandler);
 
       TThreadPoolServer server = new TThreadPoolServer(
         new TThreadPoolServer.Args(serverTransport).processor(serverProcessor).protocolFactory(new TBinaryProtocol.Factory())
@@ -742,7 +744,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     return CompletableFuture.completedFuture(null);
   }
 
-  private class IDEHandler implements IDE.Iface {
+  private class PythonConsoleFrontendHandler implements PythonConsoleFrontendService.Iface {
 
     @Override
     public void notifyFinished(boolean needsMoreInput) {

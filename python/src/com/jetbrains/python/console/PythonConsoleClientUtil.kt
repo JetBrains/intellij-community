@@ -13,10 +13,10 @@ import java.util.concurrent.locks.ReentrantLock
 
 @JvmOverloads
 fun synchronizedPythonConsoleClient(loader: ClassLoader,
-                                    delegate: PythonConsole.Iface,
-                                    pythonConsoleProcess: Process? = null): PythonConsole.Iface {
+                                    delegate: PythonConsoleBackendService.Iface,
+                                    pythonConsoleProcess: Process? = null): PythonConsoleBackendService.Iface {
   val lock = ReentrantLock()
-  return Proxy.newProxyInstance(loader, arrayOf<Class<*>>(PythonConsole.Iface::class.java),
+  return Proxy.newProxyInstance(loader, arrayOf<Class<*>>(PythonConsoleBackendService.Iface::class.java),
                                 InvocationHandler { _, method, args ->
                                   val future = ApplicationManager.getApplication().executeOnPooledThread(Callable<Any> {
                                     lock.lock()
@@ -49,5 +49,5 @@ fun synchronizedPythonConsoleClient(loader: ClassLoader,
                                       }
                                     }
                                   }
-                                }) as PythonConsole.Iface
+                                }) as PythonConsoleBackendService.Iface
 }
