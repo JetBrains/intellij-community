@@ -32,6 +32,7 @@ public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
     myHolderType = holderType;
   }
 
+  @Override
   public void cleanAll() {
     myMap.clear();
     myDirMap.clear();
@@ -45,10 +46,12 @@ public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
   public void notifyVcsStarted(AbstractVcs scope) {
   }
 
+  @Override
   public HolderType getType() {
     return myHolderType;
   }
 
+  @Override
   public void addFile(@NotNull final VirtualFile file) {
     if (! containsFile(file)) {
       myMap.put(file, null);
@@ -65,6 +68,7 @@ public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
     }
   }
 
+  @Override
   public RecursiveFileHolder copy() {
     final RecursiveFileHolder<T> copyHolder = new RecursiveFileHolder<>(myProject, myHolderType);
     copyHolder.myMap.putAll(myMap);
@@ -72,6 +76,7 @@ public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
     return copyHolder;
   }
 
+  @Override
   public boolean containsFile(@NotNull final VirtualFile file) {
     if (myMap.containsKey(file)) return true;
     final VirtualFile floor = myDirMap.floorKey(file);
@@ -85,6 +90,7 @@ public class RecursiveFileHolder<T> implements IgnoredFilesHolder {
     return false;
   }
 
+  @Override
   @NotNull
   public Collection<VirtualFile> values() {
     return myMap.keySet();

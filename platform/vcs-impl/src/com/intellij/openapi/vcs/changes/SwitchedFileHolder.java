@@ -20,6 +20,7 @@ public class SwitchedFileHolder extends RecursiveFileHolder<Pair<Boolean, String
     super(project, holderType);
   }
 
+  @Override
   public synchronized SwitchedFileHolder copy() {
     final SwitchedFileHolder copyHolder = new SwitchedFileHolder(myProject, myHolderType);
     copyHolder.myMap.putAll(myMap);
