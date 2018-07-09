@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.PersistentMap;
@@ -218,12 +217,12 @@ public class IndexDataGetter {
   private <T> TIntHashSet filter(@NotNull PersistentMap<Integer, T> map, @NotNull Condition<T> condition) {
     TIntHashSet result = new TIntHashSet();
     return executeAndCatch(() -> {
-      Processor<Integer> processor = integer -> {
+      myIndexStorage.commits.process(commit -> {
         try {
-          T value = map.get(integer);
+          T value = map.get(commit);
           if (value != null) {
             if (condition.value(value)) {
-              result.add(integer);
+              result.add(commit);
             }
           }
         }
@@ -232,8 +231,7 @@ public class IndexDataGetter {
           return false;
         }
         return true;
-      };
-      myIndexStorage.commits.process(processor);
+      });
       return result;
     }, result);
   }
