@@ -66,57 +66,50 @@ public class IndexDataGetter {
     myFatalErrorsConsumer = fatalErrorsConsumer;
   }
 
+  //
+  // Getters from forward index
+  //
+
+  @Nullable
+  public VcsUser getAuthor(int commit) {
+    return executeAndCatch(() -> myIndexStorage.users.getAuthorForCommit(commit));
+  }
+
+  @Nullable
+  public VcsUser getCommitter(int commit) {
+    return executeAndCatch(() -> {
+      Integer committer = myIndexStorage.committers.get(commit);
+      if (committer != null) {
+        return myIndexStorage.users.getUserById(committer);
+      }
+      if (myIndexStorage.commits.contains(commit)) {
+        return myIndexStorage.users.getAuthorForCommit(commit);
+      }
+      return null;
+    });
+  }
+
+  @Nullable
+  public Long getAuthorTime(int commit) {
+    return executeAndCatch(() -> {
+      Pair<Long, Long> time = myIndexStorage.timestamps.get(commit);
+      if (time == null) return null;
+      return time.first;
+    });
+  }
+
+  @Nullable
+  public Long getCommitTime(int commit) {
+    return executeAndCatch(() -> {
+      Pair<Long, Long> time = myIndexStorage.timestamps.get(commit);
+      if (time == null) return null;
+      return time.second;
+    });
+  }
+
   @Nullable
   public String getFullMessage(int index) {
     return executeAndCatch(() -> myIndexStorage.messages.get(index));
-  }
-
-  @NotNull
-  public Set<FilePath> getFileNames(@NotNull FilePath path, int commit) {
-    VirtualFile root = VcsUtil.getVcsRootFor(myProject, path);
-    if (myRoots.contains(root)) {
-      Set<FilePath> result = executeAndCatch(() -> myIndexStorage.paths.getFileNames(path, commit));
-      if (result != null) return result;
-    }
-
-    return Collections.emptySet();
-  }
-
-  @NotNull
-  public FileNamesData buildFileNamesData(@NotNull FilePath path) {
-    FileNamesData result = new MyFileNamesData();
-
-    VirtualFile root = VcsUtil.getVcsRootFor(myProject, path);
-    if (myRoots.contains(root)) {
-      executeAndCatch(() -> {
-        myIndexStorage.paths.iterateCommits(path, (changes, commit) -> executeAndCatch(() -> {
-          List<Integer> parents = myIndexStorage.parents.get(commit);
-          if (parents == null) {
-            throw new CorruptedDataException("No parents for commit " + commit);
-          }
-          result.add(commit, changes.first, changes.second, parents);
-          return null;
-        }));
-        return null;
-      });
-    }
-
-    return result;
-  }
-
-  @Nullable
-  private <T> T executeAndCatch(@NotNull Throwable2Computable<T, IOException, StorageException> computable) {
-    try {
-      return computable.compute();
-    }
-    catch (IOException | StorageException | CorruptedDataException e) {
-      myIndexStorage.markCorrupted();
-      myFatalErrorsConsumer.consume(this, e);
-    }
-    catch (RuntimeException e) {
-      processRuntimeException(e);
-    }
-    return null;
   }
 
   @Nullable
@@ -136,6 +129,52 @@ public class IndexDataGetter {
       myFatalErrorsConsumer.consume(this, e);
     }
     return null;
+  }
+
+  //
+  // Filters
+  //
+
+  public boolean canFilter(@NotNull List<VcsLogDetailsFilter> filters) {
+    if (filters.isEmpty()) return false;
+    for (VcsLogDetailsFilter filter : filters) {
+      if (filter instanceof VcsLogTextFilter ||
+          filter instanceof VcsLogUserFilter ||
+          filter instanceof VcsLogStructureFilter) {
+        continue;
+      }
+      return false;
+    }
+    return true;
+  }
+
+  @NotNull
+  public Set<Integer> filter(@NotNull List<VcsLogDetailsFilter> detailsFilters) {
+    VcsLogTextFilter textFilter = ContainerUtil.findInstance(detailsFilters, VcsLogTextFilter.class);
+    VcsLogUserFilter userFilter = ContainerUtil.findInstance(detailsFilters, VcsLogUserFilter.class);
+    VcsLogStructureFilter pathFilter = ContainerUtil.findInstance(detailsFilters, VcsLogStructureFilter.class);
+
+    TIntHashSet filteredByMessage = null;
+    if (textFilter != null) {
+      filteredByMessage = filterMessages(textFilter);
+    }
+
+    TIntHashSet filteredByUser = null;
+    if (userFilter != null) {
+      Set<VcsUser> users = ContainerUtil.newHashSet();
+      for (VirtualFile root : myRoots) {
+        users.addAll(userFilter.getUsers(root));
+      }
+
+      filteredByUser = filterUsers(users);
+    }
+
+    TIntHashSet filteredByPath = null;
+    if (pathFilter != null) {
+      filteredByPath = filterPaths(pathFilter.getFiles());
+    }
+
+    return TroveUtil.intersect(filteredByMessage, filteredByPath, filteredByUser);
   }
 
   @NotNull
@@ -235,83 +274,66 @@ public class IndexDataGetter {
     return result;
   }
 
-  public boolean canFilter(@NotNull List<VcsLogDetailsFilter> filters) {
-    if (filters.isEmpty()) return false;
-    for (VcsLogDetailsFilter filter : filters) {
-      if (filter instanceof VcsLogTextFilter ||
-          filter instanceof VcsLogUserFilter ||
-          filter instanceof VcsLogStructureFilter) {
-        continue;
-      }
-      return false;
+  //
+  // File history
+  //
+
+  @NotNull
+  public Set<FilePath> getFileNames(@NotNull FilePath path, int commit) {
+    VirtualFile root = VcsUtil.getVcsRootFor(myProject, path);
+    if (myRoots.contains(root)) {
+      Set<FilePath> result = executeAndCatch(() -> myIndexStorage.paths.getFileNames(path, commit));
+      if (result != null) return result;
     }
-    return true;
+
+    return Collections.emptySet();
   }
 
   @NotNull
-  public Set<Integer> filter(@NotNull List<VcsLogDetailsFilter> detailsFilters) {
-    VcsLogTextFilter textFilter = ContainerUtil.findInstance(detailsFilters, VcsLogTextFilter.class);
-    VcsLogUserFilter userFilter = ContainerUtil.findInstance(detailsFilters, VcsLogUserFilter.class);
-    VcsLogStructureFilter pathFilter = ContainerUtil.findInstance(detailsFilters, VcsLogStructureFilter.class);
+  public FileNamesData buildFileNamesData(@NotNull FilePath path) {
+    FileNamesData result = new MyFileNamesData();
 
-    TIntHashSet filteredByMessage = null;
-    if (textFilter != null) {
-      filteredByMessage = filterMessages(textFilter);
+    VirtualFile root = VcsUtil.getVcsRootFor(myProject, path);
+    if (myRoots.contains(root)) {
+      executeAndCatch(() -> {
+        myIndexStorage.paths.iterateCommits(path, (changes, commit) -> executeAndCatch(() -> {
+          List<Integer> parents = myIndexStorage.parents.get(commit);
+          if (parents == null) {
+            throw new CorruptedDataException("No parents for commit " + commit);
+          }
+          result.add(commit, changes.first, changes.second, parents);
+          return null;
+        }));
+        return null;
+      });
     }
 
-    TIntHashSet filteredByUser = null;
-    if (userFilter != null) {
-      Set<VcsUser> users = ContainerUtil.newHashSet();
-      for (VirtualFile root : myRoots) {
-        users.addAll(userFilter.getUsers(root));
-      }
+    return result;
+  }
 
-      filteredByUser = filterUsers(users);
+  private class MyFileNamesData extends FileNamesData {
+    protected FilePath getPathById(int pathId) {
+      return VcsUtil.getFilePath(myIndexStorage.paths.getPath(pathId));
     }
+  }
 
-    TIntHashSet filteredByPath = null;
-    if (pathFilter != null) {
-      filteredByPath = filterPaths(pathFilter.getFiles());
+  //
+  // Util
+  //
+
+  @Nullable
+  private <T> T executeAndCatch(@NotNull Throwable2Computable<T, IOException, StorageException> computable) {
+    try {
+      return computable.compute();
     }
-
-    return TroveUtil.intersect(filteredByMessage, filteredByPath, filteredByUser);
-  }
-
-  @Nullable
-  public VcsUser getAuthor(int commit) {
-    return executeAndCatch(() -> myIndexStorage.users.getAuthorForCommit(commit));
-  }
-
-  @Nullable
-  public VcsUser getCommitter(int commit) {
-    return executeAndCatch(() -> {
-      Integer committer = myIndexStorage.committers.get(commit);
-      if (committer != null) {
-        return myIndexStorage.users.getUserById(committer);
-      }
-      if (myIndexStorage.commits.contains(commit)) {
-        return myIndexStorage.users.getAuthorForCommit(commit);
-      }
-      return null;
-    });
-  }
-
-  @Nullable
-  public Long getAuthorTime(int commit) {
-    return executeAndCatch(() -> {
-      Pair<Long, Long> time = myIndexStorage.timestamps.get(commit);
-      if (time == null) return null;
-      return time.first;
-    });
-  }
-
-  @Nullable
-  public Long getCommitTime(int commit) {
-    return executeAndCatch(() -> {
-      Pair<Long, Long> time = myIndexStorage.timestamps.get(commit);
-      if (time == null) return null;
-      return time.second;
-    });
+    catch (IOException | StorageException | CorruptedDataException e) {
+      myIndexStorage.markCorrupted();
+      myFatalErrorsConsumer.consume(this, e);
+    }
+    catch (RuntimeException e) {
+      processRuntimeException(e);
+    }
+    return null;
   }
 
   private void processRuntimeException(@NotNull RuntimeException e) {
@@ -322,12 +344,6 @@ public class IndexDataGetter {
     }
     else {
       throw new RuntimeException(e);
-    }
-  }
-
-  private class MyFileNamesData extends FileNamesData {
-    protected FilePath getPathById(int pathId) {
-      return VcsUtil.getFilePath(myIndexStorage.paths.getPath(pathId));
     }
   }
 
