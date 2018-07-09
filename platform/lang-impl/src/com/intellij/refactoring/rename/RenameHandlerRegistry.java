@@ -17,6 +17,7 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.ide.TitledHandler;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,22 +26,22 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.util.ArrayUtil;
-import java.util.HashSet;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
+import java.util.function.Function;
 
 /**
  * @author dsl
@@ -49,6 +50,7 @@ public class RenameHandlerRegistry {
   public static final Key<Boolean> SELECT_ALL = Key.create("rename.selectAll");
   private final Set<RenameHandler> myHandlers  = new HashSet<>();
   private final PsiElementRenameHandler myDefaultElementRenameHandler;
+  private Function<Collection<RenameHandler>, RenameHandler> myRenameHandlerSelectorInTests = ContainerUtil::getFirstItem;
 
   public static RenameHandlerRegistry getInstance() {
     return ServiceManager.getService(RenameHandlerRegistry.class);
@@ -88,7 +90,9 @@ public class RenameHandlerRegistry {
     }
     if (availableHandlers.size() == 1) return availableHandlers.values().iterator().next();
     if (availableHandlers.size() > 1) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) return availableHandlers.values().iterator().next();
+      if (ApplicationManager.getApplication().isUnitTestMode()) {
+        return myRenameHandlerSelectorInTests.apply(availableHandlers.values());
+      }
       final String[] strings = ArrayUtil.toStringArray(availableHandlers.keySet());
       final HandlersChooser chooser = new HandlersChooser(CommonDataKeys.PROJECT.getData(dataContext), strings);
       if (chooser.showAndGet()) {
@@ -103,6 +107,17 @@ public class RenameHandlerRegistry {
     if (renameHandler.isRenaming(dataContext)) {
       availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
     }
+  }
+
+  @TestOnly
+  public void setRenameHandlerSelectorInTests(Function<Collection<RenameHandler>, RenameHandler> selector, Disposable parentDisposable) {
+    myRenameHandlerSelectorInTests = selector;
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        myRenameHandlerSelectorInTests = ContainerUtil::getFirstItem;
+      }
+    });
   }
 
   private static String getHandlerTitle(RenameHandler renameHandler) {
