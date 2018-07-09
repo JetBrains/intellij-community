@@ -181,7 +181,10 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return newType;
     }
 
-    return getTypeVarTypeForCallee(referenceExpression, context);
+    final PyType typeVarType = getTypeVarTypeForCallee(referenceExpression, context);
+    if (typeVarType != null) return typeVarType;
+
+    return getTypeForSuperClass(referenceExpression, context);
   }
 
   @Override
@@ -323,6 +326,18 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return new PyCallableTypeImpl(parameters, null);
     }
 
+    return null;
+  }
+
+  @Nullable
+  private static PyType getTypeForSuperClass(@NotNull PyReferenceExpression referenceExpression, @NotNull TypeEvalContext context) {
+    final PyArgumentList arguments = PsiTreeUtil.getParentOfType(referenceExpression, PyArgumentList.class, true, ScopeOwner.class);
+    if (arguments != null && arguments.getParent() instanceof PyClass) {
+      final PyType type = Ref.deref(getType(referenceExpression, context));
+      if (type instanceof PyInstantiableType) {
+        return ((PyInstantiableType)type).toClass();
+      }
+    }
     return null;
   }
 

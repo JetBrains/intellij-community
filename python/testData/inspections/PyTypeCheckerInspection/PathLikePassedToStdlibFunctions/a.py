@@ -53,3 +53,16 @@ Path(p)
 PurePath(p)
 
 os.path.abspath(p)
+
+def foo(bar):
+    # type: (Path) -> None
+    open(bar)
+
+    os.fspath(bar)
+    os.fsencode(bar)
+    os.fsdecode(bar)
+
+    Path(bar)
+    PurePath(<warning descr="Expected type 'str', got 'Path' instead">bar</warning>)  # TODO ok after supporting versioning in pyi-stubs
+
+    os.path.abspath(bar)

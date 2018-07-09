@@ -1388,11 +1388,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
                                                            ? stub.getSuperClasses()
                                                            : PyClassElementType.getSuperClassQNames(this);
 
-    final PsiFile file = getContainingFile();
-    if (file instanceof PyFile) {
-      for (QualifiedName name : superClasses.keySet()) {
-        result.add(name != null ? classTypeFromQName(name, (PyFile)file, context) : null);
-      }
+    for (QualifiedName name : superClasses.keySet()) {
+      result.add(name != null ? classTypeFromQName(name, context) : null);
     }
   }
 
@@ -1469,12 +1466,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     }
     else {
       final QualifiedName name = getMetaClassQName();
-      final PsiFile file = getContainingFile();
-      if (file instanceof PyFile) {
-        final PyFile pyFile = (PyFile)file;
-        if (name != null) {
-          return classTypeFromQName(name, pyFile, context);
-        }
+      if (name != null) {
+        return classTypeFromQName(name, context);
       }
     }
     final LanguageLevel level = LanguageLevel.forElement(this);
@@ -1709,13 +1702,21 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   }
 
   @Nullable
-  private static PyClassLikeType classTypeFromQName(@NotNull QualifiedName qualifiedName, @NotNull PyFile containingFile,
-                                                    @NotNull TypeEvalContext context) {
-    final PsiElement element = ContainerUtil.getFirstItem(PyResolveUtil.resolveQualifiedNameInScope(qualifiedName, containingFile, context));
-    if (element instanceof PyTypedElement) {
-      final PyType type = context.getType((PyTypedElement)element);
-      if (type instanceof PyClassLikeType) {
-        return (PyClassLikeType)type;
+  private PyClassLikeType classTypeFromQName(@NotNull QualifiedName qualifiedName, @NotNull TypeEvalContext context) {
+    final String text = "class " + getName() + "(" + qualifiedName.toString() + "):\n    pass";
+
+    final PyExpressionCodeFragmentImpl codeFragment =
+      new PyExpressionCodeFragmentImpl(getProject(), "dummy.py", text, false);
+    codeFragment.setContext(getContainingFile());
+
+    final PyClass cls = as(codeFragment.getFirstChild(), PyClass.class);
+    if (cls != null) {
+      final PyExpression expression = ArrayUtil.getFirstElement(cls.getSuperClassExpressions());
+      if (expression != null) {
+        final PyType type = context.getType(expression);
+        if (type instanceof PyClassLikeType) {
+          return (PyClassLikeType)type;
+        }
       }
     }
     return null;
