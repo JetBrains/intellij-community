@@ -25,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.io.PersistentHashMap;
 import com.intellij.util.io.PersistentMap;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogStorage;
@@ -234,12 +233,7 @@ public class IndexDataGetter {
         }
         return true;
       };
-      if (myIndexStorage.messages instanceof PersistentHashMap) {
-        ((PersistentHashMap<Integer, T>)myIndexStorage.messages).processKeysWithExistingMapping(processor);
-      }
-      else {
-        myIndexStorage.messages.processKeys(processor);
-      }
+      myIndexStorage.commits.process(processor);
       return result;
     }, result);
   }
