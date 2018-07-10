@@ -245,11 +245,14 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   }
 
   private static boolean hasAncestor(@NotNull Set<FilePath> dirs, @NotNull FilePath filePath) {
-    String path = filePath.getPath();
     for (FilePath parent : dirs) {
-      if (FileUtil.startsWith(path, parent.getPath())) return true;
+      if (isAncestor(filePath, parent)) return true;
     }
     return false;
+  }
+
+  private static boolean isAncestor(@NotNull FilePath filePath, @NotNull FilePath parent) {
+    return FileUtil.startsWith(filePath.getPath(), parent.getPath());
   }
 
   @NotNull
@@ -277,7 +280,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
         if (files != null) {
           for (Iterator<FilePath> it = files.iterator(); it.hasNext();) {
             FilePath oldBoy = it.next();
-            if (oldBoy.isUnder(newcomer, false)) {
+            if (isAncestor(oldBoy, newcomer)) {
               it.remove();
             }
           }
@@ -293,11 +296,11 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     else {
       for (Iterator<FilePath> it = dirsByRoot.iterator(); it.hasNext();) {
         FilePath oldBoy = it.next();
-        if (newcomer.isUnder(oldBoy, false)) {
+        if (isAncestor(newcomer, oldBoy)) {
           return;
         }
 
-        if (oldBoy.isUnder(newcomer, false)) {
+        if (isAncestor(oldBoy, newcomer)) {
           it.remove();
         }
       }
@@ -318,12 +321,8 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     myAffectedContentRoots.add(vcsRoot);
 
     THashSet<FilePath> dirsByRoot = myDirtyDirectoriesRecursively.get(vcsRoot);
-    if (dirsByRoot != null) {
-      for (FilePath oldBoy : dirsByRoot) {
-        if (newcomer.isUnder(oldBoy, false)) {
-          return;
-        }
-      }
+    if (dirsByRoot != null && hasAncestor(dirsByRoot, newcomer)) {
+      return;
     }
 
     final THashSet<FilePath> dirtyFiles = myDirtyFiles.get(vcsRoot);
@@ -446,10 +445,8 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
         // "affected root" -> /root with scope = /root recursively
         if (VfsUtilCore.isAncestor(contentRoot, vcsRoot, false)) {
           THashSet<FilePath> dirsByRoot = myDirtyDirectoriesRecursively.get(contentRoot);
-          if (dirsByRoot != null) {
-            for (FilePath filePath : dirsByRoot) {
-              if (path.isUnder(filePath, false)) return true;
-            }
+          if (dirsByRoot != null && hasAncestor(dirsByRoot, path)) {
+            return true;
           }
         }
       }
