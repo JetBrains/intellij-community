@@ -585,6 +585,14 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
                       .getMessageBus()
                       .connect(this)
                       .subscribe(ProgressWindow.TOPIC, pw -> Disposer.register(pw,() -> myResultsList.repaint()));
+
+    mySearchField.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusLost(FocusEvent e) {
+        stopSearching();
+        searchFinishedHandler.run();
+      }
+    });
   }
 
   private void elementsSelected(int[] indexes, int modifiers) {
