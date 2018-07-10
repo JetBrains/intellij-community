@@ -23,7 +23,13 @@ open class ExtendedJTreePathFixture(
   private val myDriver: ExtendedJTreeDriver = ExtendedJTreeDriver(robot)
 ) : JTreeFixture(robot, tree) {
 
-  constructor(tree: JTree, path: TreePath, predicate: FinderPredicate, robot: Robot, driver: ExtendedJTreeDriver) :
+  constructor(
+    tree: JTree,
+    path: TreePath,
+    predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality,
+    robot: Robot = GuiRobotHolder.robot,
+    driver: ExtendedJTreeDriver = ExtendedJTreeDriver(robot)
+  ) :
     this(tree, path.path.map { it.toString() }.toList(), predicate, robot, driver)
 
   init {
