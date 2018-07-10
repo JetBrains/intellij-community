@@ -51,6 +51,7 @@
     <externalSystemConfigurationHandler implementation="com.intellij.profile.codeInspection.InspectionsProfileConfigurationHandler"/>
     <externalSystemConfigurationHandler
         implementation="com.intellij.openapi.externalSystem.service.project.settings.DetectionExcludesConfigImporter"/>
+    <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.settings.ArtifactsImporter"/>
 
     <configuration.ModuleStructureExtension
         implementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalModuleStructureExtension"/>
