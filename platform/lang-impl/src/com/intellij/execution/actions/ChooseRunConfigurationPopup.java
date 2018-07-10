@@ -38,6 +38,7 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.ui.CommonActionsPanel;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
@@ -143,8 +144,15 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       }
     });
 
+    popup.registerAction("deleteConfiguration", KeymapUtil.getKeyStroke(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.REMOVE)),
+                         new AbstractAction() {
+                           @Override
+                           public void actionPerformed(ActionEvent e) {
+                             popup.removeSelected();
+                           }
+                         });
 
-    popup.registerAction("deleteConfiguration_bksp", KeyStroke.getKeyStroke("BACK_SPACE"), new AbstractAction() {
+    popup.registerAction("speedsearch_bksp", KeyStroke.getKeyStroke("BACK_SPACE"), new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
         SpeedSearch speedSearch = popup.getSpeedSearch();
@@ -772,6 +780,33 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
         }
       }
       return new RunListElementRenderer(this, hasSideBar);
+    }
+
+    public void removeSelected() {
+      final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
+      if (!propertiesComponent.isTrueValue("run.configuration.delete.ad")) {
+        propertiesComponent.setValue("run.configuration.delete.ad", Boolean.toString(true));
+      }
+
+      final int index = getSelectedIndex();
+      if (index == -1) {
+        return;
+      }
+
+      final Object o = getListModel().get(index);
+      if (o instanceof ItemWrapper && ((ItemWrapper)o).canBeDeleted()) {
+        deleteConfiguration(myProject, (RunnerAndConfigurationSettings)((ItemWrapper)o).getValue());
+        getListModel().deleteItem(o);
+        final List<Object> values = getListStep().getValues();
+        values.remove(o);
+
+        if (index < values.size()) {
+          onChildSelectedFor(values.get(index));
+        }
+        else if (index - 1 >= 0) {
+          onChildSelectedFor(values.get(index - 1));
+        }
+      }
     }
 
     @Override
