@@ -423,6 +423,8 @@ class CommunityLibraryLicenses {
                        url: "http://objenesis.org/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "JetBrains Annotations", libraryName: "jetbrains-annotations", version: "16.0.1", license: "Apache 2.0",
                        url: "https://github.com/JetBrains/java-annotations"),
+    new LibraryLicense(name: "jetCheck", libraryName: "jetCheck", version: "0.1", license: "Apache 2.0",
+                       url: "https://github.com/JetBrains/jetCheck"),
     new LibraryLicense(name: "JetBrains Annotations for Java 5", libraryName: "jetbrains-annotations-java5", version: "16.0.1", license: "Apache 2.0",
                        url: "https://github.com/JetBrains/java-annotations"),
 
