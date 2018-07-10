@@ -1,1 +1,0 @@
-Implementation for bidirectional communication using both `Iface` and `Client`/`AsyncClient` on the same transport.
