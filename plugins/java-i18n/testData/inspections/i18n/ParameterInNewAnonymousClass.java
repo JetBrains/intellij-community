@@ -1,4 +1,4 @@
-class Test {
+abstract class Test {
     public static final Test TEST = new Test("text") {
         public void foo() {}
     };

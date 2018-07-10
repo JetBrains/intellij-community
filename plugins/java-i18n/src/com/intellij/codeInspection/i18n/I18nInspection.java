@@ -341,11 +341,19 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     if (containingClass == null || isClassNonNls(containingClass)) {
       return null;
     }
+    List<ProblemDescriptor> results = new ArrayList<>();
     final PsiCodeBlock body = method.getBody();
     if (body != null) {
-      return checkElement(body, manager, isOnTheFly);
+      ProblemDescriptor[] descriptors = checkElement(body, manager, isOnTheFly);
+      if (descriptors != null) {
+        ContainerUtil.addAll(results, descriptors);
+      }
     }
-    return null;
+    checkAnnotations(method, manager, isOnTheFly, results);
+    for (PsiParameter parameter : method.getParameterList().getParameters()) {
+      checkAnnotations(parameter, manager, isOnTheFly, results);
+    }
+    return results.isEmpty() ? null : results.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Override
@@ -362,8 +370,21 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
         ContainerUtil.addAll(result, descriptors);
       }
     }
+    checkAnnotations(aClass, manager, isOnTheFly, result);
+
 
     return result.isEmpty() ? null : result.toArray(ProblemDescriptor.EMPTY_ARRAY);
+  }
+
+  private void checkAnnotations(PsiModifierListOwner member,
+                                @NotNull InspectionManager manager,
+                                boolean isOnTheFly, List<ProblemDescriptor> result) {
+    for (PsiAnnotation annotation : member.getAnnotations()) {
+      final ProblemDescriptor[] descriptors = checkElement(annotation, manager, isOnTheFly);
+      if (descriptors != null) {
+        ContainerUtil.addAll(result, descriptors);
+      }
+    }
   }
 
   @Override
@@ -376,13 +397,21 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
     if (AnnotationUtil.isAnnotated(field, AnnotationUtil.NON_NLS, CHECK_EXTERNAL)) {
       return null;
     }
+    List<ProblemDescriptor> result = new ArrayList<>();
     final PsiExpression initializer = field.getInitializer();
-    if (initializer != null) return checkElement(initializer, manager, isOnTheFly);
-
-    if (field instanceof PsiEnumConstant) {
-      return checkElement(((PsiEnumConstant)field).getArgumentList(), manager, isOnTheFly);
+    if (initializer != null) {
+      ProblemDescriptor[] descriptors = checkElement(initializer, manager, isOnTheFly);
+      if (descriptors != null) {
+        ContainerUtil.addAll(result, descriptors);
+      }
+    } else if (field instanceof PsiEnumConstant) {
+      ProblemDescriptor[] descriptors = checkElement(((PsiEnumConstant)field).getArgumentList(), manager, isOnTheFly);
+      if (descriptors != null) {
+        ContainerUtil.addAll(result, descriptors);
+      }
     }
-    return null;
+    checkAnnotations(field, manager, isOnTheFly, result);
+    return result.isEmpty() ? null : result.toArray(ProblemDescriptor.EMPTY_ARRAY);
   }
 
   @Nullable
