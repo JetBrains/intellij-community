@@ -416,7 +416,6 @@
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android-common/intellij.android.common.iml" filepath="$PROJECT_DIR$/../adt/idea/android-common/intellij.android.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android/intellij.android.core.iml" filepath="$PROJECT_DIR$/../adt/idea/android/intellij.android.core.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/android/intellij.android.core.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/android/intellij.android.core.tests.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../adt/idea/deploy/intellij.android.deploy.iml" filepath="$PROJECT_DIR$/../adt/idea/deploy/intellij.android.deploy.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/designer/intellij.android.designer.iml" filepath="$PROJECT_DIR$/../adt/idea/designer/intellij.android.designer.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/designer/intellij.android.designer.tests.iml" filepath="$PROJECT_DIR$/../adt/idea/designer/intellij.android.designer.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/../adt/idea/uitest-framework/intellij.android.guiTestFramework.iml" filepath="$PROJECT_DIR$/../adt/idea/uitest-framework/intellij.android.guiTestFramework.iml" />

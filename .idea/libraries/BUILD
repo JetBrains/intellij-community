@@ -754,17 +754,11 @@ java_library(
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
-        "//prebuilts/tools/common/m2/repository/com/beust/jcommander/1.64:jar",
-        "//prebuilts/tools/common/m2/repository/com/google/code/findbugs/jsr305/1.3.9:jar",
-        "//prebuilts/tools/common/m2/repository/com/google/guava/guava/18.0:jar",
         "//prebuilts/tools/common/m2/repository/org/smali/dexlib2/2.2.4:jar",
         "//prebuilts/tools/common/m2/repository/org/smali/util/2.2.4:jar",
     ],
     # do not sort: must match IML order
     runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/com/beust/jcommander/1.64:jar",
-        "//prebuilts/tools/common/m2/repository/com/google/code/findbugs/jsr305/1.3.9:jar",
-        "//prebuilts/tools/common/m2/repository/com/google/guava/guava/18.0:jar",
         "//prebuilts/tools/common/m2/repository/org/smali/dexlib2/2.2.4:jar",
         "//prebuilts/tools/common/m2/repository/org/smali/util/2.2.4:jar",
     ],
