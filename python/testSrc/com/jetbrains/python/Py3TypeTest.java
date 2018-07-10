@@ -4,11 +4,14 @@ package com.jetbrains.python;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Arrays;
 
 /**
  * @author vlan
@@ -984,6 +987,67 @@ public class Py3TypeTest extends PyTestCase {
 
     doTest("int", "expr = round(True)");
     doTest("Union[float, int]", "expr = round(True, 1)");
+  }
+
+  public void testDunderNewWithGenericCls() {
+    doTest("A",
+           "from typing import Type, TypeVar\n" +
+           "\n" +
+           "P = TypeVar('P')\n" +
+           "\n" +
+           "class A:\n" +
+           "    def __new__(cls: Type[P]) -> P:\n" +
+           "        pass\n" +
+           "\n" +
+           "expr = A()");
+
+    final PyCallExpression call = (PyCallExpression)myFixture.findElementByText("expr", PyTargetExpression.class).findAssignedValue();
+    final PyFunction dunderNew = myFixture.findElementByText("A", PyClass.class).findMethodByName(PyNames.NEW, false, null);
+
+    final Project project = call.getProject();
+    final PsiFile containingFile = call.getContainingFile();
+
+    Arrays
+      .asList(TypeEvalContext.codeAnalysis(project, containingFile), TypeEvalContext.userInitiated(project, containingFile))
+      .forEach(
+        context -> {
+          final PyType callType = dunderNew.getCallType(context, call);
+          final String actualType = PythonDocumentationProvider.getTypeName(callType, context);
+          assertEquals("Failed in " + context + " context", "A", actualType);
+        }
+      );
+  }
+
+  public void testInheritedDunderNewWithGenericCls() {
+    doTest("B",
+           "from typing import Type, TypeVar\n" +
+           "\n" +
+           "P = TypeVar('P')\n" +
+           "\n" +
+           "class A:\n" +
+           "    def __new__(cls: Type[P]) -> P:\n" +
+           "        pass\n" +
+           "        \n" +
+           "class B(A):\n" +
+           "    pass\n" +
+           "\n" +
+           "expr = B()");
+
+    final PyCallExpression call = (PyCallExpression)myFixture.findElementByText("expr", PyTargetExpression.class).findAssignedValue();
+    final PyFunction dunderNew = myFixture.findElementByText("B", PyClass.class).findMethodByName(PyNames.NEW, true, null);
+
+    final Project project = call.getProject();
+    final PsiFile containingFile = call.getContainingFile();
+
+    Arrays
+      .asList(TypeEvalContext.codeAnalysis(project, containingFile), TypeEvalContext.userInitiated(project, containingFile))
+      .forEach(
+        context -> {
+          final PyType callType = dunderNew.getCallType(context, call);
+          final String actualType = PythonDocumentationProvider.getTypeName(callType, context);
+          assertEquals("Failed in " + context + " context", "B", actualType);
+        }
+      );
   }
 
   private void doTest(final String expectedType, final String text) {

@@ -50,7 +50,7 @@ os.fsencode(p)
 os.fsdecode(p)
 
 Path(p)
-PurePath(p)
+PurePath(<warning descr="Expected type 'str', got 'Path' instead">p</warning>)  # TODO ok after supporting versioning in pyi-stubs
 
 os.path.abspath(p)
 
