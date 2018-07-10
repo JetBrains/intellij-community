@@ -50,7 +50,7 @@ class ShiftByLiteralPredicate implements PsiElementPredicate {
     if (!ShiftUtils.isIntegral(lhsType)) {
       return false;
     }
-    final PsiExpression rhs = expression.getRExpression();
+    final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getRExpression());
     if (rhs == null) {
       return false;
     }

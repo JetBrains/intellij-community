@@ -83,7 +83,7 @@ public class ReplaceShiftWithMultiplyIntention extends MutablyNamedIntention {
     final PsiAssignmentExpression exp =
       (PsiAssignmentExpression)element;
     final PsiExpression lhs = exp.getLExpression();
-    final PsiExpression rhs = exp.getRExpression();
+    final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(exp.getRExpression());
     final IElementType tokenType = exp.getOperationTokenType();
     final String assignString;
     if (tokenType.equals(JavaTokenType.LTLTEQ)) {
