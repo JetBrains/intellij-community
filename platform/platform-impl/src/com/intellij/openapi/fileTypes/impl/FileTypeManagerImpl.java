@@ -791,7 +791,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       int n = readSafely(inputStream, buffer, 0, buffer.length);
       if (n <= 0) return UnknownFileType.INSTANCE;
 
-      fileType = ReadAction.compute(() -> detect(file, buffer, n));
+      fileType = detect(file, buffer, n);
 
       if (toLog()) {
         try (InputStream newStream = ((FileSystemInterface)file.getFileSystem()).getInputStream(file)) {
