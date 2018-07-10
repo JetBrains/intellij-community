@@ -130,7 +130,7 @@ fun GuiTestCase.gradleReimport() {
   logTestStep("Reimport gradle project")
   ideFrame {
     toolwindow(id = "Gradle") {
-      content(tabName = "projects") {
+      content(tabName = "") {
         //        waitAMoment()
         actionButton("Refresh all external projects").click()
       }
@@ -141,7 +141,7 @@ fun GuiTestCase.gradleReimport() {
 fun GuiTestCase.mavenReimport() {
   logTestStep("Reimport maven project")
   ideFrame {
-    toolwindow(id = "Maven Projects") {
+    toolwindow(id = "Maven") {
       content(tabName = "") {
         actionButton("Reimport All Maven Projects").click()
       }
