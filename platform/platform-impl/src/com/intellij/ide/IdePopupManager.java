@@ -15,7 +15,6 @@
  */
 package com.intellij.ide;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.IdePopupEventDispatcher;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -116,7 +115,7 @@ public final class IdePopupManager implements IdeEventQueue.EventDispatcher {
         continue;
       }
       if (forceRestoreFocus) {
-        each.setRestoreFocusSilentely();
+        each.setRestoreFocusSilently();
       }
       closed &= each.close();
     }
