@@ -75,6 +75,7 @@ public class ThreadTracker {
     wellKnownOffenders.add("AWT-EventQueue-");
     wellKnownOffenders.add("AWT-Shutdown");
     wellKnownOffenders.add("AWT-Windows");
+    wellKnownOffenders.add("Batik CleanerThread"); // Android Studio: appeared after IDEA 182.2371.4 merge
     wellKnownOffenders.add("CompilerThread0");
     wellKnownOffenders.add("External compiler");
     wellKnownOffenders.add("Finalizer");
