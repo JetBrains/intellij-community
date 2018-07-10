@@ -1031,7 +1031,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       })) {
         return null;
       }
-      PsiMethodCallExpression maybeReadLines = tryCast(lineVar.getInitializer(), PsiMethodCallExpression.class);
+      PsiMethodCallExpression maybeReadLines = tryCast(PsiUtil.skipParenthesizedExprDown(lineVar.getInitializer()), PsiMethodCallExpression.class);
       if (!BUFFERED_READER_READ_LINE.test(maybeReadLines)) return null;
       PsiExpression reader = maybeReadLines.getMethodExpression().getQualifierExpression();
       PsiReferenceExpression readerRef = tryCast(reader, PsiReferenceExpression.class);
@@ -1049,7 +1049,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       PsiExpressionStatement updateStmt = tryCast(forLoop.getUpdate(), PsiExpressionStatement.class);
       if (updateStmt == null) return null;
       PsiExpression readNewLineExpr = ExpressionUtils.getAssignmentTo(updateStmt.getExpression(), lineVar);
-      PsiMethodCallExpression readNewLineCall = tryCast(readNewLineExpr, PsiMethodCallExpression.class);
+      PsiMethodCallExpression readNewLineCall = tryCast(PsiUtil.skipParenthesizedExprDown(readNewLineExpr), PsiMethodCallExpression.class);
       if (!BUFFERED_READER_READ_LINE.test(readNewLineCall)) return null;
       if (!ExpressionUtils.isReferenceTo(readNewLineCall.getMethodExpression().getQualifierExpression(), readerVar)) return null;
       return new BufferedReaderLines(forLoop, lineVar, reader, false);
