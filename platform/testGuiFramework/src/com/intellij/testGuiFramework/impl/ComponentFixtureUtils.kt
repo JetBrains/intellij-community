@@ -263,12 +263,12 @@ fun <S, C : Component> ComponentFixture<S, C>.jTree(
   timeout: Long = defaultTimeout,
   predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality
 ): ExtendedJTreePathFixture =
-  if (target() is Container) GuiTestUtil.jTreePath(
+  if (target() is Container) ExtendedJTreePathFixture(GuiTestUtil.jTreeComponent(
     container = target() as Container,
     timeout = timeout,
     pathStrings = *pathStrings,
     predicate = predicate
-  )
+  ), pathStrings.toList(), predicate)
   else throw unableToFindComponent("""JTree "${if (pathStrings.isNotEmpty()) "by path $pathStrings" else ""}"""")
 
 /**
@@ -284,14 +284,13 @@ fun <S, C : Component> ComponentFixture<S, C>.checkboxTree(
   predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality
 ): CheckboxTreeFixture =
   if (target() is Container) {
-    val extendedJTreePathFixture = GuiTestUtil.jTreePath(
+    val tree = GuiTestUtil.jTreeComponent(
       container = target() as Container,
       timeout = timeout,
       predicate = predicate,
       pathStrings = *pathStrings
-    )
-    if (extendedJTreePathFixture.tree !is CheckboxTree) throw ComponentLookupException("Found JTree but not a CheckboxTree")
-    CheckboxTreeFixture(extendedJTreePathFixture.tree, extendedJTreePathFixture.path, robot())
+    ) as? CheckboxTree ?: throw ComponentLookupException("Found JTree but not a CheckboxTree")
+    CheckboxTreeFixture(tree, pathStrings.toList(), predicate, robot())
   }
   else throw unableToFindComponent("""CheckboxTree "${if (pathStrings.isNotEmpty()) "by path ${pathStrings.joinToString()}" else ""}"""")
 

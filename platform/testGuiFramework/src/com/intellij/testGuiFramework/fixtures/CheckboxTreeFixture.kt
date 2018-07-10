@@ -2,19 +2,21 @@
 package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.testGuiFramework.driver.CheckboxTreeDriver
+import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
+import com.intellij.testGuiFramework.driver.FinderPredicate
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.ui.CheckboxTree
 import org.fest.swing.core.Robot
-import javax.swing.tree.TreePath
 
 class CheckboxTreeFixture(
   checkboxTree: CheckboxTree,
-  path: TreePath,
+  stringPath: List<String>,
+  predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality,
   robot: Robot = GuiRobotHolder.robot,
   private val myDriver: CheckboxTreeDriver = CheckboxTreeDriver(robot)
-) : ExtendedJTreePathFixture(checkboxTree, path, robot) {
+) : ExtendedJTreePathFixture(checkboxTree, stringPath, predicate, robot, myDriver) {
 
   init {
     this.replaceDriverWith(myDriver)
