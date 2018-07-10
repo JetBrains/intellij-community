@@ -9,18 +9,15 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.override.PyOverrideImplementUtil;
 import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.inspections.quickfix.PyImplementMethodsQuickFix;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyKnownDecoratorUtil;
 import com.jetbrains.python.psi.types.PyClassLikeType;
-import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-
-import static com.jetbrains.python.psi.PyUtil.as;
 
 public class PyAbstractClassInspection extends PyInspection {
   @Nls
@@ -39,7 +36,8 @@ public class PyAbstractClassInspection extends PyInspection {
   }
 
   private static class Visitor extends PyInspectionVisitor {
-    public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
+
+    private Visitor(@NotNull ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
     }
 
@@ -58,15 +56,9 @@ public class PyAbstractClassInspection extends PyInspection {
     }
 
     private boolean isAbstract(@NotNull PyClass pyClass) {
-      final PyType metaClass = pyClass.getMetaClassType(myTypeEvalContext);
-      if (metaClass instanceof PyClassLikeType && PyNames.ABC_META_CLASS.equals(metaClass.getName())) {
+      final PyClassLikeType metaClass = pyClass.getMetaClassType(false, myTypeEvalContext);
+      if (metaClass != null && PyNames.ABC_META_CLASS.equals(metaClass.getName())) {
         return true;
-      }
-      if (metaClass == null) {
-        final PyExpression metaClassExpr = as(pyClass.getMetaClassExpression(), PyReferenceExpression.class);
-        if (metaClassExpr != null && PyNames.ABC_META_CLASS.equals(metaClassExpr.getName())) {
-          return true;
-        }
       }
       for (PyFunction method : pyClass.getMethods()) {
         if (PyKnownDecoratorUtil.hasAbstractDecorator(method, myTypeEvalContext)) {
