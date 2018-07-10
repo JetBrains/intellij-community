@@ -33,7 +33,6 @@ import com.jetbrains.python.documentation.docstrings.DocStringUtil;
 import com.jetbrains.python.documentation.docstrings.PyDocstringGenerator;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.toolbox.Substring;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -70,11 +69,11 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
         generateDocstring(parameter, parentFunction);
       }
     }
-    else {
-      StreamEx
-        .of(getMultiCallable(elementAt))
-        .select(PyFunction.class)
-        .forEach(function -> generateDocstring(null, function));
+    else if (elementAt != null) {
+      final PyFunction function = findSuitableFunction(elementAt);
+      if (function != null) {
+        generateDocstring(null, function);
+      }
     }
   }
 

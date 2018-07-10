@@ -36,7 +36,6 @@ import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -77,11 +76,11 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
     if (parameter != null) {
       annotateParameter(project, editor, parameter, true);
     }
-    else {
-      StreamEx
-        .of(getMultiCallable(elementAt))
-        .select(PyFunction.class)
-        .forEach(function -> annotateReturnType(project, function, true));
+    else if (elementAt != null) {
+      final PyFunction function = findSuitableFunction(elementAt);
+      if (function != null) {
+        annotateReturnType(project, function, true);
+      }
     }
   }
 
