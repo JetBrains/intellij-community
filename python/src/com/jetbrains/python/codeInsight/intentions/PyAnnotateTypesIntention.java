@@ -17,6 +17,7 @@ package com.jetbrains.python.codeInsight.intentions;
 
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -33,11 +34,11 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
 import static com.jetbrains.python.codeInsight.intentions.SpecifyTypeInPy3AnnotationsIntention.*;
-import static com.jetbrains.python.codeInsight.intentions.TypeIntention.getMultiCallable;
 
 /**
  * @author traff
@@ -55,7 +56,7 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
     final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     if (elementAt == null) return false;
 
-    final PyFunction function = TypeIntention.findSuitableFunction(elementAt, input -> true);
+    final PyFunction function = findSuitableFunction(elementAt);
     if (function != null) {
       setText(PyBundle.message("INTN.add.type.hints.for.function", function.getName()));
       return true;
@@ -63,13 +64,25 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
     return false;
   }
 
+  @Nullable
+  public PyFunction findSuitableFunction(@NotNull PsiElement elementAt) {
+    return TypeIntention.findSuitableFunction(elementAt, input -> true);
+  }
+
   @Override
   public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
-    getMultiCallable(elementAt).forEach(callable -> annotateTypes(editor, callable));
+    if (elementAt != null) {
+      final PyFunction function = findSuitableFunction(elementAt);
+      if (function != null) {
+        annotateTypes(editor, function);
+      }
+    }
   }
 
   public static void annotateTypes(Editor editor, PyCallable callable) {
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(callable)) return;
+
     if (isPy3k(callable.getContainingFile())) {
       generatePy3kTypeAnnotations(callable.getProject(), editor, callable);
     }
