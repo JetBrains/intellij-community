@@ -20,6 +20,7 @@ import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.codeInspection.ex.ToolsImpl;
 import com.intellij.history.Label;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryException;
@@ -168,7 +169,13 @@ public class MadTestingUtil {
     InspectionProfileImpl.INIT_INSPECTIONS = true;
     InspectionProfileImpl profile = new InspectionProfileImpl("allEnabled");
     profile.enableAllTools(project);
-    
+    ToolsImpl goodCodeIsRed = profile.getToolsOrNull("HighlightVisitorInternal", project);
+    if (goodCodeIsRed != null) {
+      // This inspection has error-level by default and highlights the first token from erroneous range
+      // which is not very stable and also masks other warning-level inspections available on the same token.
+      goodCodeIsRed.setEnabled(false);
+    }
+
     ProjectInspectionProfileManager manager = (ProjectInspectionProfileManager)InspectionProjectProfileManager.getInstance(project);
     manager.addProfile(profile);
     InspectionProfileImpl prev = manager.getCurrentProfile();
