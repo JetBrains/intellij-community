@@ -17,7 +17,9 @@ class RestPythonPreviewProvider : RestPreviewProvider() {
     val module = ProjectFileIndex.SERVICE.getInstance(project).getModuleForFile(virtualFile) ?: return null
 
     val sdk = PythonSdkType.findPythonSdk(module) ?: return Pair("", "No Python interpreter configured for the project.")
-    val commandLine = REST_RUNNER.newCommandLine(sdk, Lists.newArrayList("rst2html"))
+    val commandLine = REST_RUNNER.newCommandLine(sdk,
+                                                 Lists.newArrayList("rst2html", "--stylesheet-path=" +
+                                                                    javaClass.getResource("/styles/docutils_default.css").file))
     val output = PySdkUtil.getProcessOutput(commandLine, virtualFile.parent.path, null, 5000,
                                             text.toByteArray(CharsetToolkit.UTF8_CHARSET), false)
     return if (output.isCancelled || output.isTimeout)
