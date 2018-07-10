@@ -20,6 +20,7 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.inspections.PyAbstractClassInspection;
 import com.jetbrains.python.inspections.PyMissingConstructorInspection;
 import com.jetbrains.python.inspections.PyStatementEffectInspection;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
@@ -94,19 +95,19 @@ public class Py3QuickFixTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
   }
-  
+
   // PY-16421
   public void testAddCallSuperSingleStarParamPreserved() {
     runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
   }
-  
+
     // PY-15867
   public void testAddCallSuperRequiredKeywordOnlyParamAfterSingleStarInSuperInitIsMerged() {
     runWithLanguageLevel(LanguageLevel.PYTHON34,
                          () -> doInspectionTest(PyMissingConstructorInspection.class, PyBundle.message("QFIX.add.super"), true, true));
   }
-  
+
   // PY-16428 
   public void testAddParameterNotAvailableInsideAnnotation() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doInspectionTest(PyUnresolvedReferencesInspection.class,
@@ -135,6 +136,29 @@ public class Py3QuickFixTest extends PyTestCase {
       myFixture.launchAction(intentionAction);
       myFixture.checkResultByFile(getTestName(false) + "_after.py");
     });
+  }
+
+  // PY-30789
+  public void testAddABCToSuperclasses() {
+    final String[] testFiles = {
+      "PyAbstractClassInspection/quickFix/AddABCToSuperclasses/main.py",
+      "PyAbstractClassInspection/quickFix/AddABCToSuperclasses/main_import.py"
+    };
+
+    doInspectionTest(testFiles,
+                     PyAbstractClassInspection.class,
+                     "Add '" + PyNames.ABC + "' to superclasses",
+                     true,
+                     true);
+  }
+
+  // PY-30789
+  public void testAddImportedABCToSuperclasses() {
+    doInspectionTest("PyAbstractClassInspection/quickFix/AddImportedABCToSuperclasses/main.py",
+                     PyAbstractClassInspection.class,
+                     "Add '" + PyNames.ABC + "' to superclasses",
+                     true,
+                     true);
   }
 
   @Override
