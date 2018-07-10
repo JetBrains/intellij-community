@@ -366,7 +366,7 @@ public class PyCompatibilityInspection extends PyInspection {
         registerOnFirstMatchingVersion(level -> level.isAtLeast(LanguageLevel.PYTHON37),
                                        "'async' and 'await' are keywords in Python 3.7 and newer",
                                        nameIdentifier,
-                                       new PyRenameElementQuickFix());
+                                       new PyRenameElementQuickFix(nameIdentifierOwner));
       }
     }
   }
