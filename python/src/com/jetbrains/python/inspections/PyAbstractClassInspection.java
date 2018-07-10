@@ -60,6 +60,11 @@ public class PyAbstractClassInspection extends PyInspection {
       if (metaClass != null && PyNames.ABC_META_CLASS.equals(metaClass.getName())) {
         return true;
       }
+      for (PyClassLikeType superClassType : pyClass.getSuperClassTypes(myTypeEvalContext)) {
+        if (superClassType != null && "abc.ABC".equals(superClassType.getClassQName())) {
+          return true;
+        }
+      }
       for (PyFunction method : pyClass.getMethods()) {
         if (PyKnownDecoratorUtil.hasAbstractDecorator(method, myTypeEvalContext)) {
           return true;
