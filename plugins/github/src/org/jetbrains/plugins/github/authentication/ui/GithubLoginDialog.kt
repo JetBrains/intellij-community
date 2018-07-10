@@ -61,7 +61,7 @@ class GithubLoginDialog @JvmOverloads constructor(private val project: Project? 
 
   private var progressIndicator: ProgressIndicator? = null
   private val progressIcon = AnimatedIcon.Default()
-  private val progressExtension = ExtendableTextComponent.Extension({ progressIcon })
+  private val progressExtension = ExtendableTextComponent.Extension { progressIcon }
 
   private lateinit var login: String
   private lateinit var token: String
@@ -115,9 +115,10 @@ class GithubLoginDialog @JvmOverloads constructor(private val project: Project? 
     setBusy(true)
     tokenAcquisitionError = null
 
+    val server = getServer()
     service<ProgressManager>().runProcessWithProgressAsynchronously(object : Task.Backgroundable(project, "Not Visible") {
       override fun run(indicator: ProgressIndicator) {
-        val (newLogin, newToken) = currentUi.acquireLoginAndToken(indicator)
+        val (newLogin, newToken) = currentUi.acquireLoginAndToken(indicator, server)
         login = newLogin
         token = newToken
       }
@@ -252,8 +253,7 @@ class GithubLoginDialog @JvmOverloads constructor(private val project: Project? 
       .addToCenter(LinkLabel.create("Sign up for Github", Runnable { BrowserUtil.browse("https://github.com") }))
       .addToRight(JBLabel(AllIcons.Ide.External_link_arrow))
 
-    override fun acquireLoginAndToken(indicator: ProgressIndicator): Pair<String, String> {
-      val server = getServer()
+    override fun acquireLoginAndToken(indicator: ProgressIndicator, server: GithubServerPath): Pair<String, String> {
       if (!isAccountUnique(loginTextField.text, server)) throw LoginNotUniqueException()
 
       val token = GithubApiTaskExecutor.execute(indicator, server, loginTextField.text, passwordField.password,
@@ -280,7 +280,7 @@ class GithubLoginDialog @JvmOverloads constructor(private val project: Project? 
 
   private inner class TokenCredentialsUI : CredentialsUI() {
     private val tokenTextField = JBTextField()
-    private val switchUiLink = LinkLabel.create("Log In with Username", { applyUi(passwordUi) })
+    private val switchUiLink = LinkLabel.create("Log In with Username") { applyUi(passwordUi) }
 
     fun setToken(token: String) {
       tokenTextField.text = token
@@ -296,11 +296,11 @@ class GithubLoginDialog @JvmOverloads constructor(private val project: Project? 
 
     override fun getSouthPanel() = switchUiLink
 
-    override fun acquireLoginAndToken(indicator: ProgressIndicator): Pair<String, String> {
-      val login = GithubApiTaskExecutor.execute(indicator, getServer(), tokenTextField.text,
+    override fun acquireLoginAndToken(indicator: ProgressIndicator, server: GithubServerPath): Pair<String, String> {
+      val login = GithubApiTaskExecutor.execute(indicator, server, tokenTextField.text,
                                                 GithubTask { GithubApiUtil.getCurrentUser(it).login })
 
-      if (!isAccountUnique(login, getServer())) throw LoginNotUniqueException(login)
+      if (!isAccountUnique(login, server)) throw LoginNotUniqueException(login)
 
       return login to tokenTextField.text
     }
@@ -326,7 +326,7 @@ class GithubLoginDialog @JvmOverloads constructor(private val project: Project? 
     abstract fun getPreferredFocus(): JComponent
     abstract fun getSouthPanel(): JComponent
     abstract fun getValidator(): Validator
-    abstract fun acquireLoginAndToken(indicator: ProgressIndicator): Pair<String, String>
+    abstract fun acquireLoginAndToken(indicator: ProgressIndicator, server: GithubServerPath): Pair<String, String>
     abstract fun handleAcquireError(error: Throwable): ValidationInfo
     abstract fun setBusy(busy: Boolean)
   }
