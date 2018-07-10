@@ -19,7 +19,7 @@ import com.intellij.util.progress.ProgressVisibilityManager
 import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.GithubIcons
-import org.jetbrains.plugins.github.api.GithubApiTaskExecutor
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.api.data.GithubUserDetailed
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -29,8 +29,6 @@ import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import java.net.URL
-import javax.imageio.ImageIO
 import javax.swing.*
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
@@ -39,7 +37,7 @@ private const val ACCOUNT_PICTURE_SIZE: Int = 40
 private const val LINK_TAG = "EDIT_LINK"
 
 internal class GithubAccountsPanel(private val project: Project,
-                                   private val apiTaskExecutor: GithubApiTaskExecutor,
+                                   private val executorFactory: GithubApiRequestExecutor.Factory,
                                    private val accountInformationProvider: GithubAccountInformationProvider)
   : BorderLayoutPanel(), Disposable {
 
@@ -66,6 +64,7 @@ internal class GithubAccountsPanel(private val project: Project,
   private val progressManager = createListProgressManager()
   private val errorLinkHandler = createLinkActivationListener()
   private var errorLinkHandlerInstalled = false
+  private var currentTokensMap = mapOf<GithubAccount, String?>()
   private val newTokensMap = mutableMapOf<GithubAccount, String>()
 
   init {
@@ -208,19 +207,25 @@ internal class GithubAccountsPanel(private val project: Project,
   }
 
   private fun loadAccountDetails(accountData: GithubAccountDecorator) {
-    val newToken: String? = newTokensMap[accountData.account]
+    val account = accountData.account
+    val token = newTokensMap[account] ?: currentTokensMap[account]
+    if (token == null) {
+      accountListModel.contentsChanged(accountData.apply {
+        loadingError = "Missing access token"
+        showLoginLink = true
+      })
+      return
+    }
     progressManager.run(object : Task.Backgroundable(project, "Not Visible") {
-      lateinit var data: Pair<GithubUserDetailed, Image>
+      lateinit var data: Pair<GithubUserDetailed, Image?>
 
       override fun run(indicator: ProgressIndicator) {
-        val task = accountInformationProvider.informationTask
-        val details = if (newToken != null) {
-          GithubApiTaskExecutor.execute(indicator, accountData.account.server, newToken, task)
+        val executor = executorFactory.create(token)
+        val details = executor.execute(indicator, accountInformationProvider.getInformationRequest(account))
+        val image = details.avatarUrl?.let {
+          executor.execute(indicator, accountInformationProvider.getAvatarRequest(account, it))
         }
-        else {
-          apiTaskExecutor.execute(indicator, accountData.account, task, true)
-        }
-        data = details to ImageIO.read(URL(details.avatarUrl))
+        data = details to image
       }
 
       override fun onSuccess() {
@@ -246,9 +251,10 @@ internal class GithubAccountsPanel(private val project: Project,
     override fun getModalityState() = ModalityState.any()
   }
 
-  fun setAccounts(accounts: Set<GithubAccount>, defaultAccount: GithubAccount?) {
+  fun setAccounts(accounts: Map<GithubAccount, String?>, defaultAccount: GithubAccount?) {
     accountListModel.removeAll()
-    accountListModel.addAll(0, accounts.map { GithubAccountDecorator(it, it == defaultAccount) })
+    accountListModel.addAll(0, accounts.keys.map { GithubAccountDecorator(it, it == defaultAccount) })
+    currentTokensMap = accounts
   }
 
   /**

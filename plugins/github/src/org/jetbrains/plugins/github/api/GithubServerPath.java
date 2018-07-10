@@ -22,6 +22,8 @@ import java.util.regex.Pattern;
 @Tag("server")
 public class GithubServerPath {
   public static final String DEFAULT_HOST = "github.com";
+  private static final String API_PREFIX = "api.";
+  private static final String ENTERPRISE_API_SUFFIX = "/api/v3";
 
   @Attribute("useHttp")
   @Nullable private final Boolean myUseHttp;
@@ -76,7 +78,8 @@ public class GithubServerPath {
   }
 
   // 1 - schema, 2 - host, 4 - port, 5 - path
-  private final static Pattern URL_REGEX = Pattern.compile("^(https?://)?([^/?:]+)(:(\\d+))?((/[^/?#]+)*)?");
+  private final static Pattern URL_REGEX = Pattern.compile("^(https?://)?([^/?:]+)(:(\\d+))?((/[^/?#]+)*)?/?",
+                                                           Pattern.CASE_INSENSITIVE);
 
   @NotNull
   public static GithubServerPath from(@NotNull String uri) throws GithubParseException {
@@ -84,7 +87,7 @@ public class GithubServerPath {
 
     if (!matcher.matches()) throw new GithubParseException("Not a valid URL");
     String schema = matcher.group(1);
-    Boolean httpSchema = (schema == null || schema.isEmpty()) ? null : schema.equals("http://");
+    Boolean httpSchema = (schema == null || schema.isEmpty()) ? null : schema.equalsIgnoreCase("http://");
     String host = matcher.group(2);
     if (host == null) throw new GithubParseException("Empty host");
 
@@ -110,6 +113,18 @@ public class GithubServerPath {
   @NotNull
   public String toUrl() {
     return getSchemaUrlPart() + myHost + getPortUrlPart() + StringUtil.notNullize(mySuffix);
+  }
+
+  @NotNull
+  public String toApiUrl() {
+    StringBuilder builder = new StringBuilder(getSchemaUrlPart());
+    if (myHost.equalsIgnoreCase(DEFAULT_HOST)) {
+      builder.append(API_PREFIX).append(myHost).append(getPortUrlPart()).append(StringUtil.notNullize(mySuffix));
+    }
+    else {
+      builder.append(myHost).append(getPortUrlPart()).append(StringUtil.notNullize(mySuffix)).append(ENTERPRISE_API_SUFFIX);
+    }
+    return builder.toString();
   }
 
   public String toString() {

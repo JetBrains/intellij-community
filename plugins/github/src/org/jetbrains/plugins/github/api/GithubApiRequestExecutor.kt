@@ -137,6 +137,10 @@ sealed class GithubApiRequestExecutor {
         override fun <T> readBody(converter: ThrowableConvertor<Reader, T, IOException>): T = request.getReader(indicator).use {
           converter.convert(it)
         }
+
+        override fun <T> handleBody(converter: ThrowableConvertor<InputStream, T, IOException>): T = request.inputStream.use {
+          converter.convert(it)
+        }
       }
     }
   }
