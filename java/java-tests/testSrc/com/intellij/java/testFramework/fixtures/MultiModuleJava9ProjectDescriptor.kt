@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.testFramework.fixtures
 
 import com.intellij.openapi.application.ex.PathManagerEx
@@ -66,7 +64,7 @@ object MultiModuleJava9ProjectDescriptor : DefaultLightProjectDescriptor() {
       ModuleRootModificationUtil.addDependency(m6, m7, DependencyScope.COMPILE, true)
 
       val m8 = makeModule(project, ModuleDescriptor.M8)
-      ModuleRootModificationUtil.addDependency(m6, m8, DependencyScope.COMPILE, false)
+      ModuleRootModificationUtil.addDependency(m6, m8)
 
       val libDir = "jar://${PathManagerEx.getTestDataPath()}/codeInsight/jigsaw"
       ModuleRootModificationUtil.addModuleLibrary(main, "${libDir}/lib-named-1.0.jar!/")
