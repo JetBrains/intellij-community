@@ -26,7 +26,7 @@ import java.util.List;
 
 public interface DataGetter<T extends VcsShortCommitDetails> {
   @NotNull
-  T getCommitData(@NotNull Integer hash, @NotNull Iterable<Integer> neighbourHashes);
+  T getCommitData(int hash, @NotNull Iterable<Integer> neighbourHashes);
 
   @Deprecated
   default void loadCommitsData(@NotNull List<Integer> hashes,

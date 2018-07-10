@@ -94,7 +94,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
 
   @Override
   @NotNull
-  public T getCommitData(@NotNull Integer hash, @NotNull Iterable<Integer> neighbourHashes) {
+  public T getCommitData(int hash, @NotNull Iterable<Integer> neighbourHashes) {
     assert EventQueue.isDispatchThread();
     T details = getFromCache(hash);
     if (details != null) {
