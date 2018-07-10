@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiCompiledFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
@@ -114,7 +113,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   }
 
   private boolean isEnabled(@NotNull CodeStyleSettings settings, @NotNull PsiFile file) {
-    if (file instanceof PsiCompiledFile || file.getFileType() == ScratchFileType.INSTANCE) return false;
+    if (!(file.isWritable()) || file.getFileType() == ScratchFileType.INSTANCE) return false;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myIsEnabledInTest;
     }
