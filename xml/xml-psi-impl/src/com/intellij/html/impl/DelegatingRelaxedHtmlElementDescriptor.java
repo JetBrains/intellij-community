@@ -108,8 +108,8 @@ public class DelegatingRelaxedHtmlElementDescriptor implements XmlElementDescrip
 
   @NotNull
   @Override
-  public Object[] getDependences() {
-    return myDelegate.getDependences();
+  public Object[] getDependencies() {
+    return this.getDependencies();
   }
 
   @Override

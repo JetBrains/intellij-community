@@ -189,8 +189,8 @@ public class RngXmlAttributeDescriptor extends BasicXmlAttributeDescriptor {
 
   @NotNull
   @Override
-  public Object[] getDependences() {
-    return myElementDescriptor.getDependences();
+  public Object[] getDependencies() {
+    return this.getDependencies();
   }
 
   @Override

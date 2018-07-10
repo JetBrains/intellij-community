@@ -194,7 +194,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
         }
 
         return new CachedValueProvider.Result<>(defaultNSDescriptorInner, defaultNSDescriptorInner != null
-                                                                          ? defaultNSDescriptorInner.getDependences()
+                                                                          ? defaultNSDescriptorInner.getDependencies()
                                                                           : ExternalResourceManager.getInstance());
       }));
     }
