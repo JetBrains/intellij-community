@@ -62,6 +62,7 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.matches("Make .* default") || // can make interface non-functional and its lambdas incorrect
            actionText.startsWith("Unimplement") || // e.g. leaves red references to the former superclass methods
            actionText.equals("Make 'static'") || // from Non-'static' initializer inspection; it does not care if initializer refers instance members, see IDEA-195165
+           actionText.startsWith("Add 'catch' clause for '") || // if existing catch contains "return value", new error "Missing return statement" may appear
            actionText.equals("Split into declaration and initialization") || // TODO: remove when IDEA-179081 is fixed
            actionText.equals("Replace with 'while'") || // TODO: remove when IDEA-195157 is fixed
            actionText.equals("Randomly change 'serialVersionUID' initializer"); // TODO: remove when IDEA-195234 is fixed
