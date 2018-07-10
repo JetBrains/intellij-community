@@ -479,10 +479,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             fileHolder.notifyVcsStarted(scope.getVcs());
 
             filterOutIgnoredFiles(modifier.getDirtyFilesIterator(), fileHolder, refreshFiles);
-
-            for (VirtualFile root : modifier.getAffectedVcsRoots()) {
-              filterOutIgnoredFiles(modifier.getDirtyDirectoriesIterator(root), fileHolder, refreshFiles);
-            }
+            filterOutIgnoredFiles(modifier.getDirtyDirectoriesIterator(), fileHolder, refreshFiles);
 
             modifier.recheckDirtyKeys();
 

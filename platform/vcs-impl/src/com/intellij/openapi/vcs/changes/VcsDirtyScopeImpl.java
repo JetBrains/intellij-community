@@ -79,31 +79,16 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
     myWasEverythingDirty = wasEverythingDirty;
     myVcsDirtyScopeModifier = new VcsDirtyScopeModifier() {
-      @Override
-      public Collection<VirtualFile> getAffectedVcsRoots() {
-        return Collections.unmodifiableCollection(myDirtyDirectoriesRecursively.keySet());
-      }
-
+      @NotNull
       @Override
       public Iterator<FilePath> getDirtyFilesIterator() {
-        if (myDirtyFiles.isEmpty()) {
-          return Collections.<FilePath>emptyList().iterator();
-        }
-        final ArrayList<Iterator<FilePath>> iteratorList = new ArrayList<>(myDirtyFiles.size());
-        for (THashSet<FilePath> paths : myDirtyFiles.values()) {
-          iteratorList.add(paths.iterator());
-        }
-        return ContainerUtil.concatIterators(iteratorList);
+        return iterateMap(myDirtyFiles);
       }
 
       @NotNull
       @Override
-      public Iterator<FilePath> getDirtyDirectoriesIterator(final VirtualFile root) {
-        final THashSet<FilePath> filePaths = myDirtyDirectoriesRecursively.get(root);
-        if (filePaths != null) {
-          return filePaths.iterator();
-        }
-        return ContainerUtil.emptyIterator();
+      public Iterator<FilePath> getDirtyDirectoriesIterator() {
+        return iterateMap(myDirtyDirectoriesRecursively);
       }
 
       @Override
@@ -112,7 +97,12 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
         recheckMap(myDirtyFiles);
       }
 
-      private void recheckMap(Map<VirtualFile, THashSet<FilePath>> map) {
+      @NotNull
+      private Iterator<FilePath> iterateMap(@NotNull Map<VirtualFile, THashSet<FilePath>> map) {
+        return ContainerUtil.concatIterators(ContainerUtil.map(map.values(), THashSet::iterator));
+      }
+
+      private void recheckMap(@NotNull Map<VirtualFile, THashSet<FilePath>> map) {
         for (Iterator<THashSet<FilePath>> iterator = map.values().iterator(); iterator.hasNext();) {
           final THashSet<FilePath> next = iterator.next();
           if (next.isEmpty()) {
