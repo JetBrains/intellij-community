@@ -44,6 +44,7 @@ public class I18NInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testVarargNonNlsParameter() { doTest(); }
   public void testInitializerInAnonymousClass() { doTest(); }
   public void testNonNlsArray() { doTest(); }
+  public void testNonNlsEquals() { doTest(); }
   public void testParameterInNewAnonymousClass() { doTest(); }
   public void testConstructorCallOfNonNlsVariable() { doTest(); }
   public void testSwitchOnNonNlsString() { doTest(); }

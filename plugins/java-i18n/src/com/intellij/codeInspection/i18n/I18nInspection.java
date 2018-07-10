@@ -20,8 +20,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.MethodSignature;
-import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
@@ -31,6 +29,8 @@ import com.intellij.ui.FieldPanel;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExceptionUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -725,40 +725,18 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
   }
 
   private static boolean isInNonNlsEquals(PsiExpression expression, final Set<PsiModifierListOwner> nonNlsTargets) {
-    if (!(expression.getParent().getParent() instanceof PsiMethodCallExpression)) {
-      return false;
-    }
-    final PsiMethodCallExpression call = (PsiMethodCallExpression)expression.getParent().getParent();
-    final PsiReferenceExpression methodExpression = call.getMethodExpression();
-    final PsiExpression qualifier = methodExpression.getQualifierExpression();
-    if (qualifier != expression) {
-      return false;
-    }
-    if (!"equals".equals(methodExpression.getReferenceName())) {
-      return false;
-    }
-    final PsiElement resolved = methodExpression.resolve();
-    if (!(resolved instanceof PsiMethod)) {
-      return false;
-    }
-    PsiType objectType = PsiType.getJavaLangObject(resolved.getManager(), resolved.getResolveScope());
-    MethodSignature equalsSignature = MethodSignatureUtil.createMethodSignature("equals",
-                                                                                new PsiType[]{objectType},
-                                                                                PsiTypeParameter.EMPTY_ARRAY,
-                                                                                PsiSubstitutor.EMPTY);
-    if (!equalsSignature.equals(((PsiMethod)resolved).getSignature(PsiSubstitutor.EMPTY))) {
-      return false;
-    }
+    final PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(expression);
+    if (call == null || !MethodCallUtils.isEqualsCall(call)) return false;
     final PsiExpression[] expressions = call.getArgumentList().getExpressions();
-    if (expressions.length != 1) {
-      return false;
-    }
-    final PsiExpression arg = expressions[0];
+    if (expressions.length != 1) return false;
+    final PsiExpression arg = PsiUtil.skipParenthesizedExprDown(expressions[0]);
     PsiReferenceExpression ref = null;
     if (arg instanceof PsiReferenceExpression) {
       ref = (PsiReferenceExpression)arg;
     }
-    else if (arg instanceof PsiMethodCallExpression) ref = ((PsiMethodCallExpression)arg).getMethodExpression();
+    else if (arg instanceof PsiMethodCallExpression) {
+      ref = ((PsiMethodCallExpression)arg).getMethodExpression();
+    }
     if (ref != null) {
       final PsiElement resolvedEntity = ref.resolve();
       if (resolvedEntity instanceof PsiModifierListOwner) {
@@ -813,7 +791,7 @@ public class I18nInspection extends AbstractBaseJavaLocalInspectionTool implemen
 
   private static boolean isNonNlsCall(PsiMethodCallExpression grParent, Set<PsiModifierListOwner> nonNlsTargets) {
     final PsiReferenceExpression methodExpression = grParent.getMethodExpression();
-    final PsiExpression qualifier = methodExpression.getQualifierExpression();
+    final PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(methodExpression.getQualifierExpression());
     if (qualifier instanceof PsiReferenceExpression) {
       final PsiElement resolved = ((PsiReferenceExpression)qualifier).resolve();
       if (resolved instanceof PsiModifierListOwner) {

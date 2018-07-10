@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>Test.java</file>
+    <line>4</line>
+    <module>testNonNlsEquals</module>
+    <package>&lt;default&gt;</package>
+    <entry_point TYPE="method" FQNAME="Foo void test(java.lang.String s, java.lang.String s1)" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Hard coded strings</problem_class>
+    <description>Hard coded string literal: &quot;bar&quot;</description>
+  </problem>
+  <problem>
+    <file>Test.java</file>
+    <line>6</line>
+    <module>testNonNlsEquals</module>
+    <package>&lt;default&gt;</package>
+    <entry_point TYPE="method" FQNAME="Foo void test(java.lang.String s, java.lang.String s1)" />
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Hard coded strings</problem_class>
+    <description>Hard coded string literal: &quot;bar&quot;</description>
+  </problem>
+</problems>
+
