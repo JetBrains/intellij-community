@@ -17,6 +17,7 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Consumer;
+import com.intellij.util.EmptyConsumer;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +32,7 @@ public interface DataGetter<T extends VcsShortCommitDetails> {
   default void loadCommitsData(@NotNull List<Integer> hashes,
                                @NotNull Consumer<List<T>> consumer,
                                @Nullable ProgressIndicator indicator) {
-    loadCommitsData(hashes, consumer, Consumer.EMPTY_CONSUMER, indicator);
+    loadCommitsData(hashes, consumer, EmptyConsumer.getInstance(), indicator);
   }
 
   void loadCommitsData(@NotNull List<Integer> hashes, @NotNull Consumer<List<T>> consumer,
