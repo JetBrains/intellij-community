@@ -17,11 +17,9 @@ package com.intellij.psi.impl.source.html.dtd;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.impl.BasicXmlAttributeDescriptor;
 import com.intellij.xml.impl.XmlEnumerationDescriptor;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim.Mossienko
@@ -95,12 +93,6 @@ public class HtmlAttributeDescriptorImpl extends BasicXmlAttributeDescriptor {
   @Override
   public void init(PsiElement element) {
     delegate.init(element);
-  }
-
-  @NotNull
-  @Override
-  public Object[] getDependencies() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

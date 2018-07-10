@@ -32,7 +32,6 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.regexp.DefaultRegExpPropertiesProvider;
 import org.intellij.lang.regexp.RegExpLanguageHost;
@@ -177,12 +176,6 @@ public class XmlAttributeValueImpl extends XmlElementImpl implements XmlAttribut
 
   @Override
   public void init(final PsiElement element) {
-  }
-
-  @NotNull
-  @Override
-  public Object[] getDependencies() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

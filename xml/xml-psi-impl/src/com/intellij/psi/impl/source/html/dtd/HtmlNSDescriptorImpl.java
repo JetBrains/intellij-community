@@ -169,7 +169,7 @@ public class HtmlNSDescriptorImpl implements XmlNSDescriptor, DumbAware, XmlNSTy
   @NotNull
   @Override
   public Object[] getDependencies() {
-    return myDelegate == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : this.getDependencies();
+    return myDelegate == null ? ArrayUtil.EMPTY_OBJECT_ARRAY : myDelegate.getDependencies();
   }
 
   @Override

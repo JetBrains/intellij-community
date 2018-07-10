@@ -198,7 +198,7 @@ public class HtmlElementDescriptorImpl extends BaseXmlElementDescriptorImpl {
   @NotNull
   @Override
   public Object[] getDependencies() {
-    return this.getDependencies();
+    return myDelegate.getDependencies();
   }
 
   @Override

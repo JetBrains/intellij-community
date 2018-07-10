@@ -25,7 +25,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -62,12 +61,6 @@ public class XmlAttributeDescriptorImpl extends XsdEnumerationDescriptor impleme
   public void init(PsiElement element){
     myTag = (XmlTag) element;
     myUse = myTag.getAttributeValue("use");
-  }
-
-  @NotNull
-  @Override
-  public Object[] getDependencies(){
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

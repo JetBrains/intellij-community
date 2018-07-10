@@ -27,7 +27,6 @@ import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
 import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -87,12 +86,6 @@ public class BeanPropertyElement extends FakePsiElement implements PsiMetaOwner,
   @Override
   public void init(PsiElement element) {
 
-  }
-
-  @NotNull
-  @Override
-  public Object[] getDependencies() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override

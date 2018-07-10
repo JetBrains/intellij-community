@@ -114,9 +114,9 @@ public class XmlNSDescriptorSequence implements XmlNSDescriptor{
   @NotNull
   @Override
   public Object[] getDependencies(){
-    final List<Object> ret = new ArrayList<>();
+    List<Object> ret = new ArrayList<>();
     for (XmlNSDescriptor descriptor : sequence) {
-      ContainerUtil.addAll(ret, this.getDependencies());
+      ContainerUtil.addAll(ret, descriptor.getDependencies());
     }
     return ret.toArray();
   }

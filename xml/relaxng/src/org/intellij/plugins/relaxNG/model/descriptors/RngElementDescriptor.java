@@ -359,9 +359,10 @@ public class RngElementDescriptor implements XmlElementDescriptor {
   @Override
   public Object[] getDependencies() {
     if (myDeclaration != null) {
-      return ArrayUtil.append(this.getDependencies(), myDeclaration.getElement());
-    } else {
-      return this.getDependencies();
+      return ArrayUtil.append(myNsDescriptor.getDependencies(), myDeclaration.getElement());
+    }
+    else {
+      return myNsDescriptor.getDependencies();
     }
   }
 

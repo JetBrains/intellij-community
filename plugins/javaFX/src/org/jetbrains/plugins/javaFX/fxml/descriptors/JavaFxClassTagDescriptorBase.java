@@ -12,7 +12,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
@@ -298,12 +297,6 @@ public abstract class JavaFxClassTagDescriptorBase implements XmlElementDescript
 
   @Override
   public void init(PsiElement element) {
-  }
-
-  @NotNull
-  @Override
-  public Object[] getDependencies() {
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }
 
   @Override
