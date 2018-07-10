@@ -1716,7 +1716,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     @TestOnly
     private void awaitAll() {
+      long start = System.currentTimeMillis();
       while (true) {
+        if (System.currentTimeMillis() - start > TimeUnit.MINUTES.toMillis(10)) {
+          throw new IllegalStateException("Too long waiting for VCS update");
+        }
         Future future;
         synchronized (myFutures) {
           future = myFutures.peek();

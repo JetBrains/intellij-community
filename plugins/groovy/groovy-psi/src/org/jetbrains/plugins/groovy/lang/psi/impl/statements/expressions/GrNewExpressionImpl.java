@@ -39,13 +39,8 @@ import java.util.List;
  */
 public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewExpression {
 
-  private static final ResolveCache.PolyVariantResolver<MyFakeReference> RESOLVER = new ResolveCache.PolyVariantResolver<MyFakeReference>() {
-    @NotNull
-    @Override
-    public GroovyResolveResult[] resolve(@NotNull MyFakeReference reference, boolean incompleteCode) {
-      return reference.getElement().resolveImpl(incompleteCode);
-    }
-  };
+  private static final ResolveCache.PolyVariantResolver<MyFakeReference> RESOLVER =
+    (reference, incompleteCode) -> reference.getElement().resolveImpl(incompleteCode);
 
   private final MyFakeReference myFakeReference = new MyFakeReference();
 

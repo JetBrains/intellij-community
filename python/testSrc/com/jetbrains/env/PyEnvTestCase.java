@@ -344,8 +344,6 @@ public abstract class PyEnvTestCase {
     // We can stop message capturing even if it was not started as cleanup process.
     stopMessageCapture();
     Disposer.dispose(myDisposable);
-    LeakHunter.checkProjectLeak();
-    LeakHunter.checkNonDefaultProjectLeak();
   }
 
   /**

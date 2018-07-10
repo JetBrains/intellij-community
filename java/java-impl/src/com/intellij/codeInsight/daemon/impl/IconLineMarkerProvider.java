@@ -33,7 +33,6 @@ import org.jetbrains.uast.evaluation.UEvaluationContextKt;
 import org.jetbrains.uast.values.*;
 
 import javax.swing.*;
-import java.awt.event.MouseEvent;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -97,16 +96,11 @@ public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
     final Icon icon = ProjectIconsAccessor.getInstance(project).getIcon(file);
     if (icon == null) return null;
 
-    final GutterIconNavigationHandler<PsiElement> navHandler = new GutterIconNavigationHandler<PsiElement>() {
-      @Override
-      public void navigate(MouseEvent e, PsiElement elt) {
-        FileEditorManager.getInstance(project).openFile(file, true);
-      }
-    };
+    final GutterIconNavigationHandler<PsiElement> navHandler = (e, elt) -> FileEditorManager.getInstance(project).openFile(file, true);
 
-    return new LineMarkerInfo<PsiElement>(bindingElement, bindingElement.getTextRange(), icon,
-                                          Pass.LINE_MARKERS, null, navHandler,
-                                          GutterIconRenderer.Alignment.LEFT);
+    return new LineMarkerInfo<>(bindingElement, bindingElement.getTextRange(), icon,
+                                Pass.LINE_MARKERS, null, navHandler,
+                                GutterIconRenderer.Alignment.LEFT);
   }
 
   @NotNull

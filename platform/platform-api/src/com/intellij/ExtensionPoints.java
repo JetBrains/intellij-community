@@ -29,7 +29,7 @@ public interface ExtensionPoints extends ToolExtensionPoints {
    * <pre>
    * &lt;extensions xmlns="com.intellij"&gt;
    *   &lt;component area="IDEA_PROJECT"&gt;
-   *     &lt;implementation&gt;my.plugin.pagckage.MyProjectComponent&lt;/implementation&gt;
+   *     &lt;implementation&gt;my.plugin.package.MyProjectComponent&lt;/implementation&gt;
    *   &lt;/component&gt;
    * &lt;/extensions&gt;
    * </pre>

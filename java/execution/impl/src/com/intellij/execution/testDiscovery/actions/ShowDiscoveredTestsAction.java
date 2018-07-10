@@ -52,6 +52,7 @@ import com.intellij.usages.UsageView;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PsiNavigateUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.tree.TreeModelAdapter;
@@ -143,7 +144,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
       uFile.accept(new AbstractUastVisitor() {
         @Override
         public boolean visitMethod(@NotNull UMethod node) {
-          physicalMethods.add(node.getSourcePsi());
+          ContainerUtil.addAllNotNull(physicalMethods, node.getSourcePsi());
           return true;
         }
       });

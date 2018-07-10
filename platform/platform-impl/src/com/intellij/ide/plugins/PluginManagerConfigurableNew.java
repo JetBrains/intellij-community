@@ -728,7 +728,7 @@ public class PluginManagerConfigurableNew
                         @NotNull String query,
                         @NotNull String showAllQuery) throws IOException {
     PluginsGroup group = new PluginsGroup(name);
-    loadPlugins(group.descriptors, jbRepositoryMap, excludeDescriptors, query, 6);
+    loadPlugins(group.descriptors, jbRepositoryMap, excludeDescriptors, query, 9);
 
     if (!group.descriptors.isEmpty()) {
       //noinspection unchecked
@@ -2323,7 +2323,7 @@ public class PluginManagerConfigurableNew
     private final int myFirstVOffset = JBUI.scale(10);
     private final int myMiddleVOffset = JBUI.scale(20);
     private final int myLastVOffset = JBUI.scale(30);
-    private final int myMiddleHOffset = JBUI.scale(20);
+    private final int myMiddleHOffset = JBUI.scale(1);
 
     private final Dimension myCellSize = new Dimension();
 
@@ -2332,6 +2332,9 @@ public class PluginManagerConfigurableNew
       calculateCellSize(parent);
 
       int width = getParentWidth(parent);
+      if (width == 0) {
+        width = JBUI.scale(740);
+      }
       int cellWidth = myCellSize.width;
       int columns = width / (cellWidth + myMiddleHOffset);
 
@@ -3711,7 +3714,7 @@ public class PluginManagerConfigurableNew
       addInstallButton();
 
       setOpaque(true);
-      setBorder(JBUI.Borders.empty(10));
+      setBorder(JBUI.Borders.empty(10, 5));
 
       setLayout(new AbstractLayoutManager() {
         @Override

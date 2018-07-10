@@ -15,7 +15,6 @@ import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.mergeTool.MergeTool;
 import com.intellij.openapi.diff.impl.processing.HighlightMode;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -73,12 +72,7 @@ public class DiffManagerImpl extends DiffManager implements PersistentStateCompo
   private final ExternalizablePropertyContainer myProperties;
   public static final DiffTool INTERNAL_DIFF = new FrameDiffTool();
 
-  private static final MarkupEditorFilter DIFF_EDITOR_FILTER = new MarkupEditorFilter() {
-    @Override
-    public boolean avaliableIn(Editor editor) {
-      return DiffUtil.isDiffEditor(editor);
-    }
-  };
+  private static final MarkupEditorFilter DIFF_EDITOR_FILTER = editor -> DiffUtil.isDiffEditor(editor);
 
   private ComparisonPolicy myComparisonPolicy = ComparisonPolicy.DEFAULT;
   private HighlightMode myHighlightMode = HighlightMode.BY_WORD;

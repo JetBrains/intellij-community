@@ -7291,9 +7291,20 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // '?:' mb_nl
+  // mb_nl ('?:' mb_nl)
   private static boolean elvis_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "elvis_expression_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = mb_nl(b, l + 1);
+    r = r && elvis_expression_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '?:' mb_nl
+  private static boolean elvis_expression_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "elvis_expression_0_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, T_ELVIS);

@@ -758,14 +758,9 @@ public class TypeCookTest extends MultiFileTestCase {
 
     File patternFile = new File(patternName);
 
-    PrintWriter writer;
     if (!patternFile.exists()) {
-      writer = new PrintWriter(new FileOutputStream(patternFile));
-      try {
+      try (PrintWriter writer = new PrintWriter(new FileOutputStream(patternFile))) {
         writer.print(itemRepr);
-      }
-      finally {
-        writer.close();
       }
 
       System.out.println("Pattern not found, file " + patternName + " created.");
@@ -775,12 +770,8 @@ public class TypeCookTest extends MultiFileTestCase {
 
     File graFile = new File(FileUtil.getTempDirectory() + File.separator + rootDir + File.separator + itemName);
 
-    writer = new PrintWriter(new FileOutputStream(graFile));
-    try {
+    try (PrintWriter writer = new PrintWriter(new FileOutputStream(graFile))) {
       writer.print(itemRepr);
-    }
-    finally {
-      writer.close();
     }
 
 

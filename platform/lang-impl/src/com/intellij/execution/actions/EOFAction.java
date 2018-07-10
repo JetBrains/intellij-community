@@ -51,14 +51,12 @@ public class EOFAction extends DumbAwareAction implements AnAction.TransparentUp
     ProcessHandler activeProcessHandler = descriptor != null ? descriptor.getProcessHandler() : null;
     if (activeProcessHandler == null || activeProcessHandler.isProcessTerminated()) return;
 
-    try {
-      OutputStream input = activeProcessHandler.getProcessInput();
+    try (OutputStream input = activeProcessHandler.getProcessInput()) {
       if (input != null) {
         ConsoleView console = e.getData(LangDataKeys.CONSOLE_VIEW);
         if (console != null) {
           console.print("^D\n", ConsoleViewContentType.SYSTEM_OUTPUT);
         }
-        input.close();
       }
     }
     catch (IOException ignored) {

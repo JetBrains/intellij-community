@@ -163,7 +163,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   }
 
   private void accumulate() {
-    myAccumulatedFiles.accomulateFiles(myRecentlyUpdatedFiles, UpdatedFilesReverseSide.DuplicateLevel.DUPLICATE_ERRORS);
+    myAccumulatedFiles.accumulateFiles(myRecentlyUpdatedFiles, UpdatedFilesReverseSide.DuplicateLevel.DUPLICATE_ERRORS);
   }
 
   private void afterExecution(final boolean wasCanceled) {

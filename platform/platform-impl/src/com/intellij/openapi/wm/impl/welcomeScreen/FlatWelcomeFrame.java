@@ -110,7 +110,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       size.height
     );
 
-    if (Registry.is("suppress.focus.stealing")) {
+    if (Registry.is("suppress.focus.stealing") && Registry.is("suppress.focus.stealing.auto.request.focus")) {
       setAutoRequestFocus(false);
     }
 
@@ -260,7 +260,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
       add(createBody(), BorderLayout.CENTER);
 
-      TouchbarDataKeys.putClientPropertyShowMode(myTouchbarActions, true, false);
+      TouchbarDataKeys.putActionDescriptor(myTouchbarActions).setShowText(true);
     }
 
     @Override
@@ -425,6 +425,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
           button.setBorder(JBUI.Borders.empty(8, 20));
           if (action instanceof WelcomePopupAction) {
             button.add(createArrow(link), BorderLayout.EAST);
+            TouchbarDataKeys.putActionDescriptor(action).setContextComponent(link);
           }
           installFocusable(button, action, KeyEvent.VK_UP, KeyEvent.VK_DOWN, true);
           actions.add(button);
@@ -574,14 +575,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         Logger.getInstance(AppUIUtil.class).warn("Resource missing: " + name);
       } else {
 
-        try {
-          InputStream is = url.openStream();
-          try {
-            return Font.createFont(Font.TRUETYPE_FONT, is);
-          }
-          finally {
-            is.close();
-          }
+        try (InputStream is = url.openStream()) {
+          return Font.createFont(Font.TRUETYPE_FONT, is);
         }
         catch (Throwable t) {
           Logger.getInstance(AppUIUtil.class).warn("Cannot load font: " + url, t);

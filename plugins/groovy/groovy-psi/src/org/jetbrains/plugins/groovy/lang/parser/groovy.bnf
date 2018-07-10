@@ -1076,7 +1076,7 @@ private conditionals ::= ternary_expression | elvis_expression
 ternary_expression ::= expression (ternary_tail_pin | ternary_tail)
 private ternary_tail_pin ::= '?' mb_nl !'[' expression mb_nl ':' mb_nl conditionals { pin = 3 consumeTokenMethod = 'consumeTokenFast' }
 private ternary_tail ::= '?' mb_nl expression mb_nl ':' mb_nl conditionals { pin = 5 consumeTokenMethod = 'consumeTokenFast' }
-elvis_expression ::= expression '?:' mb_nl expression
+elvis_expression ::= expression mb_nl ('?:' mb_nl) expression
 {
   rightAssociative = true
 }

@@ -35,6 +35,10 @@ public class HighlightVisitorInternalInspection extends AbstractBaseJavaLocalIns
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
+    if (isOnTheFly) {
+      //disable good code red in the editor as there general highlighting pass already does the job and the inspection just mess things
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     final PsiFile file = holder.getFile();
     if (InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
       return PsiElementVisitor.EMPTY_VISITOR;

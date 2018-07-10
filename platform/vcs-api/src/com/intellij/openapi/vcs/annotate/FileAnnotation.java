@@ -211,7 +211,7 @@ public abstract class FileAnnotation {
   }
 
   /**
-   * @see #reload()
+   * @see #reload(FileAnnotation)
    */
   public synchronized final void setReloader(@Nullable Consumer<FileAnnotation> reloader) {
     if (myIsClosed) return;

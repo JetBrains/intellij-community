@@ -34,7 +34,7 @@ import java.util.List;
  * @author nik
  */
 public class JpsBuilderArtifactServiceImpl extends JpsBuilderArtifactService {
-  private static final JpsElementCollectionRole<JpsArtifact> SYNTHETIC_ARTIFACTS = JpsElementCollectionRole.create(JpsElementChildRoleBase.<JpsArtifact>create("synthetic artifact"));
+  private static final JpsElementCollectionRole<JpsArtifact> SYNTHETIC_ARTIFACTS = JpsElementCollectionRole.create(JpsElementChildRoleBase.create("synthetic artifact"));
 
   @Override
   public Collection<JpsArtifact> getArtifacts(JpsModel model, boolean includeSynthetic) {

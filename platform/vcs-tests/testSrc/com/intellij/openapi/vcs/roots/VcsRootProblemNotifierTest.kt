@@ -23,6 +23,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.VcsRootChecker
+import com.intellij.openapi.vcs.VcsRootError.Type.EXTRA_MAPPING
+import com.intellij.openapi.vcs.VcsRootErrorImpl
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs
 import com.intellij.openapi.vcs.roots.VcsRootBaseTest.DOT_MOCK
 import com.intellij.openapi.vfs.VirtualFile
@@ -154,6 +156,17 @@ class VcsRootProblemNotifierTest : VcsPlatformTest() {
 
     assertFalse("The root shouldn't be auto-added because it is not the only one", vcsManager.hasAnyMappings())
     assertSuccessfulNotification("mock Repository Found", getPath(projectPath))
+  }
+
+  fun `test invalid roots are notified even if notification is not shown for unregistered (auto-added) roots`() {
+    Registry.get("vcs.root.auto.add.nofity").setValue(false)
+
+    vcsManager.setDirectoryMapping(projectPath, vcs.name)
+
+    notifier.rescanAndNotifyIfNeeded()
+
+    val rootError = VcsRootErrorImpl(EXTRA_MAPPING, projectPath, vcs.keyInstanceMethod.name)
+    assertErrorNotification("Invalid VCS root mapping", notifier.getInvalidRootDescriptionItem(rootError, vcs.name))
   }
 
   private fun createNestedRoots(): VirtualFile {

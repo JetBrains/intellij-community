@@ -82,14 +82,8 @@ public class TestCaseLoader {
     MultiMap<String, String> groups = MultiMap.createLinked();
 
     for (URL fileUrl : groupingFileUrls) {
-      try {
-        InputStreamReader reader = new InputStreamReader(fileUrl.openStream());
-        try {
-          groups.putAllValues(GroupBasedTestClassFilter.readGroups(reader));
-        }
-        finally {
-          reader.close();
-        }
+      try (InputStreamReader reader = new InputStreamReader(fileUrl.openStream())) {
+        groups.putAllValues(GroupBasedTestClassFilter.readGroups(reader));
       }
       catch (IOException e) {
         e.printStackTrace();

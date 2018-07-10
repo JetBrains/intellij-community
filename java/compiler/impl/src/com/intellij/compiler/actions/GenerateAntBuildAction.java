@@ -236,19 +236,11 @@ public class GenerateAntBuildAction extends CompileActionBase {
                                              final File propertiesFile) throws IOException {
     FileUtil.createIfDoesntExist(buildxmlFile);
     FileUtil.createIfDoesntExist(propertiesFile);
-    final PrintWriter dataOutput = makeWriter(buildxmlFile);
-    try {
+    try (PrintWriter dataOutput = makeWriter(buildxmlFile)) {
       new SingleFileProjectBuild(project, genOptions).generate(dataOutput);
     }
-    finally {
-      dataOutput.close();
-    }
-    final PrintWriter propertiesOut = makeWriter(propertiesFile);
-    try {
+    try (PrintWriter propertiesOut = makeWriter(propertiesFile)) {
       new PropertyFileGeneratorImpl(project, genOptions).generate(propertiesOut);
-    }
-    finally {
-      propertiesOut.close();
     }
   }
 
@@ -303,8 +295,7 @@ public class GenerateAntBuildAction extends CompileActionBase {
     }
 
     FileUtil.createIfDoesntExist(projectBuildFile);
-    final PrintWriter mainDataOutput = makeWriter(projectBuildFile);
-    try {
+    try (PrintWriter mainDataOutput = makeWriter(projectBuildFile)) {
       final MultipleFileProjectBuild build = new MultipleFileProjectBuild(project, genOptions);
       build.generate(mainDataOutput);
       generated.add(projectBuildFile);
@@ -324,27 +315,16 @@ public class GenerateAntBuildAction extends CompileActionBase {
         }
 
         FileUtil.createIfDoesntExist(chunkBuildFile);
-        final PrintWriter out = makeWriter(chunkBuildFile);
-        try {
+        try (PrintWriter out = makeWriter(chunkBuildFile)) {
           new ModuleChunkAntProject(project, chunk, genOptions).generate(out);
           generated.add(chunkBuildFile);
         }
-        finally {
-          out.close();
-        }
       }
     }
-    finally {
-      mainDataOutput.close();
-    }
     // properties
-    final PrintWriter propertiesOut = makeWriter(propertiesFile);
-    try {
+    try (PrintWriter propertiesOut = makeWriter(propertiesFile)) {
       new PropertyFileGeneratorImpl(project, genOptions).generate(propertiesOut);
       generated.add(propertiesFile);
-    }
-    finally {
-      propertiesOut.close();
     }
 
     filesToRefresh.addAll(generated);

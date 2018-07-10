@@ -217,12 +217,8 @@ public class WSLDistribution {
             true
           );
           if (password != null) {
-            PrintWriter pw = new PrintWriter(input);
-            try {
+            try (PrintWriter pw = new PrintWriter(input)) {
               pw.println(password);
-            }
-            finally {
-              pw.close();
             }
           }
           else {

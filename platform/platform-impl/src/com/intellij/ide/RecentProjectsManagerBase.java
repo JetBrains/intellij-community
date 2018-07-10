@@ -657,15 +657,11 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
       final File nameFile = new File(new File(path, Project.DIRECTORY_STORE_FOLDER), ProjectImpl.NAME_FILE);
       if (nameFile.exists()) {
         try {
-          final BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(nameFile), CharsetToolkit.UTF8_CHARSET));
-          try {
+          try (BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(nameFile), CharsetToolkit.UTF8_CHARSET))) {
             String name = in.readLine();
             if (!StringUtil.isEmpty(name)) {
               return name.trim();
             }
-          }
-          finally {
-            in.close();
           }
         }
         catch (IOException ignored) { }

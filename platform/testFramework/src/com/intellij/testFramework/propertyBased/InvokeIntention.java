@@ -61,7 +61,8 @@ public class InvokeIntention extends ActionOnFile {
 
   @Override
   public void performCommand(@NotNull Environment env) {
-    int offset = generateDocOffset(env, "Go to offset %s and run daemon");
+    int offset = generateDocOffset(env, null);
+    env.logMessage("Go to " + MadTestingUtil.getPositionDescription(offset, getDocument()));
 
     doInvokeIntention(offset, env);
   }
@@ -74,7 +75,7 @@ public class InvokeIntention extends ActionOnFile {
     }
 
     IntentionAction result = env.generateValue(Generator.sampledFrom(actions).noShrink(), null);
-    env.logMessage("Invoke intention '" + result.getText() + "'");
+    env.logMessage("Invoke intention " + MadTestingUtil.getIntentionDescription(result));
     return result;
   }
 
@@ -180,12 +181,12 @@ public class InvokeIntention extends ActionOnFile {
     if (elementsToWrap.isEmpty()) return intentions;
 
     Project project = getProject();
-    Set<String> names = StreamEx.of(intentions).map(IntentionAction::getText).toSet();
+    Map<String, IntentionAction> names = StreamEx.of(intentions).toMap(IntentionAction::getText, Function.identity(), (a,b) -> a);
     PsiElement elementToWrap = env.generateValue(Generator.sampledFrom(elementsToWrap).noShrink(), null);
     String text = elementToWrap.getText();
     String prefix = myPolicy.getWrapPrefix();
     String suffix = myPolicy.getWrapSuffix();
-    env.logMessage("Wrap '" + StringUtil.shortenTextWithEllipsis(text.replace('\n', ' '), 50, 10) +
+    env.logMessage("Wrap '" + StringUtil.shortenTextWithEllipsis(text.replaceAll("\\s+", " "), 50, 10) +
                    "' with '" + prefix + "..." + suffix + "' and rerun daemon");
     TextRange range = elementToWrap.getTextRange();
     PsiFile file = currentElement.getContainingFile();
@@ -208,30 +209,36 @@ public class InvokeIntention extends ActionOnFile {
       }
     }
     intentions = getAvailableIntentions(editor, file);
-    Set<String> namesWithParentheses = StreamEx.of(intentions).map(IntentionAction::getText).toSet();
-    Set<String> added = new HashSet<>(namesWithParentheses);
-    added.removeAll(names);
-    Set<String> removed = new HashSet<>(names);
-    removed.removeAll(namesWithParentheses);
+    Map<String, IntentionAction> namesWithParentheses = StreamEx.of(intentions).toMap(IntentionAction::getText, Function.identity(), (a,b) -> a);
+    Map<String, IntentionAction> added = new HashMap<>(namesWithParentheses);
+    added.keySet().removeAll(names.keySet());
+    Map<String, IntentionAction> removed = new HashMap<>(names);
+    removed.keySet().removeAll(namesWithParentheses.keySet());
     Function<String, String> cleaner = name -> name.replace(prefix, "").replace(suffix, "");
     // Exclude pairs like "Extract if (!foo)" and "Extract if (!(foo))"
-    for (Iterator<String> iterator = added.iterator(); iterator.hasNext(); ) {
+    for (Iterator<String> iterator = added.keySet().iterator(); iterator.hasNext(); ) {
       String newName = iterator.next();
       String stripped = cleaner.apply(newName);
-      if (removed.removeIf(n -> cleaner.apply(n).equals(stripped))) {
+      if (removed.keySet().removeIf(n -> cleaner.apply(n).equals(stripped))) {
         iterator.remove();
       }
     }
     if (!added.isEmpty()) {
-      messages.add("Intentions added after parenthesizing:\n" + StreamEx.of(added).map("\t"::concat).joining("\n"));
+      messages.add("Intentions added after parenthesizing:\n" + describeIntentions(added));
     }
     if (!removed.isEmpty()) {
-      messages.add("Intentions removed after parenthesizing:\n" + StreamEx.of(removed).map("\t"::concat).joining("\n"));
+      messages.add("Intentions removed after parenthesizing:\n" + describeIntentions(removed));
     }
     if (!messages.isEmpty()) {
       throw new AssertionError(String.join("\n", messages));
     }
     return intentions;
+  }
+
+  private static String describeIntentions(Map<String, IntentionAction> intentionMap) {
+    return StreamEx.ofValues(intentionMap)
+                   .map(MadTestingUtil::getIntentionDescription)
+                   .map("\t"::concat).joining("\n");
   }
 
   private void restoreAfterPotentialPsiTextInconsistency() {
@@ -240,8 +247,11 @@ public class InvokeIntention extends ActionOnFile {
 
   protected List<String> extractCommentsReformattedToSingleWhitespace(PsiFile file) {
     return PsiTreeUtil.findChildrenOfType(file, PsiComment.class)
-      .stream()
-      .filter(comment -> myPolicy.trackComment(comment)).map(comment -> comment.getText().replaceAll("[\\s*]+", " ")).collect(Collectors.toList());
+                      .stream()
+                      .filter(myPolicy::trackComment)
+                      .map(PsiElement::getText)
+                      .map(text -> text.replaceAll("[\\s*]+", " "))
+                      .collect(Collectors.toList());
   }
 
   private static void checkNoNewErrors(Project project, Editor editor, String intentionString) {
@@ -249,7 +259,7 @@ public class InvokeIntention extends ActionOnFile {
     if (!errors.isEmpty()) {
       throw new AssertionError("New highlighting errors introduced after invoking " + intentionString +
                                "\nIf this is correct, add it to IntentionPolicy#mayBreakCode." +
-                               "\nErrors found: " + StringUtil.join(errors, i -> shortInfoText(i), ","));
+                               "\nErrors found: " + StringUtil.join(errors, InvokeIntention::shortInfoText, ","));
     }
   }
 

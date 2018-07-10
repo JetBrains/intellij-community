@@ -77,29 +77,17 @@ public class ExportToFileUtil {
       }
       if (result == Messages.NO) {
         char[] buf = new char[(int)file.length()];
-        try {
-          FileReader reader = new FileReader(fileName);
-          try {
-            reader.read(buf, 0, (int)file.length());
-            prepend = new String(buf) + SystemProperties.getLineSeparator();
-          }
-          finally {
-            reader.close();
-          }
+        try (FileReader reader = new FileReader(fileName)) {
+          reader.read(buf, 0, (int)file.length());
+          prepend = new String(buf) + SystemProperties.getLineSeparator();
         }
         catch (IOException ignored) {
         }
       }
     }
 
-    try {
-      FileWriter writer = new FileWriter(fileName);
-      try {
-        writer.write(prepend + textToExport);
-      }
-      finally {
-        writer.close();
-      }
+    try (FileWriter writer = new FileWriter(fileName)) {
+      writer.write(prepend + textToExport);
     }
     catch (IOException e) {
       Messages.showMessageDialog(

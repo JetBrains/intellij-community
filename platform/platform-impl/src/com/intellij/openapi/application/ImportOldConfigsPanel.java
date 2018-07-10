@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.local.CoreLocalVirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.io.File;
 import java.util.function.Function;
@@ -95,8 +96,27 @@ class ImportOldConfigsPanel extends JDialog {
       chooserDescriptor.setHideIgnored(false);
       chooserDescriptor.withFileFilter(file -> file.isDirectory() || ConfigImportHelper.isSettingsFile(file));
       Ref<VirtualFile> fileRef = Ref.create();
-      PathChooserDialog chooser = new FileChooserFactoryImpl().createPathChooser(chooserDescriptor, null, myRootPanel);
-      chooser.choose(myLastSelection, files -> fileRef.set(files.get(0)));
+      PathChooserDialog chooser = FileChooserFactoryImpl.createNativePathChooserIfEnabled(chooserDescriptor, null, myRootPanel);
+      if (chooser == null) {
+        File lastSelectedFile = myLastSelection == null ? null : VfsUtilCore.virtualToIoFile(myLastSelection);
+        JFileChooser fc = new JFileChooser(lastSelectedFile == null ? null : lastSelectedFile.getParentFile());
+        fc.setSelectedFile(lastSelectedFile);
+        fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        fc.setFileHidingEnabled(SystemInfo.isWindows || SystemInfo.isMac);
+        fc.setFileFilter(new FileNameExtensionFilter("settings file", "zip", "jar"));
+        int returnVal = fc.showOpenDialog(this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+          File file = fc.getSelectedFile();
+          if (file != null) {
+            fileRef.set(new CoreLocalVirtualFile(new CoreLocalFileSystem(), file));
+            myPrevInstallation.setText(file.getAbsolutePath());
+          }
+        }
+      }
+      else {
+        chooser.choose(myLastSelection, files -> fileRef.set(files.get(0)));
+      }
+
       if (!fileRef.isNull()) {
         File file = VfsUtilCore.virtualToIoFile(fileRef.get());
         myLastSelection = fileRef.get();

@@ -204,8 +204,13 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitArgumentList(@NotNull GrArgumentList list) {
-    if (isWithinBrackets()) {
-      createSpaceInCode(mySettings.SPACE_WITHIN_BRACKETS);
+    if (list.getParent() instanceof GrIndexProperty) {
+      processBrackets(
+        mySettings.SPACE_WITHIN_BRACKETS,
+        null,
+        mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE,
+        mySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE
+      );
     }
     else {
       processParentheses(
@@ -621,6 +626,13 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
         mySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE
       );
     }
+  }
+
+  private boolean processBrackets(@NotNull Boolean spaceWithin,
+                                  @Nullable Boolean spaceWithinEmpty,
+                                  @Nullable Boolean leftLF,
+                                  @Nullable Boolean rightLF) {
+    return processParentheses(spaceWithin, spaceWithinEmpty, leftLF, rightLF, T_LBRACK, T_RBRACK);
   }
 
   private boolean processParentheses(@NotNull Boolean spaceWithin,

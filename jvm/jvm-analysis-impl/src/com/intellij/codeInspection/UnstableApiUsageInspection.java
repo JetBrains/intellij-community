@@ -8,6 +8,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -96,14 +97,7 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
   }
 
   private static boolean isInsideImport(@NotNull PsiElement element) {
-    //TODO remove once IDEA-195008 is fixed
-    if (JavaLanguage.INSTANCE == element.getLanguage()) {
-      return PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class) != null;
-    }
-
-    UElement uElement = UastContextKt.toUElement(element);
-    if (uElement == null) return false;
-    return UastUtils.getParentOfType(uElement, UImportStatement.class) != null;
+    return PsiTreeUtil.findFirstParent(element, parent -> UastContextKt.toUElement(parent, UImportStatement.class) != null) != null;
   }
 
   private static boolean isLibraryElement(@NotNull PsiElement element) {

@@ -17,7 +17,6 @@ public abstract class PyTestTask {
   private String myScriptParameters;
 
 
-
   public void setScriptName(String scriptName) {
     myScriptName = scriptName;
   }
@@ -34,15 +33,14 @@ public abstract class PyTestTask {
    * Each inheritor may do anything on edt, but should call parent *after all* on main thread
    */
   public void tearDown() throws Exception {
-    LeakHunter.checkNonDefaultProjectLeak();
-    LeakHunter.checkProjectLeak();
+
   }
 
   /**
    * Run test on certain SDK path.
    * To create SDK from path, use {@link PyExecutionFixtureTestTask#createTempSdk(String, sdkTools.SdkCreationType)}
    *
-   * @param sdkHome sdk path
+   * @param sdkHome     sdk path
    * @param existingSdk If sdk exists already you are encouraged to reuse it. Create one using sdkHome otherwise.
    */
   public abstract void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) throws Exception;
@@ -70,7 +68,6 @@ public abstract class PyTestTask {
   }
 
 
-
   public String getScriptParameters() {
     return myScriptParameters;
   }
@@ -86,6 +83,7 @@ public abstract class PyTestTask {
 
   /**
    * Checks if task supports this language level
+   *
    * @param level level to check
    * @return true if supports
    */

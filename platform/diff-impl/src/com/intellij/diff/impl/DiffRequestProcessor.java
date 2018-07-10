@@ -314,7 +314,6 @@ public abstract class DiffRequestProcessor implements Disposable {
 
       myToolbarGroup.removeAll();
       myPopupActionGroup.removeAll();
-      myTouchbarActionGroup.removeAll();
       ActionUtil.clearActions(myMainPanel);
 
       myActiveRequest.onAssigned(false);
@@ -366,12 +365,12 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull
   private List<AnAction> getTouchbarActions() {
+    final DefaultActionGroup left = new DefaultActionGroup(new MyPrevDifferenceAction(), new MyNextDifferenceAction());
+    final DefaultActionGroup main = new DefaultActionGroup(new MyPrevChangeAction(), new MyNextChangeAction());
+    TouchbarDataKeys.putActionDescriptor(main).setShowText(true).setShowImage(false).setMainGroup(true);
     return ContainerUtil.list(
-      new MyPrevDifferenceAction(),
-      new MyNextDifferenceAction(),
-      Separator.getInstance(),
-      new MyPrevChangeAction(),
-      new MyNextChangeAction()
+      left,
+      main
     );
   }
 
@@ -462,8 +461,7 @@ public abstract class DiffRequestProcessor implements Disposable {
                             new ShowInExternalToolAction(),
                             ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
 
-    myTouchbarActionGroup.addAll(getTouchbarActions());
-    myTouchbarActionGroup.fireUpdate();
+    myTouchbarActionGroup.replaceAll(getTouchbarActions());
   }
 
   protected void collectPopupActions(@Nullable List<AnAction> viewerActions) {

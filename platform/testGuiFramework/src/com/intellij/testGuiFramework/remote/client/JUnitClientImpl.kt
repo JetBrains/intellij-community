@@ -20,7 +20,10 @@ import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
-import java.net.*
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.Socket
+import java.net.SocketException
 import java.util.*
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executors
@@ -99,7 +102,7 @@ class JUnitClientImpl(val host: String, val port: Int, initHandlers: Array<Clien
   inner class ClientReceiveThread(val connection: Socket, val objectInputStream: ObjectInputStream) : Thread(RECEIVE_THREAD) {
     override fun run() {
       LOG.info("Starting Client Receive Thread")
-      try{
+      try {
         while (connection.isConnected) {
           val obj = objectInputStream.readObject()
           LOG.info("Received message: $obj")
@@ -108,9 +111,11 @@ class JUnitClientImpl(val host: String, val port: Int, initHandlers: Array<Clien
             .filter { it.accept(obj) }
             .forEach { it.handle(obj) }
         }
-      } catch (e: Exception) {
+      }
+      catch (e: Exception) {
         LOG.info("Transport receiving message exception", e)
-      } finally {
+      }
+      finally {
         objectInputStream.close()
       }
     }
@@ -127,7 +132,7 @@ class JUnitClientImpl(val host: String, val port: Int, initHandlers: Array<Clien
           objectOutputStream.writeObject(transportMessage)
         }
       }
-      catch(e: InterruptedException) {
+      catch (e: InterruptedException) {
         Thread.currentThread().interrupt()
       }
       finally {
@@ -143,7 +148,8 @@ class JUnitClientImpl(val host: String, val port: Int, initHandlers: Array<Clien
         {
           if (connection.isConnected) {
             objectOutputStream.writeObject(TransportMessage(MessageType.KEEP_ALIVE))
-          } else{
+          }
+          else {
             throw SocketException("Connection is broken")
           }
         }, 0L, 5, TimeUnit.SECONDS)

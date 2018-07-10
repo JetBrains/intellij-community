@@ -26,9 +26,6 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 
-import static com.intellij.psi.impl.source.tree.JavaElementType.BINARY_EXPRESSION;
-import static com.intellij.psi.impl.source.tree.JavaElementType.POLYADIC_EXPRESSION;
-
 public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boolean, JavaBinaryPlusExpressionIndex.PlusOffsets> implements PsiDependentIndex {
   public static final ID<Boolean, PlusOffsets> INDEX_ID = ID.create("java.binary.plus.expression");
 
@@ -53,7 +50,9 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
         LighterASTNode element = leaf == null ? null : tree.getParent(leaf);
         if (element == null) continue;
 
-        if ((element.getTokenType() == BINARY_EXPRESSION || element.getTokenType() == POLYADIC_EXPRESSION) && !isStringConcatenation(element, tree)) {
+        if ((element.getTokenType() == JavaElementType.BINARY_EXPRESSION
+             || element.getTokenType() == JavaElementType.POLYADIC_EXPRESSION) &&
+            !isStringConcatenation(element, tree)) {
           result.add(offset);
         }
       }
@@ -117,7 +116,7 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
   public static class PlusOffsets {
     private final int[] offsets;
 
-    public PlusOffsets(int[] offsets) {this.offsets = offsets;}
+    PlusOffsets(int[] offsets) {this.offsets = offsets;}
 
     public int[] getOffsets() {
       return offsets;
@@ -130,9 +129,7 @@ public class JavaBinaryPlusExpressionIndex extends FileBasedIndexExtension<Boole
 
       PlusOffsets offsets1 = (PlusOffsets)o;
 
-      if (!Arrays.equals(offsets, offsets1.offsets)) return false;
-
-      return true;
+      return Arrays.equals(offsets, offsets1.offsets);
     }
 
     @Override

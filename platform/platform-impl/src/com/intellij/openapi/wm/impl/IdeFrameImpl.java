@@ -30,8 +30,8 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.io.win32.WindowsElevationUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
@@ -98,7 +98,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     setSize(size);
     setLocationRelativeTo(null);
 
-    if (Registry.is("suppress.focus.stealing") && !ApplicationManagerEx.getApplicationEx().isActive()) {
+    if (Registry.is("suppress.focus.stealing") &&
+        Registry.is("suppress.focus.stealing.auto.request.focus") &&
+        !ApplicationManagerEx.getApplicationEx().isActive()) {
       setAutoRequestFocus(false);
     }
 

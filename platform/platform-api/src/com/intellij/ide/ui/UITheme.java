@@ -34,6 +34,8 @@ public class UITheme {
   private Map<String, Object> ui;
   private Map<String, Object> icons;
   private IconPathPatcher patcher;
+  private Map<String, Object> background;
+  private Class providerClass;
 
   private UITheme() {
   }
@@ -50,9 +52,10 @@ public class UITheme {
     return author;
   }
 
-  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId) throws IOException {
+  public static UITheme loadFromJson(InputStream stream, @NotNull String themeId, @NotNull Class provider) throws IOException {
     UITheme theme = new ObjectMapper().readValue(stream, UITheme.class);
     theme.id = themeId;
+    theme.providerClass = provider;
     if (!theme.icons.isEmpty()) {
       theme.patcher = new IconPathPatcher() {
         @Nullable
@@ -80,6 +83,10 @@ public class UITheme {
 
   public IconPathPatcher getPatcher() {
     return patcher;
+  }
+
+  public Class getProviderClass() {
+    return providerClass;
   }
 
   private static void apply(String key, Object value, UIDefaults defaults) {
@@ -214,5 +221,13 @@ public class UITheme {
   @SuppressWarnings("unused")
   private void setIcons(Map<String, Object> icons) {
     this.icons = icons;
+  }
+
+  public Map<String, Object> getBackground() {
+    return background;
+  }
+
+  public void setBackground(Map<String, Object> background) {
+    this.background = background;
   }
 }

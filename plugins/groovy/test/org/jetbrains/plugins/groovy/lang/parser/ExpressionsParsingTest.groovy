@@ -81,6 +81,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testconditional$elvis2() throws Throwable { doTest() }
 
+  void testconditional$elvisNlBeforeOperator() { doTest() }
+
   void testconditional$ternaryQuestionOnly() { doTest() }
 
   void testconditional$ternaryWithoutElse() { doTest() }

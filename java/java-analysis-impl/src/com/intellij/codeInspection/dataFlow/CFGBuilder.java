@@ -475,7 +475,7 @@ public class CFGBuilder {
   }
 
   /**
-   * Start catch section; must be created after {@link #doTry()} section and finished with {@link #end()}.
+   * Start catch section; must be created after {@link #doTry(PsiElement)} section and finished with {@link #end()}.
    *
    * @return this builder
    */

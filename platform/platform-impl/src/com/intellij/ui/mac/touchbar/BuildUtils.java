@@ -17,23 +17,28 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomePopupAction;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.mac.TouchbarDataKeys;
+import com.intellij.ui.mac.UpdatableDefaultActionGroup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.*;
+import java.util.List;
 
 class BuildUtils {
   private static final Logger LOG = Logger.getInstance(Utils.class);
+  private static final String DIALOG_ACTIONS_CONTEXT = "DialogWrapper.touchbar.actions";
 
   // https://developer.apple.com/design/human-interface-guidelines/macos/touch-bar/touch-bar-visual-design/
   //
@@ -57,82 +62,8 @@ class BuildUtils {
     _initExecutorsGroup();
   }
 
-  static void addActionGroupButtons(ItemsContainer out,
-                                    ActionGroup actionGroup,
-                                    ModalityState modality,
-                                    int showMode,
-                                    String filterGroupPrefix,
-                                    String optionalCtxName,
-                                    boolean forceUpdateOptionCtx) {
-    _traverse(actionGroup, new IGroupVisitor() {
-      private int mySeparatorCounter = 0;
-      private LinkedList<Pair<ActionGroup, String>> myNodePath = new LinkedList<>();
-
-      @Override
-      public boolean enterNode(@NotNull ActionGroup groupNode) {
-        final String groupName = getActionId(groupNode);
-        if (filterGroupPrefix != null && groupName != null && groupName.startsWith(filterGroupPrefix))
-          return false;
-
-        myNodePath.add(Pair.create(groupNode, groupName));
-        return true;
-      }
-
-      @Override
-      public void visitLeaf(AnAction act) {
-        if (act instanceof Separator) {
-          final Separator sep = (Separator)act;
-          int increment = 1;
-          if (sep.getText() != null) {
-            if (sep.getText().equals(ourSmallSeparatorText))
-              out.addSpacing(false);
-            else if (sep.getText().equals(ourLargeSeparatorText))
-              out.addSpacing(true);
-            else if (sep.getText().equals(ourFlexibleSeparatorText))
-              out.addFlexibleSpacing();
-          } else {
-            mySeparatorCounter += increment;
-          }
-          return;
-        }
-        if (mySeparatorCounter > 0) {
-          if (mySeparatorCounter == 1) out.addSpacing(false);
-          else if (mySeparatorCounter == 2) out.addSpacing(true);
-          else out.addFlexibleSpacing();
-
-          mySeparatorCounter = 0;
-        }
-
-        final String actId = getActionId(act);
-        // if (actId == null || actId.isEmpty())   System.out.println("unregistered action: " + act);
-
-        final boolean isRunConfigPopover = "RunConfiguration".equals(actId); // TODO: make more intelligence customizing...
-        final boolean isOpenInTerminalAction = "Terminal.OpenInTerminal".equals(actId);
-        final int mode = isRunConfigPopover || isOpenInTerminalAction ? TBItemAnActionButton.SHOWMODE_IMAGE_TEXT : showMode;
-        final TBItemAnActionButton butt = out.addAnActionButton(act, mode, modality);
-        if (_isCompactParent())
-          butt.setHiddenWhenDisabled(true);
-        if (forceUpdateOptionCtx || _isOptionalParent())
-          butt.myOptionalContextName = optionalCtxName;
-
-        if (isRunConfigPopover) {
-          butt.setWidth(ourRunConfigurationPopoverWidth);
-          butt.setHasArrowIcon(true);
-        } else if (act instanceof WelcomePopupAction)
-          butt.setHasArrowIcon(true);
-      }
-
-      @Override
-      public void leaveNode(ActionGroup groupNode) { myNodePath.removeLast(); }
-
-      private boolean _isCompactParent() { return !myNodePath.isEmpty() && myNodePath.getLast().first instanceof CompactActionGroup; }
-      private boolean _isOptionalParent() {
-        if (myNodePath.isEmpty())
-          return false;
-        final String gname = myNodePath.getLast().second;
-        return optionalCtxName != null && optionalCtxName.equals(gname);
-      }
-    });
+  static void addActionGroupButtons(@NotNull TouchBar out, @NotNull ActionGroup actionGroup, @Nullable String filterGroupPrefix, @Nullable Customizer customizer) {
+    _traverse(actionGroup, new GroupVisitor(out, filterGroupPrefix, customizer));
   }
 
   static ActionGroup getCustomizedGroup(@NotNull String barId) {
@@ -179,92 +110,139 @@ class BuildUtils {
     return result;
   }
 
-  static TouchBar createMessageDlgBar(@NotNull String[] buttons, @NotNull Runnable[] actions, String defaultButton) {
-    final TouchBar result = new TouchBar("message_dlg_bar", false, false, false);
-    final TBItemGroup gr = result.addGroup();
-    final ItemsContainer group = gr.getContainer();
-
-    // NOTE: buttons are placed from right to left, see SheetController.layoutButtons
-    int defIndex = -1;
-    if (defaultButton != null)
-      defaultButton = defaultButton.trim();
-    final int len = Math.min(buttons.length, actions.length);
-    for (int c = len - 1; c >= 0; --c) {
-      final String sb = buttons[c];
-      final boolean isDefault = Comparing.equal(sb, defaultButton);
-      if (isDefault) {
-        defIndex = c;
-        continue;
-      }
-      final TBItemButton tbb = group.addButton().setText(DialogWrapper.extractMnemonic(sb).second).setThreadSafeAction(actions[c]);
-      _setDialogLayout(tbb);
-    }
-
-    if (defIndex >= 0) {
-      final TBItemButton tbb = group.addButton().setText(DialogWrapper.extractMnemonic(buttons[defIndex]).second).setThreadSafeAction(actions[defIndex]).setColored(true);
-      _setDialogLayout(tbb);
-    }
-
-    result.setPrincipal(gr);
-    result.selectVisibleItemsToShow();
-    return result;
-  }
-
-  static TouchBar createButtonsBar(@NotNull Map<TouchbarDataKeys.DlgButtonDesc, JButton> unorderedButtons) {
-    final TouchBar result = new TouchBar("dialog_buttons", false, false, false);
+  static void addDialogButtons(@NotNull TouchBar out, @Nullable Map<TouchbarDataKeys.DlgButtonDesc, JButton> unorderedButtons, @Nullable Map<Component, ActionGroup> actions) {
     final ModalityState ms = Utils.getCurrentModalityState();
+    final boolean hasSouthPanelButtons = unorderedButtons != null && !unorderedButtons.isEmpty();
+    final byte[] prio = {-1};
 
-    // 1. add option buttons (at left)
-    byte prio = -1;
-    for (JButton jb: unorderedButtons.values()) {
-      TBItemButton tbb = null;
-      if (jb instanceof JBOptionButton) {
-        final JBOptionButton ob = (JBOptionButton)jb;
-        final Action[] opts = ob.getOptions();
-        for (Action a : opts) {
-          if (a == null)
-            continue;
-          final AnAction anAct = _createAnAction(a, ob, true);
-          if (anAct == null)
-            continue;
+    // 1. add (at left) option buttons of dialog (from south panel)
+    if (hasSouthPanelButtons) {
+      for (JButton jb : unorderedButtons.values()) {
+        TBItemButton tbb = null;
+        if (jb instanceof JBOptionButton) {
+          final JBOptionButton ob = (JBOptionButton)jb;
+          final Action[] opts = ob.getOptions();
+          for (Action a : opts) {
+            if (a == null)
+              continue;
+            final AnAction anAct = _createAnAction(a, ob, true);
+            if (anAct == null)
+              continue;
 
-          // NOTE: must set different priorities for items, otherwise system can hide all items with the same priority (but some of them is able to be placed)
-          tbb = result.addAnActionButton(anAct, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms).setComponent(ob).setPriority(--prio);
+            // NOTE: must set different priorities for items, otherwise system can hide all items with the same priority (but some of them is able to be placed)
+            tbb = out.addAnActionButton(anAct).setShowMode(TBItemAnActionButton.SHOWMODE_TEXT_ONLY).setModality(ms).setComponent(ob).setPriority(--prio[0]);
+          }
         }
-      }
 
-      if (tbb != null)
+        if (tbb != null)
+          _setDialogLayout(tbb);
+      }
+    }
+
+    // 2. add actions (collected from content children) before principal group
+    if (actions != null && !actions.isEmpty()) {
+      final ActionGroup ag = actions.values().iterator().next();
+
+      final TouchbarDataKeys.ActionDesc groupDesc = ag.getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
+      if (
+        !hasSouthPanelButtons ||
+        (groupDesc != null && groupDesc.isCombineWithDlgButtons())
+      ) {
+        final Customizer customizer = new Customizer(groupDesc, ms) {
+          @Override
+          public void process(@NotNull INodeInfo ni, @NotNull TBItemAnActionButton butt) {
+            super.process(ni, butt);
+            butt.setPriority(--prio[0]);
+            butt.myOptionalContextName = DIALOG_ACTIONS_CONTEXT;
+            if (ni.getParentDesc() != null && !ni.getParentDesc().isShowImage())
+              butt.setShowMode(TBItemAnActionButton.SHOWMODE_TEXT_ONLY);
+          }
+        };
+        TouchBar.addActionGroup(out, ag, customizer);
+
+        ag.addPropertyChangeListener(new PropertyChangeListener() {
+          @Override
+          public void propertyChange(PropertyChangeEvent evt) {
+            if (!UpdatableDefaultActionGroup.PROP_CHILDREN.equals(evt.getPropertyName()))
+              return;
+
+            final AnAction[] prevArr = (AnAction[])evt.getOldValue();
+            final AnAction[] currArr = (AnAction[])evt.getNewValue();
+
+            final List<AnAction> prev = new ArrayList<>();
+            for (AnAction act: prevArr)
+              _collectActions(act, prev);
+            final List<AnAction> curr = new ArrayList<>();
+            for (AnAction act: currArr)
+              _collectActions(act, curr);
+
+            if (prev != null && !prev.isEmpty()) {
+              if (curr != null && !curr.isEmpty()) {
+                // System.out.printf("replace %d old actions with %d new inside: %s\n", prev.size(), curr.size(), out);
+                if (curr.size() != prev.size()) {
+                  out.getItemsContainer().remove(tbi -> DIALOG_ACTIONS_CONTEXT.equals(tbi.myOptionalContextName));
+                  // System.out.printf("mismatch sizes of prev %d and cur %d actions inside: %s\n", prev.size(), curr.size(), out);
+                  TouchBar.addActionGroup(out, ag, customizer);
+                } else {
+                  out.getItemsContainer().forEachDeep(tbi -> {
+                    if (!(tbi instanceof TBItemAnActionButton))
+                      return;
+
+                    final TBItemAnActionButton butt = (TBItemAnActionButton)tbi;
+                    final int prevIndex = prev.indexOf(butt.getAnAction());
+                    if (prevIndex == -1)
+                      return;
+
+                    final AnAction newAct = curr.get(prevIndex);
+                    // System.out.printf("prev act '%s', new act '%s'\n", getActionId(butt.getAnAction()), getActionId(newAct));
+                    butt.setAnAction(newAct);
+                  });
+                }
+              } else
+                out.getItemsContainer().remove(tbi -> tbi instanceof TBItemAnActionButton && prev.indexOf(((TBItemAnActionButton)tbi).getAnAction()) != -1);
+            } else {
+              if (curr == null || curr.isEmpty()) // nothing to do
+                return;
+
+              // System.out.println("prev actions is null, add all new actions into: " + out);
+              TouchBar.addActionGroup(out, ag, customizer);
+            }
+            out.updateActionItems();
+          }
+        });
+      }
+    }
+
+    // 3. add left and main buttons (and make main principal)
+    if (hasSouthPanelButtons) {
+      final TBItemGroup gr = out.addGroup();
+      final ItemsContainer group = gr.getContainer();
+      final List<TouchbarDataKeys.DlgButtonDesc> ordered = _extractOrderedButtons(unorderedButtons);
+      for (TouchbarDataKeys.DlgButtonDesc desc : ordered) {
+        final JButton jb = unorderedButtons.get(desc);
+
+        // NOTE: can be true: jb.getAction().isEnabled() && !jb.isEnabled()
+        final AnAction anAct = _createAnAction(jb.getAction(), jb, false);
+        if (anAct == null)
+          continue;
+        final TBItemButton tbb = desc.isMainGroup() ?
+                                 group.addAnActionButton(anAct).setShowMode(TBItemAnActionButton.SHOWMODE_TEXT_ONLY).setModality(ms).setComponent(jb) :
+                                 out.addAnActionButton(anAct, gr).setShowMode(TBItemAnActionButton.SHOWMODE_TEXT_ONLY).setModality(ms).setComponent(jb)
+                                    .setPriority(--prio[0]);
+
+        boolean isDefault = desc.isDefault();
+        if (!isDefault) {
+          // check other properties
+          isDefault = jb.getAction() != null ? jb.getAction().getValue(DialogWrapper.DEFAULT_ACTION) != null : jb.isDefaultButton();
+        }
+        if (isDefault)
+          tbb.setColored(true);
         _setDialogLayout(tbb);
-    }
-
-    // 2. add left and main buttons (and make main principal)
-    final TBItemGroup gr = result.addGroup();
-    final ItemsContainer group = gr.getContainer();
-    final List<TouchbarDataKeys.DlgButtonDesc> ordered = _extractOrderedButtons(unorderedButtons);
-    for (TouchbarDataKeys.DlgButtonDesc desc: ordered) {
-      final JButton jb = unorderedButtons.get(desc);
-
-      // NOTE: can be true: jb.getAction().isEnabled() && !jb.isEnabled()
-      final AnAction anAct = _createAnAction(jb.getAction(), jb, false);
-      if (anAct == null)
-        continue;
-      final TBItemButton tbb = desc.isMainGroup ?
-                               group.addAnActionButton(anAct, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms).setComponent(jb) :
-                               result.addAnActionButton(anAct, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms, gr).setComponent(jb).setPriority(--prio);
-
-      boolean isDefault = desc.isDefalut;
-      if (!isDefault) {
-        // check other properties
-        isDefault = jb.getAction() != null ? jb.getAction().getValue(DialogWrapper.DEFAULT_ACTION) != null : jb.isDefaultButton();
       }
-      if (isDefault)
-        tbb.setColored(true);
-      _setDialogLayout(tbb);
-    }
 
-    result.selectVisibleItemsToShow();
-    result.setPrincipal(gr);
-    return result;
+      out.selectVisibleItemsToShow();
+      out.setPrincipal(gr);
+    }
   }
 
   // creates releaseOnClose touchbar
@@ -275,8 +253,9 @@ class BuildUtils {
     final ModalityState ms = app != null ? LaterInvocator.getCurrentModalityState() : null;
 
     final TBItemScrubber scrub = result.addScrubber();
-    @NotNull ListPopupStep listPopupStep = listPopup.getListStep();
-    for (Object obj : listPopupStep.getValues()) {
+    final @NotNull ListPopupStep listPopupStep = listPopup.getListStep();
+    final @NotNull List stepValues = listPopupStep.getValues();
+    for (Object obj : stepValues) {
       final Icon ic = listPopupStep.getIconFor(obj);
       String txt = listPopupStep.getTextFor(obj);
 
@@ -288,7 +267,10 @@ class BuildUtils {
       }
 
       final Runnable edtAction = () -> {
-        listPopup.getList().setSelectedValue(obj, false);
+        if (obj != null)
+          listPopup.getList().setSelectedValue(obj, false);
+        else
+          listPopup.getList().setSelectedIndex(stepValues.indexOf(obj));
         listPopup.handleSelect(true);
       };
 
@@ -318,23 +300,167 @@ class BuildUtils {
     return tb;
   }
 
-  private static void _setDialogLayout(TBItemButton button) {
-    if (button == null)
-      return;
-    button.setLayout(BUTTON_MIN_WIDTH_DLG, NSTLibrary.LAYOUT_FLAG_MIN_WIDTH, BUTTON_IMAGE_MARGIN, BUTTON_BORDER);
+  static class GroupVisitor implements INodeInfo {
+    private final @NotNull TouchBar myOut;
+    private final @Nullable String myFilterByPrefix;
+    private final @Nullable Customizer myCustomizer;
+
+    private int mySeparatorCounter = 0;
+    private LinkedList<InternalNode> myNodePath = new LinkedList<>();
+
+    GroupVisitor(@NotNull TouchBar out, @Nullable String filterByPrefix, @Nullable Customizer customizer) {
+      this.myOut = out;
+      this.myFilterByPrefix = filterByPrefix;
+      this.myCustomizer = customizer;
+    }
+
+    boolean enterNode(@NotNull ActionGroup groupNode) {
+      final String groupName = getActionId(groupNode);
+      if (myFilterByPrefix != null && groupName != null && groupName.startsWith(myFilterByPrefix))
+        return false;
+
+      final TouchbarDataKeys.ActionDesc groupDesc = groupNode.getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
+      final InternalNode node = new InternalNode(groupNode, groupName, groupDesc);
+      if (groupDesc != null && groupDesc.isMainGroup()) {
+        final TBItemGroup group = myOut.addGroup();
+        node.groupContainer = group.getContainer();
+        myOut.setPrincipal(group);
+      }
+
+      myNodePath.add(node);
+      return true;
+    }
+
+    void visitLeaf(AnAction act) {
+      ItemsContainer out = _getParentContainer();
+      if (out == null)
+        out = myOut.getItemsContainer();
+
+      if (act instanceof Separator) {
+        final Separator sep = (Separator)act;
+        int increment = 1;
+        if (sep.getText() != null) {
+          if (sep.getText().equals(ourSmallSeparatorText))
+            out.addSpacing(false);
+          else if (sep.getText().equals(ourLargeSeparatorText))
+            out.addSpacing(true);
+          else if (sep.getText().equals(ourFlexibleSeparatorText))
+            out.addFlexibleSpacing();
+        } else {
+          mySeparatorCounter += increment;
+        }
+        return;
+      }
+      if (mySeparatorCounter > 0) {
+        if (mySeparatorCounter == 1) out.addSpacing(false);
+        else if (mySeparatorCounter == 2) out.addSpacing(true);
+        else out.addFlexibleSpacing();
+
+        mySeparatorCounter = 0;
+      }
+
+      final TBItemAnActionButton butt = out.addAnActionButton(act);
+      if (myCustomizer != null)
+        myCustomizer.process(this, butt);
+    }
+
+    void leaveNode(ActionGroup groupNode) { myNodePath.removeLast(); }
+
+    private @Nullable ItemsContainer _getParentContainer() { return myNodePath.isEmpty() ? null : myNodePath.getLast().groupContainer; }
+
+    @Override
+    public boolean isParentCompact() { return !myNodePath.isEmpty() && myNodePath.getLast().group instanceof CompactActionGroup; }
+
+    @Override
+    public String getParentGroupID() {
+      if (myNodePath.isEmpty())
+        return null;
+      return myNodePath.getLast().groupID;
+    }
+
+    @Override
+    public TouchbarDataKeys.ActionDesc getParentDesc() {
+      if (myNodePath.isEmpty())
+        return null;
+      return myNodePath.getLast().groupDesc;
+    }
+
+    private static class InternalNode {
+      final @NotNull ActionGroup group;
+      final @Nullable String groupID;
+      final TouchbarDataKeys.ActionDesc groupDesc;
+
+      ItemsContainer groupContainer;
+
+      InternalNode(@NotNull ActionGroup group, @Nullable String groupID, TouchbarDataKeys.ActionDesc groupDesc) {
+        this.group = group;
+        this.groupID = groupID;
+        this.groupDesc = groupDesc;
+      }
+    }
   }
 
-  interface IGroupVisitor {
-    boolean enterNode(ActionGroup groupNode); // returns false when must skip node
-    void visitLeaf(AnAction leaf);
-    void leaveNode(ActionGroup groupNode);
+  interface INodeInfo {
+    boolean isParentCompact();
+    String getParentGroupID();
+    TouchbarDataKeys.ActionDesc getParentDesc();
+  }
+
+  static class Customizer {
+    private final int myShowMode;
+    private final @Nullable ModalityState myModality;
+
+    Customizer(int showMode, @Nullable ModalityState modality) {
+      myShowMode = showMode;
+      myModality = modality;
+    }
+
+    Customizer(@Nullable TouchbarDataKeys.ActionDesc groupDesc, @Nullable ModalityState modality) {
+      myShowMode = groupDesc == null || !groupDesc.isShowText() ? TBItemAnActionButton.SHOWMODE_IMAGE_ONLY_IF_PRESENTED : TBItemAnActionButton.SHOWMODE_IMAGE_TEXT;
+      myModality = modality;
+    }
+
+    Customizer() {
+      myShowMode = TBItemAnActionButton.SHOWMODE_IMAGE_ONLY_IF_PRESENTED;
+      myModality = null;
+    }
+
+    void process(@NotNull INodeInfo ni, @NotNull TBItemAnActionButton butt) {
+      final String actId = getActionId(butt.getAnAction());
+      // if (actId == null || actId.isEmpty())   System.out.println("unregistered action: " + act);
+
+      final boolean isRunConfigPopover = "RunConfiguration".equals(actId);
+      final boolean isOpenInTerminalAction = "Terminal.OpenInTerminal".equals(actId);
+      final TouchbarDataKeys.ActionDesc pd = ni.getParentDesc();
+      final int nodeMode = pd != null && pd.isShowText() ? TBItemAnActionButton.SHOWMODE_IMAGE_TEXT : myShowMode;
+      final int mode = isRunConfigPopover || isOpenInTerminalAction ? TBItemAnActionButton.SHOWMODE_IMAGE_TEXT : nodeMode;
+      butt.setShowMode(mode).setModality(myModality);
+      if (ni.isParentCompact())
+        butt.setHiddenWhenDisabled(true);
+
+      if (isRunConfigPopover) {
+        butt.setWidth(ourRunConfigurationPopoverWidth);
+        butt.setHasArrowIcon(true);
+      } else if (butt.getAnAction() instanceof WelcomePopupAction)
+        butt.setHasArrowIcon(true);
+
+      final TouchbarDataKeys.ActionDesc actionDesc = butt.getAnAction().getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
+      if (actionDesc != null && actionDesc.getContextComponent() != null)
+        butt.setComponent(actionDesc.getContextComponent());
+    }
   }
 
   static String getActionId(AnAction act) {
     return ActionManager.getInstance().getId(act instanceof CustomisedActionGroup ? ((CustomisedActionGroup)act).getOrigin() : act);
   }
 
-  private static void _traverse(@NotNull ActionGroup group, @NotNull IGroupVisitor visitor) {
+  private static void _setDialogLayout(TBItemButton button) {
+    if (button == null)
+      return;
+    button.setLayout(BUTTON_MIN_WIDTH_DLG, NSTLibrary.LAYOUT_FLAG_MIN_WIDTH, BUTTON_IMAGE_MARGIN, BUTTON_BORDER);
+  }
+
+  private static void _traverse(@NotNull ActionGroup group, @NotNull GroupVisitor visitor) {
     String groupId = getActionId(group);
     if (groupId == null) groupId = "unregistered";
 
@@ -412,16 +538,35 @@ class BuildUtils {
       if (jbdesc == null)
         continue;
 
-      if (jbdesc.isMainGroup)
+      if (jbdesc.isMainGroup())
         main.add(jbdesc);
       else
         secondary.add(jbdesc);
     }
 
-    final Comparator<TouchbarDataKeys.DlgButtonDesc> cmp = (desc1, desc2) -> Integer.compare(desc1.orderIndex, desc2.orderIndex);
+    final Comparator<TouchbarDataKeys.DlgButtonDesc> cmp = (desc1, desc2) -> Integer.compare(desc1.getOrder(), desc2.getOrder());
     main.sort(cmp);
     secondary.sort(cmp);
     return ContainerUtil.concat(secondary, main);
+  }
+
+  private static void _collectActions(@NotNull AnAction act, @NotNull List<AnAction> out) {
+    if (act instanceof ActionGroup) {
+      final ActionGroup group = (ActionGroup)act;
+      final AnAction[] children = group.getChildren(null);
+      for (int i = 0; i < children.length; i++) {
+        final AnAction child = children[i];
+        if (child == null)
+          continue;
+
+        if (child instanceof ActionGroup) {
+          final @NotNull ActionGroup childGroup = (ActionGroup)child;
+          _collectActions(childGroup, out);
+        } else
+          out.add(child);
+      }
+    } else
+      out.add(act);
   }
 
   private static void _initExecutorsGroup() {

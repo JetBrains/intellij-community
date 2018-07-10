@@ -58,15 +58,15 @@ public class ParameterHintsPresentationManager implements Disposable {
 
   public void deleteHint(@NotNull Editor editor, @NotNull Inlay hint, boolean useAnimation) {
     if (useAnimation) {
-      updateRenderer(editor, hint, null);
+      updateRenderer(editor, hint, null, true);
     }
     else {
       Disposer.dispose(hint);  
     }
   }
 
-  public void replaceHint(@NotNull Editor editor, @NotNull Inlay hint, @NotNull String newText) {
-    updateRenderer(editor, hint, newText);
+  public void replaceHint(@NotNull Editor editor, @NotNull Inlay hint, @NotNull String newText, boolean useAnimation) {
+    updateRenderer(editor, hint, newText, useAnimation);
   }
 
   public void setHighlighted(@NotNull Inlay hint, boolean highlighted) {
@@ -101,11 +101,11 @@ public class ParameterHintsPresentationManager implements Disposable {
     return renderer.current;
   }
 
-  private void updateRenderer(@NotNull Editor editor, @NotNull Inlay hint, @Nullable String newText) {
+  private void updateRenderer(@NotNull Editor editor, @NotNull Inlay hint, @Nullable String newText, boolean useAnimation) {
     MyRenderer renderer = (MyRenderer)hint.getRenderer();
-    renderer.update(editor, newText, true);
+    renderer.update(editor, newText, useAnimation);
     hint.updateSize();
-    scheduleRendererUpdate(editor, hint);
+    if (useAnimation) scheduleRendererUpdate(editor, hint);
   }
 
   @Override

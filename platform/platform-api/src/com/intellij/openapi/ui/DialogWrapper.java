@@ -523,8 +523,7 @@ public abstract class DialogWrapper {
       if (button instanceof JBOptionButton) {
         myOptionsButtons.add((JBOptionButton)button);
       }
-      final boolean isLeft = index < leftSideButtons.size();
-      TouchbarDataKeys.putClientPropertyDialogButton(button, !isLeft, false, index++);
+      TouchbarDataKeys.putDialogButtonDescriptor(button, index++).setMainGroup(index >= leftSideButtons.size());
     }
 
     return createSouthPanel(leftSideButtons, rightSideButtons, hasHelpToMoveToLeftSide);
@@ -1409,14 +1408,17 @@ public abstract class DialogWrapper {
     }
   }
 
+  @Deprecated
   protected boolean isNorthStrictedToPreferredSize() {
     return true;
   }
 
+  @Deprecated
   protected boolean isCenterStrictedToPreferredSize() {
     return false;
   }
 
+  @Deprecated
   protected boolean isSouthStrictedToPreferredSize() {
     return true;
   }

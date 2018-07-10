@@ -942,7 +942,7 @@ class JsonSchemaAnnotatorChecker {
    * In this case we need to show the most "suitable" error messages
    *   - by detecting the most "likely" schema corresponding to the current entity
    */
-  @NotNull
+  @Nullable
   private JsonSchemaObject showErrorsAndGetLeastErroneous(@NotNull List<JsonSchemaAnnotatorChecker> candidateErroneousCheckers,
                                                           @NotNull List<JsonSchemaObject> candidateErroneousSchemas) {
     JsonSchemaObject current = null;

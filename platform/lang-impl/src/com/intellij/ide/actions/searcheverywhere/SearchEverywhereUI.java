@@ -169,9 +169,12 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     String hint = IdeBundle.message("searcheverywhere.history.shortcuts.hint",
                                     KeymapUtil.getKeystrokeText(SearchTextField.ALT_SHOW_HISTORY_KEYSTROKE),
                                     KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE));
-    JLabel hintLabel = HintUtil.createAdComponent(hint, JBUI.Borders.empty(), SwingConstants.LEFT);
+    JLabel hintLabel = HintUtil.createAdComponent(hint, JBUI.Borders.emptyLeft(8), SwingConstants.LEFT);
     hintLabel.setOpaque(false);
     hintLabel.setForeground(JBColor.GRAY);
+    Dimension size = hintLabel.getPreferredSize();
+    size.height = JBUI.scale(17);
+    hintLabel.setPreferredSize(size);
     pnl.add(hintLabel, BorderLayout.SOUTH);
 
     return pnl;
@@ -582,6 +585,14 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
                       .getMessageBus()
                       .connect(this)
                       .subscribe(ProgressWindow.TOPIC, pw -> Disposer.register(pw,() -> myResultsList.repaint()));
+
+    mySearchField.addFocusListener(new FocusAdapter() {
+      @Override
+      public void focusLost(FocusEvent e) {
+        stopSearching();
+        searchFinishedHandler.run();
+      }
+    });
   }
 
   private void elementsSelected(int[] indexes, int modifiers) {

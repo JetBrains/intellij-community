@@ -79,12 +79,15 @@ internal class KeyChainCredentialStore : CredentialStore {
   }
 }
 
-fun findGenericPassword(serviceName: ByteArray, accountName: String?): Credentials? {
+private fun findGenericPassword(serviceName: ByteArray, accountName: String?): Credentials? {
   val accountNameBytes = accountName?.toByteArray()
   val passwordSize = IntArray(1)
   val passwordRef = PointerByReference()
   val itemRef = PointerByReference()
-  checkForError("find", LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, accountNameBytes?.size ?: 0, accountNameBytes, passwordSize, passwordRef, itemRef))
+  val errorCode = checkForError("find", LIBRARY.SecKeychainFindGenericPassword(null, serviceName.size, serviceName, accountNameBytes?.size ?: 0, accountNameBytes, passwordSize, passwordRef, itemRef))
+  if (errorCode == errSecUserCanceled) {
+    return ACCESS_TO_KEY_CHAIN_DENIED
+  }
 
   val pointer = passwordRef.value ?: return null
   val password = OneTimeString(pointer.getByteArray(0, passwordSize.get(0)))
@@ -158,9 +161,9 @@ internal class SecKeychainAttributeInfo : Structure() {
   override fun getFieldOrder() = listOf("count", "tag", "format")
 }
 
-private fun checkForError(message: String, code: Int) {
+private fun checkForError(message: String, code: Int): Int {
   if (code == errSecSuccess || code == errSecItemNotFound) {
-    return
+    return code
   }
 
   val translated = LIBRARY.SecCopyErrorMessageString(code, null)
@@ -183,6 +186,8 @@ private fun checkForError(message: String, code: Int) {
   else {
     LOG.error(builder.toString())
   }
+
+  return code
 }
 
 @Suppress("FunctionName")

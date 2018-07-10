@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -23,6 +24,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Predicate;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,8 +35,6 @@ import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseWheelEvent;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
@@ -296,8 +296,10 @@ public class TouchBarsManager {
           ed.containerSearch.release();
         }
 
-        ed.containerSearch = new BarContainer(BarType.EDITOR_SEARCH, TouchBar.buildFromGroup("editor_search_" + header, actions, true, true), null, header);
-        ourStack.showContainer(ed.containerSearch);
+        if (actions != null) {
+          ed.containerSearch = new BarContainer(BarType.EDITOR_SEARCH, TouchBar.buildFromGroup("editor_search_" + header, actions, true, true), null, header);
+          ourStack.showContainer(ed.containerSearch);
+        }
       }
     }
   }
@@ -329,34 +331,26 @@ public class TouchBarsManager {
     final ModalityState ms = Utils.getCurrentModalityState();
     final BarType btype = ModalityState.NON_MODAL.equals(ms) ? BarType.DIALOG : BarType.MODAL_DIALOG;
     BarContainer bc = null;
+    TouchBar tb = null;
 
-    final Map<TouchbarDataKeys.DlgButtonDesc, JButton> jbuttons = _findAllDialogButtons(contentPane);
-    if (jbuttons != null && !jbuttons.isEmpty()) {
-      // 1. if 'south-panel buttons' presented => show them
-      final TouchBar tb = BuildUtils.createButtonsBar(jbuttons);
-      bc = new BarContainer(btype, tb, null, contentPane);
-    } else {
-      // 2. otherwise show actions collected from content children
-      Map<Component, ActionGroup> actions = new HashMap<>();
-      _findAllTouchbarProviders(actions, contentPane);
-      if (!actions.isEmpty()) {
-        final ActionGroup ag = actions.values().iterator().next();
-        final TouchBar tb = TouchBar.buildFromGroup("dialog_with_actions", ag, true, true);
-        bc = new BarContainer(btype, tb, null, contentPane);
-        final BarContainer fbc = bc;
-        ag.addPropertyChangeListener(new PropertyChangeListener() {
-          @Override
-          public void propertyChange(PropertyChangeEvent evt) {
-            tb.clear();
-            TouchBar.addActionGroup(tb, ag);
-            ourStack.showContainer(fbc);
-          }
-        });
-      }
-    }
+    final Map<TouchbarDataKeys.DlgButtonDesc, JButton> jbuttons = new HashMap<>();
+    final Map<Component, ActionGroup> actions = new HashMap<>();
+    _findAllTouchbarProviders(actions, jbuttons, contentPane);
 
-    if (bc == null)
+    if (jbuttons.isEmpty() && actions.isEmpty())
       return null;
+
+    boolean replaceEsc = false;
+    boolean emulateEsc = false;
+    if (!actions.isEmpty()) {
+      final ActionGroup ag = actions.values().iterator().next();
+      final TouchbarDataKeys.ActionDesc groupDesc = ag.getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
+      replaceEsc = groupDesc == null || groupDesc.isReplaceEsc();
+      emulateEsc = true;
+    }
+    tb = new TouchBar("dialog_buttons", replaceEsc, false, emulateEsc);
+    BuildUtils.addDialogButtons(tb, jbuttons, actions);
+    bc = new BarContainer(btype, tb, null, contentPane);
 
     ourTemporaryBars.put(contentPane, bc);
     ourStack.showContainer(bc);
@@ -366,19 +360,6 @@ public class TouchBarsManager {
       ourTemporaryBars.remove(contentPane);
       ourStack.removeContainer(fbc);
       fbc.release();
-    };
-  }
-
-  public static @Nullable Disposable showSheetMessageButtons(@NotNull String[] buttons, @NotNull Runnable[] actions, String defaultButton) {
-    if (!isTouchBarAvailable())
-      return null;
-
-    final TouchBar tb = BuildUtils.createMessageDlgBar(buttons, actions, defaultButton);
-    BarContainer container = new BarContainer(BarType.DIALOG, tb, null, null);
-    ourStack.showContainer(container);
-    return ()->{
-      ourStack.removeContainer(container);
-      container.release();
     };
   }
 
@@ -412,42 +393,26 @@ public class TouchBarsManager {
     return null;
   }
 
-  private static void _findAllTouchbarProviders(@NotNull Map<Component, ActionGroup> out, @NotNull Container root) {
-    final Component[] children = root.getComponents();
-    for (Component component : children) {
-      if (out.containsKey(component)) {
-        // just extra protection
-        LOG.error("the component '" + component + "' was already visited");
-        continue;
-      }
-
-      if (component instanceof DataProvider) {
-        final ActionGroup actions = TouchbarDataKeys.ACTIONS_KEY.getData((DataProvider)component);
-        if (actions != null) {
-          out.put(component, actions);
-        }
-      }
-      if (component instanceof Container)
-        _findAllTouchbarProviders(out, (Container)component);
-    }
-  }
-
-  private static Map<TouchbarDataKeys.DlgButtonDesc, JButton> _findAllDialogButtons(@NotNull Container root) {
-    final Map<TouchbarDataKeys.DlgButtonDesc, JButton> out = new HashMap<>();
-    _findAllDialogButtons(out, root);
-    return out;
-  }
-
-  private static void _findAllDialogButtons(@NotNull Map<TouchbarDataKeys.DlgButtonDesc, JButton> out, @NotNull Container root) {
-    final Component[] children = root.getComponents();
-    for (Component component : children) {
+  private static void _findAllTouchbarProviders(@NotNull Map<Component, ActionGroup> out, @NotNull Map<TouchbarDataKeys.DlgButtonDesc, JButton> out2, @NotNull Container root) {
+    final JBIterable<Component> iter = UIUtil.uiTraverser(root).expandAndFilter(c -> c.isVisible()).traverse();
+    for (Component component : iter) {
       if (component instanceof JButton) {
         final TouchbarDataKeys.DlgButtonDesc desc = UIUtil.getClientProperty(component, TouchbarDataKeys.DIALOG_BUTTON_DESCRIPTOR_KEY);
         if (desc != null)
-          out.put(desc, (JButton)component);
+          out2.put(desc, (JButton)component);
       }
-      if (component instanceof Container)
-        _findAllDialogButtons(out, (Container)component);
+
+      DataProvider dp = null;
+      if (component instanceof DataProvider)
+        dp = (DataProvider)component;
+      else if (component instanceof JComponent)
+        dp = DataManager.getDataProvider((JComponent)component);
+
+      if (dp != null) {
+        final ActionGroup actions = TouchbarDataKeys.ACTIONS_KEY.getData(dp);
+        if (actions != null)
+          out.put(component, actions);
+      }
     }
   }
 

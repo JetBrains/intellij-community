@@ -47,34 +47,32 @@ public class SameParameterValueSlashesTest extends LightCodeInsightFixtureTestCa
 
   @Test
   public void testSlashes() {
-    Runnable runnable = new Runnable() {
-      public void run() {
-        String specialSymbol = "\\" + symbol;
-        String ourIntentionName = "Inline value '";
+    Runnable runnable = () -> {
+      String specialSymbol = "\\" + symbol;
+      String ourIntentionName = "Inline value '";
 
-        String before = "class C { " +
-                        "  void test() {" +
-                        "    String s = f(\"" + specialSymbol + "\");" +
-                        "  }" +
-                        "  String f(String <caret>p) {" +
-                        "    return \"123\" + p;" +
-                        "  }" +
-                        "}";
-        myFixture.configureByText("C.java", before);
+      String before = "class C { " +
+                      "  void test() {" +
+                      "    String s = f(\"" + specialSymbol + "\");" +
+                      "  }" +
+                      "  String f(String <caret>p) {" +
+                      "    return \"123\" + p;" +
+                      "  }" +
+                      "}";
+      myFixture.configureByText("C.java", before);
 
-        final IntentionAction singleIntention = myFixture.findSingleIntention(ourIntentionName);
-        myFixture.launchAction(singleIntention);
+      final IntentionAction singleIntention = myFixture.findSingleIntention(ourIntentionName);
+      myFixture.launchAction(singleIntention);
 
-        String after = "class C { " +
-                       "  void test() {" +
-                       "    String s = f();" +
-                       "  }" +
-                       "  String f() {" +
-                       "    return \"123\" + \"" + specialSymbol + "\";" +
-                       "  }" +
-                       "}";
-        myFixture.checkResult(after);
-      }
+      String after = "class C { " +
+                     "  void test() {" +
+                     "    String s = f();" +
+                     "  }" +
+                     "  String f() {" +
+                     "    return \"123\" + \"" + specialSymbol + "\";" +
+                     "  }" +
+                     "}";
+      myFixture.checkResult(after);
     };
     doTest(runnable);
   }

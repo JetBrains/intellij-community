@@ -276,9 +276,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
           while (enumeration.hasMoreElements()) {
             URL url = enumeration.nextElement();
             if (!visited.add(url.getFile())) continue; // for DEBUG mode
-            InputStream stream = null;
-            try {
-              stream = url.openStream();
+            try (InputStream stream = url.openStream()) {
               cfgList.add(load(stream));
             }
             catch (ProcessCanceledException e) {
@@ -286,11 +284,6 @@ public class Configuration extends SimpleModificationTracker implements Persiste
             }
             catch (Exception e) {
               LOG.warn(e);
-            }
-            finally {
-              if (stream != null) {
-                stream.close();
-              }
             }
           }
         }
