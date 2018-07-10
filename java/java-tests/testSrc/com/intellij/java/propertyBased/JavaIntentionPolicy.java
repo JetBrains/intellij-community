@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.propertyBased.IntentionPolicy;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -158,7 +159,7 @@ class JavaParenthesesPolicy extends JavaIntentionPolicy {
         expression = (PsiExpression)expression.getParent();
       }
       PsiElement parent = expression.getParent();
-      if (parent instanceof PsiExpressionStatement ||
+      if (ExpressionUtils.isVoidContext(expression) ||
           parent instanceof PsiNameValuePair ||
           parent instanceof PsiArrayInitializerMemberValue ||
           parent instanceof PsiSwitchLabelStatement) {
