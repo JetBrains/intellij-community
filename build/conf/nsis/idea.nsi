@@ -331,7 +331,7 @@ done:
 FunctionEnd
 
 
-Function getInstallationOptionsPostions
+Function getInstallationOptionsPositions
   !insertmacro INSTALLOPTIONS_READ $launcherShortcut "Desktop.ini" "Settings" "DesktopShortcutToLauncher"
   !insertmacro INSTALLOPTIONS_READ $secondLauncherShortcut "Desktop.ini" "Settings" "DesktopShortcutToSecondLauncher"
   !insertmacro INSTALLOPTIONS_READ $addToPath "Desktop.ini" "Settings" "AddToPath"
@@ -351,7 +351,7 @@ Function ConfirmDesktopShortcut
     StrCpy $R1 ""
   ${EndIf}
 
-  Call getInstallationOptionsPostions
+  Call getInstallationOptionsPositions
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "Text" $R0
 
   ${If} $R1 != ""
@@ -507,7 +507,7 @@ LicenseLangString myLicenseData ${LANG_JAPANESE} "${LICENSE_FILE}.txt"
 Function .onInit
   SetRegView 32
   !insertmacro INSTALLOPTIONS_EXTRACT "Desktop.ini"
-  Call getInstallationOptionsPostions
+  Call getInstallationOptionsPositions
   IfSilent silent_mode uac_elevate
 silent_mode:
   IntCmp ${CUSTOM_SILENT_CONFIG} 0 silent_config silent_config custom_silent_config
@@ -554,7 +554,7 @@ FunctionEnd
 
 Function silentConfigReader
   ; read Desktop.ini
-  Call getInstallationOptionsPostions
+  Call getInstallationOptionsPositions
   ${GetParameters} $R0
   ClearErrors
 
