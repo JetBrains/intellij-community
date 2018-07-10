@@ -2,6 +2,7 @@ package com.jetbrains.python.console.thrift.client
 
 import com.jetbrains.python.console.thrift.DirectedMessage
 import com.jetbrains.python.console.thrift.DirectedMessageCodec
+import com.jetbrains.python.console.thrift.DirectedMessageHandler
 import com.jetbrains.python.console.thrift.TCumulativeTransport
 import io.netty.bootstrap.Bootstrap
 import io.netty.buffer.ByteBuf
