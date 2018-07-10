@@ -17,6 +17,7 @@ package com.siyeh.ipp.shift;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class ShiftByLiteralPredicate implements PsiElementPredicate {
@@ -68,7 +69,7 @@ class ShiftByLiteralPredicate implements PsiElementPredicate {
     if (!ShiftUtils.isIntegral(lhsType)) {
       return false;
     }
-    final PsiExpression rhs = expression.getROperand();
+    final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getROperand());
     return ShiftUtils.isIntLiteral(rhs);
   }
 }
