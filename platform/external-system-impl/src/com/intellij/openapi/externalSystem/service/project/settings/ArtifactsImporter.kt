@@ -22,28 +22,25 @@ import com.intellij.util.ObjectUtils.consumeIfCast
 class ArtifactsImporter: ConfigurationHandler {
 
   override fun apply(project: Project, modelsProvider: IdeModifiableModelsProvider, configuration: ConfigurationData) {
-    val artifacts = configuration.find("artifacts") as? Map<*, *> ?: return
+    val artifacts = configuration.find("artifacts") as? List<*> ?: return
 
     if (artifacts.isEmpty()) {
       return
     }
 
-    val artifactManager = ArtifactManager.getInstance(project)
-    val modifiableModel = artifactManager.createModifiableModel()
-    try {
-      artifacts.forEach { name, value ->
-        if (name !is String) return@forEach
-        val artifactConfig = value as? Map<*, *> ?: return@forEach
-        val type: ArtifactType = PlainArtifactType.getInstance()
-        val artifact: ModifiableArtifact = artifactManager
-                                             .findArtifact(name)?.let { modifiableModel.getOrCreateModifiableArtifact(it) }
-                                           ?: modifiableModel.addArtifact(name, type)
-        val rootElement = type.createRootElement(name)
-        populateArtifact(project, rootElement, artifactConfig)
-        artifact.rootElement = rootElement
-      }
-    } finally {
-      modifiableModel.commit()
+    val modifiableModel = modelsProvider.modifiableArtifactModel
+
+    artifacts.forEach { value ->
+      val artifactConfig = value as? Map<*, *> ?: return@forEach
+      val name = artifactConfig["name"]
+      if (name !is String) return@forEach
+      val type: ArtifactType = PlainArtifactType.getInstance()
+      val artifact: ModifiableArtifact = modifiableModel
+                                           .findArtifact(name)?.let { modifiableModel.getOrCreateModifiableArtifact(it) }
+                                         ?: modifiableModel.addArtifact(name, type)
+      val rootElement = type.createRootElement(name)
+      populateArtifact(project, rootElement, artifactConfig)
+      artifact.rootElement = rootElement
     }
   }
 
@@ -71,7 +68,7 @@ class ArtifactsImporter: ConfigurationHandler {
               consumeIfCast(config["libraries"], List::class.java) {
                 it.forEach { libraryCoordinates ->
                   consumeIfCast(libraryCoordinates, Map::class.java) { library ->
-                    val nameSuffix = "${library["group"]}:${library["id"]}:${library["version"]}"
+                    val nameSuffix = "${library["group"]}:${library["artifact"]}:${library["version"]}"
                     project.findLibraryByNameSuffix(nameSuffix)?.let {
                       val libraryClasses = LibraryPackagingElement(LibraryTablesRegistrar.PROJECT_LEVEL, it.name, null)
                       element.addOrFindChild(libraryClasses)
