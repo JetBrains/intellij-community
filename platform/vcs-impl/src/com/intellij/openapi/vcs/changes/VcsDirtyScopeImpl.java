@@ -17,7 +17,6 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -320,6 +319,7 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   @Override
   public void addDirtyFile(final FilePath newcomer) {
     final VirtualFile vcsRoot = myVcsManager.getVcsRootFor(newcomer);
+    if (vcsRoot == null) return;
     myAffectedContentRoots.add(vcsRoot);
 
     THashSet<FilePath> dirsByRoot = myDirtyDirectoriesRecursively.get(vcsRoot);
@@ -327,27 +327,29 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
       return;
     }
 
-    final THashSet<FilePath> dirtyFiles = myDirtyFiles.get(vcsRoot);
+    THashSet<FilePath> dirtyFiles = myDirtyFiles.get(vcsRoot);
     if (dirtyFiles == null) {
-      final THashSet<FilePath> set = newFilePathsSet();
-      set.add(newcomer);
-      myDirtyFiles.put(vcsRoot, set);
-    } else {
+      dirtyFiles = newFilePathsSet();
+      myDirtyFiles.put(vcsRoot, dirtyFiles);
+    }
+    else {
       if (newcomer.isDirectory()) {
         for (Iterator<FilePath> iterator = dirtyFiles.iterator(); iterator.hasNext(); ) {
           final FilePath oldBoy = iterator.next();
-          if (!oldBoy.isDirectory() && Comparing.equal(oldBoy.getVirtualFileParent(), newcomer.getVirtualFile())) {
+          if (!oldBoy.isDirectory() && CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(oldBoy.getParentPath(), newcomer)) {
             iterator.remove();
           }
         }
-      } else if (!dirtyFiles.isEmpty()) {
-        VirtualFile parent = newcomer.getVirtualFileParent();
-        if (parent != null && dirtyFiles.contains(VcsUtil.getFilePath(parent))) {
+      }
+      else if (!dirtyFiles.isEmpty()) {
+        FilePath parent = newcomer.getParentPath();
+        if (parent != null && dirtyFiles.contains(parent)) {
           return;
         }
-        dirtyFiles.add(newcomer);
       }
     }
+
+    dirtyFiles.add(newcomer);
   }
 
   @Override
