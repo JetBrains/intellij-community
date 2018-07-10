@@ -389,7 +389,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
                 return new CachedValueProvider.Result<>(null, PsiModificationTracker.MODIFICATION_COUNT);
               }
               final XmlElementDescriptor xmlElementDescriptor = createElementDescriptor(tag);
-              return new CachedValueProvider.Result<>(xmlElementDescriptor, this.getDependencies());
+              return new CachedValueProvider.Result<>(xmlElementDescriptor, xmlElementDescriptor.getDependencies());
             }, false);
             myDescriptorsMap.put(pair, cachedValue);
             return cachedValue.getValue();
