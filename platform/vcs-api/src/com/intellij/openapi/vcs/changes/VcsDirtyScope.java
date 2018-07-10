@@ -107,10 +107,6 @@ public abstract class VcsDirtyScope {
 
   public abstract boolean belongsTo(final FilePath path, final Consumer<AbstractVcs> vcsConsumer);
 
-  public Collection<VirtualFile> getAffectedContentRootsWithCheck() {
-    return getAffectedContentRoots();
-  }
-  
   public boolean wasEveryThingDirty() {
     return false;
   }
