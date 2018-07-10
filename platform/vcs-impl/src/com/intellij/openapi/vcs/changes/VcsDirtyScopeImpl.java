@@ -48,12 +48,14 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   private static final TObjectHashingStrategy<FilePath> CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY =
     new TObjectHashingStrategy<FilePath>() {
       @Override
-      public int computeHashCode(@NotNull FilePath path) {
+      public int computeHashCode(@Nullable FilePath path) {
+        if (path == null) return 0;
         return Objects.hash(path.getPath(), path.isDirectory(), path.isNonLocal());
       }
 
       @Override
-      public boolean equals(@NotNull FilePath path1, @NotNull FilePath path2) {
+      public boolean equals(@Nullable FilePath path1, @Nullable FilePath path2) {
+        if (path1 == null || path2 == null) return path1 == path2;
         return path1.isDirectory() == path2.isDirectory() &&
                path1.isNonLocal() == path2.isNonLocal() &&
                path1.getPath().equals(path2.getPath());
