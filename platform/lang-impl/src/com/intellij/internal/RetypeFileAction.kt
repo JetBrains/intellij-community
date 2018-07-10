@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.actionSystem.LatencyRecorder
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.Extensions
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
@@ -77,7 +78,9 @@ class RetypeSession(private val project: Project, private val editor: EditorImpl
   private val lines = editor.document.text.split('\n').map { it + "\n" }
   private var line = -1
   private var column = 0
+  private var typedChars = 0
   private var completedChars = 0
+  private var backtrackedChars = 0
   private val threadDumps = mutableListOf<String>()
   private val oldSelectAutopopup = CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS
   private var needSyncPosition = false
@@ -121,6 +124,9 @@ class RetypeSession(private val project: Project, private val editor: EditorImpl
     else if (needSyncPosition) {
       val lineDelta = editor.caretModel.logicalPosition.line - editorLineBeforeAcceptingLookup
       if (lineDelta > 0) {
+        if (lineDelta == 1) {
+          checkPrevLineInSync()
+        }
         line += lineDelta
         column = 0
       }
@@ -145,6 +151,7 @@ class RetypeSession(private val project: Project, private val editor: EditorImpl
 
     if (!lookupSelected) {
       val c = currentLineText[column]
+      typedChars++
       if (c == '\n') {
         column = 0   // line will be incremented in next loop
         executeEditorAction(IdeActions.ACTION_EDITOR_ENTER)
@@ -159,7 +166,17 @@ class RetypeSession(private val project: Project, private val editor: EditorImpl
     }
     else {
       stop()
-      TypingLatencyReportDialog(project, threadDumps).show()
+
+      val message = buildString {
+        val file = FileDocumentManager.getInstance().getFile(document)
+        if (file != null) {
+          append(file.name)
+          append(" ")
+        }
+        append("Typed $typedChars chars, completed $completedChars chars, backtracked $backtrackedChars chars")
+      }
+
+      TypingLatencyReportDialog(project, message, threadDumps).show()
     }
   }
 
@@ -204,8 +221,11 @@ class RetypeSession(private val project: Project, private val editor: EditorImpl
     else if (editor.caretModel.logicalPosition.column > column) {
       // unwanted completion, backtrack
       println("Text has diverged, backtracking. Editor text:\n$editorLineText\nBuffer text:\n$currentLineText")
+      val startOffset = document.getLineStartOffset(editorLine) + column
+      val endOffset = document.getLineEndOffset(editorLine)
+      backtrackedChars += endOffset - startOffset
       WriteCommandAction.runWriteCommandAction(project) {
-        editor.document.deleteString(document.getLineStartOffset(editorLine) + column, document.getLineEndOffset(editorLine))
+        editor.document.deleteString(startOffset, endOffset)
       }
     }
     return result
@@ -230,7 +250,7 @@ class RetypeSession(private val project: Project, private val editor: EditorImpl
   }
 
   companion object {
-    val LOG = Logger.getInstance("#com.intellij.internal.RetypeSesssion")
+    val LOG = Logger.getInstance("#com.intellij.internal.RetypeSession")
   }
 }
 

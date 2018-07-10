@@ -36,6 +36,7 @@ class TypingLatencyReportAction : AnAction() {
 
 class TypingLatencyReportDialog(
   private val project: Project,
+  private val message: String = "",
   private val threadDumps: List<String> = emptyList()
 ) : DialogWrapper(project) {
   private var currentThreadDump = 0
@@ -50,11 +51,16 @@ class TypingLatencyReportDialog(
 
   override fun createCenterPanel(): JComponent {
     val jbScrollPane = createReportTree()
+    val topPane: JComponent = if (message.isNotEmpty())
+      JBUI.Panels.simplePanel().addToTop(JLabel(message)).addToCenter(jbScrollPane)
+    else
+      jbScrollPane
+
     if (threadDumps.isEmpty()) {
-      return jbScrollPane
+      return topPane
     }
     return JBSplitter(true).apply {
-      firstComponent = jbScrollPane
+      firstComponent = topPane
       secondComponent = createThreadDumpBrowser()
     }
   }
@@ -137,6 +143,9 @@ class TypingLatencyReportDialog(
 
   private fun formatReportAsText(): String {
     return buildString {
+      if (message.isNotEmpty()) {
+        append(message)
+      }
       for (row in latencyMap.values.sortedBy { it.fileType.name }) {
         appendln(formatLatency(row.fileType.name, row.totalLatency))
         appendln("Actions:")
