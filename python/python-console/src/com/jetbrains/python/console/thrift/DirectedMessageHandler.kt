@@ -1,6 +1,5 @@
-package com.jetbrains.python.console.thrift.client
+package com.jetbrains.python.console.thrift
 
-import com.jetbrains.python.console.thrift.DirectedMessage
 import com.jetbrains.python.console.thrift.DirectedMessage.MessageDirection.REQUEST
 import com.jetbrains.python.console.thrift.DirectedMessage.MessageDirection.RESPONSE
 import io.netty.buffer.ByteBuf

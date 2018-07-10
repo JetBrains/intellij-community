@@ -4,12 +4,13 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ConcurrencyUtil
 import com.jetbrains.python.console.thrift.DirectedMessage
 import com.jetbrains.python.console.thrift.DirectedMessageCodec
+import com.jetbrains.python.console.thrift.DirectedMessageHandler
 import com.jetbrains.python.console.thrift.TCumulativeTransport
 import io.netty.bootstrap.ServerBootstrap
 import io.netty.channel.ChannelHandlerContext
+import io.netty.channel.ChannelInboundHandlerAdapter
 import io.netty.channel.ChannelInitializer
 import io.netty.channel.ChannelOption
-import io.netty.channel.SimpleChannelInboundHandler
 import io.netty.channel.nio.NioEventLoopGroup
 import io.netty.channel.socket.SocketChannel
 import io.netty.channel.socket.nio.NioServerSocketChannel
@@ -109,26 +110,14 @@ class TNettyServerTransport(port: Int) : TServerTransport() {
             val thriftTransport = TNettyTransport(ch)
             val reverseTransport = TNettyClientTransport(ch)
 
-            ch.pipeline().addLast(object : SimpleChannelInboundHandler<DirectedMessage>() {
-              override fun channelRead0(ctx: ChannelHandlerContext, msg: DirectedMessage) {
-                when (msg.direction) {
-                  DirectedMessage.MessageDirection.REQUEST -> {
-                    thriftTransport.outputStream
-                  }
-                  DirectedMessage.MessageDirection.RESPONSE -> {
-                    reverseTransport.outputStream
-                  }
-                }.let {
-                  it.write(msg.content)
-                  it.flush()
-                }
-              }
+            ch.pipeline().addLast(DirectedMessageHandler(reverseTransport.outputStream, thriftTransport.outputStream))
 
+            ch.pipeline().addLast(object: ChannelInboundHandlerAdapter() {
               override fun channelInactive(ctx: ChannelHandlerContext) {
                 thriftTransport.close()
                 reverseTransport.close()
 
-                ctx.fireChannelInactive()
+                super.channelInactive(ctx)
               }
             })
 
