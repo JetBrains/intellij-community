@@ -239,10 +239,10 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
   @TestOnly
   @NotNull
-  public Point getExtensionIconLocation(@NotNull final Extension extension) {
-    final IconHolder iconHolder = icons.get(extension.toString());
+  public Point getExtensionIconLocation(@NotNull final String extensionName) {
+    final IconHolder iconHolder = icons.get(extensionName);
     if (iconHolder == null) {
-      throw new IllegalArgumentException("The " + extension + " extension does not exist in this text field");
+      throw new IllegalArgumentException("The " + extensionName + " extension does not exist in this text field");
     }
     return iconHolder.bounds.getLocation();
   }
