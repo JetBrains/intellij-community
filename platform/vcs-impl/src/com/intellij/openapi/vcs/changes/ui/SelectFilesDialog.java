@@ -39,18 +39,26 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
   @NotNull private final VirtualFileList myFileList;
   private final boolean myDeletableFiles;
 
-  protected SelectFilesDialog(Project project, List<VirtualFile> files, String prompt,
-                              VcsShowConfirmationOption confirmationOption,
-                              boolean selectableFiles, boolean showDoNotAskOption, boolean deletableFiles) {
+  protected SelectFilesDialog(Project project,
+                              @NotNull List<VirtualFile> files,
+                              @Nullable String prompt,
+                              @Nullable VcsShowConfirmationOption confirmationOption,
+                              boolean selectableFiles,
+                              boolean showDoNotAskOption,
+                              boolean deletableFiles) {
     super(project, false, confirmationOption, prompt, showDoNotAskOption);
     myDeletableFiles = deletableFiles;
     myFileList = new VirtualFileList(project, selectableFiles, deletableFiles, files);
   }
 
   @NotNull
-  public static SelectFilesDialog init(Project project, List<VirtualFile> originalFiles, String prompt,
-                                       VcsShowConfirmationOption confirmationOption,
-                                       boolean selectableFiles, boolean showDoNotAskOption, boolean deletableFiles) {
+  public static SelectFilesDialog init(Project project,
+                                       @NotNull List<VirtualFile> originalFiles,
+                                       @Nullable String prompt,
+                                       @Nullable VcsShowConfirmationOption confirmationOption,
+                                       boolean selectableFiles,
+                                       boolean showDoNotAskOption,
+                                       boolean deletableFiles) {
     SelectFilesDialog dialog = new SelectFilesDialog(project, originalFiles, prompt, confirmationOption, selectableFiles,
                                                      showDoNotAskOption, deletableFiles);
     dialog.init();

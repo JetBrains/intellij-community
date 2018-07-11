@@ -42,8 +42,11 @@ public abstract class AbstractSelectFilesDialog<T> extends DialogWrapper {
   private final String myPrompt;
   private final boolean myShowDoNotAskOption;
 
-  public AbstractSelectFilesDialog(Project project, boolean canBeParent, final VcsShowConfirmationOption confirmationOption,
-                                   final String prompt, boolean showDoNotAskOption) {
+  public AbstractSelectFilesDialog(Project project,
+                                   boolean canBeParent,
+                                   @Nullable VcsShowConfirmationOption confirmationOption,
+                                   @Nullable String prompt,
+                                   boolean showDoNotAskOption) {
     super(project, canBeParent);
     myConfirmationOption = confirmationOption;
     myPrompt = prompt;

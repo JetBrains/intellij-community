@@ -138,17 +138,17 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Nullable
-  public Collection<VirtualFile> selectFilesToProcess(final List<VirtualFile> files,
-                                                      final String title,
-                                                      @Nullable final String prompt,
-                                                      final String singleFileTitle,
-                                                      final String singleFilePromptTemplate,
-                                                      final VcsShowConfirmationOption confirmationOption) {
+  public Collection<VirtualFile> selectFilesToProcess(List<VirtualFile> files,
+                                                      String title,
+                                                      @Nullable String prompt,
+                                                      @Nullable String singleFileTitle,
+                                                      @Nullable String singleFilePromptTemplate,
+                                                      @NotNull VcsShowConfirmationOption confirmationOption) {
     if (files == null || files.isEmpty()) {
       return null;
     }
 
-    if (files.size() == 1 && singleFilePromptTemplate != null) {
+    if (files.size() == 1 && singleFileTitle != null && singleFilePromptTemplate != null) {
       String filePrompt = MessageFormat.format(singleFilePromptTemplate,
                                                FileUtil.getLocationRelativeToUserHome(files.get(0).getPresentableUrl()));
       if (ConfirmationDialog
@@ -178,15 +178,15 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Nullable
-  public Collection<FilePath> selectFilePathsToProcess(List<FilePath> files,
+  public Collection<FilePath> selectFilePathsToProcess(@NotNull List<FilePath> files,
                                                        String title,
                                                        @Nullable String prompt,
-                                                       String singleFileTitle,
-                                                       String singleFilePromptTemplate,
-                                                       VcsShowConfirmationOption confirmationOption,
+                                                       @Nullable String singleFileTitle,
+                                                       @Nullable String singleFilePromptTemplate,
+                                                       @NotNull VcsShowConfirmationOption confirmationOption,
                                                        @Nullable String okActionName,
                                                        @Nullable String cancelActionName) {
-    if (files.size() == 1 && singleFilePromptTemplate != null) {
+    if (files.size() == 1 && singleFileTitle != null && singleFilePromptTemplate != null) {
       final String filePrompt = format(singleFilePromptTemplate, files.get(0).getPresentableUrl());
       if (requestForConfirmation(confirmationOption, myProject, filePrompt, singleFileTitle,
                                  getQuestionIcon(), okActionName, cancelActionName)) {
@@ -205,12 +205,12 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @Nullable
-  public Collection<FilePath> selectFilePathsToProcess(final List<FilePath> files,
-                                                       final String title,
-                                                       @Nullable final String prompt,
-                                                       final String singleFileTitle,
-                                                       final String singleFilePromptTemplate,
-                                                       final VcsShowConfirmationOption confirmationOption) {
+  public Collection<FilePath> selectFilePathsToProcess(@NotNull List<FilePath> files,
+                                                       String title,
+                                                       @Nullable String prompt,
+                                                       @Nullable String singleFileTitle,
+                                                       @Nullable String singleFilePromptTemplate,
+                                                       @NotNull VcsShowConfirmationOption confirmationOption) {
     return selectFilePathsToProcess(files, title, prompt, singleFileTitle, singleFilePromptTemplate, confirmationOption, null, null);
   }
 
