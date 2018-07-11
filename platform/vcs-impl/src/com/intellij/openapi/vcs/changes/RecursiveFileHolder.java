@@ -1,7 +1,6 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
-import com.google.common.collect.Iterables;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -96,7 +95,7 @@ public class RecursiveFileHolder implements IgnoredFilesHolder {
     if (o == null || getClass() != o.getClass()) return false;
 
     final RecursiveFileHolder that = (RecursiveFileHolder)o;
-    return Iterables.elementsEqual(myMap, that.myMap);
+    return myMap.equals(that.myMap);
   }
 
   public int hashCode() {
