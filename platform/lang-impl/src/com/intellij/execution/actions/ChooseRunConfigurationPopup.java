@@ -39,7 +39,6 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.ui.CommonActionsPanel;
 import com.intellij.ui.popup.WizardPopup;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
@@ -145,7 +144,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
       }
     });
 
-    popup.registerAction("deleteConfiguration", KeymapUtil.getKeyStroke(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.REMOVE)),
+    popup.registerAction("deleteConfiguration", KeyStroke.getKeyStroke("DELETE"),
                          new AbstractAction() {
                            @Override
                            public void actionPerformed(ActionEvent e) {
