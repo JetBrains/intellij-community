@@ -76,9 +76,7 @@
     <codeInsight.externalLibraryResolver implementation="com.intellij.execution.junit.codeInsight.JUnitExternalLibraryResolver"/>
     <codeInsight.externalLibraryResolver implementation="com.intellij.execution.junit.codeInsight.JUnit5ExternalLibraryResolver"/>
     <junitListener implementation="com.intellij.junit4.JUnitTestDiscoveryListener"/>
-    <!-- Android Studio: This Run Configuration does not work yet -->
-    <!-- See: https://code.google.com/p/android/issues/detail?id=217241 -->
-    <!--<runConfigurationProducer implementation="com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationProducer"/>-->
+    <runConfigurationProducer implementation="com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationProducer"/>
     <testDiscoveryProducer implementation="com.intellij.execution.testDiscovery.LocalTestDiscoveryProducer"/>
     <testDiscoveryProducer implementation="com.intellij.execution.testDiscovery.IntellijTestDiscoveryProducer"/>
     <implicitUsageProvider implementation="com.intellij.execution.junit2.inspection.JUnitImplicitUsageProvider"/>
