@@ -295,6 +295,25 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     highlight("test.java", checkFileText, checkFileInTests)
   }
 
+  fun testPrivateJdkPackage() {
+    addFile("module-info.java", "module M { }")
+    highlight("test.java", """
+        import <error descr="Package 'jdk.internal' is declared in module 'java.base', which does not export it to module 'M'">jdk.internal</error>.*;
+        """.trimIndent())
+  }
+
+  fun testPrivateJdkPackageFromUnnamed() {
+    highlight("test.java", """
+        import <error descr="Package 'jdk.internal' is declared in module 'java.base', which does not export it to the unnamed module">jdk.internal</error>.*;
+        """.trimIndent())
+  }
+
+  fun testNonRootJdkModule() {
+    highlight("test.java", """
+        import <error descr="Package 'javax.doomed' is declared in module 'javax.doomed', which is not in the module graph">javax.doomed</error>.*;
+        """.trimIndent())
+  }
+
   fun testLinearModuleGraphBug() {
     addFile("module-info.java", "module M6 { requires M7; }", M6)
     addFile("module-info.java", "module M7 { }", M7)
