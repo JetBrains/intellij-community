@@ -7,14 +7,16 @@ import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import git4idea.remote.GitHttpAuthDataProvider
-import org.jetbrains.plugins.github.api.GithubApiTaskExecutor
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import java.io.IOException
 
 class GithubHttpAuthDataProvider(private val authenticationManager: GithubAuthenticationManager,
-                                 private val apiTaskExecutor: GithubApiTaskExecutor,
+                                 private val requestExecutorFactory: GithubApiRequestExecutor.Factory,
+                                 private val requestExecutorManager: GithubApiRequestExecutorManager,
                                  private val accountInformationProvider: GithubAccountInformationProvider,
                                  private val authenticationFailureManager: GithubAccountGitAuthenticationFailureManager) : GitHttpAuthDataProvider {
   private val LOG = logger<GithubHttpAuthDataProvider>()
@@ -23,7 +25,8 @@ class GithubHttpAuthDataProvider(private val authenticationManager: GithubAuthen
     return getSuitableAccounts(project, url, null).singleOrNull()?.let { account ->
       try {
         val token = authenticationManager.getTokenForAccount(account) ?: return null
-        val username = apiTaskExecutor.execute(DumbProgressIndicator(), account, accountInformationProvider.usernameTask, true)
+        val username = requestExecutorFactory.create(token)
+          .execute(DumbProgressIndicator(), accountInformationProvider.getInformationRequest(account)).login
         GithubAccountAuthData(account, username, token)
       }
       catch (e: IOException) {
@@ -53,7 +56,8 @@ class GithubHttpAuthDataProvider(private val authenticationManager: GithubAuthen
     if (login != null) {
       potentialAccounts = potentialAccounts.filter {
         try {
-          apiTaskExecutor.execute(DumbProgressIndicator(), it, accountInformationProvider.usernameTask, true) == login
+          requestExecutorManager.getExecutor(it)
+            .execute(DumbProgressIndicator(), accountInformationProvider.getInformationRequest(it)).login == login
         }
         catch (e: IOException) {
           LOG.info("Cannot load username for $it", e)

@@ -4,11 +4,11 @@ package org.jetbrains.plugins.github.authentication.accounts
 import com.google.common.cache.CacheBuilder
 import com.intellij.openapi.application.ApplicationManager
 import org.jetbrains.annotations.CalledInAny
-import org.jetbrains.annotations.CalledInBackground
-import org.jetbrains.plugins.github.api.*
+import org.jetbrains.plugins.github.api.GithubApiRequest
+import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.GithubApiResponse
 import org.jetbrains.plugins.github.api.data.GithubUserDetailed
 import java.awt.Image
-import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 class GithubAccountInformationProvider {
@@ -33,20 +33,6 @@ class GithubAccountInformationProvider {
         }
       })
   }
-
-  @CalledInBackground
-  @Throws(IOException::class)
-  fun getAccountInformation(connection: GithubConnection): GithubUserDetailed {
-    val account = connection.account
-    return if (account == null) GithubApiUtil.getCurrentUser(connection)
-    else informationCache.getOrPut(account) { GithubApiUtil.getCurrentUser(connection) }
-  }
-
-  @CalledInBackground
-  @Throws(IOException::class)
-  fun getAccountUsername(connection: GithubConnection) = getAccountInformation(connection).login
-
-  val usernameTask get() = GithubTask<String> { getAccountUsername(it) }
 
   @CalledInAny
   fun getInformationRequest(account: GithubAccount): GithubApiRequest<GithubUserDetailed> {

@@ -59,6 +59,7 @@ import git4idea.repo.GitRepository
 import git4idea.util.GitFileUtils
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubApiTaskExecutor
 import org.jetbrains.plugins.github.api.GithubApiUtil
 import org.jetbrains.plugins.github.api.GithubTask
@@ -123,6 +124,7 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
 
       val progressManager = service<ProgressManager>()
       val apiTaskExecutor = service<GithubApiTaskExecutor>()
+      val requestExecutorManager = service<GithubApiRequestExecutorManager>()
       val accountInformationProvider = service<GithubAccountInformationProvider>()
       val gitHelper = service<GithubGitHelper>()
       val git = service<Git>()
@@ -169,6 +171,7 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
       val description: String = shareDialog.getDescription()
       val account: GithubAccount = shareDialog.getAccount()
 
+      val requestExecutor = requestExecutorManager.getExecutor(account, project) ?: return
       object : Task.Backgroundable(project, "Sharing Project on GitHub...") {
         private lateinit var url: String
 
@@ -199,7 +202,7 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
           }
 
           indicator.text = "Retrieving username..."
-          val username = apiTaskExecutor.execute(indicator, account, accountInformationProvider.usernameTask)
+          val username = requestExecutor.execute(indicator, accountInformationProvider.getInformationRequest(account)).login
           val remoteUrl = gitHelper.getRemoteUrl(account.server, username, name)
 
           //git remote add origin git@github.com:login/name.git
