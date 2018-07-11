@@ -22,7 +22,7 @@ class ReviewListItem(val review: Review, preferredLanguage: TID?) : JComponentBa
     private val panel = JPanel(GridLayoutManager(1, 4))
     private val id = JBLabel("#${review.id}")
     private val title = JBLabelWithSizeCheckingToolTip(review.title)
-    private val createdAt = JBLabel(review.createdAt.toString())
+    private val createdAt = JBLabel(review.createdAt.formatRelative())
     private val createdBy = JBLabelWithSizeCheckingToolTip(review.createdBy.fullname(preferredLanguage))
 
     init {
