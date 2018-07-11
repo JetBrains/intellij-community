@@ -2801,6 +2801,14 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
                      "  }" +
                      "}";
     assertEquals(2, findMatchesCount(source3, "t$.'_t"));
+
+    String source4 = "import java.util.*;" +
+                     "class Four {{" +
+                     "  System.out.println(Calendar.YEAR);" +
+                     "}}";
+    assertEquals(1, findMatchesCount(source4, "System.out.println(Calendar.YEAR)"));
+    assertEquals(1, findMatchesCount(source4, "System.out.println(java.util.Calendar.YEAR)"));
+    assertEquals(1, findMatchesCount(source4, "System.out.println(YEAR)"));
   }
 
   public void testSearchTypes() {

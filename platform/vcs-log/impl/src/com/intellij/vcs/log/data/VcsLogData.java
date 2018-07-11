@@ -15,7 +15,6 @@
  */
 package com.intellij.vcs.log.data;
 
-import com.intellij.ide.caches.CachesInvalidator;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
@@ -107,8 +106,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
     VcsLogProgress progress = new VcsLogProgress(project, this);
 
-    VcsLogCachesInvalidator invalidator = CachesInvalidator.EP_NAME.findExtension(VcsLogCachesInvalidator.class);
-    if (invalidator.isValid()) {
+    if (VcsLogCachesInvalidator.getInstance().isValid()) {
       myStorage = createStorage();
       if (VcsLogSharedSettings.isIndexSwitchedOn(myProject)) {
         myIndex = new VcsLogPersistentIndex(myProject, myStorage, progress, logProviders, myFatalErrorsConsumer, this);

@@ -2,18 +2,21 @@
 package com.intellij.testGuiFramework.fixtures
 
 import com.intellij.testGuiFramework.driver.CheckboxTreeDriver
+import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
+import com.intellij.testGuiFramework.driver.FinderPredicate
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
+import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.ui.CheckboxTree
 import org.fest.swing.core.Robot
-import javax.swing.tree.TreePath
 
 class CheckboxTreeFixture(
   checkboxTree: CheckboxTree,
-  path: TreePath,
+  stringPath: List<String>,
+  predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality,
   robot: Robot = GuiRobotHolder.robot,
   private val myDriver: CheckboxTreeDriver = CheckboxTreeDriver(robot)
-) : ExtendedJTreePathFixture(checkboxTree, path, robot) {
+) : ExtendedJTreePathFixture(checkboxTree, stringPath, predicate, robot, myDriver) {
 
   init {
     this.replaceDriverWith(myDriver)
@@ -27,6 +30,9 @@ class CheckboxTreeFixture(
     val checkbox = getCheckboxComponent()
     if (checkbox != null && checkbox.isSelected != value) {
       clickCheckbox()
+      GuiTestUtil.pause("Wait until checkbox got value $value"){
+        getCheckboxComponent()?.isSelected ?: false
+      }
       val actualValue = getCheckboxComponent()?.isSelected
       assert(actualValue == value) {
         "Checkbox at path $path: actual value is $actualValue, but expected is $value"

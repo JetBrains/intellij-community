@@ -40,7 +40,7 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
   protected WidgetState getWidgetState(@Nullable VirtualFile file) {
     if (file == null) return WidgetState.HIDDEN;
     PsiFile psiFile = getPsiFile();
-    if (psiFile == null) return WidgetState.HIDDEN;
+    if (psiFile == null || !psiFile.isWritable()) return WidgetState.HIDDEN;
     IndentOptions indentOptions = CodeStyle.getIndentOptions(psiFile);
     IndentOptions projectIndentOptions = CodeStyle.getSettings(myProject).getLanguageIndentOptions(psiFile.getLanguage());
     FileIndentOptionsProvider provider = findProvider(file, indentOptions);

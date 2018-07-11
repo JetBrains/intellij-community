@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
@@ -645,7 +644,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
 
   private static boolean isArrayLength(PsiLocalVariable arrayVariable, PsiExpression dimension, PsiExpression bound) {
     if (ExpressionUtils.isReferenceTo(ExpressionUtils.getArrayFromLengthExpression(bound), arrayVariable)) return true;
-    if (PsiEquivalenceUtil.areElementsEquivalent(dimension, bound)) return true;
+    if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(dimension, bound)) return true;
     if (bound instanceof PsiMethodCallExpression) {
       PsiExpression qualifier = ((PsiMethodCallExpression)bound).getMethodExpression().getQualifierExpression();
       if (qualifier != null && CollectionUtils.isCollectionOrMapSize(dimension, qualifier)) return true;

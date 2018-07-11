@@ -108,6 +108,14 @@ fun GuiTestCase.testTreeItemExist(name: String, vararg expectedItem: String) {
   }
 }
 
+/**
+ * Selects specified [path] in the tree by keyboard searching
+ * @param path in string form
+ * @param testCase - test case is required only because of keyboard related functions
+ *
+ * TODO: remove [testCase] parameter (so move [shortcut] and [typeText] functions
+ * out of GuiTestCase)
+ * */
 fun ExtendedJTreePathFixture.selectWithKeyboard(testCase: GuiTestCase, vararg path: String) {
   fun currentValue(): String {
     val selectedRow = target().selectionRows.first()
@@ -130,7 +138,7 @@ fun GuiTestCase.gradleReimport() {
   logTestStep("Reimport gradle project")
   ideFrame {
     toolwindow(id = "Gradle") {
-      content(tabName = "projects") {
+      content(tabName = "") {
         //        waitAMoment()
         actionButton("Refresh all external projects").click()
       }
@@ -141,7 +149,7 @@ fun GuiTestCase.gradleReimport() {
 fun GuiTestCase.mavenReimport() {
   logTestStep("Reimport maven project")
   ideFrame {
-    toolwindow(id = "Maven Projects") {
+    toolwindow(id = "Maven") {
       content(tabName = "") {
         actionButton("Reimport All Maven Projects").click()
       }

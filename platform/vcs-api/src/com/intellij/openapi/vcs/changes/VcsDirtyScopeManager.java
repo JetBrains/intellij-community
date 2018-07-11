@@ -60,10 +60,11 @@ public abstract class VcsDirtyScopeManager {
    *
    * @param dir the directory for which the file status update is requested.
    */
-  public abstract void dirDirtyRecursively(VirtualFile dir);
+  public abstract void dirDirtyRecursively(@NotNull VirtualFile dir);
 
-  public abstract void dirDirtyRecursively(FilePath path);
+  public abstract void dirDirtyRecursively(@NotNull FilePath path);
 
+  @Nullable
   public abstract VcsInvalidated retrieveScopes();
 
   public abstract void changesProcessed();

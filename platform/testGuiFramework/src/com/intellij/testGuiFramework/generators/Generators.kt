@@ -767,11 +767,11 @@ object Utils {
   fun getJTreePathItemsString(cmp: JTree, path: TreePath): String {
     return getJTreePathArray(cmp, path)
       .map { StringUtil.wrapWithDoubleQuote(it) }
-      .reduceRight({ s, s1 -> "$s, $s1" })
+      .reduceRight { s, s1 -> "$s, $s1" }
   }
 
-  internal fun getJTreePathArray(tree: JTree, path: TreePath): List<String> = withRobot { robot ->
-    ExtendedJTreePathFixture(tree, path, robot).getPathStrings()
+  private fun getJTreePathArray(tree: JTree, path: TreePath): List<String> = withRobot { robot ->
+    ExtendedJTreePathFixture(tree, path, robot = robot).getPathStrings()
   }
 
   fun <ReturnType> withRobot(robotFunction: (Robot) -> ReturnType): ReturnType {

@@ -742,10 +742,10 @@ object GuiTestUtil {
     return JTextComponentFixture(GuiRobotHolder.robot, jTextComponent)
   }
 
-  fun jTreePath(container: Container,
-                   timeout: Long,
-                   vararg pathStrings: String,
-                   predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality): ExtendedJTreePathFixture {
+  fun jTreeComponent(container: Container,
+                     timeout: Long,
+                     vararg pathStrings: String,
+                     predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality): JTree {
     val myTree: JTree?
     try {
       myTree = if (pathStrings.isEmpty()) {
@@ -754,7 +754,7 @@ object GuiTestUtil {
       else {
         waitUntilFound(GuiRobotHolder.robot, container,
                        GuiTestUtilKt.typeMatcher(JTree::class.java) {
-                         ExtendedJTreePathFinder(it).existsByPredicate(pathStrings = *pathStrings, predicate = predicate)
+                         ExtendedJTreePathFixture(it, pathStrings.toList(), predicate).hasPath()
                        },
                        timeout.toFestTimeout())
       }
@@ -762,8 +762,7 @@ object GuiTestUtil {
     catch (e: WaitTimedOutError) {
       throw ComponentLookupException("""JTree "${if (pathStrings.isNotEmpty()) "by path ${pathStrings.joinToString()}" else ""}"""")
     }
-    return ExtendedJTreePathFixture(myTree, ExtendedJTreePathFinder(myTree)
-      .findMatchingPathByPredicate(pathStrings = *pathStrings, predicate = predicate))
+    return myTree
   }
 
   //*********COMMON FUNCTIONS WITHOUT CONTEXT

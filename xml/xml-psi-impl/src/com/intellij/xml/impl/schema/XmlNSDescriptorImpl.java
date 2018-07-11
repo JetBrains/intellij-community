@@ -389,7 +389,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
                 return new CachedValueProvider.Result<>(null, PsiModificationTracker.MODIFICATION_COUNT);
               }
               final XmlElementDescriptor xmlElementDescriptor = createElementDescriptor(tag);
-              return new CachedValueProvider.Result<>(xmlElementDescriptor, this.getDependencies());
+              return new CachedValueProvider.Result<>(xmlElementDescriptor, xmlElementDescriptor.getDependencies());
             }, false);
             myDescriptorsMap.put(pair, cachedValue);
             return cachedValue.getValue();
@@ -512,7 +512,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
                 if(attributeDescriptor != null){
                   final CachedValue<XmlAttributeDescriptor> value = CachedValuesManager.getManager(includedDocument.getProject()).createCachedValue(
                     () -> {
-                      Object[] deps = this.getDependencies();
+                      Object[] deps = attributeDescriptor.getDependencies();
                       if (deps.length == 0) {
                         LOG.error(attributeDescriptor + " (" + attributeDescriptor.getClass() + ") returned no dependencies");
                       }

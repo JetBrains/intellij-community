@@ -27,7 +27,8 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
   fun findMatchingPathByPredicate(vararg pathStrings: String, predicate: FinderPredicate): TreePath {
     val model = jTree.model
     if (jTree.isRootVisible) {
-      if (!predicate(pathStrings[0], jTree.value(model.root))) pathNotFound(*pathStrings)
+      val childValue = jTree.value(model.root) ?: ""
+      if (!predicate(pathStrings[0], childValue)) pathNotFound(*pathStrings)
       if (pathStrings.size == 1) return TreePath(arrayOf<Any>(model.root))
 
       val result: TreePath = jTree.traverseChildren(
@@ -104,7 +105,8 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
       val child = model.getChild(node, childIndex)
       if (child is LoadingNode)
         throw ExtendedJTreeDriver.LoadingNodeException(node = child, treePath = this.getPathToNode(node))
-      if (predicate(original, value(child))) {
+      val childValue = value(child) ?: continue
+      if (predicate(original, childValue)) {
         if (currentOrder == order) {
           if (pathStrings.size == 1) {
             return TreePath(arrayOf<Any>(child))
@@ -211,8 +213,8 @@ class ExtendedJTreePathFinder(val jTree: JTree) {
     return TreePath(path)
   }
 
-  private fun JTree.value(modelValue: Any): String {
-    return cellReader.valueAt(this, modelValue)!!.eraseZeroSpaceSymbols()
+  private fun JTree.value(modelValue: Any): String? {
+    return cellReader.valueAt(this, modelValue)?.eraseZeroSpaceSymbols()
   }
 
   private fun String.eraseZeroSpaceSymbols(): String = replace("\u200B", "")

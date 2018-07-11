@@ -173,6 +173,11 @@ fun doCanonicalize(url: String, baseUrl: Url, baseUrlIsFile: Boolean, asLocalFil
     // http://localhost/home/user/foo.js.map, foo.ts -> /home/user/foo.ts (File(path) exists)
     return Urls.newLocalFileUrl(path)
   }
+  else if (!path.startsWith("/")) {
+    // http://localhost/source.js.map, C:/foo.ts webpack-dsj3c45 -> C:/foo.ts webpack-dsj3c45
+    // (we can't append path suffixes unless they start with /
+    return Urls.parse(path, true) ?: Urls.newUnparsable(path)
+  }
   else {
     // new url from path and baseUrl's scheme and authority
     val split = path.split('?', limit = 2)

@@ -278,8 +278,8 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
         CachedValuesManager.getManager(myElement.getProject()).createCachedValue(() -> {
           final XmlElementDescriptor descriptor = findRootDescriptorInner(qName);
           return descriptor != null
-                 ? new CachedValueProvider.Result<>(descriptor, this.getDependencies())
-                 : new CachedValueProvider.Result<>(null, this.getDependencies());
+                 ? new CachedValueProvider.Result<>(descriptor, descriptor.getDependencies())
+                 : new CachedValueProvider.Result<>(null, getDependencies());
         }, false);
       myDescriptorsMap.put(qName, cachedValue);
     }
