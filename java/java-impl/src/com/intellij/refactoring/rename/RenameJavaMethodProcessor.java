@@ -131,7 +131,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
   private static void fixNameCollisionsWithInnerClassMethod(final PsiElement element, final String newName,
                                                             final Set<PsiMethod> methodAndOverriders, final Set<PsiClass> containingClasses,
                                                             final boolean isStatic) throws IncorrectOperationException {
-    if (!(element instanceof PsiReferenceExpression)) return;
+    if (!(element instanceof PsiReferenceExpression) || ((PsiReferenceExpression)element).getQualifierExpression() != null) return;
     PsiElement elem = ((PsiReferenceExpression)element).resolve();
 
     if (elem instanceof PsiMethod) {
