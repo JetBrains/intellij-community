@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class SelectFilePathsDialog extends AbstractSelectFilesDialog<FilePath> {
+public class SelectFilePathsDialog extends AbstractSelectFilesDialog {
 
   private final ChangesTreeImpl<FilePath> myFileList;
 

@@ -36,7 +36,7 @@ import java.awt.*;
 /**
  * @author yole
  */
-public abstract class AbstractSelectFilesDialog<T> extends DialogWrapper {
+public abstract class AbstractSelectFilesDialog extends DialogWrapper {
   protected JCheckBox myDoNotShowCheckbox;
   protected final VcsShowConfirmationOption myConfirmationOption;
   private final String myPrompt;

@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
+public class SelectFilesDialog extends AbstractSelectFilesDialog {
 
   @NotNull private final VirtualFileList myFileList;
   private final boolean myDeletableFiles;
