@@ -38,9 +38,8 @@ public class SelectFilePathsDialog extends AbstractSelectFilesDialog<FilePath> {
                                @Nullable String prompt,
                                @Nullable VcsShowConfirmationOption confirmationOption,
                                @Nullable String okActionName,
-                               @Nullable String cancelActionName,
-                               boolean showDoNotAskOption) {
-    super(project, false, confirmationOption, prompt, showDoNotAskOption);
+                               @Nullable String cancelActionName) {
+    super(project, false, confirmationOption, prompt);
     myFileList = new ChangesTreeImpl.FilePaths(project, true, true, originalFiles);
     if (okActionName != null) {
       getOKAction().putValue(Action.NAME, okActionName);

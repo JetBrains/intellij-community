@@ -39,6 +39,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
   @NotNull private final VirtualFileList myFileList;
   private final boolean myDeletableFiles;
 
+  @Deprecated
   protected SelectFilesDialog(Project project,
                               @NotNull List<VirtualFile> files,
                               @Nullable String prompt,
@@ -46,9 +47,30 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
                               boolean selectableFiles,
                               boolean showDoNotAskOption,
                               boolean deletableFiles) {
-    super(project, false, confirmationOption, prompt, showDoNotAskOption);
+    this(project, files, prompt, showDoNotAskOption ? confirmationOption : null, selectableFiles, deletableFiles);
+  }
+
+  protected SelectFilesDialog(Project project,
+                              @NotNull List<VirtualFile> files,
+                              @Nullable String prompt,
+                              @Nullable VcsShowConfirmationOption confirmationOption,
+                              boolean selectableFiles,
+                              boolean deletableFiles) {
+    super(project, false, confirmationOption, prompt);
     myDeletableFiles = deletableFiles;
     myFileList = new VirtualFileList(project, selectableFiles, deletableFiles, files);
+  }
+
+  @NotNull
+  @Deprecated
+  public static SelectFilesDialog init(Project project,
+                                       @NotNull List<VirtualFile> originalFiles,
+                                       @Nullable String prompt,
+                                       @Nullable VcsShowConfirmationOption confirmationOption,
+                                       boolean selectableFiles,
+                                       boolean showDoNotAskOption,
+                                       boolean deletableFiles) {
+    return init(project, originalFiles, prompt, showDoNotAskOption ? confirmationOption : null, selectableFiles, deletableFiles);
   }
 
   @NotNull
@@ -57,10 +79,8 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
                                        @Nullable String prompt,
                                        @Nullable VcsShowConfirmationOption confirmationOption,
                                        boolean selectableFiles,
-                                       boolean showDoNotAskOption,
                                        boolean deletableFiles) {
-    SelectFilesDialog dialog = new SelectFilesDialog(project, originalFiles, prompt, confirmationOption, selectableFiles,
-                                                     showDoNotAskOption, deletableFiles);
+    SelectFilesDialog dialog = new SelectFilesDialog(project, originalFiles, prompt, confirmationOption, selectableFiles, deletableFiles);
     dialog.init();
     return dialog;
   }

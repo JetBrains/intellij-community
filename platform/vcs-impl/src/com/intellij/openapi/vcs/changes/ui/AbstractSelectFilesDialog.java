@@ -40,17 +40,14 @@ public abstract class AbstractSelectFilesDialog<T> extends DialogWrapper {
   protected JCheckBox myDoNotShowCheckbox;
   protected final VcsShowConfirmationOption myConfirmationOption;
   private final String myPrompt;
-  private final boolean myShowDoNotAskOption;
 
   public AbstractSelectFilesDialog(Project project,
                                    boolean canBeParent,
                                    @Nullable VcsShowConfirmationOption confirmationOption,
-                                   @Nullable String prompt,
-                                   boolean showDoNotAskOption) {
+                                   @Nullable String prompt) {
     super(project, canBeParent);
     myConfirmationOption = confirmationOption;
     myPrompt = prompt;
-    myShowDoNotAskOption = showDoNotAskOption;
   }
 
   @NotNull
@@ -105,7 +102,7 @@ public abstract class AbstractSelectFilesDialog<T> extends DialogWrapper {
     panel.add(toolbarPanel, BorderLayout.NORTH);
     panel.add(ScrollPaneFactory.createScrollPane(getFileList()), BorderLayout.CENTER);
 
-    if (myShowDoNotAskOption) {
+    if (myConfirmationOption != null) {
       myDoNotShowCheckbox = new JCheckBox(CommonBundle.message("dialog.options.do.not.ask"));
       panel.add(myDoNotShowCheckbox, BorderLayout.SOUTH);
     }

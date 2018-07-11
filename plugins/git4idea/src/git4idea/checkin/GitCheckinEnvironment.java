@@ -790,7 +790,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         ApplicationManager.getApplication().invokeAndWait(() -> {
           String message = GitBundle.message("commit.partial.merge.message", partialOperation.getName());
           SelectFilePathsDialog dialog = new SelectFilePathsDialog(project, files, message,
-                                                                   null, "Commit All Files", CommonBundle.getCancelButtonText(), false);
+                                                                   null, "Commit All Files", CommonBundle.getCancelButtonText());
           dialog.setTitle(GitBundle.getString("commit.partial.merge.title"));
           dialog.show();
           mergeAll.set(dialog.isOK());
