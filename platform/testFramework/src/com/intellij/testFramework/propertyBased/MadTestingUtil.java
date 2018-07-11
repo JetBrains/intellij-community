@@ -77,7 +77,7 @@ import java.util.stream.Stream;
  */
 public class MadTestingUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.MadTestingUtil");
-  private static final boolean USE_ROULETTE_WHEEL = false;
+  private static final boolean USE_ROULETTE_WHEEL = true;
 
   public static void restrictChangesToDocument(Document document, Runnable r) {
     letSaveAllDocumentsPassIfAny();
@@ -354,9 +354,9 @@ public class MadTestingUtil {
   public static void testFileGenerator(File root, FileFilter filter, int iterationCount, PrintStream out) {
     /* Typical output:
      Roulette wheel generator:
-     #10000: sum =  7073 [1: 5597 | 2: 853  | 3: 296  | 4..5: 224  | 6..10: 88   | 11..20: 15   | 21..30: 0    | 31..50: 0    | 51..100: 0    | 101..200: 0    | 201+: 0]
+     #10000: sum =  5281 [1: 3770 | 2: 767  | 3: 272  | 4..5: 232  | 6..10: 146  | 11..20: 67   | 21..30: 12   | 31..50: 12   | 51..100: 3    | 101..200: 0    | 201+: 0]
      Plain generator:
-     #10000: sum =  2477 [1: 1450 | 2: 393  | 3: 171  | 4..5: 143  | 6..10: 151  | 11..20: 102  | 21..30: 27   | 31..50: 10   | 51..100: 22   | 101..200: 6    | 201+: 2]
+     #10000: sum =  2504 [1: 1478 | 2: 391  | 3: 159  | 4..5: 155  | 6..10: 156  | 11..20: 103  | 21..30: 22   | 31..50: 8    | 51..100: 22   | 101..200: 9    | 201+: 1]
      */
     for (boolean roulette : new boolean[]{true, false}) {
       out.println("Testing " + (roulette ? "roulette" : "plain") + " generator");
@@ -366,6 +366,7 @@ public class MadTestingUtil {
         long lastTime = System.nanoTime(), startTime = lastTime;
         for (int iteration = 1; iteration <= iterationCount; iteration++) {
           File file = env.generateValue(generator, null);
+          assert filter.accept(file);
           if (!fileMap.containsKey(file.getPath())) {
             fileMap.put(file.getPath(), 1);
           }
@@ -416,7 +417,7 @@ public class MadTestingUtil {
     private final File myRoot;
     private final FileFilter myFilter;
 
-    public FileGenerator(File root, FileFilter filter) {
+    private FileGenerator(File root, FileFilter filter) {
       myRoot = root;
       myFilter = filter;
     }
@@ -475,55 +476,61 @@ public class MadTestingUtil {
     private final SoftFactoryMap<File, File[]> myChildrenCache = new SoftFactoryMap<File, File[]>() {
       @Override
       protected File[] create(File f) {
-        File[] files = f.listFiles(child -> myFilter.accept(child) && child.isFile() || FileGenerator.containsAtLeastOneFileDeep(child));
+        File[] files = f.listFiles(child -> myFilter.accept(child) && (child.isFile() || FileGenerator.containsAtLeastOneFileDeep(child)));
         return files != null && files.length == 0 ? EMPTY_DIRECTORY : files;
       }
     };
 
-    public RouletteWheelFileGenerator(File root, FileFilter filter) {
+    private RouletteWheelFileGenerator(File root, FileFilter filter) {
       myRoot = root;
       myFilter = filter;
     }
 
     @Override
     public File apply(DataStructure data) {
-      return generateRandomFile(data, myRoot);
+      return generateRandomFile(data, myRoot, new HashSet<>());
     }
 
     @Nullable
-    private File generateRandomFile(DataStructure data, File file) {
+    private File generateRandomFile(DataStructure data, File file, Set<File> exhausted) {
+      File[] children = myChildrenCache.get(file);
+      if (children == null) {
+        return file;
+      }
+      if (children == EMPTY_DIRECTORY) {
+        return null;
+      }
+      Arrays.sort(children, Comparator.comparing(File::getName));
       while (true) {
-        File[] children = myChildrenCache.get(file);
-        if (children == null) {
-          return file;
-        }
-        if (children == EMPTY_DIRECTORY) {
-          return null;
-        }
-        Arrays.sort(children, Comparator.comparing(File::getName));
         int[] weights = new int[children.length];
         int totalWeight = 0;
         for (int i = 0; i < children.length; i++) {
-          File[] grandChildren = myChildrenCache.get(children[i]);
           int weight;
-          if (grandChildren == null) {
-            weight = 1;
-          }
-          else {
-            weight = Stream.of(grandChildren).mapToInt(f -> f.isDirectory() ? 5 : 1).sum();
+          if (exhausted.contains(children[i])) {
+            weight = 0;
+          } else {
+            File[] grandChildren = myChildrenCache.get(children[i]);
+            if (grandChildren == null) {
+              weight = 1;
+            }
+            else {
+              weight = Stream.of(grandChildren).mapToInt(f -> exhausted.contains(f) ? 0 : f.isDirectory() ? 5 : 1).sum();
+            }
           }
           weights[i] = weight;
           totalWeight += weight;
         }
+        if (totalWeight == 0) return null;
         int value = data.generate(Generator.integers(0, totalWeight));
         for (int i = 0; i < children.length; i++) {
           value -= weights[i];
           if (value < 0) {
             File chosen = children[i];
-            File generated = generateRandomFile(data, chosen);
+            File generated = generateRandomFile(data, chosen, exhausted);
             if (generated != null) {
               return generated;
             }
+            exhausted.add(chosen);
             break;
           }
         }
