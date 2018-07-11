@@ -776,6 +776,12 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
         child = child.getNextSibling();
       }
       sortableList.generate(sb);
+
+      List<SortableEntry> entries = sortableList.myEntries;
+      SortableEntry last = entries.get(entries.size() - 1);
+      if (!last.myBeforeSeparator.isEmpty()) {
+        sb.append("\n");
+      }
       sb.append(")");
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(origin.getProject());
       call.replace(factory.createExpressionFromText(sb.toString(), call));
