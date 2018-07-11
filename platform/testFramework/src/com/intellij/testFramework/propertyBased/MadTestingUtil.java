@@ -77,7 +77,7 @@ import java.util.stream.Stream;
  */
 public class MadTestingUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.testFramework.propertyBased.MadTestingUtil");
-  private static final boolean USE_ROULETTE_WHEEL = true;
+  private static final boolean USE_ROULETTE_WHEEL = false;
 
   public static void restrictChangesToDocument(Document document, Runnable r) {
     letSaveAllDocumentsPassIfAny();
