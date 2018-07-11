@@ -578,4 +578,41 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testAssigningToDictEntry() {
     doTest();
   }
+
+  // PY-29704
+  public void testPassingAbstractMethodResult() {
+    doTestByText("import abc\n" +
+                 "\n" +
+                 "class Foo:\n" +
+                 "    __metaclass__ = abc.ABCMeta\n" +
+                 "\n" +
+                 "    @abc.abstractmethod\n" +
+                 "    def get_int(self):\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    def foo(self, i):\n" +
+                 "        # type: (int) -> None\n" +
+                 "        print(i)\n" +
+                 "\n" +
+                 "    def bar(self):\n" +
+                 "        self.foo(self.get_int())");
+  }
+
+  // PY-30629
+  public void testIteratingOverAbstractMethodResult() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTestByText("from abc import ABCMeta, abstractmethod\n" +
+                         "\n" +
+                         "class A(metaclass=ABCMeta):\n" +
+                         "\n" +
+                         "    @abstractmethod\n" +
+                         "    def foo(self):\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "def something(derived: A):\n" +
+                         "    for _, _ in derived.foo():\n" +
+                         "        pass\n")
+    );
+  }
 }
