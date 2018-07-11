@@ -231,7 +231,7 @@ public abstract class LineStatusMarkerRenderer {
 
     int framingBorder = getFramingBorderSize();
 
-    List<List<ChangedLines>> blocks = createMerger(editor).run(ranges);
+    List<List<ChangedLines>> blocks = createMerger(editor).run(ranges, g.getClipBounds());
     for (List<ChangedLines> block: blocks) {
       paintChangedLines(g, editor, block, framingBorder);
     }
@@ -309,7 +309,7 @@ public abstract class LineStatusMarkerRenderer {
                                 @NotNull Editor editor,
                                 @NotNull Range range,
                                 int framingBorder) {
-    List<List<ChangedLines>> blocks = new VisibleRangeMerger(editor).run(Collections.singletonList(range));
+    List<List<ChangedLines>> blocks = new VisibleRangeMerger(editor).run(Collections.singletonList(range), g.getClipBounds());
     for (List<ChangedLines> block: blocks) {
       paintChangedLines(g, editor, block, framingBorder);
     }
@@ -461,10 +461,9 @@ public abstract class LineStatusMarkerRenderer {
     }
 
     @NotNull
-    public List<List<ChangedLines>> run(@NotNull List<? extends Range> ranges) {
-      Rectangle area = myEditor.getScrollingModel().getVisibleArea();
-      int visibleLineStart = yToLine(myEditor, area.y);
-      int visibleLineEnd = yToLine(myEditor, area.y + area.height);
+    public List<List<ChangedLines>> run(@NotNull List<? extends Range> ranges, @NotNull Rectangle clip) {
+      int visibleLineStart = yToLine(myEditor, clip.y);
+      int visibleLineEnd = yToLine(myEditor, clip.y + clip.height) + 1;
 
       for (Range range: ranges) {
         int line1 = range.getLine1();
