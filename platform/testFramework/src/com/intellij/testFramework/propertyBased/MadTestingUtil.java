@@ -385,30 +385,35 @@ public class MadTestingUtil {
           }
           if (iteration == iterationCount || curTime - lastTime > TimeUnit.SECONDS.toNanos(5)) {
             lastTime = curTime;
-            long[] stops = {1, 2, 3, 5, 10, 20, 30, 50, 100, 200, Long.MAX_VALUE};
-            int[] histogram = new int[stops.length];
-            fileMap.forEachEntry((path, count) -> {
-              int pos = Arrays.binarySearch(stops, count);
-              if (pos < 0) {
-                pos = -pos - 1;
-              }
-              histogram[pos]++;
-              return true;
-            });
-            StringBuilder report = new StringBuilder();
-            for (int i = 0; i < stops.length; i++) {
-              String range = i == 0 || stops[i - 1] == stops[i] - 1 ? String.valueOf(stops[i]) :
-                             (stops[i - 1] + 1) + (stops[i] == Long.MAX_VALUE ? "+" : ".."+stops[i]);
-              report.append(String.format(Locale.ENGLISH, "%s: %-5d| ", range, histogram[i]));
-            }
-            out.printf("#%-5d: sum = %5d [%s]%n", iteration, Arrays.stream(histogram).sum(),
-                       report.toString().replaceFirst("[\\s|]+$", ""));
+            out.println(getHistogramReport(fileMap, iteration));
           }
         }
         out.println("Total time: " + (System.nanoTime() - startTime) / 1_000_000 + "ms");
       };
       PropertyChecker.customized().withIterationCount(1).checkScenarios(() -> action);
     }
+  }
+
+  @NotNull
+  private static String getHistogramReport(TObjectLongHashMap<String> fileMap, int iteration) {
+    long[] stops = {1, 2, 3, 5, 10, 20, 30, 50, 100, 200, Long.MAX_VALUE};
+    int[] histogram = new int[stops.length];
+    fileMap.forEachValue(count -> {
+      int pos = Arrays.binarySearch(stops, count);
+      if (pos < 0) {
+        pos = -pos - 1;
+      }
+      histogram[pos]++;
+      return true;
+    });
+    StringBuilder report = new StringBuilder();
+    for (int i = 0; i < stops.length; i++) {
+      String range = i == 0 || stops[i - 1] == stops[i] - 1 ? String.valueOf(stops[i]) :
+                     (stops[i - 1] + 1) + (stops[i] == Long.MAX_VALUE ? "+" : ".."+stops[i]);
+      report.append(String.format(Locale.ENGLISH, "%s: %-5d| ", range, histogram[i]));
+    }
+    return String.format(Locale.ENGLISH, "#%-5d: sum = %5d [%s]", iteration,
+                         Arrays.stream(histogram).sum(), report.toString().replaceFirst("[\\s|]+$", ""));
   }
 
   private static class FileGenerator implements Function<DataStructure, File> {
@@ -502,39 +507,36 @@ public class MadTestingUtil {
       }
       Arrays.sort(children, Comparator.comparing(File::getName));
       while (true) {
-        int[] weights = new int[children.length];
-        int totalWeight = 0;
-        for (int i = 0; i < children.length; i++) {
-          int weight;
-          if (exhausted.contains(children[i])) {
-            weight = 0;
-          } else {
-            File[] grandChildren = myChildrenCache.get(children[i]);
-            if (grandChildren == null) {
-              weight = 1;
-            }
-            else {
-              weight = Stream.of(grandChildren).mapToInt(f -> exhausted.contains(f) ? 0 : f.isDirectory() ? 5 : 1).sum();
-            }
-          }
-          weights[i] = weight;
-          totalWeight += weight;
+        int[] weights = Arrays.stream(children).mapToInt(child -> estimateWeight(child, exhausted)).toArray();
+        int index = spin(data, weights);
+        if (index == -1) return null;
+        File chosen = children[index];
+        File generated = generateRandomFile(data, chosen, exhausted);
+        if (generated != null) {
+          return generated;
         }
-        if (totalWeight == 0) return null;
-        int value = data.generate(Generator.integers(0, totalWeight));
-        for (int i = 0; i < children.length; i++) {
-          value -= weights[i];
-          if (value < 0) {
-            File chosen = children[i];
-            File generated = generateRandomFile(data, chosen, exhausted);
-            if (generated != null) {
-              return generated;
-            }
-            exhausted.add(chosen);
-            break;
-          }
+        exhausted.add(chosen);
+      }
+    }
+
+    private static int spin(@NotNull DataStructure data, @NotNull int[] weights) {
+      int totalWeight = Arrays.stream(weights).sum();
+      if (totalWeight == 0) return -1;
+      int value = data.generate(Generator.integers(0, totalWeight));
+      for (int i = 0; i < weights.length; i++) {
+        value -= weights[i];
+        if (value < 0) {
+          return i;
         }
       }
+      return -1;
+    }
+
+    private int estimateWeight(File file, @NotNull Set<File> exhausted) {
+      if (exhausted.contains(file)) return 0;
+      File[] children = myChildrenCache.get(file);
+      if (children == null) return 1;
+      return Stream.of(children).mapToInt(f -> exhausted.contains(f) ? 0 : f.isDirectory() ? 5 : 1).sum();
     }
   }
 }
