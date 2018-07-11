@@ -557,7 +557,7 @@ public class FSRecords {
     return DbConnection.myAttributes;
   }
 
-  public static PersistentStringEnumerator getNames() {
+  private static PersistentStringEnumerator getNames() {
     return DbConnection.getNames();
   }
 
@@ -1833,7 +1833,7 @@ public class FSRecords {
   }
 
   @Contract("_->fail")
-  static void handleError(Throwable e) throws RuntimeException, Error {
+  public static void handleError(Throwable e) throws RuntimeException, Error {
     DbConnection.handleError(e);
   }
 }

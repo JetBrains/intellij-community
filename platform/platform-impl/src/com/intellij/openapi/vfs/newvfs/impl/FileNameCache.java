@@ -18,7 +18,6 @@ package com.intellij.openapi.vfs.newvfs.impl;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.IntSLRUCache;
 import com.intellij.util.containers.IntObjectLinkedMap;
-import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.text.ByteArrayCharSequence;
 import org.jetbrains.annotations.NotNull;
 
@@ -29,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author peter
  */
 public class FileNameCache {
-  private static final PersistentStringEnumerator ourNames = FSRecords.getNames();
+  
   @SuppressWarnings("unchecked") private static final IntSLRUCache<IntObjectLinkedMap.MapEntry<CharSequence>>[] ourNameCache = new IntSLRUCache[16];
   static {
     final int protectedSize = 40000 / ourNameCache.length;
@@ -48,8 +47,7 @@ public class FileNameCache {
   @NotNull
   private static IntObjectLinkedMap.MapEntry<CharSequence> cacheData(String name, int id, int stripe) {
     if (name == null) {
-      ourNames.markCorrupted();
-      throw new RuntimeException("VFS name enumerator corrupted");
+      FSRecords.handleError(new RuntimeException("VFS name enumerator corrupted"));
     }
 
     CharSequence rawName = ByteArrayCharSequence.convertToBytesIfAsciiString(name);
