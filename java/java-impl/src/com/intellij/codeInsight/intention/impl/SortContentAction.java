@@ -714,13 +714,25 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       PsiParameter last = ArrayUtil.getLastElement(parameters);
       if (last == null) return null;
       if (!last.isVarArgs()) return null;
-      PsiExpression closestExpression = getClosestExpression(originElement);
+      PsiExpression closestExpression = getTopmostExpression(getClosestExpression(originElement));
       if (closestExpression == null) return null;
       int indexOfCurrent = Arrays.asList(arguments).indexOf(closestExpression);
       if (-1 == indexOfCurrent) return null;
       if (indexOfCurrent < parameters.length - 1) return null;
       if (arguments.length < parameters.length + MIN_ELEMENTS_COUNT - 1) return null;
       return Arrays.copyOfRange(arguments, parameters.length - 1, arguments.length);
+    }
+
+    @Nullable
+    private static PsiExpression getTopmostExpression(@Nullable final PsiExpression expression) {
+      if (expression == null) return null;
+      @NotNull PsiExpression current = expression;
+      while (true) {
+        PsiExpression parentExpr = tryCast(current.getParent(), PsiExpression.class);
+        if (parentExpr == null) break;
+        current = parentExpr;
+      }
+      return current;
     }
 
     @Nullable
