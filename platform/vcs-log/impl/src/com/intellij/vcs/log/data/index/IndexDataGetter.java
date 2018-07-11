@@ -125,6 +125,14 @@ public class IndexDataGetter {
     });
   }
 
+  @NotNull
+  public Set<FilePath> getChangedPaths(int commit) {
+    List<Hash> parents = getParents(commit);
+    // for merge commits right now getPathsChangedInCommit returns a union of files changed from parents which is meaningless
+    if (parents == null || parents.size() > 1) return Collections.emptySet();
+    return executeAndCatch(() -> myIndexStorage.paths.getPathsChangedInCommit(commit), Collections.emptySet());
+  }
+
   //
   // Filters
   //
@@ -241,6 +249,15 @@ public class IndexDataGetter {
   //
   // File history
   //
+
+  @NotNull
+  public Set<FilePath> getKnownNames(@NotNull FilePath path) {
+    return executeAndCatch(() -> {
+      Set<FilePath> result = ContainerUtil.newHashSet();
+      myIndexStorage.paths.iterateCommits(path, (changes, commit) -> result.add(changes.first));
+      return null;
+    }, Collections.emptySet());
+  }
 
   @NotNull
   public Set<FilePath> getFileNames(@NotNull FilePath path, int commit) {

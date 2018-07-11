@@ -116,6 +116,21 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   }
 
   @NotNull
+  public Set<FilePath> getPathsChangedInCommit(int commit) throws IOException {
+    Collection<Integer> keysForCommit = getKeysForCommit(commit);
+    if (keysForCommit == null) return Collections.emptySet();
+
+    Set<FilePath> paths = ContainerUtil.newHashSet();
+    for (Integer pathId : keysForCommit) {
+      LightFilePath lightFilePath = myPathsIndexer.getPathsEnumerator().valueOf(pathId);
+      if (lightFilePath.isDirectory()) continue;
+      paths.add(toFilePath(lightFilePath));
+    }
+
+    return paths;
+  }
+
+  @NotNull
   private Set<Integer> getPathIds(@NotNull Collection<FilePath> paths) throws IOException {
     Set<Integer> allPathIds = ContainerUtil.newHashSet();
     for (FilePath path : paths) {
