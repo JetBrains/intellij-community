@@ -9,7 +9,6 @@ iml_module(
         "//tools/idea/java/compiler/instrumentation-util-8:intellij.java.compiler.instrumentationUtil.java8",
         "//tools/idea/jvm/jvm-analysis-impl:intellij.jvm.analysis.impl",
         "//tools/idea/plugins/IntelliLang/intellilang-jps-plugin:intellij.java.langInjection.jps",
-        "//tools/vendor/intellij/cidr:intellij.c.doxygen",
         "//tools/idea/jps/javac-ref-scanner-8:intellij.java.jps.javacRefScanner8",
     ],
     visibility = ["//visibility:public"],
