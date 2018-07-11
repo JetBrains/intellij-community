@@ -19,6 +19,7 @@ import com.google.common.collect.Lists;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.template.*;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -70,6 +71,11 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
   }
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
     if (elementAt != null) {
@@ -83,14 +89,14 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
   public static void annotateTypes(Editor editor, PyCallable callable) {
     if (!FileModificationService.getInstance().preparePsiElementForWrite(callable)) return;
 
-    if (isPy3k(callable.getContainingFile())) {
-      generatePy3kTypeAnnotations(callable.getProject(), editor, callable);
-    }
-    else {
-      if (callable instanceof PyFunction) {
+    WriteAction.run(() -> {
+      if (isPy3k(callable.getContainingFile())) {
+        generatePy3kTypeAnnotations(callable.getProject(), editor, callable);
+      }
+      else if (callable instanceof PyFunction) {
         generateTypeCommentAnnotations(callable.getProject(), (PyFunction)callable);
       }
-    }
+    });
   }
 
   private static void generateTypeCommentAnnotations(Project project, PyFunction function) {

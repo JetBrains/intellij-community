@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -82,16 +83,10 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
     return false;
   }
 
-  @Nullable
-  @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
-    return currentFile;
-  }
-
   private static void generateDocstring(@Nullable PyNamedParameter param, @NotNull PyFunction pyFunction) {
-    if (!DocStringUtil.ensureNotPlainDocstringFormat(pyFunction)) {
-      return;
-    }
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(pyFunction)) return;
+
+    if (!DocStringUtil.ensureNotPlainDocstringFormat(pyFunction)) return;
 
     final PyDocstringGenerator docstringGenerator = PyDocstringGenerator.forDocStringOwner(pyFunction);
     String type = PyNames.OBJECT;
