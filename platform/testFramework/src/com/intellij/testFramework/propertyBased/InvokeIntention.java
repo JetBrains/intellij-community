@@ -41,6 +41,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -236,8 +237,8 @@ public class InvokeIntention extends ActionOnFile {
   }
 
   private static String describeIntentions(Map<String, IntentionAction> intentionMap) {
-    return StreamEx.ofValues(intentionMap)
-                   .map(MadTestingUtil::getIntentionDescription)
+    return EntryStream.of(intentionMap)
+                   .mapKeyValue(MadTestingUtil::getIntentionDescription)
                    .map("\t"::concat).joining("\n");
   }
 

@@ -315,12 +315,16 @@ public class MadTestingUtil {
   }
 
   @NotNull
-  static String getIntentionDescription(IntentionAction result) {
-    IntentionAction actual = result;
+  static String getIntentionDescription(IntentionAction action) {
+    return getIntentionDescription(action.getText(), action);
+  }
+
+  @NotNull
+  static String getIntentionDescription(String intentionName, IntentionAction action) {
+    IntentionAction actual = action;
     while(actual instanceof IntentionActionDelegate) {
       actual = ((IntentionActionDelegate)actual).getDelegate();
     }
-    String text = actual.getText();
     String family = actual.getFamilyName();
     Class<?> aClass = actual.getClass();
     if (actual instanceof QuickFixWrapper) {
@@ -328,7 +332,7 @@ public class MadTestingUtil {
       family = fix.getFamilyName();
       aClass = fix.getClass();
     }
-    return "'" + text + "' (family: '" + family + "'; class: '" + aClass.getName() + "')";
+    return "'" + intentionName + "' (family: '" + family + "'; class: '" + aClass.getName() + "')";
   }
 
   private static class FileGenerator implements Function<DataStructure, File> {
