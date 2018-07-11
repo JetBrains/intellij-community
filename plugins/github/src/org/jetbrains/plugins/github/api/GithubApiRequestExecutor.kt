@@ -4,6 +4,7 @@ package org.jetbrains.plugins.github.api
 import com.google.gson.JsonParseException
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.util.ThrowableConvertor
@@ -11,13 +12,16 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.HttpSecurityUtil
 import com.intellij.util.io.RequestBuilder
 import org.jetbrains.annotations.CalledInAny
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.api.data.GithubErrorMessage
 import org.jetbrains.plugins.github.exceptions.*
 import org.jetbrains.plugins.github.util.GithubSettings
 import java.io.IOException
+import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.Reader
 import java.net.HttpURLConnection
+import java.util.function.Supplier
 
 /**
  * Executes API requests taking care of authentication, headers, proxies, timeouts, etc.
@@ -26,6 +30,10 @@ sealed class GithubApiRequestExecutor {
   @Throws(IOException::class, ProcessCanceledException::class)
   abstract fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T
 
+  @TestOnly
+  @Throws(IOException::class, ProcessCanceledException::class)
+  fun <T> execute(request: GithubApiRequest<T>): T = execute(EmptyProgressIndicator(), request)
+
   class WithTokenAuth internal constructor(githubSettings: GithubSettings, private val token: String) : Base(githubSettings) {
     @Throws(IOException::class, ProcessCanceledException::class)
     override fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T {
@@ -33,6 +41,31 @@ sealed class GithubApiRequestExecutor {
       return createRequestBuilder(request)
         .tuner { connection -> connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "Token $token") }
         .execute(request, indicator)
+    }
+  }
+
+  class WithBasicAuth internal constructor(githubSettings: GithubSettings,
+                                           private val login: String,
+                                           private val password: CharArray,
+                                           private val twoFactorCodeSupplier: Supplier<String>) : Base(githubSettings) {
+    @Throws(IOException::class, ProcessCanceledException::class)
+    override fun <T> execute(indicator: ProgressIndicator, request: GithubApiRequest<T>): T {
+      indicator.checkCanceled()
+      val basicHeaderValue = HttpSecurityUtil.createBasicAuthHeaderValue(login, password)
+      return try {
+        createRequestBuilder(request)
+          .tuner { connection -> connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "Basic $basicHeaderValue") }
+          .execute(request, indicator)
+      }
+      catch (e: GithubTwoFactorAuthenticationException) {
+        val code = twoFactorCodeSupplier.get()
+        createRequestBuilder(request)
+          .tuner { connection ->
+            connection.addRequestProperty(HttpSecurityUtil.AUTHORIZATION_HEADER_NAME, "Basic $basicHeaderValue")
+            connection.addRequestProperty(OTP_HEADER_NAME, code)
+          }
+          .execute(request, indicator)
+      }
     }
   }
 
@@ -151,6 +184,11 @@ sealed class GithubApiRequestExecutor {
       return GithubApiRequestExecutor.WithTokenAuth(githubSettings, token)
     }
 
+    @CalledInAny
+    internal fun create(login: String, password: CharArray, twoFactorCodeSupplier: Supplier<String>): WithBasicAuth {
+      return GithubApiRequestExecutor.WithBasicAuth(githubSettings, login, password, twoFactorCodeSupplier)
+    }
+
     companion object {
       @JvmStatic
       fun getInstance(): Factory = service()
@@ -160,7 +198,6 @@ sealed class GithubApiRequestExecutor {
   companion object {
     private val LOG = logger<GithubApiRequestExecutor>()
 
-    private const val AUTHORIZATION_HEADER_NAME = "Authorization"
     private const val OTP_HEADER_NAME = "X-GitHub-OTP"
   }
 }

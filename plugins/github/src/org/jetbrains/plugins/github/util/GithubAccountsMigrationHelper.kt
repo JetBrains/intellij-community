@@ -9,9 +9,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
 import git4idea.DialogManager
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.plugins.github.api.GithubApiTaskExecutor
-import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.api.GithubTask
+import org.jetbrains.plugins.github.api.*
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginDialog
@@ -26,7 +24,8 @@ internal const val GITHUB_SETTINGS_PASSWORD_KEY = "GITHUB_SETTINGS_PASSWORD_KEY"
 @Suppress("DEPRECATION")
 class GithubAccountsMigrationHelper internal constructor(private val settings: GithubSettings,
                                                          private val passwordSafe: PasswordSafe,
-                                                         private val accountManager: GithubAccountManager) {
+                                                         private val accountManager: GithubAccountManager,
+                                                         private val executorFactory: GithubApiRequestExecutor.Factory) {
   private val LOG = logger<GithubAccountsMigrationHelper>()
 
   internal fun getOldServer(): GithubServerPath? {
@@ -82,15 +81,16 @@ class GithubAccountsMigrationHelper internal constructor(private val settings: G
             }
             catch (e: Exception) {
               LOG.debug("Failed to migrate old token-based auth. Showing dialog.", e)
-              val dialog = GithubLoginDialog(project).withServer(hostToUse, false).withToken(password).withError(e)
+              val dialog = GithubLoginDialog(executorFactory, project).withServer(hostToUse, false).withToken(password).withError(e)
               dialogCancelled = !registerFromDialog(dialog)
             }
           }
         }
         GithubAuthData.AuthType.BASIC -> {
           LOG.debug("Migrating basic auth")
-          val dialog = GithubLoginDialog(project, message = "Password authentication is no longer supported for Github.\n" +
-                                                            "Personal access token can be acquired instead.")
+          val dialog = GithubLoginDialog(executorFactory, project,
+                                         message = "Password authentication is no longer supported for Github.\n" +
+                                                   "Personal access token can be acquired instead.")
             .withServer(hostToUse, false).withCredentials(login, password)
           dialogCancelled = !registerFromDialog(dialog)
         }

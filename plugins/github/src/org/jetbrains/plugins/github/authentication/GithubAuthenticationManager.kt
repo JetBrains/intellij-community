@@ -9,6 +9,7 @@ import git4idea.DialogManager
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
@@ -19,7 +20,8 @@ import javax.swing.JComponent
 /**
  * Entry point for interactions with Github authentication subsystem
  */
-class GithubAuthenticationManager internal constructor(private val accountManager: GithubAccountManager) {
+class GithubAuthenticationManager internal constructor(private val accountManager: GithubAccountManager,
+                                                       private val executorFactory: GithubApiRequestExecutor.Factory) {
   @CalledInAny
   fun hasAccounts(): Boolean = accountManager.accounts.isNotEmpty()
 
@@ -42,7 +44,7 @@ class GithubAuthenticationManager internal constructor(private val accountManage
 
   @CalledInAwt
   private fun requestNewToken(account: GithubAccount, project: Project?, parentComponent: JComponent?): String? {
-    val dialog = GithubLoginDialog(project, parentComponent, message = "Missing access token for $account")
+    val dialog = GithubLoginDialog(executorFactory, project, parentComponent, message = "Missing access token for $account")
       .withServer(account.server.toString(), false)
       .withCredentials(account.name)
       .withToken()
@@ -63,7 +65,7 @@ class GithubAuthenticationManager internal constructor(private val accountManage
     fun isAccountUnique(name: String, server: GithubServerPath) =
       accountManager.accounts.none { it.name == name && it.server == server }
 
-    val dialog = GithubLoginDialog(project, null, ::isAccountUnique)
+    val dialog = GithubLoginDialog(executorFactory, project, null, ::isAccountUnique)
     DialogManager.show(dialog)
     if (!dialog.isOK) return null
 

@@ -3,7 +3,10 @@ package org.jetbrains.plugins.github.api
 
 import com.intellij.util.ThrowableConvertor
 import org.jetbrains.plugins.github.api.GithubApiRequest.Get
+import org.jetbrains.plugins.github.api.GithubApiRequest.Post
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
+import org.jetbrains.plugins.github.api.data.GithubAuthorization
+import org.jetbrains.plugins.github.api.requests.GithubAuthorizationCreateRequest
 import java.awt.Image
 
 /**
@@ -26,6 +29,17 @@ object GithubApiRequests {
         })
       }
     }.withOperationName("get profile avatar")
+  }
+
+  object Auth : Entity("/authorizations") {
+    @JvmStatic
+    fun create(server: GithubServerPath, scopes: List<String>, note: String) =
+      Post.json<GithubAuthorization>(getUrl(server, urlSuffix), GithubAuthorizationCreateRequest(scopes, note, null))
+        .withOperationName("create authorization $note")
+
+    @JvmStatic
+    fun get(server: GithubServerPath) = Get.jsonList<GithubAuthorization>(getUrl(server, urlSuffix))
+      .withOperationName("get authorizations")
   }
 
   abstract class Entity(val urlSuffix: String)
