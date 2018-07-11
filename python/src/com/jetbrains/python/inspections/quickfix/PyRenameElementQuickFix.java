@@ -2,7 +2,6 @@
 package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -13,8 +12,6 @@ import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
-import com.intellij.refactoring.rename.RenameProcessor;
-import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
@@ -57,18 +54,14 @@ public class PyRenameElementQuickFix extends LocalQuickFixAndIntentionActionOnPs
     final PsiNameIdentifierOwner nameOwner = element instanceof PsiNameIdentifierOwner ?
                                              (PsiNameIdentifierOwner)element :
                                              PsiTreeUtil.getParentOfType(element, PsiNameIdentifierOwner.class, true);
-    if (nameOwner != null && editor != null) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        renameInUnitTestMode(project, nameOwner, editor);
-      }
-      else {
-        if (checkLocalScope(element) != null && (nameOwner instanceof PyNamedParameter || nameOwner instanceof PyTargetExpression)) {
-          new VariableInplaceRenamer(nameOwner, editor).performInplaceRename();
-        }
-        else {
-          PsiElementRenameHandler.invoke(nameOwner, project, ScopeUtil.getScopeOwner(nameOwner), editor);
-        }
-      }
+    if (nameOwner == null || editor == null) {
+      return;
+    }
+    if (checkLocalScope(element) != null && (nameOwner instanceof PyNamedParameter || nameOwner instanceof PyTargetExpression)) {
+      new VariableInplaceRenamer(nameOwner, editor).performInplaceRename();
+    }
+    else {
+      PsiElementRenameHandler.invoke(nameOwner, project, ScopeUtil.getScopeOwner(nameOwner), editor);
     }
   }
 
@@ -92,13 +85,5 @@ public class PyRenameElementQuickFix extends LocalQuickFixAndIntentionActionOnPs
   @Override
   public PsiElement getElementToMakeWritable(@NotNull PsiFile file) {
     return file;
-  }
-
-  private static void renameInUnitTestMode(@NotNull Project project, @NotNull PsiNameIdentifierOwner nameOwner,
-                                           @Nullable Editor editor) {
-    final PsiElement substitution = RenamePsiElementProcessor.forElement(nameOwner).substituteElementToRename(nameOwner, editor);
-    if (substitution != null) {
-      new RenameProcessor(project, substitution, "a", false, false).run();
-    }
   }
 }
