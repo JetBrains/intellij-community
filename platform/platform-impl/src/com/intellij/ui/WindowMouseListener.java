@@ -16,13 +16,18 @@
 
 package com.intellij.ui;
 
+import com.intellij.openapi.progress.util.PotemkinProgress;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.FieldAccessor;
+import com.intellij.util.MethodInvocator;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.ApiStatus;
 
+import javax.swing.*;
 import javax.swing.event.MouseInputListener;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 
 import static java.awt.Cursor.*;
 
@@ -30,7 +35,7 @@ import static java.awt.Cursor.*;
  * @author Sergey Malenkov
  */
 abstract class WindowMouseListener extends MouseAdapter implements MouseInputListener {
-  private final Component myContent;
+  protected final Component myContent;
   @JdkConstants.CursorType int myType;
   private Point myLocation;
   private Rectangle myViewBounds;
@@ -138,10 +143,7 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
         }
         updateBounds(bounds, view, dx, dy);
         if (!bounds.equals(view.getBounds())) {
-          view.setBounds(bounds);
-          view.invalidate();
-          view.validate();
-          view.repaint();
+          setBounds(view, bounds);
         }
       }
       if (stop) {
@@ -157,6 +159,13 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
     }
   }
 
+  /** Note: default implementation takes Component.getTreeLock() */
+  protected void setBounds(Component comp, Rectangle bounds) {
+    comp.setBounds(bounds);
+    comp.invalidate();
+    comp.validate();
+    comp.repaint();
+  }
 
   /**
    * Returns a window content which is used to find corresponding window and to set a cursor.
@@ -179,6 +188,8 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
   /**
    * Sets the specified cursor for the specified content.
    * It can be overridden if another approach is used.
+   *
+   * Note: default implementation takes Component.getTreeLock()
    */
   protected void setCursor(Component content, Cursor cursor) {
     UIUtil.setCursor(content, cursor);
@@ -193,5 +204,107 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
 
   static boolean isStateSet(int mask, int state) {
     return mask == (mask & state);
+  }
+
+  /**
+   * @author tav
+   */
+  @ApiStatus.Experimental
+  public class ToolkitListenerHelper {
+    private WindowMouseListener myListener;
+
+    private Class classWComponentPeer;
+    private MethodInvocator reshapeInvocator;
+    private FieldAccessor<Component, Integer> xAccessor;
+    private FieldAccessor<Component, Integer> yAccessor;
+    private FieldAccessor<Component, Integer> widthAccessor;
+    private FieldAccessor<Component, Integer> heightAccessor;
+    private MethodInvocator addMouseListenerMethod;
+    private MethodInvocator addMouseMotionListenerMethod;
+    private MethodInvocator removeMouseListenerMethod;
+    private MethodInvocator removeMouseMotionListenerMethod;
+
+    private ComponentAdapter pendingListener;
+
+
+    public ToolkitListenerHelper(WindowMouseListener l) {
+      myListener =l;
+      if (SystemInfo.isWindows) {
+        try {
+          classWComponentPeer = Class.forName("sun.awt.windows.WComponentPeer");
+          reshapeInvocator = new MethodInvocator(classWComponentPeer, "reshapeNoCheck",
+                                                 int.class, int.class, int.class, int.class);
+
+          xAccessor = new FieldAccessor<>(Component.class, "x");
+          yAccessor = new FieldAccessor<>(Component.class, "y");
+          widthAccessor = new FieldAccessor<>(Component.class, "width");
+          heightAccessor = new FieldAccessor<>(Component.class, "height");
+
+          addMouseListenerMethod =
+            new MethodInvocator(Class.forName("sun.awt.windows.WWindowPeer"), "addMouseListener", MouseListener.class);
+          addMouseMotionListenerMethod =
+            new MethodInvocator(Class.forName("sun.awt.windows.WWindowPeer"), "addMouseMotionListener", MouseMotionListener.class);
+          removeMouseListenerMethod =
+            new MethodInvocator(Class.forName("sun.awt.windows.WWindowPeer"), "removeMouseListener", MouseListener.class);
+          removeMouseMotionListenerMethod =
+            new MethodInvocator(Class.forName("sun.awt.windows.WWindowPeer"), "removeMouseMotionListener", MouseMotionListener.class);
+
+        } catch (ClassNotFoundException ignored) {
+        }
+      }
+    }
+
+    public void setCursor(Component content, Cursor cursor, Runnable defaultAction) {
+      PotemkinProgress.invokeLaterNotBlocking(content, defaultAction);
+    }
+
+    public void setBounds(Component comp, Rectangle bounds, Runnable defaultAction) {
+      if (classWComponentPeer != null && classWComponentPeer.isInstance(comp.getPeer())) {
+        // emulate native set bounds
+        reshapeInvocator.invoke(comp.getPeer(), bounds.x, bounds.y, bounds.width, bounds.height);
+        xAccessor.set(comp, bounds.x);
+        yAccessor.set(comp, bounds.y);
+        widthAccessor.set(comp, bounds.width);
+        heightAccessor.set(comp, bounds.height);
+      } else {
+        PotemkinProgress.invokeLaterNotBlocking(comp, defaultAction);
+      }
+    }
+
+    public void addTo(Component comp) {
+      final Window window = comp instanceof Window ? (Window)comp : SwingUtilities.getWindowAncestor(comp);
+      if (window.getPeer() != null) {
+        addToImpl(window);
+        return;
+      }
+      window.removeComponentListener(pendingListener);
+      window.addComponentListener(pendingListener = new ComponentAdapter() {
+        @Override
+        public void componentShown(ComponentEvent event) {
+          window.removeComponentListener(pendingListener);
+          addToImpl(window);
+        }
+      });
+    }
+
+    public void removeFrom(Component comp) {
+      comp = comp instanceof Window ? comp : SwingUtilities.getWindowAncestor(comp);
+      if (comp.getPeer() != null) {
+        if (removeMouseListenerMethod == null || removeMouseMotionListenerMethod == null) return;
+
+        removeMouseListenerMethod.invoke(comp.getPeer(), myListener);
+        removeMouseMotionListenerMethod.invoke(comp.getPeer(), myListener);
+      }
+      else if (pendingListener != null){
+        comp.removeComponentListener(pendingListener);
+      }
+    }
+
+    private void addToImpl(Component comp) {
+      if (addMouseListenerMethod == null || addMouseMotionListenerMethod == null) return;
+
+      addMouseListenerMethod.invoke(comp.getPeer(), myListener);
+      addMouseMotionListenerMethod.invoke(comp.getPeer(), myListener);
+    }
   }
 }

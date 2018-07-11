@@ -16,6 +16,10 @@
 
 package com.intellij.ui;
 
+import com.intellij.openapi.progress.util.PotemkinProgress;
+import org.jetbrains.annotations.ApiStatus;
+
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
@@ -63,5 +67,82 @@ public class WindowMoveListener extends WindowMouseListener {
       }
     }
     super.mouseClicked(event);
+  }
+
+  /**
+   * @author tav
+   */
+  @ApiStatus.Experimental
+  public static class ToolkitListener extends WindowMoveListener {
+    private ToolkitListenerHelper myHelper;
+    private Window myAncestor;
+
+    public ToolkitListener(Component content) {
+      super(content);
+      myHelper = new ToolkitListenerHelper(this);
+      myAncestor = SwingUtilities.getWindowAncestor(content);
+    }
+
+    @Override
+    public void mousePressed(MouseEvent event) {
+      if (hitTest(event)) {
+        super.mousePressed(event);
+      }
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent event) {
+      if (hitTest(event)) {
+        super.mouseReleased(event);
+      }
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent event) {
+      if (hitTest(event)) {
+        super.mouseDragged(event);
+      }
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent event) {
+      if (hitTest(event)) {
+        super.mouseMoved(event);
+      }
+    }
+
+    @Override
+    public void mouseClicked(MouseEvent event) {
+      if (hitTest(event)) {
+        PotemkinProgress.invokeLaterNotBlocking(event.getSource(), () -> super.mouseClicked(event));
+      }
+    }
+
+    private boolean hitTest(MouseEvent e) {
+      Rectangle bounds = myContent.getBounds();
+      //bounds = SwingUtilities.convertRectangle(myContent, bounds, myAncestor); // [tav] todo: takes tree lock !!!
+      Point onScreen = myAncestor.getPeer().getLocationOnScreen();
+      Point inParent = ((JFrame)myAncestor).getRootPane().getLocation(); // temp
+      bounds.setLocation(onScreen.x + inParent.x, onScreen.y + inParent.y);
+      return bounds.contains(e.getLocationOnScreen());
+    }
+
+    @Override
+    protected void setCursor(Component content, Cursor cursor) {
+      myHelper.setCursor(content, cursor, () -> super.setCursor(content, cursor));
+    }
+
+    @Override
+    protected void setBounds(Component comp, Rectangle bounds) {
+      myHelper.setBounds(comp, bounds, () -> super.setBounds(comp, bounds));
+    }
+
+    public void addTo(Component comp) {
+      myHelper.addTo(comp);
+    }
+
+    public void removeFrom(Component comp) {
+      myHelper.removeFrom(comp);
+    }
   }
 }

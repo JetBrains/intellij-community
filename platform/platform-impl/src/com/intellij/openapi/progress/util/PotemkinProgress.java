@@ -69,7 +69,8 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
     // LWCToolkit does invokeAndWait which blocks native event processing until finished. The OS considers that blockage to be
     // app freeze, stops rendering UI and shows beach-ball cursor. We want the UI to act (almost) normally in write-action progresses,
     // so we let these specific events to be dispatched, hoping they wouldn't access project/code model.
-    return event instanceof InvocationEvent && event.toString().contains("sun.lwawt.macosx.LWCToolkit");
+    return event instanceof InvocationEvent && event.toString().contains("sun.lwawt.macosx.LWCToolkit") ||
+           event instanceof MyInvocationEvent;
   }
 
   @NotNull
@@ -226,5 +227,15 @@ public class PotemkinProgress extends ProgressWindow implements PingProgress {
     }, this));
 
     started.waitFor();
+  }
+
+  public static void invokeLaterNotBlocking(Object source, Runnable runnable) {
+    Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(new MyInvocationEvent(source, runnable));
+  }
+
+  private static class MyInvocationEvent extends InvocationEvent {
+    public MyInvocationEvent(Object source, Runnable runnable) {
+      super(source, runnable);
+    }
   }
 }
