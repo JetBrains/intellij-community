@@ -43,6 +43,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import static com.intellij.util.ObjectUtils.notNull;
+
 public class IndexDataGetter {
   @NotNull private final Project myProject;
   @NotNull private final Set<VirtualFile> myRoots;
@@ -273,8 +275,9 @@ public class IndexDataGetter {
   }
 
   private class MyFileNamesData extends FileNamesData {
+    @NotNull
     protected FilePath getPathById(int pathId) {
-      return VcsUtil.getFilePath(myIndexStorage.paths.getPath(pathId));
+      return notNull(myIndexStorage.paths.getPath(pathId));
     }
   }
 
