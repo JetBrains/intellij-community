@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.console;
 
-import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -40,13 +39,13 @@ import com.jetbrains.python.console.pydev.AbstractConsoleCommunication;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.console.thrift.client.TNettyClientTransport;
+import com.jetbrains.python.console.thrift.server.TNettyServer;
 import com.jetbrains.python.console.thrift.server.TNettyServerTransport;
 import com.jetbrains.python.debugger.*;
 import com.jetbrains.python.debugger.containerview.PyViewNumericContainerAction;
 import com.jetbrains.python.debugger.pydev.GetVariableCommand;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.server.TThreadPoolServer;
 import org.apache.thrift.transport.TServerTransport;
 import org.apache.thrift.transport.TTransport;
 import org.jetbrains.annotations.NotNull;
@@ -78,7 +77,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   /**
    * This is the server responsible for giving input to a raw_input() requested.
    */
-  @Nullable private TThreadPoolServer myServer;
+  @Nullable private TNettyServer myServer;
 
   private static final Logger LOG = Logger.getInstance(PydevConsoleCommunication.class);
 
@@ -126,9 +125,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       new PythonConsoleFrontendService.Processor<>(serverHandler);
     //noinspection IOResourceOpenedButNotSafelyClosed
     TNettyServerTransport serverTransport = new TNettyServerTransport(port);
-    TThreadPoolServer server = new TThreadPoolServer(
-      new TThreadPoolServer.Args(serverTransport).processor(serverProcessor).protocolFactory(new TBinaryProtocol.Factory())
-                                                 .stopTimeoutVal(1));
+    TNettyServer server = new TNettyServer(serverTransport, serverProcessor);
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> server.serve());
 
@@ -167,9 +164,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       PythonConsoleFrontendService.Processor<PythonConsoleFrontendService.Iface> serverProcessor =
         new PythonConsoleFrontendService.Processor<>(serverHandler);
 
-      TThreadPoolServer server = new TThreadPoolServer(
-        new TThreadPoolServer.Args(serverTransport).processor(serverProcessor).protocolFactory(new TBinaryProtocol.Factory())
-                                                   .stopTimeoutVal(1));
+      TNettyServer server = new TNettyServer(serverTransport, serverProcessor);
 
       ApplicationManager.getApplication().executeOnPooledThread(() -> server.serve());
 
@@ -244,16 +239,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     myCallbackHashMap.clear();
 
     if (myServer != null) {
-      /*
-      Future<Void> shutdownFuture = myWebServer.shutdownAsync();
-      */
-      myServer.stop();
-      myServer = null;
-
-      // @alexander todo remove workaround and wait for the shutdown
-      SettableFuture<Void> future = SettableFuture.create();
-      future.set(null);
-      return future;
+      return myServer.stop();
     }
 
     return completedFuture();
