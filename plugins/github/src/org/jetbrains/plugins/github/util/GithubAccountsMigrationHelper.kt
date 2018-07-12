@@ -9,7 +9,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ThrowableComputable
 import git4idea.DialogManager
 import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.plugins.github.api.*
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
+import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.GithubApiUtil
+import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginDialog
@@ -73,8 +76,8 @@ class GithubAccountsMigrationHelper internal constructor(private val settings: G
               val server = GithubServerPath.from(hostToUse)
               val progressManager = ProgressManager.getInstance()
               val accountName = progressManager.runProcessWithProgressSynchronously(ThrowableComputable<String, IOException> {
-                GithubApiTaskExecutor.execute(progressManager.progressIndicator, server, password,
-                                              GithubTask { GithubApiUtil.getCurrentUser(it).login })
+                executorFactory.create(password).execute(progressManager.progressIndicator,
+                                                         GithubApiRequests.CurrentUser.get(server)).login
               }, "Accessing Github", true, project)
               val account = GithubAccountManager.createAccount(accountName, server)
               registerAccount(account, password)
