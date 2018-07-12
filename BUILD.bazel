@@ -156,6 +156,7 @@ iml_project(
         "//tools/base/common:studio.android.sdktools.common",
         "//tools/base/common:studio.android.sdktools.common.tests",
         "//tools/base/ddmlib:studio.android.sdktools.ddmlib",
+        "//tools/base/deploy/deployer:studio.android.sdktools.deployer",
         "//tools/base/device_validator:studio.android.sdktools.dvlib",
         "//tools/base/devicelib:studio.devicelib",
         "//tools/base/draw9patch:studio.android.sdktools.draw9patch",
