@@ -246,7 +246,8 @@ public class StreamChainInliner implements CallInliner {
       if (!(type instanceof PsiPrimitiveType)) {
         type = PsiPrimitiveType.getUnboxedType(type);
       }
-      builder.push(builder.getFactory().getConstFactory().createDefault(Objects.requireNonNull(type)));
+      builder.push(builder.getFactory().getConstFactory().createDefault(Objects.requireNonNull(type)))
+        .boxUnbox(myCall, type, myCall.getType());
     }
 
     @Override

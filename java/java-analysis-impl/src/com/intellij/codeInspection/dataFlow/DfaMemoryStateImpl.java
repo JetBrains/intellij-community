@@ -344,6 +344,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       classes = new int[]{index};
     }
     else {
+      if (ArrayUtil.indexOf(classes, index) != -1) {
+        throw new IllegalStateException("Class index already referenced from the value: "+
+                                        myEqClasses.get(index)+"; "+myFactory.getValue(id));
+      }
       classes = ArrayUtil.append(classes, index);
     }
     myIdToEqClassesIndices.put(id, classes);
