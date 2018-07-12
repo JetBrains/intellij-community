@@ -13,6 +13,8 @@ import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonValue;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -20,11 +22,13 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.CharArrayUtil;
 import com.jetbrains.jsonSchema.impl.JsonSchemaType;
 import com.jetbrains.jsonSchema.impl.JsonValidationError;
 import org.jetbrains.annotations.Nls;
@@ -73,17 +77,30 @@ public class AddMissingPropertyFix implements LocalQuickFix, BatchQuickFix<Commo
     }
     TemplateManager templateManager = TemplateManager.getInstance(project);
     TemplateBuilderImpl builder = new TemplateBuilderImpl(newElement);
-    builder.replaceElement(value, myData.myMissingPropertyIssues.iterator().next().hasEnumItems
-                                    ? new MacroCallNode(new CompleteMacro())
-                                    : new ConstantNode(value.getText()));
+    String text = value.getText();
+    boolean quoted = StringUtil.isQuotedString(text);
+    TextRange range = quoted ? TextRange.create(1, text.length() - 1) : TextRange.create(0, text.length());
+    builder.replaceElement(value, range, myData.myMissingPropertyIssues.iterator().next().hasEnumItems
+                                          ? new MacroCallNode(new CompleteMacro())
+                                          : new ConstantNode(quoted ? StringUtil.unquoteString(text) : text));
     Template template = builder.buildTemplate();
-    int offset = newElement.getTextRange().getEndOffset();
+    int endOffset = newElement.getTextRange().getEndOffset();
+    int offset = hadComma.get() ? endOffset + 1 : endOffset;
     // yes, we need separate write actions for each step
-    WriteAction.run(() -> editor.getCaretModel().moveToOffset(hadComma.get() ? offset + 1 : offset));
+    WriteAction.run(() -> editor.getCaretModel().moveToOffset(offset));
     WriteAction.run(() -> newElement.delete());
-    WriteAction.run(() -> editor.getDocument().insertString(editor.getCaretModel().getOffset(), "\n"));
+    addNewline(editor);
     template.setToReformat(true);
     templateManager.startTemplate(editor, template);
+  }
+
+  private static void addNewline(@NotNull Editor editor) {
+    int newOffset = editor.getCaretModel().getOffset();
+    Document document = editor.getDocument();
+    int lineStartOffset = DocumentUtil.getLineStartOffset(newOffset, document);
+    CharSequence docText = document.getCharsSequence();
+    int lineStartWsEndOffset = CharArrayUtil.shiftForward(docText, lineStartOffset, " \t");
+    WriteAction.run(() -> document.insertString(newOffset, "\n" + docText.subSequence(lineStartOffset, Math.min(newOffset, lineStartWsEndOffset))));
   }
 
   private PsiElement performFix(@NotNull Project project, PsiElement element, Ref<Boolean> hadComma) {
