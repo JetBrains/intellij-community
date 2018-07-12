@@ -1,263 +1,231 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.configurationStore;
+package com.intellij.configurationStore
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.util.ElementsChooser;
-import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.application.ConfigImportHelper;
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
-import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.VerticalFlowLayout;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.FieldPanel;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.AsyncPromise;
-import org.jetbrains.concurrency.Promise;
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.util.ElementsChooser
+import com.intellij.ide.util.MultiStateElementsChooser
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.application.ConfigImportHelper
+import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.fileChooser.FileChooser
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.VerticalFlowLayout
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.FieldPanel
+import com.intellij.util.ArrayUtil
+import gnu.trove.THashSet
+import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.Promise
+import java.awt.Component
+import java.awt.event.ActionEvent
+import java.io.File
+import java.nio.file.Path
+import java.nio.file.Paths
+import java.util.*
+import javax.swing.*
 
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.List;
+private const val DEFAULT_FILE_NAME = "settings.zip"
+private val DEFAULT_PATH = FileUtil.toSystemDependentName(PathManager.getConfigPath() + "/") + DEFAULT_FILE_NAME
 
-public class ChooseComponentsToExportDialog extends DialogWrapper {
-  private static final String DEFAULT_FILE_NAME = "settings.zip";
-  private static final String DEFAULT_PATH = FileUtil.toSystemDependentName(PathManager.getConfigPath() + "/") + DEFAULT_FILE_NAME;
+private const val KEY_UNMARKED_NAMES = "export.settings.unmarked"
 
-  private static final Logger LOG = Logger.getInstance(ChooseComponentsToExportDialog.class);
-  public static final String KEY_UNMAKRKED_NAMES = "export.settings.unmarked";
+private val unmarkedElementNames: Set<String>
+  get() {
+    val value = PropertiesComponent.getInstance().getValue(KEY_UNMARKED_NAMES)
+    return if (StringUtil.isEmpty(value)) {
+      emptySet()
+    }
+    else THashSet(StringUtil.split(value!!.trim { it <= ' ' }, "|"))
+  }
 
-  private final ElementsChooser<ComponentElementProperties> myChooser;
-  private final FieldPanel myPathPanel;
-  private final boolean myShowFilePath;
-  private final String myDescription;
+private fun addToExistingListElement(item: ExportableItem,
+                                     itemToContainingListElement: MutableMap<ExportableItem, ComponentElementProperties>,
+                                     fileToItem: Map<Path, List<ExportableItem>>): Boolean {
+  val list = fileToItem.get(item.file)
+  if (list == null || list.isEmpty()) {
+    return false
+  }
 
-  public ChooseComponentsToExportDialog(@NotNull Map<Path, List<ExportableItem>> fileToComponents,
-                                        boolean showFilePath, final String title, String description) {
-    super(false);
+  var file: Path? = null
+  for (tiedItem in list) {
+    if (tiedItem === item) {
+      continue
+    }
 
-    myDescription = description;
-    myShowFilePath = showFilePath;
-    Map<ExportableItem, ComponentElementProperties> componentToContainingListElement = new LinkedHashMap<>();
-    for (List<ExportableItem> list : fileToComponents.values()) {
-      for (ExportableItem item : list) {
+    val elementProperties = itemToContainingListElement[tiedItem]
+    if (elementProperties != null && item.file !== file) {
+      LOG.assertTrue(file == null, "Component " + item + " serialize itself into " + file + " and " + item.file)
+      // found
+      elementProperties.items.add(item)
+      itemToContainingListElement[item] = elementProperties
+      file = item.file
+    }
+  }
+  return file != null
+}
+
+fun chooseSettingsFile(oldPath: String?, parent: Component?, title: String, description: String): Promise<String> {
+  val chooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()
+  chooserDescriptor.description = description
+  chooserDescriptor.isHideIgnored = false
+  chooserDescriptor.title = title
+  chooserDescriptor.withFileFilter { ConfigImportHelper.isSettingsFile(it) }
+
+  var initialDir: VirtualFile?
+  if (oldPath != null) {
+    val oldFile = File(oldPath)
+    initialDir = LocalFileSystem.getInstance().findFileByIoFile(oldFile)
+    if (initialDir == null && oldFile.parentFile != null) {
+      initialDir = LocalFileSystem.getInstance().findFileByIoFile(oldFile.parentFile)
+    }
+  }
+  else {
+    initialDir = null
+  }
+  val result = AsyncPromise<String>()
+  FileChooser.chooseFiles(chooserDescriptor, null, parent, initialDir, object : FileChooser.FileChooserConsumer {
+    override fun consume(files: List<VirtualFile>) {
+      val file = files[0]
+      if (file.isDirectory) {
+        result.setResult(file.path + '/'.toString() + DEFAULT_FILE_NAME)
+      }
+      else {
+        result.setResult(file.path)
+      }
+    }
+
+    override fun cancelled() {
+      result.setError("")
+    }
+  })
+  return result
+}
+
+class ChooseComponentsToExportDialog(fileToComponents: Map<Path, List<ExportableItem>>,
+                                     private val myShowFilePath: Boolean, title: String, private val myDescription: String) : DialogWrapper(false) {
+  private val myChooser: ElementsChooser<ComponentElementProperties>
+  private val pathPanel = FieldPanel(IdeBundle.message("editbox.export.settings.to"), null, null                                     , null)
+
+  internal val exportableComponents: Set<ExportableItem>
+    get() {
+      val components = THashSet<ExportableItem>()
+      for (elementProperties in myChooser.markedElements) {
+        components.addAll(elementProperties.items)
+      }
+      return components
+    }
+
+  internal val exportFile: Path
+    get() = Paths.get(pathPanel.text)
+
+  init {
+    pathPanel.setBrowseButtonActionListener {
+      chooseSettingsFile(pathPanel.text, window, IdeBundle.message("title.export.file.location"), IdeBundle.message("prompt.choose.export.settings.file.path"))
+        .onSuccess { path -> pathPanel.text = FileUtil.toSystemDependentName(path) }
+    }
+
+    val componentToContainingListElement = LinkedHashMap<ExportableItem, ComponentElementProperties>()
+    for (list in fileToComponents.values) {
+      for (item in list) {
         if (!addToExistingListElement(item, componentToContainingListElement, fileToComponents)) {
-          ComponentElementProperties componentElementProperties = new ComponentElementProperties();
-          componentElementProperties.items.add(item);
+          val componentElementProperties = ComponentElementProperties()
+          componentElementProperties.items.add(item)
 
-          componentToContainingListElement.put(item, componentElementProperties);
+          componentToContainingListElement[item] = componentElementProperties
         }
       }
     }
-    myChooser = new ElementsChooser<>(true);
-    myChooser.setColorUnmarkedElements(false);
-    Set<String> unmarkedElementNames = getUnmarkedElementNames();
-    for (ComponentElementProperties componentElementProperty : new LinkedHashSet<>(componentToContainingListElement.values())) {
-      myChooser.addElement(componentElementProperty, !unmarkedElementNames.contains(componentElementProperty.toString()), componentElementProperty);
+    myChooser = ElementsChooser(true)
+    myChooser.setColorUnmarkedElements(false)
+    val unmarkedElementNames = unmarkedElementNames
+    for (componentElementProperty in LinkedHashSet(componentToContainingListElement.values)) {
+      myChooser.addElement(componentElementProperty, !unmarkedElementNames.contains(componentElementProperty.toString()), componentElementProperty)
     }
-    myChooser.sort(Comparator.comparing(ComponentElementProperties::toString));
+    myChooser.sort(Comparator.comparing<ComponentElementProperties, String> { it.toString() })
 
-    final ActionListener browseAction = new ActionListener() {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        chooseSettingsFile(myPathPanel.getText(), getWindow(), IdeBundle.message("title.export.file.location"), IdeBundle.message("prompt.choose.export.settings.file.path"))
-          .onSuccess(path -> myPathPanel.setText(FileUtil.toSystemDependentName(path)));
-      }
-    };
+    val exportPath = PropertiesComponent.getInstance().getValue("export.settings.path", DEFAULT_PATH)
+    pathPanel.text = exportPath
+    pathPanel.changeListener = Runnable { this.updateControls() }
+    updateControls()
 
-    myPathPanel = new FieldPanel(IdeBundle.message("editbox.export.settings.to"), null, browseAction, null);
-
-    String exportPath = PropertiesComponent.getInstance().getValue("export.settings.path", DEFAULT_PATH);
-    myPathPanel.setText(exportPath);
-    myPathPanel.setChangeListener(this::updateControls);
-    updateControls();
-
-    setTitle(title);
-    init();
+    setTitle(title)
+    init()
   }
 
-  private static Set<String> getUnmarkedElementNames() {
-    String value = PropertiesComponent.getInstance().getValue(KEY_UNMAKRKED_NAMES);
-    if (StringUtil.isEmpty(value)) {
-      return Collections.emptySet();
-    }
-    return new THashSet<>(StringUtil.split(value.trim(), "|"));
+  private fun updateControls() {
+    isOKActionEnabled = !StringUtil.isEmptyOrSpaces(pathPanel.text)
   }
 
-  private void updateControls() {
-    setOKActionEnabled(!StringUtil.isEmptyOrSpaces(myPathPanel.getText()));
-  }
-
-  @NotNull
-  @Override
-  protected Action[] createLeftSideActions() {
-    AbstractAction selectAll = new AbstractAction("Select &All") {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        myChooser.setAllElementsMarked(true);
-      }
-    };
-    AbstractAction selectNone = new AbstractAction("Select &None") {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        myChooser.setAllElementsMarked(false);
-      }
-    };
-    AbstractAction invert = new AbstractAction("&Invert") {
-      @Override
-      public void actionPerformed(@NotNull ActionEvent e) {
-        myChooser.invertSelection();
-      }
-    };
-    return new Action[]{selectAll, selectNone, invert};
-  }
-
-  @Override
-  protected void doOKAction() {
-    PropertiesComponent.getInstance().setValue("export.settings.path", myPathPanel.getText(), DEFAULT_PATH);
-    List<ComponentElementProperties> unmarked = myChooser.getElements(false);
-    StringBuilder builder = new StringBuilder();
-    for (ComponentElementProperties element : unmarked) {
-      builder.append(element.toString());
-      builder.append("|");
-    }
-    PropertiesComponent.getInstance().setValue(KEY_UNMAKRKED_NAMES, builder.length() == 0 ? null : builder.toString());
-
-    super.doOKAction();
-  }
-
-  private static boolean addToExistingListElement(@NotNull ExportableItem item,
-                                                  @NotNull Map<ExportableItem, ComponentElementProperties> itemToContainingListElement,
-                                                  @NotNull Map<Path, List<ExportableItem>> fileToItem) {
-    List<ExportableItem> list = fileToItem.get(item.getFile());
-    if (ContainerUtil.isEmpty(list)) {
-      return false;
-    }
-
-    Path file = null;
-    for (ExportableItem tiedItem : list) {
-      if (tiedItem == item) {
-        continue;
-      }
-
-      final ComponentElementProperties elementProperties = itemToContainingListElement.get(tiedItem);
-      if (elementProperties != null && item.getFile() != file) {
-        LOG.assertTrue(file == null, "Component " + item + " serialize itself into " + file + " and " + item.getFile());
-        // found
-        elementProperties.items.add(item);
-        itemToContainingListElement.put(item, elementProperties);
-        file = item.getFile();
+  override fun createLeftSideActions(): Array<Action> {
+    val selectAll = object : AbstractAction("Select &All") {
+      override fun actionPerformed(e: ActionEvent) {
+        myChooser.setAllElementsMarked(true)
       }
     }
-    return file != null;
-  }
-
-  @NotNull
-  public static Promise<String> chooseSettingsFile(String oldPath, Component parent, final String title, final String description) {
-    FileChooserDescriptor chooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
-    chooserDescriptor.setDescription(description);
-    chooserDescriptor.setHideIgnored(false);
-    chooserDescriptor.setTitle(title);
-    chooserDescriptor.withFileFilter(ConfigImportHelper::isSettingsFile);
-
-    VirtualFile initialDir;
-    if (oldPath != null) {
-      final File oldFile = new File(oldPath);
-      initialDir = LocalFileSystem.getInstance().findFileByIoFile(oldFile);
-      if (initialDir == null && oldFile.getParentFile() != null) {
-        initialDir = LocalFileSystem.getInstance().findFileByIoFile(oldFile.getParentFile());
+    val selectNone = object : AbstractAction("Select &None") {
+      override fun actionPerformed(e: ActionEvent) {
+        myChooser.setAllElementsMarked(false)
       }
     }
-    else {
-      initialDir = null;
-    }
-    final AsyncPromise<String> result = new AsyncPromise<>();
-    FileChooser.chooseFiles(chooserDescriptor, null, parent, initialDir, new FileChooser.FileChooserConsumer() {
-      @Override
-      public void consume(List<VirtualFile> files) {
-        VirtualFile file = files.get(0);
-        if (file.isDirectory()) {
-          result.setResult(file.getPath() + '/' + DEFAULT_FILE_NAME);
-        }
-        else {
-          result.setResult(file.getPath());
-        }
+    val invert = object : AbstractAction("&Invert") {
+      override fun actionPerformed(e: ActionEvent) {
+        myChooser.invertSelection()
       }
-
-      @Override
-      public void cancelled() {
-        result.setError("");
-      }
-    });
-    return result;
-  }
-
-  @Override
-  public JComponent getPreferredFocusedComponent() {
-    return myPathPanel.getTextField();
-  }
-
-  @Override
-  protected JComponent createNorthPanel() {
-    return new JLabel(myDescription);
-  }
-
-  @Override
-  protected JComponent createCenterPanel() {
-    return myChooser;
-  }
-
-  @Override
-  protected JComponent createSouthPanel() {
-    final JComponent buttons = super.createSouthPanel();
-    if (!myShowFilePath) return buttons;
-    final JPanel panel = new JPanel(new VerticalFlowLayout());
-    panel.add(myPathPanel);
-    panel.add(buttons);
-    return panel;
-  }
-
-  Set<ExportableItem> getExportableComponents() {
-    Set<ExportableItem> components = new THashSet<>();
-    for (ComponentElementProperties elementProperties : myChooser.getMarkedElements()) {
-      components.addAll(elementProperties.items);
     }
-    return components;
+    return arrayOf(selectAll, selectNone, invert)
   }
 
-  private static class ComponentElementProperties implements ElementsChooser.ElementProperties {
-    private final Set<ExportableItem> items = new THashSet<>();
-
-    public String toString() {
-      Set<String> names = new LinkedHashSet<>();
-      for (ExportableItem component : items) {
-        names.add(component.getPresentableName());
-      }
-      return StringUtil.join(ArrayUtil.toStringArray(names), ", ");
+  override fun doOKAction() {
+    PropertiesComponent.getInstance().setValue("export.settings.path", pathPanel.text, DEFAULT_PATH)
+    val unmarked = myChooser.getElements(false)
+    val builder = StringBuilder()
+    for (element in unmarked) {
+      builder.append(element.toString())
+      builder.append("|")
     }
+    PropertiesComponent.getInstance().setValue(KEY_UNMARKED_NAMES, if (builder.isEmpty()) null else builder.toString())
+
+    super.doOKAction()
   }
 
-  @NotNull
-  Path getExportFile() {
-    return Paths.get(myPathPanel.getText());
+  override fun getPreferredFocusedComponent(): JComponent? {
+    return pathPanel.textField
   }
 
-  @Override
-  protected String getDimensionServiceKey() {
-    return "#com.intellij.ide.actions.ChooseComponentsToExportDialog";
+  override fun createNorthPanel(): JComponent? {
+    return JLabel(myDescription)
+  }
+
+  override fun createCenterPanel(): JComponent? {
+    return myChooser
+  }
+
+  override fun createSouthPanel(): JComponent {
+    val buttons = super.createSouthPanel()
+    if (!myShowFilePath) return buttons
+    val panel = JPanel(VerticalFlowLayout())
+    panel.add(pathPanel)
+    panel.add(buttons)
+    return panel
+  }
+
+  override fun getDimensionServiceKey(): String? {
+    return "#com.intellij.ide.actions.ChooseComponentsToExportDialog"
+  }
+}
+
+private class ComponentElementProperties : MultiStateElementsChooser.ElementProperties {
+  val items = THashSet<ExportableItem>()
+
+  override fun toString(): String {
+    val names = LinkedHashSet<String>()
+    for ((_, presentableName) in items) {
+      names.add(presentableName)
+    }
+    return StringUtil.join(ArrayUtil.toStringArray(names), ", ")
   }
 }
