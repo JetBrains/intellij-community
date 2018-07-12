@@ -2,6 +2,7 @@
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Comparing;
@@ -67,10 +68,14 @@ class TBItemButton extends TBItem {
         myNativeCallback = ()->{
           // NOTE: executed from AppKit thread
           if (executeOnEDT) {
-            if (modality != null)
-              ApplicationManager.getApplication().invokeLater(myAction, modality);
-            else
-              ApplicationManager.getApplication().invokeLater(myAction);
+            final Application app = ApplicationManager.getApplication();
+            if (app != null) {
+              if (modality != null)
+                app.invokeLater(myAction, modality);
+              else
+                app.invokeLater(myAction);
+            } else
+              SwingUtilities.invokeLater(myAction);
           } else {
             myAction.run();
           }

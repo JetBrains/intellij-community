@@ -3,7 +3,6 @@ package com.intellij.ui.mac.touchbar;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,10 +23,9 @@ class TouchBar implements NSTLibrary.ItemCreator {
   private final ItemsContainer myItems;
   private final ItemListener myItemListener;
   private final TBItemButton myCustomEsc;
-  private final PresentationFactory myPresentationFactory = new PresentationFactory();
+  private final @NotNull UpdateTimerWrapper myUpdateTimer = new UpdateTimerWrapper(500);
 
   private ID myNativePeer;        // java wrapper holds native object
-  private TimerListener myTimerListener;
   private String myDefaultOptionalContextName;
   private BarContainer myBarContainer;
 
@@ -151,7 +149,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
       NST.releaseTouchBar(myNativePeer);
       myNativePeer = ID.NIL;
     }
-    _stopTimer();
+    myUpdateTimer.stop();
   }
 
   void clear() { myItems.releaseAll(); }
@@ -227,30 +225,22 @@ class TouchBar implements NSTLibrary.ItemCreator {
 
   void onBeforeShow() {
     updateActionItems();
-    if (myTimerListener == null) {
-      myTimerListener = new TimerListener() {
-        @Override
-        public ModalityState getModalityState() { return ModalityState.current(); }
-        @Override
-        public void run() { updateActionItems(); }
-      };
-    }
-    ActionManager.getInstance().addTransparentTimerListener(500/*delay param doesn't affect anything*/, myTimerListener);
+    myUpdateTimer.start();
   }
-  void onHide() { _stopTimer(); }
+  void onHide() {
+    myUpdateTimer.stop();
+  }
 
   void forEachDeep(Consumer<? super TBItem> proc) { myItems.forEachDeep(proc); }
 
   void updateActionItems() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
     final boolean[] layoutChanged = new boolean[]{false};
     forEachDeep(tbitem->{
       if (!(tbitem instanceof TBItemAnActionButton))
         return;
 
       final TBItemAnActionButton item = (TBItemAnActionButton)tbitem;
-      final Presentation presentation = myPresentationFactory.getPresentation(item.getAnAction());
+      final Presentation presentation = item.getAnAction().getTemplatePresentation().clone();
 
       try {
         item.updateAnAction(presentation);
@@ -284,10 +274,45 @@ class TouchBar implements NSTLibrary.ItemCreator {
     TouchBarsManager.hideContainer(myBarContainer);
   }
 
-  private void _stopTimer() {
-    if (myTimerListener != null) {
-      ActionManager.getInstance().removeTransparentTimerListener(myTimerListener);
-      myTimerListener = null;
+  private class UpdateTimerWrapper {
+    final int myDelay;
+    Object myTimerImpl;
+
+    UpdateTimerWrapper(int delay) { myDelay = delay; }
+
+    void start() {
+      if (myTimerImpl != null)
+        stop();
+
+      if (ApplicationManager.getApplication() == null) {
+        final Timer t = new Timer(myDelay, (event) -> updateActionItems());
+        myTimerImpl = t;
+
+        t.setRepeats(true);
+        t.start();
+        return;
+      }
+
+      final TimerListener t = new TimerListener() {
+        @Override
+        public ModalityState getModalityState() { return ModalityState.current(); }
+        @Override
+        public void run() { updateActionItems(); }
+      };
+      myTimerImpl = t;
+      ActionManager.getInstance().addTransparentTimerListener(myDelay/*delay param doesn't affect anything*/, t);
+    }
+
+    void stop() {
+      if (myTimerImpl == null)
+        return;
+
+      if (myTimerImpl instanceof Timer)
+        ((Timer)myTimerImpl).stop();
+      else if (myTimerImpl instanceof TimerListener)
+        ActionManager.getInstance().removeTransparentTimerListener((TimerListener)myTimerImpl);
+
+      myTimerImpl = null;
     }
   }
 }

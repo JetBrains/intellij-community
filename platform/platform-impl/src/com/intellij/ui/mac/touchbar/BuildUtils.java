@@ -1,8 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
-import com.intellij.execution.Executor;
-import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
@@ -18,7 +16,6 @@ import com.intellij.openapi.ui.OptionAction;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomePopupAction;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.mac.TouchbarDataKeys;
@@ -55,12 +52,6 @@ class BuildUtils {
   private static final int BUTTON_MIN_WIDTH_DLG = 107;
   private static final int BUTTON_BORDER = 16;
   private static final int BUTTON_IMAGE_MARGIN = 2;
-
-  private static final String RUNNERS_GROUP_TOUCHBAR = "RunnerActionsTouchbar";
-
-  static {
-    _initExecutorsGroup();
-  }
 
   static void addActionGroupButtons(@NotNull TouchBar out, @NotNull ActionGroup actionGroup, @Nullable String filterGroupPrefix, @Nullable Customizer customizer) {
     _traverse(actionGroup, new GroupVisitor(out, filterGroupPrefix, customizer));
@@ -450,7 +441,9 @@ class BuildUtils {
     }
   }
 
-  static String getActionId(AnAction act) {
+  static @Nullable String getActionId(AnAction act) {
+    if (ApplicationManager.getApplication() == null)
+      return null;
     return ActionManager.getInstance().getId(act instanceof CustomisedActionGroup ? ((CustomisedActionGroup)act).getOrigin() : act);
   }
 
@@ -567,25 +560,5 @@ class BuildUtils {
       }
     } else
       out.add(act);
-  }
-
-  private static void _initExecutorsGroup() {
-    final ActionManager am = ActionManager.getInstance();
-    final AnAction runButtons = am.getAction(RUNNERS_GROUP_TOUCHBAR);
-    if (runButtons == null) {
-      // System.out.println("ERROR: RunnersGroup for touchbar is unregistered");
-      return;
-    }
-    if (!(runButtons instanceof ActionGroup)) {
-      // System.out.println("ERROR: RunnersGroup for touchbar isn't a group");
-      return;
-    }
-    final ActionGroup g = (ActionGroup)runButtons;
-    for (Executor exec: ExecutorRegistry.getInstance().getRegisteredExecutors()) {
-      if (exec != null && (exec.getId().equals(ToolWindowId.RUN) || exec.getId().equals(ToolWindowId.DEBUG))) {
-        AnAction action = am.getAction(exec.getId());
-        ((DefaultActionGroup)g).add(action);
-      }
-    }
   }
 }
