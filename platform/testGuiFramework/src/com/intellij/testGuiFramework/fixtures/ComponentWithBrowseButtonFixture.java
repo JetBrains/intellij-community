@@ -49,7 +49,7 @@ public class ComponentWithBrowseButtonFixture extends JComponentFixture<Componen
     robot().click(target(), getExtensionIconLocation(extensionFilter));
   }
 
-  public Point getExtensionIconLocation(@NotNull final Predicate<ExtendableTextComponent.Extension> extensionFilter) {
+  private Point getExtensionIconLocation(@NotNull final Predicate<ExtendableTextComponent.Extension> extensionFilter) {
     final JComponent component = target().getChildComponent();
     if (!(component instanceof ExtendableTextField)) {
       throw new ComponentLookupException("Child component is not an instance of ExtendableTextField");
