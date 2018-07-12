@@ -63,6 +63,12 @@ object GithubApiRequests {
     }
   }
 
+  object Repos : Entity("/repos") {
+    @JvmStatic
+    fun delete(server: GithubServerPath, username: String, repoName: String) =
+      Delete(getUrl(server, urlSuffix, "/$username/$repoName")).withOperationName("delete repository $username/$repoName")
+  }
+
   object Gists : Entity("/gists") {
     @JvmStatic
     fun create(server: GithubServerPath,
