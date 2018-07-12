@@ -47,6 +47,11 @@ class TNettyServerTransport(port: Int) : TServerTransport() {
     nettyServer.waitForBind()
   }
 
+  @Throws(InterruptedException::class)
+  fun awaitTermination(timeout: Long, unit: TimeUnit): Boolean {
+    return nettyServer.awaitTermination(timeout, unit)
+  }
+
   override fun acceptImpl(): TTransport = nettyServer.accept()
 
   override fun interrupt() {
@@ -187,6 +192,11 @@ class TNettyServerTransport(port: Int) : TServerTransport() {
         workerGroup.shutdownGracefully()
         bossGroup.shutdownGracefully()
       }
+    }
+
+    @Throws(InterruptedException::class)
+    fun awaitTermination(timeout: Long, unit: TimeUnit): Boolean {
+      return workerGroup.awaitTermination(timeout, unit) && bossGroup.awaitTermination(timeout, unit)
     }
   }
 
