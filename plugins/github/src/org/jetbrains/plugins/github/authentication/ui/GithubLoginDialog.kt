@@ -38,6 +38,7 @@ import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.chain
 import org.jetbrains.plugins.github.ui.util.DialogValidationUtils.notBlank
 import org.jetbrains.plugins.github.ui.util.Validator
 import org.jetbrains.plugins.github.util.GithubUtil
+import java.awt.Component
 import java.awt.Cursor
 import java.net.UnknownHostException
 import java.util.function.Supplier
@@ -47,7 +48,7 @@ import javax.swing.text.html.HTMLEditorKit
 
 class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: GithubApiRequestExecutor.Factory,
                                                   private val project: Project? = null,
-                                                  parent: JComponent? = null,
+                                                  parent: Component? = null,
                                                   private val isAccountUnique: (name: String, server: GithubServerPath) -> Boolean = { _, _ -> true },
                                                   title: String = "Log In to Github",
                                                   private val message: String? = null)

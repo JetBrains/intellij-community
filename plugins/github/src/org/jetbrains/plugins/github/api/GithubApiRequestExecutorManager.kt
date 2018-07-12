@@ -7,7 +7,7 @@ import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
-import javax.swing.JComponent
+import java.awt.Component
 
 /**
  * Allows to acquire API executor without exposing the auth token to external code
@@ -21,7 +21,7 @@ class GithubApiRequestExecutorManager(private val authenticationManager: GithubA
   }
 
   @CalledInAwt
-  fun getExecutor(account: GithubAccount, parentComponent: JComponent): GithubApiRequestExecutor? {
+  fun getExecutor(account: GithubAccount, parentComponent: Component): GithubApiRequestExecutor? {
     return authenticationManager.getOrRequestTokenForAccount(account, parentComponent = parentComponent)
              ?.let(requestExecutorFactory::create)
   }
