@@ -30,10 +30,10 @@ import git4idea.test.GitHttpAuthTestService;
 import git4idea.test.GitPlatformTest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager;
 import org.jetbrains.plugins.github.api.GithubApiTaskExecutor;
-import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.util.GithubGitHelper;
@@ -185,8 +185,8 @@ public abstract class GithubTest extends GitPlatformTest {
     myExecutor2 = executorManager.getExecutor(myAccount2);
     myToken = token1;
 
-    myUsername = myApiTaskExecutor.execute(myAccount, c -> GithubApiUtil.getCurrentUser(c).getLogin());
-    myUsername2 = myApiTaskExecutor.execute(myAccount2, c -> GithubApiUtil.getCurrentUser(c).getLogin());
+    myUsername = myExecutor.execute(GithubApiRequests.CurrentUser.get(myAccount.getServer())).getLogin();
+    myUsername2 = myExecutor2.execute(GithubApiRequests.CurrentUser.get(myAccount2.getServer())).getLogin();
 
     myHttpAuthService = (GitHttpAuthTestService)ServiceManager.getService(GitHttpAuthService.class);
 
