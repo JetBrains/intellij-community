@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.codeInsight.intentions;
 
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -24,7 +25,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -49,7 +49,8 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
     if (!(file instanceof PyFile) || file instanceof PyDocstringFile) return false;
     updateText(false);
 
-    final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
+    final int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
+    final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, offset);
     if (elementAt == null) return false;
     if (isAvailableForParameter(project, elementAt)) {
       return true;
@@ -86,15 +87,7 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
 
   @Nullable
   public static PyExpression getProblemElement(@Nullable PsiElement elementAt) {
-    PyExpression problemElement = PsiTreeUtil.getParentOfType(elementAt, PyNamedParameter.class, PyReferenceExpression.class);
-    if (problemElement == null) return null;
-    if (problemElement instanceof PyQualifiedExpression) {
-      final PyExpression qualifier = ((PyQualifiedExpression)problemElement).getQualifier();
-      if (qualifier != null && !qualifier.getText().equals(PyNames.CANONICAL_SELF)) {
-        problemElement = qualifier;
-      }
-    }
-    return problemElement;
+    return PsiTreeUtil.getParentOfType(elementAt, PyNamedParameter.class, PyReferenceExpression.class);
   }
 
   protected abstract void updateText(boolean isReturn);

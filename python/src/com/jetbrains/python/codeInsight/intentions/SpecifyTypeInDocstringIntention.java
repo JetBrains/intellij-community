@@ -16,6 +16,7 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -57,7 +58,8 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
 
   @Override
   public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
+    final int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
+    final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, offset);
     final PyExpression problemElement = getProblemElement(elementAt);
     final PsiReference reference = problemElement == null ? null : problemElement.getReference();
 

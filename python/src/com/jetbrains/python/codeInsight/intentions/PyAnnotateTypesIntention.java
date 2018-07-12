@@ -18,6 +18,7 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
@@ -54,7 +55,8 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PyFile) || file instanceof PyDocstringFile) return false;
 
-    final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
+    final int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
+    final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, offset);
     if (elementAt == null) return false;
 
     final PyFunction function = findSuitableFunction(elementAt);
@@ -77,7 +79,8 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
 
   @Override
   public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, editor.getCaretModel().getOffset());
+    final int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
+    final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, offset);
     if (elementAt != null) {
       final PyFunction function = findSuitableFunction(elementAt);
       if (function != null) {
