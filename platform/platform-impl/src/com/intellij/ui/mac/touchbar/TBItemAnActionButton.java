@@ -4,8 +4,10 @@ package com.intellij.ui.mac.touchbar;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.IconLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +41,7 @@ class TBItemAnActionButton extends TBItemButton {
   TBItemAnActionButton(@NotNull String uid, @Nullable ItemListener listener, @NotNull AnAction action) {
     super(uid, listener);
     myAnAction = action;
-    myActionId = ActionManager.getInstance().getId(myAnAction);
+    myActionId = ApplicationManager.getApplication() == null ? action.toString() : ActionManager.getInstance().getId(myAnAction);
 
     setModality(null);
 
@@ -56,13 +58,22 @@ class TBItemAnActionButton extends TBItemButton {
   TBItemAnActionButton setShowMode(int showMode) { myShowMode = showMode; return this; }
 
   void updateAnAction(Presentation presentation) {
+    if (ApplicationManager.getApplication() == null) {
+      if (myComponent instanceof JButton) {
+        presentation.setEnabled(myComponent.isEnabled());
+        presentation.setText(DialogWrapper.extractMnemonic(((JButton)myComponent).getText()).second);
+      }
+      return;
+    }
+
     final DataContext dctx = DataManager.getInstance().getDataContext(_getComponent());
+    final ActionManager am = ActionManagerEx.getInstanceEx();
     final AnActionEvent e = new AnActionEvent(
       null,
       dctx,
       ActionPlaces.TOUCHBAR_GENERAL,
       presentation,
-      ActionManagerEx.getInstanceEx(),
+      am,
       0
     );
     myAnAction.update(e);
@@ -119,6 +130,12 @@ class TBItemAnActionButton extends TBItemButton {
   }
 
   private void _performAction() {
+    if (ApplicationManager.getApplication() == null) {
+      if (myComponent instanceof JButton)
+        ((JButton)myComponent).doClick();
+      return;
+    }
+
     final ActionManagerEx actionManagerEx = ActionManagerEx.getInstanceEx();
     final Component src = _getComponent();
     if (src == null) // KeyEvent can't have null source object

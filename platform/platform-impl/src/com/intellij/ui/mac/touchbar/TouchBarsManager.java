@@ -3,13 +3,14 @@ package com.intellij.ui.mac.touchbar;
 
 import com.intellij.execution.ExecutionListener;
 import com.intellij.execution.ExecutionManager;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -45,7 +46,7 @@ public class TouchBarsManager {
   private static final Map<Project, ProjectData> ourProjectData = new HashMap<>(); // NOTE: probably it is better to use api of UserDataHolder
   private static final Map<Container, BarContainer> ourTemporaryBars = new HashMap<>();
 
-  public static void subscribeProjectManager() {
+  public static void onApplicationInitialized() {
     if (!isTouchBarAvailable())
       return;
 
@@ -101,6 +102,8 @@ public class TouchBarsManager {
         ourProjectData.remove(project);
       }
     });
+
+    _initExecutorsGroup();
   }
 
   public static boolean isTouchBarAvailable() { return NST.isAvailable(); }
@@ -420,5 +423,27 @@ public class TouchBarsManager {
     final TouchBar top = ourStack.getTopTouchBar();
     if (top != null)
       top.updateActionItems();
+  }
+
+  private static final String RUNNERS_GROUP_TOUCHBAR = "RunnerActionsTouchbar";
+
+  private static void _initExecutorsGroup() {
+    final ActionManager am = ActionManager.getInstance();
+    final AnAction runButtons = am.getAction(RUNNERS_GROUP_TOUCHBAR);
+    if (runButtons == null) {
+      // System.out.println("ERROR: RunnersGroup for touchbar is unregistered");
+      return;
+    }
+    if (!(runButtons instanceof ActionGroup)) {
+      // System.out.println("ERROR: RunnersGroup for touchbar isn't a group");
+      return;
+    }
+    final ActionGroup g = (ActionGroup)runButtons;
+    for (Executor exec: ExecutorRegistry.getInstance().getRegisteredExecutors()) {
+      if (exec != null && (exec.getId().equals(ToolWindowId.RUN) || exec.getId().equals(ToolWindowId.DEBUG))) {
+        AnAction action = am.getAction(exec.getId());
+        ((DefaultActionGroup)g).add(action);
+      }
+    }
   }
 }

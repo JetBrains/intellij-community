@@ -3,6 +3,7 @@ package com.intellij.ui.mac.touchbar;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +38,8 @@ class ItemsContainer {
   }
 
   @NotNull TBItemAnActionButton addAnActionButton(@NotNull AnAction act, @Nullable TBItem positionAnchor) {
-    final String uid = String.format("%s.anActionButton.%d.%s", myName, myCounter++, ActionManager.getInstance().getId(act));
+    final String actId = ApplicationManager.getApplication() != null ? ActionManager.getInstance().getId(act) : act.toString();
+    final String uid = String.format("%s.anActionButton.%d.%s", myName, myCounter++, actId);
     final TBItemAnActionButton butt = new TBItemAnActionButton(uid, myListener, act);
 
     if (positionAnchor != null) {
