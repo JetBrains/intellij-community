@@ -273,7 +273,6 @@ class DistributionJARsBuilder {
     def ant = buildContext.ant
     def layoutBuilder = createLayoutBuilder()
     def productLayout = buildContext.productProperties.productLayout
-/* TODO(b/111280239): fails after IDEA 182.2371.4 merge
     def searchableOptionsDir = new File(buildContext.paths.temp, "searchableOptions/result")
 
     //todo[nik] move buildSearchableOptions and patchedApplicationInfo methods to this class
@@ -282,7 +281,6 @@ class DistributionJARsBuilder {
     if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.SEARCHABLE_OPTIONS_INDEX_STEP)) {
       layoutBuilder.patchModuleOutput(productLayout.searchableOptionsModule, FileUtil.toSystemIndependentName(searchableOptionsDir.absolutePath))
     }
-*/
 
     def applicationInfoFile = FileUtil.toSystemIndependentName(patchedApplicationInfo.absolutePath)
     def applicationInfoDir = "$buildContext.paths.temp/applicationInfo"
