@@ -1,6 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.project.settings
 
+import com.intellij.execution.BeforeRunTask
+import com.intellij.execution.BeforeRunTaskProvider
+import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.openapi.externalSystem.model.project.settings.ConfigurationData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
@@ -17,6 +20,8 @@ import com.intellij.packaging.artifacts.ModifiableArtifact
 import com.intellij.packaging.elements.CompositePackagingElement
 import com.intellij.packaging.impl.artifacts.PlainArtifactType
 import com.intellij.packaging.impl.elements.*
+import com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTask
+import com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTaskProvider
 import com.intellij.util.ObjectUtils.consumeIfCast
 
 class ArtifactsImporter: ConfigurationHandler {
@@ -155,4 +160,31 @@ class ArtifactsImporter: ConfigurationHandler {
   private fun Project.ifModuleFound(moduleName: String?, processor: (Module) -> Unit) {
     if (moduleName != null) { ModuleManager.getInstance(this@ifModuleFound).findModuleByName(moduleName)?.let { processor(it) } }
   }
+}
+
+class BuildArtifactsTaskImporter: BeforeRunTaskImporter {
+  override fun process(project: Project,
+                       modelsProvider: IdeModifiableModelsProvider,
+                       runConfiguration: RunConfiguration,
+                       beforeRunTasks: MutableList<BeforeRunTask<*>>,
+                       cfg: MutableMap<String, Any>): MutableList<BeforeRunTask<*>> {
+
+    consumeIfCast(cfg["artifactName"], String::class.java) { artifactName ->
+      val artifact = ArtifactManager.getInstance(project).findArtifact(artifactName)
+      val hasTask = beforeRunTasks
+        .filterIsInstance<BuildArtifactsBeforeRunTask>()
+        .any { it.artifactPointers.any { it.artifactName == artifactName } }
+
+      if (!hasTask && artifact != null) {
+        val provider = BeforeRunTaskProvider.getProvider(project, BuildArtifactsBeforeRunTaskProvider.ID) ?: return@consumeIfCast
+        val task = provider.createTask(runConfiguration) ?: return@consumeIfCast
+        task.addArtifact(artifact)
+        beforeRunTasks.add(task)
+      }
+    }
+    return beforeRunTasks
+  }
+
+  override fun canImport(typeName: String): Boolean = "buildArtifact" == typeName
+
 }
