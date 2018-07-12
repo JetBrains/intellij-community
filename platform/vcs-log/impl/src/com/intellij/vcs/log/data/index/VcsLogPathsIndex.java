@@ -33,7 +33,7 @@ import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.VcsIndexableDetails;
-import com.intellij.vcs.log.util.PersistentUtil;
+import com.intellij.vcs.log.util.StorageId;
 import com.intellij.vcsUtil.VcsUtil;
 import gnu.trove.TByteObjectHashMap;
 import gnu.trove.THashMap;
@@ -50,7 +50,6 @@ import java.util.*;
 import java.util.function.ObjIntConsumer;
 
 import static com.intellij.util.containers.ContainerUtil.newTroveSet;
-import static com.intellij.vcs.log.data.index.VcsLogPersistentIndex.getVersion;
 
 public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsIndex.ChangeData>> {
   private static final Logger LOG = Logger.getInstance(VcsLogPathsIndex.class);
@@ -59,12 +58,12 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
   @NotNull private final PathsIndexer myPathsIndexer;
 
-  public VcsLogPathsIndex(@NotNull String logId,
+  public VcsLogPathsIndex(@NotNull StorageId storageId,
                           @NotNull Set<VirtualFile> roots,
                           boolean hasForwardIndex,
                           @NotNull FatalErrorHandler fatalErrorHandler,
                           @NotNull Disposable disposableParent) throws IOException {
-    super(logId, PATHS, getVersion(), new PathsIndexer(createPathsEnumerator(logId), roots),
+    super(storageId, PATHS, new PathsIndexer(createPathsEnumerator(storageId), roots),
           new ChangeDataListKeyDescriptor(), hasForwardIndex, fatalErrorHandler, disposableParent);
 
     myPathsIndexer = (PathsIndexer)myIndexer;
@@ -72,10 +71,10 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   }
 
   @NotNull
-  private static PersistentEnumeratorBase<LightFilePath> createPathsEnumerator(@NotNull String logId) throws IOException {
-    File storageFile = PersistentUtil.getStorageFile(INDEX, INDEX_PATHS_IDS, logId, getVersion());
+  private static PersistentEnumeratorBase<LightFilePath> createPathsEnumerator(@NotNull StorageId storageId) throws IOException {
+    File storageFile = storageId.getStorageFile(INDEX_PATHS_IDS);
     return new PersistentBTreeEnumerator<>(storageFile, new LightFilePathKeyDescriptor(),
-                                           Page.PAGE_SIZE, null, getVersion());
+                                           Page.PAGE_SIZE, null, storageId.getVersion());
   }
 
   @Nullable

@@ -25,6 +25,7 @@ import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
+import com.intellij.vcs.log.util.StorageId;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,22 +38,18 @@ import java.util.Set;
 import java.util.function.BiPredicate;
 import java.util.function.ObjIntConsumer;
 
-import static com.intellij.vcs.log.data.index.VcsLogPersistentIndex.getVersion;
-import static com.intellij.vcs.log.util.PersistentUtil.getStorageFile;
-
 public class VcsLogFullDetailsIndex<T> implements Disposable {
   protected static final String INDEX = "index";
   @NotNull protected final MyMapReduceIndex myMapReduceIndex;
   @NotNull private final IndexId<Integer, T> myID;
-  @NotNull private final String myLogId;
+  @NotNull private final StorageId myStorageId;
   @NotNull private final String myName;
   @NotNull protected final DataIndexer<Integer, T, VcsFullCommitDetails> myIndexer;
   @NotNull private final FatalErrorHandler myFatalErrorHandler;
   private volatile boolean myDisposed = false;
 
-  public VcsLogFullDetailsIndex(@NotNull String logId,
+  public VcsLogFullDetailsIndex(@NotNull StorageId storageId,
                                 @NotNull String name,
-                                final int version,
                                 @NotNull DataIndexer<Integer, T, VcsFullCommitDetails> indexer,
                                 @NotNull DataExternalizer<T> externalizer,
                                 boolean hasForwardIndex,
@@ -61,28 +58,28 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
     throws IOException {
     myID = IndexId.create(name);
     myName = name;
-    myLogId = logId;
+    myStorageId = storageId;
     myIndexer = indexer;
     myFatalErrorHandler = fatalErrorHandler;
 
-    myMapReduceIndex = createMapReduceIndex(externalizer, version, hasForwardIndex);
+    myMapReduceIndex = createMapReduceIndex(externalizer, hasForwardIndex);
 
     Disposer.register(disposableParent, this);
   }
 
   @NotNull
-  private MyMapReduceIndex createMapReduceIndex(@NotNull DataExternalizer<T> dataExternalizer, int version, boolean hasForwardIndex)
+  private MyMapReduceIndex createMapReduceIndex(@NotNull DataExternalizer<T> dataExternalizer, boolean hasForwardIndex)
     throws IOException {
-    MyIndexExtension extension = new MyIndexExtension(myIndexer, dataExternalizer, version);
+    MyIndexExtension extension = new MyIndexExtension(myIndexer, dataExternalizer, myStorageId.getVersion());
     ForwardIndex<Integer, T> forwardIndex = hasForwardIndex ? new KeyCollectionBasedForwardIndex<Integer, T>(extension) {
       @NotNull
       @Override
       public PersistentHashMap<Integer, Collection<Integer>> createMap() throws IOException {
-        File storageFile = getStorageFile(INDEX, myName + ".idx", myLogId, version);
+        File storageFile = myStorageId.getStorageFile(myName + ".idx");
         return new PersistentHashMap<>(storageFile, new IntInlineKeyDescriptor(), new IntCollectionDataExternalizer(), Page.PAGE_SIZE);
       }
     } : new EmptyForwardIndex<>();
-    return new MyMapReduceIndex(extension, new MyMapIndexStorage<>(myName, myLogId, dataExternalizer), forwardIndex);
+    return new MyMapReduceIndex(extension, new MyMapIndexStorage<>(myName, myStorageId, dataExternalizer), forwardIndex);
   }
 
   @NotNull
@@ -180,9 +177,9 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
   }
 
   private static class MyMapIndexStorage<T> extends MapIndexStorage<Integer, T> {
-    public MyMapIndexStorage(@NotNull String name, @NotNull String logId, @NotNull DataExternalizer<T> externalizer)
+    public MyMapIndexStorage(@NotNull String name, @NotNull StorageId storageId, @NotNull DataExternalizer<T> externalizer)
       throws IOException {
-      super(getStorageFile(INDEX, name, logId, getVersion(), true), EnumeratorIntegerDescriptor.INSTANCE, externalizer, 5000, false);
+      super(storageId.getStorageFile(name, true), EnumeratorIntegerDescriptor.INSTANCE, externalizer, 5000, false);
     }
 
     @Override

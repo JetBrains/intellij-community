@@ -25,6 +25,8 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.io.*
 import com.intellij.vcs.log.VcsLogProvider
+import com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE
+import com.intellij.vcs.log.util.PersistentUtil.deleteWithRenamingAllFilesStartingWith
 import java.io.File
 import java.io.IOException
 import java.util.*
@@ -32,7 +34,7 @@ import java.util.*
 object PersistentUtil {
   @JvmField
   val LOG_CACHE = File(PathManager.getSystemPath(), "vcs-log")
-  private val CORRUPTION_MARKER = "corruption.marker"
+  private const val CORRUPTION_MARKER = "corruption.marker"
 
   @JvmStatic
   val corruptionMarkerFile: File
@@ -49,30 +51,15 @@ object PersistentUtil {
     return StringUtil.join(sortedRoots, { root -> root.path + "." + logProviders[root]!!.supportedVcs.name }, ".").hashCode()
   }
 
-  @JvmStatic
-  fun getStorageFile(storageKind: String, logId: String, version: Int): File {
-    val subdir = File(LOG_CACHE, storageKind)
-    val safeLogId = PathUtilRt.suggestFileName(logId, true, true)
-    val mapFile = File(subdir, "$safeLogId.$version")
-    if (!mapFile.exists()) {
-      IOUtil.deleteAllFilesStartingWith(File(subdir, safeLogId))
-    }
-    return mapFile
-  }
-
   @Throws(IOException::class)
   @JvmStatic
-  fun <T> createPersistentEnumerator(keyDescriptor: KeyDescriptor<T>,
-                                     storageKind: String,
-                                     logId: String,
-                                     version: Int): PersistentEnumeratorBase<T> {
-    val storageFile = getStorageFile(storageKind, logId, version)
-
-    return IOUtil.openCleanOrResetBroken({ PersistentBTreeEnumerator(storageFile, keyDescriptor, Page.PAGE_SIZE, null, version) },
+  fun <T> createPersistentEnumerator(keyDescriptor: KeyDescriptor<T>, storageId: StorageId): PersistentEnumeratorBase<T> {
+    val storageFile = storageId.getStorageFile()
+    return IOUtil.openCleanOrResetBroken({ PersistentBTreeEnumerator(storageFile, keyDescriptor, Page.PAGE_SIZE, null, storageId.version) },
                                          storageFile)
   }
 
-  private fun deleteWithRenamingAllFilesStartingWith(baseFile: File): Boolean {
+  internal fun deleteWithRenamingAllFilesStartingWith(baseFile: File): Boolean {
     val parentFile = baseFile.parentFile ?: return false
 
     val files = parentFile.listFiles { pathname -> pathname.name.startsWith(baseFile.name) } ?: return true
@@ -83,41 +70,49 @@ object PersistentUtil {
     }
     return deleted
   }
+}
+
+class StorageId(private val subdirName: String, private val logId: String, val version: Int) {
+  private val safeLogId = PathUtilRt.suggestFileName(logId, true, true)
+
+  fun subdir() = File(LOG_CACHE, subdirName)
+
+  private fun getFile(kind: String = ""): File {
+    if (kind.isEmpty()) return File(subdir(), "$safeLogId.$version")
+    return File(subdir(), "$safeLogId.$kind.$version")
+  }
+
+  private fun getFileForMapIndexStorage(kind: String = ""): File {
+    return MapIndexStorage.getIndexStorageFile(getFile(kind))
+  }
+
+  @JvmOverloads
+  fun getStorageFile(kind: String = ""): File {
+    val storageFile = getFile(kind)
+    if (!storageFile.exists()) {
+      IOUtil.deleteAllFilesStartingWith(File(subdir(), safeLogId))
+    }
+    return storageFile
+  }
+
+  // do not forget to change cleanupStorageFiles method when editing this one
+  fun getStorageFile(kind: String, forMapIndexStorage: Boolean = false): File {
+    val storageFile = if (forMapIndexStorage) getFileForMapIndexStorage(kind) else getFile(kind)
+    if (!storageFile.exists()) {
+      for (oldVersion in 0 until version) {
+        val oldStorage = StorageId(subdirName, logId, oldVersion)
+        val oldStorageFile = if (forMapIndexStorage) oldStorage.getFileForMapIndexStorage(kind) else oldStorage.getFile(kind)
+        IOUtil.deleteAllFilesStartingWith(oldStorageFile)
+      }
+    }
+    return getFile(kind)
+  }
 
   // this method cleans up all storage files for a project in a specified subdir
   // it assumes that these storage files all start with "safeLogId."
   // as method getStorageFile creates them
   // so these two methods should be changed in sync
-  @JvmStatic
-  fun cleanupStorageFiles(subdirName: String, id: String): Boolean {
-    val subdir = File(LOG_CACHE, subdirName)
-    val safeLogId = PathUtilRt.suggestFileName(id, true, true)
-    return deleteWithRenamingAllFilesStartingWith(File(subdir, "$safeLogId."))
-  }
-
-  // do not forget to change cleanupStorageFiles method when editing this one
-  @JvmOverloads
-  @JvmStatic
-  fun getStorageFile(subdirName: String,
-                     kind: String,
-                     id: String,
-                     version: Int,
-                     forMapIndexStorage: Boolean = false): File {
-    val subdir = File(LOG_CACHE, subdirName)
-    val safeLogId = PathUtilRt.suggestFileName(id, true, true)
-    val baseFile = getFileName(kind, subdir, safeLogId, version)
-    val storageFile = if (forMapIndexStorage) MapIndexStorage.getIndexStorageFile(baseFile) else baseFile
-    if (!storageFile.exists()) {
-      for (oldVersion in 0 until version) {
-        val baseOldStorageFile = getFileName(kind, subdir, safeLogId, oldVersion)
-        val oldStorageFile = if (forMapIndexStorage) MapIndexStorage.getIndexStorageFile(baseOldStorageFile) else baseOldStorageFile
-        IOUtil.deleteAllFilesStartingWith(oldStorageFile)
-      }
-    }
-    return baseFile
-  }
-
-  private fun getFileName(kind: String, subdir: File, safeLogId: String, version: Int): File {
-    return File(subdir, "$safeLogId.$kind.$version")
+  fun cleanupStorageFiles(): Boolean {
+    return deleteWithRenamingAllFilesStartingWith(File(subdir(), "$safeLogId."))
   }
 }

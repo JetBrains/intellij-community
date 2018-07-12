@@ -26,6 +26,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.VcsUserRegistryImpl;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
+import com.intellij.vcs.log.util.StorageId;
 import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -38,18 +39,17 @@ import java.util.Set;
 
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
-import static com.intellij.vcs.log.data.index.VcsLogPersistentIndex.getVersion;
 
 public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
   private static final Logger LOG = Logger.getInstance(VcsLogUserIndex.class);
   public static final String USERS = "users";
   @NotNull private final VcsUserRegistryImpl myUserRegistry;
 
-  public VcsLogUserIndex(@NotNull String logId,
+  public VcsLogUserIndex(@NotNull StorageId storageId,
                          @NotNull VcsUserRegistryImpl userRegistry,
                          @NotNull FatalErrorHandler consumer,
                          @NotNull Disposable disposableParent) throws IOException {
-    super(logId, USERS, getVersion(), new UserIndexer(userRegistry), VoidDataExternalizer.INSTANCE, true,
+    super(storageId, USERS, new UserIndexer(userRegistry), VoidDataExternalizer.INSTANCE, true,
           consumer, disposableParent);
     myUserRegistry = userRegistry;
     ((UserIndexer)myIndexer).setFatalErrorConsumer(e -> consumer.consume(this, e));
