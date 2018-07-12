@@ -5,8 +5,8 @@ import com.intellij.testGuiFramework.driver.CheckboxTreeDriver
 import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
 import com.intellij.testGuiFramework.driver.FinderPredicate
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
-import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.ui.CheckboxTree
 import org.fest.swing.core.Robot
 
@@ -30,7 +30,7 @@ class CheckboxTreeFixture(
     val checkbox = getCheckboxComponent()
     if (checkbox != null && checkbox.isSelected != value) {
       clickCheckbox()
-      GuiTestUtil.pause("Wait until checkbox got value $value"){
+      GuiTestUtilKt.waitUntil("Wait until checkbox got value $value") {
         getCheckboxComponent()?.isSelected ?: false
       }
       val actualValue = getCheckboxComponent()?.isSelected

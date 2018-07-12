@@ -4,7 +4,6 @@ package com.intellij.testGuiFramework.driver
 import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
 import com.intellij.testGuiFramework.cellReader.ProjectTreeCellReader
 import com.intellij.testGuiFramework.cellReader.SettingsTreeCellReader
-import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import org.fest.assertions.Assertions
@@ -124,9 +123,9 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
   }
 
   private fun JTree.waitForChildrenToShowUp(path: TreePath) {
-    val timeout = robot.settings().timeoutToBeVisible().toLong()
+    val timeoutInSeconds = robot.settings().timeoutToBeVisible() * 1000 // convert ms to s
     try {
-      GuiTestUtil.pause("Waiting for children are shown up", timeout) { this.childCount(path) != 0 }
+      GuiTestUtilKt.waitUntil("Waiting for children are shown up", timeoutInSeconds) { this.childCount(path) != 0 }
     }
     catch (waitTimedOutError: WaitTimedOutError) {
       throw LocationUnavailableException(waitTimedOutError.message!!)

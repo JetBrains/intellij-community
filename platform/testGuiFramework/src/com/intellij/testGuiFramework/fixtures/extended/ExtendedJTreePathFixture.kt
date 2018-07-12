@@ -4,8 +4,8 @@ package com.intellij.testGuiFramework.fixtures.extended
 import com.intellij.testGuiFramework.driver.ExtendedJTreeDriver
 import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
 import com.intellij.testGuiFramework.driver.FinderPredicate
-import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import org.fest.swing.core.MouseButton
 import org.fest.swing.core.MouseClickInfo
 import org.fest.swing.core.Robot
@@ -100,7 +100,7 @@ open class ExtendedJTreePathFixture(
     if (!cachePaths.containsKey(stringPath)){
       var partialPath: TreePath? = null
       for (partialList in stringPath.list2tree()) {
-        GuiTestUtil.pause(condition = "wait to find a correct path to click", timeoutSeconds = 2L) {
+        GuiTestUtilKt.waitUntil(condition = "wait to find a correct path to click", timeoutInSeconds = 2) {
           try {
             partialPath = ExtendedJTreePathFinder(tree)
               .findMatchingPathByPredicate(predicate = predicate, pathStrings = *partialList.toTypedArray())
