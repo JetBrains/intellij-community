@@ -85,4 +85,8 @@ public class RunContextAction extends BaseRunConfigurationAction {
     }
     return Pair.create(!ExecutorRegistry.getInstance().isStarting(context.getProject(), myExecutor.getId(), runner.getRunnerId()), true);
   }
+
+  /*package*/ boolean isForExecutor(@NotNull String executorId) {
+    return myExecutor.getId().equals(executorId);
+  }
 }
