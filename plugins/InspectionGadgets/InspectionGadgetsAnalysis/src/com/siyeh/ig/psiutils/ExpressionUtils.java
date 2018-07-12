@@ -499,7 +499,7 @@ public class ExpressionUtils {
     }
     for (int i = 0; i < operands.length; i++) {
       final PsiExpression operand = operands[i];
-      if (operand == expression || PsiTreeUtil.isAncestor(operand, expression, false)) {
+      if (PsiUtil.skipParenthesizedExprDown(operand) == expression) {
         return i == 0 && TypeUtils.isJavaLangString(operands[1].getType());
       }
       final PsiType type = operand.getType();
