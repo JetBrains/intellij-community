@@ -4,10 +4,7 @@ package org.jetbrains.plugins.github.api
 import com.intellij.util.ThrowableConvertor
 import org.jetbrains.plugins.github.api.GithubApiRequest.*
 import org.jetbrains.plugins.github.api.data.*
-import org.jetbrains.plugins.github.api.requests.GithubAuthorizationCreateRequest
-import org.jetbrains.plugins.github.api.requests.GithubGistRequest
-import org.jetbrains.plugins.github.api.requests.GithubRepoRequest
-import org.jetbrains.plugins.github.api.requests.GithubRequestPagination
+import org.jetbrains.plugins.github.api.requests.*
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import java.awt.Image
 
@@ -76,6 +73,44 @@ object GithubApiRequests {
     @JvmStatic
     fun delete(server: GithubServerPath, username: String, repoName: String) =
       Delete(getUrl(server, urlSuffix, "/$username/$repoName")).withOperationName("delete repository $username/$repoName")
+
+    object Branches : Entity("/branches") {
+      @JvmStatic
+      fun pages(server: GithubServerPath, username: String, repoName: String) =
+        GithubApiPagesLoader.Request(get(server, username, repoName), ::get)
+
+      @JvmOverloads
+      @JvmStatic
+      fun get(server: GithubServerPath, username: String, repoName: String, pagination: GithubRequestPagination? = null) =
+        get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, getQuery(pagination?.toString().orEmpty())))
+
+      @JvmStatic
+      fun get(url: String) = Get.jsonPage<GithubBranch>(url).withOperationName("get branches")
+    }
+
+    object Forks : Entity("/forks") {
+      @JvmStatic
+      fun pages(server: GithubServerPath, username: String, repoName: String) =
+        GithubApiPagesLoader.Request(get(server, username, repoName), ::get)
+
+      @JvmOverloads
+      @JvmStatic
+      fun get(server: GithubServerPath, username: String, repoName: String, pagination: GithubRequestPagination? = null) =
+        get(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix, getQuery(pagination?.toString().orEmpty())))
+
+      @JvmStatic
+      fun get(url: String) = Get.jsonPage<GithubRepo>(url).withOperationName("get forks")
+    }
+
+    object PullRequests : Entity("/pulls") {
+      @JvmStatic
+      fun create(server: GithubServerPath,
+                 username: String, repoName: String,
+                 title: String, description: String, head: String, base: String) =
+        Post.json<GithubPullRequest>(getUrl(server, Repos.urlSuffix, "/$username/$repoName", urlSuffix),
+                                     GithubPullRequestRequest(title, description, head, base))
+          .withOperationName("create pull request in $username/$repoName")
+    }
   }
 
   object Gists : Entity("/gists") {

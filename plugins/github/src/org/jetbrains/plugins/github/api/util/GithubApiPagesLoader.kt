@@ -6,6 +6,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequest
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GithubResponsePage
 import java.io.IOException
+import java.util.function.Predicate
 
 object GithubApiPagesLoader {
 
@@ -20,6 +21,18 @@ object GithubApiPagesLoader {
       request = page.nextLink?.let(pagesRequest.urlRequestProvider)
     }
     return result
+  }
+
+  @Throws(IOException::class)
+  @JvmStatic
+  fun <T> find(executor: GithubApiRequestExecutor, indicator: ProgressIndicator, pagesRequest: Request<T>, predicate: Predicate<T>): T? {
+    var request: GithubApiRequest<GithubResponsePage<T>>? = pagesRequest.initialRequest
+    while (request != null) {
+      val page = executor.execute(indicator, request)
+      page.items.find { predicate.test(it) }?.let { return it }
+      request = page.nextLink?.let(pagesRequest.urlRequestProvider)
+    }
+    return null
   }
 
   class Request<T>(val initialRequest: GithubApiRequest<GithubResponsePage<T>>,
