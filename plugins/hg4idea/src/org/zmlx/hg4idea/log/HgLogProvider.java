@@ -127,7 +127,7 @@ public class HgLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsCommitMetadata> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes)
+  public List<? extends VcsCommitMetadata> readMetadata(@NotNull VirtualFile root, @NotNull List<String> hashes)
     throws VcsException {
     return HgHistoryUtil.readCommitMetadata(myProject, root, hashes);
   }

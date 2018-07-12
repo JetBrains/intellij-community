@@ -46,7 +46,7 @@ public class MiniDetailsGetter extends AbstractDataGetter<VcsCommitMetadata> {
   @Override
   protected List<? extends VcsCommitMetadata> readDetails(@NotNull VcsLogProvider logProvider, @NotNull VirtualFile root,
                                                           @NotNull List<String> hashes) throws VcsException {
-    return logProvider.readShortDetails(root, hashes);
+    return logProvider.readMetadata(root, hashes);
   }
 
   @NotNull
