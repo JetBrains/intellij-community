@@ -19,7 +19,6 @@ package com.intellij.ui;
 import com.intellij.openapi.progress.util.PotemkinProgress;
 import org.jetbrains.annotations.ApiStatus;
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 
@@ -74,13 +73,11 @@ public class WindowMoveListener extends WindowMouseListener {
    */
   @ApiStatus.Experimental
   public static class ToolkitListener extends WindowMoveListener {
-    private ToolkitListenerHelper myHelper;
-    private Window myAncestor;
+    private final ToolkitListenerHelper myHelper;
 
     public ToolkitListener(Component content) {
       super(content);
       myHelper = new ToolkitListenerHelper(this);
-      myAncestor = SwingUtilities.getWindowAncestor(content);
     }
 
     @Override
@@ -119,11 +116,7 @@ public class WindowMoveListener extends WindowMouseListener {
     }
 
     private boolean hitTest(MouseEvent e) {
-      Rectangle bounds = myContent.getBounds();
-      //bounds = SwingUtilities.convertRectangle(myContent, bounds, myAncestor); // [tav] todo: takes tree lock !!!
-      Point onScreen = myAncestor.getPeer().getLocationOnScreen();
-      Point inParent = ((JFrame)myAncestor).getRootPane().getLocation(); // temp
-      bounds.setLocation(onScreen.x + inParent.x, onScreen.y + inParent.y);
+      Rectangle bounds = getScreenBounds(myContent);
       return bounds.contains(e.getLocationOnScreen());
     }
 
@@ -143,6 +136,18 @@ public class WindowMoveListener extends WindowMouseListener {
 
     public void removeFrom(Component comp) {
       myHelper.removeFrom(comp);
+    }
+
+    // tree lock free
+    private static Rectangle getScreenBounds(Component comp) {
+      Rectangle bounds = comp.getBounds();
+      Component ancestor = comp.getParent();
+      while (ancestor != null) {
+        Point loc = ancestor.getLocation();
+        bounds.setLocation(bounds.x + loc.x, bounds.y + loc.y);
+        ancestor = ancestor.getParent();
+      }
+      return bounds;
     }
   }
 }

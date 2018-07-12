@@ -23,11 +23,12 @@ import com.intellij.util.MethodInvocator;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.event.MouseInputListener;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.peer.ComponentPeer;
 
 import static java.awt.Cursor.*;
 
@@ -113,6 +114,7 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
       Component view = getView(content);
       if (view != null) {
         myType = isDisabled(view) ? CUSTOM_CURSOR : getCursorType(view, event.getLocationOnScreen());
+        //noinspection MagicConstant
         setCursor(content, getPredefinedCursor(myType == CUSTOM_CURSOR ? DEFAULT_CURSOR : myType));
         if (start && myType != CUSTOM_CURSOR) {
           myLocation = event.getLocationOnScreen();
@@ -210,8 +212,8 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
    * @author tav
    */
   @ApiStatus.Experimental
-  public class ToolkitListenerHelper {
-    private WindowMouseListener myListener;
+  public static class ToolkitListenerHelper {
+    private final WindowMouseListener myListener;
 
     private Class classWComponentPeer;
     private MethodInvocator reshapeInvocator;
@@ -254,14 +256,14 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
       }
     }
 
-    public void setCursor(Component content, Cursor cursor, Runnable defaultAction) {
+    public void setCursor(Component content, @SuppressWarnings("unused") Cursor cursor, Runnable defaultAction) {
       PotemkinProgress.invokeLaterNotBlocking(content, defaultAction);
     }
 
     public void setBounds(Component comp, Rectangle bounds, Runnable defaultAction) {
-      if (classWComponentPeer != null && classWComponentPeer.isInstance(comp.getPeer())) {
-        // emulate native set bounds
-        reshapeInvocator.invoke(comp.getPeer(), bounds.x, bounds.y, bounds.width, bounds.height);
+      if (classWComponentPeer != null && classWComponentPeer.isInstance(getPeer(comp))) {
+        // emulate native awt move/resize
+        reshapeInvocator.invoke(getPeer(comp), bounds.x, bounds.y, bounds.width, bounds.height);
         xAccessor.set(comp, bounds.x);
         yAccessor.set(comp, bounds.y);
         widthAccessor.set(comp, bounds.width);
@@ -272,39 +274,54 @@ abstract class WindowMouseListener extends MouseAdapter implements MouseInputLis
     }
 
     public void addTo(Component comp) {
-      final Window window = comp instanceof Window ? (Window)comp : SwingUtilities.getWindowAncestor(comp);
-      if (window.getPeer() != null) {
-        addToImpl(window);
-        return;
-      }
+      if (methodsNotAvailable()) return;
+
+      final Window window = UIUtil.getWindow(comp);
+      if (window == null) return;
+
+      final boolean wasShown = getPeer(window) != null;
+      if (wasShown) addToImpl(window);
+
       window.removeComponentListener(pendingListener);
       window.addComponentListener(pendingListener = new ComponentAdapter() {
         @Override
         public void componentShown(ComponentEvent event) {
-          window.removeComponentListener(pendingListener);
-          addToImpl(window);
+          if (!wasShown) addToImpl(window);
+        }
+        @Override
+        public void componentHidden(ComponentEvent e) {
+          window.removeComponentListener(this);
+          removeFrom(window);
         }
       });
     }
 
     public void removeFrom(Component comp) {
-      comp = comp instanceof Window ? comp : SwingUtilities.getWindowAncestor(comp);
-      if (comp.getPeer() != null) {
-        if (removeMouseListenerMethod == null || removeMouseMotionListenerMethod == null) return;
+      if (methodsNotAvailable()) return;
 
-        removeMouseListenerMethod.invoke(comp.getPeer(), myListener);
-        removeMouseMotionListenerMethod.invoke(comp.getPeer(), myListener);
+      comp = UIUtil.getWindow(comp);
+      if (getPeer(comp) != null) {
+        removeMouseListenerMethod.invoke(getPeer(comp), myListener);
+        removeMouseMotionListenerMethod.invoke(getPeer(comp), myListener);
       }
-      else if (pendingListener != null){
-        comp.removeComponentListener(pendingListener);
-      }
+      if (comp != null) comp.removeComponentListener(pendingListener);
     }
 
     private void addToImpl(Component comp) {
-      if (addMouseListenerMethod == null || addMouseMotionListenerMethod == null) return;
+      if (methodsNotAvailable()) return;
 
-      addMouseListenerMethod.invoke(comp.getPeer(), myListener);
-      addMouseMotionListenerMethod.invoke(comp.getPeer(), myListener);
+      addMouseListenerMethod.invoke(getPeer(comp), myListener);
+      addMouseMotionListenerMethod.invoke(getPeer(comp), myListener);
+    }
+
+    private boolean methodsNotAvailable() {
+      return removeMouseListenerMethod == null || removeMouseMotionListenerMethod == null;
+    }
+
+    @Nullable
+    public static ComponentPeer getPeer(@Nullable Component comp) {
+      //noinspection deprecation
+      return comp == null ? null : comp.getPeer();
     }
   }
 }

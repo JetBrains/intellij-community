@@ -362,7 +362,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
     JComponent titlePane = createTitlePane(root);
 
     setTitlePane(root, titlePane);
-    installWindowListeners(root, root.getParent());
+    //installWindowListeners(root, root.getParent()); // installed on ancestor change
     installLayout(root);
     if (myWindow != null) {
       root.revalidate();
@@ -372,7 +372,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
 
   private void uninstallClientDecorations(JRootPane root) {
     uninstallBorder(root);
-    uninstallWindowListeners(root);
+    //uninstallWindowListeners(root);
     setTitlePane(root, null);
     uninstallLayout(root);
     int style = root.getWindowDecorationStyle();
@@ -455,7 +455,7 @@ public class DarculaRootPaneUI extends BasicRootPaneUI {
     }
     if (propertyName.equals("ancestor")) {
       uninstallWindowListeners(myRootPane);
-      if (((JRootPane)e.getSource()).getWindowDecorationStyle() != JRootPane.NONE) {
+      if (e.getNewValue() != null && ((JRootPane)e.getSource()).getWindowDecorationStyle() != JRootPane.NONE) {
         installWindowListeners(myRootPane, myRootPane.getParent());
       }
     }

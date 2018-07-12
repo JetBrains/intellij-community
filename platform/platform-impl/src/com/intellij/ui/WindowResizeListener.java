@@ -17,10 +17,13 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.JBInsets;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 
 import javax.swing.Icon;
 import java.awt.*;
+import java.awt.event.HierarchyEvent;
+import java.awt.event.HierarchyListener;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static java.awt.Cursor.*;
@@ -172,13 +175,25 @@ public class WindowResizeListener extends WindowMouseListener {
    */
   @ApiStatus.Experimental
   public static class ToolkitListener extends WindowResizeListener {
-    private ToolkitListenerHelper myHelper;
-    private AtomicReference<Dimension> myMinSize = new AtomicReference<>(); // [tav] todo: update from EDT
+    private final ToolkitListenerHelper myHelper;
+    private final AtomicReference<Dimension> myMinSize = new AtomicReference<>();
 
     public ToolkitListener(Component content, Insets border, Icon corner) {
       super(content, border, corner);
       myHelper = new ToolkitListenerHelper(this);
       myMinSize.set(content.getMinimumSize());
+      Window window = UIUtil.getWindow(content);
+      if (window != null) window.addHierarchyListener(new HierarchyListener() {
+        @Override
+        public void hierarchyChanged(HierarchyEvent e) {
+          if (e.getID() == HierarchyEvent.HIERARCHY_CHANGED) {
+            myMinSize.set(content.getMinimumSize());
+          }
+          else if (e.getID() == HierarchyEvent.SHOWING_CHANGED && !window.isShowing()) {
+            window.removeHierarchyListener(this);
+          }
+        }
+      });
     }
 
     @Override
