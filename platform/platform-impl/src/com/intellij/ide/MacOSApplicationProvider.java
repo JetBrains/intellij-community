@@ -138,7 +138,7 @@ public class MacOSApplicationProvider {
       });
       installAutoUpdateMenu();
 
-      TouchBarsManager.subscribeProjectManager();
+      TouchBarsManager.onApplicationInitialized();
     }
 
     private static void installAutoUpdateMenu() {
