@@ -78,6 +78,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author traff
@@ -243,6 +245,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
 
   public void executeInConsole(@NotNull final String code) {
+    CountDownLatch latch = new CountDownLatch(1);
+
     TransactionGuard.submitTransaction(this, () -> {
       final String codeToExecute = code.endsWith("\n") || myExecuteActionHandler.checkSingleLine(code) ? code : code + "\n";
       DocumentEx document = getConsoleEditor().getDocument();
@@ -267,7 +271,16 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
           getConsoleEditor().getCaretModel().moveToOffset(oldOffset);
         }
       });
+
+      latch.countDown();
     });
+
+    try {
+      latch.await(1, TimeUnit.MINUTES);
+    }
+    catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
   }
 
   public void executeStatement(@NotNull String statement, @NotNull final Key attributes) {
