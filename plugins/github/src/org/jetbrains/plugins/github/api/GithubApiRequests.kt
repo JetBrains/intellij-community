@@ -9,6 +9,7 @@ import org.jetbrains.plugins.github.api.data.GithubGist
 import org.jetbrains.plugins.github.api.data.GithubRepo
 import org.jetbrains.plugins.github.api.requests.GithubAuthorizationCreateRequest
 import org.jetbrains.plugins.github.api.requests.GithubGistRequest
+import org.jetbrains.plugins.github.api.requests.GithubRepoRequest
 import org.jetbrains.plugins.github.api.requests.GithubRequestPagination
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import java.awt.Image
@@ -47,6 +48,12 @@ object GithubApiRequests {
 
       @JvmStatic
       fun get(url: String) = Get.jsonPage<GithubRepo>(url).withOperationName("get user repositories")
+
+      @JvmStatic
+      fun create(server: GithubServerPath, name: String, description: String, private: Boolean) =
+        Post.json<GithubRepo>(getUrl(server, CurrentUser.urlSuffix, urlSuffix),
+                              GithubRepoRequest(name, description, private))
+          .withOperationName("create user repository")
     }
 
     object RepoSubs : Entity("/subscriptions") {

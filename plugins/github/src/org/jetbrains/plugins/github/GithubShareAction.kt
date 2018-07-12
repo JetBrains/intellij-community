@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.service
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
@@ -60,9 +61,8 @@ import git4idea.util.GitFileUtils
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
-import org.jetbrains.plugins.github.api.GithubApiTaskExecutor
-import org.jetbrains.plugins.github.api.GithubApiUtil
-import org.jetbrains.plugins.github.api.GithubTask
+import org.jetbrains.plugins.github.api.GithubApiRequests
+import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
@@ -123,7 +123,6 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
       val accounts = authManager.getAccounts()
 
       val progressManager = service<ProgressManager>()
-      val apiTaskExecutor = service<GithubApiTaskExecutor>()
       val requestExecutorManager = service<GithubApiRequestExecutorManager>()
       val accountInformationProvider = service<GithubAccountInformationProvider>()
       val gitHelper = service<GithubGitHelper>()
@@ -143,14 +142,15 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
 
         @Throws(IOException::class)
         override fun invoke(account: GithubAccount, parentComponent: Component) = loadedInfo.getOrPut(account) {
+          val requestExecutor = requestExecutorManager.getExecutor(account, parentComponent) ?: throw ProcessCanceledException()
           progressManager.runProcessWithProgressSynchronously(ThrowableComputable<Pair<Boolean, Set<String>>, IOException> {
-            apiTaskExecutor.execute(progressManager.progressIndicator, account, GithubTask { connection ->
-              // ability to create private repos and list of repos
-              val user = GithubApiUtil.getCurrentUser(connection)
-              val canCreatePrivateRepo = user.canCreatePrivateRepo()
-              val names = GithubApiUtil.getUserRepos(connection).mapSmartSet { it.name }
-              canCreatePrivateRepo to names
-            })
+
+            val user = requestExecutor.execute(progressManager.progressIndicator, GithubApiRequests.CurrentUser.get(account.server))
+            val names = GithubApiPagesLoader
+              .loadAll(requestExecutor, progressManager.progressIndicator,
+                       GithubApiRequests.CurrentUser.Repos.pages(account.server, false))
+              .mapSmartSet { it.name }
+            user.canCreatePrivateRepo() to names
           }, "Loading Account Information For $account", true, project)
         }
       }
@@ -179,8 +179,8 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
           // create GitHub repo (network)
           LOG.info("Creating GitHub repository")
           indicator.text = "Creating GitHub repository..."
-          url = apiTaskExecutor
-            .execute(indicator, account, GithubTask { c -> GithubApiUtil.createRepo(c, name, description, isPrivate).htmlUrl })
+          url = requestExecutor
+            .execute(indicator, GithubApiRequests.CurrentUser.Repos.create(account.server, name, description, isPrivate)).htmlUrl
           LOG.info("Successfully created GitHub repository")
 
           val root = gitRepository?.root ?: project.baseDir
