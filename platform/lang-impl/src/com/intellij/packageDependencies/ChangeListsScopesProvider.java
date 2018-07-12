@@ -3,8 +3,11 @@ package com.intellij.packageDependencies;
 
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jetbrains.annotations.NotNull;
@@ -37,8 +40,13 @@ public class ChangeListsScopesProvider extends CustomScopesProviderEx {
 
     final List<NamedScope> result = new ArrayList<>();
     result.add(new ChangeListScope(changeListManager));
-    for (ChangeList list : changeListManager.getChangeListsCopy()) {
-      result.add(new ChangeListScope(changeListManager, list.getName()));
+    List<LocalChangeList> changeLists = changeListManager.getChangeListsCopy();
+    boolean skipSingleDefaultCL = Registry.is("vcs.skip.single.default.changelist") &&
+                                  changeLists.size() == 1 && changeLists.get(0).isBlank();
+    if (!skipSingleDefaultCL) {
+      for (ChangeList list : changeLists) {
+        result.add(new ChangeListScope(changeListManager, list.getName()));
+      }
     }
     return result;
   }

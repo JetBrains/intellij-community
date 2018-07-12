@@ -409,4 +409,8 @@
   </action>
   <action id="Vcs.MoveChangedLinesToChangelist"/>
   <action id="ChangesView.Move"/>
+
+  <action id="XDebugger.AttachToProcess">
+    <keyboard-shortcut first-keystroke="alt shift F5"/>
+  </action>
 </keymap>

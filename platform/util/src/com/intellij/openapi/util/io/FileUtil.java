@@ -59,7 +59,7 @@ public class FileUtil extends FileUtilRt {
   public static final TObjectHashingStrategy<String> PATH_HASHING_STRATEGY = FilePathHashingStrategy.create();
 
   public static final TObjectHashingStrategy<File> FILE_HASHING_STRATEGY =
-    SystemInfo.isFileSystemCaseSensitive ? ContainerUtil.<File>canonicalStrategy() : new TObjectHashingStrategy<File>() {
+    new TObjectHashingStrategy<File>() {
       @Override
       public int computeHashCode(File object) {
         return fileHashCode(object);
@@ -1023,6 +1023,7 @@ public class FileUtil extends FileUtilRt {
    *             Use {@link FileUtilRt#getExtension(String)} instead to get the unchanged extension.
    *             If you need to check whether a file has a specified extension use {@link FileUtilRt#extensionEquals(String, String)}
    */
+  @Deprecated
   @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
   @NotNull
   public static String getExtension(@NotNull String fileName) {
@@ -1429,8 +1430,13 @@ public class FileUtil extends FileUtilRt {
     return path.startsWith("/");
   }
 
-  public static boolean isWindowsAbsolutePath(@NotNull String pathString) {
-    return pathString.length() >= 2 && Character.isLetter(pathString.charAt(0)) && pathString.charAt(1) == ':';
+  public static boolean isWindowsAbsolutePath(@NotNull String path) {
+    boolean ok = path.length() >= 2 && Character.isLetter(path.charAt(0)) && path.charAt(1) == ':';
+    if (ok && path.length() > 2) {
+      char separatorChar = path.charAt(2);
+      ok = separatorChar == '/' || separatorChar == '\\';
+    }
+    return ok;
   }
 
   @Contract("null -> null; !null -> !null")

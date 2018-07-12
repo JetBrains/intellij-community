@@ -33,7 +33,7 @@ public class ImportProjectAction extends ImportModuleAction {
   @Override
   public void update(AnActionEvent e) {
     if (NewWelcomeScreen.isNewWelcomeScreen(e)) {
-      e.getPresentation().setIcon(AllIcons.Welcome.ImportProject);
+      e.getPresentation().setIcon(AllIcons.ToolbarDecorator.Import);
     }
   }
 }

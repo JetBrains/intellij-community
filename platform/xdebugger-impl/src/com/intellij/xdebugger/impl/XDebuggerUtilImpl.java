@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl;
 import com.intellij.CommonBundle;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -160,9 +161,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       promises.add(type.computeVariantsAsync(project, position).then(o -> {
         if (((List)o).isEmpty() && types.size() > 1) { // multiple types
           return Collections.singletonList(type.new XLineBreakpointAllVariant(position) {
+            @NotNull
             @Override
             public String getText() {
-              return StringUtil.unpluralize(type.getTitle());
+              return StringUtil.notNullize(StringUtil.unpluralize(type.getTitle()), type.getTitle());
             }
 
             @Nullable
@@ -662,5 +664,11 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         }
       });
     }
+  }
+
+  public static Icon getVerifiedIcon(@NotNull XBreakpoint breakpoint) {
+    return breakpoint.getSuspendPolicy() == SuspendPolicy.NONE
+           ? AllIcons.Debugger.Db_verified_no_suspend_breakpoint
+           : AllIcons.Debugger.Db_verified_breakpoint;
   }
 }

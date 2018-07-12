@@ -36,8 +36,8 @@ private const val RUNNER_ID = "RunnerId"
 private const val CONFIGURATION_TYPE_ATTRIBUTE = "type"
 private const val FACTORY_NAME_ATTRIBUTE = "factoryName"
 private const val FOLDER_NAME = "folderName"
-const val NAME_ATTR = "name"
-const val DUMMY_ELEMENT_NAME = "dummy"
+const val NAME_ATTR: String = "name"
+const val DUMMY_ELEMENT_NAME: String = "dummy"
 private const val TEMPORARY_ATTRIBUTE = "temporary"
 private const val EDIT_BEFORE_RUN = "editBeforeRun"
 private const val ACTIVATE_TOOLWINDOW_BEFORE_RUN = "activateToolWindowBeforeRun"
@@ -45,13 +45,13 @@ private const val ACTIVATE_TOOLWINDOW_BEFORE_RUN = "activateToolWindowBeforeRun"
 private const val TEMP_CONFIGURATION = "tempConfiguration"
 internal const val TEMPLATE_FLAG_ATTRIBUTE = "default"
 
-const val SINGLETON = "singleton"
+const val SINGLETON: String = "singleton"
 
 enum class RunConfigurationLevel {
   WORKSPACE, PROJECT, TEMPORARY
 }
 
-class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val manager: RunManagerImpl,
+class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(val manager: RunManagerImpl,
                                                                    private var _configuration: RunConfiguration? = null,
                                                                    private var isTemplate: Boolean = false,
                                                                    private var isSingleton: Boolean = false,
@@ -86,15 +86,15 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
 
   override fun getFactory(): ConfigurationFactory = _configuration?.factory ?: UnknownConfigurationType.getFactory()
 
-  override fun isTemplate() = isTemplate
+  override fun isTemplate(): Boolean = isTemplate
 
-  override fun isTemporary() = level == RunConfigurationLevel.TEMPORARY
+  override fun isTemporary(): Boolean = level == RunConfigurationLevel.TEMPORARY
 
   override fun setTemporary(value: Boolean) {
     level = if (value) RunConfigurationLevel.TEMPORARY else RunConfigurationLevel.WORKSPACE
   }
 
-  override fun isShared() = level == RunConfigurationLevel.PROJECT
+  override fun isShared(): Boolean = level == RunConfigurationLevel.PROJECT
 
   override fun setShared(value: Boolean) {
     if (value) {
@@ -105,7 +105,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     }
   }
 
-  override fun getConfiguration() = _configuration ?: UnknownConfigurationType.getFactory().createTemplateConfiguration(manager.project)
+  override fun getConfiguration(): RunConfiguration = _configuration ?: UnknownConfigurationType.getFactory().createTemplateConfiguration(manager.project)
 
   override fun createFactory(): Factory<RunnerAndConfigurationSettings> {
     return Factory {
@@ -143,25 +143,25 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     isEditBeforeRun = value
   }
 
-  override fun isEditBeforeRun() = isEditBeforeRun
+  override fun isEditBeforeRun(): Boolean = isEditBeforeRun
 
   override fun setActivateToolWindowBeforeRun(value: Boolean) {
     isActivateToolWindowBeforeRun = value
   }
 
-  override fun isActivateToolWindowBeforeRun() = isActivateToolWindowBeforeRun
+  override fun isActivateToolWindowBeforeRun(): Boolean = isActivateToolWindowBeforeRun
 
   override fun setSingleton(value: Boolean) {
     isSingleton = value
   }
 
-  override fun isSingleton() = isSingleton
+  override fun isSingleton(): Boolean = isSingleton
 
   override fun setFolderName(value: String?) {
     folderName = value
   }
 
-  override fun getFolderName() = folderName
+  override fun getFolderName(): String? = folderName
 
   fun readExternal(element: Element, isShared: Boolean) {
     isTemplate = element.getAttributeBooleanValue(TEMPLATE_FLAG_ATTRIBUTE)
@@ -337,9 +337,9 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     }
   }
 
-  override fun getRunnerSettings(runner: ProgramRunner<*>) = runnerSettings.getOrCreateSettings(runner)
+  override fun getRunnerSettings(runner: ProgramRunner<*>): RunnerSettings? = runnerSettings.getOrCreateSettings(runner)
 
-  override fun getConfigurationSettings(runner: ProgramRunner<*>) = configurationPerRunnerSettings.getOrCreateSettings(runner)
+  override fun getConfigurationSettings(runner: ProgramRunner<*>): ConfigurationPerRunnerSettings? = configurationPerRunnerSettings.getOrCreateSettings(runner)
 
   override fun getType(): ConfigurationType = factory.type
 
@@ -384,9 +384,9 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(private val m
     }
   }
 
-  override fun compareTo(other: Any) = if (other is RunnerAndConfigurationSettings) name.compareTo(other.name) else 0
+  override fun compareTo(other: Any): Int = if (other is RunnerAndConfigurationSettings) name.compareTo(other.name) else 0
 
-  override fun toString() = "${type.displayName}: ${if (isTemplate) "<template>" else name} (level: $level)"
+  override fun toString(): String = "${type.displayName}: ${if (isTemplate) "<template>" else name} (level: $level)"
 
   private inner class InfoProvider(override val runner: ProgramRunner<*>) : ConfigurationInfoProvider {
     override val configuration: RunConfiguration

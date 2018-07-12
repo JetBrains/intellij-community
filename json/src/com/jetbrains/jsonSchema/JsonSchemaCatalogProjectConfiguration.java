@@ -6,32 +6,38 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.containers.ConcurrentList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import com.jetbrains.jsonSchema.ide.JsonSchemaService;
-import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @State(name = "JsonSchemaCatalogProjectConfiguration", storages = @Storage("jsonCatalog.xml"))
 public class JsonSchemaCatalogProjectConfiguration implements PersistentStateComponent<JsonSchemaCatalogProjectConfiguration.MyState> {
-  @NotNull private final Project myProject;
   public volatile MyState myState = new MyState();
+  private final ConcurrentList<Runnable> myChangeHandlers = ContainerUtil.createConcurrentList();
+
+  public boolean isCatalogEnabled() {
+    MyState state = getState();
+    return state != null && state.myIsCatalogEnabled;
+  }
+
+  public void addChangeHandler(Runnable runnable) {
+    myChangeHandlers.add(runnable);
+  }
 
   public static JsonSchemaCatalogProjectConfiguration getInstance(@NotNull final Project project) {
     return ServiceManager.getService(project, JsonSchemaCatalogProjectConfiguration.class);
   }
 
-  public JsonSchemaCatalogProjectConfiguration(@NotNull Project project) {
-    myProject = project;
+  public JsonSchemaCatalogProjectConfiguration() {
   }
 
-  public void setState(boolean isEnabled) {
-    myState = new MyState(isEnabled);
-    updateComponent(isEnabled);
-  }
-
-  private void updateComponent(boolean isEnabled) {
-    ((JsonSchemaServiceImpl)JsonSchemaService.Impl.get(myProject)).getCatalogManager().setEnabled(isEnabled);
+  public void setState(boolean isEnabled, boolean isRemoteActivityEnabled) {
+    myState = new MyState(isEnabled, isRemoteActivityEnabled);
+    for (Runnable handler : myChangeHandlers) {
+      handler.run();
+    }
   }
 
   @Nullable
@@ -40,19 +46,32 @@ public class JsonSchemaCatalogProjectConfiguration implements PersistentStateCom
     return myState;
   }
 
+  public boolean isRemoteActivityEnabled() {
+    MyState state = getState();
+    return state != null && state.myIsRemoteActivityEnabled;
+  }
+
   @Override
   public void loadState(@NotNull MyState state) {
     myState = state;
-    updateComponent(state.myIsEnabled);
+    for (Runnable handler : myChangeHandlers) {
+      handler.run();
+    }
   }
 
   static class MyState {
     @Tag("enabled")
-    public boolean myIsEnabled = true;
+    public boolean myIsCatalogEnabled = true;
+
+    @Tag("remoteActivityEnabled")
+    public boolean myIsRemoteActivityEnabled = true;
 
     public MyState() {
     }
 
-    public MyState(boolean isEnabled) { myIsEnabled = isEnabled; }
+    public MyState(boolean isCatalogEnabled, boolean isRemoteActivityEnabled) {
+      myIsCatalogEnabled = isCatalogEnabled;
+      myIsRemoteActivityEnabled = isRemoteActivityEnabled;
+    }
   }
 }

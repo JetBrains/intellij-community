@@ -132,10 +132,23 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.commons.lang.exception.ExceptionUtils java.util.ArrayList getCauseMethodNameList()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.exception.ExceptionUtils java.util.List getStackFrameList(java.lang.Throwable)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.exception.ExceptionUtils java.util.List getStackFrameList(java.lang.Throwable) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.commons.lang.exception.ExceptionUtils java.util.List getThrowableList(java.lang.Throwable)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.commons.lang.exception.ExceptionUtils java.util.List getThrowableList(java.lang.Throwable) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
@@ -166,6 +179,11 @@
     <item name='org.apache.commons.lang.exception.NestableDelegate java.lang.String getMessage(java.lang.String)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val val="&quot;!null-&gt;!null&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.exception.NestableDelegate java.lang.String[] getMessages()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.lang.exception.NestableDelegate java.lang.String[] getStackFrames(java.lang.Throwable) 0'>

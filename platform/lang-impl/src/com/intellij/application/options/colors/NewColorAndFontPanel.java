@@ -122,6 +122,10 @@ public class NewColorAndFontPanel extends JPanel {
     return myOptionsPanel.showOption(option);
   }
 
+  public void selectOptionByType(final String typeToSelect) {
+    myOptionsPanel.selectOption(typeToSelect);
+  }
+
   @NotNull
   public Set<String> processListOptions() {
     if (myOptionList == null) {

@@ -20,8 +20,7 @@ import javax.swing.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMethodBreakpointProperties>
-                                      implements JavaBreakpointType<JavaMethodBreakpointProperties> {
+public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMethodBreakpointProperties> {
   public JavaMethodBreakpointType() {
     super("java-method", DebuggerBundle.message("method.breakpoints.tab.title"));
   }
@@ -58,8 +57,8 @@ public class JavaMethodBreakpointType extends JavaLineBreakpointTypeBase<JavaMet
 
   @NotNull
   @Override
-  public Icon getPendingIcon() {
-    return AllIcons.Debugger.Db_pending_method_breakpoint;
+  public Icon getInactiveDependentIcon() {
+    return AllIcons.Debugger.Db_dep_method_breakpoint;
   }
 
   //@Override

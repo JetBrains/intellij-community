@@ -127,8 +127,7 @@ public class GitRebaseUpdater extends GitUpdater {
       VcsNotifier.getInstance(myProject).
         notifyMinorWarning("Couldn't collect the updated files info",
                            String.format("Update of %s was successful, but we couldn't collect the updated changes because of an error",
-                                         myRoot), null
-        );
+                                         myRoot));
     }
     return result.success();
   }

@@ -26,7 +26,7 @@ import git4idea.test.createFileStructure
 import java.nio.file.Paths
 
 class GitSha1Test : GitSingleRepoTest() {
-  var A_FILE = "a.txt"
+  private var A_FILE = "a.txt"
 
   @Throws(Exception::class)
   override fun setUp() {

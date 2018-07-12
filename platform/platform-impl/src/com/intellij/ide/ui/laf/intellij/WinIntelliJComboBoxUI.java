@@ -9,7 +9,6 @@ import com.intellij.ui.PopupMenuListenerAdapter;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -26,6 +25,8 @@ import java.awt.event.MouseListener;
 import java.awt.geom.Path2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_WIDTH;
 
 /**
  * @author Konstantin Bulenkov
@@ -124,13 +125,13 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
                     arrowButton.getWidth() - i.right: arrowButton.getWidth() - i.left;
     }
 
-    return (comboBox.getComponentOrientation().isLeftToRight()) ?
-      new Rectangle(i.left, i.top,
-                           w - (i.left + i.right + buttonWidth),
-                           h - (i.top + i.bottom)) :
-      new Rectangle(i.left + buttonWidth, i.top,
-                           w - (i.left + i.right + buttonWidth),
-                           h - (i.top + i.bottom));
+    Rectangle rect = (comboBox.getComponentOrientation().isLeftToRight()) ?
+      new Rectangle(i.left, i.top, w - (i.left + i.right + buttonWidth), h - (i.top + i.bottom)) :
+      new Rectangle(i.left + buttonWidth, i.top, w - (i.left + i.right + buttonWidth), h - (i.top + i.bottom));
+
+    JBInsets.removeFrom(rect, padding);
+    rect.width += comboBox.isEditable() ? 0: padding.right;
+    return rect;
   }
 
 
@@ -260,7 +261,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
   }
 
   public static Icon getArrowIcon(@NotNull JComponent c) {
-    return IconCache.getIcon("comboDropTriangle", false, false, c.isEnabled());
+    return LafIconLookup.getIcon("comboDropTriangle", false, false, c.isEnabled());
   }
 
   @Override public void unconfigureArrowButton() {
@@ -434,17 +435,25 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return c.getComponentOrientation().isLeftToRight() ?
-           JBUI.insets(2, 7, 2, 2).asUIResource() : JBUI.insets(2, 2, 2, 7).asUIResource();
+    return JBUI.insets(1);
   }
 
-  protected Dimension  getSizeWithButton(Dimension d) {
+  @Override
+  protected Dimension  getSizeWithButton(Dimension size, Dimension editorSize) {
     ARROW_BUTTON_SIZE.update();
+
     Insets i = getInsets();
-    int width = ARROW_BUTTON_SIZE.width + i.left;
-    int editorHeight = editor != null ? editor.getPreferredSize().height + i.top + i.bottom : 0;
-    return new Dimension(Math.max(d.width + JBUI.scale(5), width),
-                         Math.max(editorHeight, Math.max(ARROW_BUTTON_SIZE.height, d.height)));
+    int editorHeight = editorSize != null ? editorSize.height + i.top + i.bottom + padding.top + padding.bottom: 0;
+    int editorWidth = editorSize != null ? editorSize.width + i.left + padding.left + padding.right : 0;
+    editorWidth = Math.max(editorWidth, MINIMUM_WIDTH.get() + i.left);
+
+    int width = size != null ? size.width : 0;
+    int height = size != null ? size.height : 0;
+
+    width = Math.max(editorWidth + ARROW_BUTTON_SIZE.width, width + padding.left);
+    height = Math.max(ARROW_BUTTON_SIZE.height, Math.max(editorHeight, height));
+
+    return new Dimension(width, height);
   }
 
   @Override
@@ -452,16 +461,16 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
     return new ComboBoxLayoutManager() {
       @Override
       public void layoutContainer(Container parent) {
-        JComboBox cb = (JComboBox)parent;
+      JComboBox cb = (JComboBox)parent;
 
-        if (arrowButton != null) {
-          if (cb.getComponentOrientation().isLeftToRight()) {
-            arrowButton.setBounds(cb.getWidth() - ARROW_BUTTON_SIZE.width, 0, ARROW_BUTTON_SIZE.width, cb.getHeight());
-          } else {
-            arrowButton.setBounds(0, 0, ARROW_BUTTON_SIZE.width, cb.getHeight());
-          }
+      if (arrowButton != null) {
+        if (cb.getComponentOrientation().isLeftToRight()) {
+          arrowButton.setBounds(cb.getWidth() - ARROW_BUTTON_SIZE.width, 0, ARROW_BUTTON_SIZE.width, cb.getHeight());
+        } else {
+          arrowButton.setBounds(0, 0, ARROW_BUTTON_SIZE.width, cb.getHeight());
         }
-        layoutEditor();
+      }
+      layoutEditor();
       }
     };
   }
@@ -562,13 +571,8 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       BorderLayoutPanel panel = JBUI.Panels.simplePanel(c).withBorder(
         list.getComponentOrientation().isLeftToRight() ? JBUI.Borders.empty(0, 5, 0, 1) : JBUI.Borders.empty(0, 1, 0, 5));
       panel.setBackground(c.getBackground());
+      panel.setDelegateAccessibleContextToWrappedComponent(true);
       return panel;
     }
-  }
-
-  @Nullable
-  @Override
-  public Insets getVisualPaddings(@NotNull Component component) {
-    return JBUI.insets(1);
   }
 }

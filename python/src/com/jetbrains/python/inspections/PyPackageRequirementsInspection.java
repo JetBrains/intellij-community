@@ -32,6 +32,8 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.pipenv.PipEnvInstallQuickFix;
+import com.jetbrains.python.sdk.pipenv.PipenvKt;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -108,10 +110,16 @@ public class PyPackageRequirementsInspection extends PyInspection {
                                        plural ? "are" : "is");
             final Set<String> unsatisfiedNames = new HashSet<>();
             for (PyRequirement req : unsatisfied) {
-              unsatisfiedNames.add(req.getFullName());
+              unsatisfiedNames.add(req.getName() + req.getExtras());
             }
             final List<LocalQuickFix> quickFixes = new ArrayList<>();
-            quickFixes.add(new PyInstallRequirementsFix(null, module, sdk, unsatisfied));
+            // TODO: Introduce an inspection extension
+            if (PipenvKt.isPipEnv(sdk)) {
+              quickFixes.add(new PipEnvInstallQuickFix());
+            }
+            else {
+              quickFixes.add(new PyInstallRequirementsFix(null, module, sdk, unsatisfied));
+            }
             quickFixes.add(new IgnoreRequirementFix(unsatisfiedNames));
             registerProblem(file, msg,
                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null,
@@ -401,8 +409,15 @@ public class PyPackageRequirementsInspection extends PyInspection {
       if (chosen.isEmpty()) {
         return;
       }
-      if (!PyPackageUtil.hasManagement(packages)) {
-        final PyPackageManagerUI ui = new PyPackageManagerUI(project, mySdk, new UIListener(myModule) {
+      boolean hasManagement;
+      try {
+        hasManagement = manager.hasManagement();
+      }
+      catch (ExecutionException e) {
+        hasManagement = false;
+      }
+      if (!hasManagement) {
+        final PyPackageManagerUI ui = new PyPackageManagerUI(project, mySdk, new RunningPackagingTasksListener(myModule) {
           @Override
           public void finished(List<ExecutionException> exceptions) {
             super.finished(exceptions);
@@ -419,7 +434,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     private void installRequirements(Project project, List<PyRequirement> requirements) {
-      final PyPackageManagerUI ui = new PyPackageManagerUI(project, mySdk, new UIListener(myModule));
+      final PyPackageManagerUI ui = new PyPackageManagerUI(project, mySdk, new RunningPackagingTasksListener(myModule));
       ui.install(requirements, Collections.emptyList());
     }
   }
@@ -468,7 +483,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
 
     private void installAndImportPackage(@NotNull Project project) {
       if (mySdk == null) return;
-      final PyPackageManagerUI ui = new PyPackageManagerUI(project, mySdk, new UIListener(myModule) {
+      final PyPackageManagerUI ui = new PyPackageManagerUI(project, mySdk, new RunningPackagingTasksListener(myModule) {
         @Override
         public void finished(List<ExecutionException> exceptions) {
           super.finished(exceptions);
@@ -484,14 +499,14 @@ public class PyPackageRequirementsInspection extends PyInspection {
           }
         }
       });
-      ui.install(Collections.singletonList(new PyRequirement(myPackageName)), Collections.emptyList());
+      ui.install(Collections.singletonList(PyRequirementsKt.pyRequirement(myPackageName)), Collections.emptyList());
     }
   }
 
-  private static class UIListener implements PyPackageManagerUI.Listener {
-    private final Module myModule;
+  public static class RunningPackagingTasksListener implements PyPackageManagerUI.Listener {
+    @NotNull private final Module myModule;
 
-    public UIListener(Module module) {
+    public RunningPackagingTasksListener(@NotNull Module module) {
       myModule = module;
     }
 

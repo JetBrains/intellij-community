@@ -1,0 +1,12 @@
+a ? :
+-----
+Groovy script
+  Conditional expression
+    Reference expression
+      PsiElement(identifier)('a')
+    PsiWhiteSpace(' ')
+    PsiElement(?)('?')
+    PsiErrorElement:<expression> expected, got ':'
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiElement(:)(':')

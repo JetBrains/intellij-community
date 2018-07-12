@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
@@ -551,6 +552,10 @@ public class ControlFlowUtils {
     return i == count;
   }
 
+  public static <T extends PsiElement> boolean isNestedElement(@NotNull T element, @NotNull Class<T> aClass) {
+    return PsiTreeUtil.getParentOfType(element, aClass, true, PsiClass.class, PsiLambdaExpression.class) != null;
+  }
+
   public static boolean isEmptyCodeBlock(PsiCodeBlock codeBlock) {
     return hasStatementCount(codeBlock, 0);
   }
@@ -944,7 +949,11 @@ public class ControlFlowUtils {
     if(parent instanceof PsiLocalVariable) {
       PsiElement grandParent = parent.getParent();
       if(grandParent instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)grandParent).getDeclaredElements().length == 1) {
-        return true;
+        PsiTypeElement typeElement = ((PsiLocalVariable)parent).getTypeElement();
+        if (!typeElement.isInferredType() ||
+            PsiTypesUtil.replaceWithExplicitType(((PsiLocalVariable)parent.copy()).getTypeElement()) != null) {
+          return true;
+        }
       }
     }
     if (parent instanceof PsiField) {
@@ -993,8 +1002,12 @@ public class ControlFlowUtils {
    */
   public static boolean isReachable(@NotNull PsiStatement statement) {
     ControlFlow flow;
-    PsiCodeBlock block = PsiTreeUtil.getParentOfType(statement, PsiCodeBlock.class);
-    if (block == null) return true;
+    PsiElement block = statement;
+    do {
+      block = PsiTreeUtil.getParentOfType(block, PsiCodeBlock.class);
+      if (block == null) return true;
+    }
+    while (block.getParent() instanceof PsiSwitchStatement);
     try {
       flow = ControlFlowFactory.getInstance(statement.getProject())
         .getControlFlow(block, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());

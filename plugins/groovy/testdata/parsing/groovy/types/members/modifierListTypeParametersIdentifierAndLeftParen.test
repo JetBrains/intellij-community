@@ -1,0 +1,42 @@
+class A {
+  final static <T> foo(
+}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('A')
+    Extends clause
+      <empty list>
+    Implements clause
+      <empty list>
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Method
+        Modifiers
+          PsiElement(final)('final')
+          PsiWhiteSpace(' ')
+          PsiElement(static)('static')
+        PsiWhiteSpace(' ')
+        Type parameter list
+          PsiElement(<)('<')
+          Type parameter
+            PsiElement(identifier)('T')
+            Type extends bounds list
+              <empty list>
+          PsiElement(>)('>')
+        PsiWhiteSpace(' ')
+        PsiElement(identifier)('foo')
+        PsiElement(()('(')
+        PsiWhiteSpace('\n')
+        Parameter list
+          PsiErrorElement:')' or identifier expected, got '}'
+            <empty list>
+        Throw clause
+          <empty list>
+      PsiElement(})('}')

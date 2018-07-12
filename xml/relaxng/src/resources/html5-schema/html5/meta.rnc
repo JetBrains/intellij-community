@@ -49,7 +49,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element body { body.inner & body.attrs }
 	body.attrs =
 		(	common.attrs
-		&	(	common.attrs.aria.landmark.application
+		&	(	common.attrs.aria.role.application
 			|	common.attrs.aria.landmark.document
 			|	common.attrs.aria.role.presentation
 			|	common.attrs.aria.implicit.document
@@ -128,9 +128,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 				)
 			|	base.attrs.target
 			)
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
 		)
 	base.attrs.href =
 		attribute href {

@@ -24,7 +24,7 @@ abstract class PyTreeChooserDialog<T : PsiNamedElement>(title: String,
                                                         classFilter: TreeChooser.Filter<T>?,
                                                         initialValue: T?)
   : AbstractTreeClassChooserDialog<T>(title, project, scope, clazz, classFilter, initialValue) {
-  override fun getSelectedFromTreeUserObject(node: DefaultMutableTreeNode?) = null
+  override fun getSelectedFromTreeUserObject(node: DefaultMutableTreeNode?): Nothing? = null
 
   override fun getClassesByName(name: String?, checkBoxState: Boolean, pattern: String?, searchScope: GlobalSearchScope?): MutableList<T> =
     findElements(name!!, searchScope!!).filter(filter::isAccepted).toMutableList()

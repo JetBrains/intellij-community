@@ -30,12 +30,14 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
   private final WindowsDistributionCustomizer customizer
   private final File ideaProperties
   private final File patchedApplicationInfo
+  private final String icoPath
 
   WindowsDistributionBuilder(BuildContext buildContext, WindowsDistributionCustomizer customizer, File ideaProperties, File patchedApplicationInfo) {
     super(BuildOptions.OS_WINDOWS, "Windows", buildContext)
     this.patchedApplicationInfo = patchedApplicationInfo
     this.customizer = customizer
     this.ideaProperties = ideaProperties
+    icoPath = (buildContext.applicationInfo.isEAP ? customizer.icoPathForEAP : null) ?: customizer.icoPath
   }
 
   @Override
@@ -61,8 +63,8 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.ant.copy(file: ideaProperties.path, todir: "$winDistPath/bin")
     buildContext.ant.fixcrlf(file: "$winDistPath/bin/idea.properties", eol: "dos")
 
-    if (customizer.icoPath != null) {
-      buildContext.ant.copy(file: customizer.icoPath, tofile: "$winDistPath/bin/${buildContext.productProperties.baseFileName}.ico")
+    if (icoPath != null) {
+      buildContext.ant.copy(file: icoPath, tofile: "$winDistPath/bin/${buildContext.productProperties.baseFileName}.ico")
     }
     if (customizer.includeBatchLaunchers) {
       generateScripts(winDistPath)

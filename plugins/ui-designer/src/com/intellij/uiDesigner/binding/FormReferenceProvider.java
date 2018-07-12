@@ -106,7 +106,7 @@ public class FormReferenceProvider extends PsiReferenceProvider {
   PsiType getGUIComponentType(final PsiPlainTextFile file, String fieldName) {
     final Map<String, Pair<PsiType, TextRange>> fieldNameToTypeMap = getCachedData(file).myFieldNameToTypeMap;
     final Pair<PsiType, TextRange> typeRangePair = fieldNameToTypeMap.get(fieldName);
-    return typeRangePair != null? typeRangePair.getFirst() : null;
+    return Pair.getFirst(typeRangePair);
   }
 
   public static void setGUIComponentType(PsiPlainTextFile file, String fieldName, String typeText) {

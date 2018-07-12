@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.*;
@@ -36,13 +35,26 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Handy class for reading data from HTTP connections with built-in support for HTTP redirects and gzipped content and automatic cleanup.
+ * <p>Handy class for reading data from URL connections with built-in support for HTTP redirects and gzipped content and automatic cleanup.</p>
  *
- * Usage: <pre>{@code
- * int firstByte = HttpRequests.request(url).connect(request -> request.getInputStream().read());
- * }</pre>
+ * <h3>Examples</h3>
+ *
+ * <p>Reading the whole response into a string:<br>
+ * {@code HttpRequests.request("https://example.com").readString(progressIndicator)}</p>
+ *
+ * <p>Downloading a file:<br>
+ * {@code HttpRequests.request("https://example.com/file.zip").saveToFile(new File(downloadDir, "temp.zip"), progressIndicator)}</p>
+ *
+ * <p>Tuning a connection:<br>
+ * {@code HttpRequests.request(url).userAgent("IntelliJ").readString()}<br>
+ * {@code HttpRequests.request(url).tuner(connection -> connection.setRequestProperty("X-Custom", value)).readString()}</p>
+ *
+ * <p>Using the input stream to implement custom reading logic:<br>
+ * {@code int firstByte = HttpRequests.request("file:///dev/random").connect(request -> request.getInputStream().read())}<br>
+ * {@code String firstLine = HttpRequests.request("https://example.com").connect(request -> new BufferedReader(request.getReader()).readLine())}</p>
+ *
+ * @see HttpStatusException a sublass of IOException which includes an actual URL and HTTP response code
  * @see URLUtil
- * @see <a href="https://github.com/JetBrains/intellij-community/tree/master/platform/platform-api/src/com/intellij/util/io#httprequests">docs</a>
  */
 public final class HttpRequests {
   private static final Logger LOG = Logger.getInstance(HttpRequests.class);
@@ -56,10 +68,7 @@ public final class HttpRequests {
     HttpURLConnection.HTTP_MOVED_PERM, HttpURLConnection.HTTP_SEE_OTHER, 308 /* permanent redirect */
   };
 
-  private static final int PERMANENT_IDX = ArrayUtil.indexOf(REDIRECTS, HttpURLConnection.HTTP_MOVED_PERM);
-
   private HttpRequests() { }
-
 
   public interface Request {
     @NotNull
@@ -78,6 +87,7 @@ public final class HttpRequests {
     BufferedReader getReader(@Nullable ProgressIndicator indicator) throws IOException;
 
     /** @deprecated Called automatically on open connection. Use {@link RequestBuilder#tryConnect()} to get response code */
+    @Deprecated
     boolean isSuccessful() throws IOException;
 
     @NotNull
@@ -559,14 +569,11 @@ public final class HttpRequests {
       if (LOG.isDebugEnabled()) LOG.debug("response: " + responseCode);
 
       if (responseCode < 200 || responseCode >= 300 && responseCode != HttpURLConnection.HTTP_NOT_MODIFIED) {
-        int idx = ArrayUtil.indexOf(REDIRECTS, responseCode);
-        if (idx >= 0) {
+        if (ArrayUtil.indexOf(REDIRECTS, responseCode) >= 0) {
           httpURLConnection.disconnect();
           url = connection.getHeaderField("Location");
+          if (LOG.isDebugEnabled()) LOG.debug("redirect: " + url);
           if (url != null) {
-            if (idx >= PERMANENT_IDX) {
-              LOG.error("HTTP response " + responseCode + " for '" + request.myUrl + "'; should be updated to '" + url + "'");
-            }
             request.myUrl = url;
             continue;
           }
@@ -581,12 +588,11 @@ public final class HttpRequests {
     throw new IOException(IdeBundle.message("error.connection.failed.redirects"));
   }
 
-  private static URLConnection throwHttpStatusError(@NotNull HttpURLConnection connection, @NotNull RequestImpl request, @NotNull RequestBuilderImpl builder, int responseCode) throws IOException {
+  private static URLConnection throwHttpStatusError(HttpURLConnection connection, RequestImpl request, RequestBuilderImpl builder, int responseCode) throws IOException {
     String message = null;
     if (builder.myIsReadResponseOnError) {
       message = HttpUrlConnectionUtil.readString(connection.getErrorStream(), connection);
     }
-
     if (StringUtil.isEmpty(message)) {
       message = "Request failed with status code " + responseCode;
     }
@@ -601,8 +607,7 @@ public final class HttpRequests {
     }
 
     try {
-      final SSLContext context = CertificateManager.getInstance().getSslContext();
-      final SSLSocketFactory factory = context.getSocketFactory();
+      SSLSocketFactory factory = CertificateManager.getInstance().getSslContext().getSocketFactory();
       if (factory == null) {
         LOG.info("SSLSocketFactory is not defined by IDE CertificateManager; Using default SSL configuration to connect to " + url);
       }
@@ -615,24 +620,19 @@ public final class HttpRequests {
     }
   }
 
-  /**
-   * A lot of web servers would not process request and just return 400 (Bad Request) response if any of request headers contains NUL byte.
-   * This method checks if any headers contain NUL byte in value and removes those headers from request.
-   * @param httpURLConnection connection to check
+  /*
+   * Many servers would not process a request and just return 400 (Bad Request) response if any of request headers contains NUL byte.
+   * This method checks the request and removes invalid headers.
    */
-  private static void checkRequestHeadersForNulBytes(@NotNull URLConnection httpURLConnection) {
-    for (Map.Entry<String, List<String>> header : httpURLConnection.getRequestProperties().entrySet()) {
-      boolean shouldBeIgnored = false;
+  private static void checkRequestHeadersForNulBytes(URLConnection connection) {
+    for (Map.Entry<String, List<String>> header : connection.getRequestProperties().entrySet()) {
       for (String headerValue : header.getValue()) {
-        if (headerValue.contains("\0")) {
+        if (headerValue.indexOf('\0') >= 0) {
+          connection.setRequestProperty(header.getKey(), null);
           LOG.error(String.format("Problem during request to '%s'. Header's '%s' value contains NUL bytes: '%s'. Omitting this header.",
-                                  httpURLConnection.getURL().toString(), header.getKey(), headerValue));
-          shouldBeIgnored = true;
+                                  connection.getURL().toString(), header.getKey(), headerValue));
           break;
         }
-      }
-      if (shouldBeIgnored) {
-        httpURLConnection.setRequestProperty(header.getKey(), null);
       }
     }
   }

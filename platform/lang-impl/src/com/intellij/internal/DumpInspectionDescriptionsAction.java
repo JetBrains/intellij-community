@@ -134,15 +134,9 @@ public class DumpInspectionDescriptionsAction extends AnAction implements DumbAw
   }
 
   private static boolean doDump(final File file, final Processor processor) {
-    try {
-      final BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-      try {
-        processor.process(writer);
-        return true;
-      }
-      finally {
-        writer.close();
-      }
+    try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+      processor.process(writer);
+      return true;
     }
     catch (Exception e) {
       LOG.error(e);

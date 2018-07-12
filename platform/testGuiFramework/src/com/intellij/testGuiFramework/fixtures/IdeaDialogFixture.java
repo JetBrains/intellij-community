@@ -17,6 +17,7 @@ package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Ref;
+import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import org.fest.reflect.exception.ReflectionError;
 import org.fest.reflect.reference.TypeRef;
 import org.fest.swing.core.GenericTypeMatcher;
@@ -29,8 +30,6 @@ import javax.annotation.Nonnull;
 import javax.swing.*;
 import java.lang.ref.WeakReference;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.findAndClickCancelButton;
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.waitUntilFound;
 import static junit.framework.Assert.assertNotNull;
 import static org.fest.reflect.core.Reflection.field;
 
@@ -79,7 +78,7 @@ public abstract class IdeaDialogFixture<T extends DialogWrapper> extends Compone
   public static <T extends DialogWrapper> DialogAndWrapper<T> find(@NotNull Robot robot, @NotNull final Class<T> clz,
                                                                    @NotNull final GenericTypeMatcher<JDialog> matcher) {
     final Ref<T> wrapperRef = new Ref<T>();
-    JDialog dialog = waitUntilFound(robot, new GenericTypeMatcher<JDialog>(JDialog.class) {
+    JDialog dialog = GuiTestUtil.INSTANCE.waitUntilFound(robot, new GenericTypeMatcher<JDialog>(JDialog.class) {
       @Override
       protected boolean isMatching(@NotNull JDialog dialog) {
         if (matcher.matches(dialog)) {
@@ -113,7 +112,7 @@ public abstract class IdeaDialogFixture<T extends DialogWrapper> extends Compone
     // Grab focus in case it is not automatically done by the window manager, e.g. 9wm
     focus();
 
-    findAndClickCancelButton(this);
+    GuiTestUtil.INSTANCE.findAndClickCancelButton(this);
   }
 
   public void close() {

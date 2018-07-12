@@ -71,7 +71,7 @@ abstract class VmConnection<T : Vm> : Disposable {
     get() = dispatcher.multicaster
 
   protected open fun startProcessing() {
-    opened.setResult(vm!!)
+    vm?.let { opened.setResult(it) }
   }
 
   fun close(message: String?, status: ConnectionStatus) {

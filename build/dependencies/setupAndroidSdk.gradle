@@ -32,24 +32,36 @@ import de.undercouch.gradle.tasks.download.Download
 def currentOs = org.gradle.internal.os.OperatingSystem.current()
 
 task downloadGradleDistribution(type: Download) {
-  src "http://repo.labs.intellij.net/thirdparty/gradle/gradle-4.1-bin.zip"
-  dest "$buildDir/android-sdk/tools/external/gradle/gradle-4.1-bin.zip"
+  src "http://repo.labs.intellij.net/thirdparty/gradle/gradle-4.4-bin.zip"
+  dest "$buildDir/android-sdk/tools/external/gradle/gradle-4.4-bin.zip"
   onlyIfNewer true
   onlyIf { inJetBrainsNetwork }
 }
 
 task downloadGradleDistribution2(type: Download) {
-  src "http://repo.labs.intellij.net/thirdparty/gradle/gradle-2.2.1-bin.zip"
-  dest "$buildDir/android-sdk/tools/external/gradle/gradle-2.2.1-bin.zip"
+  src "http://repo.labs.intellij.net/thirdparty/gradle/gradle-2.4-bin.zip"
+  dest "$buildDir/android-sdk/tools/external/gradle/gradle-2.4-bin.zip"
   onlyIfNewer true
   onlyIf { inJetBrainsNetwork }
 }
 
 task downloadOfflineRepo(type: Download) {
-  src "http://repo.labs.intellij.net/thirdparty/android-sdk/offline_repo_repo_3_0_03.zip"
+  src "http://repo.labs.intellij.net/thirdparty/android-sdk/offline_repo_repo_3_1_2_03.zip"
   dest "$buildDir/android-sdk/offline_repo_repo.zip"
   onlyIfNewer true
   onlyIf { inJetBrainsNetwork }
+}
+
+task downloadKotlinPlugin(type: Download) {
+  src "http://repo.labs.intellij.net/thirdparty/android-sdk/kotlin-plugin-1.2.50-eap-17-IJ2018.2-1.zip"
+  dest "$buildDir/android-sdk/kotlin-plugin.zip"
+  onlyIfNewer true
+  onlyIf { inJetBrainsNetwork }
+}
+
+task setupKotlinPluginForAndroid(dependsOn: downloadKotlinPlugin, type: Copy) {
+  from zipTree(downloadKotlinPlugin.outputs.files.singleFile)
+  into "$buildDir/android-sdk/prebuilts/tools/common/kotlin-plugin"
 }
 
 task setupOfflineRepo(dependsOn: downloadOfflineRepo, type: Copy) {
@@ -59,13 +71,15 @@ task setupOfflineRepo(dependsOn: downloadOfflineRepo, type: Copy) {
 
 task downloadAndroidSdk(type: Download) {
   def osFamily = currentOs.familyName
-  src "http://repo.labs.intellij.net/thirdparty/android-sdk/${osFamily}.tar.gz"
+  src "http://repo.labs.intellij.net/thirdparty/android-sdk/${osFamily}_3_1_2_01.tar.gz"
   dest "$buildDir/android-sdk/${osFamily}.tar.gz"
   onlyIfNewer true
   onlyIf { !currentOs.isMacOsX() && inJetBrainsNetwork }
 }
 
-task setupAndroidSdk(dependsOn: [downloadAndroidSdk, downloadGradleDistribution, downloadGradleDistribution2, setupOfflineRepo], type: Copy) {
+task setupAndroidSdk(
+  dependsOn: [downloadAndroidSdk, downloadGradleDistribution, downloadGradleDistribution2, setupOfflineRepo, setupKotlinPluginForAndroid],
+  type: Copy) {
   from tarTree(downloadAndroidSdk.outputs.files.singleFile)
   into "$buildDir/android-sdk/prebuilts/studio/sdk"
   onlyIf { !currentOs.isMacOsX() }

@@ -10,9 +10,9 @@ import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.JBGradientPaint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
@@ -178,12 +178,12 @@ public class PluginHeaderPanel {
       @NotNull
       protected Paint getBackgroundPaint() {
         switch (myActionId) {
-          case UPDATE: return new JBGradientPaint(this, new JBColor(0x629ee1, 0x629ee1), new JBColor(0x3a5bb5, 0x3a5bb5));
-          case INSTALL: return new JBGradientPaint(this, new JBColor(0x60cc69, 0x519557), new JBColor(0x326529, 0x28462f));
+          case UPDATE: return ColorUtil.mix(new JBColor(0x629ee1, 0x629ee1), new JBColor(0x3a5bb5, 0x3a5bb5), 0.5);
+          case INSTALL: return ColorUtil.mix(new JBColor(0x60cc69, 0x519557), new JBColor(0x326529, 0x28462f), 0.5);
           case RESTART:
           case UNINSTALL:
             return UIUtil.isUnderDarcula()
-                   ? new JBGradientPaint(this, UIManager.getColor("Button.darcula.startColor"), UIManager.getColor("Button.darcula.endColor"))
+                   ? ColorUtil.mix(UIManager.getColor("Button.darcula.startColor"), UIManager.getColor("Button.darcula.endColor"), 0.5)
                    : Gray._240;
         }
         return Gray._238;

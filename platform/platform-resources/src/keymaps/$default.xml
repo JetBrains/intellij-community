@@ -713,6 +713,9 @@
   <action id="XDebugger.NewWatch">
     <keyboard-shortcut first-keystroke="INSERT"/>
   </action>
+  <action id="XDebugger.AttachToProcess">
+    <keyboard-shortcut first-keystroke="control alt F5"/>
+  </action>
   <action id="Debugger.EditTypeSource">
     <keyboard-shortcut first-keystroke="shift F4"/>
   </action>
@@ -1075,6 +1078,10 @@
   <action id="Git.Reword.Commit">
     <keyboard-shortcut first-keystroke="F2" />
     <keyboard-shortcut first-keystroke="Shift F6"/>
+  </action>
+
+  <action id="ChangesView.SetDefault">
+    <keyboard-shortcut first-keystroke="control SPACE" />
   </action>
 
   <action id="DirDiffMenu.SynchronizeDiff">

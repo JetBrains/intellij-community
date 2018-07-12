@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.style
 
 import com.intellij.testFramework.LightProjectDescriptor
@@ -91,7 +77,7 @@ print(a); /*asd*/
     doTest 'foo {; ;1;;/*asd*/;54; ;<caret>;; }', 'foo { 1;/*asd*/54  }'
   }
 
-  void 'test within closure with arrow' () {
+  void 'test within closure with arrow'() {
     doTest 'foo { -> ; ;1;;/*asd*/;54; ;<caret>;; }', 'foo { ->  1;/*asd*/54  }'
   }
 
@@ -111,6 +97,47 @@ class A {
 '''
   }
 
+  void 'test after package definition'() {
+    doTest 'package com.foo<caret>; import java.lang.String'
+    doTest '''\
+package com.foo<caret>; 
+import java.lang.String
+''', '''\
+package com.foo 
+import java.lang.String
+'''
+  }
+
+  void 'test after import definition'() {
+    doTest 'import java.lang.String<caret>; import java.lang.String'
+    doTest '''\
+import java.lang.String<caret>;
+import java.lang.String;
+''', '''\
+import java.lang.String
+import java.lang.String
+'''
+  }
+
+  void 'test after enum constants'() {
+    doTest '''\
+enum E {
+  foo, bar, <caret>;  
+  E() {}
+}
+'''
+    doTest '''\
+enum E {
+  foo, bar, 
+  
+  <caret>;  
+  
+  
+  E() {}
+}
+'''
+  }
+
   private doTest(String before, String after) {
     fixture.with {
       enableInspections GrUnnecessarySemicolonInspection
@@ -124,7 +151,7 @@ class A {
     fixture.with {
       enableInspections GrUnnecessarySemicolonInspection
       configureByText '_.groovy', text
-      checkHighlighting()
+      assertNull(getAvailableIntention("Fix all 'Unnecessary semicolon'"))
     }
   }
 

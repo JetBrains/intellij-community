@@ -133,9 +133,7 @@ public class TypeUtils {
     if (expression == null) {
       return null;
     }
-    final PsiType type = expression instanceof PsiFunctionalExpression
-                         ? ((PsiFunctionalExpression)expression).getFunctionalInterfaceType()
-                         : expression.getType();
+    final PsiType type = FunctionalExpressionUtils.getFunctionalExpressionType(expression);
     if (type == null) {
       return null;
     }

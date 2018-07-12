@@ -3,7 +3,7 @@ class Singleton(object):
     data = {}
 
     def foo(self):
-        self.data = {'a': 1}
+        self.<warning descr="'Singleton' object has no attribute 'data'">data</warning> = {'a': 1}
 
 Singleton.data = {'a': 1}
 Singleton().__class__.data = {'a': 1}

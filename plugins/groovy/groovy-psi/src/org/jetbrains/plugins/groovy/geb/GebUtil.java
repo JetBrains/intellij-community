@@ -114,8 +114,10 @@ public class GebUtil {
     GrLightField field = new GrLightField(pageOrModuleClass, name, objectType, invokedExpression) {
 
       @Override
-      public PsiType getTypeGroovy() {
-        return block.getReturnType();
+      @NotNull
+      public PsiType getType() {
+        PsiType type = block.getReturnType();
+        return type != null ? type : super.getType();
       }
 
       @Override

@@ -148,6 +148,10 @@ public class SMTestProxy extends AbstractTestProxy {
     return myErrorMessage;
   }
 
+  public SMTestLocator getLocator() {
+    return myLocator;
+  }
+
   public boolean isLeaf() {
     return myChildren == null || myChildren.isEmpty();
   }
@@ -606,6 +610,7 @@ public class SMTestProxy extends AbstractTestProxy {
   /**
    * @deprecated use {@link #addOutput(String, Key)}
    */
+  @Deprecated
   public void addStdOutput(final String output, final Key outputType) {
     addOutput(output, outputType);
   }

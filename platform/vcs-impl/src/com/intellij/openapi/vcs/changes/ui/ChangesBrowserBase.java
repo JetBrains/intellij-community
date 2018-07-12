@@ -33,6 +33,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   protected final ChangesTree myViewer;
 
   private final DefaultActionGroup myToolBarGroup = new DefaultActionGroup();
+  private final DefaultActionGroup myPopupMenuGroup = new DefaultActionGroup();
   private final ActionToolbar myToolbar;
   private final JScrollPane myViewerScrollPane;
   private final AnAction myShowDiffAction;
@@ -46,13 +47,10 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     myProject = project;
     myViewer = createTreeList(project, showCheckboxes, highlightProblems);
 
-    DefaultActionGroup toolbarGroups = new DefaultActionGroup();
-    toolbarGroups.add(myToolBarGroup);
-    toolbarGroups.addSeparator();
-    toolbarGroups.addAll(myViewer.getTreeActions());
-    myToolbar = ActionManager.getInstance().createActionToolbar("ChangesBrowser", toolbarGroups, true);
+    myToolbar = ActionManager.getInstance().createActionToolbar("ChangesBrowser", myToolBarGroup, true);
     myToolbar.setTargetComponent(this);
-    myViewer.installPopupHandler(myToolBarGroup);
+
+    myViewer.installPopupHandler(myPopupMenuGroup);
 
     myViewerScrollPane = ScrollPaneFactory.createScrollPane(myViewer);
 
@@ -69,7 +67,9 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     setFocusable(false);
 
     JPanel topPanel = new JPanel(new BorderLayout());
-    topPanel.add(createToolbarComponent(), BorderLayout.CENTER);
+
+    TreeActionsToolbarPanel toolbarPanel = new TreeActionsToolbarPanel(createToolbarComponent(), myViewer);
+    topPanel.add(toolbarPanel, BorderLayout.CENTER);
 
     JComponent headerPanel = createHeaderPanel();
     if (headerPanel != null) topPanel.add(headerPanel, BorderLayout.EAST);
@@ -79,6 +79,13 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
 
     myToolBarGroup.addAll(createToolbarActions());
+    myPopupMenuGroup.addAll(createPopupMenuActions());
+
+    AnAction groupByAction = ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP);
+    if (!ActionUtil.recursiveContainsAction(myToolBarGroup, groupByAction)) {
+      myToolBarGroup.addSeparator();
+      myToolBarGroup.add(groupByAction);
+    }
 
     myShowDiffAction.registerCustomShortcutSet(this, null);
   }
@@ -108,6 +115,13 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
   @NotNull
   protected List<AnAction> createToolbarActions() {
+    return ContainerUtil.list(
+      myShowDiffAction
+    );
+  }
+
+  @NotNull
+  protected List<AnAction> createPopupMenuActions() {
     return ContainerUtil.list(
       myShowDiffAction
     );

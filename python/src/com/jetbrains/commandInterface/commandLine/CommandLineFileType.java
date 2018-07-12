@@ -52,7 +52,7 @@ public final class CommandLineFileType extends LanguageFileType {
   @NotNull
   @Override
   public String getDefaultExtension() {
-    return '.' + EXTENSION;
+    return EXTENSION;
   }
 
   @Nullable

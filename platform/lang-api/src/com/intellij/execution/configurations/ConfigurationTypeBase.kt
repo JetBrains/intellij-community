@@ -8,7 +8,16 @@ import javax.swing.Icon
 
 private val EMPTY_FACTORIES = arrayOf<ConfigurationFactory>()
 
-abstract class ConfigurationTypeBase protected constructor(private val id: String, private val displayName: String, description: String?, private val icon: Icon?) : ConfigurationType {
+abstract class ConfigurationTypeBase protected constructor(private val id: String, private val displayName: String, description: String? = null, private val icon: Lazy<Icon>?) : ConfigurationType {
+  companion object {
+    @JvmStatic
+    fun lazyIcon(producer: () -> Icon): Lazy<Icon> {
+      return lazy(LazyThreadSafetyMode.NONE, producer)
+    }
+  }
+
+  constructor(id: String, displayName: String, description: String?, icon: Icon?) : this(id, displayName, description, icon?.let { lazyOf(it) })
+
   private var factories = EMPTY_FACTORIES
 
   private var description = description.nullize() ?: displayName
@@ -17,14 +26,14 @@ abstract class ConfigurationTypeBase protected constructor(private val id: Strin
     factories = ArrayUtil.append(factories, factory)
   }
 
-  override fun getDisplayName() = displayName
+  override fun getDisplayName(): String = displayName
 
-  override final fun getConfigurationTypeDescription() = description
+  override final fun getConfigurationTypeDescription(): String = description
 
   // open due to backward compatibility
-  override fun getIcon() = icon
+  override fun getIcon(): Icon? = icon?.value
 
-  override final fun getId() = id
+  override final fun getId(): String = id
 
-  override fun getConfigurationFactories() = factories
+  override fun getConfigurationFactories(): Array<ConfigurationFactory> = factories
 }

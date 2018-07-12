@@ -25,7 +25,7 @@ import java.util.Collection;
 
 public class PluginConfigurationType implements ConfigurationType {
   private final ConfigurationFactory myFactory;
-  private String myVmParameters = "-Xmx512m -Xms256m -XX:MaxPermSize=250m -ea";
+  private String myVmParameters = "-Xmx512m -Xms256m -ea";
 
   public PluginConfigurationType() {
     myFactory = new ConfigurationFactory(this) {

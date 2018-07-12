@@ -157,12 +157,20 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       if (event.getInputEvent() instanceof MouseEvent) {
         ToolbarClicksCollector.record(myAction, myPlace);
       }
+      ActionToolbar toolbar = getActionToolbar();
+      if (toolbar != null) {
+        toolbar.updateActionsImmediately();
+      }
     }
   }
 
   protected DataContext getDataContext() {
-    ActionToolbar actionToolbar = UIUtil.getParentOfType(ActionToolbar.class, this);
+    ActionToolbar actionToolbar = getActionToolbar();
     return actionToolbar != null ? actionToolbar.getToolbarDataContext() : DataManager.getInstance().getDataContext();
+  }
+
+  private ActionToolbar getActionToolbar() {
+    return UIUtil.getParentOfType(ActionToolbar.class, this);
   }
 
   private void actionPerformed(final AnActionEvent event) {
@@ -204,6 +212,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       myPresentation.removePropertyChangeListener(myPresentationListener);
       myPresentationListener = null;
     }
+    myRollover = false;
+    myMouseDown = false;
     super.removeNotify();
   }
 
@@ -271,8 +281,13 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
    *         an empty icon.
    */
   public Icon getIcon() {
-    Icon icon = isButtonEnabled() ? myIcon : myDisabledIcon;
-    return icon == null ? EmptyIcon.ICON_18 : icon;
+    boolean enabled = isButtonEnabled();
+    Icon icon = enabled ? myIcon : myDisabledIcon;
+    return icon == null ? getFallbackIcon(enabled) : icon;
+  }
+
+  protected Icon getFallbackIcon(boolean enabled) {
+    return EmptyIcon.ICON_18;
   }
 
   public void updateIcon() {

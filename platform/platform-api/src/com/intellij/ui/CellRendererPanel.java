@@ -74,21 +74,17 @@ public class CellRendererPanel extends JPanel {
       if (count == 1) {
         Rectangle bounds = new Rectangle(getWidth(), getHeight());
         JBInsets.removeFrom(bounds, getInsets());
-        Component child = getComponent(0);
-        child.setBounds(bounds);
-        if (child instanceof CellRendererPanel) {
-          ((CellRendererPanel)child).invalidateLayout();
-          child.doLayout();
-        }
+        JComponent child = (JComponent)getComponent(0);
+        reshapeImpl(child, bounds.x, bounds.y, bounds.width, bounds.height);
+        invalidateLayout(child);
+        child.doLayout();
       }
       else {
-        invalidateLayout();
+        invalidateLayout(this);
         super.doLayout();
         for (int i = 0; i < count; i++) {
           Component c = getComponent(i);
-          if (c instanceof CellRendererPanel) {
-            c.doLayout();
-          }
+          c.doLayout();
         }
       }
     }
@@ -108,10 +104,14 @@ public class CellRendererPanel extends JPanel {
 
   @Override
   public void reshape(int x, int y, int w, int h) {
+    reshapeImpl(this, x, y, w, h);
+  }
+
+  static void reshapeImpl(JComponent component, int x, int y, int w, int h) {
     // suppress per-cell "moved" and "resized" events on paint
     // see Component#setBounds, Component#notifyNewBounds
-    AWTAccessor.getComponentAccessor().setLocation(this, x, y);
-    AWTAccessor.getComponentAccessor().setSize(this, w, h);
+    AWTAccessor.getComponentAccessor().setLocation(component, x, y);
+    AWTAccessor.getComponentAccessor().setSize(component, w, h);
   }
 
   public void invalidate() {
@@ -121,10 +121,10 @@ public class CellRendererPanel extends JPanel {
     super.invalidate();
   }
 
-  private void invalidateLayout() {
-    LayoutManager layout = getLayout();
+  private static void invalidateLayout(JComponent component) {
+    LayoutManager layout = component.getLayout();
     if (layout instanceof LayoutManager2) {
-      ((LayoutManager2)layout).invalidateLayout(this);
+      ((LayoutManager2)layout).invalidateLayout(component);
     }
   }
 

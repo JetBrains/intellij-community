@@ -234,7 +234,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
       if (simplifyForEachContext == null) return;
       PsiElement result = simplifyForEachContext.migrate();
       if (result == null) return;
-      MigrateToStreamFix.simplifyAndFormat(project, result);
+      MigrateToStreamFix.simplify(project, result);
     }
   }
 
@@ -274,7 +274,7 @@ public class SimplifyForEachInspection extends AbstractBaseJavaLocalInspectionTo
       if (simplifyForEachContext != null) {
         PsiElement result = simplifyForEachContext.migrate();
         if (result != null) {
-          MigrateToStreamFix.simplifyAndFormat(project, result);
+          MigrateToStreamFix.simplify(project, result);
         }
       }
     }

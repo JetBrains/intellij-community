@@ -36,6 +36,7 @@ public class VcsActionPromoter implements ActionPromoter {
 
     reorderActionPair(reorderedActions, reorderedIds, "Vcs.MoveChangedLinesToChangelist", "ChangesView.Move");
     reorderActionPair(reorderedActions, reorderedIds, "Vcs.RollbackChangedLines", "ChangesView.Revert");
+    reorderActionPair(reorderedActions, reorderedIds, "Vcs.Log.Refresh", "Refresh");
 
     Set<AnAction> promoted = new HashSet<>(ContainerUtil.filter(actions, action -> {
       return action instanceof ShowMessageHistoryAction ||

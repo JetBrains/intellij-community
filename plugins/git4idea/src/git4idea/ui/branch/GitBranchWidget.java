@@ -22,6 +22,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.util.ObjectUtils;
 import git4idea.GitUtil;
+import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitRepository;
@@ -37,7 +38,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   private final GitVcsSettings mySettings;
 
   public GitBranchWidget(@NotNull Project project) {
-    super(project, "Git");
+    super(project, GitVcs.NAME);
     mySettings = GitVcsSettings.getInstance(project);
   }
 

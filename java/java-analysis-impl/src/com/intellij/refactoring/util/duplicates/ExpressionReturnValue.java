@@ -19,6 +19,8 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author dsl
@@ -39,7 +41,8 @@ public class ExpressionReturnValue implements ReturnValue {
     return PsiEquivalenceUtil.areElementsEquivalent(myExpression, ((ExpressionReturnValue)other).myExpression);
   }
 
-  public PsiStatement createReplacement(final PsiMethod extractedMethod, final PsiMethodCallExpression methodCallExpression)
+  @Nullable
+  public PsiStatement createReplacement(@NotNull final PsiMethod extractedMethod, @NotNull final PsiMethodCallExpression methodCallExpression, @Nullable PsiType returnType)
     throws IncorrectOperationException {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodCallExpression.getProject()).getElementFactory();
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(methodCallExpression.getProject());

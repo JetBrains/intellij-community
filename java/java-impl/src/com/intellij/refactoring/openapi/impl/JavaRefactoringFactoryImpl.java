@@ -138,8 +138,8 @@ public class JavaRefactoringFactoryImpl extends JavaRefactoringFactory {
                                                                            PsiMethod methodToSearchFor,
                                                                            String parameterName, PsiExpression parameterInitializer,
                                                                            PsiExpression expressionToSearchFor,
-                                                                           boolean declareFinal, final boolean replaceAllOccurences) {
+                                                                           boolean declareFinal, final boolean replaceAllOccurrences) {
     return new IntroduceParameterRefactoringImpl(myProject, methodToReplaceIn, methodToSearchFor, parameterName, parameterInitializer,
-                                                 expressionToSearchFor, declareFinal, replaceAllOccurences);
+                                                 expressionToSearchFor, declareFinal, replaceAllOccurrences);
   }
 }

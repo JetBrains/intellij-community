@@ -6,6 +6,6 @@ import com.intellij.credentialStore.Credentials
 class PasswordAuthenticationData(val credentials: Credentials, isStorageAllowed: Boolean) : AuthenticationData(isStorageAllowed) {
   constructor(userName: String, password: String, isStorageAllowed: Boolean) : this(Credentials(userName, password), isStorageAllowed)
 
-  val userName = credentials.userName.orEmpty()
-  val password = credentials.getPasswordAsString().orEmpty()
+  val userName: String = credentials.userName.orEmpty()
+  val password: String = credentials.getPasswordAsString().orEmpty()
 }

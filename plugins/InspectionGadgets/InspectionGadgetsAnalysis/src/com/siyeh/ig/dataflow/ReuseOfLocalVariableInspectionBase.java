@@ -18,6 +18,7 @@ package com.siyeh.ig.dataflow;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -58,7 +59,7 @@ public class ReuseOfLocalVariableInspectionBase
       if (!(assignmentParent instanceof PsiExpressionStatement)) {
         return;
       }
-      final PsiExpression lhs = assignment.getLExpression();
+      final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(assignment.getLExpression());
       if (!(lhs instanceof PsiReferenceExpression)) {
         return;
       }
@@ -79,8 +80,7 @@ public class ReuseOfLocalVariableInspectionBase
         return;
       }
       final PsiExpression rhs = assignment.getRExpression();
-      if (rhs != null &&
-          VariableAccessUtils.variableIsUsed(variable, rhs)) {
+      if (VariableAccessUtils.variableIsUsed(variable, rhs)) {
         return;
       }
       final PsiCodeBlock variableBlock =

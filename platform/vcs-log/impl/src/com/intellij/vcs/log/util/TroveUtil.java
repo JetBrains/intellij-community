@@ -127,6 +127,13 @@ public class TroveUtil {
     });
   }
 
+  public static <V> void putAll(@NotNull TIntObjectHashMap<V> where, @NotNull TIntObjectHashMap<V> what) {
+    what.forEachEntry((index, value) -> {
+      where.put(index, value);
+      return true;
+    });
+  }
+
   @NotNull
   public static IntStream stream(@NotNull TIntHashSet set) {
     TIntIterator it = set.iterator();
@@ -136,6 +143,19 @@ public class TroveUtil {
   @NotNull
   public static <T> List<T> map(@NotNull TIntHashSet set, @NotNull IntFunction<T> function) {
     return stream(set).mapToObj(function).collect(Collectors.toList());
+  }
+
+  @NotNull
+  public static <T> TIntObjectHashMap<T> map2MapNotNull(@NotNull TIntHashSet set, @NotNull IntFunction<T> function) {
+    TIntObjectHashMap<T> result = new TIntObjectHashMap<>();
+    set.forEach(it -> {
+      T value = function.apply(it);
+      if (value != null) {
+        result.put(it, value);
+      }
+      return true;
+    });
+    return result;
   }
 
   @NotNull

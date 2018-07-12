@@ -158,7 +158,7 @@ public class StringEnumeratorTest extends TestCase {
       }
     };
 
-    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator.enumerate", 600, () -> {
+    PlatformTestUtil.startPerformanceTest("PersistentStringEnumerator.enumerate", 700, () -> {
       stringCache.addDeletedPairsListener(listener);
       for (int i = 0; i < 100000; ++i) {
         final String string = createRandomString();

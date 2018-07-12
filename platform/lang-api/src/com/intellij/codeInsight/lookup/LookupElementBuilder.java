@@ -105,6 +105,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withInsertHandler(InsertHandler)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setInsertHandler(@Nullable InsertHandler<LookupElement> insertHandler) {
     return withInsertHandler(insertHandler);
@@ -119,6 +120,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withRenderer(LookupElementRenderer)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setRenderer(@Nullable LookupElementRenderer<LookupElement> renderer) {
     return withRenderer(renderer);
@@ -138,6 +140,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withIcon(Icon)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setIcon(@Nullable Icon icon) {
     return withIcon(icon);
@@ -165,6 +168,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withLookupString(String)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder addLookupString(@NotNull String another) {
     return withLookupString(another);
@@ -185,6 +189,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withCaseSensitivity(boolean)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setCaseSensitive(boolean caseSensitive) {
     return withCaseSensitivity(caseSensitive);
@@ -213,6 +218,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withItemTextForeground(Color)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setItemTextForeground(@NotNull Color itemTextForeground) {
     return withItemTextForeground(itemTextForeground);
@@ -227,6 +233,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withItemTextUnderlined(boolean)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setItemTextUnderlined(boolean underlined) {
     return withItemTextUnderlined(underlined);
@@ -239,8 +246,19 @@ public final class LookupElementBuilder extends LookupElement {
   }
 
   /**
+   * @since 2018.2
+   */
+  @Contract(pure=true)
+  public LookupElementBuilder withItemTextItalic(boolean italic) {
+    final LookupElementPresentation presentation = copyPresentation();
+    presentation.setItemTextItalic(italic);
+    return new LookupElementBuilder(myLookupString, myObject, myInsertHandler, null, presentation, myPsiElement, myAllLookupStrings, myCaseSensitive);
+  }
+
+  /**
    * @deprecated use {@link #withTypeText(String)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setTypeText(@Nullable String typeText) {
     return withTypeText(typeText);
@@ -253,6 +271,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withTypeText(String, boolean)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setTypeText(@Nullable String typeText, boolean grayed) {
     return withTypeText(typeText, grayed);
@@ -285,6 +304,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withPresentableText(String)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setPresentableText(@NotNull String presentableText) {
     return withPresentableText(presentableText);
@@ -300,6 +320,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #bold()}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setBold() {
     return bold();
@@ -312,6 +333,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withBoldness(boolean)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setBold(boolean bold) {
     return withBoldness(bold);
@@ -327,6 +349,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #strikeout()}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setStrikeout() {
     return strikeout();
@@ -339,6 +362,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withStrikeoutness(boolean)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setStrikeout(boolean strikeout) {
     return withStrikeoutness(strikeout);
@@ -354,6 +378,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withTailText(String)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setTailText(@Nullable String tailText) {
     return withTailText(tailText);
@@ -366,6 +391,7 @@ public final class LookupElementBuilder extends LookupElement {
   /**
    * @deprecated use {@link #withTailText(String, boolean)}
    */
+  @Deprecated
   @Contract(pure=true)
   public LookupElementBuilder setTailText(@Nullable String tailText, boolean grayed) {
     return withTailText(tailText, grayed);

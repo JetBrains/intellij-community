@@ -27,7 +27,6 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
@@ -165,10 +164,8 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       return false;
     }
     
-    if (Messages.showOkCancelDialog(project, "It is required that JetBrains annotations" +
-                                             " be available in all your project sources.\n\nYou will need to add annotations.jar as a library. " +
-                                             "It is possible to configure custom JAR\nin e.g. Constant Conditions & Exceptions inspection or use JetBrains annotations available in installation. " +
-                                             "\nIntelliJ IDEA nullity annotations are freely usable and redistributable under the Apache 2.0 license.\nWould you like to do it now?",
+    if (Messages.showOkCancelDialog(project, "JetBrains annotations library is missing.\n" +
+                                             "Without the library, IntelliJ IDEA cannot run the analysis. Would you like to add it?",
                                     title, Messages.getErrorIcon()) == Messages.OK) {
       Module firstModule = modulesWithoutAnnotations.iterator().next();
       JavaProjectModelModificationService.getInstance(project).addDependency(modulesWithoutAnnotations, JetBrainsAnnotationsExternalLibraryResolver.getAnnotationsLibraryDescriptor(firstModule),

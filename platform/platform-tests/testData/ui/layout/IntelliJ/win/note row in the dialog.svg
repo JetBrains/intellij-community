@@ -11,10 +11,10 @@
         <path d="M0 0 L0 20 L269 20 L269 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="2">
-        <path d="M0 0 L0 24 L83 24 L83 0 Z"/>
+        <path d="M0 0 L0 18 L84 18 L84 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="3">
-        <path d="M0 0 L0 25 L252 25 L252 0 Z"/>
+        <path d="M0 0 L0 24 L252 24 L252 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="4">
         <path d="M0 0 L0 16 L83 16 L83 0 Z"/>
@@ -26,26 +26,26 @@
     <g fill="rgb(242,242,242)" font-family="'Segoe UI'" stroke="rgb(242,242,242)">
       <rect x="0" width="480" height="320" y="0" clip-path="url(#0)" stroke="none"/>
     </g>
-    <g fill="rgb(242,242,242)" font-family="'Segoe UI'" transform="translate(0,149)" stroke="rgb(242,242,242)">
+    <g fill="rgb(242,242,242)" font-family="'Segoe UI'" transform="translate(0,142)" stroke="rgb(242,242,242)">
       <rect x="0" width="269" height="20" y="0" clip-path="url(#1)" stroke="none"/>
       <text fill="black" x="2" xml:space="preserve" y="15" clip-path="url(#1)" stroke="none">Should be an empty row above as a gap. </text>
       <text fill="rgb(1,108,193)" x="218" xml:space="preserve" y="15" clip-path="url(#1)" stroke="none">Click me</text>
       <text fill="black" x="264" xml:space="preserve" y="15" clip-path="url(#1)" stroke="none">.</text>
     </g>
-    <g fill="rgb(242,242,242)" font-family="'Segoe UI'" transform="translate(89,104)" stroke="rgb(242,242,242)">
-      <rect x="0" width="83" height="24" y="0" clip-path="url(#2)" stroke="none"/>
-      <rect x="0" width="83" height="24" y="0" clip-path="url(#2)" stroke="none"/>
-      <image x="0" y="6" clip-path="url(#2)" width="13" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/win10/checkBoxSelected.png" height="13" preserveAspectRatio="none"/>
-      <text fill="black" x="17" xml:space="preserve" y="17" clip-path="url(#2)" stroke="none">&amp;Remember</text>
+    <g fill="rgb(242,242,242)" font-family="'Segoe UI'" transform="translate(88,103)" stroke="rgb(242,242,242)">
+      <rect x="0" width="84" height="18" y="0" clip-path="url(#2)" stroke="none"/>
+      <rect x="0" width="84" height="18" y="0" clip-path="url(#2)" stroke="none"/>
+      <image x="1" y="3" clip-path="url(#2)" width="13" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/win10/checkBoxSelected.png" height="13" preserveAspectRatio="none"/>
+      <text fill="black" x="18" xml:space="preserve" y="14" clip-path="url(#2)" stroke="none">&amp;Remember</text>
     </g>
     <g fill="rgb(242,242,242)" font-family="monospace" transform="translate(88,71)" stroke="rgb(242,242,242)">
-      <rect x="0" width="252" height="25" y="0" clip-path="url(#3)" stroke="none"/>
-      <rect x="2" y="2" clip-path="url(#3)" fill="white" width="248" height="21" stroke="none"/>
+      <rect x="0" width="252" height="24" y="0" clip-path="url(#3)" stroke="none"/>
+      <rect x="2" y="2" clip-path="url(#3)" fill="white" width="248" height="20" stroke="none"/>
     </g>
     <g fill="rgb(189,189,189)" text-rendering="optimizeLegibility" font-family="monospace" transform="translate(88,71)" stroke="rgb(189,189,189)">
-      <path d="M1 1 L251 1 L251 24 L1 24 L1 1 ZM2 2 L250 2 L250 23 L2 23 L2 2 Z" fill-rule="evenodd" clip-path="url(#3)" stroke="none"/>
+      <path d="M1 1 L251 1 L251 23 L1 23 L1 1 ZM2 2 L250 2 L250 22 L2 22 L2 2 Z" fill-rule="evenodd" clip-path="url(#3)" stroke="none"/>
     </g>
-    <g font-family="'Segoe UI'" transform="translate(0,75)">
+    <g font-family="'Segoe UI'" transform="translate(0,74)">
       <text x="0" xml:space="preserve" y="13" clip-path="url(#4)" stroke="none">Sudo password:</text>
     </g>
     <g font-family="'Segoe UI'" transform="translate(0,10)">

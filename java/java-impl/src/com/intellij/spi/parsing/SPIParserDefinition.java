@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
+import com.intellij.lang.spi.SPILanguage;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -29,9 +30,8 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.spi.psi.SPIClassProviderReferenceElement;
 import com.intellij.spi.psi.SPIClassProvidersElementList;
-import com.intellij.spi.psi.SPIPackageOrClassReferenceElement;
 import com.intellij.spi.psi.SPIFile;
-import com.intellij.lang.spi.SPILanguage;
+import com.intellij.spi.psi.SPIPackageOrClassReferenceElement;
 import org.jetbrains.annotations.NotNull;
 
 public class SPIParserDefinition implements ParserDefinition {
@@ -109,7 +109,7 @@ public class SPIParserDefinition implements ParserDefinition {
   }
 
   @Override
-  public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     return SpaceRequirements.MAY;
   }
 

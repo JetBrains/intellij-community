@@ -10,7 +10,6 @@ import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.impl.watch.DebuggerTreeNodeExpression;
 import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
@@ -88,7 +87,7 @@ public class ExpressionChildrenRenderer extends TypeRenderer implements Children
 
   private Value evaluateChildren(EvaluationContext context, NodeDescriptor descriptor) throws EvaluateException {
     ExpressionEvaluator evaluator = myChildrenExpression.getEvaluator(context.getProject());
-    Value value = DebuggerUtilsEx.computeAndKeep(() -> evaluator.evaluate(context), context);
+    Value value = context.computeAndKeep(() -> evaluator.evaluate(context));
     descriptor.putUserData(EXPRESSION_VALUE, value);
     return value;
   }

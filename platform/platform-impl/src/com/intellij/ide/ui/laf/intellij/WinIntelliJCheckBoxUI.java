@@ -2,12 +2,7 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxUI;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.IconCache;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.util.ui.*;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -19,17 +14,22 @@ import java.awt.*;
 public class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
   private static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(13)).asUIResource();
 
-  @Nullable
-  @Override
-  public Insets getVisualPaddings(@NotNull Component component) {
-    return JBUI.insets(1, 0);
-  }
-
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
     AbstractButton b = (AbstractButton)c;
     b.setRolloverEnabled(true);
     return new WinIntelliJCheckBoxUI();
+  }
+
+  @Override
+  protected Rectangle updateViewRect(AbstractButton b, Rectangle viewRect) {
+    JBInsets.removeFrom(viewRect, b.getInsets());
+    return viewRect;
+  }
+
+  @Override
+  protected Dimension updatePreferredSize(JComponent c, Dimension size) {
+    return size;
   }
 
   @Override
@@ -39,11 +39,8 @@ public class WinIntelliJCheckBoxUI extends DarculaCheckBoxUI {
     boolean pressed = bm.isPressed() || isCellPressed(b);
 
     String iconName = isIndeterminate(b) ? "checkBoxIndeterminate" : "checkBox";
-    Icon icon = IconCache.getIcon(iconName, selected || isIndeterminate(b), focused, enabled, false, pressed);
-
-    if (icon != null) {
-      icon.paintIcon(c, g, iconRect.x, iconRect.y);
-    }
+    Icon icon = LafIconLookup.getIcon(iconName, selected || isIndeterminate(b), focused, enabled, false, pressed);
+    icon.paintIcon(c, g, iconRect.x, iconRect.y);
   }
 
   private static boolean isCellRollover(AbstractButton checkBox) {

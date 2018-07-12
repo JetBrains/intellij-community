@@ -11,11 +11,8 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.MethodBytecodeUtil;
-import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -34,9 +31,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
-import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.NonNls;
@@ -52,7 +49,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 public class LineBreakpoint<P extends JavaBreakpointProperties> extends BreakpointWithHighlighter<P> {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.LineBreakpoint");
+  static final Logger LOG = Logger.getInstance(LineBreakpoint.class);
 
   public static final @NonNls Key<LineBreakpoint> CATEGORY = BreakpointCategory.lookup("line_breakpoints");
 
@@ -69,17 +66,8 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
   }
 
   @Override
-  protected Icon getInvalidIcon(boolean isMuted) {
-    return AllIcons.Debugger.Db_invalid_breakpoint;
-  }
-
-  @Override
   protected Icon getVerifiedIcon(boolean isMuted) {
-    return null;
-    //if (isRemoveAfterHit()) {
-    //  return isMuted ? AllIcons.Debugger.Db_muted_breakpoint : AllIcons.Debugger.Db_set_breakpoint;
-    //}
-    //return isMuted? AllIcons.Debugger.Db_muted_breakpoint : AllIcons.Debugger.Db_set_breakpoint;
+    return XDebuggerUtilImpl.getVerifiedIcon(myXBreakpoint);
   }
 
   @Override
@@ -296,22 +284,6 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
   }
 
   @Override
-  protected String calculateEventClass(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
-    String className = null;
-    final ObjectReference thisObject = (ObjectReference)context.computeThisObject();
-    if (thisObject != null) {
-      className = thisObject.referenceType().name();
-    }
-    else {
-      final StackFrameProxyImpl frame = context.getFrameProxy();
-      if (frame != null) {
-        className = frame.location().declaringType().name();
-      }
-    }
-    return className;
-  }
-
-  @Override
   public String getShortName() {
     return getDisplayInfoInternal(false, 30);
   }
@@ -323,7 +295,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
 
   private String getDisplayInfoInternal(boolean showPackageInfo, int totalTextLength) {
     if(isValid()) {
-      final int lineNumber = myXBreakpoint.getSourcePosition().getLine() + 1;
+      final int lineNumber = getLineIndex() + 1;
       String className = getClassName();
       final boolean hasClassInfo = className != null && className.length() > 0;
       final String methodName = getMethodName();
@@ -331,7 +303,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
       final boolean hasMethodInfo = displayName != null && displayName.length() > 0;
       if (hasClassInfo || hasMethodInfo) {
         final StringBuilder info = new StringBuilder();
-        boolean isFile = myXBreakpoint.getSourcePosition().getFile().getName().equals(className);
+        boolean isFile = getFileName().equals(className);
         String packageName = null;
         if (hasClassInfo) {
           final int dotIndex = className.lastIndexOf(".");
@@ -468,10 +440,9 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
 
   @Nullable
   public String getMethodName() {
-    XSourcePosition position = myXBreakpoint.getSourcePosition();
+    SourcePosition position = getSourcePosition();
     if (position != null) {
-      int offset = position.getOffset();
-      return findOwnerMethod(DebuggerUtilsEx.getPsiFile(myXBreakpoint.getSourcePosition(), myProject), offset);
+      return findOwnerMethod(position.getFile(), position.getOffset());
     }
     return null;
   }

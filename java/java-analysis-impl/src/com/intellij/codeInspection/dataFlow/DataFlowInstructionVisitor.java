@@ -12,6 +12,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -184,15 +185,10 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   void handleBooleanCalls(MethodCallInstruction instruction, DfaInstructionState[] states) {
     if (!hasNonTrivialBooleanContracts(instruction)) return;
     PsiMethod method = instruction.getTargetMethod();
-    if (method == null || !ControlFlowAnalyzer.isPure(method)) return;
+    if (method == null || !JavaMethodContractUtil.isPure(method)) return;
     PsiMethodCallExpression call = ObjectUtils.tryCast(instruction.getCallExpression(), PsiMethodCallExpression.class);
     if (call == null || myBooleanCalls.get(call) == ThreeState.UNSURE) return;
-    PsiElement parent = call.getParent();
-    if (parent instanceof PsiExpressionStatement) return;
-    if (parent instanceof PsiLambdaExpression &&
-        PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)parent))) {
-      return;
-    }
+    if (ExpressionUtils.isVoidContext(call)) return;
     for (DfaInstructionState s : states) {
       DfaValue val = s.getMemoryState().peek();
       ThreeState state = ThreeState.UNSURE;

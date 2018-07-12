@@ -82,7 +82,7 @@ public class SplitIfAction extends PsiElementBaseIntentionAction {
       SplitConditionUtil.create(factory, ifStatement, lOperand, rOperand, token.getTokenType(), ct);
     if (replacement == null) return;
     PsiElement result = ct.replaceAndRestoreComments(ifStatement, replacement);
-    result = CodeStyleManager.getInstance(expression.getProject()).reformat(result);
+    result = CodeStyleManager.getInstance(project).reformat(result);
     if (result instanceof PsiIfStatement) {
       PsiExpression resultCondition = ((PsiIfStatement)result).getCondition();
       if (resultCondition != null) {

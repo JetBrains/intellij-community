@@ -6,7 +6,7 @@ def x = new ActionListener(){
 
   }
 
-  def <error descr="Constructors are not allowed in anonymous class">ActionListener</error>(){
+  def ActionListener(){
     
   }
 }

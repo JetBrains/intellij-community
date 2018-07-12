@@ -9,7 +9,7 @@ Groovy script
         PsiElement(identifier)('List')
         Type arguments
           PsiElement(<)('<')
-          PsiErrorElement:Type argument expected
+          PsiErrorElement:<type argument> expected, got '>'
             <empty list>
           PsiElement(>)('>')
     PsiWhiteSpace(' ')

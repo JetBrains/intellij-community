@@ -27,7 +27,9 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -36,6 +38,7 @@ import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.idea.maven.importing.MavenAnnotationProcessorsModuleService;
 import org.jetbrains.idea.maven.importing.MavenExtraArtifactType;
 import org.jetbrains.idea.maven.importing.MavenImporter;
@@ -55,6 +58,8 @@ import static com.intellij.openapi.roots.OrderEnumerator.orderEntries;
 public class MavenProject {
 
   private static final Key<MavenArtifactIndex> DEPENDENCIES_CACHE_KEY = Key.create("MavenProject.DEPENDENCIES_CACHE_KEY");
+  private static final Key<Map<String, String>> MAVEN_CONFIG_CACHE_KEY = Key.create("MavenProject.MAVEN_CONFIG_CACHE_KEY");
+  private static final Key<Map<String, String>> JVM_CONFIG_CACHE_KEY = Key.create("MavenProject.JVM_CONFIG_CACHE_KEY");
   private static final Key<List<String>> FILTERS_CACHE_KEY = Key.create("MavenProject.FILTERS_CACHE_KEY");
 
   @NotNull private final VirtualFile myFile;
@@ -1081,6 +1086,45 @@ public class MavenProject {
   @NotNull
   public Properties getProperties() {
     return myState.myProperties;
+  }
+
+  @NotNull
+  public Map<String, String> getMavenConfig() {
+    Map<String, String> mavenConfig = getCachedValue(MAVEN_CONFIG_CACHE_KEY);
+    if (mavenConfig == null) {
+      mavenConfig = readConfigFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
+      putCachedValue(MAVEN_CONFIG_CACHE_KEY, mavenConfig);
+    }
+
+    return mavenConfig;
+  }
+
+  @NotNull
+  public Map<String, String> getJvmConfig() {
+    Map<String, String> jvmConfig = getCachedValue(JVM_CONFIG_CACHE_KEY);
+    if (jvmConfig == null) {
+      jvmConfig = readConfigFile(MavenConstants.JVM_CONFIG_RELATIVE_PATH);
+      putCachedValue(JVM_CONFIG_CACHE_KEY, jvmConfig);
+    }
+
+    return jvmConfig;
+  }
+
+  @NotNull
+  private Map<String, String> readConfigFile(@SystemIndependent String relativePath) {
+    File baseDir = MavenUtil.getBaseDir(getDirectoryFile());
+    File configFile = new File(baseDir + FileUtil.toSystemDependentName(relativePath));
+
+    ParametersList parametersList = new ParametersList();
+    if (configFile.exists() && configFile.isFile()) {
+      try (InputStream in = new FileInputStream(configFile)) {
+        parametersList.addParametersString(StreamUtil.readText(in, CharsetToolkit.UTF8));
+      }
+      catch (IOException ignore) {
+      }
+    }
+    Map<String, String> config = parametersList.getProperties();
+    return config.isEmpty() ? Collections.emptyMap() : config;
   }
 
   @NotNull

@@ -191,7 +191,7 @@ public class ControlFlowUtil {
                                          int start,
                                          int end,
                                          final boolean ignoreNotReachingWrites,
-                                         @NotNull Collection<PsiVariable> set) {
+                                         @NotNull Collection<? super PsiVariable> set) {
     List<Instruction> instructions = flow.getInstructions();
     for (int i = start; i < end; i++) {
       Instruction instruction = instructions.get(i);
@@ -408,7 +408,7 @@ public class ControlFlowUtil {
 
   private static void processGoto(@NotNull ControlFlow flow, int start, int end,
                                   @NotNull IntArrayList exitPoints,
-                                  @NotNull Collection<PsiStatement> exitStatements,
+                                  @NotNull Collection<? super PsiStatement> exitStatements,
                                   @NotNull BranchingInstruction instruction,
                                   final PsiStatement statement, @NotNull Class... classesFilter) {
     if (statement == null) return;
@@ -434,7 +434,7 @@ public class ControlFlowUtil {
     }
   }
 
-  private static void processGotoStatement(@NotNull Collection<PsiStatement> exitStatements,
+  private static void processGotoStatement(@NotNull Collection<? super PsiStatement> exitStatements,
                                            PsiStatement statement, @NotNull Class... classesFilter) {
     if (statement != null && isElementOfClass(statement, classesFilter)) {
       exitStatements.add(statement);
@@ -755,7 +755,7 @@ public class ControlFlowUtil {
    * @param targetClassMember member in target class containing code fragment
    * @return true if code fragment can be extracted outside
    */
-  public static boolean collectOuterLocals(@NotNull List<PsiVariable> array, @NotNull PsiElement scope, @NotNull PsiElement member,
+  public static boolean collectOuterLocals(@NotNull List<? super PsiVariable> array, @NotNull PsiElement scope, @NotNull PsiElement member,
                                            @NotNull PsiElement targetClassMember) {
     if (scope instanceof PsiMethodCallExpression) {
       final PsiMethodCallExpression call = (PsiMethodCallExpression)scope;
@@ -1623,6 +1623,7 @@ public class ControlFlowUtil {
      * Push an arc of the graph (oldOffset -> newOffset)
      */
     void push(int oldOffset, int newOffset) {
+      LOG.assertTrue(oldOffset >= 0, "negative offset is pushed to walk-through stack");
       if (size >= newOffsets.length) {
         oldOffsets = ArrayUtil.realloc(oldOffsets, size * 3 / 2);
         newOffsets = ArrayUtil.realloc(newOffsets, size * 3 / 2);

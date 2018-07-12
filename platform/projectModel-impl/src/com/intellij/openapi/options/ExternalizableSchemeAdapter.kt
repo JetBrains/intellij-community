@@ -7,13 +7,13 @@ import kotlin.properties.Delegates
 abstract class ExternalizableSchemeAdapter : ExternalizableScheme {
   private var myName: String by Delegates.notNull()
 
-  override fun getName() = myName
+  override fun getName(): String = myName
 
   override fun setName(value: String) {
     myName = value
   }
 
-  override fun toString() = name
+  override fun toString(): String = name
 }
 
 abstract class BaseSchemeProcessor<SCHEME, MUTABLE_SCHEME : SCHEME> : NonLazySchemeProcessor<SCHEME, MUTABLE_SCHEME>()

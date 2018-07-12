@@ -63,6 +63,10 @@ public abstract class XVariablesViewBase extends XDebugView {
     DnDManager.getInstance().registerSource(myTreePanel, getTree());
   }
 
+  public JComponent getDefaultFocusedComponent() {
+    return myTreePanel.getTree();
+  }
+
   protected void buildTreeAndRestoreState(@NotNull final XStackFrame stackFrame) {
     XSourcePosition position = stackFrame.getSourcePosition();
     XDebuggerTree tree = getTree();

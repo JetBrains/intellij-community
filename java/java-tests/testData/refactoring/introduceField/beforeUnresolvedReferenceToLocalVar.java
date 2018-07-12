@@ -4,7 +4,11 @@ public class Test
 {
     public Test()
     {
-        array<caret>List = new ArrayList();
+        //c1
+        array<caret>List = new //c2 
+          ArrayList(
+            //c3
+        );
     }
 
 }

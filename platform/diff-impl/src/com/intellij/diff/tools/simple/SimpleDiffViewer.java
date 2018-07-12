@@ -33,7 +33,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.DiffNavigationContext;
-import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -412,18 +411,27 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     return TwosideTextDiffViewer.canShowRequest(context, request);
   }
 
+  protected boolean isSomeChangeSelected(@NotNull Side side) {
+    if (myDiffChanges.isEmpty()) return false;
+
+    EditorEx editor = getEditor(side);
+    return DiffUtil.isSomeRangeSelected(editor, lines -> {
+      return ContainerUtil.exists(myDiffChanges, change -> isChangeSelected(change, lines, side));
+    });
+  }
+
   @NotNull
   @CalledInAwt
   protected List<SimpleDiffChange> getSelectedChanges(@NotNull Side side) {
     EditorEx editor = getEditor(side);
     BitSet lines = DiffUtil.getSelectedLines(editor);
+    return ContainerUtil.filter(myDiffChanges, change -> isChangeSelected(change, lines, side));
+  }
 
-    return ContainerUtil.filter(getDiffChanges(), change -> {
-      int line1 = change.getStartLine(side);
-      int line2 = change.getEndLine(side);
-
-      return DiffUtil.isSelectedByLine(lines, line1, line2);
-    });
+  private static boolean isChangeSelected(SimpleDiffChange change, @NotNull BitSet lines, @NotNull Side side) {
+    int line1 = change.getStartLine(side);
+    int line2 = change.getEndLine(side);
+    return DiffUtil.isSelectedByLine(lines, line1, line2);
   }
 
   @Nullable
@@ -528,22 +536,6 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
       if (selectedChanges.isEmpty()) return;
 
       doPerform(e, side, ContainerUtil.reverse(selectedChanges));
-    }
-
-    protected boolean isSomeChangeSelected(@NotNull Side side) {
-      if (myDiffChanges.isEmpty()) return false;
-
-      EditorEx editor = getEditor(side);
-      List<Caret> carets = editor.getCaretModel().getAllCarets();
-      if (carets.size() != 1) return true;
-      Caret caret = carets.get(0);
-      if (caret.hasSelection()) return true;
-      int line = editor.getDocument().getLineNumber(editor.getExpectedCaretOffset());
-
-      for (SimpleDiffChange change : myDiffChanges) {
-        if (change.isSelectedByLine(line, side)) return true;
-      }
-      return false;
     }
 
     protected abstract boolean isVisible(@NotNull Side side);

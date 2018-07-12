@@ -23,6 +23,8 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,7 +95,9 @@ class CheckInitialized implements ElementFilter {
     final PsiClass containingClass = method.getContainingClass();
     assert containingClass != null;
     for (PsiField field : containingClass.getFields()) {
-      if (!field.hasModifierProperty(PsiModifier.STATIC) && field.getInitializer() == null && !isInitializedImplicitly(field)) {
+      if (!field.hasModifierProperty(PsiModifier.STATIC) &&
+          !isInitializedBeforeConstructor(field, containingClass) &&
+          !isInitializedImplicitly(field)) {
         if (!allowNonFinalFields || field.hasModifierProperty(PsiModifier.FINAL)) {
           fields.add(field);
         }
@@ -130,6 +134,13 @@ class CheckInitialized implements ElementFilter {
       }
     });
     return fields;
+  }
+
+  private static boolean isInitializedBeforeConstructor(PsiField field, PsiClass containingClass) {
+    if (field.getInitializer() != null) return true;
+
+    return ContainerUtil.exists(containingClass.getInitializers(), i -> 
+      !i.hasModifierProperty(PsiModifier.STATIC) && VariableAccessUtils.variableIsAssigned(field, i, false));
   }
 
   @Override

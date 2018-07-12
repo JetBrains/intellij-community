@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.components.service
@@ -25,14 +26,13 @@ import git4idea.GitFileRevision
 import git4idea.GitRevisionNumber
 import git4idea.GitUtil
 import git4idea.history.GitHistoryUtils
-import icons.GithubIcons
 import org.jetbrains.plugins.github.api.GithubRepositoryPath
 import org.jetbrains.plugins.github.util.GithubGitHelper
 import org.jetbrains.plugins.github.util.GithubNotifications
 import org.jetbrains.plugins.github.util.GithubUtil
 
 open class GithubOpenInBrowserActionGroup
-  : ActionGroup("Open on GitHub", "Open corresponding link in browser", GithubIcons.Github_icon) {
+  : ActionGroup("Open on GitHub", "Open corresponding link in browser", AllIcons.Vcs.Vendors.Github) {
 
   override fun update(e: AnActionEvent?) {
     if (e == null) return
@@ -51,7 +51,7 @@ open class GithubOpenInBrowserActionGroup
     return emptyArray()
   }
 
-  override fun isPopup() = true
+  override fun isPopup(): Boolean = true
 
   override fun actionPerformed(e: AnActionEvent?) {
     if (e == null) return
@@ -66,7 +66,7 @@ open class GithubOpenInBrowserActionGroup
     return data != null && data.first.size == 1
   }
 
-  override fun disableIfNoVisibleChildren() = false
+  override fun disableIfNoVisibleChildren(): Boolean = false
 
   protected open fun getData(dataContext: DataContext): Pair<Set<GithubRepositoryPath>, Data>? {
     val project = dataContext.getData(CommonDataKeys.PROJECT)

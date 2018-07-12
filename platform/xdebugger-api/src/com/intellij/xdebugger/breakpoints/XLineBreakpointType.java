@@ -83,8 +83,9 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
     return null;
   }
 
+  // Preserved for API compatibility
   public List<? extends AnAction> getAdditionalPopupMenuActions(@NotNull XLineBreakpoint<P> breakpoint, @Nullable XDebugSession currentSession) {
-    return Collections.emptyList();
+    return super.getAdditionalPopupMenuActions(breakpoint, currentSession);
   }
 
   public Icon getTemporaryIcon() {
@@ -130,6 +131,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   public abstract class XLineBreakpointVariant {
+    @NotNull
     public abstract String getText();
 
     @Nullable
@@ -153,6 +155,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
       mySourcePosition = position;
     }
 
+    @NotNull
     @Override
     public String getText() {
       return "All";
@@ -192,6 +195,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
       return myElement.getIcon(0);
     }
 
+    @NotNull
     @Override
     public String getText() {
       return StringUtil.shortenTextWithEllipsis(myElement.getText(), 100, 0);

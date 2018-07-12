@@ -27,7 +27,6 @@ import com.intellij.structuralsearch.plugin.replace.impl.ReplacementBuilder;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
-import com.intellij.structuralsearch.plugin.ui.SearchContext;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
@@ -93,33 +92,49 @@ public abstract class StructuralSearchProfile {
   }
 
   @NotNull
-  public Editor createEditor(@NotNull SearchContext searchContext,
-                             @NotNull FileType fileType,
-                             Language dialect,
-                             String text,
-                             boolean useLastConfiguration) {
-    PsiFile codeFragment = createCodeFragment(searchContext.getProject(), text, null);
+  public Document createDocument(@NotNull Project project, @NotNull FileType fileType, Language dialect, String text) {
+    PsiFile codeFragment = createCodeFragment(project, text, null);
     if (codeFragment == null) {
-      codeFragment = createFileFragment(searchContext, fileType, dialect, text);
+      codeFragment = createFileFragment(project, fileType, dialect, text);
     }
 
     if (codeFragment != null) {
-      final Document doc = PsiDocumentManager.getInstance(searchContext.getProject()).getDocument(codeFragment);
+      final Document doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
       assert doc != null : "code fragment element should be physical";
-      DaemonCodeAnalyzer.getInstance(searchContext.getProject()).setHighlightingEnabled(codeFragment, false);
-      return UIUtil.createEditor(doc, searchContext.getProject(), true, true, getTemplateContextType());
+      //DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(codeFragment, false);
+      return doc;
+    }
+
+    return EditorFactory.getInstance().createDocument(text);
+  }
+
+  @NotNull
+  public Editor createEditor(@NotNull Project project,
+                             @NotNull FileType fileType,
+                             Language dialect,
+                             String text) {
+    PsiFile codeFragment = createCodeFragment(project, text, null);
+    if (codeFragment == null) {
+      codeFragment = createFileFragment(project, fileType, dialect, text);
+    }
+
+    if (codeFragment != null) {
+      final Document doc = PsiDocumentManager.getInstance(project).getDocument(codeFragment);
+      assert doc != null : "code fragment element should be physical";
+      DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(codeFragment, false);
+      return UIUtil.createEditor(doc, project, true, true, getTemplateContextType());
     }
 
     final EditorFactory factory = EditorFactory.getInstance();
     final Document document = factory.createDocument(text);
-    final EditorEx editor = (EditorEx)factory.createEditor(document, searchContext.getProject());
+    final EditorEx editor = (EditorEx)factory.createEditor(document, project);
     editor.getSettings().setFoldingOutlineShown(false);
     return editor;
   }
 
-  private static PsiFile createFileFragment(SearchContext searchContext, FileType fileType, Language dialect, String text) {
+  private static PsiFile createFileFragment(Project project, FileType fileType, Language dialect, String text) {
     final String name = "__dummy." + fileType.getDefaultExtension();
-    final PsiFileFactory factory = PsiFileFactory.getInstance(searchContext.getProject());
+    final PsiFileFactory factory = PsiFileFactory.getInstance(project);
 
     return dialect == null ?
            factory.createFileFromText(name, fileType, text, LocalTimeCounter.currentTime(), true, true) :
@@ -211,7 +226,7 @@ public abstract class StructuralSearchProfile {
                                 int offset,
                                 ReplacementInfo replacementInfo) {
     if (info.getName().equals(match.getName())) {
-      String replacementString = match.getMatchImage();
+      final String replacementString;
       boolean removeSemicolon = false;
       if (match.hasChildren() && !match.isScopeMatch()) {
         // compound matches
@@ -237,6 +252,7 @@ public abstract class StructuralSearchProfile {
         if (info.isStatementContext()) {
           removeSemicolon = match.getMatch() instanceof PsiComment;
         }
+        replacementString = match.getMatchImage();
       }
 
       offset = Replacer.insertSubstitution(result, offset, info, replacementString);
@@ -263,7 +279,7 @@ public abstract class StructuralSearchProfile {
   }
 
   @Contract("null -> false")
-  public boolean isIdentifier(PsiElement element) {
+  public boolean isIdentifier(@Nullable PsiElement element) {
     return false;
   }
 
@@ -279,5 +295,37 @@ public abstract class StructuralSearchProfile {
   @Contract("!null -> !null")
   public PsiElement getPresentableElement(PsiElement element) {
     return isIdentifier(element) ? element.getParent() : element;
+  }
+
+  /**
+   * Override this method to influence which UI controls are shown when editing the constraints of the specified variable.
+   *
+   * @param constraintName  the name of the constraint controls for which applicability is considered.
+   *  See {@link com.intellij.structuralsearch.plugin.ui.UIUtil} for predefined constraint names
+   * @param variableNode  the psi element corresponding to the current variable
+   * @param completePattern  true, if the current variableNode encompasses the complete pattern. The variableNode can also be null in this case.
+   * @param target  true, if the current variableNode is the target of the search
+   * @return true, if the requested constraint is applicable and the corresponding UI should be shown when editing the variable; false otherwise
+   */
+  public boolean isApplicableConstraint(String constraintName, @Nullable PsiElement variableNode, boolean completePattern, boolean target) {
+    switch (constraintName) {
+      case UIUtil.MINIMUM_ZERO:
+        if (target) return false;
+      case UIUtil.MAXIMUM_UNLIMITED:
+      case UIUtil.TEXT:
+      case UIUtil.REFERENCE: return !completePattern;
+    }
+    return false;
+  }
+
+  public final boolean isApplicableConstraint(String constraintName, List<PsiElement> nodes, boolean completePattern, boolean target) {
+    if (nodes.isEmpty()) {
+      return isApplicableConstraint(constraintName, (PsiElement)null, completePattern, target);
+    }
+    boolean result = true;
+    for (PsiElement node : nodes) {
+      result &= isApplicableConstraint(constraintName, node, completePattern, target);
+    }
+    return result;
   }
 }

@@ -172,9 +172,8 @@ public class CompilerManagerImpl extends CompilerManager {
     return getCompilers(compilerClass, CompilerFilter.ALL);
   }
 
-  @Override
   @NotNull
-  public <T extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass, CompilerFilter filter) {
+  private <T extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass, CompilerFilter filter) {
     final List<T> compilers = new ArrayList<>(myCompilers.size());
     for (final Compiler item : myCompilers) {
       if (compilerClass.isAssignableFrom(item.getClass()) && filter.acceptCompiler(item)) {
@@ -270,13 +269,6 @@ public class CompilerManagerImpl extends CompilerManager {
   @Override
   public void makeWithModalProgress(@NotNull CompileScope scope, @Nullable CompileStatusNotification callback) {
     new CompileDriver(myProject).make(scope, true, new ListenerNotificator(callback));
-  }
-
-  @Override
-  public void make(@NotNull CompileScope scope, CompilerFilter filter, @Nullable CompileStatusNotification callback) {
-    final CompileDriver compileDriver = new CompileDriver(myProject);
-    compileDriver.setCompilerFilter(filter);
-    compileDriver.make(scope, new ListenerNotificator(callback));
   }
 
   @Override

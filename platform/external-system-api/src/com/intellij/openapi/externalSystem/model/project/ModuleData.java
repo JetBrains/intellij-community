@@ -1,6 +1,5 @@
 package com.intellij.openapi.externalSystem.model.project;
 
-import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,7 +30,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   @Nullable private String myDescription;
   @NotNull private List<File> myArtifacts;
   @Nullable private String[] myIdeModuleGroup;
-  @Nullable  private String mySourceCompatibility;
+  @Nullable private String mySourceCompatibility;
   @Nullable private String myTargetCompatibility;
   @Nullable private String mySdkName;
   @Nullable private String myProductionModuleId;
@@ -86,18 +85,8 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   }
 
   @NotNull
-  public String getModuleFilePath() {
-    return ExternalSystemApiUtil
-      .toCanonicalPath(myModuleFileDirectoryPath + "/" + getInternalName() + ModuleFileType.DOT_DEFAULT_EXTENSION);
-  }
-
-  @NotNull
   public String getModuleFileDirectoryPath() {
     return myModuleFileDirectoryPath;
-  }
-
-  public void setModuleFileDirectoryPath(@NotNull String path) {
-    myModuleFileDirectoryPath = path;
   }
 
   /**
@@ -243,6 +232,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
     ModuleData that = (ModuleData)o;
 
     if (!myId.equals(that.myId)) return false;
+    if (!myExternalConfigPath.equals(that.myExternalConfigPath)) return false;
     if (myGroup != null ? !myGroup.equals(that.myGroup) : that.myGroup != null) return false;
     if (!myModuleTypeId.equals(that.myModuleTypeId)) return false;
     if (myVersion != null ? !myVersion.equals(that.myVersion) : that.myVersion != null) return false;
@@ -256,6 +246,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   public int hashCode() {
     int result = super.hashCode();
     result = 31 * result + myId.hashCode();
+    result = 31 * result + myExternalConfigPath.hashCode();
     result = 31 * result + myModuleTypeId.hashCode();
     result = 31 * result + (myGroup != null ? myGroup.hashCode() : 0);
     result = 31 * result + (myVersion != null ? myVersion.hashCode() : 0);

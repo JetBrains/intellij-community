@@ -26,7 +26,7 @@ import java.util.ListIterator;
 import static javax.swing.tree.TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION;
 
 public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
-  private final boolean myCanExpand;
+  protected boolean myCanExpand;
 
   private static final Convertor<TreePath, String> TO_STRING = path -> path.getLastPathComponent().toString();
   private final Convertor<TreePath, String> myToStringConvertor;

@@ -18,10 +18,8 @@ public class JavaTypeProviderTest extends LightCodeInsightTestCase {
            "    <selection>x</selection>\n" +
            "  }", "int",
            "<table>" +
-           "<tr><td align='right' valign='top'><strong>Type:</strong></td>" +
-           "<td>int</td></tr>" +
-           "<tr><td align='right' valign='top'><strong>Range:</strong></td>" +
-           "<td>{Integer.MIN_VALUE, 0..Integer.MAX_VALUE}</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>int</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Range:</td><td>{Integer.MIN_VALUE, 0..Integer.MAX_VALUE}</td></tr>" +
            "</table>");
   }
 
@@ -32,12 +30,9 @@ public class JavaTypeProviderTest extends LightCodeInsightTestCase {
            "    }\n" +
            "  }", "Optional&lt;String&gt;",
            "<table>" +
-           "<tr><td align='right' valign='top'><strong>Type:</strong></td>" +
-           "<td>Optional&lt;String&gt;</td></tr>" +
-           "<tr><td align='right' valign='top'><strong>Nullability:</strong></td>" +
-           "<td>NotNull</td></tr>" +
-           "<tr><td align='right' valign='top'><strong>Optional presense:</strong></td>" +
-           "<td>present Optional</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>Optional&lt;String&gt;</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Nullability:</td><td>non-null</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Optional:</td><td>present Optional</td></tr>" +
            "</table>");
   }
 
@@ -52,13 +47,11 @@ public class JavaTypeProviderTest extends LightCodeInsightTestCase {
            "    }\n" +
            "  }", "Object",
            "<table>" +
-           "<tr><td align='right' valign='top'><strong>Type:</strong></td>" +
-           "<td>Object</td></tr>" +
-           "<tr><td align='right' valign='top'><strong>Nullability:</strong></td>" +
-           "<td>NotNull</td></tr>" +
-           "<tr><td align='right' valign='top'><strong>Type constraints:</strong></td>" +
-           "<td>instanceof CharSequence\n" +
-           "not instanceof Number, String</td></tr></table>");
+           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>Object</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Nullability:</td><td>non-null</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Constraints:</td><td>instanceof CharSequence\n" +
+           "not instanceof Number, String</td></tr>" +
+           "</table>");
   }
 
   public void testTypeConstraint2() {
@@ -72,10 +65,9 @@ public class JavaTypeProviderTest extends LightCodeInsightTestCase {
            "    }\n" +
            "  }\n", "Object",
            "<table>" +
-           "<tr><td align='right' valign='top'><strong>Type:</strong></td>" +
-           "<td>Object</td></tr>" +
-           "<tr><td align='right' valign='top'><strong>Type constraints:</strong></td>" +
-           "<td>not instanceof CharSequence, Number</td></tr></table>");
+           "<tr><td align='left' valign='top' style='color:#909090'>Type:</td><td>Object</td></tr>" +
+           "<tr><td align='left' valign='top' style='color:#909090'>Constraints:</td><td>not instanceof CharSequence, Number</td></tr>" +
+           "</table>");
   }
 
   private static void doTest(@Language(value = "JAVA", prefix = "@SuppressWarnings(\"all\")class X{", suffix = "}") String method,

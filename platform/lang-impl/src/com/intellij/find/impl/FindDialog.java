@@ -52,6 +52,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -156,6 +157,11 @@ public class FindDialog extends DialogWrapper implements FindUI {
   public void showUI() {
     if (haveResultsPreview()) {
       ApplicationManager.getApplication().invokeLater(this::scheduleResultsUpdate, ModalityState.any());
+    }
+    if (Registry.is("ide.find.as.popup") && !SystemInfo.isJetBrainsJvm) {
+      setErrorText("<font color=\"#"+ColorUtil.toHex(UIUtil.getInactiveTextColor())+"\">" +
+                   "There is another version of this dialog in a form of lightweight popup. To use it, run the IDE with the bundled JRE." +
+                   "</font>");
     }
     show();
   }
@@ -645,16 +651,14 @@ public class FindDialog extends DialogWrapper implements FindUI {
       topOptionsPanel.add(leftOptionsPanel);
     }
 
-    if (myHelper.getModel().isOpenInNewTabVisible()){
-      myCbToOpenInNewTab = new JCheckBox(FindBundle.message("find.open.in.new.tab.checkbox"));
-      myCbToOpenInNewTab.setFocusable(false);
-      myCbToOpenInNewTab.setSelected(myHelper.isUseSeparateView());
-      myCbToOpenInNewTab.setEnabled(myHelper.getModel().isOpenInNewTabEnabled());
-      myCbToOpenInNewTab.addActionListener(e -> myHelper.setUseSeparateView(myCbToOpenInNewTab.isSelected()));
+    myCbToOpenInNewTab = new JCheckBox(FindBundle.message("find.open.in.new.tab.checkbox"));
+    myCbToOpenInNewTab.setFocusable(false);
+    myCbToOpenInNewTab.setSelected(myHelper.isUseSeparateView());
+    myCbToOpenInNewTab.setEnabled(myHelper.getModel().isOpenInNewTabEnabled());
+    myCbToOpenInNewTab.addActionListener(e -> myHelper.setUseSeparateView(myCbToOpenInNewTab.isSelected()));
 
-      if (resultsOptionPanel == null) resultsOptionPanel = createResultsOptionPanel(optionsPanel, gbConstraints);
-      resultsOptionPanel.add(myCbToOpenInNewTab);
-    }
+    if (resultsOptionPanel == null) resultsOptionPanel = createResultsOptionPanel(optionsPanel, gbConstraints);
+    resultsOptionPanel.add(myCbToOpenInNewTab);
 
     if (myPreviewSplitter != null) {
       TabbedPane pane = new JBTabsPaneImpl(myProject, SwingConstants.TOP, myDisposable);

@@ -18,8 +18,7 @@ public final class CompoundRunConfigurationType extends ConfigurationTypeBase {
   public CompoundRunConfigurationType() {
     super("CompoundRunConfigurationType",
           "Compound",
-          "It runs batch of run configurations at once",
-          LayeredIcon.create(AllIcons.Nodes.Folder, AllIcons.Nodes.RunnableMark));
+          "It runs batch of run configurations at once", lazyIcon(() -> LayeredIcon.create(AllIcons.Nodes.Folder, AllIcons.Nodes.RunnableMark)));
     addFactory(new ConfigurationFactory(this) {
       @NotNull
       @Override

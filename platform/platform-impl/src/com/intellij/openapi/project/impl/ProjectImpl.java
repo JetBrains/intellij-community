@@ -256,14 +256,16 @@ public class ProjectImpl extends PlatformComponentManagerImpl implements Project
 
   @Override
   public void init() {
+    Application application = ApplicationManager.getApplication();
+
     long start = System.currentTimeMillis();
 
     ProgressIndicator progressIndicator = isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
-    init(progressIndicator);
+    init(progressIndicator,
+         () -> application.getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).projectComponentsRegistered(this));
 
     long time = System.currentTimeMillis() - start;
     String message = getComponentConfigCount() + " project components initialized in " + time + " ms";
-    Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode()) {
       LOG.debug(message);
     } else {

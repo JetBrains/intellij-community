@@ -73,6 +73,8 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
   }
 
   /** @deprecated use {@link #annotate(TypeAnnotationProvider)} (to be removed in IDEA 18) */
+  @Deprecated
+  @NotNull
   public PsiArrayType createArrayType(@NotNull PsiAnnotation... annotations) {
     return new PsiArrayType(this, annotations);
   }
@@ -149,11 +151,11 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
    * Returns the class type for qualified class name.
    *
    * @param qName qualified class name.
-   * @param project
    * @param resolveScope the scope in which the class is searched.
    * @return the class instance.
    */
-  public static PsiClassType getTypeByName(String qName, Project project, GlobalSearchScope resolveScope) {
+  @NotNull
+  public static PsiClassType getTypeByName(@NotNull String qName, @NotNull Project project, @NotNull GlobalSearchScope resolveScope) {
     PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
     return factory.createTypeByFQClassName(qName, resolveScope);
   }
@@ -329,7 +331,7 @@ public abstract class PsiType implements PsiAnnotationOwner, Cloneable, JvmType 
     return "PsiType:" + getPresentableText();
   }
 
-  protected static abstract class Stub extends PsiType {
+  protected abstract static class Stub extends PsiType {
     protected Stub(@NotNull PsiAnnotation[] annotations) {
       super(annotations);
     }

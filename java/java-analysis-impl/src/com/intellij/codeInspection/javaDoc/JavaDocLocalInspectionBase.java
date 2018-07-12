@@ -305,6 +305,7 @@ public class JavaDocLocalInspectionBase extends LocalInspectionTool {
           }
           if (isTagRequired(METHOD_OPTIONS, "param")) {
             JavadocHighlightUtil.checkMissingParamTags(tags, method, docComment.getFirstChild(), holder);
+            JavadocHighlightUtil.checkMissingTypeParamTags(method, tags, docComment.getFirstChild(), holder);
           }
           if (isTagRequired(METHOD_OPTIONS, "throws")) {
             JavadocHighlightUtil.checkMissingThrowsTags(tags, method, docComment.getFirstChild(), holder);

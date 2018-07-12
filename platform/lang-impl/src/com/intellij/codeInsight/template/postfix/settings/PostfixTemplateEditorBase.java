@@ -65,12 +65,14 @@ public abstract class PostfixTemplateEditorBase<Condition extends PostfixTemplat
     }
   }
 
-  public PostfixTemplateEditorBase(@NotNull PostfixTemplateProvider provider) {
-    this(provider, createSimpleEditor());
+  public PostfixTemplateEditorBase(@NotNull PostfixTemplateProvider provider, boolean showExpressionTypes) {
+    this(provider, createSimpleEditor(), showExpressionTypes);
   }
+  
 
   public PostfixTemplateEditorBase(@NotNull PostfixTemplateProvider provider,
-                                   @NotNull Editor templateEditor) {
+                                   @NotNull Editor templateEditor,
+                                   boolean showExpressionTypes) {
     myProvider = provider;
     myTemplateEditor = templateEditor;
 
@@ -98,15 +100,18 @@ public abstract class PostfixTemplateEditorBase<Condition extends PostfixTemplat
     });
 
     myExpressionTypesPanel = new JPanel(new BorderLayout());
-    myExpressionTypesPanel.add(ToolbarDecorator.createDecorator(myExpressionTypesList)
-                                               .setAddAction(button -> showAddExpressionTypePopup(button))
-                                               .setRemoveAction(button -> ListUtil.removeSelectedItems(myExpressionTypesList))
-                                               .disableUpDownActions()
-                                               .createPanel());
-    myExpressionTypesPanel.setMinimumSize(new Dimension(-1, 100));
-
     FormBuilder builder = FormBuilder.createFormBuilder();
-    builder.addLabeledComponent("Applicable expression types:", myExpressionTypesPanel, true);
+    if (showExpressionTypes) {
+      myExpressionTypesPanel.add(ToolbarDecorator.createDecorator(myExpressionTypesList)
+                                                 .setAddAction(button -> showAddExpressionTypePopup(button))
+                                                 .setRemoveAction(button -> ListUtil.removeSelectedItems(myExpressionTypesList))
+                                                 .disableUpDownActions()
+                                                 .createPanel());
+      myExpressionTypesPanel.setMinimumSize(new Dimension(-1, 100));
+      builder.addLabeledComponent("Applicable expression types:", myExpressionTypesPanel, true);
+    }
+
+
     builder.addComponent(myApplyToTheTopmostJBCheckBox);
     builder.addComponent(myTemplateEditorPanel);
     builder.addComponent(myExpressionVariableHint);

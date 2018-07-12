@@ -17,7 +17,7 @@ import java.util.List;
 
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnFalse;
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.returnTrue;
-import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.NULL_VALUE;
+import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.NULL_VALUE;
 
 /**
  * Represents a method which is handled as a field in DFA.
@@ -175,7 +175,7 @@ public enum SpecialField implements DfaVariableSource {
   }
 
   public List<MethodContract> getEqualsContracts() {
-    return Arrays.asList(new StandardMethodContract(new MethodContract.ValueConstraint[]{NULL_VALUE}, returnFalse()),
+    return Arrays.asList(new StandardMethodContract(new StandardMethodContract.ValueConstraint[]{NULL_VALUE}, returnFalse()),
                          MethodContract.singleConditionContract(
                            ContractValue.qualifier().specialField(this), DfaRelationValue.RelationType.NE,
                            ContractValue.argument(0).specialField(this), returnFalse()));

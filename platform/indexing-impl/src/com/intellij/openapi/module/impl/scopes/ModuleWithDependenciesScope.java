@@ -41,7 +41,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   public static final int CONTENT = 0x20;
 
   @MagicConstant(flags = {COMPILE_ONLY, LIBRARIES, MODULES, TESTS, CONTENT})
-  public @interface ScopeConstant {}
+  @interface ScopeConstant {}
 
   private final Module myModule;
   @ScopeConstant
@@ -52,7 +52,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   private volatile Set<Module> myModules;
   private final TObjectIntHashMap<VirtualFile> myRoots = new TObjectIntHashMap<>();
 
-  public ModuleWithDependenciesScope(@NotNull Module module, @ScopeConstant int options) {
+  ModuleWithDependenciesScope(@NotNull Module module, @ScopeConstant int options) {
     super(module.getProject());
     myModule = module;
     myOptions = options;

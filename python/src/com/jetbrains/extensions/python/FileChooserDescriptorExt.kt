@@ -7,5 +7,5 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.jetbrains.python.PyNames
 
 @JvmOverloads
-fun FileChooserDescriptor.withPythonFiles(allowFilesWithNoExtension: Boolean = false) =
+fun FileChooserDescriptor.withPythonFiles(allowFilesWithNoExtension: Boolean = false): FileChooserDescriptor =
   this.withFileFilter { it.name.endsWith(PyNames.DOT_PY) || (allowFilesWithNoExtension && it.extension == null) }!!

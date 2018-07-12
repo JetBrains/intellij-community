@@ -123,7 +123,7 @@ class VcsPreviewPanel implements PreviewPanel {
   }
 
   private void addHighlighter(@NotNull Range range, @NotNull ColorKey colorKey) {
-    RangeHighlighter highlighter = LineStatusMarkerRenderer.createRangeHighlighter(range, myEditor.getMarkupModel());
+    RangeHighlighter highlighter = LineStatusMarkerRenderer.createTooltipRangeHighlighter(range, myEditor.getMarkupModel());
     highlighter.setLineMarkerRenderer(new ActiveGutterRenderer() {
       @Override
       public void paint(Editor editor, Graphics g, Rectangle r) {
@@ -131,12 +131,12 @@ class VcsPreviewPanel implements PreviewPanel {
       }
 
       @Override
-      public boolean canDoAction(MouseEvent e) {
+      public boolean canDoAction(@NotNull MouseEvent e) {
         return LineStatusMarkerRenderer.isInsideMarkerArea(e);
       }
 
       @Override
-      public void doAction(Editor editor, MouseEvent e) {
+      public void doAction(@NotNull Editor editor, @NotNull MouseEvent e) {
         myDispatcher.getMulticaster().selectionInPreviewChanged(colorKey.getExternalName());
       }
     });

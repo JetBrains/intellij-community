@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -168,7 +169,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   protected String getLineBreaker(@NotNull PsiElement token) {
-    CommonCodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(token.getProject()).getCommonSettings(token.getLanguage());
+    CommonCodeStyleSettings codeStyleSettings = CodeStyle.getLanguageSettings(token.getContainingFile());
     return codeStyleSettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE ? "\\n\"\n+ \"" : "\\n\" +\n\"";
   }
 

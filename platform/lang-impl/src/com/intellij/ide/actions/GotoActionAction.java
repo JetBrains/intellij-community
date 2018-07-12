@@ -3,6 +3,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
@@ -14,6 +15,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Editor;
@@ -50,6 +52,16 @@ import java.util.Set;
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 
 public class GotoActionAction extends GotoActionBase implements DumbAware {
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    if (Experiments.isFeatureEnabled("new.search.everywhere") && e.getProject() != null) {
+      showInSearchEverywherePopup(ActionSearchEverywhereContributor.class.getSimpleName(), e);
+    } else {
+      super.actionPerformed(e);
+    }
+  }
+
   @Override
   public void gotoActionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getProject();

@@ -36,7 +36,25 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.runtime.parser.Parser org.apache.velocity.runtime.parser.ParseException generateParseException()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.Parser org.apache.velocity.runtime.parser.node.SimpleNode Directive()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.Parser org.apache.velocity.runtime.parser.node.SimpleNode parse(java.io.Reader, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
+    </item>
+    <item name='org.apache.velocity.runtime.parser.Parser org.apache.velocity.runtime.parser.node.SimpleNode process()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.Parser void disable_tracing()'>
         <annotation name='org.jetbrains.annotations.Contract'>
@@ -109,6 +127,9 @@
         </annotation>
     </item>
     <item name='org.apache.velocity.runtime.parser.ParserTokenManager org.apache.velocity.runtime.parser.Token jjFillToken()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.runtime.parser.ParserTokenManager void SkipLexicalActions(org.apache.velocity.runtime.parser.Token) 0'>
@@ -152,6 +173,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.Token org.apache.velocity.runtime.parser.Token newToken(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -199,6 +221,7 @@
     </item>
     <item name='org.apache.velocity.runtime.parser.VelocityCharStream char[] GetSuffix(int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>

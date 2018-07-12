@@ -351,9 +351,9 @@ public class HgHistoryUtil {
   }
 
   @NotNull
-  public static List<? extends VcsShortCommitDetails> readMiniDetails(@NotNull final Project project,
-                                                                      @NotNull final VirtualFile root,
-                                                                      @NotNull List<String> hashes)
+  public static List<? extends VcsCommitMetadata> readCommitMetadata(@NotNull final Project project,
+                                                                     @NotNull final VirtualFile root,
+                                                                     @NotNull List<String> hashes)
     throws VcsException {
     final VcsLogObjectsFactory factory = getObjectsFactoryWithDisposeCheck(project);
     if (factory == null) {
@@ -372,15 +372,15 @@ public class HgHistoryUtil {
                                       HgCommandResult logResult =
                                         getLogResult(project, root, version, -1, strings, HgChangesetUtil.makeTemplate(templates));
 
-                                      return getCommitRecords(project, logResult, new HgBaseLogParser<VcsShortCommitDetails>() {
+                                      return getCommitRecords(project, logResult, new HgBaseLogParser<VcsCommitMetadata>() {
                                         @Override
-                                        protected VcsShortCommitDetails convertDetails(@NotNull String rev,
-                                                                                       @NotNull String changeset,
-                                                                                       @NotNull SmartList<HgRevisionNumber> parents,
-                                                                                       @NotNull Date revisionDate,
-                                                                                       @NotNull String author,
-                                                                                       @NotNull String email,
-                                                                                       @NotNull List<String> attributes) {
+                                        protected VcsCommitMetadata convertDetails(@NotNull String rev,
+                                                                                   @NotNull String changeset,
+                                                                                   @NotNull SmartList<HgRevisionNumber> parents,
+                                                                                   @NotNull Date revisionDate,
+                                                                                   @NotNull String author,
+                                                                                   @NotNull String email,
+                                                                                   @NotNull List<String> attributes) {
                                           String message = parseAdditionalStringAttribute(attributes, MESSAGE_INDEX);
                                           String subject = extractSubject(message);
                                           List<Hash> parentsHash = new SmartList<>();
@@ -388,8 +388,8 @@ public class HgHistoryUtil {
                                             parentsHash.add(factory.createHash(parent.getChangeset()));
                                           }
                                           return factory
-                                            .createShortDetails(factory.createHash(changeset), parentsHash, revisionDate.getTime(), root,
-                                                                subject, author, email, author, email, revisionDate.getTime());
+                                            .createCommitMetadata(factory.createHash(changeset), parentsHash, revisionDate.getTime(), root,
+                                                                  subject, author, email, message, author, email, revisionDate.getTime());
                                         }
                                       });
                                     });

@@ -29,8 +29,8 @@ import org.jetbrains.annotations.Nullable;
  * Use {@link com.intellij.execution.ui.ConsoleViewContentType#getConsoleViewType} to get TextAttributes for an instance
  * of this class.
  * <p/>
- * @see {@link com.intellij.execution.process.ColoredOutputTypeRegistry}
- * @see {@link com.intellij.execution.ui.ConsoleViewContentType#registerNewConsoleViewType}
+ * @see com.intellij.execution.process.ColoredOutputTypeRegistry
+ * @see com.intellij.execution.ui.ConsoleViewContentType#registerNewConsoleViewType
  */
 @SuppressWarnings({"JavaDoc", "JavadocReference"})
 public class ProcessOutputType extends Key {
@@ -38,7 +38,7 @@ public class ProcessOutputType extends Key {
 
   public ProcessOutputType(@NotNull String name, @NotNull ProcessOutputType streamType) {
     super(name);
-    myStreamType = streamType;
+    myStreamType = streamType.getBaseOutputType();
   }
 
   ProcessOutputType(@NotNull String name) {
@@ -65,6 +65,11 @@ public class ProcessOutputType extends Key {
 
   public static boolean isStdout(@NotNull Key key) {
     return key instanceof ProcessOutputType && ((ProcessOutputType)key).isStdout();
+  }
+
+  @NotNull
+  public static String getKeyNameForLogging(@NotNull Key key) {
+    return key.toString().replace("\u001B", "ESC");
   }
 
   @Nullable

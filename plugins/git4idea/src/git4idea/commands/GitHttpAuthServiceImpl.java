@@ -25,9 +25,13 @@ class GitHttpAuthServiceImpl extends GitHttpAuthService {
   @Override
   @NotNull
   public GitHttpAuthenticator createAuthenticator(@NotNull Project project,
-                                                  @NotNull GitCommand command,
                                                   @NotNull Collection<String> urls,
                                                   boolean ignoreAuthenticationRequest) {
-    return new GitHttpGuiAuthenticator(project, command, urls, ignoreAuthenticationRequest);
+    if (ignoreAuthenticationRequest) {
+      return STUB_AUTHENTICATOR;
+    }
+    else {
+      return new GitHttpGuiAuthenticator(project, urls);
+    }
   }
 }

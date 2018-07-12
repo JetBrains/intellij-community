@@ -26,6 +26,7 @@
     <orderEntry type="module" module-name="intellij.xml.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" exported="" />
     <orderEntry type="module" module-name="intellij.java.typeMigration" />
+    <orderEntry type="module" module-name="intellij.platform.externalSystem" />
   </component>
   <component name="copyright">
     <Base>

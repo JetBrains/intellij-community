@@ -112,7 +112,7 @@ public abstract class AbstractTestFrameworkIntegrationTest extends BaseConfigura
                          ArtifactRepositoryManager repoManager) throws Exception {
     
     Collection<File> files = repoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(), descriptor.getVersion(),
-                                                           descriptor.isIncludeTransitiveDependencies());
+                                                           descriptor.isIncludeTransitiveDependencies(), descriptor.getExcludedDependencies());
     assertFalse("No files retrieved for: " + descriptor.getGroupId(), files.isEmpty());
     for (File artifact : files) {
       VirtualFile libJarLocal = LocalFileSystem.getInstance().findFileByIoFile(artifact);

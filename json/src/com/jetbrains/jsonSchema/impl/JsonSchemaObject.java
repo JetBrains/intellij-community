@@ -766,6 +766,7 @@ public class JsonSchemaObject {
       return pattern.matcher(StringUtil.newBombedCharSequence(s, 300)).matches();
     } catch (ProcessCanceledException e) {
       // something wrong with the pattern, infinite cycle?
+      Logger.getInstance(JsonSchemaObject.class).info("Pattern matching canceled");
       return false;
     } catch (Exception e) {
       // catch exceptions around to prevent things like:

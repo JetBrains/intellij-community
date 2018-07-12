@@ -13,6 +13,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -20,8 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Collections;
-
-import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
 
 public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleReferenceElement> {
   public PsiJavaModuleReference(@NotNull PsiJavaModuleReferenceElement element) {
@@ -113,7 +112,12 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
     Key<CachedValue<Collection<PsiJavaModule>>> key = incompleteCode ? K_INCOMPLETE : K_COMPLETE;
     return manager.getCachedValue(refOwner, key, () -> {
       Collection<PsiJavaModule> modules = Resolver.findModules(refOwner.getContainingFile(), refText, incompleteCode);
-      return CachedValueProvider.Result.create(modules, OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(modules, cacheDependency());
     }, false);
+  }
+
+  @SuppressWarnings("deprecation")
+  private static Object cacheDependency() {
+    return PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
   }
 }

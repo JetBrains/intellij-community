@@ -17,6 +17,7 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Consumer;
+import com.intellij.util.EmptyConsumer;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,11 +26,17 @@ import java.util.List;
 
 public interface DataGetter<T extends VcsShortCommitDetails> {
   @NotNull
-  T getCommitData(@NotNull Integer hash, @NotNull Iterable<Integer> neighbourHashes);
+  T getCommitData(int hash, @NotNull Iterable<Integer> neighbourHashes);
 
-  void loadCommitsData(@NotNull List<Integer> hashes,
-                       @NotNull Consumer<List<T>> consumer,
-                       @Nullable ProgressIndicator indicator);
+  @Deprecated
+  default void loadCommitsData(@NotNull List<Integer> hashes,
+                               @NotNull Consumer<List<T>> consumer,
+                               @Nullable ProgressIndicator indicator) {
+    loadCommitsData(hashes, consumer, EmptyConsumer.getInstance(), indicator);
+  }
+
+  void loadCommitsData(@NotNull List<Integer> hashes, @NotNull Consumer<List<T>> consumer,
+                       @NotNull Consumer<Throwable> errorConsumer, @Nullable ProgressIndicator indicator);
 
   @Nullable
   T getCommitDataIfAvailable(int hash);

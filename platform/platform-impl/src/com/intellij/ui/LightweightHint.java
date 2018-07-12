@@ -187,6 +187,11 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           .setRequestFocus(hintHint.isRequestFocus())
           .setHint(true);
         myComponent.validate();
+        Border border = hintHint.getComponentBorder();
+        if (border != null) {
+          tooltip.setComponentBorder(border);
+        }
+
         myCurrentIdeTooltip = IdeTooltipManager.getInstance().show(tooltip, hintHint.isShowImmediately(), hintHint.isAnimationEnabled());
       }
       else {

@@ -16,13 +16,11 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.caches.CachesInvalidator;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.registry.Registry;
@@ -94,7 +92,6 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
       return;
     }
 
-    UsageTrigger.trigger(ApplicationManagerEx.getApplicationEx().getName() + ".caches.invalidated");
     if (invalidateCachesInvalidatesVfs) FSRecords.invalidateCaches();
     else FileBasedIndex.getInstance().invalidateCaches();
 

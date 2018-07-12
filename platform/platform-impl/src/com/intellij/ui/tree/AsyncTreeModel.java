@@ -63,12 +63,16 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Identifia
       }
       onValidThread(() -> {
         Node node = tree.map.get(object);
-        if (node == null || node.isLoadingRequired()) {
+        if (node == null) {
           LOG.debug("ignore updating of nonexistent node: ", object);
         }
         else if (type == EventType.NodesChanged) {
           // the object is already updated, so we should not start additional command to update
           AsyncTreeModel.this.treeNodesChanged(event.getTreePath(), event.getChildIndices(), event.getChildren());
+        }
+        else if (node.isLoadingRequired()) {
+          // update the object presentation only, if its children are not requested yet
+          AsyncTreeModel.this.treeNodesChanged(event.getTreePath(), null, null);
         }
         else if (type == EventType.NodesInserted) {
           processor.process(new CmdGetChildren("Insert children", node, false));

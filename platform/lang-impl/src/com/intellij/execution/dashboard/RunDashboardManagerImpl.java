@@ -31,6 +31,7 @@ import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.*;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +51,7 @@ import java.util.stream.Collectors;
 )
 public class RunDashboardManagerImpl implements RunDashboardManager, PersistentStateComponent<RunDashboardManagerImpl.State> {
   private static final float DEFAULT_CONTENT_PROPORTION = 0.3f;
+  @NonNls private static final String HELP_ID = "run-dashboard.reference";
 
   @NotNull private final Project myProject;
   @NotNull private final ContentManager myContentManager;
@@ -79,7 +81,6 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     myReuseCondition = this::canReuseContent;
 
     myGroupers = Arrays.stream(RunDashboardGroupingRule.EP_NAME.getExtensions())
-      .sorted(RunDashboardGroupingRule.PRIORITY_COMPARATOR)
       .map(RunDashboardGrouper::new)
       .collect(Collectors.toList());
   }
@@ -158,6 +159,13 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
         updateToolWindowContent();
         updateDashboard(true);
       }
+
+      @Override
+      public void contentRemoved(ContentManagerEvent event) {
+        if (myContentManager.getContentCount() == 0 && !isShowConfigurations()) {
+          setShowConfigurations(true);
+        }
+      }
     });
   }
 
@@ -177,6 +185,11 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   @Override
+  public String getToolWindowContextHelpId() {
+    return HELP_ID;
+  }
+
+  @Override
   public boolean isToolWindowAvailable() {
     return hasContent();
   }
@@ -186,6 +199,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     myDashboardContent = new RunDashboardContent(myProject, myContentManager, myGroupers);
     myToolWindowContent = ContentFactory.SERVICE.getInstance().createContent(myDashboardContent, null, false);
     myToolWindowContent.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
+    myToolWindowContent.setHelpId(getToolWindowContextHelpId());
     myToolWindowContent.setCloseable(false);
     Disposer.register(myToolWindowContent, myDashboardContent);
     Disposer.register(myToolWindowContent, () -> {
@@ -201,6 +215,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     myToolWindowContentManager.addContent(myToolWindowContent);
 
     myToolWindowContentManagerListener = new ToolWindowContentManagerListener();
+    myToolWindowContentManager.addContentManagerListener(myToolWindowContentManagerListener);
   }
 
   @Override
@@ -392,25 +407,26 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
         return;
       }
 
+      boolean containsConfigurationsContent = false;
+      for (Content content : myToolWindowContentManager.getContents()) {
+        if (myToolWindowContent.equals(content)) {
+          containsConfigurationsContent = true;
+          break;
+        }
+      }
+
       if (myShowConfigurations) {
-        if (!myDashboardToToolWindowContents.isEmpty() || myToolWindowContentManager.getContentCount() == 0) {
+        if (!containsConfigurationsContent) {
           myToolWindowContentManager.removeContentManagerListener(myToolWindowContentManagerListener);
           myDashboardToToolWindowContents.clear();
           myToolWindowContentManager.removeAllContents(true);
           myToolWindowContentManager.addContent(myToolWindowContent);
-          Content content = myContentManager.getSelectedContent();
-          if (content != null) {
-            myToolWindowContent.setDisplayName(content.getDisplayName());
-            myToolWindowContent.setIcon(content.getIcon());
-          }
-          else {
-            myToolWindowContent.setDisplayName(null);
-            myToolWindowContent.setIcon(null);
-          }
+          myToolWindowContentManager.addContentManagerListener(myToolWindowContentManagerListener);
         }
+        updateToolWindowContentTabHeader(myContentManager.getSelectedContent());
       }
       else {
-        if (myDashboardToToolWindowContents.isEmpty()) {
+        if (containsConfigurationsContent) {
           myToolWindowContentManager.removeContentManagerListener(myToolWindowContentManagerListener);
           myToolWindowContentManager.removeContent(myToolWindowContent, false);
           for (Content dashboardContent : myContentManager.getContents()) {
@@ -418,7 +434,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
           }
           Content contentToSelect = myDashboardToToolWindowContents.get(myContentManager.getSelectedContent());
           if (contentToSelect != null) {
-            myToolWindowContentManager.setSelectedContent(contentToSelect);
+            myToolWindowContentManager.setSelectedContent(contentToSelect, true);
           }
           myToolWindowContentManager.addContentManagerListener(myToolWindowContentManagerListener);
         }
@@ -458,8 +474,22 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     dashboardContent.addPropertyChangeListener(propertyChangeListener);
     toolWindowContent.setShouldDisposeContent(false);
     toolWindowContent.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
+    toolWindowContent.setHelpId(getToolWindowContextHelpId());
     myToolWindowContentManager.addContent(toolWindowContent);
     myDashboardToToolWindowContents.put(dashboardContent, toolWindowContent);
+  }
+
+  private void updateToolWindowContentTabHeader(@Nullable Content content) {
+    if (content != null) {
+      myToolWindowContent.setDisplayName(content.getDisplayName());
+      myToolWindowContent.setIcon(content.getIcon());
+      myToolWindowContent.setCloseable(true);
+    }
+    else {
+      myToolWindowContent.setDisplayName(null);
+      myToolWindowContent.setIcon(null);
+      myToolWindowContent.setCloseable(false);
+    }
   }
 
   @Nullable
@@ -488,7 +518,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
       for (RunDashboardGrouper grouper : myGroupers) {
         if (grouper.getRule().getName().equals(ruleState.name) && !grouper.getRule().isAlwaysEnabled()) {
           grouper.setEnabled(ruleState.enabled);
-          return;
+          break;
         }
       }
     }
@@ -550,20 +580,23 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
       if (myToolWindowContentManager == null || myToolWindowContent == null || !myShowConfigurations) return;
 
-      if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
-        myToolWindowContent.setDisplayName(event.getContent().getDisplayName());
-        myToolWindowContent.setIcon(event.getContent().getIcon());
-      }
-      else {
-        myToolWindowContent.setDisplayName(null);
-        myToolWindowContent.setIcon(null);
-      }
+      Content content = event.getOperation() == ContentManagerEvent.ContentOperation.add ? event.getContent() : null;
+      updateToolWindowContentTabHeader(content);
     }
   }
 
   private class ToolWindowContentManagerListener extends ContentManagerAdapter {
     @Override
     public void contentRemoveQuery(ContentManagerEvent event) {
+      if (event.getContent().equals(myToolWindowContent)) {
+        Content content = myContentManager.getSelectedContent();
+        if (content != null) {
+          myContentManager.removeContent(content, true);
+        }
+        event.consume();
+        return;
+      }
+
       Content dashboardContent = getDashboardContent(event.getContent());
       if (dashboardContent == null || dashboardContent.getManager() == null) return;
 
@@ -576,6 +609,8 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
     @Override
     public void selectionChanged(ContentManagerEvent event) {
+      if (event.getContent().equals(myToolWindowContent)) return;
+
       if (event.getOperation() != ContentManagerEvent.ContentOperation.add) return;
 
       Content dashboardContent = getDashboardContent(event.getContent());

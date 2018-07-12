@@ -9,10 +9,10 @@ class RunAnythingSEOption extends BooleanOptionDescription {
   @NotNull private final String myKey;
   @NotNull private final Project myProject;
 
-  public RunAnythingSEOption(@NotNull Project project, @NotNull String option, @NotNull String registryKey) {
+  public RunAnythingSEOption(@NotNull Project project, @NotNull String option, @NotNull String key) {
     super(option, null);
     myProject = project;
-    myKey = registryKey;
+    myKey = key;
   }
 
   @Override

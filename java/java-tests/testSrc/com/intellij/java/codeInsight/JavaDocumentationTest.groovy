@@ -11,6 +11,8 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.util.ui.UIUtil
+
 /**
  * @author peter
  */
@@ -83,7 +85,7 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
       class Foo {{
         new Bar<String>().f<caret>oo();
       }}""",
-    "Bar\n List&lt;String&gt; foo(String param)")
+    "Bar<br/> <a href=\"psi_element://java.util.List\">List</a>&lt;String&gt; foo(String param)")
   }
 
   void testGenericField() {
@@ -93,7 +95,7 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
       class Foo {{
         new Bar<Integer>().fi<caret>eld
       }}""",
-      "Bar\n Integer field")
+      "Bar<br/> Integer field")
   }
 
   void testMethodInAnonymousClass() {
@@ -123,7 +125,7 @@ class JavaDocumentationTest extends LightCodeInsightFixtureTestCase {
       class Outer {
         class Inner {}
       }""",
-      "C\n Outer.Inner field")
+      "<a href=\"psi_element://C\">C</a><br/> <a href=\"psi_element://Outer.Inner\">Outer.Inner</a> field")
   }
 
   void testAsterisksFiltering() {
@@ -221,6 +223,6 @@ class Bar {
   void doTestCtrlHoverDoc(String inputFile, String expectedDoc) {
     configure inputFile.stripIndent()
     String doc = CtrlMouseHandler.getInfo(myFixture.editor, CtrlMouseHandler.BrowseMode.Declaration)
-    assert doc == expectedDoc
+    assert UIUtil.getHtmlBody(doc) == expectedDoc
   }
 }

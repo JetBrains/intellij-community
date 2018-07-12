@@ -104,7 +104,7 @@ public class ComboBoxActionFixture {
           }
         });
       }
-    }, GuiTestUtil.SHORT_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
     comboBoxButtonFixture.click();
   }
 
@@ -127,7 +127,7 @@ public class ComboBoxActionFixture {
         }
         return false;
       }
-    }, GuiTestUtil.SHORT_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
 
     final Integer appIndex = execute(new GuiQuery<Integer>() {
       @Override

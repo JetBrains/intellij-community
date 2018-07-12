@@ -39,8 +39,6 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
   };
   static final int MAX_PREFERRED_COUNT = 5;
   public static final String OVERFLOW_MESSAGE = "Not all variants are shown, please type more letters to see the rest";
-  public static final Key<WeighingContext> WEIGHING_CONTEXT = Key.create("WEIGHING_CONTEXT");
-  public static final Key<Integer> PREFIX_CHANGES = Key.create("PREFIX_CHANGES");
   private static final UISettings ourUISettings = UISettings.getInstance();
   private final List<LookupElement> myFrozenItems = new ArrayList<>();
   private final int myLimit = Registry.intValue("ide.completion.variant.limit");
@@ -54,12 +52,23 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
   private final CompletionFinalSorter myFinalSorter = CompletionFinalSorter.newSorter();
   private int myPrefixChanges;
 
+  /**
+   * If false, the lookup arranger will generate enough items to fill the visible area of the list and fill the rest with "Loading..."
+   * items. If true, it will produce up to {@link #myLimit} items and truncate the list afterwards.
+   */
+  private boolean myConsiderAllItemsVisible = ApplicationManager.getApplication().isUnitTestMode();
+
   public CompletionLookupArrangerImpl(CompletionProcessEx process) {
     myProcess = process;
   }
 
   public CompletionLookupArrangerImpl(CompletionParameters parameters) {
     myProcess = (CompletionProcessEx) parameters.getProcess();
+  }
+
+  public CompletionLookupArrangerImpl withAllItemsVisible() {
+    myConsiderAllItemsVisible = true;
+    return this;
   }
 
   private MultiMap<CompletionSorterImpl, LookupElement> groupItemsBySorter(Iterable<LookupElement> source) {
@@ -340,10 +349,9 @@ public class CompletionLookupArrangerImpl extends LookupArranger implements Comp
     return new ArrayList<>(model);
   }
 
-  private static void ensureEverythingVisibleAdded(LookupElementListPresenter lookup, final LinkedHashSet<LookupElement> model, Iterator<LookupElement> byRelevance) {
-    final boolean testMode = ApplicationManager.getApplication().isUnitTestMode();
+  private void ensureEverythingVisibleAdded(LookupElementListPresenter lookup, final LinkedHashSet<LookupElement> model, Iterator<LookupElement> byRelevance) {
     final int limit = Math.max(lookup.getLastVisibleIndex(), model.size()) + ourUISettings.getMaxLookupListHeight() * 3;
-    addSomeItems(model, byRelevance, lastAdded -> !testMode && model.size() >= limit);
+    addSomeItems(model, byRelevance, lastAdded -> !myConsiderAllItemsVisible && model.size() >= limit);
   }
 
   private static void ensureItemAdded(Set<LookupElement> items,

@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
@@ -161,7 +162,7 @@ public class HgCommittedChangesProvider implements CommittedChangesProvider<Comm
   }
 
   public VcsCommittedViewAuxiliary createActions(DecoratorManager decoratorManager, RepositoryLocation repositoryLocation) {
-    AnAction copyHashAction = new AnAction("Copy &Hash", "Copy hash to clipboard", PlatformIcons.COPY_ICON) {
+    AnAction copyHashAction = new DumbAwareAction("Copy &Hash", "Copy hash to clipboard", PlatformIcons.COPY_ICON) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);

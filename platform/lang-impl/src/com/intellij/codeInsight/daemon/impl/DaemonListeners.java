@@ -167,8 +167,8 @@ public class DaemonListeners implements Disposable {
         Document document = e.getDocument();
         VirtualFile virtualFile = fileDocumentManager.getFile(document);
         Project project = virtualFile == null ? null : ProjectUtil.guessProjectForFile(virtualFile);
-        //no need to stop daemon if something happened in the console
-        if (worthBothering(document, project)) {
+        //no need to stop daemon if something happened in the console or in non-physical document
+        if (worthBothering(document, project) && application.isDispatchThread()) {
           stopDaemon(true, "Document change");
           UpdateHighlightersUtil.updateHighlightersByTyping(myProject, e);
         }
@@ -490,6 +490,9 @@ public class DaemonListeners implements Disposable {
       if (TodoConfiguration.PROP_TODO_PATTERNS.equals(evt.getPropertyName())) {
         stopDaemonAndRestartAllFiles("Todo patterns changed");
       }
+      else if (TodoConfiguration.PROP_MULTILINE.equals(evt.getPropertyName())) {
+        stopDaemonAndRestartAllFiles("Todo multi-line detection changed");
+      }
     }
   }
 
@@ -590,6 +593,7 @@ public class DaemonListeners implements Disposable {
         if (e.getArea() == EditorMouseEventArea.EDITING_AREA && !UIUtil.isControlKeyDown(e.getMouseEvent())) {
           int offset = editor.logicalPositionToOffset(logical);
           if (editor.offsetToLogicalPosition(offset).column != logical.column) return; // we are in virtual space
+          if (editor.getInlayModel().getElementAt(e.getMouseEvent().getPoint()) != null) return;
           HighlightInfo info = myDaemonCodeAnalyzer.findHighlightByOffset(editor.getDocument(), offset, false);
           if (info == null || info.getDescription() == null) {
             IdeTooltipManager.getInstance().hideCurrent(e.getMouseEvent());

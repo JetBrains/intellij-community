@@ -4,37 +4,46 @@ import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.NamedRunnable;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.PairFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogFilterCollection;
 import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.graph.actions.GraphAction;
 import com.intellij.vcs.log.graph.actions.GraphAnswer;
-import com.intellij.vcs.log.impl.CommonUiProperties;
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties.VcsLogHighlighterProperty;
-import com.intellij.vcs.log.impl.VcsLogUiPropertiesImpl;
 import com.intellij.vcs.log.ui.frame.MainFrame;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 public class VcsLogUiImpl extends AbstractVcsLogUi {
+  private static final String HELP_ID = "reference.changesToolWindow.log";
+
   @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final MainFrame myMainFrame;
-  @NotNull private final VcsLogUiPropertiesImpl.MainVcsLogUiPropertiesListener myPropertiesListener;
+  @NotNull private final MyVcsLogUiPropertiesListener myPropertiesListener;
 
-  public VcsLogUiImpl(@NotNull VcsLogData logData,
+  public VcsLogUiImpl(@NotNull String id,
+                      @NotNull VcsLogData logData,
                       @NotNull VcsLogColorManager manager,
                       @NotNull MainVcsLogUiProperties uiProperties,
                       @NotNull VisiblePackRefresher refresher) {
-    super(logData, manager, refresher);
+    super(id, logData, manager, refresher);
     myUiProperties = uiProperties;
     myMainFrame = new MainFrame(logData, this, uiProperties, myLog, myVisiblePack);
 
@@ -90,17 +99,36 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
   }
 
   @Override
-  protected <T> void handleCommitNotFound(@NotNull T commitId, @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
-    if (getFilterUi().getFilters().isEmpty()) {
-      super.handleCommitNotFound(commitId, rowGetter);
+  protected <T> void handleCommitNotFound(@NotNull T commitId,
+                                          boolean commitExists,
+                                          @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
+    if (getFilterUi().getFilters().isEmpty() || !commitExists) {
+      super.handleCommitNotFound(commitId, commitExists, rowGetter);
+      return;
     }
-    else {
-      showWarningWithLink("Commit " + commitId.toString() + " does not exist or does not match active filters",
-                          "Reset filters and search again.", () -> {
-          getFilterUi().setFilter(null);
-          invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create()), pack -> pack.getFilters().isEmpty());
-        });
+
+    List<NamedRunnable> runnables = ContainerUtil.newArrayList();
+    runnables.add(new NamedRunnable("View and Reset Filters") {
+      @Override
+      public void run() {
+        getFilterUi().setFilter(null);
+        invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create()),
+                       pack -> pack.getFilters().isEmpty());
+      }
+    });
+    if (VcsLogProjectTabsProperties.MAIN_LOG_ID.equals(getId())) {
+      runnables.add(new NamedRunnable("View in New Tab") {
+        @Override
+        public void run() {
+          VcsProjectLog projectLog = VcsProjectLog.getInstance(myProject);
+          VcsLogUiImpl ui = projectLog.getTabsManager().openAnotherLogTab(notNull(projectLog.getLogManager()), true);
+          ui.invokeOnChange(() -> ui.jumpTo(commitId, rowGetter, SettableFuture.create()),
+                            pack -> pack.getFilters().isEmpty());
+        }
+      });
     }
+    VcsBalloonProblemNotifier.showOverChangesView(myProject, getCommitNotFoundMessage(commitId, true), MessageType.WARNING,
+                                                  runnables.toArray(new NamedRunnable[0]));
   }
 
   @Override
@@ -142,65 +170,66 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     return myUiProperties;
   }
 
+  @Nullable
+  @Override
+  public String getHelpId() {
+    return HELP_ID;
+  }
+
   @Override
   public void dispose() {
     myUiProperties.removeChangeListener(myPropertiesListener);
     super.dispose();
   }
 
-  private class MyVcsLogUiPropertiesListener extends VcsLogUiPropertiesImpl.MainVcsLogUiPropertiesListener {
-    @Override
-    public void onShowDetailsChanged() {
-      myMainFrame.showDetails(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
-    }
+  private class MyVcsLogUiPropertiesListener implements VcsLogUiProperties.PropertiesChangeListener {
 
     @Override
-    public void onShowLongEdgesChanged() {
-      myVisiblePack.getVisibleGraph().getActionController().setLongEdgesHidden(!myUiProperties.get(MainVcsLogUiProperties.SHOW_LONG_EDGES));
+    public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
+      if (CommonUiProperties.SHOW_DETAILS.equals(property)) {
+        myMainFrame.showDetails(myUiProperties.get(CommonUiProperties.SHOW_DETAILS));
+      }
+      else if (CommonUiProperties.SHOW_DIFF_PREVIEW.equals(property)) {
+        myMainFrame.showDiffPreview(myUiProperties.get(CommonUiProperties.SHOW_DIFF_PREVIEW));
+      }
+      else if (MainVcsLogUiProperties.SHOW_LONG_EDGES.equals(property)) {
+        onShowLongEdgesChanged();
+      }
+      else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
+        myMainFrame.getGraphTable().rootColumnUpdated();
+      }
+      else if (MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW.equals(property)) {
+        myMainFrame.getGraphTable().setCompactReferencesView(myUiProperties.get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW));
+      }
+      else if (MainVcsLogUiProperties.SHOW_TAG_NAMES.equals(property)) {
+        myMainFrame.getGraphTable().setShowTagNames(myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES));
+      }
+      else if (MainVcsLogUiProperties.BEK_SORT_TYPE.equals(property)) {
+        myRefresher.onSortTypeChange(myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE));
+      }
+      else if (MainVcsLogUiProperties.TEXT_FILTER_REGEX.equals(property) ||
+               MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE.equals(property)) {
+        applyFiltersAndUpdateUi(myMainFrame.getFilterUi().getFilters());
+      }
+      else if (CommonUiProperties.COLUMN_ORDER.equals(property)) {
+        myMainFrame.getGraphTable().onColumnOrderSettingChanged();
+      }
+      else if (property instanceof VcsLogHighlighterProperty) {
+        myMainFrame.getGraphTable().repaint();
+      }
+      else if (property instanceof CommonUiProperties.TableColumnProperty) {
+        myMainFrame.getGraphTable().forceReLayout(((CommonUiProperties.TableColumnProperty)property).getColumn());
+      }
+      else if (MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS.equals(property)) {
+      }
+      else {
+        throw new UnsupportedOperationException("Property " + property + " does not exist");
+      }
     }
 
-    @Override
-    public void onBekChanged() {
-      myRefresher.onSortTypeChange(myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE));
-    }
-
-    @Override
-    public void onShowRootNamesChanged() {
-      myMainFrame.getGraphTable().rootColumnUpdated();
-    }
-
-    @Override
-    public void onHighlighterChanged() {
-      myMainFrame.getGraphTable().repaint();
-    }
-
-    @Override
-    public void onCompactReferencesViewChanged() {
-      myMainFrame.getGraphTable().setCompactReferencesView(myUiProperties.get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW));
-    }
-
-    @Override
-    public void onShowTagNamesChanged() {
-      myMainFrame.getGraphTable().setShowTagNames(myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES));
-    }
-
-    @Override
-    public void onColumnWidthChanged(int column) {
-      myMainFrame.getGraphTable().forceReLayout(column);
-    }
-
-    @Override
-    public void onColumnOrderChanged() {
-      myMainFrame.getGraphTable().onColumnOrderSettingChanged();
-    }
-
-    @Override
-    public void onShowChangesFromParentsChanged() {
-    }
-
-    @Override
-    public void onTextFilterSettingsChanged() {
-      applyFiltersAndUpdateUi(myMainFrame.getFilterUi().getFilters());
+    private void onShowLongEdgesChanged() {
+      myVisiblePack.getVisibleGraph().getActionController()
+                   .setLongEdgesHidden(!myUiProperties.get(MainVcsLogUiProperties.SHOW_LONG_EDGES));
     }
   }
 }

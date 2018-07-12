@@ -72,7 +72,6 @@ import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -183,9 +182,11 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     final Ref<Boolean> refProcessCanceled = new Ref<>();
     final Ref<Boolean> anyException = new Ref<>();
 
+    DumbService.getInstance(myProject).completeJustSubmittedTasks();
+
     final Runnable findUsagesRunnable = () -> {
       try {
-        refUsages.set(DumbService.getInstance(myProject).runReadActionInSmartMode(this::findUsages));
+        refUsages.set(ReadAction.compute(this::findUsages));
       }
       catch (UnknownReferenceTypeException e) {
         refErrorLanguage.set(e.getElementLanguage());

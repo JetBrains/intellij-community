@@ -28,6 +28,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.ExpressionConverter;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -78,6 +79,10 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
     PsiExpressionList argList = RefactoringUtil.getArgumentListByMethodReference(ref);
     if (argList == null) return true;
     PsiExpression[] oldArgs = argList.getExpressions();
+    JavaResolveResult result = callExpression.resolveMethodGenerics();
+    boolean varargs = result instanceof MethodCandidateInfo &&
+    ((MethodCandidateInfo)result).getApplicabilityLevel() == MethodCandidateInfo.ApplicabilityLevel.VARARGS;
+   
 
     final PsiExpression anchor;
     final PsiMethod methodToSearchFor = data.getMethodToSearchFor();
@@ -119,7 +124,7 @@ public class JavaIntroduceParameterMethodUsagesProcessor implements IntroducePar
 
       // here comes some postprocessing...
       new OldReferenceResolver(callExpression, newArg, data.getMethodToReplaceIn(), data.getReplaceFieldsWithGetters(), initializer)
-        .resolve();
+        .resolve(varargs);
     }
 
 

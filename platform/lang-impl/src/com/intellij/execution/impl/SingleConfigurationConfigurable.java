@@ -26,6 +26,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorListener;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBCheckBox;
@@ -192,28 +193,34 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
           }
         }
       }
-      catch (RuntimeConfigurationException exception) {
-        final Runnable quickFix = exception.getQuickFix();
-        Runnable resultQuickFix;
-        if (quickFix != null && snapshot != null) {
-          final RunnerAndConfigurationSettings fixedSettings = snapshot;
-          resultQuickFix = () -> {
-            quickFix.run();
-            getEditor().resetFrom(fixedSettings);
-          };
-        }
-        else {
-          resultQuickFix = quickFix;
-        }
-        myLastValidationResult = new ValidationResult(exception.getLocalizedMessage(), exception.getTitle(), resultQuickFix);
-      }
       catch (ConfigurationException e) {
-        myLastValidationResult = new ValidationResult(e.getLocalizedMessage(), ExecutionBundle.message("invalid.data.dialog.title"), null);
+        myLastValidationResult = createValidationResult(snapshot, e);
       }
 
       myValidationResultValid = true;
     }
     return myLastValidationResult;
+  }
+
+  private ValidationResult createValidationResult(RunnerAndConfigurationSettings snapshot, ConfigurationException e) {
+    if (!e.shouldShowInDumbMode() && DumbService.isDumb(getConfiguration().getProject())) return null;
+
+    return new ValidationResult(
+      e.getLocalizedMessage(),
+      e instanceof RuntimeConfigurationException ? e.getTitle() : ExecutionBundle.message("invalid.data.dialog.title"),
+      getQuickFix(snapshot, e));
+  }
+
+  @Nullable
+  private Runnable getQuickFix(RunnerAndConfigurationSettings snapshot, ConfigurationException exception) {
+    Runnable quickFix = exception.getQuickFix();
+    if (quickFix != null && snapshot != null) {
+      return () -> {
+        quickFix.run();
+        getEditor().resetFrom(snapshot);
+      };
+    }
+    return quickFix;
   }
 
   private static void checkConfiguration(final ProgramRunner runner, final RunnerAndConfigurationSettings snapshot)

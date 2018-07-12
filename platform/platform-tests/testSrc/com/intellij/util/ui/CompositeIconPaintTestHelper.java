@@ -5,6 +5,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.ui.RestoreScaleRule;
+import com.intellij.util.ui.JBUI.ScaleContext;
 import com.intellij.util.ui.paint.ImageComparator;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
@@ -36,13 +37,17 @@ public abstract class CompositeIconPaintTestHelper {
       int usrScale = bit2scale.apply(mask, 1);
       int sysScale = bit2scale.apply(mask, 0);
       assert iconScale * usrScale * sysScale <= 4;
-      test(iconScale, usrScale, sysScale);
+      test(ScaleContext.create(SYS_SCALE.of(sysScale), USR_SCALE.of(usrScale), OBJ_SCALE.of(iconScale)));
     }
   }
 
-  private void test(int iconScale, int usrScale, int sysScale) {
-    JBUI.setUserScaleFactor(usrScale);
-    JBUI.ScaleContext ctx = JBUI.ScaleContext.create(SYS_SCALE.of(sysScale)/*, USR_SCALE.of(usrScale)*/); // USR_SCALE is set automatically
+  private void test(final ScaleContext ctx) {
+    assume(ctx);
+
+    JBUI.setUserScaleFactor((float)ctx.getScale(USR_SCALE));
+
+    ScaleContext ctx_noObjScale = ctx.copy();
+    ctx_noObjScale.update(OBJ_SCALE.of(1));
 
     String[] cellIconsPaths = getCellIconsPaths();
     int count = cellIconsPaths.length;
@@ -55,34 +60,35 @@ public abstract class CompositeIconPaintTestHelper {
       catch (MalformedURLException e) {
         throw new RuntimeException(e);
       }
-      cellIcons[i].updateScaleContext(ctx.copy());
+      cellIcons[i].updateScaleContext(ctx_noObjScale);
     }
 
-    Icon scaledIcon = createCompositeIcon(cellIcons).scale(iconScale);
-    ctx.update(OBJ_SCALE.of(iconScale));
+    Icon scaledIcon = createCompositeIcon(ctx_noObjScale, cellIcons).scale((float)ctx.getScale(OBJ_SCALE));
     test(scaledIcon, ctx);
   }
 
-  private void test(Icon icon, JBUI.ScaleContext ctx) {
+  private void test(Icon icon, final ScaleContext ctx) {
     Pair<BufferedImage, Graphics2D> pair = createImageAndGraphics(ctx.getScale(SYS_SCALE), icon.getIconWidth(), icon.getIconHeight());
     BufferedImage iconImage = pair.first;
     Graphics2D g2d = pair.second;
 
     icon.paintIcon(null, g2d, 0, 0);
 
-    if (shouldSaveGoldImage()) saveImage(iconImage, getGoldImagePath((int)ctx.getScale(PIX_SCALE)));
+    if (shouldSaveGoldImage()) saveImage(iconImage, getGoldImagePath(ctx));
 
-    BufferedImage goldImage = loadImage(getGoldImagePath((int)ctx.getScale(PIX_SCALE)));
+    BufferedImage goldImage = loadImage(getGoldImagePath(ctx));
 
     ImageComparator.compareAndAssert(
       new ImageComparator.AASmootherComparator(0.1, 0.1, new Color(0, 0, 0, 0)), goldImage, iconImage, null);
   }
 
-  protected abstract ScalableIcon createCompositeIcon(Icon... cellIcons);
+  protected void assume(ScaleContext ctx) {}
+
+  protected abstract ScalableIcon createCompositeIcon(ScaleContext ctx, Icon... cellIcons);
 
   protected abstract String[] getCellIconsPaths();
 
-  protected abstract String getGoldImagePath(int scale);
+  protected abstract String getGoldImagePath(ScaleContext ctx);
 
   protected abstract boolean shouldSaveGoldImage();
 }

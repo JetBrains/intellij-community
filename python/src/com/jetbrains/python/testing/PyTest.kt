@@ -35,14 +35,14 @@ class PyTestSettingsEditor(configuration: PyAbstractTestConfiguration) :
 
 class PyPyTestExecutionEnvironment(configuration: PyTestConfiguration, environment: ExecutionEnvironment) :
   PyTestExecutionEnvironment<PyTestConfiguration>(configuration, environment) {
-  override fun getRunner() = PythonHelper.PYTEST
+  override fun getRunner(): PythonHelper = PythonHelper.PYTEST
 }
 
 
 class PyTestConfiguration(project: Project, factory: PyTestFactory)
   : PyAbstractTestConfiguration(project, factory, PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.PY_TEST)) {
   @ConfigField
-  var keywords = ""
+  var keywords: String = ""
 
   override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =
     PyPyTestExecutionEnvironment(this, environment)
@@ -54,14 +54,21 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
     when {
       keywords.isEmpty() -> ""
       else -> "-k $keywords"
-    }
+    } + if (forRerun) " --last-failed" else ""
 
-  override fun isFrameworkInstalled() = VFSTestFrameworkListener.getInstance().isTestFrameworkInstalled(sdk, PyNames.PY_TEST)
+  override fun isFrameworkInstalled(): Boolean = VFSTestFrameworkListener.getInstance().isTestFrameworkInstalled(sdk, PyNames.PY_TEST)
 
+  override fun setMetaInfo(metaInfo: String) {
+    keywords = metaInfo
+  }
+
+  override fun isSameAsLocation(target: ConfigurationTarget, metainfo: String?): Boolean {
+    return super.isSameAsLocation(target, metainfo) && metainfo == keywords
+  }
 }
 
 object PyTestFactory : PyAbstractTestFactory<PyTestConfiguration>() {
-  override fun createTemplateConfiguration(project: Project) = PyTestConfiguration(project, this)
+  override fun createTemplateConfiguration(project: Project): PyTestConfiguration = PyTestConfiguration(project, this)
 
-  override fun getName(): String =  PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.PY_TEST)
+  override fun getName(): String = PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.PY_TEST)
 }

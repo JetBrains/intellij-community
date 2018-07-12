@@ -31,6 +31,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static git4idea.branch.GitBranchUtil.sortBranchesByName;
+
 /**
  * @author Dmitry Avdeev
  */
@@ -77,12 +79,12 @@ public class GitTaskHandler extends DvcsTaskHandler<GitRepository> {
   @Override
   protected Iterable<TaskInfo> getAllBranches(@NotNull GitRepository repository) {
     GitBranchesCollection branches = repository.getBranches();
-    List<TaskInfo> list = new ArrayList<>(ContainerUtil.map(branches.getLocalBranches(),
+    List<TaskInfo> list = new ArrayList<>(ContainerUtil.map(sortBranchesByName(branches.getLocalBranches()),
                                                             (Function<GitBranch, TaskInfo>)branch -> new TaskInfo(branch.getName(),
                                                                                                                   Collections.singleton(
                                                                                                                     repository
                                                                                                                       .getPresentableUrl()))));
-    list.addAll(ContainerUtil.map(branches.getRemoteBranches(),
+    list.addAll(ContainerUtil.map(sortBranchesByName(branches.getRemoteBranches()),
                                   (Function<GitBranch, TaskInfo>)branch -> new TaskInfo(branch.getName(), Collections.singleton(repository.getPresentableUrl())) {
                                     @Override
                                     public boolean isRemote() {

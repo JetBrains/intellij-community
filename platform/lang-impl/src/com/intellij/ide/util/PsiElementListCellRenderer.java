@@ -20,6 +20,7 @@ import com.intellij.navigation.ColoredItemPresentation;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -37,7 +38,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.IconUtil;
@@ -58,6 +58,7 @@ import java.util.regex.Pattern;
 import static com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgroundColor;
 
 public abstract class PsiElementListCellRenderer<T extends PsiElement> extends JPanel implements ListCellRenderer {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.PsiElementListCellRenderer");
   private static final String LEFT = BorderLayout.WEST;
   private static final Pattern CONTAINER_PATTERN = Pattern.compile("(\\(in |\\()?([^)]*)(\\))?");
 
@@ -161,7 +162,10 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
 
         if (nameAttributes == null) nameAttributes = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, color);
 
-        assert name != null : "Null name for PSI element " + element + " (by " + PsiElementListCellRenderer.this + ")";
+        if (name == null) {
+          LOG.error("Null name for PSI element " + element.getClass() + " (by " + PsiElementListCellRenderer.this + ")");
+          name = "Unknown";
+        }
         SpeedSearchUtil.appendColoredFragmentForMatcher(name, this, nameAttributes, myMatchers.nameMatcher, bgColor, selected);
         if (!element.isValid()) {
           append(" Invalid", SimpleTextAttributes.ERROR_ATTRIBUTES);
@@ -317,6 +321,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   /**
    * @deprecated use {@link #installSpeedSearch(IPopupChooserBuilder)} instead
    */
+  @Deprecated
   public void installSpeedSearch(PopupChooserBuilder<?> builder) {
     installSpeedSearch((IPopupChooserBuilder)builder);
   }
@@ -324,6 +329,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
   /**
    * @deprecated use {@link #installSpeedSearch(IPopupChooserBuilder, boolean)} instead
    */
+  @Deprecated
   public void installSpeedSearch(PopupChooserBuilder<?> builder, boolean includeContainerText) {
     installSpeedSearch((IPopupChooserBuilder)builder, includeContainerText);
   }
@@ -345,24 +351,5 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
         return o.toString();
       }
     });
-  }
-
-  /**
-   * Use {@link #installSpeedSearch(IPopupChooserBuilder)} instead
-   */
-  @Deprecated
-  public void installSpeedSearch(JList list) {
-    new ListSpeedSearch(list) {
-      @Override
-      protected String getElementText(Object o) {
-        if (o instanceof PsiElement) {
-          final String elementText = PsiElementListCellRenderer.this.getElementText((T)o);
-          return elementText + " " + getContainerText((T)o, elementText);
-        }
-        else {
-          return o.toString();
-        }
-      }
-    };
   }
 }

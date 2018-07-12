@@ -43,11 +43,11 @@ interface UPolyadicExpression : UExpression {
     visitor.afterVisitPolyadicExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitPolyadicExpression(this, data)
 
-  override fun asLogString() = log("operator = $operator")
+  override fun asLogString(): String = log("operator = $operator")
 
-  override fun asRenderString() =
+  override fun asRenderString(): String =
     operands.joinToString(separator = " ${operator.text} ", transform = UExpression::asRenderString)
 }

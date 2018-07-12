@@ -43,8 +43,6 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.impl.ToolWindowImpl;
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.content.*;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.concurrency.Semaphore;
@@ -58,7 +56,6 @@ import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import java.awt.*;
-import java.beans.PropertyChangeEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -94,11 +91,7 @@ public class BuildContentManagerImpl implements BuildContentManager {
 
     StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {
       ToolWindow toolWindow = ToolWindowManager.getInstance(project)
-        .registerToolWindow(ToolWindowId.BUILD, true, ToolWindowAnchor.BOTTOM, project, true);
-      JComponent component = toolWindow.getComponent();
-      if (component != null) {
-        component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
-      }
+                                               .registerToolWindow(ToolWindowId.BUILD, true, ToolWindowAnchor.BOTTOM, project, true);
       toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowBuild);
       toolWindow.setAvailable(true, null);
       toolWindow.hide(null);
@@ -120,7 +113,7 @@ public class BuildContentManagerImpl implements BuildContentManager {
       });
       new ContentManagerWatcher(toolWindow, contentManager);
 
-      for (Runnable postponedRunnable : myPostponedRunnables) {
+      for (Runnable postponedRunnable: myPostponedRunnables) {
         postponedRunnable.run();
       }
       myPostponedRunnables.clear();
@@ -164,7 +157,7 @@ public class BuildContentManagerImpl implements BuildContentManager {
       final Content[] existingContents = contentManager.getContents();
       if (idx != -1) {
         final MultiMap<String, String> existingCategoriesNames = MultiMap.createSmart();
-        for (Content existingContent : existingContents) {
+        for (Content existingContent: existingContents) {
           String tabName = existingContent.getTabName();
           existingCategoriesNames.putValue(StringUtil.trimEnd(StringUtil.split(tabName, " ").get(0), ':'), tabName);
         }
@@ -183,7 +176,7 @@ public class BuildContentManagerImpl implements BuildContentManager {
         contentManager.addContent(content);
       }
 
-      for (Content existingContent : existingContents) {
+      for (Content existingContent: existingContents) {
         existingContent.setDisplayName(existingContent.getTabName());
       }
       String tabName = content.getTabName();
@@ -193,28 +186,10 @@ public class BuildContentManagerImpl implements BuildContentManager {
 
   public void updateTabDisplayName(Content content, String tabName) {
     runWhenInitialized(() -> {
-      String displayName;
-      ContentManager contentManager = myToolWindow.getContentManager();
-      Content firstContent = contentManager.getContent(0);
-      assert firstContent != null;
-      if (!Build.equals(firstContent.getTabName())) {
-        if (contentManager.getContentCount() > 1) {
-          setIdLabelHidden(false);
-          displayName = tabName;
-        }
-        else {
-          displayName = Build + ": " + tabName;
-        }
-      }
-      else {
-        displayName = tabName;
-        setIdLabelHidden(true);
-      }
-
-      if (!displayName.equals(content.getDisplayName())) {
+      if (!tabName.equals(content.getDisplayName())) {
         // we are going to adjust display name, so we need to ensure tab name is not retrieved based on display name
         content.setTabName(tabName);
-        content.setDisplayName(displayName);
+        content.setDisplayName(tabName);
       }
     });
   }
@@ -285,7 +260,7 @@ public class BuildContentManagerImpl implements BuildContentManager {
       Pair<Icon, AtomicInteger> pair = liveContentsMap.computeIfAbsent(content, c -> Pair.pair(c.getIcon(), new AtomicInteger(0)));
       pair.second.incrementAndGet();
       content.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
-      if(pair.first == null) {
+      if (pair.first == null) {
         content.putUserData(Content.TAB_LABEL_ORIENTATION_KEY, ComponentOrientation.RIGHT_TO_LEFT);
       }
       content.setIcon(ExecutionUtil.getLiveIndicator(pair.first, 0, 13));
@@ -323,17 +298,6 @@ public class BuildContentManagerImpl implements BuildContentManager {
     });
   }
 
-  private void setIdLabelHidden(boolean hide) {
-    JComponent component = myToolWindow.getComponent();
-    Object oldValue = component.getClientProperty(ToolWindowContentUi.HIDE_ID_LABEL);
-    Object newValue = hide ? "true" : null;
-    component.putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, newValue);
-    if (myToolWindow instanceof ToolWindowImpl) {
-      ((ToolWindowImpl)myToolWindow).getContentUI()
-        .propertyChange(new PropertyChangeEvent(this, ToolWindowContentUi.HIDE_ID_LABEL, oldValue, newValue));
-    }
-  }
-
   private class CloseListener extends ContentManagerAdapter implements VetoableProjectManagerListener, Disposable {
     @Nullable
     private Content myContent;
@@ -364,7 +328,7 @@ public class BuildContentManagerImpl implements BuildContentManager {
 
       final Content content = myContent;
       ContentManager contentManager = content.getManager();
-      if(contentManager != null) {
+      if (contentManager != null) {
         contentManager.removeContentManagerListener(this);
       }
       ProjectManager.getInstance().removeProjectManagerListener(myProject, this);
@@ -419,6 +383,9 @@ public class BuildContentManagerImpl implements BuildContentManager {
       myProcessHandler.putUserData(RunContentManagerImpl.ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY, Boolean.TRUE);
       GeneralSettings.ProcessCloseConfirmation rc =
         TerminateRemoteProcessDialog.show(myProject, myProcessHandler.getExecutionName(), myProcessHandler);
+      if(myProcessHandler == null) { // process finished before the dialog close
+        return true;
+      }
       if (rc == null) { // cancel
         return false;
       }

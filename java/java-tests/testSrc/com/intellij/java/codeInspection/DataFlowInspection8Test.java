@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
-  private static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
+  static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public Sdk getSdk() {
       return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk18());
@@ -197,6 +197,10 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testStreamCollectorInlining() { doTest(); }
   public void testStreamComparatorInlining() { doTest(); }
   public void testStreamKnownSource() { doTest(); }
+  public void testStreamTypeAnnoInlining() {
+    setupTypeUseAnnotations("foo", myFixture);
+    doTest();
+  }
   
   public void testMapGetWithNotNullKeys() { doTestWithCustomAnnotations(); }
   public void testInferNestedForeachNullability() { doTestWithCustomAnnotations(); }
@@ -214,7 +218,6 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   }
 
   public void testMutabilityJdk() { doTest(); }
-  public void testMutabilityInferred() { doTest(); }
 
   public void testPrimitiveGetters() { doTest(); }
   public void testUnknownOnStack() { doTest(); }
@@ -227,4 +230,25 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testThisAsVariable() { doTest(); }
   public void testQueuePeek() { doTest(); }
   public void testForeachCollectionElement() { doTest(); }
+  public void testContractReturnValues() { doTest(); }
+  public void testTryFinallySimple() { doTest(); }
+  public void testAssertAll() {
+    myFixture.addClass("package org.junit.jupiter.api;\n" +
+                       "\n" +
+                       "import org.junit.jupiter.api.function.Executable;\n" +
+                       "\n" +
+                       "public class Assertions {\n" +
+                       "  public static void assertAll(String s, Executable... e) {}\n" +
+                       "  public static void assertAll(Executable... e) {}\n" +
+                       "  public static void assertNotNull(Object o) {}\n" +
+                       "  public static void assertTrue(boolean b) {}\n" +
+                       "}");
+    myFixture.addClass("package org.junit.jupiter.api.function;public interface Executable { void execute() throws Throwable;}\n");
+    doTest();
+  }
+
+  public void testConflictsInInferredTypes() { 
+    setupAmbiguousAnnotations("foo", myFixture);
+    doTest();
+  }
 }

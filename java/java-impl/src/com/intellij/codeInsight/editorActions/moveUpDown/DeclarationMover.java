@@ -29,6 +29,7 @@ import java.util.List;
 
 class DeclarationMover extends LineMover {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.moveUpDown.DeclarationMover");
+  @SuppressWarnings("StatefulEp")
   private PsiEnumConstant myEnumToInsertSemicolonAfter;
   private boolean moveEnumConstant;
 

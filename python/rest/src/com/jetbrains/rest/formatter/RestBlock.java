@@ -30,15 +30,13 @@ import java.util.Collections;
 import java.util.List;
 
 public class RestBlock implements ASTBlock {
-  private final RestBlock myParent;
   private final ASTNode myNode;
   private final Alignment myAlignment;
   private final Indent myIndent;
   private final Wrap myWrap;
   private List<RestBlock> mySubBlocks = null;
 
-  public RestBlock(RestBlock parent, ASTNode node, final Alignment alignment, Indent indent, Wrap wrap) {
-    myParent = parent;
+  public RestBlock(ASTNode node, final Alignment alignment, Indent indent, Wrap wrap) {
     myNode = node;
     myAlignment = alignment;
     myIndent = indent;
@@ -80,21 +78,14 @@ public class RestBlock implements ASTBlock {
   }
 
   private RestBlock buildSubBlock(ASTNode child) {
-    IElementType parentType = myNode.getElementType();
     IElementType childType = child.getElementType();
     IElementType grandparentType = myNode.getTreeParent() == null ? null : myNode.getTreeParent().getElementType();
-    Wrap wrap = null;
     Indent childIndent = Indent.getNoneIndent();
-    Alignment childAlignment = null;
 
-    if (grandparentType == RestElementTypes.FIELD_LIST && parentType == RestElementTypes.LINE_TEXT &&
-      childType == RestTokenTypes.LINE) {
+    if (grandparentType == RestElementTypes.DIRECTIVE_BLOCK && childType == RestTokenTypes.FIELD) {
       childIndent = Indent.getNormalIndent();
     }
-    if (parentType == RestElementTypes.DIRECTIVE_BLOCK && childType == RestTokenTypes.FIELD) {
-      childIndent = Indent.getNormalIndent();
-    }
-    return new RestBlock(this, child, childAlignment, childIndent, wrap);
+    return new RestBlock(child, null, childIndent, null);
   }
 
 

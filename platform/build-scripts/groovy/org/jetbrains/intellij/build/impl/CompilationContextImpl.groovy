@@ -348,12 +348,7 @@ class CompilationContextImpl implements CompilationContext {
   @Override
   void notifyArtifactBuilt(String artifactPath) {
     def file = new File(artifactPath)
-    def baseDir = new File(paths.projectHome)
     def artifactsDir = new File(paths.artifacts)
-    if (!FileUtil.isAncestor(baseDir, file, true)) {
-      messages.warning("Artifact '$artifactPath' is not under '$paths.projectHome', it won't be reported")
-      return
-    }
 
     if (file.isFile()) {
       //temporary workaround until TW-54541 is fixed: if build is going to produce big artifacts and we have lack of free disk space it's better not to send 'artifactBuilt' message to avoid "No space left on device" errors
@@ -380,7 +375,7 @@ class CompilationContextImpl implements CompilationContext {
       }
     }
 
-    def relativePath = FileUtil.toSystemIndependentName(FileUtil.getRelativePath(baseDir, file))
+    def pathToReport = file.absolutePath
 
     def targetDirectoryPath = ""
     if (FileUtil.isAncestor(artifactsDir, file.parentFile, true)) {
@@ -391,9 +386,9 @@ class CompilationContextImpl implements CompilationContext {
       targetDirectoryPath = (targetDirectoryPath ? targetDirectoryPath + "/"  : "") + file.name
     }
     if (targetDirectoryPath) {
-      relativePath += "=>" + targetDirectoryPath
+      pathToReport += "=>" + targetDirectoryPath
     }
-    messages.artifactBuilt(relativePath)
+    messages.artifactBuilt(pathToReport)
   }
 
   private static String toCanonicalPath(String path) {

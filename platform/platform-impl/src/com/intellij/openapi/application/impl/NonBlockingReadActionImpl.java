@@ -2,11 +2,11 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -113,7 +113,7 @@ class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
         T result = myComputation.call();
 
         if (myEdtFinish != null) {
-          safeTransferToEdt(result, myEdtFinish);
+          safeTransferToEdt(result, myEdtFinish, indicator);
         } else {
           promise.setResult(result);
         }
@@ -137,9 +137,9 @@ class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
       return false;
     }
 
-    void safeTransferToEdt(T result, Pair<ModalityState, Consumer<T>> edtFinish) {
+    void safeTransferToEdt(T result, Pair<ModalityState, Consumer<T>> edtFinish, ProgressIndicator indicator) {
       if (Promises.isRejected(promise)) return;
-      
+
       Semaphore semaphore = new Semaphore(1);
       ApplicationManager.getApplication().invokeLater(() -> {
         if (checkObsolete()) {
@@ -147,20 +147,22 @@ class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
           return;
         }
 
-        // complete the promise now to prevent write actions inside custom callback from cancelling it 
+        // complete the promise now to prevent write actions inside custom callback from cancelling it
         promise.setResult(result);
 
         // now background thread may release its read lock, and we continue on EDT, invoking custom callback
         semaphore.up();
 
-        if (Promises.isFulfilled(promise)) { // in case another thread managed to cancel it just before `setResult`
+        if (promise.isSucceeded()) { // in case another thread managed to cancel it just before `setResult`
           edtFinish.second.accept(result);
         }
       }, edtFinish.first);
 
       // don't release read action until we're on EDT, to avoid result invalidation in between
       while (!semaphore.waitFor(10)) {
-        ProgressManager.checkCanceled();
+        if (indicator.isCanceled()) { // checkCanceled isn't enough, because some smart developers disable it
+          throw new ProcessCanceledException();
+        }
       }
     }
 

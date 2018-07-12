@@ -79,7 +79,7 @@ fun ProjectInspectionProfileManager.createProfile(localInspectionTool: LocalInsp
   return configureInspections(arrayOf(localInspectionTool), project, disposable)
 }
 
-fun enableInspectionTool(project: Project, tool: InspectionProfileEntry, disposable: Disposable) = enableInspectionTool(project, InspectionToolRegistrar.wrapTool(tool), disposable)
+fun enableInspectionTool(project: Project, tool: InspectionProfileEntry, disposable: Disposable): Unit = enableInspectionTool(project, InspectionToolRegistrar.wrapTool(tool), disposable)
 
 fun enableInspectionTools(project: Project, disposable: Disposable, vararg tools: InspectionProfileEntry) {
   for (tool in tools) {

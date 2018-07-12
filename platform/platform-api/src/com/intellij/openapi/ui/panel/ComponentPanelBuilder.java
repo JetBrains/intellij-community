@@ -202,7 +202,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
       if (component instanceof JRadioButton || component instanceof JCheckBox) {
         top = 0;
-        left = isMacDefault ? 27 : isWin10 ? 17 : 23;
+        left = isMacDefault ? 26 : isWin10 ? 17 : 23;
         bottom = isWin10 ? 10 : isMacDefault ? 8 : 9;
       }
       else if (component instanceof JTextField || component instanceof TextComponent ||
@@ -263,6 +263,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
                          "a:visited {color:#" + ColorUtil.toHex(JBColor.linkVisited()) + ";}\n" +
                          "a:hover {color:#" + ColorUtil.toHex(JBColor.linkHover()) + ";}\n" +
                          "a:active {color:#" + ColorUtil.toHex(JBColor.linkPressed()) + ";}\n" +
+                         //"body {background-color:#" + ColorUtil.toHex(JBColor.YELLOW) + ";}\n" + // Left for visual debugging
                          "</style>\n</head>";
       if (commentText.length() > 70 && isCommentBelow) {
         int width = component.getFontMetrics(component.getFont()).stringWidth(commentText.substring(0, 70));

@@ -2,11 +2,8 @@
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.json.JsonLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
 import com.intellij.openapi.util.Factory;
@@ -17,10 +14,7 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.JsonSchemaVfsListener;
-import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
-import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
-import com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory;
-import com.jetbrains.jsonSchema.extension.SchemaType;
+import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import com.jetbrains.jsonSchema.remote.JsonSchemaCatalogManager;
@@ -181,10 +175,15 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     List<JsonSchemaInfo> results = ContainerUtil.newArrayListWithCapacity(schemas.size() + providers.size());
     Set<String> processedRemotes = ContainerUtil.newHashSet();
     for (JsonSchemaFileProvider provider: providers) {
-      if (provider.isUserVisible()
-          && provider.getRemoteSource() != null  /*currently we're unable to handle providers without URLs properly*/
-          && processedRemotes.add(provider.getRemoteSource())) {
-        results.add(new JsonSchemaInfo(provider));
+      if (provider.isUserVisible()) {
+        if (provider.getRemoteSource() != null) {
+          if (processedRemotes.add(provider.getRemoteSource())) {
+            results.add(new JsonSchemaInfo(provider));
+          }
+        }
+        else {
+          results.add(new JsonSchemaInfo(provider));
+        }
       }
     }
 
@@ -206,20 +205,27 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     return JsonCachedValues.getSchemaObject(replaceHttpFileWithBuiltinIfNeeded(schemaFile), myProject);
   }
 
-  private VirtualFile replaceHttpFileWithBuiltinIfNeeded(VirtualFile schemaFile) {
+  public VirtualFile replaceHttpFileWithBuiltinIfNeeded(VirtualFile schemaFile) {
     // this hack is needed to handle user-defined mappings via urls
     // we cannot perform that inside corresponding provider, because it leads to recursive component dependency
     // this way we're preventing http files when a built-in schema exists
     if (schemaFile instanceof HttpVirtualFile) {
       String url = schemaFile.getUrl();
-      Optional<VirtualFile> first = myState.getFiles().stream()
-                                           .filter(f -> {
-                                             JsonSchemaFileProvider prov = getSchemaProvider(f);
-                                             return prov != null && !(prov.getSchemaFile() instanceof HttpVirtualFile) && url.equals(prov.getRemoteSource());
-                                           }).findFirst();
-      return first.orElse(schemaFile);
+      VirtualFile first1 = getLocalSchemaByUrl(url);
+      return first1 != null ? first1 : schemaFile;
     }
     return schemaFile;
+  }
+
+  @Nullable
+  public VirtualFile getLocalSchemaByUrl(String url) {
+    return myState.getFiles().stream()
+                  .filter(f -> {
+                     JsonSchemaFileProvider prov = getSchemaProvider(f);
+                     return prov != null && !(prov.getSchemaFile() instanceof HttpVirtualFile)
+                            && (url.equals(prov.getRemoteSource()) || JsonFileResolver.replaceUnsafeSchemaStoreUrls(url).equals(prov.getRemoteSource())
+                             || url.equals(JsonFileResolver.replaceUnsafeSchemaStoreUrls(prov.getRemoteSource())));
+                  }).findFirst().orElse(null);
   }
 
   @Nullable
@@ -228,14 +234,30 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
     return JsonCachedValues.getSchemaObject(schemaFile, myProject);
   }
 
-  @NotNull
-  public JsonSchemaCatalogManager getCatalogManager() {
-    return myCatalogManager;
-  }
-
   @Override
   public boolean isSchemaFile(@NotNull VirtualFile file) {
-    return myState.getFiles().contains(file) || hasSchemaSchema(file);
+    return myState.getFiles().contains(file)
+           || isSchemaByProvider(file)
+           || hasSchemaSchema(file);
+  }
+
+  private boolean isSchemaByProvider(@NotNull VirtualFile file) {
+    JsonSchemaFileProvider provider = myState.getProvider(file);
+    if (provider == null) {
+      for (JsonSchemaFileProvider stateProvider: myState.getProviders()) {
+        if (isSchemaProvider(stateProvider) && stateProvider.isAvailable(file))
+          return true;
+      }
+      return false;
+    }
+    return isSchemaProvider(provider);
+  }
+
+  private static boolean isSchemaProvider(JsonSchemaFileProvider provider) {
+    VirtualFile schemaFile = provider.getSchemaFile();
+    if (schemaFile == null) return false;
+    String url = schemaFile.getUrl();
+    return url.startsWith("http://json-schema.org/") && url.endsWith("/schema");
   }
 
   @Override
@@ -266,9 +288,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
   }
 
   private static boolean isProviderAvailable(@NotNull final VirtualFile file, @NotNull JsonSchemaFileProvider provider) {
-    final FileType type = file.getFileType();
-    final boolean isJson = type instanceof LanguageFileType && ((LanguageFileType)type).getLanguage().isKindOf(JsonLanguage.INSTANCE);
-    return (isJson || !SchemaType.userSchema.equals(provider.getSchemaType())) && provider.isAvailable(file);
+    return provider.isAvailable(file);
   }
 
   @Nullable
@@ -300,7 +320,13 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   @Override
   public void triggerUpdateRemote() {
-    myCatalogManager.triggerUpdateCatalog();
+    myCatalogManager.triggerUpdateCatalog(myProject);
+  }
+
+  @Override
+  public boolean isApplicableToFile(@Nullable VirtualFile file) {
+    if (file == null) return false;
+    return Arrays.stream(JsonSchemaEnabler.EXTENSION_POINT_NAME.getExtensions()).anyMatch(e -> e.isEnabledForFile(file));
   }
 
   private static class MyState {

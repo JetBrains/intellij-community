@@ -10,7 +10,7 @@ public class UnnecessarilyQualifiedInnerClassAccessFixTest extends IGQuickFixesT
   public void testRemoveQualifier() {
     doTest("Remove qualifier",
       "class X {\n" +
-      "  X<caret>/*1*/./*2*/Y foo;\n" +
+      "  /**/X/*1*/./*2*/Y foo;\n" +
       "  \n" +
       "  class Y{}\n" +
       "}",
@@ -27,7 +27,7 @@ public class UnnecessarilyQualifiedInnerClassAccessFixTest extends IGQuickFixesT
     doTest("Remove qualifier",
       "package p;\n" +
       "import java.util.List;\n" +
-      "abstract class X implements List<<caret>X.Y> {\n" +
+      "abstract class X implements List</**/X.Y> {\n" +
       "  class Y{}\n" +
       "}",
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class EditClassFiltersDialog
@@ -49,19 +35,22 @@ public class EditClassFiltersDialog extends DialogWrapper {
     init();
   }
 
+  protected ClassFilterEditor createClassFilterEditor(Project project) {
+    return new ClassFilterEditor(project, myChooserFilter, "reference.viewBreakpoints.classFilters.newPattern");
+  }
 
   protected JComponent createCenterPanel() {
     JPanel contentPanel = new JPanel(new BorderLayout());
 
     Box mainPanel = Box.createHorizontalBox();
 
-    myClassFilterEditor = new ClassFilterEditor(myProject, myChooserFilter, "reference.viewBreakpoints.classFilters.newPattern");
+    myClassFilterEditor = createClassFilterEditor(myProject);
     myClassFilterEditor.setPreferredSize(JBUI.size(400, 200));
     myClassFilterEditor.setBorder(IdeBorderFactory.createTitledBorder(
       DebuggerBundle.message("class.filters.dialog.inclusion.filters.group"), false));
     mainPanel.add(myClassFilterEditor);
 
-    myClassExclusionFilterEditor = new ClassFilterEditor(myProject, myChooserFilter, "reference.viewBreakpoints.classFilters.newPattern");
+    myClassExclusionFilterEditor = createClassFilterEditor(myProject);
     myClassExclusionFilterEditor.setPreferredSize(JBUI.size(400, 200));
     myClassExclusionFilterEditor.setBorder(IdeBorderFactory.createTitledBorder(
       DebuggerBundle.message("class.filters.dialog.exclusion.filters.group"), false));
@@ -74,6 +63,7 @@ public class EditClassFiltersDialog extends DialogWrapper {
 
   public void dispose(){
     myClassFilterEditor.stopEditing();
+    myClassExclusionFilterEditor.stopEditing();
     super.dispose();
   }
 

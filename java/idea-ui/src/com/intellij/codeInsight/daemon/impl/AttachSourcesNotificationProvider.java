@@ -140,8 +140,10 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
     }
     else {
       panel.createActionLabel(ProjectBundle.message("class.file.open.source.action"), () -> {
-        OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, sourceFile);
-        FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
+        if (sourceFile.isValid()) {
+          OpenFileDescriptor descriptor = new OpenFileDescriptor(myProject, sourceFile);
+          FileEditorManager.getInstance(myProject).openTextEditor(descriptor, true);
+        }
       });
     }
 

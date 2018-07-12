@@ -24,9 +24,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.LightColors;
-import com.jetbrains.jsonSchema.JsonSchemaMappingsConfigurable;
 import com.jetbrains.jsonSchema.extension.SchemaType;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.settings.mappings.JsonSchemaMappingsConfigurable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,6 +61,7 @@ public class JsonSchemaConflictNotificationProvider extends EditorNotifications.
   @Nullable
   @Override
   public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor) {
+    if (!myJsonSchemaService.isApplicableToFile(file)) return null;
     final Collection<VirtualFile> schemaFiles = myJsonSchemaService.getSchemaFilesForFile(file);
     if (schemaFiles.size() <= 1) return null;
 

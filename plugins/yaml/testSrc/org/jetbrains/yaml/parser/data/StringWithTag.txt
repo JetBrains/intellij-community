@@ -2,7 +2,8 @@ YAML file
   YAML document
     YAML mapping
       YAML key value
-        PsiElement(scalar key)('foo:')
+        PsiElement(scalar key)('foo')
+        PsiElement(:)(':')
         PsiWhiteSpace(' ')
         YAML quoted text
           PsiElement(tag)('!')

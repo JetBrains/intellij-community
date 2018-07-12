@@ -50,6 +50,7 @@ public abstract class TestUtils {
   public static final String GROOVY_JAR_21 = "groovy-all-2.1.3.jar";
   public static final String GROOVY_JAR_22 = "groovy-all-2.2.0-beta-1.jar";
   public static final String GROOVY_JAR_23 = "groovy-all-2.3.0.jar";
+  public static final String GROOVY_JAR_30 = "groovy-3.0.0-alpha-2.jar";
 
   public static String getMockJdkHome() {
     return getAbsoluteTestDataPath() + "/mockJDK";
@@ -87,8 +88,12 @@ public abstract class TestUtils {
     return getAbsoluteTestDataPath() + "/mockGroovyLib2.3";
   }
 
+  private static String getMockGroovy3_0LibraryHome() {
+    return getAbsoluteTestDataPath() + "/mockGroovyLib3.0";
+  }
+
   public static String getMockGroovy1_8LibraryName() {
-    return getMockGroovy1_8LibraryHome()+"/"+GROOVY_JAR_18;
+    return getMockGroovy1_8LibraryHome() + "/" + GROOVY_JAR_18;
   }
 
   public static String getMockGroovy2_1LibraryName() {
@@ -101,6 +106,10 @@ public abstract class TestUtils {
 
   public static String getMockGroovy2_3LibraryName() {
     return getMockGroovy2_3LibraryHome() + "/" + GROOVY_JAR_23;
+  }
+
+  public static String getMockGroovy3_0LibraryName() {
+    return getMockGroovy3_0LibraryHome() + "/" + GROOVY_JAR_30;
   }
 
   public static PsiFile createPseudoPhysicalGroovyFile(final Project project, final String text) throws IncorrectOperationException {
@@ -135,6 +144,12 @@ public abstract class TestUtils {
     return text.substring(0, index) + text.substring(index + END_MARKER.length());
   }
 
+  /**
+   * Reads input file which consists at least of two sections separated with "-----" line
+   * @param filePath file to read
+   * @return a list of sections read from the file
+   * @throws RuntimeException if any IO problem occurs
+   */
   public static List<String> readInput(String filePath) {
     String content;
     try {
@@ -164,7 +179,7 @@ public abstract class TestUtils {
     input.add(content);
 
     Assert.assertTrue("No data found in source file", input.size() > 0);
-    Assert.assertNotNull("Test output points to null", input.size() > 1);
+    Assert.assertTrue("Test output points to null", input.size() > 1);
 
     return input;
   }
@@ -202,8 +217,33 @@ public abstract class TestUtils {
     }
 
     if (missedVariants.size() > 0) {
-      Assert.assertTrue("Some completion variants are missed " + missedVariants, false);
+      Assert.fail("Some completion variants are missed " + missedVariants);
     }
+  }
+
+  public static void checkCompletionType(JavaCodeInsightTestFixture fixture, String lookupString, String expectedTypeCanonicalText) {
+    LookupElement[] lookupElements = fixture.completeBasic();
+    PsiType type = null;
+
+    for (LookupElement lookupElement : lookupElements) {
+      if (lookupElement.getLookupString().equals(lookupString)) {
+        PsiElement element = lookupElement.getPsiElement();
+        if (element instanceof PsiField) {
+          type = ((PsiField)element).getType();
+          break;
+        }
+        if (element instanceof PsiMethod) {
+          type = ((PsiMethod)element).getReturnType();
+          break;
+        }
+      }
+    }
+
+    if (type == null) {
+      Assert.fail("No field or method called '" + lookupString + "' found in completion lookup elements");
+    }
+
+    Assert.assertEquals(expectedTypeCanonicalText, type.getCanonicalText());
   }
 
   public static void checkResolve(PsiFile file, final String ... expectedUnresolved) {

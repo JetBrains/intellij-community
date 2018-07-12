@@ -48,6 +48,7 @@ public class PropertyStubElementType extends ILightStubElementType<PropertyStub,
     return new PropertyStubImpl(parentStub, psi.getKey());
   }
 
+  @Override
   @NotNull
   public String getExternalId() {
     return "properties.prop";

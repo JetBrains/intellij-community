@@ -500,7 +500,8 @@ public class CreateFromUsageUtils {
     final List<PsiReferenceExpression> result = new ArrayList<>();
     JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitReferenceExpression(PsiReferenceExpression expr) {
-        if (expression instanceof PsiReferenceExpression) {
+        if (expression instanceof PsiReferenceExpression && 
+            (expr.getParent() instanceof PsiMethodCallExpression == expression.getParent() instanceof PsiMethodCallExpression)) {
           if (Comparing.equal(expr.getReferenceName(), ((PsiReferenceExpression)expression).getReferenceName()) && !isValidReference(expr, false)) {
             result.add(expr);
           }
@@ -804,9 +805,7 @@ public class CreateFromUsageUtils {
 
       PsiType[] types = ExpectedTypesProvider.processExpectedTypes(expectedTypes, visitor, manager.getProject());
       if (types.length == 0) {
-        return allowVoidType
-               ? new PsiType[]{PsiType.VOID}
-               : new PsiType[]{PsiType.getJavaLangObject(manager, resolveScope)};
+        return Arrays.stream(expectedTypes).map(type -> type.getType()).toArray(PsiType[]::new);
       }
 
       return types;

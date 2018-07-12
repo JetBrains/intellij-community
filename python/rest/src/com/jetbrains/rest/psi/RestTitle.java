@@ -102,7 +102,7 @@ public class RestTitle extends RestElement {
     final String text = getNode().getText().trim();
     if (text.length() < 2) return Pair.empty();
     Character overline = text.charAt(0);
-    if (ourAdornmentSymbols.indexOf(overline) < 0) {
+    if (text.split("\n").length < 3 || ourAdornmentSymbols.indexOf(overline) < 0) {
       overline = null;
     }
     final char underline = text.charAt(text.length()-2);

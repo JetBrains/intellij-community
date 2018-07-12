@@ -18,7 +18,7 @@ import org.jetbrains.idea.devkit.util.ExtensionLocator
 
 class StatefulEpInspection2 : DevKitJvmInspection() {
 
-  override fun buildVisitor(project: Project, sink: HighlightSink, isOnTheFly: Boolean) = object : DefaultJvmElementVisitor<Boolean?> {
+  override fun buildVisitor(project: Project, sink: HighlightSink, isOnTheFly: Boolean): DefaultJvmElementVisitor<Boolean?> = object : DefaultJvmElementVisitor<Boolean?> {
 
     override fun visitField(field: JvmField): Boolean? {
       val clazz = field.containingClass ?: return null

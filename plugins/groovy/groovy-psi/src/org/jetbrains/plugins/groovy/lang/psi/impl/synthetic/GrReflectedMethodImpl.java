@@ -214,12 +214,12 @@ public class GrReflectedMethodImpl extends LightMethodBuilder implements GrRefle
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitMethod(this);
   }
 
   @Override
-  public void acceptChildren(GroovyElementVisitor visitor) {
+  public void acceptChildren(@NotNull GroovyElementVisitor visitor) {
     //todo
   }
 

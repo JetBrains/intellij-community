@@ -9,6 +9,7 @@ import com.intellij.lang.properties.PropertiesFileProcessor;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.xml.XmlPropertiesFile;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -20,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -28,7 +30,8 @@ import java.util.List;
 
 public class I18nUtil {
   @NotNull
-  public static List<PropertiesFile> propertiesFilesByBundleName(final String resourceBundleName, final PsiElement context) {
+  public static List<PropertiesFile> propertiesFilesByBundleName(@Nullable String resourceBundleName, @NotNull PsiElement context) {
+    if (resourceBundleName == null) return Collections.emptyList();
     PsiFile containingFile = context.getContainingFile();
     PsiElement containingFileContext = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
     if (containingFileContext != null) containingFile = containingFileContext.getContainingFile();
@@ -48,21 +51,24 @@ public class I18nUtil {
     return Collections.emptyList();
   }
 
-  public static void createProperty(Project project,
-                                    Collection<PropertiesFile> propertiesFiles,
-                                    String key,
-                                    String value) throws IncorrectOperationException {
+  public static void createProperty(@NotNull Project project,
+                                    @NotNull Collection<PropertiesFile> propertiesFiles,
+                                    @NotNull String key,
+                                    @NotNull String value) throws IncorrectOperationException {
     createProperty(project, propertiesFiles, key, value, false);
   }
 
-  public static void createProperty(Project project,
-                                    Collection<PropertiesFile> propertiesFiles,
-                                    String key,
-                                    String value,
+  public static void createProperty(@NotNull Project project,
+                                    @NotNull Collection<PropertiesFile> propertiesFiles,
+                                    @NotNull String key,
+                                    @NotNull String value,
                                     boolean replaceIfExist) throws IncorrectOperationException {
     for (PropertiesFile file : propertiesFiles) {
       PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-      documentManager.commitDocument(documentManager.getDocument(file.getContainingFile()));
+      Document document = documentManager.getDocument(file.getContainingFile());
+      if (document != null) {
+        documentManager.commitDocument(document);
+      }
 
       IProperty existingProperty = file.findPropertyByKey(key);
       if (existingProperty == null) {
@@ -74,7 +80,7 @@ public class I18nUtil {
     }
   }
 
-  public static List<String> defaultSuggestPropertiesFiles(Project project) {
+  public static List<String> defaultSuggestPropertiesFiles(@NotNull Project project) {
     final List<String> paths = new ArrayList<>();
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 

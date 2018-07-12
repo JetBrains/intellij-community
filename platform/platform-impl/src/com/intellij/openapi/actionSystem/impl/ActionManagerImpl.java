@@ -50,7 +50,6 @@ import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,7 +58,6 @@ import javax.swing.*;
 import javax.swing.Timer;
 import java.awt.*;
 import java.awt.event.*;
-import java.text.MessageFormat;
 import java.util.*;
 import java.util.List;
 
@@ -142,21 +140,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       Class<?> aClass = Class.forName(className, true, stub.getLoader());
       obj = ReflectionUtil.newInstance(aClass);
     }
-    catch (ClassNotFoundException e) {
-      throw error(stub, e, "class with name ''{0}'' not found", className);
-    }
-    catch (NoClassDefFoundError e) {
-      throw error(stub, e, "class with name ''{0}'' cannot be loaded", className);
-    }
-    catch(UnsupportedClassVersionError e) {
-      throw error(stub, e, "error loading class ''{0}''", className);
-    }
-    catch (Exception e) {
-      throw error(stub, e, "cannot create class ''{0}''", className);
+    catch (Throwable e) {
+      LOG.error(new PluginException(e, stub.getPluginId()));
+      return null;
     }
 
     if (!(obj instanceof AnAction)) {
-      LOG.error("class with name '" + className + "' must be an instance of '" + AnAction.class.getName()+"'; got "+obj);
+      LOG.error(new PluginException("class with name '" + className + "' must be an instance of '" + AnAction.class.getName()+"'; got "+obj, stub.getPluginId()));
       return null;
     }
 
@@ -171,17 +161,6 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       setIconFromClass(actionClass, actionClass.getClassLoader(), iconPath, anAction.getTemplatePresentation(), stub.getPluginId());
     }
     return anAction;
-  }
-
-  @NotNull
-  @Contract(pure = true)
-  private static RuntimeException error(@NotNull ActionStub stub, @NotNull Throwable original, @NotNull String template, @NotNull String className) {
-    PluginId pluginId = stub.getPluginId();
-    String text = MessageFormat.format(template, className);
-    if (pluginId == null) {
-      return new IllegalStateException(text);
-    }
-    return new PluginException(text, original, pluginId);
   }
 
   private static void processAbbreviationNode(Element e, String id) {
@@ -477,7 +456,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
     }
     AnAction converted = convertStub((ActionStub)action);
-    if (converted == null) return null;
+    if (converted == null) {
+      unregisterAction(id);
+      return null;
+    }
 
     synchronized (myLock) {
       action = myId2Action.get(id);
@@ -1202,7 +1184,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       IdeaLogger.ourLastActionId = myLastPreformedActionId;
-      ActionsCollectorImpl.getInstance().record(myLastPreformedActionId);
+      ActionsCollectorImpl.getInstance().record(myLastPreformedActionId, action.getClass());
     }
     for (AnActionListener listener : myActionListeners) {
       listener.beforeActionPerformed(action, dataContext, event);
@@ -1332,7 +1314,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         }
 
         Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
-        if (component != null && !component.isShowing()) {
+        if (component != null && !component.isShowing() && !ActionPlaces.TOUCHBAR_GENERAL.equals(place)) {
           result.setRejected();
           return;
         }

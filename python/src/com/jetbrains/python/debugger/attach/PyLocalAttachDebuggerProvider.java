@@ -25,11 +25,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.attach.XLocalAttachDebugger;
 import com.intellij.xdebugger.attach.XLocalAttachDebuggerProvider;
 import com.intellij.xdebugger.attach.XLocalAttachGroup;
+import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -87,8 +87,8 @@ public class PyLocalAttachDebuggerProvider implements XLocalAttachDebuggerProvid
   public List<XLocalAttachDebugger> getAvailableDebuggers(@NotNull Project project,
                                                           @NotNull ProcessInfo processInfo,
                                                           @NotNull UserDataHolder contextHolder) {
-    String executableSubstring = Registry.get("python.attach.to.process.executable.substring").asString();
-    if (StringUtil.containsIgnoreCase(processInfo.getExecutableName(), executableSubstring)) {
+    final String filter = PyDebuggerOptionsProvider.getInstance(project).getAttachProcessFilter();
+    if (StringUtil.containsIgnoreCase(processInfo.getCommandLine(), filter)) {
       List<XLocalAttachDebugger> result;
 
       if (processInfo.getExecutableCannonicalPath().isPresent() &&

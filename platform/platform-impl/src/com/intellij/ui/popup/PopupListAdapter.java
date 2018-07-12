@@ -88,6 +88,7 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
   @Override
   public JComponent buildFinalComponent() {
     myListWithFilter = (ListWithFilter)ListWithFilter.wrap(myList, new MyListWrapper(myList), myBuilder.getItemsNamer());
+    myListWithFilter.setAutoPackHeight(myBuilder.isAutoPackHeightOnFiltering());
     return myListWithFilter;
   }
 
@@ -138,7 +139,7 @@ class PopupListAdapter<T> implements PopupChooserBuilder.PopupComponentAdapter<T
 
     private MyListWrapper(final JList list) {
       super(UIUtil.isUnderAquaLookAndFeel() ? 0 : -1);
-      list.setVisibleRowCount(15);
+      list.setVisibleRowCount(myBuilder.getVisibleRowCount());
       setViewportView(list);
 
 

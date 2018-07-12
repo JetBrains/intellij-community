@@ -15,12 +15,9 @@ Groovy script
       PsiElement({)('{')
       Parameter list
         <empty list>
-      PsiErrorElement:Wrong statement
-        <empty list>
       PsiElement(@)('@')
-      PsiErrorElement:Wrong statement
-        <empty list>
-      PsiElement(wrong token)('#')
+      PsiErrorElement:<annotation reference> expected, got '#'
+        PsiElement(wrong token)('#')
       Literal
         PsiElement(Integer)('2')
       PsiElement(})('}')

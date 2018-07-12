@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiAnnotationMemberValue
-import com.intellij.psi.PsiArrayInitializerMemberValue
 import com.intellij.psi.PsiLiteral
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 
@@ -13,17 +12,11 @@ fun PsiAnnotation.findDeclaredDetachedValue(attributeName: String?): PsiAnnotati
 }
 
 internal fun <T : Any> PsiAnnotationMemberValue.getArrayValue(computeValue: (PsiAnnotationMemberValue) -> T?): List<T> {
-  if (this is PsiArrayInitializerMemberValue) {
-    return initializers.mapNotNull(computeValue)
-  }
-  else {
-    val value = computeValue(this) ?: return emptyList()
-    return listOf(value)
-  }
+  return AnnotationUtil.arrayAttributeValues(this).mapNotNull(computeValue)
 }
 
-fun PsiAnnotationMemberValue?.booleanValue() = (this as? PsiLiteral)?.value as? Boolean
+fun PsiAnnotationMemberValue?.booleanValue(): Boolean? = (this as? PsiLiteral)?.value as? Boolean
 
-fun PsiAnnotationMemberValue?.stringValue() = (this as? PsiLiteral)?.value as? String
+fun PsiAnnotationMemberValue?.stringValue(): String? = (this as? PsiLiteral)?.value as? String
 
-fun GrModifierList.hasAnnotation(fqn: String) = annotations.any { it.qualifiedName == fqn }
+fun GrModifierList.hasAnnotation(fqn: String): Boolean = annotations.any { it.qualifiedName == fqn }

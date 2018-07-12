@@ -4,21 +4,21 @@ package com.intellij.ide.ui.laf.intellij;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 
+import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.BW;
+import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.MINIMUM_HEIGHT;
+
 /**
  * @author Konstantin Bulenkov
  * @author Sergey Malenkov
  */
 public class MacIntelliJTextFieldUI extends DarculaTextFieldUI {
-  private static final int MACOS_LIGHT_INPUT_HEIGHT = 21;
-  public static final int BW = 3;
-  public static final int MACOS_LIGHT_INPUT_HEIGHT_TOTAL = MACOS_LIGHT_INPUT_HEIGHT + (BW * 2);
-
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(final JComponent c) {
     return new MacIntelliJTextFieldUI();
@@ -37,21 +37,20 @@ public class MacIntelliJTextFieldUI extends DarculaTextFieldUI {
   }
 
   @Override
-  protected int getMinimumHeightForTextField() {
-    return JBUI.scale(MACOS_LIGHT_INPUT_HEIGHT);
+  protected int getMinimumHeight(int textHeight) {
+    Insets i = getComponent().getInsets();
+    Component c = getComponent();
+    return DarculaEditorTextFieldBorder.isComboBoxEditor(c) || UIUtil.getParentOfType(JSpinner.class, c) != null ?
+           textHeight : MINIMUM_HEIGHT.get() + i.top + i.bottom;
   }
 
   @Override
-  protected int getMinimumHeight() {
-    JTextComponent component = getComponent();
-    if (JBUI.isUseCorrectInputHeight(component)) {
-      return super.getMinimumHeight();
-    }
-    return DarculaEditorTextFieldBorder.isComboBoxEditor(component) ? JBUI.scale(18) : JBUI.scale(26);
+  protected Insets getDefaultMargins() {
+    return JBUI.insets(1, 5);
   }
 
   @Override
   protected float bw() {
-    return JBUI.scale(BW);
+    return BW.getFloat();
   }
 }

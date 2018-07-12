@@ -43,15 +43,15 @@ import java.util.List;
 public class StubSerializationHelper {
   private final AbstractStringEnumerator myNameStorage;
 
-  protected final TIntObjectHashMap<ObjectStubSerializer> myIdToSerializer = new TIntObjectHashMap<>();
-  protected final TObjectIntHashMap<ObjectStubSerializer> mySerializerToId = new TObjectIntHashMap<>();
+  private final TIntObjectHashMap<ObjectStubSerializer> myIdToSerializer = new TIntObjectHashMap<>();
+  private final TObjectIntHashMap<ObjectStubSerializer> mySerializerToId = new TObjectIntHashMap<>();
 
-  public StubSerializationHelper(@NotNull AbstractStringEnumerator nameStorage, @NotNull Disposable parentDisposable) {
+  StubSerializationHelper(@NotNull AbstractStringEnumerator nameStorage, @NotNull Disposable parentDisposable) {
     myNameStorage = nameStorage;
     myStringInterner = new RecentStringInterner(parentDisposable);
   }
 
-  public void assignId(@NotNull final ObjectStubSerializer serializer) throws IOException {
+  void assignId(@NotNull final ObjectStubSerializer serializer) throws IOException {
     final int id = persistentId(serializer);
     final ObjectStubSerializer old = myIdToSerializer.put(id, serializer);
     assert old == null : "ID: " + serializer.getExternalId() + " is not unique; Already registered serializer with this ID: " + old.getClass().getName();
@@ -65,7 +65,7 @@ public class StubSerializationHelper {
   }
 
   private void doSerialize(@NotNull Stub rootStub, @NotNull StubOutputStream stream) throws IOException {
-    final ObjectStubSerializer serializer = StubSerializationUtil.getSerializer(rootStub);
+    ObjectStubSerializer<Stub, Stub> serializer = StubSerializationUtil.getSerializer(rootStub);
 
     if (((ObjectStubBase)rootStub).isDangling()) {
       stream.writeByte(0);
@@ -81,7 +81,7 @@ public class StubSerializationHelper {
     }
   }
 
-  public void serialize(@NotNull Stub rootStub, @NotNull OutputStream stream) throws IOException {
+  void serialize(@NotNull Stub rootStub, @NotNull OutputStream stream) throws IOException {
     BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
     FileLocalStringEnumerator storage = new FileLocalStringEnumerator(true);
     StubOutputStream stubOutputStream = new StubOutputStream(out, storage);
@@ -115,15 +115,12 @@ public class StubSerializationHelper {
 
   private int getClassId(final ObjectStubSerializer serializer) {
     final int idValue = mySerializerToId.get(serializer);
-    if (idValue <= 0) {
-      assert false : "No ID found for serializer " +
-                     LogUtil.objectAndClass(serializer) +
-                     ", external id:" +
-                     serializer.getExternalId() +
-                     (serializer instanceof IElementType ?
-                        ", language:" + ((IElementType)serializer).getLanguage() + ", " + serializer : "")
-        ;
-    }
+    assert idValue > 0 : "No ID found for serializer " +
+                         LogUtil.objectAndClass(serializer) +
+                         ", external id:" +
+                         serializer.getExternalId() +
+                         (serializer instanceof IElementType ?
+                      ", language:" + ((IElementType)serializer).getLanguage() + ", " + serializer : "");
     return idValue;
   }
 
@@ -184,7 +181,7 @@ public class StubSerializationHelper {
       id = DataInputOutputUtil.readINT(stream);
     }
 
-    final ObjectStubSerializer serializer = getClassById(id);
+    final ObjectStubSerializer<?, Stub> serializer = getClassById(id);
     if (serializer == null) {
       String externalId = null;
       try {
@@ -234,8 +231,7 @@ public class StubSerializationHelper {
     private final ArrayList<String> myStrings = new ArrayList<>();
 
     FileLocalStringEnumerator(boolean forSavingStub) {
-      if (forSavingStub) myEnumerates = new TObjectIntHashMap<>();
-      else myEnumerates = null;
+      myEnumerates = forSavingStub ? new TObjectIntHashMap<>() : null;
     }
 
     @Override

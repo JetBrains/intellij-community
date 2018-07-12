@@ -163,7 +163,7 @@ public class MavenIndex {
   private static NotNexusIndexer initNotNexusIndexer(Kind kind, String repositoryPathOrUrl) {
     if (kind == Kind.REMOTE) {
       BintrayModel.Repository info = BintrayRepositoryService.parseInfo(repositoryPathOrUrl);
-      if (info != null) {
+      if (info != null && info.repo != null) {
         return new BintrayIndexer(info.subject, info.repo);
       }
     }

@@ -458,6 +458,7 @@ public class UnscrambleDialog extends DialogWrapper {
 
   @Nullable
   private static String getExceptionAbbreviation(String line) {
+    line = StringUtil.trimStart(line.trim(), "Caused by: ");
     int lastDelimiter = 0;
     for (int j = 0; j < line.length(); j++) {
       char c = line.charAt(j);

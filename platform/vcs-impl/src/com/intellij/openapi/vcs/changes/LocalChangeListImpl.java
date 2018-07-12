@@ -121,7 +121,7 @@ public class LocalChangeListImpl extends LocalChangeList {
 
   @Override
   public String toString() {
-    return myName.trim();
+    return myName;
   }
 
   @Override

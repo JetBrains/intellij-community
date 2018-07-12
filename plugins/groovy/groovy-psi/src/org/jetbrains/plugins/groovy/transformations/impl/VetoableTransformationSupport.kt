@@ -30,7 +30,7 @@ import org.jetbrains.plugins.groovy.transformations.TransformationContext
 private val VETOABLE_FQN = "groovy.beans.Vetoable"
 private val VCL_FQN = "java.beans.VetoableChangeListener"
 private val VCS_FQN = "java.beans.VetoableChangeSupport"
-val ORIGIN_INFO = "via @Vetoable"
+val ORIGIN_INFO: String = "via @Vetoable"
 
 class VetoableTransformationSupport : AstTransformationSupport {
 

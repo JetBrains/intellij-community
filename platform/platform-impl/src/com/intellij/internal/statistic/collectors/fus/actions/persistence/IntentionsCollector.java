@@ -5,7 +5,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
-import com.intellij.internal.statistic.UsagesCollector;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.*;
@@ -15,7 +14,10 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
@@ -27,7 +29,7 @@ import java.util.*;
     @Storage(value = "statistics.intentions.xml", roamingType = RoamingType.DISABLED, deprecated = true)
   }
 )
-public class IntentionsCollector implements PersistentStateComponent<IntentionsCollector.State> {
+public class IntentionsCollector extends BaseUICollector implements PersistentStateComponent<IntentionsCollector.State> {
   private State myState = new State();
 
   @Nullable
@@ -56,7 +58,7 @@ public class IntentionsCollector implements PersistentStateComponent<IntentionsC
   }
 
   @NotNull
-  private static String getIntentionId(@NotNull IntentionAction action) {
+  private String getIntentionId(@NotNull IntentionAction action) {
     Object handler = action;
     if (action instanceof IntentionActionDelegate) {
       IntentionAction delegate = ((IntentionActionDelegate)action).getDelegate();
@@ -75,7 +77,7 @@ public class IntentionsCollector implements PersistentStateComponent<IntentionsC
       fqn = StringUtil.trimStart(fqn, prefix);
     }
 
-    if (UsagesCollector.isNotBundledPluginClass(handler.getClass())) {
+    if (isNotBundledPluginClass(handler.getClass())) {
       fqn = "[!]" + fqn;
     }
 

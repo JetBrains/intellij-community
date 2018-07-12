@@ -107,7 +107,7 @@ public final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationAc
       int y2 = Math.max(0, Math.min(y, component.getHeight() - 1)); // fit y into [0, height-1]
 
       myContext = myDataContextProvider != null ? myDataContextProvider.get() : DataManager.getInstance().getDataContext(component, x2, y2);
-      Utils.fillMenu(myGroup, this, true, myPresentationFactory, myContext, myPlace, false, false, LaterInvocator.isInModalContext());
+      Utils.fillMenu(myGroup, this, true, myPresentationFactory, myContext, myPlace, false, false, LaterInvocator.isInModalContext(), false);
       if (getComponentCount() == 0) {
         return;
       }
@@ -154,7 +154,7 @@ public final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationAc
       public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
         MyMenu.this.removeAll();
         Utils.fillMenu(myGroup, MyMenu.this, !UISettings.getInstance().getDisableMnemonics(), myPresentationFactory, myContext, myPlace, false,
-                       false, LaterInvocator.isInModalContext());
+                       false, LaterInvocator.isInModalContext(), false);
         myManager.addActionPopup(ActionPopupMenuImpl.this);
       }
     }

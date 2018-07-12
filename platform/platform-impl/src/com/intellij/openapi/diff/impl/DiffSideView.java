@@ -30,11 +30,11 @@ import com.intellij.openapi.editor.event.EditorMouseMotionAdapter;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.ScrollUtil;
 import com.intellij.util.ui.UIUtil;
@@ -143,7 +143,7 @@ public class DiffSideView {
   }
 
   @Nullable
-  public OpenFileDescriptor getCurrentOpenFileDescriptor() {
+  public Navigatable getCurrentOpenFileDescriptor() {
     final EditorEx editor = myEditorSource.getEditor();
     final DiffContent content = myEditorSource.getContent();
     if (content == null || editor == null) {
@@ -164,7 +164,7 @@ public class DiffSideView {
         if (!isEventHandled(e.getMouseEvent()) || !isInMyArea(e)) {
           return;
         }
-        OpenFileDescriptor descriptor = getOpenFileDescriptor(e);
+        Navigatable descriptor = getOpenFileDescriptor(e);
         if (descriptor == null) {
           return;
         }
@@ -183,7 +183,7 @@ public class DiffSideView {
       return false;
     }
 
-    private OpenFileDescriptor getOpenFileDescriptor(EditorMouseEvent e) {
+    private Navigatable getOpenFileDescriptor(EditorMouseEvent e) {
       int offset = myEditor.logicalPositionToOffset(myEditor.xyToLogicalPosition(e.getMouseEvent().getPoint()));
       return myContent.getOpenFileDescriptor(offset);
     }

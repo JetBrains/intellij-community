@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ClassLoaderUtil;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
@@ -293,6 +294,11 @@ public class FileTemplateUtil {
         throw new Exception("File name must be specified");
       }
     }
+    propsMap.put(FileTemplate.ATTRIBUTE_FILE_NAME, fileName + (StringUtil.isEmpty(template.getExtension()) ? "" : "." + template.getExtension()));
+    String path = VfsUtilCore.getRelativePath(directory.getVirtualFile(), directory.getProject().getBaseDir());
+    if (path != null) {
+      propsMap.put(FileTemplate.ATTRIBUTE_DIR_PATH, path);
+    }
 
     //Set escaped references to dummy values to remove leading "\" (if not already explicitly set)
     String[] dummyRefs = calculateAttributes(template.getText(), propsMap, true, directory.getProject());
@@ -345,6 +351,8 @@ public class FileTemplateUtil {
     for (DefaultTemplatePropertiesProvider provider : providers) {
       provider.fillProperties(directory, props);
     }
+    props.setProperty(FileTemplate.ATTRIBUTE_FILE_NAME, "");
+    props.setProperty(FileTemplate.ATTRIBUTE_DIR_PATH, "");
   }
 
   public static String indent(String methodText, Project project, FileType fileType) {

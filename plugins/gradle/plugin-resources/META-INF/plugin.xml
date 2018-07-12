@@ -21,9 +21,7 @@
   </description>
 
   <depends>com.intellij.modules.lang</depends>
-  <xi:include href="/META-INF/ExternalBuildSystemsSupport.xml" xpointer="xpointer(/idea-plugin/*)">
-    <xi:fallback/>
-  </xi:include>
+  <depends>com.intellij.modules.externalSystem</depends>
   <xi:include href="/META-INF/gradle-java-integration.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
@@ -53,19 +51,21 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleStartupActivity"/>
-    <projectOpenProcessor id="default"
-                          implementation="org.jetbrains.plugins.gradle.service.project.GradleProjectOpenProcessor"
-                          order="last"/>
+    <projectOpenProcessor id="gradle" implementation="org.jetbrains.plugins.gradle.service.project.GradleProjectOpenProcessor"/>
     <orderEnumerationHandlerFactory implementation="org.jetbrains.plugins.gradle.execution.GradleOrderEnumeratorHandler$FactoryImpl"/>
     <consoleFilterProvider implementation="org.jetbrains.plugins.gradle.execution.GradleConsoleFilterProvider"/>
     <stacktrace.fold substring="at org.gradle."/>
     <stacktrace.fold substring="at org.jetbrains.plugins.gradle."/>
     <stacktrace.fold substring="at com.intellij.openapi.externalSystem."/>
 
+    <externalSystemOutputParserProvider implementation="org.jetbrains.plugins.gradle.execution.build.output.GradleOutputParserProvider"
+                                        id="gradle"/>
     <externalSystemExecutionConsoleManager implementation="org.jetbrains.plugins.gradle.execution.GradleExecutionConsoleManager"
                                            id="gradle"/>
 
     <externalSystemWorkspaceContributor implementation="org.jetbrains.plugins.gradle.service.project.GradleWorkspaceContributor"/>
+    <externalSystemConfigurationHandler implementation="org.jetbrains.plugins.gradle.service.project.GradleTaskTriggersImporter"/>
+    <externalSystemConfigurationHandler implementation="org.jetbrains.plugins.gradle.service.project.ActionDelegateConfigImporter"/>
     <externalSystem.beforeRunTaskImporter implementation="org.jetbrains.plugins.gradle.service.project.GradleBeforeRunTaskImporter"/>
     <internalFileTemplate name="Gradle Build Script"/>
     <internalFileTemplate name="Gradle Build Script with wrapper"/>

@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
@@ -21,6 +22,7 @@ import com.intellij.util.io.HttpRequests;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.PythonHelpersLocator;
 import one.util.streamex.EntryStream;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,14 +33,14 @@ import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
 import java.io.IOException;
 import java.io.Reader;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class PyPIPackageUtil {
   private static final Logger LOG = Logger.getInstance(PyPIPackageUtil.class);
@@ -79,10 +81,14 @@ public class PyPIPackageUtil {
 
   /**
    * Contains cached packages taken from additional repositories.
-   * 
-   * @see #getAdditionalPackages() 
    */
-  private volatile List<RepoPackage> myAdditionalPackages = null;
+  protected final LoadingCache<String, List<RepoPackage>> myAdditionalPackages = CacheBuilder.newBuilder().build(
+    new CacheLoader<String, List<RepoPackage>>() {
+      @Override
+      public List<RepoPackage> load(@NotNull String key) throws Exception {
+        return getPackagesFromAdditionalRepository(key);
+      }
+    });
 
   /**
    * Contains cached package information retrieved through PyPI's JSON API.
@@ -153,51 +159,29 @@ public class PyPIPackageUtil {
   }
 
   @NotNull
-  public List<RepoPackage> getAdditionalPackages() {
-    return myAdditionalPackages != null ? Collections.unmodifiableList(myAdditionalPackages) : Collections.emptyList();
+  public List<RepoPackage> getAdditionalPackages(@NotNull List<String> repositories) {
+    return StreamEx.of(myAdditionalPackages.getAllPresent(repositories).values()).flatMap(StreamEx::of).toList();
   }
 
-  @NotNull
-  public List<RepoPackage> loadAndGetAdditionalPackages(boolean alwaysRefresh) throws IOException {
-    if (myAdditionalPackages == null || alwaysRefresh) {
-      final Set<RepoPackage> uniquePackages = new TreeSet<>();
-      for (String url : PyPackageService.getInstance().additionalRepositories) {
-        uniquePackages.addAll(getPackagesFromAdditionalRepository(url));
+  public void loadAdditionalPackages(@NotNull List<String> repositories, boolean alwaysRefresh) throws IOException {
+    if (alwaysRefresh) {
+      for (String url : repositories) {
+        myAdditionalPackages.refresh(url);
       }
-      myAdditionalPackages = new ArrayList<>(uniquePackages);
     }
-    return Collections.unmodifiableList(myAdditionalPackages);
+    else {
+      for (String url : repositories) {
+        getCachedValueOrRethrowIO(myAdditionalPackages, url);
+      }
+    }
   }
 
   @NotNull
   private static List<RepoPackage> getPackagesFromAdditionalRepository(@NotNull String url) throws IOException {
-    final List<RepoPackage> result = new ArrayList<>();
-    final boolean simpleIndex = url.endsWith("simple/");
-    final List<String> packagesList = parsePyPIListFromWeb(url, simpleIndex);
-
-    for (String pyPackage : packagesList) {
-      if (simpleIndex) {
-        final Pair<String, String> nameVersion = splitNameVersion(StringUtil.trimTrailing(pyPackage, '/'));
-        result.add(new RepoPackage(nameVersion.getFirst(), url, nameVersion.getSecond()));
-      }
-      else {
-        try {
-          final Pattern repositoryPattern = Pattern.compile(url + "([^/]*)/([^/]*)$");
-          final Matcher matcher = repositoryPattern.matcher(URLDecoder.decode(pyPackage, "UTF-8"));
-          if (matcher.find()) {
-            final String packageName = matcher.group(1);
-            final String packageVersion = matcher.group(2);
-            if (!packageName.contains(" ")) {
-              result.add(new RepoPackage(packageName, url, packageVersion));
-            }
-          }
-        }
-        catch (UnsupportedEncodingException e) {
-          LOG.warn(e.getMessage());
-        }
-      }
-    }
-    return result;
+    return parsePyPIListFromWeb(url)
+      .stream()
+      .map(s -> new RepoPackage(s, url, null))
+      .collect(Collectors.toList());
   }
 
   public void fillPackageDetails(@NotNull String packageName, @NotNull CatchingConsumer<PackageDetails.Info, Exception> callback) {
@@ -251,10 +235,10 @@ public class PyPIPackageUtil {
   }
 
   @Nullable
-  private String getLatestPackageVersionFromPyPI(@NotNull String packageName) throws IOException {
+  private String getLatestPackageVersionFromPyPI(@NotNull Project project, @NotNull String packageName) throws IOException {
     LOG.debug("Requesting the latest PyPI version for the package " + packageName);
     final List<String> versions = getPackageVersionsFromPyPI(packageName, true);
-    return ContainerUtil.getFirstItem(versions);
+    return PyPackagingSettings.getInstance(project).selectLatestVersion(versions);
   }
 
   /**
@@ -278,20 +262,20 @@ public class PyPIPackageUtil {
   }
 
   @Nullable
-  private String getLatestPackageVersionFromAdditionalRepositories(@NotNull String packageName) throws IOException {
+  private String getLatestPackageVersionFromAdditionalRepositories(@NotNull Project project, @NotNull String packageName) throws IOException {
     final List<String> versions = getPackageVersionsFromAdditionalRepositories(packageName);
-    return ContainerUtil.getFirstItem(versions);
+    return PyPackagingSettings.getInstance(project).selectLatestVersion(versions);
   }
 
   @Nullable
-  public String fetchLatestPackageVersion(@NotNull String packageName) throws IOException {
+  public String fetchLatestPackageVersion(@NotNull Project project, @NotNull String packageName) throws IOException {
     String version = null;
     // Package is on PyPI not a, say, some system package on Ubuntu
     if (PyPIPackageCache.getInstance().containsPackage(packageName)) {
-      version = getLatestPackageVersionFromPyPI(packageName);
+      version = getLatestPackageVersionFromPyPI(project, packageName);
     }
     if (!PyPackageService.getInstance().additionalRepositories.isEmpty()) {
-      final String extraVersion = getLatestPackageVersionFromAdditionalRepositories(packageName);
+      final String extraVersion = getLatestPackageVersionFromAdditionalRepositories(project, packageName);
       if (extraVersion != null) {
         version = extraVersion;
       }
@@ -342,75 +326,41 @@ public class PyPIPackageUtil {
   public void updatePyPICache() throws IOException {
     final PyPackageService service = PyPackageService.getInstance();
     if (service.PYPI_REMOVED) return;
-    final List<String> decodedNames = parsePyPIList(parsePyPIListFromWeb(PYPI_LIST_URL, true));
-    PyPIPackageCache.reload(decodedNames);
+    PyPIPackageCache.reload(parsePyPIListFromWeb(PYPI_LIST_URL));
     service.LAST_TIME_CHECKED = System.currentTimeMillis();
   }
 
   @NotNull
-  private static List<String> parsePyPIList(@NotNull List<String> packages) {
-    final List<String> decodedNames = new ArrayList<>();
-    for (String pyPackage : packages) {
-      try {
-        final String packageName = URLDecoder.decode(pyPackage, "UTF-8");
-        if (!packageName.contains(" ")) {
-          decodedNames.add(packageName);
-        }
-      }
-      catch (UnsupportedEncodingException e) {
-        LOG.warn(e.getMessage());
-      }
-    }
-    return decodedNames;
-  }
-
-  @NotNull
-  private static List<String> parsePyPIListFromWeb(@NotNull String url, boolean isSimpleIndex) throws IOException {
+  private static List<String> parsePyPIListFromWeb(@NotNull String url) throws IOException {
     LOG.debug("Fetching index of all packages available on " + url);
     return HttpRequests.request(url).userAgent(getUserAgent()).connect(request -> {
       final List<String> packages = new ArrayList<>();
       final Reader reader = request.getReader();
       new ParserDelegator().parse(reader, new HTMLEditorKit.ParserCallback() {
-        boolean inTable = false;
         HTML.Tag myTag;
 
         @Override
         public void handleStartTag(@NotNull HTML.Tag tag, @NotNull MutableAttributeSet set, int i) {
           myTag = tag;
-          if (!isSimpleIndex) {
-            if ("table".equals(tag.toString())) {
-              inTable = !inTable;
-            }
-
-            if (inTable && "a".equals(tag.toString())) {
-              packages.add(String.valueOf(set.getAttribute(HTML.Attribute.HREF)));
-            }
-          }
         }
 
         @Override
         public void handleText(@NotNull char[] data, int pos) {
-          if (isSimpleIndex) {
-            if (myTag != null && "a".equals(myTag.toString())) {
-              packages.add(String.valueOf(data));
-            }
+          if (myTag != null && "a".equals(myTag.toString())) {
+            packages.add(String.valueOf(data));
           }
         }
 
         @Override
-        public void handleEndTag(@NotNull HTML.Tag tag, int i) {
-          if (!isSimpleIndex) {
-            if ("table".equals(tag.toString())) {
-              inTable = !inTable;
-            }
-          }
+        public void handleEndTag(@NotNull HTML.Tag t, int pos) {
+          myTag = null;
         }
       }, true);
       return packages;
     });
   }
 
-  public void loadAndGetPackages() throws IOException {
+  public void loadPackages() throws IOException {
     // This lock is solely to prevent multiple threads from updating
     // the mammoth cache of PyPI packages simultaneously.
     synchronized (myPyPIPackageCacheUpdateLock) {

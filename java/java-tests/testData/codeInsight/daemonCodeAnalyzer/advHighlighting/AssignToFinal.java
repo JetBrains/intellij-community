@@ -243,3 +243,22 @@ class AssignmentInUnreachablePolyadic {
     else if (true && (<error descr="Variable 'bbbb' might already have been assigned to">bbbb</error> = false)) ;
   }
 }
+
+class QualifiedThis {
+  final int x;
+
+  QualifiedThis() {
+    <error descr="Cannot assign a value to final variable 'x'">QualifiedThis.this.x</error> = 5;
+    this.x = 5;
+  }
+}
+
+class ParenthesizedThis {
+  final int x;
+  final int y = <error descr="Variable '(this).x' might not have been initialized">(this).x</error> + 1;
+
+  ParenthesizedThis() {
+    (this).x = 5; // javac disallows this -- probably a bug in javac
+    <error descr="Variable 'x' might already have been assigned to">this.x</error> = 6;
+  }
+}

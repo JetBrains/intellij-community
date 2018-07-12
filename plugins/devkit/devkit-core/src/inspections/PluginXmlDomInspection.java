@@ -19,6 +19,8 @@ import com.intellij.ExtensionPoints;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ui.ListTable;
+import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.diagnostic.ITNReporter;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -37,33 +39,48 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.highlighting.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import com.siyeh.ig.ui.ExternalizableStringSet;
+import com.siyeh.ig.ui.UiUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
+import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 import org.jetbrains.idea.devkit.inspections.quickfix.AddWithTagFix;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
+import javax.swing.*;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author mike
- */
 public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugin> {
   private static final Logger LOG = Logger.getInstance(PluginXmlDomInspection.class);
 
+  public List<String> myRegistrationCheckIgnoreClassList = new ExternalizableStringSet();
+
+
   public PluginXmlDomInspection() {
     super(IdeaPlugin.class);
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    String title = DevKitBundle.message("inspections.plugin.xml.ignore.classes.title");
+    ListTable table = new ListTable(new ListWrappingTableModel(myRegistrationCheckIgnoreClassList, title));
+    JPanel panel = UiUtils.createAddRemoveTreeClassChooserPanel(table, title);
+    return new FormBuilder().addComponentFillVertically(panel, 0).getPanel();
   }
 
   @NotNull
@@ -168,26 +185,64 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
   }
 
-  private static void annotateExtensionPoint(ExtensionPoint extensionPoint, DomElementAnnotationHolder holder) {
+  private void annotateExtensionPoint(ExtensionPoint extensionPoint, DomElementAnnotationHolder holder) {
     if (extensionPoint.getWithElements().isEmpty() &&
         !extensionPoint.collectMissingWithTags().isEmpty()) {
       holder.createProblem(extensionPoint, DevKitBundle.message("inspections.plugin.xml.ep.doesnt.have.with"), new AddWithTagFix());
     }
 
-    GenericAttributeValue<String> name = extensionPoint.getName();
-    if (!isValidEpName(name)) {
-      holder.createProblem(name, ProblemHighlightType.WEAK_WARNING,
-                           DevKitBundle.message("inspections.plugin.xml.invalid.ep.name", name.getValue()), null);
-    }
-    GenericAttributeValue<String> qualifiedName = extensionPoint.getQualifiedName();
-    if (!isValidEpName(qualifiedName)) {
-      holder.createProblem(qualifiedName, ProblemHighlightType.WEAK_WARNING,
-                           DevKitBundle.message("inspections.plugin.xml.invalid.ep.qualified.name", qualifiedName.getValue()), null);
-    }
+    checkEpBeanClassAndInterface(extensionPoint, holder);
+    checkEpNameAndQualifiedName(extensionPoint, holder);
 
     Module module = extensionPoint.getModule();
     if (ComponentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
-      ComponentModuleRegistrationChecker.checkProperModule(extensionPoint, holder);
+      ComponentModuleRegistrationChecker.checkProperModule(extensionPoint, holder, myRegistrationCheckIgnoreClassList);
+    }
+  }
+
+  private static void checkEpBeanClassAndInterface(ExtensionPoint extensionPoint, DomElementAnnotationHolder holder) {
+    boolean hasBeanClass = DomUtil.hasXml(extensionPoint.getBeanClass());
+    boolean hasInterface = DomUtil.hasXml(extensionPoint.getInterface());
+    if (hasBeanClass && hasInterface) {
+      holder.createProblem(extensionPoint, ProblemHighlightType.GENERIC_ERROR,
+                           DevKitBundle.message("inspections.plugin.xml.ep.both.beanClass.and.interface"), null);
+    }
+    else if (!hasBeanClass && !hasInterface) {
+      holder.createProblem(extensionPoint, ProblemHighlightType.GENERIC_ERROR,
+                           DevKitBundle.message("inspections.plugin.xml.ep.missing.beanClass.and.interface"), null);
+    }
+  }
+
+  private static void checkEpNameAndQualifiedName(ExtensionPoint extensionPoint, DomElementAnnotationHolder holder) {
+    GenericAttributeValue<String> name = extensionPoint.getName();
+    GenericAttributeValue<String> qualifiedName = extensionPoint.getQualifiedName();
+    boolean hasName = DomUtil.hasXml(name);
+    boolean hasQualifiedName = DomUtil.hasXml(qualifiedName);
+
+    if (hasName && hasQualifiedName) {
+      holder.createProblem(extensionPoint, ProblemHighlightType.GENERIC_ERROR,
+                           DevKitBundle.message("inspections.plugin.xml.ep.both.name.and.qualifiedName"), null);
+    }
+    else if (!hasName && !hasQualifiedName) {
+      holder.createProblem(extensionPoint, ProblemHighlightType.GENERIC_ERROR,
+                           DevKitBundle.message("inspections.plugin.xml.ep.missing.name.and.qualifiedName"), null);
+    }
+
+    if (hasQualifiedName) {
+      if (!isValidEpName(qualifiedName)) {
+        String message = DevKitBundle.message("inspections.plugin.xml.invalid.ep.name.description",
+                                              DevKitBundle.message("inspections.plugin.xml.invalid.ep.qualifiedName"),
+                                              qualifiedName.getValue());
+        holder.createProblem(qualifiedName, ProblemHighlightType.WEAK_WARNING, message, null);
+      }
+      return;
+    }
+
+    if (hasName && !isValidEpName(name)) {
+      String message = DevKitBundle.message("inspections.plugin.xml.invalid.ep.name.description",
+                                            DevKitBundle.message("inspections.plugin.xml.invalid.ep.name"),
+                                            name.getValue());
+      holder.createProblem(name, ProblemHighlightType.WEAK_WARNING, message, null);
     }
   }
 
@@ -196,11 +251,24 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       return true;
     }
     @NonNls String name = nameAttrValue.getValue();
-    return StringUtil.isNotEmpty(name) &&
-           Character.isLowerCase(name.charAt(0)) && // also checks that name doesn't start with dot
-           !name.toUpperCase().equals(name) && // not all uppercase
-           StringUtil.isLatinAlphanumeric(name.replace(".", "")) &&
-           name.charAt(name.length() - 1) != '.';
+
+    if (StringUtil.isEmpty(name) ||
+        !Character.isLowerCase(name.charAt(0)) || // also checks that name doesn't start with dot
+        name.toUpperCase().equals(name) || // not all uppercase
+        !StringUtil.isLatinAlphanumeric(name.replace(".", "")) ||
+        name.charAt(name.length() - 1) == '.') {
+      return false;
+    }
+
+    List<String> fragments = StringUtil.split(name, ".");
+    if (fragments.stream().anyMatch(f -> Character.isUpperCase(f.charAt(0)))) {
+      return false;
+    }
+
+    String epName = fragments.get(fragments.size() - 1);
+    fragments.remove(fragments.size() - 1);
+    List<String> words = StringUtil.getWordsIn(epName);
+    return words.stream().noneMatch(w -> fragments.stream().anyMatch(f -> StringUtil.equalsIgnoreCase(w, f)));
   }
 
   private static void annotateExtensions(Extensions extensions, DomElementAnnotationHolder holder) {
@@ -269,7 +337,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     return false;
   }
 
-  private static void annotateExtension(Extension extension, DomElementAnnotationHolder holder) {
+  private void annotateExtension(Extension extension, DomElementAnnotationHolder holder) {
     final ExtensionPoint extensionPoint = extension.getExtensionPoint();
     if (extensionPoint == null) return;
     final GenericAttributeValue<PsiClass> interfaceAttribute = extensionPoint.getInterface();
@@ -334,14 +402,15 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     Module module = extension.getModule();
     if (ComponentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
-      ComponentModuleRegistrationChecker.checkProperXmlFileForExtension(extension, holder);
+      ComponentModuleRegistrationChecker.checkProperXmlFileForExtension(extension, holder, myRegistrationCheckIgnoreClassList);
     }
   }
 
-  private static void annotateComponent(Component component, DomElementAnnotationHolder holder) {
+  private void annotateComponent(Component component, DomElementAnnotationHolder holder) {
     Module module = component.getModule();
     if (ComponentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
-      ComponentModuleRegistrationChecker.checkProperXmlFileForClass(component, holder, component.getImplementationClass().getValue());
+      ComponentModuleRegistrationChecker.checkProperXmlFileForClass(
+        component, holder, component.getImplementationClass().getValue(), myRegistrationCheckIgnoreClassList);
     }
   }
 

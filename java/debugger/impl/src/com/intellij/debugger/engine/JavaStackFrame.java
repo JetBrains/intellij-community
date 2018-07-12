@@ -12,11 +12,10 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.*;
-import com.intellij.debugger.memory.utils.StackFrameItem;
-import com.intellij.debugger.settings.CapturePoint;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
+import com.intellij.debugger.ui.breakpoints.BreakpointIntentionAction;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.lang.java.JavaLanguage;
@@ -34,7 +33,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ColoredTextContainer;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -67,7 +65,6 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   @NotNull private final StackFrameDescriptorImpl myDescriptor;
   private JavaDebuggerEvaluator myEvaluator = null;
   private final String myEqualityObject;
-  private CapturePoint myInsertCapturePoint;
 
   public JavaStackFrame(@NotNull StackFrameDescriptorImpl descriptor, boolean update) {
     myDescriptor = descriptor;
@@ -115,9 +112,6 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       }
     }
     JavaFramesListRenderer.customizePresentation(myDescriptor, component, selectedDescriptor);
-    if (myInsertCapturePoint != null) {
-      component.setIcon(XDebuggerUIConstants.INFORMATION_MESSAGE_ICON);
-    }
   }
 
   @Override
@@ -132,12 +126,6 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         if (node.isObsolete()) return;
-        if (myInsertCapturePoint != null) {
-          node.setMessage("Async stacktrace from " +
-                          myInsertCapturePoint.myClassName + "." + myInsertCapturePoint.myMethodName +
-                          " could be available here, enable in", XDebuggerUIConstants.INFORMATION_MESSAGE_ICON,
-                          SimpleTextAttributes.REGULAR_ATTRIBUTES, StackFrameItem.CAPTURE_SETTINGS_OPENER);
-        }
         XValueChildrenList children = new XValueChildrenList();
         buildVariablesThreadAction(getFrameDebuggerContext(getDebuggerContext()), children, node);
         node.addChildren(children, true);
@@ -188,6 +176,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       final ObjectReference thisObjectReference = myDescriptor.getThisObject();
       if (thisObjectReference != null) {
         ValueDescriptorImpl thisDescriptor = myNodeManager.getThisDescriptor(null, thisObjectReference);
+        myDescriptor.putUserData(BreakpointIntentionAction.THIS_TYPE_KEY, thisObjectReference.type().name());
         children.add(JavaValue.create(thisDescriptor, evaluationContext, myNodeManager));
       }
       else if (location != null) {
@@ -208,7 +197,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
         Value returnValue = methodValuePair.getSecond();
         // try to keep the value as early as possible
         try {
-          DebuggerUtilsEx.keep(returnValue, evaluationContext);
+          evaluationContext.keep(returnValue);
         }
         catch (ObjectCollectedException ignored) {
         }
@@ -259,7 +248,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   }
 
   private static final Pair<Set<String>, Set<TextWithImports>> EMPTY_USED_VARS =
-    Pair.create(Collections.emptySet(), Collections.<TextWithImports>emptySet());
+    Pair.create(Collections.emptySet(), Collections.emptySet());
 
   // copied from FrameVariablesTree
   private void buildVariables(DebuggerContextImpl debuggerContext,
@@ -597,7 +586,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   private static Pair<Set<String>, Set<TextWithImports>> findReferencedVars(Set<String> visibleVars, @NotNull SourcePosition position) {
     final int line = position.getLine();
     if (line < 0) {
-      return Pair.create(Collections.emptySet(), Collections.<TextWithImports>emptySet());
+      return Pair.create(Collections.emptySet(), Collections.emptySet());
     }
     final PsiFile positionFile = position.getFile();
     if (!positionFile.isValid() || !positionFile.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
@@ -607,7 +596,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     final VirtualFile vFile = positionFile.getVirtualFile();
     final Document doc = vFile != null ? FileDocumentManager.getInstance().getDocument(vFile) : null;
     if (doc == null || doc.getLineCount() == 0 || line > (doc.getLineCount() - 1)) {
-      return Pair.create(Collections.emptySet(), Collections.<TextWithImports>emptySet());
+      return Pair.create(Collections.emptySet(), Collections.emptySet());
     }
 
     final TextRange limit = calculateLimitRange(positionFile, doc, line);
@@ -658,7 +647,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
         }
       }
     }
-    return Pair.create(Collections.emptySet(), Collections.<TextWithImports>emptySet());
+    return Pair.create(Collections.emptySet(), Collections.emptySet());
   }
 
   private static TextRange calculateLimitRange(final PsiFile file, final Document doc, final int line) {
@@ -687,10 +676,6 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       }
     });
     return rangeRef.get();
-  }
-
-  public void setInsertCapturePoint(CapturePoint insertCapturePoint) {
-    myInsertCapturePoint = insertCapturePoint;
   }
 
   @Override

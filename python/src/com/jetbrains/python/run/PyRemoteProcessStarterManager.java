@@ -44,6 +44,15 @@ public interface PyRemoteProcessStarterManager {
                                     @NotNull PyRemoteSdkAdditionalDataBase sdkAdditionalData,
                                     @NotNull PyRemotePathMapper pathMapper) throws ExecutionException, InterruptedException;
 
+  /**
+   * Please <b>do not use</b> in new code. Consider introducing a separate
+   * extension point with implementations for different
+   * {@link com.intellij.remote.CredentialsType} using
+   * {@link PyRemoteSdkAdditionalDataBase#switchOnConnectionType(com.intellij.remote.ext.CredentialsCase[])}.
+   *
+   * @deprecated <b>do not use</b> in new code
+   */
+  @Deprecated
   @NotNull
   ProcessOutput executeRemoteProcess(@Nullable Project project,
                                      @NotNull String[] command,
@@ -52,6 +61,15 @@ public interface PyRemoteProcessStarterManager {
                                      @NotNull PyRemoteSdkAdditionalDataBase sdkAdditionalData,
                                      @NotNull PyRemotePathMapper pathMapper, boolean askForSudo, boolean checkHelpers) throws ExecutionException, InterruptedException;
 
+  /**
+   * Please <b>do not use</b> in new code. Consider introducing a separate
+   * extension point with implementations for different
+   * {@link com.intellij.remote.CredentialsType} using
+   * {@link PyRemoteSdkAdditionalDataBase#switchOnConnectionType(com.intellij.remote.ext.CredentialsCase[])}.
+   *
+   * @deprecated <b>do not use</b> in new code
+   */
+  @Deprecated
   default ProcessOutput executeRemoteProcess(@Nullable Project project,
                                             @NotNull String[] command,
                                             @Nullable String workingDir,

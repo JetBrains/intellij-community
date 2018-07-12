@@ -17,6 +17,7 @@ package com.intellij.vcs.log.history;
 
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -32,7 +33,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogFilterCollection;
+import com.intellij.vcs.log.VcsLogFilterUi;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.index.IndexDataGetter;
@@ -61,6 +65,7 @@ import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static com.intellij.util.ObjectUtils.notNull;
 
 public class FileHistoryUi extends AbstractVcsLogUi {
+  @NotNull private static final String HELP_ID = "reference.versionControl.toolwindow.history";
   @NotNull private static final List<String> HIGHLIGHTERS = Arrays.asList(MyCommitsHighlighter.Factory.ID,
                                                                           CurrentBranchHighlighter.Factory.ID);
   @NotNull private final FileHistoryUiProperties myUiProperties;
@@ -78,7 +83,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
                        @NotNull FilePath path,
                        @Nullable Hash revision,
                        @NotNull VirtualFile root) {
-    super(logData, manager, refresher);
+    super(getFileHistoryLogId(path, revision), logData, manager, refresher);
     myUiProperties = uiProperties;
 
     myIndexDataGetter = ObjectUtils.assertNotNull(logData.getIndex().getDataGetter());
@@ -87,13 +92,18 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     myPath = path;
     myFileHistoryPanel = new FileHistoryPanel(this, logData, myVisiblePack, path);
 
-    for (VcsLogHighlighterFactory factory : ContainerUtil.filter(Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject),
-                                                                 f -> HIGHLIGHTERS.contains(f.getId()))) {
+    for (VcsLogHighlighterFactory factory: ContainerUtil.filter(Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject),
+                                                                f -> HIGHLIGHTERS.contains(f.getId()))) {
       getTable().addHighlighter(factory.createHighlighter(logData, this));
     }
 
     myPropertiesChangeListener = new MyPropertiesChangeListener();
     myUiProperties.addChangeListener(myPropertiesChangeListener);
+  }
+
+  @NotNull
+  public static String getFileHistoryLogId(@NotNull FilePath path, @Nullable Hash revision) {
+    return path.getPath() + (revision == null ? "" : revision.asString());
   }
 
   @Nullable
@@ -119,7 +129,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   public VcsFileRevision createRevision(@Nullable VcsFullCommitDetails details) {
     if (details != null && !(details instanceof LoadingDetails)) {
       List<Change> changes = collectRelevantChanges(details);
-      for (Change change : changes) {
+      for (Change change: changes) {
         ContentRevision revision = change.getAfterRevision();
         if (revision != null) {
           return new VcsLogFileRevision(details, revision, revision.getFile());
@@ -138,7 +148,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     if (myPath.isDirectory()) return myPath;
 
     List<Change> changes = collectRelevantChanges(details);
-    for (Change change : changes) {
+    for (Change change: changes) {
       ContentRevision revision = change.getAfterRevision();
       if (revision != null) {
         return revision.getFile();
@@ -151,12 +161,22 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull
   public List<Change> collectRelevantChanges(@NotNull VcsFullCommitDetails details) {
     Set<FilePath> fileNames = getFileNames(details);
-    if (myPath.isDirectory()) {
-      return ContainerUtil.filter(details.getChanges(), change -> affectsDirectories(change, fileNames));
+    return collectRelevantChanges(details,
+                                  change -> myPath.isDirectory() ? affectsDirectories(change, fileNames) : affectsFiles(change, fileNames));
+  }
+
+  @NotNull
+  private static List<Change> collectRelevantChanges(@NotNull VcsFullCommitDetails details,
+                                                     @NotNull Condition<Change> isRelevant) {
+    List<Change> changes = ContainerUtil.filter(details.getChanges(), isRelevant);
+    if (!changes.isEmpty()) return changes;
+    if (details.getParents().size() > 1) {
+      for (int parent = 0; parent < details.getParents().size(); parent++) {
+        List<Change> changesToParent = ContainerUtil.filter(details.getChanges(parent), isRelevant);
+        if (!changesToParent.isEmpty()) return changesToParent;
+      }
     }
-    else {
-      return ContainerUtil.filter(details.getChanges(), change -> affectsFiles(change, fileNames));
-    }
+    return Collections.emptyList();
   }
 
   @NotNull
@@ -188,7 +208,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   public List<Change> collectChanges(@NotNull List<VcsFullCommitDetails> detailsList, boolean onlyRelevant) {
     List<Change> changes = ContainerUtil.newArrayList();
     List<VcsFullCommitDetails> detailsListReversed = ContainerUtil.reverse(detailsList);
-    for (VcsFullCommitDetails details : detailsListReversed) {
+    for (VcsFullCommitDetails details: detailsListReversed) {
       changes.addAll(onlyRelevant ? collectRelevantChanges(details) : details.getChanges());
     }
 
@@ -196,10 +216,17 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   }
 
   @Override
-  protected <T> void handleCommitNotFound(@NotNull T commitId, @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
-    String mainText = "Commit " + commitId.toString() + " does not exist in history for " + myPath.getName();
+  protected <T> void handleCommitNotFound(@NotNull T commitId,
+                                          boolean commitExists,
+                                          @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
+    if (!commitExists) {
+      super.handleCommitNotFound(commitId, false, rowGetter);
+      return;
+    }
+
+    String mainText = "Commit " + getCommitPresentation(commitId) + " does not exist in history for " + myPath.getName();
     if (getFilterUi().getFilters().get(VcsLogFilterCollection.BRANCH_FILTER) != null) {
-      showWarningWithLink(mainText + " in current branch.", "Show all branches and search again.", () -> {
+      showWarningWithLink(mainText + " in current branch", "View and Show All Branches", () -> {
         myUiProperties.set(FileHistoryUiProperties.SHOW_ALL_BRANCHES, true);
         invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create()));
       });
@@ -207,7 +234,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     else {
       VcsLogUiImpl mainLogUi = VcsProjectLog.getInstance(myProject).getMainLogUi();
       if (mainLogUi != null) {
-        showWarningWithLink(mainText + ".", "Search in Log.", () -> {
+        showWarningWithLink(mainText, "View in Log", () -> {
           if (VcsLogContentUtil.selectLogUi(myProject, mainLogUi)) {
             if (commitId instanceof Hash) {
               mainLogUi.jumpToCommit((Hash)commitId,
@@ -219,9 +246,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
             }
           }
         });
-      }
-      else {
-        super.handleCommitNotFound(commitId, rowGetter);
       }
     }
   }
@@ -262,6 +286,12 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @Override
   public Component getMainComponent() {
     return myFileHistoryPanel;
+  }
+
+  @Nullable
+  @Override
+  public String getHelpId() {
+    return HELP_ID;
   }
 
   private void updateFilter() {

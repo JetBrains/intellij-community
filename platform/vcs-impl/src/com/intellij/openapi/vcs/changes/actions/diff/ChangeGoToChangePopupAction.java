@@ -97,6 +97,12 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
       return Collections.emptyList(); // remove diff action
     }
 
+    @NotNull
+    @Override
+    protected List<AnAction> createPopupMenuActions() {
+      return Collections.emptyList(); // remove diff action
+    }
+
     @Override
     protected void onDoubleClick() {
       myRef.get().cancel();

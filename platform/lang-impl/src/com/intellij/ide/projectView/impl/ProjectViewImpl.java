@@ -16,8 +16,6 @@ import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.DeleteHandler;
-import com.intellij.ide.util.DirectoryChooserUtil;
-import com.intellij.ide.util.EditorHelper;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeDescriptor;
@@ -57,8 +55,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
@@ -73,10 +71,7 @@ import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tree.TreeVisitor;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.PlatformIcons;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.messages.MessageBusConnection;
@@ -129,6 +124,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private static final boolean ourShowLibraryContentsDefaults = true;
   private final Map<String, Boolean> myHideEmptyPackages = new THashMap<>();
   private static final boolean ourHideEmptyPackagesDefaults = true;
+  private final Map<String, Boolean> myCompactDirectories = new THashMap<>();
+  private static final boolean ourCompactDirectoriesDefaults = false;
   private final Map<String, Boolean> myAbbreviatePackageNames = new THashMap<>();
   private static final boolean ourAbbreviatePackagesDefaults = false;
   private final Map<String, Boolean> myAutoscrollToSource = new THashMap<>();
@@ -144,7 +141,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final AutoScrollToSourceHandler myAutoScrollToSourceHandler;
   private final MyAutoScrollFromSourceHandler myAutoScrollFromSourceHandler;
 
-  private final IdeView myIdeView = new MyIdeView();
+  private final IdeView myIdeView = new IdeViewForProjectViewPane(this::getCurrentProjectViewPane);
   private final MyDeletePSIElementProvider myDeletePSIElementProvider = new MyDeletePSIElementProvider();
   private final ModuleDeleteProvider myDeleteModuleProvider = new ModuleDeleteProvider();
 
@@ -155,7 +152,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private static final DataKey<ProjectViewImpl> DATA_KEY = DataKey.create("com.intellij.ide.projectView.impl.ProjectViewImpl");
 
   private DefaultActionGroup myActionGroup;
-  private String mySavedPaneId = ProjectViewPane.ID;
+  private String mySavedPaneId = getDefaultViewId();
   private String mySavedPaneSubId;
   @NonNls private static final String ELEMENT_NAVIGATOR = "navigator";
   @NonNls private static final String ELEMENT_PANES = "panes";
@@ -167,6 +164,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   @NonNls private static final String ELEMENT_SHOW_MODULES = "showModules";
   @NonNls private static final String ELEMENT_SHOW_LIBRARY_CONTENTS = "showLibraryContents";
   @NonNls private static final String ELEMENT_HIDE_EMPTY_PACKAGES = "hideEmptyPackages";
+  @NonNls private static final String ELEMENT_COMPACT_DIRECTORIES = "compactDirectories";
   @NonNls private static final String ELEMENT_ABBREVIATE_PACKAGE_NAMES = "abbreviatePackageNames";
   @NonNls private static final String ELEMENT_AUTOSCROLL_TO_SOURCE = "autoscrollToSource";
   @NonNls private static final String ELEMENT_AUTOSCROLL_FROM_SOURCE = "autoscrollFromSource";
@@ -216,7 +214,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         setAutoscrollToSource(state, myCurrentViewId);
       }
     };
-    toolWindowManager.addToolWindowManagerListener(new ToolWindowManagerAdapter(){
+
+    myConnection.subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       private boolean toolWindowVisible;
 
       @Override
@@ -553,9 +552,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     if (newPane == null) return;
     newPane.setSubId(subId);
     showPane(newPane);
-    if (fromContentManager) {
-      ProjectViewStatistics.recordProjectViewPaneUsage(myCurrentViewId, myCurrentViewSubId);
-    }
     ProjectViewSelectInTarget target = getProjectViewSelectInTarget(newPane);
     if (target != null) target.setSubId(subId);
     if (isAutoscrollFromSource(id)) {
@@ -638,14 +634,43 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         }
 
         @Override
-        public void update(AnActionEvent e) {
-          super.update(e);
-          if (ScopeViewPane.ID.equals(myCurrentViewId)) {
-            e.getPresentation().setEnabled(false);
-          }
+        public void update(@NotNull AnActionEvent event) {
+          super.update(event);
+          Presentation presentation = event.getPresentation();
+          presentation.setEnabledAndVisible(!ScopeViewPane.ID.equals(myCurrentViewId));
         }
       }).setAsSecondary(true);
     }
+
+    myActionGroup.addAction(new PaneOptionAction(myCompactDirectories,
+                                                 IdeBundle.message("action.compact.directories.text"),
+                                                 IdeBundle.message("action.compact.directories.description"),
+                                                 null, ourCompactDirectoriesDefaults) {
+
+      @Override
+      public void update(@NotNull AnActionEvent event) {
+        super.update(event);
+        Presentation presentation = event.getPresentation();
+        presentation.setEnabledAndVisible(ScopeViewPane.ID.equals(myCurrentViewId));
+      }
+
+      @Override
+      public boolean isSelected(AnActionEvent event) {
+        return isGlobalOptions()
+               ? getGlobalOptions().getCompactDirectories()
+               : super.isSelected(event);
+      }
+
+      @Override
+      public void setSelected(AnActionEvent event, boolean compactDirectories) {
+        AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
+        SelectionInfo selectionInfo = SelectionInfo.create(viewPane);
+        if (isGlobalOptions()) getGlobalOptions().setCompactDirectories(compactDirectories);
+        super.setSelected(event, compactDirectories);
+        setPaneOption(myCompactDirectories, compactDirectories, viewPane.getId(), true);
+        selectionInfo.apply(viewPane);
+      }
+    }).setAsSecondary(true);
 
     if (isShowMembersOptionSupported()) {
       myActionGroup.addAction(new PaneOptionAction(myShowMembers, IdeBundle.message("action.show.members"),
@@ -699,7 +724,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     collapseAllAction.getTemplatePresentation().setIcon(AllIcons.General.CollapseAll);
     collapseAllAction.getTemplatePresentation().setHoveredIcon(AllIcons.General.CollapseAllHover);
     titleActions.add(collapseAllAction);
-    getProjectViewPaneById(myCurrentViewId == null ? ProjectViewPane.ID : myCurrentViewId).addToolbarActions(myActionGroup);
+    getProjectViewPaneById(myCurrentViewId == null ? getDefaultViewId() : myCurrentViewId).addToolbarActions(myActionGroup);
 
     ToolWindowEx window = (ToolWindowEx)ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.PROJECT_VIEW);
     if (window != null) {
@@ -994,12 +1019,12 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   private final class MyPanel extends JPanel implements DataProvider {
     MyPanel() {
       super(new BorderLayout());
-
+      Collection<AbstractProjectViewPane> snapshot = new ArrayList<>(myId2Pane.values());
       UIUtil.putClientProperty(
         this, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, new Iterable<JComponent>() {
           @Override
           public Iterator<JComponent> iterator() {
-            return JBIterable.from(myId2Pane.values())
+            return JBIterable.from(snapshot)
               .map(pane -> {
                 JComponent last = null;
                 for (Component c : UIUtil.uiParents(pane.getComponentToFocus(), false)) {
@@ -1304,48 +1329,6 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     return result;
   }
 
-  private final class MyIdeView implements IdeView {
-    @Override
-    public void selectElement(PsiElement element) {
-      selectPsiElement(element, false);
-      boolean requestFocus = true;
-      if (element != null) {
-        final boolean isDirectory = element instanceof PsiDirectory;
-        if (!isDirectory) {
-          FileEditor editor = EditorHelper.openInEditor(element, false);
-          if (editor != null) {
-            ToolWindowManager.getInstance(myProject).activateEditorComponent();
-            JComponent component = editor.getPreferredFocusedComponent();
-            if (component != null) {
-              component.requestFocus();
-            }
-            requestFocus = false;
-          }
-        }
-      }
-
-      if (requestFocus) {
-        selectPsiElement(element, true);
-      }
-    }
-
-    @NotNull
-    @Override
-    public PsiDirectory[] getDirectories() {
-      final AbstractProjectViewPane viewPane = getCurrentProjectViewPane();
-      if (viewPane != null) {
-        return viewPane.getSelectedDirectories();
-      }
-
-      return PsiDirectory.EMPTY_ARRAY;
-    }
-
-    @Override
-    public PsiDirectory getOrChooseDirectory() {
-      return DirectoryChooserUtil.getOrChooseDirectory(this);
-    }
-  }
-
   @Override
   public void selectPsiElement(PsiElement element, boolean requestFocus) {
     if (element == null) return;
@@ -1387,7 +1370,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       mySavedPaneId = navigatorElement.getAttributeValue(ATTRIBUTE_CURRENT_VIEW);
       mySavedPaneSubId = navigatorElement.getAttributeValue(ATTRIBUTE_CURRENT_SUBVIEW);
       if (mySavedPaneId == null) {
-        mySavedPaneId = ProjectViewPane.ID;
+        mySavedPaneId = getDefaultViewId();
         mySavedPaneSubId = null;
       }
 
@@ -1396,6 +1379,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       readOption(navigatorElement.getChild(ELEMENT_SHOW_MODULES), myShowModules);
       readOption(navigatorElement.getChild(ELEMENT_SHOW_LIBRARY_CONTENTS), myShowLibraryContents);
       readOption(navigatorElement.getChild(ELEMENT_HIDE_EMPTY_PACKAGES), myHideEmptyPackages);
+      readOption(navigatorElement.getChild(ELEMENT_COMPACT_DIRECTORIES), myCompactDirectories);
       readOption(navigatorElement.getChild(ELEMENT_ABBREVIATE_PACKAGE_NAMES), myAbbreviatePackageNames);
       readOption(navigatorElement.getChild(ELEMENT_AUTOSCROLL_TO_SOURCE), myAutoscrollToSource);
       readOption(navigatorElement.getChild(ELEMENT_AUTOSCROLL_FROM_SOURCE), myAutoscrollFromSource);
@@ -1414,6 +1398,18 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     Element panesElement = parentNode.getChild(ELEMENT_PANES);
     if (panesElement != null) {
       readPaneState(panesElement);
+    }
+  }
+
+  @NotNull
+  public static String getDefaultViewId() {
+    //noinspection SpellCheckingInspection
+    if ("AndroidStudio".equals(PlatformUtils.getPlatformPrefix()) && !Boolean.getBoolean("studio.projectview")) {
+      // the default in Android Studio unless studio.projectview is set: issuetracker.google.com/37091465
+      return "AndroidView";
+    }
+    else {
+      return ProjectViewPane.ID;
     }
   }
 
@@ -1449,7 +1445,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     AbstractProjectViewPane currentPane = getCurrentProjectViewPane();
     if (currentPane != null) {
       String subId = currentPane.getSubId();
-      if (subId != null || !currentPane.getId().equals(ProjectViewPane.ID)) {
+      if (subId != null || !currentPane.getId().equals(getDefaultViewId())) {
         navigatorElement.setAttribute(ATTRIBUTE_CURRENT_VIEW, currentPane.getId());
         if (subId != null) {
           navigatorElement.setAttribute(ATTRIBUTE_CURRENT_SUBVIEW, subId);
@@ -1462,6 +1458,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     writeOption(navigatorElement, myShowModules, ELEMENT_SHOW_MODULES);
     writeOption(navigatorElement, myShowLibraryContents, ELEMENT_SHOW_LIBRARY_CONTENTS);
     writeOption(navigatorElement, myHideEmptyPackages, ELEMENT_HIDE_EMPTY_PACKAGES);
+    writeOption(navigatorElement, myCompactDirectories, ELEMENT_COMPACT_DIRECTORIES);
     writeOption(navigatorElement, myAbbreviatePackageNames, ELEMENT_ABBREVIATE_PACKAGE_NAMES);
     writeOption(navigatorElement, myAutoscrollToSource, ELEMENT_AUTOSCROLL_TO_SOURCE);
     writeOption(navigatorElement, myAutoscrollFromSource, ELEMENT_AUTOSCROLL_FROM_SOURCE);
@@ -1703,6 +1700,24 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
   }
 
   @Override
+  public boolean isCompactDirectories(String paneId) {
+    return isGlobalOptions()
+           ? getGlobalOptions().getCompactDirectories()
+           : getPaneOptionValue(myCompactDirectories, paneId, ourCompactDirectoriesDefaults);
+  }
+
+  @Override
+  public void setCompactDirectories(boolean compactDirectories, @NotNull String paneId) {
+    if (isGlobalOptions()) {
+      getGlobalOptions().setCompactDirectories(compactDirectories);
+      for (String pane: myCompactDirectories.keySet()) {
+        setPaneOption(myCompactDirectories, compactDirectories, pane, true);
+      }
+    }
+    setPaneOption(myCompactDirectories, compactDirectories, paneId, true);
+  }
+
+  @Override
   public void setAbbreviatePackageNames(boolean abbreviatePackageNames, @NotNull String paneId) {
     if (isGlobalOptions()) {
       getGlobalOptions().setAbbreviatePackages(abbreviatePackageNames);
@@ -1757,13 +1772,16 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      if (isHideEmptyMiddlePackages(myCurrentViewId)) {
+      // see com.intellij.ide.favoritesTreeView.actions.FavoritesCompactEmptyMiddlePackagesAction.updateButton
+      if (isFlattenPackages(myCurrentViewId)) {
         presentation.setText(IdeBundle.message("action.hide.empty.middle.packages"));
         presentation.setDescription(IdeBundle.message("action.show.hide.empty.middle.packages"));
+        presentation.setEnabledAndVisible(true);
       }
       else {
         presentation.setText(IdeBundle.message("action.compact.empty.middle.packages"));
         presentation.setDescription(IdeBundle.message("action.show.compact.empty.middle.packages"));
+        presentation.setEnabledAndVisible(!ScopeViewPane.ID.equals(myCurrentViewId));
       }
     }
   }
@@ -1799,7 +1817,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         }
       }
       else {
-        List<TreeVisitor> visitors = AsyncProjectViewSupport.createVisitors(Arrays.asList(myElements));
+        List<TreeVisitor> visitors = AbstractProjectViewPane.createVisitors(myElements);
         if (1 == visitors.size()) {
           TreeUtil.visit(tree, visitors.get(0), path -> {
             if (path != null) TreeUtil.selectPath(tree, path);

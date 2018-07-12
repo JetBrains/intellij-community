@@ -41,7 +41,7 @@ public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
   @NotNull private final HgProjectSettings myProjectSettings;
 
   public HgStatusWidget(@NotNull HgVcs vcs, @NotNull Project project, @NotNull HgProjectSettings projectSettings) {
-    super(project, "Hg");
+    super(project, vcs.getShortName());
     myVcs = vcs;
     myProjectSettings = projectSettings;
   }

@@ -45,7 +45,7 @@ import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
 
 import java.util.*;
 
-import static org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunnerKt.resolveMethodReference;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.REFERENCE_DOTS;
 import static org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunnerKt.resolveReferenceExpression;
 
 /**
@@ -91,20 +91,14 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitReferenceExpression(this);
   }
 
   @Override
   @Nullable
   public PsiElement getReferenceNameElement() {
-    final ASTNode lastChild = getNode().getLastChildNode();
-    if (lastChild == null) return null;
-    if (TokenSets.REFERENCE_NAMES.contains(lastChild.getElementType())) {
-      return lastChild.getPsi();
-    }
-
-    return null;
+    return findChildByType(TokenSets.REFERENCE_NAMES);
   }
 
   @Override
@@ -195,11 +189,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       if (type != null) {
         return type;
       }
-    }
-
-    IElementType dotType = getDotTokenType();
-    if (dotType == GroovyTokenTypes.mMEMBER_POINTER) {
-      return GrClosureType.create(multiResolve(false), this);
     }
 
     if (ResolveUtil.isDefinitelyKeyOfMap(this)) {
@@ -424,10 +413,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     final String name = getReferenceName();
     if (name == null || nameElement == null) return Collections.emptyList();
 
-    if (hasMemberPointer()) {
-      return resolveMethodReference(this);
-    }
-
     try {
       ResolveProfiler.start();
       final IElementType nameType = nameElement.getNode().getElementType();
@@ -479,7 +464,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Override
   public boolean hasMemberPointer() {
-    return findChildByType(GroovyTokenTypes.mMEMBER_POINTER) != null;
+    return false;
   }
 
   @Override
@@ -531,7 +516,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   @Override
   @Nullable
   public PsiElement getDotToken() {
-    return findChildByType(TokenSets.DOTS);
+    return findChildByType(REFERENCE_DOTS);
   }
 
   @Override

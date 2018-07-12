@@ -1,10 +1,9 @@
 package org.jetbrains.yaml.folding;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.folding.FoldingBuilderEx;
+import com.intellij.lang.folding.CustomFoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -20,22 +19,21 @@ import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
 import org.jetbrains.yaml.psi.impl.YAMLBlockSequenceImpl;
 import org.jetbrains.yaml.psi.impl.YAMLHashImpl;
 
-import java.util.LinkedList;
 import java.util.List;
 
 /**
  * @author oleg
  */
-public class YAMLFoldingBuilder extends FoldingBuilderEx implements DumbAware {
+public class YAMLFoldingBuilder extends CustomFoldingBuilder {
 
   private static final int PLACEHOLDER_LEN = 20;
 
-  @NotNull
   @Override
-  public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
-    List<FoldingDescriptor> descriptors = new LinkedList<>();
+  protected void buildLanguageFoldRegions(@NotNull List<FoldingDescriptor> descriptors,
+                                          @NotNull PsiElement root,
+                                          @NotNull Document document,
+                                          boolean quick) {
     collectDescriptors(root, descriptors);
-    return descriptors.toArray(FoldingDescriptor.EMPTY);
   }
 
   private static void collectDescriptors(@NotNull final PsiElement element, @NotNull final List<FoldingDescriptor> descriptors) {
@@ -67,7 +65,7 @@ public class YAMLFoldingBuilder extends FoldingBuilderEx implements DumbAware {
   }
 
   @Nullable
-  public String getPlaceholderText(@NotNull ASTNode node) {
+  protected String getLanguagePlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
     return getPlaceholderText(SourceTreeToPsiMap.treeElementToPsi(node));
   }
 
@@ -112,7 +110,7 @@ public class YAMLFoldingBuilder extends FoldingBuilderEx implements DumbAware {
     return "...";
   }
 
-  public boolean isCollapsedByDefault(@NotNull ASTNode node) {
+  protected boolean isRegionCollapsedByDefault(@NotNull ASTNode node) {
     return false;
   }
 

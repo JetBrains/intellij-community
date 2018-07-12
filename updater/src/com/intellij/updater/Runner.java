@@ -211,14 +211,15 @@ public class Runner {
       "              patch will only be applied if it is guaranteed that the patched version will match exactly\n" +
       "              the source of the patch. This means that unexpected files will be deleted and all existing files\n" +
       "              will be validated\n" +
-      "    --root=<dir>: Sets dir as the root directory of the patch. The root directory is the directory where the patch should be" +
-      "                  applied to. For example on Mac, you can diff the two .app folders and set Contents as the root." +
-      "                  The root directory is relative to <old_folder> and uses forwards-slashes as separators." +
+      "    --root=<dir>: Sets dir as the root directory of the patch. The root directory is the directory where the patch should be\n" +
+      "                  applied to. For example on Mac, you can diff the two .app folders and set Contents as the root.\n" +
+      "                  The root directory is relative to <old_folder> and uses forwards-slashes as separators.\n" +
       "    --normalized: This creates a normalized patch. This flag only makes sense in addition to --zip_as_binary\n" +
       "                  A normalized patch must be used to move from an installation that was patched\n" +
       "                  in a non-binary way to a fully binary patch. This will yield a larger patch, but the\n" +
       "                  generated patch can be applied on versions where non-binary patches have been applied to and it\n" +
-      "                  guarantees that the patched version will match exactly the original one.\n");
+      "                  guarantees that the patched version will match exactly the original one.\n" +
+      "  <folder>: The folder where product was installed. For example: c:/Program Files/JetBrains/IntelliJ IDEA 2017.3.4");
   }
 
   private static boolean create(PatchSpec spec) {
@@ -365,11 +366,31 @@ public class Runner {
     finally {
       try {
         cleanup(ui);
+        refreshApplicationIcon(destPath);
       }
       catch (Throwable t) {
         logger().warn("cleanup failed", t);
       }
     }
+  }
+
+  private static void refreshApplicationIcon(String destPath) {
+    if (isMac()) {
+      try {
+        String applicationPath = destPath.contains("/Contents") ? destPath.substring(0, destPath.lastIndexOf("/Contents")) : destPath;
+        logger().info("refreshApplicationIcon for: " + applicationPath);
+        Runtime runtime = Runtime.getRuntime();
+        String[] args = {"touch", applicationPath};
+        runtime.exec(args);
+      }
+      catch (IOException e) {
+        logger().warn("refreshApplicationIcon failed", e);
+      }
+    }
+  }
+
+  private static boolean isMac() {
+    return System.getProperty("os.name").toLowerCase(Locale.US).startsWith("mac");
   }
 
   private static String resolveJarFile() {

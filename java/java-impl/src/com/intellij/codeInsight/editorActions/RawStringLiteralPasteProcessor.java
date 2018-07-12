@@ -42,8 +42,8 @@ public class RawStringLiteralPasteProcessor implements PasteProvider {
     PsiElement stringLiteral = findRawStringLiteralAtCaret(file, offset);
     if (stringLiteral == null) return;
 
-    int leadingTicsSequence = PsiRawStringLiteralUtil.getLeadingTicsSequence(text);
-    int trailingTicsSequence = PsiRawStringLiteralUtil.getTrailingTicsSequence(text);
+    int leadingTicsSequence = PsiRawStringLiteralUtil.getLeadingTicksSequence(text);
+    int trailingTicsSequence = PsiRawStringLiteralUtil.getTrailingTicksSequence(text);
 
     String prefix = "";
     TextRange textRange = stringLiteral.getTextRange();
@@ -59,9 +59,9 @@ public class RawStringLiteralPasteProcessor implements PasteProvider {
     }
 
     String literalText = stringLiteral.getText();
-    int ticsLength = PsiRawStringLiteralUtil.getLeadingTicsSequence(literalText);
+    int ticsLength = PsiRawStringLiteralUtil.getLeadingTicksSequence(literalText);
     String quotes = literalText.substring(0, ticsLength);
-    String additionalQuotes = PsiRawStringLiteralUtil.getAdditionalTics(text, quotes);
+    String additionalQuotes = PsiRawStringLiteralUtil.getAdditionalTicks(text, quotes);
     insertAtCaret(StringUtil.convertLineSeparators(text), additionalQuotes, stringLiteral, editor, prefix, suffix);
   }
 

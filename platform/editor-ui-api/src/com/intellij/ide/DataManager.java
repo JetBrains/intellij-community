@@ -25,6 +25,7 @@ public abstract class DataManager {
    * @return {@link DataContext} constructed by the current focused component
    * @deprecated use either {@link #getDataContext(Component)} or {@link #getDataContextFromFocus()}
    */
+  @Deprecated
   @NotNull
   public abstract DataContext getDataContext();
 

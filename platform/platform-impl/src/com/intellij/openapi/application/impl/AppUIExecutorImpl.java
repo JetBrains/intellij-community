@@ -204,10 +204,11 @@ class AppUIExecutorImpl implements AppUIExecutor {
     for (ConstrainedExecutor constraint : myConstraints) {
       if (!constraint.isCorrectContext()) {
         log.add(constraint);
-        if (log.size() > 1000) {
-          LOG.error("Too many reschedule requests, probably constraints can't be satisfied all together: " + log.subList(100, 120));
+        if (log.size() > 3_000) {
+          LOG.error("Too many reschedule requests, probably constraints can't be satisfied all together: " + log.subList(log.size() - 30, log.size()));
+        } else {
+          constraint.rescheduleInCorrectContext(() -> checkConstraints(task, future, log));
         }
-        constraint.rescheduleInCorrectContext(() -> checkConstraints(task, future, log));
         return;
       }
     }

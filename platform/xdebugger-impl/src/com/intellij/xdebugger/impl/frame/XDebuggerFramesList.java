@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
@@ -110,7 +111,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
     // default font generates too much garbage in deriveFont
     Font font = getFont();
     if (font != null) {
-      setFont(new Font(font.getName(), font.getStyle(), font.getSize()));
+      setFont(new FontUIResource(font.getName(), font.getStyle(), font.getSize()));
     }
   }
 

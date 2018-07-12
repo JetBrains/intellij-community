@@ -94,7 +94,6 @@ public class HgHistoryProvider implements VcsHistoryProvider {
     for (HgFileRevision hgFileRevision : history) {
       partner.acceptRevision(hgFileRevision);
     }
-    partner.finished();
   }
 
   @NotNull

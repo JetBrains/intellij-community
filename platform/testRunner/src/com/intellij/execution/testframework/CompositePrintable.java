@@ -16,12 +16,14 @@
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
@@ -321,35 +323,37 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
 
       @Override
       public void mark() {}
+
+      @Override
+      public void printWithAnsiColoring(@NotNull String text, @NotNull Key processOutputType) {
+        // Write text to a file as a single chunk. ANSI coloring will be applied when reading the file.
+        print(text, ConsoleViewContentType.getConsoleViewType(processOutputType));
+      }
     }
 
     private void readFileContentAndPrint(Printer printer, @Nullable File file, List<Printable> nestedPrintables) {
       if (file != null) {
-        try {
-          int lineNum = 0;
-          Map<String, ConsoleViewContentType> contentTypeByNameMap = ContainerUtil.newMapFromValues(
-            ConsoleViewContentType.getRegisteredTypes().iterator(), contentType -> contentType.toString()
-          );
-          DataInputStream reader = new DataInputStream(new BufferedInputStream(new FileInputStream(file)));
-          try {
-            while (reader.available() > 0 && !wasPrintableChanged(printer)) {
-              if (lineNum == CompositePrintable.this.getExceptionMark() && lineNum > 0) printer.mark();
-              final String firstToken = IOUtil.readString(reader);
-              if (firstToken == null) break;
-              if (firstToken.equals(HYPERLINK)) {
-                new DiffHyperlink(IOUtil.readString(reader), IOUtil.readString(reader), IOUtil.readString(reader), false)
-                  .printOn(printer);
-              }
-              else {
-                ConsoleViewContentType contentType = contentTypeByNameMap.getOrDefault(firstToken, ConsoleViewContentType.NORMAL_OUTPUT);
-                String text = IOUtil.readString(reader);
+        int lineNum = 0;
+        Map<String, ConsoleViewContentType> contentTypeByNameMap = ContainerUtil.newMapFromValues(
+          ConsoleViewContentType.getRegisteredTypes().iterator(), contentType -> contentType.toString()
+        );
+        try (DataInputStream reader = new DataInputStream(new BufferedInputStream(new FileInputStream(file)))) {
+          while (reader.available() > 0 && !wasPrintableChanged(printer)) {
+            if (lineNum == CompositePrintable.this.getExceptionMark() && lineNum > 0) printer.mark();
+            final String firstToken = IOUtil.readString(reader);
+            if (firstToken == null) break;
+            if (firstToken.equals(HYPERLINK)) {
+              new DiffHyperlink(IOUtil.readString(reader), IOUtil.readString(reader), IOUtil.readString(reader), false)
+                .printOn(printer);
+            }
+            else {
+              ConsoleViewContentType contentType = contentTypeByNameMap.getOrDefault(firstToken, ConsoleViewContentType.NORMAL_OUTPUT);
+              String text = IOUtil.readString(reader);
+              if (text != null) {
                 printText(printer, text, contentType);
               }
-              lineNum++;
             }
-          }
-          finally {
-            reader.close();
+            lineNum++;
           }
         }
         catch (FileNotFoundException e) {
@@ -365,9 +369,12 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
       }
     }
 
-    private void printText(Printer printer, String text, ConsoleViewContentType contentType) {
+    private void printText(@NotNull Printer printer, @NotNull String text, @NotNull ConsoleViewContentType contentType) {
       if (ConsoleViewContentType.NORMAL_OUTPUT.equals(contentType)) {
-        printer.printWithAnsiColoring(text, contentType);
+        printer.printWithAnsiColoring(text, ProcessOutputTypes.STDOUT);
+      }
+      else if (ConsoleViewContentType.ERROR_OUTPUT.equals(contentType)) {
+        printer.printWithAnsiColoring(text, ProcessOutputTypes.STDERR);
       }
       else {
         printer.print(text, contentType);
@@ -381,32 +388,27 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
 
   private void printOutputFile(List<Printable> currentPrintables) {
     if (myOutputFile != null && new File(myOutputFile).exists()) {
-      try {
-        final PrintStream printStream = new PrintStream(new FileOutputStream(new File(myOutputFile), true));
-        try {
-          for (Printable currentPrintable : currentPrintables) {
-            currentPrintable.printOn(new Printer() {
-              @Override
-              public void print(String text, ConsoleViewContentType contentType) {
-                if (contentType != ConsoleViewContentType.SYSTEM_OUTPUT) {
-                  printStream.print(text);
-                }
-              }
-
-              @Override
-              public void printHyperlink(String text, HyperlinkInfo info) {
+      try (PrintStream printStream = new PrintStream(new FileOutputStream(new File(myOutputFile), true))) {
+        for (Printable currentPrintable : currentPrintables) {
+          currentPrintable.printOn(new Printer() {
+            @Override
+            public void print(String text, ConsoleViewContentType contentType) {
+              if (contentType != ConsoleViewContentType.SYSTEM_OUTPUT) {
                 printStream.print(text);
               }
+            }
 
-              @Override
-              public void onNewAvailable(@NotNull Printable printable) {}
-              @Override
-              public void mark() {}
-            });
-          }
-        }
-        finally {
-          printStream.close();
+            @Override
+            public void printHyperlink(String text, HyperlinkInfo info) {
+              printStream.print(text);
+            }
+
+            @Override
+            public void onNewAvailable(@NotNull Printable printable) {}
+
+            @Override
+            public void mark() {}
+          });
         }
       }
       catch (IOException e) {

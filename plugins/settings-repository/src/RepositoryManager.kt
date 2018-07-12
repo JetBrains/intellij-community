@@ -88,15 +88,15 @@ interface UpdateResult {
   val deleted: Collection<String>
 }
 
-val EMPTY_UPDATE_RESULT = ImmutableUpdateResult(Collections.emptySet(), Collections.emptySet())
+val EMPTY_UPDATE_RESULT: ImmutableUpdateResult = ImmutableUpdateResult(Collections.emptySet(), Collections.emptySet())
 
 data class ImmutableUpdateResult(override val changed: Collection<String>, override val deleted: Collection<String>) : UpdateResult {
   fun toMutable(): MutableUpdateResult = MutableUpdateResult(changed, deleted)
 }
 
 class MutableUpdateResult(changed: Collection<String>, deleted: Collection<String>) : UpdateResult {
-  override val changed = THashSet(changed)
-  override val deleted = THashSet(deleted)
+  override val changed: THashSet<String> = THashSet(changed)
+  override val deleted: THashSet<String> = THashSet(deleted)
 
   fun add(result: UpdateResult?): MutableUpdateResult {
     if (result != null) {

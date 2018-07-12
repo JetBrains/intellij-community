@@ -35,7 +35,6 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptorEx;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
@@ -222,7 +221,7 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
 
   @NotNull
   @Override
-  public Object[] getDependences() {
+  public Object[] getDependencies() {
     if (myPattern != null) {
       if (DumbService.isDumb(myElement.getProject())) {
         return new Object[] { ModificationTracker.EVER_CHANGED, ExternalResourceManager.getInstance()};
@@ -279,8 +278,8 @@ public class RngNsDescriptor implements XmlNSDescriptorEx, Validator {
         CachedValuesManager.getManager(myElement.getProject()).createCachedValue(() -> {
           final XmlElementDescriptor descriptor = findRootDescriptorInner(qName);
           return descriptor != null
-                 ? new CachedValueProvider.Result<>(descriptor, descriptor.getDependences())
-                 : new CachedValueProvider.Result<>(null, getDependences());
+                 ? new CachedValueProvider.Result<>(descriptor, descriptor.getDependencies())
+                 : new CachedValueProvider.Result<>(null, getDependencies());
         }, false);
       myDescriptorsMap.put(qName, cachedValue);
     }

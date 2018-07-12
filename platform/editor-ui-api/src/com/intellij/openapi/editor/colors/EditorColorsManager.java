@@ -18,11 +18,12 @@ package com.intellij.openapi.editor.colors;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.ui.ColorUtil;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.awt.*;
 
 public abstract class EditorColorsManager {
   public static final Topic<EditorColorsListener> TOPIC = Topic.create("EditorColorsListener", EditorColorsListener.class);
@@ -39,9 +40,6 @@ public abstract class EditorColorsManager {
 
   @Deprecated
   public abstract void removeAllSchemes();
-
-  @Deprecated
-  public abstract void setSchemes(@NotNull List<EditorColorsScheme> schemes);
 
   @NotNull
   public abstract EditorColorsScheme[] getAllSchemes();
@@ -80,5 +78,10 @@ public abstract class EditorColorsManager {
   @NotNull
   public EditorColorsScheme getSchemeForCurrentUITheme() {
     return getGlobalScheme();
+  }
+
+  public boolean isDarkEditor() {
+    Color bg = getGlobalScheme().getDefaultBackground();
+    return ColorUtil.isDark(bg);
   }
 }

@@ -36,7 +36,7 @@ import java.awt.*
  */
 class ConsolePromptDecorator(private val myEditorEx: EditorEx, private val myConsoleData: PythonConsoleData) : EditorLinePainter(), TextAnnotationGutterProvider {
 
-  var mainPrompt = ""
+  var mainPrompt: String = ""
     set(mainPrompt) {
       if (this.mainPrompt != mainPrompt) {
         field = mainPrompt
@@ -44,10 +44,10 @@ class ConsolePromptDecorator(private val myEditorEx: EditorEx, private val myCon
       }
     }
 
-  var promptAttributes = ConsoleViewContentType.USER_INPUT
+  var promptAttributes: ConsoleViewContentType? = ConsoleViewContentType.USER_INPUT
     set(promptAttributes) {
       field = promptAttributes
-      myEditorEx.colorsScheme.setColor(promptColor, promptAttributes.attributes.foregroundColor)
+      myEditorEx.colorsScheme.setColor(promptColor, promptAttributes?.attributes?.foregroundColor)
 
       UIUtil.invokeLaterIfNeeded { myEditorEx.gutterComponentEx.revalidateMarkup() }
     }
@@ -63,7 +63,7 @@ class ConsolePromptDecorator(private val myEditorEx: EditorEx, private val myCon
     }, mainPrompt.length)
 
   init {
-    myEditorEx.colorsScheme.setColor(promptColor, this.promptAttributes.attributes.foregroundColor)
+    myEditorEx.colorsScheme.setColor(promptColor, this.promptAttributes?.attributes?.foregroundColor)
   }
 
 
@@ -100,7 +100,7 @@ class ConsolePromptDecorator(private val myEditorEx: EditorEx, private val myCon
   }
 
   override fun getBgColor(line: Int, editor: Editor): Color? {
-    var backgroundColor: Color? = this.promptAttributes.attributes.backgroundColor
+    var backgroundColor: Color? = this.promptAttributes?.attributes?.backgroundColor
     if (backgroundColor == null) {
       backgroundColor = myEditorEx.backgroundColor
     }

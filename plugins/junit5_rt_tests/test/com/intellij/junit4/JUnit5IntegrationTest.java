@@ -53,7 +53,7 @@ public class JUnit5IntegrationTest extends AbstractTestFrameworkCompilingIntegra
   protected void setupModule() throws Exception {
     super.setupModule();
     final ArtifactRepositoryManager repoManager = getRepoManager();
-    addLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.1.0"), repoManager);
+    addLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("org.junit.jupiter", "junit-jupiter-api", "5.2.0"), repoManager);
     addLibs(myModule, new JpsMavenRepositoryLibraryDescriptor("junit", "junit", "4.12"), repoManager);
   }
 

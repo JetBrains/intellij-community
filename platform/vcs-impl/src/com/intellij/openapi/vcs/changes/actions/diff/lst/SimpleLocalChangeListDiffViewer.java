@@ -347,7 +347,6 @@ public class SimpleLocalChangeListDiffViewer extends SimpleDiffViewer {
       }
 
       e.getPresentation().setText(text);
-      e.getPresentation().setIcon(AllIcons.Actions.MoveToAnotherChangelist);
 
       e.getPresentation().setVisible(true);
       e.getPresentation().setEnabled(!selectedChanges.isEmpty());

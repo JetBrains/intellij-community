@@ -63,7 +63,7 @@ abstract class RunManager {
    * @return all configurations of the type, or an empty array if no configurations of the type are defined.
    */
   @Deprecated("", ReplaceWith("getConfigurationsList(type)"))
-  fun getConfigurations(type: ConfigurationType) = getConfigurationsList(type).toTypedArray()
+  fun getConfigurations(type: ConfigurationType): Array<RunConfiguration> = getConfigurationsList(type).toTypedArray()
 
   /**
    * Returns the list of all configurations of a specified type.
@@ -78,7 +78,7 @@ abstract class RunManager {
    * @return settings for all configurations of the type, or an empty array if no configurations of the type are defined.
    */
   @Deprecated("", ReplaceWith("getConfigurationSettingsList(type)"))
-  fun getConfigurationSettings(type: ConfigurationType) = getConfigurationSettingsList(type).toTypedArray()
+  fun getConfigurationSettings(type: ConfigurationType): Array<RunnerAndConfigurationSettings> = getConfigurationSettingsList(type).toTypedArray()
 
   /**
    * Returns the list of [RunnerAndConfigurationSettings] for all configurations of a specified type.
@@ -93,7 +93,7 @@ abstract class RunManager {
    * Returns the list of all run configurations.
    */
   @Deprecated("", ReplaceWith("allConfigurationsList"))
-  fun getAllConfigurations() = allConfigurationsList.toTypedArray()
+  fun getAllConfigurations(): Array<RunConfiguration> = allConfigurationsList.toTypedArray()
 
   /**
    * Returns the list of all run configurations.
@@ -131,7 +131,7 @@ abstract class RunManager {
    */
   abstract fun createConfiguration(name: String, factory: ConfigurationFactory): RunnerAndConfigurationSettings
 
-  fun createRunConfiguration(name: String, factory: ConfigurationFactory) = createConfiguration(name, factory)
+  fun createRunConfiguration(name: String, factory: ConfigurationFactory): RunnerAndConfigurationSettings = createConfiguration(name, factory)
 
   /**
    * Creates a configuration settings object based on a specified [RunConfiguration]. Note that you need to call
@@ -204,9 +204,9 @@ abstract class RunManager {
 
   abstract fun findSettings(configuration: RunConfiguration): RunnerAndConfigurationSettings?
 
-  fun findConfigurationByTypeAndName(typeId: String, name: String) = allSettings.firstOrNull { typeId == it.type.id && name == it.name }
+  fun findConfigurationByTypeAndName(typeId: String, name: String): RunnerAndConfigurationSettings? = allSettings.firstOrNull { typeId == it.type.id && name == it.name }
 
-  fun findConfigurationByTypeAndName(type: ConfigurationType?, name: String) = type?.let { findConfigurationByTypeAndName(it.id, name) }
+  fun findConfigurationByTypeAndName(type: ConfigurationType?, name: String): RunnerAndConfigurationSettings? = type?.let { findConfigurationByTypeAndName(it.id, name) }
 
   abstract fun removeConfiguration(settings: RunnerAndConfigurationSettings?)
 
@@ -215,5 +215,5 @@ abstract class RunManager {
 
 private const val UNNAMED = "Unnamed"
 
-val IS_RUN_MANAGER_INITIALIZED = Key.create<Boolean>("RunManagerInitialized")
+val IS_RUN_MANAGER_INITIALIZED: Key<Boolean> = Key.create<Boolean>("RunManagerInitialized")
 private  val LOG = Logger.getInstance(RunManager::class.java)

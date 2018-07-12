@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.text;
 
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
@@ -143,6 +144,7 @@ public class StringUtil extends StringUtilRt {
 
   // Unlike String.replace(CharSequence,CharSequence) does not allocate intermediate objects on non-match
   // TODO revise when JDK9 arrives - its String.replace(CharSequence, CharSequence) is more optimized
+  @ReviseWhenPortedToJDK("9")
   @NotNull
   @Contract(pure = true)
   public static String replace(@NonNls @NotNull String text, @NonNls @NotNull String oldS, @NonNls @NotNull String newS) {
@@ -1077,8 +1079,8 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static String pluralize(@NotNull String base, int n) {
-    if (n == 1) return base;
+  public static String pluralize(@NotNull String base, int count) {
+    if (count == 1) return base;
     return pluralize(base);
   }
 
@@ -1730,6 +1732,7 @@ public class StringUtil extends StringUtilRt {
   /**
    * @deprecated use #capitalize(String)
    */
+  @Deprecated
   @Contract(value = "null -> null; !null -> !null", pure = true)
   public static String firstLetterToUpperCase(@Nullable final String displayString) {
     if (displayString == null || displayString.isEmpty()) return displayString;
@@ -1832,7 +1835,11 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static boolean startsWith(@NotNull CharSequence text, int startIndex, @NotNull CharSequence prefix) {
-    int l1 = text.length() - startIndex;
+    int tl = text.length();
+    if (startIndex < 0 || startIndex > tl) {
+      throw new IllegalArgumentException("Index is out of bounds: " + startIndex + ", length: " + tl);
+    }
+    int l1 = tl - startIndex;
     int l2 = prefix.length();
     if (l1 < l2) return false;
 
@@ -2306,6 +2313,7 @@ public class StringUtil extends StringUtilRt {
   /**
    * @deprecated Use {@link #replace(String, List, List)}
    */
+  @Deprecated
   @NotNull
   @Contract(pure = true)
   public static String replace(@NotNull String text, @NotNull String[] from, @NotNull String[] to) {
@@ -2380,7 +2388,10 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static int countChars(@NotNull CharSequence text, char c, int start, int end, boolean stopAtOtherChar) {
     int count = 0;
-    for (int i = start, len = Math.min(text.length(), end); i < len; ++i) {
+    boolean forward = start <= end;
+    start = forward ? Math.max(0, start) : Math.min(text.length(), start);
+    end = forward ? Math.min(text.length(), end) : Math.max(0, end);
+    for (int i = forward ? start : start - 1; forward && i < end || !forward && i >= end; i += forward ? 1 : -1) {
       if (text.charAt(i) == c) {
         count++;
       }
@@ -3244,7 +3255,7 @@ public class StringUtil extends StringUtilRt {
       return false;
   }
 
-  private static final Pattern UNICODE_CHAR = Pattern.compile("\\\\u[0-9a-eA-E]{4}");
+  private static final Pattern UNICODE_CHAR = Pattern.compile("\\\\u[0-9a-fA-F]{4}");
 
   public static String replaceUnicodeEscapeSequences(String text) {
     if (text == null) return null;
@@ -3331,6 +3342,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   /** @deprecated use {@link #startsWithConcatenation(String, String...)} (to remove in IDEA 15) */
+  @Deprecated
   public static boolean startsWithConcatenationOf(@NotNull String string, @NotNull String firstPrefix, @NotNull String secondPrefix) {
     return startsWithConcatenation(string, firstPrefix, secondPrefix);
   }

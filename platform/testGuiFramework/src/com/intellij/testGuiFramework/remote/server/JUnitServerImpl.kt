@@ -88,11 +88,9 @@ class JUnitServerImpl : JUnitServer {
            ?: throw SocketException("Client doesn't respond. Either the test has hanged or IDE crushed.")
   }
 
-  override fun sendAndWaitAnswer(message: TransportMessage)
-    = sendAndWaitAnswerBase(message)
+  override fun sendAndWaitAnswer(message: TransportMessage): Unit = sendAndWaitAnswerBase(message)
 
-  override fun sendAndWaitAnswer(message: TransportMessage, timeout: Long, timeUnit: TimeUnit)
-    = sendAndWaitAnswerBase(message, timeout, timeUnit)
+  override fun sendAndWaitAnswer(message: TransportMessage, timeout: Long, timeUnit: TimeUnit): Unit = sendAndWaitAnswerBase(message, timeout, timeUnit)
 
   private fun sendAndWaitAnswerBase(message: TransportMessage, timeout: Long = 0L, timeUnit: TimeUnit = TimeUnit.SECONDS) {
     val countDownLatch = CountDownLatch(1)
@@ -123,15 +121,15 @@ class JUnitServerImpl : JUnitServer {
   }
 
   override fun isConnected(): Boolean {
-    try {
-      return connection.isConnected
+    return try {
+      connection.isConnected && !connection.isClosed
     }
     catch (lateInitException: UninitializedPropertyAccessException) {
-      return false
+      false
     }
   }
 
-  override fun getPort() = port
+  override fun getPort(): Int = port
 
   override fun stopServer() {
     serverSendThread.objectOutputStream.close()
@@ -143,6 +141,7 @@ class JUnitServerImpl : JUnitServer {
     serverReceiveThread.interrupt()
     LOG.info("Server Receive Thread joined")
     connection.close()
+    isStarted = false
   }
 
 
@@ -162,7 +161,7 @@ class JUnitServerImpl : JUnitServer {
     }
   }
 
-  inner class ServerSendThread(val connection: Socket, val objectOutputStream: ObjectOutputStream) : Thread(SEND_THREAD) {
+  inner class ServerSendThread(private val connection: Socket, val objectOutputStream: ObjectOutputStream) : Thread(SEND_THREAD) {
 
     override fun run() {
       LOG.info("Server Send Thread started")
@@ -187,7 +186,7 @@ class JUnitServerImpl : JUnitServer {
 
   }
 
-  inner class ServerReceiveThread(val connection: Socket, val objectInputStream: ObjectInputStream) : Thread(RECEIVE_THREAD) {
+  inner class ServerReceiveThread(private val connection: Socket, val objectInputStream: ObjectInputStream) : Thread(RECEIVE_THREAD) {
 
     override fun run() {
       try {

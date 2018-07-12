@@ -30,6 +30,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.path.GrMethodCallExpressionImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable
+import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyClosurePattern
 import org.jetbrains.plugins.groovy.lang.psi.patterns.GroovyPatterns.groovyBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.patterns.groovyClosure
 import org.jetbrains.plugins.groovy.lang.psi.patterns.psiMethod
@@ -46,7 +47,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.delegatesTo.DelegatesToInfo
 class GradleExtensionsContributor : GradleMethodContextContributor {
 
   override fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? {
-    val extensionsData = Companion.getExtensionsFor(closure) ?: return null
+    val extensionsData = getExtensionsFor(closure) ?: return null
     for (extension in extensionsData.extensions) {
       val extensionClosure = groovyClosure().inMethod(psiMethod(GRADLE_API_PROJECT, extension.name))
       if (extensionClosure.accepts(closure)) {
@@ -214,7 +215,7 @@ class GradleExtensionsContributor : GradleMethodContextContributor {
   }
 
   companion object {
-    val closureInLeftShiftMethod = groovyClosure().withTreeParent(
+    val closureInLeftShiftMethod: GroovyClosurePattern = groovyClosure().withTreeParent(
       groovyBinaryExpression().with(object : PatternCondition<GrBinaryExpression?>("leftShiftCondition") {
         override fun accepts(t: GrBinaryExpression, context: ProcessingContext?): Boolean {
           return t.operationTokenType == COMPOSITE_LSHIFT_SIGN

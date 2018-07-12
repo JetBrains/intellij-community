@@ -2,7 +2,7 @@
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.engine.DebuggerUtils;
-import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -11,7 +11,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.PairFunction;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
@@ -25,13 +27,14 @@ import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 import org.jetbrains.java.debugger.breakpoints.JavaBreakpointFiltersPanel;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
 
-import javax.swing.*;
+import java.util.List;
 
 /**
  * Base class for java line-connected exceptions (line, method, field)
  * @author egor
  */
-public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointProperties> extends XLineBreakpointType<P> {
+public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointProperties> extends XLineBreakpointType<P>
+  implements JavaBreakpointType<P> {
   public JavaLineBreakpointTypeBase(@NonNls @NotNull String id, @Nls @NotNull String title) {
     super(id, title);
   }
@@ -62,12 +65,6 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
     else {
       return super.getDisplayText(breakpoint);
     }
-  }
-
-  @Nullable
-  @Override
-  public Icon getPendingIcon() {
-    return AllIcons.Debugger.Db_pending_breakpoint;
   }
 
   protected static boolean canPutAtElement(@NotNull final VirtualFile file,
@@ -107,10 +104,8 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
           }
 
           final int offset = element.getTextOffset();
-          if (offset >= 0) {
-            if (document.getLineNumber(offset) != line) {
-              break;
-            }
+          if (!DocumentUtil.isValidOffset(offset, document) || document.getLineNumber(offset) != line) {
+            break;
           }
           parent = element;
           element = element.getParent();
@@ -125,5 +120,11 @@ public abstract class JavaLineBreakpointTypeBase<P extends JavaBreakpointPropert
       return res.get();
     }
     return false;
+  }
+
+  @Override
+  public List<? extends AnAction> getAdditionalPopupMenuActions(@NotNull XLineBreakpoint<P> breakpoint,
+                                                                @Nullable XDebugSession currentSession) {
+    return BreakpointIntentionAction.getIntentions(breakpoint, currentSession);
   }
 }

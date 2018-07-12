@@ -39,10 +39,6 @@ public class XPathParameterInfoHandler implements ParameterInfoHandler<XPathFunc
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
-    public Object[] getParametersForDocumentation(XPathFunction xPathFunction, ParameterInfoContext parameterInfoContext) {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
-    }
-
     public XPathFunctionCall findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
         final XPathFunctionCall call = findFunctionCall(context.getFile(), context.getOffset());
         if (call != null) {
@@ -83,14 +79,6 @@ public class XPathParameterInfoHandler implements ParameterInfoHandler<XPathFunc
     public void updateParameterInfo(@NotNull XPathFunctionCall call, @NotNull UpdateParameterInfoContext context) {
         int currentParameterIndex = ParameterInfoUtils.getCurrentParameterIndex(call.getNode(), context.getOffset(), XPathTokenTypes.COMMA);
         context.setCurrentParameter(currentParameterIndex);
-    }
-
-    public String getParameterCloseChars() {
-        return "(,)";
-    }
-
-    public boolean tracksParameterIndex() {
-        return true;
     }
 
     public void updateUI(XPathFunction function, @NotNull ParameterInfoUIContext context) {

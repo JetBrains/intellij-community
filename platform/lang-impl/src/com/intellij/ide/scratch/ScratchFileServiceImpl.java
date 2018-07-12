@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.scratch;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.FileIconProvider;
 import com.intellij.ide.navigationToolbar.AbstractNavBarModelExtension;
 import com.intellij.lang.Language;
@@ -37,6 +38,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.LanguageSubstitutor;
 import com.intellij.psi.LanguageSubstitutors;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UseScopeEnlarger;
@@ -247,6 +249,17 @@ public class ScratchFileServiceImpl extends ScratchFileService implements Persis
   }
 
   public static class NavBarExtension extends AbstractNavBarModelExtension {
+
+    @Nullable
+    @Override
+    public Icon getIcon(Object object) {
+      VirtualFile file = object instanceof PsiFileSystemItem ? ((PsiFileSystemItem)object).getVirtualFile() : null;
+      if (file == null) return null;
+      RootType rootType = ScratchFileService.getInstance().getRootType(file);
+      if (rootType == null) return null;
+      Icon icon = rootType.substituteIcon(((PsiFileSystemItem)object).getProject(), file);
+      return icon == null && file.isDirectory() ? AllIcons.Nodes.Folder : icon;
+    }
 
     @Nullable
     @Override

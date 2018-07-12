@@ -292,7 +292,7 @@ public class SimplifyBooleanExpressionFix extends LocalQuickFixOnPsiElement {
 
   public static void simplifyExpression(PsiExpression expression) throws IncorrectOperationException {
     final PsiExpression result = createSimplifiedReplacement(expression);
-    PsiExpression newExpression = (PsiExpression)expression.replace(result);
+    PsiExpression newExpression = (PsiExpression)new CommentTracker().replaceAndRestoreComments(expression, result);
     if (newExpression instanceof PsiLiteralExpression) {
       final PsiElement parent = newExpression.getParent();
       if (parent instanceof PsiAssertStatement && ((PsiLiteralExpression)newExpression).getValue() == Boolean.TRUE) {

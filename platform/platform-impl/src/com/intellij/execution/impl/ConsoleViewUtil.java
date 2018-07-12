@@ -51,11 +51,6 @@ import java.util.Map;
  */
 public class ConsoleViewUtil {
 
-  /**
-   * @deprecated use {@link com.intellij.openapi.editor.EditorKind}
-   */
-  @Deprecated
-  public static final Key<Boolean> EDITOR_IS_CONSOLE_VIEW = Key.create("EDITOR_IS_CONSOLE_VIEW");
   public static final Key<Boolean> EDITOR_IS_CONSOLE_HISTORY_VIEW = Key.create("EDITOR_IS_CONSOLE_HISTORY_VIEW");
 
   private static final Key<Boolean> REPLACE_ACTION_ENABLED = Key.create("REPLACE_ACTION_ENABLED");
@@ -152,7 +147,7 @@ public class ConsoleViewUtil {
   }
 
   public static boolean isConsoleViewEditor(@NotNull Editor editor) {
-    return editor.getUserData(EDITOR_IS_CONSOLE_VIEW) == Boolean.TRUE || editor.getEditorKind() == (EditorKind.CONSOLE);
+    return editor.getEditorKind() == (EditorKind.CONSOLE);
   }
 
   public static boolean isReplaceActionEnabledForConsoleViewEditor(@NotNull Editor editor) {
@@ -236,8 +231,10 @@ public class ConsoleViewUtil {
   @NotNull
   public static ConsoleViewContentType getContentTypeForToken(@NotNull IElementType tokenType, @NotNull SyntaxHighlighter highlighter) {
     TextAttributesKey[] keys = highlighter.getTokenHighlights(tokenType);
-    return keys.length == 0 ? ConsoleViewContentType.NORMAL_OUTPUT :
-           ConsoleViewContentType.getConsoleViewType(ColorCache.keys.get(Arrays.asList(keys)));
+    if (keys.length == 0) {
+      return ConsoleViewContentType.NORMAL_OUTPUT;
+    }
+    return ConsoleViewContentType.getConsoleViewType(ColorCache.keys.get(Arrays.asList(keys)));
   }
 
   public static void printAsFileType(@NotNull ConsoleView console, @NotNull String text, @NotNull FileType fileType) {

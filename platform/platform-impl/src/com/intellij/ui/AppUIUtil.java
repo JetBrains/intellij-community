@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.BrowserUtil;
@@ -20,6 +6,7 @@ import com.intellij.ide.gdpr.Consent;
 import com.intellij.ide.gdpr.ConsentOptions;
 import com.intellij.ide.gdpr.ConsentSettingsUi;
 import com.intellij.ide.gdpr.EndUserAgreement;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.Main;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,6 +26,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
@@ -75,7 +63,7 @@ import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
  */
 public class AppUIUtil {
   private static final String VENDOR_PREFIX = "jetbrains-";
-  private static final boolean DEBUG_MODE = SystemProperties.getBooleanProperty("idea.debug.mode", false);
+  private static final boolean DEBUG_MODE = PluginManagerCore.isRunningFromSources();
   private static boolean ourMacDocIconSet = false;
 
   public static void updateWindowIcon(@NotNull Window window) {
@@ -194,15 +182,9 @@ public class AppUIUtil {
       return;
     }
 
-    try {
-      InputStream is = url.openStream();
-      try {
-        Font font = Font.createFont(Font.TRUETYPE_FONT, is);
-        GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
-      }
-      finally {
-        is.close();
-      }
+    try (InputStream is = url.openStream()) {
+      Font font = Font.createFont(Font.TRUETYPE_FONT, is);
+      GraphicsEnvironment.getLocalGraphicsEnvironment().registerFont(font);
     }
     catch (Throwable t) {
       Logger.getInstance(AppUIUtil.class).warn("Cannot register font: " + url, t);
@@ -255,7 +237,7 @@ public class AppUIUtil {
       if (!agreement.isAccepted()) {
         try {
           // todo: does not seem to request focus when shown
-          SwingUtilities.invokeAndWait(() -> showEndUserAgreementText(agreement.getText()));
+          SwingUtilities.invokeAndWait(() -> showEndUserAgreementText(agreement.getText(), agreement.isPrivacyPolicy()));
           EndUserAgreement.setAccepted(agreement);
         }
         catch (Exception e) {
@@ -295,10 +277,11 @@ public class AppUIUtil {
   /**
    * todo: update to support GDPR requirements
    *
-   * @param htmlText Updated version of Privacy Policy text if any.
+   * @param htmlText Updated version of Privacy Policy or EULA text if any.
    *                 If it's {@code null}, the standard text from bundled resources would be used.
+   * @param isPrivacyPolicy  true if this document is a privacy policy
    */
-  public static void showEndUserAgreementText(@NotNull String htmlText) {
+  public static void showEndUserAgreementText(@NotNull String htmlText, final boolean isPrivacyPolicy) {
     DialogWrapper dialog = new DialogWrapper(true) {
       @Override
       protected JComponent createCenterPanel() {
@@ -357,6 +340,15 @@ public class AppUIUtil {
       }
 
       @Override
+      protected JPanel createSouthAdditionalPanel() {
+        JPanel panel = new NonOpaquePanel(new BorderLayout());
+        JLabel label = new JLabel("Scroll to the end to accept");
+        label.setForeground(new JBColor(0x808080, 0x8C8C8C));
+        panel.add(label);
+        return panel;
+      }
+
+      @Override
       public void doCancelAction() {
         super.doCancelAction();
         ApplicationEx application = ApplicationManagerEx.getApplicationEx();
@@ -369,7 +361,12 @@ public class AppUIUtil {
       }
     };
     dialog.setModal(true);
-    dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " User License Agreement");
+    if (isPrivacyPolicy) {
+      dialog.setTitle(ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + " Privacy Policy");
+    }
+    else {
+      dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " User License Agreement");
+    }
     dialog.setSize(JBUI.scale(509), JBUI.scale(395));
     dialog.show();
   }
@@ -405,7 +402,10 @@ public class AppUIUtil {
       @Override
       protected Action[] createActions() {
         if (consents.size() > 1) {
-          return super.createActions();
+          Action[] actions = super.createActions();
+          setOKButtonText("Save");
+          setCancelButtonText("Skip");
+          return actions;
         }
         setOKButtonText(consents.iterator().next().getName());
         return new Action[]{getOKAction(), new DialogWrapperAction("Don't send") {

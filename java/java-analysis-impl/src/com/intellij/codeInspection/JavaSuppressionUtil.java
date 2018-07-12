@@ -22,11 +22,11 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.regex.Matcher;
@@ -86,24 +86,8 @@ public class JavaSuppressionUtil {
     if (attributes.length == 0) {
       return Collections.emptyList();
     }
-    final PsiAnnotationMemberValue attributeValue = attributes[0].getValue();
-    Collection<String> result = new ArrayList<>();
-    if (attributeValue instanceof PsiArrayInitializerMemberValue) {
-      final PsiAnnotationMemberValue[] initializers = ((PsiArrayInitializerMemberValue)attributeValue).getInitializers();
-      for (PsiAnnotationMemberValue annotationMemberValue : initializers) {
-        final String id = getInspectionIdSuppressedInAnnotationAttribute(annotationMemberValue);
-        if (id != null) {
-          result.add(id);
-        }
-      }
-    }
-    else {
-      final String id = getInspectionIdSuppressedInAnnotationAttribute(attributeValue);
-      if (id != null) {
-        result.add(id);
-      }
-    }
-    return result;
+    return ContainerUtil.mapNotNull(AnnotationUtil.arrayAttributeValues(attributes[0].getValue()),
+                                    JavaSuppressionUtil::getInspectionIdSuppressedInAnnotationAttribute);
   }
 
   public static PsiElement getElementMemberSuppressedIn(@NotNull PsiJavaDocumentedElement owner, @NotNull String inspectionToolID) {

@@ -17,6 +17,7 @@ package com.siyeh.ipp.imports;
 
 import com.intellij.psi.*;
 import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.ipp.psiutils.ErrorUtil;
 import org.jetbrains.annotations.NotNull;
 
 class OnDemandImportPredicate implements PsiElementPredicate {
@@ -26,12 +27,10 @@ class OnDemandImportPredicate implements PsiElementPredicate {
     if (!(element instanceof PsiImportStatement)) {
       return false;
     }
-    final PsiImportStatementBase importStatementBase =
-      (PsiImportStatementBase)element;
-    if (!importStatementBase.isOnDemand()) {
+    PsiImportStatementBase importStatement = (PsiImportStatementBase)element;
+    if (!importStatement.isOnDemand() || ErrorUtil.containsError(element)) {
       return false;
     }
-    final PsiFile file = importStatementBase.getContainingFile();
-    return file instanceof PsiJavaFile;
+    return importStatement.getContainingFile() instanceof PsiJavaFile;
   }
 }

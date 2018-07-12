@@ -130,28 +130,19 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
   }
 
   @Override
-  public String getStringToReplace(@NotNull Editor editor, @Nullable FindResult findResult) {
+  public String getStringToReplace(@NotNull Editor editor, @Nullable FindResult findResult) throws FindManager.MalformedReplacementStringException {
     if (findResult == null) {
       return null;
     }
     String foundString = editor.getDocument().getText(findResult);
     CharSequence documentText = editor.getDocument().getImmutableCharSequence();
     FindModel currentModel = mySearchResults.getFindModel();
-    String stringToReplace = null;
 
-    if (currentModel != null) {
-      if (currentModel.isReplaceState()) {
-        FindManager findManager = FindManager.getInstance(mySearchResults.getProject());
-        try {
-          stringToReplace = findManager.getStringToReplace(foundString, currentModel,
-                                                           findResult.getStartOffset(), documentText);
-        }
-        catch (FindManager.MalformedReplacementStringException e) {
-          return null;
-        }
-      }
+    if (currentModel != null && currentModel.isReplaceState()) {
+      FindManager findManager = FindManager.getInstance(mySearchResults.getProject());
+      return findManager.getStringToReplace(foundString, currentModel, findResult.getStartOffset(), documentText);
     }
-    return stringToReplace;
+    return null;
   }
 
   @Nullable
@@ -208,7 +199,13 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
   public boolean canReplace() {
     if (mySearchResults != null && mySearchResults.getCursor() != null && !isReplaceDenied()) {
 
-      final String replacement = getStringToReplace(getEditor(), mySearchResults.getCursor());
+      final String replacement;
+      try {
+        replacement = getStringToReplace(getEditor(), mySearchResults.getCursor());
+      }
+      catch (FindManager.MalformedReplacementStringException e) {
+        return false;
+      }
       return replacement != null;
     }
     return false;
@@ -218,7 +215,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     return mySearchResults.getEditor();
   }
 
-  public void performReplace() {
+  public void performReplace() throws FindManager.MalformedReplacementStringException {
     mySuppressUpdate = true;
     String replacement = getStringToReplace(getEditor(), mySearchResults.getCursor());
     if (replacement == null) {

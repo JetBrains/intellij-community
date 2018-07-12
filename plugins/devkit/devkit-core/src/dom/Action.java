@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.jetbrains.idea.devkit.dom;
 
+import com.intellij.ide.presentation.Presentation;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
@@ -24,128 +25,49 @@ import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 
 import java.util.List;
 
-/**
- * plugin.dtd:action interface.
- */
+@Presentation(typeName = "Action")
 public interface Action extends ActionOrGroup {
 
-	/**
-	 * Returns the value of the popup child.
-	 * Attribute popup
-	 * @return the value of the popup child.
-	 */
-	@NotNull
-	GenericAttributeValue<Boolean> getPopup();
+  @NotNull
+  @Attribute("class")
+  @Required
+  @ExtendClass(value = "com.intellij.openapi.actionSystem.AnAction",
+    allowNonPublic = true, allowAbstract = false, allowInterface = false)
+  @Convert(PluginPsiClassConverter.class)
+  GenericAttributeValue<PsiClass> getClazz();
 
 
-	/**
-	 * Returns the value of the icon child.
-	 * Attribute icon
-	 * @return the value of the icon child.
-	 */
-	@NotNull
-	GenericAttributeValue<String> getIcon();
+  @NotNull
+  List<KeyboardShortcut> getKeyboardShortcuts();
+
+  KeyboardShortcut addKeyboardShortcut();
 
 
-	/**
-	 * Returns the value of the description child.
-	 * Attribute description
-	 * @return the value of the description child.
-	 */
-	@NotNull
-	GenericAttributeValue<String> getDescription();
+  @NotNull
+  List<MouseShortcut> getMouseShortcuts();
+
+  MouseShortcut addMouseShortcut();
 
 
-	/**
-	 * Returns the value of the class child.
-	 * Attribute class
-	 * @return the value of the class child.
-	 */
-	@NotNull
-	@Attribute ("class")
-	@Required
-        @ExtendClass(value = "com.intellij.openapi.actionSystem.AnAction",
-		allowNonPublic = true, allowAbstract = false, allowInterface = false)
-        @Convert(PluginPsiClassConverter.class)
-        GenericAttributeValue<PsiClass> getClazz();
+  @NotNull
+  List<Abbreviation> getAbbreviations();
+
+  Abbreviation addAbbreviation();
 
 
-	/**
-	 * Returns the value of the text child.
-	 * Attribute text
-	 * @return the value of the text child.
-	 */
-	@NotNull
-	@Stubbed
-	GenericAttributeValue<String> getText();
+  @NotNull
+  List<AddToGroup> getAddToGroups();
 
-	/**
-	 * Returns the value of the id child.
-	 * Attribute id
-	 * @return the value of the id child.
-	 */
-	@NotNull
-	@Required
-	@Stubbed
-	GenericAttributeValue<String> getId();
-
-	/**
-	 * Returns the list of keyboard-shortcut children.
-	 * @return the list of keyboard-shortcut children.
-	 */
-	@NotNull
-	List<KeyboardShortcut> getKeyboardShortcuts();
-	/**
-	 * Adds new child to the list of keyboard-shortcut children.
-	 * @return created child
-	 */
-	KeyboardShortcut addKeyboardShortcut();
+  AddToGroup addAddToGroup();
 
 
-	/**
-	 * Returns the list of mouse-shortcut children.
-	 * @return the list of mouse-shortcut children.
-	 */
-	@NotNull
-	List<MouseShortcut> getMouseShortcuts();
-	/**
-	 * Adds new child to the list of mouse-shortcut children.
-	 * @return created child
-	 */
-	MouseShortcut addMouseShortcut();
+  @NotNull
+  @Convert(ActionOrGroupResolveConverter.OnlyActions.class)
+  GenericAttributeValue<ActionOrGroup> getUseShortcutOf();
 
-        /**
- 	 * Returns the list of abbreviation children.
- 	 * @return the list of abbreviation children.
- 	 */
- 	@NotNull
- 	List<Abbreviation> getAbbreviations();
+  @NotNull
+  GenericAttributeValue<String> getKeymap();
 
- 	/**
- 	 * Adds new child to the list of abbreviation children.
- 	 * @return created child
- 	 */
-        Abbreviation addAbbreviation();
-
-	/**
-	 * Returns the list of add-to-group children.
-	 * @return the list of add-to-group children.
-	 */
-	@NotNull
-	List<AddToGroup> getAddToGroups();
-	/**
-	 * Adds new child to the list of add-to-group children.
-	 * @return created child
-	 */
-	AddToGroup addAddToGroup();
-
-        @NotNull
-	@Convert(ActionOrGroupResolveConverter.OnlyActions.class)
-        GenericAttributeValue<ActionOrGroup> getUseShortcutOf();
-
-        @NotNull
-        GenericAttributeValue<String> getKeymap();
-
- 	@NotNull
- 	GenericAttributeValue<String> getProjectType();
+  @NotNull
+  GenericAttributeValue<String> getProjectType();
 }

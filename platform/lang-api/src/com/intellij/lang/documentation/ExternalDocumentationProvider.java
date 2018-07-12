@@ -35,6 +35,7 @@ public interface ExternalDocumentationProvider {
    * @param originalElement the element at caret (on which the action was invoked)
    * @return true if the external documentation action should be enabled, false otherwise.
    */
+  @Deprecated
   boolean hasDocumentationFor(PsiElement element, PsiElement originalElement);
 
   /**

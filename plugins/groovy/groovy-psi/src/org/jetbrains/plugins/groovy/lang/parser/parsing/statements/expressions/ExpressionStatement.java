@@ -14,6 +14,7 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.a
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.arithmetic.UnaryExpressionNotPlusMinus;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary.PrimaryExpression;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets;
 
 /**
  * Main classdef for any general expression parsing
@@ -29,7 +30,7 @@ public class ExpressionStatement {
     final PathExpression.Result result = PathExpression.parsePathExprQualifierForExprStatement(builder, parser);
     if (result != PathExpression.Result.WRONG_WAY &&
         !TokenSets.SEPARATORS.contains(builder.getTokenType()) &&
-        !TokenSets.BINARY_OP_SET.contains(builder.getTokenType()) &&
+        !GroovyTokenSets.BINARY_OPERATORS.contains(builder.getTokenType()) &&
         !TokenSets.POSTFIX_UNARY_OP_SET.contains(builder.getTokenType())) {
       if (result == PathExpression.Result.METHOD_CALL) {
         marker.drop();
@@ -136,7 +137,7 @@ public class ExpressionStatement {
   }
 
   private static IElementType namePartParse(PsiBuilder builder, GroovyParser parser) {
-    if (TokenSets.BINARY_OP_SET.contains(builder.getTokenType())) return GroovyElementTypes.WRONGWAY;
+    if (GroovyTokenSets.BINARY_OPERATORS.contains(builder.getTokenType())) return GroovyElementTypes.WRONGWAY;
     if (TokenSets.KEYWORDS.contains(builder.getTokenType())) return GroovyElementTypes.WRONGWAY;
     final IElementType type = PathExpression.namePartParse(builder, parser);
     if (type == GroovyElementTypes.WRONGWAY && TokenSets.NUMBERS.contains(builder.getTokenType())) {

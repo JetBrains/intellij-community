@@ -19,7 +19,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.HighlighterIteratorWrapper;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -92,6 +91,22 @@ public class SemanticEditorPosition {
     return false;
   }
 
+  /**
+   * Checks if there are line breaks strictly after the given offset till the end of the current element.
+   *
+   * @param offset The offset to search line breaks after.
+   * @return True if there are line breaks after the given offset.
+   */
+  public boolean hasLineBreaksAfter(int offset) {
+    if (!myIterator.atEnd() && offset >= 0) {
+      int offsetAfter = offset + 1;
+      if (offsetAfter < myIterator.getEnd()) {
+        return CharArrayUtil.containLineBreaks(myChars, offsetAfter, myIterator.getEnd());
+      }
+    }
+    return false;
+  }
+
   public boolean isAtMultiline(SyntaxElement... elements) {
     return isAtAnyOf(elements) && CharArrayUtil.containLineBreaks(myChars, myIterator.getStart(), myIterator.getEnd());
   }
@@ -157,18 +172,6 @@ public class SemanticEditorPosition {
     return copyAnd(position -> position.moveToLeftParenthesisBackwardsSkippingNested(leftParenthesis, rightParenthesis));
   }
 
-  /**
-   * @deprecated use {@link #moveToLeftParenthesisBackwardsSkippingNestedWithPredicate(SyntaxElement, SyntaxElement, Predicate)} instead. 
-   */
-  @Deprecated
-  public void moveToLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
-                                                           @NotNull SyntaxElement rightParenthesis,
-                                                           @NotNull Condition<SyntaxElement> terminationCondition) {
-    moveToLeftParenthesisBackwardsSkippingNestedWithPredicate(leftParenthesis,
-                                                              rightParenthesis,
-                                                              self -> terminationCondition.value(self.getCurrElement()));
-  }
-
   public void moveToLeftParenthesisBackwardsSkippingNestedWithPredicate(@NotNull SyntaxElement leftParenthesis,
                                                                         @NotNull SyntaxElement rightParenthesis,
                                                                         @NotNull Predicate<SemanticEditorPosition> terminationCondition) {
@@ -185,18 +188,6 @@ public class SemanticEditorPosition {
       }
       myIterator.retreat();
     }
-  }
-
-  /**
-   * @deprecated use {@link #findLeftParenthesisBackwardsSkippingNestedWithPredicate(SyntaxElement, SyntaxElement, Predicate)} instead. 
-   */
-  @Deprecated 
-  public SemanticEditorPosition findLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
-                                                                           @NotNull SyntaxElement rightParenthesis,
-                                                                           @NotNull Condition<SyntaxElement> terminationCondition) 
-  {
-    return findLeftParenthesisBackwardsSkippingNestedWithPredicate(leftParenthesis, rightParenthesis,
-                                                                   self -> terminationCondition.value(self.getCurrElement()));
   }
 
   public SemanticEditorPosition findLeftParenthesisBackwardsSkippingNestedWithPredicate(
@@ -241,7 +232,6 @@ public class SemanticEditorPosition {
     return myIterator.getStart();
   }
 
-  @SuppressWarnings("unused")
   public boolean isAtAnyOf(@NotNull SyntaxElement... syntaxElements) {
     if (!myIterator.atEnd()) {
       SyntaxElement currElement = map(myIterator.getTokenType());

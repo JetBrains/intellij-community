@@ -104,6 +104,8 @@ public class JsonFoldingBuilder implements FoldingBuilder, DumbAware {
 
   private static boolean spanMultipleLines(@NotNull ASTNode node, @NotNull Document document) {
     final TextRange range = node.getTextRange();
-    return document.getLineNumber(range.getStartOffset()) < document.getLineNumber(range.getEndOffset());
+    int endOffset = range.getEndOffset();
+    return document.getLineNumber(range.getStartOffset())
+           < (endOffset < document.getTextLength() ? document.getLineNumber(endOffset) : document.getLineCount() - 1);
   }
 }

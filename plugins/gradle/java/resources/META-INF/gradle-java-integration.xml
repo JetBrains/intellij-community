@@ -34,7 +34,7 @@
     <projectTaskRunner implementation="org.jetbrains.plugins.gradle.execution.build.GradleProjectTaskRunner" id="gradle" order="first"/>
     <buildProcess.parametersProvider implementation="org.jetbrains.plugins.gradle.compiler.GradleBuildProcessParametersProvider"/>
     <externalSystemNotificationExtension implementation="org.jetbrains.plugins.gradle.service.notification.GradleNotificationJavaExtension"/>
-    <externalSystemOutputParserProvider implementation="org.jetbrains.plugins.gradle.execution.build.output.GradleOutputParserProvider"
+    <externalSystemOutputParserProvider implementation="org.jetbrains.plugins.gradle.execution.build.output.GradleJavaOutputParserProvider"
                                         id="gradle-jvm"/>
     <externalProjectDataService implementation="org.jetbrains.plugins.gradle.service.project.data.BuildClasspathModuleGradleDataService"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleBuildClasspathManager"/>
@@ -48,7 +48,7 @@
     <projectImportBuilder implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportBuilder"/>
     <moduleBuilder builderClass="org.jetbrains.plugins.gradle.service.project.wizard.GradleModuleBuilder"/>
     <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleProjectImportProvider"/>
-    <projectOpenProcessor id="java" implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaProjectOpenProcessor"/>
+    <projectOpenProcessor id="java" order="before gradle" implementation="org.jetbrains.plugins.gradle.service.project.wizard.GradleJavaProjectOpenProcessor"/>
 
     <!--Gradle Test Runner-->
     <testActionProvider implementation="org.jetbrains.plugins.gradle.execution.test.runner.OpenGradleTestResultActionProvider"/>

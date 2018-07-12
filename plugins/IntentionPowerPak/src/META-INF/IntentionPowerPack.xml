@@ -445,11 +445,6 @@
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
-      <className>com.siyeh.ipp.parenthesis.AddClarifyingParenthesesIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.other</categoryKey>
-    </intentionAction>
-    <intentionAction>
       <className>com.siyeh.ipp.unicode.UnicodeUnescapeIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>

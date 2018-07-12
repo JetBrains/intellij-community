@@ -1,10 +1,18 @@
 package com.siyeh.ig.numeric;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.Nullable;
 
-public class ComparisonToNanInspectionTest extends IGInspectionTestCase {
+public class ComparisonToNanInspectionTest extends LightInspectionTestCase {
 
-  public void test() {
-    doTest("com/siyeh/igtest/numeric/comparison_to_nan", new ComparisonToNaNInspection());
+  public void testComparisonToNaN() {
+    doTest();
+  }
+
+  @Nullable
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new ComparisonToNaNInspection();
   }
 }

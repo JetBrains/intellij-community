@@ -55,8 +55,8 @@ open class BrowserLauncherAppless : BrowserLauncher() {
     private val defaultBrowserCommand: List<String>?
       get() {
         return when {
-          SystemInfo.isWindows -> listOf(ExecUtil.getWindowsShellName(), "/c", "start", GeneralCommandLine.inescapableQuote(""))
-          SystemInfo.isMac -> listOf(ExecUtil.getOpenCommandPath())
+          SystemInfo.isWindows -> listOf(ExecUtil.windowsShellName, "/c", "start", GeneralCommandLine.inescapableQuote(""))
+          SystemInfo.isMac -> listOf(ExecUtil.openCommandPath)
           SystemInfo.isUnix && SystemInfo.hasXdgOpen() -> listOf("xdg-open")
           else -> null
         }
@@ -81,10 +81,10 @@ open class BrowserLauncherAppless : BrowserLauncher() {
       }
     }
 
-    fun isOpenCommandUsed(command: GeneralCommandLine) = SystemInfo.isMac && ExecUtil.getOpenCommandPath() == command.exePath
+    fun isOpenCommandUsed(command: GeneralCommandLine): Boolean = SystemInfo.isMac && ExecUtil.openCommandPath == command.exePath
   }
 
-  override fun open(url: String) = openOrBrowse(url, false)
+  override fun open(url: String): Unit = openOrBrowse(url, false)
 
   override fun browse(file: File) {
     var path = file.absolutePath
@@ -220,14 +220,16 @@ open class BrowserLauncherAppless : BrowserLauncher() {
   }
 
   private fun doLaunch(url: String?, command: List<String>, browser: WebBrowser?, project: Project?, additionalParameters: Array<String> = ArrayUtil.EMPTY_STRING_ARRAY, launchTask: (() -> Unit)? = null): Boolean {
-    val commandLine = GeneralCommandLine(command)
-
-    if (url != null) {
-      if (url.startsWith("jar:")) {
-        return false
-      }
-      commandLine.addParameter(url)
+    if (url != null && url.startsWith("jar:")) {
+      return false
     }
+
+    val commandWithUrl = command.toMutableList()
+    if (url != null) {
+      if (browser != null) browser.addOpenUrlParameter(commandWithUrl, url)
+      else commandWithUrl.add(url)
+    }
+    val commandLine = GeneralCommandLine(commandWithUrl)
 
     val browserSpecificSettings = browser?.specificSettings
     if (browserSpecificSettings != null) {

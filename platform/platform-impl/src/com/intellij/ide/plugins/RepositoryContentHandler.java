@@ -38,6 +38,7 @@ class RepositoryContentHandler extends DefaultHandler {
   private static final String SIZE = "size";
   private static final String RATING = "rating";
   private static final String DATE = "date";
+  private static final String TAGS = "tags";
 
   private final StringBuilder currentValue = new StringBuilder();
   private PluginNode currentPlugin;
@@ -139,6 +140,9 @@ class RepositoryContentHandler extends DefaultHandler {
         plugins.add(currentPlugin);
       }
       currentPlugin = null;
+    }
+    else if (qName.equals(TAGS)) {
+      currentPlugin.addTags(currentValueString);
     }
   }
 

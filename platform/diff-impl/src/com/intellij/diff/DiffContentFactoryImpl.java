@@ -47,6 +47,7 @@ import com.intellij.ui.LightColors;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
+import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -135,6 +136,12 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
     return createImpl(project, text, referent.getContentType(), null, referent.getHighlightFile(), false, true);
   }
 
+
+  @NotNull
+  @Override
+  public DocumentContent createEditable(@Nullable Project project, @NotNull String text, @Nullable FileType fileType) {
+    return createImpl(project, text, fileType, null, null, false, false);
+  }
 
   @NotNull
   @Override
@@ -243,11 +250,20 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   public DiffContent createFromBytes(@Nullable Project project,
                                      @NotNull byte[] content,
                                      @NotNull FilePath filePath) throws IOException {
-    if (isBinaryContent(content, filePath.getFileType())) {
-      return createBinaryImpl(project, content, filePath.getFileType(), filePath.getName(), filePath.getVirtualFile());
+    return createFromBytes(project, content, filePath, null);
+  }
+
+  @NotNull
+  @Override
+  public DiffContent createFromBytes(@Nullable Project project,
+                                     @NotNull byte[] content,
+                                     @NotNull FilePath filePath,
+                                     @Nullable Charset defaultCharset) throws IOException {
+    if (defaultCharset == null && isBinaryContent(content, filePath.getFileType())) {
+      return createBinaryImpl(project, content, filePath.getFileType(), filePath, filePath.getVirtualFile());
     }
 
-    return createDocumentFromBytes(project, content, filePath);
+    return createDocumentFromBytes(project, content, filePath, defaultCharset);
   }
 
   @NotNull
@@ -257,7 +273,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                      @NotNull FileType fileType,
                                      @NotNull String fileName) throws IOException {
     if (isBinaryContent(content, fileType)) {
-      return createBinaryImpl(project, content, fileType, fileName, null);
+      return createBinaryImpl(project, content, fileType, VcsUtil.getFilePath(fileName), null);
     }
 
     return createDocumentFromBytes(project, content, fileType, fileName);
@@ -269,7 +285,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                      @NotNull byte[] content,
                                      @NotNull VirtualFile highlightFile) throws IOException {
     if (isBinaryContent(content, highlightFile.getFileType())) {
-      return createBinaryImpl(project, content, highlightFile.getFileType(), highlightFile.getName(), highlightFile);
+      return createBinaryImpl(project, content, highlightFile.getFileType(), VcsUtil.getFilePath(highlightFile), highlightFile);
     }
 
     return createDocumentFromBytes(project, content, highlightFile);
@@ -293,6 +309,15 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   }
 
   @NotNull
+  private static DocumentContent createDocumentFromBytes(@Nullable Project project,
+                                                         @NotNull byte[] content,
+                                                         @NotNull FilePath filePath,
+                                                         @Nullable Charset defaultCharset) {
+    Charset charset = guessCharset(content, filePath.getFileType(), defaultCharset != null ? defaultCharset : filePath.getCharset());
+    return createFromBytesImpl(project, content, filePath.getFileType(), filePath.getName(), filePath.getVirtualFile(), charset);
+  }
+
+  @NotNull
   @Override
   public DocumentContent createDocumentFromBytes(@Nullable Project project, @NotNull byte[] content, @NotNull VirtualFile highlightFile) {
     Charset charset = guessCharset(content, highlightFile);
@@ -305,7 +330,7 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
                                   @NotNull byte[] content,
                                   @NotNull FileType type,
                                   @NotNull String fileName) throws IOException {
-    return createBinaryImpl(project, content, type, fileName, null);
+    return createBinaryImpl(project, content, type, VcsUtil.getFilePath(fileName), null);
   }
 
 
@@ -337,17 +362,17 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
   private static DiffContent createBinaryImpl(@Nullable Project project,
                                               @NotNull byte[] content,
                                               @NotNull FileType type,
-                                              @NotNull String fileName,
+                                              @NotNull FilePath path,
                                               @Nullable VirtualFile highlightFile) throws IOException {
     // workaround - our JarFileSystem and decompilers can't process non-local files
     boolean useTemporalFile = type instanceof ArchiveFileType || BinaryFileTypeDecompilers.INSTANCE.forFileType(type) != null;
 
     VirtualFile file;
     if (useTemporalFile) {
-      file = createTemporalFile(project, "tmp", fileName, content);
+      file = createTemporalFile(project, "tmp", path.getName(), content);
     }
     else {
-      file = new BinaryLightVirtualFile(fileName, type, content);
+      file = new MyBinaryLightVirtualFile(path, type, content);
       file.setWritable(false);
     }
     file.putUserData(DiffUtil.TEMP_FILE_KEY, Boolean.TRUE);
@@ -539,6 +564,21 @@ public class DiffContentFactoryImpl extends DiffContentFactoryEx {
         return CharsetToolkit.UTF8_CHARSET;
       default:
         return null;
+    }
+  }
+
+  private static class MyBinaryLightVirtualFile extends BinaryLightVirtualFile {
+    private final FilePath myPath;
+
+    public MyBinaryLightVirtualFile(@NotNull FilePath path, FileType type, @NotNull byte[] content) {
+      super(path.getName(), type, content);
+      myPath = path;
+    }
+
+    @NotNull
+    @Override
+    public String getPath() {
+      return myPath.getPath();
     }
   }
 }

@@ -34,7 +34,7 @@ ${function.invoke()}
   private fun addClasspath(path: String) = """<classpath path="$path"/>"""
 
 
-  fun build(outputDir: String, classPath: List<String>, sourcePath: String) =
+  fun build(outputDir: String, classPath: List<String>, sourcePath: String): String =
     module {
       modules(outputDir = outputDir) {
         classPath

@@ -74,10 +74,6 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     bootstrapPicoContainer(name);
   }
 
-  protected final void init(@Nullable ProgressIndicator progressIndicator) {
-    init(progressIndicator, null);
-  }
-
   protected final void init(@Nullable ProgressIndicator indicator, @Nullable Runnable componentsRegistered) {
     List<ComponentConfig> componentConfigs = getComponentConfigs(indicator);
     for (ComponentConfig config : componentConfigs) {

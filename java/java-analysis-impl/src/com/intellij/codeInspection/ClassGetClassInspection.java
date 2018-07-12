@@ -11,9 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-/**
- * @author Tagir Valeev
- */
 public class ClassGetClassInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher OBJECT_GET_CLASS =
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "getClass").parameterCount(0);
@@ -54,8 +51,7 @@ public class ClassGetClassInspection extends AbstractBaseJavaLocalInspectionTool
       if (call == null) return;
       PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
       if (qualifier == null) return;
-      CommentTracker ct = new CommentTracker();
-      ct.replaceAndRestoreComments(call, ct.markUnchanged(qualifier));
+      new CommentTracker().replaceAndRestoreComments(call, qualifier);
     }
   }
 

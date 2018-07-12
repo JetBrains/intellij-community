@@ -1,0 +1,244 @@
+foo.abstract
+foo.final
+foo.native
+foo.private
+foo.protected
+foo.public
+foo.static
+foo.strictfp
+foo.synchronized
+foo.transient
+foo.volatile
+foo.def
+
+foo.assert
+foo.break
+foo.continue
+foo.for
+foo.if
+foo.else
+foo.return
+foo.switch
+foo.throw
+foo.try
+foo.while
+
+foo.case
+foo.default
+
+foo.new
+foo.as
+foo.in
+
+foo.class
+foo.interface
+foo.trait
+foo.enum
+
+foo.this
+foo.super
+-----
+Groovy script
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(abstract)('abstract')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(final)('final')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(native)('native')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(private)('private')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(protected)('protected')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(public)('public')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(static)('static')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(strictfp)('strictfp')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(synchronized)('synchronized')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(transient)('transient')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(volatile)('volatile')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(def)('def')
+  PsiElement(new line)('\n\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(assert)('assert')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(break)('break')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(continue)('continue')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(for)('for')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(if)('if')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(else)('else')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(return)('return')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(switch)('switch')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(throw)('throw')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(try)('try')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(while)('while')
+  PsiElement(new line)('\n\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(case)('case')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(default)('default')
+  PsiElement(new line)('\n\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(new)('new')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(as)('as')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(in)('in')
+  PsiElement(new line)('\n\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(class)('class')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(interface)('interface')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(trait)('trait')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(enum)('enum')
+  PsiElement(new line)('\n\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(this)('this')
+  PsiElement(new line)('\n')
+  Reference expression
+    Reference expression
+      PsiElement(identifier)('foo')
+    PsiElement(.)('.')
+    PsiElement(super)('super')

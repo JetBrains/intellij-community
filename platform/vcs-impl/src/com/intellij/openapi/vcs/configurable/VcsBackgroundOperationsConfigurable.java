@@ -44,7 +44,7 @@ public class VcsBackgroundOperationsConfigurable implements SearchableConfigurab
 
   @Override
   public boolean isModified() {
-    return myPanel.isModified();
+    return myPanel != null && myPanel.isModified();
   }
 
   @Nls

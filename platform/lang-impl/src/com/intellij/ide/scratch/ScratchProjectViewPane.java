@@ -14,9 +14,11 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -169,7 +171,12 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     return !isScratchesMergedIntoProjectTab();
   }
 
-  public static class MyStructureProvider implements TreeStructureProvider {
+  @NotNull
+  public static AbstractTreeNode createRootNode(@NotNull Project project, @NotNull ViewSettings settings) {
+    return new MyProjectNode(project, settings);
+  }
+
+  public static class MyStructureProvider implements TreeStructureProvider, DumbAware {
     @NotNull
     @Override
     public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent,
@@ -177,7 +184,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
                                                ViewSettings settings) {
       Project project = parent instanceof ProjectViewProjectNode? parent.getProject() : null;
       if (project != null && isScratchesMergedIntoProjectTab()) {
-        children.add(new MyProjectNode(project, settings));
+        children.add(createRootNode(project, settings));
       }
       return children;
     }
@@ -185,6 +192,14 @@ public class ScratchProjectViewPane extends ProjectViewPane {
     @Nullable
     @Override
     public Object getData(@NotNull Collection<AbstractTreeNode> selected, String dataName) {
+      if (LangDataKeys.PASTE_TARGET_PSI_ELEMENT.is(dataName)) {
+        AbstractTreeNode single = JBIterable.from(selected).single();
+        if (single instanceof MyRootNode) {
+          VirtualFile file = ((MyRootNode)single).getVirtualFile();
+          Project project = single.getProject();
+          return file == null || project == null ? null : PsiManager.getInstance(project).findDirectory(file);
+        }
+      }
       return null;
     }
   }
@@ -197,7 +212,7 @@ public class ScratchProjectViewPane extends ProjectViewPane {
 
     @Override
     protected AbstractTreeNode createRoot(Project project, ViewSettings settings) {
-      return new MyProjectNode(project, settings);
+      return createRootNode(project, settings);
     }
 
     @Nullable

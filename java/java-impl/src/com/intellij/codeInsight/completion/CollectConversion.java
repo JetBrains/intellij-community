@@ -25,10 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.containers.ContainerUtil;
@@ -70,13 +67,12 @@ class CollectConversion {
     if (matchingExpectation == null) return;
 
     for (Pair<String, PsiType> pair : suggestCollectors(Arrays.asList(ExpectedTypesProvider.getExpectedTypes(qualifier, true)), qualifier)) {
-      PsiMethod[] methods = collectors.findMethodsByName(pair.first, false);
-      if (methods.length == 0) continue;
-      
-      JavaMethodCallElement item = new JavaMethodCallElement(methods[0], false, false);
-      item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
-      item.setInferenceSubstitutorFromExpectedType(qualifier, matchingExpectation);
-      consumer.consume(PrioritizedLookupElement.withPriority(item, 1));
+      for (PsiMethod method : collectors.findMethodsByName(pair.first, false)) {
+        JavaMethodCallElement item = new JavaMethodCallElement(method, false, false);
+        item.setAutoCompletionPolicy(AutoCompletionPolicy.NEVER_AUTOCOMPLETE);
+        item.setInferenceSubstitutorFromExpectedType(qualifier, matchingExpectation);
+        consumer.consume(PrioritizedLookupElement.withPriority(item, 1));
+      }
     }
   }
 
@@ -96,16 +92,26 @@ class CollectConversion {
     JavaPsiFacade facade = JavaPsiFacade.getInstance(qualifier.getProject());
     PsiElementFactory factory = facade.getElementFactory();
     GlobalSearchScope scope = qualifier.getResolveScope();
+
+    boolean joiningApplicable = InheritanceUtil.isInheritor(component, CharSequence.class.getName());
+    
     PsiClass list = facade.findClass(JAVA_UTIL_LIST, scope);
     PsiClass set = facade.findClass(JAVA_UTIL_SET, scope);
     PsiClass collection = facade.findClass(JAVA_UTIL_COLLECTION, scope);
-    if (list == null || set == null || collection == null) return Collections.emptyList();
+    PsiClass string = facade.findClass(JAVA_LANG_STRING, scope);
+    if (list == null || set == null || collection == null || string == null) return Collections.emptyList();
 
     PsiType listType = null;
     PsiType setType = null;
     boolean hasIterable = false;
+    boolean hasString = false;
     for (ExpectedTypeInfo info : expectedTypes) {
       PsiType type = info.getDefaultType();
+      if (type.equalsToText(JAVA_LANG_STRING)) {
+        hasString = true;
+        continue;
+      }
+      
       PsiClass expectedClass = PsiUtil.resolveClassInClassTypeOnly(type);
       PsiType expectedComponent = PsiUtil.extractIterableTypeParameter(type, true);
       if (expectedClass == null || expectedComponent == null || !TypeConversionUtil.isAssignable(expectedComponent, component)) continue;
@@ -133,6 +139,9 @@ class CollectConversion {
     }
     if (expectedTypes.isEmpty() || hasIterable) {
       result.add(Pair.create("toCollection", factory.createType(collection, component)));
+    }
+    if ((expectedTypes.isEmpty() || hasString) && joiningApplicable) {
+      result.add(Pair.create("joining", factory.createType(string)));
     }
     return result;
   }
@@ -192,7 +201,7 @@ class CollectConversion {
 
       PsiMethodCallExpression innerCall = (PsiMethodCallExpression)args[0];
       PsiMethod collectorMethod = innerCall.resolveMethod();
-      if (collectorMethod != null && !collectorMethod.getParameterList().isEmpty()) {
+      if (collectorMethod != null && (!collectorMethod.getParameterList().isEmpty() || MethodSignatureUtil.hasOverloads(collectorMethod))) {
         context.getEditor().getCaretModel().moveToOffset(innerCall.getArgumentList().getFirstChild().getTextRange().getEndOffset());
       }
 

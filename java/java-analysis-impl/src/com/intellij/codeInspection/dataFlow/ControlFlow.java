@@ -50,13 +50,7 @@ public class ControlFlow {
   }
 
   public ControlFlowOffset getNextOffset() {
-    final int currentSize = myInstructions.size();
-    return new ControlFlowOffset() {
-      @Override
-      public int getInstructionOffset() {
-        return currentSize;
-      }
-    };
+    return new FixedOffset(myInstructions.size());
   }
 
   public void startElement(PsiElement psiElement) {
@@ -133,6 +127,40 @@ public class ControlFlow {
         return delegate.getInstructionOffset() + delta;
       }
     };
+  }
+
+  public static class FixedOffset extends ControlFlowOffset {
+    private final int myOffset;
+
+    public FixedOffset(int offset) {
+      myOffset = offset;
+    }
+
+    @Override
+    public int getInstructionOffset() {
+      return myOffset;
+    }
+  }
+
+  public static class DeferredOffset extends ControlFlowOffset {
+    private int myOffset = -1;
+
+    @Override
+    public int getInstructionOffset() {
+      if (myOffset == -1) {
+        throw new IllegalStateException("Not set");
+      }
+      return myOffset;
+    }
+
+    public void setOffset(int offset) {
+      if (myOffset != -1) {
+        throw new IllegalStateException("Already set");
+      }
+      else {
+        myOffset = offset;
+      }
+    }
   }
 
 }

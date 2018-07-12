@@ -298,7 +298,6 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     @SuppressWarnings("deprecation")
     @Override
     public int getUniqueID() {
-      //noinspection deprecation
       return myConfiguration.getUniqueID();
     }
 

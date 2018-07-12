@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -82,17 +83,17 @@ class DfaVariableState {
   }
 
   @NotNull
-  Nullness getNullability() {
-    return NullnessUtil.fromBoolean(myFactMap.get(DfaFactType.CAN_BE_NULL));
+  Nullability getNullability() {
+    return NullabilityUtil.fromBoolean(myFactMap.get(DfaFactType.CAN_BE_NULL));
   }
 
   public boolean isNotNull() {
-    return getNullability() == Nullness.NOT_NULL;
+    return getNullability() == Nullability.NOT_NULL;
   }
 
   @NotNull
   DfaVariableState withNotNull() {
-    return getNullability() == Nullness.NOT_NULL ? this : withoutFact(DfaFactType.CAN_BE_NULL);
+    return getNullability() == Nullability.NOT_NULL ? this : withoutFact(DfaFactType.CAN_BE_NULL);
   }
 
   @NotNull

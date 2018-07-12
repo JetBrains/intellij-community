@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.inference;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.Mutability;
-import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.RecursionManager;
@@ -20,13 +20,11 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.ANY_VALUE;
-import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint.NULL_VALUE;
+import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.NULL_VALUE;
 
 /**
  * A facade for all inference algorithms which work on Java source code (Light AST) and cache results in the index.
@@ -36,58 +34,58 @@ public class JavaSourceInference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.inference.JavaSourceInference");
 
   /**
-   * Infer method return type nullity
+   * Infer method return type nullability
    *
    * @param method method to analyze
-   * @return inferred return type nullity; {@link Nullness#UNKNOWN} if cannot be inferred or non-applicable
+   * @return inferred return type nullability; {@link Nullability#UNKNOWN} if cannot be inferred or non-applicable
    */
   @NotNull
-  public static Nullness inferNullity(PsiMethodImpl method) {
+  public static Nullability inferNullability(PsiMethodImpl method) {
     if (!InferenceFromSourceUtil.shouldInferFromSource(method)) {
-      return Nullness.UNKNOWN;
+      return Nullability.UNKNOWN;
     }
 
     PsiType type = method.getReturnType();
     if (type == null || type instanceof PsiPrimitiveType) {
-      return Nullness.UNKNOWN;
+      return Nullability.UNKNOWN;
     }
 
     return CachedValuesManager.getCachedValue(method, () -> {
       MethodData data = ContractInferenceIndexKt.getIndexedData(method);
       MethodReturnInferenceResult result = data == null ? null : data.getMethodReturn();
-      Nullness nullness = result == null ? null : RecursionManager
-        .doPreventingRecursion(method, true, () -> result.getNullness(method, data.methodBody(method)));
-      if (nullness == null) nullness = Nullness.UNKNOWN;
-      return CachedValueProvider.Result.create(nullness, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      Nullability nullability = result == null ? null : RecursionManager
+        .doPreventingRecursion(method, true, () -> result.getNullability(method, data.methodBody(method)));
+      if (nullability == null) nullability = Nullability.UNKNOWN;
+      return CachedValueProvider.Result.create(nullability, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }
 
   /**
-   * Infer method parameter nullity
+   * Infer method parameter nullability
    *
    * @param parameter parameter to analyze
-   * @return inferred parameter nullity; {@link Nullness#UNKNOWN} if cannot be inferred or non-applicable
+   * @return inferred parameter nullability; {@link Nullability#UNKNOWN} if cannot be inferred or non-applicable
    */
-  public static Nullness inferNullity(@NotNull PsiParameter parameter) {
-    if (!parameter.isPhysical() || parameter.getType() instanceof PsiPrimitiveType) return Nullness.UNKNOWN;
+  public static Nullability inferNullability(@NotNull PsiParameter parameter) {
+    if (!parameter.isPhysical() || parameter.getType() instanceof PsiPrimitiveType) return Nullability.UNKNOWN;
     PsiParameterList parent = ObjectUtils.tryCast(parameter.getParent(), PsiParameterList.class);
-    if (parent == null) return Nullness.UNKNOWN;
+    if (parent == null) return Nullability.UNKNOWN;
     PsiMethodImpl method = ObjectUtils.tryCast(parent.getParent(), PsiMethodImpl.class);
-    if (method == null || !InferenceFromSourceUtil.shouldInferFromSource(method)) return Nullness.UNKNOWN;
+    if (method == null || !InferenceFromSourceUtil.shouldInferFromSource(method)) return Nullability.UNKNOWN;
 
     return CachedValuesManager.getCachedValue(parameter, () -> {
-      Nullness nullness = Nullness.UNKNOWN;
+      Nullability nullability = Nullability.UNKNOWN;
       MethodData data = ContractInferenceIndexKt.getIndexedData(method);
       if (data != null) {
         BitSet notNullParameters = data.getNotNullParameters();
         if (!notNullParameters.isEmpty()) {
           int index = ArrayUtil.indexOf(parent.getParameters(), parameter);
           if (notNullParameters.get(index)) {
-            nullness = Nullness.NOT_NULL;
+            nullability = Nullability.NOT_NULL;
           }
         }
       }
-      return CachedValueProvider.Result.create(nullness, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      return CachedValueProvider.Result.create(nullability, method, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
     });
   }
 
@@ -169,7 +167,7 @@ public class JavaSourceInference {
     if (returnType != null && !(returnType instanceof PsiPrimitiveType)) {
       contracts = boxReturnValues(contracts);
     }
-    List<StandardMethodContract> compatible = ContainerUtil.filter(contracts, contract -> isContractCompatibleWithMethod(method, returnType, contract));
+    List<StandardMethodContract> compatible = ContainerUtil.filter(contracts, contract -> isContractCompatibleWithMethod(method, contract));
     if (compatible.size() > MAX_CONTRACT_COUNT) {
       LOG.debug("Too many contracts for " + PsiUtil.getMemberQualifiedName(method) + ", shrinking the list");
       return compatible.subList(0, MAX_CONTRACT_COUNT);
@@ -177,16 +175,16 @@ public class JavaSourceInference {
     return compatible;
   }
 
-  private static boolean isContractCompatibleWithMethod(@NotNull PsiMethod method, PsiType returnType, StandardMethodContract contract) {
+  private static boolean isContractCompatibleWithMethod(@NotNull PsiMethod method, StandardMethodContract contract) {
     if (hasContradictoryExplicitParameterNullity(method, contract)) return false;
     if (isReturnNullitySpecifiedExplicitly(method, contract)) return false;
     if (isContradictingExplicitNullableReturn(method, contract)) return false;
-    return contract.getReturnValue().isReturnTypeCompatible(returnType);
+    return contract.getReturnValue().isMethodCompatible(method);
   }
 
   private static boolean hasContradictoryExplicitParameterNullity(@NotNull PsiMethod method, StandardMethodContract contract) {
-    for (int i = 0; i < contract.arguments.length; i++) {
-      if (contract.arguments[i] == NULL_VALUE && NullableNotNullManager.isNotNull(method.getParameterList().getParameters()[i])) {
+    for (int i = 0; i < contract.getParameterCount(); i++) {
+      if (contract.getParameterConstraint(i) == NULL_VALUE && NullableNotNullManager.isNotNull(method.getParameterList().getParameters()[i])) {
         return true;
       }
     }
@@ -194,13 +192,12 @@ public class JavaSourceInference {
   }
 
   private static boolean isContradictingExplicitNullableReturn(@NotNull PsiMethod method, StandardMethodContract contract) {
-    return contract.getReturnValue().isNotNull() &&
-           Arrays.stream(contract.arguments).allMatch(c -> c == ANY_VALUE) &&
+    return contract.getReturnValue().isNotNull() && contract.isTrivial() &&
            NullableNotNullManager.getInstance(method.getProject()).isNullable(method, false);
   }
 
   private static boolean isReturnNullitySpecifiedExplicitly(@NotNull PsiMethod method, StandardMethodContract contract) {
-    if (!contract.getReturnValue().isNotNull() && !contract.getReturnValue().isNull()) {
+    if (!contract.getReturnValue().equals(ContractReturnValue.returnNotNull()) && !contract.getReturnValue().isNull()) {
       return false; // spare expensive nullity check
     }
     return NullableNotNullManager.getInstance(method.getProject()).isNotNull(method, false);
@@ -210,7 +207,7 @@ public class JavaSourceInference {
   private static List<StandardMethodContract> boxReturnValues(List<StandardMethodContract> contracts) {
     return ContainerUtil.mapNotNull(contracts, contract -> {
       if (contract.getReturnValue().isBoolean()) {
-        return new StandardMethodContract(contract.arguments, ContractReturnValue.returnNotNull());
+        return contract.withReturnValue(ContractReturnValue.returnNotNull());
       }
       return contract;
     });

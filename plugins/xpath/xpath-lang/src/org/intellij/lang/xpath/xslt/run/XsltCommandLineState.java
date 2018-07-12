@@ -28,12 +28,12 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -223,7 +223,9 @@ public class XsltCommandLineState extends CommandLineState {
                                 final VirtualFile fileByUrl = VirtualFileManager.getInstance().refreshAndFindFileByUrl(url.replace(File.separatorChar, '/'));
                                 if (fileByUrl != null) {
                                     fileByUrl.refresh(false, false);
-                                    new OpenFileDescriptor(myXsltRunConfiguration.getProject(), fileByUrl).navigate(true);
+                                  PsiNavigationSupport.getInstance()
+                                                      .createNavigatable(myXsltRunConfiguration.getProject(),
+                                                                         fileByUrl, -1).navigate(true);
                                     return;
                                 }
                             }

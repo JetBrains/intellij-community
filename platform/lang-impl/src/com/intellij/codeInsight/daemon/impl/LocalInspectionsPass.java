@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.Keymap;
@@ -144,7 +145,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         if (descriptor.getHighlightType() == ProblemHighlightType.INFORMATION) {
           if (ourToolsWithInformationProblems.add(shortName)) {
             LOG.error("Tool '" + shortName + "' registers INFORMATION level problem in batch mode on " + getFile() + ". " +
-                      "INFORMATION level fixes could change semantics and should not be used in batch transformations");
+                      "INFORMATION level 'warnings' are invisible in the editor and should not become visible in batch mode. " +
+                      "Moreover, cause INFORMATION level fixes act more like intention actions, they could e.g. change semantics and " +
+                      "thus should not be suggested for batch transformations");
           }
           continue;
         }
@@ -353,7 +356,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     boolean isFileLevel = psiElement instanceof PsiFile && textRange.equals(psiElement.getTextRange());
 
     final HighlightSeverity severity = highlightInfoType.getSeverity(psiElement);
-    TextAttributes attributes = mySeverityRegistrar.getTextAttributesBySeverity(severity);
+    TextAttributesKey attributesKey = ((ProblemDescriptorBase)problemDescriptor).getEnforcedTextAttributes();
+    TextAttributes attributes = attributesKey == null || getColorsScheme() == null
+                                ? mySeverityRegistrar.getTextAttributesBySeverity(severity)
+                                : getColorsScheme().getAttributes(attributesKey);
     HighlightInfo.Builder b = HighlightInfo.newHighlightInfo(highlightInfoType)
                               .range(psiElement, textRange.getStartOffset(), textRange.getEndOffset())
                               .description(message)
@@ -410,7 +416,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }, myProject.getDisposed());
 
-  private final Set<Pair<TextRange, String>> emptyActionRegistered = Collections.synchronizedSet(new THashSet<Pair<TextRange, String>>());
+  private final Set<Pair<TextRange, String>> emptyActionRegistered = Collections.synchronizedSet(new THashSet<>());
 
   private void addDescriptorIncrementally(@NotNull final ProblemDescriptor descriptor,
                                           @NotNull final LocalInspectionToolWrapper tool,
@@ -723,12 +729,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       ProgressManager.checkCanceled();
       final LocalInspectionToolWrapper wrapper = pair.getKey();
       final LocalInspectionTool tool = wrapper.getTool();
-      if (host != null && myIgnoreSuppressed && SuppressionUtil.inspectionResultSuppressed(host, tool)) {
-        continue;
-      }
       ProblemsHolder holder = new ProblemsHolder(iManager, injectedPsi, isOnTheFly) {
         @Override
         public void registerProblem(@NotNull ProblemDescriptor descriptor) {
+          if (host != null && myIgnoreSuppressed && SuppressionUtil.inspectionResultSuppressed(host, tool)) {
+            return;
+          }
           super.registerProblem(descriptor);
           if (isOnTheFly && inVisibleRange) {
             addDescriptorIncrementally(descriptor, wrapper, indicator);

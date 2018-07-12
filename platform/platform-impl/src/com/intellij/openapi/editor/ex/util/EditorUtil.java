@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex.util;
 
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.Dumpable;
-import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
@@ -13,8 +13,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.event.EditorFactoryAdapter;
-import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -169,11 +167,11 @@ public final class EditorUtil {
     CharSequence editorInfo = "editor's class: " + editor.getClass()
                               + ", all soft wraps: " + editor.getSoftWrapModel().getSoftWrapsForRange(0, document.getTextLength())
                               + ", fold regions: " + Arrays.toString(editor.getFoldingModel().getAllFoldRegions());
-    LogMessageEx.error(LOG, "Can't calculate last visual column", String.format(
+    LOG.error("Can't calculate last visual column", new Throwable(), AttachmentFactory.createContext(String.format(
       "Target visual line: %d, mapped logical line: %d, visual lines range for the mapped logical line: [%s]-[%s], soft wraps for "
       + "the target logical line: %s. Editor info: %s",
       line, resultLogLine, resVisStart, resVisEnd, softWraps, editorInfo
-    ));
+    )));
 
     return resVisEnd.column;
   }
@@ -276,9 +274,8 @@ public final class EditorUtil {
         else {
           documentInfo = "Text holder class: " + text.getClass();
         }
-        LogMessageEx.error(
-          LOG, "detected incorrect offset -> column number calculation",
-          "start: " + start + ", given offset: " + offset+", given tab size: " + tabSize + ". "+documentInfo+ editorInfo);
+        LOG.error("detected incorrect offset -> column number calculation", new Throwable(), AttachmentFactory.createContext(
+          "start: " + start + ", given offset: " + offset + ", given tab size: " + tabSize + ". " + documentInfo + editorInfo));
       }
     }
 
@@ -744,14 +741,8 @@ public final class EditorUtil {
     // for injected editors disposal will happen only when host editor is disposed,
     // but this seems to be the best we can do (there are no notifications on disposal of injected editor)
     Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
-    EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryAdapter() {
-      @Override
-      public void editorReleased(@NotNull EditorFactoryEvent event) {
-        if (event.getEditor() == hostEditor) {
-          Disposer.dispose(disposable);
-        }
-      }
-    }, disposable);
+    if (hostEditor instanceof EditorImpl) Disposer.register(((EditorImpl)hostEditor).getDisposable(), disposable);
+    else LOG.warn("Cannot watch for disposal of " + editor);
   }
 
   public static void runBatchFoldingOperationOutsideOfBulkUpdate(@NotNull Editor editor, @NotNull Runnable operation) {
@@ -809,12 +800,20 @@ public final class EditorUtil {
    * Performs inlay-aware conversion of offset to visual position in editor. If there are inlays at given position, their
    * 'related to preceding text' property will be taken account to determine resulting position. Specifically, resulting position will
    * match caret's visual position if it's moved to the given offset using {@link Caret#moveToOffset(int)} call.
+   * <p>
+   * NOTE: if editor is an {@link EditorWindow}, corresponding offset is treated as an offset in injected editor, but returned position
+   * is always related to host editor.
    *
    * @see Inlay#isRelatedToPrecedingText()
    */
   @NotNull
   public static VisualPosition inlayAwareOffsetToVisualPosition(@NotNull Editor editor, int offset) {
-    VisualPosition pos = editor.logicalToVisualPosition(editor.offsetToLogicalPosition(offset));
+    LogicalPosition logicalPosition = editor.offsetToLogicalPosition(offset);
+    if (editor instanceof EditorWindow) {
+      logicalPosition = ((EditorWindow)editor).injectedToHost(logicalPosition);
+      editor = ((EditorWindow)editor).getDelegate();
+    }
+    VisualPosition pos = editor.logicalToVisualPosition(logicalPosition);
     Inlay inlay;
     while ((inlay = editor.getInlayModel().getInlineElementAt(pos)) != null) {
       if (inlay.isRelatedToPrecedingText()) break;

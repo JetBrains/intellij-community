@@ -82,7 +82,10 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
       if (node == null) return;
 
       myState.setLastEditedConfigurable(getNodePathString(node)); //survive after rename;
-      myDetails.setText(node.getConfigurable().getBannerSlogan());
+      NamedConfigurable configurable = node.getConfigurable();
+      if (configurable != null) {
+        myDetails.setText(configurable.getBannerSlogan());
+      }
       node.reloadNode((DefaultTreeModel)myTree.getModel());
       fireItemsChangedExternally();
     }
@@ -654,15 +657,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
 
   protected void initializeConfigurable(final NamedConfigurable configurable) {
     myInitializedConfigurables.add(configurable);
-  }
-
-  /**
-   * @deprecated use {@link #checkForEmptyAndDuplicatedNames(String, String, Class)} instead
-   */
-  protected void checkApply(Set<MyNode> rootNodes, String prefix, String title) throws ConfigurationException {
-    for (MyNode rootNode : rootNodes) {
-      checkForEmptyAndDuplicatedNames(rootNode, prefix, title, NamedConfigurable.class, false);
-    }
   }
 
   protected final void checkForEmptyAndDuplicatedNames(String prefix, String title,

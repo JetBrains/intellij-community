@@ -716,7 +716,7 @@ public class BuildManager implements Disposable {
     // the build will be aware of all events that have happened before this request
     runCommand(() -> {
       final Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler> preloaded = takePreloadedProcess(projectPath);
-      final RequestFuture<PreloadedProcessMessageHandler> preloadedFuture = preloaded != null? preloaded.first : null;
+      final RequestFuture<PreloadedProcessMessageHandler> preloadedFuture = Pair.getFirst(preloaded);
       final boolean usingPreloadedProcess = preloadedFuture != null;
 
       final UUID sessionId;

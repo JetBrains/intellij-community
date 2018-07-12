@@ -33,6 +33,7 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
     myBuilders = builders;
   }
 
+  @Override
   @NotNull
   public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement root, @NotNull Document document, boolean quick) {
     final List<FoldingDescriptor> descriptors = new ArrayList<>();
@@ -64,6 +65,7 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements Possibl
     return !mayUseBuilder(node, builder) ? node.getText() : builder.getPlaceholderText(node);
   }
 
+  @Override
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
     final FoldingBuilder builder = node.getUserData(FOLDING_BUILDER);
     return mayUseBuilder(node, builder) && builder.isCollapsedByDefault(node);

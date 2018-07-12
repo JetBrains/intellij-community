@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl.view;
 
 import com.intellij.lang.CodeDocumentationAwareCommenter;
@@ -18,6 +18,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.BitUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -196,9 +197,10 @@ abstract class LineLayout {
   private static String getLineCommentPrefix(IElementType token) {
     if (token == null) return null;
     Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(token.getLanguage());
-    return commenter instanceof CodeDocumentationAwareCommenter &&
-           token.equals(((CodeDocumentationAwareCommenter)commenter).getLineCommentTokenType()) ?
-           commenter.getLineCommentPrefix() : null;
+    if (!(commenter instanceof CodeDocumentationAwareCommenter) ||
+        !token.equals(((CodeDocumentationAwareCommenter)commenter).getLineCommentTokenType())) return null;
+    String prefix = commenter.getLineCommentPrefix();
+    return prefix == null ? null : StringUtil.trimTrailing(prefix); // some commenters (e.g. for Python) include space in comment prefix
   }
 
   private static boolean distinctTokens(@Nullable IElementType token1, @Nullable IElementType token2) {
@@ -568,7 +570,7 @@ abstract class LineLayout {
       int start = Math.max(startOffset, targetStartOffset);
       int end = Math.min(endOffset, targetEndOffset);
       BidiRun subRun = new BidiRun(level, start, end);
-      List<Chunk> subChunks = new ArrayList<>();
+      List<Chunk> subChunks = new SmartList<>();
       Document document = view.getEditor().getDocument();
       for (Chunk chunk : getChunks(document.getImmutableCharSequence(), document.getLineStartOffset(line))) {
         if (chunk.endOffset <= start) continue;

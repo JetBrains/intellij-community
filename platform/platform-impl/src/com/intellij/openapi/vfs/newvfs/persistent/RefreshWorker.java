@@ -94,9 +94,7 @@ public class RefreshWorker {
       Pair<NewVirtualFile, FileAttributes> pair = myRefreshQueue.pullFirst();
       NewVirtualFile file = pair.first;
       boolean fileDirty = file.isDirty();
-      if (LOG.isTraceEnabled()) {
-        LOG.trace("file=" + file + " dirty=" + fileDirty);
-      }
+      if (LOG.isTraceEnabled()) LOG.trace("file=" + file + " dirty=" + fileDirty);
       if (!fileDirty) continue;
 
       checkCancelled(file);
@@ -201,9 +199,7 @@ public class RefreshWorker {
       // generating events unless a directory was changed in between
       boolean hasEvents = ReadAction.compute(() -> {
         if (!Arrays.equals(currentNames, persistence.list(dir)) || !Arrays.equals(children, dir.getChildren())) {
-          if (LOG.isTraceEnabled()) {
-            LOG.trace("retry: " + dir);
-          }
+          if (LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
           return false;
         }
 
@@ -218,7 +214,7 @@ public class RefreshWorker {
             scheduleCreation(dir, name, childAttributes.isDirectory());
           }
           else {
-            LOG.warn("[+] fs=" + fs + " dir=" + dir + " name=" + name);
+            if (LOG.isTraceEnabled()) LOG.trace("[+] fs=" + fs + " dir=" + dir + " name=" + name);
           }
         }
 
@@ -230,7 +226,7 @@ public class RefreshWorker {
             checkAndScheduleFileNameChange(actualNames, child);
           }
           else {
-            LOG.warn("[x] fs=" + fs + " dir=" + dir + " name=" + child.getName());
+            if (LOG.isTraceEnabled()) LOG.warn("[x] fs=" + fs + " dir=" + dir + " name=" + child.getName());
             scheduleDeletion(child);
           }
         }
@@ -277,9 +273,7 @@ public class RefreshWorker {
       // generating events unless a directory was changed in between
       boolean hasEvents = ReadAction.compute(() -> {
         if (!cached.equals(dir.getCachedChildren()) || !wanted.equals(dir.getSuspiciousNames())) {
-          if (LOG.isTraceEnabled()) {
-            LOG.trace("retry: " + dir);
-          }
+          if (LOG.isTraceEnabled()) LOG.trace("retry: " + dir);
           return false;
         }
 

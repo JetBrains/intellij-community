@@ -19,9 +19,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 /**
  * @author peter
@@ -44,15 +45,14 @@ public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfoBase i
     myMember = SmartPointerManager.getInstance(member.getProject()).createSmartPsiElementPointer(member);
   }
 
-  @NotNull
   @Override
   public final T getPsiMember() {
-    return ObjectUtils.assertNotNull(myMember.getElement());
+    return myMember.getElement();
   }
 
   @Override
   public void insert(@NotNull final PsiClass aClass, @Nullable PsiElement anchor, boolean before) throws IncorrectOperationException {
-    T member = getPsiMember();
+    T member = Objects.requireNonNull(getPsiMember());
     final PsiMember existingMember;
     if (member instanceof PsiField) {
       existingMember = aClass.findFieldByName(member.getName(), false);

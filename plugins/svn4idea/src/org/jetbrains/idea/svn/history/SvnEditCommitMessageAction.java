@@ -1,13 +1,13 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -32,7 +32,7 @@ import org.jetbrains.idea.svn.properties.PropertyValue;
 
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
-public class SvnEditCommitMessageAction extends AnAction {
+public class SvnEditCommitMessageAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dc = e.getDataContext();

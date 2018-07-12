@@ -45,9 +45,9 @@ open class FileBasedStorage(file: Path,
   @Volatile private var cachedVirtualFile: VirtualFile? = null
 
   protected var lineSeparator: LineSeparator? = null
-  protected var blockSavingTheContent = false
+  protected var blockSavingTheContent: Boolean = false
 
-  @Volatile var file = file
+  @Volatile var file: Path = file
     private set
 
   init {
@@ -67,7 +67,7 @@ open class FileBasedStorage(file: Path,
     }
   }
 
-  override fun createSaveSession(states: StateMap) = FileSaveSession(states, this)
+  override fun createSaveSession(states: StateMap): FileSaveSession = FileSaveSession(states, this)
 
   protected open class FileSaveSession(storageData: StateMap, storage: FileBasedStorage) :
     XmlElementStorage.XmlElementStorageSaveSession<FileBasedStorage>(storageData, storage) {
@@ -192,7 +192,7 @@ open class FileBasedStorage(file: Path,
     }
   }
 
-  override fun toString() = file.systemIndependentPath
+  override fun toString(): String = file.systemIndependentPath
 }
 
 internal fun writeFile(file: Path?,

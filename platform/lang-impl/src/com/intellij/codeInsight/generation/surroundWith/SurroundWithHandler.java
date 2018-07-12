@@ -64,10 +64,9 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
     invoke(project, editor, file, null);
   }
 
-  @Nullable
   @Override
-  public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
-    return null;
+  public boolean startInWriteAction() {
+    return false;
   }
 
   public static void invoke(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file, Surrounder surrounder) {

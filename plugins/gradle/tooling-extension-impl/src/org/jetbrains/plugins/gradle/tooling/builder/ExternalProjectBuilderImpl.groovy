@@ -38,8 +38,8 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
-import org.jetbrains.plugins.gradle.tooling.util.DependencyResolverImpl
 import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
+import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
 /**
  * @author Vladislav.Soroka
@@ -136,7 +136,7 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     Map<String, Set<File>> artifactsByConfiguration = new HashMap<String, Set<File>>()
     for (Map.Entry<String, Configuration> configurationEntry : configurationsByName.entrySet()) {
       Set<File> files = configurationEntry.getValue().getAllArtifacts().getFiles().getFiles()
-      artifactsByConfiguration.put(configurationEntry.getKey(), files)
+      artifactsByConfiguration.put(configurationEntry.getKey(), new LinkedHashSet<>(files))
     }
     externalProject.setArtifactsByConfiguration(artifactsByConfiguration)
   }

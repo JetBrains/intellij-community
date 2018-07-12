@@ -4,12 +4,15 @@ package org.jetbrains.plugins.github.api
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.ui.Messages
 import com.intellij.util.ThrowableConvertor
+import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
+import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
 import org.jetbrains.plugins.github.exceptions.GithubOperationCanceledException
 import org.jetbrains.plugins.github.exceptions.GithubTwoFactorAuthenticationException
 import org.jetbrains.plugins.github.util.GithubAuthData
@@ -27,23 +30,36 @@ class GithubApiTaskExecutor(private val authenticationManager: GithubAuthenticat
 
   /**
    * Run github task using saved OAuth token to authenticate
+   * If [silentFailOnMissingToken] is true - throw [GithubMissingTokenException] when token is missing, otherwise - ask user to provide one
    * TODO: Share connection between requests
    */
+  @CalledInBackground
+  @JvmOverloads
   @Throws(IOException::class)
-  fun <T> execute(indicator: ProgressIndicator, account: GithubAccount, task: GithubTask<T>): T {
-    return CancellableGithubConnection(indicator,
-                                       GithubAuthData.createTokenAuth(account.server.toString(),
-                                                                      authenticationManager.getTokenForAccount(account))).use(task::convert)
+  fun <T> execute(indicator: ProgressIndicator, account: GithubAccount, task: GithubTask<T>, silentFailOnMissingToken: Boolean = false): T {
+    val token = if (silentFailOnMissingToken) {
+      authenticationManager.getTokenForAccount(account) ?: throw GithubMissingTokenException(account)
+    }
+    else {
+      authenticationManager.getOrRequestTokenForAccount(account, modalityStateSupplier = { indicator.modalityState })
+      ?: throw ProcessCanceledException(GithubMissingTokenException(account))
+    }
+
+    return CancellableGithubConnection(indicator, GithubAuthData.createTokenAuth(account.server.toString(), token))
+      .apply { setAccount(account) }
+      .use(task::convert)
   }
 
+  @CalledInBackground
   @TestOnly
   @Throws(IOException::class)
-  fun <T> execute(account: GithubAccount, task: GithubTask<T>): T = execute(EmptyProgressIndicator(), account, task)
+  fun <T> execute(account: GithubAccount, task: GithubTask<T>): T = execute(EmptyProgressIndicator(), account, task, true)
 
   companion object {
     /**
      * Run one-time github task without authentication
      */
+    @CalledInBackground
     @JvmStatic
     @Throws(IOException::class)
     fun <T> execute(indicator: ProgressIndicator, server: GithubServerPath, task: GithubTask<T>): T {
@@ -53,6 +69,7 @@ class GithubApiTaskExecutor(private val authenticationManager: GithubAuthenticat
     /**
      * Run one-time github task using OAuth token to authenticate
      */
+    @CalledInBackground
     @JvmStatic
     @Throws(IOException::class)
     fun <T> execute(indicator: ProgressIndicator, server: GithubServerPath, token: String, task: GithubTask<T>): T {
@@ -62,6 +79,7 @@ class GithubApiTaskExecutor(private val authenticationManager: GithubAuthenticat
     /**
      * Run one-time github task with login and password
      */
+    @CalledInBackground
     @JvmStatic
     @Throws(IOException::class)
     fun <T> execute(indicator: ProgressIndicator, server: GithubServerPath, login: String, password: CharArray, task: GithubTask<T>): T {
@@ -82,10 +100,10 @@ class GithubApiTaskExecutor(private val authenticationManager: GithubAuthenticat
                                      connection: GithubConnection): GithubAuthData {
       GithubApiUtil.askForTwoFactorCodeSMS(connection)
       val code = invokeAndWaitIfNeed(indicator.modalityState) {
-          Messages.showInputDialog(null,
-                                   "Authentication Code",
-                                   "Github Two-Factor Authentication",
-                                   null)
+        Messages.showInputDialog(null,
+                                 "Authentication Code",
+                                 "Github Two-Factor Authentication",
+                                 null)
       }
 
       if (code == null) throw GithubOperationCanceledException("Can't get two factor authentication code")

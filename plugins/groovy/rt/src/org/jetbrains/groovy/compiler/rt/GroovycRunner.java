@@ -33,52 +33,8 @@ import java.util.*;
  */
 public class GroovycRunner {
 
-  private GroovycRunner() {
-  }
-
-  /*
-  private static Controller initController() {
-    if (!"true".equals(System.getProperty("profile.groovy.compiler"))) {
-      return null;
-    }
-
-    try {
-      return new Controller();
-    }
-    catch (Exception ex) {
-      ex.printStackTrace();
-      return null;
-    }
-  }
-  */
-
-
   public static void main(String[] args) {
-    /*
-    if (ourController != null) {
-      try {
-        ourController.startCPUProfiling(ProfilingModes.CPU_SAMPLING, null);
-      }
-      catch (Exception e) {
-        e.printStackTrace();
-      }
-    }
-    */
-
     System.exit(intMain(args));
-    /*
-    finally {
-      if (ourController != null) {
-        try {
-          ourController.captureSnapshot(ProfilingModes.SNAPSHOT_WITHOUT_HEAP);
-          ourController.stopCPUProfiling();
-        }
-        catch (Exception e) {
-          e.printStackTrace();
-        }
-      }
-    }
-    */
   }
 
   public static int intMain(String[] args) {
@@ -97,10 +53,11 @@ public class GroovycRunner {
 
     String configScript = System.getProperty(GroovyRtConstants.GROOVYC_CONFIG_SCRIPT);
 
-    return intMain2(indy, optimize, forStubs, argPath, configScript, null);
+    return intMain2(indy, optimize, forStubs, argPath, configScript, null, null);
   }
 
-  public static int intMain2(boolean indy, boolean optimize, boolean forStubs, String argPath, String configScript, Queue mailbox) {
+  public static int intMain2(boolean indy, boolean optimize, boolean forStubs, String argPath, String configScript,
+                             @Nullable String targetBytecode, @Nullable Queue mailbox) {
     if (indy) {
       System.setProperty("groovy.target.indy", "true");
     }
@@ -130,8 +87,8 @@ public class GroovycRunner {
 
     try {
       Class<?> aClass = Class.forName("org.jetbrains.groovy.compiler.rt.DependentGroovycRunner", true, loader);
-      Method method = aClass.getDeclaredMethod("runGroovyc", boolean.class, String.class, String.class, Queue.class);
-      method.invoke(null, Boolean.valueOf(forStubs), argPath, configScript, mailbox);
+      Method method = aClass.getDeclaredMethod("runGroovyc", boolean.class, String.class, String.class, String.class, Queue.class);
+      method.invoke(null, Boolean.valueOf(forStubs), argPath, configScript, targetBytecode, mailbox);
     }
     catch (Throwable e) {
       //noinspection InstanceofCatchParameter

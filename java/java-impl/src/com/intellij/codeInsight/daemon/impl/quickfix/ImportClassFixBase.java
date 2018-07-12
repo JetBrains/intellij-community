@@ -121,12 +121,15 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
       if (qName != null) { //filter local classes
         if (qName.indexOf('.') == -1 || !PsiNameHelper.getInstance(project).isQualifiedName(qName)) continue; //do not show classes from default or invalid package
         if (qName.endsWith(name) && (file == null || ImportFilter.shouldImport(file, qName))) {
-          if (isAccessible(aClass, myElement)) {
-            classList.add(aClass);
-          }
+          classList.add(aClass);
         }
       }
     }
+
+    boolean anyAccessibleFound = classList.stream().anyMatch(aClass -> isAccessible(aClass, myElement));
+    PsiManager manager = myElement.getManager();
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
+    classList.removeIf(aClass -> (anyAccessibleFound || !manager.isInProject(aClass) || facade.arePackagesTheSame(aClass, myElement)) && !isAccessible(aClass, myElement));
 
     if (acceptWrongNumberOfTypeParams && referenceHasTypeParameters) {
       final List<PsiClass> candidates = new ArrayList<>();

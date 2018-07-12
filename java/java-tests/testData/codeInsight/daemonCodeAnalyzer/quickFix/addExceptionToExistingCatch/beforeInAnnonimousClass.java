@@ -1,4 +1,4 @@
-// "Add exception to existing catch clause" "true"
+// "Add exception to existing catch clause" "false"
 import java.io.FileInputStream;
 
 class Test {

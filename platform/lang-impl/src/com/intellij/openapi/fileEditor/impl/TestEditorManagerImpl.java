@@ -30,7 +30,6 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
 
@@ -271,7 +270,7 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
 
       @Override
       @NotNull
-      public FileEditorState readState(@Nullable Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+      public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
         throw new IncorrectOperationException();
       }
 
@@ -430,14 +429,6 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
     return result;
   }
 
-  @Override
-  public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
-  }
-
-
-  @Override
-  public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
-  }
 
   @Override
   public Editor openTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {

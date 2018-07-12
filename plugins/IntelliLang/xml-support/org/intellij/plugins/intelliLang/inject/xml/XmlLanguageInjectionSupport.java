@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.*;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
@@ -125,7 +126,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
       newInjections.add(newInjection);
     }
     configuration.replaceInjectionsWithUndo(
-      project, newInjections, injections, Collections.emptyList());
+      project, host.getContainingFile(), newInjections, injections, Collections.emptyList());
     return true;
   }
 
@@ -141,7 +142,7 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
       xmlInjection == null? showDefaultInjectionUI(project, originalInjection.copy()) : showInjectionUI(project, xmlInjection);
     if (newInjection != null) {
       configuration.replaceInjectionsWithUndo(
-        project, Collections.singletonList(newInjection),
+        project, host.getContainingFile(), Collections.singletonList(newInjection),
         Collections.singletonList(originalInjection),
         Collections.emptyList());
     }
@@ -284,19 +285,19 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
       injection.setTagName(tag.getLocalName());
       injection.setTagNamespace(tag.getNamespace());
       injection.generatePlaces();
-      doEditInjection(host.getProject(), injection);
+      doEditInjection(host.getProject(), host.getContainingFile(), injection);
       return true;
     }
     return false;
   }
 
-  private static void doEditInjection(final Project project, final XmlTagInjection template) {
+  private static void doEditInjection(final Project project, PsiFile psiFile, final XmlTagInjection template) {
     final Configuration configuration = InjectorUtils.getEditableInstance(project);
     final AbstractTagInjection originalInjection = (AbstractTagInjection)configuration.findExistingInjection(template);
 
     final XmlTagInjection newInjection = originalInjection == null? template : new XmlTagInjection().copyFrom(originalInjection);
     configuration.replaceInjectionsWithUndo(
-      project, Collections.singletonList(newInjection),
+      project, psiFile, Collections.singletonList(newInjection),
       ContainerUtil.createMaybeSingletonList(originalInjection),
       Collections.emptyList());
   }
@@ -312,18 +313,18 @@ public class XmlLanguageInjectionSupport extends AbstractLanguageInjectionSuppor
       injection.setTagName(tag.getLocalName());
       injection.setTagNamespace(tag.getNamespace());
       injection.generatePlaces();
-      doEditInjection(host.getProject(), injection);
+      doEditInjection(host.getProject(), host.getContainingFile(), injection);
       return true;
     }
     return false;
   }
 
-  private static void doEditInjection(final Project project, final XmlAttributeInjection template) {
+  private static void doEditInjection(final Project project, PsiFile file, final XmlAttributeInjection template) {
     final Configuration configuration = InjectorUtils.getEditableInstance(project);
     final BaseInjection originalInjection = configuration.findExistingInjection(template);
     final BaseInjection newInjection = originalInjection == null ? template : originalInjection.copy();
     configuration.replaceInjectionsWithUndo(
-      project, Collections.singletonList(newInjection),
+      project, file, Collections.singletonList(newInjection),
       ContainerUtil.createMaybeSingletonList(originalInjection),
       Collections.emptyList());
   }

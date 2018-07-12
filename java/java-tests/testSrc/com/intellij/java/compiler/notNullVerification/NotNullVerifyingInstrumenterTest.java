@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.compiler.notNullVerification;
 
 import com.intellij.JavaTestUtil;
@@ -21,12 +7,16 @@ import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.compiler.notNullVerification.NotNullVerifyingInstrumenter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TestName;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,11 +27,17 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
+import static org.junit.Assert.*;
+
 /**
  * @author yole
  */
-public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
+public class NotNullVerifyingInstrumenterTest {
+  @Rule public TempDirectory tempDir = new TempDirectory();
+  @Rule public TestName testName = new TestName();
 
+  @Test
   public void testSimpleReturn() throws Exception {
     Class<?> testClass = prepareTest();
     Object instance = testClass.newInstance();
@@ -49,6 +45,7 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     verifyCallThrowsException("@NotNull method SimpleReturn.test must not return null", instance, method);
   }
 
+  @Test
   public void testSimpleReturnWithMessage() throws Exception {
     Class<?> testClass = prepareTest();
     Object instance = testClass.newInstance();
@@ -56,6 +53,7 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     verifyCallThrowsException("This method cannot return null", instance, method);
   }
 
+  @Test
   public void testMultipleReturns() throws Exception {
     Class<?> testClass = prepareTest();
     Object instance = testClass.newInstance();
@@ -63,6 +61,7 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     verifyCallThrowsException("@NotNull method MultipleReturns.test must not return null", instance, method, 1);
   }
 
+  @Test
   public void testSimpleParam() throws Exception {
     Class<?> testClass = prepareTest();
     Object instance = testClass.newInstance();
@@ -70,6 +69,7 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     verifyCallThrowsException("Argument 0 for @NotNull parameter of SimpleParam.test must not be null", instance, method, (Object)null);
   }
 
+  @Test
   public void testSimpleParamWithMessage() throws Exception {
     Class<?> testClass = prepareTest();
     Object instance = testClass.newInstance();
@@ -77,18 +77,21 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     verifyCallThrowsException("SimpleParamWithMessage.test(o) cant be null", instance, method, (Object)null);
   }
 
+  @Test
   public void testConstructorParam() throws Exception {
     Class<?> testClass = prepareTest();
     Constructor method = testClass.getConstructor(Object.class);
     verifyCallThrowsException("Argument 0 for @NotNull parameter of ConstructorParam.<init> must not be null", null, method, (Object)null);
   }
 
+  @Test
   public void testConstructorParamWithMessage() throws Exception {
     Class<?> testClass = prepareTest();
     Constructor method = testClass.getConstructor(Object.class);
     verifyCallThrowsException("ConstructorParam.ConstructorParam.o cant be null", null, method, (Object)null);
   }
 
+  @Test
   public void testUseParameterNames() throws Exception {
     Class<?> testClass = prepareTest(true, AnnotationUtil.NOT_NULL);
     Constructor constructor = testClass.getConstructor(Object.class, Object.class);
@@ -102,24 +105,28 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     verifyCallThrowsException("Argument for @NotNull parameter 'x' of UseParameterNames.instanceMethod must not be null", instance, instanceMethod, (Object)null);
   }
 
+  @Test
   public void testLongParameter() throws Exception {
     Class<?> testClass = prepareTest(true, AnnotationUtil.NOT_NULL);
     Method staticMethod = testClass.getMethod("foo", long.class, String.class, String.class);
     verifyCallThrowsException("Argument for @NotNull parameter 'c' of LongParameter.foo must not be null", null, staticMethod, new Long(2), "z", null);
   }
 
+  @Test
   public void testDoubleParameter() throws Exception {
     Class<?> testClass = prepareTest(true, AnnotationUtil.NOT_NULL);
     Method staticMethod = testClass.getMethod("foo", double.class, String.class, String.class);
     verifyCallThrowsException("Argument for @NotNull parameter 'c' of DoubleParameter.foo must not be null", null, staticMethod, new Long(2), "z", null);
   }
 
+  @Test
   public void testEnumConstructor() throws Exception {
     Class testClass = prepareTest();
     Object field = testClass.getField("Value");
     assertNotNull(field);
   }
 
+  @Test
   public void testCustomExceptionType() throws Exception {
     Class<?> testClass = prepareTest();
     try {
@@ -133,24 +140,28 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     }
   }
 
+  @Test
   public void testEnumConstructorSecondParam() throws Exception {
     Class testClass = prepareTest();
     Object field = testClass.getField("Value");
     assertNotNull(field);
   }
 
+  @Test
   public void testStaticInnerClass() throws Exception {
-    final Class aClass = prepareTest();
+    Class aClass = prepareTest();
     assertNotNull(aClass.newInstance());
   }
 
+  @Test
   public void testNonStaticInnerClass() throws Exception {
-    final Class aClass = prepareTest();
+    Class aClass = prepareTest();
     assertNotNull(aClass.newInstance());
   }
 
+  @Test
   public void testSkipBridgeMethods() throws Exception {
-    final Class<?> testClass = prepareTest();
+    Class<?> testClass = prepareTest();
     try {
       testClass.getMethod("main").invoke(null);
       fail();
@@ -164,6 +175,7 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     }
   }
 
+  @Test
   public void testMultipleMessages() throws Exception {
     Class<?> test = prepareTest();
     Object instance = test.newInstance();
@@ -175,6 +187,7 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     verifyCallThrowsException("@NotNull method MultipleMessages.foo2 must not return null", instance, test.getMethod("foo2"));
   }
 
+  @Test
   public void testMultipleAnnotations() throws Exception {
     Class<?> test = prepareTest(false, "FooAnno", "BarAnno");
     Object instance = test.newInstance();
@@ -182,6 +195,7 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     verifyCallThrowsException("@BarAnno method MultipleAnnotations.foo2 must not return null", instance, test.getMethod("foo2"));
   }
 
+  @Test
   public void testTypeUseOnlyAnnotations() throws Exception {
     Class<?> test = prepareTest(false, "FooAnno");
     Object instance = test.newInstance();
@@ -190,11 +204,13 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     test.getMethod("foo3", List.class).invoke(instance, (List)null);
   }
 
+  @Test
   public void testTypeUseInEnumConstructor() throws Exception {
     Class<?> test = prepareTest(false, "TypeUseNotNull");
-    assertSize(1, test.getEnumConstants());
+    assertEquals(1, test.getEnumConstants().length);
   }
 
+  @Test
   public void testTypeUseAndMemberAnnotations() throws Exception {
     Class<?> test = prepareTest(false, "FooAnno");
     Object instance = test.newInstance();
@@ -204,21 +220,24 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
     Method returnType = test.getMethod("returnType");
     verifyCallThrowsException("@FooAnno method TypeUseAndMemberAnnotations.returnType must not return null", instance, returnType);
 
-    assertSize(1, returnType.getAnnotations());
-    assertSize(1, returnType.getAnnotatedReturnType().getAnnotations());
+    assertEquals(1, returnType.getAnnotations().length);
+    assertEquals(1, returnType.getAnnotatedReturnType().getAnnotations().length);
   }
 
+  @Test
   public void testMalformedBytecode() throws Exception {
     Class<?> testClass = prepareTest(false, AnnotationUtil.NOT_NULL);
     verifyCallThrowsException("Argument 0 for @NotNull parameter of MalformedBytecode$NullTest2.handle must not be null", null, testClass.getMethod("main"));
   }
 
+  @Test
   public void testEnclosingClass() throws Exception {
     Class<?> testClass = prepareTest();
     Object obj = testClass.getMethod("main").invoke(null);
     assertEquals(testClass, obj.getClass().getEnclosingClass());
   }
 
+  @Test
   public void testLocalClassImplicitParameters() throws Exception {
     Class<?> test = prepareTest(true, "NotNull");
     Object instance = test.newInstance();
@@ -240,7 +259,7 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
         ((Method)member).invoke(instance, args);
       }
     }
-    catch(InvocationTargetException ex) {
+    catch (InvocationTargetException ex) {
       Throwable cause = ex.getCause();
       if (cause instanceof IllegalStateException || cause instanceof IllegalArgumentException) {
         exceptionText = cause.getMessage();
@@ -252,13 +271,12 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
   private Class<?> prepareTest() throws IOException {
     return prepareTest(false, AnnotationUtil.NOT_NULL);
   }
-  
+
   private Class<?> prepareTest(boolean withDebugInfo, String... notNullAnnos) throws IOException {
     String base = JavaTestUtil.getJavaTestDataPath() + "/compiler/notNullVerification/";
-    final String baseClassName = getTestName(false);
-    String path = base + baseClassName;
-    String javaPath = path + ".java";
-    File classesDir = FileUtil.createTempDirectory(baseClassName, "output");
+    String baseClassName = PlatformTestUtil.getTestName(testName.getMethodName(), false);
+    String javaPath = (base + baseClassName) + ".java";
+    File classesDir = tempDir.newFolder("output");
 
     try {
       List<String> cmdLine = ContainerUtil.newArrayList("-classpath", base + "annotations.jar", "-d", classesDir.getAbsolutePath());
@@ -269,13 +287,13 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
       com.sun.tools.javac.Main.compile(ArrayUtil.toStringArray(cmdLine));
 
       Class mainClass = null;
-      final File[] files = classesDir.listFiles();
+      File[] files = classesDir.listFiles();
       assertNotNull(files);
       Arrays.sort(files, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
       boolean modified = false;
       MyClassLoader classLoader = new MyClassLoader(getClass().getClassLoader());
-      for (File file : files) {
-        final String fileName = file.getName();
+      for (File file: files) {
+        String fileName = file.getName();
         byte[] content = FileUtil.loadFileBytes(file);
 
         FailSafeClassReader reader = new FailSafeClassReader(content, 0, content.length);
@@ -283,8 +301,8 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
         modified |= NotNullVerifyingInstrumenter.processClassFile(reader, writer, notNullAnnos);
 
         byte[] instrumented = writer.toByteArray();
-        final String className = FileUtil.getNameWithoutExtension(fileName);
-        final Class aClass = classLoader.doDefineClass(className, instrumented);
+        String className = FileUtil.getNameWithoutExtension(fileName);
+        Class aClass = classLoader.doDefineClass(className, instrumented);
         if (className.equals(baseClassName)) {
           mainClass = aClass;
         }
@@ -305,11 +323,6 @@ public class NotNullVerifyingInstrumenterTest extends UsefulTestCase {
 
     public Class doDefineClass(String name, byte[] data) {
       return defineClass(name, data, 0, data.length);
-    }
-
-    @Override
-    public Class<?> loadClass(String name) throws ClassNotFoundException {
-      return super.loadClass(name);
     }
   }
 }

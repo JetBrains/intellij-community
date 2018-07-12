@@ -15,7 +15,7 @@
  */
 package com.jetbrains.python.documentation.docstrings;
 
-import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,10 +25,12 @@ import org.jetbrains.annotations.NotNull;
 public class GoogleCodeStyleDocStringUpdater extends SectionBasedDocStringUpdater {
   private final String myFallbackSectionIndent;
 
-  public static GoogleCodeStyleDocStringUpdater forProject(@NotNull GoogleCodeStyleDocString docString,
-                                                           @NotNull String minContentIndent,
-                                                           @NotNull Project project) {
-    return new GoogleCodeStyleDocStringUpdater(docString, minContentIndent, GoogleCodeStyleDocStringBuilder.getDefaultSectionIndent(project));
+  public static GoogleCodeStyleDocStringUpdater forSettings(@NotNull GoogleCodeStyleDocString docString,
+                                                            @NotNull String minContentIndent,
+                                                            @NotNull PsiFile settingAnchor) {
+    return new GoogleCodeStyleDocStringUpdater(docString,
+                                               minContentIndent,
+                                               GoogleCodeStyleDocStringBuilder.getDefaultSectionIndent(settingAnchor));
   }
 
   public GoogleCodeStyleDocStringUpdater(@NotNull GoogleCodeStyleDocString docString,

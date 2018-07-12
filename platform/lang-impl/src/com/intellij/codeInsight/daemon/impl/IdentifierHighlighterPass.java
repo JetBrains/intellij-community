@@ -29,12 +29,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-
-import static com.intellij.util.AstLoadingFilter.disableTreeLoading;
 
 /**
  * @author yole
@@ -183,7 +182,7 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   }
 
   private void highlightTargetUsages(@NotNull PsiElement target) {
-    final Couple<Collection<TextRange>> usages = disableTreeLoading(
+    final Couple<Collection<TextRange>> usages = AstLoadingFilter.disableTreeLoading(
       () -> getHighlightUsages(target, myFile, true),
       () -> "Currently highlighted file: \n" +
             "psi file: " + myFile + ";\n" +

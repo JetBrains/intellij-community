@@ -33,8 +33,6 @@ import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.LineRange;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.internal.statistic.UsageTrigger;
-import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -44,6 +42,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.project.DumbAware;
@@ -65,6 +64,8 @@ import com.intellij.ui.JBSplitter;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.mac.TouchbarDataKeys;
+import com.intellij.ui.mac.UpdatableDefaultActionGroup;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -94,11 +95,13 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull private final DefaultActionGroup myToolbarGroup;
   @NotNull private final DefaultActionGroup myPopupActionGroup;
+  @NotNull private final UpdatableDefaultActionGroup myTouchbarActionGroup;
 
   @NotNull private final JPanel myPanel;
   @NotNull private final MyPanel myMainPanel;
-  @NotNull private final Wrapper myContentPanel;
+  @NotNull protected final Wrapper myContentPanel;
   @NotNull private final ActionToolbar myToolbar;
+  @NotNull protected final Wrapper myToolbarWrapper;
   @NotNull private final Wrapper myToolbarStatusPanel;
   @NotNull private final MyProgressBar myProgressBar;
 
@@ -128,6 +131,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     myToolbarGroup = new DefaultActionGroup();
     myPopupActionGroup = new DefaultActionGroup();
+    myTouchbarActionGroup = new UpdatableDefaultActionGroup();
 
     // UI
 
@@ -138,11 +142,12 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     myToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, myToolbarGroup, true);
     myToolbar.setTargetComponent(myMainPanel);
+    myToolbarWrapper = new Wrapper(myToolbar.getComponent());
 
     myPanel = JBUI.Panels.simplePanel(myMainPanel);
 
     JPanel statusPanel = JBUI.Panels.simplePanel(myToolbarStatusPanel).addToLeft(myProgressBar);
-    JPanel topPanel = JBUI.Panels.simplePanel(myToolbar.getComponent()).addToRight(statusPanel);
+    JPanel topPanel = JBUI.Panels.simplePanel(myToolbarWrapper).addToRight(statusPanel);
 
     Splitter bottomContentSplitter = new JBSplitter(true, "DiffRequestProcessor.BottomComponentSplitter", 0.8f);
     bottomContentSplitter.setFirstComponent(myContentPanel);
@@ -358,6 +363,17 @@ public abstract class DiffRequestProcessor implements Disposable {
     );
   }
 
+  @NotNull
+  private List<AnAction> getTouchbarActions() {
+    final DefaultActionGroup left = new DefaultActionGroup(new MyPrevDifferenceAction(), new MyNextDifferenceAction());
+    final DefaultActionGroup main = new DefaultActionGroup(new MyPrevChangeAction(), new MyNextChangeAction());
+    TouchbarDataKeys.putActionDescriptor(main).setShowText(true).setShowImage(false).setMainGroup(true);
+    return ContainerUtil.list(
+      left,
+      main
+    );
+  }
+
   //
   // Misc
   //
@@ -444,6 +460,8 @@ public abstract class DiffRequestProcessor implements Disposable {
     DiffUtil.addActionBlock(myToolbarGroup,
                             new ShowInExternalToolAction(),
                             ActionManager.getInstance().getAction(IdeActions.ACTION_CONTEXT_HELP));
+
+    myTouchbarActionGroup.replaceAll(getTouchbarActions());
   }
 
   protected void collectPopupActions(@Nullable List<AnAction> viewerActions) {
@@ -493,7 +511,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   @Nullable
   public JComponent getPreferredFocusedComponent() {
     JComponent component = myState.getPreferredFocusedComponent();
-    return component != null ? component : myToolbar.getComponent();
+    return component != null && component.isShowing() && component.isFocusable() ? component : myToolbar.getComponent();
   }
 
   @Nullable
@@ -599,7 +617,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     public void actionPerformed(@NotNull AnActionEvent e) {
       if (myState.getActiveTool() == myDiffTool) return;
 
-      UsageTrigger.trigger("diff.DiffSettings.Tool." + ConvertUsagesUtil.ensureProperKey(myDiffTool.getName()));
+      DiffUsageTriggerCollector.trigger("toggle.diff.tool." + myDiffTool.getName());
       moveToolOnTop(myDiffTool);
 
       updateRequest(true);
@@ -658,7 +676,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected class MyNextDifferenceAction extends NextDifferenceAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
-      if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
+      if (!isToolbarPlace(e.getPlace())) {
         e.getPresentation().setEnabledAndVisible(true);
         return;
       }
@@ -701,7 +719,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected class MyPrevDifferenceAction extends PrevDifferenceAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
-      if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
+      if (!isToolbarPlace(e.getPlace())) {
         e.getPresentation().setEnabledAndVisible(true);
         return;
       }
@@ -795,7 +813,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected class MyNextChangeAction extends NextChangeAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
-      if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
+      if (!isToolbarPlace(e.getPlace())) {
         e.getPresentation().setEnabledAndVisible(true);
         return;
       }
@@ -820,7 +838,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected class MyPrevChangeAction extends PrevChangeAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
-      if (!ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
+      if (!isToolbarPlace(e.getPlace())) {
         e.getPresentation().setEnabledAndVisible(true);
         return;
       }
@@ -840,6 +858,10 @@ public abstract class DiffRequestProcessor implements Disposable {
 
       goToPrevChange(false);
     }
+  }
+
+  private static boolean isToolbarPlace(String place) {
+    return ActionPlaces.DIFF_TOOLBAR.equals(place) || ActionPlaces.TOUCHBAR_GENERAL.equals(place);
   }
 
   //
@@ -895,6 +917,9 @@ public abstract class DiffRequestProcessor implements Disposable {
       }
       else if (DiffDataKeys.DIFF_CONTEXT.is(dataId)) {
         return myContext;
+      }
+      else if (TouchbarDataKeys.ACTIONS_KEY.is(dataId)) {
+        return myTouchbarActionGroup;
       }
 
       data = myState.getData(dataId);

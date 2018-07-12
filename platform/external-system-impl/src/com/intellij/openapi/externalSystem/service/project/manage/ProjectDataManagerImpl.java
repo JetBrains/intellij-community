@@ -40,8 +40,10 @@ import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 import static com.intellij.util.containers.ContainerUtil.map2Array;
 
@@ -65,12 +67,21 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
   }
 
   public ProjectDataManagerImpl() {
+    this(() -> ProjectDataService.EP_NAME.getExtensions());
+  }
+
+  @TestOnly
+  ProjectDataManagerImpl(ProjectDataService... dataServices) {
+    this(() -> dataServices);
+  }
+
+  private ProjectDataManagerImpl(Supplier<ProjectDataService[]> supplier) {
     myServices = new NotNullLazyValue<Map<Key<?>, List<ProjectDataService<?, ?>>>>() {
       @NotNull
       @Override
       protected Map<Key<?>, List<ProjectDataService<?, ?>>> compute() {
         Map<Key<?>, List<ProjectDataService<?, ?>>> result = ContainerUtilRt.newHashMap();
-        for (ProjectDataService<?, ?> service : ProjectDataService.EP_NAME.getExtensions()) {
+        for (ProjectDataService<?, ?> service : supplier.get()) {
           List<ProjectDataService<?, ?>> services = result.get(service.getTargetDataKey());
           if (services == null) {
             result.put(service.getTargetDataKey(), services = ContainerUtilRt.newArrayList());
@@ -95,11 +106,6 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
     if (project.isDisposed()) return;
 
     MultiMap<Key<?>, DataNode<?>> grouped = ExternalSystemApiUtil.recursiveGroup(nodes);
-    for (Key<?> key : myServices.getValue().keySet()) {
-      if (!grouped.containsKey(key)) {
-        grouped.put(key, Collections.emptyList());
-      }
-    }
 
     final Collection<DataNode<?>> projects = grouped.get(ProjectKeys.PROJECT);
     // only one project(can be multi-module project) expected for per single import
@@ -137,26 +143,29 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
 
     long allStartTime = System.currentTimeMillis();
     try {
-      final Set<Map.Entry<Key<?>, Collection<DataNode<?>>>> entries = grouped.entrySet();
+      // keep order of services execution
+      final Set<Key<?>> allKeys = new TreeSet(grouped.keySet());
+      allKeys.addAll(myServices.getValue().keySet());
+
       final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       if (indicator != null) {
         indicator.setIndeterminate(false);
       }
-      final int size = entries.size();
+      final int size = allKeys.size();
       int count = 0;
       List<Runnable> postImportTasks = ContainerUtil.newSmartList();
-      for (Map.Entry<Key<?>, Collection<DataNode<?>>> entry : entries) {
+      for (Key<?> key : allKeys) {
         if (indicator != null) {
           String message = ExternalSystemBundle.message(
             "progress.update.text", projectSystemId != null ? projectSystemId.getReadableName() : "",
-            "Refresh " + getReadableText(entry.getKey()));
+            "Refresh " + getReadableText(key));
           indicator.setText(message);
           indicator.setFraction((double)count++ / size);
         }
         long startTime = System.currentTimeMillis();
-        doImportData(entry.getKey(), entry.getValue(), projectData, project, modelsProvider,
+        doImportData(key, grouped.get(key), projectData, project, modelsProvider,
                      postImportTasks, onSuccessImportTasks, onFailureImportTasks);
-        trace.logPerformance("Data import by " + entry.getKey().toString(), System.currentTimeMillis() - startTime);
+        trace.logPerformance("Data import by " + key.toString(), System.currentTimeMillis() - startTime);
       }
 
       for (Runnable postImportTask : postImportTasks) {

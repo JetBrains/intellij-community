@@ -53,6 +53,8 @@ public interface IPopupChooserBuilder<T> {
 
   IPopupChooserBuilder<T> setNamerForFiltering(Function<T, String> namer);
 
+  IPopupChooserBuilder<T> setAutoPackHeightOnFiltering(boolean autoPackHeightOnFiltering);
+
   IPopupChooserBuilder<T> setModalContext(boolean modalContext);
 
   @NotNull
@@ -68,7 +70,7 @@ public interface IPopupChooserBuilder<T> {
 
   IPopupChooserBuilder<T> addListener(JBPopupListener listener);
 
-  IPopupChooserBuilder<T> setSettingButton(Component abutton);
+  IPopupChooserBuilder<T> setSettingButton(Component button);
 
   IPopupChooserBuilder<T> setMayBeParent(boolean mayBeParent);
 
@@ -92,6 +94,8 @@ public interface IPopupChooserBuilder<T> {
   IPopupChooserBuilder<T> withHintUpdateSupply();
 
   IPopupChooserBuilder<T> setFont(Font f);
+
+  IPopupChooserBuilder<T> setVisibleRowCount(int visibleRowCount);
 
   ListComponentUpdater getBackgroundUpdater();
 }

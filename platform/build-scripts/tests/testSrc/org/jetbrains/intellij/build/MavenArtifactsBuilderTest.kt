@@ -13,7 +13,6 @@ class MavenArtifactsBuilderTest {
     checkCoordinates("intellij.java.debugger", "com.jetbrains.intellij.java", "java-debugger")
     checkCoordinates("intellij.platform.util", "com.jetbrains.intellij.platform", "util")
     checkCoordinates("intellij.platform.testFramework", "com.jetbrains.intellij.platform", "test-framework")
-    checkCoordinates("intellij.platform.annotations.java5", "com.jetbrains.intellij.platform", "annotations-java5")
     checkCoordinates("intellij.java.compiler.antTasks", "com.jetbrains.intellij.java", "java-compiler-ant-tasks")
     checkCoordinates("intellij.platform.vcs.log", "com.jetbrains.intellij.platform", "vcs-log")
     checkCoordinates("intellij.spring", "com.jetbrains.intellij.spring", "spring")

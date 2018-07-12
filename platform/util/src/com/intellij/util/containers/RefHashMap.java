@@ -131,7 +131,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
   }
 
   @NotNull
-  protected abstract <T> Key<T> createKey(@NotNull T k, @NotNull TObjectHashingStrategy<T> strategy, @NotNull ReferenceQueue<? super T> q);
+  protected abstract <T> Key<T> createKey(@NotNull T k, @NotNull TObjectHashingStrategy<? super T> strategy, @NotNull ReferenceQueue<? super T> q);
 
   private class HardKey implements Key<K> {
     private K myObject;
@@ -151,6 +151,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
       myObject = null;
     }
 
+    @Override
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof Key)) return false;
@@ -159,6 +160,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
       return keyEqual(t, u, myStrategy);
     }
 
+    @Override
     public int hashCode() {
       return myHash;
     }
@@ -259,9 +261,9 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     private final Entry<?, V> ent;
     private final K key; // Strong reference to key, so that the GC will leave it alone as long as this Entry exists
     private final int myKeyHashCode;
-    @NotNull private final TObjectHashingStrategy<K> myStrategy;
+    @NotNull private final TObjectHashingStrategy<? super K> myStrategy;
 
-    private MyEntry(@NotNull Entry<?, V> ent, @NotNull K key, int keyHashCode, @NotNull TObjectHashingStrategy<K> strategy) {
+    private MyEntry(@NotNull Entry<?, V> ent, @NotNull K key, int keyHashCode, @NotNull TObjectHashingStrategy<? super K> strategy) {
       this.ent = ent;
       this.key = key;
       myKeyHashCode = keyHashCode;
@@ -287,6 +289,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
       return o1 == null ? o2 == null : o1.equals(o2);
     }
 
+    @Override
     public boolean equals(Object o) {
       if (!(o instanceof Entry)) return false;
       //noinspection unchecked
@@ -294,6 +297,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
       return keyEqual(key, e.getKey(), myStrategy) && valEqual(getValue(), e.getValue());
     }
 
+    @Override
     public int hashCode() {
       V v;
       return myKeyHashCode ^ ((v = getValue()) == null ? 0 : v.hashCode());
@@ -377,6 +381,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
       return toRemove;
     }
 
+    @Override
     public int hashCode() {
       int h = 0;
       for (Entry<Key<K>,V> entry : hashEntrySet) {

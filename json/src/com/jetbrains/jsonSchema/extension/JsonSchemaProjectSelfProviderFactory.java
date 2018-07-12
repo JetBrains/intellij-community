@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
@@ -31,7 +32,7 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
 
   public static class MyJsonSchemaFileProvider implements JsonSchemaFileProvider {
     @NotNull private final Project myProject;
-    @Nullable private final VirtualFile mySchemaFile;
+    @NotNull private final NullableLazyValue<VirtualFile> mySchemaFile;
     @NotNull private final String myFileName;
 
     public boolean isSchemaV4() {
@@ -48,12 +49,14 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
       myProject = project;
       myFileName = fileName;
       // schema file can not be static here, because in schema's user data we cache project-scope objects (i.e. which can refer to project)
-      mySchemaFile = JsonSchemaProviderFactory.getResourceFile(JsonSchemaProjectSelfProviderFactory.class, "/jsonSchema/" + fileName);
+      mySchemaFile = NullableLazyValue.createValue(() -> JsonSchemaProviderFactory.getResourceFile(JsonSchemaProjectSelfProviderFactory.class, "/jsonSchema/" + fileName));
     }
 
     @Override
     public boolean isAvailable(@NotNull VirtualFile file) {
-      JsonSchemaVersion schemaVersion = JsonSchemaService.Impl.get(myProject).getSchemaVersion(file);
+      JsonSchemaService service = JsonSchemaService.Impl.get(myProject);
+      if (!service.isApplicableToFile(file)) return false;
+      JsonSchemaVersion schemaVersion = service.getSchemaVersion(file);
       if (schemaVersion == null) return false;
       switch (schemaVersion) {
         case SCHEMA_4:
@@ -81,7 +84,7 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
     @Nullable
     @Override
     public VirtualFile getSchemaFile() {
-      return mySchemaFile;
+      return mySchemaFile.getValue();
     }
 
     @NotNull

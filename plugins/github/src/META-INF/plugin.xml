@@ -26,12 +26,13 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.github.api.GithubApiTaskExecutor"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubGitHelper"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.extensions.GithubAccountGitAuthenticationFailureManager"/>
     <projectService serviceInterface="org.jetbrains.plugins.github.util.GithubProjectSettings"
                     serviceImplementation="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder"/>
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GithubAnnotationGutterActionProvider"/>
     <projectConfigurable parentId="project.propVCSSupport.Mappings" instance="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
-    <postStartupActivity implementation="org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper"/>
     <statistics.applicationUsagesCollector
         implementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountsStatisticsCollector"/>
   </extensions>
@@ -58,6 +59,7 @@
       <add-to-group group-id="Git.LogContextMenu"/>
       <add-to-group group-id="Vcs.Log.ContextMenu"/>
       <add-to-group group-id="VcsHistoryActionsGroup"/>
+      <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>
     </action>
     <action id="Github.Create.Gist" class="org.jetbrains.plugins.github.GithubCreateGistAction">
       <add-to-group group-id="EditorPopupMenu"/>

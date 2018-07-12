@@ -44,7 +44,9 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
    *         a negative integer (-1), if file1 is located in the classpath after file2
    *         zero - otherwise or when the files are not comparable.
    */
-  public abstract int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2);
+  public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
+    return 0;
+  }
 
   // optimization methods:
 
@@ -423,9 +425,7 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
       if (res1 == 0) return res2;
       if (res2 == 0) return res1;
 
-      res1 /= Math.abs(res1);
-      res2 /= Math.abs(res2);
-      if (res1 == res2) return res1;
+      if (res1 > 0 == res2 > 0) return res1;
 
       return 0;
     }
@@ -532,16 +532,22 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     public int compare(@NotNull final VirtualFile file1, @NotNull final VirtualFile file2) {
       final int[] result = {0};
       ContainerUtil.process(myScopes, scope -> {
-        int res1 = scope.contains(file1) && scope.contains(file2) ? scope.compare(file1, file2) : 0;
+        // ignore irrelevant scopes - they don't know anything about the files
+        if (!scope.contains(file1) || !scope.contains(file2)) return true;
+        int cmp = scope.compare(file1, file2);
         if (result[0] == 0) {
-          result[0] = res1;
+          result[0] = cmp;
           return true;
         }
-        if (result[0] > 0 != res1 > 0) {
-          result[0] = 0;
-          return false;
+        if (cmp == 0) {
+          return true;
         }
-        return true;
+        if (result[0] > 0 == cmp > 0) {
+          return true;
+        }
+        // scopes disagree about the order - abort the voting
+        result[0] = 0;
+        return false;
       });
       return result[0];
     }
@@ -772,7 +778,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     /**
      * @deprecated use {@link GlobalSearchScope#filesScope(Project, Collection)}
      */
-    public FilesScope(@Nullable Project project, @NotNull Collection<VirtualFile> files) {
+    @Deprecated
+    private FilesScope(@Nullable Project project, @NotNull Collection<VirtualFile> files) {
       this(project, files, null, false);
     }
 
@@ -788,11 +795,6 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     @Override
     public boolean contains(@NotNull final VirtualFile file) {
       return myFiles.contains(file);
-    }
-
-    @Override
-    public int compare(@NotNull final VirtualFile file1, @NotNull final VirtualFile file2) {
-      return 0;
     }
 
     @Override

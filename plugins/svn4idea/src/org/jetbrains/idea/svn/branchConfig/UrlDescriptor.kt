@@ -11,7 +11,7 @@ import java.io.IOException
 
 class UrlDescriptor(val isEncoded: Boolean) : KeyDescriptor<Url> {
   @Throws(IOException::class)
-  override fun save(out: DataOutput, value: Url) = out.writeUTF(if (isEncoded) value.toString() else value.toDecodedString())
+  override fun save(out: DataOutput, value: Url): Unit = out.writeUTF(if (isEncoded) value.toString() else value.toDecodedString())
 
   @Throws(IOException::class)
   override fun read(`in`: DataInput): Url {
@@ -25,14 +25,14 @@ class UrlDescriptor(val isEncoded: Boolean) : KeyDescriptor<Url> {
     }
   }
 
-  override fun getHashCode(value: Url) = value.hashCode()
+  override fun getHashCode(value: Url): Int = value.hashCode()
 
-  override fun isEqual(val1: Url, val2: Url) = val1 == val2
+  override fun isEqual(val1: Url, val2: Url): Boolean = val1 == val2
 
   companion object {
     @JvmField
-    val ENCODED_URL_DESCRIPTOR = UrlDescriptor(true)
+    val ENCODED_URL_DESCRIPTOR: UrlDescriptor = UrlDescriptor(true)
     @JvmField
-    val DECODED_URL_DESCRIPTOR = UrlDescriptor(false)
+    val DECODED_URL_DESCRIPTOR: UrlDescriptor = UrlDescriptor(false)
   }
 }

@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
@@ -26,7 +27,8 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.committed.MockAbstractVcs;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
-import com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog;
+import com.intellij.openapi.vcs.changes.ui.CommitHelper;
+import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.projectlevelman.AllVcses;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,12 +36,14 @@ import com.intellij.tasks.*;
 import com.intellij.tasks.actions.OpenTaskDialog;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.tasks.impl.TaskChangelistSupport;
+import com.intellij.tasks.impl.TaskCheckinHandlerFactory;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import icons.TasksIcons;
+import org.easymock.EasyMock;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -293,7 +297,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertNotNull(changeList);
 
     List<Change> changes = addChanges(changeList);
-    CommitChangeListDialog.commitChanges(getProject(), changes, changeList, null, changeList.getName());
+    commitChanges(changeList, changes);
 
     assertEquals(2, myTaskManager.getLocalTasks().size()); // no extra task created
     assertEquals(2, myChangeListManager.getChangeListsCopy().size());
@@ -313,12 +317,28 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     assertEquals(2, myChangeListManager.getChangeListsCopy().size());
 
     List<Change> changes = addChanges(changeList);
-    CommitChangeListDialog.commitChanges(getProject(), changes, changeList, null, changeList.getName());
+    commitChanges(changeList, changes);
 
     assertEquals(2, myTaskManager.getLocalTasks().size()); // extra task created
     assertEquals(2, myChangeListManager.getChangeListsCopy().size());
 
     assertTrue(ContainerUtil.exists(myTaskManager.getLocalTasks(), task -> task.getSummary().equals("New Changelist")));
+  }
+
+  private void commitChanges(LocalChangeList changeList, List<Change> changes) {
+    String commitMessage = changeList.getName();
+
+    CheckinProjectPanel panel = EasyMock.createMock(CheckinProjectPanel.class);
+    EasyMock.expect(panel.getProject()).andReturn(getProject());
+    EasyMock.expect(panel.getCommitMessage()).andReturn(commitMessage);
+    EasyMock.replay(panel);
+
+    CheckinHandler checkinHandler = new TaskCheckinHandlerFactory().createHandler(panel, new CommitContext());
+
+    List<CheckinHandler> handlers = ContainerUtil.list(checkinHandler);
+    CommitHelper helper = new CommitHelper(getProject(), changeList, changes, "Commit", commitMessage, handlers, false, true,
+                                           new PseudoMap<>(), null);
+    helper.doCommit();
   }
 
   private LocalChangeList addChangeList(String title) {

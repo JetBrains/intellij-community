@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.impl;
 
@@ -24,7 +10,6 @@ import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
-import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.*;
@@ -458,23 +443,16 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     public void paint(@NotNull Graphics g) {
-      ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
-      
-      try {
-        if (!transparent()) {
-          g.setColor(myEditor.getBackgroundColor());
-          Rectangle bounds = getBounds();
-          g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
-        }
-
-        if (myErrorStripeRenderer != null) {
-          int x = isMirrored() ? 0 : getThinGap() + getMinMarkHeight();
-          final Rectangle b = new Rectangle(x, 0, getErrorIconWidth(), getErrorIconHeight());
-          myErrorStripeRenderer.paint(this, g, b);
-        }
+      if (!transparent()) {
+        g.setColor(myEditor.getBackgroundColor());
+        Rectangle bounds = getBounds();
+        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
       }
-      finally {
-        ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintFinish();
+
+      if (myErrorStripeRenderer != null) {
+        int x = isMirrored() ? 0 : getThinGap() + getMinMarkHeight();
+        final Rectangle b = new Rectangle(x, 0, getErrorIconWidth(), getErrorIconHeight());
+        myErrorStripeRenderer.paint(this, g, b);
       }
     }
 
@@ -657,17 +635,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       if (myDirtyYPositions != null) {
         final Graphics2D imageGraphics = myCachedTrack.createGraphics();
 
-        ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
-
-        try {
-          myDirtyYPositions = myDirtyYPositions.intersection(docRange);
-          if (myDirtyYPositions == null) myDirtyYPositions = docRange;
-          repaint(imageGraphics, componentBounds.width, myDirtyYPositions);
-          myDirtyYPositions = null;
-        }
-        finally {
-          ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintFinish();
-        }
+        myDirtyYPositions = myDirtyYPositions.intersection(docRange);
+        if (myDirtyYPositions == null) myDirtyYPositions = docRange;
+        repaint(imageGraphics, componentBounds.width, myDirtyYPositions);
+        myDirtyYPositions = null;
       }
 
       UIUtil.drawImage(g, myCachedTrack, null, 0, 0);

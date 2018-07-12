@@ -43,6 +43,6 @@ Groovy script
           Reference expression
             PsiElement(identifier)('b')
           PsiElement())(')')
-        PsiErrorElement:'=' expected
+        PsiErrorElement:'=' expected, got ')'
           <empty list>
       PsiElement())(')')

@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
@@ -51,7 +52,6 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   public static final Key<List<StackCapturingLineBreakpoint>> CAPTURE_BREAKPOINTS = Key.create("CAPTURE_BREAKPOINTS");
   private static final Key<Map<Object, List<StackFrameItem>>> CAPTURED_STACKS = Key.create("CAPTURED_STACKS");
   private static final int MAX_STORED_STACKS = 1000;
-  public static final int MAX_STACK_LENGTH = 500;
 
   private final JavaMethodBreakpointProperties myProperties = new JavaMethodBreakpointProperties();
 
@@ -97,8 +97,8 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
             Value key = myCaptureEvaluator.evaluate(new EvaluationContextImpl(suspendContext, frameProxy));
             if (key instanceof ObjectReference) {
               List<StackFrameItem> frames = StackFrameItem.createFrames(suspendContext, true);
-              if (frames.size() > MAX_STACK_LENGTH) {
-                frames = frames.subList(0, MAX_STACK_LENGTH);
+              if (frames.size() > getMaxStackLength()) {
+                frames = frames.subList(0, getMaxStackLength());
               }
               stacks.put(getKey((ObjectReference)key), frames);
             }
@@ -144,11 +144,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
 
   public static void createAll(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    StreamEx<CapturePoint> points = StreamEx.of(DebuggerSettings.getInstance().getCapturePoints()).filter(c -> c.myEnabled);
-    if (isAgentEnabled()) {
-      points = points.append(debugProcess.getAgentInsertPoints());
-    }
-    points.forEach(c -> track(debugProcess, c));
+    DebuggerSettings.getInstance().getCapturePoints().stream().filter(c -> c.myEnabled).forEach(c -> track(debugProcess, c));
   }
 
   public static void clearCaches(DebugProcessImpl debugProcess) {
@@ -229,12 +225,30 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   }
 
   @Nullable
-  public static List<StackFrameItem> getRelatedStack(@NotNull StackFrameProxyImpl frame,
-                                                     @NotNull SuspendContextImpl suspendContext,
-                                                     boolean checkInProcessData) {
+  public static List<StackFrameItem> getAgentRelatedStack(JavaStackFrame frame, @NotNull SuspendContextImpl suspendContext) {
+    if (isAgentEnabled()) {
+      Location location = frame.getDescriptor().getLocation();
+      if (location != null) {
+        Method method = DebuggerUtilsEx.getMethod(location);
+        // TODO: use com.intellij.rt.debugger.agent.CaptureStorage.GENERATED_INSERT_METHOD_POSTFIX
+        if (method != null && method.name().endsWith("$$$capture")) {
+          try {
+            return getProcessCapturedStack(new EvaluationContextImpl(suspendContext, frame.getStackFrameProxy()));
+          }
+          catch (EvaluateException e) {
+            LOG.error(e);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static List<StackFrameItem> getRelatedStack(@NotNull StackFrameProxyImpl frame, @NotNull SuspendContextImpl suspendContext) {
     DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
     Map<Object, List<StackFrameItem>> capturedStacks = debugProcess.getUserData(CAPTURED_STACKS);
-    if (ContainerUtil.isEmpty(capturedStacks) && !isAgentEnabled()) {
+    if (ContainerUtil.isEmpty(capturedStacks)) {
       return null;
     }
     List<StackCapturingLineBreakpoint> captureBreakpoints = debugProcess.getUserData(CAPTURE_BREAKPOINTS);
@@ -251,18 +265,8 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
         if ((StringUtil.isEmpty(insertClassName) || StringUtil.equals(insertClassName, className)) &&
             StringUtil.equals(b.myCapturePoint.myInsertMethodName, methodName)) {
           try {
-            EvaluationContextImpl evaluationContext = new EvaluationContextImpl(suspendContext, frame);
-            Value key = b.myInsertEvaluator.evaluate(evaluationContext);
-            List<StackFrameItem> items = null;
-            if (key instanceof ObjectReference) {
-              if (capturedStacks != null) {
-                items = capturedStacks.get(getKey((ObjectReference)key));
-              }
-              if (items == null && checkInProcessData) {
-                items = getProcessCapturedStack(key, evaluationContext);
-              }
-            }
-            return items;
+            Value key = b.myInsertEvaluator.evaluate(new EvaluationContextImpl(suspendContext, frame));
+            return key instanceof ObjectReference ? capturedStacks.get(getKey((ObjectReference)key)) : null;
           }
           catch (EvaluateException e) {
             LOG.debug(e);
@@ -282,22 +286,23 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   private static final Key<Pair<ClassType, Method>> CAPTURE_STORAGE_METHOD = Key.create("CAPTURE_STORAGE_METHOD");
   public static final Pair<ClassType, Method> NO_CAPTURE_AGENT = Pair.empty();
 
-  private static List<StackFrameItem> getProcessCapturedStack(Value key, EvaluationContextImpl evaluationContext)
+  private static List<StackFrameItem> getProcessCapturedStack(EvaluationContextImpl evalContext)
     throws EvaluateException {
-    evaluationContext = evaluationContext.withAutoLoadClasses(false);
+    EvaluationContextImpl evaluationContext = evalContext.withAutoLoadClasses(false);
 
     DebugProcessImpl process = evaluationContext.getDebugProcess();
     Pair<ClassType, Method> methodPair = process.getUserData(CAPTURE_STORAGE_METHOD);
 
     if (methodPair == null) {
       try {
+        // TODO: obtain CaptureStorage fqn from the class somehow
         ClassType captureClass = (ClassType)process.findClass(evaluationContext, "com.intellij.rt.debugger.agent.CaptureStorage", null);
         if (captureClass == null) {
           methodPair = NO_CAPTURE_AGENT;
           LOG.debug("Error loading debug agent", "agent class not found");
         }
         else {
-          methodPair = Pair.create(captureClass, captureClass.methodsByName("getRelatedStack").get(0));
+          methodPair = Pair.create(captureClass, captureClass.methodsByName("getCurrentCapturedStack").get(0));
         }
       }
       catch (EvaluateException e) {
@@ -312,10 +317,11 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     }
 
     VirtualMachineProxyImpl virtualMachineProxy = process.getVirtualMachineProxy();
-    List<Value> args = Arrays.asList(key, virtualMachineProxy.mirrorOf(MAX_STACK_LENGTH));
-    Value resArray = process.invokeMethod(evaluationContext, methodPair.first, methodPair.second, args,
-                                          ObjectReference.INVOKE_SINGLE_THREADED, true);
-    DebuggerUtilsEx.keep(resArray, evaluationContext);
+    List<Value> args = Collections.singletonList(virtualMachineProxy.mirrorOf(getMaxStackLength()));
+    Pair<ClassType, Method> finalMethodPair = methodPair;
+    Value resArray = evaluationContext.computeAndKeep(
+      () -> process.invokeMethod(evaluationContext, finalMethodPair.first, finalMethodPair.second,
+                                 args, ObjectReference.INVOKE_SINGLE_THREADED, true));
     if (resArray instanceof ArrayReference) {
       List<Value> values = ((ArrayReference)resArray).getValues();
       List<StackFrameItem> res = new ArrayList<>(values.size());
@@ -456,5 +462,9 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
 
   public static boolean isAgentEnabled() {
     return DebuggerSettings.getInstance().INSTRUMENTING_AGENT;
+  }
+
+  public static int getMaxStackLength() {
+    return Registry.intValue("debugger.async.stacks.max.depth", 500);
   }
 }

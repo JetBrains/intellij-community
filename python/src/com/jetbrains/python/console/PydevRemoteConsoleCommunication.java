@@ -24,11 +24,8 @@ public class PydevRemoteConsoleCommunication extends PydevConsoleCommunication {
   /**
    * Initializes the xml-rpc communication.
    *
-   * @param project
    * @param port       the port where the communication should happen.
    * @param process    this is the process that was spawned (server for the XML-RPC)
-   * @param clientPort
-   * @throws MalformedURLException
    */
   public PydevRemoteConsoleCommunication(Project project, int port, Process process, int clientPort)
     throws Exception {

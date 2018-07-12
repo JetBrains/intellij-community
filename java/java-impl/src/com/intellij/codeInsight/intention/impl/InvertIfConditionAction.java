@@ -10,6 +10,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.controlFlow.*;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -17,6 +18,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
@@ -41,17 +43,32 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
           .filter(prefixExpr -> PsiUtil.skipParenthesizedExprDown(prefixExpr.getOperand()) == null)
           .first() != null) return false;
     if (element instanceof PsiKeyword) {
-      PsiKeyword keyword = (PsiKeyword) element;
-      if ((keyword.getTokenType() == JavaTokenType.IF_KEYWORD || keyword.getTokenType() == JavaTokenType.ELSE_KEYWORD)
-          && keyword.getParent() == ifStatement) {
-        return true;
+      if (element.getParent() != ifStatement) {
+        return false;
+      }
+      final IElementType tokenType = ((PsiKeyword)element).getTokenType();
+      if (tokenType != JavaTokenType.IF_KEYWORD && tokenType != JavaTokenType.ELSE_KEYWORD) {
+        return false;
       }
     }
-    final TextRange condTextRange = condition.getTextRange();
-    if (condTextRange == null) return false;
-    if (!condTextRange.contains(offset)) return false;
+    else {
+      final TextRange condTextRange = condition.getTextRange();
+      if (condTextRange == null || !condTextRange.contains(offset)) {
+        return false;
+      }
+    }
     PsiElement block = findCodeBlock(ifStatement);
-    return block != null;
+    if (block == null) {
+      return false;
+    }
+    if (PsiUtil.skipParenthesizedExprDown(ifStatement.getCondition()) == null) {
+      return true;
+    }
+    // check that the code structure isn't broken completely
+    ControlFlow localFlow = buildControlFlow(block);
+    int startThenOffset = getThenOffset(localFlow, ifStatement);
+    int afterIfOffset = localFlow.getEndOffset(ifStatement);
+    return startThenOffset >= 0 && afterIfOffset >= 0;
   }
 
   @Override
@@ -150,7 +167,11 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
     return null;
   }
 
-  private static ControlFlow buildControlFlow(PsiElement element) {
+  @NotNull
+  private static ControlFlow buildControlFlow(@Nullable PsiElement element) {
+    if (element == null) {
+      return ControlFlow.EMPTY;
+    }
     try {
       return ControlFlowFactory.getInstance(element.getProject()).getControlFlow(element, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(), false);
     }
@@ -192,6 +213,11 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
       PsiStatement statement = factory.createStatementFromText("return;", ifStatement);
       statement = (PsiStatement) codeStyle.reformat(statement);
       if (thenBranch instanceof PsiBlockStatement) {
+        if (ifStatement.getParent() instanceof PsiIfStatement) {
+          ifStatement = (PsiIfStatement)wrapWithCodeBlock(ifStatement);
+          thenBranch = ifStatement.getThenBranch();
+          assert thenBranch != null;
+        }
         PsiCodeBlock codeBlock = ((PsiBlockStatement)thenBranch).getCodeBlock();
         PsiElement firstElement = codeBlock.getFirstBodyElement();
         PsiElement lastElement = codeBlock.getLastBodyElement();
@@ -262,8 +288,8 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
 
         PsiBlockStatement codeBlock = (PsiBlockStatement) factory.createStatementFromText("{}", ifStatement);
         codeBlock.getCodeBlock().addRange(first, last);
-        first.getParent().deleteChildRange(first, last);
         ct.replaceAndRestoreComments(ifStatement.getThenBranch(), codeBlock);
+        first.getParent().deleteChildRange(first, last);
       }
       codeStyle.reformat(ifStatement);
       return ifStatement;

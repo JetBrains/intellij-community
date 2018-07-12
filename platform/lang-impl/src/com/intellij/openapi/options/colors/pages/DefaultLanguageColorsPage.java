@@ -74,6 +74,8 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
     TAG_HIGHLIGHTING_MAP.put("tag", DefaultLanguageHighlighterColors.MARKUP_TAG);
     TAG_HIGHLIGHTING_MAP.put("attribute", DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE);
     TAG_HIGHLIGHTING_MAP.put("entity", DefaultLanguageHighlighterColors.MARKUP_ENTITY);
+    TAG_HIGHLIGHTING_MAP.put("reassigned_parameter", DefaultLanguageHighlighterColors.REASSIGNED_PARAMETER);
+    TAG_HIGHLIGHTING_MAP.put("reassigned_local", DefaultLanguageHighlighterColors.REASSIGNED_LOCAL_VARIABLE);
   }
 
   private final static AttributesDescriptor[] ATTRIBUTES_DESCRIPTORS = {
@@ -126,6 +128,8 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.local.variable"), DefaultLanguageHighlighterColors.LOCAL_VARIABLE),
     new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.reassigned.local.variable"), DefaultLanguageHighlighterColors.REASSIGNED_LOCAL_VARIABLE),
+    new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.global.variable"), DefaultLanguageHighlighterColors.GLOBAL_VARIABLE),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.function.declaration"), DefaultLanguageHighlighterColors.FUNCTION_DECLARATION),
@@ -133,6 +137,8 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       OptionsBundle.message("options.language.defaults.function.call"), DefaultLanguageHighlighterColors.FUNCTION_CALL),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.parameter"), DefaultLanguageHighlighterColors.PARAMETER),
+    new AttributesDescriptor(
+      OptionsBundle.message("options.language.defaults.reassigned.parameter"), DefaultLanguageHighlighterColors.REASSIGNED_PARAMETER),
     new AttributesDescriptor(
       OptionsBundle.message("options.language.defaults.interface.name"), DefaultLanguageHighlighterColors.INTERFACE_NAME),
     new AttributesDescriptor(
@@ -213,6 +219,8 @@ public class DefaultLanguageColorsPage implements RainbowColorSettingsPage, Disp
       " */</doc_comment>\n" +
       "Function <func_decl>declaration</func_decl> (<param>parameter1</param> <param>parameter2</param> <param>parameter3</param> <param>parameter4</param>)\n" +
       "    Local <local_var>variable1</local_var> <local_var>variable2</local_var> <local_var>variable3</local_var> <local_var>variable4</local_var>\n" +
+      "    Reassigned local <reassigned_local>variable</reassigned_local>\n" +
+      "    Reassigned <reassigned_parameter>parameter</reassigned_parameter>\n" +
       "Function <func_call>call</func_call>(" +
       "<parameter_hint p:>0, <parameter_hint param:>1, <parameter_hint parameterName:>2" +
       ")\n" +

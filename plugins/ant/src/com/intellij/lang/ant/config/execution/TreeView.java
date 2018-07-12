@@ -19,13 +19,13 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.OccurenceNavigator;
 import com.intellij.ide.OccurenceNavigatorSupport;
 import com.intellij.ide.TextCopyProvider;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.impl.BuildTask;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -135,7 +135,8 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
           return null;
         }
 
-        return new OpenFileDescriptor(myProject, messageNode.getFile(), messageNode.getOffset());
+        return PsiNavigationSupport.getInstance()
+                                   .createNavigatable(myProject, messageNode.getFile(), messageNode.getOffset());
       }
 
       @Nullable
@@ -389,17 +390,17 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
       MessageNode item = getSelectedItem();
       if (item == null) return null;
       if (isValid(item.getFile())) {
-        return new OpenFileDescriptor(myProject, item.getFile(), item.getOffset());
+        return PsiNavigationSupport.getInstance().createNavigatable(myProject, item.getFile(), item.getOffset());
       }
       if (item.getType() == AntBuildMessageView.MessageType.TARGET) {
-        final OpenFileDescriptor descriptor = getDescriptorForTargetNode(item);
-        if (descriptor != null && isValid(descriptor.getFile())) {
+        final Navigatable descriptor = getDescriptorForTargetNode(item);
+        if (descriptor != null && (descriptor.canNavigate())) {
           return descriptor;
         }
       }
       if (item.getType() == AntBuildMessageView.MessageType.TASK) {
-        final OpenFileDescriptor descriptor = getDescriptorForTaskNode(item);
-        if (descriptor != null && isValid(descriptor.getFile())) {
+        final Navigatable descriptor = getDescriptorForTaskNode(item);
+        if (descriptor != null && (descriptor.canNavigate())) {
           return descriptor;
         }
       }
@@ -408,7 +409,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
   }
 
   @Nullable
-  private OpenFileDescriptor getDescriptorForTargetNode(MessageNode node) {
+  private Navigatable getDescriptorForTargetNode(MessageNode node) {
     final String targetName = node.getText()[0];
     final AntBuildTargetBase target = (AntBuildTargetBase)myBuildFile.getModel().findTarget(targetName);
     return (target == null) ? null : target.getOpenFileDescriptor();
@@ -416,7 +417,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
 
   private
   @Nullable
-  OpenFileDescriptor getDescriptorForTaskNode(MessageNode node) {
+  Navigatable getDescriptorForTaskNode(MessageNode node) {
     final String[] text = node.getText();
     if (text == null || text.length == 0) return null;
     final String taskName = text[0];

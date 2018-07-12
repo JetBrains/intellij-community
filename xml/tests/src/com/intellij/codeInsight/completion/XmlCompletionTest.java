@@ -27,7 +27,6 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.javaee.ExternalResourceManagerExImpl;
-import com.intellij.psi.codeStyle.CodeStyleSchemes;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -681,7 +680,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
                        "xml:id",
                        "xml:lang",
                        "xml:space",
-                       "xsi:nill",
+                       "xsi:nil",
                        "xsi:noNamespaceSchemaLocation",
                        "xsi:type");
   }

@@ -7,7 +7,6 @@ import com.intellij.CommonBundle;
 import com.intellij.diff.DiffRequestFactory;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.diff.*;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -84,7 +83,6 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   private volatile boolean myDisposed;
 
   public DirDiffTableModel(@Nullable Project project, DiffElement source, DiffElement target, DirDiffSettings settings) {
-    UsageTrigger.trigger("diff.DirDiffTableModel");
     myProject = project;
     mySettings = settings;
     mySource = source;
@@ -417,6 +415,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       final DiffElement[] children = element.getChildren();
       for (DiffElement child : children) {
         if (!myUpdating.get()) return;
+        text.set(prepareText(child.getPath()));
         BiMap<String, String> replacing = mySourceToReplacingTarget.get(root.getPath());
         String replacementName = replacing != null ? source ? replacing.get(child.getName()) : replacing.inverse().get(child.getName()) : null;
         final DTree el = root.addChild(child, source, replacementName);

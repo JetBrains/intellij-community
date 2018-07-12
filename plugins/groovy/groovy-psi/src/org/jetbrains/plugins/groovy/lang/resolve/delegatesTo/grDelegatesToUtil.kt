@@ -17,10 +17,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.getArgumentTypes
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 
-@JvmField val DELEGATES_TO_KEY = Key.create<String>("groovy.closure.delegatesTo.type")
-@JvmField val DELEGATES_TO_STRATEGY_KEY = Key.create<Int>("groovy.closure.delegatesTo.strategy")
+@JvmField val DELEGATES_TO_KEY: Key<String> = Key.create<String>("groovy.closure.delegatesTo.type")
+@JvmField val DELEGATES_TO_STRATEGY_KEY: Key<Int> = Key.create<Int>("groovy.closure.delegatesTo.strategy")
 
-val defaultDelegatesToInfo = DelegatesToInfo(null, Closure.OWNER_ONLY)
+val defaultDelegatesToInfo: DelegatesToInfo = DelegatesToInfo(null, Closure.OWNER_ONLY)
 
 fun getDelegatesToInfo(closure: GrClosableBlock): DelegatesToInfo? = CachedValuesManager.getCachedValue(closure) {
   Result.create(doGetDelegatesToInfo(closure), PsiModificationTracker.MODIFICATION_COUNT)

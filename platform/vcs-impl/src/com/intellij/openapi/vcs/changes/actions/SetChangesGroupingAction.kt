@@ -12,23 +12,23 @@ abstract class SetChangesGroupingAction : ToggleAction(), DumbAware {
   }
   abstract val groupingKey: String
 
-  override fun update(e: AnActionEvent) = super.update(e).also {
+  override fun update(e: AnActionEvent): Unit = super.update(e).also {
     e.presentation.isEnabledAndVisible = getGroupingSupport(e)?.isAvailable(groupingKey) ?: false
   }
 
-  override fun isSelected(e: AnActionEvent) = e.presentation.isEnabledAndVisible && getGroupingSupport(e)?.get(groupingKey) ?: false
+  override fun isSelected(e: AnActionEvent): Boolean = e.presentation.isEnabledAndVisible && getGroupingSupport(e)?.get(groupingKey) ?: false
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     getGroupingSupport(e)!![groupingKey] = state
   }
 
-  protected fun getGroupingSupport(e: AnActionEvent) = e.getData(ChangesGroupingSupport.KEY)
+  protected fun getGroupingSupport(e: AnActionEvent): ChangesGroupingSupport? = e.getData(ChangesGroupingSupport.KEY)
 }
 
 class SetDirectoryChangesGroupingAction : SetChangesGroupingAction() {
-  override val groupingKey get() = "directory"
+  override val groupingKey: String get() = "directory"
 }
 
 class SetModuleChangesGroupingAction : SetChangesGroupingAction() {
-  override val groupingKey get() = "module"
+  override val groupingKey: String get() = "module"
 }

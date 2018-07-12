@@ -360,7 +360,7 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
 
       @Override
       public int getMinVisibilityLevel(PsiMember member) {
-        return member instanceof PsiMethod && isEntryPoint(member) ? PsiUtil.ACCESS_LEVEL_PROTECTED : -1;
+        return member instanceof PsiMethod && isEntryPoint(member) ? PsiUtil.ACCESS_LEVEL_PROTECTED : ACCESS_LEVEL_INVALID;
       }
 
       @Override

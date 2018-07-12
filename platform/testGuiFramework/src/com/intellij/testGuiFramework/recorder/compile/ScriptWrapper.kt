@@ -17,7 +17,7 @@ package com.intellij.testGuiFramework.recorder.compile
 
 object ScriptWrapper {
 
-  val TEST_METHOD_NAME = "testMe"
+  val TEST_METHOD_NAME: String = "testMe"
 
   private fun classWrap(function: () -> (String)): String = "class CurrentTest: GuiTestCase() {\n${function.invoke()}\n}"
   private fun funWrap(function: () -> String): String = "fun $TEST_METHOD_NAME(){\n${function.invoke()}\n}"

@@ -15,23 +15,23 @@
  */
 package com.intellij.psi.codeStyle;
 
-import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
+
 /**
- * @author Rustam Vishnyakov
+ * Provides indent options for a PSI file thus allowing different PSI files having different indentation policies withing the same project.
+ * The provider can also offer ad hoc actions to control the current indentation policy without opening settings.
  */
 public abstract class FileIndentOptionsProvider {
 
   public final static ExtensionPointName<FileIndentOptionsProvider> EP_NAME = ExtensionPointName.create("com.intellij.fileIndentOptionsProvider");
 
-  private final static String SHOW_NOTIFICATION_KEY = "show.indent.detected.notification";
   /**
    * Retrieves indent options for PSI file.
    * @param settings Code style settings for which indent options are calculated.
@@ -39,7 +39,7 @@ public abstract class FileIndentOptionsProvider {
    * @return Indent options or {@code null} if the provider can't retrieve them.
    */
   @Nullable
-  public abstract CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull CodeStyleSettings settings, @NotNull PsiFile file);
+  public abstract IndentOptions getIndentOptions(@NotNull CodeStyleSettings settings, @NotNull PsiFile file);
 
   /**
    * Tells if the provider can be used when a complete file is reformatted.
@@ -50,40 +50,65 @@ public abstract class FileIndentOptionsProvider {
   }
 
   /**
-   * @return information used to create user notification in editor. If the option is {@code null}, no notification
-   * will be shown.
+   * Checks if any actions are available for the given virtual file and indent options without creating them. Indent options may not
+   * necessarily be from the same {@code FileIndentOptionsProvider} but still the provider may offer its own actions in such case.
+   *
+   * @param file          The current virtual file.
+   * @param indentOptions The indent options to check actions' availability for.
+   * @return True if any actions are available, false otherwise.
    */
-  @Nullable
-  public EditorNotificationInfo getNotificationInfo(@NotNull Project project,
-                                                    @NotNull VirtualFile file,
-                                                    @NotNull FileEditor fileEditor,
-                                                    @NotNull CommonCodeStyleSettings.IndentOptions user,
-                                                    @NotNull CommonCodeStyleSettings.IndentOptions detected) {
-    return null;
-  }
-  
-  /**
-   * Tells if there should not be any notification for this specific file.
-   * @param file  The file to check.
-   * @return {@code true} if the file can be silently accepted without a warning.
-   */
-  @SuppressWarnings("UnusedParameters")
-  public boolean isAcceptedWithoutWarning(@Nullable Project project, @NotNull VirtualFile file) {
+  public boolean areActionsAvailable(@NotNull VirtualFile file, @NotNull IndentOptions indentOptions) {
     return false;
   }
 
   /**
-   * Sets the file as accepted by end user.
-   * @param file The file to be accepted. A particular implementation of {@code FileIndentOptionsProvider} may ignore this parameter
-   *             and set a global acceptance flag so that no notification will be shown anymore.
+   * @param file          The current virtual file
+   * @param indentOptions The current indent options.
+   * @return An array of actions available for the given virtual file and indent options or {@code null} if no actions are available.
    */
-  public void setAccepted(@SuppressWarnings("UnusedParameters") @NotNull VirtualFile file) {}
-
-  public static boolean isShowNotification() {
-    return PropertiesComponent.getInstance().getBoolean(SHOW_NOTIFICATION_KEY, true);
+  @Nullable
+  public AnAction[] getActions(@NotNull PsiFile file, @NotNull IndentOptions indentOptions) {
+    return null;
   }
 
-  public static void setShowNotification(boolean value) {
-    PropertiesComponent.getInstance().setValue(SHOW_NOTIFICATION_KEY, Boolean.toString(value), Boolean.toString(true));
+  /**
+   * Returns a tooltip string to inform a user about the given indent options. The default implementation returns the following tooltip:
+   * "x spaces/Tab (hint)", where "hint" is an optional short string returned by {@link #getHint(IndentOptions)}
+   * @param indentOptions The indent options to return the tooltip for.
+   * @return The tooltip string or {@code null} if the tooltip is not available.
+   */
+  @NotNull
+  public String getTooltip(@NotNull IndentOptions indentOptions) {
+    return getTooltip(indentOptions, getHint(indentOptions));
   }
+
+  /**
+   * Returns a short, usually one-word, string to indicate the source of the given indent options.
+   *
+   * @param indentOptions The indent options to return the hint for.
+   * @return The indent options source hint or {@code null} if not available.
+   */
+  @Nullable
+  protected String getHint(@NotNull IndentOptions indentOptions) {
+    return null;
+  }
+
+  @NotNull
+  public static String getTooltip(@NotNull IndentOptions indentOptions, @Nullable String hint) {
+    StringBuilder sb = new StringBuilder();
+    if (indentOptions.USE_TAB_CHARACTER) {
+      sb.append("Tab");
+    }
+    else {
+      sb.append(indentOptions.INDENT_SIZE).append(" spaces");
+    }
+    if (hint != null) sb.append(" (").append(hint).append(')');
+    return sb.toString();
+  }
+
+  @Nullable
+  public String getAdvertisementText(@NotNull PsiFile psiFile, @NotNull IndentOptions indentOptions) {
+    return null;
+  }
+
 }

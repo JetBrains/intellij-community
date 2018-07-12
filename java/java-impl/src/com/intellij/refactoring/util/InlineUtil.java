@@ -27,9 +27,11 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -160,6 +162,9 @@ public class InlineUtil {
     if (typeElement == null) {
       typeElement = factory.createTypeElement(variable.getType());
     }
+    else if (typeElement.isInferredType()) {
+      return expr;
+    }
     castTypeElement.replace(typeElement);
     final PsiExpression operand = cast.getOperand();
     assert operand != null;
@@ -204,7 +209,7 @@ public class InlineUtil {
   }
 
   public static void inlineArrayCreationForVarargs(final PsiNewExpression arrayCreation) {
-    PsiExpressionList argumentList = (PsiExpressionList)arrayCreation.getParent();
+    PsiExpressionList argumentList = (PsiExpressionList)PsiUtil.skipParenthesizedExprUp(arrayCreation.getParent());
     if (argumentList == null) return;
     PsiExpression[] args = argumentList.getExpressions();
     PsiArrayInitializerExpression arrayInitializer = arrayCreation.getArrayInitializer();
@@ -213,7 +218,8 @@ public class InlineUtil {
         arrayCreation.delete();
         return;
       }
-
+      
+      CommentTracker cm = new CommentTracker();
       PsiExpression[] initializers = arrayInitializer.getInitializers();
       if (initializers.length > 0) {
         PsiElement lastInitializerSibling = initializers[initializers.length - 1];
@@ -237,8 +243,9 @@ public class InlineUtil {
           firstElement = leadingComment;
         }
         argumentList.addRange(firstElement, lastInitializerSibling);
+        cm.markRangeUnchanged(firstElement, lastInitializerSibling);
       }
-      args[args.length - 1].delete();
+      cm.deleteAndRestoreComments(args[args.length - 1]);
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
@@ -323,11 +330,18 @@ public class InlineUtil {
       return TailCallType.Return;
     }
     if (callParent instanceof PsiExpressionStatement) {
-      PsiStatement callStatement = (PsiStatement)callParent;
-      PsiMethod callerMethod = PsiTreeUtil.getParentOfType(callStatement, PsiMethod.class);
-      if (callerMethod != null) {
-        final PsiStatement[] psiStatements = callerMethod.getBody().getStatements();
-        return psiStatements.length > 0 && callStatement == psiStatements [psiStatements.length-1] ? TailCallType.Simple : TailCallType.None;
+      PsiStatement curElement = (PsiStatement)callParent;
+      while (true) {
+        if (PsiTreeUtil.getNextSiblingOfType(curElement, PsiStatement.class) != null) return TailCallType.None;
+        PsiElement parent = curElement.getParent();
+        if (parent instanceof PsiCodeBlock) {
+          PsiElement blockParent = parent.getParent();
+          if (blockParent instanceof PsiMethod || blockParent instanceof PsiLambdaExpression) return TailCallType.Simple;
+          if (!(blockParent instanceof PsiBlockStatement)) return TailCallType.None;
+          parent = blockParent.getParent();
+        }
+        if (!(parent instanceof PsiLabeledStatement) && !(parent instanceof PsiIfStatement)) return TailCallType.None;
+        curElement = (PsiStatement)parent;
       }
     }
     return TailCallType.None;

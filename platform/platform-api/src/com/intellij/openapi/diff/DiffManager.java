@@ -45,24 +45,6 @@ public abstract class DiffManager {
    */
   public abstract DiffTool getIdeaDiffTool();
 
-  /**
-   * <B>Work in progress. Don't rely on this functionality</B><br>
-   * Adds new diff tool.
-   *
-   * @param tool diff tool to register
-   * @return false iff tool already registered (tool won't be registered twice). Otherwise true.
-   * @throws NullPointerException iff tool == null
-   */
-  public abstract boolean registerDiffTool(DiffTool tool) throws NullPointerException;
-
-  /**
-   * <B>Work in progress. Don't rely on this functionality</B><br>
-   * Unregister tool, registered with {@link #registerDiffTool(DiffTool)}
-   *
-   * @param tool diff tool to unregister
-   */
-  public abstract void unregisterDiffTool(DiffTool tool);
-
   public abstract MarkupEditorFilter getDiffEditorFilter();
 
   /**

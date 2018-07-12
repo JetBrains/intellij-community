@@ -13,15 +13,6 @@ import com.intellij.openapi.project.Project;
  * @author yole
  */
 public class ToggleAutoTestAction extends ToggleAction {
-  /**
-   * @deprecated use default constructor instead
-   * @param environment
-   * To be removed in IDEA 16
-   */
-  @Deprecated
-  public ToggleAutoTestAction(ExecutionEnvironment environment) {
-    this();
-  }
 
   public ToggleAutoTestAction() {
     super("Toggle auto-test", "Toggle automatic rerun of tests on code changes",

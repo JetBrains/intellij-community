@@ -917,14 +917,6 @@ public class SingleInspectionProfilePanel extends JPanel {
     return myProfile;
   }
 
-  private void setProfile(InspectionProfileModifiableModel modifiableModel) {
-    if (myProfile == modifiableModel) {
-      return;
-    }
-    myProfile = modifiableModel;
-    initToolStates();
-  }
-
   @Override
   public Dimension getPreferredSize() {
     return new Dimension(700, 500);
@@ -1038,7 +1030,6 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   public void reset() {
     myModified = false;
-    setProfile(myProfile);
     filterTree();
     final String filter = myProfileFilter.getFilter();
     myProfileFilter.reset();
@@ -1212,7 +1203,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }
 
     private void setupResetLinkVisibility() {
-      if (myTreeTable == null) return;
+      if (myTreeTable == null || myProfile == null) return;
       InspectionConfigTreeNode.Tool node = myTreeTable.getStrictlySelectedToolNode();
       if (node != null) {
         ScopeToolState state = getSelectedState();

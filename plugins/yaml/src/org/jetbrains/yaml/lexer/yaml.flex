@@ -28,6 +28,8 @@ import org.jetbrains.yaml.YAMLTokenTypes;
   private int braceCount = 0;
   private IElementType valueTokenType = null;
   private int previousState = YYINITIAL;
+  private int previousAnchorState = YYINITIAL;
+  private int nextState = YYINITIAL;
 
   protected int yycolumn = 0;
 
@@ -113,7 +115,9 @@ import org.jetbrains.yaml.YAMLTokenTypes;
   // The compact notation may be used when the entry is itself a nested block collection.
   // In this case, both the “-” indicator and the following spaces are considered to be part of the indentation of the nested collection.
   // See 8.2.1. Block Sequences http://www.yaml.org/spec/1.2/spec.html#id2797382
-  private IElementType getScalarKeyAndUpdateIndent() {
+  private IElementType getScalarKey(int nextState) {
+    this.nextState = nextState;
+    yyBegin(KEY_MODE);
     currentLineIndent = yycolumn;
     return SCALAR_KEY;
   }
@@ -153,8 +157,9 @@ COMMENT =                       "#"{LINE}
 
 ID =                            [^\n\-\ {}\[\]#][^\n{}\[\]>:#]*
 
-KEY_flow = {NS_PLAIN_ONE_LINE_flow} {WHITE_SPACE_CHAR}* ":"
-KEY_block = {NS_PLAIN_ONE_LINE_block} {WHITE_SPACE_CHAR}* ":"
+KEY_flow = {NS_PLAIN_ONE_LINE_flow}
+KEY_block = {NS_PLAIN_ONE_LINE_block}
+KEY_SUFIX = {WHITE_SPACE_CHAR}* ":"
 
 INJECTION =                     ("{{" {ID} "}"{0,2}) | ("%{" [^}\n]* "}"?)
 
@@ -172,6 +177,10 @@ C_TAG_HANDLE = "!" {NS_WORD_CHAR}+ "!" | "!" "!" | "!"
 C_NS_SHORTHAND_TAG = {C_TAG_HANDLE} {NS_TAG_CHAR}+
 C_NON_SPECIFIC_TAG = "!"
 C_NS_TAG_PROPERTY = {C_VERBATIM_TAG} | {C_NS_SHORTHAND_TAG} | {C_NON_SPECIFIC_TAG}
+
+//[102] ns-anchor-char ::= ns-char - c-flow-indicator
+//[103] ns-anchor-name ::= ns-anchor-char+
+NS_ANCHOR_NAME = [^,\[\]\{\}\s]+
 
 BS_HEADER_ERR_WORD = [^ \t#\n] [^ \t\n]*
 
@@ -193,7 +202,7 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
 ///////////////////////////// STATES DECLARATIONS //////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-%xstate BRACES, VALUE, VALUE_OR_KEY, VALUE_BRACE, INDENT_VALUE, BS_HEADER_TAIL
+%xstate BRACES, VALUE, VALUE_OR_KEY, VALUE_BRACE, INDENT_VALUE, BS_HEADER_TAIL, ANCHOR_MODE, ALIAS_MODE, KEY_MODE
 
 %%
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -249,38 +258,58 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
   return TAG;
 }
 
+//[101] c-ns-anchor-property ::= “&” ns-anchor-name
+& / {NS_ANCHOR_NAME}            {   previousAnchorState = yystate();
+                                    yyBegin(ANCHOR_MODE);
+                                    return AMPERSAND;
+                                }
+}
+
+<KEY_MODE> {
+":"                             {   yyBegin(nextState);
+                                    return COLON;
+                                }
+}
+
+<ANCHOR_MODE> {
+{NS_ANCHOR_NAME}                {   yyBegin(previousAnchorState);
+                                    return ANCHOR;
+                                }
 }
 
 <YYINITIAL, BRACES, VALUE_OR_KEY> {
 
 
-{STRING_SINGLE_LINE} ":" {
-  return getScalarKeyAndUpdateIndent();
-}
-
-{DSTRING_SINGLE_LINE} ":" {
-  return getScalarKeyAndUpdateIndent();
-}
-
+{STRING_SINGLE_LINE} | {DSTRING_SINGLE_LINE} / {KEY_SUFIX}
+                                {   return getScalarKey(yystate()); }
 
 }
 
 <BRACES> {
-{KEY_flow} / !(!{ANY_CHAR}|{NS_PLAIN_SAFE_flow}) {
-  yyBegin(VALUE_BRACE);
-  return SCALAR_KEY;
+//look ahead: {NS_PLAIN_SAFE_flow} symbol
+{KEY_flow} / {KEY_SUFIX} {NS_PLAIN_SAFE_flow} {
+  yyBegin(VALUE);
+  return TEXT;
 }
-
+//look ahead: different from {NS_PLAIN_SAFE_flow} symbol or EOF
+{KEY_flow} / {KEY_SUFIX} {
+  return getScalarKey(VALUE_BRACE);
+}
 }
 
 <YYINITIAL, VALUE_OR_KEY> {
-{KEY_block} / !(!{ANY_CHAR}|{NS_PLAIN_SAFE_block}) {
+//look ahead: {NS_PLAIN_SAFE_block} symbol
+{KEY_block} / {KEY_SUFIX} {NS_PLAIN_SAFE_block} {
   yyBegin(VALUE);
-  return getScalarKeyAndUpdateIndent();
+  return TEXT;
+}
+//look ahead: different from {NS_PLAIN_SAFE_block} symbol or EOF
+{KEY_block} / {KEY_SUFIX} {
+  return getScalarKey(VALUE);
 }
 }
 
-<YYINITIAL, BRACES, VALUE, VALUE_BRACE, VALUE_OR_KEY, BS_HEADER_TAIL> {
+<YYINITIAL, BRACES, VALUE, VALUE_BRACE, VALUE_OR_KEY, BS_HEADER_TAIL, KEY_MODE> {
 
 {WHITE_SPACE}                   { return getWhitespaceTypeAndUpdateIndent(); }
 
@@ -313,6 +342,17 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
  return SCALAR_DSTRING;
 }
 
+//[104] c-ns-alias-node ::= “*” ns-anchor-name
+\* / {NS_ANCHOR_NAME}           {   previousAnchorState = yystate();
+                                    yyBegin(ALIAS_MODE);
+                                    return STAR;
+                                }
+}
+
+<ALIAS_MODE> {
+{NS_ANCHOR_NAME}                {   yyBegin(previousAnchorState);
+                                    return ALIAS;
+                                }
 }
 
 // See 8.1 Block Scalar Styles
@@ -412,27 +452,4 @@ C_B_BLOCK_HEADER = ( [:digit:]* ( "-" | "+" )? ) | ( ( "-" | "+" )? [:digit:]* )
                                                 return valueTokenType;
                                             }
                                         }
-}
-
-// Rules for matching EOLs
-<BRACES> {
-
-{KEY_flow} {
-  if (zzMarkedPos == zzEndRead){
-    return SCALAR_KEY;
-  }
-  yyBegin(VALUE);
-  return tokenOrForbidden(TEXT);
-}
-
-}
-
-<YYINITIAL, VALUE_OR_KEY> {
-{KEY_block} {
-  if (zzMarkedPos == zzEndRead){
-    return SCALAR_KEY;
-  }
-  yyBegin(VALUE);
-  return tokenOrForbidden(TEXT);
-}
 }

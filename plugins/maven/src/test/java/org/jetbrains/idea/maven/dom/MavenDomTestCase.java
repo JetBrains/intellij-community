@@ -86,11 +86,15 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
 
   @Override
   protected void tearDownFixtures() throws Exception {
-    CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = myOriginalAutoCompletion;
-    myConfigTimestamps.clear();
+    try {
+      CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = myOriginalAutoCompletion;
+      myConfigTimestamps.clear();
 
-    myFixture.tearDown();
-    myFixture = null;
+      myFixture.tearDown();
+    }
+    finally {
+      myFixture = null;
+    }
   }
 
   protected PsiFile findPsiFile(VirtualFile f) {
@@ -172,7 +176,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     PsiReference ref = getReferenceAtCaret(file);
     if (ref == null) return;
     PsiReference[] refs = ref instanceof PsiMultiReference ? ((PsiMultiReference)ref).getReferences() : new PsiReference[]{ref};
-    for (PsiReference each : refs) {
+    for (PsiReference each: refs) {
       assertFalse(each.toString(), refClass.isInstance(each));
     }
   }
@@ -200,7 +204,9 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     int index = text.indexOf(referenceText);
     assert index >= 0;
 
-    assert text.indexOf(referenceText, index + referenceText.length()) == -1 : "Reference text '" + referenceText + "' occurs more than one times";
+    assert text.indexOf(referenceText, index + referenceText.length()) == -1 : "Reference text '" +
+                                                                               referenceText +
+                                                                               "' occurs more than one times";
 
     return getReferenceAt(file, index);
   }
@@ -218,7 +224,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
 
     return getReferenceAt(file, k);
   }
-  
+
   @Nullable
   protected PsiElement resolveReference(VirtualFile file, @NotNull String referenceText) throws IOException {
     PsiReference ref = getReference(file, referenceText);
@@ -268,7 +274,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     LookupElement[] variants = myFixture.completeBasic();
 
     List<String> result = new ArrayList<>();
-    for (LookupElement each : variants) {
+    for (LookupElement each: variants) {
       result.add(each.getLookupString());
     }
     return result;
@@ -277,7 +283,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
   protected void assertDocumentation(String expectedText) {
     PsiElement originalElement = getElementAtCaret(myProjectPom);
     PsiElement targetElement = DocumentationManager.getInstance(myProject)
-      .findTargetElement(getEditor(), getTestPsiFile(), originalElement);
+                                                   .findTargetElement(getEditor(), getTestPsiFile(), originalElement);
 
     DocumentationProvider provider = DocumentationManager.getProviderFromElement(targetElement);
     assertEquals(expectedText, provider.generateDoc(targetElement, originalElement));
@@ -397,7 +403,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
 
     RangeHighlighter[] highlighters = editor.getMarkupModel().getAllHighlighters();
     List<HighlightInfo> actual = new ArrayList<>();
-    for (RangeHighlighter each : highlighters) {
+    for (RangeHighlighter each: highlighters) {
       if (!each.isValid()) continue;
       int offset = each.getStartOffset();
       PsiElement element = getTestPsiFile(file).findElementAt(offset);

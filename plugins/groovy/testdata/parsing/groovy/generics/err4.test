@@ -21,20 +21,19 @@ Groovy script
         Modifiers
           PsiElement(public)('public')
         PsiWhiteSpace(' ')
-        PsiErrorElement:Type parameters are unexpected
-          Type parameter list
-            PsiElement(<)('<')
-            Type parameter
-              PsiElement(identifier)('A')
-              Type extends bounds list
-                <empty list>
-            PsiElement(,)(',')
-            PsiWhiteSpace(' ')
-            Type parameter
-              PsiElement(identifier)('B')
-              Type extends bounds list
-                <empty list>
-            PsiElement(>)('>')
+        Type parameter list
+          PsiElement(<)('<')
+          Type parameter
+            PsiElement(identifier)('A')
+            Type extends bounds list
+              <empty list>
+          PsiElement(,)(',')
+          PsiWhiteSpace(' ')
+          Type parameter
+            PsiElement(identifier)('B')
+            Type extends bounds list
+              <empty list>
+          PsiElement(>)('>')
         PsiWhiteSpace(' ')
         Field
           PsiElement(identifier)('foo')

@@ -89,8 +89,9 @@ public interface Document extends UserDataHolder {
   /**
    * @deprecated Use {@link #getCharsSequence()} or {@link #getText()} instead.
    */
+  @NotNull
   @Deprecated
-  default @NotNull char[] getChars() {
+  default char[] getChars() {
     return CharArrayUtil.fromSequence(getImmutableCharSequence());
   }
 
@@ -237,7 +238,8 @@ public interface Document extends UserDataHolder {
    * @param endOffset the end offset for the range of text covered by the marker.
    * @return the marker instance.
    */
-  default @NotNull RangeMarker createRangeMarker(int startOffset, int endOffset) {
+  @NotNull
+  default RangeMarker createRangeMarker(int startOffset, int endOffset) {
     return createRangeMarker(startOffset, endOffset, false);
   }
 

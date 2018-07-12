@@ -140,11 +140,4 @@ public abstract class ProjectTaskManager {
                                                      boolean includeRuntimeDependencies);
 
   public abstract ProjectTask createBuildTask(boolean isIncrementalBuild, ProjectModelBuildableElement... artifacts);
-
-  /**
-   * @deprecated use {@link #createBuildTask(boolean, ProjectModelBuildableElement...)}
-   */
-  public ProjectTask createArtifactsBuildTask(boolean isIncrementalBuild, ProjectModelBuildableElement... artifacts) {
-    return createBuildTask(isIncrementalBuild, artifacts);
-  }
 }

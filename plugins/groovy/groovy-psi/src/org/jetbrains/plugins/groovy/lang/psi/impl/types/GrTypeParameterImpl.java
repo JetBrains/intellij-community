@@ -432,7 +432,7 @@ public class GrTypeParameterImpl extends GrStubElementBase<GrTypeParameterStub> 
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitTypeParameter(this);
   }
 }

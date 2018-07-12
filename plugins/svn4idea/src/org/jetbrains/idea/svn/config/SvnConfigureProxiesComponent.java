@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.config;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -8,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.IconUtil;
@@ -134,7 +133,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
 
   protected ArrayList<AnAction> createActions(final boolean fromPopup) {
     ArrayList<AnAction> result = new ArrayList<>();
-    result.add(new AnAction("Add", "Add", IconUtil.getAddIcon()) {
+    result.add(new DumbAwareAction("Add", "Add", IconUtil.getAddIcon()) {
         {
             registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
         }
@@ -170,7 +169,7 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
       }
     });
 
-    result.add(new AnAction("Copy", "Copy", PlatformIcons.COPY_ICON) {
+    result.add(new DumbAwareAction("Copy", "Copy", PlatformIcons.COPY_ICON) {
         {
             registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
         }

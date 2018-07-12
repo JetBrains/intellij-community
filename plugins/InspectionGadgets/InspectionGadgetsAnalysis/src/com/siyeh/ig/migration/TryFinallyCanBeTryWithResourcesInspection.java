@@ -29,6 +29,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
+import gnu.trove.TIntArrayList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -91,7 +92,18 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
                                                        .map(ResourceVariable::generateResourceDeclaration)
                                                        .collect(Collectors.joining(";"));
       StringBuilder sb = new StringBuilder("try(");
-      sb.append(resourceList).append(")");
+      sb.append(resourceList);
+      PsiResourceList resourceListElement = tryStatement.getResourceList();
+      if (resourceListElement != null) {
+        PsiElement[] children = resourceListElement.getChildren();
+        if (children.length > 2 && resourceListElement.getResourceVariablesCount() > 0) {
+          sb.append(";");
+          for (int i = 1; i < children.length - 1; i++) {
+            sb.append(children[i].getText());
+          }
+        }
+      }
+      sb.append(")");
       List<PsiLocalVariable> locals = StreamEx.of(context.myResourceVariables)
                                               .map(resourceVariable -> resourceVariable.myVariable)
                                               .select(PsiLocalVariable.class)
@@ -102,25 +114,32 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         PsiLocalVariable variable = locals.get(0);
         PsiStatement declaration = PsiTreeUtil.getParentOfType(variable, PsiStatement.class);
         if (declaration == null) return;
+        if (declaration.getParent() != tryStatement.getParent()) return;
         List<PsiStatement> statements = collectStatementsBetween(declaration, tryStatement);
         PsiJavaToken lBrace = tryBlock.getLBrace();
         if (lBrace != null) {
           for (int i = statements.size() - 1; i >= 0; i--) {
             PsiStatement statement = statements.get(i);
             tryBlock.addAfter(statement, lBrace);
-            statement.delete();
+            if (statement.isValid()) {
+              statement.delete();
+            }
           }
         }
       }
-      restoreStatements(tryStatement, tryBlock, context);
+      restoreStatementsBeforeLastVariableInTryResource(tryStatement, tryBlock, context);
 
 
       for (PsiStatement statement : context.myStatementsToDelete) {
-        new CommentTracker().deleteAndRestoreComments(statement);
+        if (statement.isValid()) {
+          new CommentTracker().deleteAndRestoreComments(statement);
+        }
       }
       for (ResourceVariable variable : context.myResourceVariables) {
         if (!variable.myUsedOutsideTry) {
-          new CommentTracker().deleteAndRestoreComments(variable.myVariable);
+          if (variable.myVariable.isValid()) {
+            new CommentTracker().deleteAndRestoreComments(variable.myVariable);
+          }
         }
       }
       sb.append(tryBlock.getText());
@@ -143,9 +162,9 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
     }
 
 
-    private static void restoreStatements(PsiTryStatement tryStatement,
-                                          PsiCodeBlock tryBlock,
-                                          Context context) {
+    private static void restoreStatementsBeforeLastVariableInTryResource(PsiTryStatement tryStatement,
+                                                                         PsiCodeBlock tryBlock,
+                                                                         Context context) {
       Optional<PsiExpression> lastInTryVariable = StreamEx.of(context.myResourceVariables)
                                                           .map(v -> v.myInitializer)
                                                           .filter(e -> e != null && PsiTreeUtil.isAncestor(tryBlock, e, false))
@@ -219,6 +238,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
 
       List<ResourceVariable> resourceVariables = new ArrayList<>();
       List<PsiStatement> statementsToDelete = new ArrayList<>();
+      TIntArrayList initializerPositions = new TIntArrayList();
       for (PsiVariable resourceVariable : collectedVariables) {
         boolean variableUsedOutsideTry = isVariableUsedOutsideContext(resourceVariable, tryStatement);
         if (!PsiUtil.isLanguageLevel9OrHigher(finallyBlock) && variableUsedOutsideTry) return null;
@@ -228,6 +248,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
           if (!hasNonNullInitializer) {
             int assignmentStatementIndex = findInitialization(tryStatements, resourceVariable);
             if (assignmentStatementIndex == -1) return null;
+            initializerPositions.add(assignmentStatementIndex);
             PsiExpressionStatement assignmentStatement = (PsiExpressionStatement)tryStatements[assignmentStatementIndex];
             PsiExpression expression = assignmentStatement.getExpression();
             PsiAssignmentExpression assignment = tryCast(expression, PsiAssignmentExpression.class);
@@ -255,9 +276,18 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         }
       }
       if (!noStatementsBetweenVariableDeclarations(collectedVariables)) return null;
+      if (!initializersAreAtTheBeginning(initializerPositions)) return null;
 
       Collections.sort(resourceVariables, Comparator.comparing(o -> o.myVariable, PsiElementOrderComparator.getInstance()));
       return new Context(resourceVariables, new HashSet<>(statementsToDelete));
+    }
+
+    private static boolean initializersAreAtTheBeginning(TIntArrayList initializerPositions) {
+      initializerPositions.sort();
+      for (int i = 0; i < initializerPositions.size(); i++) {
+        if (initializerPositions.get(i) != i) return false;
+      }
+      return true;
     }
 
     private static boolean noStatementsBetweenVariableDeclarations(Set<PsiVariable> collectedVariables) {
@@ -272,7 +302,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
 
   private static List<PsiStatement> collectStatementsBetween(PsiStatement startExclusive, PsiStatement endExclusive) {
     List<PsiStatement> statements = new ArrayList<>();
-    PsiStatement current = PsiTreeUtil.getNextSiblingOfType(startExclusive.getNextSibling(), PsiStatement.class);
+    PsiStatement current = PsiTreeUtil.getNextSiblingOfType(startExclusive, PsiStatement.class);
     while (current != endExclusive && current != null) {
       statements.add(current);
       current = PsiTreeUtil.getNextSiblingOfType(current.getNextSibling(), PsiStatement.class);
@@ -408,7 +438,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
   @Nullable
   private static PsiVariable findAutoCloseableVariable(PsiStatement statement) {
     Set<PsiVariable> variables = new HashSet<>(1);
-    findAutoCloseableVariables(statement, variables);
+    if (!findAutoCloseableVariables(statement, variables)) return null;
     if (variables.isEmpty()) {
       return null;
     }
@@ -429,13 +459,12 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       PsiCodeBlock tryBlock = tryStatement.getTryBlock();
       if (tryBlock == null) return true;
       PsiStatement[] tryStatements = tryBlock.getStatements();
-      boolean containsClosedVariables = false;
       for (PsiStatement tryStmt : tryStatements) {
-        if (findAutoClosableVariableWithoutTry(tryStmt, variables)) {
-          containsClosedVariables = true;
+        if (!findAutoClosableVariableWithoutTry(tryStmt, variables)) {
+          return false;
         }
       }
-      return containsClosedVariables;
+      return true;
     }
     return false;
   }

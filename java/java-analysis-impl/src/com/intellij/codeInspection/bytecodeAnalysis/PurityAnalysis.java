@@ -16,7 +16,9 @@
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.asm.ASMUtils;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.util.ArrayUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
@@ -95,10 +97,19 @@ abstract class DataValue implements org.jetbrains.org.objectweb.asm.tree.analysi
     return Stream.empty();
   }
 
+  public ContractReturnValue asContractReturnValue() {
+    return ContractReturnValue.returnAny();
+  }
+
   static final DataValue ThisDataValue = new DataValue(-1) {
     @Override
     public int getSize() {
       return 1;
+    }
+
+    @Override
+    public ContractReturnValue asContractReturnValue() {
+      return ContractReturnValue.returnThis();
     }
 
     @Override
@@ -110,6 +121,11 @@ abstract class DataValue implements org.jetbrains.org.objectweb.asm.tree.analysi
     @Override
     public int getSize() {
       return 1;
+    }
+
+    @Override
+    public ContractReturnValue asContractReturnValue() {
+      return ContractReturnValue.returnNew();
     }
 
     @Override
@@ -127,6 +143,11 @@ abstract class DataValue implements org.jetbrains.org.objectweb.asm.tree.analysi
     private ParameterDataValue(int n) {
       super(n);
       this.n = n;
+    }
+
+    @Override
+    public ContractReturnValue asContractReturnValue() {
+      return ContractReturnValue.returnParameter(n);
     }
 
     static ParameterDataValue create(int n) {
@@ -345,7 +366,7 @@ abstract class EffectQuantum {
 
     @Override
     Stream<EKey> dependencies() {
-      return Stream.concat(Stream.of(key), Stream.of(data).flatMap(DataValue::dependencies));
+      return StreamEx.of(data).flatMap(DataValue::dependencies).prepend(key);
     }
 
     @Override
@@ -516,7 +537,7 @@ class DataInterpreter extends Interpreter<DataValue> {
         }
         if (HardCodedPurity.getInstance().isPureMethod(method)) {
           quantum = null;
-          result = DataValue.LocalDataValue;
+          result = HardCodedPurity.getInstance().getReturnValueForPureMethod(method);
         }
         else if (HardCodedPurity.getInstance().isThisChangingMethod(method)) {
           DataValue receiver = ArrayUtil.getFirstElement(data);

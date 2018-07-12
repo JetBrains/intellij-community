@@ -16,18 +16,19 @@
 package git4idea.branch;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.*;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommand;
-import git4idea.commands.GitLineHandler;
+import git4idea.commands.*;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.repo.GitBranchTrackInfo;
@@ -43,9 +44,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
@@ -134,12 +134,25 @@ public class GitBranchUtil {
     }
   }
 
-  /**
-   * Get tracked branch of the given branch
-   */
-  @Nullable
-  public static String getTrackedBranchName(Project project, VirtualFile root, String branchName) throws VcsException {
-    return GitConfigUtil.getValue(project, root, trackedBranchKey(branchName));
+  @NotNull
+  public static List<String> getAllTags(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+    GitLineHandler h = new GitLineHandler(project, root, GitCommand.TAG);
+    h.addParameters("-l");
+    h.setSilent(true);
+
+    List<String> tags = new ArrayList<>();
+    h.addLineListener(new GitLineHandlerAdapter() {
+      @Override
+      public void onLineAvailable(String line, Key outputType) {
+        if (outputType != ProcessOutputTypes.STDOUT) return;
+        if (line.length() != 0) tags.add(line);
+      }
+    });
+
+    GitCommandResult result = Git.getInstance().runCommandWithoutCollectingOutput(h);
+    result.getOutputOrThrow();
+
+    return tags;
   }
 
   @NotNull
@@ -324,6 +337,13 @@ public class GitBranchUtil {
     }
 
     return commonBranches != null ? StreamEx.of(commonBranches).sorted(StringUtil::naturalCompare).toList() : Collections.emptyList();
+  }
+
+  @NotNull
+  public static <T extends GitReference> List<T> sortBranchesByName(@NotNull Collection<T> branches) {
+    return branches.stream()
+                   .sorted(Comparator.comparing(GitReference::getFullName, NaturalComparator.INSTANCE))
+                   .collect(Collectors.toList());
   }
 
   /**

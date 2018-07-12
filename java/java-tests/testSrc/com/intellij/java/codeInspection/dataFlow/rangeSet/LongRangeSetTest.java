@@ -30,9 +30,6 @@ import java.util.stream.Collectors;
 import static com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet.*;
 import static org.junit.Assert.*;
 
-/**
- * @author Tagir Valeev
- */
 public class LongRangeSetTest {
   @Test
   public void testToString() {

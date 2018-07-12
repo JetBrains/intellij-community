@@ -20,9 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 
-/**
- * @author Tagir Valeev
- */
 public class BulkMethodInfo {
   private final String myClassName;
   private final String mySimpleName;

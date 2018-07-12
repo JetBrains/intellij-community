@@ -7,8 +7,9 @@ import javax.swing.ButtonGroup
 import javax.swing.JLabel
 
 @PublishedApi
-internal fun createLayoutBuilder(): LayoutBuilder {
-  return LayoutBuilder(MigLayoutBuilder(createIntelliJSpacingConfiguration()))
+@JvmOverloads
+internal fun createLayoutBuilder(isUseMagic: Boolean = true): LayoutBuilder {
+  return LayoutBuilder(MigLayoutBuilder(createIntelliJSpacingConfiguration(), isUseMagic = isUseMagic))
 }
 
 interface LayoutBuilderImpl {
@@ -16,7 +17,7 @@ interface LayoutBuilderImpl {
 
   // backward compatibility
   @Deprecated(level = DeprecationLevel.HIDDEN, message = "deprecated")
-  fun newRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, separated: Boolean = false, indented: Boolean = false) = newRow(label, buttonGroup, separated)
+  fun newRow(label: JLabel? = null, buttonGroup: ButtonGroup? = null, separated: Boolean = false, indented: Boolean = false): Row = newRow(label, buttonGroup, separated)
 
   fun build(container: Container, layoutConstraints: Array<out LCFlags>)
 

@@ -8,7 +8,7 @@ data class MergeRangeList(val ranges: Set<MergeRange>) {
   companion object {
     @JvmStatic
     @Throws(SvnBindException::class)
-    fun parseMergeInfo(value: String) = value.lineSequence().map { parseLine(it) }.toMap()
+    fun parseMergeInfo(value: String): Map<String, MergeRangeList> = value.lineSequence().map { parseLine(it) }.toMap()
 
     @Throws(SvnBindException::class)
     fun parseRange(value: String): MergeRange {

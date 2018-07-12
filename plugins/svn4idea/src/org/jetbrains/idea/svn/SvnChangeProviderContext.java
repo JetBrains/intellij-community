@@ -266,7 +266,7 @@ class SvnChangeProviderContext implements StatusReceiver {
       final VirtualFile vcsRoot = ProjectLevelVcsManager.getInstance(myVcs.getProject()).getVcsRootFor(virtualFile);
       if (vcsRoot != null) {  // it will be null if we walked into an excluded directory
         String baseUrl = myBranchConfigurationManager.get(vcsRoot).getBaseName(switchUrl);
-        myChangelistBuilder.processSwitchedFile(virtualFile, baseUrl == null ? switchUrl.toString() : baseUrl, true);
+        myChangelistBuilder.processSwitchedFile(virtualFile, baseUrl == null ? switchUrl.toDecodedString() : baseUrl, true);
       }
     }
   }

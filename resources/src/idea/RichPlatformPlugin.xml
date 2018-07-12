@@ -6,6 +6,7 @@
   <module value="com.intellij.modules.vcs"/>
   <module value="com.intellij.modules.xdebugger"/>
   <module value="com.intellij.modules.xml"/>
+  <module value="com.intellij.modules.externalSystem"/>
 
   <xi:include href="/componentSets/IdeaComponents.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/idea/RichPlatformActions.xml" xpointer="xpointer(/idea-plugin/*)"/>
@@ -299,8 +300,6 @@
 
     <moduleConfigurationEditorProvider implementation="com.intellij.openapi.roots.ui.configuration.DefaultModuleEditorsProvider" order="first"/>
 
-    <statistics.usagesCollector implementation="com.intellij.openapi.roots.ui.configuration.libraries.impl.LibraryUsageCollector"/>
-    <statistics.usagesCollector implementation="com.intellij.compiler.CompilerSettingsUsageCollector"/>
     <postStartupActivity implementation="com.intellij.compiler.impl.CleanStaleModuleOutputsActivity"/>
 
     <keymapExtension implementation="com.intellij.debugger.actions.DebuggerKeymapExtension"/>

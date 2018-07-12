@@ -75,3 +75,17 @@ class E1:
     e: int = dataclasses.field(default_factory=int)
 
 E1(<arg8>)
+
+
+@dataclasses.dataclass
+class F1:
+    x: int
+    y: str
+    z: float = 0.0
+
+    @classmethod
+    def from_str(cls, string):
+        return cls(<arg9>)
+
+    def to_str(self):
+        return self(<arg10>)

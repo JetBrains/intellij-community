@@ -117,6 +117,12 @@ public class ObjectUtils {
     return null;
   }
 
+  @Contract("null, _ -> null")
+  @Nullable
+  public static <T, S> S doIfNotNull(@Nullable T obj, @NotNull Function<? super T, ? extends S> function) {
+    return obj == null ? null : function.fun(obj);
+  }
+
   @SuppressWarnings("unchecked")
   public static <T> void consumeIfCast(@Nullable Object obj, @NotNull Class<T> clazz, final Consumer<T> consumer) {
     if (clazz.isInstance(obj)) consumer.consume((T)obj);
@@ -129,6 +135,19 @@ public class ObjectUtils {
       return null;
     }
     return obj;
+  }
+
+  public static int binarySearch(int fromIndex, int toIndex, @NotNull IntIntFunction test) {
+    int low = fromIndex;
+    int high = toIndex - 1;
+    while (low <= high) {
+      int mid = (low + high) >>> 1;
+      int cmp = test.fun(mid);
+      if (cmp < 0) low = mid + 1;
+      else if (cmp > 0) high = mid - 1;
+      else return mid;
+    }
+    return -(low + 1);
   }
 
   private static class Sentinel {

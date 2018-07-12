@@ -10,6 +10,7 @@ import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessor;
 import com.intellij.codeInsight.editorActions.smartEnter.SmartEnterProcessors;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.concurrency.JobScheduler;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
@@ -20,6 +21,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
@@ -29,16 +31,23 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ThreeState;
@@ -49,6 +58,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("deprecation")
 public class CodeCompletionHandlerBase {
@@ -147,10 +158,19 @@ public class CodeCompletionHandlerBase {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.SECOND_BASIC_COMPLETION);
     }
 
+    long startingTime = System.currentTimeMillis();
+
     Runnable initCmd = () -> {
-      CompletionInitializationContextImpl context = CompletionInitializationUtil.createCompletionInitializationContext(project, editor, caret,
-                                                                                                                   invocationCount, completionType);
-      doComplete(context, hasModifiers);
+      CompletionInitializationContextImpl context = withTimeout(calcSyncTimeOut(startingTime), () ->
+        CompletionInitializationUtil.createCompletionInitializationContext(project, editor, caret, invocationCount, completionType));
+
+      boolean hasValidContext = context != null;
+      if (!hasValidContext) {
+        final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(caret, project);
+        context = new CompletionInitializationContextImpl(editor, caret, psiFile, completionType, invocationCount);
+      }
+
+      doComplete(context, hasModifiers, hasValidContext, startingTime);
     };
     if (autopopup) {
       CommandProcessor.getInstance().runUndoTransparentAction(initCmd);
@@ -211,7 +231,7 @@ public class CodeCompletionHandlerBase {
     return lookup;
   }
 
-  private void doComplete(CompletionInitializationContextImpl initContext, boolean hasModifiers) {
+  private void doComplete(CompletionInitializationContextImpl initContext, boolean hasModifiers, boolean isValidContext, long startingTime) {
     final Editor editor = initContext.getEditor();
     CompletionAssertions.checkEditorValid(editor);
 
@@ -233,7 +253,12 @@ public class CodeCompletionHandlerBase {
                                                                             initContext.getHostOffsets(),
                                                                             hasModifiers, lookup);
 
-    CompletionServiceImpl.setCompletionPhase(synchronous ? new CompletionPhase.Synchronous(indicator) : new CompletionPhase.BgCalculation(indicator));
+    CompletionServiceImpl.setCompletionPhase(synchronous && isValidContext ? new CompletionPhase.Synchronous(indicator) : new CompletionPhase.BgCalculation(indicator));
+
+    if (!isValidContext) {
+      indicator.makeSureLookupIsShown(0);
+      return;
+    }
 
     indicator.getCompletionThreading().startThread(indicator, () -> AsyncCompletion.tryReadOrCancel(indicator, () -> {
       CompletionParameters parameters = prepareCompletionParameters(initContext, indicator);
@@ -246,8 +271,9 @@ public class CodeCompletionHandlerBase {
       return;
     }
 
-    indicator.makeSureLookupIsShown(ourAutoInsertItemTimeout);
-    if (indicator.blockingWaitForFinish(ourAutoInsertItemTimeout)) {
+    int timeout = calcSyncTimeOut(startingTime);
+    indicator.makeSureLookupIsShown(timeout);
+    if (indicator.blockingWaitForFinish(timeout)) {
       try {
         indicator.getLookup().refreshUi(true, false);
         completionFinished(indicator, hasModifiers);
@@ -462,7 +488,23 @@ public class CodeCompletionHandlerBase {
     if (context.shouldAddCompletionChar()) {
       WriteAction.run(() -> addCompletionChar(context, item, editor, completionChar));
     }
+    checkPsiTextConcistency(indicator);
+
     return context;
+  }
+
+  private static void checkPsiTextConcistency(CompletionProcessEx indicator) {
+    PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(InjectedLanguageUtil.getTopLevelEditor(indicator.getEditor()), indicator.getProject());
+    if (psiFile != null) {
+      if (Registry.is("ide.check.stub.text.consistency") ||
+          ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
+        StubTextInconsistencyException.checkStubTextConsistency(psiFile);
+        if (PsiDocumentManager.getInstance(psiFile.getProject()).hasUncommitedDocuments()) {
+          PsiDocumentManager.getInstance(psiFile.getProject()).commitAllDocuments();
+          StubTextInconsistencyException.checkStubTextConsistency(psiFile);
+        }
+      }
+    }
   }
 
   public static void afterItemInsertion(final CompletionProgressIndicator indicator, final Runnable laterRunnable) {
@@ -511,8 +553,8 @@ public class CodeCompletionHandlerBase {
           editor.getDocument().deleteString(caretOffset, idEndOffset);
         }
 
-        assert context.getStartOffset() >= 0 : "stale startOffset: was " + initialStartOffset + "; selEnd=" + caretOffset + "; idEnd=" + idEndOffset + "; file=" + context.getFile();
-        assert context.getTailOffset() >= 0 : "stale tail: was " + initialStartOffset + "; selEnd=" + caretOffset + "; idEnd=" + idEndOffset + "; file=" + context.getFile();
+        assert context.getStartOffset() >= 0 : "stale startOffset: was " + initialStartOffset + "; selEnd=" + caretOffset + "; idEnd=" + idEndOffset + "; file=" + psiFile;
+        assert context.getTailOffset() >= 0 : "stale tail: was " + initialStartOffset + "; selEnd=" + caretOffset + "; idEnd=" + idEndOffset + "; file=" + psiFile;
 
         Project project = psiFile.getProject();
         if (item.requiresCommittedDocuments()) {
@@ -606,6 +648,30 @@ public class CodeCompletionHandlerBase {
       }
     }
     return null;
+  }
+
+  @Nullable
+  private static <T> T withTimeout(long maxDurationMillis, @NotNull Computable<T> task) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return task.compute();
+    }
+
+    ProgressIndicator indicator = new ProgressIndicatorBase();
+
+    ScheduledFuture future = JobScheduler.getScheduler().schedule(() -> indicator.cancel(), maxDurationMillis, TimeUnit.MILLISECONDS);
+    try {
+      return ProgressManager.getInstance().runProcess(task, indicator);
+    }
+    catch (ProcessCanceledException e) {
+      return null;
+    }
+    finally {
+      future.cancel(false);
+    }
+  }
+
+  private static int calcSyncTimeOut(long startTime) {
+    return (int)Math.max(300, ourAutoInsertItemTimeout - (System.currentTimeMillis() - startTime));
   }
 
   @SuppressWarnings("unused") // for Rider

@@ -16,7 +16,7 @@ class ShowUsagesSettings : PersistentStateComponent<ShowUsageViewSettings> {
 
   private var state = ShowUsageViewSettings()
 
-  override fun getState() = state
+  override fun getState(): ShowUsageViewSettings = state
 
   override fun loadState(state: ShowUsageViewSettings) {
     this.state = state

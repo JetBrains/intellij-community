@@ -42,12 +42,10 @@ Groovy script
           PsiElement(identifier)('foo')
           PsiWhiteSpace(' ')
           PsiElement(=)('=')
-          PsiErrorElement:Expression expected
+          PsiErrorElement:<expression> expected, got 'for'
             <empty list>
       PsiWhiteSpace(' ')
       PsiElement(for)('for')
-      PsiErrorElement:';', '}' or new line expected
-        <empty list>
       PsiElement(new line)('\n\n  ')
       Class initializer
         Modifiers
@@ -93,5 +91,5 @@ Groovy script
                 PsiElement(})('}')
           PsiElement(new line)('\n')
           PsiElement(})('}')
-      PsiErrorElement:';', '}' or new line expected
+      PsiErrorElement:';', new line or '}' expected
         <empty list>

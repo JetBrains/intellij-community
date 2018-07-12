@@ -192,8 +192,19 @@ public final class TypeConstraint {
       instanceOfTypes = withSuper(this.myInstanceofValues);
       instanceOfTypes.retainAll(withSuper(other.myInstanceofValues));
     }
-    TypeConstraint constraint = StreamEx.of(instanceOfTypes).foldLeft(EMPTY, TypeConstraint::withInstanceofValue);
-    return StreamEx.of(notTypes).foldLeft(constraint, TypeConstraint::withNotInstanceofValue);
+    TypeConstraint constraint = EMPTY;
+    for (DfaPsiType type: instanceOfTypes) {
+      constraint = constraint.withInstanceofValue(type);
+      if (constraint == null) {
+        // Should not happen normally, but may happen with inconsistent hierarchy (e.g. if final class is extended)
+        return EMPTY;
+      }
+    }
+    for (DfaPsiType type: notTypes) {
+      constraint = constraint.withNotInstanceofValue(type);
+      if (constraint == null) return EMPTY;
+    }
+    return constraint;
   }
 
   private static Set<DfaPsiType> withSuper(Set<DfaPsiType> instanceofValues) {

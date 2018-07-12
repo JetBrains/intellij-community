@@ -16,72 +16,52 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 /**
  * @author yole
  */
-public abstract class AbstractSelectFilesDialog<T> extends DialogWrapper {
-  protected JCheckBox myDoNotShowCheckbox;
-  protected final VcsShowConfirmationOption myConfirmationOption;
+public abstract class AbstractSelectFilesDialog extends DialogWrapper {
   private final String myPrompt;
-  private final boolean myShowDoNotAskOption;
 
-  public AbstractSelectFilesDialog(Project project, boolean canBeParent, final VcsShowConfirmationOption confirmationOption,
-                                   final String prompt, boolean showDoNotAskOption) {
+  public AbstractSelectFilesDialog(Project project,
+                                   boolean canBeParent,
+                                   @Nullable VcsShowConfirmationOption confirmationOption,
+                                   @Nullable String prompt) {
     super(project, canBeParent);
-    myConfirmationOption = confirmationOption;
     myPrompt = prompt;
-    myShowDoNotAskOption = showDoNotAskOption;
+
+    if (confirmationOption != null) {
+      setDoNotAskOption(new MyDoNotAskOption(confirmationOption));
+    }
   }
 
   @NotNull
   protected abstract ChangesTree getFileList();
 
-  @Nullable
-  private JLabel createPromptLabel() {
+  @Override
+  protected JComponent createNorthPanel() {
     if (myPrompt != null) {
       final JLabel label = new JLabel(myPrompt);
       label.setUI(new MultiLineLabelUI());
-      label.setBorder(new EmptyBorder(5, 1, 5, 1));
+      label.setBorder(JBUI.Borders.empty(5, 1));
       return label;
     }
     return null;
-  }
-
-  @Override
-  protected JComponent createNorthPanel() {
-    return createPromptLabel();
-  }
-
-  protected void doOKAction() {
-  if (myDoNotShowCheckbox != null && myDoNotShowCheckbox.isSelected()) {
-      myConfirmationOption.setValue(VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
-    }
-    super.doOKAction();
-  }
-
-  @Override
-  public void doCancelAction() {
-    if (myDoNotShowCheckbox != null && myDoNotShowCheckbox.isSelected()) {
-        myConfirmationOption.setValue(VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY);
-      }
-    super.doCancelAction();
   }
 
   @Override
@@ -91,31 +71,47 @@ public abstract class AbstractSelectFilesDialog<T> extends DialogWrapper {
 
   @Nullable
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(createToolbar(), BorderLayout.NORTH);
+    DefaultActionGroup group = createToolbarActions();
+    group.add(Separator.getInstance());
+    group.add(ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP));
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("VcsSelectFilesDialog", group, true);
 
+    TreeActionsToolbarPanel toolbarPanel = new TreeActionsToolbarPanel(toolbar, getFileList());
+
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(toolbarPanel, BorderLayout.NORTH);
     panel.add(ScrollPaneFactory.createScrollPane(getFileList()), BorderLayout.CENTER);
 
-    if (myShowDoNotAskOption) {
-      myDoNotShowCheckbox = new JCheckBox(CommonBundle.message("dialog.options.do.not.ask"));
-      panel.add(myDoNotShowCheckbox, BorderLayout.SOUTH);
-    }
     return panel;
-  }
-
-  private JComponent createToolbar() {
-    DefaultActionGroup group = createToolbarActions();
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("VcsSelectFilesDialog", group, true);
-    return toolbar.getComponent();
   }
 
   @NotNull
   protected DefaultActionGroup createToolbarActions() {
-    DefaultActionGroup group = new DefaultActionGroup();
-    final AnAction[] actions = getFileList().getTreeActions();
-    for(AnAction action: actions) {
-      group.add(action);
+    return new DefaultActionGroup();
+  }
+
+  private static class MyDoNotAskOption extends DoNotAskOption.Adapter {
+    private final VcsShowConfirmationOption myConfirmationOption;
+
+    private MyDoNotAskOption(@NotNull VcsShowConfirmationOption confirmationOption) {
+      myConfirmationOption = confirmationOption;
     }
-    return group;
+
+    @Override
+    public boolean shouldSaveOptionsOnCancel() {
+      return true;
+    }
+
+    @Override
+    public void rememberChoice(boolean isSelected, int exitCode) {
+      if (isSelected) {
+        if (exitCode == DialogWrapper.OK_EXIT_CODE) {
+          myConfirmationOption.setValue(VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
+        }
+        if (exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
+          myConfirmationOption.setValue(VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY);
+        }
+      }
+    }
   }
 }

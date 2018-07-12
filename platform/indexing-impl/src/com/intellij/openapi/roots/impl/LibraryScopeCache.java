@@ -25,7 +25,6 @@ import com.intellij.openapi.module.impl.scopes.ModulesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.SdkResolveScopeProvider;
 import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
@@ -162,17 +161,7 @@ public class LibraryScopeCache {
     if (jdkName == null) return GlobalSearchScope.allScope(myProject);
     GlobalSearchScope scope = mySdkScopes.get(jdkName);
     if (scope == null) {
-      //noinspection deprecation
-      for (SdkResolveScopeProvider provider : SdkResolveScopeProvider.EP_NAME.getExtensions()) {
-        scope = provider.getScope(myProject, jdkOrderEntry);
-
-        if (scope != null) {
-          break;
-        }
-      }
-      if (scope == null) {
-        scope = new JdkScope(myProject, jdkOrderEntry);
-      }
+      scope = new JdkScope(myProject, jdkOrderEntry);
       return ConcurrencyUtil.cacheOrGet(mySdkScopes, jdkName, scope);
     }
     return scope;

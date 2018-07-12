@@ -20,16 +20,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.IdFilter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
 interface FileNameIndexService {
-  Collection<VirtualFile> getVirtualFilesByName(Project project, String name, GlobalSearchScope scope, @Nullable IdFilter idFilter);
+  @NotNull
+  Collection<VirtualFile> getVirtualFilesByName(Project project, @NotNull String name, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter);
 
-  void processAllFileNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter);
+  void processAllFileNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter);
 
-  Collection<VirtualFile> getFilesWithFileType(FileType type, GlobalSearchScope scope);
+  @NotNull
+  Collection<VirtualFile> getFilesWithFileType(@NotNull FileType type, @NotNull GlobalSearchScope scope);
 
-  boolean processFilesWithFileType(FileType type, Processor<VirtualFile> processor, GlobalSearchScope scope);
+  boolean processFilesWithFileType(@NotNull FileType type, @NotNull Processor<VirtualFile> processor, @NotNull GlobalSearchScope scope);
 }

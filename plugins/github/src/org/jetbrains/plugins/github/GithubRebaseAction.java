@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -23,12 +24,12 @@ import git4idea.update.GitFetchResult;
 import git4idea.update.GitFetcher;
 import git4idea.update.GitUpdateResult;
 import git4idea.util.GitPreservingProcess;
-import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiTaskExecutor;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubFullPath;
+import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.api.data.GithubRepoDetailed;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.util.GithubGitHelper;
@@ -47,7 +48,7 @@ public class GithubRebaseAction extends LegacySingleAccountActionGroup {
   private static final String CANNOT_PERFORM_GITHUB_REBASE = "Can't perform GitHub rebase";
 
   public GithubRebaseAction() {
-    super("Rebase my GitHub fork", "Rebase your GitHub forked repository relative to the origin", GithubIcons.Github_icon);
+    super("Rebase my GitHub fork", "Rebase your GitHub forked repository relative to the origin", AllIcons.Vcs.Vendors.Github);
   }
 
   @Override
@@ -62,12 +63,12 @@ public class GithubRebaseAction extends LegacySingleAccountActionGroup {
 
   @Nullable
   @Override
-  protected Pair<GitRemote, String> getRemote(@NotNull GithubAccount account, @NotNull GitRepository repository) {
+  protected Pair<GitRemote, String> getRemote(@NotNull GithubServerPath server, @NotNull GitRepository repository) {
     for (GitRemote gitRemote : repository.getRemotes()) {
       String remoteName = gitRemote.getName();
       if ("upstream".equals(remoteName)) {
         for (String remoteUrl : gitRemote.getUrls()) {
-          if (account.getServer().matches(remoteUrl)) {
+          if (server.matches(remoteUrl)) {
             return Pair.pair(gitRemote, remoteUrl);
           }
         }
@@ -100,8 +101,8 @@ public class GithubRebaseAction extends LegacySingleAccountActionGroup {
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
       myRepository.update();
-      Pair<GitRemote, String> remote = getRemote(myAccount, myRepository);
-      String upstreamRemoteUrl = remote != null ? remote.second : null;
+      Pair<GitRemote, String> remote = getRemote(myAccount.getServer(), myRepository);
+      String upstreamRemoteUrl = Pair.getSecond(remote);
       if (upstreamRemoteUrl == null) {
         indicator.setText("Configuring upstream remote...");
         LOG.info("Configuring upstream remote");

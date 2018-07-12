@@ -317,11 +317,15 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+?)" + // name, non-greedy matching
                                                                                 "(?::|@|,| |#|#L|\\?l=| on line | at line |:?\\(|:?\\[)" + // separator
-                                                                                "(\\d+)(?:(?:\\D)(\\d+)?)?" + // line + column
+                                                                                "(\\d+)?(?:(?:\\D)(\\d+)?)?" + // line + column
                                                                                 "[)\\]]?" // possible closing paren/brace
   );
   public static final Pattern patternToDetectAnonymousClasses = Pattern.compile("([\\.\\w]+)((\\$[\\d]+)*(\\$)?)");
   private static final Pattern patternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
+  private static final Pattern patternToDetectSignatures = Pattern.compile("(.+#.*)\\(.*\\)");
+
+  //space character in the end of pattern forces full matches search
+  private static final String fullMatchSearchSuffix = " ";
 
   @Override
   public String transformPattern(String pattern) {
@@ -330,6 +334,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   public static String getTransformedPattern(String pattern, ChooseByNameModel model) {
+    String rawPattern = pattern;
+
     Pattern regex = null;
     if (StringUtil.containsAnyChar(pattern, ":,;@[( #") || pattern.contains(" line ") || pattern.contains("?l=")) { // quick test if reg exp should be used
       regex = patternToDetectLinesAndColumns;
@@ -337,7 +343,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
     if (model instanceof GotoClassModel2 || model instanceof GotoSymbolModel2) {
       if (pattern.indexOf('#') != -1) {
-        regex = patternToDetectMembers;
+        regex = model instanceof GotoClassModel2 ? patternToDetectMembers : patternToDetectSignatures;
       }
 
       if (pattern.indexOf('$') != -1) {
@@ -350,6 +356,10 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       if (matcher.matches()) {
         pattern = matcher.group(1);
       }
+    }
+
+    if (rawPattern.endsWith(fullMatchSearchSuffix)) {
+      pattern += fullMatchSearchSuffix;
     }
 
     return pattern;

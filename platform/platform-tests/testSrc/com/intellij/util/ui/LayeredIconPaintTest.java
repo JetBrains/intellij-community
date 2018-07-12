@@ -5,11 +5,14 @@ import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RestoreScaleRule;
+import com.intellij.util.ui.JBUI.ScaleContext;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.ExternalResource;
 
 import javax.swing.*;
+
+import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
 
 /**
  * Tests {@link com.intellij.ui.LayeredIcon} painting.
@@ -27,7 +30,7 @@ public class LayeredIconPaintTest extends CompositeIconPaintTestHelper {
   }
 
   @Override
-  protected ScalableIcon createCompositeIcon(Icon... cellIcons) {
+  protected ScalableIcon createCompositeIcon(ScaleContext ctx, Icon... cellIcons) {
     LayeredIcon icon = new LayeredIcon(2);
     icon.setIcon(cellIcons[0], 0);
     icon.setIcon(cellIcons[1], 1, JBUI.scale(10), JBUI.scale(6));
@@ -35,8 +38,8 @@ public class LayeredIconPaintTest extends CompositeIconPaintTestHelper {
   }
 
   @Override
-  protected String getGoldImagePath(int scale) {
-    return PlatformTestUtil.getPlatformTestDataPath() + "ui/gold_LayeredIcon@" + scale + "x.png";
+  protected String getGoldImagePath(ScaleContext ctx) {
+    return PlatformTestUtil.getPlatformTestDataPath() + "ui/gold_LayeredIcon@" + (int)ctx.getScale(PIX_SCALE) + "x.png";
   }
 
   @Override

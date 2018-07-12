@@ -28,6 +28,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -130,19 +131,24 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
         myHelpButton.setText("");
       }
 
+      int index = 0;
       JPanel leftPanel = new JPanel();
       if (ApplicationInfo.contextHelpAvailable()) {
         leftPanel.add(myHelpButton);
+        TouchbarDataKeys.putDialogButtonDescriptor(myHelpButton, index++);
       }
       leftPanel.add(myCancelButton);
+      TouchbarDataKeys.putDialogButtonDescriptor(myCancelButton, index++);
       panel.add(leftPanel, BorderLayout.WEST);
 
       if (mySteps.size() > 1) {
         buttonPanel.add(Box.createHorizontalStrut(5));
         buttonPanel.add(myPreviousButton);
+        TouchbarDataKeys.putDialogButtonDescriptor(myPreviousButton, index++).setMainGroup(true);
       }
       buttonPanel.add(Box.createHorizontalStrut(5));
       buttonPanel.add(myNextButton);
+      TouchbarDataKeys.putDialogButtonDescriptor(myNextButton, index++).setMainGroup(true).setDefault(true);
     }
     else {
       panel.add(buttonPanel, BorderLayout.CENTER);
@@ -367,7 +373,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
   protected final void updateStep(JBCardLayout.SwipeDirection direction) {
-    //it would be better to pass 'direction' to 'updateStep' as a parameter, but since that method is used and overriden in plugins
+    //it would be better to pass 'direction' to 'updateStep' as a parameter, but since that method is used and overridden in plugins
     // we cannot do it without breaking compatibility
     try {
       myTransitionDirection = direction;

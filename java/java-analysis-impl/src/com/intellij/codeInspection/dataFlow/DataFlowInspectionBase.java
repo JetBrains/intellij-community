@@ -2,14 +2,12 @@
 
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.ExpressionUtil;
-import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind.NullabilityProblem;
+import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
 import com.intellij.codeInspection.dataFlow.fix.ReplaceWithConstantValueFix;
 import com.intellij.codeInspection.dataFlow.fix.ReplaceWithObjectsEqualsFix;
@@ -21,6 +19,7 @@ import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -307,7 +306,8 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
                                           HashSet<PsiElement> reportedAnchors,
                                           DataFlowInstructionVisitor visitor) {
     visitor.sameValueAssignments().forEach(expr -> {
-      if(!reportedAnchors.add(expr)) return;
+      expr = PsiUtil.skipParenthesizedExprDown(expr);
+      if(expr == null || !reportedAnchors.add(expr)) return;
       PsiAssignmentExpression assignment = PsiTreeUtil.getParentOfType(expr, PsiAssignmentExpression.class);
       PsiElement context = PsiTreeUtil.getParentOfType(expr, PsiForStatement.class, PsiClassInitializer.class);
       if (context instanceof PsiForStatement && PsiTreeUtil.isAncestor(((PsiForStatement)context).getInitialization(), expr, true)) {
@@ -331,15 +331,19 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     });
   }
 
-  private static void reportMutabilityViolations(ProblemsHolder holder,
+  private void reportMutabilityViolations(ProblemsHolder holder,
                                                  Set<PsiElement> reportedAnchors,
                                                  Set<PsiElement> violations,
                                                  String message) {
     for (PsiElement violation : violations) {
       if (reportedAnchors.add(violation)) {
-        holder.registerProblem(violation, message);
+        holder.registerProblem(violation, message, createMutabilityViolationFix(holder, violation));
       }
     }
+  }
+
+  protected LocalQuickFix createMutabilityViolationFix(ProblemsHolder holder, PsiElement violation) {
+    return null;
   }
 
   private void reportNullabilityProblems(ProblemsHolder holder,
@@ -417,12 +421,12 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     PsiMethod method = (PsiMethod)scope.getParent();
     if (PsiUtil.canBeOverridden(method)) return;
 
-    PsiAnnotation nullableAnno = NullableNotNullManager.getInstance(scope.getProject()).getNullableAnnotation(method, false);
-    if (nullableAnno == null || !nullableAnno.isPhysical()) return;
+    NullabilityAnnotationInfo info = NullableNotNullManager.getInstance(scope.getProject()).findOwnNullabilityInfo(method);
+    if (info == null || info.getNullability() != Nullability.NULLABLE || !info.getAnnotation().isPhysical()) return;
 
-    PsiJavaCodeReferenceElement annoName = nullableAnno.getNameReferenceElement();
+    PsiJavaCodeReferenceElement annoName = info.getAnnotation().getNameReferenceElement();
     assert annoName != null;
-    String msg = "@" + NullableStuffInspectionBase.getPresentableAnnoName(nullableAnno) +
+    String msg = "@" + NullableStuffInspectionBase.getPresentableAnnoName(info.getAnnotation()) +
                  " method '" + method.getName() + "' always returns a non-null value";
     LocalQuickFix[] fixes = {AddAnnotationPsiFix.createAddNotNullFix(method)};
     if (holder.isOnTheFly()) {
@@ -539,6 +543,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       }
 
       holder.registerProblem(ref, "Value <code>#ref</code> #loc is always '" + presentableName + "'",
+                             ProblemHighlightType.WEAK_WARNING,
                              fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
   }
@@ -664,6 +669,16 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         );
       }
       else {
+        if (instruction instanceof BinopInstruction) {
+          TextRange range = ((BinopInstruction)instruction).getAnchorRange();
+          if (range != null) {
+            // report rare cases like a == b == c where "a == b" part is constant
+            String message = InspectionsBundle.message("dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
+            holder.registerProblem(psiAnchor, range, message);
+            // do not add to reported anchors if only part of expression was reported
+            return;
+          }
+        }
         reportConstantCondition(holder, psiAnchor, evaluatesToTrue);
       }
       reportedAnchors.add(psiAnchor);
@@ -671,7 +686,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
   }
 
   private void reportConstantCondition(ProblemsHolder holder, PsiElement psiAnchor, boolean evaluatesToTrue) {
-    if (psiAnchor.getParent() instanceof PsiForeachStatement) {
+    if (PsiUtil.skipParenthesizedExprUp(psiAnchor.getParent()) instanceof PsiForeachStatement) {
       // highlighted for-each iterated value means evaluatesToTrue == "collection is always empty"
       if (!evaluatesToTrue) {
         // loop on always non-empty collection -- nothing to report
@@ -749,10 +764,17 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
                                      Set<PsiElement> reportedAnchors,
                                      @NotNull PsiElement block) {
     final PsiMethod method = getScopeMethod(block);
-    if (method == null || NullableStuffInspectionBase.isNullableNotInferred(method, true)) return;
+    if (method == null) return;
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(holder.getProject());
+    NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(method);
+    PsiAnnotation anno = info == null ? null : info.getAnnotation();
+    Nullability nullability = info == null ? Nullability.UNKNOWN : info.getNullability();
+    if (nullability == Nullability.NULLABLE) {
+      if (!AnnotationUtil.isInferredAnnotation(anno)) return;
+      if (DfaPsiUtil.getTypeNullability(method.getReturnType()) == Nullability.NULLABLE) return;
+    }
 
-    PsiAnnotation notNullAnno = NullableNotNullManager.getInstance(method.getProject()).getNotNullAnnotation(method, true);
-    if (notNullAnno == null && (!SUGGEST_NULLABLE_ANNOTATIONS || block.getParent() instanceof PsiLambdaExpression)) return;
+    if (nullability != Nullability.NOT_NULL && (!SUGGEST_NULLABLE_ANNOTATIONS || block.getParent() instanceof PsiLambdaExpression)) return;
 
     PsiType returnType = method.getReturnType();
     // no warnings in void lambdas, where the expression is not returned anyway
@@ -765,15 +787,14 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       final PsiExpression expr = problem.getAnchor();
       if (!reportedAnchors.add(expr)) continue;
 
-      if (notNullAnno != null) {
-        String presentable = NullableStuffInspectionBase.getPresentableAnnoName(notNullAnno);
+      if (nullability == Nullability.NOT_NULL) {
+        String presentable = NullableStuffInspectionBase.getPresentableAnnoName(anno);
         final String text = isNullLiteralExpression(expr)
                             ? InspectionsBundle.message("dataflow.message.return.null.from.notnull", presentable)
                             : InspectionsBundle.message("dataflow.message.return.nullable.from.notnull", presentable);
         holder.registerProblem(expr, text);
       }
       else if (AnnotationUtil.isAnnotatingApplicable(expr)) {
-        final NullableNotNullManager manager = NullableNotNullManager.getInstance(expr.getProject());
         final String defaultNullable = manager.getDefaultNullable();
         final String presentableNullable = StringUtil.getShortName(defaultNullable);
         final String text = isNullLiteralExpression(expr)
@@ -837,11 +858,11 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         if (call != null) {
           PsiMethod method = call.resolveMethod();
           if (method != null) {
-            List<StandardMethodContract> contracts = ControlFlowAnalyzer.getMethodContracts(method);
+            List<StandardMethodContract> contracts = JavaMethodContractUtil.getMethodContracts(method);
             return contracts.stream().anyMatch(
               smc -> smc.getReturnValue().isFail() &&
-                     IntStreamEx.ofIndices(smc.arguments)
-                                .allMatch(idx -> smc.arguments[idx] == (idx == index ? wantedConstraint : ValueConstraint.ANY_VALUE)));
+                     IntStreamEx.range(smc.getParameterCount())
+                                .allMatch(idx -> smc.getParameterConstraint(idx) == (idx == index ? wantedConstraint : ValueConstraint.ANY_VALUE)));
           }
         }
       }

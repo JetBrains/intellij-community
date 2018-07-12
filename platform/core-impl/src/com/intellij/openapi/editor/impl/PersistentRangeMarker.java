@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,12 @@ class PersistentRangeMarker extends RangeMarkerImpl {
   PersistentRangeMarker(@NotNull DocumentEx document, int startOffset, int endOffset, boolean register) {
     super(document, startOffset, endOffset, register);
     myLinesCols = ObjectUtils.assertNotNull(storeLinesAndCols(document, getStartOffset(), getEndOffset()));
+  }
+
+  // constructor which creates marker without document and saves it in the virtual file directly. Can be cheaper than loading document.
+  PersistentRangeMarker(@NotNull VirtualFile virtualFile, int startOffset, int endOffset, int startLine, int startCol, int endLine, int endCol, boolean register) {
+    super(virtualFile, startOffset, endOffset, register);
+    myLinesCols = new LinesCols(startLine, startCol, endLine, endCol);
   }
 
   @Nullable

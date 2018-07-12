@@ -522,11 +522,11 @@ public class JavaCompletionUtil {
       }
 
       if (completion instanceof PsiClass) {
-        List<JavaPsiClassReferenceElement> classItems = JavaClassNameCompletionContributor.createClassLookupItems((PsiClass)completion,
-                                                                                                             JavaClassNameCompletionContributor.AFTER_NEW
-                                                                                                               .accepts(reference),
-                                                                                                             JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER,
-                                                                                                             Conditions.alwaysTrue());
+        List<JavaPsiClassReferenceElement> classItems = JavaClassNameCompletionContributor.createClassLookupItems(
+          CompletionUtil.getOriginalOrSelf((PsiClass)completion),
+          JavaClassNameCompletionContributor.AFTER_NEW.accepts(reference),
+          JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER,
+          Conditions.alwaysTrue());
         return JBIterable.from(classItems).flatMap(i -> JavaConstructorCallElement.wrap(i, reference.getElement()));
       }
     }
@@ -549,6 +549,9 @@ public class JavaCompletionUtil {
     }
     if (completion instanceof PsiVariable) {
       return Collections.singletonList(new VariableLookupItem((PsiVariable)completion).setSubstitutor(substitutor));
+    }
+    if (completion instanceof PsiPackage) {
+      return Collections.singletonList(new PackageLookupItem((PsiPackage)completion, reference.getElement()));
     }
 
     return Collections.singletonList(LookupItemUtil.objectToLookupItem(completion));

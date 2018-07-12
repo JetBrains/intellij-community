@@ -161,6 +161,14 @@ public class CreateTypeParameterFromUsageFix extends BaseIntentionAction {
     static Context from(@NotNull PsiJavaCodeReferenceElement element, boolean findFirstOnly) {
       if (!PsiUtil.isLanguageLevel5OrHigher(element)) return null;
       if (element.isQualified()) return null;
+      PsiElement parent = element.getParent();
+      if (parent instanceof PsiMethodCallExpression ||
+          parent instanceof PsiJavaCodeReferenceElement ||
+          parent instanceof PsiNewExpression ||
+          (parent instanceof PsiTypeElement && parent.getParent() instanceof PsiClassObjectAccessExpression) ||
+          element instanceof PsiReferenceExpression) {
+        return null;
+      }
       List<PsiNameIdentifierOwner> candidates = collectParentClassesAndMethodsUntilStatic(element, findFirstOnly);
       if (candidates.isEmpty()) return null;
       String name = element.getReferenceName();

@@ -64,7 +64,7 @@ public final class ImageEditorImpl implements ImageEditor {
     setValue(file);
   }
 
-  private void setValue(VirtualFile file) {
+  void setValue(VirtualFile file) {
     try {
       editorUI.setImageProvider(IfsUtil.getImageProvider(file), IfsUtil.getFormat(file));
     }

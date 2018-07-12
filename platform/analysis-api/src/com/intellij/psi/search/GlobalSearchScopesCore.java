@@ -207,7 +207,7 @@ public class GlobalSearchScopesCore {
     }
   }
 
-  private static class DirectoryScope extends GlobalSearchScope {
+  public static class DirectoryScope extends GlobalSearchScope {
     private final VirtualFile myDirectory;
     private final boolean myWithSubdirectories;
 
@@ -217,10 +217,19 @@ public class GlobalSearchScopesCore {
       myDirectory = psiDirectory.getVirtualFile();
     }
 
-    private DirectoryScope(@NotNull Project project, @NotNull VirtualFile directory, final boolean withSubdirectories) {
+    public DirectoryScope(@NotNull Project project, @NotNull VirtualFile directory, final boolean withSubdirectories) {
       super(project);
       myWithSubdirectories = withSubdirectories;
       myDirectory = directory;
+    }
+
+    @NotNull
+    public VirtualFile getDirectory() {
+      return myDirectory;
+    }
+
+    public boolean isWithSubdirectories() {
+      return myWithSubdirectories;
     }
 
     @Override

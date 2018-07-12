@@ -25,10 +25,6 @@ public class CommonActionsManagerImpl extends CommonActionsManager {
     return new NextOccurenceToolbarAction(navigator);
   }
 
-  public AnAction createExpandAllAction(TreeExpander expander) {
-    return new ExpandAllToolbarAction(expander);
-  }
-
   public AnAction createExpandAllAction(TreeExpander expander, JComponent component) {
     final ExpandAllToolbarAction expandAllToolbarAction = new ExpandAllToolbarAction(expander);
     expandAllToolbarAction.registerCustomShortcutSet(expandAllToolbarAction.getShortcutSet(), component);
@@ -36,15 +32,16 @@ public class CommonActionsManagerImpl extends CommonActionsManager {
   }
 
   @Override
-  public AnAction createExpandAllHeaderAction(JTree tree) {
-    AnAction action = createExpandAllAction(new DefaultTreeExpander(tree), tree);
+  public AnAction createExpandAllHeaderAction(TreeExpander expander, JComponent component) {
+    AnAction action = createExpandAllAction(expander, component);
     action.getTemplatePresentation().setIcon(AllIcons.General.ExpandAll);
     action.getTemplatePresentation().setHoveredIcon(AllIcons.General.ExpandAllHover);
     return action;
   }
 
-  public AnAction createCollapseAllAction(TreeExpander expander) {
-    return new CollapseAllToolbarAction(expander);
+  @Override
+  public AnAction createExpandAllHeaderAction(JTree tree) {
+    return createExpandAllHeaderAction(new DefaultTreeExpander(tree), tree);
   }
 
   public AnAction createCollapseAllAction(TreeExpander expander, JComponent component) {
@@ -54,11 +51,16 @@ public class CommonActionsManagerImpl extends CommonActionsManager {
   }
 
   @Override
-  public AnAction createCollapseAllHeaderAction(JTree tree) {
-    AnAction action = createCollapseAllAction(new DefaultTreeExpander(tree), tree);
+  public AnAction createCollapseAllHeaderAction(TreeExpander expander, JComponent component) {
+    AnAction action = createCollapseAllAction(expander, component);
     action.getTemplatePresentation().setIcon(AllIcons.General.CollapseAll);
     action.getTemplatePresentation().setHoveredIcon(AllIcons.General.CollapseAllHover);
     return action;
+  }
+
+  @Override
+  public AnAction createCollapseAllHeaderAction(JTree tree) {
+    return createCollapseAllHeaderAction(new DefaultTreeExpander(tree), tree);
   }
 
   public AnAction createHelpAction(String helpId) {

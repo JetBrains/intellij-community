@@ -56,3 +56,9 @@ interface I2 {
 <error descr="Class 'E2' must either be declared abstract or implement abstract method 'method()' in 'I2'">enum E2 implements I2</error> {
   A
 }
+abstract class Perspicacious {
+
+  abstract void <warning descr="Abstract method 'insightAndUnderstanding()' is not implemented in every subclass">insightAndUnderstanding</warning>();
+}
+<error descr="Class 'HighlyPerspicacious' must either be declared abstract or implement abstract method 'insightAndUnderstanding()' in 'Perspicacious'">class HighlyPerspicacious extends Perspicacious</error> {
+}

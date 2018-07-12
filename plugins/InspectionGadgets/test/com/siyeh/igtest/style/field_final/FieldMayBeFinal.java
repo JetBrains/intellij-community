@@ -137,11 +137,11 @@ public class FieldMayBeFinal {
         private final int j = i++;
     }
 
-    static class AssigmentInForeach {
+    static class AssignmentInForeach {
         private boolean b, c;
         private int j;
 
-        AssigmentInForeach(int[][] is) {
+        AssignmentInForeach(int[][] is) {
             b = false;
             for (int i : is[j]) {
                 b = c = i == 10;
@@ -1082,5 +1082,13 @@ class T75 {
     private int innerField;
 
     private Inner() {innerField = 0;}
+  }
+}
+// IDEA-193896
+class T76 {
+  private T76 a;
+  T76(T76 other) {
+    a = other;
+    other.a = null;
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.checkin;
 
@@ -31,14 +17,12 @@ import com.intellij.openapi.vcs.CodeSmellDetector;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
-import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 
 /**
@@ -62,30 +46,9 @@ public class CodeAnalysisBeforeCheckinHandler extends CheckinHandler {
   @Override
   @Nullable
   public RefreshableOnComponent getBeforeCheckinConfigurationPanel() {
-    final JCheckBox checkBox = new NonFocusableCheckBox(VcsBundle.message("before.checkin.standard.options.check.smells"));
-    return new RefreshableOnComponent() {
-      @Override
-      public JComponent getComponent() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.add(checkBox);
-        CheckinHandlerUtil.disableWhenDumb(myProject, checkBox, "Code analysis is impossible until indices are up-to-date");
-        return panel;
-      }
-
-      @Override
-      public void refresh() {
-      }
-
-      @Override
-      public void saveState() {
-        getSettings().CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT = checkBox.isSelected();
-      }
-
-      @Override
-      public void restoreState() {
-        checkBox.setSelected(getSettings().CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT);
-      }
-    };
+    return new BooleanCommitOption(myCheckinPanel, VcsBundle.message("before.checkin.standard.options.check.smells"), true,
+                                   () -> getSettings().CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT,
+                                   value -> getSettings().CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT = value);
   }
 
   private VcsConfiguration getSettings() {

@@ -1,27 +1,16 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
+import com.intellij.codeInsight.InferredAnnotationsManagerImpl;
+import com.intellij.codeInspection.dataFlow.ContractReturnValue;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.StandardMethodContract;
+import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,6 +26,7 @@ import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import one.util.streamex.EntryStream;
+import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +36,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.security.MessageDigest;
 import java.util.*;
+import java.util.function.Function;
 
 import static com.intellij.codeInspection.bytecodeAnalysis.Direction.*;
 
@@ -59,10 +50,10 @@ public class ProjectBytecodeAnalysis {
    */
   private static final boolean SKIP_INDEX = false;
   public static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.bytecodeAnalysis");
-  public static final Key<Boolean> INFERRED_ANNOTATION = Key.create("INFERRED_ANNOTATION");
   public static final String NULLABLE_METHOD = "java.annotations.inference.nullable.method";
   public static final String NULLABLE_METHOD_TRANSITIVITY = "java.annotations.inference.nullable.method.transitivity";
   public static final int EQUATIONS_LIMIT = 1000;
+
   private final Project myProject;
   private final boolean nullableMethod;
   private final boolean nullableMethodTransitivity;
@@ -74,7 +65,6 @@ public class ProjectBytecodeAnalysis {
 
   public ProjectBytecodeAnalysis(Project project) {
     myProject = project;
-    //noinspection ConstantConditions
     myEquationProvider = SKIP_INDEX ? new PlainEquationProvider(myProject) : new IndexedEquationProvider(myProject);
     nullableMethod = Registry.is(NULLABLE_METHOD);
     nullableMethodTransitivity = Registry.is(NULLABLE_METHOD_TRANSITIVITY);
@@ -85,7 +75,8 @@ public class ProjectBytecodeAnalysis {
     if (!(listOwner instanceof PsiCompiledElement)) {
       return null;
     }
-    if (annotationFQN.equals(AnnotationUtil.NOT_NULL) || annotationFQN.equals(AnnotationUtil.NULLABLE) || annotationFQN.equals(ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT)) {
+    if (annotationFQN.equals(AnnotationUtil.NOT_NULL) || annotationFQN.equals(AnnotationUtil.NULLABLE) || annotationFQN.equals(
+      JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT)) {
       PsiAnnotation[] annotations = findInferredAnnotations(listOwner);
       for (PsiAnnotation annotation : annotations) {
         if (annotationFQN.equals(annotation.getQualifiedName())) {
@@ -118,7 +109,7 @@ public class ProjectBytecodeAnalysis {
         return PsiAnnotation.EMPTY_ARRAY;
       }
       if (listOwner instanceof PsiMethod) {
-        ArrayList<EKey> allKeys = collectMethodKeys((PsiMethod)listOwner, primaryKey);
+        List<EKey> allKeys = collectMethodKeys((PsiMethod)listOwner, primaryKey);
         MethodAnnotations methodAnnotations = loadMethodAnnotations((PsiMethod)listOwner, primaryKey, allKeys);
         return toPsi(primaryKey, methodAnnotations);
       } else if (listOwner instanceof PsiParameter) {
@@ -256,58 +247,55 @@ public class ProjectBytecodeAnalysis {
    * @param primaryKey primary compressed key for this method
    * @return compressed keys for this method
    */
-  public static ArrayList<EKey> collectMethodKeys(@NotNull PsiMethod method, EKey primaryKey) {
+  public static List<EKey> collectMethodKeys(@NotNull PsiMethod method, EKey primaryKey) {
     return BytecodeAnalysisConverter.mkInOutKeys(method, primaryKey);
   }
 
-  private ParameterAnnotations loadParameterAnnotations(@NotNull EKey notNullKey)
-    throws EquationsLimitException {
-
-    final Solver notNullSolver = new Solver(new ELattice<>(Value.NotNull, Value.Top), Value.Top);
+  private ParameterAnnotations loadParameterAnnotations(@NotNull EKey notNullKey) throws EquationsLimitException {
+    Solver notNullSolver = new Solver(new ELattice<>(Value.NotNull, Value.Top), Value.Top);
     collectEquations(Collections.singletonList(notNullKey), notNullSolver);
-
     Map<EKey, Value> notNullSolutions = notNullSolver.solve();
     // subtle point
     boolean notNull =
       (Value.NotNull == notNullSolutions.get(notNullKey)) || (Value.NotNull == notNullSolutions.get(notNullKey.mkUnstable()));
 
-    final Solver nullableSolver = new Solver(new ELattice<>(Value.Null, Value.Top), Value.Top);
-    final EKey nullableKey = new EKey(notNullKey.member, notNullKey.dirKey + 1, true, false);
+    Solver nullableSolver = new Solver(new ELattice<>(Value.Null, Value.Top), Value.Top);
+    EKey nullableKey = new EKey(notNullKey.member, notNullKey.dirKey + 1, true, false);
     collectEquations(Collections.singletonList(nullableKey), nullableSolver);
     Map<EKey, Value> nullableSolutions = nullableSolver.solve();
     // subtle point
     boolean nullable =
       (Value.Null == nullableSolutions.get(nullableKey)) || (Value.Null == nullableSolutions.get(nullableKey.mkUnstable()));
+
     return new ParameterAnnotations(notNull, nullable);
   }
 
-  private MethodAnnotations loadMethodAnnotations(@NotNull PsiMethod owner, @NotNull EKey key, ArrayList<EKey> allKeys)
-    throws EquationsLimitException {
+  private MethodAnnotations loadMethodAnnotations(@NotNull PsiMethod owner, @NotNull EKey key, List<EKey> allKeys) throws EquationsLimitException {
     MethodAnnotations result = new MethodAnnotations();
 
-    final PuritySolver puritySolver = new PuritySolver();
+    PuritySolver puritySolver = new PuritySolver();
     collectPurityEquations(key.withDirection(Pure), puritySolver);
-
     Map<EKey, Effects> puritySolutions = puritySolver.solve();
 
     int arity = owner.getParameterList().getParametersCount();
     BytecodeAnalysisConverter.addEffectAnnotations(puritySolutions, result, key, owner.isConstructor());
 
     EKey failureKey = key.withDirection(Throw);
-    final Solver failureSolver = new Solver(new ELattice<>(Value.Fail, Value.Top), Value.Top);
+    Solver failureSolver = new Solver(new ELattice<>(Value.Fail, Value.Top), Value.Top);
     collectEquations(Collections.singletonList(failureKey), failureSolver);
     if (failureSolver.solve().get(failureKey) == Value.Fail) {
       // Always failing method
       result.contractsValues.put(key, StreamEx.constant("_", arity).joining(",", "\"", "->fail\""));
-    } else {
-      final Solver outSolver = new Solver(new ELattice<>(Value.Bot, Value.Top), Value.Top);
+    }
+    else {
+      Solver outSolver = new Solver(new ELattice<>(Value.Bot, Value.Top), Value.Top);
       collectEquations(allKeys, outSolver);
       Map<EKey, Value> solutions = outSolver.solve();
-      BytecodeAnalysisConverter.addMethodAnnotations(solutions, result, key, arity);
+      addMethodAnnotations(solutions, result, key, arity);
     }
 
     if (nullableMethod) {
-      final Solver nullableMethodSolver = new Solver(new ELattice<>(Value.Bot, Value.Null), Value.Bot);
+      Solver nullableMethodSolver = new Solver(new ELattice<>(Value.Bot, Value.Null), Value.Bot);
       EKey nullableKey = key.withDirection(NullableOut);
       if (nullableMethodTransitivity) {
         collectEquations(Collections.singletonList(nullableKey), nullableMethodSolver);
@@ -320,6 +308,7 @@ public class ProjectBytecodeAnalysis {
         result.nullables.add(key);
       }
     }
+
     return result;
   }
 
@@ -327,10 +316,9 @@ public class ProjectBytecodeAnalysis {
     return new EKey(key.member, key.dirKey, stability, false);
   }
 
-  private void collectPurityEquations(EKey key, PuritySolver puritySolver)
-    throws EquationsLimitException {
-    HashSet<EKey> queued = new HashSet<>();
-    ArrayDeque<EKey> queue = new ArrayDeque<>();
+  private void collectPurityEquations(EKey key, PuritySolver puritySolver) throws EquationsLimitException {
+    Set<EKey> queued = new HashSet<>();
+    Deque<EKey> queue = new ArrayDeque<>();
 
     queue.push(key);
     queued.add(key);
@@ -359,7 +347,7 @@ public class ProjectBytecodeAnalysis {
   }
 
   private void collectEquations(List<EKey> keys, Solver solver) throws EquationsLimitException {
-    HashSet<EKey> queued = new HashSet<>();
+    Set<EKey> queued = new HashSet<>();
     Stack<EKey> queue = new Stack<>();
 
     for (EKey key : keys) {
@@ -394,9 +382,150 @@ public class ProjectBytecodeAnalysis {
   @NotNull
   private PsiAnnotation createAnnotationFromText(@NotNull final String text) throws IncorrectOperationException {
     PsiAnnotation annotation = JavaPsiFacade.getElementFactory(myProject).createAnnotationFromText(text, null);
-    annotation.putUserData(INFERRED_ANNOTATION, Boolean.TRUE);
+    InferredAnnotationsManagerImpl.markInferred(annotation);
     ((LightVirtualFile)annotation.getContainingFile().getViewProvider().getVirtualFile()).setWritable(false);
     return annotation;
+  }
+
+  BitSet findAlwaysNotNullParameters(@NotNull EKey methodKey, BitSet possiblyNotNullParameters) throws EquationsLimitException {
+    BitSet alwaysNotNullParameters = new BitSet();
+    if (possiblyNotNullParameters.cardinality() != 0) {
+      List<EKey> keys = IntStreamEx.of(possiblyNotNullParameters).mapToObj(idx -> methodKey.withDirection(new In(idx, false))).toList();
+      final Solver notNullSolver = new Solver(new ELattice<>(Value.NotNull, Value.Top), Value.Top);
+      collectEquations(keys, notNullSolver);
+
+      Map<EKey, Value> notNullSolutions = notNullSolver.solve();
+      alwaysNotNullParameters = IntStreamEx.of(possiblyNotNullParameters).filter(idx -> {
+        EKey key = methodKey.withDirection(new In(idx, false));
+        return notNullSolutions.get(key) == Value.NotNull || notNullSolutions.get(key.mkUnstable()) == Value.NotNull;
+      }).toBitSet();
+    }
+    return alwaysNotNullParameters;
+  }
+
+  /**
+   * Given `solution` of all dependencies of a method with the `methodKey`, converts this solution into annotations.
+   *
+   * @param solution solution of equations
+   * @param methodAnnotations annotations to which corresponding solutions should be added
+   * @param methodKey a primary key of a method being analyzed. not it is stable
+   * @param arity arity of this method (hint for constructing @Contract annotations)
+   */
+  private void addMethodAnnotations(@NotNull Map<EKey, Value> solution, @NotNull MethodAnnotations methodAnnotations, @NotNull EKey methodKey, int arity)
+    throws EquationsLimitException {
+    List<StandardMethodContract> contractClauses = new ArrayList<>();
+    Set<EKey> notNulls = methodAnnotations.notNulls;
+    Set<EKey> pures = methodAnnotations.pures;
+    Map<EKey, String> contracts = methodAnnotations.contractsValues;
+
+    ContractReturnValue fullReturnValue = methodAnnotations.returnValue.asContractReturnValue();
+    for (Map.Entry<EKey, Value> entry : solution.entrySet()) {
+      // NB: keys from Psi are always stable, so we need to stabilize keys from equations
+      Value value = entry.getValue();
+      if (value == Value.Top || value == Value.Bot || (value == Value.Fail && !pures.contains(methodKey))) {
+        continue;
+      }
+      EKey key = entry.getKey().mkStable();
+      Direction direction = key.getDirection();
+      EKey baseKey = key.mkBase();
+      if (!methodKey.equals(baseKey)) {
+        continue;
+      }
+      if (value == Value.NotNull && direction == Out) {
+        notNulls.add(methodKey);
+      }
+      else if (value == Value.Pure && direction == Pure) {
+        pures.add(methodKey);
+      }
+      else if (direction instanceof ParamValueBasedDirection) {
+        ContractReturnValue contractReturnValue =
+          fullReturnValue.equals(ContractReturnValue.returnAny()) ? value.toReturnValue() : fullReturnValue;
+        contractClauses.add(contractElement(arity, (ParamValueBasedDirection)direction, contractReturnValue));
+      }
+    }
+
+    Map<Boolean, List<StandardMethodContract>> partition =
+      StreamEx.of(contractClauses).partitioningBy(c -> c.getReturnValue().isFail());
+    List<StandardMethodContract> failingContracts = squashContracts(partition.get(true));
+    List<StandardMethodContract> nonFailingContracts = squashContracts(partition.get(false));
+    // Sometimes "null,_->!null;!null,_->!null" contracts are inferred for some reason
+    // They are squashed to "_,_->!null" which is better expressed as @NotNull annotation
+    if (nonFailingContracts.size() == 1) {
+      StandardMethodContract contract = nonFailingContracts.get(0);
+      if (contract.getReturnValue().equals(ContractReturnValue.returnNotNull()) && contract.isTrivial()) {
+        nonFailingContracts = Collections.emptyList();
+        notNulls.add(methodKey);
+      }
+    }
+    List<StandardMethodContract> allContracts = StreamEx.of(failingContracts, nonFailingContracts).toFlatList(Function.identity());
+    removeConstraintFromNonNullParameter(methodKey, allContracts);
+
+    if (allContracts.isEmpty() && !fullReturnValue.equals(ContractReturnValue.returnAny())) {
+      allContracts.add(StandardMethodContract.trivialContract(arity, fullReturnValue));
+    }
+    if (notNulls.contains(methodKey)) {
+      // filter contract clauses for @NotNull methods
+      allContracts.removeIf(smc -> smc.getReturnValue().equals(ContractReturnValue.returnNotNull()));
+    }
+    // Failing contracts go first
+    String result = StreamEx.of(allContracts)
+                            .sorted(Comparator.comparingInt((StandardMethodContract smc) -> smc.getReturnValue().isFail() ? 0 : 1)
+                                              .thenComparing(StandardMethodContract::toString))
+                            .map(Object::toString)
+                            .distinct()
+                            .map(str -> str.replace(" ", "")) // for compatibility with existing tests
+                            .joining(";");
+    if (!result.isEmpty()) {
+      contracts.put(methodKey, '"' + result + '"');
+    }
+  }
+
+  private void removeConstraintFromNonNullParameter(@NotNull EKey methodKey,
+                                                    List<StandardMethodContract> allContracts) throws EquationsLimitException {
+    BitSet possiblyNotNullParameters = StreamEx.of(allContracts)
+                                               .flatMapToInt(
+                                                 smc -> IntStreamEx.range(smc.getParameterCount())
+                                                                   .filter(idx -> smc.getParameterConstraint(idx) == ValueConstraint.NOT_NULL_VALUE))
+                                               .toBitSet();
+    BitSet alwaysNotNullParameters = findAlwaysNotNullParameters(methodKey, possiblyNotNullParameters);
+    if (alwaysNotNullParameters.cardinality() != 0) {
+      allContracts.replaceAll(smc -> {
+        ValueConstraint[] constraints = smc.getConstraints().toArray(new ValueConstraint[0]);
+        alwaysNotNullParameters.stream().forEach(idx -> constraints[idx] = ValueConstraint.ANY_VALUE);
+        return new StandardMethodContract(constraints, smc.getReturnValue());
+      });
+    }
+  }
+
+  @NotNull
+  private static List<StandardMethodContract> squashContracts(List<StandardMethodContract> contractClauses) {
+    // If there's a pair of contracts yielding the same value like "null,_->true", "!null,_->true"
+    // then trivial contract should be used like "_,_->true"
+    StandardMethodContract soleContract = StreamEx.ofPairs(contractClauses, (c1, c2) -> {
+      if (c1.getReturnValue() != c2.getReturnValue()) return null;
+      int idx = -1;
+      for (int i = 0; i < c1.getParameterCount(); i++) {
+        ValueConstraint left = c1.getParameterConstraint(i);
+        ValueConstraint right = c2.getParameterConstraint(i);
+        if (left == ValueConstraint.ANY_VALUE && right == ValueConstraint.ANY_VALUE) continue;
+        if (idx >= 0 || !right.canBeNegated() || left != right.negate()) return null;
+        idx = i;
+      }
+      return c1;
+    }).nonNull().findFirst().orElse(null);
+    if(soleContract != null) {
+      contractClauses =
+        Collections.singletonList(StandardMethodContract.trivialContract(soleContract.getParameterCount(), soleContract.getReturnValue()));
+    }
+    return contractClauses;
+  }
+
+  private static StandardMethodContract contractElement(int arity,
+                                                        ParamValueBasedDirection inOut, ContractReturnValue returnValue) {
+    final ValueConstraint[] constraints = new ValueConstraint[arity];
+    Arrays.fill(constraints, ValueConstraint.ANY_VALUE);
+    constraints[inOut.paramIndex] = inOut.inValue.toValueConstraint();
+    return new StandardMethodContract(constraints, returnValue);
   }
 
   static abstract class EquationProvider<T extends MemberDescriptor> {
@@ -405,7 +534,7 @@ public class ProjectBytecodeAnalysis {
 
     EquationProvider(Project project) {
       myProject = project;
-      project.getMessageBus().connect().subscribe(PsiModificationTracker.TOPIC, () -> myEquationCache.clear());
+      project.getMessageBus().connect().subscribe(PsiModificationTracker.TOPIC, myEquationCache::clear);
     }
 
     abstract EKey adaptKey(@NotNull EKey key, MessageDigest messageDigest);
@@ -508,6 +637,7 @@ class MethodAnnotations {
   final Set<EKey> pures = new HashSet<>(1);
   // @Contracts
   final Map<EKey, String> contractsValues = new HashMap<>();
+  DataValue returnValue = DataValue.UnknownDataValue1;
 }
 
 class ParameterAnnotations {

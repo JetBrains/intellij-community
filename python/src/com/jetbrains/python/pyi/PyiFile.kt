@@ -16,6 +16,7 @@
 package com.jetbrains.python.pyi
 
 import com.intellij.psi.FileViewProvider
+import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.psi.LanguageLevel
 import com.jetbrains.python.psi.PyImportElement
 import com.jetbrains.python.psi.impl.PyFileImpl
@@ -26,11 +27,11 @@ import com.jetbrains.python.psi.resolve.RatedResolveResult
  * @author vlan
  */
 class PyiFile(viewProvider: FileViewProvider) : PyFileImpl(viewProvider, PyiLanguageDialect.getInstance()) {
-  override fun getFileType() = PyiFileType.INSTANCE
+  override fun getFileType(): PythonFileType = PyiFileType.INSTANCE
 
-  override fun toString() = "PyiFile:" + name
+  override fun toString(): String = "PyiFile:" + name
 
-  override fun getLanguageLevel() = LanguageLevel.PYTHON37
+  override fun getLanguageLevel(): LanguageLevel = LanguageLevel.PYTHON37
 
   override fun multiResolveName(name: String, exported: Boolean): List<RatedResolveResult> {
     val baseResults = super.multiResolveName(name, exported)

@@ -143,6 +143,7 @@ public class GithubUrlUtil {
    *
    * @deprecated {@link org.jetbrains.plugins.github.api.GithubRepositoryPath}
    */
+  @Deprecated
   @NotNull
   public static String getHostFromUrl(@NotNull String url) {
     String path = removeProtocolPrefix(url).replace(':', '/');

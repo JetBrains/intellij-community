@@ -21,12 +21,8 @@ Groovy script
     Generalized list
       PsiElement([)('[')
       PsiElement(])(']')
-  PsiErrorElement:';' or new line expected
-    <empty list>
-  PsiErrorElement:Unexpected symbol
+  PsiErrorElement:',' unexpected
     PsiElement(,)(',')
-  PsiErrorElement:';' or new line expected
-    <empty list>
   PsiWhiteSpace(' ')
   Reference expression
     PsiElement(identifier)('d')

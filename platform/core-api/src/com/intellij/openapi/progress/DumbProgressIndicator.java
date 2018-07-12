@@ -68,14 +68,6 @@ public class DumbProgressIndicator implements StandardProgressIndicator {
   }
 
   @Override
-  public void startNonCancelableSection() {
-  }
-
-  @Override
-  public void finishNonCancelableSection() {
-  }
-
-  @Override
   public boolean isModal() {
     return false;
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.hint;
 
+import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaFactMap;
 import com.intellij.codeInspection.dataFlow.DfaFactType;
@@ -22,6 +23,7 @@ import com.intellij.lang.ExpressionTypeProvider;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.ColorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,6 +96,9 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
   }
 
   private static String makeHtmlRow(String titleText, String contentHtml) {
-    return "<tr><td align='right' valign='top'><strong>" + StringUtil.escapeXml(titleText) + ":</strong></td><td>" + contentHtml + "</td></tr>";
+    String titleCell = "<td align='left' valign='top' style='color:" +
+                       ColorUtil.toHtmlColor(DocumentationComponent.SECTION_COLOR) + "'>" + StringUtil.escapeXml(titleText) + ":</td>";
+    String contentCell = "<td>" + contentHtml + "</td>";
+    return "<tr>" + titleCell + contentCell + "</tr>";
   }
 }

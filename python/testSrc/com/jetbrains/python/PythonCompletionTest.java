@@ -231,8 +231,20 @@ public class PythonCompletionTest extends PyTestCase {
     assertSameElements(myFixture.getLookupElementStrings(), Arrays.asList("my_foo", "my_bar"));
   }
 
-  public void testSlots() {  // PY-1211
-    doTest();
+  // PY-1211, PY-29232
+  public void testSlots() {
+    final String testName = getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasicAllCarets(null);
+    myFixture.checkResultByFile(testName + ".after.py");
+  }
+
+  // PY-29231
+  public void testSlotsAsAllowedNames() {
+    final String testName = getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasicAllCarets(null);
+    myFixture.checkResultByFile(testName + ".after.py");
   }
 
   public void testReturnType() {
@@ -1333,6 +1345,11 @@ public class PythonCompletionTest extends PyTestCase {
   // PY-28989
   public void testModuleFromNamespacePackage() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, this::assertSingleVariantInExtendedCompletion);
+  }
+
+  // PY-29158
+  public void testModuleStringLiteralCompletion() {
+    doMultiFileTest(CompletionType.BASIC, 2);
   }
 
   // PY-28341

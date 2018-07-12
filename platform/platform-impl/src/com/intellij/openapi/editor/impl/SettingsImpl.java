@@ -18,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
@@ -350,17 +349,6 @@ public class SettingsImpl implements EditorSettings {
    * @deprecated use {@link com.intellij.openapi.editor.EditorKind}
    */
   @Deprecated
-  public void setSoftWrapAppliancePlace(SoftWrapAppliancePlaces softWrapAppliancePlace) {
-    if (softWrapAppliancePlace != mySoftWrapAppliancePlace) {
-      mySoftWrapAppliancePlace = softWrapAppliancePlace;
-      fireEditorRefresh();
-    }
-  }
-
-  /**
-   * @deprecated use {@link com.intellij.openapi.editor.EditorKind}
-   */
-  @Deprecated
   public SoftWrapAppliancePlaces getSoftWrapAppliancePlace() {
     return mySoftWrapAppliancePlace;
   }
@@ -381,7 +369,7 @@ public class SettingsImpl implements EditorSettings {
     final PsiFile file = psiManager.getPsiFile(document);
     if (file == null) return;
 
-    CodeStyleSettingsManager.updateDocumentIndentOptions(project, document);
+    CodeStyle.updateDocumentIndentOptions(project, document);
   }
 
   @Override

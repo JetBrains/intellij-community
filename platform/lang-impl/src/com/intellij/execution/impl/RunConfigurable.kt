@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance
 import com.intellij.ui.*
 import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*
 import com.intellij.ui.components.labels.ActionLink
+import com.intellij.ui.mac.TouchbarDataKeys
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.IconUtil
@@ -73,9 +74,9 @@ private fun getName(userObject: Any): String {
 
 open class RunConfigurable @JvmOverloads constructor(private val project: Project, var runDialog: RunDialogBase? = null) : Configurable, Disposable {
   @Volatile private var isDisposed: Boolean = false
-  val root = DefaultMutableTreeNode("Root")
-  val treeModel = MyTreeModel(root)
-  val tree = Tree(treeModel)
+  val root: DefaultMutableTreeNode = DefaultMutableTreeNode("Root")
+  val treeModel: MyTreeModel = MyTreeModel(root)
+  val tree: Tree = Tree(treeModel)
   private val rightPanel = JPanel(BorderLayout())
   private val splitter = JBSplitter("RunConfigurable.dividerProportion", 0.3f)
   private var wholePanel: JPanel? = null
@@ -175,7 +176,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
             else if (userObject is RunnerAndConfigurationSettingsImpl) {
               val settings = userObject as RunnerAndConfigurationSettings
               shared = settings.isShared
-              icon = RunManagerEx.getInstanceEx(project).getConfigurationIcon(settings)
+              icon = runManager.getConfigurationIcon(settings)
               configuration = settings
             }
             if (configuration != null) {
@@ -221,7 +222,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
 
     // add templates
     val templates = DefaultMutableTreeNode(TEMPLATES)
-    for (type in RunManagerImpl.getInstanceImpl(project).configurationFactoriesWithoutUnknown) {
+    for (type in manager.configurationFactoriesWithoutUnknown) {
       val configurationFactories = type.configurationFactories
       val typeNode = DefaultMutableTreeNode(type)
       templates.add(typeNode)
@@ -318,7 +319,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
   private fun showTemplateConfigurable(factory: ConfigurationFactory) {
     var configurable: Configurable? = storedComponents[factory]
     if (configurable == null) {
-      configurable = TemplateConfigurable(RunManagerImpl.getInstanceImpl(project).getConfigurationTemplate(factory))
+      configurable = TemplateConfigurable(runManager.getConfigurationTemplate(factory))
       storedComponents.put(factory, configurable)
       configurable.reset()
     }
@@ -552,10 +553,14 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
       additionalSettings.add(Pair.create(configurable, configurable.createComponent()))
     }
 
+    val touchbarActions = DefaultActionGroup(toolbarAddAction)
+    TouchbarDataKeys.putActionDescriptor(touchbarActions).setShowText(true).isCombineWithDlgButtons = true
+
     wholePanel = JPanel(BorderLayout())
     DataManager.registerDataProvider(wholePanel!!) { dataId ->
       when (dataId) {
         RunConfigurationSelector.KEY.name -> RunConfigurationSelector { configuration -> selectConfiguration(configuration) }
+        TouchbarDataKeys.ACTIONS_KEY.name -> touchbarActions
         else -> null
       }
     }
@@ -1297,7 +1302,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
 
   private inner class MyCreateFolderAction : AnAction(ExecutionBundle.message("run.configuration.create.folder.text"),
                                                       ExecutionBundle.message("run.configuration.create.folder.description"),
-                                                      AllIcons.Nodes.Folder) {
+                                                      AllIcons.Actions.NewFolder) {
 
     override fun actionPerformed(e: AnActionEvent) {
       val type = selectedConfigurationType ?: return
@@ -1430,7 +1435,7 @@ open class RunConfigurable @JvmOverloads constructor(private val project: Projec
     }
 
     //Legacy, use canDrop() instead
-    override fun canExchangeRows(oldIndex: Int, newIndex: Int) = false
+    override fun canExchangeRows(oldIndex: Int, newIndex: Int): Boolean = false
 
     override fun canDrop(oldIndex: Int, newIndex: Int, position: RowsDnDSupport.RefinedDropSupport.Position): Boolean {
       if (tree.rowCount <= oldIndex || tree.rowCount <= newIndex || oldIndex < 0 || newIndex < 0) {

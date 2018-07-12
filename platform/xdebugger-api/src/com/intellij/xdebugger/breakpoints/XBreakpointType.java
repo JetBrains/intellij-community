@@ -3,8 +3,10 @@
 package com.intellij.xdebugger.breakpoints;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointCustomPropertiesPanel;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
@@ -134,6 +136,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   /**
    * @deprecated override {@link #getInactiveDependentIcon()} instead
    */
+  @Deprecated
   @NotNull
   public Icon getDisabledDependentIcon() {
     return AllIcons.Debugger.Db_dep_line_breakpoint;
@@ -154,6 +157,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   /**
    * @deprecated override {@link #createCustomPropertiesPanel(Project)} instead
    */
+  @Deprecated
   @Nullable
   public XBreakpointCustomPropertiesPanel<B> createCustomPropertiesPanel() {
     return null;
@@ -172,6 +176,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   /**
    * @deprecated override {@link #getEditorsProvider(B, Project)} instead
    */
+  @Deprecated
   @Nullable
   public XDebuggerEditorsProvider getEditorsProvider() {
     return null;
@@ -247,5 +252,9 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   public interface XBreakpointCreator<P extends XBreakpointProperties> {
     @NotNull
     XBreakpoint<P> createBreakpoint(@Nullable P properties);
+  }
+
+  public List<? extends AnAction> getAdditionalPopupMenuActions(@NotNull B breakpoint, @Nullable XDebugSession currentSession) {
+    return Collections.emptyList();
   }
 }

@@ -94,6 +94,6 @@ fun ByteBuffer.toByteArray(): ByteArray {
   return bytes
 }
 
-fun String.encodeUrlQueryParameter() = URLEncoder.encode(this, Charsets.UTF_8.name())!!
+fun String.encodeUrlQueryParameter(): String = URLEncoder.encode(this, Charsets.UTF_8.name())!!
 
 fun String.decodeBase64(): ByteArray = Base64.getDecoder().decode(this)

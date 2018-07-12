@@ -22,7 +22,6 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.project.ProjectRenameAware;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
 import com.intellij.openapi.externalSystem.service.ui.ExternalToolWindowManager;
-import com.intellij.openapi.externalSystem.service.vcs.ExternalSystemVcsRegistrar;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.DumbAware;
@@ -45,13 +44,13 @@ public class ExternalSystemStartupActivity implements StartupActivity, DumbAware
       return;
     }
     Runnable task = () -> {
-      for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemApiUtil.getAllManagers()) {
+      for (ExternalSystemManager<?, ?, ?, ?, ?> manager: ExternalSystemApiUtil.getAllManagers()) {
         if (manager instanceof StartupActivity) {
           ((StartupActivity)manager).runActivity(project);
         }
       }
       if (project.getUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT) != Boolean.TRUE) {
-        for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
+        for (ExternalSystemManager manager: ExternalSystemManager.EP_NAME.getExtensions()) {
           final boolean isNewProject = project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == Boolean.TRUE;
           if (isNewProject) {
             ExternalSystemUtil.refreshProjects(new ImportSpecBuilder(project, manager.getSystemId())
@@ -60,7 +59,6 @@ public class ExternalSystemStartupActivity implements StartupActivity, DumbAware
         }
       }
       ExternalToolWindowManager.handle(project);
-      ExternalSystemVcsRegistrar.handle(project);
       ProjectRenameAware.beAware(project);
     };
 

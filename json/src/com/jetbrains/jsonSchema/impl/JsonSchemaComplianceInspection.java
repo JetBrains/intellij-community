@@ -9,6 +9,7 @@ import com.intellij.json.JsonBundle;
 import com.intellij.json.psi.JsonElementVisitor;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonValue;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
@@ -36,8 +37,10 @@ public class JsonSchemaComplianceInspection extends LocalInspectionTool {
     JsonValue root = file instanceof JsonFile ? ObjectUtils.tryCast(file.getFirstChild(), JsonValue.class) : null;
     if (root == null) return PsiElementVisitor.EMPTY_VISITOR;
 
-    final JsonSchemaObject rootSchema =
-      JsonSchemaService.Impl.get(file.getProject()).getSchemaObject(file.getViewProvider().getVirtualFile());
+    JsonSchemaService service = JsonSchemaService.Impl.get(file.getProject());
+    VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
+    if (!service.isApplicableToFile(virtualFile)) return PsiElementVisitor.EMPTY_VISITOR;
+    final JsonSchemaObject rootSchema = service.getSchemaObject(virtualFile);
     if (rootSchema == null) return PsiElementVisitor.EMPTY_VISITOR;
 
     return new JsonElementVisitor() {

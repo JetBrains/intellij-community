@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.notification.Notification;
@@ -53,10 +54,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.Accessible;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.LineBorder;
-import javax.swing.border.TitledBorder;
+import javax.swing.border.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.plaf.ColorUIResource;
@@ -74,7 +72,7 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.CUSTOM_COMPONENT_ACTION_PROPERTY;
+import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.ACTION_KEY;
 import static java.util.Locale.ENGLISH;
 
 public class UiInspectorAction extends ToggleAction implements DumbAware {
@@ -397,6 +395,10 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
         if (component.isDoubleBuffered()) {
           append(", double-buffered", SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
+        if (DataManagerImpl.getDataProviderEx(component) != null) {
+          append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          append("data-provider", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        }
         componentNode.setText(toString());
         setIcon(createColorIcon(component.getForeground(), component.getBackground()));
       }
@@ -663,6 +665,24 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           return result;
         }
       });
+      new DoubleClickListener(){
+        @Override
+        protected boolean onDoubleClick(MouseEvent event) {
+          int row = table.rowAtPoint(event.getPoint());
+          int column = table.columnAtPoint(event.getPoint());
+          if (row >=0 && row < table.getRowCount() && column >=0 && column < table.getColumnCount()) {
+            Component renderer = table.getCellRenderer(row, column)
+                                        .getTableCellRendererComponent(table, myModel.getValueAt(row, column), false, false, row, column);
+            if (renderer instanceof JLabel) {
+              //noinspection UseOfSystemOutOrSystemErr
+              System.out.println((component != null ? getComponentName(component)+ " " : "" )
+                                 + ((JLabel)renderer).getText().replace("\tat", "\n\tat"));
+              return true;
+            }
+          }
+          return false;
+        }
+      }.installOn(table);
 
       table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
 
@@ -1007,7 +1027,11 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
     }
 
     @NotNull
-    private static String getTextDescription(@NotNull Border value) {
+    private static String getTextDescription(@Nullable Border value) {
+      if (value == null) {
+        return "null";
+      }
+
       StringBuilder sb = new StringBuilder();
       sb.append(getClassName(value));
 
@@ -1023,6 +1047,14 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       if (value instanceof CompoundBorder) {
         sb.append(" inside={").append(getTextDescription(((CompoundBorder)value).getInsideBorder())).append("}");
         sb.append(" outside={").append(getTextDescription(((CompoundBorder)value).getOutsideBorder())).append("}");
+      }
+      if (value instanceof EmptyBorder) {
+        Insets insets = ((EmptyBorder)value).getBorderInsets();
+        sb.append(" insets={top=").append(insets.top)
+          .append(" left=").append(insets.left)
+          .append(" bottom=").append(insets.bottom)
+          .append(" right=").append(insets.right)
+          .append("}");
       }
 
       if (value instanceof UIResource) sb.append(" UIResource");
@@ -1410,13 +1442,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   @Nullable
   private static AnAction getAction(Component c) {
-    if (c instanceof JComponent) {
-      Object obj = ((JComponent)c).getClientProperty(CUSTOM_COMPONENT_ACTION_PROPERTY);
-      if (obj instanceof AnAction) {
-        return (AnAction)obj;
-      }
-    }
-    return null;
+    return UIUtil.getClientProperty(c, ACTION_KEY);
   }
 
   private static class UiInspector implements AWTEventListener, Disposable {

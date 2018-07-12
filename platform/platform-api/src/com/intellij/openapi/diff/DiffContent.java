@@ -16,16 +16,14 @@
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.LineSeparator;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.List;
 
 /**
  * Represents some data that probably can be compared with some other.
@@ -35,25 +33,7 @@ import java.util.List;
  */
 @Deprecated
 public abstract class DiffContent {
-  private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private boolean myIsEmpty;
-
-  public void addListener(Listener listener) {
-    myListeners.add(listener);
-  }
-
-  public void removeListener(Listener listener) {
-    myListeners.remove(listener);
-  }
-
-  /**
-   * This content becomes invalid for some reason. Diff tool should stop show it.
-   */
-  protected void fireContentInvalid() {
-    for (Listener listener : myListeners) {
-      listener.contentInvalid();
-    }
-  }
 
   /**
    * Means this content represents binary data. It should be used only for byte by byte comparison.
@@ -74,17 +54,6 @@ public abstract class DiffContent {
   }
 
   /**
-   * Called by {@link com.intellij.openapi.diff.DiffTool}
-   * when document returned by {@link #getDocument()} is opened in editor. Implementors may use this notification to
-   * add listeners when document is editing and remove when editing done to avoid memory leaks.
-   *
-   * @param isAssigned true means editing started, false means editing stopped.
-   *                   Total number of calls with true should be same as for false
-   */
-  public void onAssigned(boolean isAssigned) {
-  }
-
-  /**
    * Represents this content as Document
    * null means content has no text representation
    *
@@ -99,7 +68,7 @@ public abstract class DiffContent {
    * @param offset in document returned by {@link #getDocument()}
    * @return {@link com.intellij.openapi.fileEditor.OpenFileDescriptor} to open this content in editor
    */
-  public abstract OpenFileDescriptor getOpenFileDescriptor(int offset);
+  public abstract Navigatable getOpenFileDescriptor(int offset);
 
   /**
    * @return VirtualFile from which this content gets data.
@@ -116,7 +85,7 @@ public abstract class DiffContent {
   public abstract FileType getContentType();
 
   /**
-   * @return Binary represntation of content.
+   * @return Binary representation of content.
    *         Should not be null if {@link #getFile()} returns existing not directory file
    * @throws java.io.IOException
    */
@@ -146,9 +115,5 @@ public abstract class DiffContent {
   @Nullable
   public LineSeparator getLineSeparator() {
     return null;
-  }
-
-  public interface Listener {
-    void contentInvalid();
   }
 }

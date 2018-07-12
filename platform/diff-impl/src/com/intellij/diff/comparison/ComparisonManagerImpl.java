@@ -327,12 +327,12 @@ public class ComparisonManagerImpl extends ComparisonManager {
 
   @NotNull
   public static List<MergeLineFragment> convertIntoMergeLineFragments(@NotNull List<MergeRange> conflicts) {
-    return ContainerUtil.map(conflicts, ch -> new MergeLineFragmentImpl(ch.start1, ch.end1, ch.start2, ch.end2, ch.start3, ch.end3));
+    return ContainerUtil.map(conflicts, ch -> new MergeLineFragmentImpl(ch));
   }
 
   @NotNull
   public static List<MergeWordFragment> convertIntoMergeWordFragments(@NotNull List<MergeRange> conflicts) {
-    return ContainerUtil.map(conflicts, ch -> new MergeWordFragmentImpl(ch.start1, ch.end1, ch.start2, ch.end2, ch.start3, ch.end3));
+    return ContainerUtil.map(conflicts, ch -> new MergeWordFragmentImpl(ch));
   }
 
   //

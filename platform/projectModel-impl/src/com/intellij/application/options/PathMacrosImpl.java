@@ -46,6 +46,7 @@ public class PathMacrosImpl extends PathMacros implements PersistentStateCompone
     SYSTEM_MACROS.add(PathMacroUtil.APPLICATION_HOME_DIR);
     SYSTEM_MACROS.add(PathMacroUtil.APPLICATION_PLUGINS_DIR);
     SYSTEM_MACROS.add(PathMacroUtil.PROJECT_DIR_MACRO_NAME);
+    SYSTEM_MACROS.add(PathMacroUtil.MODULE_WORKING_DIR_NAME);
     SYSTEM_MACROS.add(PathMacroUtil.MODULE_DIR_MACRO_NAME);
     SYSTEM_MACROS.add(PathMacroUtil.USER_HOME_NAME);
   }

@@ -11,7 +11,7 @@
     </item>
     <item name='org.apache.commons.collections.list.AbstractLinkedList boolean addAll(int, java.util.Collection)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,!null-&gt;true&quot;"/>
+            <val val="&quot;_,_-&gt;true&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.collections.list.AbstractLinkedList boolean addAll(int, java.util.Collection) 1'>
@@ -51,28 +51,42 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.AbstractLinkedList java.util.List subList(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.AbstractLinkedList java.util.ListIterator createSubListListIterator(org.apache.commons.collections.list.AbstractLinkedList.LinkedSubList, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.AbstractLinkedList java.util.ListIterator createSubListListIterator(org.apache.commons.collections.list.AbstractLinkedList.LinkedSubList, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.AbstractLinkedList java.util.ListIterator listIterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.AbstractLinkedList java.util.ListIterator listIterator(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.AbstractLinkedList org.apache.commons.collections.list.AbstractLinkedList.Node createHeaderNode()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.AbstractLinkedList org.apache.commons.collections.list.AbstractLinkedList.Node createNode(java.lang.Object)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -138,6 +152,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.AbstractLinkedList.LinkedSubList java.util.List subList(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.AbstractLinkedList.LinkedSubList void checkModCount()'>
@@ -216,15 +233,24 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.CursorableLinkedList java.util.Iterator iterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.CursorableLinkedList java.util.ListIterator createSubListListIterator(org.apache.commons.collections.list.AbstractLinkedList.LinkedSubList, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.CursorableLinkedList java.util.ListIterator createSubListListIterator(org.apache.commons.collections.list.AbstractLinkedList.LinkedSubList, int) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.CursorableLinkedList org.apache.commons.collections.list.CursorableLinkedList.Cursor cursor(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.CursorableLinkedList void addNode(org.apache.commons.collections.list.AbstractLinkedList.Node, org.apache.commons.collections.list.AbstractLinkedList.Node) 0'>
@@ -344,6 +370,7 @@
     </item>
     <item name='org.apache.commons.collections.list.FixedSizeList java.util.List decorate(java.util.List)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -352,12 +379,21 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.FixedSizeList java.util.List subList(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.FixedSizeList java.util.ListIterator listIterator()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.FixedSizeList java.util.ListIterator listIterator(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.FixedSizeList void add(int, java.lang.Object)'>
@@ -416,6 +452,7 @@
     </item>
     <item name='org.apache.commons.collections.list.GrowthList java.util.List decorate(java.util.List)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -436,6 +473,7 @@
     </item>
     <item name='org.apache.commons.collections.list.LazyList java.util.List decorate(java.util.List, org.apache.commons.collections.Factory)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -447,6 +485,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.LazyList java.util.List subList(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.NodeCachingLinkedList boolean isCacheFull()'>
@@ -481,6 +522,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.PredicatedList java.util.List decorate(java.util.List, org.apache.commons.collections.Predicate)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.PredicatedList java.util.List decorate(java.util.List, org.apache.commons.collections.Predicate) 0'>
@@ -490,9 +534,15 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.PredicatedList java.util.List subList(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.PredicatedList java.util.ListIterator listIterator(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.PredicatedList.PredicatedListIterator PredicatedListIterator(java.util.ListIterator)'>
@@ -532,6 +582,9 @@
         </annotation>
     </item>
     <item name='org.apache.commons.collections.list.SetUniqueList org.apache.commons.collections.list.SetUniqueList decorate(java.util.List)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.SetUniqueList org.apache.commons.collections.list.SetUniqueList decorate(java.util.List) 0'>
@@ -580,6 +633,7 @@
     </item>
     <item name='org.apache.commons.collections.list.SynchronizedList java.util.List decorate(java.util.List)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -593,6 +647,9 @@
         </annotation>
     </item>
     <item name='org.apache.commons.collections.list.SynchronizedList java.util.List subList(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.TransformedList TransformedList(java.util.List, org.apache.commons.collections.Transformer)'>
@@ -608,6 +665,7 @@
     </item>
     <item name='org.apache.commons.collections.list.TransformedList java.util.List decorate(java.util.List, org.apache.commons.collections.Transformer)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -624,9 +682,15 @@
         </annotation>
     </item>
     <item name='org.apache.commons.collections.list.TransformedList java.util.List subList(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.TransformedList java.util.ListIterator listIterator(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.TransformedList.TransformedListIterator TransformedListIterator(java.util.ListIterator)'>
@@ -645,9 +709,15 @@
         </annotation>
     </item>
     <item name='org.apache.commons.collections.list.TreeList java.lang.Object[] toArray()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.TreeList java.util.ListIterator listIterator(int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.TreeList.AVLNode AVLNode(int, java.lang.Object, org.apache.commons.collections.list.TreeList.AVLNode, org.apache.commons.collections.list.TreeList.AVLNode)'>
@@ -744,6 +814,9 @@
         </annotation>
     </item>
     <item name='org.apache.commons.collections.list.TypedList java.util.List decorate(java.util.List, java.lang.Class)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.TypedList java.util.List decorate(java.util.List, java.lang.Class) 0'>
@@ -839,6 +912,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.UnmodifiableList java.util.List subList(int, int)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.commons.collections.list.UnmodifiableList void add(int, java.lang.Object)'>

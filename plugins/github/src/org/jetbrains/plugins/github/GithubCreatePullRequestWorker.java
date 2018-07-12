@@ -26,7 +26,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.vcs.log.VcsCommitMetadata;
@@ -48,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiTaskExecutor;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubFullPath;
+import org.jetbrains.plugins.github.api.GithubServerPath;
 import org.jetbrains.plugins.github.api.data.GithubBranch;
 import org.jetbrains.plugins.github.api.data.GithubPullRequest;
 import org.jetbrains.plugins.github.api.data.GithubRepo;
@@ -133,7 +133,7 @@ public class GithubCreatePullRequestWorker {
       Git git = ServiceManager.getService(Git.class);
 
       gitRepository.update();
-      Pair<GitRemote, String> remote = findGithubRemote(account, gitRepository);
+      Pair<GitRemote, String> remote = findGithubRemote(account.getServer(), gitRepository);
       if (remote == null) {
         GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "Can't find GitHub remote");
         return null;
@@ -171,13 +171,13 @@ public class GithubCreatePullRequestWorker {
   }
 
   @Nullable
-  static Pair<GitRemote, String> findGithubRemote(@NotNull GithubAccount account, @NotNull GitRepository repository) {
+  static Pair<GitRemote, String> findGithubRemote(@NotNull GithubServerPath server, @NotNull GitRepository repository) {
     Pair<GitRemote, String> githubRemote = null;
     for (GitRemote gitRemote : repository.getRemotes()) {
       for (String remoteUrl : gitRemote.getUrls()) {
-        if (account.getServer().matches(remoteUrl)) {
+        if (server.matches(remoteUrl)) {
           String remoteName = gitRemote.getName();
-          if ("github" == remoteName || "origin" == remoteName) {
+          if ("github".equals(remoteName) || "origin".equals(remoteName)) {
             return Pair.create(gitRemote, remoteUrl);
           }
           if (githubRemote == null) {

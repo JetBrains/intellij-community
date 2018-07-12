@@ -1,0 +1,31 @@
+class A {
+  A(
+}
+-----
+Groovy script
+  Class definition
+    Modifiers
+      <empty list>
+    PsiElement(class)('class')
+    PsiWhiteSpace(' ')
+    PsiElement(identifier)('A')
+    Extends clause
+      <empty list>
+    Implements clause
+      <empty list>
+    PsiWhiteSpace(' ')
+    Type definition body
+      PsiElement({)('{')
+      PsiWhiteSpace('\n  ')
+      Constructor
+        Modifiers
+          <empty list>
+        PsiElement(identifier)('A')
+        PsiElement(()('(')
+        PsiWhiteSpace('\n')
+        Parameter list
+          PsiErrorElement:')' or identifier expected, got '}'
+            <empty list>
+        Throw clause
+          <empty list>
+      PsiElement(})('}')

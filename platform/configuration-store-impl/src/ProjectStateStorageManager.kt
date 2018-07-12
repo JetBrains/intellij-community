@@ -29,10 +29,10 @@ open class ProjectStateStorageManager(macroSubstitutor: TrackingPathMacroSubstit
                                       useVirtualFileTracker: Boolean = true) : StateStorageManagerImpl(ROOT_TAG_NAME, macroSubstitutor, if (useVirtualFileTracker) project else null) {
   companion object {
     internal const val VERSION_OPTION = "version"
-    const val ROOT_TAG_NAME = "project"
+    const val ROOT_TAG_NAME: String = "project"
   }
 
-  override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), PROJECT_CONFIG_DIR)
+  override fun normalizeFileSpec(fileSpec: String): String = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), PROJECT_CONFIG_DIR)
 
   override fun expandMacros(path: String): String {
     if (path[0] == '$') {

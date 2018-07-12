@@ -23,7 +23,8 @@ public class SingleClassesTest {
   public void setUp() throws IOException {
     fixture = new DecompilerTestFixture();
     fixture.setUp(IFernflowerPreferences.BYTECODE_SOURCE_MAPPING, "1",
-                  IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1");
+                  IFernflowerPreferences.DUMP_ORIGINAL_LINES, "1",
+                  IFernflowerPreferences.IGNORE_INVALID_BYTECODE, "1");
   }
 
   @After
@@ -104,6 +105,9 @@ public class SingleClassesTest {
   @Test public void testPop2TwoIntPop2() { doTest("pkg/TestPop2TwoIntPop2"); }
   @Test public void testPop2TwoIntTwoPop() { doTest("pkg/TestPop2TwoIntTwoPop"); }
   @Test public void testSuperInner() { doTest("pkg/TestSuperInner", "pkg/TestSuperInnerBase"); }
+  @Test public void testMissingConstructorCallGood() { doTest("pkg/TestMissingConstructorCallGood"); }
+  @Test public void testMissingConstructorCallBad() { doTest("pkg/TestMissingConstructorCallBad"); }
+
 
   // TODO: fix all below
   //@Test public void testPackageInfo() { doTest("pkg/package-info"); }

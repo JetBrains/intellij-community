@@ -28,7 +28,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
@@ -249,7 +248,7 @@ public class JoiningMigration extends BaseStreamApiMigration {
           PsiMethodCallExpression nextCall = ExpressionUtils.getCallForQualifier(call);
           PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
           if (nextCall != null && qualifier != null) {
-            ct.replace(nextCall, ct.markUnchanged(qualifier));
+            ct.replace(nextCall, qualifier);
           }
         }
       }

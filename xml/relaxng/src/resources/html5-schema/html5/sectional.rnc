@@ -147,9 +147,7 @@
 		element address { address.inner & address.attrs }
 	address.attrs =
 		(	common.attrs
-		&	(	common.attrs.aria.role.contentinfo
-			|	common.attrs.aria.role.presentation
-			)?
+		&	common.attrs.aria?
 		)
 	address.inner = 
 		( common.inner.flow )

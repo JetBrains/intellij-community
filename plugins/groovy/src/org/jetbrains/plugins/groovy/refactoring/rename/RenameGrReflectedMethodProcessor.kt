@@ -26,5 +26,5 @@ class RenameGrReflectedMethodProcessor : RenameAliasImportedMethodProcessor() {
     return element is GrMethod && element.reflectedMethods.isNotEmpty()
   }
 
-  override fun isInplaceRenameSupported() = false
+  override fun isInplaceRenameSupported(): Boolean = false
 }

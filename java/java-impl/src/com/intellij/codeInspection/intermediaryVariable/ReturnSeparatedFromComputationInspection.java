@@ -60,7 +60,7 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
         if (returnType != null) {
           PsiStatement refactoredStatement = getPrevNonEmptyStatement(returnStatement, null);
           if (refactoredStatement != null) {
-            final PsiExpression returnValue = returnStatement.getReturnValue();
+            final PsiExpression returnValue = PsiUtil.skipParenthesizedExprDown(returnStatement.getReturnValue());
             if (returnValue instanceof PsiReferenceExpression) {
               final PsiElement resolved = ((PsiReferenceExpression)returnValue).resolve();
               if (resolved instanceof PsiVariable) {
@@ -440,7 +440,7 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
         return false;
       }
       PsiCodeBlock finallyBlock = targetStatement.getFinallyBlock();
-      if (finallyBlock != null && isVariableUsed(flow, finallyBlock, resultVariable)) {
+      if (isVariableUsed(flow, finallyBlock, resultVariable)) {
         return false;
       }
       boolean allCatchesReturn = true;
@@ -540,7 +540,7 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
   }
 
   @Nullable
-  private static PsiStatement getPrevNonEmptyStatement(@Nullable PsiElement psiElement, @Nullable Set<PsiElement> skippedEmptyStatements) {
+  private static PsiStatement getPrevNonEmptyStatement(@Nullable PsiElement psiElement, @Nullable Set<? super PsiElement> skippedEmptyStatements) {
     if (psiElement == null || !(psiElement.getParent() instanceof PsiCodeBlock)) {
       return null;
     }

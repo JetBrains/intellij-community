@@ -374,12 +374,12 @@ class ApplyPatchChange {
     }
 
     @Override
-    public boolean canDoAction(MouseEvent e) {
+    public boolean canDoAction(@NotNull MouseEvent e) {
       return LineStatusMarkerRenderer.isInsideMarkerArea(e);
     }
 
     @Override
-    public void doAction(Editor editor, MouseEvent e) {
+    public void doAction(@NotNull Editor editor, @NotNull MouseEvent e) {
       if (getResultRange() != null) myViewer.scrollToChange(ApplyPatchChange.this, Side.RIGHT, false);
     }
   }

@@ -26,9 +26,6 @@ import java.util.regex.Pattern;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 
-/**
- * @author Tagir Valeev
- */
 public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher OPTIONAL_OR_ELSE =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_OPTIONAL, "orElse").parameterCount(1);
@@ -468,7 +465,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
           tryCast(PsiTreeUtil.skipWhitespacesForward(returnVar.getParent()), PsiStatement.class);
         if (nextStatement == null) return null;
         PsiExpression lambdaExpr = extractMappingExpression(nextStatement, returnVar);
-        if (lambdaExpr == null || !LambdaGenerationUtil.canBeUncheckedLambda(lambdaExpr)) return null;
+        if (!LambdaGenerationUtil.canBeUncheckedLambda(lambdaExpr)) return null;
         if(!ReferencesSearch.search(returnVar).forEach(reference ->
                                                      PsiTreeUtil.isAncestor(statement, reference.getElement(), false) ||
                                                      PsiTreeUtil.isAncestor(nextStatement, reference.getElement(), false))) return null;
@@ -506,7 +503,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
     private final String myMessage;
     private final String myDescription;
 
-    public SimplifyOptionalChainFix(String replacement, String message, String description) {
+    private SimplifyOptionalChainFix(String replacement, String message, String description) {
       myReplacement = replacement;
       myMessage = message;
       myDescription = description;

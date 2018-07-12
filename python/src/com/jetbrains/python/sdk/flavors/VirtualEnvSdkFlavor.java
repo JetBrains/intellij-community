@@ -17,6 +17,8 @@ package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -24,6 +26,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
+import com.jetbrains.python.PythonModuleTypeBase;
+import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkType;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
@@ -50,9 +54,12 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     List<String> candidates = new ArrayList<>();
     if (project != null) {
-      VirtualFile rootDir = project.getBaseDir();
-      if (rootDir != null)
-        candidates.addAll(findInDirectory(rootDir));
+      for (Module module : ModuleUtil.getModulesOfType(project, PythonModuleTypeBase.getInstance())) {
+        final VirtualFile baseDir = PySdkExtKt.getBaseDir(module);
+        if (baseDir != null) {
+          candidates.addAll(findInDirectory(baseDir));
+        }
+      }
     }
     
     final VirtualFile path = getDefaultLocation();

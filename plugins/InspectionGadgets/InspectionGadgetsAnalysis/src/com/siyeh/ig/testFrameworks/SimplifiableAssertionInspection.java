@@ -25,10 +25,10 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.EqualityCheck;
 import com.siyeh.ig.psiutils.ImportUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -105,6 +105,11 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
     return EqualityCheck.from(expression) != null;
   }
 
+  private static final CallMatcher ARRAYS_EQUALS = CallMatcher.staticCall("java.util.Arrays", "equals").parameterCount(2);
+  private static boolean isArrayEqualityComparison(PsiExpression expression) {
+    return expression instanceof PsiMethodCallExpression && ARRAYS_EQUALS.test((PsiMethodCallExpression)expression);
+  }
+  
   private static boolean isIdentityComparison(PsiExpression expression) {
     if (!(expression instanceof PsiBinaryExpression)) {
       return false;
@@ -166,6 +171,9 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
         }
         else if (isEqualityComparison(position)) {
           replaceAssertLiteralWithAssertEquals(callExpression, position, assertTrueFalseHint.getMessage(), assertTrueFalseHint.getArgIndex(), "assertNotEquals");
+        }
+        else if (assertTrue && isArrayEqualityComparison(position)) {
+          replaceAssertLiteralWithAssertEquals(callExpression, position, assertTrueFalseHint.getMessage(), assertTrueFalseHint.getArgIndex(), "assertArrayEquals");
         }
       }
     }
@@ -233,6 +241,11 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
           lhs = check.getLeft();
           rhs = check.getRight();
         }
+        else if (position instanceof PsiMethodCallExpression && ARRAYS_EQUALS.test((PsiMethodCallExpression)position)) {
+          PsiExpression[] args = ((PsiMethodCallExpression)position).getArgumentList().getExpressions();
+          lhs = args[0];
+          rhs = args[1];
+        }
       }
       if (!(lhs instanceof PsiLiteralExpression) && rhs instanceof PsiLiteralExpression) {
         final PsiExpression temp = lhs;
@@ -264,7 +277,9 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
       else {
         buf.append(lhs.getText()).append(',').append(rhs.getText());
       }
-      if (TypeUtils.hasFloatingPointType(lhs) || TypeUtils.hasFloatingPointType(rhs) ||
+
+      if (lhsType != null && TypeConversionUtil.isFloatOrDoubleType(lhsType.getDeepComponentType()) ||
+          rhsType != null && TypeConversionUtil.isFloatOrDoubleType(rhsType.getDeepComponentType()) ||
           isPrimitiveAndBoxedFloat(lhsType, rhsType) || isPrimitiveAndBoxedFloat(rhsType, lhsType)) {
         buf.append(",0.0");
       }
@@ -421,6 +436,9 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
           }
           else if (isAssertThatCouldBeFail(position, !assertTrue)) {
             registerMethodCallError(expression, "fail()");
+          }
+          else if (assertTrue && isArrayEqualityComparison(position)) {
+            registerMethodCallError(expression, "assertArrayEquals");
           }
         }
       }

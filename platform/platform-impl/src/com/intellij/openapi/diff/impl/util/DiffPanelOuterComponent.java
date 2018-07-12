@@ -40,7 +40,6 @@ public class DiffPanelOuterComponent extends JPanel implements DataProvider {
   private DeferScrollToFirstDiff myScrollState = NO_SCROLL_NEEDED;
   private ScrollingPanel myScrollingPanel = null;
   private final JPanel myBottomContainer;
-  private JComponent myBottomComponent;
   private final JPanel myWrapper;
   private Getter<Integer> myPreferredHeightGetter;
   private int myPrefferedWidth;
@@ -82,20 +81,6 @@ public class DiffPanelOuterComponent extends JPanel implements DataProvider {
     myWrapper.add(component, BorderLayout.NORTH);
   }
 
-  public JComponent getBottomComponent() {
-    return myBottomComponent;
-  }
-
-  public void setBottomComponent(JComponent component) {
-    if (myBottomComponent != null) {
-      myBottomContainer.remove(myBottomComponent);
-    }
-    myBottomComponent = component;
-    if (myBottomComponent != null) {
-      myBottomContainer.add(BorderLayout.CENTER, component);
-    }
-  }
-
   public void setDataProvider(DataProvider dataProvider) {
     myDataProvider = dataProvider;
   }
@@ -135,13 +120,6 @@ public class DiffPanelOuterComponent extends JPanel implements DataProvider {
       return null;
     }
     if (CommonDataKeys.EDITOR.is(dataId)) {
-      if (myBottomComponent != null) {
-        // we don't want editor actions to be executed when the bottom component has focus
-        final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-        if (myBottomComponent.isAncestorOf(focusOwner)) {
-          return null;
-        }
-      }
       final FocusDiffSide side = (FocusDiffSide)myDataProvider.getData(FocusDiffSide.DATA_KEY.getName());
       if (side != null) {
         final Editor editor = side.getEditor();

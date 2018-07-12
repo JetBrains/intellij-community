@@ -635,8 +635,12 @@ public class TemplateState implements Disposable {
     return result;
   }
 
-  ExpressionContext getCurrentExpressionContext() {
+  public ExpressionContext getCurrentExpressionContext() {
     return createExpressionContext(mySegments.getSegmentStart(getCurrentSegmentNumber()));
+  }
+
+  public ExpressionContext getExpressionContextForSegment(int segmentNumber) {
+    return createExpressionContext(mySegments.getSegmentStart(segmentNumber));
   }
 
   Expression getCurrentExpression() {
@@ -937,6 +941,9 @@ public class TemplateState implements Disposable {
   }
 
   public void considerNextTabOnLookupItemSelected(LookupElement item) {
+    if (isFinished()) {
+      return;
+    }
     if (item != null) {
       ExpressionContext context = getCurrentExpressionContext();
       for (TemplateCompletionProcessor processor : Extensions.getExtensions(TemplateCompletionProcessor.EP_NAME)) {
@@ -1034,15 +1041,6 @@ public class TemplateState implements Disposable {
 
   public void gotoEnd() {
     gotoEnd(true);
-  }
-
-  /**
-   * @deprecated use this#gotoEnd(true)
-   */
-  public void cancelTemplate() {
-    if (isDisposed()) return;
-    LookupManager.getInstance(myProject).hideActiveLookup();
-    cleanupTemplateState(true);
   }
 
   private void finishTemplateEditing() {

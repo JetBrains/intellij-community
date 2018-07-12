@@ -58,7 +58,7 @@ public class CompareFiles extends BaseDiffAction {
     if (diffRequest == null) {
       return false;
     }
-    return !diffRequest.isSafeToCallFromUpdate() || DiffManager.getInstance().getDiffTool().canShow(diffRequest);
+    return DiffManager.getInstance().getDiffTool().canShow(diffRequest);
   }
 
   protected DiffRequest getDiffData(DataContext dataContext) {

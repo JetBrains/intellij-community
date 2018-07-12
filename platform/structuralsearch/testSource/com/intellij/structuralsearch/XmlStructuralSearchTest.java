@@ -90,7 +90,7 @@ public class XmlStructuralSearchTest extends StructuralSearchTestCase {
     String s3 = "<a> content </a>\n" +
                 "<b> another content </b>\n" +
                 "<c>another <aaa>zzz</aaa>content </c>";
-    String s4 = "<'_tag>'Content*</'_tag>";
+    String s4 = "<'_tag>'Content+</'_tag>";
     assertEquals("Content match", 6, findMatchesCount(s3, s4, StdFileTypes.HTML));
     assertEquals("Content match", 6, findMatchesCount(s3, s4, StdFileTypes.XML));
   }
@@ -171,7 +171,7 @@ public class XmlStructuralSearchTest extends StructuralSearchTestCase {
 
   public void testXmlSearch2() {
     String s1 = "<body><p class=\"11\"> AAA </p><p class=\"22\"></p> <p> ZZZ </p> <p/> <p/> <p/> </body>";
-    String s2 = "<p '_a{0,0}=\"'_t:[ regex( 11 ) ]\"> 'content? </p>";
+    String s2 = "<p '_a{0,0}=\"'_t:[ regex( 11 ) ]\"> '_content? </p>";
 
     assertEquals(5, findMatchesCount(s1, s2, StdFileTypes.XML));
   }

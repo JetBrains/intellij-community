@@ -16,17 +16,18 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.history.VcsCachingHistory;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.impl.VcsSelectionHistoryDialog;
-import com.intellij.openapi.vcs.impl.BackgroundableActionEnabledHandler;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsSelection;
@@ -45,11 +46,7 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
 
     VirtualFile file = FileDocumentManager.getInstance().getFile(selection.getDocument());
     if (file == null) return false;
-
-    final ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(project);
-    final BackgroundableActionEnabledHandler handler =
-      vcsManager.getBackgroundableActionHandler(VcsBackgroundableActions.HISTORY_FOR_SELECTION);
-    if (handler.isInProgress(VcsBackgroundableActions.keyFrom(file))) return false;
+    FilePath filePath = VcsUtil.getFilePath(file);
 
     AbstractVcs activeVcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
     if (activeVcs == null) return false;
@@ -57,7 +54,11 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
     VcsHistoryProvider provider = activeVcs.getVcsBlockHistoryProvider();
     if (provider == null) return false;
 
-    if (!AbstractVcs.fileInVcsByFileStatus(project, VcsUtil.getFilePath(file))) return false;
+    BackgroundableActionLock lock =
+      VcsCachingHistory.getHistoryLock(activeVcs, VcsBackgroundableActions.HISTORY_FOR_SELECTION, filePath, null);
+    if (lock.isLocked()) return false;
+
+    if (!AbstractVcs.fileInVcsByFileStatus(project, filePath)) return false;
     return true;
   }
 
@@ -105,6 +106,12 @@ public class SelectedBlockHistoryAction extends AbstractVcsAction {
   }
 
   protected void update(@NotNull VcsContext context, @NotNull Presentation presentation) {
+    Editor editor = context.getEditor();
+    if (editor == null) {
+      presentation.setEnabledAndVisible(false);
+      return;
+    }
+
     presentation.setEnabled(isEnabled(context));
     VcsSelection selection = VcsSelectionUtil.getSelection(context);
     if (selection != null) {

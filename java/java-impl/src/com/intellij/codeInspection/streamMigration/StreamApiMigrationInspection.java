@@ -2,7 +2,6 @@
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInsight.ExceptionUtil;
-import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.intention.impl.StreamRefactoringUtil;
@@ -40,6 +39,7 @@ import javax.swing.*;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Predicate;
 
 import static com.intellij.codeInspection.streamMigration.OperationReductionMigration.SUM_OPERATION;
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -306,13 +306,16 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
   }
 
   static boolean isVariableSuitableForStream(PsiVariable variable, PsiStatement statement, TerminalBlock tb) {
-    if (ReferencesSearch.search(variable).forEach(ref -> {
-      PsiExpression expression = tryCast(ref.getElement(), PsiExpression.class);
-      return expression == null ||
-             !PsiUtil.isAccessedForWriting(expression) ||
-             tb.operations().anyMatch(op -> op.isWriteAllowed(variable, expression));
-    })) {
-      return true;
+    PsiElement block = PsiUtil.getVariableCodeBlock(variable, statement);
+    if (block != null) {
+      Predicate<PsiElement> notAllowedWrite = e -> {
+        if (!(e instanceof PsiReferenceExpression)) return false;
+        PsiReferenceExpression ref = (PsiReferenceExpression)e;
+        return PsiUtil.isAccessedForWriting(ref) &&
+               ref.isReferenceTo(variable) &&
+               tb.operations().noneMatch(op -> op.isWriteAllowed(variable, ref));
+      };
+      if (PsiTreeUtil.processElements(block, notAllowedWrite.negate()::test)) return true;
     }
     return HighlightControlFlowUtil.isEffectivelyFinal(variable, statement, null);
   }
@@ -633,7 +636,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
     if (arrayType == null || !StreamApiUtil.isSupportedStreamElement(arrayType.getComponentType())) return null;
     PsiExpression dimension = ArrayUtil.getFirstElement(initializer.getArrayDimensions());
     if (dimension == null) return null;
-    PsiExpression bound = loop.myBound;
+    PsiExpression bound = PsiUtil.skipParenthesizedExprDown(loop.myBound);
     if (!isArrayLength(arrayVariable, dimension, bound)) return null;
     if (VariableAccessUtils.variableIsUsed(arrayVariable, assignment.getRExpression())) return null;
     return arrayVariable;
@@ -641,7 +644,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
 
   private static boolean isArrayLength(PsiLocalVariable arrayVariable, PsiExpression dimension, PsiExpression bound) {
     if (ExpressionUtils.isReferenceTo(ExpressionUtils.getArrayFromLengthExpression(bound), arrayVariable)) return true;
-    if (PsiEquivalenceUtil.areElementsEquivalent(dimension, bound)) return true;
+    if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(dimension, bound)) return true;
     if (bound instanceof PsiMethodCallExpression) {
       PsiExpression qualifier = ((PsiMethodCallExpression)bound).getMethodExpression().getQualifierExpression();
       if (qualifier != null && CollectionUtils.isCollectionOrMapSize(dimension, qualifier)) return true;
@@ -1027,7 +1030,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       })) {
         return null;
       }
-      PsiMethodCallExpression maybeReadLines = tryCast(lineVar.getInitializer(), PsiMethodCallExpression.class);
+      PsiMethodCallExpression maybeReadLines = tryCast(PsiUtil.skipParenthesizedExprDown(lineVar.getInitializer()), PsiMethodCallExpression.class);
       if (!BUFFERED_READER_READ_LINE.test(maybeReadLines)) return null;
       PsiExpression reader = maybeReadLines.getMethodExpression().getQualifierExpression();
       PsiReferenceExpression readerRef = tryCast(reader, PsiReferenceExpression.class);
@@ -1045,7 +1048,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       PsiExpressionStatement updateStmt = tryCast(forLoop.getUpdate(), PsiExpressionStatement.class);
       if (updateStmt == null) return null;
       PsiExpression readNewLineExpr = ExpressionUtils.getAssignmentTo(updateStmt.getExpression(), lineVar);
-      PsiMethodCallExpression readNewLineCall = tryCast(readNewLineExpr, PsiMethodCallExpression.class);
+      PsiMethodCallExpression readNewLineCall = tryCast(PsiUtil.skipParenthesizedExprDown(readNewLineExpr), PsiMethodCallExpression.class);
       if (!BUFFERED_READER_READ_LINE.test(readNewLineCall)) return null;
       if (!ExpressionUtils.isReferenceTo(readNewLineCall.getMethodExpression().getQualifierExpression(), readerVar)) return null;
       return new BufferedReaderLines(forLoop, lineVar, reader, false);

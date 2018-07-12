@@ -101,6 +101,7 @@ public class StartupUtil {
 
     // avoiding "log4j:WARN No appenders could be found"
     System.setProperty("log4j.defaultInitOverride", "true");
+    System.setProperty("com.jetbrains.suppressWindowRaise", "true");
     try {
       org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
       if (!root.getAllAppenders().hasMoreElements()) {
@@ -373,9 +374,8 @@ public class StartupUtil {
       IdeaWin32.isAvailable();  // logging is done there
     }
 
-    if (SystemInfo.isWindows) {
-      // WinP should not unpack .dll files into parent directory
-      System.setProperty("winp.unpack.dll.to.parent.dir", "false");
+    if (SystemInfo.isWindows && System.getProperty("winp.folder.preferred") == null) {
+      System.setProperty("winp.folder.preferred", ideTempDir.getPath());
     }
   }
 

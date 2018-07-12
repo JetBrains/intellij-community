@@ -30,7 +30,6 @@ public enum LanguageLevel {
   JDK_1_9(JavaCoreBundle.message("jdk.1.9.language.level.description"), 9),
   JDK_10(JavaCoreBundle.message("jdk.10.language.level.description"), 10),
   JDK_11(JavaCoreBundle.message("jdk.11.language.level.description"), 11),
-  JDK_11_PREVIEW(JavaCoreBundle.message("jdk.11.preview.language.level.description"), 11),
   JDK_X(JavaCoreBundle.message("jdk.X.language.level.description"), 12);
 
   public static final LanguageLevel HIGHEST = JDK_10;
@@ -48,11 +47,6 @@ public enum LanguageLevel {
 
   public boolean isPreview() {
     return myPreview;
-  }
-
-  /** @deprecated use {@link JavaSdkVersion#getDescription()} (to be removed in IDEA 2019) */
-  public String getName() {
-    return this == JDK_X ? "Java X" :  "Java " + JavaSdkVersion.fromLanguageLevel(this).getDescription();
   }
 
   @NotNull
@@ -74,7 +68,8 @@ public enum LanguageLevel {
     return myVersion;
   }
 
-  /** @deprecated use {@code org.jetbrains.jps.model.java.JpsJavaSdkType.complianceOption()} (to be removed in IDEA 2019) */
+  /** @deprecated use {@link org.jetbrains.jps.model.java.JpsJavaSdkType#complianceOption()} (to be removed in IDEA 2019) */
+  @Deprecated
   public String getCompilerComplianceDefaultOption() {
     return myVersion.feature <= 8 ? "1." + myVersion.feature : String.valueOf(myVersion.feature);
   }

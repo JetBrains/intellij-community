@@ -26,7 +26,7 @@
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestCaseAsRelatedFileProvider"/>
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.navigation.DescriptionInspectionGotoRelatedProvider" />
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.testAssistant.TestDataReferenceContributor"/>
-    <getDataRule key="Location" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestLocationDataRule"/>
+    <getDataRule key="TestLocationData" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestLocationDataRule"/>
 
     <automaticRenamerFactory implementation="org.jetbrains.idea.devkit.refactoring.InspectionAutomaticRenamerFactory"/>
 
@@ -71,7 +71,7 @@
     <localInspection language="XML" shortName="PluginXmlValidity" displayName="Plugin.xml Validity" applyToDialects="false"
                      groupKey="inspections.group.name" enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlDomInspection"/>
-    <localInspection language="JAVA" shortName="ComponentNotRegistered"
+    <localInspection language="JVM" shortName="ComponentNotRegistered"
                      key="inspections.component.not.registered.name" groupKey="inspections.group.name" enabledByDefault="true"
                      level="WARNING" implementationClass="org.jetbrains.idea.devkit.inspections.ComponentNotRegisteredInspection"/>
     <localInspection language="JAVA" shortName="InspectionDescriptionNotFoundInspection" displayName="Inspection Description Checker"
@@ -182,10 +182,10 @@
                      groupKey="inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="org.jetbrains.idea.devkit.inspections.PresentationAnnotationInspection"/>
-    <localInspection language="UAST" shortName="UnstableApiUsage" displayName="Unstable API usage"
-                     groupKey="inspections.group.name" enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.UnstableApiUsageInspection"/>
 
+    <intentionAction>
+      <className>org.jetbrains.idea.devkit.codeStyle.bean.CodeStyleBeanIntention</className>
+    </intentionAction>
 
     <moduleConfigurationEditorProvider implementation="org.jetbrains.idea.devkit.module.PluginModuleEditorsProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
@@ -208,9 +208,11 @@
     <stacktrace.fold substring="at com.intellij.testFramework.EdtTestUtil"/>
     <stacktrace.fold substring="at com.intellij.testFramework.UsefulTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.collectAndCheckHighlighting("/>
-    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.checkResultByFile("/>
+    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.checkResult"/>
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.access$"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl.lambda$"/>
     <stacktrace.fold substring="at com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl$"/>
+    <stacktrace.fold substring="at com.intellij.testFramework.fixtures.CodeInsightTestFixture$"/>
     <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.LightPlatformCodeInsightTestCase"/>
     <stacktrace.fold substring="at com.intellij.testFramework.PlatformTestCase"/>
@@ -238,8 +240,12 @@
     <moduleService serviceImplementation="org.jetbrains.idea.devkit.build.PluginBuildConfiguration"/>
     <generatedSourcesFilter implementation="org.jetbrains.idea.devkit.internal.IconsGeneratedSourcesFilter"/>
 
-    <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.PluginDescriptorXIncludeReferenceContributor"/>
-    <psi.fileReferenceHelper implementation="org.jetbrains.idea.devkit.references.PluginDescriptorXIncludeFileReferenceHelper"/>
+    <psi.referenceContributor
+        language="XML"
+        implementation="org.jetbrains.idea.devkit.references.PluginDescriptorXIncludeReferenceContributor"/>
+    <psi.fileReferenceHelper
+        order="first"
+        implementation="org.jetbrains.idea.devkit.references.PluginDescriptorXIncludeFileReferenceHelper"/>
 
     <!-- must be before SubstringConsoleFolding to be able to fold the entire stacktrace -->
     <console.folding order="first" implementation="com.intellij.testFramework.FailedTestDebugLogConsoleFolding"/>

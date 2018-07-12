@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.JavaCompilerConfigurationProxy;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -42,9 +43,13 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static com.intellij.openapi.util.text.StringUtil.nullize;
+import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 
 public class MavenModuleImporter {
 
@@ -102,6 +107,7 @@ public class MavenModuleImporter {
     configFolders();
     configDependencies();
     configLanguageLevel();
+    configCompilerArguments();
   }
 
   public void preConfigFacets() {
@@ -401,5 +407,27 @@ public class MavenModuleImporter {
     }
 
     myRootModelAdapter.setLanguageLevel(level);
+  }
+
+  private void configCompilerArguments() {
+    List<String> options = new ArrayList<>();
+
+    Element compilerConfiguration = myMavenProject.getPluginConfiguration("org.apache.maven.plugins", "maven-compiler-plugin");
+    if (compilerConfiguration != null) {
+      addIfNotNull(options, nullize(compilerConfiguration.getChildTextTrim("compilerArgument")));
+
+      Element compilerArgs = compilerConfiguration.getChild("compilerArgs");
+      if (compilerArgs != null) {
+        for (Element arg: compilerArgs.getChildren("arg")) {
+          addIfNotNull(options, nullize(arg.getTextTrim()));
+        }
+        for (Element compilerArg: compilerArgs.getChildren("compilerArg")) {
+          addIfNotNull(options, nullize(compilerArg.getTextTrim()));
+        }
+      }
+
+    }
+
+    JavaCompilerConfigurationProxy.setAdditionalOptions(myModule.getProject(), myModule, options);
   }
 }

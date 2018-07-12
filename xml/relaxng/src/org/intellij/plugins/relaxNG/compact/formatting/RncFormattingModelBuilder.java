@@ -33,9 +33,4 @@ public class RncFormattingModelBuilder implements FormattingModelBuilder {
     return FormattingModelProvider.createFormattingModelForPsiFile(element.getContainingFile(), new RncBlock(element.getNode()), settings);
   }
 
-  @Override
-  public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
-    // TODO
-    return null;
-  }
 }

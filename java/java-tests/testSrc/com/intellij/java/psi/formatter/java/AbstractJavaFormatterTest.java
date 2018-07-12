@@ -16,6 +16,7 @@
 package com.intellij.java.psi.formatter.java;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.formatting.FormatterTestUtils.Action;
 import com.intellij.lang.java.JavaLanguage;
@@ -54,6 +55,8 @@ import static com.intellij.formatting.FormatterTestUtils.Action.REFORMAT;
  * @since Apr 27, 2010 6:26:29 PM
  */
 public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
+  private JavaCodeStyleBean myCodeStyleBean;
+
   @NotNull
   public static String shiftIndentInside(@NotNull String initial, final int i, boolean shiftEmptyLines) {
     StringBuilder result = new StringBuilder(initial.length());
@@ -83,6 +86,15 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     return result.toString();
   }
 
+  @NotNull
+  public JavaCodeStyleBean getCodeStyleBean() {
+    if (myCodeStyleBean == null) {
+      myCodeStyleBean = new JavaCodeStyleBean();
+      myCodeStyleBean.setRootSettings(CodeStyle.getSettings(getProject()));
+    }
+    return myCodeStyleBean;
+  }
+
   public static JavaCodeStyleSettings getJavaSettings() {
     return getSettings().getRootSettings().getCustomSettings(JavaCodeStyleSettings.class);
   }
@@ -99,7 +111,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
   }
 
   public static CommonCodeStyleSettings getSettings() {
-    CodeStyleSettings rootSettings = CodeStyleSettingsManager.getSettings(getProject());
+    CodeStyleSettings rootSettings = CodeStyle.getSettings(getProject());
     return rootSettings.getCommonSettings(JavaLanguage.INSTANCE);
   }
 

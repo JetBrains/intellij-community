@@ -282,7 +282,12 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
 
           myContent = new ContentImpl(consoleComponent, myViewManager.getViewName(), true);
           Disposer.register(myContent, this);
-          myContent.setCloseable(false);
+          Disposer.register(myContent, new Disposable() {
+            @Override
+            public void dispose() {
+              myViewManager.onBuildsViewRemove(MultipleBuildsView.this);
+            }
+          });
           Icon contentIcon = myViewManager.getContentIcon();
           if (contentIcon != null) {
             myContent.setIcon(contentIcon);

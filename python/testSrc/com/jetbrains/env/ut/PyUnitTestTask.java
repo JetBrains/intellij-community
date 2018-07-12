@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.testFramework.EdtTestUtil;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
@@ -143,6 +144,13 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
         mySetUp = false;
       }
     });
+    final CodeInsightTestFixture fixture = myFixture;
+    if (fixture != null) {
+      final Project project = fixture.getProject();
+      if (project != null && !project.isDisposed()) {
+        Disposer.dispose(project);
+      }
+    }
   }
 
   @Override
@@ -230,6 +238,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
               });
               myConsoleView = (SMTRunnerConsoleView)descriptor.getExecutionConsole();
               myTestProxy = myConsoleView.getResultsViewer().getTestsRootNode();
+              Disposer.register(myFixture.getProject(), myTestProxy);
               myConsoleView.getResultsViewer().addEventsListener(new TestResultsViewer.SMEventsAdapter() {
                 @Override
                 public void onTestingFinished(TestResultsViewer sender) {
@@ -288,6 +297,7 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
     }
     return null;
   }
+
   public void assertFinished() {
     Assert.assertTrue("State is " + myTestProxy.getMagnitudeInfo().getTitle() + "\n" + output(),
                       myTestProxy.wasLaunched() && !myTestProxy.wasTerminated());

@@ -4,18 +4,18 @@ package com.intellij.diagnostic;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.spi.LoggingEvent;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class MessagePool {
+  public enum State { NoErrors, ReadErrors, UnreadErrors }
+
   private static final int MAX_POOL_SIZE = 100;
   private static final int MAX_GROUP_SIZE = 20;
   private static final int GROUP_TIME_SPAN_MS = 1000;
@@ -35,15 +35,30 @@ public class MessagePool {
   private MessagePool() { }
 
   public void addIdeFatalMessage(@NotNull IdeaLoggingEvent event) {
-    Object data = event.getData();
-    LogMessage message = data instanceof LogMessage ? (LogMessage)data : new LogMessage(event);
     if (myErrors.size() < MAX_POOL_SIZE) {
-      myGrouper.addToGroup(message);
+      Object data = event.getData();
+      if (data instanceof GroupedLogMessage) {
+        myGrouper.addToGroup(new LogMessage(new Throwable(), "illegal reuse of a grouped message", Collections.emptyList()));
+      }
+      else if (data instanceof AbstractMessage) {
+        myGrouper.addToGroup((AbstractMessage)data);
+      }
+      else {
+        myGrouper.addToGroup(new LogMessage(event.getThrowable(), event.getMessage(), Collections.emptyList()));
+      }
     }
     else if (myErrors.size() == MAX_POOL_SIZE) {
-      TooManyErrorsException t = new TooManyErrorsException();
-      myGrouper.addToGroup(new LogMessage(new LoggingEvent(t.getMessage(), LogManager.getRootLogger(), Level.ERROR, null, t)));
+      TooManyErrorsException e = new TooManyErrorsException();
+      myGrouper.addToGroup(new LogMessage(e, null, Collections.emptyList()));
     }
+  }
+
+  public State getState() {
+    if (myErrors.isEmpty()) return State.NoErrors;
+    for (AbstractMessage message: myErrors) {
+      if (!message.isRead()) return State.UnreadErrors;
+    }
+    return State.ReadErrors;
   }
 
   public List<AbstractMessage> getFatalErrors(boolean includeReadMessages, boolean includeSubmittedMessages) {

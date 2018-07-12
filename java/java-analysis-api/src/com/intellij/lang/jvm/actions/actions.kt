@@ -12,7 +12,7 @@ import com.intellij.openapi.util.registry.Registry
 
 fun useInterlaguageActions(): Boolean = ApplicationManager.getApplication().isUnitTestMode || Registry.`is`("ide.interlanguage.fixes")
 
-val EP_NAME = ExtensionPointName.create<JvmElementActionsFactory>("com.intellij.lang.jvm.actions.jvmElementActionsFactory")
+val EP_NAME: ExtensionPointName<JvmElementActionsFactory> = ExtensionPointName.create<JvmElementActionsFactory>("com.intellij.lang.jvm.actions.jvmElementActionsFactory")
 
 private inline fun createActions(crossinline actions: (JvmElementActionsFactory) -> List<IntentionAction>): List<IntentionAction> {
   return EP_NAME.extensions.flatMap {

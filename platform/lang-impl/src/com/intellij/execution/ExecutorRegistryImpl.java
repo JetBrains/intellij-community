@@ -14,6 +14,7 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -322,7 +323,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
       if (project == null || project.isDisposed()) {
         return;
       }
-
+      MacroManager.getInstance().cacheMacrosPreview(e.getDataContext());
       run(project, getSelectedConfiguration(project), e.getDataContext());
     }
   }

@@ -99,11 +99,11 @@ public class HgLogProvider implements VcsLogProvider {
   public void readFullDetails(@NotNull VirtualFile root,
                               @NotNull List<String> hashes,
                               @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
-                              boolean fast)
+                              boolean isForIndexing)
     throws VcsException {
-    // parameter fast is currently not used
+    // parameter isForIndexing is currently not used
     // since this method is not called from index yet, fast always is false
-    // but when implementing indexing mercurial commits, we'll need to avoid rename/move detection when fast = true
+    // but when implementing indexing mercurial commits, we'll need to avoid rename/move detection when isForIndexing = true
 
     HgVcs hgvcs = HgVcs.getInstance(myProject);
     assert hgvcs != null;
@@ -127,9 +127,9 @@ public class HgLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes)
+  public List<? extends VcsCommitMetadata> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes)
     throws VcsException {
-    return HgHistoryUtil.readMiniDetails(myProject, root, hashes);
+    return HgHistoryUtil.readCommitMetadata(myProject, root, hashes);
   }
 
   @NotNull

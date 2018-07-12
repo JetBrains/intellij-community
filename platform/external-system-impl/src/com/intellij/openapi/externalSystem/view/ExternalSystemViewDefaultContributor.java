@@ -22,6 +22,7 @@ import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.*;
+import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.IdeModelsProviderImpl;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
@@ -95,6 +96,12 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
     addDependenciesNode(externalProjectsView, dataNodes, result);
 
     return result;
+  }
+
+  @Nullable
+  @Override
+  public String getDisplayName(@NotNull DataNode node) {
+    return getNodeDisplayName(node);
   }
 
   private static void addDependenciesNode(@NotNull ExternalProjectsView externalProjectsView,
@@ -282,12 +289,6 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
         setNameAndTooltip(getName(), null, data.getScope().getDisplayName());
       }
     }
-
-    @Override
-    public String getName() {
-      final ModuleDependencyData data = getData();
-      return data != null ? data.getExternalName() : "";
-    }
   }
 
   private static class LibraryDependencyDataExternalSystemNode extends DependencyDataExternalSystemNode<LibraryDependencyData> {
@@ -306,18 +307,20 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
         setNameAndTooltip(getName(), null, data.getScope().getDisplayName());
       }
     }
+  }
 
-    @Override
-    public String getName() {
-      final LibraryDependencyData data = getData();
-      if (data == null) return "";
-      String externalName = data.getExternalName();
+  @NotNull
+  private static String getNodeDisplayName(@NotNull DataNode node) {
+    Object data = node.getData();
+    if (data instanceof LibraryDependencyData) {
+      LibraryDependencyData libraryDependencyData = (LibraryDependencyData)data;
+      String externalName = libraryDependencyData.getExternalName();
       if (StringUtil.isEmpty(externalName)) {
-        Set<String> paths = data.getTarget().getPaths(LibraryPathType.BINARY);
+        Set<String> paths = libraryDependencyData.getTarget().getPaths(LibraryPathType.BINARY);
         if (paths.size() == 1) {
           String relativePathToRoot = null;
           String path = ExternalSystemApiUtil.toCanonicalPath(paths.iterator().next());
-          DataNode<ProjectData> projectDataDataNode = ExternalSystemApiUtil.findParent(myDataNode, PROJECT);
+          DataNode<ProjectData> projectDataDataNode = ExternalSystemApiUtil.findParent(node, PROJECT);
           if (projectDataDataNode != null) {
             relativePathToRoot = FileUtil.getRelativePath(projectDataDataNode.getData().getLinkedExternalProjectPath(), path, '/');
             relativePathToRoot = relativePathToRoot != null && StringUtil.startsWith(relativePathToRoot, "../../")
@@ -332,5 +335,12 @@ public class ExternalSystemViewDefaultContributor extends ExternalSystemViewCont
       }
       return externalName;
     }
+    if (data instanceof Named) {
+      return ((Named)data).getExternalName();
+    }
+    if (data instanceof TaskData) {
+      return ((TaskData)data).getName();
+    }
+    return StringUtil.notNullize(node.toString());
   }
 }

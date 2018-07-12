@@ -5,7 +5,6 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
@@ -180,6 +179,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
    * @deprecated use toTestString
    * @return
    */
+  @Deprecated
   @Nullable
   @NonNls public String getTestPresentation() {
     if (myName != null) {
@@ -242,25 +242,8 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   /**
    * @deprecated use {@link #getPresentation()} instead
    */
+  @Deprecated
   protected String getToolTip() {
     return getPresentation().getTooltip();
   }
-
-  /**
-   * @deprecated use {@link #getPresentation()} instead
-   */
-  @Nullable
-  public TextAttributesKey getAttributesKey() {
-    return getPresentation().getTextAttributesKey();
-  }
-
-  /**
-   * @deprecated use {@link #getPresentation()} instead
-   */
-  @Nullable
-  public String getLocationString() {
-    return getPresentation().getLocationString();
-  }
-
-
 }

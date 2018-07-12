@@ -15,7 +15,3 @@ stdlib/2/os/__init__.pyi # parse only
 # pytype doesn't yet support aliases with implicit type parameters
 # (e.g., here, FutureT = Future[T])
 stdlib/3.4/asyncio/tasks.pyi
-
-# aliases to class constants
-stdlib/3/signal.pyi # parse only
-stdlib/3/re.pyi # parse only

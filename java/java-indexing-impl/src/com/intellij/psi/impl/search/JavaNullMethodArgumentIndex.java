@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -51,7 +37,9 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
   private static final Logger LOG = Logger.getInstance(JavaNullMethodArgumentIndex.class);
 
   public static final ID<MethodCallData, Void> INDEX_ID = ID.create("java.null.method.argument");
-  private static final TokenSet CALL_TYPES = TokenSet.create(METHOD_CALL_EXPRESSION, NEW_EXPRESSION, ANONYMOUS_CLASS);
+  private interface Lazy {
+    TokenSet CALL_TYPES = TokenSet.create(METHOD_CALL_EXPRESSION, NEW_EXPRESSION, ANONYMOUS_CLASS);
+  }
   private final boolean myOfflineMode = ApplicationManager.getApplication().isCommandLine() &&
                                         !ApplicationManager.getApplication().isUnitTestMode();
 
@@ -101,7 +89,7 @@ public class JavaNullMethodArgumentIndex extends ScalarIndexExtension<JavaNullMe
       if (isNullLiteral(lighterAst, literal)) {
         LighterASTNode exprList = lighterAst.getParent(literal);
         if (exprList != null && exprList.getTokenType() == EXPRESSION_LIST) {
-          ContainerUtil.addIfNotNull(calls, LightTreeUtil.getParentOfType(lighterAst, exprList, CALL_TYPES, ElementType.MEMBER_BIT_SET));
+          ContainerUtil.addIfNotNull(calls, LightTreeUtil.getParentOfType(lighterAst, exprList, Lazy.CALL_TYPES, ElementType.MEMBER_BIT_SET));
         }
       }
     }

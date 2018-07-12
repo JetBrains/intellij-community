@@ -5,7 +5,7 @@ public enum IntentionGroup {
   ERROR(20),
   INSPECTION(10),
   NOTIFICATION(7),
-  GUTTER(5),
+  GUTTER(-5),
   EMPTY_ACTION(-10),
   OTHER(0);
 

@@ -79,7 +79,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
 
   private void initBranchSyncPolicyIfNotInitialized() {
     if (myRepositoryManager.moreThanOneRoot() && myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.NOT_DECIDED) {
-      if (!myMultiRootBranchConfig.diverged()) {
+      if (myRepositoryManager.shouldProposeSyncControl()) {
         notifyAboutSyncedBranches();
         myVcsSettings.setSyncSetting(DvcsSyncSettings.Value.SYNC);
       }

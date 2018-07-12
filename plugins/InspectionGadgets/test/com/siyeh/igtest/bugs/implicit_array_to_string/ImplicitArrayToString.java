@@ -55,4 +55,8 @@ public class ImplicitArrayToString {
     void concatenation(int[] is) {
         String s = "string" + <warning descr="Implicit call to 'toString()' on array 'is'">is</warning> + "string";
     }
+
+    void inParentheses(int[] is) {
+        String s = "foo" + (<warning descr="Implicit call to 'toString()' on array 'is'">is</warning>);
+    }
 }

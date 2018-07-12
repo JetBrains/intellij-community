@@ -238,7 +238,7 @@ public class MavenUtil {
   public static VirtualFile findProfilesXmlFile(VirtualFile pomFile) {
     if (pomFile == null) return null;
     VirtualFile parent = pomFile.getParent();
-    if (parent == null) return null;
+    if (parent == null || !parent.isValid()) return null;
     return parent.findChild(MavenConstants.PROFILES_XML);
   }
 
@@ -937,6 +937,10 @@ public class MavenUtil {
     }
 
     return (V)res;
+  }
+
+  public static boolean isMavenModule(@Nullable Module module) {
+    return module != null && MavenProjectsManager.getInstance(module.getProject()).isMavenizedModule(module);
   }
 
   public static String getArtifactName(String packaging, Module module, boolean exploded) {

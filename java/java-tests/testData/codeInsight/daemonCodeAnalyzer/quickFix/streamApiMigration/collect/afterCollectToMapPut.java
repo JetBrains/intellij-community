@@ -7,7 +7,7 @@ import java.util.stream.Collectors;
 
 public class Main {
   private Map<String, Integer> test(String... list) {
-      HashMap<String, Integer> map = Arrays.stream(list).filter(Objects::nonNull).collect(Collectors.toMap(s -> s, s -> 1, (a, b) -> b, HashMap::new));
+    HashMap<String, Integer> map = Arrays.stream(list).filter(Objects::nonNull).collect(Collectors.toMap(s -> s, s -> 1, (a, b) -> b, HashMap::new));
       return map;
   }
 

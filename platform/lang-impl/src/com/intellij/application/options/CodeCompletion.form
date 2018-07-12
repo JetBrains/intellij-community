@@ -3,7 +3,7 @@
   <grid id="8765f" binding="myPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="17" y="22" width="562" height="438"/>
+      <xy x="17" y="22" width="591" height="438"/>
     </constraints>
     <properties>
       <enabled value="true"/>
@@ -18,7 +18,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <grid id="7f988" layout-manager="GridLayoutManager" row-count="9" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="7f988" layout-manager="GridLayoutManager" row-count="10" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -56,7 +56,7 @@
                   <text resource-bundle="messages/ApplicationBundle" key="editbox.auto.complete"/>
                 </properties>
               </component>
-              <grid id="f8961" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
+              <grid id="f8961" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="0">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
                   <grid row="8" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -64,16 +64,6 @@
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="b0975" class="com.intellij.ui.components.JBLabel" binding="myDocComment">
-                    <constraints>
-                      <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="2" use-parent-layout="false"/>
-                    </constraints>
-                    <properties>
-                      <componentStyle value="SMALL"/>
-                      <enabled value="true"/>
-                      <text value="Only for explicitly invoked completion"/>
-                    </properties>
-                  </component>
                   <grid id="52549" layout-manager="GridBagLayout">
                     <constraints>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -170,7 +160,7 @@
                   </component>
                 </children>
               </grid>
-              <grid id="e7f70" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+              <grid id="e7f70" binding="myCbOnCodeCompletionPanel" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
                   <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -202,7 +192,7 @@
                   </hspacer>
                 </children>
               </grid>
-              <grid id="d12fa" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+              <grid id="d12fa" binding="myCbOnSmartTypeCompletionPanel" layout-manager="GridLayoutManager" row-count="1" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
                   <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -233,6 +223,14 @@
                     </constraints>
                   </hspacer>
                 </children>
+              </grid>
+              <grid id="4ae92" binding="myAddonPanel" layout-manager="GridBagLayout">
+                <constraints>
+                  <grid row="9" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="2" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children/>
               </grid>
             </children>
           </grid>

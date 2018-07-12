@@ -16,6 +16,7 @@
 package com.intellij.openapi.command.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoConstants;
@@ -88,6 +89,7 @@ public class DocumentUndoProvider implements Disposable {
     
     private boolean shouldProcess(Document document) {
       if (myProject != null && myProject.isDisposed()) return false;
+      if (!ApplicationManager.getApplication().isDispatchThread()) return false; // some light document
       return !UndoManagerImpl.isCopy(document) // if we don't ignore copy's events, we will receive notification
              // for the same event twice (from original document too)
              // and undo will work incorrectly

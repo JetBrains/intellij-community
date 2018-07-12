@@ -95,7 +95,7 @@ public class ExtractSuperClassTest extends RefactoringTestCase {
   }
 
   public void testParameterNameEqualsFieldName() throws Exception {    // IDEADEV-10629
-    doTest("Test", "TestSubclass", new RefactoringTestUtil.MemberDescriptor("a", PsiField.class));
+    doTest("Test", "TestSubclass", new RefactoringTestUtil.MemberDescriptor("a", PsiField.class), new RefactoringTestUtil.MemberDescriptor("b", PsiField.class));
   }
 
   public void testSameTypeParameterName() throws Exception {

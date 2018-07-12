@@ -3,14 +3,15 @@
  */
 package com.intellij.codeInspection.dataFlow.inliner;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
-import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiType;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -67,11 +68,12 @@ public class MapUpdateInliner implements CallInliner {
         .pushExpression(key)
         .pop()
         .pushExpression(value)
+        .boxUnbox(value, ExpectedTypeUtils.findExpectedType(value, false))
         .checkNotNull(value, NullabilityProblemKind.passingNullableToNotNullParameter)
         .evaluateFunction(function)
         .pushUnknown()
         .ifNotNull()
-        .push(builder.getFactory().createTypeValue(type, Nullness.NOT_NULL))
+        .push(builder.getFactory().createTypeValue(type, Nullability.NOT_NULL))
         .swap()
         .invokeFunction(2, function)
         .end()
@@ -91,7 +93,7 @@ public class MapUpdateInliner implements CallInliner {
       .flushFields()
       .elseBranch()
       .pop()
-      .push(builder.getFactory().createTypeValue(type, Nullness.NOT_NULL))
+      .push(builder.getFactory().createTypeValue(type, Nullability.NOT_NULL))
       .end();
   }
 
@@ -104,7 +106,7 @@ public class MapUpdateInliner implements CallInliner {
       .evaluateFunction(function)
       .pushUnknown() // stack: .. key; get() result
       .ifNotNull() // stack: .. key
-      .push(builder.getFactory().createTypeValue(type, Nullness.NOT_NULL))
+      .push(builder.getFactory().createTypeValue(type, Nullability.NOT_NULL))
       .invokeFunction(2, function) // stack: .. mapping result
       .flushFields()
       .elseBranch()
@@ -120,7 +122,7 @@ public class MapUpdateInliner implements CallInliner {
     builder
       .pushExpression(key) // stack: .. key
       .evaluateFunction(function)
-      .push(builder.getFactory().createTypeValue(type, Nullness.NULLABLE))
+      .push(builder.getFactory().createTypeValue(type, Nullability.NULLABLE))
       .invokeFunction(2, function) // stack: .. mapping result
       .flushFields();
   }

@@ -47,6 +47,7 @@ import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.util.ObjectUtils.assertNotNull;
+import static git4idea.branch.GitBranchUtil.sortBranchesByName;
 
 /**
  * The dialog that allows initiating git rebase activity
@@ -160,8 +161,6 @@ public class GitRebaseDialog extends DialogWrapper {
       }
     });
 
-    setupBranches();
-
     myInteractiveCheckBox.setSelected(mySettings.isInteractive());
     myPreserveMergesCheckBox.setSelected(mySettings.isPreserveMerges());
     myShowTagsCheckBox.setSelected(mySettings.showTags());
@@ -170,6 +169,7 @@ public class GitRebaseDialog extends DialogWrapper {
 
     myOriginalOntoBranch = GitUIUtil.getTextField(myOntoComboBox).getText();
 
+    setupBranches();
     validateFields();
   }
 
@@ -339,14 +339,14 @@ public class GitRebaseDialog extends DialogWrapper {
       final VirtualFile root = gitRoot();
       GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
       if (repository != null) {
-        myLocalBranches.addAll(repository.getBranches().getLocalBranches());
-        myRemoteBranches.addAll(repository.getBranches().getRemoteBranches());
+        myLocalBranches.addAll(sortBranchesByName(repository.getBranches().getLocalBranches()));
+        myRemoteBranches.addAll(sortBranchesByName(repository.getBranches().getRemoteBranches()));
         myCurrentBranch = repository.getCurrentBranch();
       }
       else {
         LOG.error("Repository is null for root " + root);
       }
-      GitTag.list(myProject, root, myTags);
+      myTags.addAll(GitTag.list(myProject, root));
     }
     catch (VcsException e) {
       GitUIUtil.showOperationError(myProject, e, "git branch -a");

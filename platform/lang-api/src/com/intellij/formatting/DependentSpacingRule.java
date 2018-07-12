@@ -58,7 +58,6 @@ public class DependentSpacingRule {
    *
    * @param anchor  target anchor
    * @param data    data to register for the given anchor
-   * @param <T>     data's type
    * @see #getData(Anchor)
    */
   public DependentSpacingRule registerData(@NotNull Anchor anchor, int data) {
@@ -79,7 +78,6 @@ public class DependentSpacingRule {
    * Allows to retrieve data associated with the given anchor.
    *
    * @param anchor  target anchor
-   * @param <T>     data's type
    * @return data associated for the given anchor
    * @throws IllegalArgumentException   if no data is registered for the given anchor
    *                                    (use {@link #hasData(Anchor)} for the preliminary examination)

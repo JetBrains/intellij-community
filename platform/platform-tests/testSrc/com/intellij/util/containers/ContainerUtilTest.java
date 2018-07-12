@@ -16,6 +16,8 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
 import one.util.streamex.IntStreamEx;
@@ -164,7 +166,7 @@ public class ContainerUtilTest {
     List<Object> list = ContainerUtil.createLockFreeCopyOnWriteList();
     int count = 15000;
     List<Integer> ints = IntStreamEx.range(0, count).boxed().toList();
-    PlatformTestUtil.startPerformanceTest("COWList add", 3500, () -> {
+    PlatformTestUtil.startPerformanceTest("COWList add", 4500, () -> {
       for (int it = 0; it < 10; it++) {
         list.clear();
         for (int i = 0; i < count; i++) {
@@ -240,5 +242,62 @@ public class ContainerUtilTest {
     List<String> expected = ContainerUtil.immutableList(value);
     List<String> actual = ContainerUtil.newArrayList(value);
     assertEquals(expected, actual);
+  }
+
+  @Test
+  public void testMergeSortedLists() {
+    List<Segment> target = new ArrayList<>(Arrays.asList(
+      range(0, 0),
+      range(2, 2),
+      range(4, 4),
+      range(6, 6)
+    ));
+    List<Segment> source = Arrays.asList(
+      range(1, 1),
+      range(2, 2),
+      range(2, 3)
+    );
+    target = mergeSegmentLists(target, source);
+    assertEquals(Arrays.asList(
+      range(0, 0),
+      range(1, 1),
+      range(2, 2),
+      range(2, 3),
+      range(4, 4),
+      range(6, 6)
+    ), target);
+    target = mergeSegmentLists(target, source);
+    assertEquals(Arrays.asList(
+      range(0, 0),
+      range(1, 1),
+      range(2, 2),
+      range(2, 3),
+      range(4, 4),
+      range(6, 6)
+    ), target);
+    target = mergeSegmentLists(target, Arrays.asList(
+      range(-1, -1),
+      range(-1, -2),
+      range(-2, -3)
+    ));
+    assertEquals(Arrays.asList(
+      range(-1, -1),
+      range(-1, -2),
+      range(-2, -3),
+      range(0, 0),
+      range(1, 1),
+      range(2, 2),
+      range(2, 3),
+      range(4, 4),
+      range(6, 6)
+    ), target);
+  }
+
+  private static Segment range(int start, int end) {
+    return new UnfairTextRange(start, end);
+  }
+
+  private static List<Segment> mergeSegmentLists(List<Segment> list1, List<Segment> list2) {
+    return ContainerUtil.mergeSortedLists(list1, list2, Segment.BY_START_OFFSET_THEN_END_OFFSET, true);
   }
 }

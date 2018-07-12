@@ -33,7 +33,7 @@ class LineMarkersUtil {
                                     @NotNull Document document,
                                     @NotNull Segment bounds,
                                     int group, // -1 for all
-                                    @NotNull Processor<LineMarkerInfo> processor) {
+                                    @NotNull Processor<? super LineMarkerInfo> processor) {
     MarkupModelEx markupModel = (MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true);
     return markupModel.processRangeHighlightersOverlappingWith(bounds.getStartOffset(), bounds.getEndOffset(),
          highlighter -> {
@@ -46,7 +46,7 @@ class LineMarkersUtil {
   static void setLineMarkersToEditor(@NotNull Project project,
                                      @NotNull Document document,
                                      @NotNull Segment bounds,
-                                     @NotNull Collection<LineMarkerInfo<PsiElement>> markers,
+                                     @NotNull Collection<? extends LineMarkerInfo<PsiElement>> markers,
                                      int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 

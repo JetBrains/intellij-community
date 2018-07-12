@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.browsers.*
 import com.intellij.ide.browsers.impl.WebBrowserServiceImpl
-import com.intellij.internal.statistic.UsageTrigger
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -111,7 +110,6 @@ abstract class BaseOpenInBrowserAction : DumbAwareAction {
 
   override fun actionPerformed(e: AnActionEvent) {
     getBrowser(e)?.let {
-      UsageTrigger.trigger("OpenInBrowser.${it.name}")
       open(e, it)
     }
   }

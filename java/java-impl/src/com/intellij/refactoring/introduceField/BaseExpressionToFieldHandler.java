@@ -27,7 +27,6 @@ import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -708,7 +707,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         }
 
         final SmartTypePointer type = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(myType);
-        initializer = IntroduceVariableBase.simplifyVariableInitializer(initializer, myType);
+        initializer = IntroduceVariableBase.simplifyVariableInitializer(initializer, myType, initializerPlace == InitializationPlace.IN_FIELD_DECLARATION);
 
         final PsiMethod enclosingConstructor = getEnclosingConstructor(myParentClass, myAnchorElement);
         PsiClass destClass = mySettings.getDestinationClass() == null ? myParentClass : mySettings.getDestinationClass();

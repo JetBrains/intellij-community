@@ -46,7 +46,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   private final HashMap<String, StripeButton> myId2Button = new HashMap<>();
   private final HashMap<String, InternalDecorator> myId2Decorator = new HashMap<>();
-  private final HashMap<StripeButton, WindowInfoImpl> myButton2Info = new HashMap<>();
   private final HashMap<InternalDecorator, WindowInfoImpl> myDecorator2Info = new HashMap<>();
   private final HashMap<String, Float> myId2SplitProportion = new HashMap<>();
   private Pair<ToolWindow, Integer> myMaximizedProportion;
@@ -199,7 +198,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
                                               @NotNull Runnable finishCallBack) {
     final WindowInfoImpl copiedInfo = info.copy();
     myId2Button.put(copiedInfo.getId(), button);
-    myButton2Info.put(button, copiedInfo);
     return new AddToolStripeButtonCmd(button, copiedInfo, comparator, finishCallBack);
   }
 
@@ -240,13 +238,13 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
    *
    * @param id {@code ID} of the button to be removed.
    */
-  @NotNull
-  final FinalizableCommand createRemoveButtonCmd(@NotNull String id, @NotNull Runnable finishCallBack) {
-    final StripeButton button = getButtonById(id);
-    final WindowInfoImpl info = getButtonInfoById(id);
+  @Nullable
+  final FinalizableCommand createRemoveButtonCmd(@NotNull WindowInfoImpl info, @NotNull String id, @NotNull Runnable finishCallBack) {
+    StripeButton button = myId2Button.remove(id);
+    if (button == null) {
+      return null;
+    }
 
-    myButton2Info.remove(button);
-    myId2Button.remove(id);
     return new RemoveToolStripeButtonCmd(button, info, finishCallBack);
   }
 
@@ -299,21 +297,8 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     return myLayeredPane;
   }
 
-  @Nullable
-  private StripeButton getButtonById(final String id) {
-    return myId2Button.get(id);
-  }
-
   private InternalDecorator getDecoratorById(final String id) {
     return myId2Decorator.get(id);
-  }
-
-  /**
-   * @param id {@code ID} of tool stripe butoon.
-   * @return {@code WindowInfo} associated with specified tool stripe button.
-   */
-  private WindowInfoImpl getButtonInfoById(final String id) {
-    return myButton2Info.get(myId2Button.get(id));
   }
 
   /**
@@ -887,7 +872,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     public final void run() {
       try {
         // Show component.
-        if (!myDirtyMode && UISettings.getInstance().getAnimateWindows() && !RemoteDesktopService.isAnimationDisabled()) {
+        if (!myDirtyMode && UISettings.getInstance().getAnimateWindows() && !RemoteDesktopService.isRemoteSession()) {
           // Prepare top image. This image is scrolling over bottom image.
           final Image topImage = myLayeredPane.getTopImage();
           final Graphics topGraphics = topImage.getGraphics();
@@ -1081,6 +1066,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           myLayeredPane.validate();
           myLayeredPane.repaint();
         }
+        transferFocus();
       }
       finally {
         finish();
@@ -1103,7 +1089,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     public final void run() {
       try {
         final UISettings uiSettings = UISettings.getInstance();
-        if (!myDirtyMode && uiSettings.getAnimateWindows() && !RemoteDesktopService.isAnimationDisabled()) {
+        if (!myDirtyMode && uiSettings.getAnimateWindows() && !RemoteDesktopService.isRemoteSession()) {
           final Rectangle bounds = myComponent.getBounds();
           // Prepare top image. This image is scrolling over bottom image. It contains
           // picture of component is being removed.
@@ -1145,6 +1131,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           myLayeredPane.validate();
           myLayeredPane.repaint();
         }
+        transferFocus();
       }
       finally {
         finish();
@@ -1184,7 +1171,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     @Override
     public void run() {
       try {
-        StripeButton stripeButton = getButtonById(myId);
+        StripeButton stripeButton = myId2Button.get(myId);
         if (stripeButton == null) {
           return;
         }

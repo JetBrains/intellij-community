@@ -165,6 +165,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
    *         or implement any other method.
    * @deprecated use {@link #findDeepestSuperMethods()} instead
    */
+  @Deprecated
   @Nullable
   PsiMethod findDeepestSuperMethod();
 

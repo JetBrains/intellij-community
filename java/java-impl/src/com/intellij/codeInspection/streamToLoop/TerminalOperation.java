@@ -38,9 +38,6 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-/**
- * @author Tagir Valeev
- */
 abstract class TerminalOperation extends Operation {
   @Override
   final String wrap(StreamVariable inVar, StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
@@ -148,7 +145,7 @@ abstract class TerminalOperation extends Operation {
         return new ExplicitCollectTerminalOperation(supplier, accumulator);
       }
       if (args.length == 1) {
-        return fromCollector(elementType, resultType, args[0]);
+        return fromCollector(elementType, resultType, PsiUtil.skipParenthesizedExprDown(args[0]));
       }
     }
     return null;
@@ -329,7 +326,7 @@ abstract class TerminalOperation extends Operation {
     Project project = resultClass.getProject();
     PsiClass superClass = JavaPsiFacade.getInstance(project).findClass(superClassName, resultClass.getResolveScope());
     if(superClass == null) return resultType;
-    PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(superClass, resultClass, PsiSubstitutor.EMPTY, null);
+    PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(superClass, resultClass, PsiSubstitutor.EMPTY);
     if(superClassSubstitutor == null) {
       // inconsistent class hierarchy: probably something is not resolved
       return resultType;

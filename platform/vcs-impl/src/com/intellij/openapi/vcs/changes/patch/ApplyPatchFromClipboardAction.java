@@ -39,7 +39,6 @@ public class ApplyPatchFromClipboardAction extends DumbAwareAction {
   }
 
   public static class MyApplyPatchFromClipboardDialog extends ApplyPatchDifferentiatedDialog {
-    private static final JCheckBox FLY_OPTION_PANEL = createAnalyzeOnTheFlyOptionPanel();
 
     public MyApplyPatchFromClipboardDialog(@NotNull Project project, @NotNull String clipboardText) {
       super(project, new ApplyPatchDefaultExecutor(project), Collections.emptyList(), ApplyPatchMode.APPLY_PATCH_IN_MEMORY,
@@ -50,7 +49,7 @@ public class ApplyPatchFromClipboardAction extends DumbAwareAction {
     @Nullable
     @Override
     protected JComponent createDoNotAskCheckbox() {
-      return FLY_OPTION_PANEL;
+      return createAnalyzeOnTheFlyOptionPanel();
     }
 
     @NotNull

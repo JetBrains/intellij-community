@@ -3,7 +3,10 @@ package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.ui.Gray;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.LafIconLookup;
+import com.intellij.util.ui.MacUIUtil;
+import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -12,12 +15,12 @@ import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
+import static com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder.*;
+
 /**
  * @author Konstantin Bulenkov
  */
 public class MacIntelliJButtonUI extends DarculaButtonUI {
-  static final int ARC_SIZE = JBUI.scale(6);
-
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
     return new MacIntelliJButtonUI();
@@ -25,14 +28,14 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
 
   @Override
   public void paint(Graphics g, JComponent c) {
-    if (!(c.getBorder() instanceof MacIntelliJButtonBorder) && !isComboButton(c)) {
+    if (!(c.getBorder() instanceof MacIntelliJButtonBorder)) {
       super.paint(g, c);
       return;
     }
     int w = c.getWidth();
     int h = c.getHeight();
     if (UIUtil.isHelpButton(c)) {
-      Icon icon = IconCache.getIcon("helpButton", false, c.hasFocus(), true);
+      Icon icon = LafIconLookup.getIcon("helpButton", false, c.hasFocus(), true);
       int x = (w - icon.getIconWidth()) / 2;
       int y = (h - icon.getIconHeight()) / 2;
       icon.paintIcon(c, g, x, y);
@@ -44,12 +47,12 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-        float lw = getLineWidth(g2);
-        Insets i = c.getInsets();
+        float lw = LW(g2);
+        float arc = ARC.getFloat();
+        Insets i = isSmallComboButton(c) ? JBUI.insets(1) : c.getInsets();
 
         // Draw background
-        Shape outerRect = new RoundRectangle2D.Float(i.left, i.top, w - (i.left + i.right), h - (i.top + i.bottom),
-                                                      ARC_SIZE, ARC_SIZE);
+        Shape outerRect = new RoundRectangle2D.Float(i.left, i.top, w - (i.left + i.right), h - (i.top + i.bottom), arc, arc);
         g2.setPaint(getBackgroundPaint(c));
         g2.fill(outerRect);
 
@@ -59,7 +62,7 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
         outline.append(new RoundRectangle2D.Float(i.left + lw, i.top + lw,
                                                    w - lw*2 - (i.left + i.right),
                                                    h - lw*2 - (i.top + i.bottom),
-                                                   ARC_SIZE - lw, ARC_SIZE - lw), false);
+                                                   arc - lw, arc - lw), false);
         g2.setPaint(getBorderPaint(c));
         g2.fill(outline);
 
@@ -68,10 +71,6 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
         g2.dispose();
       }
     }
-  }
-
-  public static float getLineWidth(Graphics2D g) {
-    return UIUtil.isRetina(g) ? 0.5f : 1.0f;
   }
 
   @SuppressWarnings("UseJBColor")
@@ -110,16 +109,20 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
 
   @Override
   protected Dimension getDarculaButtonSize(JComponent c, Dimension prefSize) {
-    if (isComboButton(c)) {
-      return prefSize;
-    } else if (UIUtil.isHelpButton(c)) {
-      Icon icon = IconCache.getIcon("helpButton");
+    if (UIUtil.isHelpButton(c)) {
+      Icon icon = LafIconLookup.getIcon("helpButton");
       return new Dimension(icon.getIconWidth(), icon.getIconHeight());
     } else {
       Insets i = c.getInsets();
-      return new Dimension(Math.max(JBUI.scale(28) + prefSize.width, JBUI.scale(72) + i.left + i.right),
-                           Math.max(prefSize.height, JBUI.scale(21) + i.top + i.bottom));
+      return new Dimension(getComboAction(c) != null ?
+                           prefSize.width:
+                           Math.max(HORIZONTAL_PADDING.get() * 2 + prefSize.width, MINIMUM_BUTTON_WIDTH.get() + i.left + i.right),
+                           Math.max(prefSize.height, getMinimumHeight() + i.top + i.bottom));
     }
+  }
+
+  protected int getMinimumHeight() {
+    return MINIMUM_HEIGHT.get();
   }
 
   @Override
@@ -132,12 +135,5 @@ public class MacIntelliJButtonUI extends DarculaButtonUI {
       g.setColor(UIManager.getColor("Button.disabledText"));
     }
     SwingUtilities2.drawStringUnderlineCharAt(c, g, text, -1, x, y);
-  }
-
-  @Override protected void modifyViewRect(AbstractButton b, Rectangle rect) {
-    JBInsets.removeFrom(rect, b.getInsets());
-    if (isComboButton(b)) {
-      JBInsets.removeFrom(rect, JBUI.insetsLeft(5));
-    }
   }
 }

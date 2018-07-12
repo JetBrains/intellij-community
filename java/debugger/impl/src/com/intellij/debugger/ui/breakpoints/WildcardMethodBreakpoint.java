@@ -24,6 +24,7 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -118,13 +119,18 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
       return;
     }
     if (isEmulated()) {
+      VirtualMachineProxyImpl virtualMachineProxy = debugProcess.getVirtualMachineProxy();
+      if (!virtualMachineProxy.canGetBytecodes() || !virtualMachineProxy.canGetConstantPool()) {
+        disableEmulation();
+        return;
+      }
       debugProcess.getRequestsManager().callbackOnPrepareClasses(this, getClassPattern());
 
       Pattern pattern = PatternUtil.fromMask(getClassPattern());
-      debugProcess.getVirtualMachineProxy().allClasses().stream()
-        .filter(c -> pattern.matcher(c.name()).matches())
-        .filter(ReferenceType::isPrepared)
-        .forEach(aList -> processClassPrepare(debugProcess, aList));
+      virtualMachineProxy.allClasses().stream()
+                  .filter(c -> pattern.matcher(c.name()).matches())
+                  .filter(ReferenceType::isPrepared)
+                  .forEach(aList -> processClassPrepare(debugProcess, aList));
     }
     else {
       try {

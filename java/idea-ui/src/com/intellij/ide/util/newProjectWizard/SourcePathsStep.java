@@ -49,9 +49,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -74,7 +72,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
   private final Icon myIcon;
   private final String myHelpId;
   private ElementsChooser<JavaModuleSourceRoot> mySourcePathsChooser;
-  private String myCurrentContentEntryPath = null;
+  private String myCurrentContentEntryPath;
   private JRadioButton myRbCreateSource;
   private JRadioButton myRbNoSource;
   private JTextField myTfSourceDirectoryName;
@@ -88,6 +86,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     myHelpId = helpId;
   }
 
+  @Override
   protected JComponent createResultsPanel() {
     myResultPanel = new JPanel(new CardLayout());
     myResultPanel.add(createComponentForEmptyRootCase(), CREATE_SOURCE_PANEL);
@@ -138,23 +137,20 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     group.add(myRbCreateSource);
     group.add(myRbNoSource);
     myTfSourceDirectoryName.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       public void textChanged(DocumentEvent event) {
         updateFullPathField();
       }
     });
 
-    myRbCreateSource.addItemListener(new ItemListener() {
-      public void itemStateChanged(ItemEvent e) {
-        final boolean enabled = e.getStateChange() == ItemEvent.SELECTED;
-        srcPathLabel.setEnabled(enabled);
-        fieldPanel.setEnabled(enabled);
-        fullPathLabel.setVisible(enabled);
-        myTfFullPath.setVisible(enabled);
-        if (enabled) {
-          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-            IdeFocusManager.getGlobalInstance().requestFocus(myTfSourceDirectoryName, true);
-          });
-        }
+    myRbCreateSource.addItemListener(e -> {
+      final boolean enabled = e.getStateChange() == ItemEvent.SELECTED;
+      srcPathLabel.setEnabled(enabled);
+      fieldPanel.setEnabled(enabled);
+      fullPathLabel.setVisible(enabled);
+      myTfFullPath.setVisible(enabled);
+      if (enabled) {
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myTfSourceDirectoryName, true));
       }
     });
     return panel;
@@ -177,6 +173,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
   private JComponent createComponentForChooseSources() {
     final JPanel panel = new JPanel(new GridBagLayout());
     mySourcePathsChooser = new ElementsChooser<JavaModuleSourceRoot>(true) {
+      @Override
       public String getItemText(@NotNull JavaModuleSourceRoot sourceRoot) {
         String packagePrefix = sourceRoot.getPackagePrefix();
         return sourceRoot.getDirectory().getAbsolutePath() +
@@ -200,29 +197,23 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     panel.add(unmarkAllButton, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.NONE,
                                                       JBUI.insets(0, 0, 8, 10), 0, 0));
 
-    markAllButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        mySourcePathsChooser.setAllElementsMarked(true);
-      }
-    });
-    unmarkAllButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        mySourcePathsChooser.setAllElementsMarked(false);
-      }
-    });
+    markAllButton.addActionListener(__ -> mySourcePathsChooser.setAllElementsMarked(true));
+    unmarkAllButton.addActionListener(__ -> mySourcePathsChooser.setAllElementsMarked(false));
 
     return panel;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myRbCreateSource.isSelected()? myTfSourceDirectoryName : mySourcePathsChooser.getComponent();
   }
 
+  @Override
   public void updateDataModel() {
     List<Pair<String,String>> paths = null;
     if (CHOOSE_SOURCE_PANEL.equals(myCurrentMode)) {
       final List<JavaModuleSourceRoot> selectedElements = mySourcePathsChooser.getMarkedElements();
-      if (selectedElements.size() > 0) {
+      if (!selectedElements.isEmpty()) {
         paths = new ArrayList<>(selectedElements.size());
 
         for (final JavaModuleSourceRoot root : selectedElements) {
@@ -247,6 +238,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     }
   }
 
+  @Override
   public boolean validate() throws ConfigurationException {
     if (!super.validate()) {
       return false;
@@ -255,7 +247,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     if (CREATE_SOURCE_PANEL.equals(myCurrentMode) && myRbCreateSource.isSelected()) {
       final String sourceDirectoryPath = getSourceDirectoryPath();
       final String relativePath = myTfSourceDirectoryName.getText().trim();
-      if (relativePath.length() == 0) {
+      if (relativePath.isEmpty()) {
         String text = IdeBundle.message("prompt.relative.path.to.sources.empty", FileUtil.toSystemDependentName(sourceDirectoryPath));
         final int answer = Messages.showYesNoCancelDialog(myTfSourceDirectoryName, text, IdeBundle.message("title.mark.source.directory"),
                                                IdeBundle.message("action.mark"), IdeBundle.message("action.do.not.mark"),
@@ -292,17 +284,19 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     final String contentEntryPath = getContentRootPath();
     if (contentEntryPath != null) {
       final String dirName = myTfSourceDirectoryName.getText().trim().replace(File.separatorChar, '/');
-      return dirName.length() > 0? contentEntryPath + "/" + dirName : contentEntryPath;
+      return !dirName.isEmpty() ? contentEntryPath + "/" + dirName : contentEntryPath;
     }
     return null;
   }
 
+  @Override
   protected boolean shouldRunProgress() {
     return isContentEntryChanged();
   }
 
+  @Override
   protected void onFinished(final List<JavaModuleSourceRoot> foundPaths, final boolean canceled) {
-    if (foundPaths.size() > 0) {
+    if (!foundPaths.isEmpty()) {
       myCurrentMode = CHOOSE_SOURCE_PANEL;
       mySourcePathsChooser.setElements(foundPaths, true);
     }
@@ -325,11 +319,12 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     myResultPanel.revalidate();
   }
 
-  protected boolean isContentEntryChanged() {
+  private boolean isContentEntryChanged() {
     final String contentEntryPath = getContentRootPath();
     return myCurrentContentEntryPath == null? contentEntryPath != null : !myCurrentContentEntryPath.equals(contentEntryPath);
   }
 
+  @Override
   protected List<JavaModuleSourceRoot> calculate() {
     return new ArrayList<>(calculateSourceRoots(getContentRootPath()));
   }
@@ -347,11 +342,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     return myBuilder.getContentEntryPath();
   }
 
-  protected void setSourceDirectoryName(String name) {
-    name = name == null? "" : name.trim();
-    myTfSourceDirectoryName.setText(name);
-  }
-
+  @Override
   protected String getProgressText() {
     final String root = getContentRootPath();
     return IdeBundle.message("progress.searching.for.sources", root != null? root.replace('/', File.separatorChar) : "") ;
@@ -361,7 +352,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     private final FileChooserDescriptor myChooserDescriptor;
     private final JTextField myField;
 
-    public BrowsePathListener(JTextField textField, final FileChooserDescriptor chooserDescriptor) {
+    BrowsePathListener(JTextField textField, final FileChooserDescriptor chooserDescriptor) {
       super(textField, IdeBundle.message("prompt.select.source.directory"), "", chooserDescriptor);
       myChooserDescriptor = chooserDescriptor;
       myField = textField;
@@ -377,6 +368,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
       return null;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       final VirtualFile contentEntryDir = getContentEntryDir();
       if (contentEntryDir != null) {
@@ -393,10 +385,12 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
     }
   }
 
+  @Override
   public Icon getIcon() {
     return myIcon;
   }
 
+  @Override
   public String getHelpId() {
     return myHelpId;
   }

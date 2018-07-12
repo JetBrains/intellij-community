@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -9,7 +9,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.HttpConfigurable;
-import com.intellij.util.net.IdeaWideProxySelector;
 import git4idea.config.GitVcsSettings;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +59,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
     GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_ENV, service.getScriptPath().getPath());
     GitHttpAuthenticator httpAuthenticator =
-      service.createAuthenticator(myProject, myHandler.getCommand(), myHandler.getUrls(), myHandler.isIgnoreAuthenticationRequest());
+      service.createAuthenticator(myProject, myHandler.getUrls(), myHandler.isIgnoreAuthenticationRequest());
     myHttpHandler = service.registerHandler(httpAuthenticator, myProject);
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, myHttpHandler.toString());
     int port = service.getXmlRcpPort();
@@ -71,7 +70,12 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
       @Override
       public void onLineAvailable(@NonNls String line, Key outputType) {
         String lowerCaseLine = line.toLowerCase();
-        if (lowerCaseLine.contains("authentication failed") || lowerCaseLine.contains("403 forbidden")) {
+        if (lowerCaseLine.contains("authentication failed") ||
+            lowerCaseLine.contains("403 forbidden") ||
+            lowerCaseLine.contains("error: 400") ||
+            (lowerCaseLine.contains("fatal: repository") && lowerCaseLine.contains("not found")) ||
+            (lowerCaseLine.contains("fatal: unable to access") && lowerCaseLine.contains("the requested url returned error: 403")) ||
+            lowerCaseLine.contains("[remote rejected] (permission denied)")) {
           LOG.debug("auth listener: auth failure detected: " + line);
           myHttpAuthFailed = true;
         }
@@ -79,8 +83,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
 
       @Override
       public void processTerminated(int exitCode) {
-        LOG.debug("auth listener: process terminated. auth failed=" + myHttpAuthFailed
-                             + ", cancelled=" + httpAuthenticator.wasCancelled());
+        LOG.debug("auth listener: process terminated. auth failed=" + myHttpAuthFailed + ", cancelled=" + httpAuthenticator.wasCancelled());
         if (!httpAuthenticator.wasCancelled()) {
           if (myHttpAuthFailed) {
             httpAuthenticator.forgetPassword();
@@ -146,7 +149,7 @@ public class GitHandlerAuthenticationManager implements AutoCloseable {
   private static boolean isSshUrlExcluded(@NotNull HttpConfigurable httpConfigurable, @NotNull Collection<String> urls) {
     return ContainerUtil.exists(urls, url -> {
       String host = URLUtil.parseHostFromSshUrl(url);
-      return ((IdeaWideProxySelector)httpConfigurable.getOnlyBySettingsSelector()).isProxyException(host);
+      return httpConfigurable.isProxyException(host);
     });
   }
 }

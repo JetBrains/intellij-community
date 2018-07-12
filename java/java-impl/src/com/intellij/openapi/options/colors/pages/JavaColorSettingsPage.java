@@ -210,7 +210,7 @@ public class JavaColorSettingsPage implements RainbowColorSettingsPage, Inspecti
       "        int <localVar>a</localVar> = <implicitAnonymousParameter>localVar</implicitAnonymousParameter>;\n" +
       "      }\n" +
       "    };\n" +
-      "    <reassignedParameter>reassignedParam</reassignedParameter> = new <constructorCall>ArrayList</constructorCall><<class>String</class>>().toArray(new int[<staticallyConstImported>CONSTANT</staticallyConstImported>]);\n" +
+      "    <reassignedParameter>reassignedParam</reassignedParameter> = new <constructorCall>ArrayList</constructorCall><<class>String</class>>().<methodCall>toArray</methodCall>(new int[<staticallyConstImported>CONSTANT</staticallyConstImported>]);\n" +
       "  }\n" +
       "}\n" +
       "enum <enum>AnEnum</enum> { <static_final>CONST1</static_final>, <static_final>CONST2</static_final> }\n" +

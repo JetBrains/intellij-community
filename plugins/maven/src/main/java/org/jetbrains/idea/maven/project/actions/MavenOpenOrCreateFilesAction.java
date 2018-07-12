@@ -15,11 +15,10 @@
  */
 package org.jetbrains.idea.maven.project.actions;
 
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -91,7 +90,7 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
     }
 
     for (VirtualFile each : virtualFiles) {
-      new OpenFileDescriptor(project, each).navigate(true);
+      PsiNavigationSupport.getInstance().createNavigatable(project, each, -1).navigate(true);
     }
   }
 

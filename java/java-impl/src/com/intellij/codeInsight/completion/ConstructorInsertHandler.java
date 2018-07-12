@@ -16,7 +16,6 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -50,8 +49,6 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.ConstructorInsertHandler");
   public static final ConstructorInsertHandler SMART_INSTANCE = new ConstructorInsertHandler(true);
   public static final ConstructorInsertHandler BASIC_INSTANCE = new ConstructorInsertHandler(false);
-  static final OffsetKey PARAM_LIST_START = OffsetKey.create("paramListStart");
-  static final OffsetKey PARAM_LIST_END = OffsetKey.create("paramListEnd");
   private final boolean mySmart;
 
   private ConstructorInsertHandler(boolean smart) {
@@ -66,12 +63,8 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
 
     boolean isAbstract = psiClass.hasModifierProperty(PsiModifier.ABSTRACT);
 
-    if (Lookup.REPLACE_SELECT_CHAR == context.getCompletionChar() && context.getOffsetMap().containsOffset(PARAM_LIST_START)) {
-      final int plStart = context.getOffset(PARAM_LIST_START);
-      final int plEnd = context.getOffset(PARAM_LIST_END);
-      if (plStart >= 0 && plEnd >= 0) {
-        context.getDocument().deleteString(plStart, plEnd);
-      }
+    if (Lookup.REPLACE_SELECT_CHAR == context.getCompletionChar()) {
+      JavaClassNameInsertHandler.overwriteTopmostReference(context);
     }
 
     context.commitDocument();
@@ -87,7 +80,7 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
     if (delegate instanceof PsiTypeLookupItem) {
       if (context.getDocument().getTextLength() > context.getTailOffset() &&
           context.getDocument().getCharsSequence().charAt(context.getTailOffset()) == '<') {
-        PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getTailOffset(), PsiJavaCodeReferenceElement.class, false);
+        PsiJavaCodeReferenceElement ref = JavaClassNameInsertHandler.findJavaReference(context.getFile(), context.getTailOffset());
         if (ref != null) {
           PsiReferenceParameterList parameterList = ref.getParameterList();
           if (parameterList != null && context.getTailOffset() == parameterList.getTextRange().getStartOffset()) {

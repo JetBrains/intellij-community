@@ -37,7 +37,7 @@ class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : Jvm
   override fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> {
     val javaClass = targetClass.toJavaClassOrNull() ?: return emptyList()
 
-    val constantRequested = request.constant || javaClass.isInterface || request.modifiers.containsAll(constantModifiers)
+    val constantRequested = request.isConstant || javaClass.isInterface || request.modifiers.containsAll(constantModifiers)
     val result = ArrayList<IntentionAction>()
     if (constantRequested || StringUtil.isCapitalized(request.fieldName)) {
       result += CreateConstantAction(javaClass, request)

@@ -1,0 +1,1 @@
+deprecated: dataSourceImport.png; to be removed in IDEA 2020

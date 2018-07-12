@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.merge
 
 import com.intellij.diff.DiffContentFactoryImpl
@@ -20,11 +6,7 @@ import com.intellij.diff.HeavyDiffTestCase
 import com.intellij.diff.contents.DocumentContent
 import com.intellij.diff.merge.MergeTestBase.SidesState.*
 import com.intellij.diff.merge.TextMergeViewer.MyThreesideViewer
-import com.intellij.diff.util.DiffUtil
-import com.intellij.diff.util.Side
-import com.intellij.diff.util.TextDiffType
-import com.intellij.diff.util.ThreeSide
-import com.intellij.idea.ActionsBundle
+import com.intellij.diff.util.*
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -99,11 +81,10 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
     //
 
     fun runApplyNonConflictsAction(side: ThreeSide) {
-      runActionById(side.select("Diff.ApplyNonConflicts.Left", "Diff.ApplyNonConflicts", "Diff.ApplyNonConflicts.Right")!!)
+      runActionById(side.select("Left", "All", "Right")!!)
     }
 
-    private fun runActionById(id: String): Boolean {
-      val text = ActionsBundle.actionText(id)
+    private fun runActionById(text: String): Boolean {
       val action = actions.filter { text == it.templatePresentation.text }.single()
       return runAction(action)
     }
@@ -305,6 +286,14 @@ abstract class MergeTestBase : HeavyDiffTestCase() {
     fun Int.assertRange(start: Int, end: Int) {
       val change = change(this)
       assertEquals(Pair(start, end), Pair(change.startLine, change.endLine))
+    }
+
+    fun Int.assertRange(start1: Int, end1: Int, start2: Int, end2: Int, start3: Int, end3: Int) {
+      val change = change(this)
+      assertEquals(MergeRange(start1, end1, start2, end2, start3, end3),
+                   MergeRange(change.getStartLine(ThreeSide.LEFT), change.getEndLine(ThreeSide.LEFT),
+                              change.getStartLine(ThreeSide.BASE), change.getEndLine(ThreeSide.BASE),
+                              change.getStartLine(ThreeSide.RIGHT), change.getEndLine(ThreeSide.RIGHT)))
     }
 
     fun Int.assertContent(expected: String, start: Int, end: Int) {

@@ -275,7 +275,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     };
   }
 
-  private static void addNamesFromStatistics(@NotNull Set<String> names, @NotNull VariableKind variableKind, @Nullable String propertyName, @Nullable PsiType type) {
+  private static void addNamesFromStatistics(@NotNull Set<? super String> names, @NotNull VariableKind variableKind, @Nullable String propertyName, @Nullable PsiType type) {
     String[] allNames = JavaStatisticsManager.getAllVariableNamesUsed(variableKind, propertyName, type);
 
     int maxFrequency = 0;
@@ -357,7 +357,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   private void suggestFromOptionalContent(@NotNull VariableKind variableKind,
                                           @NotNull PsiClassType classType,
-                                          @NotNull Collection<String> suggestions) {
+                                          @NotNull Collection<? super String> suggestions) {
     final PsiType optionalContent = extractOptionalContent(classType);
     if (optionalContent == null) return;
 
@@ -388,7 +388,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     return null;
   }
 
-  private static void suggestNamesFromHierarchy(@NotNull PsiClassType type, @NotNull Collection<String> suggestions) {
+  private static void suggestNamesFromHierarchy(@NotNull PsiClassType type, @NotNull Collection<? super String> suggestions) {
     final PsiClass resolved = type.resolve();
     if (resolved == null || resolved.getContainingClass() == null) return;
 
@@ -400,7 +400,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     });
   }
 
-  private static void suggestNamesFromGenericParameters(@NotNull PsiClassType type, @NotNull Collection<String> suggestions) {
+  private static void suggestNamesFromGenericParameters(@NotNull PsiClassType type, @NotNull Collection<? super String> suggestions) {
     StringBuilder fullNameBuilder = new StringBuilder();
     final PsiType[] parameters = type.getParameters();
     for (PsiType parameter : parameters) {
@@ -418,7 +418,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     }
   }
 
-  private static void suggestNamesForCollectionInheritors(@NotNull PsiClassType type, @NotNull Collection<String> suggestions) {
+  private static void suggestNamesForCollectionInheritors(@NotNull PsiClassType type, @NotNull Collection<? super String> suggestions) {
     PsiType componentType = PsiUtil.extractIterableTypeParameter(type, false);
     if (componentType == null || componentType.equals(type)) {
       return;
@@ -632,7 +632,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
               final PsiExpression qualifierExpression = methodExpr.getQualifierExpression();
               if (qualifierExpression instanceof PsiReferenceExpression &&
                   ((PsiReferenceExpression)qualifierExpression).resolve() instanceof PsiVariable) {
-                String name = qualifierExpression.getText() + StringUtil.capitalize(propertyName);
+                String name = ((PsiReferenceExpression)qualifierExpression).getReferenceName() + StringUtil.capitalize(propertyName);
                 return new NamesByExprInfo(propertyName, name);
               }
               return new NamesByExprInfo(propertyName);
@@ -651,15 +651,11 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       }
     }
     else if (expr instanceof PsiArrayAccessExpression) {
-      PsiExpression arrayExpr = ((PsiArrayAccessExpression)expr).getArrayExpression();
-      if (arrayExpr instanceof PsiReferenceExpression) {
-        String arrayName = getPropertyName((PsiReferenceExpression)arrayExpr);
-        if (arrayName != null) {
-          String name = StringUtil.unpluralize(arrayName);
-          if (name != null) {
-            return new NamesByExprInfo(name);
-          }
-        }
+      NamesByExprInfo info = suggestVariableNameByExpressionOnly(((PsiArrayAccessExpression)expr).getArrayExpression(), variableKind, useAllMethodNames);
+
+      String singular = info.propertyName == null ? null : StringUtil.unpluralize(info.propertyName);
+      if (singular != null) {
+        return new NamesByExprInfo(singular, ContainerUtil.mapNotNull(info.names, StringUtil::unpluralize));
       }
     }
     else if (expr instanceof PsiLiteralExpression && variableKind == VariableKind.STATIC_FINAL_FIELD) {
@@ -1021,7 +1017,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
                                                   PsiElement place,
                                                   boolean lookForward,
                                                   boolean allowShadowing,
-                                                  Predicate<PsiVariable> canBeReused) {
+                                                  Predicate<? super PsiVariable> canBeReused) {
     PsiElement scope = PsiTreeUtil.getNonStrictParentOfType(place, PsiStatement.class, PsiCodeBlock.class, PsiMethod.class);
     for (int index = 0; ; index++) {
       String name = index > 0 ? baseName + index : baseName;
@@ -1050,7 +1046,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
 
   public static boolean hasConflictingVariableAfterwards(@Nullable PsiElement scope,
                                                          @NotNull final String name,
-                                                         @NotNull Predicate<PsiVariable> canBeReused) {
+                                                         @NotNull Predicate<? super PsiVariable> canBeReused) {
     PsiElement run = scope;
     while (run != null) {
       class CancelException extends RuntimeException {

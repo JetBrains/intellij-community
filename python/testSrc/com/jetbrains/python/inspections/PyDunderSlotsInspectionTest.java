@@ -239,6 +239,26 @@ public class PyDunderSlotsInspectionTest extends PyInspectionTestCase {
     doTestPy3();
   }
 
+  // PY-29230
+  public void testWriteToOldStyleClass() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON26,
+      () -> doTestByText("class A:\n" +
+                         "    __slots__ = ['bar']\n" +
+                         "    \n" +
+                         "A().baz = 1\n" +
+                         "\n" +
+                         "\n" +
+                         "class B:\n" +
+                         "    __slots__ = ['bar']\n" +
+                         "    \n" +
+                         "class C(B):\n" +
+                         "    __slots__ = ['baz']\n" +
+                         "    \n" +
+                         "C().foo = 1")
+    );
+  }
+
   // PY-29234
   public void testSlotAndAnnotatedClassVar() {
     runWithLanguageLevel(
@@ -247,6 +267,25 @@ public class PyDunderSlotsInspectionTest extends PyInspectionTestCase {
                          "    __slots__ = ['a']\n" +
                          "    a: int")
     );
+  }
+
+  // PY-29268
+  public void testWriteToNewStyleInheritedFromOldStyle() {
+    doTestByText("class A:\n" +
+                 "    __slots__ = ['a']\n" +
+                 "\n" +
+                 "class B(A, object):\n" +
+                 "    __slots__ = ['b']\n" +
+                 "\n" +
+                 "B().c = 1");
+  }
+
+  // PY-29268
+  public void testWriteToNewStyleInheritedFromUnknown() {
+    doTestByText("class B(A, object):\n" +
+                 "    __slots__ = ['b']\n" +
+                 "\n" +
+                 "B().c = 1");
   }
 
   private void doTestPy2() {

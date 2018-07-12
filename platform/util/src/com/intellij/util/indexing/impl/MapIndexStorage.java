@@ -145,7 +145,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
 
   @NotNull
   private File getStorageFile() {
-    return new File(myBaseStorageFile.getPath() + ".storage");
+    return getIndexStorageFile(myBaseStorageFile);
   }
 
   @Override
@@ -305,5 +305,10 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
   @TestOnly
   public PersistentMap<Key, UpdatableValueContainer<Value>> getIndexMap() {
     return myMap;
+  }
+
+  @NotNull
+  public static File getIndexStorageFile(@NotNull File baseFile) {
+    return new File(baseFile.getPath() + ".storage");
   }
 }

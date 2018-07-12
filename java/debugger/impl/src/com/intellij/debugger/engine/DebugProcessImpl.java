@@ -17,7 +17,6 @@ import com.intellij.debugger.jdi.EmptyConnectorArgument;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.settings.CapturePoint;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
@@ -132,8 +131,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final Alarm myStatusUpdateAlarm = new Alarm();
 
   private final ThreadBlockedMonitor myThreadBlockedMonitor = new ThreadBlockedMonitor(this, myDisposable);
-
-  private List<CapturePoint> myAgentInsertPoints = Collections.emptyList();
 
   protected DebugProcessImpl(Project project) {
     myProject = project;
@@ -309,7 +306,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         ((ListeningConnector)findConnector(SOCKET_LISTENING_CONNECTOR_NAME)).stopListening(arguments);
       }
     }
-    catch (IOException | IllegalConnectorArgumentsException e) {
+    catch (IOException | IllegalConnectorArgumentsException | IllegalArgumentException e) {
       LOG.debug(e);
     }
     catch (ExecutionException e) {
@@ -399,24 +396,20 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   void deleteStepRequests(@Nullable final ThreadReference stepThread) {
     EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
-    List<StepRequest> stepRequests = requestManager.stepRequests();
-    if (!stepRequests.isEmpty()) {
-      final List<StepRequest> toDelete = new ArrayList<>(stepRequests.size());
-      for (final StepRequest request : stepRequests) {
-        ThreadReference threadReference = request.thread();
-        // [jeka] on attempt to delete a request assigned to a thread with unknown status, a JDWP error occurs
+    for (StepRequest request : new ArrayList<>(requestManager.stepRequests())) { // need a copy here to avoid CME
+      if (stepThread == null || stepThread.equals(request.thread())) {
         try {
-          if (threadReference.status() != ThreadReference.THREAD_STATUS_UNKNOWN && (stepThread == null || stepThread.equals(threadReference))) {
-            toDelete.add(request);
-          }
-        }
-        catch (IllegalThreadStateException e) {
-          LOG.info(e); // undocumented by JDI: may be thrown when querying thread status
+          requestManager.deleteEventRequest(request);
         }
         catch (ObjectCollectedException ignored) {
         }
+        catch (VMDisconnectedException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.error(e); // report all for now
+        }
       }
-      requestManager.deleteEventRequests(toDelete);
     }
   }
 
@@ -2206,14 +2199,5 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   static boolean isResumeOnlyCurrentThread() {
     return DebuggerSettings.getInstance().RESUME_ONLY_CURRENT_THREAD;
-  }
-
-  @NotNull
-  public List<CapturePoint> getAgentInsertPoints() {
-    return myAgentInsertPoints;
-  }
-
-  public void setAgentInsertPoints(@NotNull List<CapturePoint> agentInsertPoints) {
-    myAgentInsertPoints = agentInsertPoints;
   }
 }

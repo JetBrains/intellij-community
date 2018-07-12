@@ -146,7 +146,7 @@ class JarLoader extends Loader {
 
   @Override
   @Nullable
-  Resource getResource(String name, boolean flag) {
+  Resource getResource(String name) {
     JarMemoryLoader loader = myMemoryLoader != null? myMemoryLoader.get() : null;
     if (loader != null) {
       Resource resource = loader.getResource(name);

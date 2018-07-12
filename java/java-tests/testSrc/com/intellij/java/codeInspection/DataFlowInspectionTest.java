@@ -96,6 +96,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNotEqualsDoesntImplyNotNullity() { doTest(); }
   public void testEqualsEnumConstant() { doTest(); }
   public void testSwitchEnumConstant() { doTest(); }
+  public void testIncompleteSwitchEnum() { doTest(); }
   public void testEnumConstantNotNull() { doTest(); }
   public void testCheckEnumConstantConstructor() { doTest(); }
   public void testCompareToEnumConstant() { doTest(); }
@@ -280,6 +281,11 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testFinalGetter() { doTest(); }
   public void testGetterResultsNotSame() { doTest(); }
   public void testIntersectionTypeInstanceof() { doTest(); }
+  
+  public void testKeepComments() { 
+    doTest();
+    checkIntentionResult("Simplify");
+  }
 
   public void testImmutableClassNonGetterMethod() {
     myFixture.addClass("package javax.annotation.concurrent; public @interface Immutable {}");
@@ -610,4 +616,9 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testMergedInitializerAndConstructor() { doTest(); }
   public void testClassMethodsInlining() { doTest(); }
   public void testObjectLocality() { doTest(); }
+  public void testInstanceOfForUnknownVariable() { doTest(); }
+  public void testNanComparisonWrong() { doTest(); }
+  public void testConstantMethods() { doTest(); }
+  public void testPolyadicEquality() { doTest(); }
+  public void testBoxUnboxArrayElement() { doTest(); }
 }

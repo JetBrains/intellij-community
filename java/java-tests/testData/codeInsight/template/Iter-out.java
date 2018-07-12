@@ -6,7 +6,7 @@ class Foo {
     {
         List<BarGoo> goos;
         for (BarGoo goo : goos) {
-            <caret>
+            
         }
     }
 }

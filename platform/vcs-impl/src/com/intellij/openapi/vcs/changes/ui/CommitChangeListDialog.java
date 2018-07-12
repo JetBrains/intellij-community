@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.CommonBundle;
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.diff.util.DiffUserDataKeysEx;
-import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.HelpIdProvider;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
@@ -13,7 +12,6 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
@@ -232,18 +230,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     CommitChangeListDialog dialog =
       new CommitChangeListDialog(project, changes, included, initialSelection, executors, showVcsCommit, defaultList, changeLists,
                                  affectedVcses, forceCommitInVcs, false, comment, customResultHandler);
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      dialog.show();
-    }
-    else {
-      Action okAction = dialog.getOKAction();
-      if (okAction.isEnabled()) {
-        okAction.actionPerformed(null);
-      }
-      else {
-        dialog.doCancelAction();
-      }
-    }
+    dialog.show();
     return dialog.isOK();
   }
 
@@ -319,7 +306,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     }
     myHelpId = myShowVcsCommit ? HELP_ID : getHelpId(executors);
 
-    myEnablePartialCommit = ContainerUtil.exists(getAffectedVcses(), AbstractVcs::arePartialChangelistsSupported) &&
+    myEnablePartialCommit = ContainerUtil.exists(myAffectedVcses, AbstractVcs::arePartialChangelistsSupported) &&
                             (myShowVcsCommit || ContainerUtil.exists(myExecutors, executor -> executor.supportsPartialCommit()));
 
     myDiffDetails = new MyChangeProcessor(myProject, myEnablePartialCommit);
@@ -382,7 +369,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       setComment(initialSelection, comment);
     }
 
-    myCommitOptions = new CommitOptionsPanel(this, myHandlers, getAffectedVcses());
+    //noinspection unchecked
+    myCommitOptions = new CommitOptionsPanel(this, myHandlers, (Set)getAffectedVcses());
     restoreState();
 
     myWarningLabel = new JBLabel();
@@ -409,8 +397,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                          public void on(Integer integer) {
                                                            if (integer == 0) return;
                                                            myDiffDetails.refresh(false);
-                                                           mySplitter.skipNextLayouting();
-                                                           myDetailsSplitter.getComponent().skipNextLayouting();
+                                                           mySplitter.skipNextLayout();
+                                                           myDetailsSplitter.getComponent().skipNextLayout();
                                                            Dimension dialogSize = getSize();
                                                            setSize(dialogSize.width, dialogSize.height + integer);
                                                            repaint();
@@ -420,8 +408,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                                                          public void off(Integer integer) {
                                                            if (integer == 0) return;
                                                            myDiffDetails.clear(); // TODO: we may want to keep it in memory
-                                                           mySplitter.skipNextLayouting();
-                                                           myDetailsSplitter.getComponent().skipNextLayouting();
+                                                           mySplitter.skipNextLayout();
+                                                           myDetailsSplitter.getComponent().skipNextLayout();
                                                            Dimension dialogSize = getSize();
                                                            setSize(dialogSize.width, dialogSize.height - integer);
                                                            repaint();
@@ -463,9 +451,9 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   @NotNull
-  private static List<CheckinHandler> createCheckinHandlers(@NotNull Project project,
-                                                            @NotNull CheckinProjectPanel checkinPanel,
-                                                            @NotNull CommitContext commitContext) {
+  public static List<CheckinHandler> createCheckinHandlers(@NotNull Project project,
+                                                           @NotNull CheckinProjectPanel checkinPanel,
+                                                           @NotNull CommitContext commitContext) {
     List<CheckinHandler> handlers = new ArrayList<>();
     for (BaseCheckinHandlerFactory factory : getCheckInFactories(project)) {
       CheckinHandler handler = factory.createHandler(checkinPanel, commitContext);
@@ -1197,11 +1185,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
       putContextUserData(DiffUserDataKeysEx.SHOW_READ_ONLY_LOCK, true);
       putContextUserData(LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT, enablePartialCommit);
-    }
-
-    @Override
-    public boolean isWindowFocused() {
-      return DiffUtil.isFocusedComponent(getProject(), getComponent());
     }
 
     @NotNull

@@ -12,16 +12,16 @@ Groovy script
       Literal
         PsiElement(Integer)('1')
       PsiElement(,)(',')
-      PsiErrorElement:Expression expected
+      PsiErrorElement:<expression> expected, got ','
         <empty list>
       PsiElement(,)(',')
-      PsiErrorElement:Expression expected
+      PsiErrorElement:<expression> expected, got ','
         <empty list>
       PsiElement(,)(',')
-      PsiErrorElement:Expression expected
+      PsiErrorElement:<expression> expected, got ','
         <empty list>
       PsiElement(,)(',')
-      PsiErrorElement:Expression expected
+      PsiErrorElement:<expression> expected, got ','
         <empty list>
       PsiElement(,)(',')
       Literal

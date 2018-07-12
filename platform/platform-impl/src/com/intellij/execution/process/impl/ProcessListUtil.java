@@ -123,16 +123,10 @@ public class ProcessListUtil {
       if (pid == -1) continue;
 
       List<String> cmdline;
-      try {
-        FileInputStream stream = new FileInputStream(new File(each, "cmdline"));
-        try {
-          //noinspection SSBasedInspection - no better candidate for system encoding anyways 
-          String cmdlineString = new String(FileUtil.loadBytes(stream));
-          cmdline = StringUtil.split(cmdlineString, "\0");
-        }
-        finally {
-          stream.close();
-        }
+      try (FileInputStream stream = new FileInputStream(new File(each, "cmdline"))) {
+        //noinspection SSBasedInspection - no better candidate for system encoding anyways
+        String cmdlineString = new String(FileUtil.loadBytes(stream));
+        cmdline = StringUtil.split(cmdlineString, "\0");
       }
       catch (IOException e) {
         continue;
@@ -173,9 +167,8 @@ public class ProcessListUtil {
                                                         full -> parseMacOutput(commandOnly, full)));
   }
 
-
   @Nullable
-  static List<ProcessInfo> parseMacOutput(String commandOnly, String full) {
+  public static List<ProcessInfo> parseMacOutput(@NotNull String commandOnly, @NotNull String full) {
     List<MacProcessInfo> commands = doParseMacOutput(commandOnly);
     List<MacProcessInfo> fulls = doParseMacOutput(full);
     if (commands == null || fulls == null) return null;
@@ -194,6 +187,31 @@ public class ProcessListUtil {
 
       String name = PathUtil.getFileName(command);
       String args = each.commandLine.substring(command.length()).trim();
+
+      result.add(new ProcessInfo(each.pid, each.commandLine, name, args, command));
+    }
+    return result;
+  }
+
+  @Nullable
+  public static List<ProcessInfo> parseLinuxOutputMacStyle(@NotNull String commandOnly, @NotNull String full) {
+    List<MacProcessInfo> commands = doParseMacOutput(commandOnly);
+    List<MacProcessInfo> fulls = doParseMacOutput(full);
+    if (commands == null || fulls == null) return null;
+
+    TIntObjectHashMap<String> idToCommand = new TIntObjectHashMap<>();
+    for (MacProcessInfo each : commands) {
+      idToCommand.put(each.pid, each.commandLine);
+    }
+
+    List<ProcessInfo> result = new ArrayList<>();
+    for (MacProcessInfo each : fulls) {
+      if (!idToCommand.containsKey(each.pid)) continue;
+
+      String command = idToCommand.get(each.pid);
+      String name = PathUtil.getFileName(command);
+      String args = each.commandLine.startsWith(command) ? each.commandLine.substring(command.length()).trim()
+                                                         : each.commandLine;
 
       result.add(new ProcessInfo(each.pid, each.commandLine, name, args, command));
     }

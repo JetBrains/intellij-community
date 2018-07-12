@@ -23,4 +23,4 @@ fun String.trimMiddle(maxLength: Int, useEllipsisSymbol: Boolean = true): String
   return StringUtil.shortenTextWithEllipsis(this, maxLength, maxLength shr 1, useEllipsisSymbol)
 }
 
-fun CharArray.nullize() = if (isEmpty()) null else this
+fun CharArray.nullize(): CharArray? = if (isEmpty()) null else this

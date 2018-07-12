@@ -20,7 +20,6 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -58,10 +57,6 @@ import javax.swing.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.jar.Attributes;
 import java.util.stream.Stream;
@@ -360,11 +355,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     myCustomPositionManagerFactories.add(factory);
   }
 
-  @Override
-  public void unregisterPositionManagerFactory(final Function<DebugProcess, PositionManager> factory) {
-    myCustomPositionManagerFactories.remove(factory);
-  }
-
   /* Remoting */
   private static void checkTargetJPDAInstalled(JavaParameters parameters) throws ExecutionException {
     final Sdk jdk = parameters.getJdk();
@@ -514,7 +504,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   }
 
   private static final String AGENT_FILE_NAME = "debugger-agent.jar";
-  private static final String STORAGE_FILE_NAME = "debugger-agent-storage.jar";
 
   private static void addDebuggerAgent(JavaParameters parameters) {
     if (StackCapturingLineBreakpoint.isAgentEnabled()) {
@@ -543,12 +532,10 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
               }
             }
             if (agentFile.exists()) {
-              String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.getAbsolutePath(), "captureAgent", null, f -> {
-                String name = f.getName();
-                return STORAGE_FILE_NAME.equals(name) || AGENT_FILE_NAME.equals(name);
-              });
+              String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(
+                agentFile.getAbsolutePath(), "captureAgent", null, f -> AGENT_FILE_NAME.equals(f.getName()));
               if (agentPath != null) {
-                parametersList.add(prefix + agentPath + "=" + generateAgentSettings());
+                parametersList.add(prefix + agentPath + generateAgentSettings());
               }
             }
             else {
@@ -576,17 +563,19 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
                              point.myMethodDesc + CaptureSettingsProvider.AgentPoint.SEPARATOR +
                              point.myKey.asString());
     }
-    try {
-      File file = FileUtil.createTempFile("capture", ".props");
-      try (FileOutputStream out = new FileOutputStream(file)) {
-        properties.store(out, null);
-        return file.toURI().toASCIIString();
+    if (!properties.isEmpty()) {
+      try {
+        File file = FileUtil.createTempFile("capture", ".props");
+        try (FileOutputStream out = new FileOutputStream(file)) {
+          properties.store(out, null);
+          return "=" + file.toURI().toASCIIString();
+        }
+      }
+      catch (IOException e) {
+        LOG.error(e);
       }
     }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    return null;
+    return "";
   }
 
   private static boolean shouldForceNoJIT(Sdk jdk) {

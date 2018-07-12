@@ -76,6 +76,13 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
             // Fold region shouldn't disappear even if no one holds a reference to it, so folding tree needs a strong reference to a region
             return region;
           }
+
+          @Override
+          void onRemoved() {
+            for (Getter<FoldRegionImpl> getter: intervals) {
+              removeRegionFromGroup(getter.get());
+            }
+          }
         };
       }
     };
@@ -179,21 +186,6 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
   @Override
   public FoldRegion addFoldRegion(int startOffset, int endOffset, @NotNull String placeholderText) {
     return createFoldRegion(startOffset, endOffset, placeholderText, null, false);
-  }
-
-  private boolean checkIfValid(@NotNull final FoldRegion region) {
-    assertIsDispatchThreadForEditor();
-    assertOurRegion(region);
-    if (!isFoldingEnabled()) {
-      return false;
-    }
-    if (!myIsBatchFoldingProcessing) {
-      LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
-      return false;
-    }
-    return region.isValid() &&
-           !DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), region.getStartOffset()) &&
-           !DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), region.getEndOffset());
   }
 
   @Override
@@ -584,14 +576,19 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
                                      @NotNull String placeholder,
                                      @Nullable FoldingGroup group,
                                      boolean neverExpands) {
-    if (!myFoldTree.checkIfValidToCreate(startOffset, endOffset)) return null;
+    assertIsDispatchThreadForEditor();
+    if (!myIsBatchFoldingProcessing) {
+      LOG.error("Fold regions must be added or removed inside batchFoldProcessing() only.");
+      return null;
+    }
+    if (!isFoldingEnabled() || startOffset >= endOffset ||
+        DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), startOffset) ||
+        DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), endOffset) ||
+        !myFoldTree.checkIfValidToCreate(startOffset, endOffset)) return null;
 
     FoldRegionImpl region = new FoldRegionImpl(myEditor, startOffset, endOffset, placeholder, group, neverExpands);
     myRegionTree.addInterval(region, startOffset, endOffset, false, false, false, 0);
-    if (!checkIfValid(region)) {
-      region.dispose();
-      return null;
-    }
+    LOG.assertTrue(region.isValid());
     myFoldRegionsProcessed = true;
     if (group != null) {
       myGroups.putValue(group, region);

@@ -298,6 +298,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         context.processMessage(new ProgressMessage("Parsing java... [" + chunk.getPresentableShortName() + "]"));
 
         final int filesCount = files.size();
+        boolean compiledOk = true;
         if (filesCount > 0) {
           LOG.info("Compiling " + filesCount + " java files; module: " + chunkName + (chunk.containsTests() ? " (tests)" : ""));
           if (LOG.isDebugEnabled()) {
@@ -313,23 +314,23 @@ public class JavaBuilder extends ModuleLevelBuilder {
               LOG.debug("  " + file.getAbsolutePath());
             }
           }
-          boolean compiledOk = false;
           try {
             compiledOk = compileJava(context, chunk, files, classpath, platformCp, srcPath, diagnosticSink, outputSink, compilingTool, hasModules);
           }
           finally {
             filesWithErrors = diagnosticSink.getFilesWithErrors();
-            if (!compiledOk && diagnosticSink.getErrorCount() == 0) {
-              // unexpected exception occurred or compiler did not output any errors for some reason
-              diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Compilation failed: internal java compiler error"));
-            }
-            if (diagnosticSink.getErrorCount() > 0) {
-              diagnosticSink.report(new JpsInfoDiagnostic("Errors occurred while compiling module '" + chunkName + "'"));
-            }
           }
         }
 
         context.checkCanceled();
+
+        if (!compiledOk && diagnosticSink.getErrorCount() == 0) {
+          // unexpected exception occurred or compiler did not output any errors for some reason
+          diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "Compilation failed: internal java compiler error"));
+        }
+        if (diagnosticSink.getErrorCount() > 0) {
+          diagnosticSink.report(new JpsInfoDiagnostic("Errors occurred while compiling module '" + chunkName + "'"));
+        }
 
         if (!Utils.PROCEED_ON_ERROR_KEY.get(context, Boolean.FALSE) && diagnosticSink.getErrorCount() > 0) {
           throw new StopBuildException(
@@ -905,28 +906,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     final int languageLevel = getLanguageLevel(chunk.representativeTarget().getModule());
     final int chunkSdkVersion = getChunkSdkVersion(chunk);
 
-    int bytecodeTarget = 0;
-    for (JpsModule module : chunk.getModules()) {
-      // use the lower possible target among modules that form the chunk
-      final int moduleTarget = JpsJavaSdkType.parseVersion(compilerConfiguration.getByteCodeTargetLevel(module.getName()));
-      if (moduleTarget > 0 && (bytecodeTarget == 0 || moduleTarget < bytecodeTarget)) {
-        bytecodeTarget = moduleTarget;
-      }
-    }
-    if (bytecodeTarget == 0) {
-      if (languageLevel > 0) {
-        // according to IDEA rule: if not specified explicitly, set target to be the same as source language level
-        bytecodeTarget = languageLevel;
-      }
-      else {
-        // last resort and backward compatibility:
-        // check if user explicitly defined bytecode target in additional compiler options
-        String value = USER_DEFINED_BYTECODE_TARGET.get(context);
-        if (value != null) {
-          bytecodeTarget = JpsJavaSdkType.parseVersion(value);
-        }
-      }
-    }
+    int bytecodeTarget = getModuleBytecodeTarget(context, chunk, compilerConfiguration, languageLevel);
 
     if (shouldUseReleaseOption(compilerConfiguration, compilerSdkVersion, chunkSdkVersion, bytecodeTarget)) {
       options.add("--release");
@@ -965,6 +945,36 @@ public class JavaBuilder extends ModuleLevelBuilder {
       options.add("-target");
       options.add(complianceOption(bytecodeTarget));
     }
+  }
+
+  public static int getModuleBytecodeTarget(CompileContext context, ModuleChunk chunk, JpsJavaCompilerConfiguration compilerConfiguration) {
+    return getModuleBytecodeTarget(context, chunk, compilerConfiguration, getLanguageLevel(chunk.representativeTarget().getModule()));
+  }
+  
+  private static int getModuleBytecodeTarget(CompileContext context, ModuleChunk chunk, JpsJavaCompilerConfiguration compilerConfiguration, int languageLevel) {
+    int bytecodeTarget = 0;
+    for (JpsModule module : chunk.getModules()) {
+      // use the lower possible target among modules that form the chunk
+      final int moduleTarget = JpsJavaSdkType.parseVersion(compilerConfiguration.getByteCodeTargetLevel(module.getName()));
+      if (moduleTarget > 0 && (bytecodeTarget == 0 || moduleTarget < bytecodeTarget)) {
+        bytecodeTarget = moduleTarget;
+      }
+    }
+    if (bytecodeTarget == 0) {
+      if (languageLevel > 0) {
+        // according to IDEA rule: if not specified explicitly, set target to be the same as source language level
+        bytecodeTarget = languageLevel;
+      }
+      else {
+        // last resort and backward compatibility:
+        // check if user explicitly defined bytecode target in additional compiler options
+        String value = USER_DEFINED_BYTECODE_TARGET.get(context);
+        if (value != null) {
+          bytecodeTarget = JpsJavaSdkType.parseVersion(value);
+        }
+      }
+    }
+    return bytecodeTarget;
   }
 
   private static String complianceOption(int major) {

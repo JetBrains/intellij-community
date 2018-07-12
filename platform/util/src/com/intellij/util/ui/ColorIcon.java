@@ -54,7 +54,7 @@ public class ColorIcon extends EmptyIcon {
 
   @NotNull
   @Override
-  protected ColorIcon copy() {
+  public ColorIcon copy() {
     return new ColorIcon(this);
   }
 

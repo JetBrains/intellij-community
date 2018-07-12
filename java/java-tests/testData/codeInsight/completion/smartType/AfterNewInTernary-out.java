@@ -1,5 +1,5 @@
 class User {
     {
-        String s = new String(<caret>) == null ? getDefaultEjbName() : s;
+        String s = new User()<caret> == null ? getDefaultEjbName() : s;
     }
 }

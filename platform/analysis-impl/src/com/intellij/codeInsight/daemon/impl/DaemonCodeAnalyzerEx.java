@@ -52,7 +52,7 @@ public abstract class DaemonCodeAnalyzerEx extends DaemonCodeAnalyzer {
                                                      @Nullable("null means all") final HighlightSeverity minSeverity,
                                                      final int startOffset,
                                                      final int endOffset,
-                                                     @NotNull final Processor<HighlightInfo> processor) {
+                                                     @NotNull final Processor<? super HighlightInfo> processor) {
     LOG.assertTrue(ApplicationManager.getApplication().isReadAccessAllowed());
 
     final SeverityRegistrar severityRegistrar = SeverityRegistrar.getSeverityRegistrar(project);

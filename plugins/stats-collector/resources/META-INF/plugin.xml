@@ -1,63 +1,96 @@
 <idea-plugin>
-  <id>com.intellij.stats</id>
-  <name>Stats Collector</name>
+  <id>com.intellij.stats.completion</id>
+  <name>Completion Stats Collector</name>
   <version>1</version>
-  <vendor>JetBrains</vendor>
+  <vendor email="vitaliy.bibaev@jetbrains.com" url="http://www.jetbrains.com">JetBrains</vendor>
 
   <description><![CDATA[
-      This plugin collects data about your usage of code completion, anonymises and sends it to us. Note, the plugin doesn’t send any of your personal data or code. All we send is just numbers calculated based on your completion usage patterns
+      This plugin collects data about your usage of code completion, anonymizes and sends it to JetBrains.
+      Note, the plugin doesn't send any of your personal data or code. All we send is just numbers
+      calculated based on your completion usage patterns. If you don't want to send anything just disable this plugin.
     ]]></description>
+
+  <change-notes><![CDATA[
+    ]]>
+  </change-notes>
 
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>
-  
+  <depends>com.intellij.modules.java</depends>
+
   <extensions defaultExtensionNs="com.intellij">
+
     <applicationService serviceInterface="com.intellij.stats.completion.CompletionLoggerProvider"
                         serviceImplementation="com.intellij.stats.completion.CompletionFileLoggerProvider">
     </applicationService>
-    
-    <applicationService serviceInterface="com.intellij.stats.completion.UrlProvider" 
-                        serviceImplementation="com.intellij.stats.completion.InternalUrlProvider">
-    </applicationService>
-    
-    <applicationService serviceInterface="com.intellij.stats.completion.FilePathProvider"
-                        serviceImplementation="com.intellij.stats.completion.PluginDirectoryFilePathProvider" 
-                        testServiceImplementation="com.intellij.stats.completion.TestFilePathProvider">
-    </applicationService>
-    
-    <applicationService serviceInterface="com.intellij.stats.completion.StatisticSender"
-                        serviceImplementation="com.intellij.stats.completion.StatisticSender">
-    </applicationService>
-    
-    <applicationService serviceInterface="com.intellij.stats.completion.experiment.WebServiceStatusProvider"
-                        serviceImplementation="com.intellij.stats.completion.experiment.StatusInfoProvider">
-    </applicationService>
-    
-    <applicationService serviceInterface="com.intellij.stats.completion.RequestService" 
-                        serviceImplementation="com.intellij.stats.completion.SimpleRequestService">
+
+    <applicationService serviceInterface="com.intellij.stats.storage.FilePathProvider"
+                        serviceImplementation="com.intellij.stats.storage.PluginDirectoryFilePathProvider"
+                        testServiceImplementation="com.intellij.mocks.TestFilePathProvider">
     </applicationService>
 
-    <applicationService serviceInterface="com.intellij.completion.tracker.LookupElementTracking"
-                        serviceImplementation="com.intellij.completion.tracker.UserDataLookupElementTracking"/>
 
-    <!--<postStartupActivity implementation="com.intellij.plugin.NotificationManager"/>-->
+    <applicationService serviceInterface="com.intellij.stats.sender.StatisticSender"
+                        serviceImplementation="com.intellij.stats.sender.StatisticSenderImpl"
+                        testServiceImplementation="com.intellij.mocks.TestStatisticSender">
+    </applicationService>
+
+    <applicationService serviceInterface="com.intellij.stats.experiment.WebServiceStatus"
+                        serviceImplementation="com.intellij.stats.experiment.WebServiceStatusProvider">
+    </applicationService>
+
+    <applicationService serviceInterface="com.intellij.stats.network.service.RequestService"
+                        serviceImplementation="com.intellij.stats.network.service.SimpleRequestService"
+                        testServiceImplementation="com.intellij.mocks.TestRequestService">
+    </applicationService>
+
+    <applicationService serviceInterface="com.intellij.stats.experiment.ExperimentDecision"
+                        serviceImplementation="com.intellij.stats.experiment.PermanentInstallationIDBasedDecision"
+                        testServiceImplementation="com.intellij.mocks.TestExperimentDecision">
+    </applicationService>
+
+    <applicationService serviceInterface="com.intellij.stats.completion.InstallationIdProvider"
+                        serviceImplementation="com.intellij.stats.completion.PermanentInstallationIdProvider">
+    </applicationService>
+
+    <postStartupActivity implementation="com.intellij.plugin.NotificationManager"/>
+
+    <applicationService serviceInterface="com.intellij.completion.tracker.LookupElementPositionTracker"
+                        serviceImplementation="com.intellij.completion.tracker.UserDataLookupElementPositionTracker"/>
 
     <reporting.sendPermission implementation="com.intellij.reporting.AllowedOnlyInEAP"/>
-
   </extensions>
 
   <application-components>
-    <!--<component>-->
-      <!--<implementation-class>com.intellij.stats.completion.SenderComponent</implementation-class>-->
-    <!--</component>-->
+    <component>
+      <implementation-class>com.intellij.stats.sender.SenderComponent</implementation-class>
+    </component>
 
     <component>
       <implementation-class>com.intellij.stats.completion.CompletionTrackerInitializer</implementation-class>
     </component>
 
     <component>
-      <implementation-class>com.intellij.completion.tracker.ShownTimesTrackerInitializer</implementation-class>
+      <implementation-class>
+        com.intellij.stats.personalization.impl.ApplicationUserFactorStorage
+      </implementation-class>
+    </component>
+
+    <component>
+      <implementation-class>com.intellij.completion.FeatureManagerImpl</implementation-class>
+      <interface-class>com.jetbrains.completion.feature.FeatureManager</interface-class>
     </component>
   </application-components>
+
+  <project-components>
+    <component>
+      <implementation-class>com.intellij.stats.personalization.impl.ProjectUserFactorStorage</implementation-class>
+    </component>
+
+    <component>
+      <interface-class>com.intellij.stats.personalization.UserFactorsManager</interface-class>
+      <implementation-class>com.intellij.stats.personalization.impl.UserFactorsManagerImpl</implementation-class>
+    </component>
+  </project-components>
 
 </idea-plugin>

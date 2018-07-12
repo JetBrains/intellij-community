@@ -2,7 +2,12 @@
 package com.intellij.ide.projectWizard.kotlin.createProject
 
 import com.intellij.ide.projectWizard.kotlin.model.*
-import com.intellij.testGuiFramework.util.*
+import com.intellij.testGuiFramework.impl.gradleReimport
+import com.intellij.testGuiFramework.impl.waitAMoment
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel
+import com.intellij.testGuiFramework.util.scenarios.openProjectStructureAndCheck
+import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogModel
+import com.intellij.testGuiFramework.util.scenarios.projectStructureDialogScenarios
 import org.junit.Test
 
 class CreateKotlinMPProjectGuiTest : KotlinGuiTestCase() {
@@ -16,47 +21,47 @@ class CreateKotlinMPProjectGuiTest : KotlinGuiTestCase() {
     createKotlinMPProject(
       projectPath = projectFolder,
       moduleName = projectName,
-      mppProjectStructure = MppProjectStructure.RootCommonModule,
+      mppProjectStructure = NewProjectDialogModel.MppProjectStructure.RootCommonModule,
       setOfMPPModules = MPPModules.mppFullSet()
     )
     waitAMoment(extraTimeOut)
+    editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
-      isKotlinDslUsed = false,
-      kotlinKind = KotlinKind.Common
+      isKotlinDslUsed = false
     )
 
     if (setOfMPPModules.contains(KotlinKind.JVM)) {
-      editBuildGradle(kotlinVersion, false, KotlinKind.JVM, "$projectName-jvm")
+      editBuildGradle(kotlinVersion, false, "$projectName-jvm")
     }
     if (setOfMPPModules.contains(KotlinKind.JS)) {
-      editBuildGradle(kotlinVersion, false, KotlinKind.JS, "$projectName-js")
+      editBuildGradle(kotlinVersion, false, "$projectName-js")
     }
     gradleReimport()
     waitAMoment(extraTimeOut)
 
-    val expectedJars = (kotlinLibs[KotlinKind.Common]!!.kotlinMPProject.jars.getJars() +
+    val expectedJars = (kotlinLibs[KotlinKind.Common]!!.kotlinMPProject.jars.getJars(kotlinVersion) +
                         (if (setOfMPPModules.contains(
-                            KotlinKind.JVM)) kotlinLibs[KotlinKind.JVM]!!.kotlinMPProject.jars.getJars() else emptyList()) +
+                            KotlinKind.JVM)) kotlinLibs[KotlinKind.JVM]!!.kotlinMPProject.jars.getJars(kotlinVersion) else emptyList()) +
                         (if (setOfMPPModules.contains(
-                            KotlinKind.JS)) kotlinLibs[KotlinKind.JS]!!.kotlinMPProject.jars.getJars() else emptyList())
+                            KotlinKind.JS)) kotlinLibs[KotlinKind.JS]!!.kotlinMPProject.jars.getJars(kotlinVersion) else emptyList())
       ).toSet()
 
-    checkInProjectStructure {
-      checkLibrariesFromMavenGradle(
+    projectStructureDialogScenarios.openProjectStructureAndCheck {
+      projectStructureDialogModel.checkLibrariesFromMavenGradle(
         BuildSystem.Gradle,
         kotlinVersion,
         expectedJars
       )
-      checkFacetInOneModule(defaultFacetSettings[TargetPlatform.Common]!!, "$projectName", "${projectName}_main", "Kotlin")
-      checkFacetInOneModule(defaultFacetSettings[TargetPlatform.Common]!!, "$projectName", "${projectName}_test", "Kotlin")
+      projectStructureDialogModel.checkFacetInOneModule(defaultFacetSettings[TargetPlatform.Common]!!, "$projectName", "${projectName}_main", "Kotlin")
+      projectStructureDialogModel.checkFacetInOneModule(defaultFacetSettings[TargetPlatform.Common]!!, "$projectName", "${projectName}_test", "Kotlin")
       if (setOfMPPModules.contains(KotlinKind.JS)) {
-        checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JavaScript]!!, "${projectName}-js", "${projectName}-js_main", "Kotlin")
-        checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JavaScript]!!, "${projectName}-js", "${projectName}-js_test", "Kotlin")
+        projectStructureDialogModel.checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JavaScript]!!, "${projectName}-js", "${projectName}-js_main", "Kotlin")
+        projectStructureDialogModel.checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JavaScript]!!, "${projectName}-js", "${projectName}-js_test", "Kotlin")
       }
       if (setOfMPPModules.contains(KotlinKind.JVM)) {
-        checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JVM18]!!, "${projectName}-jvm", "${projectName}-jvm_main", "Kotlin")
-        checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JVM18]!!, "${projectName}-jvm", "${projectName}-jvm_test", "Kotlin")
+        projectStructureDialogModel.checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JVM18]!!, "${projectName}-jvm", "${projectName}-jvm_main", "Kotlin")
+        projectStructureDialogModel.checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JVM18]!!, "${projectName}-jvm", "${projectName}-jvm_test", "Kotlin")
       }
     }
   }
@@ -71,48 +76,48 @@ class CreateKotlinMPProjectGuiTest : KotlinGuiTestCase() {
     createKotlinMPProject(
       projectPath = projectFolder,
       moduleName = projectName,
-      mppProjectStructure = MppProjectStructure.RootEmptyModule,
+      mppProjectStructure = NewProjectDialogModel.MppProjectStructure.RootEmptyModule,
       setOfMPPModules = MPPModules.mppFullSet()
     )
     waitAMoment(extraTimeOut)
+    editSettingsGradle()
     editBuildGradle(
       kotlinVersion = kotlinVersion,
       isKotlinDslUsed = false,
-      kotlinKind = KotlinKind.Common,
       projectName = *arrayOf("$projectName-common")
     )
 
     if (setOfMPPModules.contains(KotlinKind.JVM)) {
-      editBuildGradle(kotlinVersion, false, KotlinKind.JVM,  "$projectName-jvm")
+      editBuildGradle(kotlinVersion, false,  "$projectName-jvm")
     }
     if (setOfMPPModules.contains(KotlinKind.JS)) {
-      editBuildGradle(kotlinVersion, false, KotlinKind.JS,  "$projectName-js")
+      editBuildGradle(kotlinVersion, false,  "$projectName-js")
     }
     gradleReimport()
     waitAMoment(extraTimeOut)
 
-    val expectedJars = (kotlinLibs[KotlinKind.Common]!!.kotlinMPProject.jars.getJars() +
+    val expectedJars = (kotlinLibs[KotlinKind.Common]!!.kotlinMPProject.jars.getJars(kotlinVersion) +
                         (if (setOfMPPModules.contains(
-                            KotlinKind.JVM)) kotlinLibs[KotlinKind.JVM]!!.kotlinMPProject.jars.getJars() else emptyList()) +
+                            KotlinKind.JVM)) kotlinLibs[KotlinKind.JVM]!!.kotlinMPProject.jars.getJars(kotlinVersion) else emptyList()) +
                         (if (setOfMPPModules.contains(
-                            KotlinKind.JS)) kotlinLibs[KotlinKind.JS]!!.kotlinMPProject.jars.getJars() else emptyList())
+                            KotlinKind.JS)) kotlinLibs[KotlinKind.JS]!!.kotlinMPProject.jars.getJars(kotlinVersion) else emptyList())
       ).toSet()
 
-    checkInProjectStructure {
-      checkLibrariesFromMavenGradle(
+    projectStructureDialogScenarios.openProjectStructureAndCheck {
+      projectStructureDialogModel.checkLibrariesFromMavenGradle(
         BuildSystem.Gradle,
         kotlinVersion,
         expectedJars
       )
-      checkFacetInOneModule(defaultFacetSettings[TargetPlatform.Common]!!, "${projectName}-common", "${projectName}-common_main", "Kotlin")
-      checkFacetInOneModule(defaultFacetSettings[TargetPlatform.Common]!!, "${projectName}-common", "${projectName}-common_test", "Kotlin")
+      projectStructureDialogModel.checkFacetInOneModule(defaultFacetSettings[TargetPlatform.Common]!!, "${projectName}-common", "${projectName}-common_main", "Kotlin")
+      projectStructureDialogModel.checkFacetInOneModule(defaultFacetSettings[TargetPlatform.Common]!!, "${projectName}-common", "${projectName}-common_test", "Kotlin")
       if (setOfMPPModules.contains(KotlinKind.JS)) {
-        checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JavaScript]!!, "${projectName}-js", "${projectName}-js_main", "Kotlin")
-        checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JavaScript]!!, "${projectName}-js", "${projectName}-js_test", "Kotlin")
+        projectStructureDialogModel.checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JavaScript]!!, "${projectName}-js", "${projectName}-js_main", "Kotlin")
+        projectStructureDialogModel.checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JavaScript]!!, "${projectName}-js", "${projectName}-js_test", "Kotlin")
       }
       if (setOfMPPModules.contains(KotlinKind.JVM)) {
-        checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JVM18]!!, "${projectName}-jvm", "${projectName}-jvm_main", "Kotlin")
-        checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JVM18]!!, "${projectName}-jvm", "${projectName}-jvm_test", "Kotlin")
+        projectStructureDialogModel.checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JVM18]!!, "${projectName}-jvm", "${projectName}-jvm_main", "Kotlin")
+        projectStructureDialogModel.checkFacetInOneModule(defaultFacetSettings[TargetPlatform.JVM18]!!, "${projectName}-jvm", "${projectName}-jvm_test", "Kotlin")
       }
     }
   }

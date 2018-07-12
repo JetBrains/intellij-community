@@ -152,6 +152,7 @@
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.immutable.ImmutableTransformationSupport"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.transformations.immutable.CopyWithNamedArgumentProvider"/>
 
+    <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.impl.namedVariant.NamedVariantTransformationSupport"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
 
     <methodDescriptor lightMethodKey="SwingBuilder_builder_method"
@@ -189,6 +190,10 @@
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultBuiltinTypeClassTypeCalculator"/>
     <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression" order="last"
                     implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultSafeCaseTypeCalculator"/>
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression" order="last"
+                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultConditionalTypeCalculator"/>
+    <typeCalculator forClass="org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression" order="last"
+                    implementationClass="org.jetbrains.plugins.groovy.lang.typing.DefaultMethodReferenceTypeCalculator"/>
 
     <scriptTypeDetector implementation="org.jetbrains.plugins.groovy.gant.GantScriptTypeDetector"/>
 
@@ -196,6 +201,7 @@
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.ext.newify.GroovyNewifyNamedArgumentProvider"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovyNewExprNamedArgumentProvider"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovyMethodReturnNamedArgumentProvider" order="last"/>
+    <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.transformations.impl.namedVariant.GroovyNamedVariantArgumentProvider"/>
 
     <applicabilityProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.ConstructorMapApplicabilityProvider"/>
     <applicabilityProvider implementation="org.jetbrains.plugins.groovy.ext.newify.NewifyConstructorApplicabilityProvider"/>
@@ -275,6 +281,8 @@
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.BuilderAnnotationChecker"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.griffon.GriffonPropertyListenerAnnotationChecker"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.BaseScriptAnnotationChecker"/>
+    <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.NamedParamAnnotationChecker"/>
+    <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.ImmutableOptionsAnnotationChecker"/>
 
     <convertToJava.customMethodInvocator
         implementation="org.jetbrains.plugins.groovy.refactoring.convertToJava.invocators.MapGetterSetterInvocator"/>
@@ -306,8 +314,6 @@
     <declarationRangeHandler key="org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer"
                              implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GrClassInitializerDeclarationRangeHandler"/>
 
-
-    <psi.clsCustomNavigationPolicy implementation="org.jetbrains.plugins.groovy.codeInsight.GroovyClsCustomNavigationPolicy"/>
 
     <moduleBuilder builderClass="org.jetbrains.plugins.groovy.config.GroovyAwareModuleBuilder"/>
 
@@ -600,6 +606,7 @@
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyConstructorUsagesSearcher"/>
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyReflectedMethodReferenceSearcher"/>
     <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GrLiteralMethodSearcher"/>
+    <methodReferencesSearch implementation="org.jetbrains.plugins.groovy.findUsages.GrNewMethodsReferencesSearcher"/>
     <annotatedElementsSearch implementation="org.jetbrains.plugins.groovy.findUsages.AnnotatedMembersSearcher"/>
     <superMethodsSearch implementation="org.jetbrains.plugins.groovy.findUsages.GDKSuperMethodSearcher"/>
     <definitionsScopedSearch implementation="org.jetbrains.plugins.groovy.findUsages.GroovyImplementationSearch"/>

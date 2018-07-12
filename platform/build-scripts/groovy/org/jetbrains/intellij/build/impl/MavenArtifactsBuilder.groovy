@@ -12,6 +12,8 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.library.JpsLibrary
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
@@ -25,14 +27,6 @@ import org.jetbrains.jps.model.module.JpsModuleDependency
 class MavenArtifactsBuilder {
   /** second component of module names which describes a common group rather than a specific framework and therefore should be excluded from artifactId */
   private static final Set<String> COMMON_GROUP_NAMES = ["platform", "vcs", "tools", "clouds"] as Set<String>
-
-  /** temporary map which specifies which modules will be replaced by libraries so they won't need to be published */
-  private static final Map<String, MavenCoordinates> MODULES_TO_BE_CONVERTED_TO_LIBRARIES = [
-    "intellij.platform.annotations": new MavenCoordinates("org.jetbrains", "annotations", "16.0.1"),
-    "intellij.platform.annotations.java5": new MavenCoordinates("org.jetbrains", "annotations", "16.0.1"),
-    "intellij.platform.annotations.common": null
-  ] as Map<String, MavenCoordinates>
-
   private final BuildContext buildContext
 
   MavenArtifactsBuilder(BuildContext buildContext) {
@@ -167,10 +161,6 @@ ${it.includeTransitiveDeps ? "" : """
                                                       Set<JpsModule> computationInProgress) {
     if (results.containsKey(module)) return results[module]
     if (nonMavenizableModules.contains(module)) return null
-    if (MODULES_TO_BE_CONVERTED_TO_LIBRARIES.containsKey(module.name)) {
-      def coordinates = MODULES_TO_BE_CONVERTED_TO_LIBRARIES[module.name]
-      return coordinates != null ? new MavenArtifactData(coordinates, []) : null
-    }
     if (!module.name.startsWith("intellij.")) {
       buildContext.messages.debug("  module '$module.name' doesn't belong to IntelliJ project so it cannot be published")
       return null
@@ -222,15 +212,16 @@ ${it.includeTransitiveDeps ? "" : """
       }
       else if (dependency instanceof JpsLibraryDependency) {
         def library = (dependency as JpsLibraryDependency).library
-        def repLibrary = library.asTyped(JpsRepositoryLibraryType.INSTANCE)
-        if (repLibrary == null) {
+        def libraryDescriptors = getMavenLibraryDescriptors(library)
+        if (libraryDescriptors.isEmpty()) {
           buildContext.messages.debug(" module '$module.name' depends on non-maven library ${LibraryLicensesListGenerator.getLibraryName(library)}")
           mavenizable = false
         }
         else {
-          def libraryDescriptor = repLibrary.properties.data
-          dependencies << new MavenArtifactDependency(new MavenCoordinates(libraryDescriptor.groupId, libraryDescriptor.artifactId, libraryDescriptor.version),
-                                                      libraryDescriptor.includeTransitiveDependencies, scope)
+          libraryDescriptors.each {
+            dependencies << new MavenArtifactDependency(new MavenCoordinates(it.groupId, it.artifactId, it.version),
+                                                        it.includeTransitiveDependencies, scope)
+          }
         }
       }
     }
@@ -242,6 +233,25 @@ ${it.includeTransitiveDeps ? "" : """
     def artifactData = new MavenArtifactData(generateMavenCoordinates(module.name, buildContext.messages, buildContext.buildNumber), dependencies)
     results[module] = artifactData
     return artifactData
+  }
+
+  private List<JpsMavenRepositoryLibraryDescriptor> getMavenLibraryDescriptors(JpsLibrary library) {
+    def typed = library.asTyped(JpsRepositoryLibraryType.INSTANCE)
+    if (typed != null) {
+      return [typed.properties.data]
+    }
+    if (library.name == "KotlinJavaRuntime") {
+      //todo[nik] remove this when KotlinJavaRuntime will be converted to repository library (we didn't do it yet for historical reasons and to avoid specifying Kotlin version in two places
+      def versionFile = new File(buildContext.paths.kotlinHome, "kotlinc/build.txt")
+      if (!versionFile.exists()) {
+        buildContext.messages.error("Cannot read Kotlin version, $versionFile doesn't exist")
+      }
+      def kotlinVersion = versionFile.text.trim().takeWhile { it != '-' }.toString()
+      return ["kotlin-stdlib", "kotlin-stdlib-jdk7", "kotlin-stdlib-jdk8", "kotlin-reflect", "kotlin-test"].collect {
+        new JpsMavenRepositoryLibraryDescriptor("org.jetbrains.kotlin", it, kotlinVersion, false)
+      }
+    }
+    return []
   }
 
   @Immutable

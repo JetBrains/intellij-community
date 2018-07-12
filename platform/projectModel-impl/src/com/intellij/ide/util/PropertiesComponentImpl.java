@@ -10,7 +10,6 @@ import org.jdom.Verifier;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,12 +39,6 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
     }
     myMap.put(key, value);
     incModificationCount();
-  }
-
-  @TestOnly
-  @Deprecated
-  public static PropertiesComponentImpl create() {
-    return new PropertiesComponentImpl();
   }
 
   @Override

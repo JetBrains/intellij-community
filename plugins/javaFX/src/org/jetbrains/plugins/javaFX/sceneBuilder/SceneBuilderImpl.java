@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.sceneBuilder;
 
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
@@ -137,7 +136,6 @@ public class SceneBuilderImpl implements SceneBuilder {
     if (myProject.isDisposed()) {
       return;
     }
-    UsageTrigger.trigger("scene-builder.open");
   }
 
   private static void logUncaughtException(Thread t, Throwable e) {
@@ -314,7 +312,6 @@ public class SceneBuilderImpl implements SceneBuilder {
     myListener = (observable, oldValue, newValue) -> {
       if (!mySkipChanges) {
         myEditorCallback.saveChanges(myEditorController.getFxmlText());
-        UsageTrigger.trigger("scene-builder.edit");
       }
     };
     mySelectionListener = (observable, oldValue, newValue) -> {

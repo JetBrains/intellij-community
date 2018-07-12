@@ -16,7 +16,7 @@
 package com.intellij.util.graph;
 
 import com.intellij.util.ObjectUtils;
-import java.util.HashMap;
+import com.intellij.util.graph.impl.GraphAlgorithmsImpl;
 import org.junit.Test;
 
 import java.util.*;
@@ -234,6 +234,36 @@ public class DFSTBuilderTest {
       assertTrue("All nodes: " + list, comparator.compare(b, o2) < 0);
       assertTrue("All nodes: " + list, comparator.compare(c, o1) < 0);
       assertTrue("All nodes: " + list, comparator.compare(c, o2) < 0);
+    }
+  }
+
+  @Test
+  public void testOrderingWithSelectedEntryPoint() {
+    TestNode a = new TestNode("a");
+    TestNode b = new TestNode("b");
+    TestNode c = new TestNode("c");
+    TestNode d = new TestNode("d");
+    TestNode e = new TestNode("e");
+    TestNode f = new TestNode("f");
+    TestNode g = new TestNode("g");
+    List<TestNode> allNodes = Arrays.asList(a, b, c, d, e, f, g);
+    Map<TestNode, TestNode[]> mapIn = new HashMap<>();
+    mapIn.put(a, new TestNode[]{b});
+    mapIn.put(b, new TestNode[]{d, c});
+    mapIn.put(c, new TestNode[]{d, b});
+    mapIn.put(d, new TestNode[]{f, e});
+    mapIn.put(e, new TestNode[]{f, d});
+    mapIn.put(f, new TestNode[]{g, b});
+    for (int seed = 0; seed < 4; ++seed) {
+      Random random = new Random(seed);
+      List<TestNode> shuffled = new ArrayList<>(allNodes);
+      Collections.shuffle(shuffled, random);
+      Graph<TestNode> graph = new GraphAlgorithmsImpl().invertEdgeDirections(graphByNodes(shuffled.toArray(new TestNode[0]), mapIn));
+      DFSTBuilder<TestNode> builder = new DFSTBuilder<>(graph, a);
+      Comparator<TestNode> comparator = builder.comparator(true);
+      for (int i = 0; i < allNodes.size() -1; ++i) {
+        assertTrue(comparator.compare(allNodes.get(i), allNodes.get(i + 1)) < 0);
+      }
     }
   }
 }

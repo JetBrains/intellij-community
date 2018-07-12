@@ -34,18 +34,20 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.problems.ProblemListener;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.ui.tree.project.ProjectFileNode;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -100,7 +102,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   protected AbstractProjectViewPane(@NotNull Project project) {
     myProject = project;
-    WolfTheProblemSolver.ProblemListener problemListener = new WolfTheProblemSolver.ProblemListener() {
+    ProblemListener problemListener = new ProblemListener() {
       @Override
       public void problemsAppeared(@NotNull VirtualFile file) {
         queueUpdateByProblem();
@@ -116,7 +118,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         queueUpdateByProblem();
       }
     };
-    WolfTheProblemSolver.getInstance(project).addProblemListener(problemListener, this);
+    project.getMessageBus().connect(this).subscribe(ProblemListener.TOPIC, problemListener);
     Disposer.register(project, this);
   }
 
@@ -188,9 +190,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
   public void expand(@Nullable final Object[] path, final boolean requestFocus){
     if (getTreeBuilder() == null || path == null) return;
-    getTreeBuilder().buildNodeForPath(path);
+    AbstractTreeUi ui = getTreeBuilder().getUi();
+    if (ui != null) ui.buildNodeForPath(path);
 
-    DefaultMutableTreeNode node = getTreeBuilder().getNodeForPath(path);
+    DefaultMutableTreeNode node = ui == null ? null : ui.getNodeForPath(path);
     if (node == null) {
       return;
     }
@@ -591,19 +594,12 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         Object component = path.getLastPathComponent();
         if (component instanceof DefaultMutableTreeNode) {
           //noinspection deprecation
-          return getSelectedDirectoriesInAmbiguousCase((DefaultMutableTreeNode)component);
+          return getSelectedDirectoriesInAmbiguousCase(((DefaultMutableTreeNode)component).getUserObject());
         }
         return getSelectedDirectoriesInAmbiguousCase(component);
       }
     }
     return PsiDirectory.EMPTY_ARRAY;
-  }
-
-  @NotNull
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  protected PsiDirectory[] getSelectedDirectoriesInAmbiguousCase(@NotNull final DefaultMutableTreeNode node) {
-    return getSelectedDirectoriesInAmbiguousCase(node.getUserObject());
   }
 
   @NotNull
@@ -827,8 +823,21 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return null;
   }
 
+  @NotNull
+  static List<TreeVisitor> createVisitors(Object... objects) {
+    return StreamEx.of(objects).map(AbstractProjectViewPane::createVisitor).nonNull().toImmutableList();
+  }
+
   @Nullable
   public static TreeVisitor createVisitor(Object object) {
+    if (object instanceof AbstractTreeNode) {
+      AbstractTreeNode node = (AbstractTreeNode)object;
+      object = node.getValue();
+    }
+    if (object instanceof ProjectFileNode) {
+      ProjectFileNode node = (ProjectFileNode)object;
+      object = node.getVirtualFile();
+    }
     if (object instanceof VirtualFile) return createVisitor((VirtualFile)object);
     if (object instanceof PsiElement) return createVisitor((PsiElement)object);
     if (object != null) LOG.warn("unsupported object: " + object);

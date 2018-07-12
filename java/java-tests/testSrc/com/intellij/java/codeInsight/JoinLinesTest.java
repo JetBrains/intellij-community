@@ -43,6 +43,7 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
   public void testCallChain() { doTest(); }
   public void testCallChain2() { doTest(); }
   public void testCallChainWrong() { doTest(); }
+  public void testCallChainWrong2() { doTest(); }
   public void testDeclarationAndCall() { doTest(); }
   public void testDeclarationAndCallSelfRef() { doTest(); }
   public void testAssignmentAndCall() { doTest(); }
@@ -186,6 +187,8 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
 
   public void testAssignmentExpression() { doTest(); }
   public void testAssignmentExpression2() { doTest(); }
+  public void testAssignmentExpressionPrecedence() { doTest(); }
+  public void testAssignmentExpressionPrecedence2() { doTest(); }
 
   public void testReformatInsertsNewlines() {
     CommonCodeStyleSettings settings = getJavaSettings();

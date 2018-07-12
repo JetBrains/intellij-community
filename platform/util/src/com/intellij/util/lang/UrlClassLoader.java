@@ -140,11 +140,6 @@ public class UrlClassLoader extends ClassLoader {
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
     public Builder setLogErrorOnMissingJar(boolean log) {myErrorOnMissingJar = log; return this; }
 
-    /** @deprecated use {@link #allowUnescaped()} (to be removed in IDEA 2018) */
-    public Builder allowUnescaped(boolean acceptUnescaped) { myAcceptUnescaped = acceptUnescaped; return this; }
-    /** @deprecated use {@link #noPreload()} (to be removed in IDEA 2018) */
-    public Builder preload(boolean preload) { myPreload = preload; return this; }
-
     public UrlClassLoader get() { return new UrlClassLoader(this); }
   }
 
@@ -158,6 +153,7 @@ public class UrlClassLoader extends ClassLoader {
   private final boolean myAllowBootstrapResources;
 
   /** @deprecated use {@link #build()}, left for compatibility with java.system.class.loader setting */
+  @Deprecated
   public UrlClassLoader(@NotNull ClassLoader parent) {
     this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache()
            .usePersistentClasspathIndexForLocalClassDirectories());
@@ -219,7 +215,7 @@ public class UrlClassLoader extends ClassLoader {
 
   @Override
   protected Class findClass(final String name) throws ClassNotFoundException {
-    Resource res = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION, false);
+    Resource res = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION);
     if (res == null) {
       throw new ClassNotFoundException(name);
     }
@@ -234,7 +230,7 @@ public class UrlClassLoader extends ClassLoader {
 
   @Nullable
   protected Class _findClass(@NotNull String name) {
-    Resource res = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION, false);
+    Resource res = getClassPath().getResource(name.replace('.', '/') + CLASS_EXTENSION);
     if (res == null) {
       return null;
     }
@@ -287,9 +283,9 @@ public class UrlClassLoader extends ClassLoader {
   @Nullable
   private Resource findResourceImpl(String name) {
     String n = FileUtil.toCanonicalUriPath(name);
-    Resource resource = getClassPath().getResource(n, true);
+    Resource resource = getClassPath().getResource(n);
     if (resource == null && n.startsWith("/")) { // compatibility with existing code, non-standard classloader behavior
-      resource = getClassPath().getResource(n.substring(1), true);
+      resource = getClassPath().getResource(n.substring(1));
     }
     return resource;
   }
@@ -311,7 +307,7 @@ public class UrlClassLoader extends ClassLoader {
 
   @Override
   protected Enumeration<URL> findResources(String name) throws IOException {
-    return getClassPath().getResources(name, true);
+    return getClassPath().getResources(name);
   }
 
   public static void loadPlatformLibrary(@NotNull String libName) {

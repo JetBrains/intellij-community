@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -25,7 +10,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.util.TimeoutUtil;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.StatusType;
@@ -36,19 +20,21 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import static org.junit.Assert.assertEquals;
+
 public class ConflictCreator {
-  private final Project myProject;
+  private final SvnVcs myVcs;
   private final VirtualFile myTheirsDir;
   private final VirtualFile myMineDir;
   private final TreeConflictData.Data myData;
   private final SvnClientRunner myClientRunner;
 
-  public ConflictCreator(final Project project,
+  public ConflictCreator(SvnVcs vcs,
                          VirtualFile dir,
                          VirtualFile mineDir,
                          TreeConflictData.Data data,
                          final SvnClientRunner clientRunner) {
-    myProject = project;
+    myVcs = vcs;
     myTheirsDir = dir;
     myMineDir = mineDir;
     myData = data;
@@ -73,15 +59,14 @@ public class ConflictCreator {
     }
 
     if (! filePatchList.isEmpty()) {
-      PatchApplier<BinaryFilePatch> applier = new PatchApplier<>(myProject, myTheirsDir, filePatchList, (LocalChangeList)null, null);
+      PatchApplier<BinaryFilePatch> applier =
+        new PatchApplier<>(myVcs.getProject(), myTheirsDir, filePatchList, (LocalChangeList)null, null);
       applier.setIgnoreContentRootsCheck();
       applier.execute();
-      Assert.assertEquals(0, applier.getRemainingPatches().size());
+      assertEquals(0, applier.getRemainingPatches().size());
     }
 
     TimeoutUtil.sleep(10);
-
-    SvnVcs vcs = SvnVcs.getInstance(myProject);
 
     for (TextFilePatch patch : patches) {
       if (patch.isNewFile() || ! Comparing.equal(patch.getAfterName(), patch.getBeforeName())) {
@@ -90,7 +75,7 @@ public class ConflictCreator {
         String subPath = "";
         for (String part : parts) {
           final String path = subPath + part;
-          Info info = vcs.getInfo(new File(myTheirsDir.getPath(), path));
+          Info info = myVcs.getInfo(new File(myTheirsDir.getPath(), path));
           if (info == null || info.getURL() == null) {
             myClientRunner.add(myTheirsDir, path);
           }

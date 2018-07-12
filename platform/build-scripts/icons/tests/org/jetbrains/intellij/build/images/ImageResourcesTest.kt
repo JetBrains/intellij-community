@@ -234,6 +234,6 @@ class FailedTest internal constructor(val module: String, val message: String, v
   internal constructor(module: JpsModule, message: String, file: File, details: String) :
     this(module.name, message, file.name, "${file.path}\n\n$details")
 
-  fun getTestName(): String = "'${module}' - $id - $message"
+  fun getTestName(): String = "'${module}' - $id - ${message.substringBefore('\n')}"
   fun getException(): Throwable = Exception("${message}\n\n$details".trim())
 }

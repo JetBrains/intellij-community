@@ -60,7 +60,7 @@ public class ArrayUtilRt {
    *         these elements.
    */
   @Contract(pure=true)
-  public static <T> int find(@NotNull final T[] src, final T obj) {
+  public static <T> int find(@NotNull final T[] src, @Nullable final T obj) {
     for (int i = 0; i < src.length; i++) {
       final T o = src[i];
       if (o == null) {

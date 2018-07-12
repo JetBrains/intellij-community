@@ -167,11 +167,6 @@ public class ChangesUtil {
       .filter(Objects::nonNull);
   }
 
-  /**
-   * @deprecated Use {@link ChangesUtil#getFiles(Stream)}.
-   */
-  @SuppressWarnings("unused") // Required for compatibility with external plugins.
-  @Deprecated
   @NotNull
   public static VirtualFile[] getFilesFromChanges(@NotNull Collection<Change> changes) {
     return getFiles(changes.stream()).toArray(VirtualFile[]::new);

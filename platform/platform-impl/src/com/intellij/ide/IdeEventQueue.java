@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -269,13 +270,6 @@ public class IdeEventQueue extends EventQueue {
     }
   }
 
-  /** @deprecated use {@link #addActivityListener(Runnable, Disposable)} (to be removed in IDEA 17) */
-  public void addActivityListener(@NotNull final Runnable runnable) {
-    synchronized (myLock) {
-      myActivityListeners.add(runnable);
-    }
-  }
-
   public void addActivityListener(@NotNull final Runnable runnable, Disposable parentDisposable) {
     synchronized (myLock) {
       ContainerUtil.add(runnable, myActivityListeners, parentDisposable);
@@ -398,6 +392,8 @@ public class IdeEventQueue extends EventQueue {
     }
 
     if (isFocusEvent(e)) {
+      TouchBarsManager.onFocusEvent(e);
+
       AWTEvent finalEvent = e;
       if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
         FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (execute on focus event): " + focusEventsList.stream().
@@ -674,6 +670,9 @@ public class IdeEventQueue extends EventQueue {
 
       return;
     }
+
+    if (e instanceof InputEvent)
+      TouchBarsManager.onInputEvent((InputEvent)e);
 
     if (dispatchByCustomDispatchers(e)) return;
 

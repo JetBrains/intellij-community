@@ -11,8 +11,6 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
-import com.intellij.internal.statistic.UsageTrigger;
-import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.DumbService;
@@ -81,8 +79,6 @@ public class ProgramRunnerUtil {
           }
         }
       }
-
-      UsageTrigger.trigger("execute." + ConvertUsagesUtil.ensureProperKey(runnerAndConfigurationSettings.getType().getId()) + "." + environment.getExecutor().getId());
     }
 
     try {

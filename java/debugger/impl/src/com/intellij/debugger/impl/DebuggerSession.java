@@ -10,7 +10,6 @@ import com.intellij.debugger.engine.jdi.StackFrameProxy;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
-import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
@@ -208,7 +207,6 @@ public class DebuggerSession implements AbstractDebuggerSession {
     myState = new DebuggerSessionState(State.STOPPED, null);
     myDebugProcess.addDebugProcessListener(new MyDebugProcessListener(debugProcess));
     myDebugProcess.addEvaluationListener(new MyEvaluationListener());
-    myDebugProcess.setAgentInsertPoints(CaptureSettingsProvider.getIdeInsertPoints());
     ValueLookupManager.getInstance(getProject()).startListening();
     mySearchScope = environment.getSearchScope();
     myAlternativeJre = environment.getAlternativeJre();

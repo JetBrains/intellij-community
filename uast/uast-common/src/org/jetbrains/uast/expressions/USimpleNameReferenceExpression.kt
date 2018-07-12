@@ -15,9 +15,9 @@
  */
 package org.jetbrains.uast
 
-import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
+import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.visitor.UastVisitor
 
 /**
@@ -35,10 +35,10 @@ interface USimpleNameReferenceExpression : UReferenceExpression {
     visitor.afterVisitSimpleNameReferenceExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitSimpleNameReferenceExpression(this, data)
 
-  override fun asLogString() = log("identifier = $identifier")
+  override fun asLogString(): String = log("identifier = $identifier")
 
-  override fun asRenderString() = identifier
+  override fun asRenderString(): String = identifier
 }

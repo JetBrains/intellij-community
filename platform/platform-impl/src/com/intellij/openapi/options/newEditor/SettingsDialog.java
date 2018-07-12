@@ -6,8 +6,8 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
@@ -163,7 +163,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   @Override
   public void doOKAction() {
     if (myEditor.apply()) {
-      ApplicationManager.getApplication().saveAll(true);
+      StoreUtil.saveProjectsAndApp(true);
       super.doOKAction();
     }
   }

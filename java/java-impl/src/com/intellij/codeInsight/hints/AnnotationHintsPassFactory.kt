@@ -25,6 +25,6 @@ class AnnotationHintsPassFactory(project: Project, registrar: TextEditorHighligh
   }
 
   companion object {
-    val modificationStampHolder = ModificationStampHolder(Key.create<Long>("LAST_PASS_MODIFICATION_TIMESTAMP"))
+    val modificationStampHolder: ModificationStampHolder = ModificationStampHolder(Key.create<Long>("LAST_PASS_MODIFICATION_TIMESTAMP"))
   }
 }

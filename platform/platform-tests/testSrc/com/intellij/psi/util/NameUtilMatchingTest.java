@@ -429,6 +429,10 @@ public class NameUtilMatchingTest extends TestCase {
     assertMatches("smart8co", "smart18completion");
   }
 
+  public void testMatchOnlyAdjacentDigits() {
+    assertDoesntMatch("*012", "001122");
+  }
+
   public void testSpecialSymbols() {
     assertMatches("a@b", "a@bc");
     assertDoesntMatch("*@in", "a int");

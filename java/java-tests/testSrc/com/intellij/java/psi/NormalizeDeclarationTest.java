@@ -37,6 +37,7 @@ public class NormalizeDeclarationTest extends PsiTestCase{
 
   public void test1() throws Exception { doTest(); }
   public void test2() throws Exception { doTest(); }
+  public void testCStyleArrayParameterBeforeErrorId() throws Exception { doTest(); }
 
   public void testSCR6549() throws Exception { doTest(); }
   public void testSCR9467() throws Exception { doTest(); }

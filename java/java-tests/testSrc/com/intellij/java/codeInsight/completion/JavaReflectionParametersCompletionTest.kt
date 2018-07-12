@@ -28,7 +28,7 @@ import com.intellij.testFramework.LightProjectDescriptor
  * @author Pavel.Dolgov
  */
 class JavaReflectionParametersCompletionTest : LightFixtureCompletionTestCase() {
-  override fun getBasePath() = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/reflectionParameters/"
+  override fun getBasePath(): String = JavaTestUtil.getRelativeJavaTestDataPath() + "/codeInsight/completion/reflectionParameters/"
 
   override fun getProjectDescriptor(): LightProjectDescriptor = com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase.JAVA_8
 

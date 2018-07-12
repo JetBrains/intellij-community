@@ -37,6 +37,7 @@ public class SimplifiableJUnitAssertionFixTest extends IGQuickFixesTestCase {
   public void testTrueToEqualsBetweenIncompatibleTypes() { doTest(); }
   public void testFalseToNotEqualsJUnit4() { doTest(); }
   public void testObjectEqualsToEquals() { doTest(); }
+  public void testTrueToArrayEquals() { doTest(); }
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
@@ -73,6 +74,7 @@ public class SimplifiableJUnitAssertionFixTest extends IGQuickFixesTestCase {
                        "    public static void assertFalse(boolean condition) {}" +
                        "    public static void assertEquals(boolean expected, boolean actual) {}" +
                        "    public static void assertNotEquals(long expected, long actual) {}" +
+                       "    public static void assertArrayEquals(int[] expected, int[] actual) {}" +
                        "    public static void assertNotEquals(double expected, double actual, double delta) {}" +
                        "    public static void assertFalse(String message, boolean condition) {}" +
                        "}");

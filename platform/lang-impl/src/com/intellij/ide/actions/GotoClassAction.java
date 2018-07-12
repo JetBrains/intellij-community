@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.actions.searcheverywhere.ClassSearchEverywhereContributor;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -31,6 +32,7 @@ import com.intellij.navigation.AnonymousElementProvider;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -59,6 +61,11 @@ import java.util.List;
 public class GotoClassAction extends GotoActionBase implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
+    if (Experiments.isFeatureEnabled("new.search.everywhere")) {
+      showInSearchEverywherePopup(ClassSearchEverywhereContributor.class.getSimpleName(), e);
+      return;
+    }
+
     Project project = e.getProject();
     if (project == null) return;
 
@@ -118,7 +125,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
 
       if (file != null && popup.getMemberPattern() != null) {
         NavigationUtil.activateFileWithPsiElement(psiElement, !popup.isOpenInCurrentWindowRequested());
-        Navigatable member = findMember(popup.getMemberPattern(), psiElement, file);
+        Navigatable member = findMember(popup.getMemberPattern(), popup.getTrimmedText(), psiElement, file);
         if (member != null) {
           member.navigate(true);
         }
@@ -132,7 +139,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
   }
 
   @Nullable
-  private static Navigatable findMember(String pattern, PsiElement psiElement, VirtualFile file) {
+  public static Navigatable findMember(String memberPattern, String fullPattern, PsiElement psiElement, VirtualFile file) {
     final PsiStructureViewFactory factory = LanguageStructureViewBuilder.INSTANCE.forLanguage(psiElement.getLanguage());
     final StructureViewBuilder builder = factory == null ? null : factory.getStructureViewBuilder(psiElement.getContainingFile());
     final FileEditor[] editors = FileEditorManager.getInstance(psiElement.getProject()).getEditors(file);
@@ -146,11 +153,18 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
       if (element == null) {
         return null;
       }
-      final MinusculeMatcher matcher = NameUtil.buildMatcher(pattern).build();
+      
+      MinusculeMatcher matcher = NameUtil.buildMatcher(memberPattern).build();
       int max = Integer.MIN_VALUE;
       Object target = null;
       for (TreeElement treeElement : element.getChildren()) {
         if (treeElement instanceof StructureViewTreeElement) {
+          Object value = ((StructureViewTreeElement)treeElement).getValue();
+          if (value instanceof PsiElement && value instanceof Navigatable &&
+              fullPattern.equals(CopyReferenceAction.elementToFqn((PsiElement)value))) {
+            return (Navigatable)value;
+          }
+
           String presentableText = treeElement.getPresentation().getPresentableText();
           if (presentableText != null) {
             final int degree = matcher.matchingDegree(presentableText);
@@ -191,30 +205,35 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
   private static PsiElement getElement(@NotNull PsiElement element, ChooseByNamePopup popup) {
     final String path = popup.getPathToAnonymous();
     if (path != null) {
-      final String[] classes = path.split("\\$");
-      List<Integer> indexes = new ArrayList<>();
-      for (String cls : classes) {
-        if (cls.isEmpty()) continue;
-        try {
-          indexes.add(Integer.parseInt(cls) - 1);
-        }
-        catch (Exception e) {
-          return element;
-        }
-      }
-      PsiElement current = element;
-      for (int index : indexes) {
-        final PsiElement[] anonymousClasses = getAnonymousClasses(current);
-        if (index >= 0 && index < anonymousClasses.length) {
-          current = anonymousClasses[index];
-        }
-        else {
-          return current;
-        }
-      }
-      return current;
+      return getElement(element, path);
     }
     return element;
+  }
+
+  @NotNull
+  public static PsiElement getElement(@NotNull PsiElement element, @NotNull String path) {
+    final String[] classes = path.split("\\$");
+    List<Integer> indexes = new ArrayList<>();
+    for (String cls : classes) {
+      if (cls.isEmpty()) continue;
+      try {
+        indexes.add(Integer.parseInt(cls) - 1);
+      }
+      catch (Exception e) {
+        return element;
+      }
+    }
+    PsiElement current = element;
+    for (int index : indexes) {
+      final PsiElement[] anonymousClasses = getAnonymousClasses(current);
+      if (index >= 0 && index < anonymousClasses.length) {
+        current = anonymousClasses[index];
+      }
+      else {
+        return current;
+      }
+    }
+    return current;
   }
 
   @NotNull

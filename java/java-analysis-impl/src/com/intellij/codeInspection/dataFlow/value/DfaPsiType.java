@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiCapturedWildcardType;
 import com.intellij.psi.PsiClassType;
@@ -39,6 +40,13 @@ public class DfaPsiType {
   @NotNull
   public PsiType getPsiType() {
     return myPsiType;
+  }
+
+  @NotNull
+  public TypeConstraint asConstraint() {
+    TypeConstraint constraint = TypeConstraint.EMPTY.withInstanceofValue(this);
+    assert constraint != null;
+    return constraint;
   }
 
   public boolean isAssignableFrom(DfaPsiType other) {

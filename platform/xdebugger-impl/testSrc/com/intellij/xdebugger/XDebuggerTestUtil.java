@@ -63,7 +63,7 @@ public class XDebuggerTestUtil {
     XBreakpointManager manager = XDebuggerManager.getInstance(project).getBreakpointManager();
     XLineBreakpointImpl breakpoint = ReadAction.compute(() -> (XLineBreakpointImpl)manager.findBreakpointAtLine(type, file, line));
     assertNotNull(breakpoint);
-    assertEquals(validity ? AllIcons.Debugger.Db_set_breakpoint : AllIcons.Debugger.Db_invalid_breakpoint, breakpoint.getIcon());
+    assertEquals(validity ? XDebuggerUtilImpl.getVerifiedIcon(breakpoint) : AllIcons.Debugger.Db_invalid_breakpoint, breakpoint.getIcon());
     assertEquals(errorMessage, breakpoint.getErrorMessage());
   }
 
@@ -108,7 +108,7 @@ public class XDebuggerTestUtil {
     XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
     WriteAction.runAndWait(() -> {
       XLineBreakpoint<?> breakpoint = Arrays.stream(XDebuggerUtil.getInstance().getLineBreakpointTypes())
-                                            .map(t -> breakpointManager.findBreakpointAtLine(t, file, line))
+                                            .map(t -> breakpointManager.findBreakpointAtLine(t, file, line)).filter(Objects::nonNull)
                                             .findFirst().orElse(null);
       assertNotNull(breakpoint);
       breakpointManager.removeBreakpoint(breakpoint);

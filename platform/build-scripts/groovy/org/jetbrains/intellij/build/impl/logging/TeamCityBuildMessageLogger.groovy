@@ -60,22 +60,28 @@ class TeamCityBuildMessageLogger extends BuildMessageLogger {
         String value = escape(message.text.substring(index + 1))
         printTeamCityMessage("buildStatisticValue", false, "key='$key' value='$value'")
         break
+      case LogMessage.Kind.SET_PARAMETER:
+        int index = message.text.indexOf('=')
+        String name = escape(message.text.substring(0, index))
+        String value = escape(message.text.substring(index + 1))
+        printTeamCityMessage("setParameter", false, "name='$name' value='$value'")
+        break
       case LogMessage.Kind.COMPILATION_ERROR:
         int index = message.text.indexOf(':')
         String compiler = escape(message.text.substring(0, index))
         String messageText = escape(message.text.substring(index + 1))
-        printTeamCityMessage("compilationStarted", false, "compiler='$compiler']");
-        printTeamCityMessage("message", false, "text='$messageText' status='ERROR']");
-        printTeamCityMessage("compilationFinished", false, "compiler='$compiler']");
+        printTeamCityMessage("compilationStarted", false, "compiler='$compiler']")
+        printTeamCityMessage("message", false, "text='$messageText' status='ERROR']")
+        printTeamCityMessage("compilationFinished", false, "compiler='$compiler']")
         break
       case LogMessage.Kind.COMPILATION_ERRORS:
         String compiler = escape((message as CompilationErrorsLogMessage).compilerName)
-        printTeamCityMessage("compilationStarted", false, "compiler='$compiler']");
+        printTeamCityMessage("compilationStarted", false, "compiler='$compiler']")
         (message as CompilationErrorsLogMessage).errorMessages.each {
           String messageText = escape(it)
-          printTeamCityMessage("message", false, "text='$messageText' status='ERROR']");
+          printTeamCityMessage("message", false, "text='$messageText' status='ERROR']")
         }
-        printTeamCityMessage("compilationFinished", false, "compiler='$compiler']");
+        printTeamCityMessage("compilationFinished", false, "compiler='$compiler']")
         break
       case LogMessage.Kind.DEBUG:
         //debug messages are printed to a separate file available in the build artifacts

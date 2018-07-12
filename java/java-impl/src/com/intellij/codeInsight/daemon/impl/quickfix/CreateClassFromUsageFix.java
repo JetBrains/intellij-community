@@ -17,12 +17,12 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -67,9 +67,11 @@ public class CreateClassFromUsageFix extends CreateClassFromUsageBaseFix {
 
         IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
 
-        OpenFileDescriptor descriptor = new OpenFileDescriptor(refElement.getProject(), aClass.getContainingFile().getVirtualFile(),
-                                                               aClass.getTextOffset());
-        FileEditorManager.getInstance(aClass.getProject()).openTextEditor(descriptor, true);
+        Navigatable descriptor = PsiNavigationSupport.getInstance().createNavigatable(refElement.getProject(),
+                                                                                      aClass.getContainingFile()
+                                                                                            .getVirtualFile(),
+                                                                                      aClass.getTextOffset());
+        descriptor.navigate(true);
       }
     );
   }

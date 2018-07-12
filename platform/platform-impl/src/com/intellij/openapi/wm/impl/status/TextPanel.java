@@ -67,7 +67,7 @@ public class TextPanel extends JComponent implements Accessible {
   protected void paintComponent(final Graphics g) {
     String s = getText();
     final Rectangle bounds = getBounds();
-    if (UIUtil.isUnderDarcula()) {
+    if (UIUtil.isUnderDarcula() && getClientProperty("NoFillPanelColorForDarcula") == null) {
       g.setColor(UIUtil.getPanelBackground());
       g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
     }
@@ -200,19 +200,21 @@ public class TextPanel extends JComponent implements Accessible {
     @Override
     protected void paintComponent(@NotNull final Graphics g) {
       super.paintComponent(g);
-      if (shouldPaintIconAndArrows() && getText() != null) {
+      if (getText() != null) {
         Rectangle r = getBounds();
         Insets insets = getInsets();
-        Icon arrows = AllIcons.Ide.Statusbar_arrows;
-        arrows.paintIcon(this, g, r.width - insets.right - arrows.getIconWidth() - 2,
-                         r.height / 2 - arrows.getIconHeight() / 2);
+        if (shouldPaintArrows()) {
+          Icon arrows = AllIcons.Ide.Statusbar_arrows;
+          arrows.paintIcon(this, g, r.width - insets.right - arrows.getIconWidth() - 2,
+                           r.height / 2 - arrows.getIconHeight() / 2);
+        }
         if (myIcon != null) {
           myIcon.paintIcon(this, g, insets.left - GAP - myIcon.getIconWidth(), r.height / 2 - myIcon.getIconHeight() / 2);
         }
       }
     }
 
-    protected boolean shouldPaintIconAndArrows() {
+    protected boolean shouldPaintArrows() {
       return true;
     }
 
@@ -229,7 +231,10 @@ public class TextPanel extends JComponent implements Accessible {
     @Override
     public Dimension getPreferredSize() {
       final Dimension preferredSize = super.getPreferredSize();
-      int deltaWidth = AllIcons.Ide.Statusbar_arrows.getIconWidth();
+      int deltaWidth = 0;
+      if (shouldPaintArrows()) {
+        deltaWidth += AllIcons.Ide.Statusbar_arrows.getIconWidth();
+      }
       if (myIcon != null) {
         deltaWidth += myIcon.getIconWidth();
       }

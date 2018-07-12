@@ -44,9 +44,10 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library>
+      <library name="jing" type="repository">
+        <properties maven-id="thaiopensource:jing:20030619" />
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/jing.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/thaiopensource/jing/20030619/jing-20030619.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

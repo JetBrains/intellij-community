@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.ArrayUtil;
 import com.intellij.vcsUtil.VcsUtil;
@@ -48,6 +49,11 @@ public class VcsVirtualFile extends AbstractVcsVirtualFile {
                         @Nullable VcsFileRevision revision,
                         @NotNull VirtualFileSystem fileSystem) {
     super(path, fileSystem);
+    myFileRevision = revision;
+  }
+
+  public VcsVirtualFile(@NotNull VirtualFile parent, @NotNull String name, @Nullable VcsFileRevision revision, VirtualFileSystem fileSystem) {
+    super(parent, name, fileSystem);
     myFileRevision = revision;
   }
 

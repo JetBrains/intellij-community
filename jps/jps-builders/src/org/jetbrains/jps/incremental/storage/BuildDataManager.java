@@ -383,16 +383,10 @@ public class BuildDataManager implements StorageOwner {
     if (cached != null) {
       return cached;
     }
-    try {
-      final DataInputStream is = new DataInputStream(new FileInputStream(myVersionFile));
-      try {
-        final boolean diff = is.readInt() != VERSION;
-        myVersionDiffers = diff;
-        return diff;
-      }
-      finally {
-        is.close();
-      }
+    try (DataInputStream is = new DataInputStream(new FileInputStream(myVersionFile))) {
+      final boolean diff = is.readInt() != VERSION;
+      myVersionDiffers = diff;
+      return diff;
     }
     catch (FileNotFoundException ignored) {
       return false; // treat it as a new dir

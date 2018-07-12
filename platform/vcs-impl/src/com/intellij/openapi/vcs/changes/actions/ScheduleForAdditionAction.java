@@ -123,11 +123,11 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   }
 
   /**
-   * {@link #isStatusForAddition(FileStatus)} checks file status to be {@link FileStatus.UNKNOWN} (if not overridden).
-   * As an optimization, we assume that if {@link ChangesListView.UNVERSIONED_FILES_DATA_KEY} is empty, but {@link VcsDataKeys.CHANGES} is
+   * {@link #isStatusForAddition(FileStatus)} checks file status to be {@link FileStatus#UNKNOWN} (if not overridden).
+   * As an optimization, we assume that if {@link ChangesListView#UNVERSIONED_FILES_DATA_KEY} is empty, but {@link VcsDataKeys#CHANGES} is
    * not, then there will be either versioned (files from changes, hijacked files, locked files, switched files) or ignored files in
-   * {@link VcsDataKeys.VIRTUAL_FILE_STREAM}. So there will be no files with {@link FileStatus.UNKNOWN} status and we should not explicitly
-   * check {@link VcsDataKeys.VIRTUAL_FILE_STREAM} files in this case.
+   * {@link VcsDataKeys#VIRTUAL_FILE_STREAM}. So there will be no files with {@link FileStatus#UNKNOWN} status and we should not explicitly
+   * check {@link VcsDataKeys#VIRTUAL_FILE_STREAM} files in this case.
    */
   protected boolean checkVirtualFiles(@NotNull AnActionEvent e) {
     return ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES));

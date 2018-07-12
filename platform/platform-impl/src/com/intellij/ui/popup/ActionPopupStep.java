@@ -197,7 +197,7 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
       ActionManager.getInstance(), modifiers);
     event.setInjectedContext(action.isInInjectedContext());
     if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      ActionUtil.performActionDumbAware(action, event);
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event, dataContext);
     }
   }
 

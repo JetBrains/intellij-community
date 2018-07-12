@@ -5,7 +5,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.highlighter.XmlFileType;
@@ -727,12 +727,17 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
   @Override
   protected void duplicateError(@NotNull PsiFile file, @NotNull String externalName, @NotNull String text) {
-    String message = text + "; for signature: '" + externalName + "' in the file " + file.getVirtualFile().getPresentableUrl();
-    LogMessageEx.error(LOG, message, file.getText());
+    String message = text + "; for signature: '" + externalName + "' in the file " + file.getName();
+    LOG.error(message, new Throwable(), AttachmentFactory.createAttachment(file.getVirtualFile()));
   }
 
   public static boolean areExternalAnnotationsApplicable(@NotNull PsiModifierListOwner owner) {
-    if (!owner.isPhysical()) return false;
+    if (!owner.isPhysical()) {
+      PsiElement originalElement = owner.getOriginalElement();
+      if (!(originalElement instanceof PsiCompiledElement)) {
+        return false;
+      }
+    }
     if (owner instanceof PsiLocalVariable) return false;
     if (owner instanceof PsiParameter) {
       PsiElement parent = owner.getParent();

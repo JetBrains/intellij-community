@@ -19,9 +19,6 @@ import java.util.function.Consumer;
 
 import static com.intellij.codeInspection.streamToLoop.FunctionHelper.replaceVarReference;
 
-/**
- * @author Tagir Valeev
- */
 abstract class SourceOperation extends Operation {
   @Contract(value = " -> true", pure = true)
   @Override

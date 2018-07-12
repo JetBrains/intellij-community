@@ -147,21 +147,28 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
         String name = project == null ? "application" : "project";
         AtomicLong time = new AtomicLong();
         for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
-          if (provider instanceof OptionsTopHitProvider) {
-            application.invokeLater(() -> time.addAndGet(cache((OptionsTopHitProvider)provider, indicator, project)));
+          if (provider instanceof ConfigurableOptionsTopHitProvider) {
+            // process on EDT, because it creates a Swing components
+            application.invokeLater(() -> {
+              long millisOnEDT = System.currentTimeMillis();
+              cache((ConfigurableOptionsTopHitProvider)provider, indicator, project);
+              time.addAndGet(System.currentTimeMillis() - millisOnEDT);
+            });
+          }
+          else if (provider instanceof OptionsTopHitProvider) {
+            cache((OptionsTopHitProvider)provider, indicator, project);
           }
         }
-        application.invokeLater(() -> LOG.info(time.get() + " ms spent to cache options in " + name));
-        time.addAndGet(System.currentTimeMillis() - millis);
+        application.invokeLater(() -> LOG.info(time.get() + " ms spent on EDT to cache options in " + name));
+        long delta = System.currentTimeMillis() - millis;
+        LOG.info(delta + " ms spent to cache options in " + name);
       }
     }
 
-    private static long cache(@NotNull OptionsTopHitProvider provider, @Nullable ProgressIndicator indicator, @Nullable Project project) {
-      if (indicator != null && indicator.isCanceled()) return 0; // if application is closed
-      if (project != null && project.isDisposed()) return 0; // if project is closed
-      long millis = System.currentTimeMillis();
+    private static void cache(@NotNull OptionsTopHitProvider provider, @Nullable ProgressIndicator indicator, @Nullable Project project) {
+      if (indicator != null && indicator.isCanceled()) return; // if application is closed
+      if (project != null && project.isDisposed()) return; // if project is closed
       if (provider.isEnabled(project)) provider.getCachedOptions(project);
-      return System.currentTimeMillis() - millis;
     }
   }
 }

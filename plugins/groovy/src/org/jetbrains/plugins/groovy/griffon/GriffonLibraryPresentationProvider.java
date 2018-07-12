@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProviderBase;
+import org.jetbrains.plugins.groovy.config.GroovyLibraryProperties;
 
 import javax.swing.*;
 import java.io.File;
@@ -152,7 +153,7 @@ public class GriffonLibraryPresentationProvider extends GroovyLibraryPresentatio
 
   @NotNull
   @Override
-  public Icon getIcon() {
+  public Icon getIcon(GroovyLibraryProperties properties) {
     return JetgroovyIcons.Griffon.Griffon;
   }
 

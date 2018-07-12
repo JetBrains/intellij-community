@@ -245,10 +245,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
     final PsiArrayInitializerExpression other = getExpression(PsiArrayInitializerExpression.class);
     if (other == null) return;
-    myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(
-      new ArrayBackedNodeIterator(expression.getInitializers()),
-      new ArrayBackedNodeIterator(other.getInitializers())
-    ));
+    myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(expression.getInitializers(), other.getInitializers()));
   }
 
   @Override
@@ -360,7 +357,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiElement classReference = clazz.getBaseClassReference();
     final boolean isTypedVar = myMatchingVisitor.getMatchContext().getPattern().isTypedVar(classReference);
 
-    if (myMatchingVisitor.setResult((myMatchingVisitor.match(clazz.getBaseClassReference(), clazz2.getBaseClassReference()) || isTypedVar) &&
+    if (myMatchingVisitor.setResult((isTypedVar || myMatchingVisitor.match(clazz.getBaseClassReference(), clazz2.getBaseClassReference())) &&
                                     myMatchingVisitor.matchSons(clazz.getArgumentList(), clazz2.getArgumentList()) &&
                                     compareClasses(clazz, clazz2)) && isTypedVar) {
       myMatchingVisitor.setResult(matchType(classReference, clazz2.getBaseClassReference()));
@@ -551,7 +548,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     boolean special = false;
     if (_handler == null) {
       _handler = pattern.getHandlerSimple(reference);
-      special = true;
+      special = reference.resolve() != null;
     }
 
     final PsiElement other = myMatchingVisitor.getElement();
@@ -559,7 +556,9 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (_handler instanceof SubstitutionHandler && (qualifier == null || special)) {
       final SubstitutionHandler handler = (SubstitutionHandler)_handler;
       if (handler.isSubtype() || handler.isStrictSubtype()) {
-        myMatchingVisitor.setResult(checkMatchWithinHierarchy(other, handler, reference));
+        if (myMatchingVisitor.setResult(checkMatchWithinHierarchy(reference, other, handler))) {
+          handler.addResult(other, 0, -1, myMatchingVisitor.getMatchContext());
+        }
       }
       else {
         final PsiElement deparenthesized = other instanceof PsiExpression && context.getOptions().isLooseMatching() ?
@@ -750,10 +749,30 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       matchedElement = ((PsiClass)matchedElement).getNameIdentifier();
     }
     else if (matchedElement instanceof PsiMethod && ((PsiMethod)matchedElement).hasTypeParameters()) {
-      typeParameters = ((PsiMethod)matchedType).getTypeParameters();
-      matchedElement = ((PsiMethod)matchedType).getNameIdentifier();
+      typeParameters = ((PsiMethod)matchedElement).getTypeParameters();
+      matchedElement = ((PsiMethod)matchedElement).getNameIdentifier();
     }
 
+    if (patternElement instanceof PsiTypeElement && matchedElement instanceof PsiTypeElement) {
+      final PsiType type1 = ((PsiTypeElement)patternElement).getType();
+      final PsiType type2 = ((PsiTypeElement)matchedElement).getType();
+      if (type1 instanceof PsiWildcardType && type2 instanceof PsiWildcardType) {
+        final PsiWildcardType wildcardType1 = (PsiWildcardType)type1;
+        final PsiWildcardType wildcardType2 = (PsiWildcardType)type2;
+        if (wildcardType1.equals(wildcardType2)) return true;
+        if (wildcardType1.isExtends() && (wildcardType2.isExtends() || !wildcardType2.isBounded())) {
+          if (wildcardType2.isExtends()) {
+            return myMatchingVisitor.match(patternElement.getLastChild(), matchedElement.getLastChild());
+          }
+          else if (!wildcardType2.isBounded()) {
+            return myMatchingVisitor.matchOptionally(patternElement.getLastChild(), null);
+          }
+        }
+        else if (wildcardType1.isSuper() && wildcardType2.isSuper()) {
+          return myMatchingVisitor.match(patternElement.getLastChild(), matchedElement.getLastChild());
+        }
+      }
+    }
     if (patternElement instanceof PsiJavaCodeReferenceElement) {
       final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)patternElement;
       final PsiReferenceParameterList list = referenceElement.getParameterList();
@@ -781,6 +800,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
       RegExpPredicate regExpPredicate = null;
 
+      boolean fullTypeResult = false;
       if (patternArrayDimensions != 0) {
         if (patternArrayDimensions != matchedArrayDimensions) {
           return false;
@@ -798,15 +818,15 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
             }
           });
         }
+        fullTypeResult = true;
       }
 
       try {
-        if (handler.isSubtype() || handler.isStrictSubtype()) {
-          return checkMatchWithinHierarchy(matchedElement, handler, patternElement);
-        }
-        else {
-          return handler.handle(matchedElement, myMatchingVisitor.getMatchContext());
-        }
+        final boolean result = (handler.isSubtype() || handler.isStrictSubtype())
+                               ? checkMatchWithinHierarchy(patternElement, matchedElement, handler)
+                               : handler.validate(matchedElement, 0, -1, myMatchingVisitor.getMatchContext());
+        if (result) handler.addResult(fullTypeResult ? matchedType : matchedElement, 0, -1, myMatchingVisitor.getMatchContext());
+        return result;
       }
       finally {
         if (regExpPredicate != null) regExpPredicate.setNodeTextGenerator(null);
@@ -862,46 +882,36 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     return index == -1 ? result : result.substring(0, index);
   }
 
-  private boolean checkMatchWithinHierarchy(PsiElement matchElement, SubstitutionHandler handler, PsiElement context) {
+  private boolean checkMatchWithinHierarchy(PsiElement patternElement, PsiElement matchElement, SubstitutionHandler handler) {
     boolean includeInterfaces = true;
     boolean includeClasses = true;
-    final PsiElement contextParent = context.getParent();
+    final PsiElement patternParent = patternElement.getParent();
 
-    if (contextParent instanceof PsiReferenceList) {
-      final PsiElement grandParentContext = contextParent.getParent();
+    if (patternParent instanceof PsiReferenceList) {
+      final PsiElement patternGrandParent = patternParent.getParent();
 
-      if (grandParentContext instanceof PsiClass) {
-        final PsiClass psiClass = (PsiClass)grandParentContext;
+      if (patternGrandParent instanceof PsiClass) {
+        final PsiClass psiClass = (PsiClass)patternGrandParent;
 
-        if (contextParent == psiClass.getExtendsList()) {
+        if (patternParent == psiClass.getExtendsList()) {
           includeInterfaces = psiClass.isInterface();
         }
-        else if (contextParent == psiClass.getImplementsList()) {
+        else if (patternParent == psiClass.getImplementsList()) {
           includeClasses = false;
         }
       }
     }
 
-    // is type2 is (strict) subtype of type
-    final NodeIterator node = new HierarchyNodeIterator(matchElement, includeClasses, includeInterfaces);
-
+    final NodeIterator nodes = new HierarchyNodeIterator(matchElement, includeClasses, includeInterfaces);
     if (handler.isStrictSubtype()) {
-      node.advance();
+      nodes.advance();
     }
 
-    final boolean notPredicate = handler.getPredicate() instanceof NotPredicate;
-    while (node.hasNext() && !handler.validate(node.current(), 0, -1, myMatchingVisitor.getMatchContext())) {
-      if (notPredicate) return false;
-      node.advance();
+    final boolean negated = handler.getPredicate() instanceof NotPredicate;
+    while (nodes.hasNext() && negated == handler.validate(nodes.current(), 0, -1, myMatchingVisitor.getMatchContext())) {
+      nodes.advance();
     }
-
-    if (node.hasNext()) {
-      handler.addResult(matchElement, 0, -1, myMatchingVisitor.getMatchContext());
-      return true;
-    }
-    else {
-      return false;
-    }
+    return negated != nodes.hasNext();
   }
 
   @Override
@@ -917,10 +927,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     final PsiPolyadicExpression expr2 = getExpression(PsiPolyadicExpression.class);
     if (expr2 == null) return;
     if (myMatchingVisitor.setResult(expression.getOperationTokenType().equals(expr2.getOperationTokenType()))) {
-      final PsiExpression[] operands1 = expression.getOperands();
-      final PsiExpression[] operands2 = expr2.getOperands();
-      myMatchingVisitor.setResult(
-        myMatchingVisitor.matchSequentially(new ArrayBackedNodeIterator(operands1), new ArrayBackedNodeIterator(operands2)));
+      myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(expression.getOperands(), expr2.getOperands()));
     }
   }
 
@@ -950,7 +957,16 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       myMatchingVisitor.setResult(myMatchingVisitor.matchOptionally(initializer, var2Initializer));
     }
     finally {
-      myMatchingVisitor.scopeMatch(nameIdentifier, isTypedVar, var2.getNameIdentifier());
+      final PsiIdentifier identifier = var2.getNameIdentifier();
+      final String name;
+      if (identifier == null && (name = var2.getName()) != null) {
+        // when matching a stub or compiled code
+        final PsiIdentifier fakeIdentifier = JavaPsiFacade.getElementFactory(var2.getProject()).createIdentifier(name);
+        myMatchingVisitor.scopeMatch(nameIdentifier, isTypedVar, fakeIdentifier);
+      }
+      else {
+        myMatchingVisitor.scopeMatch(nameIdentifier, isTypedVar, identifier);
+      }
     }
   }
 
@@ -969,7 +985,8 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       final PsiType type1 = new1.getType();
       final PsiType type2 = new2.getType();
       myMatchingVisitor.setResult(type1 != null && type2 != null && type1.getArrayDimensions() == type2.getArrayDimensions() &&
-                                  myMatchingVisitor.matchSons(new1.getArgumentList(), new2.getArgumentList()));
+                                  myMatchingVisitor.matchSons(new1.getArgumentList(), new2.getArgumentList()) &&
+                                  myMatchingVisitor.setResult(matchTypeParameters(new1, new2)));
     }
   }
 
@@ -1018,27 +1035,22 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     }
 
     if (!myMatchingVisitor.setResult(myMatchingVisitor.matchSons(mcall.getArgumentList(), mcall2.getArgumentList()))) return;
-    if (!myMatchingVisitor.setResult(matchTypeParameters(mcallRef1, mcallRef2))) return;
+    if (!myMatchingVisitor.setResult(matchTypeParameters(mcall, mcall2))) return;
     if (isTypedVar) {
       myMatchingVisitor.setResult(myMatchingVisitor.handleTypedElement(patternMethodName, mcallRef2.getReferenceNameElement()));
     }
   }
 
-  private boolean matchTypeParameters(PsiJavaCodeReferenceElement mcallRef1, PsiJavaCodeReferenceElement mcallRef2) {
-    final PsiReferenceParameterList patternParameterList = mcallRef1.getParameterList();
-    if (patternParameterList == null) {
-      return true;
-    }
+  private boolean matchTypeParameters(PsiCallExpression call1, PsiCallExpression call2) {
+    final PsiReferenceParameterList patternParameterList = call1.getTypeArgumentList();
     final PsiTypeElement[] patternTypeElements = patternParameterList.getTypeParameterElements();
     if (patternTypeElements.length == 0) {
       return true;
     }
-    PsiReferenceParameterList matchedParameterList = mcallRef2.getParameterList();
-    if (matchedParameterList == null) {
-      return false;
-    }
-    if (matchedParameterList.getFirstChild() == null) { // check inferred type parameters
-      final JavaResolveResult resolveResult = mcallRef2.advancedResolve(false);
+    PsiReferenceParameterList matchedParameterList = call2.getTypeArgumentList();
+    if (matchedParameterList.getFirstChild() == null && myMatchingVisitor.getMatchContext().getOptions().isLooseMatching()) {
+      // check inferred type parameters
+      final JavaResolveResult resolveResult = call2.resolveMethodGenerics();
       final PsiMethod targetMethod = (PsiMethod)resolveResult.getElement();
       if (targetMethod == null) {
         return false;
@@ -1055,7 +1067,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
         if (type == null) {
           return false;
         }
-        final PsiTypeElement matchedTypeElement = JavaPsiFacade.getElementFactory(mcallRef1.getProject()).createTypeElement(type);
+        final PsiTypeElement matchedTypeElement = JavaPsiFacade.getElementFactory(call1.getProject()).createTypeElement(type);
         matchedParameterList.add(matchedTypeElement);
       }
     }
@@ -1137,8 +1149,49 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   public void visitSwitchStatement(final PsiSwitchStatement switch1) {
     final PsiSwitchStatement switch2 = (PsiSwitchStatement)myMatchingVisitor.getElement();
 
-    myMatchingVisitor.setResult(myMatchingVisitor.match(switch1.getExpression(), switch2.getExpression()) &&
-                                myMatchingVisitor.matchSons(switch1.getBody(), switch2.getBody()));
+    if (myMatchingVisitor.setResult(myMatchingVisitor.match(switch1.getExpression(), switch2.getExpression()))) {
+      final List<PsiSwitchLabelStatement> cases1 = PsiTreeUtil.getChildrenOfTypeAsList(switch1.getBody(), PsiSwitchLabelStatement.class);
+      if (cases1.isEmpty()) {
+        myMatchingVisitor.setResult(myMatchingVisitor.matchSons(switch1.getBody(), switch2.getBody()));
+      }
+      else {
+        final List<PsiSwitchLabelStatement> cases2 = PsiTreeUtil.getChildrenOfTypeAsList(switch2.getBody(), PsiSwitchLabelStatement.class);
+        myMatchingVisitor.setResult(
+          myMatchingVisitor.matchSequentially(cases1.toArray(PsiElement.EMPTY_ARRAY), cases2.toArray(PsiElement.EMPTY_ARRAY)));
+      }
+    }
+  }
+
+  @Override
+  public void visitSwitchLabelStatement(final PsiSwitchLabelStatement case1) {
+    final PsiSwitchLabelStatement case2 = (PsiSwitchLabelStatement)myMatchingVisitor.getElement();
+    final MatchContext context = myMatchingVisitor.getMatchContext();
+    final PsiExpression value1 = case1.getCaseValue();
+    final PsiExpression value2 = case2.getCaseValue();
+    final boolean isTypedVar = context.getPattern().isTypedVar(value1);
+    context.pushResult();
+    try {
+      if (myMatchingVisitor.setResult(isTypedVar ||
+                                      case1.isDefaultCase() == case2.isDefaultCase() && myMatchingVisitor.match(value1, value2))) {
+        final List<PsiStatement> statements = collectCaseStatements(case1);
+        if (!statements.isEmpty()) {
+          myMatchingVisitor.setResult(myMatchingVisitor.matchSequentially(statements.toArray(PsiElement.EMPTY_ARRAY),
+                                                                          collectCaseStatements(case2).toArray(PsiElement.EMPTY_ARRAY)));
+        }
+      }
+    } finally {
+      myMatchingVisitor.scopeMatch(value1, isTypedVar, (value2 == null) ? case2 : value2);
+    }
+  }
+
+  private static List<PsiStatement> collectCaseStatements(PsiSwitchLabelStatement switchLabelStatement) {
+    final List<PsiStatement> result = new SmartList<>();
+    PsiStatement sibling = PsiTreeUtil.getNextSiblingOfType(switchLabelStatement, PsiStatement.class);
+    while (sibling != null && !(sibling instanceof PsiSwitchLabelStatement)) {
+      result.add(sibling);
+      sibling = PsiTreeUtil.getNextSiblingOfType(sibling, PsiStatement.class);
+    }
+    return result;
   }
 
   @Override
@@ -1300,23 +1353,17 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (!context.getOptions().isLooseMatching() &&
         ((catches1.length == 0 && catches2.length != 0) ||
          (finally1 == null && finally2 != null) ||
-         (resourceList1 == null && resourceList2 != null)) ||
-        catches2.length < catches1.length
+         (resourceList1 == null && resourceList2 != null))
       ) {
       myMatchingVisitor.setResult(false);
     }
     else {
       final List<PsiElement> unmatchedElements = new SmartList<>();
-
       if (resourceList1 != null) {
-        if (resourceList2 == null) {
-          myMatchingVisitor.setResult(false);
-          return;
-        }
         final List<PsiResourceListElement> resources1 = PsiTreeUtil.getChildrenOfTypeAsList(resourceList1, PsiResourceListElement.class);
         final List<PsiResourceListElement> resources2 = PsiTreeUtil.getChildrenOfTypeAsList(resourceList2, PsiResourceListElement.class);
-        if (!myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(resources1.toArray(new PsiResourceListElement[0]),
-                                                                           resources2.toArray(new PsiResourceListElement[0])))) {
+        if (!myMatchingVisitor.setResult(myMatchingVisitor.matchInAnyOrder(resources1.toArray(PsiElement.EMPTY_ARRAY),
+                                                                           resources2.toArray(PsiElement.EMPTY_ARRAY)))) {
           return;
         }
       }
@@ -1345,11 +1392,10 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
   }
 
   @Override
-  public void visitSwitchLabelStatement(final PsiSwitchLabelStatement case1) {
-    final PsiSwitchLabelStatement case2 = (PsiSwitchLabelStatement)myMatchingVisitor.getElement();
-
-    myMatchingVisitor.setResult(case1.isDefaultCase() == case2.isDefaultCase() &&
-                                myMatchingVisitor.match(case1.getCaseValue(), case2.getCaseValue()));
+  public void visitResourceExpression(PsiResourceExpression expression) {
+    final PsiElement other = myMatchingVisitor.getElement();
+    myMatchingVisitor.setResult(other instanceof PsiResourceExpression &&
+                                myMatchingVisitor.match(expression.getExpression(), ((PsiResourceExpression)other).getExpression()));
   }
 
   @Override
@@ -1556,7 +1602,9 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       if (id == null) id = clazz2;
       final SubstitutionHandler handler = (SubstitutionHandler)myMatchingVisitor.getMatchContext().getPattern().getHandler(identifier);
       if (handler.isSubtype() || handler.isStrictSubtype()) {
-        myMatchingVisitor.setResult(checkMatchWithinHierarchy(id, handler, identifier));
+        if (myMatchingVisitor.setResult(checkMatchWithinHierarchy(identifier, id, handler))) {
+          handler.addResult(id, 0, -1, myMatchingVisitor.getMatchContext());
+        }
       }
       else {
         myMatchingVisitor.setResult(myMatchingVisitor.handleTypedElement(identifier, id));

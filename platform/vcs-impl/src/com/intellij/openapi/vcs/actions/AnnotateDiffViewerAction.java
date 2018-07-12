@@ -142,8 +142,7 @@ public class AnnotateDiffViewerAction {
     EventData data = collectEventData(e);
     assert data != null;
 
-    boolean annotationShown = data.annotator.isAnnotationShown();
-    if (annotationShown) {
+    if (!selected) {
       data.annotator.hideAnnotation();
     }
     else {

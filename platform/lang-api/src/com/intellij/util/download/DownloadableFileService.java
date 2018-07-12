@@ -54,6 +54,7 @@ public abstract class DownloadableFileService {
   /**
    * @deprecated use {@link #createDownloader(DownloadableFileSetDescription)} instead
    */
+  @Deprecated
   @NotNull
   public abstract FileDownloader createDownloader(@NotNull DownloadableFileSetDescription description, @Nullable Project project,
                                                   JComponent parent);
@@ -61,6 +62,7 @@ public abstract class DownloadableFileService {
   /**
    * @deprecated use {@link #createDownloader(java.util.List, String)} instead
    */
+  @Deprecated
   @NotNull
   public abstract FileDownloader createDownloader(List<? extends DownloadableFileDescription> fileDescriptions, @Nullable Project project,
                                                   JComponent parent, @NotNull String presentableDownloadName);

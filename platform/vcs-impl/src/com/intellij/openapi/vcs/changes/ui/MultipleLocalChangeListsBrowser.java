@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.ThreeStateCheckboxAction;
 import com.intellij.openapi.diff.DiffBundle;
@@ -15,11 +16,11 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
 import com.intellij.openapi.vcs.changes.actions.RollbackDialogAction;
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool;
@@ -34,6 +35,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ThreeStateCheckBox.State;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -88,6 +90,13 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     myChangeList = ChangeListManager.getInstance(project).getDefaultChangeList();
     myChangeListChooser = new ChangeListChooser();
 
+    if (Registry.is("vcs.skip.single.default.changelist")) {
+      List<LocalChangeList> allChangeLists = ChangeListManager.getInstance(project).getChangeLists();
+      if (allChangeLists.size() == 1 && allChangeLists.get(0).isBlank()) {
+        myChangeListChooser.setVisible(false);
+      }
+    }
+
     ChangeListManager.getInstance(myProject).addChangeListListener(new MyChangeListListener(), this);
     init();
 
@@ -104,13 +113,25 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   @Nullable
   @Override
   protected JComponent createHeaderPanel() {
-    return myChangeListChooser;
+    return JBUI.Panels.simplePanel(myChangeListChooser)
+                      .withBorder(JBUI.Borders.emptyLeft(6));
   }
 
   @NotNull
   @Override
   protected List<AnAction> createToolbarActions() {
-    List<AnAction> result = new ArrayList<>(super.createToolbarActions());
+    return ContainerUtil.append(
+      super.createToolbarActions(),
+      new RollbackDialogAction(),
+      ActionManager.getInstance().getAction("ChangesView.Refresh"),
+      ActionManager.getInstance().getAction("Vcs.CheckinProjectToolbar")
+    );
+  }
+
+  @NotNull
+  @Override
+  protected List<AnAction> createPopupMenuActions() {
+    List<AnAction> result = new ArrayList<>(super.createPopupMenuActions());
 
     result.add(ActionManager.getInstance().getAction("ChangesView.Refresh"));
 
@@ -118,8 +139,9 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
       result.add(new ShowHideUnversionedFilesAction());
 
       // We do not add "Delete" key shortcut for deleting unversioned files as this shortcut is already used to uncheck checkboxes in the tree.
-      result.add(UnversionedViewDialog.getUnversionedActionGroup());
-      UnversionedViewDialog.registerUnversionedActionsShortcuts(myViewer);
+      ActionGroup unversionedGroup = UnversionedViewDialog.getUnversionedPopupGroup();
+      result.add(unversionedGroup);
+      ActionUtil.recursiveRegisterShortcutSet(unversionedGroup, myViewer, null);
     }
     else {
       // avoid duplicated actions on toolbar
@@ -136,7 +158,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     editSourceAction.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
     result.add(editSourceAction);
 
-    result.add(ActionManager.getInstance().getAction("Vcs.CheckinProjectToolbar"));
+    result.add(ActionManager.getInstance().getAction("Vcs.CheckinProjectMenu"));
     return result;
   }
 
@@ -145,8 +167,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
   protected List<AnAction> createDiffActions() {
     return ContainerUtil.append(
       super.createDiffActions(),
-      new ToggleChangeDiffAction(),
-      new MoveChangeDiffAction()
+      new ToggleChangeDiffAction()
     );
   }
 
@@ -435,24 +456,7 @@ public class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser 
     }
   }
 
-  private class MoveChangeDiffAction extends MoveChangesToAnotherListAction {
-    @Override
-    protected boolean isEnabled(@NotNull AnActionEvent e) {
-      return e.getData(VcsDataKeys.CURRENT_CHANGE) != null ||
-             e.getData(VcsDataKeys.CURRENT_UNVERSIONED) != null;
-    }
-
-    @Override
-    public void actionPerformed(@NotNull AnActionEvent e) {
-      Change change = e.getData(VcsDataKeys.CURRENT_CHANGE);
-      VirtualFile file = e.getData(VcsDataKeys.CURRENT_UNVERSIONED);
-      List<Change> changes = change == null ? Collections.emptyList() : Collections.singletonList(change);
-      List<VirtualFile> unversionedFiles = file == null ? Collections.emptyList() : Collections.singletonList(file);
-      askAndMove(myProject, changes, unversionedFiles);
-    }
-  }
-
-  private class ToggleChangeDiffAction extends ThreeStateCheckboxAction implements CustomComponentAction {
+  private class ToggleChangeDiffAction extends ThreeStateCheckboxAction implements CustomComponentAction, DumbAware {
     public ToggleChangeDiffAction() {
       super(VcsBundle.message("commit.dialog.include.action.name"));
     }

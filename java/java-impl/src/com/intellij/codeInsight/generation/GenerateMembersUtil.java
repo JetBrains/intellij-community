@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
@@ -23,10 +24,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.util.RefactoringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.VisibilityUtil;
+import com.intellij.util.*;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -371,7 +369,7 @@ public class GenerateMembersUtil {
                                                           @NotNull PsiTypeParameter typeParameter,
                                                           final @NotNull PsiSubstitutor substitutor,
                                                           @NotNull final PsiMethod sourceMethod) {
-    final PsiElement copy = (typeParameter instanceof PsiCompiledElement ? ((PsiCompiledElement)typeParameter).getMirror() : typeParameter).copy();
+    final PsiElement copy = ObjectUtils.notNull(typeParameter instanceof PsiCompiledElement ? ((PsiCompiledElement)typeParameter).getMirror() : typeParameter, typeParameter).copy();
     final Map<PsiElement, PsiElement> replacementMap = new HashMap<>();
     copy.accept(new JavaRecursiveElementVisitor() {
       @Override
@@ -592,6 +590,13 @@ public class GenerateMembersUtil {
     }
   }
 
+  public static void copyAnnotations(@NotNull PsiModifierListOwner source, @NotNull PsiModifierListOwner target, String... skipAnnotations) {
+    PsiModifierList targetModifierList = target.getModifierList();
+    PsiModifierList sourceModifierList = source.getModifierList();
+    if (targetModifierList == null || sourceModifierList == null) return;
+    copyAnnotations(sourceModifierList, targetModifierList, skipAnnotations);
+  }
+
   //java bean getters/setters
   public static PsiMethod generateSimpleGetterPrototype(@NotNull PsiField field) {
     return generatePrototype(field, PropertyUtilBase.generateGetterPrototype(field));
@@ -697,7 +702,12 @@ public class GenerateMembersUtil {
   public static PsiMethod setVisibility(PsiMember member, PsiMethod prototype) {
     if (prototype == null) return null;
 
-    String visibility = JavaCodeStyleSettings.getInstance(member.getContainingFile()).VISIBILITY;
+    PsiFile file = member.getContainingFile();
+    JavaCodeStyleSettings javaSettings =
+      file != null
+      ? JavaCodeStyleSettings.getInstance(file)
+      : CodeStyle.getProjectOrDefaultSettings(member.getProject()).getCustomSettings(JavaCodeStyleSettings.class);
+    String visibility = javaSettings.VISIBILITY;
 
     @PsiModifier.ModifierConstant String newVisibility;
     if (VisibilityUtil.ESCALATE_VISIBILITY.equals(visibility)) {

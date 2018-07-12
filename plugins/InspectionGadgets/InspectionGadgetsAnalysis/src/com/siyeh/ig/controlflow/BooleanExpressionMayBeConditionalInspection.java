@@ -28,7 +28,10 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.BoolUtils;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.SideEffectChecker;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -133,17 +136,7 @@ public class BooleanExpressionMayBeConditionalInspection extends BaseInspection 
       }
       final PsiExpression expression1 = ParenthesesUtils.stripParentheses(lBinaryExpression.getLOperand());
       final PsiExpression expression2 = ParenthesesUtils.stripParentheses(rBinaryExpression.getLOperand());
-      if (expression1 == null || expression2 == null ||
-          ParenthesesUtils.stripParentheses(lBinaryExpression.getROperand()) == null ||
-          ParenthesesUtils.stripParentheses(rBinaryExpression.getROperand()) == null) {
-        return;
-      }
-      if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(BoolUtils.getNegated(expression1), expression2) &&
-          !SideEffectChecker.mayHaveSideEffects(expression2)) {
-        registerError(expression);
-      }
-      else if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(expression1, BoolUtils.getNegated(expression2)) &&
-               !SideEffectChecker.mayHaveSideEffects(expression1)) {
+      if (BoolUtils.areExpressionsOpposite(expression1, expression2) && !SideEffectChecker.mayHaveSideEffects(expression1)) {
         registerError(expression);
       }
     }

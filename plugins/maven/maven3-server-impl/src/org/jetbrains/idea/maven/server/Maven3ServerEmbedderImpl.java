@@ -435,6 +435,10 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
       ProjectBuilderConfiguration config = new DefaultProjectBuilderConfiguration().setExecutionProperties(props);
       config.setBuildStartTime(new Date());
 
+      Properties userProperties = new Properties();
+      userProperties.putAll(getMavenAndJvmConfigProperties(basedir));
+      config.setUserProperties(userProperties);
+
       result = interpolator.interpolate(result, basedir, config, false);
     }
     catch (ModelInterpolationException e) {
@@ -756,7 +760,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
   }
 
   /**
-   * copied from {@link DefaultProjectBuilder#resolveDependencies(MavenProject, org.sonatype.aether.RepositorySystemSession)}
+   * copied from {@link DefaultProjectBuilder#resolveDependencies(MavenProject, RepositorySystemSession)}
    */
   private DependencyResolutionResult resolveDependencies(MavenProject project, RepositorySystemSession session) {
     DependencyResolutionResult resolutionResult;
@@ -864,6 +868,7 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
     return lifecycleListeners;
   }
 
+  @Override
   public MavenExecutionRequest createRequest(@Nullable File file,
                                              @Nullable List<String> activeProfiles,
                                              @Nullable List<String> inactiveProfiles,
@@ -886,7 +891,14 @@ public class Maven3ServerEmbedderImpl extends Maven3ServerEmbedder {
       getComponent(MavenExecutionRequestPopulator.class).populateDefaults(result);
 
       result.setSystemProperties(mySystemProperties);
-      result.setUserProperties(myUserProperties);
+      Properties userProperties = new Properties();
+      if (myUserProperties != null) {
+        userProperties.putAll(myUserProperties);
+      }
+      if (file != null) {
+        userProperties.putAll(getMavenAndJvmConfigProperties(file.getParentFile()));
+      }
+      result.setUserProperties(userProperties);
 
       if (activeProfiles != null) {
         result.setActiveProfiles(activeProfiles);

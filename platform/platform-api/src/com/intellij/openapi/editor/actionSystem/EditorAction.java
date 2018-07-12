@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
 import static com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR;
@@ -71,6 +72,13 @@ public abstract class EditorAction extends AnAction implements DumbAware {
   public final void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Editor editor = getEditor(dataContext);
+    if (this instanceof LatencyAwareEditorAction && editor != null) {
+      String actionId = ActionManager.getInstance().getId(this);
+      InputEvent inputEvent = e.getInputEvent();
+      if (actionId != null && inputEvent != null) {
+        LatencyRecorder.getInstance().recordLatencyAwareAction(editor, actionId, inputEvent.getWhen());
+      }
+    }
     actionPerformed(editor, dataContext);
   }
 

@@ -1,8 +1,6 @@
 rest file
   RestLine:LINE_TEXT
-    PsiElement(LINE)('Many modern websites have the need for a threaded commenting system.')
-    PsiElement(WHITESPACE)('  ')
-    PsiElement(LINE)('Places')
+    PsiElement(LINE)('Many modern websites have the need for a threaded commenting system.  Places')
     PsiElement(WHITESPACE)('\n')
     PsiElement(LINE)('like ')
   RestReference:REFERENCE_NAME

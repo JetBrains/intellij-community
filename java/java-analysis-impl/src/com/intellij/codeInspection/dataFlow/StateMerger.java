@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
@@ -270,7 +271,7 @@ class StateMerger {
       for (final DfaMemoryStateImpl state1 : similarStates) {
         ProgressManager.checkCanceled();
         for (final DfaVariableValue var : state1.getChangedVariables()) {
-          if (state1.getVariableState(var).getNullability() != Nullness.NULLABLE) {
+          if (state1.getVariableState(var).getNullability() != Nullability.NULLABLE) {
             continue;
           }
           
@@ -345,7 +346,9 @@ class StateMerger {
       DfaMemoryStateImpl getState() {
         if(myCommonEqualities != null) {
           myState.removeEquivalenceRelations(var);
-          myState.setFact(var, RANGE, myRange);
+          if (!myState.isUnknownState(var)) {
+            myState.setVariableState(var, myState.getVariableState(var).withFact(RANGE, myRange));
+          }
           for (EqualityFact equality : myCommonEqualities) {
             equality.applyTo(myState);
           }

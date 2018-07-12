@@ -165,6 +165,7 @@ public abstract class CompletionContributor {
    * @deprecated use {@link CompletionResultSet#addLookupAdvertisement(String)}
    * @return text to be shown at the bottom of lookup list
    */
+  @Deprecated
   @Nullable
   public String advertise(@NotNull CompletionParameters parameters) {
     return null;

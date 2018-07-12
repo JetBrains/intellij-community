@@ -29,7 +29,6 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProviderEP;
 import org.jetbrains.annotations.NotNull;
@@ -79,11 +78,6 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
   }
 
   @Override
-  public boolean projectUsesOwnSettings() {
-    return myProject != null && CodeStyleSettingsManager.getInstance(myProject).USE_PER_PROJECT_SETTINGS;
-  }
-
-  @Override
   public boolean isUnsuitableCodeStyleConfigurable(final Configurable c) {
     return false;
   }
@@ -96,11 +90,6 @@ public class CodeStyleFacadeImpl extends CodeStyleFacade {
   @Override
   public int getTabSize(final FileType fileType) {
     return CodeStyle.getProjectOrDefaultSettings(myProject).getTabSize(fileType);
-  }
-
-  @Override
-  public boolean isSmartTabs(final FileType fileType) {
-    return CodeStyle.getProjectOrDefaultSettings(myProject).isSmartTabs(fileType);
   }
 
   @Override

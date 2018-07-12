@@ -103,7 +103,6 @@ public final class ExecutionEnvironmentBuilder {
     myRunProfile = copySource.getRunProfile();
     myRunnerSettings = copySource.getRunnerSettings();
     myConfigurationSettings = copySource.getConfigurationSettings();
-    //noinspection deprecation
     myRunner = copySource.getRunner();
     myContentToReuse = copySource.getContentToReuse();
     myExecutor = copySource.getExecutor();

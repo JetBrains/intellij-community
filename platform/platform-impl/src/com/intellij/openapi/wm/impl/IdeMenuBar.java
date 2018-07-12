@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.impl.status.ClockPanel;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.mac.foundation.NSDefaults;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
@@ -328,8 +329,9 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
       removeAll();
       final boolean enableMnemonics = !UISettings.getInstance().getDisableMnemonics();
+      final boolean isDarkMenu = SystemInfo.isMacSystemMenu ? NSDefaults.isDarkMenuBar() : false;
       for (final AnAction action : myVisibleActions) {
-        add(new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, true));
+        add(new ActionMenu(null, ActionPlaces.MAIN_MENU, (ActionGroup)action, myPresentationFactory, enableMnemonics, true, isDarkMenu));
       }
 
       updateMnemonicsVisibility();

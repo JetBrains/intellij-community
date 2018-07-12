@@ -9,10 +9,8 @@ setup(name='foo',
       requires=[
           'Markdown',
       ],
-      install_requires=[
-          'NewDjango==1.3.1',
-      ],
+      install_requires='NewDjango==1.3.1',
       tests_require=tests_require,
-      setup_requires=[
-          'numpy'
-      ])
+      setup_requires=(
+          'numpy',
+      ))

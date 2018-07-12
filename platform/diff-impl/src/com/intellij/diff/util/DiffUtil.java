@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
@@ -51,7 +37,6 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.GenericDataProvider;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -59,6 +44,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
@@ -561,11 +547,11 @@ public class DiffUtil {
                                        @Nullable Charset charset,
                                        @Nullable Boolean bom,
                                        boolean readOnly) {
-    if (readOnly) title += " " + DiffBundle.message("diff.content.read.only.content.title.suffix");
-
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(JBUI.Borders.empty(0, 4));
-    panel.add(new JBLabel(title).setCopyable(true), BorderLayout.CENTER);
+    JBLabel titleLabel = new JBLabel(title).setCopyable(true);
+    if (readOnly) titleLabel.setIcon(AllIcons.Ide.Readonly);
+    panel.add(titleLabel, BorderLayout.CENTER);
     if (charset != null && separator != null) {
       JPanel panel2 = new JPanel();
       panel2.setLayout(new BoxLayout(panel2, BoxLayout.X_AXIS));
@@ -685,7 +671,7 @@ public class DiffUtil {
 
   public static void runPreservingFocus(@NotNull FocusableContext context, @NotNull Runnable task) {
     boolean hadFocus = context.isFocusedInWindow();
-    if (hadFocus) KeyboardFocusManager.getCurrentKeyboardFocusManager().clearFocusOwner();
+//    if (hadFocus) KeyboardFocusManager.getCurrentKeyboardFocusManager().clearFocusOwner();
     task.run();
     if (hadFocus) context.requestFocusInWindow();
   }
@@ -823,6 +809,15 @@ public class DiffUtil {
   // Document modification
   //
 
+  public static boolean isSomeRangeSelected(@NotNull Editor editor, @NotNull Condition<? super BitSet> condition) {
+    List<Caret> carets = editor.getCaretModel().getAllCarets();
+    if (carets.size() != 1) return true;
+    Caret caret = carets.get(0);
+    if (caret.hasSelection()) return true;
+
+    return condition.value(getSelectedLines(editor));
+  }
+
   @NotNull
   public static BitSet getSelectedLines(@NotNull Editor editor) {
     Document document = editor.getDocument();
@@ -855,13 +850,21 @@ public class DiffUtil {
       lines.set(line1, line2 + 1);
       if (caret.getSelectionEnd() == document.getTextLength()) lines.set(totalLines);
     }
-    else if (expectedCaretOffset == -1) {
-      lines.set(caret.getLogicalPosition().line);
-      if (caret.getOffset() == document.getTextLength()) lines.set(totalLines);
-    }
     else {
-      lines.set(document.getLineNumber(expectedCaretOffset));
-      if (expectedCaretOffset == document.getTextLength()) lines.set(totalLines);
+      int offset;
+      VisualPosition visualPosition;
+      if (expectedCaretOffset == -1) {
+        offset = caret.getOffset();
+        visualPosition = caret.getVisualPosition();
+      }
+      else {
+        offset = expectedCaretOffset;
+        visualPosition = editor.offsetToVisualPosition(expectedCaretOffset);
+      }
+
+      Pair<LogicalPosition, LogicalPosition> pair = EditorUtil.calcSurroundingRange(editor, visualPosition, visualPosition);
+      lines.set(pair.first.line, pair.second.line);
+      if (offset == document.getTextLength()) lines.set(totalLines);
     }
   }
 
@@ -1308,11 +1311,11 @@ public class DiffUtil {
                         BooleanGetter.FALSE);
   }
 
-  private static boolean compareWordMergeContents(@NotNull MergeWordFragment fragment,
-                                                  @NotNull List<? extends CharSequence> texts,
-                                                  @NotNull ComparisonPolicy policy,
-                                                  @NotNull ThreeSide side1,
-                                                  @NotNull ThreeSide side2) {
+  public static boolean compareWordMergeContents(@NotNull MergeWordFragment fragment,
+                                                 @NotNull List<? extends CharSequence> texts,
+                                                 @NotNull ComparisonPolicy policy,
+                                                 @NotNull ThreeSide side1,
+                                                 @NotNull ThreeSide side2) {
     int start1 = fragment.getStartOffset(side1);
     int end1 = fragment.getEndOffset(side1);
     int start2 = fragment.getStartOffset(side2);

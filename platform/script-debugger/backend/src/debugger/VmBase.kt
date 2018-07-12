@@ -19,7 +19,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.util.containers.ContainerUtil
 
 abstract class VmBase(override val debugListener: DebugEventListener) : Vm, AttachStateManager, UserDataHolderBase() {
-  override val evaluateContext by lazy(LazyThreadSafetyMode.NONE) { computeEvaluateContext() }
+  override val evaluateContext: EvaluateContext? by lazy(LazyThreadSafetyMode.NONE) { computeEvaluateContext() }
 
   override val attachStateManager: AttachStateManager = this
 

@@ -11,8 +11,10 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.fileEditor.*;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -31,6 +33,8 @@ import java.util.concurrent.TimeoutException;
  * @author Vladimir Kondratyev
  */
 public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
+  private static final Key<TransientEditorState> TRANSIENT_EDITOR_STATE_KEY = Key.create("transientState");
+
   protected final Project myProject;
   private final PropertyChangeSupport myChangeSupport;
   @NotNull private final TextEditorComponent myComponent;
@@ -43,6 +47,13 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
     myFile = file;
     myChangeSupport = new PropertyChangeSupport(this);
     myComponent = createEditorComponent(project, file);
+
+    TransientEditorState state = myFile.getUserData(TRANSIENT_EDITOR_STATE_KEY);
+    if (state != null) {
+      state.applyTo(getEditor());
+      myFile.putUserData(TRANSIENT_EDITOR_STATE_KEY, null);
+    }
+
     Disposer.register(this, myComponent);
     myAsyncLoader = new AsyncEditorLoader(this, myComponent, provider);
     myLoadingFinished = myAsyncLoader.start();
@@ -64,6 +75,9 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
 
   @Override
   public void dispose(){
+    if (Boolean.TRUE.equals(myFile.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) {
+      myFile.putUserData(TRANSIENT_EDITOR_STATE_KEY, TransientEditorState.forEditor(getEditor()));
+    }
   }
 
   @NotNull
@@ -198,6 +212,20 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
     }
     catch (InterruptedException | ExecutionException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  private static class TransientEditorState {
+    private boolean softWrapsEnabled;
+
+    private static TransientEditorState forEditor(Editor editor) {
+      TransientEditorState state = new TransientEditorState();
+      state.softWrapsEnabled = editor.getSettings().isUseSoftWraps();
+      return state;
+    }
+
+    private void applyTo(Editor editor) {
+      editor.getSettings().setUseSoftWraps(softWrapsEnabled);
     }
   }
 }

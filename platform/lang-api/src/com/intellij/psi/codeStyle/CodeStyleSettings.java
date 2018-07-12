@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.configurationStore.UnknownElementCollector;
@@ -23,6 +24,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ClassMap;
+import com.intellij.util.containers.JBIterable;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -473,7 +475,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
   /**
    * @deprecated Use get/setRightMargin() methods instead.
    */
-  @SuppressWarnings("DeprecatedIsStillUsed")
+  @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
   public int RIGHT_MARGIN = 120;
   /**
    * <b>Do not use this field directly since it doesn't reflect a setting for a specific language which may
@@ -793,6 +795,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     myVersion = getVersion(element);
+    notifySettingsBeforeLoading();
     DefaultJDOMExternalizer.readExternal(this, element);
     if (LAYOUT_STATIC_IMPORTS_SEPARATELY) {
       // add <all other static imports> entry if there is none
@@ -854,6 +857,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
     mySoftMargins.deserializeFrom(element);
 
     migrateLegacySettings();
+    notifySettingsLoaded();
   }
 
   @Override
@@ -865,9 +869,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
 
     myUnknownElementWriter.write(element, getCustomSettingsValues(), CustomCodeStyleSettings::getTagName, settings -> {
       CustomCodeStyleSettings parentCustomSettings = parentSettings.getCustomSettings(settings.getClass());
-      if (parentCustomSettings == null) {
-        throw new WriteExternalException("Custom settings are null for " + settings.getClass());
-      }
       settings.writeExternal(element, parentCustomSettings);
     });
 
@@ -918,6 +919,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
    * @see FileTypeIndentOptionsProvider
    * @see LanguageCodeStyleSettingsProvider
    */
+  @NotNull
   public IndentOptions getIndentOptions(@Nullable FileType fileType) {
     IndentOptions indentOptions = getLanguageIndentOptions(fileType);
     if (indentOptions != null) return indentOptions;
@@ -1042,6 +1044,18 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
     if (!(fileType instanceof LanguageFileType)) return null;
     Language lang = ((LanguageFileType)fileType).getLanguage();
     return getIndentOptions(lang);
+  }
+
+  /**
+   * Returns language indent options or, if the language doesn't have any options of its own, indent options configured for other file
+   * types.
+   *
+   * @param language The language to get indent options for.
+   * @return Language indent options.
+   */
+  public IndentOptions getLanguageIndentOptions(@NotNull Language language) {
+    IndentOptions langOptions = getIndentOptions(language);
+    return langOptions != null ? langOptions : OTHER_INDENT_OPTIONS;
   }
 
   @Nullable
@@ -1335,7 +1349,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
         }
       }
     }
-    //noinspection deprecation
     return WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
   }
 
@@ -1394,6 +1407,16 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
       }
       myVersion = CURR_VERSION;
     }
+  }
+
+  private void notifySettingsBeforeLoading() {
+    JBIterable.from(myCustomSettings.values())
+              .forEach(CustomCodeStyleSettings::beforeLoading);
+  }
+
+  private void notifySettingsLoaded() {
+    JBIterable.from(myCustomSettings.values())
+              .forEach(CustomCodeStyleSettings::afterLoaded);
   }
 
   @SuppressWarnings("deprecation")

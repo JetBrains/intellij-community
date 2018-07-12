@@ -237,12 +237,6 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   }
 
   @Override
-  public String getTooltipMessage() {
-    // see TrafficProgressPanel
-    return null;
-  }
-
-  @Override
   public void paint(Component c, Graphics g, Rectangle r) {
     DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus(mySeverityRegistrar);
     Icon icon = getIcon(status);
@@ -298,13 +292,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       return result;
     }
 
-    Icon icon = AllIcons.General.InspectionsOK;
-    for (int i = status.errorCount.length - 1; i >= 0; i--) {
-      if (status.errorCount[i] > 0) {
-        icon = mySeverityRegistrar.getRendererIconByIndex(i);
-        break;
-      }
-    }
+    int lastNotNullIndex = ArrayUtil.lastIndexOfNot(status.errorCount, 0);
+    Icon icon = lastNotNullIndex == -1 ? AllIcons.General.InspectionsOK : mySeverityRegistrar.getRendererIconByIndex(lastNotNullIndex);
 
     if (status.errorAnalyzingFinished) {
       boolean isDumb = myProject != null && DumbService.isDumb(myProject);
@@ -327,22 +316,22 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     int currentSeverityErrors = 0;
     @org.intellij.lang.annotations.Language("HTML")
     String text = "";
-    for (int i = status.errorCount.length - 1; i >= 0; i--) {
-      if (status.errorCount[i] > 0) {
+    for (int i = lastNotNullIndex; i >= 0; i--) {
+      int count = status.errorCount[i];
+      if (count > 0) {
         final HighlightSeverity severity = mySeverityRegistrar.getSeverityByIndex(i);
-        String name =
-          status.errorCount[i] > 1 ? StringUtil.pluralize(severity.getName().toLowerCase()) : severity.getName().toLowerCase();
+        String name = count > 1 ? StringUtil.pluralize(severity.getName().toLowerCase()) : severity.getName().toLowerCase();
         text += status.errorAnalyzingFinished
-                ? DaemonBundle.message("errors.found", status.errorCount[i], name)
-                : DaemonBundle.message("errors.found.so.far", status.errorCount[i], name);
+                ? DaemonBundle.message("errors.found", count, name)
+                : DaemonBundle.message("errors.found.so.far", count, name);
         text += "<br>";
-        currentSeverityErrors += status.errorCount[i];
+        currentSeverityErrors += count;
       }
     }
     if (currentSeverityErrors == 0) {
-      text += status.errorAnalyzingFinished
+      text += (status.errorAnalyzingFinished
               ? DaemonBundle.message("no.errors.or.warnings.found")
-              : DaemonBundle.message("no.errors.or.warnings.found.so.far") + "<br>";
+              : DaemonBundle.message("no.errors.or.warnings.found.so.far")) + "<br>";
     }
     statistics = XmlStringUtil.wrapInHtml(text);
 
@@ -356,9 +345,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       JProgressBar progressBar = new JProgressBar(0, MAX);
       progressBar.setMaximum(MAX);
       UIUtil.applyStyle(UIUtil.ComponentStyle.MINI, progressBar);
-      JLabel percLabel = new JLabel();
-      percLabel.setText(TrafficProgressPanel.MAX_TEXT);
-      passes.put(pass, Pair.create(progressBar, percLabel));
+      JLabel percentLabel = new JLabel();
+      percentLabel.setText(TrafficProgressPanel.MAX_TEXT);
+      passes.put(pass, Pair.create(progressBar, percentLabel));
     }
   }
 }

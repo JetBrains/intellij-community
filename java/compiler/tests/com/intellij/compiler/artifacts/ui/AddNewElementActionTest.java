@@ -2,6 +2,7 @@ package com.intellij.compiler.artifacts.ui;
 
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.impl.elements.ProductionModuleOutputElementType;
+import com.intellij.packaging.impl.elements.ProductionModuleSourceElementType;
 
 /**
  * @author nik
@@ -24,6 +25,16 @@ public class AddNewElementActionTest extends ArtifactEditorTestCase {
     assertLayout("<root>\n" +
                  " dir/\n" +
                  "  module:mod");
+  }
+
+  public void testAddSourcesToDirectory() {
+    addModule();
+    createEditor(addArtifact(root().dir("dir")));
+    selectNode("dir");
+    myArtifactEditor.addNewPackagingElement(ProductionModuleSourceElementType.ELEMENT_TYPE);
+    assertLayout("<root>\n" +
+                 " dir/\n" +
+                 "  module sources:mod");
   }
 
   public void testAddToDirectoryInIncludedArtifact() {

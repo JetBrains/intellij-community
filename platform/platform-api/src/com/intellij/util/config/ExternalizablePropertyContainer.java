@@ -70,6 +70,7 @@ public class ExternalizablePropertyContainer extends AbstractProperty.AbstractPr
   /**
    * @deprecated
    */
+  @Deprecated
   public <T extends JDOMExternalizable> void  registerProperty(ListProperty<T> property, @NonNls String itemTagName, Factory<T> factory) {
     registerProperty(property, itemTagName, Externalizer.FactoryBased.create(factory));
   }

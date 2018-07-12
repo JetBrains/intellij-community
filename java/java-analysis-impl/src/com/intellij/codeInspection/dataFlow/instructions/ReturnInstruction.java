@@ -16,7 +16,8 @@
 
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.*;
+import com.intellij.codeInspection.dataFlow.DfaControlTransferValue;
+import com.intellij.codeInspection.dataFlow.ExceptionTransfer;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +37,7 @@ public class ReturnInstruction extends ControlTransferInstruction {
 
   public boolean isViaException() {
     DfaControlTransferValue transfer = getTransfer();
-    return transfer != null && transfer.getTarget() instanceof ExceptionTransfer;
+    return transfer.getTarget() instanceof ExceptionTransfer;
   }
 
 }

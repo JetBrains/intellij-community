@@ -33,7 +33,7 @@ public abstract class CompletionService {
    * A "weigher" extension key (see {@link Weigher}) to sort the whole lookup descending.
    * @deprecated use "completion" relevance key instead
    */
-  public static final Key<CompletionWeigher> SORTING_KEY = Key.create("completionSorting");
+  @Deprecated public static final Key<CompletionWeigher> SORTING_KEY = Key.create("completionSorting");
 
   public static CompletionService getCompletionService() {
     return ServiceManager.getService(CompletionService.class);
@@ -50,6 +50,7 @@ public abstract class CompletionService {
    * @param text
    * @deprecated use {@link CompletionResultSet#addLookupAdvertisement(String)}
    */
+  @Deprecated
   public abstract void setAdvertisementText(@Nullable String text);
 
   /**

@@ -452,6 +452,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       if (selectedRows.length != 1) return null;
       return getModel().getBranchesAtRow(selectedRows[0]);
     }
+    else if (VcsLogDataKeys.VCS_LOG_REFS.is(dataId)) {
+      int[] selectedRows = getSelectedRows();
+      if (selectedRows.length != 1) return null;
+      return getModel().getRefsAtRow(selectedRows[0]);
+    }
     else if (VcsDataKeys.PRESET_COMMIT_MESSAGE.is(dataId)) {
       int[] selectedRows = getSelectedRows();
       if (selectedRows.length == 0) return null;
@@ -904,8 +909,12 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   private class MyProgressListener implements VcsLogProgress.ProgressListener {
     @Override
-    public void progressStarted() {
+    public void progressStarted(@NotNull Collection<VcsLogProgress.ProgressKey> keys) {
       getEmptyText().setText(LOADING_COMMITS_TEXT);
+    }
+
+    @Override
+    public void progressChanged(@NotNull Collection<VcsLogProgress.ProgressKey> keys) {
     }
 
     @Override

@@ -37,4 +37,5 @@ public class TrivialIfFixTest extends IGQuickFixesTestCase {
   public void testParentheses() { doTest(); }
   public void testNested() { doTest(); }
   public void testInCodeBlock() { doTest(); }
+  public void testInSwitch() { doTest(); }
 }

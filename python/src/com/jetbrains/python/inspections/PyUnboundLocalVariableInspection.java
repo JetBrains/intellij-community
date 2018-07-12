@@ -42,6 +42,7 @@ import com.jetbrains.python.psi.impl.PyGlobalStatementNavigator;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -140,6 +141,9 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
             return;
           }
         }
+        if (isWriteAndRaiseInsideWith(node, resolved)) {
+          return;
+        }
         if (PyUnreachableCodeInspection.hasAnyInterruptedControlFlowPaths(node)) {
           return;
         }
@@ -159,6 +163,27 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
                           new AddGlobalQuickFix());
         }
       }
+    }
+
+    private static boolean isWriteAndRaiseInsideWith(@NotNull PyReferenceExpression node, @Nullable PsiElement resolvedElement) {
+      if (resolvedElement != null && !PyUtil.inSameFile(node, resolvedElement)) {
+        return false;
+      }
+      boolean isExceptionRaised = false;
+      boolean isUnderContextManager = false;
+      PsiElement firstWith = PsiTreeUtil.getParentOfType(resolvedElement, PyWithStatement.class, true, ScopeOwner.class);
+      if (firstWith != null && PsiTreeUtil.findChildOfType(firstWith, PyRaiseStatement.class) != null) {
+        isExceptionRaised = true;
+        PyWithStatement withStatement = (PyWithStatement)firstWith;
+        for (PyWithItem withItem : withStatement.getWithItems()) {
+          PyExpression contextManager = withItem.getExpression();
+          if (contextManager != null) {
+            isUnderContextManager = true;
+            break;
+          }
+        }
+      }
+      return isExceptionRaised && isUnderContextManager;
     }
 
     private static boolean isFirstUnboundRead(@NotNull PyReferenceExpression node, @NotNull ScopeOwner owner) {

@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * as the language's whitespace tokens. See {@link com.intellij.lang.ParserDefinition}
  *
  * @see com.intellij.lang.LanguageFormatting
- * @see FormattingModelProvider#createFormattingModelForPsiFile(com.intellij.psi.PsiFile, Block, com.intellij.psi.codeStyle.CodeStyleSettings)
+ * @see FormattingModelProvider#createFormattingModelForPsiFile(PsiFile, Block, CodeStyleSettings)
  */
 
 public interface FormattingModelBuilder {
@@ -58,5 +58,7 @@ public interface FormattingModelBuilder {
    * @return the range to reformat, or null if the default range should be used
    */
   @Nullable
-  TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset);
+  default TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
+    return null;
+  }
 }

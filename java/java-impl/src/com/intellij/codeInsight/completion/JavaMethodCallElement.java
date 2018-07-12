@@ -313,7 +313,7 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     int braceOffset = offset - 1;
     int numberOfParametersToDisplay = parametersCount > 1 && PsiImplUtil.isVarArgs(method) ? parametersCount - 1 : parametersCount;
     int numberOfCommas = Math.min(numberOfParametersToDisplay, limit) - 1;
-    String commas = StringUtil.repeat(", ", numberOfCommas);
+    String commas = Registry.is("editor.completion.hints.virtual.comma") ? "" : StringUtil.repeat(", ", numberOfCommas);
     editor.getDocument().insertString(offset, commas);
 
     PsiDocumentManager.getInstance(project).commitDocument(document);

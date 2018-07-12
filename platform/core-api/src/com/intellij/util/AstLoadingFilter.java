@@ -111,12 +111,12 @@ public class AstLoadingFilter {
   }
 
   public static <T, E extends Throwable>
-  T disableTreeLoading(@NotNull ThrowableComputable<T, E> computable) throws E {
+  T disableTreeLoading(@NotNull ThrowableComputable<? extends T, E> computable) throws E {
     return disableTreeLoading(computable, () -> null);
   }
 
   public static <T, E extends Throwable>
-  T disableTreeLoading(@NotNull ThrowableComputable<T, E> computable, @NotNull Supplier<String> debugInfo) throws E {
+  T disableTreeLoading(@NotNull ThrowableComputable<? extends T, E> computable, @NotNull Supplier<String> debugInfo) throws E {
     if (myDisabledInfo.get() != null) {
       return computable.compute();
     }
@@ -142,13 +142,13 @@ public class AstLoadingFilter {
   }
 
   public static <T, E extends Throwable>
-  T forceEnableTreeLoading(@NotNull PsiFile psiFile, @NotNull ThrowableComputable<T, E> computable) throws E {
+  T forceEnableTreeLoading(@NotNull PsiFile psiFile, @NotNull ThrowableComputable<? extends T, E> computable) throws E {
     VirtualFile virtualFile = psiFile.getVirtualFile();
     return virtualFile == null ? computable.compute() : forceEnableTreeLoading(virtualFile, computable);
   }
 
   public static <T, E extends Throwable>
-  T forceEnableTreeLoading(@NotNull VirtualFile virtualFile, @NotNull ThrowableComputable<T, E> computable) throws E {
+  T forceEnableTreeLoading(@NotNull VirtualFile virtualFile, @NotNull ThrowableComputable<? extends T, E> computable) throws E {
     Set<VirtualFile> enabledFiles = myForcedEnabledFiles.get();
     if (enabledFiles.add(virtualFile)) {
       try {

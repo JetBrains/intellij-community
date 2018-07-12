@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaDirectoryService;
@@ -94,6 +95,24 @@ public final class DevkitActionsUtil {
     Messages.showMessageDialog(project, DevKitBundle.message("error.no.plugin.xml"),
                                CommonBundle.getErrorTitle(), Messages.getErrorIcon());
     return null;
+  }
+
+  /**
+   * @throws IncorrectOperationException
+   */
+  public static void checkCanCreateClass(PsiDirectory directory, String name) {
+    PsiDirectory currentDir = directory;
+    String packageName = StringUtil.getPackageName(name);
+    if (!packageName.isEmpty()) {
+      for (String dir : packageName.split("\\.")) {
+        PsiDirectory childDir = currentDir.findSubdirectory(dir);
+        if (childDir == null) {
+          return;
+        }
+        currentDir = childDir;
+      }
+    }
+    JavaDirectoryService.getInstance().checkCreateClass(currentDir, StringUtil.getShortName(name));
   }
 
   public static PsiClass createSingleClass(String name, String classTemplateName, PsiDirectory directory) {

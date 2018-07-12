@@ -15,9 +15,9 @@
  */
 package com.siyeh.ig.numeric;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.codeInspection.dataFlow.NullnessUtil;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -70,7 +70,7 @@ public class BigDecimalEqualsInspection extends BaseInspection {
       final String qualifierText = commentTracker.text(check.getLeft(), ParenthesesUtils.METHOD_CALL_PRECEDENCE);
       final String argText = commentTracker.text(check.getRight());
       String replacement = qualifierText + ".compareTo(" + argText + ")==0";
-      if (!check.isLeftDereferenced() && NullnessUtil.getExpressionNullness(check.getLeft(), true) != Nullness.NOT_NULL) {
+      if (!check.isLeftDereferenced() && NullabilityUtil.getExpressionNullability(check.getLeft(), true) != Nullability.NOT_NULL) {
         replacement = commentTracker.text(check.getLeft(), ParenthesesUtils.EQUALITY_PRECEDENCE) + "!=null && " + replacement;
       }
       PsiReplacementUtil.replaceExpression(call, replacement, commentTracker);

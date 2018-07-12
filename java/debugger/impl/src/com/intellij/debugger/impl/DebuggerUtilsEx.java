@@ -8,7 +8,6 @@ package com.intellij.debugger.impl;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.debugger.DebuggerBundle;
-import com.intellij.debugger.EvaluatingComputable;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.*;
@@ -433,36 +432,22 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
+  /**
+   * @deprecated use {@link EvaluationContext#keep(Value)} directly
+   */
+  @Deprecated
   public static void keep(Value value, EvaluationContext context) {
-    if (value instanceof ObjectReference) {
-      ((SuspendContextImpl)context.getSuspendContext()).keep((ObjectReference)value);
-    }
+    context.keep(value);
   }
 
   public static StringReference mirrorOfString(@NotNull String s, VirtualMachineProxyImpl virtualMachineProxy, EvaluationContext context)
     throws EvaluateException {
-    return computeAndKeep(() -> virtualMachineProxy.mirrorOf(s), context);
+    return context.computeAndKeep(() -> virtualMachineProxy.mirrorOf(s));
   }
 
   public static ArrayReference mirrorOfArray(@NotNull ArrayType arrayType, int dimension, EvaluationContext context)
     throws EvaluateException {
-    return computeAndKeep(() -> context.getDebugProcess().newInstance(arrayType, dimension), context);
-  }
-
-  public static <T extends Value> T computeAndKeep(EvaluatingComputable<T> computable, EvaluationContext context) throws EvaluateException {
-    int retries = 10;
-    while (true) {
-      T res = computable.compute();
-      try {
-        keep(res, context);
-        return res;
-      }
-      catch (ObjectCollectedException oce) {
-        if (--retries < 0) {
-          throw oce;
-        }
-      }
-    }
+    return context.computeAndKeep(() -> context.getDebugProcess().newInstance(arrayType, dimension));
   }
 
   public abstract DebuggerTreeNode  getSelectedNode    (DataContext context);
@@ -568,6 +553,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     String getClassName() {
       return "";
     }
+  }
+
+  public static String methodKey(Method m) {
+    return m.declaringType().name() + '.' + m.name() + m.signature();
   }
 
   public static String methodNameWithArguments(Method m) {
@@ -933,15 +922,7 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   public static final Comparator<Method> LAMBDA_ORDINAL_COMPARATOR = Comparator.comparingInt(m -> getLambdaOrdinal(m.name()));
 
   public static int getLambdaOrdinal(@NotNull String name) {
-    int pos = name.lastIndexOf('$');
-    if (pos > -1) {
-      try {
-        return Integer.parseInt(name.substring(pos + 1));
-      }
-      catch (NumberFormatException ignored) {
-      }
-    }
-    return -1;
+    return StringUtil.parseInt(StringUtil.substringAfterLast(name, "$"), -1);
   }
 
   public static List<PsiLambdaExpression> collectLambdas(@NotNull SourcePosition position, final boolean onlyOnTheLine) {

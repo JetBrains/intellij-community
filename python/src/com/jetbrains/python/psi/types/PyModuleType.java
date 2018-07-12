@@ -29,7 +29,6 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.resolve.*;
-import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -293,9 +292,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       final String visibleName = element.getVisibleName();
       if (importedQName != null) {
         importedQNames.add(importedQName);
-        final QualifiedName implicitSubModuleQName = importedQName.append(visibleName);
-        if (implicitSubModuleQName != null) {
-          importedQNames.add(implicitSubModuleQName);
+        if (visibleName != null) {
+          importedQNames.add(importedQName.append(visibleName));
         }
       }
       else {

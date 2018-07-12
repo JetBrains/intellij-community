@@ -2,7 +2,12 @@
 
 package com.theoryinpractice.testng.inspection;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -59,9 +64,19 @@ public class ConvertOldAnnotationInspection extends AbstractBaseJavaLocalInspect
       return DISPLAY_NAME;
     }
 
+    @Override
+    public boolean startInWriteAction() {
+      return false;
+    }
+
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final PsiAnnotation annotation = (PsiAnnotation)descriptor.getPsiElement();
       if (!TestNGUtil.checkTestNGInClasspath(annotation)) return;
+      if (!FileModificationService.getInstance().preparePsiElementsForWrite(annotation)) return;
+      WriteAction.run(() -> doFix(annotation));
+    }
+
+    private static void doFix(PsiAnnotation annotation) {
       final PsiModifierList modifierList = PsiTreeUtil.getParentOfType(annotation, PsiModifierList.class);
       LOG.assertTrue(modifierList != null);
       try {

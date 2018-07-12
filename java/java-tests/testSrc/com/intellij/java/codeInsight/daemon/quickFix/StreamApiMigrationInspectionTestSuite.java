@@ -16,7 +16,10 @@
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 
+import com.intellij.codeInsight.daemon.quickFix.ActionHint;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
+import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.intention.impl.config.IntentionManagerImpl;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.streamMigration.StreamApiMigrationInspection;
 import com.intellij.pom.java.LanguageLevel;
@@ -66,6 +69,12 @@ public class StreamApiMigrationInspectionTestSuite {
     }
 
     public void test() { doAllTests(); }
+
+    @Override
+    protected void doAction(@NotNull ActionHint actionHint, String testFullPath, String testName) throws Exception {
+      ((IntentionManagerImpl)IntentionManager.getInstance())
+        .withDisabledIntentions(() -> super.doAction(actionHint, testFullPath, testName));
+    }
 
     abstract String getFolder();
 

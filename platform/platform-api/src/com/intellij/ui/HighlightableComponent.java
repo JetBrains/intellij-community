@@ -243,9 +243,9 @@ public class HighlightableComponent extends JComponent implements Accessible {
 
     if (isOpaque()) {
       g.setColor(getBackground());
-      g.fillRect(0,0,textOffset-2,getHeight());
+      g.fillRect(0, 0, Math.max(0, textOffset - 2), getHeight());
       g.setColor(bgColor);
-      g.fillRect(textOffset-2, 0, getWidth(), getHeight());
+      g.fillRect(Math.max(0, textOffset - 2), 0, getWidth(), getHeight());
     }
 
     // paint icon
@@ -351,7 +351,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
     UISettings.setupAntialiasing(g);
   }
 
-  private int getTextOffset() {
+  protected int getTextOffset() {
     if (myIcon == null){
       return 2;
     }
@@ -384,7 +384,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
   }
 
   @NotNull
-  public Map<String, Rectangle> getHightlightedRegionsBoundsMap() {
+  public Map<String, Rectangle> getHighlightedRegionsBoundsMap() {
 
     HashMap<String, Rectangle> map = new HashMap<>();
     FontMetrics defFontMetrics = getFontMetrics(getFont());
@@ -404,7 +404,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
         FontMetrics fontMetrics = getFontMetrics(regFont);
         pivot += fontMetrics.stringWidth(text);
         end = pivot;
-        map.put(text, new Rectangle(this.getBounds().x + start, this.getBounds().y, end, this.getBounds().height));
+        map.put(text, new Rectangle(this.getBounds().x + start, this.getBounds().y, end - start, this.getBounds().height));
       }
     }
     return map;

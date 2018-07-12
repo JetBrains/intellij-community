@@ -70,7 +70,9 @@ public interface PsiModificationTracker extends ModificationTracker {
    * The corresponding {@link CachedValue} will then be flushed on every physical PSI change that doesn't happen inside a Java code block.
    * This can include changes on Java class or file level, or changes in non-Java files, e.g. XML. Rarely needed.
    * @see #getOutOfCodeBlockModificationCount()
+   * @deprecated rarely supported by language plugins; also a wrong way for optimisations
    */
+  @Deprecated
   Key OUT_OF_CODE_BLOCK_MODIFICATION_COUNT = Key.create("OUT_OF_CODE_BLOCK_MODIFICATION_COUNT");
 
   /**
@@ -95,12 +97,16 @@ public interface PsiModificationTracker extends ModificationTracker {
 
   /**
    * @return Same as {@link #getJavaStructureModificationCount()}, but also includes changes in non-Java files, e.g. XML. Rarely needed.
+   * @deprecated rarely supported by language plugins; also a wrong way for optimisations
    */
+  @Deprecated
   long getOutOfCodeBlockModificationCount();
 
   /**
    * @return an object returning {@link #getOutOfCodeBlockModificationCount()}
+   * @deprecated rarely supported by language plugins; also a wrong way for optimisations
    */
+  @Deprecated
   @NotNull
   ModificationTracker getOutOfCodeBlockModificationTracker();
 

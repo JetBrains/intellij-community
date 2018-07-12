@@ -1,32 +1,25 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.ide.DataManager;
+import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
-import java.util.HashMap;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class SimpleDataContext implements DataContext {
   private final Map<String, Object> myDataId2Data;
   private final DataContext myParent;
+  private boolean myWithRules = false;
+  private DataProvider myDataProvider;
 
   private SimpleDataContext(String dataId, Object data, DataContext parent) {
     myDataId2Data = new HashMap<>(1);
@@ -34,9 +27,19 @@ public class SimpleDataContext implements DataContext {
     myParent = parent;
   }
   
-  private SimpleDataContext(Map<String, Object> dataid2data, DataContext parent) {
+  private SimpleDataContext(Map<String, Object> dataid2data, DataContext parent, boolean withRules) {
     myDataId2Data = dataid2data;
     myParent = parent;
+    myWithRules = withRules;
+    if (withRules) {
+      myDataProvider = new DataProvider() {
+        @Nullable
+        @Override
+        public Object getData(String dataId) {
+          return myDataId2Data.get(dataId);
+        }
+      };
+    }
   }
 
   @Override
@@ -48,6 +51,13 @@ public class SimpleDataContext implements DataContext {
       result = IdeFocusManager.getGlobalInstance().getFocusOwner();
     }
 
+    if (result == null && myWithRules) {
+      GetDataRule rule = ((DataManagerImpl)DataManager.getInstance()).getDataRule(dataId);
+      if (rule != null) {
+        return rule.getData(myDataProvider);
+      }
+    }
+
     return result;
   }
 
@@ -56,7 +66,14 @@ public class SimpleDataContext implements DataContext {
   }
   
   public static DataContext getSimpleContext(Map<String,Object> dataId2data, DataContext parent) {
-    return new SimpleDataContext(dataId2data, parent);
+    return new SimpleDataContext(dataId2data, parent, false);
+  }
+
+  /**
+   * Creates a simple data context which can apply data rules.
+   */
+  public static DataContext getSimpleContext(Map<String, Object> dataId2data, DataContext parent, boolean withRules) {
+    return new SimpleDataContext(dataId2data, parent, withRules);
   }
 
   public static DataContext getSimpleContext(String dataId, Object data) {

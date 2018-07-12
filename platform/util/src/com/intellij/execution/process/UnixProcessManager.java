@@ -278,9 +278,4 @@ public class UnixProcessManager {
       sendSignal(pid, signal);
     }
   }
-
-  /** @deprecated to be removed in IDEA 2018 */
-  public static int getProcessPid(@NotNull Process process) {
-    return getProcessId(process);
-  }
 }

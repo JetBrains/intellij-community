@@ -460,9 +460,16 @@ public class LambdaUtil {
           gParent = gParent.getParent();
         }
 
+        JavaResolveResult[] results = null;
         if (gParent instanceof PsiMethodCallExpression) {
+          results = ((PsiMethodCallExpression)gParent).getMethodExpression().multiResolve(true);
+        }
+        else if (gParent instanceof PsiConstructorCall){
+          results = getConstructorCandidates((PsiConstructorCall)gParent);
+        }
+        
+        if (results != null) {
           final Set<PsiType> types = new HashSet<>();
-          final JavaResolveResult[] results = ((PsiMethodCallExpression)gParent).getMethodExpression().multiResolve(true);
           for (JavaResolveResult result : results) {
             final PsiType functionalExpressionType = getSubstitutedType(functionalExpression, true, lambdaIdx, result);
             if (functionalExpressionType != null && types.add(functionalExpressionType)) {
@@ -474,6 +481,28 @@ public class LambdaUtil {
       }
     }
     return false;
+  }
+
+  @Nullable
+  private static JavaResolveResult[] getConstructorCandidates(PsiConstructorCall parentCall) {
+    final JavaPsiFacade facade = JavaPsiFacade.getInstance(parentCall.getProject());
+    PsiExpressionList argumentList = parentCall.getArgumentList();
+    if (argumentList != null) {
+      PsiClassType classType = null;
+      if (parentCall instanceof PsiNewExpression) {
+        PsiJavaCodeReferenceElement ref = ((PsiNewExpression)parentCall).getClassReference();
+        classType = ref != null ? facade.getElementFactory().createType(ref) : null;
+      }
+      else if (parentCall instanceof PsiEnumConstant) {
+        PsiClass containingClass = ((PsiEnumConstant)parentCall).getContainingClass();
+        classType = containingClass != null ? facade.getElementFactory().createType(containingClass) : null;
+      }
+      
+      if (classType != null) {
+        return facade.getResolveHelper().multiResolveConstructor(classType, argumentList, parentCall);
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -777,7 +806,8 @@ public class LambdaUtil {
       if (resolveMethod == null) {
         return null;
       }
-      PsiClass anEnum = JavaPsiFacade.getElementFactory(call.getProject()).createEnum(enumName);
+      PsiElement contextFile = call.getContainingFile().copy();
+      PsiClass anEnum = (PsiClass)contextFile.add(JavaPsiFacade.getElementFactory(call.getProject()).createEnum(enumName));
       anEnum.add(resolveMethod);
       return  (PsiCall)anEnum.add(call);
     }

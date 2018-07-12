@@ -125,29 +125,15 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     }
   }
 
-  /**
-   * @deprecated use {@link #addFavoritesListener(FavoritesListener, Disposable)} instead
-   */
-  public void addFavoritesListener(FavoritesListener listener) {
-    myListeners.add(listener);
-    listener.rootsChanged();
-  }
   public void addFavoritesListener(final FavoritesListener listener, @NotNull Disposable parent) {
     myListeners.add(listener);
     listener.rootsChanged();
     Disposer.register(parent, new Disposable() {
       @Override
       public void dispose() {
-        removeFavoritesListener(listener);
+        myListeners.remove(listener);
       }
     });
-  }
-
-  /**
-   * @deprecated use {@link #addFavoritesListener(FavoritesListener, Disposable)} instead
-   */
-  public void removeFavoritesListener(FavoritesListener listener) {
-    myListeners.remove(listener);
   }
 
   List<AbstractTreeNode> createRootNodes() {

@@ -1,12 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
-import com.intellij.ide.ui.laf.VisualPaddingsProvider;
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -19,16 +15,10 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class DarculaCheckBoxUI extends MetalCheckBoxUI implements VisualPaddingsProvider {
+public class DarculaCheckBoxUI extends MetalCheckBoxUI {
   private static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(18)).asUIResource();
 
-  @Nullable
-  @Override
-  public Insets getVisualPaddings(@NotNull Component component) {
-    return JBUI.insets(0, 2, 0, 0);
-  }
-
-  @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
+  @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
   public static ComponentUI createUI(JComponent c) {
     return new DarculaCheckBoxUI();
   }
@@ -39,12 +29,6 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI implements VisualPaddings
     if (UIUtil.getParentOfType(CellRendererPane.class, c) != null) {
       c.setBorder(null);
     }
-  }
-
-  @Override
-  public Dimension getMinimumSize(JComponent c) {
-    Dimension size = super.getMinimumSize(c);
-    return JBUI.isCompensateVisualPaddingOnComponentLevel(c.getParent()) ? size : new Dimension(size.width, DarculaUIUtil.DARCULA_INPUT_HEIGHT);
   }
 
   @Override public void installDefaults(AbstractButton b) {
@@ -61,16 +45,14 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI implements VisualPaddings
     Graphics2D g = (Graphics2D)g2d;
     Dimension size = c.getSize();
 
-    Rectangle viewRect = new Rectangle(size);
+    AbstractButton b = (AbstractButton) c;
+    Rectangle viewRect = updateViewRect(b, new Rectangle(size));
     Rectangle iconRect = new Rectangle();
     Rectangle textRect = new Rectangle();
-    AbstractButton b = (AbstractButton) c;
 
     Font f = c.getFont();
     g.setFont(f);
     FontMetrics fm = SwingUtilities2.getFontMetrics(c, g, f);
-
-    JBInsets.removeFrom(viewRect, c.getInsets());
 
     String text = SwingUtilities.layoutCompoundLabel(
       c, fm, b.getText(), getDefaultIcon(),
@@ -88,9 +70,16 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI implements VisualPaddings
     drawText(c, g, b, fm, textRect, text);
   }
 
+  protected Rectangle updateViewRect(AbstractButton b, Rectangle viewRect) {
+    if (!(b.getBorder() instanceof DarculaCheckBoxBorder)) {
+      JBInsets.removeFrom(viewRect, b.getInsets());
+    }
+    return viewRect;
+  }
+
   protected void drawCheckIcon(JComponent c, Graphics2D g, AbstractButton b, Rectangle iconRect, boolean selected, boolean enabled) {
     String iconName = isIndeterminate(b) ? "checkBoxIndeterminate" : "checkBox";
-    Icon icon = IconCache.getIcon(iconName, selected || isIndeterminate(b), c.hasFocus(), b.isEnabled());
+    Icon icon = LafIconLookup.getIcon(iconName, selected || isIndeterminate(b), c.hasFocus(), b.isEnabled());
     icon.paintIcon(c, g, iconRect.x, iconRect.y);
   }
 
@@ -109,6 +98,18 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI implements VisualPaddings
                                                   textRect.y + fm.getAscent());
       }
     }
+  }
+
+  @Override
+  public Dimension getPreferredSize(JComponent c) {
+    return updatePreferredSize(c, super.getPreferredSize(c));
+  }
+
+  protected Dimension updatePreferredSize(JComponent c, Dimension size) {
+    if (c.getBorder() instanceof DarculaCheckBoxBorder) {
+      JBInsets.removeFrom(size, c.getInsets());
+    }
+    return size;
   }
 
   @Override

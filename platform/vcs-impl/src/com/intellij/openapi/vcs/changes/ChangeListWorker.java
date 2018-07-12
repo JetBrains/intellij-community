@@ -880,6 +880,10 @@ public class ChangeListWorker {
     private final ChangeListWorker myWorker;
 
     private final Map<String, OpenTHashSet<Change>> myChangesBeforeUpdateMap = FactoryMap.create(it -> new OpenTHashSet<>());
+
+    private static final String CONFLICT_CHANGELIST_ID = "";
+    private final Map<FilePath, String> myListsForPathsBeforeUpdate = new HashMap<>();
+
     private final Set<String> myListsToDisappear = new HashSet<>();
 
     public ChangeListUpdater(@NotNull ChangeListWorker worker) {
@@ -894,6 +898,9 @@ public class ChangeListWorker {
 
     public void notifyStartProcessingChanges(@Nullable VcsModifiableDirtyScope scope) {
       myWorker.myChangeMappings.forEach((change, list) -> {
+        putPathBeforeUpdate(ChangesUtil.getBeforePath(change), list.id);
+        putPathBeforeUpdate(ChangesUtil.getAfterPath(change), list.id);
+
         OpenTHashSet<Change> changes = myChangesBeforeUpdateMap.get(list.id);
         changes.add(change);
       });
@@ -909,6 +916,34 @@ public class ChangeListWorker {
           }
         }
       }
+    }
+
+    private void putPathBeforeUpdate(@Nullable FilePath path, @NotNull String listId) {
+      if (path == null) return;
+
+      String oldListId = myListsForPathsBeforeUpdate.get(path);
+      if (CONFLICT_CHANGELIST_ID.equals(oldListId) || listId.equals(oldListId)) return;
+
+      if (oldListId == null) {
+        myListsForPathsBeforeUpdate.put(path, listId);
+      }
+      else {
+        myListsForPathsBeforeUpdate.put(path, CONFLICT_CHANGELIST_ID);
+      }
+    }
+
+    @Nullable
+    private String guessChangeListByPaths(@NotNull Change change) {
+      FilePath bPath = ChangesUtil.getBeforePath(change);
+      FilePath aPath = ChangesUtil.getAfterPath(change);
+
+      String bListId = myListsForPathsBeforeUpdate.get(bPath);
+      String aListId = myListsForPathsBeforeUpdate.get(aPath);
+      if (CONFLICT_CHANGELIST_ID.equals(bListId) || CONFLICT_CHANGELIST_ID.equals(aListId)) return null;
+      if (bListId == null && aListId == null) return null;
+      if (bListId == null) return aListId;
+      if (aListId == null) return bListId;
+      return bListId.equals(aListId) ? bListId : null;
     }
 
     @NotNull
@@ -987,6 +1022,7 @@ public class ChangeListWorker {
       myListsToDisappear.clear();
 
       myChangesBeforeUpdateMap.clear();
+      myListsForPathsBeforeUpdate.clear();
     }
 
     private void doneProcessingChanges(@NotNull ChangeListWorker.ListData list,
@@ -1100,7 +1136,18 @@ public class ChangeListWorker {
         Set<Change> changesBeforeUpdate = myChangesBeforeUpdateMap.get(list.id);
         if (changesBeforeUpdate.contains(change)) {
           if (LOG.isDebugEnabled()) {
-            LOG.debug("[addChangeToCorrespondingList] matched: " + list.name);
+            LOG.debug("[addChangeToCorrespondingList] matched by change: " + list.name);
+          }
+          return list;
+        }
+      }
+
+      String listId = guessChangeListByPaths(change);
+      if (listId != null) {
+        ListData list = myWorker.getDataById(listId);
+        if (list != null) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("[addChangeToCorrespondingList] matched by paths: " + list.name);
           }
           return list;
         }

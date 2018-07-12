@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.immutable
 
 import com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP
@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.transformations.plusAssign
 class ImmutableTransformationSupport : AstTransformationSupport {
 
   override fun applyTransformation(context: TransformationContext) {
-    val annotation = context.getAnnotation(GROOVY_TRANSFORM_IMMUTABLE) ?: return
+    val annotation = context.getAnnotation(GROOVY_TRANSFORM_IMMUTABLE) ?: context.getAnnotation(GROOVY_TRANSFORM_IMMUTABLE_BASE) ?: return
     if (annotation.findDeclaredDetachedValue(immutableCopyWith)?.booleanValue() != true) return
     if (context.fields.isEmpty()) return
     if (context.findMethodsByName(immutableCopyWith, false).any { it.parameters.size == 1 }) return

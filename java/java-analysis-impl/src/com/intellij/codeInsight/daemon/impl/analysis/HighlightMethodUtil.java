@@ -608,7 +608,7 @@ public class HighlightMethodUtil {
 
   private static String buildOneLineMismatchDescription(@NotNull PsiExpressionList list,
                                                         @NotNull MethodCandidateInfo candidateInfo,
-                                                        @NotNull Ref<PsiElement> elementToHighlight) {
+                                                        @NotNull Ref<? super PsiElement> elementToHighlight) {
     final PsiExpression[] expressions = list.getExpressions();
     final PsiMethod resolvedMethod = candidateInfo.getElement();
     final PsiSubstitutor substitutor = candidateInfo.getSubstitutor();
@@ -1306,6 +1306,7 @@ public class HighlightMethodUtil {
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
     if (!hasNoBody) {
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteMethodBodyFix(method));
+      QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createPushDownMethodFix());
     }
     if (method.hasModifierProperty(PsiModifier.ABSTRACT) && !isInterface) {
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.ABSTRACT, false, false));

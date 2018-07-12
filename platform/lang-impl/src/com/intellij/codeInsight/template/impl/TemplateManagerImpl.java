@@ -82,15 +82,6 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
 
   }
 
-  /**
-   * @deprecated Use {@link #setTemplateTesting(Project, Disposable)} instead
-   */
-  @TestOnly
-  @Deprecated
-  public void setTemplateTesting(final boolean templateTesting) {
-    myTemplateTesting = templateTesting;
-  }
-
   @TestOnly
   public static void setTemplateTesting(Project project, Disposable parentDisposable) {
     final TemplateManagerImpl instance = (TemplateManagerImpl)getInstance(project);

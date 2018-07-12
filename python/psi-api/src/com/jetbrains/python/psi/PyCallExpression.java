@@ -273,24 +273,6 @@ public interface PyCallExpression extends PyCallSiteExpression {
       myMappedTupleParameters = tupleMappedParameters;
     }
 
-    /**
-     * @deprecated
-     * Use {@link #PyArgumentsMapping(PyCallSiteExpression, PyMarkedCallee, List, Map, List, List, List, List, Map)} that includes
-     * implicitly mapped parameters. This constructor will be removed in 2018.2.
-     */
-    @Deprecated
-    public PyArgumentsMapping(@NotNull PyCallSiteExpression callSiteExpression,
-                              @Nullable PyMarkedCallee markedCallee,
-                              @NotNull Map<PyExpression, PyCallableParameter> mappedParameters,
-                              @NotNull List<PyCallableParameter> unmappedParameters,
-                              @NotNull List<PyExpression> unmappedArguments,
-                              @NotNull List<PyCallableParameter> parametersMappedToVariadicPositionalArguments,
-                              @NotNull List<PyCallableParameter> parametersMappedToVariadicKeywordArguments,
-                              @NotNull Map<PyExpression, PyCallableParameter> tupleMappedParameters) {
-      this(callSiteExpression, markedCallee, Collections.emptyList(), mappedParameters, unmappedParameters, unmappedArguments,
-           parametersMappedToVariadicPositionalArguments, parametersMappedToVariadicKeywordArguments, tupleMappedParameters);
-    }
-
     @NotNull
     public static PyArgumentsMapping empty(@NotNull PyCallSiteExpression callSiteExpression) {
       return new PyCallExpression.PyArgumentsMapping(callSiteExpression,

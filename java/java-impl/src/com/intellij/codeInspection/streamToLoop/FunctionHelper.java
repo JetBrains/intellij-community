@@ -11,10 +11,12 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.FunctionalExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
@@ -132,10 +134,9 @@ abstract class FunctionHelper {
   @Contract("null, _, _ -> null")
   @Nullable
   static FunctionHelper create(PsiExpression expression, int paramCount, boolean allowReturns) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     if(expression == null) return null;
-    PsiType type = expression instanceof PsiFunctionalExpression
-                   ? ((PsiFunctionalExpression)expression).getFunctionalInterfaceType()
-                   : expression.getType();
+    PsiType type = FunctionalExpressionUtils.getFunctionalExpressionType(expression);
     if(!(type instanceof PsiClassType)) return null;
     PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(type);
     if (interfaceMethod == null || interfaceMethod.getParameterList().getParametersCount() != paramCount) return null;
@@ -619,7 +620,9 @@ abstract class FunctionHelper {
     String getStatementText() {
       PsiElement[] children = myBody.getChildren();
       // Keep everything except braces
-      return StreamEx.of(children, 1, children.length - 1).map(PsiElement::getText).joining().trim();
+      return StreamEx.of(children, 1, children.length - 1)
+                     .dropWhile(e -> e instanceof PsiWhiteSpace)
+                     .map(PsiElement::getText).joining();
     }
 
     void transform(StreamToLoopReplacementContext context, String... argumentValues) {

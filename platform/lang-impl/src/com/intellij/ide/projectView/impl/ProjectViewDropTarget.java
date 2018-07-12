@@ -2,11 +2,7 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.dnd.DnDAction;
-import com.intellij.ide.dnd.DnDEvent;
-import com.intellij.ide.dnd.DnDNativeTarget;
-import com.intellij.ide.dnd.FileCopyPasteUtil;
-import com.intellij.ide.dnd.TransferableWrapper;
+import com.intellij.ide.dnd.*;
 import com.intellij.ide.projectView.impl.nodes.DropTargetNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -31,11 +27,9 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JTree;
+import javax.swing.*;
 import javax.swing.tree.TreePath;
-import java.awt.Image;
-import java.awt.Point;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.awt.dnd.DnDConstants;
 import java.io.File;
 import java.util.ArrayList;
@@ -271,6 +265,12 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
         Messages.showMessageDialog(myProject, "Move refactoring is not available while indexing is in progress", "Indexing", null);
         return;
       }
+
+      if (!myProject.isInitialized()) {
+        Messages.showMessageDialog(myProject, "Move refactoring is not available while project initialization is in progress", "Project Initialization", null);
+        return;
+      }
+
       Module module = getModule(target);
       final DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
       PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -367,7 +367,7 @@ abstract class ProjectViewDropTarget implements DnDNativeTarget {
       }
       else {
         final PsiFile containingFile = targetElement.getContainingFile();
-        LOG.assertTrue(containingFile != null);
+        LOG.assertTrue(containingFile != null, targetElement);
         psiDirectory = containingFile.getContainingDirectory();
       }
       TransactionGuard.getInstance().submitTransactionAndWait(() -> CopyHandler.doCopy(sources, psiDirectory));

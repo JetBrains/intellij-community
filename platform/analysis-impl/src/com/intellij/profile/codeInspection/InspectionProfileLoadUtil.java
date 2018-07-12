@@ -25,7 +25,6 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -40,21 +39,9 @@ public class InspectionProfileLoadUtil {
       }
     }
     if (name == null) {
-      //noinspection deprecation
       name = element.getAttributeValue("profile_name");
     }
     return name != null ? name : FileUtilRt.getNameWithoutExtension(file.getFileName().toString());
-  }
-
-  /**
-   * @deprecated Please use load(file: Path, ...)
-   */
-  @NotNull
-  @Deprecated
-  public static InspectionProfileImpl load(@NotNull File file,
-                                           @NotNull InspectionToolRegistrar registrar,
-                                           @NotNull InspectionProfileManager profileManager) throws JDOMException, IOException, InvalidDataException {
-    return load(file.toPath(), registrar, profileManager);
   }
 
   @NotNull

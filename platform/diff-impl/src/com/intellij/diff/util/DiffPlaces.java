@@ -18,6 +18,7 @@ package com.intellij.diff.util;
 public interface DiffPlaces {
   String DEFAULT = "Default";
   String CHANGES_VIEW = "ChangesView";
+  String VCS_LOG_VIEW = "VcsLogView";
   String COMMIT_DIALOG = "CommitDialog";
   String TESTS_FAILED_ASSERTIONS = "TestsFiledAssertions";
   String MERGE = "Merge";

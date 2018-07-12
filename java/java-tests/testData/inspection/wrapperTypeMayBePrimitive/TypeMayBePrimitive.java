@@ -23,6 +23,7 @@ class TypeMayBePrimitive {
     <warning descr="Type may be primitive">Boolean</warning> boxNotNeeded;
     boxNotNeeded = getNotNullBox();
     use(boxNotNeeded);
+    boxNotNeeded |= true;
 
     Boolean bool = getBool();
     use(bool);
@@ -52,7 +53,7 @@ class TypeMayBePrimitive {
     Integer i2 = 12;
     boxedParam(i2);
 
-    Integer i3 = 12;
+    <warning descr="Type may be primitive">Integer</warning> i3 = 12;
     boxedAndPrimitiveParam(i3, i3);
   }
 
@@ -84,5 +85,17 @@ class TypeMayBePrimitive {
     <warning descr="Type may be primitive">Integer</warning> i2 = 12;
     if (i2 == 43) {
     }
+
+    Boolean b = true;
+    if (b != null) {}
+  }
+
+  void varargUse() {
+    Integer i = 12;
+    vararg(i, i, i, i);
+  }
+
+  void vararg(int k, int... i) {
+
   }
 }

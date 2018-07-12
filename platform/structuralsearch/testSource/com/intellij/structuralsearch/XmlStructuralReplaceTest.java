@@ -2,7 +2,6 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.testFramework.PlatformTestUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,7 +20,7 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
     String s3 = "<a><b/></a>";
 
     String expectedResult = "<a><b/></a>";
-    assertEquals("First tag replacement", expectedResult, Replacer.testReplace(s1, s2, s3, options, getProject()));
+    assertEquals("First tag replacement", expectedResult, replace(s1, s2, s3));
 
     String s4 = "<group id=\"EditorTabPopupMenu\">\n" +
                 "      <reference id=\"Compile\"/>\n" +
@@ -44,7 +43,7 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
                      "      <separator/>\n" +
                      "      <reference ref=\"ExternalToolsGroup\"/>\n" +
                      "</group>";
-    assertEquals("Replace tag", expectedResult, Replacer.testReplace(s4, s5, s6, options, getProject()));
+    assertEquals("Replace tag", expectedResult, replace(s4, s5, s6));
 
     String s7 = "<h4 class=\"a\">My title<aaa>ZZZZ</aaa> My title 3</h4>\n" +
                 "<h4>My title 2</h4>";
@@ -53,23 +52,23 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
 
     expectedResult = "<h5>My title <aaa>ZZZZ</aaa>  My title 3</h5>\n" +
                      "<h4>My title 2</h4>";
-    assertEquals("Replace tag saving content", expectedResult, Replacer.testReplace(s7, s8, s9, options, getProject()));
+    assertEquals("Replace tag saving content", expectedResult, replace(s7, s8, s9));
 
     expectedResult = "\n" +
                      "<h4>My title 2</h4>";
-    assertEquals("Delete tag", expectedResult, Replacer.testReplace(s7, s8, "", options, getProject()));
+    assertEquals("Delete tag", expectedResult, replace(s7, s8, ""));
 
     String what = "<'_H:h4 class=\"a\">'_Content*</'_H>";
     String by = "<$H$>$Content$</$H$>";
     expectedResult = "<h4>My title <aaa>ZZZZ</aaa>  My title 3</h4>\n" +
                      "<h4>My title 2</h4>";
-    assertEquals("Replace with variable", expectedResult, Replacer.testReplace(s7, what, by, options, getProject()));
+    assertEquals("Replace with variable", expectedResult, replace(s7, what, by));
 
     String in = "<b>Cry 'Havoc!', and <i>let slip the<br> dogs of war</i></b>";
     what = "<'_Tag:b >'_Content2*</'_Tag>";
     by = "<$Tag$ id=\"unique\">$Content2$</$Tag$>";
     expectedResult = "<b id=\"unique\">Cry 'Havoc!', and  <i>let slip the<br> dogs of war</i></b>";
-    assertEquals("Replace complex content with variable", expectedResult, Replacer.testReplace(in, what, by, options, getProject()));
+    assertEquals("Replace complex content with variable", expectedResult, replace(in, what, by));
   }
 
   public void testHtmlReplacement1() throws IOException {
@@ -90,8 +89,7 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
     String by = "<input $a$ id=\"someId1\" />";
     String expected = "<input class=\"other\" type=\"text\" ng-model=\"someModel\" placeholder=\"Some placeholder\" id=\"someId1\" />";
 
-    String actual = Replacer.testReplace(in, what, by, options, getProject());
-    assertEquals(expected, actual);
+    assertEquals(expected, replace(in, what, by));
   }
 
   public void testRemoveAttribute() {
@@ -100,13 +98,13 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
     String by = "";
     String expected = "<input class=\"other\">";
 
-    assertEquals(expected, Replacer.testReplace(in, what, by, options, getProject()));
+    assertEquals(expected, replace(in, what, by));
 
     String in2 = "<img src=\"foobar.jpg\" alt=\"alt\" width=\"108\" height=\"71\" style=\"display:block\" >";
     String what2 = "<img alt '_other*>";
     String by2 = "<img $other$>";
     assertEquals("<img src=\"foobar.jpg\" width=\"108\" height=\"71\" style=\"display:block\">",
-                 Replacer.testReplace(in2, what2, by2, options, getProject()));
+                 replace(in2, what2, by2));
   }
 
   public void testRemoveTag() {
@@ -120,7 +118,7 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
                       "  <b>liberation</b>\n" +
                       "</a>";
 
-    assertEquals(expected, Replacer.testReplace(in, what, by, options, getProject()));
+    assertEquals(expected, replace(in, what, by));
   }
 
   public void testReplaceAttributeValue() {
@@ -129,7 +127,7 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
     String by = "\"two\"";
     String expected = "<input id=\"two\" class=\"no\">";
 
-    assertEquals(expected, Replacer.testReplace(in, what, by, options, getProject()));
+    assertEquals(expected, replace(in, what, by));
   }
 
   @NotNull
@@ -150,7 +148,7 @@ public class XmlStructuralReplaceTest extends StructuralReplaceTestCase {
     String replacement = loadFile(replacementFileName);
     String expectedResult = loadFile(outFileName);
 
-    assertEquals(message, expectedResult, Replacer.testReplace(content, pattern, replacement, options,getProject(), filepattern));
+    assertEquals(message, expectedResult, replace(content, pattern, replacement, filepattern));
 
     options.getMatchOptions().setFileType(StdFileTypes.XML);
   }

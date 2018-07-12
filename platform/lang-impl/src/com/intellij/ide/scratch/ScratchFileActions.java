@@ -3,6 +3,7 @@ package com.intellij.ide.scratch;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
@@ -12,7 +13,6 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -183,7 +183,7 @@ public class ScratchFileActions {
       project, fileName, language, context.text, context.createOption);
     if (file == null) return;
 
-    new OpenFileDescriptor(project, file, context.caretOffset).navigate(true);
+    PsiNavigationSupport.getInstance().createNavigatable(project, file, context.caretOffset).navigate(true);
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (context.ideView != null && psiFile != null) {
       context.ideView.selectElement(psiFile);

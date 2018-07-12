@@ -9,5 +9,5 @@ C.attr = 'spam'
 print(C.attr)
 
 c = C()
-c.attr = 'spam'
+<warning descr="'C' object attribute 'attr' is read-only">c.attr</warning> = 'spam'
 print(c.attr)

@@ -155,6 +155,19 @@ public abstract class AbstractTestProxy extends CompositePrintable {
   }
 
   @Nullable
+  public DiffHyperlink getLeafDiffViewerProvider() {
+    DiffHyperlink provider = getDiffViewerProvider();
+    if (provider != null) return provider;
+    if (isDefect()) {
+      for (AbstractTestProxy child : getChildren()) {
+        provider = child.getLeafDiffViewerProvider();
+        if (provider != null) return provider;
+      }
+    }
+    return null;
+  }
+
+  @Nullable
   public DiffHyperlink getDiffViewerProvider() {
     return null;
   }

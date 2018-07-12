@@ -18,13 +18,14 @@ package com.intellij.internal.statistic.beans;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * ATTENTION! DO NOT IMPORT @NotNull AND @Nullable ANNOTATIONS
  * This class is also used on jetbrains web site
  */
-
+@Deprecated // to be removed in 2018.2
 public class ConvertUsagesUtil {
   static final char GROUP_SEPARATOR = ':';
   static final char GROUPS_SEPARATOR = ';';
@@ -83,50 +84,6 @@ public class ConvertUsagesUtil {
     return "";
   }
 
-  //@NotNull
-  public static Map<GroupDescriptor, Set<UsageDescriptor>> convertString(String usages) {
-    assert usages != null;
-    Map<GroupDescriptor, Set<UsageDescriptor>> descriptors = new HashMap<>();
-    for (String groupStr : usages.split(Character.toString(GROUPS_SEPARATOR))) {
-      if (!isEmptyOrSpaces(groupStr)) {
-        final StringPair group = getPair(groupStr, Character.toString(GROUP_SEPARATOR));
-        if (group != null) {
-          final String groupId = group.first;
-          assert groupId != null;
-          descriptors.putAll(convertValueString(GroupDescriptor.create(groupId), group.second));
-        }
-      }
-    }
-    return descriptors;
-  }
-
-  //@NotNull
-  public static Map<GroupDescriptor, Set<UsageDescriptor>> convertValueString(GroupDescriptor groupId, String valueData) {
-    assert groupId != null;
-    final Map<GroupDescriptor, Set<UsageDescriptor>> descriptors = new HashMap<>();
-    for (String value : valueData.split(Character.toString(GROUP_VALUE_SEPARATOR))) {
-      if (!isEmptyOrSpaces(value)) {
-        final StringPair pair = getPair(value, "=");
-        if (pair != null) {
-          final String count = pair.second;
-          if (!isEmptyOrSpaces(count)) {
-            try {
-              final int i = Integer.parseInt(count);
-              if (!descriptors.containsKey(groupId)) {
-                descriptors.put(groupId, new LinkedHashSet<>());
-              }
-              descriptors.get(groupId).add(new UsageDescriptor(pair.first, i));
-            }
-            catch (NumberFormatException ignored) {
-            }
-          }
-        }
-      }
-    }
-
-    return descriptors;
-  }
-
   //@Nullable
   public static StringPair getPair(String str, String separator) {
     assert str != null;
@@ -140,19 +97,6 @@ public class ConvertUsagesUtil {
       }
     }
     return null;
-  }
-
-  //@NotNull
-  public static <T extends UsageDescriptor> Map<GroupDescriptor, Set<T>> sortDescriptorsByPriority(Map<GroupDescriptor, Set<T>> descriptors) {
-    assert descriptors != null;
-    final SortedMap<GroupDescriptor, Set<T>> map = new TreeMap<>((g1, g2) -> {
-      final int priority = (int)(g2.getPriority() - g1.getPriority());
-      return priority == 0 ? g1.getId().compareTo(g2.getId()) : priority;
-    });
-
-    map.putAll(descriptors);
-
-    return map;
   }
 
   /**

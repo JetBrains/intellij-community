@@ -2,8 +2,10 @@
 
 package com.intellij.ui;
 
-import com.intellij.openapi.util.ScalableIcon;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.IconLoader.DarkIconProvider;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI.CachingScalableJBIcon;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +18,7 @@ import java.util.List;
 import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
 import static java.lang.Math.ceil;
 
-public class RowIcon extends CachingScalableJBIcon<RowIcon> {
+public class RowIcon extends CachingScalableJBIcon<RowIcon> implements DarkIconProvider {
   private final Alignment myAlignment;
 
   private int myWidth;
@@ -59,7 +61,7 @@ public class RowIcon extends CachingScalableJBIcon<RowIcon> {
 
   @NotNull
   @Override
-  protected RowIcon copy() {
+  public RowIcon copy() {
     return new RowIcon(this);
   }
 
@@ -68,21 +70,18 @@ public class RowIcon extends CachingScalableJBIcon<RowIcon> {
     if (myScaledIcons != null) {
       return myScaledIcons;
     }
-    if (getScale() == 1f) {
-      return myScaledIcons = myIcons;
-    }
-    for (Icon icon : myIcons) {
-      if (icon != null && !(icon instanceof ScalableIcon)) {
-        return myScaledIcons = myIcons;
+    return myScaledIcons = scaleIcons(myIcons, getScale());
+  }
+
+  static Icon[] scaleIcons(Icon[] icons, float scale) {
+    if (scale == 1f) return icons;
+    Icon[] scaledIcons = new Icon[icons.length];
+    for (int i = 0; i < icons.length; i++) {
+      if (icons[i] != null) {
+        scaledIcons[i] = IconUtil.scale(icons[i], null, scale);
       }
     }
-    myScaledIcons = new Icon[myIcons.length];
-    for (int i = 0; i < myIcons.length; i++) {
-      if (myIcons[i] != null) {
-        myScaledIcons[i] = ((ScalableIcon)myIcons[i]).scale(getScale());
-      }
-    }
-    return myScaledIcons;
+    return scaledIcons;
   }
 
   @NotNull
@@ -157,6 +156,15 @@ public class RowIcon extends CachingScalableJBIcon<RowIcon> {
     }
     myWidth = width;
     myHeight = height;
+  }
+
+  @Override
+  public Icon getDarkIcon(boolean isDark) {
+    RowIcon newIcon = copy();
+    for (int i=0; i<newIcon.myIcons.length; i++) {
+      newIcon.myIcons[i] = IconLoader.getDarkIcon(newIcon.myIcons[i], isDark);
+    }
+    return newIcon;
   }
 
   @Override

@@ -5,6 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +59,18 @@ public class RedundantExplicitVariableTypeInspection extends AbstractBaseJavaLoc
   }
 
   private static PsiElement replaceExplicitTypeWithVar(PsiTypeElement typeElement, PsiElement context) {
+    PsiElement parent = typeElement.getParent();
+    if (parent instanceof PsiVariable) {
+      PsiExpression copyVariableInitializer = ((PsiVariable)parent).getInitializer();
+      if (copyVariableInitializer instanceof PsiNewExpression) {
+        final PsiDiamondType.DiamondInferenceResult diamondResolveResult =
+          PsiDiamondTypeImpl.resolveInferredTypesNoCheck((PsiNewExpression)copyVariableInitializer, copyVariableInitializer);
+        if (!diamondResolveResult.getInferredTypes().isEmpty()) {
+          PsiDiamondTypeUtil.expandTopLevelDiamondsInside(copyVariableInitializer);
+        }
+      }
+    }
+
     return typeElement.replace(JavaPsiFacade.getElementFactory(context.getProject()).createTypeElementFromText("var", context));
   }
 

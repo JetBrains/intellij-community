@@ -61,8 +61,23 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!myClass.isValid() || !myClass.getManager().isInProject(myClass)) return false;
-    setText(QuickFixBundle.message("create.constructor.matching.super"));
-    return true;
+    PsiClass base = myClass.getSuperClass();
+    if (base == null) return false;
+    PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(base, myClass, PsiSubstitutor.EMPTY);
+    for (PsiMethod baseConstructor: base.getConstructors()) {
+      if (PsiUtil.isAccessible(baseConstructor, myClass, null)) {
+        PsiMethod derived = GenerateMembersUtil.substituteGenericMethod(baseConstructor, substitutor, myClass);
+        String className = myClass.getName();
+        LOG.assertTrue(className != null);
+        derived.setName(className);
+        if (myClass.findMethodBySignature(derived, false) == null) {
+          setText(QuickFixBundle.message("create.constructor.matching.super"));
+          return true;
+        }
+      }
+    }
+    return false;
+    
   }
 
   @Override

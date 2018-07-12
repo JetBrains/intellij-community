@@ -56,7 +56,7 @@ public class RunTargetAction extends AnAction {
     if (antTarget == null) return;
 
     ExecutionHandler.runBuild(
-      antTarget.first, new String[] {antTarget.second.getName().getValue() },
+      antTarget.first, Collections.singletonList(antTarget.second.getName().getValue()),
       null,
       e.getDataContext(),
       Collections.emptyList(),

@@ -188,7 +188,11 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
     if (gotoData.listUpdaterTask != null) {
       Alarm alarm = new Alarm(popup);
-      alarm.addRequest(() -> popup.showInBestPositionFor(editor), 300);
+      alarm.addRequest(() -> {
+        if (!editor.isDisposed()) {
+          popup.showInBestPositionFor(editor);
+        }
+      }, 300);
       gotoData.listUpdaterTask.init(popup, builder.getBackgroundUpdater(), usageView);
       ProgressManager.getInstance().run(gotoData.listUpdaterTask);
     }
@@ -246,6 +250,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   /**
    * @deprecated, use getChooserTitle(PsiElement, String, int, boolean) instead
    */
+  @Deprecated
   @NotNull
   protected String getChooserTitle(PsiElement sourceElement, String name, int length) {
     LOG.warn("Please override getChooserTitle(PsiElement, String, int, boolean) instead");

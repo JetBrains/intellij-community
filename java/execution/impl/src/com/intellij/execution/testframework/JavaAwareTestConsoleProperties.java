@@ -28,9 +28,14 @@ import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.stacktrace.StackTraceLine;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
 import com.intellij.openapi.diff.LineTokenizer;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,22 +85,37 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
     if (containingClass == null) return null;
     final String qualifiedName = containingClass.getQualifiedName();
     if (qualifiedName == null) return null;
-    String containingMethod = null;
+    PsiMethod containingMethod = null;
     for (Iterator<Location<PsiMethod>> iterator = psiLocation.getAncestors(PsiMethod.class, false); iterator.hasNext();) {
       final PsiMethod psiMethod = iterator.next().getPsiElement();
-      if (containingClass.equals(psiMethod.getContainingClass())) containingMethod = psiMethod.getName();
+      if (containingClass.equals(psiMethod.getContainingClass())) containingMethod = psiMethod;
     }
     if (containingMethod == null) return null;
+    String methodName = containingMethod.getName();
     StackTraceLine lastLine = null;
     final String[] stackTrace = new LineTokenizer(stacktrace).execute();
     for (String aStackTrace : stackTrace) {
       final StackTraceLine line = new StackTraceLine(containingClass.getProject(), aStackTrace);
-      if (containingMethod.equals(line.getMethodName()) && qualifiedName.equals(line.getClassName())) {
+      if (methodName.equals(line.getMethodName()) && qualifiedName.equals(line.getClassName())) {
         lastLine = line;
         break;
       }
     }
-    return lastLine != null ? lastLine.getOpenFileDescriptor(containingClass.getContainingFile().getVirtualFile()) : null;
+    if (lastLine != null) {
+      try {
+        int lineNumber = lastLine.getLineNumber();
+        PsiFile psiFile = containingClass.getContainingFile();
+        Document document = PsiDocumentManager.getInstance(containingClass.getProject()).getDocument(psiFile);
+        TextRange textRange = containingMethod.getTextRange();
+        if (textRange == null || document == null || 
+            lineNumber < 0 || lineNumber >= document.getLineCount() || 
+            textRange.contains(document.getLineStartOffset(lineNumber))) {
+          return new OpenFileDescriptor(containingClass.getProject(), psiFile.getVirtualFile(), lineNumber, 0);
+        }
+      }
+      catch (NumberFormatException ignored) { }
+    }     
+    return null;
   }
 
   @Nullable

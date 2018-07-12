@@ -10,19 +10,13 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.StreamApiUtil;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author Tagir Valeev
- */
 public class OptionalUtil {
   private static final String OPTIONAL_INT = "java.util.OptionalInt";
   private static final String OPTIONAL_LONG = "java.util.OptionalLong";
@@ -97,7 +91,7 @@ public class OptionalUtil {
    * @return an expression text which will unwrap an {@code Optional}.
    */
   public static String generateOptionalUnwrap(String qualifier, PsiVariable var,
-                                              PsiExpression trueExpression, PsiExpression falseExpression,
+                                              @NotNull PsiExpression trueExpression, PsiExpression falseExpression,
                                               @Nullable PsiType targetType, boolean useOrElseGet) {
     PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(trueExpression);
     PsiType trueType = trueExpression.getType();
@@ -126,15 +120,17 @@ public class OptionalUtil {
         PsiConditionalExpression condition = (PsiConditionalExpression)stripped;
         PsiExpression thenExpression = condition.getThenExpression();
         PsiExpression elseExpression = condition.getElseExpression();
-        if (elseExpression != null && PsiEquivalenceUtil.areElementsEquivalent(falseExpression, elseExpression)) {
-          return generateOptionalUnwrap(
-            qualifier + ".filter(" + LambdaUtil.createLambda(var, condition.getCondition()) + ")", var,
-            condition.getThenExpression(), falseExpression, targetType, useOrElseGet);
-        }
-        if (thenExpression != null && PsiEquivalenceUtil.areElementsEquivalent(falseExpression, thenExpression)) {
-          return generateOptionalUnwrap(
-            qualifier + ".filter(" + var.getName() + " -> " + BoolUtils.getNegatedExpressionText(condition.getCondition()) + ")", var,
-            condition.getElseExpression(), falseExpression, targetType, useOrElseGet);
+        if (thenExpression != null && elseExpression != null) {
+          if (PsiEquivalenceUtil.areElementsEquivalent(falseExpression, elseExpression)) {
+            return generateOptionalUnwrap(
+              qualifier + ".filter(" + LambdaUtil.createLambda(var, condition.getCondition()) + ")", var,
+              thenExpression, falseExpression, targetType, useOrElseGet);
+          }
+          if (PsiEquivalenceUtil.areElementsEquivalent(falseExpression, thenExpression)) {
+            return generateOptionalUnwrap(
+              qualifier + ".filter(" + var.getName() + " -> " + BoolUtils.getNegatedExpressionText(condition.getCondition()) + ")", var,
+              elseExpression, falseExpression, targetType, useOrElseGet);
+          }
         }
       }
       String suffix = null;
@@ -199,7 +195,22 @@ public class OptionalUtil {
     if (useOrElseGet && !ExpressionUtils.isSafelyRecomputableExpression(falseExpression)) {
       return qualifier + ".orElseGet(() -> " + falseExpression.getText() + ")";
     } else {
-      return qualifier + ".orElse(" + falseExpression.getText() + ")";
+      PsiType falseType = falseExpression.getType();
+      String falseText = falseExpression.getText();
+      if (falseType instanceof PsiPrimitiveType && targetType instanceof PsiPrimitiveType && !(targetType.equals(falseType))) {
+        Number falseValue = JavaPsiMathUtil.getNumberFromLiteral(falseExpression);
+        if (falseValue != null) {
+          falseText = falseValue.toString();
+          if (targetType.equals(PsiType.FLOAT)) {
+            falseText += "F";
+          } else if(targetType.equals(PsiType.DOUBLE) && !falseText.contains(".")) {
+            falseText += ".0";
+          } else if(targetType.equals(PsiType.LONG)) {
+            falseText += "L";
+          }
+        }
+      }
+      return qualifier + ".orElse(" + falseText + ")";
     }
   }
 

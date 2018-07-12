@@ -18,6 +18,14 @@ public interface TabOutScopesTracker {
   }
 
   /**
+   * Registers a new scope (empty at the time of call) at caret offset. Caret is supposed to be located between just inserted pair
+   * of quotes/brackets.
+   */
+  default void registerEmptyScopeAtCaret(@NotNull Editor editor) {
+    registerEmptyScope(editor, editor.getCaretModel().getOffset());
+  }
+
+  /**
    * Registers a new scope (empty at the time of call) at the given offset. Provided offset is supposed to point at the location between
    * just inserted pair of quotes/brackets.
    */

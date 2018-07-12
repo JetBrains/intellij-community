@@ -7,9 +7,12 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.wrapper.PathAssembler;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
 
@@ -20,6 +23,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.openapi.util.Pair.pair;
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
 
 /**
  * @author Vladislav.Soroka
@@ -51,8 +55,10 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
                                             "include ':app'");
 
     createProjectSubFile("buildSrc/src/main/groovy/org/buildsrc/BuildSrcClass.groovy", "package org.buildsrc;\n" +
-                                                                                       "public class BuildSrcClass {}");
-    createProjectSubFile("app/build.gradle", "def foo = new org.buildsrc.BuildSrcClass()");
+                                                                                       "public class BuildSrcClass {" +
+                                                                                       "   public String sayHello() { 'Hello!' }" +
+                                                                                       "}");
+    createProjectSubFile("app/build.gradle", "def foo = new org.buildsrc.BuildSrcClass().sayHello()");
 
     importProject();
     assertModules("multiproject", "app",
@@ -61,6 +67,7 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
     Module buildSrcModule = getModule("multiproject_buildSrc_main");
     assertNotNull(buildSrcModule);
     assertUsages("org.buildsrc.BuildSrcClass", GlobalSearchScope.moduleScope(buildSrcModule), 1);
+    assertUsages("org.buildsrc.BuildSrcClass", "sayHello", GlobalSearchScope.moduleScope(buildSrcModule), 1);
   }
 
   @Test
@@ -196,10 +203,24 @@ public class GradleFindUsagesTest extends GradleImportingTestCase {
   }
 
   private void assertUsages(String fqn, GlobalSearchScope scope, int count) throws Exception {
-    final PsiClass[][] psiClasses = new PsiClass[1][1];
-    edt(() -> psiClasses[0] = JavaPsiFacade.getInstance(myProject).findClasses(fqn, scope));
-    assertEquals(1, psiClasses[0].length);
-    assertUsagesCount(count, psiClasses[0][0]);
+    assertUsages(fqn, null, scope, count);
+  }
+
+  private void assertUsages(@NotNull String fqn, @Nullable String methodName, GlobalSearchScope scope, int count) throws Exception {
+    PsiClass[] psiClasses = runInEdtAndGet(() -> JavaPsiFacade.getInstance(myProject).findClasses(fqn, scope));
+    assertEquals(1, psiClasses.length);
+    PsiClass aClass = psiClasses[0];
+    if (methodName != null) {
+      PsiMethod[] methods = runInEdtAndGet(() -> aClass.findMethodsByName(methodName, false));
+      int actualUsagesCount = 0;
+      for (PsiMethod method : methods) {
+        actualUsagesCount += findUsages(method).size();
+      }
+      assertEquals(count, actualUsagesCount);
+    }
+    else {
+      assertUsagesCount(count, aClass);
+    }
   }
 
   private void assertUsages(String fqn, int count) throws Exception {

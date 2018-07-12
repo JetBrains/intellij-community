@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="34" height="42" viewBox="0 0 34 42">
+  <defs>
+    <rect id="comboright@2x-a" width="34" height="42"/>
+    <linearGradient id="comboright@2x-c" x1="50%" x2="50%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#6BB4FA"/>
+      <stop offset="100%" stop-color="#057EFF"/>
+    </linearGradient>
+    <linearGradient id="comboright@2x-e" x1="50%" x2="50%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#4CA2F8"/>
+      <stop offset="100%" stop-color="#025BFF"/>
+    </linearGradient>
+    <rect id="comboright@2x-d" width="130" height="42" x="-96" rx="8"/>
+  </defs>
+  <g fill="none" fill-rule="evenodd">
+    <mask id="comboright@2x-b" fill="#fff">
+      <use xlink:href="#comboright@2x-a"/>
+    </mask>
+    <g mask="url(#comboright@2x-b)">
+      <use fill="url(#comboright@2x-c)" xlink:href="#comboright@2x-d"/>
+      <rect width="129" height="41" x="-95.5" y=".5" stroke="url(#comboright@2x-e)" rx="8"/>
+    </g>
+    <g mask="url(#comboright@2x-b)">
+      <g transform="translate(9 23)">
+        <rect width="1" height="1" fill="#B7DAFD"/>
+        <rect width="1" height="1" x="14" fill="#B7DAFD"/>
+        <rect width="1" height="1" x="2" fill="#83BEFE"/>
+        <rect width="1" height="1" x="3" y="1" fill="#83BEFD"/>
+        <rect width="1" height="1" x="4" y="2" fill="#7FBBFF"/>
+        <rect width="1" height="1" x="5" y="3" fill="#74B7FE"/>
+        <rect width="1" height="1" x="6" y="4" fill="#71B6FE"/>
+        <rect width="1" height="1" y="2" fill="#8BC2FD"/>
+        <rect width="1" height="1" x="1" y="3" fill="#95C6FF"/>
+        <rect width="1" height="1" x="2" y="4" fill="#97C9FF"/>
+        <rect width="1" height="1" x="3" y="5" fill="#98C7FE"/>
+        <rect width="1" height="1" x="4" y="6" fill="#9BC9FF"/>
+        <rect width="1" height="1" x="5" y="7" fill="#A1CEFF"/>
+        <rect width="1" height="1" x="6" y="8" fill="#98C9FF"/>
+        <rect width="1" height="1" x="14" y="2" fill="#8BC2FD" transform="matrix(-1 0 0 1 29 0)"/>
+        <rect width="1" height="1" x="13" y="3" fill="#95C6FF" transform="matrix(-1 0 0 1 27 0)"/>
+        <rect width="1" height="1" x="12" y="4" fill="#97C9FF" transform="matrix(-1 0 0 1 25 0)"/>
+        <rect width="1" height="1" x="11" y="5" fill="#98C7FE" transform="matrix(-1 0 0 1 23 0)"/>
+        <rect width="1" height="1" x="10" y="6" fill="#9BC9FF" transform="matrix(-1 0 0 1 21 0)"/>
+        <rect width="1" height="1" x="9" y="7" fill="#A1CEFF" transform="matrix(-1 0 0 1 19 0)"/>
+        <rect width="1" height="1" x="8" y="8" fill="#98C9FF" transform="matrix(-1 0 0 1 17 0)"/>
+        <rect width="1" height="1" x="12" fill="#83BEFE" transform="matrix(-1 0 0 1 25 0)"/>
+        <rect width="1" height="1" x="11" y="1" fill="#83BEFD" transform="matrix(-1 0 0 1 23 0)"/>
+        <rect width="1" height="1" x="10" y="2" fill="#7FBBFF" transform="matrix(-1 0 0 1 21 0)"/>
+        <rect width="1" height="1" x="9" y="3" fill="#74B7FE" transform="matrix(-1 0 0 1 19 0)"/>
+        <rect width="1" height="1" x="8" y="4" fill="#71B6FE" transform="matrix(-1 0 0 1 17 0)"/>
+        <rect width="1" height="1" x="7" y="5" fill="#A6D0FF" transform="matrix(-1 0 0 1 15 0)"/>
+      </g>
+    </g>
+    <path fill="#FFF" d="M23,25 L23,26 L22,26 L22,27 L21,27 L21,28 L20,28 L20,29 L19,29 L19,30 L18,30 L18,31 L17,31 L17,32 L16,32 L16,31 L15,31 L15,30 L14,30 L14,29 L13,29 L13,28 L12,28 L12,27 L11,27 L11,26 L10,26 L10,25 L9,25 L9,24 L10,24 L10,23 L11,23 L11,24 L12,24 L12,25 L13,25 L13,26 L14,26 L14,27 L15,27 L15,28 L16,28 L16,29 L17,29 L17,28 L18,28 L18,27 L19,27 L19,26 L20,26 L20,25 L21,25 L21,24 L22,24 L22,23 L23,23 L23,24 L24,24 L24,25 L23,25 Z" mask="url(#comboright@2x-b)"/>
+    <g mask="url(#comboright@2x-b)">
+      <g transform="matrix(1 0 0 -1 9 17)">
+        <rect width="1" height="1" fill="#B7DAFD"/>
+        <rect width="1" height="1" x="14" fill="#B7DAFD"/>
+        <rect width="1" height="1" x="2" fill="#83BEFE"/>
+        <rect width="1" height="1" x="3" y="1" fill="#83BEFD"/>
+        <rect width="1" height="1" x="4" y="2" fill="#7FBBFF"/>
+        <rect width="1" height="1" x="5" y="3" fill="#74B7FE"/>
+        <rect width="1" height="1" x="6" y="4" fill="#71B6FE"/>
+        <rect width="1" height="1" y="2" fill="#8BC2FD"/>
+        <rect width="1" height="1" x="1" y="3" fill="#95C6FF"/>
+        <rect width="1" height="1" x="2" y="4" fill="#97C9FF"/>
+        <rect width="1" height="1" x="3" y="5" fill="#98C7FE"/>
+        <rect width="1" height="1" x="4" y="6" fill="#9BC9FF"/>
+        <rect width="1" height="1" x="5" y="7" fill="#A1CEFF"/>
+        <rect width="1" height="1" x="6" y="8" fill="#98C9FF"/>
+        <rect width="1" height="1" x="14" y="2" fill="#8BC2FD" transform="matrix(-1 0 0 1 29 0)"/>
+        <rect width="1" height="1" x="13" y="3" fill="#95C6FF" transform="matrix(-1 0 0 1 27 0)"/>
+        <rect width="1" height="1" x="12" y="4" fill="#97C9FF" transform="matrix(-1 0 0 1 25 0)"/>
+        <rect width="1" height="1" x="11" y="5" fill="#98C7FE" transform="matrix(-1 0 0 1 23 0)"/>
+        <rect width="1" height="1" x="10" y="6" fill="#9BC9FF" transform="matrix(-1 0 0 1 21 0)"/>
+        <rect width="1" height="1" x="9" y="7" fill="#A1CEFF" transform="matrix(-1 0 0 1 19 0)"/>
+        <rect width="1" height="1" x="8" y="8" fill="#98C9FF" transform="matrix(-1 0 0 1 17 0)"/>
+        <rect width="1" height="1" x="12" fill="#83BEFE" transform="matrix(-1 0 0 1 25 0)"/>
+        <rect width="1" height="1" x="11" y="1" fill="#83BEFD" transform="matrix(-1 0 0 1 23 0)"/>
+        <rect width="1" height="1" x="10" y="2" fill="#7FBBFF" transform="matrix(-1 0 0 1 21 0)"/>
+        <rect width="1" height="1" x="9" y="3" fill="#74B7FE" transform="matrix(-1 0 0 1 19 0)"/>
+        <rect width="1" height="1" x="8" y="4" fill="#71B6FE" transform="matrix(-1 0 0 1 17 0)"/>
+        <rect width="1" height="1" x="7" y="5" fill="#A6D0FF" transform="matrix(-1 0 0 1 15 0)"/>
+      </g>
+    </g>
+    <path fill="#FFF" d="M23,10 L23,11 L22,11 L22,12 L21,12 L21,13 L20,13 L20,14 L19,14 L19,15 L18,15 L18,16 L17,16 L17,17 L16,17 L16,16 L15,16 L15,15 L14,15 L14,14 L13,14 L13,13 L12,13 L12,12 L11,12 L11,11 L10,11 L10,10 L9,10 L9,9 L10,9 L10,8 L11,8 L11,9 L12,9 L12,10 L13,10 L13,11 L14,11 L14,12 L15,12 L15,13 L16,13 L16,14 L17,14 L17,13 L18,13 L18,12 L19,12 L19,11 L20,11 L20,10 L21,10 L21,9 L22,9 L22,8 L23,8 L23,9 L24,9 L24,10 L23,10 Z" mask="url(#comboright@2x-b)" transform="matrix(1 0 0 -1 0 25)"/>
+  </g>
+</svg>

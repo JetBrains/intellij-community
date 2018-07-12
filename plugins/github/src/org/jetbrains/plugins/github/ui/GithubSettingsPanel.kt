@@ -11,6 +11,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI.PanelFactory.grid
 import com.intellij.util.ui.UI.PanelFactory.panel
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.plugins.github.api.GithubApiTaskExecutor
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.authentication.ui.GithubAccountsPanel
 import org.jetbrains.plugins.github.util.GithubSettings
@@ -20,9 +21,11 @@ import java.text.NumberFormat
 import javax.swing.*
 import javax.swing.text.NumberFormatter
 
-class GithubSettingsPanel(project: Project, accountInformationProvider: GithubAccountInformationProvider)
+class GithubSettingsPanel(project: Project,
+                          apiTaskExecutor: GithubApiTaskExecutor,
+                          accountInformationProvider: GithubAccountInformationProvider)
   : ConfigurableUi<GithubSettingsConfigurable.GithubSettingsHolder>, Disposable {
-  private val accountsPanel = GithubAccountsPanel(project, accountInformationProvider)
+  private val accountsPanel = GithubAccountsPanel(project, apiTaskExecutor, accountInformationProvider)
   private val timeoutField = JFormattedTextField(NumberFormatter(NumberFormat.getIntegerInstance()).apply {
     minimum = 0
     maximum = 60

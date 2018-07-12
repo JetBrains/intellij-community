@@ -50,7 +50,7 @@ public class GriffonDefaultImportContributor implements GrImportContributor {
           }
         }
 
-        return Result.create(Couple.<List<String>>of(new ArrayList<>(), new ArrayList<>()),
+        return Result.create(Couple.of(new ArrayList<>(), new ArrayList<>()),
                              PsiModificationTracker.MODIFICATION_COUNT);
       }
 

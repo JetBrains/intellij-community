@@ -53,25 +53,30 @@ public abstract class SmartPointerManager {
    * @param element the element to create a pointer to.
    * @return the smart pointer instance.
    */
-  @NotNull public abstract <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element);
+  @NotNull
+  public abstract <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element);
 
   /**
    * Creates a smart pointer to the specified PSI element.
    *
-   * @param element the element to create a pointer to.
+   * @param element        the element to create a pointer to.
    * @param containingFile the result of {@code element.getContainingFile()}.
    * @return the smart pointer instance.
    */
-  @NotNull public abstract <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element, PsiFile containingFile);
+  @NotNull
+  public abstract <E extends PsiElement> SmartPsiElementPointer<E> createSmartPsiElementPointer(@NotNull E element, PsiFile containingFile);
 
   /**
    * Creates a smart pointer to the specified PSI element which doesn't hold a strong reference to the PSI
    * element.
-   * @deprecated use {@link #createSmartPsiElementPointer(PsiElement)} instead
+   *
    * @param element the element to create a pointer to.
    * @return the smart pointer instance.
+   * @deprecated use {@link #createSmartPsiElementPointer(PsiElement)} instead
    */
-  @NotNull public <E extends PsiElement> SmartPsiElementPointer<E> createLazyPointer(@NotNull E element) {
+  @Deprecated
+  @NotNull
+  public <E extends PsiElement> SmartPsiElementPointer<E> createLazyPointer(@NotNull E element) {
     return createSmartPsiElementPointer(element);
   }
 

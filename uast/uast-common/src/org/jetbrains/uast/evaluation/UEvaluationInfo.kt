@@ -28,7 +28,7 @@ data class UEvaluationInfo(val value: UValue, val state: UEvaluationState) {
     return UEvaluationInfo(mergedValue, mergedState)
   }
 
-  fun copy(value: UValue) = if (value != this.value) UEvaluationInfo(value, state) else this
+  fun copy(value: UValue): UEvaluationInfo = if (value != this.value) UEvaluationInfo(value, state) else this
 
   val reachable: Boolean
     get() = value.reachable

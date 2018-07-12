@@ -162,7 +162,7 @@ public class DebuggerUIUtil {
     builder.setResizable(true)
       .setMovable(true)
         .setDimensionServiceKey(project, FULL_VALUE_POPUP_DIMENSION_KEY, false)
-        .setRequestFocus(false);
+        .setRequestFocus(true);
       if (callback != null) {
         builder.setCancelCallback(() -> {
           callback.setObsolete();

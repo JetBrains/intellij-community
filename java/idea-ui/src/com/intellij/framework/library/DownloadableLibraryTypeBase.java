@@ -23,6 +23,7 @@ import java.net.URL;
 /**
  * @deprecated use {@link DownloadableLibraryType} instead
  */
+@Deprecated
 public abstract class DownloadableLibraryTypeBase extends DownloadableLibraryType {
   protected DownloadableLibraryTypeBase(@NotNull String libraryCategoryName,
                                         @NotNull String libraryTypeId,

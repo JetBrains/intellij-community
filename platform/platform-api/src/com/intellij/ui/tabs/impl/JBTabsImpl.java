@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
@@ -408,6 +409,7 @@ public class JBTabsImpl extends JComponent
   }
 
   protected void resetTabsCache() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myAllTabs = null;
   }
 
@@ -2481,6 +2483,8 @@ public class JBTabsImpl extends JComponent
 
   @NotNull
   private ActionCallback removeTab(TabInfo info, @Nullable TabInfo forcedSelectionTransfer, boolean transferFocus, boolean isDropTarget) {
+    if (myPopupInfo == info) myPopupInfo = null;
+
     if (!isDropTarget) {
       if (info == null || !getTabs().contains(info)) return ActionCallback.DONE;
     }
@@ -2840,8 +2844,7 @@ public class JBTabsImpl extends JComponent
     protected BaseNavigationAction(@NotNull String copyFromID, @NotNull JBTabsImpl tabs, @NotNull ActionManager mgr) {
       myActionManager = mgr;
       myTabs = tabs;
-      myShadow = new ShadowAction(this, myActionManager.getAction(copyFromID), tabs);
-      Disposer.register(tabs, myShadow);
+      myShadow = new ShadowAction(this, myActionManager.getAction(copyFromID), tabs, tabs);
       setEnabledInModalContext(true);
     }
 

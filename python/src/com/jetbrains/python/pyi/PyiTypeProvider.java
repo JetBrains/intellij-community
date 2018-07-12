@@ -81,18 +81,14 @@ public class PyiTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public Ref<PyType> getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
-    if (callSite != null) {
-      final PsiElement pythonStub = PyiUtil.getPythonStub(function);
+  public Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+    final PsiElement pythonStub = PyiUtil.getPythonStub(function);
 
-      if (pythonStub instanceof PyFunction) {
-        return getOverloadedCallType((PyFunction)pythonStub, callSite, context);
-      }
-
-      return getOverloadedCallType(function, callSite, context);
+    if (pythonStub instanceof PyFunction) {
+      return getOverloadedCallType((PyFunction)pythonStub, callSite, context);
     }
 
-    return null;
+    return getOverloadedCallType(function, callSite, context);
   }
 
   @Nullable

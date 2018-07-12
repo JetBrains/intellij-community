@@ -8,6 +8,8 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.util.Couple;
@@ -368,7 +370,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
   }
 
 
-  private class MyRefresh extends AnAction {
+  private class MyRefresh extends DumbAwareAction {
     private MyRefresh() {
       super(SvnBundle.message("committed.changes.action.merge.highlighting.refresh.text"),
             SvnBundle.message("committed.changes.action.merge.highlighting.refresh.description"), AllIcons.Actions.Refresh);
@@ -393,7 +395,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
   }
 
-  private class HighlightFrom extends ToggleAction {
+  private class HighlightFrom extends DumbAwareToggleAction {
     @Override
     public void update(final AnActionEvent e) {
       super.update(e);
@@ -417,7 +419,7 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
     }
   }
 
-  private abstract class CommonFilter extends ToggleAction {
+  private abstract class CommonFilter extends DumbAwareToggleAction {
     private boolean mySelected;
     private final Icon myIcon;
 

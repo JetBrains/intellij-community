@@ -28,6 +28,11 @@ abstract class LinuxDistributionCustomizer {
   String iconPngPath
 
   /**
+   * Path to png file for EAP builds (if {@code null} {@link #iconPngPath} will be used)
+   */
+  String iconPngPathForEAP = null
+
+  /**
    * Relative paths to files in Linux distribution which should take 'executable' permissions
    */
   List<String> extraExecutables = []

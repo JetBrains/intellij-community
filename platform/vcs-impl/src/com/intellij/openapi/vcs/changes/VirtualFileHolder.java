@@ -36,12 +36,9 @@ public class VirtualFileHolder implements FileHolder {
     myFiles.clear();
   }
 
-  // returns number of removed directories
-  static int cleanScope(final Project project, final Collection<VirtualFile> files, final VcsModifiableDirtyScope scope) {
-    return ReadAction.compute(() -> {
-      int result = 0;
-      // to avoid deadlocks caused by incorrect lock ordering, need to lock on this after taking read action
-      if (project.isDisposed() || files.isEmpty()) return 0;
+  static void cleanScope(final Project project, final Collection<VirtualFile> files, final VcsModifiableDirtyScope scope) {
+    ReadAction.run(() -> {
+      if (project.isDisposed() || files.isEmpty()) return;
 
       if (scope.getRecursivelyDirtyDirectories().size() == 0) {
         final Set<FilePath> dirtyFiles = scope.getDirtyFiles();
@@ -50,9 +47,7 @@ public class VirtualFileHolder implements FileHolder {
         for (FilePath dirtyFile : dirtyFiles) {
           VirtualFile f = dirtyFile.getVirtualFile();
           if (f != null) {
-            if (files.remove(f)) {
-              if (f.isDirectory()) ++result;
-            }
+            files.remove(f);
           }
           else {
             cleanDroppedFiles = true;
@@ -64,7 +59,6 @@ public class VirtualFileHolder implements FileHolder {
             if (fileDropped(file)) {
               iterator.remove();
               scope.addDirtyFile(VcsUtil.getFilePath(file));
-              if (file.isDirectory()) ++result;
             }
           }
         }
@@ -78,11 +72,9 @@ public class VirtualFileHolder implements FileHolder {
           }
           if (fileDropped || scope.belongsTo(VcsUtil.getFilePath(file))) {
             iterator.remove();
-            if (file.isDirectory()) ++result;
           }
         }
       }
-      return result;
     });
   }
 

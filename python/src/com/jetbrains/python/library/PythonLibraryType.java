@@ -69,7 +69,7 @@ public class PythonLibraryType extends LibraryType<DummyLibraryProperties> {
 
   @Nullable
   @Override
-  public Icon getIcon() {
+  public Icon getIcon(DummyLibraryProperties properties) {
     return null;
   }
 

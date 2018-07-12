@@ -67,24 +67,30 @@ public class FindInProjectManager {
     final FindModel findModel;
     if (model != null) {
       findModel = model.clone();
+      findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
     }
     else {
       findModel = findManager.getFindInProjectModel().clone();
       findModel.setReplaceState(false);
-      findModel.setOpenInNewTabVisible(true);
       findModel.setOpenInNewTabEnabled(isOpenInNewTabEnabled);
       findModel.setOpenInNewTab(toOpenInNewTab);
       initModel(findModel, dataContext);
     }
 
     findManager.showFindDialog(findModel, () -> {
-      findModel.setOpenInNewTabVisible(false);
-      if (isOpenInNewTabEnabled) {
-        FindSettings.getInstance().setShowResultsInSeparateView(findModel.isOpenInNewTab());
+      if (findModel.isReplaceState()) {
+        ReplaceInProjectManager.getInstance(myProject).replaceInPath(findModel);
+      } else {
+        findInPath(findModel);
       }
-      startFindInProject(findModel);
-      findModel.setOpenInNewTabVisible(false); //todo check it in both cases: dialog & popup
     });
+  }
+
+  public void findInPath(@NotNull FindModel findModel) {
+    if (findModel.isOpenInNewTabEnabled()) {
+      FindSettings.getInstance().setShowResultsInSeparateView(findModel.isOpenInNewTab());
+    }
+    startFindInProject(findModel);
   }
 
   @SuppressWarnings("WeakerAccess")

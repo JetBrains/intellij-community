@@ -65,7 +65,7 @@ class ExecutorAction private constructor(private val origin: AnAction,
   }
 
   override fun update(e: AnActionEvent) {
-    val name = getActionName(e.dataContext, executor)
+    val name = getActionName(e.dataContext)
     e.presentation.isEnabledAndVisible = name != null
     origin.update(e)
     e.presentation.text = name
@@ -87,7 +87,7 @@ class ExecutorAction private constructor(private val origin: AnAction,
 
   override fun disableIfNoVisibleChildren(): Boolean = origin !is ActionGroup || origin.disableIfNoVisibleChildren()
 
-  private fun getActionName(dataContext: DataContext, executor: Executor): String? {
+  fun getActionName(dataContext: DataContext): String? {
     val list = getConfigurations(dataContext)
     if (list.isEmpty()) {
       return null

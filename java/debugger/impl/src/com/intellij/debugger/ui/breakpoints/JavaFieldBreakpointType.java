@@ -26,9 +26,7 @@ import javax.swing.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFieldBreakpointProperties>
-                                     implements JavaBreakpointType<JavaFieldBreakpointProperties> {
-
+public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFieldBreakpointProperties> {
   public JavaFieldBreakpointType() {
     super("java-field", DebuggerBundle.message("field.watchpoints.tab.title"));
   }
@@ -70,8 +68,8 @@ public class JavaFieldBreakpointType extends JavaLineBreakpointTypeBase<JavaFiel
 
   @NotNull
   @Override
-  public Icon getPendingIcon() {
-    return AllIcons.Debugger.Db_pending_field_breakpoint;
+  public Icon getInactiveDependentIcon() {
+    return AllIcons.Debugger.Db_dep_field_breakpoint;
   }
 
   //@Override

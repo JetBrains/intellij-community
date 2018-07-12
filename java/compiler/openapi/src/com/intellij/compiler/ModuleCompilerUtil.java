@@ -91,6 +91,7 @@ public final class ModuleCompilerUtil {
    * @deprecated Use {@link CircularModuleDependenciesDetector#addingDependencyFormsCircularity(Module, Module)} instead.
    *             To be removed in IDEA 2018.2.
    */
+  @Deprecated
   public static Couple<Module> addingDependencyFormsCircularity(@NotNull Module currentModule, @NotNull Module toDependOn) {
     return CircularModuleDependenciesDetector.addingDependencyFormsCircularity(currentModule, toDependOn);
   }

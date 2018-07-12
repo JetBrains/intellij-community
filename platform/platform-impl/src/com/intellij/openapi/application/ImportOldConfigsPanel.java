@@ -1,17 +1,27 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
-import com.intellij.internal.statistic.collectors.legacy.ideSettings.IdeInitialConfigButtonUsages;
 import com.intellij.openapi.MnemonicHelper;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileChooser.PathChooserDialog;
+import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.local.CoreLocalFileSystem;
+import com.intellij.openapi.vfs.local.CoreLocalVirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.io.File;
 import java.util.function.Function;
@@ -34,7 +44,7 @@ class ImportOldConfigsPanel extends JDialog {
   private final File myGuessedOldConfig;
   private final Function<File, Pair<File, File>> myValidator;
   private final String myProductName;
-  private File myLastSelection = null;
+  private VirtualFile myLastSelection = null;
   private Pair<File, File> myResult;
 
   ImportOldConfigsPanel(@Nullable File guessedOldConfig, Function<File, Pair<File, File>> validator) {
@@ -69,31 +79,48 @@ class ImportOldConfigsPanel extends JDialog {
     myRbImport.addChangeListener(e -> update());
 
     if (SystemInfo.isMac) {
-      myLastSelection = new File("/Applications");
+      myLastSelection = new CoreLocalFileSystem().findFileByPath("/Applications");
     }
     else if (SystemInfo.isWindows) {
       String programFiles = System.getenv("ProgramFiles");
       if (programFiles != null) {
         File jetBrainsHome = new File(programFiles, "JetBrains");
         if (jetBrainsHome.isDirectory()) {
-          myLastSelection = jetBrainsHome;
+          myLastSelection = new CoreLocalVirtualFile(new CoreLocalFileSystem(), jetBrainsHome);
         }
       }
     }
 
     myPrevInstallation.addActionListener(e -> {
-      JFileChooser fc = new JFileChooser(myLastSelection != null ? myLastSelection.getParentFile() : null);
-      fc.setSelectedFile(myLastSelection);
-      fc.setFileSelectionMode(SystemInfo.isMac ? JFileChooser.FILES_AND_DIRECTORIES : JFileChooser.DIRECTORIES_ONLY);
-      fc.setFileHidingEnabled(SystemInfo.isWindows || SystemInfo.isMac);
-
-      int returnVal = fc.showOpenDialog(this);
-      if (returnVal == JFileChooser.APPROVE_OPTION) {
-        File file = fc.getSelectedFile();
-        if (file != null) {
-          myLastSelection = file;
-          myPrevInstallation.setText(file.getAbsolutePath());
+      FileChooserDescriptor chooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
+      chooserDescriptor.setHideIgnored(false);
+      chooserDescriptor.withFileFilter(file -> file.isDirectory() || ConfigImportHelper.isSettingsFile(file));
+      Ref<VirtualFile> fileRef = Ref.create();
+      PathChooserDialog chooser = FileChooserFactoryImpl.createNativePathChooserIfEnabled(chooserDescriptor, null, myRootPanel);
+      if (chooser == null) {
+        File lastSelectedFile = myLastSelection == null ? null : VfsUtilCore.virtualToIoFile(myLastSelection);
+        JFileChooser fc = new JFileChooser(lastSelectedFile == null ? null : lastSelectedFile.getParentFile());
+        fc.setSelectedFile(lastSelectedFile);
+        fc.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
+        fc.setFileHidingEnabled(SystemInfo.isWindows || SystemInfo.isMac);
+        fc.setFileFilter(new FileNameExtensionFilter("settings file", "zip", "jar"));
+        int returnVal = fc.showOpenDialog(this);
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+          File file = fc.getSelectedFile();
+          if (file != null) {
+            fileRef.set(new CoreLocalVirtualFile(new CoreLocalFileSystem(), file));
+            myPrevInstallation.setText(file.getAbsolutePath());
+          }
         }
+      }
+      else {
+        chooser.choose(myLastSelection, files -> fileRef.set(files.get(0)));
+      }
+
+      if (!fileRef.isNull()) {
+        File file = VfsUtilCore.virtualToIoFile(fileRef.get());
+        myLastSelection = fileRef.get();
+        myPrevInstallation.setText(file.getAbsolutePath());
       }
     });
 
@@ -118,8 +145,6 @@ class ImportOldConfigsPanel extends JDialog {
   }
 
   private void close() {
-    IdeInitialConfigButtonUsages.setConfigImport(myRbDoNotImport, myRbImport, myRbImportAuto, myCustomButton);
-
     if (myRbImport.isSelected()) {
       String text = myPrevInstallation.getText();
       if (StringUtil.isEmptyOrSpaces(text)) {
@@ -128,24 +153,34 @@ class ImportOldConfigsPanel extends JDialog {
       }
 
       File selectedDir = new File(FileUtil.toCanonicalPath(text.trim()));
-      if (FileUtil.pathsEqual(selectedDir.getPath(), PathManager.getHomePath()) ||
-          FileUtil.pathsEqual(selectedDir.getPath(), PathManager.getConfigPath())) {
-        showError(ApplicationBundle.message("error.selected.current.installation.home", myProductName));
-        return;
-      }
 
-      Pair<File, File> result = myValidator.apply(selectedDir);
-      if (result == null) {
-        showError(ApplicationBundle.message("error.does.not.appear.to.be.installation.home", selectedDir, myProductName));
-        return;
+      if (selectedDir.isFile()) {
+        if (!ConfigImportHelper.isValidSettingsFile(selectedDir)) {
+          showError(IdeBundle.message("error.file.contains.no.settings.to.import", selectedDir, IdeBundle.message("message.please.ensure.correct.settings")));
+          return;
+        }
+        myResult = pair(selectedDir, null);
       }
+      else {
+        if (FileUtil.pathsEqual(selectedDir.getPath(), PathManager.getHomePath()) ||
+            FileUtil.pathsEqual(selectedDir.getPath(), PathManager.getConfigPath())) {
+          showError(ApplicationBundle.message("error.selected.current.installation.home", myProductName));
+          return;
+        }
 
-      if (!result.first.canRead()) {
-        showError(ApplicationBundle.message("error.no.read.permissions", result));
-        return;
+        Pair<File, File> result = myValidator.apply(selectedDir);
+        if (result == null) {
+          showError(ApplicationBundle.message("error.does.not.appear.to.be.installation.home", selectedDir, myProductName));
+          return;
+        }
+
+        if (!result.first.canRead()) {
+          showError(ApplicationBundle.message("error.no.read.permissions", result));
+          return;
+        }
+
+        myResult = result;
       }
-
-      myResult = result;
     }
 
     dispose();

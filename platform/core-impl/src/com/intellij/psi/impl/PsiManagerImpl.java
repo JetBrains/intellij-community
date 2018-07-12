@@ -70,7 +70,8 @@ public class PsiManagerImpl extends PsiManagerEx {
 
   public PsiManagerImpl(Project project,
                         FileDocumentManager fileDocumentManager,
-                        PsiBuilderFactory psiBuilderFactory,
+                        //We need to initialize PsiBuilderFactory service so it won't initialize under PsiLock from ChameleonTransform
+                        @SuppressWarnings("unused") PsiBuilderFactory psiBuilderFactory,
                         FileIndexFacade fileIndex,
                         MessageBus messageBus,
                         PsiModificationTracker modificationTracker) {
@@ -79,19 +80,11 @@ public class PsiManagerImpl extends PsiManagerEx {
     myMessageBus = messageBus;
     myModificationTracker = modificationTracker;
 
-    //We need to initialize PsiBuilderFactory service so it won't initialize under PsiLock from ChameleonTransform
-    @SuppressWarnings({"UnusedDeclaration", "UnnecessaryLocalVariable"}) Object used = psiBuilderFactory;
-
     myFileManager = new FileManagerImpl(this, fileDocumentManager, fileIndex);
 
     myTreeChangePreprocessors.add((PsiTreeChangePreprocessor)modificationTracker);
 
-    Disposer.register(project, new Disposable() {
-      @Override
-      public void dispose() {
-        myIsDisposed = true;
-      }
-    });
+    Disposer.register(project, () -> myIsDisposed = true);
   }
 
   @Override
@@ -140,12 +133,7 @@ public class PsiManagerImpl extends PsiManagerEx {
   public void setAssertOnFileLoadingFilter(@NotNull VirtualFileFilter filter, @NotNull Disposable parentDisposable) {
     // Find something to ensure there's no changed files waiting to be processed in repository indices.
     myAssertOnFileLoadingFilter = filter;
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        myAssertOnFileLoadingFilter = VirtualFileFilter.NONE;
-      }
-    });
+    Disposer.register(parentDisposable, () -> myAssertOnFileLoadingFilter = VirtualFileFilter.NONE);
   }
 
   @Override
@@ -209,12 +197,7 @@ public class PsiManagerImpl extends PsiManagerEx {
   @Override
   public void addPsiTreeChangeListener(@NotNull final PsiTreeChangeListener listener, @NotNull Disposable parentDisposable) {
     addPsiTreeChangeListener(listener);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        removePsiTreeChangeListener(listener);
-      }
-    });
+    Disposer.register(parentDisposable, () -> removePsiTreeChangeListener(listener));
   }
 
   @Override

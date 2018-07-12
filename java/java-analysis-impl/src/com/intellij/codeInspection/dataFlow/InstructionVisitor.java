@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.PsiArrayAccessExpression;
@@ -66,12 +67,7 @@ public abstract class InstructionVisitor {
   @NotNull
   public DfaInstructionState[] visitControlTransfer(@NotNull ControlTransferInstruction controlTransferInstruction,
                                                     @NotNull DataFlowRunner runner, @NotNull DfaMemoryState state) {
-    DfaControlTransferValue transferValue = controlTransferInstruction.getTransfer();
-    if (transferValue == null) {
-      transferValue = (DfaControlTransferValue)state.pop();
-    }
-    return new ControlTransferHandler(state, runner, transferValue.getTarget()).iteration(transferValue.getTraps())
-      .toArray(DfaInstructionState.EMPTY_ARRAY);
+    return controlTransferInstruction.getTransfer().dispatch(state, runner).toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
   public DfaInstructionState[] visitEndOfInitializer(EndOfInitializerInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
@@ -103,7 +99,7 @@ public abstract class InstructionVisitor {
                              value instanceof DfaVariableValue ? state.getConstantValue((DfaVariableValue)value) :
                              null;
     PsiType type = constant == null ? null : ObjectUtils.tryCast(constant.getValue(), PsiType.class);
-    state.push(runner.getFactory().createTypeValue(type, Nullness.NOT_NULL));
+    state.push(runner.getFactory().createTypeValue(type, Nullability.NOT_NULL));
     return nextInstruction(instruction, runner, state);
   }
 
@@ -164,12 +160,6 @@ public abstract class InstructionVisitor {
     else {
       instruction.setFalseReachable();
     }
-  }
-
-
-  public DfaInstructionState[] visitEmptyStack(EmptyStackInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    memState.emptyStack();
-    return nextInstruction(instruction, runner, memState);
   }
 
   public DfaInstructionState[] visitFieldReference(DereferenceInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {

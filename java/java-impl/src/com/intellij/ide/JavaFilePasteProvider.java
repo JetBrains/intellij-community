@@ -15,15 +15,14 @@
  */
 package com.intellij.ide;
 
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -74,7 +73,7 @@ public class JavaFilePasteProvider implements PasteProvider {
       if (file instanceof PsiJavaFile) {
         updatePackageStatement((PsiJavaFile)file, targetDir);
       }
-      new OpenFileDescriptor(project, file.getVirtualFile()).navigate(true);
+      PsiNavigationSupport.getInstance().createNavigatable(project, file.getVirtualFile(), -1).navigate(true);
     });
   }
 

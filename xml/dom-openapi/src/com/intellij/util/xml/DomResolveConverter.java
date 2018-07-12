@@ -50,6 +50,8 @@ public class DomResolveConverter<T extends DomElement> extends ResolvingConverte
     @NotNull
     protected CachedValue<Map<String, DomElement>> create(final DomElement scope) {
       final DomManager domManager = scope.getManager();
+      //noinspection ConstantConditions
+      if (domManager == null) throw new AssertionError("Null DomManager for " + scope.getClass());
       final Project project = domManager.getProject();
       return CachedValuesManager.getManager(project).createCachedValue(new CachedValueProvider<Map<String, DomElement>>() {
         @Override

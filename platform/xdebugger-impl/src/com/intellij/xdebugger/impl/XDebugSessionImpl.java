@@ -15,6 +15,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
@@ -42,7 +43,6 @@ import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.breakpoints.*;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
-import com.intellij.xdebugger.impl.frame.XStackFrameEx;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
@@ -574,9 +574,7 @@ public class XDebugSessionImpl implements XDebugSession {
     // allowed only for the active session
     if (myDebuggerManager.getCurrentSession() == this) {
       boolean isTopFrame = isTopFrameSelected();
-      if (myCurrentStackFrame instanceof XStackFrameEx) {
-        ((XStackFrameEx)myCurrentStackFrame).beforeUpdateExecutionPosition();
-      }
+
       myDebuggerManager.updateExecutionPoint(getCurrentPosition(), !isTopFrame, getPositionIconRenderer(isTopFrame));
     }
   }
@@ -608,11 +606,12 @@ public class XDebugSessionImpl implements XDebugSession {
     myCurrentExecutionStack = executionStack;
     myCurrentStackFrame = frame;
     myIsTopFrame = isTopFrame;
-    activateSession();
 
     if (frameChanged) {
       myDispatcher.getMulticaster().stackFrameChanged();
     }
+
+    activateSession();
   }
 
   void activateSession() {
@@ -661,8 +660,25 @@ public class XDebugSessionImpl implements XDebugSession {
 
       presentation.setErrorMessage(errorMessage);
       presentation.setIcon(icon);
+
+      long timestamp = presentation.getTimestamp();
+      if (timestamp != 0 && XDebuggerUtilImpl.getVerifiedIcon(breakpoint).equals(icon)) {
+        long delay = System.currentTimeMillis() - timestamp;
+        presentation.setTimestamp(0);
+        BreakpointsUsageCollector.reportUsage(myProject, "verified." + (int)Math.pow(10,(int)Math.log10(delay)) + "+");
+      }
     }
     myDebuggerManager.getBreakpointManager().getLineBreakpointManager().queueBreakpointUpdate((XLineBreakpointImpl<?>)breakpoint);
+  }
+
+  @Override
+  public void setBreakpointVerified(@NotNull XLineBreakpoint<?> breakpoint) {
+    updateBreakpointPresentation(breakpoint, XDebuggerUtilImpl.getVerifiedIcon(breakpoint), null);
+  }
+
+  @Override
+  public void setBreakpointInvalid(@NotNull XLineBreakpoint<?> breakpoint, @Nullable String errorMessage) {
+    updateBreakpointPresentation(breakpoint, AllIcons.Debugger.Db_invalid_breakpoint, errorMessage);
   }
 
   @Override
@@ -943,11 +959,19 @@ public class XDebugSessionImpl implements XDebugSession {
     XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification("", message, type.toNotificationType(), notificationListener).notify(myProject);
   }
 
-  private class MyBreakpointListener implements XBreakpointListener<XBreakpoint<?>> {
+  private final class MyBreakpointListener implements XBreakpointListener<XBreakpoint<?>> {
     @Override
     public void breakpointAdded(@NotNull final XBreakpoint<?> breakpoint) {
-      if (!myBreakpointsDisabled) {
-        processAllHandlers(breakpoint, true);
+      if (processAdd(breakpoint)) {
+        CustomizedBreakpointPresentation presentation = getBreakpointPresentation(breakpoint);
+        if (presentation != null) {
+          if (XDebuggerUtilImpl.getVerifiedIcon(breakpoint).equals(presentation.getIcon())) {
+            BreakpointsUsageCollector.reportUsage(myProject, "verified.0");
+          }
+          else {
+            presentation.setTimestamp(System.currentTimeMillis());
+          }
+        }
       }
     }
 
@@ -956,13 +980,25 @@ public class XDebugSessionImpl implements XDebugSession {
       if (getActiveNonLineBreakpoint() == breakpoint) {
         myActiveNonLineBreakpoint = null;
       }
+      processRemove(breakpoint);
+    }
+
+    void processRemove(@NotNull final XBreakpoint<?> breakpoint) {
       processAllHandlers(breakpoint, false);
+    }
+
+    boolean processAdd(@NotNull final XBreakpoint<?> breakpoint) {
+      if (!myBreakpointsDisabled) {
+        processAllHandlers(breakpoint, true);
+        return true;
+      }
+      return false;
     }
 
     @Override
     public void breakpointChanged(@NotNull final XBreakpoint<?> breakpoint) {
-      breakpointRemoved(breakpoint);
-      breakpointAdded(breakpoint);
+      processRemove(breakpoint);
+      processAdd(breakpoint);
     }
   }
 

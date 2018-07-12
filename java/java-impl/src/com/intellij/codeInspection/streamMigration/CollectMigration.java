@@ -35,9 +35,6 @@ import static com.siyeh.ig.psiutils.ControlFlowUtils.getInitializerUsageStatus;
 import static com.siyeh.ig.psiutils.Java8MigrationUtils.MapCheckCondition.fromConditional;
 import static com.siyeh.ig.psiutils.Java8MigrationUtils.extractLambdaCandidate;
 
-/**
- * @author Tagir Valeev
- */
 class CollectMigration extends BaseStreamApiMigration {
   private static final Logger LOG = Logger.getInstance(CollectMigration.class);
 
@@ -74,14 +71,15 @@ class CollectMigration extends BaseStreamApiMigration {
     PsiElement result;
     if (toReplace != null) {
       result = ct.replace(toReplace, stream);
+      terminal.cleanUp(ct);
       removeLoop(ct, loopStatement);
     }
     else {
       PsiVariable variable = terminal.getTargetVariable();
       LOG.assertTrue(variable != null);
+      terminal.cleanUp(ct);
       result = replaceInitializer(loopStatement, variable, variable.getInitializer(), stream, terminal.getStatus(), ct);
     }
-    terminal.cleanUp();
     return result;
   }
 
@@ -219,7 +217,7 @@ class CollectMigration extends BaseStreamApiMigration {
 
     public InitializerUsageStatus getStatus() { return myStatus; }
 
-    void cleanUp() {}
+    void cleanUp(CommentTracker ct) {}
 
     boolean isTrivial() {
       return generateIntermediate(new CommentTracker()).isEmpty();
@@ -673,9 +671,9 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     @Override
-    public void cleanUp() {
-      myDownstream.cleanUp();
-      myStatement.delete();
+    public void cleanUp(CommentTracker ct) {
+      myDownstream.cleanUp(ct);
+      ct.delete(myStatement);
     }
 
     @Override
@@ -757,12 +755,12 @@ class CollectMigration extends BaseStreamApiMigration {
     }
 
     @Override
-    public void cleanUp() {
+    public void cleanUp(CommentTracker ct) {
       PsiLocalVariable variable = myUpstream.getTargetVariable();
       if (variable != null && myUpstream.getStatus() != ControlFlowUtils.InitializerUsageStatus.AT_WANTED_PLACE) {
-        variable.delete();
+        ct.delete(variable);
       }
-      myUpstream.cleanUp();
+      myUpstream.cleanUp(ct);
     }
   }
 

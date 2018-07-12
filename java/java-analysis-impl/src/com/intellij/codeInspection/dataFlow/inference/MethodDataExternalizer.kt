@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.inference
 
+import com.intellij.codeInsight.Nullability
 import com.intellij.codeInspection.dataFlow.ContractReturnValue
-import com.intellij.codeInspection.dataFlow.MethodContract
-import com.intellij.codeInspection.dataFlow.Nullness
 import com.intellij.codeInspection.dataFlow.StandardMethodContract
+import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint
 import com.intellij.util.io.DataExternalizer
 import com.intellij.util.io.DataInputOutputUtil.*
 import java.io.DataInput
@@ -70,9 +70,9 @@ internal object MethodDataExternalizer : DataExternalizer<Map<Int, MethodData>> 
   }
   private fun readNullity(input: DataInput): MethodReturnInferenceResult = when (input.readByte().toInt()) {
     0 -> MethodReturnInferenceResult.Predefined(
-      Nullness.values()[input.readByte().toInt()])
+      Nullability.values()[input.readByte().toInt()])
     else -> MethodReturnInferenceResult.FromDelegate(
-      Nullness.values()[input.readByte().toInt()],
+      Nullability.values()[input.readByte().toInt()],
       readRanges(input))
   }
 
@@ -101,7 +101,7 @@ internal object MethodDataExternalizer : DataExternalizer<Map<Int, MethodData>> 
     is DelegationContract -> { out.writeByte(0); writeRange(
       out, contract.expression); out.writeBoolean(contract.negated) }
     is KnownContract -> { out.writeByte(1)
-      writeContractArguments(out, contract.contract.arguments.toList())
+      writeContractArguments(out, contract.contract.constraints)
       out.writeByte(contract.contract.returnValue.ordinal())
     }
     is MethodCallContract -> { out.writeByte(2)
@@ -135,13 +135,13 @@ internal object MethodDataExternalizer : DataExternalizer<Map<Int, MethodData>> 
       readSeq(input) { readContract(input) })
   }
 
-  private fun writeContractArguments(out: DataOutput, arguments: List<MethodContract.ValueConstraint>) =
+  private fun writeContractArguments(out: DataOutput, arguments: List<ValueConstraint>) =
       writeSeq(out, arguments) { out.writeByte(it.ordinal) }
   private fun readContractArguments(input: DataInput) = readSeq(input, {
     readValueConstraint(input)
   })
 
-  private fun readValueConstraint(input: DataInput) = MethodContract.ValueConstraint.values()[input.readByte().toInt()]
+  private fun readValueConstraint(input: DataInput) = ValueConstraint.values()[input.readByte().toInt()]
 
   private fun readReturnValue(input: DataInput) = ContractReturnValue.valueOf(input.readByte().toInt())
 

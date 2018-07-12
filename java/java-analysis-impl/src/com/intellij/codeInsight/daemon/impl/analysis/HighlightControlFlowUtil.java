@@ -649,10 +649,8 @@ public class HighlightControlFlowUtil {
                                      @NotNull PsiField field,
                                      @NotNull PsiReferenceExpression reference,
                                      @NotNull PsiFile containingFile) {
-
     if (!containingFile.getManager().areElementsEquivalent(enclosingCtrOrInitializer.getContainingClass(), field.getContainingClass())) return false;
-    PsiExpression qualifierExpression = reference.getQualifierExpression();
-    return qualifierExpression == null || qualifierExpression instanceof PsiThisExpression;
+    return LocalsOrMyInstanceFieldsControlFlowPolicy.isLocalOrMyInstanceReference(reference);
   }
 
 

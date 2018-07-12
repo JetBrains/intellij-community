@@ -17,7 +17,22 @@ import java.util.List;
 public abstract class PyInspectionExtension {
   public static final ExtensionPointName<PyInspectionExtension> EP_NAME = ExtensionPointName.create("Pythonid.inspectionExtension");
 
+  public boolean ignoreUnused(PsiElement local, @NotNull TypeEvalContext evalContext) {
+    @SuppressWarnings("deprecation")
+    final boolean result = ignoreUnused(local);
+    return result;
+  }
+
+  /**
+   * @deprecated  use {@link #ignoreUnused(PsiElement, TypeEvalContext)} instead.
+   * Will be removed in 2019.2
+   */
+  @Deprecated
   public boolean ignoreUnused(PsiElement local) {
+    return false;
+  }
+
+  public boolean ignoreShadowed(@NotNull final PsiElement element) {
     return false;
   }
 
@@ -40,21 +55,7 @@ public abstract class PyInspectionExtension {
   /**
    * Checks if unresolved reference could be ignored.
    *
-   * @param node element containing reference
-   * @param reference unresolved reference
-   * @return true if the unresolved reference could be ignored
-   * @deprecated Use {@link PyInspectionExtension#ignoreUnresolvedReference(PyElement, PsiReference, TypeEvalContext)} instead.
-   * This method will be remove in 2018.2.
-   */
-  @Deprecated
-  public boolean ignoreUnresolvedReference(@NotNull PyElement node, @NotNull PsiReference reference) {
-    return ignoreUnresolvedReference(node, reference, TypeEvalContext.codeInsightFallback(node.getProject()));
-  }
-
-  /**
-   * Checks if unresolved reference could be ignored.
-   *
-   * @param node element containing reference
+   * @param node      element containing reference
    * @param reference unresolved reference
    * @return true if the unresolved reference could be ignored
    */

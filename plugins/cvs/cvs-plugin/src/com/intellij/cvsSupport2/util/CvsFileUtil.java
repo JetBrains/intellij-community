@@ -15,12 +15,12 @@
  */
 package com.intellij.cvsSupport2.util;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.javacvsImpl.FileReadOnlyHandler;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -70,7 +70,7 @@ public class CvsFileUtil {
       return FileDocumentManager.getInstance().getLineSeparator(virtualFile, null);
     }
     else {
-      return CodeStyleSettingsManager.getInstance().getCurrentSettings().getLineSeparator();
+      return CodeStyle.getDefaultSettings().getLineSeparator();
     }
   }
 

@@ -77,6 +77,12 @@
       <keyboard-shortcut first-keystroke="shift ENTER" keymap="$default"/>
     </action>>
     <action id="SearchEverywhere" class="com.intellij.ide.actions.SearchEverywhereAction" icon="AllIcons.Actions.Find"/>
+
+    <action id="RunAnything" icon="AllIcons.Actions.Run_anything"
+            class="com.intellij.ide.actions.runAnything.RunAnythingAction"
+            text="Run anything" description="Allows to execute any command">
+    </action>
+
     <action id="SmartSelect" class="com.intellij.ide.actions.SmartSelect" use-shortcut-of="EditorSelectWord"/>
     <action id="SmartUnSelect" class="com.intellij.ide.actions.SmartUnSelect" use-shortcut-of="EditorUnSelectWord"/>
 
@@ -203,6 +209,7 @@
       <action id="CompareTwoFiles" class="com.intellij.diff.actions.CompareFilesAction" icon="AllIcons.Actions.Diff"/>
       <action id="CompareFileWithEditor" class="com.intellij.diff.actions.CompareFileWithEditorAction"/>
       <action id="CompareClipboardWithSelection" class="com.intellij.diff.actions.CompareClipboardWithSelectionAction" icon="AllIcons.Actions.DiffWithClipboard"/>
+      <action id="ShowBlankDiffWindow" class="com.intellij.diff.actions.ShowBlankDiffWindowAction" icon="AllIcons.Actions.Diff"/>
 
       <separator/>
       <action id="Diff.FocusOppositePane" class="com.intellij.openapi.diff.actions.FocusOppositePaneAction"/>
@@ -294,6 +301,7 @@
         <action id="InvalidateCaches" class="com.intellij.ide.actions.InvalidateCachesAction"/>
 
         <action id="ChangeFileEncodingAction" class="com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction"/>
+        <action id="AssociateWithFileType" class="com.intellij.ide.actions.AssociateFileTypeAction"/>
 
         <group id="ChangeLineSeparators" text="Line Separators" popup="true" class="com.intellij.ide.actions.NonTrivialActionGroup">
           <action id="ConvertToWindowsLineSeparators" class="com.intellij.codeStyle.ConvertToWindowsLineSeparatorsAction"/>
@@ -655,7 +663,7 @@
     </group>
 
     <group id="WelcomeScreen.Configure">
-      <action id="WelcomeScreen.Settings" class="com.intellij.ide.actions.ShowSettingsAction" icon="AllIcons.General.Configure"/>
+      <action id="WelcomeScreen.Settings" class="com.intellij.ide.actions.ShowSettingsAction" icon="AllIcons.General.Settings"/>
       <action id="WelcomeScreen.Plugins" class="com.intellij.ide.actions.ShowPluginManagerAction" icon="AllIcons.General.PluginManager"/>
 
       <action id="WelcomeScreen.Configure.Import" class="com.intellij.configurationStore.ImportSettingsAction" icon="AllIcons.General.ImportSettings"/>
@@ -782,7 +790,7 @@
                   text="Test Mac Messages Sequences" />
         </group>
         <action id="FocusDebugger" internal="true" class="com.intellij.internal.focus.FocusDebuggerAction" text="Start Focus Debugger"/>
-        <action id="DumpFocusState" internal="true" class="com.intellij.internal.focus.DumpFocusStateAction" text="Dump Focus State"/>
+        <action id="DumpFocusableComponentHierarchyAction" internal="true" class="com.intellij.internal.focus.DumpFocusableComponentHierarchyAction" text="Dump Focusable Component Hierarchy"/>
         <action id="FocusTracer" internal="true" class="com.intellij.internal.focus.FocusTracesAction" text="Start Focus Trace">
           <keyboard-shortcut first-keystroke="control shift F11" keymap="$default"/>
         </action>
@@ -793,6 +801,7 @@
         <action id="UiDropper" internal="true" class="com.intellij.internal.inspector.UiDropperAction" text="UI &amp;Dropper"/>
         <action id="HidpiInfo" internal="true" class="com.intellij.internal.HidpiInfo" text="Show &amp;HiDPI Info"/>
         <action id="GrayFilterConfig" internal="true" class="com.intellij.internal.GrayFilterConfig" text="&amp;GrayFilter"/>
+        <action id="TextGrayFilterConfig" internal="true" class="com.intellij.internal.TextGrayFilterConfig" text="&amp;TextGrayFilter"/>
         <action id="ShowSplash" internal="true" class="com.intellij.ui.ShowSplashAction" text="Show Splash" />
         <action id="ShowAboutPopupInDebugModeAction" class="com.intellij.internal.ui.ShowAboutPopupInDebugModeAction"
                 text="Show About Popup in Debug Mode"/>
@@ -827,8 +836,7 @@
       <separator/>
       <reference ref="MaintenanceGroup"/>
 
-      <action internal="true" id="SendStatistics" class="com.intellij.internal.statistic.actions.SendStatisticsAction" text="OLD: Collect And Send Statistics"/>
-      <action internal="true" id="SendFUStatistics" class="com.intellij.internal.statistic.actions.SendFUStatisticsAction" text="NEW: Collect And Send Statistics"/>
+      <action internal="true" id="SendFUStatistics" class="com.intellij.internal.statistic.actions.SendFUStatisticsAction" text="Collect And Send Statistics"/>
       <action internal="true" id="SendEventLogStatistics" class="com.intellij.internal.statistic.actions.SendEventLogAction" text="Send Feature Usage Event Log"/>
 
       <action internal="true" id="ShowEditorHighlighterTokens" class="com.intellij.openapi.editor.actions.ShowEditorHighlighterTokensAction"
@@ -886,5 +894,7 @@
 
     <action id="MarkNotificationsAsRead" class="com.intellij.notification.impl.actions.MarkAllNotificationsAsReadAction"/>
     <action class="com.intellij.ide.actions.SelectInProjectViewAction" id="SelectInProjectView" text="Select in Project View" />
+
+    <action id="SetShortcutAction" class="com.intellij.ide.actions.SetShortcutAction" use-shortcut-of="ShowIntentionActions"/>
   </actions>
 </idea-plugin>

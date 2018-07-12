@@ -274,11 +274,6 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
     FindRecents.getInstance().addStringToReplace(s);
   }
 
-  @Override
-  public void addDirectory(@NotNull String s) {
-    FindRecents.getInstance().addDirectory(s);
-  }
-
   @NotNull
   @Override
   public String[] getRecentFindStrings(){
@@ -295,12 +290,6 @@ public class FindSettingsImpl extends FindSettings implements PersistentStateCom
   @Override
   public String[] getRecentFileMasks() {
     return ArrayUtil.toStringArray(recentFileMasks);
-  }
-
-  @NotNull
-  @Override
-  public List<String> getRecentDirectories(){
-    return FindRecents.getInstance().getRecentDirectories();
   }
 
   @Override

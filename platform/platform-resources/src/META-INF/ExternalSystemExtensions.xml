@@ -4,7 +4,7 @@
     <postStartupActivity implementation="com.intellij.openapi.externalSystem.service.ExternalSystemStartupActivity"/>
 
     <keymapExtension implementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemKeymapExtension"/>
-    
+
     <!--Generic services-->
     <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager"/>
     <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.RemoteExternalSystemCommunicationManager"/>
@@ -16,9 +16,11 @@
                         serviceImplementation="com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapperImpl"/>
     <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.internal.ExternalSystemProcessingManager"/>
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationManager"/>
-    <externalSystemNotificationExtension implementation="com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtensionImpl" />
+    <externalSystemNotificationExtension
+        implementation="com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtensionImpl"/>
 
-    <module.workingDirectoryProvider implementation="com.intellij.openapi.externalSystem.service.project.ExternalSystemWorkingDirectoryProvider"/>
+    <module.workingDirectoryProvider
+        implementation="com.intellij.openapi.externalSystem.service.project.ExternalSystemWorkingDirectoryProvider"/>
     <!--Project structure management services-->
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.ProjectDataManager"
                         serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl"/>
@@ -38,21 +40,27 @@
 
     <postStartupActivity implementation="com.intellij.openapi.externalSystem.service.project.manage.ReprocessContentRootDataActivity"/>
 
-    <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.settings.CompilerConfigurationHandler"/>
-    <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.settings.CodeStyleConfigurationHandler"/>
-    <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationHandler"/>
-    <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationHandler"/>
+    <externalSystemConfigurationHandler
+        implementation="com.intellij.openapi.externalSystem.service.project.settings.CompilerConfigurationHandler"/>
+    <externalSystemConfigurationHandler
+        implementation="com.intellij.openapi.externalSystem.service.project.settings.CodeStyleConfigurationHandler"/>
+    <externalSystemConfigurationHandler
+        implementation="com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationHandler"/>
+    <externalSystemConfigurationHandler
+        implementation="com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationHandler"/>
     <externalSystemConfigurationHandler implementation="com.intellij.profile.codeInspection.InspectionsProfileConfigurationHandler"/>
     <externalSystemConfigurationHandler
         implementation="com.intellij.openapi.externalSystem.service.project.settings.DetectionExcludesConfigImporter"/>
 
-    <configuration.ModuleStructureExtension implementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalModuleStructureExtension"/>
-    
+    <configuration.ModuleStructureExtension
+        implementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalModuleStructureExtension"/>
+
     <!--Tool window services-->
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.task.ToolWindowModuleService"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.task.ToolWindowTaskService"/>
-    <externalSystemViewContributor implementation="com.intellij.openapi.externalSystem.view.ExternalSystemViewDefaultContributor"/>
-    
+    <externalSystemViewContributor id="default" order="last"
+                                   implementation="com.intellij.openapi.externalSystem.view.ExternalSystemViewDefaultContributor"/>
+
     <!--Execution-->
     <programRunner implementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskRunner"/>
     <programRunner implementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemTaskDebugRunner"/>

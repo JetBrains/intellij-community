@@ -129,8 +129,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
         myCustomRenderers.writeExternal(custom);
       }
     }
-    catch (WriteExternalException e) {
-      // ignore
+    catch (WriteExternalException ignore) {
     }
     return element;
   }

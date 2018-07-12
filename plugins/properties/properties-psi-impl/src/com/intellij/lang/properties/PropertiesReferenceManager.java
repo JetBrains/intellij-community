@@ -34,7 +34,7 @@ public class PropertiesReferenceManager {
   private final PsiManager myPsiManager;
   private final DumbService myDumbService;
 
-  public static PropertiesReferenceManager getInstance(Project project) {
+  public static PropertiesReferenceManager getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, PropertiesReferenceManager.class);
   }
 
@@ -44,7 +44,7 @@ public class PropertiesReferenceManager {
   }
 
   @NotNull
-  public List<PropertiesFile> findPropertiesFiles(@NotNull final Module module, final String bundleName) {
+  public List<PropertiesFile> findPropertiesFiles(@NotNull Module module, @NotNull String bundleName) {
     ConcurrentMap<String, List<PropertiesFile>> map =
       CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
         ConcurrentMap<String, List<PropertiesFile>> factoryMap = ConcurrentFactoryMap.createMap(
@@ -56,9 +56,9 @@ public class PropertiesReferenceManager {
   }
 
   @NotNull
-  public List<PropertiesFile> findPropertiesFiles(@NotNull final GlobalSearchScope searchScope,
-                                                  final String bundleName,
-                                                  BundleNameEvaluator bundleNameEvaluator) {
+  public List<PropertiesFile> findPropertiesFiles(@NotNull GlobalSearchScope searchScope,
+                                                  @NotNull String bundleName,
+                                                  @NotNull BundleNameEvaluator bundleNameEvaluator) {
 
 
     final ArrayList<PropertiesFile> result = new ArrayList<>();
@@ -72,9 +72,9 @@ public class PropertiesReferenceManager {
   }
 
   @Nullable
-  public PropertiesFile findPropertiesFile(final Module module,
-                                           final String bundleName,
-                                           final Locale locale) {
+  public PropertiesFile findPropertiesFile(@NotNull Module module,
+                                           @NotNull String bundleName,
+                                           @Nullable Locale locale) {
     List<PropertiesFile> propFiles = findPropertiesFiles(module, bundleName);
     if (locale != null) {
       for(PropertiesFile propFile: propFiles) {
@@ -118,7 +118,7 @@ public class PropertiesReferenceManager {
     return true;
   }
 
-  private boolean processFile(VirtualFile file, BundleNameEvaluator evaluator, PropertiesFileProcessor processor) {
+  private boolean processFile(@NotNull VirtualFile file, @NotNull BundleNameEvaluator evaluator, @NotNull PropertiesFileProcessor processor) {
     final PsiFile psiFile = myPsiManager.findFile(file);
     PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile(psiFile);
     if (propertiesFile != null) {

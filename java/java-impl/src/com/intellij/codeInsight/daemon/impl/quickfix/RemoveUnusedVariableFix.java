@@ -108,12 +108,12 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     });
   }
 
-  public static RemoveUnusedVariableUtil.RemoveMode showSideEffectsWarning(List<PsiElement> sideEffects,
-                                           PsiVariable variable,
-                                           Editor editor,
-                                           boolean canCopeWithSideEffects,
-                                           @NonNls String beforeText,
-                                           @NonNls String afterText) {
+  public static RemoveUnusedVariableUtil.RemoveMode showSideEffectsWarning(List<? extends PsiElement> sideEffects,
+                                                                           PsiVariable variable,
+                                                                           Editor editor,
+                                                                           boolean canCopeWithSideEffects,
+                                                                           @NonNls String beforeText,
+                                                                           @NonNls String afterText) {
     if (sideEffects.isEmpty()) return RemoveUnusedVariableUtil.RemoveMode.DELETE_ALL;
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return canCopeWithSideEffects
@@ -133,10 +133,10 @@ public class RemoveUnusedVariableFix implements IntentionAction {
     return RemoveUnusedVariableUtil.RemoveMode.values()[code];
   }
 
-  private static RemoveUnusedVariableUtil.RemoveMode showSideEffectsWarning(List<PsiElement> sideEffects,
-                                            PsiVariable variable,
-                                            Editor editor,
-                                            boolean canCopeWithSideEffects) {
+  private static RemoveUnusedVariableUtil.RemoveMode showSideEffectsWarning(List<? extends PsiElement> sideEffects,
+                                                                            PsiVariable variable,
+                                                                            Editor editor,
+                                                                            boolean canCopeWithSideEffects) {
     String text;
     if (sideEffects.isEmpty()) {
       text = "";

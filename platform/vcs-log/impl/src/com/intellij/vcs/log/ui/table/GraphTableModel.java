@@ -1,7 +1,7 @@
 package com.intellij.vcs.log.ui.table;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
@@ -12,8 +12,6 @@ import com.intellij.vcs.log.data.CommitIdByStringCondition;
 import com.intellij.vcs.log.data.DataGetter;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
-import com.intellij.vcs.log.util.VcsLogUtil;
-import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.render.GraphCommitCell;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -36,6 +34,9 @@ public class GraphTableModel extends AbstractTableModel {
 
   private static final int UP_PRELOAD_COUNT = 20;
   private static final int DOWN_PRELOAD_COUNT = 40;
+
+  public static final int COMMIT_NOT_FOUND = -1;
+  public static final int COMMIT_DOES_NOT_MATCH = -2;
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final Consumer<Runnable> myRequestMore;
@@ -70,16 +71,31 @@ public class GraphTableModel extends AbstractTableModel {
     return myLogData.getCommitId(getIdAtRow(row));
   }
 
-  public int getRowOfCommit(@NotNull final Hash hash, @NotNull VirtualFile root) {
-    final int commitIndex = myLogData.getCommitIndex(hash, root);
-    return ContainerUtil.indexOf(VcsLogUtil.getVisibleCommits(myDataPack.getVisibleGraph()), (Condition<Integer>)i -> i == commitIndex);
+  public int getRowOfCommit(@NotNull Hash hash, @NotNull VirtualFile root) {
+    if (!myLogData.getStorage().containsCommit(new CommitId(hash, root))) return COMMIT_NOT_FOUND;
+    return getRowOfCommitWithoutCheck(hash, root);
   }
 
   public int getRowOfCommitByPartOfHash(@NotNull String partialHash) {
-    final CommitIdByStringCondition hashByString = new CommitIdByStringCondition(partialHash);
+    CommitIdByStringCondition hashByString = new CommitIdByStringCondition(partialHash);
+    Ref<Boolean> commitExists = new Ref<>(false);
     CommitId commitId = myLogData.getStorage().findCommitId(
-      commitId1 -> hashByString.value(commitId1) && getRowOfCommit(commitId1.getHash(), commitId1.getRoot()) != -1);
-    return commitId != null ? getRowOfCommit(commitId.getHash(), commitId.getRoot()) : -1;
+      commitId1 -> {
+        if (hashByString.value(commitId1)) {
+          commitExists.set(true);
+          return getRowOfCommitWithoutCheck(commitId1.getHash(), commitId1.getRoot()) >= 0;
+        }
+        return false;
+      });
+    return commitId != null
+           ? getRowOfCommitWithoutCheck(commitId.getHash(), commitId.getRoot())
+           : (commitExists.get() ? COMMIT_DOES_NOT_MATCH : COMMIT_NOT_FOUND);
+  }
+
+  private int getRowOfCommitWithoutCheck(@NotNull Hash hash, @NotNull VirtualFile root) {
+    int commitIndex = myLogData.getCommitIndex(hash, root);
+    Integer rowIndex = myDataPack.getVisibleGraph().getVisibleRowIndex(commitIndex);
+    return rowIndex == null ? COMMIT_DOES_NOT_MATCH : rowIndex;
   }
 
   @Override

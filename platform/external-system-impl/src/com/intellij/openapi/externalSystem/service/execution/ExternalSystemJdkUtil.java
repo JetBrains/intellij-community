@@ -106,6 +106,7 @@ public class ExternalSystemJdkUtil {
   }
 
   /** @deprecated trivial (to be removed in IDEA 2019) */
+  @Deprecated
   public static boolean checkForJdk(@NotNull Project project, @Nullable String jdkName) {
     try {
       final Sdk sdk = getJdk(project, jdkName);

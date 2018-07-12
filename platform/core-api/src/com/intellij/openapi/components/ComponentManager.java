@@ -36,6 +36,7 @@ public interface ComponentManager extends UserDataHolder, Disposable {
   /**
    * @deprecated Use {@link #getComponent(Class)} instead.
    */
+  @Deprecated
   BaseComponent getComponent(@NotNull String name);
 
   /**
@@ -70,6 +71,7 @@ public interface ComponentManager extends UserDataHolder, Disposable {
    *
    * @deprecated use <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/plugin_structure/plugin_extensions_and_extension_points.html">extension points</a> instead
    */
+  @Deprecated
   @NotNull
   <T> T[] getComponents(@NotNull Class<T> baseClass);
 

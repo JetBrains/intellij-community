@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferen
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.XmlBaseReferenceProvider;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.ProcessingContext;
+import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 import org.jetbrains.idea.devkit.util.PsiUtil;
@@ -28,7 +29,7 @@ public class PluginDescriptorXIncludeReferenceContributor extends PsiReferenceCo
 
   private static XmlAttributeValuePattern getPattern() {
     return XmlPatterns.xmlAttributeValue().withLocalName("href")
-      .withSuperParent(2, XmlPatterns.xmlTag().withLocalName("include"))
+      .withSuperParent(2, XmlPatterns.xmlTag().withLocalName("include").withNamespace(XmlUtil.XINCLUDE_URI))
       .with(new PatternCondition<XmlAttributeValue>("XInclude inside plugin.xml") {
         @Override
         public boolean accepts(@NotNull XmlAttributeValue value, ProcessingContext context) {

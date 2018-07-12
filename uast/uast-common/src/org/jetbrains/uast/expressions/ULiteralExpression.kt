@@ -15,9 +15,9 @@
  */
 package org.jetbrains.uast
 
-import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.internal.log
+import org.jetbrains.uast.visitor.UastTypedVisitor
 import org.jetbrains.uast.visitor.UastVisitor
 
 /**
@@ -54,7 +54,7 @@ interface ULiteralExpression : UExpression {
     visitor.afterVisitLiteralExpression(this)
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitLiteralExpression(this, data)
 
   override fun asRenderString(): String {
@@ -70,5 +70,5 @@ interface ULiteralExpression : UExpression {
     }
   }
 
-  override fun asLogString() = log("value = ${asRenderString()}")
+  override fun asLogString(): String = log("value = ${asRenderString()}")
 }

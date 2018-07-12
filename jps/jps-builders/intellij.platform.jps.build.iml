@@ -19,8 +19,7 @@
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="NanoXML" level="project" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
-    <orderEntry type="library" name="Netty" level="project" />
-    <orderEntry type="library" exported="" name="protobuf" level="project" />
+    <orderEntry type="library" name="protobuf" level="project" />
     <orderEntry type="module" module-name="intellij.java.rt" scope="RUNTIME" />
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
@@ -34,5 +33,6 @@
     <orderEntry type="library" scope="TEST" name="KotlinTest" level="project" />
     <orderEntry type="library" name="Xerces" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="library" name="netty-codec-http" level="project" />
   </component>
 </module>

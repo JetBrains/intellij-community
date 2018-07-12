@@ -20,6 +20,6 @@ public class RedundantComparatorComparingInspectionTest extends LightQuickFixPar
 
   @Override
   protected String getBasePath() {
-    return "/codeInsight/daemonCodeAnalyzer/quickFix/redundantComparing";
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/comparatorCanBeSimplified";
   }
 }

@@ -266,7 +266,13 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, PyDocStrin
   boolean isSubclass(@NotNull String superClassQName, @Nullable TypeEvalContext context);
 
   /**
-   * Returns the aggregated list of names defined in __slots__ attributes of the class and its ancestors.
+   * Returns the aggregated list of names defined in `__slots__` attributes of the class and its ancestors.
+   * <p>
+   * Returned value is `null` if class or at least one of its ancestor does not follow the next conditions:
+   * <ul>
+   * <li>it should be a new style class</li>
+   * <li>its `__slots__` should exist and should not contain `__dict__`</li>
+   * </ul>
    *
    * @param context (will be used default if null)
    */

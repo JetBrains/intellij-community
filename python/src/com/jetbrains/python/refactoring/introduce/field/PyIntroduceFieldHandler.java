@@ -189,7 +189,7 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
     }
     final PyFunctionBuilder builder = new PyFunctionBuilder(PythonUnitTestUtil.TESTCASE_SETUP_NAME, clazz);
     builder.parameter(PyNames.CANONICAL_SELF);
-    PyFunction setUp = builder.buildFunction(clazz.getProject(), LanguageLevel.getDefault());
+    PyFunction setUp = builder.buildFunction();
     final PyStatementList statements = clazz.getStatementList();
     final PsiElement anchor = statements.getFirstChild();
     setUp = (PyFunction)statements.addBefore(setUp, anchor);

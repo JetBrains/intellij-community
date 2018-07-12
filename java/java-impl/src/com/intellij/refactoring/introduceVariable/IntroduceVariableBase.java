@@ -58,6 +58,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -924,7 +925,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
               if (lastChild instanceof PsiComment) { // keep trailing comment
                 declaration.addBefore(lastChild, null);
               }
-              statement.delete();
+              CommentTracker commentTracker = new CommentTracker();
+              commentTracker.markUnchanged(initializer);
+              commentTracker.deleteAndRestoreComments(statement);
               if (editor != null) {
                 LogicalPosition pos = new LogicalPosition(line, col);
                 editor.getCaretModel().moveToLogicalPosition(pos);
@@ -1040,7 +1043,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   }
 
   public static PsiExpression simplifyVariableInitializer(final PsiExpression initializer,
-                                                          final PsiType expectedType) {
+                                                        final PsiType expectedType) {
+    return simplifyVariableInitializer(initializer, expectedType, true);
+  }
+
+  public static PsiExpression simplifyVariableInitializer(final PsiExpression initializer,
+                                                          final PsiType expectedType,
+                                                          final boolean inDeclaration) {
 
     if (initializer instanceof PsiTypeCastExpression) {
       PsiExpression operand = ((PsiTypeCastExpression)initializer).getOperand();
@@ -1054,7 +1063,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     else if (initializer instanceof PsiNewExpression) {
       final PsiNewExpression newExpression = (PsiNewExpression)initializer;
       if (newExpression.getArrayInitializer() != null) {
-        return newExpression.getArrayInitializer();
+        if (inDeclaration) {
+          return newExpression.getArrayInitializer();
+        }
       }
       else {
         final PsiExpression tryToDetectDiamondNewExpr = ((PsiVariable)JavaPsiFacade.getElementFactory(initializer.getProject())

@@ -12,7 +12,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWindow;
-import com.intellij.openapi.progress.util.SmoothProgressAdapter;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.SystemNotifications;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -57,19 +56,6 @@ public class ProgressManagerImpl extends CoreProgressManager implements Disposab
       }
 
     }, this);
-  }
-
-  @Override
-  public void setCancelButtonText(String cancelButtonText) {
-    ProgressIndicator progressIndicator = getProgressIndicator();
-    if (progressIndicator != null) {
-      if (progressIndicator instanceof SmoothProgressAdapter && cancelButtonText != null) {
-        ProgressIndicator original = ((SmoothProgressAdapter)progressIndicator).getOriginalProgressIndicator();
-        if (original instanceof ProgressWindow) {
-          ((ProgressWindow)original).setCancelButtonText(cancelButtonText);
-        }
-      }
-    }
   }
 
   @Override

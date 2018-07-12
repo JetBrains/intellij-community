@@ -24,7 +24,6 @@
 
     <projectService serviceInterface="org.intellij.images.search.ImageTagManager"
                     serviceImplementation="org.intellij.images.search.ImageTagManager"/>
-    <statistics.usagesCollector implementation="org.intellij.images.statistics.BackgroundImagesUsageCollector"/>
   </extensions>
 
   <actions>

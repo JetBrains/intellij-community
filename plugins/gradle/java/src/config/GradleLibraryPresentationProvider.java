@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryPresentationProviderBase;
+import org.jetbrains.plugins.groovy.config.GroovyLibraryProperties;
 
 import javax.swing.*;
 import java.io.File;
@@ -49,7 +50,7 @@ public class GradleLibraryPresentationProvider extends GroovyLibraryPresentation
 
   @NotNull
   @Override
-  public Icon getIcon() {
+  public Icon getIcon(GroovyLibraryProperties properties) {
     return GradleIcons.Gradle;
   }
 

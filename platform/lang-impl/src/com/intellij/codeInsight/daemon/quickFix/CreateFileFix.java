@@ -54,11 +54,11 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private long myIsAvailableTimeStamp;
   private static final int REFRESH_INTERVAL = 1000;
 
-  public CreateFileFix(boolean isDirectory,
-                       @NotNull String newFileName,
-                       @NotNull PsiDirectory directory,
-                       @Nullable String text,
-                       @NotNull String key) {
+  protected CreateFileFix(boolean isDirectory,
+                          @NotNull String newFileName,
+                          @NotNull PsiDirectory directory,
+                          @Nullable String text,
+                          @NotNull String key) {
     super(directory);
 
     myIsDirectory = isDirectory;
