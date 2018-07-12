@@ -125,6 +125,14 @@ public class ConfigurationContext {
     myContextComponent = null;
   }
 
+  /*package*/ ConfigurationContext(@NotNull Location location) {
+    //noinspection unchecked
+    myLocation = location;
+    myModule = location.getModule();
+    myRuntimeConfiguration = null;
+    myContextComponent = null;
+  }
+
   public boolean containsMultipleSelection() {
     return myMultipleSelection;
   }
@@ -203,6 +211,11 @@ public class ConfigurationContext {
 
     final PsiElement psiElement = myLocation.getPsiElement();
     if (!psiElement.isValid()) {
+      return null;
+    }
+
+    if (MultipleRunLocationsProvider.findAlternativeLocations(myLocation) != null) {
+      myExistingConfiguration.set(null);
       return null;
     }
 
