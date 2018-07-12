@@ -3985,7 +3985,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // mb_not ('instanceof') (type_element | expect_type)
+  // mb_not ('instanceof') mb_nl (type_element | expect_type)
   static boolean instanceof_expression_tail(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "instanceof_expression_tail")) return false;
     if (!nextTokenIsFast(b, T_NOT, KW_INSTANCEOF)) return false;
@@ -3994,7 +3994,8 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     r = mb_not(b, l + 1);
     r = r && instanceof_expression_tail_1(b, l + 1);
     p = r; // pin = 2
-    r = r && instanceof_expression_tail_2(b, l + 1);
+    r = r && report_error_(b, mb_nl(b, l + 1));
+    r = p && instanceof_expression_tail_3(b, l + 1) && r;
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
@@ -4010,8 +4011,8 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   // type_element | expect_type
-  private static boolean instanceof_expression_tail_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "instanceof_expression_tail_2")) return false;
+  private static boolean instanceof_expression_tail_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "instanceof_expression_tail_3")) return false;
     boolean r;
     r = type_element(b, l + 1);
     if (!r) r = expect_type(b, l + 1);
@@ -7146,19 +7147,19 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
         r = expression(b, l, 3);
         exit_section_(b, l, m, LAND_EXPRESSION, r, true, null);
       }
-      else if (g < 4 && consumeTokenSmart(b, T_BOR)) {
+      else if (g < 4 && bor_expression_0(b, l + 1)) {
         r = expression(b, l, 4);
         exit_section_(b, l, m, BOR_EXPRESSION, r, true, null);
       }
-      else if (g < 5 && consumeTokenSmart(b, T_XOR)) {
+      else if (g < 5 && xor_expression_0(b, l + 1)) {
         r = expression(b, l, 5);
         exit_section_(b, l, m, XOR_EXPRESSION, r, true, null);
       }
-      else if (g < 6 && consumeTokenSmart(b, T_BAND)) {
+      else if (g < 6 && band_expression_0(b, l + 1)) {
         r = expression(b, l, 6);
         exit_section_(b, l, m, BAND_EXPRESSION, r, true, null);
       }
-      else if (g < 7 && equalityOperator(b, l + 1)) {
+      else if (g < 7 && equality_expression_0(b, l + 1)) {
         r = expression(b, l, 7);
         exit_section_(b, l, m, EQUALITY_EXPRESSION, r, true, null);
       }
@@ -7166,11 +7167,11 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
         r = expression(b, l, 7);
         exit_section_(b, l, m, RELATIONAL_EXPRESSION, r, true, null);
       }
-      else if (g < 7 && consumeTokenSmart(b, T_REGEX_FIND)) {
+      else if (g < 7 && regex_find_expression_0(b, l + 1)) {
         r = expression(b, l, 7);
         exit_section_(b, l, m, REGEX_FIND_EXPRESSION, r, true, null);
       }
-      else if (g < 7 && consumeTokenSmart(b, T_REGEX_MATCH)) {
+      else if (g < 7 && regex_match_expression_0(b, l + 1)) {
         r = expression(b, l, 7);
         exit_section_(b, l, m, REGEX_MATCH_EXPRESSION, r, true, null);
       }
@@ -7190,7 +7191,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
         r = true;
         exit_section_(b, l, m, AS_EXPRESSION, r, true, null);
       }
-      else if (g < 9 && shift_sign(b, l + 1)) {
+      else if (g < 9 && shift_expression_0(b, l + 1)) {
         r = expression(b, l, 9);
         exit_section_(b, l, m, SHIFT_EXPRESSION, r, true, null);
       }
@@ -7333,12 +7334,78 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
+  // '|' mb_nl
+  private static boolean bor_expression_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "bor_expression_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, T_BOR);
+    r = r && mb_nl(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '^' mb_nl
+  private static boolean xor_expression_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "xor_expression_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, T_XOR);
+    r = r && mb_nl(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '&' mb_nl
+  private static boolean band_expression_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "band_expression_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, T_BAND);
+    r = r && mb_nl(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // <<equalityOperator>> mb_nl
+  private static boolean equality_expression_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "equality_expression_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = equalityOperator(b, l + 1);
+    r = r && mb_nl(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
   // '<=>' mb_nl
   private static boolean compare_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "compare_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, T_COMPARE);
+    r = r && mb_nl(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '=~' mb_nl
+  private static boolean regex_find_expression_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "regex_find_expression_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, T_REGEX_FIND);
+    r = r && mb_nl(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '==~' mb_nl
+  private static boolean regex_match_expression_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "regex_match_expression_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, T_REGEX_MATCH);
     r = r && mb_nl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
@@ -7355,13 +7422,14 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // mb_not ('in')
+  // mb_not ('in') mb_nl
   private static boolean in_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "in_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = mb_not(b, l + 1);
     r = r && in_expression_0_1(b, l + 1);
+    r = r && mb_nl(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -7376,20 +7444,43 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // 'as' type_element
+  // 'as' mb_nl type_element
   private static boolean as_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "as_expression_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, KW_AS);
+    r = r && mb_nl(b, l + 1);
     r = r && type_element(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
 
-  // '..' | '..<'
+  // shift_sign mb_nl
+  private static boolean shift_expression_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "shift_expression_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = shift_sign(b, l + 1);
+    r = r && mb_nl(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // ('..' | '..<') mb_nl
   private static boolean range_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "range_expression_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = range_expression_0_0(b, l + 1);
+    r = r && mb_nl(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '..' | '..<'
+  private static boolean range_expression_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "range_expression_0_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, T_RANGE);
@@ -7501,9 +7592,20 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r || p;
   }
 
-  // '~' | '!'
+  // ('~' | '!') mb_nl
   private static boolean not_expression_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "not_expression_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = not_expression_0_0(b, l + 1);
+    r = r && mb_nl(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // '~' | '!'
+  private static boolean not_expression_0_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "not_expression_0_0")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokenSmart(b, T_BNOT);
