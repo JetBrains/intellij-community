@@ -248,6 +248,10 @@ def do_exit(*args):
 
 
 def enable_thrift_logging():
+    """Sets up `thriftpy` logger
+
+    The logger is used in `thriftpy/server.py` for logging exceptions.
+    """
     import logging
 
     # create logger
