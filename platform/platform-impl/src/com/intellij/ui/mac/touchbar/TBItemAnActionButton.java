@@ -20,8 +20,6 @@ import java.awt.event.KeyEvent;
 import static java.awt.event.ComponentEvent.COMPONENT_FIRST;
 
 class TBItemAnActionButton extends TBItemButton {
-  private static final boolean LOG_ICON_ERRORS = System.getProperty("touchbar.log.icon.errors", "false").equals("true");
-
   public static final int SHOWMODE_IMAGE_ONLY = 0;
   public static final int SHOWMODE_TEXT_ONLY = 1;
   public static final int SHOWMODE_IMAGE_TEXT = 2;
@@ -113,8 +111,7 @@ class TBItemAnActionButton extends TBItemButton {
         if (icon == null)
           icon = IconLoader.getDisabledIcon(presentation.getIcon());
       }
-      if (icon == null && LOG_ICON_ERRORS)
-        LOG.error("can't get icon, action " + myActionId + ", presentation = " + _printPresentation(presentation));
+      // if (icon == null) System.out.println("WARN: can't obtain icon, action " + myActionId + ", presentation = " + _printPresentation(presentation));
     }
 
     boolean isSelected = false;
