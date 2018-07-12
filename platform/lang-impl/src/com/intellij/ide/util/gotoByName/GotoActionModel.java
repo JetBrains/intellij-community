@@ -689,10 +689,11 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
       panel.add(nameComponent, BorderLayout.CENTER);
       
       if (matchedValue instanceof String) { //...
-        nameComponent.append((String)matchedValue, new SimpleTextAttributes(STYLE_PLAIN, defaultActionForeground(isSelected, null)));
         if (showIcon) {
           panel.add(new JBLabel(EMPTY_ICON), BorderLayout.WEST);
         }
+        String str = cutName((String)matchedValue, null, list, panel, nameComponent);
+        nameComponent.append(str, new SimpleTextAttributes(STYLE_PLAIN, defaultActionForeground(isSelected, null)));
         return panel;
       }
 
@@ -719,17 +720,6 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
           Icon icon = presentation.getIcon();
           panel.add(createIconLabel(icon, disabled), BorderLayout.WEST);
         }
-        appendWithColoredMatches(nameComponent, getName(presentation.getText(), groupName, toggle), pattern, fg, isSelected);
-        panel.setToolTipText(presentation.getDescription());
-
-        Shortcut[] shortcuts = getActiveKeymapShortcuts(ActionManager.getInstance().getId(anAction)).getShortcuts();
-        String shortcutText = KeymapUtil.getPreferredShortcutText(
-          shortcuts);
-        if (StringUtil.isNotEmpty(shortcutText)) {
-          nameComponent.append(" " + shortcutText,
-                               new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER | SimpleTextAttributes.STYLE_BOLD,
-                                                        UIUtil.isUnderDarcula() ? groupFg : ColorUtil.shift(groupFg, 1.3)));
-        }
 
         if (toggle) {
           AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, ((ActionWrapper)value).myDataContext);
@@ -745,6 +735,19 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
             panel.add(groupLabel, BorderLayout.EAST);
           }
         }
+
+        panel.setToolTipText(presentation.getDescription());
+        Shortcut[] shortcuts = getActiveKeymapShortcuts(ActionManager.getInstance().getId(anAction)).getShortcuts();
+        String shortcutText = KeymapUtil.getPreferredShortcutText(shortcuts);
+        String name = getName(presentation.getText(), groupName, toggle);
+        name = cutName(name, shortcutText, list, panel, nameComponent);
+
+        appendWithColoredMatches(nameComponent, name, pattern, fg, isSelected);
+        if (StringUtil.isNotEmpty(shortcutText)) {
+          nameComponent.append(" " + shortcutText,
+                               new SimpleTextAttributes(SimpleTextAttributes.STYLE_SMALLER | SimpleTextAttributes.STYLE_BOLD,
+                                                        UIUtil.isUnderDarcula() ? groupFg : ColorUtil.shift(groupFg, 1.3)));
+        }
       }
       else if (value instanceof OptionDescription) {
         if (!isSelected && !(value instanceof BooleanOptionDescription)) {
@@ -759,11 +762,7 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         hit = StringUtil.unescapeXml(hit);
         hit = hit.replace("  ", " "); // avoid extra spaces from mnemonics and xml conversion
         String fullHit = hit;
-        hit = StringUtil.first(hit, 45, true);
-
         Color fg = UIUtil.getListForeground(isSelected);
-
-        appendWithColoredMatches(nameComponent, hit.trim(), pattern, fg, isSelected);
 
         if (showIcon) {
           panel.add(new JLabel(EMPTY_ICON), BorderLayout.WEST);
@@ -781,8 +780,58 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
           settingsLabel.setBorder(eastBorder);
           panel.add(settingsLabel, BorderLayout.EAST);
         }
+
+        String name = cutName(fullHit, null, list, panel, nameComponent);
+        appendWithColoredMatches(nameComponent, name, pattern, fg, isSelected);
       }
       return panel;
+    }
+
+    private static String cutName(String name, String shortcutText, JList list, JPanel panel, SimpleColoredComponent nameComponent) {
+      if (!list.isShowing() || list.getWidth() <= 0) {
+        return StringUtil.first(name, 60, true); //fallback to previous behaviour
+      }
+      int freeSpace = calcFreeSpace(list, panel, nameComponent, shortcutText);
+      return doCutName(name, nameComponent.getFontMetrics(nameComponent.getFont()), freeSpace);
+    }
+
+    private static int calcFreeSpace(JList list, JPanel panel, JComponent nameComponent, String shortcutText) {
+      BorderLayout layout = (BorderLayout)panel.getLayout();
+      Component eastComponent = layout.getLayoutComponent(BorderLayout.EAST);
+      Component westComponent = layout.getLayoutComponent(BorderLayout.WEST);
+      int freeSpace = list.getWidth()
+        - (list.getInsets().right + list.getInsets().left)
+        - (panel.getInsets().right + panel.getInsets().left)
+        - (eastComponent == null ? 0 : eastComponent.getPreferredSize().width)
+        - (westComponent == null ? 0 : westComponent.getPreferredSize().width)
+        - (nameComponent.getInsets().right + nameComponent.getInsets().left);
+
+      if (StringUtil.isNotEmpty(shortcutText)) {
+        FontMetrics fm = nameComponent.getFontMetrics(nameComponent.getFont().deriveFont(Font.BOLD));
+        freeSpace -= fm.stringWidth(" " + shortcutText);
+      }
+
+      return freeSpace;
+    }
+
+    private static String doCutName(String str, FontMetrics fm, int freeSpace) {
+      if (freeSpace <= 0) {
+        return str;
+      }
+
+      int strWidth = fm.stringWidth(str);
+      if (strWidth <= freeSpace) {
+        return str;
+      }
+
+      int cutSymbolIndex  = (int)((((double) freeSpace - fm.stringWidth("...")) / strWidth) * str.length());
+      cutSymbolIndex = Integer.max(1, cutSymbolIndex);
+      str = str.substring(0, cutSymbolIndex);
+      while (fm.stringWidth(str + "...") > freeSpace && str.length() > 1) {
+        str = str.substring(0, str.length() - 1);
+      }
+
+      return str.trim() + "...";
     }
 
     private static void addOnOffButton(@NotNull JPanel panel, boolean selected) {
