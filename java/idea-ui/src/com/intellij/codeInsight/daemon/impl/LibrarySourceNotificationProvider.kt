@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.ProjectTopics
@@ -43,6 +29,11 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
   private companion object {
     private val KEY = Key.create<EditorNotificationPanel>("library.source.mismatch.panel")
     private val ANDROID_SDK_PATTERN = ".*/platforms/android-\\d+/android.jar!/.*".toRegex()
+
+    private const val FIELD = PsiFormatUtil.SHOW_NAME or PsiFormatUtil.SHOW_TYPE or PsiFormatUtil.SHOW_FQ_CLASS_NAMES
+    private const val METHOD = PsiFormatUtil.SHOW_NAME or PsiFormatUtilBase.SHOW_PARAMETERS
+    private const val PARAMETER = PsiFormatUtilBase.SHOW_TYPE or PsiFormatUtil.SHOW_FQ_CLASS_NAMES
+    private const val CLASS = PsiFormatUtil.SHOW_NAME or PsiFormatUtil.SHOW_FQ_CLASS_NAMES or PsiFormatUtil.SHOW_EXTENDS_IMPLEMENTS
   }
 
   init {
@@ -63,18 +54,18 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
           if (clsFile != null && !clsFile.path.matches(ANDROID_SDK_PATTERN)) {
             val panel = EditorNotificationPanel(LightColors.RED)
             panel.setText(ProjectBundle.message("library.source.mismatch", offender.name))
-            panel.createActionLabel(ProjectBundle.message("library.source.open.class"), {
+            panel.createActionLabel(ProjectBundle.message("library.source.open.class")) {
               if (!project.isDisposed && clsFile.isValid) {
                 PsiNavigationSupport.getInstance().createNavigatable(project, clsFile, -1).navigate(true)
               }
-            })
-            panel.createActionLabel(ProjectBundle.message("library.source.show.diff"), {
+            }
+            panel.createActionLabel(ProjectBundle.message("library.source.show.diff")) {
               if (!project.isDisposed && clsFile.isValid) {
                 val cf = DiffContentFactory.getInstance()
                 val request = SimpleDiffRequest(null, cf.create(project, clsFile), cf.create(project, file), clsFile.path, file.path)
                 DiffManager.getInstance().showDiff(project, request)
               }
-            })
+            }
             return panel
           }
         }
@@ -84,36 +75,23 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
     return null
   }
 
-  private fun differs(clazz: PsiClass): Boolean {
-    val binary = clazz.originalElement
-    return binary !== clazz &&
-        binary is PsiClass &&
-           (fieldDiffers(fields(clazz), fields(binary)) || methodsDiffers(methods(clazz), methods(binary)) || classDiffers(inners(clazz), inners(binary)))
+  private fun differs(src: PsiClass): Boolean {
+    val cls = src.originalElement
+    return cls !== src && cls is PsiClass &&
+           (differs(fields(src), fields(cls), ::format) ||
+            differs(methods(src), methods(cls), ::format) ||
+            differs(inners(src), inners(cls), ::format))
   }
 
-  private fun classDiffers(list1: List<PsiClass>, list2: List<PsiClass>): Boolean {
-    val classOptions = PsiFormatUtil.SHOW_NAME + PsiFormatUtil.SHOW_FQ_CLASS_NAMES + PsiFormatUtil.SHOW_EXTENDS_IMPLEMENTS
-    return list1.size != list2.size || list1.map { PsiFormatUtil.formatClass(it, classOptions) }.sorted() !=
-                                       list2.map { PsiFormatUtil.formatClass(it, classOptions) }.sorted()
-  }
-  
-  private fun fieldDiffers(list1: List<PsiField>, list2: List<PsiField>): Boolean {
-    val fieldOptions = PsiFormatUtil.SHOW_NAME + PsiFormatUtil.SHOW_TYPE + PsiFormatUtil.SHOW_FQ_CLASS_NAMES 
-    return list1.size != list2.size || list1.map { PsiFormatUtil.formatVariable(it, fieldOptions, PsiSubstitutor.EMPTY) }.sorted() != 
-                                       list2.map { PsiFormatUtil.formatVariable(it, fieldOptions, PsiSubstitutor.EMPTY) }.sorted()
-  }
+  private fun <T : PsiMember> differs(srcMembers: List<T>, clsMembers: List<T>, format: (T) -> String) =
+    srcMembers.size != clsMembers.size || srcMembers.map(format).sorted() != clsMembers.map(format).sorted()
 
-  private fun methodsDiffers(list1: List<PsiMethod>, list2: List<PsiMethod>): Boolean {
-    val methodOptions = PsiFormatUtil.SHOW_NAME + PsiFormatUtilBase.SHOW_PARAMETERS
-    val parametersOptions = PsiFormatUtilBase.SHOW_TYPE + PsiFormatUtil.SHOW_FQ_CLASS_NAMES
-    return list1.size != list2.size || 
-           list1.map { PsiFormatUtil.formatMethod(it, PsiSubstitutor.EMPTY, methodOptions, parametersOptions) }.sorted() !=
-           list2.map { PsiFormatUtil.formatMethod(it, PsiSubstitutor.EMPTY, methodOptions, parametersOptions) }.sorted()
-  }
+  private fun fields(c: PsiClass) = if (c is PsiExtensibleClass) c.ownFields else c.fields.asList()
+  private fun methods(c: PsiClass) = (if (c is PsiExtensibleClass) c.ownMethods else c.methods.asList()).filter { !defaultInit(it) }
+  private fun defaultInit(it: PsiMethod) = it.isConstructor && it.parameterList.parametersCount == 0
+  private fun inners(c: PsiClass) = if (c is PsiExtensibleClass) c.ownInnerClasses else c.innerClasses.asList()
 
-  private fun fields(clazz: PsiClass) = (clazz as? PsiExtensibleClass)?.ownFields ?: clazz.fields.asList()
-  private fun methods(clazz: PsiClass): List<PsiMethod> =
-      ((clazz as? PsiExtensibleClass)?.ownMethods ?: clazz.methods.asList())
-          .filter { !(it.isConstructor && it.parameterList.parametersCount == 0) }
-  private fun inners(clazz: PsiClass) = (clazz as? PsiExtensibleClass)?.ownInnerClasses ?: clazz.innerClasses.asList()
+  private fun format(f: PsiField) = PsiFormatUtil.formatVariable(f, FIELD, PsiSubstitutor.EMPTY)
+  private fun format(m: PsiMethod) = PsiFormatUtil.formatMethod(m, PsiSubstitutor.EMPTY, METHOD, PARAMETER)
+  private fun format(c: PsiClass) = PsiFormatUtil.formatClass(c, CLASS)
 }
