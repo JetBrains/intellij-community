@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeInsight.hints.HintWidthAdjustment;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -47,8 +48,9 @@ public class ParameterHintsPresentationManager implements Disposable {
     return renderer instanceof MyRenderer ? ((MyRenderer)renderer).getText() : null;
   }
 
-  public Inlay addHint(@NotNull Editor editor, int offset, boolean relatesToPrecedingText, @NotNull String hintText, boolean useAnimation) {
-    MyRenderer renderer = new MyRenderer(editor, hintText, useAnimation);
+  public Inlay addHint(@NotNull Editor editor, int offset, boolean relatesToPrecedingText, @NotNull String hintText,
+                       @Nullable HintWidthAdjustment widthAdjuster, boolean useAnimation) {
+    MyRenderer renderer = new MyRenderer(editor, hintText, widthAdjuster, useAnimation);
     Inlay inlay = editor.getInlayModel().addInlineElement(offset, relatesToPrecedingText, renderer);
     if (inlay != null) {
       if (useAnimation) scheduleRendererUpdate(editor, inlay);
@@ -58,15 +60,16 @@ public class ParameterHintsPresentationManager implements Disposable {
 
   public void deleteHint(@NotNull Editor editor, @NotNull Inlay hint, boolean useAnimation) {
     if (useAnimation) {
-      updateRenderer(editor, hint, null, true);
+      updateRenderer(editor, hint, null, null,true);
     }
     else {
       Disposer.dispose(hint);  
     }
   }
 
-  public void replaceHint(@NotNull Editor editor, @NotNull Inlay hint, @NotNull String newText, boolean useAnimation) {
-    updateRenderer(editor, hint, newText, useAnimation);
+  public void replaceHint(@NotNull Editor editor, @NotNull Inlay hint, @NotNull String newText, @Nullable HintWidthAdjustment widthAdjuster,
+                          boolean useAnimation) {
+    updateRenderer(editor, hint, newText, widthAdjuster, useAnimation);
   }
 
   public void setHighlighted(@NotNull Inlay hint, boolean highlighted) {
@@ -101,9 +104,10 @@ public class ParameterHintsPresentationManager implements Disposable {
     return renderer.current;
   }
 
-  private void updateRenderer(@NotNull Editor editor, @NotNull Inlay hint, @Nullable String newText, boolean useAnimation) {
+  private void updateRenderer(@NotNull Editor editor, @NotNull Inlay hint, @Nullable String newText, HintWidthAdjustment widthAdjuster,
+                              boolean useAnimation) {
     MyRenderer renderer = (MyRenderer)hint.getRenderer();
-    renderer.update(editor, newText, useAnimation);
+    renderer.update(editor, newText, widthAdjuster, useAnimation);
     hint.updateSize();
     if (useAnimation) scheduleRendererUpdate(editor, hint);
   }
@@ -140,13 +144,13 @@ public class ParameterHintsPresentationManager implements Disposable {
     private boolean highlighted;
     private boolean current;
 
-    private MyRenderer(Editor editor, String text, boolean animated) {
+    private MyRenderer(Editor editor, String text, HintWidthAdjustment widthAdjustment, boolean animated) {
       super(text);
-      updateState(editor, text, animated);
+      updateState(editor, text, widthAdjustment, animated);
     }
 
-    public void update(Editor editor, String newText, boolean animated) {
-      updateState(editor, newText, animated);
+    public void update(Editor editor, String newText, HintWidthAdjustment widthAdjustment, boolean animated) {
+      updateState(editor, newText, widthAdjustment, animated);
     }
 
     @Nullable
@@ -167,7 +171,8 @@ public class ParameterHintsPresentationManager implements Disposable {
       return "ParameterNameHints";
     }
 
-    private void updateState(Editor editor, String text, boolean animated) {
+    private void updateState(Editor editor, String text, HintWidthAdjustment widthAdjustment, boolean animated) {
+      setWidthAdjustment(widthAdjustment);
       FontMetrics metrics = getFontMetrics(editor).getMetrics();
       startWidth = doCalcWidth(getText(), metrics);
       setText(text);
