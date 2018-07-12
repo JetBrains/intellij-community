@@ -30,12 +30,13 @@ import git4idea.test.GitHttpAuthTestService;
 import git4idea.test.GitPlatformTest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
+import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager;
 import org.jetbrains.plugins.github.api.GithubApiTaskExecutor;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager;
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
 import org.jetbrains.plugins.github.util.GithubGitHelper;
-import org.jetbrains.plugins.github.util.GithubSettings;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
 import static org.junit.Assume.assumeNotNull;
@@ -64,7 +65,9 @@ public abstract class GithubTest extends GitPlatformTest {
   @NotNull protected GithubApiTaskExecutor myApiTaskExecutor;
 
   @NotNull protected GithubAccount myAccount;
+  @NotNull protected GithubApiRequestExecutor myExecutor;
   @NotNull protected GithubAccount myAccount2;
+  @NotNull protected GithubApiRequestExecutor myExecutor2;
 
   @NotNull protected String myUsername;
   @NotNull protected String myUsername2;
@@ -174,9 +177,12 @@ public abstract class GithubTest extends GitPlatformTest {
     assumeNotNull(host);
     assumeTrue(token1 != null && token2 != null);
     myAuthenticationManager = GithubAuthenticationManager.getInstance();
+    GithubApiRequestExecutorManager executorManager = GithubApiRequestExecutorManager.getInstance();
     myApiTaskExecutor = GithubApiTaskExecutor.getInstance();
     myAccount = myAuthenticationManager.registerAccount("account1", host, token1);
+    myExecutor = executorManager.getExecutor(myAccount);
     myAccount2 = myAuthenticationManager.registerAccount("account2", host, token2);
+    myExecutor2 = executorManager.getExecutor(myAccount2);
     myToken = token1;
 
     myUsername = myApiTaskExecutor.execute(myAccount, c -> GithubApiUtil.getCurrentUser(c).getLogin());

@@ -6,8 +6,10 @@ import org.jetbrains.plugins.github.api.GithubApiRequest.Get
 import org.jetbrains.plugins.github.api.GithubApiRequest.Post
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubAuthorization
+import org.jetbrains.plugins.github.api.data.GithubGist
 import org.jetbrains.plugins.github.api.data.GithubRepo
 import org.jetbrains.plugins.github.api.requests.GithubAuthorizationCreateRequest
+import org.jetbrains.plugins.github.api.requests.GithubGistRequest
 import org.jetbrains.plugins.github.api.requests.GithubRequestPagination
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import java.awt.Image
@@ -60,6 +62,14 @@ object GithubApiRequests {
       @JvmStatic
       fun get(url: String) = Get.jsonPage<GithubRepo>(url).withOperationName("get repository subscriptions")
     }
+  }
+
+  object Gists : Entity("/gists") {
+    @JvmStatic
+    fun create(server: GithubServerPath,
+               contents: List<GithubGistRequest.FileContent>, description: String, public: Boolean) =
+      Post.json<GithubGist>(getUrl(server, urlSuffix), GithubGistRequest(contents, description, public))
+        .withOperationName("create gist")
   }
 
   object Auth : Entity("/authorizations") {
