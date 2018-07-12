@@ -14,7 +14,7 @@ import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
 import org.jetbrains.plugins.github.authentication.ui.GithubLoginDialog
-import javax.swing.JComponent
+import java.awt.Component
 
 /**
  * Entry point for interactions with Github authentication subsystem
@@ -33,7 +33,7 @@ class GithubAuthenticationManager internal constructor(private val accountManage
   @CalledInAny
   internal fun getOrRequestTokenForAccount(account: GithubAccount,
                                            project: Project? = null,
-                                           parentComponent: JComponent? = null,
+                                           parentComponent: Component? = null,
                                            modalityStateSupplier: () -> ModalityState = { ModalityState.any() }): String? {
     return getTokenForAccount(account) ?: invokeAndWaitIfNeed(modalityStateSupplier()) {
       requestNewToken(account, project, parentComponent)
@@ -41,7 +41,7 @@ class GithubAuthenticationManager internal constructor(private val accountManage
   }
 
   @CalledInAwt
-  private fun requestNewToken(account: GithubAccount, project: Project?, parentComponent: JComponent?): String? {
+  private fun requestNewToken(account: GithubAccount, project: Project?, parentComponent: Component?): String? {
     val dialog = GithubLoginDialog(project, parentComponent, message = "Missing access token for $account")
       .withServer(account.server.toString(), false)
       .withCredentials(account.name)
