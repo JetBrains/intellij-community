@@ -171,11 +171,6 @@ public class TabLabel extends JPanel implements Accessible {
   private SimpleColoredComponent createLabel(final JBTabsImpl tabs) {
     SimpleColoredComponent label = new SimpleColoredComponent() {
       @Override
-      protected boolean shouldDrawMacShadow() {
-        return SystemInfo.isMac || UIUtil.isUnderDarcula();
-      }
-
-      @Override
       protected boolean shouldDrawDimmed() {
         return myTabs.getSelectedInfo() != myInfo || myTabs.useBoldLabels();
       }
