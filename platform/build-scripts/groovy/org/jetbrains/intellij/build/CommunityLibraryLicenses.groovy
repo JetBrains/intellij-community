@@ -440,6 +440,7 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("tcServiceMessages"),
     jetbrainsLibrary("optimizedFileManager.jar"),
     jetbrainsLibrary("KotlinJavaRuntime"),
+    jetbrainsLibrary("KotlinScriptRuntime"),
     jetbrainsLibrary("kotlinx-coroutines-core"),
     jetbrainsLibrary("kotlinx-coroutines-jdk8")
   ] as List<LibraryLicense>
