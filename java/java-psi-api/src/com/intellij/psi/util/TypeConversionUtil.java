@@ -1333,45 +1333,6 @@ public class TypeConversionUtil {
     return PsiType.INT;
   }
 
-  @Nullable
-  @Contract(pure = true)
-  public static String getBinaryOperationText(IElementType op) {
-    if (op == JavaTokenType.AND) {
-      return "&";
-    }
-    else if (op == JavaTokenType.ASTERISK) {
-      return "*";
-    }
-    else if (op == JavaTokenType.DIV) {
-      return "/";
-    }
-    else if (op == JavaTokenType.GTGT) {
-      return ">>";
-    }
-    else if (op == JavaTokenType.GTGTGT) {
-      return ">>>";
-    }
-    else if (op == JavaTokenType.LTLT) {
-      return "<<";
-    }
-    else if (op == JavaTokenType.MINUS) {
-      return "-";
-    }
-    else if (op == JavaTokenType.OR) {
-      return "|";
-    }
-    else if (op == JavaTokenType.PERC) {
-      return "%";
-    }
-    else if (op == JavaTokenType.PLUS) {
-      return "+";
-    }
-    else if (op == JavaTokenType.XOR) {
-      return "^";
-    }
-    return null;
-  }
-
   public static IElementType convertEQtoOperation(IElementType eqOpSign) {
     IElementType opSign = null;
     if (eqOpSign == JavaTokenType.ANDEQ) {

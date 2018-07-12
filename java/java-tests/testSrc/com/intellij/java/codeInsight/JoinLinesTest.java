@@ -187,7 +187,6 @@ public class JoinLinesTest extends LightCodeInsightTestCase {
 
   public void testAssignmentExpression() { doTest(); }
   public void testAssignmentExpression2() { doTest(); }
-  public void testAssignmentExpressionPrecedence() { doTest(); }
 
   public void testReformatInsertsNewlines() {
     CommonCodeStyleSettings settings = getJavaSettings();

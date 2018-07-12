@@ -24,7 +24,6 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
@@ -82,7 +81,7 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
     try {
       PsiDeclarationStatement newDecl = factory.createVariableDeclarationStatement(var.getName(), var.getType(), initializerExpression);
       PsiVariable newVar = (PsiVariable)newDecl.getDeclaredElements()[0];
-      if (!var.getModifierList().getText().isEmpty()) {
+      if (var.getModifierList().getText().length() > 0) {
         PsiUtil.setModifierProperty(newVar, PsiModifier.FINAL, true);
       }
       newVar.getModifierList().replace(var.getModifierList());
@@ -122,31 +121,73 @@ public class DeclarationJoinLinesHandler implements JoinLinesHandlerDelegate {
   }
 
   @Nullable
-  public static PsiExpression getInitializerExpression(PsiExpression initializer, PsiAssignmentExpression assignment) {
+  public static PsiExpression getInitializerExpression(PsiExpression initializer,
+                                                       PsiAssignmentExpression assignment) {
     PsiExpression initializerExpression;
-    final IElementType compoundOp = assignment.getOperationTokenType();
+    final IElementType originalOpSign = assignment.getOperationTokenType();
     final PsiExpression rExpression = assignment.getRExpression();
     if (rExpression == null) return null;
-    if (compoundOp == JavaTokenType.EQ) {
+    if (originalOpSign == JavaTokenType.EQ) {
       initializerExpression = rExpression;
     }
     else {
       if (initializer == null) return null;
-      IElementType simpleOp = TypeConversionUtil.convertEQtoOperation(compoundOp);
-      if (simpleOp == null) return null;
-      String opSign = TypeConversionUtil.getBinaryOperationText(simpleOp);
-      if (opSign == null) return null;
-      final Project project = assignment.getProject();
-      final String rightText = rExpression.getText();
-      int precedence = ParenthesesUtils.getPrecedenceForOperator(simpleOp) + 1;
-      String initializerText =
-        ParenthesesUtils.getText(initializer, precedence) + opSign + ParenthesesUtils.getText(rExpression, precedence);
-      if ("+".equals(opSign) && ExpressionUtils.isZero(initializer) ||
-          "*".equals(opSign) && ExpressionUtils.isOne(initializer)) {
-        initializerText = rightText;
+      String opSign = null;
+      if (originalOpSign == JavaTokenType.ANDEQ) {
+        opSign = "&";
       }
-      initializerExpression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(initializerText, assignment);
-      initializerExpression = (PsiExpression)CodeStyleManager.getInstance(project).reformat(initializerExpression);
+      else if (originalOpSign == JavaTokenType.ASTERISKEQ) {
+        opSign = "*";
+      }
+      else if (originalOpSign == JavaTokenType.DIVEQ) {
+        opSign = "/";
+      }
+      else if (originalOpSign == JavaTokenType.GTGTEQ) {
+        opSign = ">>";
+      }
+      else if (originalOpSign == JavaTokenType.GTGTGTEQ) {
+        opSign = ">>>";
+      }
+      else if (originalOpSign == JavaTokenType.LTLTEQ) {
+        opSign = "<<";
+      }
+      else if (originalOpSign == JavaTokenType.MINUSEQ) {
+        opSign = "-";
+      }
+      else if (originalOpSign == JavaTokenType.OREQ) {
+        opSign = "|";
+      }
+      else if (originalOpSign == JavaTokenType.PERCEQ) {
+        opSign = "%";
+      }
+      else if (originalOpSign == JavaTokenType.PLUSEQ) {
+        opSign = "+";
+      }
+      else if (originalOpSign == JavaTokenType.XOREQ) {
+        opSign = "^";
+      }
+
+      try {
+        final Project project = assignment.getProject();
+        String initializerText = initializer.getText() + opSign;
+        final String rightText = rExpression.getText();
+        if (ParenthesesUtils.areParenthesesNeeded(assignment.getOperationSign(), rExpression)) {
+          initializerText += "(" + rightText + ")";
+        }
+        else {
+          initializerText += rightText;
+        }
+        if ("+".equals(opSign) && ExpressionUtils.isZero(initializer) ||
+            "*".equals(opSign) && ExpressionUtils.isOne(initializer)) {
+          initializerText = rightText;
+        }
+        initializerExpression = JavaPsiFacade.getElementFactory(project).createExpressionFromText(initializerText, assignment);
+        initializerExpression = (PsiExpression)CodeStyleManager.getInstance(project).reformat(initializerExpression);
+      }
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+        return null;
+      }
     }
     return initializerExpression;
   }

@@ -1234,6 +1234,45 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
       myUnaryExpression = unaryExpression;
     }
 
+    @Nullable
+    @Contract(pure = true)
+    private static String getOperationSign(IElementType op) {
+      if (op == JavaTokenType.AND) {
+        return "&";
+      }
+      else if (op == JavaTokenType.ASTERISK) {
+        return "*";
+      }
+      else if (op == JavaTokenType.DIV) {
+        return "/";
+      }
+      else if (op == JavaTokenType.GTGT) {
+        return ">>";
+      }
+      else if (op == JavaTokenType.GTGTGT) {
+        return ">>>";
+      }
+      else if (op == JavaTokenType.LTLT) {
+        return "<<";
+      }
+      else if (op == JavaTokenType.MINUS) {
+        return "-";
+      }
+      else if (op == JavaTokenType.OR) {
+        return "|";
+      }
+      else if (op == JavaTokenType.PERC) {
+        return "%";
+      }
+      else if (op == JavaTokenType.PLUS) {
+        return "+";
+      }
+      else if (op == JavaTokenType.XOR) {
+        return "^";
+      }
+      return null;
+    }
+
     @Override
     String createReplacement(CommentTracker ct) {
       String lambda;
@@ -1241,7 +1280,7 @@ public class StreamApiMigrationInspection extends AbstractBaseJavaLocalInspectio
         PsiElementFactory factory = JavaPsiFacade.getElementFactory(myVariable.getProject());
         PsiExpression expression = myUnaryExpression == null ? myExpression : factory.createExpressionFromText("1", null);
         String expressionText = ParenthesesUtils.getText(ct.markUnchanged(expression), ParenthesesUtils.getPrecedenceForOperator(myOpType));
-        String lambdaBody = myVariable.getName() + TypeConversionUtil.getBinaryOperationText(myOpType) + expressionText;
+        String lambdaBody = myVariable.getName() + getOperationSign(myOpType) + expressionText;
         if (!myVariable.getType().equals(expression.getType())) {
           lambdaBody = ("(" + myVariable.getType().getCanonicalText() + ")") + "(" + lambdaBody + ")";
         }
