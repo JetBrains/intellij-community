@@ -35,7 +35,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -168,6 +167,11 @@ public class StructuralSearchDialog extends DialogWrapper {
         TextCompletionUtil.installCompletionHint(editor);
         editor.putUserData(STRUCTURAL_SEARCH, true);
         return editor;
+      }
+
+      @Override
+      protected void updateBorder(@NotNull EditorEx editor) {
+        setupBorder(editor);
       }
     };
     textField.setPreferredSize(new Dimension(850, 150));
@@ -729,7 +733,6 @@ public class StructuralSearchDialog extends DialogWrapper {
       }
       balloon.showInCenterOf(component);
       Disposer.register(myDisposable, balloon);
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(component, true));
     });
   }
 
