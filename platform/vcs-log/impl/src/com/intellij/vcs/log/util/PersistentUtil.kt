@@ -72,18 +72,48 @@ object PersistentUtil {
   }
 }
 
-class StorageId(private val subdirName: String, private val logId: String, val version: Int) {
+class StorageId(private val subdirName: String,
+                private val logId: String,
+                val version: Int,
+                private val features: BooleanArray) {
   private val safeLogId = PathUtilRt.suggestFileName(logId, true, true)
+
+  constructor(subdirName: String, logId: String, version: Int) : this(subdirName, logId, version, booleanArrayOf())
 
   fun subdir() = File(LOG_CACHE, subdirName)
 
+  private fun featuresSuffix(): String {
+    if (features.isEmpty()) return ""
+    return "." + features.map { if (it) 1 else 0 }.joinToString { it.toString() }
+  }
+
   private fun getFile(kind: String = ""): File {
-    if (kind.isEmpty()) return File(subdir(), "$safeLogId.$version")
-    return File(subdir(), "$safeLogId.$kind.$version")
+    val name: String = if (kind.isEmpty()) "$safeLogId.$version" else "$safeLogId.$kind.$version"
+    return File(subdir(), "$name${featuresSuffix()}")
   }
 
   private fun getFileForMapIndexStorage(kind: String = ""): File {
     return MapIndexStorage.getIndexStorageFile(getFile(kind))
+  }
+
+  private fun iterateOverOtherFeatures(function: (BooleanArray) -> Unit) {
+    if (features.isEmpty()) return
+
+    val f = BooleanArray(features.size) { _ -> false }
+    mainLoop@ while (true) {
+      if (!features.contentEquals(f)) {
+        function(f)
+      }
+
+      for (i in 0 until features.size) {
+        if (!f[i]) {
+          f[i] = true
+          continue@mainLoop
+        }
+        f[i] = false
+      }
+      break@mainLoop
+    }
   }
 
   @JvmOverloads
@@ -100,19 +130,25 @@ class StorageId(private val subdirName: String, private val logId: String, val v
     val storageFile = if (forMapIndexStorage) getFileForMapIndexStorage(kind) else getFile(kind)
     if (!storageFile.exists()) {
       for (oldVersion in 0 until version) {
-        val oldStorage = StorageId(subdirName, logId, oldVersion)
-        val oldStorageFile = if (forMapIndexStorage) oldStorage.getFileForMapIndexStorage(kind) else oldStorage.getFile(kind)
-        IOUtil.deleteAllFilesStartingWith(oldStorageFile)
+        StorageId(subdirName, logId, oldVersion).cleanupStorageFiles(kind, forMapIndexStorage)
+      }
+      iterateOverOtherFeatures {
+        StorageId(subdirName, logId, version, it).cleanupStorageFiles(kind, forMapIndexStorage)
       }
     }
     return getFile(kind)
+  }
+
+  private fun cleanupStorageFiles(kind: String, forMapIndexStorage: Boolean) {
+    val oldStorageFile = if (forMapIndexStorage) getFileForMapIndexStorage(kind) else getFile(kind)
+    IOUtil.deleteAllFilesStartingWith(oldStorageFile)
   }
 
   // this method cleans up all storage files for a project in a specified subdir
   // it assumes that these storage files all start with "safeLogId."
   // as method getStorageFile creates them
   // so these two methods should be changed in sync
-  fun cleanupStorageFiles(): Boolean {
+  fun cleanupAllStorageFiles(): Boolean {
     return deleteWithRenamingAllFilesStartingWith(File(subdir(), "$safeLogId."))
   }
 }

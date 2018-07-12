@@ -63,7 +63,7 @@ import static com.intellij.vcs.log.util.PersistentUtil.calcLogId;
 
 public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
-  private static final int VERSION = 7;
+  private static final int VERSION = 8;
   private static final VcsLogProgress.ProgressKey INDEXING = new VcsLogProgress.ProgressKey("index");
 
   @NotNull private final Project myProject;
@@ -317,7 +317,8 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
       Disposer.register(parentDisposable, this);
 
       try {
-        StorageId storageId = new StorageId(INDEX, logId, getVersion());
+        boolean forwardIndexRequired = VcsLogIndexService.isPathsForwardIndexRequired();
+        StorageId storageId = new StorageId(INDEX, logId, getVersion(), new boolean[]{forwardIndexRequired});
 
         File commitsStorage = storageId.getStorageFile(COMMITS);
         myIsFresh = !commitsStorage.exists();
@@ -332,7 +333,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
         trigrams = new VcsLogMessagesTrigramIndex(storageId, fatalErrorHandler, this);
         users = new VcsLogUserIndex(storageId, userRegistry, fatalErrorHandler, this);
-        paths = new VcsLogPathsIndex(storageId, roots, VcsLogIndexService.isPathsForwardIndexRequired(), fatalErrorHandler, this);
+        paths = new VcsLogPathsIndex(storageId, roots, forwardIndexRequired, fatalErrorHandler, this);
 
         File parentsStorage = storageId.getStorageFile(PARENTS);
         parents = new PersistentHashMap<>(parentsStorage, EnumeratorIntegerDescriptor.INSTANCE,
@@ -375,7 +376,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
     private static void cleanup(@NotNull String logId) {
       StorageId storageId = new StorageId(INDEX, logId, getVersion());
-      if (!storageId.cleanupStorageFiles()) {
+      if (!storageId.cleanupAllStorageFiles()) {
         LOG.error("Could not clean up storage files in " + storageId.subdir() + " starting with " + logId);
       }
     }
