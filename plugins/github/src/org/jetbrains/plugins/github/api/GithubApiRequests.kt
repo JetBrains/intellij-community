@@ -3,10 +3,7 @@ package org.jetbrains.plugins.github.api
 
 import com.intellij.util.ThrowableConvertor
 import org.jetbrains.plugins.github.api.GithubApiRequest.*
-import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
-import org.jetbrains.plugins.github.api.data.GithubAuthorization
-import org.jetbrains.plugins.github.api.data.GithubGist
-import org.jetbrains.plugins.github.api.data.GithubRepo
+import org.jetbrains.plugins.github.api.data.*
 import org.jetbrains.plugins.github.api.requests.GithubAuthorizationCreateRequest
 import org.jetbrains.plugins.github.api.requests.GithubGistRequest
 import org.jetbrains.plugins.github.api.requests.GithubRepoRequest
@@ -71,6 +68,11 @@ object GithubApiRequests {
   }
 
   object Repos : Entity("/repos") {
+    @JvmStatic
+    fun get(server: GithubServerPath, username: String, repoName: String) =
+      Get.Optional.json<GithubRepoDetailed>(getUrl(server, urlSuffix, "/$username/$repoName"))
+        .withOperationName("get information for repository $username/$repoName")
+
     @JvmStatic
     fun delete(server: GithubServerPath, username: String, repoName: String) =
       Delete(getUrl(server, urlSuffix, "/$username/$repoName")).withOperationName("delete repository $username/$repoName")
