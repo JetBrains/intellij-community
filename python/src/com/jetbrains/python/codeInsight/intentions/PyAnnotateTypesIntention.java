@@ -18,7 +18,6 @@ package com.jetbrains.python.codeInsight.intentions;
 import com.google.common.collect.Lists;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
@@ -55,11 +54,7 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof PyFile) || file instanceof PyDocstringFile) return false;
 
-    final int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
-    final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, offset);
-    if (elementAt == null) return false;
-
-    final PyFunction function = findSuitableFunction(elementAt);
+    final PyFunction function = findSuitableFunction(editor, file);
     if (function != null) {
       setText(PyBundle.message("INTN.add.type.hints.for.function", function.getName()));
       return true;
@@ -67,9 +62,12 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
     return false;
   }
 
-  @Nullable
-  public PyFunction findSuitableFunction(@NotNull PsiElement elementAt) {
-    return TypeIntention.findSuitableFunction(elementAt, input -> true);
+  @Override
+  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    final PyFunction function = findSuitableFunction(editor, file);
+    if (function != null) {
+      annotateTypes(editor, function);
+    }
   }
 
   @Override
@@ -77,16 +75,9 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
     return false;
   }
 
-  @Override
-  public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
-    final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, offset);
-    if (elementAt != null) {
-      final PyFunction function = findSuitableFunction(elementAt);
-      if (function != null) {
-        annotateTypes(editor, function);
-      }
-    }
+  @Nullable
+  private static PyFunction findSuitableFunction(@NotNull Editor editor, @NotNull PsiFile file) {
+    return TypeIntention.findOnlySuitableFunction(editor, file, input -> true);
   }
 
   public static void annotateTypes(Editor editor, PyFunction function) {

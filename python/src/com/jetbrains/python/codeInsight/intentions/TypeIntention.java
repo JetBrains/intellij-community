@@ -20,9 +20,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
@@ -33,10 +32,9 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Predicate;
-
-import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * User: ktisha
@@ -49,93 +47,83 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
     if (!(file instanceof PyFile) || file instanceof PyDocstringFile) return false;
     updateText(false);
 
-    final int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
-    final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, offset);
-    if (elementAt == null) return false;
-    if (isAvailableForParameter(project, elementAt)) {
+    if (findOnlySuitableParameter(editor, file) != null) {
       return true;
     }
-    if (isAvailableForReturn(elementAt)) {
+    if (findOnlySuitableFunction(editor, file) != null) {
       updateText(true);
       return true;
     }
     return false;
   }
 
-  private boolean isAvailableForParameter(Project project, PsiElement elementAt) {
-    final PyExpression problemElement = getProblemElement(elementAt);
-    if (problemElement == null) return false;
-    if (PsiTreeUtil.getParentOfType(problemElement, PyLambdaExpression.class) != null) {
-      return false;
-    }
-    final PsiReference reference = problemElement.getReference();
-    if (reference instanceof PsiPolyVariantReference) {
-      final ResolveResult[] results = ((PsiPolyVariantReference)reference).multiResolve(false);
-      if (results.length != 1) return false;
-    }
-    final VirtualFile virtualFile = problemElement.getContainingFile().getVirtualFile();
-    if (virtualFile != null) {
-      if (ProjectRootManager.getInstance(project).getFileIndex().isInLibraryClasses(virtualFile)) {
-        return false;
-      }
-    }
-    final PsiElement resolved = reference != null ? reference.resolve() : null;
-    final PyParameter parameter = getParameter(problemElement, resolved);
-
-    return parameter != null && !isParamTypeDefined(parameter);
+  @Nullable
+  protected final PyFunction findOnlySuitableFunction(@NotNull Editor editor, @NotNull PsiFile file) {
+    return findOnlySuitableFunction(editor, file, input -> !isReturnTypeDefined(input));
   }
 
   @Nullable
-  public static PyExpression getProblemElement(@Nullable PsiElement elementAt) {
-    return PsiTreeUtil.getParentOfType(elementAt, PyNamedParameter.class, PyReferenceExpression.class);
+  public static PyFunction findOnlySuitableFunction(@NotNull Editor editor, @NotNull PsiFile file, Predicate<PyFunction> condition) {
+    final PsiElement elementAt = getElementUnderCaret(editor, file);
+    return elementAt != null ? ContainerUtil.getOnlyItem(findSuitableFunctions(elementAt, condition)) : null;
+  }
+
+  @Nullable
+  protected final PyNamedParameter findOnlySuitableParameter(@NotNull Editor editor, @NotNull PsiFile file) {
+    return ContainerUtil.getOnlyItem(findSuitableParameters(editor, file));
+  }
+
+  @NotNull
+  private List<PyNamedParameter> findSuitableParameters(@NotNull Editor editor, @NotNull PsiFile file) {
+    final PsiElement elementAt = getElementUnderCaret(editor, file);
+    final StreamEx<PyNamedParameter> parameters;
+    final PyNamedParameter immediateParam = PsiTreeUtil.getParentOfType(elementAt, PyNamedParameter.class);
+    if (immediateParam != null) {
+      parameters = StreamEx.of(immediateParam);
+    }
+    else {
+      final PyReferenceExpression referenceExpr = PsiTreeUtil.getParentOfType(elementAt, PyReferenceExpression.class);
+      if (referenceExpr != null) {
+        parameters = StreamEx.of(PyUtil.multiResolveTopPriority(referenceExpr, getResolveContext(elementAt)))
+                             .select(PyNamedParameter.class);
+      }
+      else {
+        parameters = StreamEx.empty();
+      }
+    }
+    final ProjectFileIndex index = ProjectFileIndex.getInstance(file.getProject());
+    return parameters
+      .filter(param -> !param.isSelf())
+      .filter(param -> PsiTreeUtil.getParentOfType(param, PyLambdaExpression.class) == null)
+      .filter(param -> !index.isInLibraryClasses(param.getContainingFile().getVirtualFile()))
+      .filter(param -> !isParamTypeDefined(param))
+      .toList();
+  }
+
+  @Nullable
+  private static PsiElement getElementUnderCaret(@NotNull Editor editor, @NotNull PsiFile file) {
+    final int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
+    return PyUtil.findNonWhitespaceAtOffset(file, offset);
   }
 
   protected abstract void updateText(boolean isReturn);
 
-  protected boolean isParamTypeDefined(PyParameter parameter) {
-    return false;
-  }
+  protected abstract boolean isParamTypeDefined(@NotNull PyNamedParameter parameter);
 
-  @Nullable
-  protected static PyNamedParameter getParameter(PyExpression problemElement, PsiElement resolved) {
-    PyNamedParameter parameter = as(problemElement, PyNamedParameter.class);
-    if (resolved instanceof PyNamedParameter) {
-      parameter = (PyNamedParameter)resolved;
-    }
-    return parameter == null || parameter.isSelf() ? null : parameter;
-  }
-
-  private boolean isAvailableForReturn(@NotNull final PsiElement elementAt) {
-    return findSuitableFunction(elementAt) != null;
-  }
-
-  @Nullable
-  protected PyFunction findSuitableFunction(@NotNull PsiElement elementAt) {
-    return findSuitableFunction(elementAt, input -> !isReturnTypeDefined(input));
-  }
-
-  @Nullable
-  public static PyFunction findSuitableFunction(@NotNull PsiElement elementAt, @NotNull Predicate<PyFunction> extraCondition) {
-    return ContainerUtil.getOnlyItem(findSuitableFunctions(elementAt, extraCondition));
-  }
+  protected abstract boolean isReturnTypeDefined(@NotNull PyFunction function);
 
   @NotNull
   private static List<PyFunction> findSuitableFunctions(@NotNull PsiElement elementAt, @NotNull Predicate<PyFunction> extraCondition) {
     final StreamEx<PyFunction> definitions;
-    final PyFunction underCaret = findFunctionDefinitionUnderCaret(elementAt);
-    if (underCaret != null) {
-      definitions = StreamEx.of(underCaret);
+    final PyFunction immediateDefinition = findFunctionDefinitionUnderCaret(elementAt);
+    if (immediateDefinition != null) {
+      definitions = StreamEx.of(immediateDefinition);
     }
     else {
-      final PyCallExpression callExpression = getCallExpression(elementAt);
-      if (callExpression == null) {
-        definitions = StreamEx.empty();
-      }
-      else {
-        definitions = StreamEx.of(callExpression.multiResolveCallee(getResolveContext(elementAt)))
-                              .map(result -> result.getElement())
-                              .select(PyFunction.class);
-      }
+      definitions = StreamEx.of(getCallExpressions(elementAt))
+                            .flatMap(call -> StreamEx.of(call.multiResolveCallee(getResolveContext(elementAt))))
+                            .map(result -> result.getElement())
+                            .select(PyFunction.class);
     }
     final ProjectFileIndex index = ProjectFileIndex.getInstance(elementAt.getProject());
     return definitions.filter(elem -> !index.isInLibraryClasses(elem.getContainingFile().getVirtualFile()))
@@ -158,38 +146,38 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
     return null;
   }
 
-  protected boolean isReturnTypeDefined(@NotNull PyFunction function) {
-    return false;
-  }
-
-  @Nullable
-  static PyCallExpression getCallExpression(PsiElement elementAt) {
-    final PyExpression problemElement = getProblemElement(elementAt);
-    if (problemElement != null) {
-      PsiReference reference = problemElement.getReference();
-      final PsiElement resolved = reference != null? reference.resolve() : null;
-      if (resolved instanceof PyTargetExpression) {
-        final PyResolveContext context = getResolveContext(elementAt);
-        if (context.getTypeEvalContext().maySwitchToAST(resolved)) {
-          final PyExpression assignedValue = ((PyTargetExpression)resolved).findAssignedValue();
-          if (assignedValue instanceof PyCallExpression) {
-            return (PyCallExpression)assignedValue;
-          }
-        }
+  @NotNull
+  private static List<PyCallExpression> getCallExpressions(@NotNull PsiElement elementAt) {
+    final PyResolveContext context = getResolveContext(elementAt);
+    final PyReferenceExpression referenceExpr = PsiTreeUtil.getParentOfType(elementAt, PyReferenceExpression.class);
+    if (referenceExpr != null) {
+      final List<PyCallExpression> calls = StreamEx.of(PyUtil.multiResolveTopPriority(referenceExpr, context))
+                                                   .select(PyTargetExpression.class)
+                                                   .filter(target -> context.getTypeEvalContext().maySwitchToAST(target))
+                                                   .map(target -> target.findAssignedValue())
+                                                   .select(PyCallExpression.class)
+                                                   .toList();
+      if (!calls.isEmpty()) {
+        return calls;
       }
     }
 
-    PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(elementAt, PyAssignmentStatement.class);
-    if (assignmentStatement != null) {
-      final PyExpression assignedValue = assignmentStatement.getAssignedValue();
+    final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(elementAt, PyAssignmentStatement.class);
+    if (assignment != null) {
+      final PyExpression assignedValue = assignment.getAssignedValue();
       if (assignedValue instanceof PyCallExpression) {
-        return (PyCallExpression)assignedValue;
+        return Collections.singletonList((PyCallExpression)assignedValue);
       }
     }
-    return PsiTreeUtil.getParentOfType(elementAt, PyCallExpression.class, false);
+    final PyCallExpression immediateCall = PsiTreeUtil.getParentOfType(elementAt, PyCallExpression.class, false);
+    if (immediateCall != null) {
+      return Collections.singletonList(immediateCall);
+    }
+    return Collections.emptyList();
   }
 
-  protected static PyResolveContext getResolveContext(@NotNull PsiElement origin) {
-    return PyResolveContext.noImplicits().withTypeEvalContext(TypeEvalContext.codeAnalysis(origin.getProject(), origin.getContainingFile()));
+  private static PyResolveContext getResolveContext(@NotNull PsiElement origin) {
+    final TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(origin.getProject(), origin.getContainingFile());
+    return PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext);
   }
 }

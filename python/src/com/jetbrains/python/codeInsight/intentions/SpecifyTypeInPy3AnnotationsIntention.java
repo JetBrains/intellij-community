@@ -17,7 +17,6 @@ package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.template.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Editor;
@@ -28,7 +27,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -69,22 +67,15 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
 
   @Override
   public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    final int offset = TargetElementUtil.adjustOffset(file, editor.getDocument(), editor.getCaretModel().getOffset());
-    final PsiElement elementAt = PyUtil.findNonWhitespaceAtOffset(file, offset);
-    final PyExpression problemElement = getProblemElement(elementAt);
-    final PsiReference reference = problemElement == null ? null : problemElement.getReference();
-
-    final PsiElement resolved = reference != null ? reference.resolve() : null;
-    final PyNamedParameter parameter = getParameter(problemElement, resolved);
-
+    final PyNamedParameter parameter = findOnlySuitableParameter(editor, file);
     if (parameter != null) {
       annotateParameter(project, editor, parameter);
+      return;
     }
-    else if (elementAt != null) {
-      final PyFunction function = findSuitableFunction(elementAt);
-      if (function != null) {
-        annotateReturnType(project, function);
-      }
+
+    final PyFunction function = findOnlySuitableFunction(editor, file);
+    if (function != null) {
+      annotateReturnType(project, function);
     }
   }
 
@@ -215,16 +206,8 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
   }
 
   @Override
-  protected boolean isParamTypeDefined(PyParameter parameter) {
-    return isDefinedInAnnotation(parameter);
-  }
-
-  private static boolean isDefinedInAnnotation(PyParameter parameter) {
-    if (LanguageLevel.forElement(parameter).isPython2()) {
-      return false;
-    }
-    if (parameter instanceof PyNamedParameter && (((PyNamedParameter)parameter).getAnnotation() != null)) return true;
-    return false;
+  protected boolean isParamTypeDefined(@NotNull PyNamedParameter parameter) {
+    return parameter.getAnnotation() != null;
   }
 
   @Override
