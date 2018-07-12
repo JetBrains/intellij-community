@@ -85,6 +85,11 @@ public class ConfigurationContext {
     return sharedContext;
   }
 
+  @NotNull
+  public static ConfigurationContext createEmptyContextForLocation(@NotNull Location location) {
+    return new ConfigurationContext(location);
+  }
+
   private ConfigurationContext(final DataContext dataContext) {
     myRuntimeConfiguration = RunConfiguration.DATA_KEY.getData(dataContext);
     myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
@@ -125,7 +130,7 @@ public class ConfigurationContext {
     myContextComponent = null;
   }
 
-  /*package*/ ConfigurationContext(@NotNull Location location) {
+  private ConfigurationContext(@NotNull Location location) {
     //noinspection unchecked
     myLocation = location;
     myModule = location.getModule();

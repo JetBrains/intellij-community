@@ -166,7 +166,7 @@ class PreferredProducerFind {
   ) {
     SmartList<ConfigurationFromContext> result = new SmartList<>();
     for (Location alternativeLocation : alternativeLocationsInfo.getAlternativeLocations()) {
-      ConfigurationContext fakeContextForAlternativeLocation = new ConfigurationContext(alternativeLocation);
+      ConfigurationContext fakeContextForAlternativeLocation = ConfigurationContext.createEmptyContextForLocation(alternativeLocation);
       List<ConfigurationFromContext> configurationsForLocation =
         doGetConfigurationsFromContext(alternativeLocation, fakeContextForAlternativeLocation, strict);
       if (configurationsForLocation != null) {
