@@ -281,7 +281,15 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
       if (lhsType != null && TypeConversionUtil.isFloatOrDoubleType(lhsType.getDeepComponentType()) ||
           rhsType != null && TypeConversionUtil.isFloatOrDoubleType(rhsType.getDeepComponentType()) ||
           isPrimitiveAndBoxedFloat(lhsType, rhsType) || isPrimitiveAndBoxedFloat(rhsType, lhsType)) {
-        buf.append(",0.0");
+        StringBuilder noDelta = new StringBuilder();
+        compoundMethodCall(callExpression, methodName, message, positionIndex, buf.toString(), noDelta);
+        PsiExpression expression = methodName.equals("assertNotEquals")
+                                   ? null
+                                   : JavaPsiFacade.getElementFactory(callExpression.getProject()).createExpressionFromText(noDelta.toString(), callExpression);
+        PsiMethod method = expression instanceof PsiMethodCallExpression ? ((PsiMethodCallExpression)expression).resolveMethod() : null;
+        if (method == null || method.isDeprecated()) {
+          buf.append(",0.0");
+        }
       }
       compoundMethodCall(callExpression, methodName, message, positionIndex, buf.toString(), newExpression);
       PsiReplacementUtil.replaceExpressionAndShorten(callExpression, newExpression.toString());
