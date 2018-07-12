@@ -69,8 +69,7 @@ public class MigrateDiffTool implements DiffTool {
   @Override
   public boolean canShow(DiffRequest request) {
     if (request instanceof MergeRequest) return false;
-    if (request.getContents().length != 2) return false;
-    return true;
+    return request.getContents().length == 2 || request.getContents().length == 3;
   }
 
   @Override
