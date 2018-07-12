@@ -169,6 +169,11 @@ public final class HttpRequests {
   }
 
   @NotNull
+  public static RequestBuilder delete(@NotNull String url) {
+    return new RequestBuilderImpl(url, connection -> ((HttpURLConnection)connection).setRequestMethod("DELETE"));
+  }
+
+  @NotNull
   public static RequestBuilder post(@NotNull String url, @Nullable String contentType) {
     return new RequestBuilderImpl(url, rawConnection -> {
       HttpURLConnection connection = (HttpURLConnection)rawConnection;
@@ -572,7 +577,8 @@ public final class HttpRequests {
         return connection;
       }
 
-      LOG.assertTrue(method.equals("GET") || method.equals("HEAD"), "'" + method + "' not supported; please use GET, HEAD or POST");
+      LOG.assertTrue(method.equals("GET") || method.equals("HEAD") || method.equals("DELETE"),
+                     "'" + method + "' not supported; please use GET, HEAD, DELETE or POST");
 
       if (LOG.isDebugEnabled()) LOG.debug("connecting to " + url);
       int responseCode = httpURLConnection.getResponseCode();
