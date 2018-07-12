@@ -22,6 +22,19 @@ sealed class GithubApiRequest<T>(val url: String) {
 
   abstract class Get<T> @JvmOverloads constructor(url: String,
                                                   override val acceptMimeType: String? = null) : GithubApiRequest<T>(url) {
+    abstract class Optional<T> @JvmOverloads constructor(url: String,
+                                                         acceptMimeType: String? = null) : Get<T?>(url, acceptMimeType) {
+      companion object {
+        inline fun <reified T> json(url: String): Optional<T> = Json(url, T::class.java)
+      }
+
+      open class Json<T>(url: String, clazz: Class<T>) : Optional<T>(url, GithubApiContentHelper.V3_JSON_MIME_TYPE) {
+        private val typeToken = TypeToken.get(clazz)
+
+        override fun extractResult(response: GithubApiResponse): T = parseJsonResponse(response, typeToken)
+      }
+    }
+
     companion object {
       inline fun <reified T> json(url: String): Get<T> = Json(url, T::class.java)
 

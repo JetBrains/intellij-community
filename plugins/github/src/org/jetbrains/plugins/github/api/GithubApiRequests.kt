@@ -70,6 +70,10 @@ object GithubApiRequests {
                contents: List<GithubGistRequest.FileContent>, description: String, public: Boolean) =
       Post.json<GithubGist>(getUrl(server, urlSuffix), GithubGistRequest(contents, description, public))
         .withOperationName("create gist")
+
+    @JvmStatic
+    fun get(server: GithubServerPath, id: String) = Get.Optional.json<GithubGist>(getUrl(server, urlSuffix, "/$id"))
+      .withOperationName("get gist $id")
   }
 
   object Auth : Entity("/authorizations") {

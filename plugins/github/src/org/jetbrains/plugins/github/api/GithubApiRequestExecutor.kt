@@ -90,6 +90,10 @@ sealed class GithubApiRequestExecutor {
           result
         }
       }
+      catch (e: GithubStatusCodeException) {
+        @Suppress("UNCHECKED_CAST")
+        if (request is GithubApiRequest.Get.Optional<*> && e.statusCode == HttpURLConnection.HTTP_NOT_FOUND) return null as T else throw e
+      }
       catch (e: GithubConfusingException) {
         if (request.operationName != null) {
           val errorText = "Can't ${request.operationName}"

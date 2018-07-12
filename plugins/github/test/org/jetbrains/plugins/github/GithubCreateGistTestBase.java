@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.github.api.GithubApiRequests;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.data.GithubGist;
 import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent;
@@ -75,7 +76,7 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
 
     if (GIST == null) {
       try {
-        GIST = myApiTaskExecutor.execute(myAccount, c -> GithubApiUtil.getGist(c, GIST_ID));
+        GIST = myExecutor.execute(GithubApiRequests.Gists.get(myAccount.getServer(), GIST_ID));
       }
       catch (IOException e) {
         System.err.println(e.getMessage());
