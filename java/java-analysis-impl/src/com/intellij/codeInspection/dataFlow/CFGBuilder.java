@@ -358,7 +358,7 @@ public class CFGBuilder {
    *
    * @return this builder
    */
-  public CFGBuilder boxUnbox(PsiExpression expression, PsiType expectedType) {
+  public CFGBuilder boxUnbox(@NotNull PsiExpression expression, PsiType expectedType) {
     myAnalyzer.generateBoxingUnboxingInstructionFor(expression, expectedType);
     return this;
   }
