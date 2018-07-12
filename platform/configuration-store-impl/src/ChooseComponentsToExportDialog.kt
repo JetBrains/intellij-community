@@ -31,12 +31,12 @@ import javax.swing.*
 private const val DEFAULT_FILE_NAME = "settings.zip"
 private val DEFAULT_PATH = FileUtil.toSystemDependentName(PathManager.getConfigPath() + "/") + DEFAULT_FILE_NAME
 
-private const val KEY_UNMARKED_NAMES = "export.settings.unmarked"
+private const val KEY_MARKED_NAMES = "export.settings.marked"
 
-private val unmarkedElementNames: Set<String>
+private val markedElementNames: Set<String>
   get() {
-    val value = PropertiesComponent.getInstance().getValue(KEY_UNMARKED_NAMES)
-    return if (StringUtil.isEmpty(value)) {
+    val value = PropertiesComponent.getInstance().getValue(KEY_MARKED_NAMES)
+    return if (value.isNullOrEmpty()) {
       emptySet()
     }
     else THashSet(StringUtil.split(value!!.trim { it <= ' ' }, "|"))
@@ -56,12 +56,12 @@ private fun addToExistingListElement(item: ExportableItem,
       continue
     }
 
-    val elementProperties = itemToContainingListElement[tiedItem]
+    val elementProperties = itemToContainingListElement.get(tiedItem)
     if (elementProperties != null && item.file !== file) {
-      LOG.assertTrue(file == null, "Component " + item + " serialize itself into " + file + " and " + item.file)
+      LOG.assertTrue(file == null, "Component $item serialize itself into $file and ${item.file}")
       // found
       elementProperties.items.add(item)
-      itemToContainingListElement[item] = elementProperties
+      itemToContainingListElement.set(item, elementProperties)
       file = item.file
     }
   }
@@ -91,7 +91,7 @@ fun chooseSettingsFile(oldPath: String?, parent: Component?, title: String, desc
     override fun consume(files: List<VirtualFile>) {
       val file = files[0]
       if (file.isDirectory) {
-        result.setResult(file.path + '/'.toString() + DEFAULT_FILE_NAME)
+        result.setResult("${file.path}/$DEFAULT_FILE_NAME")
       }
       else {
         result.setResult(file.path)
@@ -105,15 +105,14 @@ fun chooseSettingsFile(oldPath: String?, parent: Component?, title: String, desc
   return result
 }
 
-class ChooseComponentsToExportDialog(fileToComponents: Map<Path, List<ExportableItem>>,
-                                     private val myShowFilePath: Boolean, title: String, private val myDescription: String) : DialogWrapper(false) {
-  private val myChooser: ElementsChooser<ComponentElementProperties>
-  private val pathPanel = FieldPanel(IdeBundle.message("editbox.export.settings.to"), null, null                                     , null)
+internal class ChooseComponentsToExportDialog(fileToComponents: Map<Path, List<ExportableItem>>, private val isShowFilePath: Boolean, title: String, private val description: String) : DialogWrapper(false) {
+  private val chooser: ElementsChooser<ComponentElementProperties>
+  private val pathPanel = FieldPanel(IdeBundle.message("editbox.export.settings.to"), null, null, null)
 
   internal val exportableComponents: Set<ExportableItem>
     get() {
       val components = THashSet<ExportableItem>()
-      for (elementProperties in myChooser.markedElements) {
+      for (elementProperties in chooser.markedElements) {
         components.addAll(elementProperties.items)
       }
       return components
@@ -134,18 +133,17 @@ class ChooseComponentsToExportDialog(fileToComponents: Map<Path, List<Exportable
         if (!addToExistingListElement(item, componentToContainingListElement, fileToComponents)) {
           val componentElementProperties = ComponentElementProperties()
           componentElementProperties.items.add(item)
-
-          componentToContainingListElement[item] = componentElementProperties
+          componentToContainingListElement.set(item, componentElementProperties)
         }
       }
     }
-    myChooser = ElementsChooser(true)
-    myChooser.setColorUnmarkedElements(false)
-    val unmarkedElementNames = unmarkedElementNames
+    chooser = ElementsChooser(true)
+    chooser.setColorUnmarkedElements(false)
+    val markedElementNames = markedElementNames
     for (componentElementProperty in LinkedHashSet(componentToContainingListElement.values)) {
-      myChooser.addElement(componentElementProperty, !unmarkedElementNames.contains(componentElementProperty.toString()), componentElementProperty)
+      chooser.addElement(componentElementProperty, markedElementNames.isEmpty() || markedElementNames.contains(componentElementProperty.fileName), componentElementProperty)
     }
-    myChooser.sort(Comparator.comparing<ComponentElementProperties, String> { it.toString() })
+    chooser.sort(Comparator.comparing<ComponentElementProperties, String> { it.toString() })
 
     val exportPath = PropertiesComponent.getInstance().getValue("export.settings.path", DEFAULT_PATH)
     pathPanel.text = exportPath
@@ -163,17 +161,17 @@ class ChooseComponentsToExportDialog(fileToComponents: Map<Path, List<Exportable
   override fun createLeftSideActions(): Array<Action> {
     val selectAll = object : AbstractAction("Select &All") {
       override fun actionPerformed(e: ActionEvent) {
-        myChooser.setAllElementsMarked(true)
+        chooser.setAllElementsMarked(true)
       }
     }
     val selectNone = object : AbstractAction("Select &None") {
       override fun actionPerformed(e: ActionEvent) {
-        myChooser.setAllElementsMarked(false)
+        chooser.setAllElementsMarked(false)
       }
     }
     val invert = object : AbstractAction("&Invert") {
       override fun actionPerformed(e: ActionEvent) {
-        myChooser.invertSelection()
+        chooser.invertSelection()
       }
     }
     return arrayOf(selectAll, selectNone, invert)
@@ -181,45 +179,45 @@ class ChooseComponentsToExportDialog(fileToComponents: Map<Path, List<Exportable
 
   override fun doOKAction() {
     PropertiesComponent.getInstance().setValue("export.settings.path", pathPanel.text, DEFAULT_PATH)
-    val unmarked = myChooser.getElements(false)
+
     val builder = StringBuilder()
-    for (element in unmarked) {
-      builder.append(element.toString())
-      builder.append("|")
+    if (chooser.hasUnmarkedElements()) {
+      val marked = chooser.getElements(true)
+      for (element in marked) {
+        builder.append(element.fileName)
+        builder.append("|")
+      }
     }
-    PropertiesComponent.getInstance().setValue(KEY_UNMARKED_NAMES, if (builder.isEmpty()) null else builder.toString())
+    PropertiesComponent.getInstance().setValue(KEY_MARKED_NAMES, if (builder.isEmpty()) null else builder.toString())
 
     super.doOKAction()
   }
 
-  override fun getPreferredFocusedComponent(): JComponent? {
-    return pathPanel.textField
-  }
+  override fun getPreferredFocusedComponent(): JTextField? = pathPanel.textField
 
-  override fun createNorthPanel(): JComponent? {
-    return JLabel(myDescription)
-  }
+  override fun createNorthPanel() = JLabel(description)
 
-  override fun createCenterPanel(): JComponent? {
-    return myChooser
-  }
+  override fun createCenterPanel(): JComponent = chooser
 
   override fun createSouthPanel(): JComponent {
     val buttons = super.createSouthPanel()
-    if (!myShowFilePath) return buttons
+    if (!isShowFilePath) {
+      return buttons
+    }
     val panel = JPanel(VerticalFlowLayout())
     panel.add(pathPanel)
     panel.add(buttons)
     return panel
   }
 
-  override fun getDimensionServiceKey(): String? {
-    return "#com.intellij.ide.actions.ChooseComponentsToExportDialog"
-  }
+  override fun getDimensionServiceKey() = "#com.intellij.ide.actions.ChooseComponentsToExportDialog"
 }
 
 private class ComponentElementProperties : MultiStateElementsChooser.ElementProperties {
   val items = THashSet<ExportableItem>()
+
+  val fileName: String
+    get() = items.first().file.fileName.toString()
 
   override fun toString(): String {
     val names = LinkedHashSet<String>()
