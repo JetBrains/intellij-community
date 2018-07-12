@@ -61,10 +61,11 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
   public VcsLogPathsIndex(@NotNull String logId,
                           @NotNull Set<VirtualFile> roots,
+                          boolean hasForwardIndex,
                           @NotNull FatalErrorHandler fatalErrorHandler,
                           @NotNull Disposable disposableParent) throws IOException {
     super(logId, PATHS, getVersion(), new PathsIndexer(createPathsEnumerator(logId), roots),
-          new ChangeDataListKeyDescriptor(), false, fatalErrorHandler, disposableParent);
+          new ChangeDataListKeyDescriptor(), hasForwardIndex, fatalErrorHandler, disposableParent);
 
     myPathsIndexer = (PathsIndexer)myIndexer;
     myPathsIndexer.setFatalErrorConsumer(e -> fatalErrorHandler.consume(this, e));

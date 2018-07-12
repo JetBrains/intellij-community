@@ -37,10 +37,7 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLogProperties;
-import com.intellij.vcs.log.VcsLogProvider;
-import com.intellij.vcs.log.VcsUserRegistry;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.HeavyAwareExecutor;
@@ -338,7 +335,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
         trigrams = new VcsLogMessagesTrigramIndex(logId, fatalErrorHandler, this);
         users = new VcsLogUserIndex(logId, userRegistry, fatalErrorHandler, this);
-        paths = new VcsLogPathsIndex(logId, roots, fatalErrorHandler, this);
+        paths = new VcsLogPathsIndex(logId, roots, VcsLogIndexService.isPathsForwardIndexRequired(), fatalErrorHandler, this);
 
         File parentsStorage = getStorageFile(INDEX, PARENTS, logId, version);
         parents = new PersistentHashMap<>(parentsStorage, EnumeratorIntegerDescriptor.INSTANCE,
