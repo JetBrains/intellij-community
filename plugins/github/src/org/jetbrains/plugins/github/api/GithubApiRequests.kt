@@ -2,8 +2,7 @@
 package org.jetbrains.plugins.github.api
 
 import com.intellij.util.ThrowableConvertor
-import org.jetbrains.plugins.github.api.GithubApiRequest.Get
-import org.jetbrains.plugins.github.api.GithubApiRequest.Post
+import org.jetbrains.plugins.github.api.GithubApiRequest.*
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubAuthorization
 import org.jetbrains.plugins.github.api.data.GithubGist
@@ -74,6 +73,10 @@ object GithubApiRequests {
     @JvmStatic
     fun get(server: GithubServerPath, id: String) = Get.Optional.json<GithubGist>(getUrl(server, urlSuffix, "/$id"))
       .withOperationName("get gist $id")
+
+    @JvmStatic
+    fun delete(server: GithubServerPath, id: String) = Delete(getUrl(server, urlSuffix, "/$id"))
+      .withOperationName("delete gist $id")
   }
 
   object Auth : Entity("/authorizations") {

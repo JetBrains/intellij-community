@@ -96,4 +96,10 @@ sealed class GithubApiRequest<T>(val url: String) {
       return response.readBody(ThrowableConvertor { GithubApiContentHelper.readJson(it, typeToken) })
     }
   }
+
+  open class Delete(url: String) : GithubApiRequest<Unit>(url) {
+    override val acceptMimeType: String? = null
+
+    override fun extractResult(response: GithubApiResponse) {}
+  }
 }

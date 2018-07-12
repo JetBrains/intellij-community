@@ -109,6 +109,7 @@ sealed class GithubApiRequestExecutor {
         is GithubApiRequest.Get -> HttpRequests.request(request.url)
         is GithubApiRequest.Post -> HttpRequests.post(request.url, request.bodyMimeType)
         is GithubApiRequest.Head -> HttpRequests.head(request.url)
+        is GithubApiRequest.Delete -> HttpRequests.delete(request.url)
         else -> throw UnsupportedOperationException("${request.javaClass} is not supported")
       }
         .connectTimeout(githubSettings.connectionTimeout)

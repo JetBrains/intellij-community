@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.api.GithubApiRequests;
-import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.data.GithubGist;
 import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent;
 import org.jetbrains.plugins.github.test.GithubTest;
@@ -50,10 +49,7 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
 
   protected void deleteGist() throws IOException {
     if (GIST_ID != null) {
-      myApiTaskExecutor.execute(myAccount, c -> {
-        GithubApiUtil.deleteGist(c, GIST_ID);
-        return null;
-      });
+      myExecutor.execute(GithubApiRequests.Gists.delete(myAccount.getServer(), GIST_ID));
       GIST = null;
       GIST_ID = null;
     }
