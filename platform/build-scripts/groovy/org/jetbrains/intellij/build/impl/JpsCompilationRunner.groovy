@@ -194,7 +194,7 @@ class JpsCompilationRunner {
         Standalone.runBuild(loader, compilationData.dataStorageRoot, messageHandler, scopes, false)
       }
       catch (Throwable e) {
-        context.messages.error("Compilation failed unexpectedly", e)
+        e.printStackTrace();
       }
     }
     if (!messageHandler.errorMessagesByCompiler.isEmpty()) {
