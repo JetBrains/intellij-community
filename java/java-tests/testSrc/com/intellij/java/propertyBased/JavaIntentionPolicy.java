@@ -93,7 +93,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                      intentionText.startsWith("Remove unnecessary") ||
                                      intentionText.startsWith("Remove 'try-finally' block") ||
                                      intentionText.startsWith("Fix doc comment") ||
-                                     intentionText.startsWith("Add javadoc") ||
+                                     intentionText.startsWith("Add Javadoc") ||
                                      intentionText.startsWith("Qualify with outer class") || // may change links in javadoc
                                      intentionText.contains("'ordering inconsistent with equals'") || //javadoc will be changed
                                      intentionText.matches("Simplify '.*' to .*") ||
