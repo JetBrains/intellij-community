@@ -23,6 +23,8 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.LocatableConfiguration;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -34,6 +36,7 @@ import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,26 +67,46 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
     if (Registry.is("suggest.all.run.configurations.from.context") || context.findExisting() == null) {
       final List<ConfigurationFromContext> producers = getConfigurationsFromContext(context);
+      boolean isMultipleConfigurationsFromAlternativeLocations = producers.size() > 1 && producers.get(0).isFromAlternativeLocation();
+      boolean isRunAction = this instanceof RunContextAction && ((RunContextAction)this).isForExecutor(DefaultRunExecutor.EXECUTOR_ID);
+      boolean createRunAll = isMultipleConfigurationsFromAlternativeLocations && isRunAction;
       if (producers.size() > 1) {
-        final AnAction[] children = new AnAction[producers.size()];
-        int childIdx = 0;
+        final List<AnAction> childActions = new ArrayList<>();
         for (final ConfigurationFromContext fromContext : producers) {
           final ConfigurationType configurationType = fromContext.getConfigurationType();
-          final RunConfiguration configuration = fromContext.getConfiguration();
-          final String actionName = childActionName(configurationType, configuration);
-          final AnAction anAction = new AnAction(actionName, configurationType.getDisplayName(), configuration.getIcon()) {
+          final String actionName = childActionName(fromContext);
+          final AnAction anAction = new AnAction(actionName, configurationType.getDisplayName(), fromContext.getConfiguration().getIcon()) {
             @Override
             public void actionPerformed(AnActionEvent e) {
               perform(fromContext, context);
             }
           };
           anAction.getTemplatePresentation().setText(actionName, false);
-          children[childIdx++] = anAction;
+          childActions.add(anAction);
         }
-        return children;
+        if (createRunAll) {
+          childActions.add(runAllConfigurationsAction(context, producers));
+        }
+        return childActions.toArray(AnAction.EMPTY_ARRAY);
       }
     }
     return EMPTY_ARRAY;
+  }
+
+  @NotNull
+  private AnAction runAllConfigurationsAction(@NotNull ConfigurationContext context, @NotNull List<ConfigurationFromContext> producers) {
+    return new AnAction(
+      "Run all",
+      "Run all configurations available in this context",
+      LayeredIcon.create(AllIcons.Nodes.Folder, AllIcons.Nodes.RunnableMark)
+    ) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        for (ConfigurationFromContext producer : producers) {
+          perform(producer, context);
+        }
+      }
+    };
   }
 
   @NotNull
@@ -138,7 +161,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
             @Override
             @NotNull
             public String getTextFor(final ConfigurationFromContext producer) {
-              return childActionName(producer.getConfigurationType(), producer.getConfiguration());
+              return childActionName(producer);
             }
 
             @Override
@@ -219,10 +242,19 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   }
 
   @NotNull
-  private static String childActionName(ConfigurationType configurationType, RunConfiguration configuration) {
-    return configuration instanceof LocatableConfiguration
-           ? StringUtil.unquoteString(suggestRunActionName((LocatableConfiguration)configuration))
-           : configurationType.getDisplayName();
+  private static String childActionName(ConfigurationFromContext configurationFromContext) {
+    RunConfiguration configuration = configurationFromContext.getConfiguration();
+    if (!(configuration instanceof LocatableConfiguration)) {
+      return configurationFromContext.getConfigurationType().getDisplayName();
+    }
+    if (configurationFromContext.isFromAlternativeLocation()) {
+      String locationDisplayName = configurationFromContext.getAlternativeLocationDisplayName();
+      if (locationDisplayName != null) {
+        return ((LocatableConfigurationBase)configuration).getActionName() + " " + locationDisplayName;
+      }
+    }
+
+    return StringUtil.unquoteString(suggestRunActionName((LocatableConfiguration)configurationFromContext.getConfiguration()));
   }
 
   protected abstract void updatePresentation(Presentation presentation, @NotNull String actionText, ConfigurationContext context);
