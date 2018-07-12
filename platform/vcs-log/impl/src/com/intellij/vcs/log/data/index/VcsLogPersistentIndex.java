@@ -37,7 +37,10 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.*;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogProperties;
+import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.data.*;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.HeavyAwareExecutor;
@@ -52,7 +55,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -273,18 +275,6 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     LOG.assertTrue(myRoots.contains(root));
     if (hasRenames(commit)) return;
     mySingleTaskController.request(new IndexingRequest(root, TroveUtil.singleton(commit), false, true));
-  }
-
-  @Override
-  public boolean canFilter(@NotNull List<VcsLogDetailsFilter> filters) {
-    return myDataGetter != null && myDataGetter.canFilter(filters);
-  }
-
-  @NotNull
-  @Override
-  public Set<Integer> filter(@NotNull List<VcsLogDetailsFilter> detailsFilters) {
-    if (myDataGetter == null) return Collections.emptySet();
-    return myDataGetter.filter(detailsFilters);
   }
 
   @Nullable
