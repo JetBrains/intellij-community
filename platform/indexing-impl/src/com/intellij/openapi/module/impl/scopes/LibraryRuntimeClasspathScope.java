@@ -139,8 +139,8 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
     final int i1 = myEntries.indexOf(r1);
     final int i2 = myEntries.indexOf(r2);
     if (i1 == i2) return 0;
-    if (i1 == 0) return -1;
-    if (i2 == 0) return 1;
+    if (i1 == -1) return -1;
+    if (i2 == -1) return 1;
     return i2 - i1;
   }
 
