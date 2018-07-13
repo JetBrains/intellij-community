@@ -288,17 +288,29 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @CalledInAwt
   protected void applyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
+    applyRequest(request, force, scrollToChangePolicy, false);
+  }
+
+  @CalledInAwt
+  protected void applyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy, boolean sync) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myIterationState = IterationState.NONE;
 
     force = force || (myQueuedApplyRequest != null && myQueuedApplyRequest.force);
     myQueuedApplyRequest = new ApplyData(request, force, scrollToChangePolicy);
 
-    IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(() -> {
+    Runnable task = () -> {
       if (myQueuedApplyRequest == null || myDisposed) return;
       doApplyRequest(myQueuedApplyRequest.request, myQueuedApplyRequest.force, myQueuedApplyRequest.scrollToChangePolicy);
       myQueuedApplyRequest = null;
-    }, ModalityState.current());
+    };
+
+    if (sync) {
+      task.run();
+    }
+    else {
+      IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(task, ModalityState.current());
+    }
   }
 
   @CalledInAwt
