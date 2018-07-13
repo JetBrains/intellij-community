@@ -1212,7 +1212,7 @@ public final class PsiUtil extends PsiUtilCore {
     return expression;
   }
 
-  public static PsiElement skipParenthesizedExprUp(PsiElement parent) {
+  public static PsiElement skipParenthesizedExprUp(@Nullable PsiElement parent) {
     while (parent instanceof PsiParenthesizedExpression) {
       parent = parent.getParent();
     }
