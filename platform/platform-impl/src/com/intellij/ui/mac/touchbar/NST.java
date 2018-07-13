@@ -260,7 +260,7 @@ public class NST {
     // Maximum icon size    44px × 44px (22pt × 22pt @2x)
 
     final Application app = ApplicationManager.getApplication();
-    final float fMulX = app != null && UISettings.getInstance().getPresentationMode() ? 40/icon.getIconHeight() : 40/16.f;
+    final float fMulX = app != null && UISettings.getInstance().getPresentationMode() ? 40.f/icon.getIconHeight() : (icon.getIconHeight() < 24 ? 40.f/16 : 44.f/icon.getIconHeight());
     return _getImg4ByteRGBA(icon, fMulX);
   }
 }
