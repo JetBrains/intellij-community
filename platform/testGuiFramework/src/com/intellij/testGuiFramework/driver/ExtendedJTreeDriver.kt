@@ -66,10 +66,12 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
   }
 
   private fun JTree.scrollToPathToSelectExt(path: TreePath): Pair<Boolean, Point> {
-    return GuiTestUtilKt.computeOnEdt {
+    val result =  GuiTestUtilKt.computeOnEdt {
       val isSelected = this.selectionCount == 1 && this.isPathSelected(path)
       Pair.of(isSelected, this.scrollToTreePathExt(path))
     }!!
+    robot.waitForIdle()
+    return result
   }
 
   private fun JTree.scrollToTreePathExt(path: TreePath): Point {
@@ -195,11 +197,13 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
   }
 
   private fun JTree.scrollToMatchingPathAndGetToggleInfo(treePath: TreePath): Triple<Boolean, Point, Int> {
-    return GuiTestUtilKt.computeOnEdt {
+    val result = GuiTestUtilKt.computeOnEdt {
       ComponentPreconditions.checkEnabledAndShowing(this)
       val point = scrollToTreePathExt(treePath)
       Triple.of(isExpanded(treePath), point, toggleClickCount)
     }!!
+    robot.waitForIdle()
+    return result
   }
 
   fun showPopupMenu(tree: JTree, treePath: TreePath): JPopupMenu {
