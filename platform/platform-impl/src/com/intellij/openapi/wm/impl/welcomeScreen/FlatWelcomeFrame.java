@@ -5,7 +5,9 @@ import com.intellij.diagnostic.IdeMessagePanel;
 import com.intellij.diagnostic.MessagePool;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.MacOSApplicationProvider;
 import com.intellij.ide.RecentProjectsManager;
+import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.impl.IdeNotificationArea;
 import com.intellij.openapi.Disposable;
@@ -259,6 +261,21 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         }
       }
       add(createBody(), BorderLayout.CENTER);
+      setTransferHandler(new TransferHandler(null) {
+        @Override
+        public boolean canImport(TransferSupport support) {
+          return true;
+        }
+
+        @Override
+        public boolean importData(TransferSupport support) {
+          List<File> list = FileCopyPasteUtil.getFileList(support.getTransferable());
+          if (list != null && list.size() > 0) {
+            return MacOSApplicationProvider.tryOpenFileList(null, list, "WelcomeFrame");
+          }
+          return false;
+        }
+      });
 
       TouchbarDataKeys.putActionDescriptor(myTouchbarActions).setShowText(true);
     }
