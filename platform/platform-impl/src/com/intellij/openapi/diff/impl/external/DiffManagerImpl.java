@@ -13,7 +13,6 @@ import com.intellij.openapi.diff.DiffTool;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.diff.impl.DiffUtil;
-import com.intellij.openapi.diff.impl.mergeTool.MergeTool;
 import com.intellij.openapi.diff.impl.processing.HighlightMode;
 import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.util.Disposer;
@@ -25,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.Arrays;
 
 @State(
   name = "DiffManager",
@@ -92,42 +90,12 @@ public class DiffManagerImpl extends DiffManager implements PersistentStateCompo
 
   @Override
   public DiffTool getIdeaDiffTool() {
-    return INTERNAL_DIFF;
+    return MigrateDiffTool.INSTANCE;
   }
 
   @Override
   public DiffTool getDiffTool() {
-    DiffTool[] standardTools;
-    // there is inner check in multiple tool for external viewers as well
-    if (!ENABLE_FILES.value(myProperties) || !ENABLE_FOLDERS.value(myProperties) || !ENABLE_MERGE.value(myProperties)) {
-      DiffTool[] embeddableTools = {
-        INTERNAL_DIFF,
-        MergeTool.INSTANCE,
-        BinaryDiffTool.INSTANCE
-      };
-      standardTools = new DiffTool[]{
-        MigrateDiffTool.INSTANCE,
-        ExtCompareFolders.INSTANCE,
-        ExtCompareFiles.INSTANCE,
-        ExtMergeFiles.INSTANCE,
-        new MultiLevelDiffTool(Arrays.asList(embeddableTools)),
-        INTERNAL_DIFF,
-        MergeTool.INSTANCE,
-        BinaryDiffTool.INSTANCE
-      };
-    }
-    else {
-      standardTools = new DiffTool[]{
-        MigrateDiffTool.INSTANCE,
-        ExtCompareFolders.INSTANCE,
-        ExtCompareFiles.INSTANCE,
-        ExtMergeFiles.INSTANCE,
-        INTERNAL_DIFF,
-        MergeTool.INSTANCE,
-        BinaryDiffTool.INSTANCE
-      };
-    }
-    return new CompositeDiffTool(standardTools);
+    return MigrateDiffTool.INSTANCE;
   }
 
   @Override
