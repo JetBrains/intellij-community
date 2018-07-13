@@ -31,7 +31,6 @@ import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.impl.ForwardIndex;
-import com.intellij.util.indexing.impl.KeyCollectionBasedForwardIndex;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogIndexService;
@@ -75,15 +74,15 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
   @NotNull
   @Override
-  protected ForwardIndex<Integer, List<VcsLogPathsIndex.ChangeData>> createForwardIndex(@NotNull IndexExtension<Integer, List<VcsLogPathsIndex.ChangeData>, VcsFullCommitDetails> extension)
+  protected ForwardIndex<Integer, List<VcsLogPathsIndex.ChangeData>> createForwardIndex(@NotNull IndexExtension<Integer, List<ChangeData>, VcsFullCommitDetails> extension)
     throws IOException {
     if (!VcsLogIndexService.isPathsForwardIndexRequired()) return super.createForwardIndex(extension);
-    return new KeyCollectionBasedForwardIndex<Integer, List<VcsLogPathsIndex.ChangeData>>(extension) {
+    return new VcsLogPathsForwardIndex(extension) {
       @NotNull
       @Override
-      public PersistentHashMap<Integer, Collection<Integer>> createMap() throws IOException {
+      public PersistentHashMap<Integer, List<Collection<Integer>>> createMap() throws IOException {
         File storageFile = myStorageId.getStorageFile(myName + ".idx");
-        return new PersistentHashMap<>(storageFile, new IntInlineKeyDescriptor(), new IntCollectionDataExternalizer(), Page.PAGE_SIZE);
+        return new PersistentHashMap<>(storageFile, new IntInlineKeyDescriptor(), new IntCollectionListExternalizer(), Page.PAGE_SIZE);
       }
     };
   }
@@ -135,11 +134,11 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
   @NotNull
   public Set<FilePath> getPathsChangedInCommit(int commit) throws IOException {
-    Collection<Integer> keysForCommit = getKeysForCommit(commit);
+    List<Collection<Integer>> keysForCommit = getKeysForCommit(commit);
     if (keysForCommit == null) return Collections.emptySet();
 
     Set<FilePath> paths = ContainerUtil.newHashSet();
-    for (Integer pathId : keysForCommit) {
+    for (Integer pathId : ContainerUtil.newHashSet(ContainerUtil.flatten(keysForCommit))) {
       LightFilePath lightFilePath = myPathsIndexer.getPathsEnumerator().valueOf(pathId);
       if (lightFilePath.isDirectory()) continue;
       paths.add(toFilePath(lightFilePath));
