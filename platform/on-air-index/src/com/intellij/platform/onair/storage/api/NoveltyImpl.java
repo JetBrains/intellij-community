@@ -13,9 +13,9 @@ import java.util.concurrent.atomic.AtomicLong;
 public class NoveltyImpl implements Novelty, Closeable {
   private static final int INITIAL_SIZE = 1024 * 1024 * 2047; // almost 2GB
 
-  private final MappedByteBuffer myByteBuffer;
+  protected final MappedByteBuffer myByteBuffer;
   // private final List<Pair<Integer, Integer>> myFreeList;
-  private final AtomicLong mySize = new AtomicLong(0);
+  private final AtomicLong mySize;
 
   public NoveltyImpl(File backedFile) throws IOException {
     //myFreeList = new LinkedList<>();
@@ -25,6 +25,12 @@ public class NoveltyImpl implements Novelty, Closeable {
       myByteBuffer = file.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, INITIAL_SIZE);
       myByteBuffer.limit(INITIAL_SIZE);
     }
+    mySize = new AtomicLong(0);
+  }
+
+  private NoveltyImpl(MappedByteBuffer byteBuffer, AtomicLong size) {
+    myByteBuffer = byteBuffer;
+    mySize = size;
   }
 
   private void addFreeBlock(int blockSize, int blockPos) {
@@ -62,7 +68,7 @@ public class NoveltyImpl implements Novelty, Closeable {
     long size = mySize.getAndAdd(4 + bytes.length);
 
     if (size + 4 + bytes.length < myByteBuffer.capacity()) {
-      ByteBuffer buffer = myByteBuffer.duplicate();
+      ByteBuffer buffer = getBuffer();
       if (size > buffer.limit()) {
         throw new OutOfMemoryError("Not enough memory in Novelty storage " + size + " buffer limit is" + buffer.limit());
       }
@@ -85,7 +91,7 @@ public class NoveltyImpl implements Novelty, Closeable {
 
   @Override
   public byte[] lookup(long address) {
-    ByteBuffer buffer = myByteBuffer.duplicate();
+    ByteBuffer buffer = getBuffer();
     buffer.position((int)address);
     int count = buffer.getInt();
     byte[] result = new byte[count];
@@ -93,9 +99,13 @@ public class NoveltyImpl implements Novelty, Closeable {
     return result;
   }
 
+  protected ByteBuffer getBuffer() {
+    return myByteBuffer.duplicate();
+  }
+
   @Override
   public void update(long address, byte[] bytes) {
-    ByteBuffer buffer = myByteBuffer.duplicate();
+    ByteBuffer buffer = getBuffer();
     buffer.position((int)address);
     final int count = buffer.getInt();
     if (count != bytes.length) {
@@ -115,5 +125,20 @@ public class NoveltyImpl implements Novelty, Closeable {
 
   public int getFreeSpace() {
     return INITIAL_SIZE - getSize();
+  }
+
+  public Novelty unsynchronizedCopy() {
+    return new MutableNoveltyImpl((MappedByteBuffer)getBuffer(), mySize);
+  }
+
+  private static class MutableNoveltyImpl extends NoveltyImpl {
+    private MutableNoveltyImpl(MappedByteBuffer byteBuffer, AtomicLong size) {
+      super(byteBuffer, size);
+    }
+
+    @Override
+    protected ByteBuffer getBuffer() {
+      return myByteBuffer;
+    }
   }
 }

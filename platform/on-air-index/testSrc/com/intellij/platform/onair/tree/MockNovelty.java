@@ -59,4 +59,9 @@ public class MockNovelty implements Novelty {
 
     return realSize;
   }
+
+  @Override
+  public Novelty unsynchronizedCopy() {
+    return this;
+  }
 }

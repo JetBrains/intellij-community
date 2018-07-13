@@ -52,29 +52,32 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
                            int cacheSize,
                            int R,
                            int baseR) {
-    myNovelty = novelty;
+    myNovelty = novelty.unsynchronizedCopy();
+
     myKeyDescriptor = keyDescriptor;
     myValueExternalizer = valueExternalizer;
     myInlineKeys = keyDescriptor instanceof InlineKeyDescriptor;
 
-    if (head != null) {
-      myTree = BTree.load(storage, 8, head.data);
-      // myHashToVirtualFile = BTree.load(storage, 4, head.hashToVirtualFile);
-    }
-    else {
-      myTree = BTree.create(novelty, storage, 8);
-      // myHashToVirtualFile = BTree.create(novelty, storage, 4);
-    }
-    if (!myInlineKeys) {
+    synchronized (lockObject) {
       if (head != null) {
-        myKeysInternary = BTree.load(storage, 4, head.internary);
+        myTree = BTree.load(storage, 8, head.data);
+        // myHashToVirtualFile = BTree.load(storage, 4, head.hashToVirtualFile);
       }
       else {
-        myKeysInternary = BTree.create(novelty, storage, 4);
+        myTree = BTree.create(myNovelty, storage, 8);
+        // myHashToVirtualFile = BTree.create(novelty, storage, 4);
       }
-    }
-    else {
-      myKeysInternary = null;
+      if (!myInlineKeys) {
+        if (head != null) {
+          myKeysInternary = BTree.load(storage, 4, head.internary);
+        }
+        else {
+          myKeysInternary = BTree.create(myNovelty, storage, 4);
+        }
+      }
+      else {
+        myKeysInternary = null;
+      }
     }
 
     myCache = CacheBuilder
@@ -99,7 +102,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
               byte[] serializedKey = new byte[4 + 4];
               ByteUtils.writeUnsignedInt(keyInt ^ 0x80000000, serializedKey, 4);
               setR(serializedKey, R);
-              myTree.put(novelty, serializedKey, valueBytes.toByteArray(), true);
+              myTree.put(myNovelty, serializedKey, valueBytes.toByteArray(), true);
             }
             else {
               BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
@@ -116,12 +119,12 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
               ByteUtils.writeUnsignedInt(keyInt ^ 0x80000000, serializedKey, 4);
               setR(serializedKey, R);
 
-              myTree.put(novelty, serializedKey, valueBytes.toByteArray(), true);
+              myTree.put(myNovelty, serializedKey, valueBytes.toByteArray(), true);
 
               final byte[] hashKey = Arrays.copyOfRange(serializedKey, 4, 8);
               // intern based on 128 bit hash happens on BTree value level
               // TODO: consider incorporating it into the novelty (to save space on indexing)
-              myKeysInternary.put(novelty, hashKey, keyBytes, false);
+              myKeysInternary.put(myNovelty, hashKey, keyBytes, false);
             }
           }
         }
@@ -139,7 +142,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
           DeltaValueContainer<Value> delta = new DeltaValueContainer<>();
           synchronized (lockObject) {
             setR(keyBytes, R);
-            final byte[] valueBytes = myTree.get(novelty, keyBytes);
+            final byte[] valueBytes = myTree.get(myNovelty, keyBytes);
             if (valueBytes != null) {
               try {
                 delta.readFrom(new DataInputStream(new ByteArrayInputStream(valueBytes)), myValueExternalizer);
@@ -154,7 +157,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
             ValueContainerImpl<Value> container = new ValueContainerImpl<>();
             synchronized (lockObject) {
               setR(keyBytes, baseR);
-              final byte[] baseValueBytes = myTree.get(novelty, keyBytes);
+              final byte[] baseValueBytes = myTree.get(myNovelty, keyBytes);
               if (baseValueBytes != null) {
                 try {
                   container.readFrom(new DataInputStream(new ByteArrayInputStream(baseValueBytes)), myValueExternalizer);
