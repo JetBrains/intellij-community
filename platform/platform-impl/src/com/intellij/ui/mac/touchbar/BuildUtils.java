@@ -430,8 +430,8 @@ class BuildUtils {
         butt.setHiddenWhenDisabled(true);
 
       if (isRunConfigPopover) {
-        butt.setWidth(ourRunConfigurationPopoverWidth);
         butt.setHasArrowIcon(true);
+        butt.setLayout(ourRunConfigurationPopoverWidth, 0, 5, 8);
       } else if (butt.getAnAction() instanceof WelcomePopupAction)
         butt.setHasArrowIcon(true);
 
