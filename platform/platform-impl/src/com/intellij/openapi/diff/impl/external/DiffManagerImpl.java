@@ -16,7 +16,6 @@ import com.intellij.openapi.diff.impl.DiffUtil;
 import com.intellij.openapi.diff.impl.mergeTool.MergeTool;
 import com.intellij.openapi.diff.impl.processing.HighlightMode;
 import com.intellij.openapi.editor.markup.MarkupEditorFilter;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.actions.migrate.MigrateDiffTool;
 import com.intellij.util.config.*;
@@ -136,18 +135,6 @@ public class DiffManagerImpl extends DiffManager implements PersistentStateCompo
     return DIFF_EDITOR_FILTER;
   }
 
-  @Override
-  public DiffPanel createDiffPanel(Window window, @NotNull Project project, DiffTool parentTool) {
-    return new DiffPanelImpl(window, project, true, true, FULL_DIFF_DIVIDER_POLYGONS_OFFSET, parentTool);
-  }
-
-  @Override
-  public DiffPanel createDiffPanel(Window window, @NotNull Project project, @NotNull Disposable parentDisposable, DiffTool parentTool) {
-    DiffPanel diffPanel = createDiffPanel(window, project, parentTool);
-    Disposer.register(parentDisposable, diffPanel);
-    return diffPanel;
-  }
-
   public static DiffManagerImpl getInstanceEx() {
     return (DiffManagerImpl)DiffManager.getInstance();
   }
@@ -194,10 +181,11 @@ public class DiffManagerImpl extends DiffManager implements PersistentStateCompo
     return myProperties;
   }
 
-  static DiffPanel createDiffPanel(DiffRequest data, Window window, @NotNull Disposable parentDisposable, FrameDiffTool tool) {
+  static DiffPanel createDiffPanel(DiffRequest data, Window window, @NotNull Disposable parentDisposable, DiffTool tool) {
     DiffPanel diffPanel = null;
     try {
-      diffPanel = DiffManager.getInstance().createDiffPanel(window, data.getProject(), parentDisposable, tool);
+      diffPanel = new DiffPanelImpl(window, data.getProject(), true, true, FULL_DIFF_DIVIDER_POLYGONS_OFFSET, tool);
+      Disposer.register(parentDisposable, diffPanel);
       int contentCount = data.getContents().length;
       LOG.assertTrue(contentCount == 2, String.valueOf(contentCount));
       LOG.assertTrue(data.getContentTitles().length == contentCount);
