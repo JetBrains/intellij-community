@@ -37,7 +37,7 @@ public class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Void> {
   public VcsLogMessagesTrigramIndex(@NotNull StorageId storageId,
                                     @NotNull FatalErrorHandler fatalErrorHandler,
                                     @NotNull Disposable disposableParent) throws IOException {
-    super(storageId, TRIGRAMS, new TrigramMessageIndexer(), VoidDataExternalizer.INSTANCE, false,
+    super(storageId, TRIGRAMS, new TrigramMessageIndexer(), VoidDataExternalizer.INSTANCE,
           fatalErrorHandler, disposableParent);
   }
 

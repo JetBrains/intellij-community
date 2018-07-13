@@ -28,9 +28,13 @@ import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.StorageException;
+import com.intellij.util.indexing.impl.ForwardIndex;
+import com.intellij.util.indexing.impl.KeyCollectionBasedForwardIndex;
 import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsLogIndexService;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.impl.VcsIndexableDetails;
 import com.intellij.vcs.log.util.StorageId;
@@ -60,14 +64,28 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
   public VcsLogPathsIndex(@NotNull StorageId storageId,
                           @NotNull Set<VirtualFile> roots,
-                          boolean hasForwardIndex,
                           @NotNull FatalErrorHandler fatalErrorHandler,
                           @NotNull Disposable disposableParent) throws IOException {
     super(storageId, PATHS, new PathsIndexer(createPathsEnumerator(storageId), roots),
-          new ChangeDataListKeyDescriptor(), hasForwardIndex, fatalErrorHandler, disposableParent);
+          new ChangeDataListKeyDescriptor(), fatalErrorHandler, disposableParent);
 
     myPathsIndexer = (PathsIndexer)myIndexer;
     myPathsIndexer.setFatalErrorConsumer(e -> fatalErrorHandler.consume(this, e));
+  }
+
+  @NotNull
+  @Override
+  protected ForwardIndex<Integer, List<VcsLogPathsIndex.ChangeData>> createForwardIndex(@NotNull IndexExtension<Integer, List<VcsLogPathsIndex.ChangeData>, VcsFullCommitDetails> extension)
+    throws IOException {
+    if (!VcsLogIndexService.isPathsForwardIndexRequired()) return super.createForwardIndex(extension);
+    return new KeyCollectionBasedForwardIndex<Integer, List<VcsLogPathsIndex.ChangeData>>(extension) {
+      @NotNull
+      @Override
+      public PersistentHashMap<Integer, Collection<Integer>> createMap() throws IOException {
+        File storageFile = myStorageId.getStorageFile(myName + ".idx");
+        return new PersistentHashMap<>(storageFile, new IntInlineKeyDescriptor(), new IntCollectionDataExternalizer(), Page.PAGE_SIZE);
+      }
+    };
   }
 
   @NotNull

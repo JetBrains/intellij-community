@@ -22,7 +22,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Consumer;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.*;
-import com.intellij.util.io.*;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumeratorIntegerDescriptor;
+import com.intellij.util.io.KeyDescriptor;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.util.StorageId;
@@ -30,7 +32,6 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
@@ -41,8 +42,8 @@ import java.util.function.ObjIntConsumer;
 public class VcsLogFullDetailsIndex<T> implements Disposable {
   protected static final String INDEX = "index";
   @NotNull protected final MyMapReduceIndex myMapReduceIndex;
-  @NotNull private final StorageId myStorageId;
-  @NotNull private final String myName;
+  @NotNull protected final StorageId myStorageId;
+  @NotNull protected final String myName;
   @NotNull protected final DataIndexer<Integer, T, VcsFullCommitDetails> myIndexer;
   @NotNull private final FatalErrorHandler myFatalErrorHandler;
   private volatile boolean myDisposed = false;
@@ -51,7 +52,6 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
                                 @NotNull String name,
                                 @NotNull DataIndexer<Integer, T, VcsFullCommitDetails> indexer,
                                 @NotNull DataExternalizer<T> externalizer,
-                                boolean hasForwardIndex,
                                 @NotNull FatalErrorHandler fatalErrorHandler,
                                 @NotNull Disposable disposableParent)
     throws IOException {
@@ -60,24 +60,22 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
     myIndexer = indexer;
     myFatalErrorHandler = fatalErrorHandler;
 
-    myMapReduceIndex = createMapReduceIndex(externalizer, hasForwardIndex);
+    myMapReduceIndex = createMapReduceIndex(externalizer);
 
     Disposer.register(disposableParent, this);
   }
 
   @NotNull
-  private MyMapReduceIndex createMapReduceIndex(@NotNull DataExternalizer<T> dataExternalizer, boolean hasForwardIndex)
-    throws IOException {
+  private MyMapReduceIndex createMapReduceIndex(@NotNull DataExternalizer<T> dataExternalizer) throws IOException {
     MyIndexExtension<T> extension = new MyIndexExtension<>(myName, myIndexer, dataExternalizer, myStorageId.getVersion());
-    ForwardIndex<Integer, T> forwardIndex = hasForwardIndex ? new KeyCollectionBasedForwardIndex<Integer, T>(extension) {
-      @NotNull
-      @Override
-      public PersistentHashMap<Integer, Collection<Integer>> createMap() throws IOException {
-        File storageFile = myStorageId.getStorageFile(myName + ".idx");
-        return new PersistentHashMap<>(storageFile, new IntInlineKeyDescriptor(), new IntCollectionDataExternalizer(), Page.PAGE_SIZE);
-      }
-    } : new EmptyForwardIndex<>();
+    ForwardIndex<Integer, T> forwardIndex = createForwardIndex(extension);
     return new MyMapReduceIndex(extension, new MyMapIndexStorage<>(myName, myStorageId, dataExternalizer), forwardIndex);
+  }
+
+  @NotNull
+  protected ForwardIndex<Integer, T> createForwardIndex(@NotNull IndexExtension<Integer, T, VcsFullCommitDetails> extension)
+    throws IOException {
+    return new EmptyForwardIndex<>();
   }
 
   @NotNull
@@ -121,8 +119,8 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
   }
 
   @Nullable
-  protected Collection<Integer> getKeysForCommit(int commit) throws IOException {
-    MapBasedForwardIndex<Integer, T, Collection<Integer>> index = myMapReduceIndex.getForwardIndex();
+  protected <MapIndexType> MapIndexType getKeysForCommit(int commit) throws IOException {
+    MapBasedForwardIndex<Integer, T, MapIndexType> index = myMapReduceIndex.getForwardIndex();
     if (index == null) return null;
 
     return index.getInput(commit);
@@ -156,9 +154,9 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
     }
 
     @Nullable
-    public MapBasedForwardIndex<Integer, T, Collection<Integer>> getForwardIndex() {
+    public <MapIndexType> MapBasedForwardIndex<Integer, T, MapIndexType> getForwardIndex() {
       if (myForwardIndex instanceof MapBasedForwardIndex) {
-        return ((MapBasedForwardIndex<Integer, T, Collection<Integer>>)myForwardIndex);
+        return ((MapBasedForwardIndex<Integer, T, MapIndexType>)myForwardIndex);
       }
       return null;
     }

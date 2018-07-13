@@ -20,8 +20,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
+import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.StorageException;
-import com.intellij.util.io.VoidDataExternalizer;
+import com.intellij.util.indexing.impl.ForwardIndex;
+import com.intellij.util.indexing.impl.KeyCollectionBasedForwardIndex;
+import com.intellij.util.io.*;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.data.VcsUserRegistryImpl;
@@ -32,6 +35,7 @@ import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
@@ -49,10 +53,24 @@ public class VcsLogUserIndex extends VcsLogFullDetailsIndex<Void> {
                          @NotNull VcsUserRegistryImpl userRegistry,
                          @NotNull FatalErrorHandler consumer,
                          @NotNull Disposable disposableParent) throws IOException {
-    super(storageId, USERS, new UserIndexer(userRegistry), VoidDataExternalizer.INSTANCE, true,
+    super(storageId, USERS, new UserIndexer(userRegistry), VoidDataExternalizer.INSTANCE,
           consumer, disposableParent);
     myUserRegistry = userRegistry;
     ((UserIndexer)myIndexer).setFatalErrorConsumer(e -> consumer.consume(this, e));
+  }
+
+  @NotNull
+  @Override
+  protected ForwardIndex<Integer, Void> createForwardIndex(@NotNull IndexExtension<Integer, Void, VcsFullCommitDetails> extension)
+    throws IOException {
+    return new KeyCollectionBasedForwardIndex<Integer, Void>(extension) {
+      @NotNull
+      @Override
+      public PersistentHashMap<Integer, Collection<Integer>> createMap() throws IOException {
+        File storageFile = myStorageId.getStorageFile(myName + ".idx");
+        return new PersistentHashMap<>(storageFile, new IntInlineKeyDescriptor(), new IntCollectionDataExternalizer(), Page.PAGE_SIZE);
+      }
+    };
   }
 
   public TIntHashSet getCommitsForUsers(@NotNull Set<VcsUser> users) throws IOException, StorageException {

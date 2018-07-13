@@ -333,7 +333,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
         trigrams = new VcsLogMessagesTrigramIndex(storageId, fatalErrorHandler, this);
         users = new VcsLogUserIndex(storageId, userRegistry, fatalErrorHandler, this);
-        paths = new VcsLogPathsIndex(storageId, roots, forwardIndexRequired, fatalErrorHandler, this);
+        paths = new VcsLogPathsIndex(storageId, roots, fatalErrorHandler, this);
 
         File parentsStorage = storageId.getStorageFile(PARENTS);
         parents = new PersistentHashMap<>(parentsStorage, EnumeratorIntegerDescriptor.INSTANCE,
