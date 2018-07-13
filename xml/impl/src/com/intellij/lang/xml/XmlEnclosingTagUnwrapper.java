@@ -103,7 +103,9 @@ public class XmlEnclosingTagUnwrapper implements Unwrapper {
     if (line > 0 && DocumentUtil.isLineEmpty(document, line)) {
       int start = document.getLineStartOffset(line);
       int end = Math.min(document.getLineEndOffset(line) + 1, document.getTextLength() - 1);
-      if (start < end) {
+      if (end == document.getTextLength() - 1) {
+        document.deleteString(start - 1, end);
+      } else if (start < end) {
         document.deleteString(start, end);
       }
     }
