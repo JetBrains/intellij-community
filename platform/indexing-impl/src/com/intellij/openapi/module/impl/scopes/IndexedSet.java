@@ -23,7 +23,7 @@ class IndexedSet<E> extends LinkedHashSet<E> {
   @Override
   public boolean add(E e) {
     if (super.add(e)) {
-      myIndex.put(e, size());
+      myIndex.put(e, size() - 1);
       return true;
     }
     else {
