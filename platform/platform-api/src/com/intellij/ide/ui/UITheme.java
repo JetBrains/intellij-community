@@ -31,6 +31,7 @@ public class UITheme {
   private boolean dark;
   private String author;
   private String id;
+  private String editorScheme;
   private Map<String, Object> ui;
   private Map<String, Object> icons;
   private IconPathPatcher patcher;
@@ -71,6 +72,15 @@ public class UITheme {
 
   public String getId() {
     return id;
+  }
+
+  @Nullable
+  public String getEditorScheme() {
+    return editorScheme;
+  }
+
+  public Map<String, Object> getBackground() {
+    return background;
   }
 
   public void applyProperties(UIDefaults defaults) {
@@ -223,8 +233,9 @@ public class UITheme {
     this.icons = icons;
   }
 
-  public Map<String, Object> getBackground() {
-    return background;
+  @SuppressWarnings("unused")
+  public void setEditorScheme(String editorScheme) {
+    this.editorScheme = editorScheme;
   }
 
   public void setBackground(Map<String, Object> background) {
