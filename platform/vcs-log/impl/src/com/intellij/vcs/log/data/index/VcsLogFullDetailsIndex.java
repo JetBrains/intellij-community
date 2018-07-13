@@ -41,7 +41,6 @@ import java.util.function.ObjIntConsumer;
 public class VcsLogFullDetailsIndex<T> implements Disposable {
   protected static final String INDEX = "index";
   @NotNull protected final MyMapReduceIndex myMapReduceIndex;
-  @NotNull private final IndexId<Integer, T> myID;
   @NotNull private final StorageId myStorageId;
   @NotNull private final String myName;
   @NotNull protected final DataIndexer<Integer, T, VcsFullCommitDetails> myIndexer;
@@ -56,7 +55,6 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
                                 @NotNull FatalErrorHandler fatalErrorHandler,
                                 @NotNull Disposable disposableParent)
     throws IOException {
-    myID = IndexId.create(name);
     myName = name;
     myStorageId = storageId;
     myIndexer = indexer;
@@ -70,7 +68,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
   @NotNull
   private MyMapReduceIndex createMapReduceIndex(@NotNull DataExternalizer<T> dataExternalizer, boolean hasForwardIndex)
     throws IOException {
-    MyIndexExtension extension = new MyIndexExtension(myIndexer, dataExternalizer, myStorageId.getVersion());
+    MyIndexExtension<T> extension = new MyIndexExtension<>(myName, myIndexer, dataExternalizer, myStorageId.getVersion());
     ForwardIndex<Integer, T> forwardIndex = hasForwardIndex ? new KeyCollectionBasedForwardIndex<Integer, T>(extension) {
       @NotNull
       @Override
@@ -151,7 +149,7 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
   }
 
   private class MyMapReduceIndex extends MapReduceIndex<Integer, T, VcsFullCommitDetails> {
-    public MyMapReduceIndex(@NotNull MyIndexExtension extension,
+    public MyMapReduceIndex(@NotNull MyIndexExtension<T> extension,
                             @NotNull MyMapIndexStorage<T> mapIndexStorage,
                             @NotNull ForwardIndex<Integer, T> forwardIndex) {
       super(extension, mapIndexStorage, forwardIndex);
@@ -188,14 +186,16 @@ public class VcsLogFullDetailsIndex<T> implements Disposable {
     }
   }
 
-  private class MyIndexExtension extends IndexExtension<Integer, T, VcsFullCommitDetails> {
+  private static class MyIndexExtension<T> extends IndexExtension<Integer, T, VcsFullCommitDetails> {
+    @NotNull private final IndexId<Integer, T> myID;
     @NotNull private final DataIndexer<Integer, T, VcsFullCommitDetails> myIndexer;
     @NotNull private final DataExternalizer<T> myExternalizer;
     private final int myVersion;
 
-    public MyIndexExtension(@NotNull DataIndexer<Integer, T, VcsFullCommitDetails> indexer,
+    public MyIndexExtension(@NotNull String name, @NotNull DataIndexer<Integer, T, VcsFullCommitDetails> indexer,
                             @NotNull DataExternalizer<T> externalizer,
                             int version) {
+      myID = IndexId.create(name);
       myIndexer = indexer;
       myExternalizer = externalizer;
       myVersion = version;
