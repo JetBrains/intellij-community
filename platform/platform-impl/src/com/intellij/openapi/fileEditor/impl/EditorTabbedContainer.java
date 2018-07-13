@@ -502,19 +502,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
   public void close() {
     TabInfo selected = myTabs.getTargetInfo();
     if (selected == null) return;
-
-    final VirtualFile file = (VirtualFile)selected.getObject();
-    final FileEditorManagerEx mgr = FileEditorManagerEx.getInstanceEx(myProject);
-
-    mgr
-      .getActiveWindow()
-      .onSuccess(wnd -> {
-        if (wnd != null) {
-          if (wnd.findFileComposite(file) != null) {
-            mgr.closeFile(file, wnd);
-          }
-        }
-      });
+    FileEditorManagerEx.getInstanceEx(myProject).closeFile((VirtualFile)selected.getObject(), myWindow);
   }
 
   private boolean isFloating() {
