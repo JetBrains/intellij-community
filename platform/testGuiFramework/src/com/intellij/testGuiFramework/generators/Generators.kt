@@ -201,9 +201,9 @@ class CheckboxTreeGenerator : ComponentCodeGenerator<CheckboxTree> {
   override fun generate(cmp: CheckboxTree, me: MouseEvent, cp: Point): String {
     val path = getJTreePath(cmp, cmp.getPath(cp))
     return if (wasClickOnCheckBox(cmp, cp))
-      "checkboxTree($path).clickCheckbox($path)"
+      "checkboxTree($path).clickCheckbox()"
     else
-      "checkboxTree($path).clickPath($path)"
+      "checkboxTree($path).clickPath()"
   }
 }
 
@@ -286,8 +286,8 @@ class JTreeGenerator : ComponentCodeGenerator<JTree> {
   private fun JTree.getPath(cp: Point) = this.getClosestPathForLocation(cp.x, cp.y)
   override fun generate(cmp: JTree, me: MouseEvent, cp: Point): String {
     val path = getJTreePath(cmp, cmp.getPath(cp))
-    if (me.isRightButton()) return "jTree($path).rightClickPath($path)"
-    return "jTree($path).clickPath($path)"
+    if (me.isRightButton()) return "jTree($path).rightClickPath()"
+    return "jTree($path).clickPath()"
   }
 }
 
