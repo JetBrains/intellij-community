@@ -132,6 +132,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     myToolbarGroup = new DefaultActionGroup();
     myPopupActionGroup = new DefaultActionGroup();
     myTouchbarActionGroup = new UpdatableDefaultActionGroup();
+    TouchbarDataKeys.putActionDescriptor(myTouchbarActionGroup).setReplaceEsc(false);
 
     // UI
 
