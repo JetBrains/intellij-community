@@ -14,6 +14,7 @@ import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.quickFixes.PyRenameElementQuickFixTest;
 import org.intellij.lang.regexp.inspection.RedundantEscapeInspection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +32,7 @@ public class PyQuickFixTest extends PyTestCase {
     super.setUp();
     InspectionProfileImpl.INIT_INSPECTIONS = true;
     myFixture.setCaresAboutInjection(false);
+    PyRenameElementQuickFixTest.registerTestNameSuggestionProvider(getTestRootDisposable());
   }
 
   @Override

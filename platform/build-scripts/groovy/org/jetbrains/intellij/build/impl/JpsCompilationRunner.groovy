@@ -37,6 +37,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.Processor
 import com.intellij.util.containers.MultiMap
 import groovy.transform.CompileStatic
+import org.apache.tools.ant.BuildException
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -194,7 +195,7 @@ class JpsCompilationRunner {
         Standalone.runBuild(loader, compilationData.dataStorageRoot, messageHandler, scopes, false)
       }
       catch (Throwable e) {
-        context.messages.error("Compilation failed unexpectedly", e)
+        throw new BuildException("Compilation failed unexpectedly", e)
       }
     }
     if (!messageHandler.errorMessagesByCompiler.isEmpty()) {

@@ -155,7 +155,7 @@ public class PyPep8NamingInspection extends PyInspection {
 
     private void registerAndAddRenameAndIgnoreErrorQuickFixes(@Nullable final PsiElement node, @NotNull final String errorCode) {
       if (getHolder() != null && getHolder().isOnTheFly())
-        registerProblem(node, ERROR_CODES_DESCRIPTION.get(errorCode), new PyRenameElementQuickFix(), new IgnoreErrorFix(errorCode));
+        registerProblem(node, ERROR_CODES_DESCRIPTION.get(errorCode), new PyRenameElementQuickFix(node), new IgnoreErrorFix(errorCode));
       else
         registerProblem(node, ERROR_CODES_DESCRIPTION.get(errorCode), new IgnoreErrorFix(errorCode));
     }
@@ -174,7 +174,7 @@ public class PyPep8NamingInspection extends PyInspection {
         if (nameNode != null) {
           final List<LocalQuickFix> quickFixes = Lists.newArrayList();
           if (getHolder() != null && getHolder().isOnTheFly())
-            quickFixes.add(new PyRenameElementQuickFix());
+            quickFixes.add(new PyRenameElementQuickFix(nameNode.getPsi()));
 
           if (containingClass != null) {
             quickFixes.add(new IgnoreBaseClassQuickFix(containingClass, myTypeEvalContext));

@@ -231,6 +231,9 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
           String text = c.getToolTipText(myCurrentEvent);
           if (text == null || text.trim().isEmpty()) return false;
 
+          Rectangle visibleRect = c.getParent() instanceof JViewport ? ((JViewport)c.getParent()).getViewRect() : c.getVisibleRect();
+          if (!visibleRect.contains(getPoint())) return false;
+
           JLayeredPane layeredPane = UIUtil.getParentOfType(JLayeredPane.class, c);
 
           final JEditorPane pane = initPane(text, new HintHint(me).setAwtTooltip(true), layeredPane);

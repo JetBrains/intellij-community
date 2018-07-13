@@ -51,7 +51,8 @@ public class IndexSpeedSearch extends VcsLogSpeedSearch {
     addChangeListener(evt -> {
       if (evt.getPropertyName().equals(ENTERED_PREFIX_PROPERTY_NAME)) {
         String newValue = (String)evt.getNewValue();
-        if (newValue != null) {
+        IndexDataGetter dataGetter = myIndex.getDataGetter();
+        if (newValue != null && dataGetter != null) {
           String oldValue = (String)evt.getOldValue();
           Collection<VcsUser> usersToExamine = myUserRegistry.getUsers();
           if (oldValue != null && newValue.contains(oldValue) && myMatchedUsers != null) {
@@ -60,7 +61,7 @@ public class IndexSpeedSearch extends VcsLogSpeedSearch {
           }
           myMatchedUsers = ContainerUtil.filter(usersToExamine,
                                                 user -> compare(VcsUserUtil.getShortPresentation(user), newValue));
-          myMatchedByUserCommits = myIndex.filter(Collections.singletonList(new SimpleVcsLogUserFilter(myMatchedUsers)));
+          myMatchedByUserCommits = dataGetter.filter(Collections.singletonList(new SimpleVcsLogUserFilter(myMatchedUsers)));
         }
         else {
           myMatchedByUserCommits = null;

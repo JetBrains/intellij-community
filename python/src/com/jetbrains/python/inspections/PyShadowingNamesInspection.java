@@ -118,7 +118,7 @@ public class PyShadowingNamesInspection extends PyInspection {
                   return;
                 }
                 registerProblem(problemElement, String.format("Shadows name '%s' from outer scope", name),
-                                ProblemHighlightType.WEAK_WARNING, null, new PyRenameElementQuickFix());
+                                ProblemHighlightType.WEAK_WARNING, null, new PyRenameElementQuickFix(problemElement));
                 return;
               }
             }

@@ -100,26 +100,26 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   private static Pair<String, Color> initLicensingInfo(UpdateChannel channel, BuildInfo build) {
-    LicensingFacade facade = LicensingFacade.getInstance();
-    if (facade == null) return null;
+    final LicensingFacade la = LicensingFacade.getInstance();
+    if (la == null) return null;
 
     if (channel.getLicensing().equals(UpdateChannel.LICENSING_EAP)) {
       return pair(IdeBundle.message("updates.channel.bundled.key"), null);
     }
 
     Date releaseDate = build.getReleaseDate();
-    Boolean applicable = releaseDate == null ? null : facade.isApplicableForProduct(releaseDate);
-    if (applicable == null) {
+    if (releaseDate == null) {
       return null;
     }
-    if (applicable == Boolean.FALSE) {
+
+    if (!la.isApplicableForProduct(releaseDate)) {
       return pair(IdeBundle.message("updates.paid.upgrade", channel.getEvalDays()), JBColor.RED);
     }
-    if (facade.isPerpetualForProduct(releaseDate) == Boolean.TRUE) {
+    if (la.isPerpetualForProduct(releaseDate)) {
       return pair(IdeBundle.message("updates.fallback.build"), null);
     }
 
-    Date expiration = facade.getLicenseExpirationDate();
+    Date expiration = la.getLicenseExpirationDate();
     if (expiration != null) {
       return pair(IdeBundle.message("updates.interim.build", DateFormatUtil.formatAboutDialogDate(expiration)), null);
     }

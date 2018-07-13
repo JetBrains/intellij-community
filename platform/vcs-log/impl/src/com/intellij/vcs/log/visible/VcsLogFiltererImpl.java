@@ -25,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.*;
+import com.intellij.vcs.log.data.index.IndexDataGetter;
 import com.intellij.vcs.log.data.index.VcsLogIndex;
 import com.intellij.vcs.log.graph.GraphCommit;
 import com.intellij.vcs.log.graph.PermanentGraph;
@@ -110,11 +111,12 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
     if (detailsFilters.isEmpty()) return new FilterByDetailsResult(null, false, commitCount);
 
     Set<Integer> filteredWidthIndex = null;
-    if (myIndex.canFilter(detailsFilters)) {
+    IndexDataGetter dataGetter = myIndex.getDataGetter();
+    if (dataGetter != null && dataGetter.canFilter(detailsFilters)) {
       Collection<VirtualFile> notIndexedRoots = ContainerUtil.filter(visibleRoots, root -> !myIndex.isIndexed(root));
 
       if (notIndexedRoots.size() < visibleRoots.size()) {
-        filteredWidthIndex = myIndex.filter(detailsFilters);
+        filteredWidthIndex = dataGetter.filter(detailsFilters);
         if (notIndexedRoots.isEmpty()) return new FilterByDetailsResult(filteredWidthIndex, false, commitCount);
         matchingHeads = getMatchingHeads(dataPack.getRefsModel(), notIndexedRoots, filters);
       }

@@ -2,7 +2,7 @@
 package com.intellij.openapi.module.impl.scopes;
 
 import com.intellij.util.UnmodifiableIterator;
-import gnu.trove.TObjectIntHashMap;
+import com.intellij.util.containers.ObjectIntHashMap;
 
 import java.util.Collection;
 import java.util.Iterator;
@@ -11,10 +11,10 @@ import java.util.function.Predicate;
 
 class IndexedSet<E> extends LinkedHashSet<E> {
 
-  private final TObjectIntHashMap<E> myIndex = new TObjectIntHashMap<>();
+  private final ObjectIntHashMap<E> myIndex = new ObjectIntHashMap<>();
 
   /**
-   * @return index of element or 0 if element is not in this set
+   * @return index of element or -1 if element is not in this set
    */
   int indexOf(E element) {
     return myIndex.get(element);
@@ -23,7 +23,7 @@ class IndexedSet<E> extends LinkedHashSet<E> {
   @Override
   public boolean add(E e) {
     if (super.add(e)) {
-      myIndex.put(e, size());
+      myIndex.put(e, size() - 1);
       return true;
     }
     else {

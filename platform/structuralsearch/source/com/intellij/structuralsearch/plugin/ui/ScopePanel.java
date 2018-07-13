@@ -75,7 +75,7 @@ public class ScopePanel extends JPanel {
     myToolbar = (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar("ScopePanel", scopeActionGroup, true);
     myToolbar.setForceMinimumSize(true);
     myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
-    setScope(GlobalSearchScope.projectScope(myProject));
+    setScope(null);
 
     final GroupLayout layout = new GroupLayout(this);
     setLayout(layout);
@@ -103,7 +103,7 @@ public class ScopePanel extends JPanel {
     myDirectoryComboBox.setRecentDirectories(recentDirectories);
   }
 
-  public void setScope(SearchScope selectedScope) {
+  public void setScope(@Nullable SearchScope selectedScope) {
     myScope = (selectedScope == null) ? GlobalSearchScope.projectScope(myProject) : selectedScope;
     myScopeType = Scopes.getType(myScope);
 
@@ -124,15 +124,16 @@ public class ScopePanel extends JPanel {
     ((JBCardLayout)myScopeDetailsPanel.getLayout()).show(myScopeDetailsPanel, myScopeType.toString());
   }
 
-  public void setScopeCallback(Runnable callback) {
+  public void setScopeCallback(@Nullable Runnable callback) {
     myCallback = callback;
   }
 
+  @Nullable
   public SearchScope getScope() {
     return myScope;
   }
 
-  void setScopeFromUI(Scopes.Type type) {
+  void setScopeFromUI(@NotNull Scopes.Type type) {
     switch (type) {
       case PROJECT:
         myScope = GlobalSearchScope.projectScope(myProject);
@@ -157,7 +158,7 @@ public class ScopePanel extends JPanel {
 
     private final Scopes.Type myScopeType;
 
-    public ScopeToggleAction(@Nullable String text, Scopes.Type scopeType) {
+    public ScopeToggleAction(@NotNull String text, @NotNull Scopes.Type scopeType) {
       super(text, null, EmptyIcon.ICON_0);
       myScopeType = scopeType;
       getTemplatePresentation().setDisabledIcon(EmptyIcon.ICON_0);
