@@ -1000,14 +1000,6 @@ java_library(
 
 # managed by go/iml_to_build
 java_library(
-    name = "gradle-api",
-    visibility = ["//visibility:public"],
-    exports = ["//tools/base/build-system:gradle-api_neverlink"],
-    runtime_deps = ["//tools/base/build-system:gradle-api_neverlink"],
-)
-
-# managed by go/iml_to_build
-java_library(
     name = "auto-value-annotations",
     visibility = ["//visibility:public"],
     exports = ["//prebuilts/tools/common/m2/repository/com/google/auto/value/auto-value-annotations/1.6:jar"],
