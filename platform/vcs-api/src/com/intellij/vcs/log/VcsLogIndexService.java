@@ -3,6 +3,7 @@ package com.intellij.vcs.log;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.registry.Registry;
 
 /**
  * Provides information about Vcs Log index features that are required for the plugin.
@@ -18,6 +19,8 @@ public interface VcsLogIndexService {
   boolean requiresPathsForwardIndex();
 
   static boolean isPathsForwardIndexRequired() {
+    if (Registry.is("vcs.log.index.paths.forward.index.on")) return true;
+
     VcsLogIndexService[] extensions = Extensions.getExtensions(VCS_LOG_INDEX_SERVICE_EP);
     for (VcsLogIndexService indexService : extensions) {
       if (indexService.requiresPathsForwardIndex()) return true;
