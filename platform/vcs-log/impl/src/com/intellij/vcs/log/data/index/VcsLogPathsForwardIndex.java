@@ -38,7 +38,12 @@ public abstract class VcsLogPathsForwardIndex
   }
 
   @Override
-  protected List<Collection<Integer>> convertToMapValueType(int inputId, Map<Integer, List<VcsLogPathsIndex.ChangeData>> map) {
+  protected List<Collection<Integer>> convertToMapValueType(int inputId, @NotNull Map<Integer, List<VcsLogPathsIndex.ChangeData>> map) {
+    return convertToMapValueType(map);
+  }
+
+  @NotNull
+  static List<Collection<Integer>> convertToMapValueType(@NotNull Map<Integer, List<VcsLogPathsIndex.ChangeData>> map) {
     SmartList<Collection<Integer>> result = new SmartList<>();
 
     for (Map.Entry<Integer, List<VcsLogPathsIndex.ChangeData>> entry : map.entrySet()) {
@@ -86,7 +91,7 @@ public abstract class VcsLogPathsForwardIndex
     }
   }
 
-  private static class VcsLogPathsDiffBuilder extends InputDataDiffBuilder<Integer, List<VcsLogPathsIndex.ChangeData>> {
+  static class VcsLogPathsDiffBuilder extends InputDataDiffBuilder<Integer, List<VcsLogPathsIndex.ChangeData>> {
     @Nullable private final List<Collection<Integer>> myOldData;
 
     public VcsLogPathsDiffBuilder(int id, @Nullable List<Collection<Integer>> oldData) {
