@@ -105,4 +105,20 @@ public class WrapVarargArgumentsWithExplicitArrayIntentionTest extends IPPTestCa
       "}"
     );
   }
+
+  public void testEmptyArray() {
+    doTest(
+      "class X {" +
+      "  void x() {" +
+      "    java.util.Arrays.asList(/*_Wrap vararg arguments with explicit array creation*/);" +
+      "  }" +
+      "}",
+
+      "class X {" +
+      "  void x() {" +
+      "    java.util.Arrays.asList(new Object[]{});" +
+      "  }" +
+      "}"
+    );
+  }
 }

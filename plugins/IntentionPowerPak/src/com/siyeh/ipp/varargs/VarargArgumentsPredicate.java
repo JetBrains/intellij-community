@@ -60,7 +60,7 @@ class VarargArgumentsPredicate implements PsiElementPredicate {
     if (!JavaGenericsUtil.isReifiableType(substitutedType)) {
       return false;
     }
-    if (arguments.length > parameters.length) {
+    if (arguments.length != parameters.length) {
       return true;
     }
     final PsiExpression lastExpression = arguments[arguments.length - 1];
