@@ -29,8 +29,6 @@ import javax.swing.tree.TreePath
 
 open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDriver(robot) {
   private val DEFAULT_FIND_PATH_ATTEMPTS: Int = 3
-  // TODO: check can we remove jTreeLocation and use local variables instead of
-  private val jTreeLocation = JTreeLocation()
 
   init {
     val resultReader = when (javaClass.name) {
@@ -77,18 +75,18 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
 
   private fun JTree.scrollToMatchingPath(path: TreePath): Pair<Boolean, Point> {
     this.makeVisible(path, false)
-    return this.scrollToPathToSelectExt(path, jTreeLocation)
+    return this.scrollToPathToSelectExt(path)
   }
 
-  private fun JTree.scrollToPathToSelectExt(path: TreePath, location: JTreeLocation): Pair<Boolean, Point> {
+  private fun JTree.scrollToPathToSelectExt(path: TreePath): Pair<Boolean, Point> {
     return GuiTestUtilKt.computeOnEdt {
       val isSelected = this.selectionCount == 1 && this.isPathSelected(path)
-      Pair.of(isSelected, this.scrollToTreePathExt(path, location))
+      Pair.of(isSelected, this.scrollToTreePathExt(path))
     }!!
   }
 
-  private fun JTree.scrollToTreePathExt(path: TreePath, location: JTreeLocation): Point {
-    val boundsAndCoordinates = location.pathBoundsAndCoordinates(this, path)
+  private fun JTree.scrollToTreePathExt(path: TreePath): Point {
+    val boundsAndCoordinates = JTreeLocation().pathBoundsAndCoordinates(this, path)
     this.scrollRectToVisible(boundsAndCoordinates.first as Rectangle)
     return boundsAndCoordinates.second!!
   }
@@ -221,7 +219,7 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
   private fun JTree.scrollToMatchingPathAndGetToggleInfo(treePath: TreePath): Triple<Boolean, Point, Int> {
     return GuiTestUtilKt.computeOnEdt {
       ComponentPreconditions.checkEnabledAndShowing(this)
-      val point = scrollToTreePathExt(treePath, jTreeLocation)
+      val point = scrollToTreePathExt(treePath)
       Triple.of(isExpanded(treePath), point, toggleClickCount)
     }!!
   }
