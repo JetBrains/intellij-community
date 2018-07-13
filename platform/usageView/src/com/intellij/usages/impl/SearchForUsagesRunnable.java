@@ -295,8 +295,9 @@ class SearchForUsagesRunnable implements Runnable {
     int usageCount = myUsageCountWithoutDefinition.get();
     if (usageCount >= 2 || usageCount == 1 && myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
       usageView = myUsageViewManager.createUsageView(mySearchFor, Usage.EMPTY_ARRAY, myPresentation, mySearcherFactory);
-      usageView.associateProgress(indicator);
       if (myUsageViewRef.compareAndSet(null, usageView)) {
+        // associate progress only if created successfully, otherwise Dispose will cancel the actual progress, see IDEA-195542
+        usageView.associateProgress(indicator);
         if (myProcessPresentation.isShowFindOptionsPrompt()) {
           openView(usageView);
         }
