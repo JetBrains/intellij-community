@@ -1,6 +1,7 @@
   // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.fixtures.extended
 
+import com.intellij.openapi.externalSystem.service.execution.NotSupportedException
 import com.intellij.testGuiFramework.driver.ExtendedJTreeDriver
 import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
 import com.intellij.testGuiFramework.driver.FinderPredicate
@@ -82,14 +83,14 @@ open class ExtendedJTreePathFixture(
     }
   }
 
-  fun clickPath(mouseClickInfo: MouseClickInfo): Unit = myDriver.clickPath(tree, path, mouseClickInfo)
+  fun clickPath(mouseClickInfo: MouseClickInfo): Unit =
+    myDriver.clickPath(tree, path, mouseClickInfo.button(), mouseClickInfo.times())
 
-  fun clickPath(button: MouseButton = MouseButton.LEFT_BUTTON, times: Int = 1): Unit =
-    myDriver.clickPath(tree, path, button, times)
+  fun clickPath(): Unit = myDriver.clickPath(tree, path, MouseButton.LEFT_BUTTON, 1)
 
-  fun doubleClickPath(): Unit = myDriver.doubleClickPath(tree, path)
+  fun doubleClickPath(): Unit = myDriver.clickPath(tree, path, MouseButton.LEFT_BUTTON, 2)
 
-  fun rightClickPath(): Unit = myDriver.rightClickPath(tree, path)
+  fun rightClickPath(): Unit = myDriver.clickPath(tree, path, MouseButton.RIGHT_BUTTON, 1)
 
   fun expandPath() {
     myDriver.expandPath(tree, path)
@@ -121,7 +122,6 @@ open class ExtendedJTreePathFixture(
 
   fun selectPath(): Unit = myDriver.selectPath(tree, path)
 
-  //  fun scrollToPath(): Point = myDriver.scrollToPath(tree, path)
   fun openPopupMenu(): JPopupMenu = myDriver.showPopupMenu(tree, path)
 
   fun drag(): Unit = myDriver.drag(tree, path)
@@ -129,4 +129,53 @@ open class ExtendedJTreePathFixture(
   fun drop(): Unit = myDriver.drop(tree, path)
 
   fun getPathStrings(): List<String> = path.path.map { it.toString() }
+
+  ////////////////////////////////////////////////////////////////
+  // Overridden functions
+  override fun clickPath(path: String): ExtendedJTreePathFixture {
+    val tree = this.path(path)
+    tree.clickPath()
+    return tree
+  }
+
+  override fun clickPath(path: String, mouseClickInfo: MouseClickInfo): JTreeFixture {
+    val tree = this.path(path)
+    tree.clickPath(mouseClickInfo)
+    return tree
+  }
+
+  override fun clickPath(path: String, button: MouseButton): ExtendedJTreePathFixture {
+    val tree = this.path(path)
+    when(button){
+      MouseButton.LEFT_BUTTON -> tree.clickPath()
+      MouseButton.MIDDLE_BUTTON -> throw NotSupportedException("Middle mouse click not supported")
+      MouseButton.RIGHT_BUTTON -> tree.rightClickPath()
+    }
+    return tree
+  }
+
+  override fun doubleClickPath(path: String): ExtendedJTreePathFixture {
+    val tree = this.path(path)
+    tree.doubleClickPath()
+    return tree
+  }
+
+  override fun rightClickPath(path: String): ExtendedJTreePathFixture {
+    val tree = this.path(path)
+    tree.rightClickPath()
+    return tree
+  }
+
+  override fun expandPath(path: String): ExtendedJTreePathFixture {
+    val tree = this.path(path)
+    tree.expandPath()
+    return tree
+  }
+
+  override fun collapsePath(path: String): ExtendedJTreePathFixture {
+    val tree = this.path(path)
+    tree.collapsePath()
+    return tree
+  }
+
 }

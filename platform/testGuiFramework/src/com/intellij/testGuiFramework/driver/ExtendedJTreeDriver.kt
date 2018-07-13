@@ -39,9 +39,6 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
     this.replaceCellReader(resultReader)
   }
 
-  fun clickPath(tree: JTree, treePath: TreePath, mouseClickInfo: MouseClickInfo): Unit =
-    clickPath(tree, treePath, mouseClickInfo.button(), mouseClickInfo.times())
-
   fun clickPath(tree: JTree,
                 treePath: TreePath,
                 button: MouseButton = MouseButton.LEFT_BUTTON,
@@ -56,16 +53,6 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
                                      "attempts due to it high mutability. Maybe this path is loading async.")
       clickPath(tree, treePath, button, times, attempts - 1)
     }
-  }
-
-  fun doubleClickPath(tree: JTree, treePath: TreePath) {
-    val p = tree.scrollToPath(treePath)
-    tree.doubleClick(p)
-  }
-
-  fun rightClickPath(tree: JTree, treePath: TreePath) {
-    val p = tree.scrollToPath(treePath)
-    tree.rightClick(p)
   }
 
   fun JTree.scrollToPath(path: TreePath): Point {
@@ -115,7 +102,6 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
 
   private fun JTree.expandTreePath(path: TreePath) {
     GuiTestUtilKt.runOnEdt {
-//      val realPath = addRootIfInvisible(path)
       if (!isExpanded(path)) expandPath(path)
     }
   }
@@ -154,14 +140,6 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
       val lastPathComponent = path.lastPathComponent
       model.getChildCount(lastPathComponent)
     }!!
-  }
-
-  private fun JTree.doubleClick(p: Point) {
-    robot.click(this, p, MouseButton.LEFT_BUTTON, 2)
-  }
-
-  private fun JTree.rightClick(p: Point) {
-    robot.click(this, p, MouseButton.RIGHT_BUTTON, 1)
   }
 
   fun expandPath(tree: JTree, treePath: TreePath) {
