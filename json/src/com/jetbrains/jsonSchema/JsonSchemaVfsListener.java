@@ -95,7 +95,7 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
     }
 
     protected void onFileChange(@NotNull final VirtualFile schemaFile) {
-      if (JsonFileType.INSTANCE.equals(schemaFile.getFileType())) {
+      if (JsonFileType.DEFAULT_EXTENSION.equals(schemaFile.getExtension())) {
         myDirtySchemas.add(schemaFile);
         myUpdater.queue(myRunnable);
       }
