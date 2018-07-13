@@ -41,9 +41,9 @@ internal fun getFixture(element: PyNamedParameter, typeEvalContext: TypeEvalCont
 fun PyNamedParameter.isFixture(typeEvalContext: TypeEvalContext) = getFixture(this, typeEvalContext) != null
 
 /**
- * @return Boolean is function decorated as fixture
+ * @return Boolean is function decorated as fixture or marked so by EP
  */
-internal fun PyFunction.isFixture() = decoratorList?.findDecorator(decoratorName) != null
+internal fun PyFunction.isFixture() = decoratorList?.findDecorator(decoratorName) != null || isCustomFixture()
 
 
 /**
@@ -92,7 +92,7 @@ private val pyTestName = PyTestFrameworkService.getSdkReadableNameByFramework(Py
 internal fun getFixtures(module: Module, forWhat: PyFunction, typeEvalContext: TypeEvalContext): List<PyTestFixture> {
   // Fixtures could be used only by test functions or other fixtures.
   val fixture = forWhat.isFixture()
-  val pyTestEnabled = TestRunnerService.getInstance(module).projectConfiguration == pyTestName
+  val pyTestEnabled = isPyTestEnabled(module)
   return if (
     fixture ||
     (pyTestEnabled && isTestElement(forWhat, ThreeState.NO, typeEvalContext)) ||
@@ -106,5 +106,8 @@ internal fun getFixtures(module: Module, forWhat: PyFunction, typeEvalContext: T
   }
   else emptyList()
 }
+
+internal fun isPyTestEnabled(module: Module) =
+  TestRunnerService.getInstance(module).projectConfiguration == pyTestName
 
 
