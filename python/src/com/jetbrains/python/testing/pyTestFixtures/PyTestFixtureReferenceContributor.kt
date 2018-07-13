@@ -13,7 +13,7 @@ import com.jetbrains.python.psi.types.PyType
 import com.jetbrains.python.psi.types.PyTypeProviderBase
 import com.jetbrains.python.psi.types.TypeEvalContext
 
-private class PyTextFixtureReference(namedParameter: PyNamedParameter, fixture: PyTestFixture) : BaseReference(namedParameter) {
+class PyTextFixtureReference(namedParameter: PyNamedParameter, fixture: PyTestFixture) : BaseReference(namedParameter) {
   private val functionRef = SmartPointerManager.createPointer(fixture.function)
   private val resolveRef = SmartPointerManager.createPointer(fixture.resolveTarget)
 
