@@ -58,14 +58,14 @@ final class SearchRequestCollectorImpl implements SearchRequestCollector {
   @Override
   public <T> void searchSubQuery(@NotNull Query<T> subQuery, @NotNull Preprocessor<SymbolReference, T> preprocessor) {
     synchronized (lock) {
-      if (subQuery instanceof SymbolReferenceSearchQuery) {
+      if (subQuery instanceof SymbolReferenceQuery) {
         // unwrap subQuery into current session
-        SymbolReferenceSearchQuery referenceSearchQuery = (SymbolReferenceSearchQuery)subQuery;
+        SymbolReferenceQuery symbolReferenceQuery = (SymbolReferenceQuery)subQuery;
         // T is SymbolReference, but java can't infer that
         //noinspection unchecked
         Preprocessor<SymbolReference, SymbolReference> referencePreprocessor = (Preprocessor<SymbolReference, SymbolReference>)preprocessor;
-        searchSubQuery(referenceSearchQuery.getBaseQuery(), referencePreprocessor);
-        searchParams(referenceSearchQuery.getParameters(), referencePreprocessor);
+        searchSubQuery(symbolReferenceQuery.getBaseQuery(), referencePreprocessor);
+        searchParams(symbolReferenceQuery.getParameters(), referencePreprocessor);
       }
       else {
         myQueryRequests.add(new SearchQueryRequest<>(subQuery, Preprocessor.andThen(myPreprocessor, preprocessor)));
