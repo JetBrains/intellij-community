@@ -1101,6 +1101,12 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       Usage[] usagesArray = usages.toArray(Usage.EMPTY_ARRAY);
       UsageViewManager.getInstance(myProject).showUsages(targetsArray, usagesArray, presentation);
     }
+
+    @Override
+    public void update(AnActionEvent e) {
+      Boolean enabled = mySelectedTab.getContributor().map(contributor -> contributor.showInFindResults()).orElse(true);
+      e.getPresentation().setEnabled(enabled);
+    }
   }
 
   private class ShowFilterAction extends ToggleAction implements DumbAware {
