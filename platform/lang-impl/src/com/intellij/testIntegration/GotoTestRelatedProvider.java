@@ -50,7 +50,7 @@ public class GotoTestRelatedProvider extends GotoRelatedProvider {
     if (!result.isEmpty()) {
       final List<GotoRelatedItem> items = new ArrayList<>();
       for (PsiElement element : result) {
-        items.add(new GotoRelatedItem(element, isTest ? "Tests" : "Testee classes"));
+        items.add(new GotoRelatedItem(element, isTest ? "Tested classes" : "Tests"));
       }
       return items;
     }
