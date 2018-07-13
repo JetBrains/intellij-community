@@ -910,7 +910,7 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
    * this policy does not handle KeyEvent.VK_ESCAPE, so it can delegate the handling
    * to a ThreeComponentSplitter instance.
    */
-  private static void installFocusTraversalPolicy(@NotNull Container container, @NotNull FocusTraversalPolicy policy) {
+  public static void installFocusTraversalPolicy(@NotNull Container container, @NotNull FocusTraversalPolicy policy) {
     container.setFocusCycleRoot(true);
     container.setFocusTraversalPolicyProvider(true);
     container.setFocusTraversalPolicy(policy);
