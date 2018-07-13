@@ -6,7 +6,10 @@ import org.jetbrains.plugins.github.api.GithubApiRequest.Get
 import org.jetbrains.plugins.github.api.GithubApiRequest.Post
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
 import org.jetbrains.plugins.github.api.data.GithubAuthorization
+import org.jetbrains.plugins.github.api.data.GithubRepo
 import org.jetbrains.plugins.github.api.requests.GithubAuthorizationCreateRequest
+import org.jetbrains.plugins.github.api.requests.GithubRequestPagination
+import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import java.awt.Image
 
 /**
@@ -29,6 +32,34 @@ object GithubApiRequests {
         })
       }
     }.withOperationName("get profile avatar")
+
+    object Repos : Entity("/repos") {
+      @JvmOverloads
+      @JvmStatic
+      fun pages(server: GithubServerPath, allAssociated: Boolean = true) = GithubApiPagesLoader.Request(get(server, allAssociated), ::get)
+
+      @JvmOverloads
+      @JvmStatic
+      fun get(server: GithubServerPath, allAssociated: Boolean = true, pagination: GithubRequestPagination? = null) =
+        get(getUrl(server, CurrentUser.urlSuffix, urlSuffix,
+                   getQuery(if (allAssociated) "" else "type=owner", pagination?.toString().orEmpty())))
+
+      @JvmStatic
+      fun get(url: String) = Get.jsonPage<GithubRepo>(url).withOperationName("get user repositories")
+    }
+
+    object RepoSubs : Entity("/subscriptions") {
+      @JvmStatic
+      fun pages(server: GithubServerPath) = GithubApiPagesLoader.Request(get(server), ::get)
+
+      @JvmOverloads
+      @JvmStatic
+      fun get(server: GithubServerPath, pagination: GithubRequestPagination? = null) =
+        get(getUrl(server, CurrentUser.urlSuffix, urlSuffix, getQuery(pagination?.toString().orEmpty())))
+
+      @JvmStatic
+      fun get(url: String) = Get.jsonPage<GithubRepo>(url).withOperationName("get repository subscriptions")
+    }
   }
 
   object Auth : Entity("/authorizations") {
@@ -45,4 +76,17 @@ object GithubApiRequests {
   abstract class Entity(val urlSuffix: String)
 
   private fun getUrl(server: GithubServerPath, suffix: String) = server.toApiUrl() + suffix
+
+  private fun getUrl(server: GithubServerPath, vararg suffixes: String) = StringBuilder(server.toApiUrl()).append(*suffixes).toString()
+
+  private fun getQuery(vararg queryParts: String): String {
+    val builder = StringBuilder()
+    for (part in queryParts) {
+      if (part.isEmpty()) continue
+      if (builder.isEmpty()) builder.append("?")
+      else builder.append("&")
+      builder.append(part)
+    }
+    return builder.toString()
+  }
 }

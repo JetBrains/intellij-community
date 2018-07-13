@@ -107,16 +107,6 @@ class GithubAuthenticationManager internal constructor(private val accountManage
     return true
   }
 
-  @CalledInAwt
-  fun ensureHasAccountsWithTokens(project: Project): Boolean {
-    if (!ensureHasAccounts(project)) return false
-    var atLeastOneHasToken = false
-    for (account in getAccounts()) {
-      atLeastOneHasToken = getOrRequestTokenForAccount(account, project) != null
-    }
-    return atLeastOneHasToken
-  }
-
   fun getSingleOrDefaultAccount(project: Project): GithubAccount? {
     project.service<GithubProjectDefaultAccountHolder>().account?.let { return it }
     val accounts = accountManager.accounts
