@@ -176,7 +176,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       JsonObjectValueAdapter object = propertyAdapter.getParentObject();
       if (object == null) return;
 
-      JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker();
+      JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(JsonComplianceCheckerOptions.RELAX_ENUM_CHECK);
       checker.checkByScheme(object, schema.getIf());
       if (checker.isCorrect()) {
         JsonSchemaObject then = schema.getThen();

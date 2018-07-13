@@ -27,24 +27,28 @@ public class JsonSchemaComplianceChecker {
   @NotNull private final ProblemsHolder myHolder;
   @NotNull private final JsonLikePsiWalker myWalker;
   private final LocalInspectionToolSession mySession;
+  @NotNull private final JsonComplianceCheckerOptions myOptions;
   @Nullable private final String myMessagePrefix;
 
   public JsonSchemaComplianceChecker(@NotNull JsonSchemaObject rootSchema,
                                      @NotNull ProblemsHolder holder,
                                      @NotNull JsonLikePsiWalker walker,
-                                     @NotNull LocalInspectionToolSession session) {
-    this(rootSchema, holder, walker, session, null);
+                                     @NotNull LocalInspectionToolSession session,
+                                     @NotNull JsonComplianceCheckerOptions options) {
+    this(rootSchema, holder, walker, session, options, null);
   }
 
   public JsonSchemaComplianceChecker(@NotNull JsonSchemaObject rootSchema,
                                      @NotNull ProblemsHolder holder,
                                      @NotNull JsonLikePsiWalker walker,
                                      @NotNull LocalInspectionToolSession session,
+                                     @NotNull JsonComplianceCheckerOptions options,
                                      @Nullable String messagePrefix) {
     myRootSchema = rootSchema;
     myHolder = holder;
     myWalker = walker;
     mySession = session;
+    myOptions = options;
     myMessagePrefix = messagePrefix;
   }
 
@@ -54,7 +58,7 @@ public class JsonSchemaComplianceChecker {
       final List<JsonSchemaVariantsTreeBuilder.Step> position = myWalker.findPosition(firstProp.getDelegate(), true);
       if (position == null || position.isEmpty()) return;
       final MatchResult result = new JsonSchemaResolver(myRootSchema, false, position).detailedResolve();
-      createWarnings(JsonSchemaAnnotatorChecker.checkByMatchResult(firstProp.getValue(), result));
+      createWarnings(JsonSchemaAnnotatorChecker.checkByMatchResult(firstProp.getValue(), result, myOptions));
     }
     checkRoot(element, firstProp);
   }
@@ -71,7 +75,7 @@ public class JsonSchemaComplianceChecker {
     }
     if (rootToCheck != null) {
       final MatchResult matchResult = new JsonSchemaResolver(myRootSchema).detailedResolve();
-      createWarnings(JsonSchemaAnnotatorChecker.checkByMatchResult(rootToCheck, matchResult));
+      createWarnings(JsonSchemaAnnotatorChecker.checkByMatchResult(rootToCheck, matchResult, myOptions));
     }
   }
 
