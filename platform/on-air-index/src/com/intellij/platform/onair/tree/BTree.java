@@ -118,14 +118,18 @@ public class BTree implements Tree {
     byte type = bytes[metadataOffset];
     int size = bytes[metadataOffset + 1] & 0xff; // 0..255
     final BasePage result;
-    if (!isNovelty) {
-      storage.prefetch(address, bytes, this, size, type);
-    }
     switch (type) {
       case BOTTOM:
-        result = new BottomPage(bytes, this, address, size);
+        final int mask = (int)(ByteUtils.readUnsignedInt(bytes, metadataOffset + 2) ^ 0x80000000);
+        if (!isNovelty) {
+          storage.prefetch(address, bytes, this, size, type, mask);
+        }
+        result = new BottomPage(bytes, this, address, size, mask);
         break;
       case INTERNAL:
+        if (!isNovelty) {
+          storage.prefetch(address, bytes, this, size, type, 0);
+        }
         result = new InternalPage(bytes, this, address, size);
         break;
       default:
@@ -144,9 +148,10 @@ public class BTree implements Tree {
 
   public static BTree create(@NotNull Novelty novelty, @NotNull Storage storage, int keySize) {
     final int metadataOffset = (keySize + BYTES_PER_ADDRESS) * DEFAULT_BASE;
-    final byte[] bytes = new byte[metadataOffset + 2];
+    final byte[] bytes = new byte[metadataOffset + 6]; // byte type, byte size, int inline value mask
     bytes[metadataOffset] = BOTTOM;
     bytes[metadataOffset + 1] = 0;
+    bytes[metadataOffset + 2] = -128; // set mask to signed int = 0
     return new BTree(storage, keySize, new Address(novelty.alloc(bytes)));
   }
 

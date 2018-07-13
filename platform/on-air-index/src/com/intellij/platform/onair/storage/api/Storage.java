@@ -12,5 +12,5 @@ public interface Storage extends StorageConsumer {
   @NotNull
   Address alloc(@NotNull byte[] what);
 
-  void prefetch(@NotNull Address address, @NotNull byte[] bytes, @NotNull BTree tree, int size, byte type);
+  void prefetch(@NotNull Address address, @NotNull byte[] bytes, @NotNull BTree tree, int size, byte type, int mask);
 }

@@ -14,7 +14,7 @@ public class AirTreeTest extends AirTreeTestBase {
     int total = 1000;
     BTree tree = createTree();
 
-    for (int i = 0; i < total; i++) {
+    for (int i = 0; i < total - 10; i++) {
       if (i == 42) {
         tree.dump(novelty, System.out, ValueDumper.INSTANCE);
 
@@ -27,6 +27,11 @@ public class AirTreeTest extends AirTreeTestBase {
       }
 
       Assert.assertTrue(tree.put(novelty, key(i), v(i)));
+    }
+
+    // insert in non-linear order
+    for (int i = 0; i < 10; i++) {
+      Assert.assertTrue(tree.put(novelty, key(total - i - 1), v(total - i - 1)));
     }
 
     // tree.dump(novelty, System.out, ValueDumper.INSTANCE);

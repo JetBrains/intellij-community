@@ -4,7 +4,10 @@ package com.intellij.platform.onair.storage;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.platform.onair.storage.api.*;
+import com.intellij.platform.onair.storage.api.Address;
+import com.intellij.platform.onair.storage.api.Novelty;
+import com.intellij.platform.onair.storage.api.Storage;
+import com.intellij.platform.onair.storage.api.StorageConsumer;
 import com.intellij.platform.onair.storage.cache.ConcurrentObjectCache;
 import com.intellij.platform.onair.tree.BTree;
 import net.spy.memcached.BinaryConnectionFactory;
@@ -130,14 +133,16 @@ public class StorageImpl implements Storage {
   }
 
   @Override
-  public void prefetch(@NotNull Address prefetchAddress, @NotNull byte[] bytes, @NotNull BTree tree, int size, byte type) {
+  public void prefetch(@NotNull Address prefetchAddress, @NotNull byte[] bytes, @NotNull BTree tree, int size, byte type, int mask) {
     if (prefetchInProgress.get() > 70) {
       System.out.println("too many pre-fetches, cool down");
       return;
     }
 
-    if (type == BTree.INTERNAL && myLocalCache.get(prefetchAddress) != null) {
-      return;
+    if (type == BTree.BOTTOM) {
+      if (mask == ~(0xFFFFFFFF << size)) { // all bits set to 1
+        return;
+      }
     }
 
     if (preFetches.putIfAbsent(prefetchAddress, bytes) != null) {
@@ -149,13 +154,15 @@ public class StorageImpl implements Storage {
     final List<Address> addressValues = new ArrayList<>(size);
 
     for (int i = 0; i < size; i++) {
-      final int offset = (bytesPerKey + BYTES_PER_ADDRESS) * i + bytesPerKey;
-      final long lowBytes = readUnsignedLong(bytes, offset, 8);
-      final long highBytes = readUnsignedLong(bytes, offset + 8, 8);
-      Address address = new Address(highBytes, lowBytes);
-      if (myLocalCache.get(address) == null) { // don't prefetch already cached stuff
-        addresses.add(address.toString());
-        addressValues.add(address);
+      if ((mask & (1L << i)) == 0) {
+        final int offset = (bytesPerKey + BYTES_PER_ADDRESS) * i + bytesPerKey;
+        final long lowBytes = readUnsignedLong(bytes, offset, 8);
+        final long highBytes = readUnsignedLong(bytes, offset + 8, 8);
+        Address address = new Address(highBytes, lowBytes);
+        if (myLocalCache.get(address) == null) { // don't prefetch already cached stuff
+          addresses.add(address.toString());
+          addressValues.add(address);
+        }
       }
     }
     if (addresses.isEmpty()) {

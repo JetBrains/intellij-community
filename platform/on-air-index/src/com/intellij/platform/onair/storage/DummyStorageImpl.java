@@ -29,6 +29,6 @@ public class DummyStorageImpl implements Storage {
   }
 
   @Override
-  public void prefetch(@NotNull Address address, @NotNull byte[] bytes, @NotNull BTree tree, int size, byte type) {
+  public void prefetch(@NotNull Address address, @NotNull byte[] bytes, @NotNull BTree tree, int size, byte type, int mask) {
   }
 }
