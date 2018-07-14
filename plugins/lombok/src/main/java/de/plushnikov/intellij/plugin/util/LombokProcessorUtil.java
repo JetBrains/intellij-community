@@ -54,7 +54,6 @@ public class LombokProcessorUtil {
     return null != getLevelVisibility(psiAnnotation);
   }
 
-  @NotNull
   public static Collection<String> getOnX(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameterName) {
     PsiAnnotationMemberValue onXValue = psiAnnotation.findAttributeValue(parameterName);
     if (!(onXValue instanceof PsiAnnotation)) {

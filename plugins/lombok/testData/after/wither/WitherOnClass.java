@@ -59,7 +59,6 @@ class WitherOnClass3 {
 	}
 }
 
-@lombok.experimental.Accessors(prefix = "f")
 class WitherOnClass4 {
 	final int fX = 10;
 	final int fY;

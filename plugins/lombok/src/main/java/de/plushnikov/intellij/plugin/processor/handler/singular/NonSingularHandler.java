@@ -34,14 +34,19 @@ class NonSingularHandler implements BuilderElementHandler {
 
   @Override
   public Collection<PsiMethod> renderBuilderMethod(@NotNull BuilderInfo info) {
-    return Collections.singleton(
-      new LombokLightMethodBuilder(info.getManager(), createSetterName(info.getFieldName(), info.isFluentBuilder()))
-        .withContainingClass(info.getBuilderClass())
-        .withMethodReturnType(info.isChainBuilder() ? info.getBuilderType() : PsiType.VOID)
-        .withParameter(info.getFieldName(), info.getFieldType())
-        .withNavigationElement(info.getVariable())
-        .withModifier(PsiModifier.PUBLIC)
-        .withBody(createCodeBlock(info.getBuilderClass(), info.isFluentBuilder(), info.getFieldName())));
+    return Collections.singleton(new LombokLightMethodBuilder(info.getManager(), createSetterName(info.getFieldName(), info.isFluentBuilder()))
+      .withContainingClass(info.getBuilderClass())
+      .withMethodReturnType(info.isChainBuilder() ? info.getBuilderType() : PsiType.VOID)
+      .withParameter(info.getFieldName(), info.getFieldType())
+      .withNavigationElement(info.getVariable())
+      .withModifier(PsiModifier.PUBLIC)
+      .withAnnotations(info.getAnnotations())
+      .withBody(createCodeBlock(info.getBuilderClass(), info.isFluentBuilder(), info.getFieldName())));
+  }
+
+  @NotNull
+  private String createSetterName(@NotNull String fieldName, boolean isFluent) {
+    return isFluent ? fieldName : SETTER_PREFIX + StringUtil.capitalize(fieldName);
   }
 
   @NotNull
@@ -53,11 +58,6 @@ class NonSingularHandler implements BuilderElementHandler {
   @Override
   public String createSingularName(PsiAnnotation singularAnnotation, String psiFieldName) {
     return psiFieldName;
-  }
-
-  @NotNull
-  private String createSetterName(@NotNull String fieldName, boolean isFluent) {
-    return isFluent ? fieldName : SETTER_PREFIX + StringUtil.capitalize(fieldName);
   }
 
   private String getAllMethodBody(@NotNull String psiFieldName, boolean fluentBuilder) {

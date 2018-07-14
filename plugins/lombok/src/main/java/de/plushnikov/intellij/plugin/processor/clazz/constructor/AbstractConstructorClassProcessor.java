@@ -283,10 +283,9 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       String constructorPropertiesAnnotation = "java.beans.ConstructorProperties( {" +
         fieldNames.stream().collect(Collectors.joining("\", \"", "\"", "\"")) +
         "} ) ";
-      modifierList.addAnnotation(constructorPropertiesAnnotation);
+      constructor.withAnnotation(constructorPropertiesAnnotation);
     }
-
-    addOnXAnnotations(psiAnnotation, modifierList, "onConstructor");
+    constructor.withAnnotations(LombokProcessorUtil.getOnX(psiAnnotation, "onConstructor"));
 
     if (!useJavaDefaults) {
       final Iterator<String> fieldNameIterator = fieldNames.iterator();

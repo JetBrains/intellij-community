@@ -2,7 +2,6 @@
 
 import java.util.List;
 
-@lombok.experimental.Accessors(prefix = "m")
 class BuilderWithToBuilder<T> {
 	private String mOne;
 	private String mTwo;
@@ -128,12 +127,10 @@ class BuilderWithToBuilder<T> {
 	}
 }
 
-@lombok.experimental.Accessors(prefix = "m")
 class ConstructorWithToBuilder<T> {
 	private String mOne;
 	private String mTwo;
 	private T foo;
-	@lombok.Singular
 	private List<T> bars;
 
 	public ConstructorWithToBuilder(String mOne, T bar) {
@@ -196,13 +193,11 @@ class ConstructorWithToBuilder<T> {
 	}
 }
 
-@lombok.experimental.Accessors(prefix = "m")
 class StaticWithToBuilder<T, K> {
 	private String mOne;
 	private String mTwo;
 	private T foo;
 	private K bar;
-	@lombok.Singular
 	private List<T> bars;
 
 	public static <Z> StaticWithToBuilder<Z, String> test(String mOne, Z bar) {

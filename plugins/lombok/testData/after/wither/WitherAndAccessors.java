@@ -4,7 +4,6 @@ class WitherAndAccessors {
 
 	int y = 20;
 
-	@lombok.experimental.Accessors(fluent=true)
 	final int z;
 
 	@java.beans.ConstructorProperties({"y", "z"})

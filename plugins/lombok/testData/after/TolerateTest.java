@@ -5,7 +5,6 @@ import java.util.regex.Pattern;
 class Tolerate {
 	private Pattern pattern;
 
-	@lombok.experimental.Tolerate
 	public void setPattern(String pattern) {
 		setPattern(Pattern.compile(pattern));
 	}
@@ -26,7 +25,6 @@ class Tolerate {
 class Tolerate2 {
 	private final Pattern pattern;
 
-	@lombok.experimental.Tolerate
 	public Tolerate2 withPattern(String pattern) {
 		return withPattern(Pattern.compile(pattern));
 	}

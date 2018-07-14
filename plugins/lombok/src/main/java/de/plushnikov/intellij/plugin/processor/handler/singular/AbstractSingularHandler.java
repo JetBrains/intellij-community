@@ -62,7 +62,8 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
       .withContainingClass(builderClass)
       .withMethodReturnType(returnType)
       .withNavigationElement(info.getVariable())
-      .withModifier(PsiModifier.PUBLIC);
+      .withModifier(PsiModifier.PUBLIC)
+      .withAnnotations(info.getAnnotations());
 
     addOneMethodParameter(oneAddMethod, info.getFieldType(), singularName);
     oneAddMethod.withBody(createOneAddMethodCodeBlock(builderClass, info.isFluentBuilder(), singularName, info.getFieldName(), info.getFieldType()));
@@ -72,7 +73,8 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
       .withContainingClass(builderClass)
       .withMethodReturnType(returnType)
       .withNavigationElement(info.getVariable())
-      .withModifier(PsiModifier.PUBLIC);
+      .withModifier(PsiModifier.PUBLIC)
+      .withAnnotations(info.getAnnotations());
 
     addAllMethodParameter(allAddMethod, info.getFieldType(), info.getFieldName());
     allAddMethod.withBody(createAllAddMethodCodeBlock(builderClass, info.isFluentBuilder(), info.getFieldName(), info.getFieldType()));
@@ -83,6 +85,7 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
       .withMethodReturnType(returnType)
       .withNavigationElement(info.getVariable())
       .withModifier(PsiModifier.PUBLIC)
+      .withAnnotations(info.getAnnotations())
       .withBody(createClearMethodCodeBlock(builderClass, info.isFluentBuilder(), info.getFieldName()));
 
     methods.add(clearMethod);

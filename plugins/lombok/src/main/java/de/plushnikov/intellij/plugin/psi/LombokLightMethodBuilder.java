@@ -14,6 +14,7 @@ import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiType;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Objects;
 
 /**
@@ -109,6 +111,17 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
 
   public LombokLightMethodBuilder withBody(@NotNull PsiCodeBlock codeBlock) {
     myBodyCodeBlock = codeBlock;
+    return this;
+  }
+
+  public LombokLightMethodBuilder withAnnotation(@NotNull String annotation) {
+    getModifierList().addAnnotation(annotation);
+    return this;
+  }
+
+  public LombokLightMethodBuilder withAnnotations(Collection<String> annotations) {
+    final PsiModifierList modifierList = getModifierList();
+    annotations.forEach(modifierList::addAnnotation);
     return this;
   }
 

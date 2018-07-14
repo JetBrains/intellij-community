@@ -2,12 +2,16 @@ package de.plushnikov.intellij.plugin.processor;
 
 import de.plushnikov.intellij.plugin.AbstractLombokParsingTestCase;
 
-import java.io.IOException;
-
 /**
  * Unit tests for IntelliJPlugin for Lombok, based on lombok test classes
  */
 public class BuilderTest extends AbstractLombokParsingTestCase {
+
+  @Override
+  protected String annotationToComparePattern() {
+    return "java.lang.Deprecated";
+  }
+
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -16,102 +20,112 @@ public class BuilderTest extends AbstractLombokParsingTestCase {
   }
 
   // This test is lombok's homepage example.
-  public void testBuilder$BuilderExample() throws IOException {
+  public void testBuilder$BuilderExample() {
     doTest(true);
   }
 
   // This test is lombok's homepage customized example.
-  public void testBuilder$BuilderExampleCustomized() throws IOException {
+  public void testBuilder$BuilderExampleCustomized() {
     doTest(true);
   }
 
-  public void testBuilder$BuilderSimple() throws IOException {
+  public void testBuilder$BuilderSimple() {
     doTest(true);
   }
 
-  public void testBuilder$BuilderComplex() throws IOException {
+  public void testBuilder$BuilderComplex() {
     doTest(true);
   }
 
-  public void testBuilder$BuilderChainAndFluent() throws IOException {
+  public void testBuilder$BuilderChainAndFluent() {
     doTest(true);
   }
 
-  public void testBuilder$BuilderWithAccessors() throws IOException {
+  public void testBuilder$BuilderWithAccessors() {
     doTest(true);
   }
 
-  public void testBuilder$BuilderWithFieldAccessors() throws IOException {
+  public void testBuilder$BuilderWithFieldAccessors() {
     doTest(true);
   }
 
   // This test is lombok's homepage example with predefined elements and another inner class.
-  public void testBuilder$BuilderPredefined() throws IOException {
+  public void testBuilder$BuilderPredefined() {
     doTest(true);
   }
 
-  public void testBuilder$BuilderWithExistingBuilderClass() throws IOException {
+  public void testBuilder$BuilderWithExistingBuilderClass() {
     doTest(true);
   }
 
-  public void testBuilder$BuilderConstructorException() throws IOException {
+  public void testBuilder$BuilderConstructorException() {
     doTest(true);
   }
 
-  public void testBuilder$BuilderAndAllArgsConstructor() throws IOException {
+  public void testBuilder$BuilderAndAllArgsConstructor() {
     doTest(true);
   }
 
-  public void testBuilder$BuilderMethodException() throws IOException {
+  public void testBuilder$BuilderMethodException() {
     doTest(true);
   }
 
-  public void testBuilder$BuilderValueData() throws IOException {
+  public void testBuilder$BuilderValueData() {
     doTest(true);
   }
 
-  public void testBuilder$BuilderSingularGuavaListsSets() throws IOException {
+  public void testBuilder$BuilderSingularGuavaListsSets() {
     doTest(true);
   }
 
-  public void testBuilder$BuilderSingularGuavaMaps() throws IOException {
+  public void testBuilder$BuilderSingularGuavaMaps() {
     doTest(true);
   }
 
-  public void testBuilder$BuilderSingularSets() throws IOException {
+  public void testBuilder$BuilderSingularSets() {
     doTest(true);
   }
 
-  public void testBuilder$BuilderSingularLists() throws IOException {
+  public void testBuilder$BuilderSingularLists() {
     doTest(true);
   }
 
-  public void testBuilder$BuilderSingularMaps() throws IOException {
+  public void testBuilder$BuilderSingularMaps() {
     doTest(true);
   }
 
   // ignored because of disabled auto singularization
-  public void ignore_testBuilder$BuilderSingularNoAuto() throws IOException {
+  public void ignore_testBuilder$BuilderSingularNoAuto() {
     doTest(true);
   }
 
   // ignored because of disabled guava redirection
-  public void ignore_testBuilder$BuilderSingularRedirectToGuava() throws IOException {
+  public void ignore_testBuilder$BuilderSingularRedirectToGuava() {
     doTest(true);
   }
 
-  public void testBuilder$BuilderInstanceMethod() throws IOException {
+  public void testBuilder$BuilderInstanceMethod() {
     doTest(true);
   }
 
-  public void testBuilder$BuilderSingularWithPrefixes() throws IOException {
-    doTest(true);
-  }
-  public void testBuilder$BuilderGenerics() throws IOException {
+  public void testBuilder$BuilderSingularWithPrefixes() {
     doTest(true);
   }
 
-  public void testBuilder$BuilderGenericsOnConstructor() throws IOException {
+  public void testBuilder$BuilderGenerics() {
     doTest(true);
   }
+
+  public void testBuilder$BuilderGenericsOnConstructor() {
+    doTest(true);
+  }
+
+  public void testBuilder$BuilderWithDeprecatedField() {
+    doTest(true);
+  }
+
+  public void testBuilder$BuilderWithDeprecatedParam() {
+    doTest(true);
+  }
+
 }

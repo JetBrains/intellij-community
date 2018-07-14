@@ -28,6 +28,7 @@ import lombok.Singular;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Optional;
 
 public class BuilderInfo {
@@ -39,6 +40,7 @@ public class BuilderInfo {
 
   private PsiVariable variableInClass;
   private PsiType fieldInBuilderType;
+  private boolean deprecated;
 
   private PsiClass builderClass;
   private PsiType builderClassType;
@@ -63,6 +65,7 @@ public class BuilderInfo {
 
     result.variableInClass = psiParameter;
     result.fieldInBuilderType = psiParameter.getType();
+    result.deprecated = PsiAnnotationSearchUtil.isAnnotatedWith(psiParameter, Deprecated.class);
     result.fieldInitializer = null;
     result.hasBuilderDefaultAnnotation = false;
 
@@ -78,6 +81,7 @@ public class BuilderInfo {
     final BuilderInfo result = new BuilderInfo();
 
     result.variableInClass = psiField;
+    result.deprecated = psiField.isDeprecated();
     result.fieldInBuilderType = psiField.getType();
     result.fieldInitializer = psiField.getInitializer();
     result.hasBuilderDefaultAnnotation = null == PsiAnnotationSearchUtil.findAnnotation(psiField, BUILDER_DEFAULT_ANNOTATION);
@@ -171,6 +175,10 @@ public class BuilderInfo {
     return variableInClass;
   }
 
+  public boolean isDeprecated() {
+    return deprecated;
+  }
+
   public boolean isFluentBuilder() {
     return fluentBuilder;
   }
@@ -209,6 +217,13 @@ public class BuilderInfo {
 
   public boolean isViaStaticCall() {
     return viaStaticCall;
+  }
+
+  public Collection<String> getAnnotations() {
+    if (deprecated) {
+      return Collections.singleton(Deprecated.class.getName());
+    }
+    return Collections.emptyList();
   }
 
   public Collection<PsiField> renderBuilderFields() {
