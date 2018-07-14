@@ -3,12 +3,8 @@ package org.jetbrains.idea.svn
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vcs.VcsTestUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.ArrayUtil
-import com.intellij.util.ArrayUtil.newLongArray
-import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.idea.svn.SvnPropertyKeys.MERGE_INFO
 import org.jetbrains.idea.svn.SvnUtil.createUrl
 import org.jetbrains.idea.svn.SvnUtil.parseUrl
@@ -31,32 +27,12 @@ import java.io.File
 private const val CONTENT1 = "123\n456\n123"
 private const val CONTENT2 = "123\n456\n123\n4"
 
-private fun assertRevisions(changeLists: List<SvnChangeList>, vararg expectedTopRevisions: Long) {
-  val revisions = newLongArray(expectedTopRevisions.size)
-  for (i in revisions.indices) {
-    revisions[i] = changeLists[i].number
-  }
+private fun assertRevisions(changeLists: List<SvnChangeList>, vararg expectedTopRevisions: Long) =
+  assertArrayEquals(expectedTopRevisions, changeLists.take(expectedTopRevisions.size).map { it.number }.toLongArray())
 
-  assertArrayEquals(expectedTopRevisions, revisions)
-}
-
-private fun newFile(parent: File, name: String): File {
-  val f1 = File(parent, name)
-  f1.createNewFile()
-  return f1
-}
-
-private fun newFolder(parent: String, name: String): File {
-  val trunk = File(parent, name)
-  trunk.mkdir()
-  return trunk
-}
-
-private fun newFolder(parent: File, name: String): File {
-  val trunk = File(parent, name)
-  trunk.mkdir()
-  return trunk
-}
+private fun newFile(parent: File, name: String) = File(parent, name).also { it.createNewFile() }
+private fun newFolder(parent: String, name: String) = File(parent, name).also { it.mkdir() }
+private fun newFolder(parent: File, name: String) = File(parent, name).also { it.mkdir() }
 
 class SvnMergeInfoTest : SvnTestCase() {
   private lateinit var myBranchVcsRoot: File
@@ -74,7 +50,6 @@ class SvnMergeInfoTest : SvnTestCase() {
   private val trunkChangeLists: List<SvnChangeList>
     get() {
       val provider = vcs.committedChangesProvider
-
       return provider.getCommittedChanges(provider.createDefaultSettings(), SvnRepositoryLocation(parseUrl(myTrunkUrl, false)), 0)
     }
 
@@ -90,7 +65,7 @@ class SvnMergeInfoTest : SvnTestCase() {
     vcsManager.setDirectoryMapping(myBranchVcsRoot.absolutePath, SvnVcs.VCS_NAME)
 
     val vcsRoot = LocalFileSystem.getInstance().findFileByIoFile(myBranchVcsRoot)
-    val node = Node(vcsRoot!!, createUrl(myBranchUrl), createUrl(myRepoUrl))
+    val node = Node(vcsRoot!!, createUrl(myBranchUrl), myRepositoryUrl)
     val root = RootUrlInfo(node, WorkingCopyFormat.ONE_DOT_SIX, vcsRoot, null)
     val wcInfo = WCInfo(root, true, Depth.INFINITY)
     val mergeContext = MergeContext(vcs, parseUrl(myTrunkUrl, false), wcInfo, Url.tail(myTrunkUrl), vcsRoot)
@@ -101,10 +76,9 @@ class SvnMergeInfoTest : SvnTestCase() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD)
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE)
 
-    val repoUrl = createUrl(myRepoUrl, false)
     val wcInfoWithBranches = WCInfoWithBranches(wcInfo, emptyList<WCInfoWithBranches.Branch>(), vcsRoot,
-                                                WCInfoWithBranches.Branch(repoUrl.appendPath("trunk", false)))
-    myMergeChecker = BranchInfo(vcs, wcInfoWithBranches, WCInfoWithBranches.Branch(repoUrl.appendPath("branch", false)))
+                                                WCInfoWithBranches.Branch(myRepositoryUrl.appendPath("trunk", false)))
+    myMergeChecker = BranchInfo(vcs, wcInfoWithBranches, WCInfoWithBranches.Branch(myRepositoryUrl.appendPath("branch", false)))
   }
 
   @Test
@@ -152,7 +126,6 @@ class SvnMergeInfoTest : SvnTestCase() {
 
     assertMergeInfo(myBranchVcsRoot, "/trunk:3")
     assertMergeInfo(File(myBranchVcsRoot, "folder"), "")
-
     assertMergeResult(trunkChangeLists, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED)
   }
 
@@ -169,7 +142,6 @@ class SvnMergeInfoTest : SvnTestCase() {
     updateFile(myBranchVcsRoot)
 
     assertMergeInfo(myBranchVcsRoot, "/trunk:3*")
-
     assertMergeResult(trunkChangeLists, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED)
   }
 
@@ -193,10 +165,9 @@ class SvnMergeInfoTest : SvnTestCase() {
     assertMergeInfo(myBranchVcsRoot, "/trunk:3-4")
     assertMergeInfo(File(myBranchVcsRoot, "folder"), "/trunk:3")
 
-    val changeListList = trunkChangeLists
-
-    assertRevisions(changeListList, 4, 3)
-    assertMergeResult(changeListList, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED, SvnMergeInfoCache.MergeCheckResult.MERGED)
+    val changeLists = trunkChangeLists
+    assertRevisions(changeLists, 4, 3)
+    assertMergeResult(changeLists, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED, SvnMergeInfoCache.MergeCheckResult.MERGED)
   }
 
   @Test
@@ -221,7 +192,6 @@ class SvnMergeInfoTest : SvnTestCase() {
     assertMergeInfo(File(myBranchVcsRoot, "folder/folder1"), "/trunk:3*")
 
     val changeListList = trunkChangeLists
-
     assertRevisions(changeListList, 3)
     assertMergeResult(changeListList, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED)
   }
@@ -243,7 +213,6 @@ class SvnMergeInfoTest : SvnTestCase() {
     updateFile(myBranchVcsRoot)
 
     val changeListList = trunkChangeLists
-
     assertRevisions(changeListList, 3)
     assertMergeResult(changeListList[0], SvnMergeInfoCache.MergeCheckResult.MERGED)
   }
@@ -265,9 +234,7 @@ class SvnMergeInfoTest : SvnTestCase() {
     val f1info = vcs.getInfo(File(myBranchVcsRoot, "folder/f1.txt"))
     assertEquals(2, f1info!!.revision.number)
 
-    val changeListList = trunkChangeLists
-    val changeList = changeListList[0]
-
+    val changeList = trunkChangeLists[0]
     assertMergeResult(changeList, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED)
 
     // and after update
@@ -312,18 +279,14 @@ class SvnMergeInfoTest : SvnTestCase() {
   }
 
   private fun editAndCommit(trunk: File, file: VirtualFile, content: String) {
-    editFile(file, content)
+    editFileInCommand(file, content)
     commitFile(trunk)
   }
 
   private fun editFile(file: File) {
     val vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
 
-    editFile(vf!!, CONTENT1)
-  }
-
-  private fun editFile(file: VirtualFile, content: String) {
-    VcsTestUtil.editFileInCommand(myProject, file, content)
+    editFileInCommand(vf!!, CONTENT1)
   }
 
   private fun assertMergeInfo(file: File, expectedValue: String) {
@@ -336,57 +299,30 @@ class SvnMergeInfoTest : SvnTestCase() {
   private fun assertMergeResult(changeLists: List<SvnChangeList>, vararg mergeResults: SvnMergeInfoCache.MergeCheckResult) {
     myOneShotMergeInfoHelper.prepare()
 
-    for (i in mergeResults.indices) {
-      val changeList = changeLists[i]
-
-      assertMergeResult(changeList, mergeResults[i])
-      assertMergeResultOneShot(changeList, mergeResults[i])
+    for ((index, mergeResult) in mergeResults.withIndex()) {
+      assertMergeResult(changeLists[index], mergeResult)
+      assertMergeResultOneShot(changeLists[index], mergeResult)
     }
   }
 
-  private fun assertMergeResult(changeList: SvnChangeList, mergeResult: SvnMergeInfoCache.MergeCheckResult) {
+  private fun assertMergeResult(changeList: SvnChangeList, mergeResult: SvnMergeInfoCache.MergeCheckResult) =
     assertEquals(mergeResult, myMergeChecker.checkList(changeList, myBranchVcsRoot.absolutePath))
-  }
 
-  private fun assertMergeResultOneShot(changeList: SvnChangeList, mergeResult: SvnMergeInfoCache.MergeCheckResult) {
+  private fun assertMergeResultOneShot(changeList: SvnChangeList, mergeResult: SvnMergeInfoCache.MergeCheckResult) =
     assertEquals(mergeResult, myOneShotMergeInfoHelper.checkList(changeList))
-  }
 
-  private fun commitFile(file: File) {
-    runInAndVerifyIgnoreOutput("ci", "-m", "test", file.absolutePath)
-  }
-
-  private fun updateFile(file: File) {
-    runInAndVerifyIgnoreOutput("up", file.absolutePath)
-  }
-
-  private fun checkOutFile(url: String, directory: File) {
-    runInAndVerifyIgnoreOutput("co", url, directory.absolutePath)
-  }
-
-  private fun setMergeInfo(file: File, value: String) {
-    runInAndVerifyIgnoreOutput("propset", "svn:mergeinfo", value, file.absolutePath)
-  }
-
-  private fun merge(file: File, url: String, vararg revisions: String) {
-    merge(file, url, false, *revisions)
-  }
-
-  private fun recordMerge(file: File, url: String, vararg revisions: String) {
-    merge(file, url, true, *revisions)
-  }
-
+  private fun commitFile(file: File) = runInAndVerifyIgnoreOutput("ci", "-m", "test", file.absolutePath)
+  private fun updateFile(file: File) = runInAndVerifyIgnoreOutput("up", file.absolutePath)
+  private fun checkOutFile(url: String, directory: File) = runInAndVerifyIgnoreOutput("co", url, directory.absolutePath)
+  private fun setMergeInfo(file: File, value: String) = runInAndVerifyIgnoreOutput("propset", "svn:mergeinfo", value, file.absolutePath)
+  private fun merge(file: File, url: String, vararg revisions: String) = merge(file, url, false, *revisions)
+  private fun recordMerge(file: File, url: String, vararg revisions: String) = merge(file, url, true, *revisions)
   private fun merge(file: File, url: String, recordOnly: Boolean, vararg revisions: String) {
-    val parameters = ContainerUtil.newArrayList<String>()
-
-    parameters.add("merge")
-    ContainerUtil.addAll<String, String, List<String>>(parameters, *revisions)
-    parameters.add(url)
-    parameters.add(file.absolutePath)
+    val parameters = mutableListOf<String>("merge", *revisions, url, file.absolutePath)
     if (recordOnly) {
       parameters.add("--record-only")
     }
 
-    runInAndVerifyIgnoreOutput(*ArrayUtil.toObjectArray(parameters, String::class.java))
+    runInAndVerifyIgnoreOutput(*parameters.toTypedArray())
   }
 }
