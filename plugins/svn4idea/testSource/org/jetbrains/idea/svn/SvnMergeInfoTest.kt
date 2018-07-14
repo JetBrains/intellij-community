@@ -66,7 +66,7 @@ class SvnMergeInfoTest : SvnTestCase() {
 
     val vcsRoot = LocalFileSystem.getInstance().findFileByIoFile(myBranchVcsRoot)
     val node = Node(vcsRoot!!, createUrl(myBranchUrl), myRepositoryUrl)
-    val root = RootUrlInfo(node, WorkingCopyFormat.ONE_DOT_SIX, vcsRoot, null)
+    val root = RootUrlInfo(node, WorkingCopyFormat.ONE_DOT_EIGHT, vcsRoot, null)
     val wcInfo = WCInfo(root, true, Depth.INFINITY)
     val mergeContext = MergeContext(vcs, parseUrl(myTrunkUrl, false), wcInfo, Url.tail(myTrunkUrl), vcsRoot)
     myOneShotMergeInfoHelper = OneShotMergeInfoHelper(mergeContext)
