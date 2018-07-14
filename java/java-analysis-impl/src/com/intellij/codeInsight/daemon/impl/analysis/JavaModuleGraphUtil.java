@@ -340,16 +340,19 @@ public class JavaModuleGraphUtil {
       myInbound = inbound;
     }
 
+    @NotNull
     @Override
     public Collection<N> getNodes() {
       return myNodes;
     }
 
+    @NotNull
     @Override
     public Iterator<N> getIn(N n) {
       return myInbound ? myEdges.get(n).iterator() : Collections.emptyIterator();
     }
 
+    @NotNull
     @Override
     public Iterator<N> getOut(N n) {
       return myInbound ? Collections.emptyIterator() : myEdges.get(n).iterator();

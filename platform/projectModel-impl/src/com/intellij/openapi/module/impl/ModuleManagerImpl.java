@@ -851,11 +851,13 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Disposa
     @NotNull
     private Graph<Module> moduleGraph(final boolean includeTests) {
       return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<Module>() {
+        @NotNull
         @Override
         public Collection<Module> getNodes() {
           return myModules.values();
         }
 
+        @NotNull
         @Override
         public Iterator<Module> getIn(Module m) {
           Module[] dependentModules = ModuleRootManager.getInstance(m).getDependencies(includeTests);

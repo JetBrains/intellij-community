@@ -136,11 +136,13 @@ public class UnusedLibrariesInspection extends GlobalInspectionTool {
     collectClassesPerRoots(givenRoots, fromClasses, toClasses);
 
     Graph<VirtualFile> graph = GraphGenerator.generate(new InboundSemiGraph<VirtualFile>() {
+      @NotNull
       @Override
       public Collection<VirtualFile> getNodes() {
         return Arrays.asList(givenRoots);
       }
 
+      @NotNull
       @Override
       public Iterator<VirtualFile> getIn(VirtualFile n) {
         Set<String> classesInCurrentRoot = fromClasses.get(n);

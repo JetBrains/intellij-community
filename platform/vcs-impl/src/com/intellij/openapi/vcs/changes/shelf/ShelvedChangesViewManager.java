@@ -746,7 +746,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
   public class MyShelfContent extends DnDActivateOnHoldTargetContent {
 
-    private MyShelfContent(JPanel panel, String displayName, boolean isLockable) {
+    private MyShelfContent(JPanel panel, @NotNull String displayName, boolean isLockable) {
       super(myProject, panel, displayName, isLockable);
     }
 

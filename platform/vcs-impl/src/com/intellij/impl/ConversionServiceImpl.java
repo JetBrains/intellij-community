@@ -363,11 +363,13 @@ public class ConversionServiceImpl extends ConversionService {
       myProviders = providers;
     }
 
+    @NotNull
     @Override
     public Collection<ConverterProvider> getNodes() {
       return Arrays.asList(myProviders);
     }
 
+    @NotNull
     @Override
     public Iterator<ConverterProvider> getIn(ConverterProvider n) {
       List<ConverterProvider> preceding = new ArrayList<>();

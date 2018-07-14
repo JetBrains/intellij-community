@@ -56,17 +56,17 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
     myModules = buildDependents(myModule);
   }
 
+  @NotNull
   private static Set<Module> buildDependents(Module module) {
     Set<Module> result = new THashSet<>();
     result.add(module);
-    
-    Set<Module> processedExporting = new THashSet<>();
 
     ModuleIndex index = getModuleIndex(module.getProject());
 
     Queue<Module> walkingQueue = new Queue<>(10);
     walkingQueue.addLast(module);
 
+    Set<Module> processedExporting = new THashSet<>();
     while (!walkingQueue.isEmpty()) {
       Module current = walkingQueue.pullFirst();
       processedExporting.add(current);
@@ -117,11 +117,6 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
   }
 
   @Override
-  public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-    return 0;
-  }
-
-  @Override
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
     return myModules.contains(aModule);
   }
@@ -131,6 +126,7 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
     return false;
   }
 
+  @NotNull
   @Override
   public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
     ModuleManager moduleManager = ModuleManager.getInstance(myModule.getProject());
@@ -138,11 +134,13 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
                                     moduleManager::getUnloadedModuleDescription);
   }
 
+  @Override
   @NonNls
   public String toString() {
     return "Module with dependents:" + myModule.getName();
   }
 
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof ModuleWithDependentsScope)) return false;
@@ -152,6 +150,7 @@ class ModuleWithDependentsScope extends GlobalSearchScope {
     return myModule.equals(moduleWithDependentsScope.myModule);
   }
 
+  @Override
   public int hashCode() {
     return myModule.hashCode();
   }

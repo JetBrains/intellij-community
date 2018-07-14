@@ -94,7 +94,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     super(project);
   }
 
-  public void openMessagesView(final VcsErrorViewPanel errorTreeView, final String tabDisplayName) {
+  public void openMessagesView(final VcsErrorViewPanel errorTreeView, @NotNull String tabDisplayName) {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, () -> {
       final MessageView messageView = MessageView.SERVICE.getInstance(myProject);
