@@ -247,7 +247,7 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
         return reference;
       }
 
-      if (!JavaCodeStyleSettings.getInstance(reference.getContainingFile()).INSERT_INNER_CLASS_IMPORTS) {
+        if (!JavaCodeStyleSettings.getInstance(reference.getContainingFile()).isInsertInnerClassImportsFor(refClass.getName())) {
         final PsiElement qualifier = reference.getQualifier();
         if (qualifier instanceof PsiQualifiedReferenceElement) {
           return getClassReferenceToShorten(parentClass, addImports, (PsiQualifiedReferenceElement)qualifier);
