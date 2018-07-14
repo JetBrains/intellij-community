@@ -27,7 +27,6 @@ import org.jetbrains.idea.svn.mergeinfo.BranchInfo;
 import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
 import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
 import org.jetbrains.idea.svn.properties.PropertyValue;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
@@ -35,9 +34,11 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
+import static com.intellij.util.ArrayUtil.newLongArray;
 import static org.jetbrains.idea.svn.SvnPropertyKeys.MERGE_INFO;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
+import static org.junit.Assert.*;
 
 public class SvnMergeInfoTest extends SvnTestCase {
 
@@ -174,7 +175,7 @@ public class SvnMergeInfoTest extends SvnTestCase {
     commitFile(myBranchVcsRoot);
     updateFile(myBranchVcsRoot);
 
-    assertMergeInfo(myBranchVcsRoot, "/trunk:3-4", "/trunk:3,4");
+    assertMergeInfo(myBranchVcsRoot, "/trunk:3-4");
     assertMergeInfo(new File(myBranchVcsRoot, "folder"), "/trunk:3");
 
     final List<SvnChangeList> changeListList = getTrunkChangeLists();
@@ -247,7 +248,7 @@ public class SvnMergeInfoTest extends SvnTestCase {
     assertMergeInfo(myBranchVcsRoot, "/trunk:3");
 
     final Info f1info = vcs.getInfo(new File(myBranchVcsRoot, "folder/f1.txt"));
-    assert f1info.getRevision().getNumber() == 2;
+    assertEquals(2, f1info.getRevision().getNumber());
 
     final List<SvnChangeList> changeListList = getTrunkChangeLists();
     final SvnChangeList changeList = changeListList.get(0);
@@ -334,18 +335,12 @@ public class SvnMergeInfoTest extends SvnTestCase {
     VcsTestUtil.editFileInCommand(myProject, file, content);
   }
 
-  private void assertMergeInfo(@NotNull File file, @NotNull String... values) throws SvnBindException {
+  private void assertMergeInfo(@NotNull File file, @NotNull String expectedValue) throws SvnBindException {
     PropertyValue propertyValue =
       vcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, Revision.WORKING);
-    assert propertyValue != null;
 
-    boolean result = false;
-
-    for (String value : values) {
-      result |= value.equals(propertyValue.toString());
-    }
-
-    assert result;
+    assertNotNull(propertyValue);
+    assertEquals(expectedValue, propertyValue.toString());
   }
 
   private void assertMergeResult(@NotNull List<SvnChangeList> changeLists, @NotNull SvnMergeInfoCache.MergeCheckResult... mergeResults)
@@ -361,17 +356,20 @@ public class SvnMergeInfoTest extends SvnTestCase {
   }
 
   private void assertMergeResult(@NotNull SvnChangeList changeList, @NotNull SvnMergeInfoCache.MergeCheckResult mergeResult) {
-    assert mergeResult.equals(myMergeChecker.checkList(changeList, myBranchVcsRoot.getAbsolutePath()));
+    assertEquals(mergeResult, myMergeChecker.checkList(changeList, myBranchVcsRoot.getAbsolutePath()));
   }
 
   private void assertMergeResultOneShot(@NotNull SvnChangeList changeList, @NotNull SvnMergeInfoCache.MergeCheckResult mergeResult) {
-    Assert.assertEquals(mergeResult, myOneShotMergeInfoHelper.checkList(changeList));
+    assertEquals(mergeResult, myOneShotMergeInfoHelper.checkList(changeList));
   }
 
-  private static void assertRevisions(@NotNull List<SvnChangeList> changeLists, @NotNull int... revisions) {
+  private static void assertRevisions(@NotNull List<SvnChangeList> changeLists, @NotNull long... expectedTopRevisions) {
+    long[] revisions = newLongArray(expectedTopRevisions.length);
     for (int i = 0; i < revisions.length; i++) {
-      assert changeLists.get(i).getNumber() == revisions[i];
+      revisions[i] = changeLists.get(i).getNumber();
     }
+
+    assertArrayEquals(expectedTopRevisions, revisions);
   }
 
   private void commitFile(@NotNull File file) throws IOException {
