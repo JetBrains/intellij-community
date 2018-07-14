@@ -261,23 +261,21 @@ public class SvnMergeInfoTest extends SvnTestCase {
     assertMergeResult(changeList, SvnMergeInfoCache.MergeCheckResult.MERGED);
   }
 
-  private void createOneFolderStructure() throws InterruptedException, IOException {
+  private void createOneFolderStructure() throws IOException {
     trunk = newFolder(myTempDirFixture.getTempDirPath(), "trunk");
     folder = newFolder(trunk, "folder");
     f1 = newFile(folder, "f1.txt");
     f2 = newFile(folder, "f2.txt");
-    waitTime();
 
     importAndCheckOut(trunk);
   }
 
-  private void createTwoFolderStructure(File branchFolder) throws InterruptedException, IOException {
+  private void createTwoFolderStructure(File branchFolder) throws IOException {
     trunk = newFolder(myTempDirFixture.getTempDirPath(), "trunk");
     folder = newFolder(trunk, "folder");
     f1 = newFile(folder, "f1.txt");
     folder1 = newFolder(folder, "folder1");
     f2 = newFile(folder1, "f2.txt");
-    waitTime();
 
     importAndCheckOut(trunk, branchFolder);
   }
@@ -303,40 +301,37 @@ public class SvnMergeInfoTest extends SvnTestCase {
   }
 
   @NotNull
-  private VirtualFile editAndCommit(@NotNull File trunk, @NotNull File file) throws InterruptedException, IOException {
+  private VirtualFile editAndCommit(@NotNull File trunk, @NotNull File file) throws IOException {
     return editAndCommit(trunk, file, CONTENT1);
   }
 
   @NotNull
-  private VirtualFile editAndCommit(@NotNull File trunk, @NotNull File file, @NotNull String content)
-    throws InterruptedException, IOException {
+  private VirtualFile editAndCommit(@NotNull File trunk, @NotNull File file, @NotNull String content) throws IOException {
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
 
     return editAndCommit(trunk, vf, content);
   }
 
   @NotNull
-  private VirtualFile editAndCommit(@NotNull File trunk, @NotNull VirtualFile file, @NotNull String content)
-    throws InterruptedException, IOException {
+  private VirtualFile editAndCommit(@NotNull File trunk, @NotNull VirtualFile file, @NotNull String content) throws IOException {
     editFile(file, content);
     commitFile(trunk);
 
     return file;
   }
 
-  private void editFile(@NotNull File file) throws InterruptedException {
+  private void editFile(@NotNull File file) {
     editFile(file, CONTENT1);
   }
 
-  private void editFile(@NotNull File file, @NotNull String content) throws InterruptedException {
+  private void editFile(@NotNull File file, @NotNull String content) {
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
 
     editFile(vf, content);
   }
 
-  private void editFile(@NotNull VirtualFile file, @NotNull String content) throws InterruptedException {
+  private void editFile(@NotNull VirtualFile file, @NotNull String content) {
     VcsTestUtil.editFileInCommand(myProject, file, content);
-    waitTime();
   }
 
   private void assertMergeInfo(@NotNull File file, @NotNull String... values) throws SvnBindException {
@@ -379,35 +374,31 @@ public class SvnMergeInfoTest extends SvnTestCase {
     }
   }
 
-  private void commitFile(@NotNull File file) throws IOException, InterruptedException {
+  private void commitFile(@NotNull File file) throws IOException {
     runInAndVerifyIgnoreOutput("ci", "-m", "test", file.getAbsolutePath());
-    waitTime();
   }
 
-  private void updateFile(@NotNull File file) throws IOException, InterruptedException {
+  private void updateFile(@NotNull File file) throws IOException {
     runInAndVerifyIgnoreOutput("up", file.getAbsolutePath());
-    waitTime();
   }
 
   private void checkOutFile(@NotNull String url, @NotNull File directory) throws IOException {
     runInAndVerifyIgnoreOutput("co", url, directory.getAbsolutePath());
   }
 
-  private void setMergeInfo(@NotNull File file, @NotNull String value) throws IOException, InterruptedException {
+  private void setMergeInfo(@NotNull File file, @NotNull String value) throws IOException {
     runInAndVerifyIgnoreOutput("propset", "svn:mergeinfo", value, file.getAbsolutePath());
-    waitTime();
   }
 
-  private void merge(@NotNull File file, @NotNull String url, @NotNull String... revisions) throws IOException, InterruptedException {
+  private void merge(@NotNull File file, @NotNull String url, @NotNull String... revisions) throws IOException {
     merge(file, url, false, revisions);
   }
 
-  private void recordMerge(@NotNull File file, @NotNull String url, @NotNull String... revisions) throws IOException, InterruptedException {
+  private void recordMerge(@NotNull File file, @NotNull String url, @NotNull String... revisions) throws IOException {
     merge(file, url, true, revisions);
   }
 
-  private void merge(@NotNull File file, @NotNull String url, boolean recordOnly, @NotNull String... revisions)
-    throws IOException, InterruptedException {
+  private void merge(@NotNull File file, @NotNull String url, boolean recordOnly, @NotNull String... revisions) throws IOException {
     List<String> parameters = ContainerUtil.newArrayList();
 
     parameters.add("merge");
@@ -419,7 +410,6 @@ public class SvnMergeInfoTest extends SvnTestCase {
     }
 
     runInAndVerifyIgnoreOutput(ArrayUtil.toObjectArray(parameters, String.class));
-    waitTime();
   }
 
   @NotNull
@@ -430,22 +420,16 @@ public class SvnMergeInfoTest extends SvnTestCase {
   }
 
   @NotNull
-  private static File newFolder(String parent, String name) throws InterruptedException {
+  private static File newFolder(String parent, String name) {
     final File trunk = new File(parent, name);
     trunk.mkdir();
-    waitTime();
     return trunk;
   }
 
   @NotNull
-  private static File newFolder(File parent, String name) throws InterruptedException {
+  private static File newFolder(File parent, String name) {
     final File trunk = new File(parent, name);
     trunk.mkdir();
-    waitTime();
     return trunk;
-  }
-
-  private static void waitTime() throws InterruptedException {
-    Thread.sleep(100);
   }
 }
