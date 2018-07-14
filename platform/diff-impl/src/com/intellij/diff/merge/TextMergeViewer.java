@@ -183,6 +183,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
     // all changes - both applied and unapplied ones
     @NotNull private final List<TextMergeChange> myAllMergeChanges = new ArrayList<>();
+    @NotNull private IgnorePolicy myCurrentIgnorePolicy;
 
     private boolean myInitialRediffStarted;
     private boolean myInitialRediffFinished;
@@ -198,11 +199,16 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       myLineStatusTracker = new SimpleLineStatusTracker(getProject(), getEditor().getDocument(), MyLineStatusMarkerRenderer::new);
 
-      myTextDiffProvider = new TextDiffProviderBase(getTextSettings(),
-                                                    myInnerDiffWorker::onSettingsChanged,
-                                                    this,
-                                                    ar(IgnorePolicy.DEFAULT),
-                                                    ar(HighlightPolicy.BY_LINE, HighlightPolicy.BY_WORD));
+      myTextDiffProvider = new TextDiffProviderBase(
+        getTextSettings(),
+        () -> {
+          restartMergeResolveIfNeeded();
+          myInnerDiffWorker.onSettingsChanged();
+        },
+        this,
+        ar(IgnorePolicy.DEFAULT, IgnorePolicy.TRIM_WHITESPACES, IgnorePolicy.IGNORE_WHITESPACES),
+        ar(HighlightPolicy.BY_LINE, HighlightPolicy.BY_WORD));
+      myCurrentIgnorePolicy = myTextDiffProvider.getIgnorePolicy();
 
       DiffUtil.registerAction(new ApplySelectedChangesAction(Side.LEFT, true), myPanel);
       DiffUtil.registerAction(new ApplySelectedChangesAction(Side.RIGHT, true), myPanel);
@@ -322,6 +328,26 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     // Diff
     //
 
+    private void restartMergeResolveIfNeeded() {
+      if (myTextDiffProvider.getIgnorePolicy().equals(myCurrentIgnorePolicy)) return;
+
+      if (!myInitialRediffFinished) {
+        ApplicationManager.getApplication().invokeLater(() -> restartMergeResolveIfNeeded());
+        return;
+      }
+
+      if (myContentModified) {
+        if (Messages.showYesNoDialog(myProject, "This operation will reset all applied changes. Are you sure you want to continue?",
+                                     "Restart Visual Merge", Messages.getQuestionIcon()) != Messages.YES) {
+          getTextSettings().setIgnorePolicy(myCurrentIgnorePolicy);
+          return;
+        }
+      }
+
+      myInitialRediffFinished = false;
+      doRediff();
+    }
+
     private boolean setInitialOutputContent() {
       final Document baseDocument = ThreeSide.BASE.select(myMergeRequest.getContents()).getDocument();
       final Document outputDocument = myMergeRequest.getOutputContent().getDocument();
@@ -356,6 +382,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     @CalledInAwt
     private void doRediff() {
       myStatusPanel.setBusy(true);
+      myInnerDiffWorker.disable();
 
       // This is made to reduce unwanted modifications before rediff is finished.
       // It could happen between this init() EDT chunk and invokeLater().
@@ -396,6 +423,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     protected Runnable doPerformRediff(@NotNull ProgressIndicator indicator) {
       try {
         indicator.checkCanceled();
+        IgnorePolicy ignorePolicy = myTextDiffProvider.getIgnorePolicy();
 
         List<DocumentContent> contents = myMergeRequest.getContents();
         List<CharSequence> sequences = ReadAction.compute(() -> {
@@ -406,13 +434,13 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
         ComparisonManager manager = ComparisonManager.getInstance();
         List<MergeLineFragment> lineFragments = manager.compareLines(sequences.get(0), sequences.get(1), sequences.get(2),
-                                                                     ComparisonPolicy.DEFAULT, indicator);
+                                                                     ignorePolicy.getComparisonPolicy(), indicator);
 
         List<MergeConflictType> conflictTypes = ContainerUtil.map(lineFragments, fragment -> {
-          return DiffUtil.getLineMergeType(fragment, sequences, lineOffsets, ComparisonPolicy.DEFAULT);
+          return DiffUtil.getLineMergeType(fragment, sequences, lineOffsets, ignorePolicy.getComparisonPolicy());
         });
 
-        return apply(lineFragments, conflictTypes);
+        return () -> apply(lineFragments, conflictTypes, ignorePolicy);
       }
       catch (DiffTooBigException e) {
         return applyNotification(DiffNotifications.createDiffTooBig());
@@ -429,47 +457,49 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
     }
 
-    @NotNull
-    private Runnable apply(@NotNull final List<MergeLineFragment> fragments,
-                           @NotNull final List<MergeConflictType> conflictTypes) {
-      return () -> {
-        clearDiffPresentation();
+    @CalledInAwt
+    private void apply(@NotNull List<MergeLineFragment> fragments,
+                       @NotNull List<MergeConflictType> conflictTypes,
+                       @NotNull IgnorePolicy ignorePolicy) {
+      clearDiffPresentation();
+      resetChangeCounters();
 
-        boolean success = setInitialOutputContent();
-        if (!success) {
-          myPanel.addNotification(DiffNotifications.createNotification("Can't resolve conflicts in a read-only file"));
-          return;
+      boolean success = setInitialOutputContent();
+      if (!success) {
+        fragments = Collections.emptyList();
+        conflictTypes = Collections.emptyList();
+        myPanel.addNotification(DiffNotifications.createNotification("Can't resolve conflicts in a read-only file"));
+      }
+
+      myModel.setChanges(ContainerUtil.map(fragments, f -> new LineRange(f.getStartLine(ThreeSide.BASE),
+                                                                         f.getEndLine(ThreeSide.BASE))));
+
+      for (int index = 0; index < fragments.size(); index++) {
+        MergeLineFragment fragment = fragments.get(index);
+        MergeConflictType conflictType = conflictTypes.get(index);
+
+        TextMergeChange change = new TextMergeChange(index, fragment, conflictType, TextMergeViewer.this);
+        myAllMergeChanges.add(change);
+        onChangeAdded(change);
+      }
+
+      myInitialScrollHelper.onRediff();
+
+      myContentPanel.repaintDividers();
+      myStatusPanel.update();
+
+      getEditor().setViewer(false);
+
+      myInnerDiffWorker.onEverythingChanged();
+      myInitialRediffFinished = true;
+      myContentModified = false;
+      myCurrentIgnorePolicy = ignorePolicy;
+
+      if (myViewer.getTextSettings().isAutoApplyNonConflictedChanges()) {
+        if (hasNonConflictedChanges(ThreeSide.BASE)) {
+          applyNonConflictedChanges(ThreeSide.BASE);
         }
-
-        myModel.setChanges(ContainerUtil.map(fragments, f -> new LineRange(f.getStartLine(ThreeSide.BASE),
-                                                                           f.getEndLine(ThreeSide.BASE))));
-
-        resetChangeCounters();
-        for (int index = 0; index < fragments.size(); index++) {
-          MergeLineFragment fragment = fragments.get(index);
-          MergeConflictType conflictType = conflictTypes.get(index);
-
-          TextMergeChange change = new TextMergeChange(index, fragment, conflictType, TextMergeViewer.this);
-          myAllMergeChanges.add(change);
-          onChangeAdded(change);
-        }
-
-        myInitialScrollHelper.onRediff();
-
-        myContentPanel.repaintDividers();
-        myStatusPanel.update();
-
-        getEditor().setViewer(false);
-
-        myInnerDiffWorker.onSettingsChanged();
-        myInitialRediffFinished = true;
-
-        if (myViewer.getTextSettings().isAutoApplyNonConflictedChanges()) {
-          if (hasNonConflictedChanges(ThreeSide.BASE)) {
-            applyNonConflictedChanges(ThreeSide.BASE);
-          }
-        }
-      };
+      }
     }
 
     @Override
@@ -517,6 +547,23 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         if (myEnabled == enabled) return;
         myEnabled = enabled;
 
+        rebuildEverything();
+      }
+
+      @CalledInAwt
+      public void onEverythingChanged() {
+        myEnabled = myTextDiffProvider.getHighlightPolicy() == HighlightPolicy.BY_WORD;
+
+        rebuildEverything();
+      }
+
+      @CalledInAwt
+      public void disable() {
+        myEnabled = false;
+        stop();
+      }
+
+      private void rebuildEverything() {
         if (myProgress != null) myProgress.cancel();
         myProgress = null;
 
@@ -579,9 +626,10 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       private void performRediff(@NotNull final List<TextMergeChange> scheduled,
                                  @NotNull final List<InnerChunkData> data,
                                  @NotNull final ProgressIndicator indicator) {
+        ComparisonPolicy comparisonPolicy = myTextDiffProvider.getIgnorePolicy().getComparisonPolicy();
         final List<MergeInnerDifferences> result = new ArrayList<>(data.size());
         for (InnerChunkData chunkData : data) {
-          result.add(DiffUtil.compareThreesideInner(chunkData.text, ComparisonPolicy.DEFAULT, indicator));
+          result.add(DiffUtil.compareThreesideInner(chunkData.text, comparisonPolicy, indicator));
         }
 
         ApplicationManager.getApplication().invokeLater(() -> {
