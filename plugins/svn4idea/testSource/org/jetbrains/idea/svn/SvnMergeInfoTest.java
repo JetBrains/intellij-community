@@ -46,21 +46,16 @@ public class SvnMergeInfoTest extends SvnTestCase {
   private static final String CONTENT2 = "123\n456\n123\n4";
 
   private File myBranchVcsRoot;
-  private WCInfo myWCInfo;
-  private WCInfoWithBranches myWCInfoWithBranches;
   private OneShotMergeInfoHelper myOneShotMergeInfoHelper;
-
   private BranchInfo myMergeChecker;
 
   private File trunk;
   private File folder;
-  private File folder1;
   private File f1;
   private File f2;
 
   private String myTrunkUrl;
   private String myBranchUrl;
-  private MergeContext myMergeContext;
 
   @Override
   public void setUp() throws Exception {
@@ -77,9 +72,9 @@ public class SvnMergeInfoTest extends SvnTestCase {
     VirtualFile vcsRoot = LocalFileSystem.getInstance().findFileByIoFile(myBranchVcsRoot);
     Node node = new Node(vcsRoot, createUrl(myBranchUrl), createUrl(myRepoUrl));
     RootUrlInfo root = new RootUrlInfo(node, WorkingCopyFormat.ONE_DOT_SIX, vcsRoot, null);
-    myWCInfo = new WCInfo(root, true, Depth.INFINITY);
-    myMergeContext = new MergeContext(vcs, parseUrl(myTrunkUrl, false), myWCInfo, Url.tail(myTrunkUrl), vcsRoot);
-    myOneShotMergeInfoHelper = new OneShotMergeInfoHelper(myMergeContext);
+    WCInfo wcInfo = new WCInfo(root, true, Depth.INFINITY);
+    MergeContext mergeContext = new MergeContext(vcs, parseUrl(myTrunkUrl, false), wcInfo, Url.tail(myTrunkUrl), vcsRoot);
+    myOneShotMergeInfoHelper = new OneShotMergeInfoHelper(mergeContext);
 
     vcs.getSvnConfiguration().setCheckNestedForQuickMerge(true);
 
@@ -87,9 +82,9 @@ public class SvnMergeInfoTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
 
     Url repoUrl = createUrl(myRepoUrl, false);
-    myWCInfoWithBranches =
-      new WCInfoWithBranches(myWCInfo, Collections.emptyList(), vcsRoot, new WCInfoWithBranches.Branch(repoUrl.appendPath("trunk", false)));
-    myMergeChecker = new BranchInfo(vcs, myWCInfoWithBranches, new WCInfoWithBranches.Branch(repoUrl.appendPath("branch", false)));
+    WCInfoWithBranches wcInfoWithBranches =
+      new WCInfoWithBranches(wcInfo, Collections.emptyList(), vcsRoot, new WCInfoWithBranches.Branch(repoUrl.appendPath("trunk", false)));
+    myMergeChecker = new BranchInfo(vcs, wcInfoWithBranches, new WCInfoWithBranches.Branch(repoUrl.appendPath("branch", false)));
   }
 
   @Test
@@ -275,7 +270,7 @@ public class SvnMergeInfoTest extends SvnTestCase {
     trunk = newFolder(myTempDirFixture.getTempDirPath(), "trunk");
     folder = newFolder(trunk, "folder");
     f1 = newFile(folder, "f1.txt");
-    folder1 = newFolder(folder, "folder1");
+    File folder1 = newFolder(folder, "folder1");
     f2 = newFile(folder1, "f2.txt");
 
     importAndCheckOut(trunk, branchFolder);
@@ -301,34 +296,25 @@ public class SvnMergeInfoTest extends SvnTestCase {
     checkOutFile(myBranchUrl, branch);
   }
 
-  @NotNull
-  private VirtualFile editAndCommit(@NotNull File trunk, @NotNull File file) throws IOException {
-    return editAndCommit(trunk, file, CONTENT1);
+  private void editAndCommit(@NotNull File trunk, @NotNull File file) throws IOException {
+    editAndCommit(trunk, file, CONTENT1);
   }
 
-  @NotNull
-  private VirtualFile editAndCommit(@NotNull File trunk, @NotNull File file, @NotNull String content) throws IOException {
+  private void editAndCommit(@NotNull File trunk, @NotNull File file, @NotNull String content) throws IOException {
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
 
-    return editAndCommit(trunk, vf, content);
+    editAndCommit(trunk, vf, content);
   }
 
-  @NotNull
-  private VirtualFile editAndCommit(@NotNull File trunk, @NotNull VirtualFile file, @NotNull String content) throws IOException {
+  private void editAndCommit(@NotNull File trunk, @NotNull VirtualFile file, @NotNull String content) throws IOException {
     editFile(file, content);
     commitFile(trunk);
-
-    return file;
   }
 
   private void editFile(@NotNull File file) {
-    editFile(file, CONTENT1);
-  }
-
-  private void editFile(@NotNull File file, @NotNull String content) {
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
 
-    editFile(vf, content);
+    editFile(vf, CONTENT1);
   }
 
   private void editFile(@NotNull VirtualFile file, @NotNull String content) {
