@@ -73,11 +73,7 @@ public class LombokProcessorProvider {
   }
 
   private <K, V> void putProcessor(final Map<K, Collection<V>> map, final K key, final V value) {
-    Collection<V> valueList = map.get(key);
-    if (null == valueList) {
-      valueList = new HashSet<V>();
-      map.put(key, valueList);
-    }
+    Collection<V> valueList = map.computeIfAbsent(key, k -> new HashSet<V>());
     valueList.add(value);
   }
 

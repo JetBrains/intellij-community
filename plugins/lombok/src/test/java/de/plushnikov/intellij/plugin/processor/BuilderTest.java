@@ -41,6 +41,10 @@ public class BuilderTest extends AbstractLombokParsingTestCase {
     doTest(true);
   }
 
+  public void testBuilder$BuilderWithFieldAccessors() throws IOException {
+    doTest(true);
+  }
+
   // This test is lombok's homepage example with predefined elements and another inner class.
   public void testBuilder$BuilderPredefined() throws IOException {
     doTest(true);

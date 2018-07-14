@@ -74,15 +74,17 @@ public class BuilderProcessor extends AbstractClassProcessor {
       }
     }
 
-    final String builderClassName = builderHandler.getBuilderClassName(psiClass, psiAnnotation);
-    PsiClass builderClass = PsiClassUtil.getInnerClassInternByName(psiClass, builderClassName);
+    PsiClass builderClass = builderHandler.getExistInnerBuilderClass(psiClass, null, psiAnnotation).orElse(null);
     if (null == builderClass) {
+      // have to create full class (with all methods) here, or auto completion doesn't work
       builderClass = builderHandler.createBuilderClass(psiClass, psiAnnotation);
     }
 
-    builderHandler.createBuilderMethodIfNecessary(target, psiClass, null, builderClass, psiAnnotation);
+    builderHandler.createBuilderMethodIfNecessary(psiClass, null, builderClass, psiAnnotation)
+      .ifPresent(target::add);
 
-    builderHandler.createToBuilderMethodIfNecessary(target, psiClass, null, builderClass, psiAnnotation);
+    builderHandler.createToBuilderMethodIfNecessary(psiClass, null, builderClass, psiAnnotation)
+      .ifPresent(target::add);
   }
 
   @Override

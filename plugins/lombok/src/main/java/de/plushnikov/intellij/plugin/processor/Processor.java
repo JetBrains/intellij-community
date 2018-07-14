@@ -27,8 +27,6 @@ public interface Processor {
 
   boolean isEnabled(@NotNull PropertiesComponent propertiesComponent);
 
-  boolean isShouldGenerateFullBodyBlock();
-
   @NotNull
   List<? super PsiElement> process(@NotNull PsiClass psiClass);
 

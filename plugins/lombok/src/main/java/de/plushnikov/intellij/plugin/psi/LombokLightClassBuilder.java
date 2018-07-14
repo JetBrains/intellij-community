@@ -98,6 +98,11 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder {
     return this;
   }
 
+  public LombokLightClassBuilder withField(@NotNull PsiField psiField) {
+    addField(psiField);
+    return this;
+  }
+
   public LombokLightClassBuilder withFields(@NotNull Collection<PsiField> fields) {
     for (PsiField field : fields) {
       addField(field);

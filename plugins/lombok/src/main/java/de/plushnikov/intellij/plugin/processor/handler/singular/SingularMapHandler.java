@@ -2,21 +2,20 @@ package de.plushnikov.intellij.plugin.processor.handler.singular;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
-import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
+import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Collection;
 
 class SingularMapHandler extends AbstractSingularHandler {
 
@@ -25,32 +24,36 @@ class SingularMapHandler extends AbstractSingularHandler {
   private static final String LOMBOK_KEY = "$key";
   private static final String LOMBOK_VALUE = "$value";
 
-  SingularMapHandler(String qualifiedName, boolean shouldGenerateFullBodyBlock) {
-    super(qualifiedName, shouldGenerateFullBodyBlock);
+  SingularMapHandler(String qualifiedName) {
+    super(qualifiedName);
   }
 
-  public void addBuilderField(@NotNull List<PsiField> fields, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, @NotNull AccessorsInfo accessorsInfo, @NotNull PsiSubstitutor substitutor) {
-    final String fieldName = accessorsInfo.removePrefix(psiVariable.getName());
+  @NotNull
+  private PsiType getKeyType(PsiManager psiManager, PsiType psiFieldType) {
+    return PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 0);
+  }
 
-    final Project project = psiVariable.getProject();
-    final PsiManager psiManager = psiVariable.getManager();
+  @NotNull
+  private PsiType getValueType(PsiManager psiManager, PsiType psiFieldType) {
+    return PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 1);
+  }
 
-    final PsiType psiFieldType = psiVariable.getType();
+  public Collection<PsiField> renderBuilderFields(@NotNull BuilderInfo info) {
+    final PsiType keyType = getKeyType(info.getManager(), info.getFieldType());
+    final PsiType builderFieldKeyType = getBuilderFieldType(keyType, info.getProject());
 
-    final PsiType keyType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 0);
-    final PsiType valueType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 1);
+    final PsiType valueType = getValueType(info.getManager(), info.getFieldType());
+    final PsiType builderFieldValueType = getBuilderFieldType(valueType, info.getProject());
 
-    final PsiType builderFieldKeyType = getBuilderFieldType(keyType, project);
-    fields.add(new LombokLightFieldBuilder(psiManager, fieldName + LOMBOK_KEY, builderFieldKeyType)
-      .withModifier(PsiModifier.PRIVATE)
-      .withNavigationElement(psiVariable)
-      .withContainingClass(innerClass));
-
-    final PsiType builderFieldValueType = getBuilderFieldType(valueType, project);
-    fields.add(new LombokLightFieldBuilder(psiManager, fieldName + LOMBOK_VALUE, builderFieldValueType)
-      .withModifier(PsiModifier.PRIVATE)
-      .withNavigationElement(psiVariable)
-      .withContainingClass(innerClass));
+    return Arrays.asList(
+      new LombokLightFieldBuilder(info.getManager(), info.getFieldName() + LOMBOK_KEY, builderFieldKeyType)
+        .withContainingClass(info.getBuilderClass())
+        .withModifier(PsiModifier.PRIVATE)
+        .withNavigationElement(info.getVariable()),
+      new LombokLightFieldBuilder(info.getManager(), info.getFieldName() + LOMBOK_VALUE, builderFieldValueType)
+        .withContainingClass(info.getBuilderClass())
+        .withModifier(PsiModifier.PRIVATE)
+        .withNavigationElement(info.getVariable()));
   }
 
   @NotNull
@@ -61,8 +64,8 @@ class SingularMapHandler extends AbstractSingularHandler {
 
   protected void addOneMethodParameter(@NotNull LombokLightMethodBuilder methodBuilder, @NotNull PsiType psiFieldType, @NotNull String singularName) {
     final PsiManager psiManager = methodBuilder.getManager();
-    final PsiType keyType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 0);
-    final PsiType valueType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 1);
+    final PsiType keyType = getKeyType(psiManager, psiFieldType);
+    final PsiType valueType = getValueType(psiManager, psiFieldType);
 
     methodBuilder.withParameter(singularName + KEY, keyType);
     methodBuilder.withParameter(singularName + VALUE, valueType);
@@ -94,8 +97,8 @@ class SingularMapHandler extends AbstractSingularHandler {
       "this.{0}" + LOMBOK_VALUE + ".add({1}" + VALUE + ");" +
       "{2}";
 
-    final PsiType keyType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 0);
-    final PsiType valueType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 1);
+    final PsiType keyType = getKeyType(psiManager, psiFieldType);
+    final PsiType valueType = getValueType(psiManager, psiFieldType);
 
     return MessageFormat.format(codeBlockTemplate, psiFieldName, singularName, fluentBuilder ? "\nreturn this;" : "",
       keyType.getCanonicalText(false), valueType.getCanonicalText(false));
@@ -111,8 +114,8 @@ class SingularMapHandler extends AbstractSingularHandler {
       "this.{0}" + LOMBOK_VALUE + ".add($lombokEntry.getValue());\n" +
       "'}'{1}";
 
-    final PsiType keyType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 0);
-    final PsiType valueType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 1);
+    final PsiType keyType = getKeyType(psiManager, psiFieldType);
+    final PsiType valueType = getValueType(psiManager, psiFieldType);
 
     final PsiType keyIterType = PsiTypeUtil.extractAllElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 0);
     final PsiType valueIterType = PsiTypeUtil.extractAllElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 1);
@@ -123,11 +126,11 @@ class SingularMapHandler extends AbstractSingularHandler {
   }
 
   @Override
-  public void appendBuildPrepare(@NotNull StringBuilder buildMethodCode, @NotNull PsiVariable psiVariable, @NotNull String fieldName) {
+  public String renderBuildPrepare(@NotNull PsiVariable psiVariable, @NotNull String fieldName) {
     final PsiManager psiManager = psiVariable.getManager();
     final PsiType psiFieldType = psiVariable.getType();
-    final PsiType keyType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 0);
-    final PsiType valueType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 1);
+    final PsiType keyType = getKeyType(psiManager, psiFieldType);
+    final PsiType valueType = getValueType(psiManager, psiFieldType);
 
     final String selectedFormat;
     if (collectionQualifiedName.equals(SingularCollectionClassNames.JAVA_UTIL_SORTED_MAP)) {
@@ -154,7 +157,7 @@ class SingularMapHandler extends AbstractSingularHandler {
         "  '}'\n";
     }
 
-    buildMethodCode.append(MessageFormat.format(selectedFormat,
-      fieldName, keyType.getCanonicalText(false), valueType.getCanonicalText(false), collectionQualifiedName));
+    return MessageFormat.format(selectedFormat, fieldName, keyType.getCanonicalText(false),
+      valueType.getCanonicalText(false), collectionQualifiedName);
   }
 }

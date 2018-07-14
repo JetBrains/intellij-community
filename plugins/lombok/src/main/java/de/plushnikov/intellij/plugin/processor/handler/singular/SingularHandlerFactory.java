@@ -57,28 +57,28 @@ public class SingularHandlerFactory {
   }
 
   @NotNull
-  public static BuilderElementHandler getHandlerFor(@NotNull PsiVariable psiVariable, @Nullable PsiAnnotation singularAnnotation, boolean shouldGenerateFullBodyBlock) {
+  public static BuilderElementHandler getHandlerFor(@NotNull PsiVariable psiVariable, @Nullable PsiAnnotation singularAnnotation) {
     if (null == singularAnnotation) {
-      return new NonSingularHandler(shouldGenerateFullBodyBlock);
+      return new NonSingularHandler();
     }
 
     final PsiType psiType = psiVariable.getType();
     final String qualifiedName = PsiTypeUtil.getQualifiedName(psiType);
     if (!isInvalidSingularType(qualifiedName)) {
       if (COLLECTION_TYPES.contains(qualifiedName)) {
-        return new SingularCollectionHandler(qualifiedName, shouldGenerateFullBodyBlock);
+        return new SingularCollectionHandler(qualifiedName);
       }
       if (MAP_TYPES.contains(qualifiedName)) {
-        return new SingularMapHandler(qualifiedName, shouldGenerateFullBodyBlock);
+        return new SingularMapHandler(qualifiedName);
       }
       if (GUAVA_COLLECTION_TYPES.contains(qualifiedName)) {
-        return new SingularGuavaCollectionHandler(qualifiedName, qualifiedName.contains("Sorted"), shouldGenerateFullBodyBlock);
+        return new SingularGuavaCollectionHandler(qualifiedName, qualifiedName.contains("Sorted"));
       }
       if (GUAVA_MAP_TYPES.contains(qualifiedName)) {
-        return new SingularGuavaMapHandler(qualifiedName, qualifiedName.contains("Sorted"), shouldGenerateFullBodyBlock);
+        return new SingularGuavaMapHandler(qualifiedName, qualifiedName.contains("Sorted"));
       }
       if (GUAVA_TABLE_TYPES.contains(qualifiedName)) {
-        return new SingularGuavaTableHandler(qualifiedName, false, shouldGenerateFullBodyBlock);
+        return new SingularGuavaTableHandler(qualifiedName, false);
       }
     }
     return new EmptyBuilderElementHandler();

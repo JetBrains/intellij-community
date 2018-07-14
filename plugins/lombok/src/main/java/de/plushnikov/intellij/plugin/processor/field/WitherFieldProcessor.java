@@ -208,12 +208,8 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
   @NotNull
   private PsiCodeBlock createCodeBlock(@NotNull PsiField psiField, PsiClass psiFieldContainingClass, PsiType returnType, String psiFieldName) {
     final String blockText;
-    if (isShouldGenerateFullBodyBlock()) {
-      final String paramString = getConstructorCall(psiField, psiFieldContainingClass);
-      blockText = String.format("return this.%s == %s ? this : new %s(%s);", psiFieldName, psiFieldName, returnType.getCanonicalText(), paramString);
-    } else {
-      blockText = "return null;";
-    }
+    final String paramString = getConstructorCall(psiField, psiFieldContainingClass);
+    blockText = String.format("return this.%s == %s ? this : new %s(%s);", psiFieldName, psiFieldName, returnType.getCanonicalText(), paramString);
     return PsiMethodUtil.createCodeBlockFromText(blockText, psiFieldContainingClass);
   }
 

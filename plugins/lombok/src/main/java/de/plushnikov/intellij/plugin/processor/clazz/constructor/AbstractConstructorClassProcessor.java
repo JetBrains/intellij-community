@@ -44,7 +44,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Base lombok processor class for constructor processing
@@ -268,33 +270,43 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
       .withNavigationElement(psiAnnotation)
       .withModifier(modifier);
 
-    final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiClass);
+    final List<String> fieldNames = new ArrayList<>();
+    final AccessorsInfo classAccessorsInfo = AccessorsInfo.build(psiClass);
+    for (PsiField psiField : params) {
+      final AccessorsInfo paramAccessorsInfo = AccessorsInfo.build(psiField, classAccessorsInfo);
+      fieldNames.add(paramAccessorsInfo.removePrefix(psiField.getName()));
+    }
+
     final PsiModifierList modifierList = constructor.getModifierList();
 
-    if (!suppressConstructorProperties && !useJavaDefaults && !params.isEmpty()) {
-      StringBuilder constructorPropertiesAnnotation = new StringBuilder("java.beans.ConstructorProperties( {");
-      for (PsiField param : params) {
-        constructorPropertiesAnnotation.append('"').append(accessorsInfo.removePrefix(param.getName())).append('"').append(',');
-      }
-      constructorPropertiesAnnotation.deleteCharAt(constructorPropertiesAnnotation.length() - 1);
-      constructorPropertiesAnnotation.append("} ) ");
-
-      modifierList.addAnnotation(constructorPropertiesAnnotation.toString());
+    if (!suppressConstructorProperties && !useJavaDefaults && !fieldNames.isEmpty()) {
+      String constructorPropertiesAnnotation = "java.beans.ConstructorProperties( {" +
+        fieldNames.stream().collect(Collectors.joining("\", \"", "\"", "\"")) +
+        "} ) ";
+      modifierList.addAnnotation(constructorPropertiesAnnotation);
     }
 
     addOnXAnnotations(psiAnnotation, modifierList, "onConstructor");
 
     if (!useJavaDefaults) {
-      for (PsiField param : params) {
-        constructor.withParameter(accessorsInfo.removePrefix(param.getName()), param.getType());
+      final Iterator<String> fieldNameIterator = fieldNames.iterator();
+      final Iterator<PsiField> fieldIterator = params.iterator();
+      while (fieldNameIterator.hasNext() && fieldIterator.hasNext()) {
+        constructor.withParameter(fieldNameIterator.next(), fieldIterator.next().getType());
       }
     }
 
     final StringBuilder blockText = new StringBuilder();
-    for (PsiField param : params) {
-      final String fieldInitializer = useJavaDefaults ? PsiTypesUtil.getDefaultValueOfType(param.getType()) : accessorsInfo.removePrefix(param.getName());
+
+    final Iterator<String> fieldNameIterator = fieldNames.iterator();
+    final Iterator<PsiField> fieldIterator = params.iterator();
+    while (fieldNameIterator.hasNext() && fieldIterator.hasNext()) {
+      final PsiField param = fieldIterator.next();
+      final String fieldName = fieldNameIterator.next();
+      final String fieldInitializer = useJavaDefaults ? PsiTypesUtil.getDefaultValueOfType(param.getType()) : fieldName;
       blockText.append(String.format("this.%s = %s;\n", param.getName(), fieldInitializer));
     }
+
     constructor.withBody(PsiMethodUtil.createCodeBlockFromText(blockText.toString(), psiClass));
 
     return constructor;
@@ -355,13 +367,9 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   @NotNull
   private PsiCodeBlock createStaticCodeBlock(@NotNull PsiType psiType, boolean useJavaDefaults, @NotNull final PsiParameterList parameterList) {
     final String blockText;
-    if (isShouldGenerateFullBodyBlock()) {
-      final String psiClassName = psiType.getPresentableText();
-      final String paramsText = useJavaDefaults ? "" : joinParameters(parameterList);
-      blockText = String.format("return new %s(%s);", psiClassName, paramsText);
-    } else {
-      blockText = "return null;";
-    }
+    final String psiClassName = psiType.getPresentableText();
+    final String paramsText = useJavaDefaults ? "" : joinParameters(parameterList);
+    blockText = String.format("return new %s(%s);", psiClassName, paramsText);
     return PsiMethodUtil.createCodeBlockFromText(blockText, parameterList);
   }
 

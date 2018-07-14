@@ -26,13 +26,11 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
-import de.plushnikov.intellij.plugin.processor.ShouldGenerateFullCodeBlock;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiElementUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
-import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
 import lombok.Delegate;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -243,34 +241,26 @@ public class DelegateHandler {
   @NotNull
   private <T extends PsiModifierListOwner & PsiNamedElement> PsiCodeBlock createCodeBlock(@NotNull PsiClass psiClass, @NotNull T psiElement, @NotNull PsiMethod psiMethod, @NotNull PsiType returnType, @NotNull PsiParameter[] psiParameters) {
     final String blockText;
-    if (isShouldGenerateFullBodyBlock()) {
-      final StringBuilder paramString = new StringBuilder();
+    final StringBuilder paramString = new StringBuilder();
 
-      for (int parameterIndex = 0; parameterIndex < psiParameters.length; parameterIndex++) {
-        final PsiParameter psiParameter = psiParameters[parameterIndex];
-        final String generatedParameterName = StringUtils.defaultIfEmpty(psiParameter.getName(), "p" + parameterIndex);
-        paramString.append(generatedParameterName).append(',');
-      }
-
-      if (paramString.length() > 0) {
-        paramString.deleteCharAt(paramString.length() - 1);
-      }
-
-      final boolean isMethodCall = psiElement instanceof PsiMethod;
-      blockText = String.format("%sthis.%s%s.%s(%s);",
-        PsiType.VOID.equals(returnType) ? "" : "return ",
-        psiElement.getName(),
-        isMethodCall ? "()" : "",
-        psiMethod.getName(),
-        paramString.toString());
-    } else {
-      blockText = "return " + PsiTypeUtil.getReturnValueOfType(returnType) + ";";
+    for (int parameterIndex = 0; parameterIndex < psiParameters.length; parameterIndex++) {
+      final PsiParameter psiParameter = psiParameters[parameterIndex];
+      final String generatedParameterName = StringUtils.defaultIfEmpty(psiParameter.getName(), "p" + parameterIndex);
+      paramString.append(generatedParameterName).append(',');
     }
-    return PsiMethodUtil.createCodeBlockFromText(blockText, psiClass);
-  }
 
-  private boolean isShouldGenerateFullBodyBlock() {
-    return ShouldGenerateFullCodeBlock.getInstance().isStateActive();
+    if (paramString.length() > 0) {
+      paramString.deleteCharAt(paramString.length() - 1);
+    }
+
+    final boolean isMethodCall = psiElement instanceof PsiMethod;
+    blockText = String.format("%sthis.%s%s.%s(%s);",
+      PsiType.VOID.equals(returnType) ? "" : "return ",
+      psiElement.getName(),
+      isMethodCall ? "()" : "",
+      psiMethod.getName(),
+      paramString.toString());
+    return PsiMethodUtil.createCodeBlockFromText(blockText, psiClass);
   }
 
   private static class DelegateAnnotationElementVisitor extends JavaElementVisitor {

@@ -102,7 +102,6 @@ public class ValueProcessor extends AbstractClassProcessor {
   }
 
 
-
   @Override
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {
     return LombokPsiElementUsage.READ_WRITE;

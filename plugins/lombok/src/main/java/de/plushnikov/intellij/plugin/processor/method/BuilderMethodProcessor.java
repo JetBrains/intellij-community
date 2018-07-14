@@ -8,7 +8,6 @@ import com.intellij.psi.PsiMethod;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.handler.BuilderHandler;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
-import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import lombok.Builder;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,15 +44,17 @@ public class BuilderMethodProcessor extends AbstractMethodProcessor {
     final PsiClass psiClass = psiMethod.getContainingClass();
     if (null != psiClass) {
 
-      final String builderClassName = builderHandler.getBuilderClassName(psiClass, psiAnnotation, psiMethod);
-      PsiClass builderClass = PsiClassUtil.getInnerClassInternByName(psiClass, builderClassName);
+      PsiClass builderClass = builderHandler.getExistInnerBuilderClass(psiClass, psiMethod, psiAnnotation).orElse(null);
       if (null == builderClass) {
+        // have to create full class (with all methods) here, or auto completion doesn't work
         builderClass = builderHandler.createBuilderClass(psiClass, psiMethod, psiAnnotation);
       }
 
-      builderHandler.createBuilderMethodIfNecessary(target, psiClass, psiMethod, builderClass, psiAnnotation);
+      builderHandler.createBuilderMethodIfNecessary(psiClass, psiMethod, builderClass, psiAnnotation)
+        .ifPresent(target::add);
 
-      builderHandler.createToBuilderMethodIfNecessary(target, psiClass, psiMethod, builderClass, psiAnnotation);
+      builderHandler.createToBuilderMethodIfNecessary(psiClass, psiMethod, builderClass, psiAnnotation)
+        .ifPresent(target::add);
     }
   }
 }

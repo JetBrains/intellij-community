@@ -166,12 +166,8 @@ public class SetterFieldProcessor extends AbstractFieldProcessor {
   @NotNull
   private PsiCodeBlock createCodeBlock(@NotNull PsiField psiField, @NotNull PsiClass psiClass, PsiType returnType, boolean isStatic, PsiParameter methodParameter) {
     final String blockText;
-    if (isShouldGenerateFullBodyBlock()) {
-      final String thisOrClass = isStatic ? psiClass.getName() : "this";
-      blockText = String.format("%s.%s = %s; ", thisOrClass, psiField.getName(), methodParameter.getName());
-    } else {
-      blockText = "";
-    }
+    final String thisOrClass = isStatic ? psiClass.getName() : "this";
+    blockText = String.format("%s.%s = %s; ", thisOrClass, psiField.getName(), methodParameter.getName());
 
     String codeBlockText = blockText;
     if (!isStatic && !PsiType.VOID.equals(returnType)) {

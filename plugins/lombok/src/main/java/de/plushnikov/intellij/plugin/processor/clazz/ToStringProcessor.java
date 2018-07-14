@@ -114,12 +114,8 @@ public class ToStringProcessor extends AbstractClassProcessor {
   @NotNull
   private PsiCodeBlock createCodeBlock(@NotNull PsiClass psiClass, @NotNull Collection<PsiField> psiFields, @NotNull PsiAnnotation psiAnnotation) {
     final String blockText;
-    if (isShouldGenerateFullBodyBlock()) {
-      final String paramString = createParamString(psiClass, psiFields, psiAnnotation);
-      blockText = String.format("return \"%s(%s)\";", getSimpleClassName(psiClass), paramString);
-    } else {
-      blockText = "return \"\";";
-    }
+    final String paramString = createParamString(psiClass, psiFields, psiAnnotation);
+    blockText = String.format("return \"%s(%s)\";", getSimpleClassName(psiClass), paramString);
     return PsiMethodUtil.createCodeBlockFromText(blockText, psiClass);
   }
 

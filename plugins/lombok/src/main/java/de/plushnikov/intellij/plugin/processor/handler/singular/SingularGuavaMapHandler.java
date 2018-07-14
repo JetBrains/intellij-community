@@ -2,21 +2,20 @@ package de.plushnikov.intellij.plugin.processor.handler.singular;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
-import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
+import de.plushnikov.intellij.plugin.processor.handler.BuilderInfo;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.MessageFormat;
-import java.util.List;
+import java.util.Collection;
+import java.util.Collections;
 
 class SingularGuavaMapHandler extends SingularMapHandler {
   private static final String LOMBOK_KEY = "key";
@@ -24,19 +23,18 @@ class SingularGuavaMapHandler extends SingularMapHandler {
 
   private final boolean sortedCollection;
 
-  SingularGuavaMapHandler(String guavaQualifiedName, boolean sortedCollection, boolean shouldGenerateFullBodyBlock) {
-    super(guavaQualifiedName, shouldGenerateFullBodyBlock);
+  SingularGuavaMapHandler(String guavaQualifiedName, boolean sortedCollection) {
+    super(guavaQualifiedName);
     this.sortedCollection = sortedCollection;
   }
 
-  public void addBuilderField(@NotNull List<PsiField> fields, @NotNull PsiVariable psiVariable, @NotNull PsiClass innerClass, @NotNull AccessorsInfo accessorsInfo, @NotNull PsiSubstitutor substitutor) {
-    final String fieldName = accessorsInfo.removePrefix(psiVariable.getName());
-    final LombokLightFieldBuilder fieldBuilder =
-      new LombokLightFieldBuilder(psiVariable.getManager(), fieldName, getBuilderFieldType(substitutor.substitute(psiVariable.getType()), psiVariable.getProject()))
+  public Collection<PsiField> renderBuilderFields(@NotNull BuilderInfo info) {
+    final PsiType builderFieldKeyType = getBuilderFieldType(info.getFieldType(), info.getProject());
+    return Collections.singleton(
+      new LombokLightFieldBuilder(info.getManager(), info.getFieldName(), builderFieldKeyType)
+        .withContainingClass(info.getBuilderClass())
         .withModifier(PsiModifier.PRIVATE)
-        .withNavigationElement(psiVariable)
-        .withContainingClass(innerClass);
-    fields.add(fieldBuilder);
+        .withNavigationElement(info.getVariable()));
   }
 
   @NotNull
@@ -82,18 +80,18 @@ class SingularGuavaMapHandler extends SingularMapHandler {
   }
 
   @Override
-  public void appendBuildPrepare(@NotNull StringBuilder buildMethodCode, @NotNull PsiVariable psiVariable, @NotNull String fieldName) {
+  public String renderBuildPrepare(@NotNull PsiVariable psiVariable, @NotNull String fieldName) {
     final PsiManager psiManager = psiVariable.getManager();
     final PsiType psiFieldType = psiVariable.getType();
 
     final PsiType keyType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 0);
     final PsiType valueType = PsiTypeUtil.extractOneElementType(psiFieldType, psiManager, CommonClassNames.JAVA_UTIL_MAP, 1);
 
-    buildMethodCode.append(MessageFormat.format(
+    return MessageFormat.format(
       "{3}<{1}, {2}> {0} = " +
         "this.{0} == null ? " +
         "{3}.<{1}, {2}>of() : " +
         "this.{0}.build();\n",
-      fieldName, keyType.getCanonicalText(false), valueType.getCanonicalText(false), collectionQualifiedName));
+      fieldName, keyType.getCanonicalText(false), valueType.getCanonicalText(false), collectionQualifiedName);
   }
 }

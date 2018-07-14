@@ -182,12 +182,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
   @NotNull
   private PsiCodeBlock createEqualsCodeBlock(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, boolean hasCanEqualMethod) {
-    final String blockText;
-    if (isShouldGenerateFullBodyBlock()) {
-      blockText = createEqualsBlockString(psiClass, psiAnnotation, hasCanEqualMethod);
-    } else {
-      blockText = "return false;";
-    }
+    final String blockText = createEqualsBlockString(psiClass, psiAnnotation, hasCanEqualMethod);
     return PsiMethodUtil.createCodeBlockFromText(blockText, psiClass);
   }
 
@@ -205,12 +200,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
   @NotNull
   private PsiCodeBlock createHashCodeBlock(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
-    final String blockText;
-    if (isShouldGenerateFullBodyBlock()) {
-      blockText = createHashcodeBlockString(psiClass, psiAnnotation);
-    } else {
-      blockText = "return 0;";
-    }
+    final String blockText = createHashcodeBlockString(psiClass, psiAnnotation);
     return PsiMethodUtil.createCodeBlockFromText(blockText, psiClass);
   }
 
@@ -234,12 +224,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
   @NotNull
   private PsiCodeBlock createCanEqualCodeBlock(@NotNull PsiClass psiClass) {
-    final String blockText;
-    if (isShouldGenerateFullBodyBlock()) {
-      blockText = String.format("return other instanceof %s;", psiClass.getName());
-    } else {
-      blockText = "return true;";
-    }
+    final String blockText = String.format("return other instanceof %s;", psiClass.getName());
     return PsiMethodUtil.createCodeBlockFromText(blockText, psiClass);
   }
 

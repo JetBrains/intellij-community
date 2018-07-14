@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.processor.field;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiVariable;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigDiscovery;
 import de.plushnikov.intellij.plugin.lombokconfig.ConfigKey;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
@@ -39,12 +40,26 @@ public class AccessorsInfo {
 
   @NotNull
   public static AccessorsInfo build(@NotNull PsiField psiField) {
-    final PsiAnnotation accessorsFieldAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, Accessors.class);
-    final PsiClass containingClass = psiField.getContainingClass();
+    return build(psiField, psiField.getContainingClass());
+  }
+
+  @NotNull
+  public static AccessorsInfo build(@NotNull PsiVariable psiVariable, @Nullable PsiClass containingClass) {
+    final PsiAnnotation accessorsFieldAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiVariable, Accessors.class);
     if (null != accessorsFieldAnnotation) {
       return buildFromAnnotation(accessorsFieldAnnotation, containingClass);
     } else {
       return build(containingClass);
+    }
+  }
+
+  @NotNull
+  public static AccessorsInfo build(@NotNull PsiField psiField, @NotNull AccessorsInfo classAccessorsInfo) {
+    final PsiAnnotation accessorsFieldAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, Accessors.class);
+    if (null != accessorsFieldAnnotation) {
+      return buildFromAnnotation(accessorsFieldAnnotation, psiField.getContainingClass());
+    } else {
+      return classAccessorsInfo;
     }
   }
 
