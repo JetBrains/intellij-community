@@ -17,7 +17,6 @@ public class LombokPostfixTemplateProvider extends JavaPostfixTemplateProvider {
   }
 
   @NotNull
-  @Override
   public String getPresentableName() {
     return "Lombok";
   }

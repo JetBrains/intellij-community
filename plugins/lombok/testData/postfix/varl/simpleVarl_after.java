@@ -1,4 +1,4 @@
-import lombok.experimental.var;
+import lombok.var;
 
 public class Foo {
     void m(Object o) {
