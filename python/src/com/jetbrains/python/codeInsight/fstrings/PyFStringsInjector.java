@@ -15,10 +15,12 @@
  */
 package com.jetbrains.python.codeInsight.fstrings;
 
+import com.intellij.codeInsight.generation.CommentByLineCommentHandler;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.jetbrains.python.codeInsight.PyInjectorBase;
 import com.jetbrains.python.codeInsight.fstrings.FStringParser.Fragment;
 import com.jetbrains.python.documentation.doctest.PyDocstringLanguageDialect;
@@ -51,6 +53,8 @@ public class PyFStringsInjector extends PyInjectorBase {
         registrar.addPlace(null, null, pyString, offsets.getContentRange().shiftRight(relNodeOffset));
         registrar.doneInjecting();
       }
+      InjectedLanguageUtil.putInjectedFileUserData(pyString, PyDocstringLanguageDialect.getInstance(),
+                                                   CommentByLineCommentHandler.INJECTION_FORBIDS_LINE_COMMENTS, true);
     }
   }
 

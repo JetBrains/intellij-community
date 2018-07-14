@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -44,6 +45,11 @@ import java.util.List;
 import java.util.Map;
 
 public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHandler {
+  /**
+   * Put this marker key in an injected file to make "Comment with line comment" action operate on its host file
+   * instead of the injected fragment itself.
+   */
+  public static final Key<Boolean> INJECTION_FORBIDS_LINE_COMMENTS = Key.create("INJECTION_FORBIDS_LINE_COMMENTS");
 
   private final List<Block> myBlocks = new ArrayList<>();
 
@@ -54,9 +60,19 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
 
     PsiElement context = InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file);
 
-    if (context != null && (context.textContains('\'') || context.textContains('\"') || context.textContains('/'))) {
-      String s = context.getText();
-      if (StringUtil.startsWith(s, "\"") || StringUtil.startsWith(s, "\'") || StringUtil.startsWith(s, "/")) {
+    if (context != null) {
+      final boolean commentInHostFile;
+      if (file.getUserData(INJECTION_FORBIDS_LINE_COMMENTS) != null) {
+        commentInHostFile = true;
+      }
+      else if (context.textContains('\'') || context.textContains('\"') || context.textContains('/')) {
+        String s = context.getText();
+        commentInHostFile = StringUtil.startsWith(s, "\"") || StringUtil.startsWith(s, "\'") || StringUtil.startsWith(s, "/");
+      }
+      else {
+        commentInHostFile = false;
+      }
+      if (commentInHostFile) {
         file = context.getContainingFile();
         editor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
         caret = caret instanceof InjectedCaret ? ((InjectedCaret)caret).getDelegate() : caret;
