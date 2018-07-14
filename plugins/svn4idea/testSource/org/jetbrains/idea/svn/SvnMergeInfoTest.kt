@@ -1,419 +1,419 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.svn;
+package org.jetbrains.idea.svn
 
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsTestUtil;
-import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.api.Depth;
-import org.jetbrains.idea.svn.api.Revision;
-import org.jetbrains.idea.svn.api.Target;
-import org.jetbrains.idea.svn.api.Url;
-import org.jetbrains.idea.svn.commandLine.SvnBindException;
-import org.jetbrains.idea.svn.dialogs.WCInfo;
-import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
-import org.jetbrains.idea.svn.history.SvnChangeList;
-import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
-import org.jetbrains.idea.svn.info.Info;
-import org.jetbrains.idea.svn.integrate.MergeContext;
-import org.jetbrains.idea.svn.mergeinfo.BranchInfo;
-import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper;
-import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache;
-import org.jetbrains.idea.svn.properties.PropertyValue;
-import org.junit.Test;
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.VcsTestUtil
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.ArrayUtil
+import com.intellij.util.ArrayUtil.newLongArray
+import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.idea.svn.SvnPropertyKeys.MERGE_INFO
+import org.jetbrains.idea.svn.SvnUtil.createUrl
+import org.jetbrains.idea.svn.SvnUtil.parseUrl
+import org.jetbrains.idea.svn.api.Depth
+import org.jetbrains.idea.svn.api.Revision
+import org.jetbrains.idea.svn.api.Target
+import org.jetbrains.idea.svn.api.Url
+import org.jetbrains.idea.svn.commandLine.SvnBindException
+import org.jetbrains.idea.svn.dialogs.WCInfo
+import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches
+import org.jetbrains.idea.svn.history.SvnChangeList
+import org.jetbrains.idea.svn.history.SvnRepositoryLocation
+import org.jetbrains.idea.svn.integrate.MergeContext
+import org.jetbrains.idea.svn.mergeinfo.BranchInfo
+import org.jetbrains.idea.svn.mergeinfo.OneShotMergeInfoHelper
+import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache
+import org.junit.Assert.*
+import org.junit.Test
+import java.io.File
+import java.io.IOException
 
-import java.io.File;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
+private const val CONTENT1 = "123\n456\n123"
+private const val CONTENT2 = "123\n456\n123\n4"
 
-import static com.intellij.util.ArrayUtil.newLongArray;
-import static org.jetbrains.idea.svn.SvnPropertyKeys.MERGE_INFO;
-import static org.jetbrains.idea.svn.SvnUtil.createUrl;
-import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
-import static org.junit.Assert.*;
+private fun assertRevisions(changeLists: List<SvnChangeList>, vararg expectedTopRevisions: Long) {
+  val revisions = newLongArray(expectedTopRevisions.size)
+  for (i in revisions.indices) {
+    revisions[i] = changeLists[i].number
+  }
 
-public class SvnMergeInfoTest extends SvnTestCase {
+  assertArrayEquals(expectedTopRevisions, revisions)
+}
 
-  private static final String CONTENT1 = "123\n456\n123";
-  private static final String CONTENT2 = "123\n456\n123\n4";
+private fun newFile(parent: File, name: String): File {
+  val f1 = File(parent, name)
+  f1.createNewFile()
+  return f1
+}
 
-  private File myBranchVcsRoot;
-  private OneShotMergeInfoHelper myOneShotMergeInfoHelper;
-  private BranchInfo myMergeChecker;
+private fun newFolder(parent: String, name: String): File {
+  val trunk = File(parent, name)
+  trunk.mkdir()
+  return trunk
+}
 
-  private File trunk;
-  private File folder;
-  private File f1;
-  private File f2;
+private fun newFolder(parent: File, name: String): File {
+  val trunk = File(parent, name)
+  trunk.mkdir()
+  return trunk
+}
 
-  private String myTrunkUrl;
-  private String myBranchUrl;
+class SvnMergeInfoTest : SvnTestCase() {
+  private lateinit var myBranchVcsRoot: File
+  private lateinit var myOneShotMergeInfoHelper: OneShotMergeInfoHelper
+  private lateinit var myMergeChecker: BranchInfo
 
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  private lateinit var trunk: File
+  private lateinit var folder: File
+  private lateinit var f1: File
+  private lateinit var f2: File
 
-    myTrunkUrl = myRepoUrl + "/trunk";
-    myBranchUrl = myRepoUrl + "/branch";
+  private lateinit var myTrunkUrl: String
+  private lateinit var myBranchUrl: String
 
-    myBranchVcsRoot = new File(myTempDirFixture.getTempDirPath(), "branch");
-    myBranchVcsRoot.mkdir();
+  private val trunkChangeLists: List<SvnChangeList>
+    @Throws(com.intellij.openapi.vcs.VcsException::class)
+    get() {
+      val provider = vcs.committedChangesProvider
 
-    vcsManager.setDirectoryMapping(myBranchVcsRoot.getAbsolutePath(), SvnVcs.VCS_NAME);
+      return provider.getCommittedChanges(provider.createDefaultSettings(), SvnRepositoryLocation(parseUrl(myTrunkUrl, false)), 0)
+    }
 
-    VirtualFile vcsRoot = LocalFileSystem.getInstance().findFileByIoFile(myBranchVcsRoot);
-    Node node = new Node(vcsRoot, createUrl(myBranchUrl), createUrl(myRepoUrl));
-    RootUrlInfo root = new RootUrlInfo(node, WorkingCopyFormat.ONE_DOT_SIX, vcsRoot, null);
-    WCInfo wcInfo = new WCInfo(root, true, Depth.INFINITY);
-    MergeContext mergeContext = new MergeContext(vcs, parseUrl(myTrunkUrl, false), wcInfo, Url.tail(myTrunkUrl), vcsRoot);
-    myOneShotMergeInfoHelper = new OneShotMergeInfoHelper(mergeContext);
+  @Throws(Exception::class)
+  override fun setUp() {
+    super.setUp()
 
-    vcs.getSvnConfiguration().setCheckNestedForQuickMerge(true);
+    myTrunkUrl = "$myRepoUrl/trunk"
+    myBranchUrl = "$myRepoUrl/branch"
 
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
+    myBranchVcsRoot = File(myTempDirFixture.tempDirPath, "branch")
+    myBranchVcsRoot.mkdir()
 
-    Url repoUrl = createUrl(myRepoUrl, false);
-    WCInfoWithBranches wcInfoWithBranches =
-      new WCInfoWithBranches(wcInfo, Collections.emptyList(), vcsRoot, new WCInfoWithBranches.Branch(repoUrl.appendPath("trunk", false)));
-    myMergeChecker = new BranchInfo(vcs, wcInfoWithBranches, new WCInfoWithBranches.Branch(repoUrl.appendPath("branch", false)));
+    vcsManager.setDirectoryMapping(myBranchVcsRoot.absolutePath, SvnVcs.VCS_NAME)
+
+    val vcsRoot = LocalFileSystem.getInstance().findFileByIoFile(myBranchVcsRoot)
+    val node = Node(vcsRoot!!, createUrl(myBranchUrl), createUrl(myRepoUrl))
+    val root = RootUrlInfo(node, WorkingCopyFormat.ONE_DOT_SIX, vcsRoot, null)
+    val wcInfo = WCInfo(root, true, Depth.INFINITY)
+    val mergeContext = MergeContext(vcs, parseUrl(myTrunkUrl, false), wcInfo, Url.tail(myTrunkUrl), vcsRoot)
+    myOneShotMergeInfoHelper = OneShotMergeInfoHelper(mergeContext)
+
+    vcs.svnConfiguration.isCheckNestedForQuickMerge = true
+
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD)
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE)
+
+    val repoUrl = createUrl(myRepoUrl, false)
+    val wcInfoWithBranches = WCInfoWithBranches(wcInfo, emptyList<WCInfoWithBranches.Branch>(), vcsRoot,
+                                                WCInfoWithBranches.Branch(repoUrl.appendPath("trunk", false)))
+    myMergeChecker = BranchInfo(vcs, wcInfoWithBranches, WCInfoWithBranches.Branch(repoUrl.appendPath("branch", false)))
   }
 
   @Test
-  public void testSimpleNotMerged() throws Exception {
-    createOneFolderStructure();
+  @Throws(Exception::class)
+  fun testSimpleNotMerged() {
+    createOneFolderStructure()
 
     // rev 3
-    editAndCommit(trunk, f1);
+    editAndCommit(trunk, f1)
 
-    assertMergeResult(getTrunkChangeLists(), SvnMergeInfoCache.MergeCheckResult.NOT_MERGED);
+    assertMergeResult(trunkChangeLists, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED)
   }
 
   @Test
-  public void testSimpleMerged() throws Exception {
-    createOneFolderStructure();
+  @Throws(Exception::class)
+  fun testSimpleMerged() {
+    createOneFolderStructure()
 
     // rev 3
-    editAndCommit(trunk, f1);
+    editAndCommit(trunk, f1)
 
     // rev 4: record as merged into branch
-    recordMerge(myBranchVcsRoot, myTrunkUrl, "-c", "3");
-    commitFile(myBranchVcsRoot);
-    updateFile(myBranchVcsRoot);
+    recordMerge(myBranchVcsRoot, myTrunkUrl, "-c", "3")
+    commitFile(myBranchVcsRoot)
+    updateFile(myBranchVcsRoot)
 
-    assertMergeInfo(myBranchVcsRoot, "/trunk:3");
-    assertMergeResult(getTrunkChangeLists(), SvnMergeInfoCache.MergeCheckResult.MERGED);
+    assertMergeInfo(myBranchVcsRoot, "/trunk:3")
+    assertMergeResult(trunkChangeLists, SvnMergeInfoCache.MergeCheckResult.MERGED)
   }
 
   @Test
-  public void testEmptyMergeinfoBlocks() throws Exception {
-    createOneFolderStructure();
+  @Throws(Exception::class)
+  fun testEmptyMergeinfoBlocks() {
+    createOneFolderStructure()
 
     // rev 3
-    editAndCommit(trunk, f1);
+    editAndCommit(trunk, f1)
 
     // rev 4: record as merged into branch
-    merge(myBranchVcsRoot, myTrunkUrl, "-c", "3");
-    commitFile(myBranchVcsRoot);
-    updateFile(myBranchVcsRoot);
+    merge(myBranchVcsRoot, myTrunkUrl, "-c", "3")
+    commitFile(myBranchVcsRoot)
+    updateFile(myBranchVcsRoot)
     // rev5: put blocking empty mergeinfo
     //runInAndVerifyIgnoreOutput("merge", "-c", "-3", myRepoUrl + "/trunk/folder", new File(myBranchVcsRoot, "folder").getAbsolutePath(), "--record-only"));
-    merge(new File(myBranchVcsRoot, "folder"), myTrunkUrl + "/folder", "-r", "3:2");
-    commitFile(myBranchVcsRoot);
-    updateFile(myBranchVcsRoot);
+    merge(File(myBranchVcsRoot, "folder"), "$myTrunkUrl/folder", "-r", "3:2")
+    commitFile(myBranchVcsRoot)
+    updateFile(myBranchVcsRoot)
 
-    assertMergeInfo(myBranchVcsRoot, "/trunk:3");
-    assertMergeInfo(new File(myBranchVcsRoot, "folder"), "");
+    assertMergeInfo(myBranchVcsRoot, "/trunk:3")
+    assertMergeInfo(File(myBranchVcsRoot, "folder"), "")
 
-    assertMergeResult(getTrunkChangeLists(), SvnMergeInfoCache.MergeCheckResult.NOT_MERGED);
+    assertMergeResult(trunkChangeLists, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED)
   }
 
   @Test
-  public void testNonInheritableMergeinfo() throws Exception {
-    createOneFolderStructure();
+  @Throws(Exception::class)
+  fun testNonInheritableMergeinfo() {
+    createOneFolderStructure()
 
     // rev 3
-    editAndCommit(trunk, f1);
+    editAndCommit(trunk, f1)
 
     // rev 4: record non inheritable merge
-    setMergeInfo(myBranchVcsRoot, "/trunk:3*");
-    commitFile(myBranchVcsRoot);
-    updateFile(myBranchVcsRoot);
+    setMergeInfo(myBranchVcsRoot, "/trunk:3*")
+    commitFile(myBranchVcsRoot)
+    updateFile(myBranchVcsRoot)
 
-    assertMergeInfo(myBranchVcsRoot, "/trunk:3*");
+    assertMergeInfo(myBranchVcsRoot, "/trunk:3*")
 
-    assertMergeResult(getTrunkChangeLists(), SvnMergeInfoCache.MergeCheckResult.NOT_MERGED);
+    assertMergeResult(trunkChangeLists, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED)
   }
 
   @Test
-  public void testOnlyImmediateInheritableMergeinfo() throws Exception {
-    createOneFolderStructure();
+  @Throws(Exception::class)
+  fun testOnlyImmediateInheritableMergeinfo() {
+    createOneFolderStructure()
 
     // rev 3
-    editAndCommit(trunk, f1, CONTENT1);
+    editAndCommit(trunk, f1, CONTENT1)
     // rev4
-    editAndCommit(trunk, f1, CONTENT2);
+    editAndCommit(trunk, f1, CONTENT2)
 
-    updateFile(myBranchVcsRoot);
+    updateFile(myBranchVcsRoot)
 
     // rev 4: record non inheritable merge
-    setMergeInfo(myBranchVcsRoot, "/trunk:3,4");
-    setMergeInfo(new File(myBranchVcsRoot, "folder"), "/trunk:3");
-    commitFile(myBranchVcsRoot);
-    updateFile(myBranchVcsRoot);
+    setMergeInfo(myBranchVcsRoot, "/trunk:3,4")
+    setMergeInfo(File(myBranchVcsRoot, "folder"), "/trunk:3")
+    commitFile(myBranchVcsRoot)
+    updateFile(myBranchVcsRoot)
 
-    assertMergeInfo(myBranchVcsRoot, "/trunk:3-4");
-    assertMergeInfo(new File(myBranchVcsRoot, "folder"), "/trunk:3");
+    assertMergeInfo(myBranchVcsRoot, "/trunk:3-4")
+    assertMergeInfo(File(myBranchVcsRoot, "folder"), "/trunk:3")
 
-    final List<SvnChangeList> changeListList = getTrunkChangeLists();
+    val changeListList = trunkChangeLists
 
-    assertRevisions(changeListList, 4, 3);
-    assertMergeResult(changeListList, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED, SvnMergeInfoCache.MergeCheckResult.MERGED);
+    assertRevisions(changeListList, 4, 3)
+    assertMergeResult(changeListList, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED, SvnMergeInfoCache.MergeCheckResult.MERGED)
   }
 
   @Test
-  public void testTwoPaths() throws Exception {
-    createTwoFolderStructure(myBranchVcsRoot);
+  @Throws(Exception::class)
+  fun testTwoPaths() {
+    createTwoFolderStructure(myBranchVcsRoot)
 
     // rev 3
-    editFile(f1);
-    editFile(f2);
-    commitFile(trunk);
+    editFile(f1)
+    editFile(f2)
+    commitFile(trunk)
 
-    updateFile(myBranchVcsRoot);
+    updateFile(myBranchVcsRoot)
 
     // rev 4: record non inheritable merge
-    setMergeInfo(myBranchVcsRoot, "/trunk:3");
+    setMergeInfo(myBranchVcsRoot, "/trunk:3")
     // this makes not merged for f2 path
-    setMergeInfo(new File(myBranchVcsRoot, "folder/folder1"), "/trunk:3*");
-    commitFile(myBranchVcsRoot);
-    updateFile(myBranchVcsRoot);
+    setMergeInfo(File(myBranchVcsRoot, "folder/folder1"), "/trunk:3*")
+    commitFile(myBranchVcsRoot)
+    updateFile(myBranchVcsRoot)
 
-    assertMergeInfo(myBranchVcsRoot, "/trunk:3");
-    assertMergeInfo(new File(myBranchVcsRoot, "folder/folder1"), "/trunk:3*");
+    assertMergeInfo(myBranchVcsRoot, "/trunk:3")
+    assertMergeInfo(File(myBranchVcsRoot, "folder/folder1"), "/trunk:3*")
 
-    final List<SvnChangeList> changeListList = getTrunkChangeLists();
+    val changeListList = trunkChangeLists
 
-    assertRevisions(changeListList, 3);
-    assertMergeResult(changeListList, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED);
+    assertRevisions(changeListList, 3)
+    assertMergeResult(changeListList, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED)
   }
 
   @Test
-  public void testWhenInfoInRepo() throws Exception {
-    final File fullBranch = newFolder(myTempDirFixture.getTempDirPath(), "fullBranch");
+  @Throws(Exception::class)
+  fun testWhenInfoInRepo() {
+    val fullBranch = newFolder(myTempDirFixture.tempDirPath, "fullBranch")
 
-    createTwoFolderStructure(fullBranch);
+    createTwoFolderStructure(fullBranch)
     // folder1 will be taken as branch wc root
-    checkOutFile(myBranchUrl + "/folder/folder1", myBranchVcsRoot);
+    checkOutFile("$myBranchUrl/folder/folder1", myBranchVcsRoot)
 
     // rev 3 : f2 changed
-    editAndCommit(trunk, f2);
+    editAndCommit(trunk, f2)
 
     // rev 4: record as merged into branch using full branch WC
-    recordMerge(fullBranch, myTrunkUrl, "-c", "3");
-    commitFile(fullBranch);
-    updateFile(myBranchVcsRoot);
+    recordMerge(fullBranch, myTrunkUrl, "-c", "3")
+    commitFile(fullBranch)
+    updateFile(myBranchVcsRoot)
 
-    final List<SvnChangeList> changeListList = getTrunkChangeLists();
+    val changeListList = trunkChangeLists
 
-    assertRevisions(changeListList, 3);
-    assertMergeResult(changeListList.get(0), SvnMergeInfoCache.MergeCheckResult.MERGED);
+    assertRevisions(changeListList, 3)
+    assertMergeResult(changeListList[0], SvnMergeInfoCache.MergeCheckResult.MERGED)
   }
 
   @Test
-  public void testMixedWorkingRevisions() throws Exception {
-    createOneFolderStructure();
+  @Throws(Exception::class)
+  fun testMixedWorkingRevisions() {
+    createOneFolderStructure()
 
     // rev 3
-    editAndCommit(trunk, f1);
+    editAndCommit(trunk, f1)
 
     // rev 4: record non inheritable merge
-    setMergeInfo(myBranchVcsRoot, "/trunk:3");
-    commitFile(myBranchVcsRoot);
+    setMergeInfo(myBranchVcsRoot, "/trunk:3")
+    commitFile(myBranchVcsRoot)
     // ! no update!
 
-    assertMergeInfo(myBranchVcsRoot, "/trunk:3");
+    assertMergeInfo(myBranchVcsRoot, "/trunk:3")
 
-    final Info f1info = vcs.getInfo(new File(myBranchVcsRoot, "folder/f1.txt"));
-    assertEquals(2, f1info.getRevision().getNumber());
+    val f1info = vcs.getInfo(File(myBranchVcsRoot, "folder/f1.txt"))
+    assertEquals(2, f1info!!.revision.number)
 
-    final List<SvnChangeList> changeListList = getTrunkChangeLists();
-    final SvnChangeList changeList = changeListList.get(0);
+    val changeListList = trunkChangeLists
+    val changeList = changeListList[0]
 
-    assertMergeResult(changeList, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED);
+    assertMergeResult(changeList, SvnMergeInfoCache.MergeCheckResult.NOT_MERGED)
 
     // and after update
-    updateFile(myBranchVcsRoot);
-    myMergeChecker.clear();
+    updateFile(myBranchVcsRoot)
+    myMergeChecker.clear()
 
-    assertMergeResult(changeList, SvnMergeInfoCache.MergeCheckResult.MERGED);
+    assertMergeResult(changeList, SvnMergeInfoCache.MergeCheckResult.MERGED)
   }
 
-  private void createOneFolderStructure() throws IOException {
-    trunk = newFolder(myTempDirFixture.getTempDirPath(), "trunk");
-    folder = newFolder(trunk, "folder");
-    f1 = newFile(folder, "f1.txt");
-    f2 = newFile(folder, "f2.txt");
+  @Throws(IOException::class)
+  private fun createOneFolderStructure() {
+    trunk = newFolder(myTempDirFixture.tempDirPath, "trunk")
+    folder = newFolder(trunk, "folder")
+    f1 = newFile(folder, "f1.txt")
+    f2 = newFile(folder, "f2.txt")
 
-    importAndCheckOut(trunk);
+    importAndCheckOut(trunk)
   }
 
-  private void createTwoFolderStructure(File branchFolder) throws IOException {
-    trunk = newFolder(myTempDirFixture.getTempDirPath(), "trunk");
-    folder = newFolder(trunk, "folder");
-    f1 = newFile(folder, "f1.txt");
-    File folder1 = newFolder(folder, "folder1");
-    f2 = newFile(folder1, "f2.txt");
+  @Throws(IOException::class)
+  private fun createTwoFolderStructure(branchFolder: File) {
+    trunk = newFolder(myTempDirFixture.tempDirPath, "trunk")
+    folder = newFolder(trunk, "folder")
+    f1 = newFile(folder, "f1.txt")
+    val folder1 = newFolder(folder, "folder1")
+    f2 = newFile(folder1, "f2.txt")
 
-    importAndCheckOut(trunk, branchFolder);
+    importAndCheckOut(trunk, branchFolder)
   }
 
-  @NotNull
-  private List<SvnChangeList> getTrunkChangeLists() throws com.intellij.openapi.vcs.VcsException {
-    final CommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> provider = vcs.getCommittedChangesProvider();
+  @Throws(IOException::class)
+  private fun importAndCheckOut(trunk: File, branch: File = myBranchVcsRoot) {
+    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.absolutePath, myTrunkUrl)
+    runInAndVerifyIgnoreOutput("copy", "-m", "test", myTrunkUrl, myBranchUrl)
 
-    return provider.getCommittedChanges(provider.createDefaultSettings(), new SvnRepositoryLocation(parseUrl(myTrunkUrl, false)), 0);
+    FileUtil.delete(trunk)
+    checkOutFile(myTrunkUrl, trunk)
+    checkOutFile(myBranchUrl, branch)
   }
 
-  private void importAndCheckOut(@NotNull File trunk) throws IOException {
-    importAndCheckOut(trunk, myBranchVcsRoot);
+  @Throws(IOException::class)
+  private fun editAndCommit(trunk: File, file: File, content: String = CONTENT1) {
+    val vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
+
+    editAndCommit(trunk, vf!!, content)
   }
 
-  private void importAndCheckOut(@NotNull File trunk, @NotNull File branch) throws IOException {
-    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myTrunkUrl);
-    runInAndVerifyIgnoreOutput("copy", "-m", "test", myTrunkUrl, myBranchUrl);
-
-    FileUtil.delete(trunk);
-    checkOutFile(myTrunkUrl, trunk);
-    checkOutFile(myBranchUrl, branch);
+  @Throws(IOException::class)
+  private fun editAndCommit(trunk: File, file: VirtualFile, content: String) {
+    editFile(file, content)
+    commitFile(trunk)
   }
 
-  private void editAndCommit(@NotNull File trunk, @NotNull File file) throws IOException {
-    editAndCommit(trunk, file, CONTENT1);
+  private fun editFile(file: File) {
+    val vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
+
+    editFile(vf!!, CONTENT1)
   }
 
-  private void editAndCommit(@NotNull File trunk, @NotNull File file, @NotNull String content) throws IOException {
-    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-
-    editAndCommit(trunk, vf, content);
+  private fun editFile(file: VirtualFile, content: String) {
+    VcsTestUtil.editFileInCommand(myProject, file, content)
   }
 
-  private void editAndCommit(@NotNull File trunk, @NotNull VirtualFile file, @NotNull String content) throws IOException {
-    editFile(file, content);
-    commitFile(trunk);
+  @Throws(SvnBindException::class)
+  private fun assertMergeInfo(file: File, expectedValue: String) {
+    val propertyValue = vcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, Revision.WORKING)
+
+    assertNotNull(propertyValue)
+    assertEquals(expectedValue, propertyValue!!.toString())
   }
 
-  private void editFile(@NotNull File file) {
-    final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+  @Throws(VcsException::class)
+  private fun assertMergeResult(changeLists: List<SvnChangeList>, vararg mergeResults: SvnMergeInfoCache.MergeCheckResult) {
+    myOneShotMergeInfoHelper.prepare()
 
-    editFile(vf, CONTENT1);
-  }
+    for (i in mergeResults.indices) {
+      val changeList = changeLists[i]
 
-  private void editFile(@NotNull VirtualFile file, @NotNull String content) {
-    VcsTestUtil.editFileInCommand(myProject, file, content);
-  }
-
-  private void assertMergeInfo(@NotNull File file, @NotNull String expectedValue) throws SvnBindException {
-    PropertyValue propertyValue =
-      vcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, Revision.WORKING);
-
-    assertNotNull(propertyValue);
-    assertEquals(expectedValue, propertyValue.toString());
-  }
-
-  private void assertMergeResult(@NotNull List<SvnChangeList> changeLists, @NotNull SvnMergeInfoCache.MergeCheckResult... mergeResults)
-    throws VcsException {
-    myOneShotMergeInfoHelper.prepare();
-
-    for (int i = 0; i < mergeResults.length; i++) {
-      SvnChangeList changeList = changeLists.get(i);
-
-      assertMergeResult(changeList, mergeResults[i]);
-      assertMergeResultOneShot(changeList, mergeResults[i]);
+      assertMergeResult(changeList, mergeResults[i])
+      assertMergeResultOneShot(changeList, mergeResults[i])
     }
   }
 
-  private void assertMergeResult(@NotNull SvnChangeList changeList, @NotNull SvnMergeInfoCache.MergeCheckResult mergeResult) {
-    assertEquals(mergeResult, myMergeChecker.checkList(changeList, myBranchVcsRoot.getAbsolutePath()));
+  private fun assertMergeResult(changeList: SvnChangeList, mergeResult: SvnMergeInfoCache.MergeCheckResult) {
+    assertEquals(mergeResult, myMergeChecker.checkList(changeList, myBranchVcsRoot.absolutePath))
   }
 
-  private void assertMergeResultOneShot(@NotNull SvnChangeList changeList, @NotNull SvnMergeInfoCache.MergeCheckResult mergeResult) {
-    assertEquals(mergeResult, myOneShotMergeInfoHelper.checkList(changeList));
+  private fun assertMergeResultOneShot(changeList: SvnChangeList, mergeResult: SvnMergeInfoCache.MergeCheckResult) {
+    assertEquals(mergeResult, myOneShotMergeInfoHelper.checkList(changeList))
   }
 
-  private static void assertRevisions(@NotNull List<SvnChangeList> changeLists, @NotNull long... expectedTopRevisions) {
-    long[] revisions = newLongArray(expectedTopRevisions.length);
-    for (int i = 0; i < revisions.length; i++) {
-      revisions[i] = changeLists.get(i).getNumber();
-    }
-
-    assertArrayEquals(expectedTopRevisions, revisions);
+  @Throws(IOException::class)
+  private fun commitFile(file: File) {
+    runInAndVerifyIgnoreOutput("ci", "-m", "test", file.absolutePath)
   }
 
-  private void commitFile(@NotNull File file) throws IOException {
-    runInAndVerifyIgnoreOutput("ci", "-m", "test", file.getAbsolutePath());
+  @Throws(IOException::class)
+  private fun updateFile(file: File) {
+    runInAndVerifyIgnoreOutput("up", file.absolutePath)
   }
 
-  private void updateFile(@NotNull File file) throws IOException {
-    runInAndVerifyIgnoreOutput("up", file.getAbsolutePath());
+  @Throws(IOException::class)
+  private fun checkOutFile(url: String, directory: File) {
+    runInAndVerifyIgnoreOutput("co", url, directory.absolutePath)
   }
 
-  private void checkOutFile(@NotNull String url, @NotNull File directory) throws IOException {
-    runInAndVerifyIgnoreOutput("co", url, directory.getAbsolutePath());
+  @Throws(IOException::class)
+  private fun setMergeInfo(file: File, value: String) {
+    runInAndVerifyIgnoreOutput("propset", "svn:mergeinfo", value, file.absolutePath)
   }
 
-  private void setMergeInfo(@NotNull File file, @NotNull String value) throws IOException {
-    runInAndVerifyIgnoreOutput("propset", "svn:mergeinfo", value, file.getAbsolutePath());
+  @Throws(IOException::class)
+  private fun merge(file: File, url: String, vararg revisions: String) {
+    merge(file, url, false, *revisions)
   }
 
-  private void merge(@NotNull File file, @NotNull String url, @NotNull String... revisions) throws IOException {
-    merge(file, url, false, revisions);
+  @Throws(IOException::class)
+  private fun recordMerge(file: File, url: String, vararg revisions: String) {
+    merge(file, url, true, *revisions)
   }
 
-  private void recordMerge(@NotNull File file, @NotNull String url, @NotNull String... revisions) throws IOException {
-    merge(file, url, true, revisions);
-  }
+  @Throws(IOException::class)
+  private fun merge(file: File, url: String, recordOnly: Boolean, vararg revisions: String) {
+    val parameters = ContainerUtil.newArrayList<String>()
 
-  private void merge(@NotNull File file, @NotNull String url, boolean recordOnly, @NotNull String... revisions) throws IOException {
-    List<String> parameters = ContainerUtil.newArrayList();
-
-    parameters.add("merge");
-    ContainerUtil.addAll(parameters, revisions);
-    parameters.add(url);
-    parameters.add(file.getAbsolutePath());
+    parameters.add("merge")
+    ContainerUtil.addAll<String, String, List<String>>(parameters, *revisions)
+    parameters.add(url)
+    parameters.add(file.absolutePath)
     if (recordOnly) {
-      parameters.add("--record-only");
+      parameters.add("--record-only")
     }
 
-    runInAndVerifyIgnoreOutput(ArrayUtil.toObjectArray(parameters, String.class));
-  }
-
-  @NotNull
-  private static File newFile(File parent, String name) throws IOException {
-    final File f1 = new File(parent, name);
-    f1.createNewFile();
-    return f1;
-  }
-
-  @NotNull
-  private static File newFolder(String parent, String name) {
-    final File trunk = new File(parent, name);
-    trunk.mkdir();
-    return trunk;
-  }
-
-  @NotNull
-  private static File newFolder(File parent, String name) {
-    final File trunk = new File(parent, name);
-    trunk.mkdir();
-    return trunk;
+    runInAndVerifyIgnoreOutput(*ArrayUtil.toObjectArray(parameters, String::class.java))
   }
 }
