@@ -3,7 +3,6 @@ package org.jetbrains.idea.svn
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.VcsConfiguration
-import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsTestUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
@@ -17,7 +16,6 @@ import org.jetbrains.idea.svn.api.Depth
 import org.jetbrains.idea.svn.api.Revision
 import org.jetbrains.idea.svn.api.Target
 import org.jetbrains.idea.svn.api.Url
-import org.jetbrains.idea.svn.commandLine.SvnBindException
 import org.jetbrains.idea.svn.dialogs.WCInfo
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches
 import org.jetbrains.idea.svn.history.SvnChangeList
@@ -29,7 +27,6 @@ import org.jetbrains.idea.svn.mergeinfo.SvnMergeInfoCache
 import org.junit.Assert.*
 import org.junit.Test
 import java.io.File
-import java.io.IOException
 
 private const val CONTENT1 = "123\n456\n123"
 private const val CONTENT2 = "123\n456\n123\n4"
@@ -75,14 +72,12 @@ class SvnMergeInfoTest : SvnTestCase() {
   private lateinit var myBranchUrl: String
 
   private val trunkChangeLists: List<SvnChangeList>
-    @Throws(com.intellij.openapi.vcs.VcsException::class)
     get() {
       val provider = vcs.committedChangesProvider
 
       return provider.getCommittedChanges(provider.createDefaultSettings(), SvnRepositoryLocation(parseUrl(myTrunkUrl, false)), 0)
     }
 
-  @Throws(Exception::class)
   override fun setUp() {
     super.setUp()
 
@@ -113,7 +108,6 @@ class SvnMergeInfoTest : SvnTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testSimpleNotMerged() {
     createOneFolderStructure()
 
@@ -124,7 +118,6 @@ class SvnMergeInfoTest : SvnTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testSimpleMerged() {
     createOneFolderStructure()
 
@@ -141,7 +134,6 @@ class SvnMergeInfoTest : SvnTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testEmptyMergeinfoBlocks() {
     createOneFolderStructure()
 
@@ -165,7 +157,6 @@ class SvnMergeInfoTest : SvnTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testNonInheritableMergeinfo() {
     createOneFolderStructure()
 
@@ -183,7 +174,6 @@ class SvnMergeInfoTest : SvnTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testOnlyImmediateInheritableMergeinfo() {
     createOneFolderStructure()
 
@@ -210,7 +200,6 @@ class SvnMergeInfoTest : SvnTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testTwoPaths() {
     createTwoFolderStructure(myBranchVcsRoot)
 
@@ -238,7 +227,6 @@ class SvnMergeInfoTest : SvnTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testWhenInfoInRepo() {
     val fullBranch = newFolder(myTempDirFixture.tempDirPath, "fullBranch")
 
@@ -261,7 +249,6 @@ class SvnMergeInfoTest : SvnTestCase() {
   }
 
   @Test
-  @Throws(Exception::class)
   fun testMixedWorkingRevisions() {
     createOneFolderStructure()
 
@@ -290,7 +277,6 @@ class SvnMergeInfoTest : SvnTestCase() {
     assertMergeResult(changeList, SvnMergeInfoCache.MergeCheckResult.MERGED)
   }
 
-  @Throws(IOException::class)
   private fun createOneFolderStructure() {
     trunk = newFolder(myTempDirFixture.tempDirPath, "trunk")
     folder = newFolder(trunk, "folder")
@@ -300,7 +286,6 @@ class SvnMergeInfoTest : SvnTestCase() {
     importAndCheckOut(trunk)
   }
 
-  @Throws(IOException::class)
   private fun createTwoFolderStructure(branchFolder: File) {
     trunk = newFolder(myTempDirFixture.tempDirPath, "trunk")
     folder = newFolder(trunk, "folder")
@@ -311,7 +296,6 @@ class SvnMergeInfoTest : SvnTestCase() {
     importAndCheckOut(trunk, branchFolder)
   }
 
-  @Throws(IOException::class)
   private fun importAndCheckOut(trunk: File, branch: File = myBranchVcsRoot) {
     runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.absolutePath, myTrunkUrl)
     runInAndVerifyIgnoreOutput("copy", "-m", "test", myTrunkUrl, myBranchUrl)
@@ -321,14 +305,12 @@ class SvnMergeInfoTest : SvnTestCase() {
     checkOutFile(myBranchUrl, branch)
   }
 
-  @Throws(IOException::class)
   private fun editAndCommit(trunk: File, file: File, content: String = CONTENT1) {
     val vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file)
 
     editAndCommit(trunk, vf!!, content)
   }
 
-  @Throws(IOException::class)
   private fun editAndCommit(trunk: File, file: VirtualFile, content: String) {
     editFile(file, content)
     commitFile(trunk)
@@ -344,7 +326,6 @@ class SvnMergeInfoTest : SvnTestCase() {
     VcsTestUtil.editFileInCommand(myProject, file, content)
   }
 
-  @Throws(SvnBindException::class)
   private fun assertMergeInfo(file: File, expectedValue: String) {
     val propertyValue = vcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, Revision.WORKING)
 
@@ -352,7 +333,6 @@ class SvnMergeInfoTest : SvnTestCase() {
     assertEquals(expectedValue, propertyValue!!.toString())
   }
 
-  @Throws(VcsException::class)
   private fun assertMergeResult(changeLists: List<SvnChangeList>, vararg mergeResults: SvnMergeInfoCache.MergeCheckResult) {
     myOneShotMergeInfoHelper.prepare()
 
@@ -372,37 +352,30 @@ class SvnMergeInfoTest : SvnTestCase() {
     assertEquals(mergeResult, myOneShotMergeInfoHelper.checkList(changeList))
   }
 
-  @Throws(IOException::class)
   private fun commitFile(file: File) {
     runInAndVerifyIgnoreOutput("ci", "-m", "test", file.absolutePath)
   }
 
-  @Throws(IOException::class)
   private fun updateFile(file: File) {
     runInAndVerifyIgnoreOutput("up", file.absolutePath)
   }
 
-  @Throws(IOException::class)
   private fun checkOutFile(url: String, directory: File) {
     runInAndVerifyIgnoreOutput("co", url, directory.absolutePath)
   }
 
-  @Throws(IOException::class)
   private fun setMergeInfo(file: File, value: String) {
     runInAndVerifyIgnoreOutput("propset", "svn:mergeinfo", value, file.absolutePath)
   }
 
-  @Throws(IOException::class)
   private fun merge(file: File, url: String, vararg revisions: String) {
     merge(file, url, false, *revisions)
   }
 
-  @Throws(IOException::class)
   private fun recordMerge(file: File, url: String, vararg revisions: String) {
     merge(file, url, true, *revisions)
   }
 
-  @Throws(IOException::class)
   private fun merge(file: File, url: String, recordOnly: Boolean, vararg revisions: String) {
     val parameters = ContainerUtil.newArrayList<String>()
 
