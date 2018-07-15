@@ -210,7 +210,8 @@ public class VcsLogUtil {
   }
 
   public static void triggerUsage(@NotNull String text, boolean isFromHistory) {
-    String feature = (isFromHistory ? "history." : "log.") + UsageDescriptorKeyValidator.ensureProperKey(text);
+    String prefix = isFromHistory ? "history." : "log.";
+    String feature = prefix + UsageDescriptorKeyValidator.ensureProperKey(text);
     FUSApplicationUsageTrigger.getInstance().trigger(VcsLogUsageTriggerCollector.class, feature);
   }
 
