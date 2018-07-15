@@ -14,9 +14,6 @@ import git4idea.GitVcs
 import git4idea.history.GitLogUtil
 import git4idea.repo.GitRepositoryManager
 
-/**
- * @author yole
- */
 open class GitDefaultMergeDialogCustomizer(
   private val gitMergeProvider: GitMergeProvider
 ) : MergeDialogCustomizer() {
@@ -37,12 +34,9 @@ open class GitDefaultMergeDialogCustomizer(
 
     val rebaseOntoBranches = filesByRoot.keys.map { gitMergeProvider.resolveRebaseOntoBranch(it) }
     if (rebaseOntoBranches.any { it != null }) {
-      return buildString {
-        append("<html>Rebasing ")
-        append(gitMergeProvider.getSingleCurrentBranchName(filesByRoot.keys)?.let { "branch <b>${XmlStringUtil.escapeString(it)}</b>" } ?: "diverging branches")
-        append(" onto ")
-        append(rebaseOntoBranches.toSet().singleOrNull()?.let { "branch <b>${XmlStringUtil.escapeString(it)}</b>" } ?: "diverging branches ")
-      }
+      val singleCurrentBranch = gitMergeProvider.getSingleCurrentBranchName(filesByRoot.keys)
+      val singleOntoBranch = rebaseOntoBranches.toSet().singleOrNull()
+      return getDescriptionForRebase(singleCurrentBranch, singleOntoBranch)
     }
 
     val cherryPickCommitDetails = filesByRoot.keys.map { loadCherryPickCommitDetails(it) }
@@ -68,12 +62,9 @@ open class GitDefaultMergeDialogCustomizer(
   }
 
   override fun getLeftPanelTitle(file: VirtualFile): String {
-    val repo = GitRepositoryManager.getInstance(project).getRepositoryForFile(file)
-    if (repo != null) {
-      return "<html>" + XmlStringUtil.escapeString(super.getLeftPanelTitle(file)) +
-             ", branch <b>${XmlStringUtil.escapeString(repo.currentBranchName)}</b>"
-    }
-    return super.getLeftPanelTitle(file)
+    val currentBranch = GitRepositoryManager.getInstance(project).getRepositoryForFile(file)?.currentBranchName
+    return if (currentBranch != null) getDefaultLeftPanelTitleForBranch(currentBranch)
+           else super.getLeftPanelTitle(file)
   }
 
   override fun getRightPanelTitle(file: VirtualFile, revisionNumber: VcsRevisionNumber?): String {
@@ -82,10 +73,7 @@ open class GitDefaultMergeDialogCustomizer(
 
     val branchBeingMerged = gitMergeProvider.resolveMergeBranch(repository) ?: gitMergeProvider.resolveRebaseOntoBranch(repository.root)
     if (branchBeingMerged != null) {
-      val branch = "<html>Changes from branch <b>${XmlStringUtil.escapeString(branchBeingMerged)}</b>"
-      if (revisionNumber is GitRevisionNumber) {
-        return branch + ", revision ${revisionNumber.shortRev}"
-      }
+      return getDefaultRightPanelTitleForBranch(branchBeingMerged, revisionNumber)
     }
 
     val cherryPickHead = try {
@@ -121,4 +109,23 @@ open class GitDefaultMergeDialogCustomizer(
   }
 
   private data class CherryPickDetails(val shortHash: String, val authorName: String, val commitMessage: String)
+}
+
+fun getDescriptionForRebase(rebasingBranch: String?, baseBranch: String?): String {
+  return buildString {
+    append("<html>Rebasing ")
+    append(rebasingBranch?.let { "branch <b>${XmlStringUtil.escapeString(it)}</b>" } ?: "")
+    append(baseBranch?.let { " onto branch <b>${XmlStringUtil.escapeString(it)}</b>" } ?: "diverging branches ")
+  }
+}
+
+fun getDefaultLeftPanelTitleForBranch(branchName: String): String {
+  return "<html>${XmlStringUtil.escapeString(DiffBundle.message("merge.version.title.our"))}, branch <b>${
+         XmlStringUtil.escapeString(branchName)}</b>"
+}
+
+fun getDefaultRightPanelTitleForBranch(branchName: String, revisionNumber: VcsRevisionNumber?) : String {
+  var title = "<html>Changes from branch <b>${XmlStringUtil.escapeString(branchName)}</b>"
+  if (revisionNumber is GitRevisionNumber) title += ", revision ${revisionNumber.shortRev}"
+  return title
 }

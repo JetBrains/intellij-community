@@ -23,6 +23,8 @@ import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThreeState;
@@ -31,6 +33,7 @@ import git4idea.branch.GitRebaseParams;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
+import git4idea.merge.GitDefaultMergeDialogCustomizerKt;
 import git4idea.rebase.GitSuccessfulRebase.SuccessType;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -398,12 +401,64 @@ public class GitRebaseProcess {
 
   @NotNull
   private ResolveConflictResult showConflictResolver(@NotNull GitRepository conflicting, boolean calledFromNotification) {
-    GitConflictResolver.Params params = new GitConflictResolver.Params(myProject).setReverse(true);
+    GitConflictResolver.Params params = new GitConflictResolver
+      .Params(myProject)
+      .setMergeDialogCustomizer(new GitRebaseMergeDialogCustomizer(conflicting, myRebaseSpec))
+      .setReverse(true);
     RebaseConflictResolver conflictResolver = new RebaseConflictResolver(myProject, myGit, conflicting, params, calledFromNotification);
     boolean allResolved = conflictResolver.merge();
     if (conflictResolver.myWasNothingToMerge) return ResolveConflictResult.NOTHING_TO_MERGE;
     if (allResolved) return ResolveConflictResult.ALL_RESOLVED;
     return ResolveConflictResult.UNRESOLVED_REMAIN;
+  }
+
+  private static class GitRebaseMergeDialogCustomizer extends MergeDialogCustomizer {
+
+    @Nullable private String myRebasingBranch;
+    @Nullable private String myBaseBranch;
+
+    private GitRebaseMergeDialogCustomizer(@NotNull GitRepository repository, @NotNull GitRebaseSpec rebaseSpec) {
+      GitRebaseParams rebaseParams = rebaseSpec.getParams();
+      if (rebaseParams != null) {
+        String currentBranchAtTheStartOfRebase = rebaseSpec.getInitialBranchNames().get(repository);
+        String upstream = rebaseParams.getUpstream();
+        if (upstream.equals(HEAD)) {
+          /* this is to overcome a hack: passing HEAD into `git rebase HEAD branch`
+             to avoid passing branch names for different repositories */
+          upstream = currentBranchAtTheStartOfRebase;
+        }
+        String branch = rebaseParams.getBranch();
+        if (branch == null) {
+          branch = currentBranchAtTheStartOfRebase;
+        }
+
+        myRebasingBranch = branch;
+        myBaseBranch = upstream;
+      }
+    }
+
+    @NotNull
+    @Override
+    public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
+      if (myRebasingBranch == null || myBaseBranch == null) return super.getMultipleFileMergeDescription(files);
+      return GitDefaultMergeDialogCustomizerKt.getDescriptionForRebase(myRebasingBranch, myBaseBranch);
+    }
+
+    @NotNull
+    @Override
+    public String getLeftPanelTitle(@NotNull VirtualFile file) {
+      return myRebasingBranch != null ?
+             GitDefaultMergeDialogCustomizerKt.getDefaultLeftPanelTitleForBranch(myRebasingBranch) :
+             super.getLeftPanelTitle(file);
+    }
+
+    @NotNull
+    @Override
+    public String getRightPanelTitle(@NotNull VirtualFile file, @Nullable VcsRevisionNumber revisionNumber) {
+      return myBaseBranch != null ?
+             GitDefaultMergeDialogCustomizerKt.getDefaultRightPanelTitleForBranch(myBaseBranch, revisionNumber) :
+             super.getRightPanelTitle(file, revisionNumber);
+    }
   }
 
   private void showStoppedForEditingMessage() {
