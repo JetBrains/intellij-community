@@ -62,7 +62,8 @@ public class BuilderProcessor extends AbstractClassProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    return builderHandler.validate(psiClass, psiAnnotation, builder);
+    // we skip validation here, bacause it will be validated by other BuilderClassProcessor
+    return true;//builderHandler.validate(psiClass, psiAnnotation, builder);
   }
 
   protected void generatePsiElements(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
