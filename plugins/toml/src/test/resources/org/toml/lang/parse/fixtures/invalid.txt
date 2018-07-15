@@ -1,0 +1,151 @@
+TOML File
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('key11')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(BASIC_STRING)('""')
+    PsiWhiteSpace(' ')
+    PsiErrorElement:'""' unexpected
+      PsiElement(BASIC_STRING)('""')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('key12')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(BASIC_STRING)('""')
+    PsiWhiteSpace(' ')
+    PsiErrorElement:'foo' unexpected
+      PsiElement(BARE_KEY)('foo')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('key13')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiErrorElement:<literal>, '[' or '{' expected, got 'foo'
+      <empty list>
+    PsiWhiteSpace(' ')
+    PsiElement(BARE_KEY)('foo')
+    PsiWhiteSpace(' ')
+    PsiElement(BASIC_STRING)('""')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('key14')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(NUMBER)('1')
+    PsiErrorElement:'.' unexpected
+      PsiElement(.)('.')
+    PsiElement(BARE_KEY)('foo')
+  PsiWhiteSpace('\n\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('key21')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(BASIC_STRING)('""')
+    PsiWhiteSpace(' ')
+    PsiErrorElement:'[' unexpected
+      PsiElement([)('[')
+    PsiElement(BARE_KEY)('invalid')
+    PsiElement(])(']')
+  PsiWhiteSpace('\n')
+  TomlKeyValue
+    TomlKey
+      PsiElement(BARE_KEY)('key22')
+    PsiWhiteSpace(' ')
+    PsiElement(=)('=')
+    PsiWhiteSpace(' ')
+    TomlLiteral
+      PsiElement(BASIC_STRING)('""')
+  PsiWhiteSpace('\n\n')
+  TomlTable
+    TomlTableHeader
+      PsiElement([)('[')
+      TomlKey
+        PsiElement(BARE_KEY)('header1')
+      PsiElement(])(']')
+      PsiWhiteSpace(' ')
+      PsiErrorElement:'invalid' unexpected
+        PsiElement(BARE_KEY)('invalid')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      PsiElement(BASIC_STRING)('""')
+    PsiWhiteSpace('\n')
+    TomlKeyValue
+      TomlKey
+        PsiElement(BARE_KEY)('key')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      TomlLiteral
+        PsiElement(BASIC_STRING)('""')
+  PsiWhiteSpace('\n\n')
+  TomlTable
+    TomlTableHeader
+      PsiElement([)('[')
+      TomlKey
+        PsiElement(BARE_KEY)('header2')
+      PsiElement(])(']')
+    PsiWhiteSpace('\n')
+    TomlKeyValue
+      TomlKey
+        PsiElement(BARE_KEY)('key1')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      TomlLiteral
+        PsiElement(BASIC_STRING)('""')
+      PsiWhiteSpace(' ')
+      PsiErrorElement:'invalid' unexpected
+        PsiElement(BARE_KEY)('invalid')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      PsiElement(BASIC_STRING)('""')
+    PsiWhiteSpace('\n')
+    TomlKeyValue
+      TomlKey
+        PsiElement(BARE_KEY)('key2')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      TomlLiteral
+        PsiElement(BASIC_STRING)('""')
+  PsiWhiteSpace('\n\n')
+  TomlArrayTable
+    TomlTableHeader
+      PsiElement([)('[')
+      PsiElement([)('[')
+      TomlKey
+        PsiElement(BARE_KEY)('header3')
+      PsiElement(])(']')
+      PsiElement(])(']')
+      PsiWhiteSpace(' ')
+      PsiErrorElement:'invalid' unexpected
+        PsiElement(BARE_KEY)('invalid')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      PsiElement(BASIC_STRING)('""')
+    PsiWhiteSpace('\n')
+    TomlKeyValue
+      TomlKey
+        PsiElement(BARE_KEY)('key')
+      PsiWhiteSpace(' ')
+      PsiElement(=)('=')
+      PsiWhiteSpace(' ')
+      TomlLiteral
+        PsiElement(BASIC_STRING)('""')

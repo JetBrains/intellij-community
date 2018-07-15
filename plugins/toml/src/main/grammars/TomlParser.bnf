@@ -37,12 +37,16 @@
 
 File ::= FileForm*
 
-private FileForm ::= KeyValue | ArrayTable | Table {recoverWhile=FileForm_recover}
-private FileForm_recover ::= !(
-  BARE_KEY | BARE_KEY_OR_NUMBER | BARE_KEY_OR_DATE | BASIC_STRING | LITERAL_STRING | '['
-)
+private FileForm ::= NewLineKeyValue | ArrayTable | Table { recoverWhile = FileForm_recover }
+private FileForm_recover ::=
+  !<<atNewLine (BARE_KEY | BARE_KEY_OR_NUMBER | BARE_KEY_OR_DATE | BASIC_STRING | LITERAL_STRING | '[')>>
+private EatUntilNextLine_recover ::= !<<atNewLine <<any>>>>
 
-KeyValue ::= Key '=' <<atSameLine Value>> {pin=1}
+KeyValue ::= Key '=' <<atSameLine Value>> { pin = 1 }
+NewLineKeyValue ::= <<atNewLine KeyValue>> {
+    elementType = KeyValue
+    recoverWhile = EatUntilNextLine_recover
+}
 
 Key ::= BareKey | BASIC_STRING | LITERAL_STRING
 private BareKey ::= BARE_KEY
@@ -50,8 +54,7 @@ private BareKey ::= BARE_KEY
   | <<remap 'BARE_KEY_OR_DATE' 'BARE_KEY'>>
 
 
-// The last rule (BARE_KEY) used in the case of completion (key=IntellijIdeaRulezzz)
-private Value ::= Literal | Array | InlineTable | BARE_KEY
+private Value ::= Literal | Array | InlineTable
 
 Literal ::= Number | Date | BOOLEAN
   | BASIC_STRING | LITERAL_STRING
@@ -60,14 +63,21 @@ Literal ::= Number | Date | BOOLEAN
 private Number ::= <<remap 'BARE_KEY_OR_NUMBER' 'NUMBER'>> | NUMBER
 private Date ::= <<remap 'BARE_KEY_OR_DATE' 'DATE_TIME'>> | DATE_TIME
 
-Array ::= '[' ArrayElement* ']' {pin=1}
-private ArrayElement ::= Value (','|&']') {pin=1}
+Array ::= '[' ArrayElement* ']' { pin = 1 }
+private ArrayElement ::= Value (','|&']') { pin = 1 }
 
-Table ::= TableHeader KeyValue*
-TableHeader ::= '[' Key ('.' Key)* ']' {pin=1}
+Table ::= TableHeader NewLineKeyValue*
+TableHeader ::= '[' Key ('.' Key)* ']' {
+  pin = 1
+  recoverWhile = EatUntilNextLine_recover
+}
 
-ArrayTable ::= ArrayTableHeader KeyValue*
-ArrayTableHeader ::= '[''[' Key ('.' Key)* ']'']' {pin=2 elementType=TableHeader}
+ArrayTable ::= ArrayTableHeader NewLineKeyValue*
+ArrayTableHeader ::= '[''[' Key ('.' Key)* ']'']' {
+  pin = 2
+  elementType = TableHeader
+  recoverWhile = EatUntilNextLine_recover
+}
 
-InlineTable ::= '{' InlineTableElement* '}' {pin=1}
-private InlineTableElement ::= KeyValue (','|&'}') {pin=1}
+InlineTable ::= '{' InlineTableElement* '}' { pin = 1 }
+private InlineTableElement ::= KeyValue (','|&'}') { pin = 1 }

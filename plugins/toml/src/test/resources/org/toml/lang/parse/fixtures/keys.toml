@@ -21,6 +21,6 @@ key1 =
 key3 =
 key4 = ""
 
-# parse same-line identifier as a value (needed for completion)
+# INVALID don't parse invalid (identifier) value as next key
 key1 =IntellijIdeaRulezzz
 key2 = IntellijIdeaRulezzz

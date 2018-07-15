@@ -24,18 +24,33 @@ object TomlParserUtil : GeneratedParserUtilBase() {
     }
 
     @JvmStatic
+    fun any(b: PsiBuilder, level: Int): Boolean = true
+
+    @JvmStatic
     fun atSameLine(b: PsiBuilder, level: Int, parser: Parser): Boolean {
         val marker = enter_section_(b)
-        addVariant(b, "VALUE")
-        b.tokenType // skip whitespace
-        val result = !isNextAfterNewLine(b) && parser.parse(b, level)
+        b.eof() // skip whitespace
+        val isSameLine = !isNextAfterNewLine(b)
+        if (!isSameLine) addVariant(b, "VALUE")
+        val result = isSameLine && parser.parse(b, level)
+        exit_section_(b, marker, null, result)
+        return result
+    }
+
+    @JvmStatic
+    fun atNewLine(b: PsiBuilder, level: Int, parser: Parser): Boolean {
+        val marker = enter_section_(b)
+        b.eof() // skip whitespace
+        val result = isNextAfterNewLine(b) && parser.parse(b, level)
         exit_section_(b, marker, null, result)
         return result
     }
 }
 
-private fun isNextAfterNewLine(b: PsiBuilder) =
-    b.rawLookup(-1) == TokenType.WHITE_SPACE && b.rawLookupText(-1).contains("\n")
+private fun isNextAfterNewLine(b: PsiBuilder): Boolean {
+    val prevToken = b.rawLookup(-1)
+    return prevToken == null || prevToken == TokenType.WHITE_SPACE && b.rawLookupText(-1).contains("\n")
+}
 
 private fun PsiBuilder.rawLookupText(steps: Int): CharSequence {
     val start = rawTokenTypeStart(steps)

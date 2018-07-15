@@ -1,0 +1,17 @@
+key11 = "" ""
+key12 = "" foo
+key13 = foo ""
+key14 = 1.foo
+
+key21 = "" [invalid]
+key22 = ""
+
+[header1] invalid = ""
+key = ""
+
+[header2]
+key1 = "" invalid = ""
+key2 = ""
+
+[[header3]] invalid = ""
+key = ""

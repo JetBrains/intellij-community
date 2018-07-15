@@ -24,6 +24,7 @@ class TomlParserTest
     fun testTables() = doTest()
     fun testInlineTables() = doTest()
     fun testArrayTables() = doTest()
+    fun testInvalid() = doTest()
 
     override fun getTestDataPath() = "src/test/resources"
     override fun setUp() {

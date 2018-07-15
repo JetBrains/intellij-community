@@ -152,13 +152,15 @@ TOML File
     TomlLiteral
       PsiElement(BASIC_STRING)('""')
   PsiWhiteSpace('\n\n')
-  PsiComment(COMMENT)('# parse same-line identifier as a value (needed for completion)')
+  PsiComment(COMMENT)('# INVALID don't parse invalid (identifier) value as next key')
   PsiWhiteSpace('\n')
   TomlKeyValue
     TomlKey
       PsiElement(BARE_KEY)('key1')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
+    PsiErrorElement:<literal>, '[' or '{' expected, got 'IntellijIdeaRulezzz'
+      <empty list>
     PsiElement(BARE_KEY)('IntellijIdeaRulezzz')
   PsiWhiteSpace('\n')
   TomlKeyValue
@@ -166,5 +168,7 @@ TOML File
       PsiElement(BARE_KEY)('key2')
     PsiWhiteSpace(' ')
     PsiElement(=)('=')
+    PsiErrorElement:<literal>, '[' or '{' expected, got 'IntellijIdeaRulezzz'
+      <empty list>
     PsiWhiteSpace(' ')
     PsiElement(BARE_KEY)('IntellijIdeaRulezzz')
