@@ -86,7 +86,7 @@ class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
     @Nullable
     @Override
     public DiffRequestProducer createProducer(@Nullable Project project) {
-      return myBrowser.getDiffRequestProducer(myChange);
+      return myBrowser.getDiffRequestProducer(myChange, true);
     }
   }
 }

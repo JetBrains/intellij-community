@@ -9,13 +9,17 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
@@ -34,6 +38,7 @@ import com.intellij.vcs.log.impl.MergedChangeDiffRequestProvider;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogActionPlaces;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
+import com.intellij.vcsUtil.VcsFileUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +47,8 @@ import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
 
+import static com.intellij.diff.util.DiffUserDataKeysEx.VCS_DIFF_LEFT_CONTENT_TITLE;
+import static com.intellij.diff.util.DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_TITLE;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_CHANGES_FROM_PARENTS;
@@ -247,9 +254,13 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
     return null;
   }
 
-  @Nullable
   @Override
   public ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object userObject) {
+    return getDiffRequestProducer(userObject, false);
+  }
+
+  @Nullable
+  public ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object userObject, boolean forDiffPreview) {
     if (userObject instanceof MergedChange) {
       MergedChange mergedChange = (MergedChange)userObject;
       if (mergedChange.getSourceChanges().size() == 2) {
@@ -258,6 +269,11 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
     }
     if (userObject instanceof Change) {
       Change change = (Change)userObject;
+
+      Map<Key, Object> context = ContainerUtil.newHashMap();
+      if (forDiffPreview) {
+        putFilePathsIntoContext(change, context);
+      }
 
       CommitId parentId = null;
       for (CommitId commitId : myChangesToParents.keySet()) {
@@ -269,13 +285,45 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
 
       if (parentId != null) {
         RootTag tag = new RootTag(parentId.getHash(), getText(parentId));
-        Map<Key, Object> context = Collections.singletonMap(ChangeDiffRequestProducer.TAG_KEY, tag);
-        return ChangeDiffRequestProducer.create(myProject, change, context);
+        context.put(ChangeDiffRequestProducer.TAG_KEY, tag);
       }
 
-      return ChangeDiffRequestProducer.create(myProject, change);
+      return ChangeDiffRequestProducer.create(myProject, change, context);
     }
     return null;
+  }
+
+  private static void putFilePathsIntoContext(@NotNull Change change, @NotNull Map<Key, Object> context) {
+    ContentRevision afterRevision = change.getAfterRevision();
+    ContentRevision beforeRevision = change.getBeforeRevision();
+    FilePath aFile = afterRevision == null ? null : afterRevision.getFile();
+    FilePath bFile = beforeRevision == null ? null : beforeRevision.getFile();
+    context.put(VCS_DIFF_RIGHT_CONTENT_TITLE, getRevisionTitle(afterRevision, aFile, null));
+    context.put(VCS_DIFF_LEFT_CONTENT_TITLE, getRevisionTitle(beforeRevision, bFile, aFile));
+  }
+
+  @NotNull
+  private static String getRevisionTitle(@Nullable ContentRevision revision,
+                                         @Nullable FilePath file,
+                                         @Nullable FilePath baseFile) {
+    return getShortHash(revision) +
+           (file == null || Objects.equals(baseFile, file) ? "" : " (" + getRelativeFileName(baseFile, file) + ")");
+  }
+
+  @NotNull
+  private static String getShortHash(@Nullable ContentRevision revision) {
+    if (revision == null) return "";
+    VcsRevisionNumber revisionNumber = revision.getRevisionNumber();
+    if (revisionNumber instanceof ShortVcsRevisionNumber) return ((ShortVcsRevisionNumber)revisionNumber).toShortString();
+    return revisionNumber.asString();
+  }
+
+  @NotNull
+  private static String getRelativeFileName(@Nullable FilePath baseFile, @NotNull FilePath file) {
+    if (baseFile == null || !baseFile.getName().equals(file.getName())) return file.getName();
+    FilePath aParentPath = baseFile.getParentPath();
+    if (aParentPath == null) return file.getName();
+    return VcsFileUtil.relativePath(aParentPath.getIOFile(), file.getIOFile());
   }
 
   private class MyTreeModelBuilder extends TreeModelBuilder {
