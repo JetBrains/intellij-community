@@ -26,7 +26,7 @@ public class Main {
     this.basic = basic;
   }
 
-  private Main() {
+  public Main() {
     _foo = 10;
     fBar = 20;
     baz = 40;
