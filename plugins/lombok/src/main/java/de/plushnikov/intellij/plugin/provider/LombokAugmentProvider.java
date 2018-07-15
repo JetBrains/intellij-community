@@ -107,8 +107,9 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     if (!element.isValid()) {
       return emptyResult;
     }
+    final PsiClass psiClass = (PsiClass) element;
     // Skip processing of Annotations and Interfaces
-    if (((PsiClass) element).isAnnotationType() || ((PsiClass) element).isInterface()) {
+    if (psiClass.isAnnotationType() || psiClass.isInterface()) {
       return emptyResult;
     }
     // skip processing if plugin is disabled
@@ -116,8 +117,6 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     if (!ProjectSettings.isLombokEnabledInProject(project)) {
       return emptyResult;
     }
-
-    final PsiClass psiClass = (PsiClass) element;
 
     if (type == PsiField.class) {
       return CachedValuesManager.getCachedValue(element, new FieldLombokCachedValueProvider<Psi>(type, psiClass));
