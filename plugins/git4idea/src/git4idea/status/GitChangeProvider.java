@@ -142,8 +142,8 @@ public class GitChangeProvider implements ChangeProvider {
           if (!existingInScope.contains(childVf) && existingInScope.contains(parentVf)) {
             LOG.debug("adding git root for check. child: " + childVf.getPath() + ", parent: " + parentVf.getPath());
             ((VcsModifiableDirtyScope)dirtyScope).addDirtyDirRecursively(VcsUtil.getFilePath(childVf));
+            break;
           }
-          break;
         }
       }
     }
