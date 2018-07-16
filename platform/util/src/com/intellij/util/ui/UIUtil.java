@@ -101,9 +101,9 @@ public class UIUtil {
     UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", UIUtil.JBHtmlEditorKit.createStyleSheet());
   }
 
-  public static void decorateFrame(@NotNull JRootPane pane) {
-    if (Registry.is("ide.mac.allowDarkWindowDecorations")) {
-      pane.putClientProperty("jetbrains.awt.windowDarkAppearance", isUnderDarcula());
+  public static void decorateWindowHeader(@NotNull JRootPane pane) {
+    if (SystemInfo.isMac) {
+      pane.putClientProperty("jetbrains.awt.windowDarkAppearance", Registry.is("ide.mac.allowDarkWindowDecorations") && isUnderDarcula());
     }
   }
 
