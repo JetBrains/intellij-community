@@ -15,7 +15,6 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
-import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.module.Module;
@@ -371,14 +370,10 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
     if (expanded && object instanceof Node) return null;
     if (object instanceof PresentableNodeDescriptor) {
       PresentableNodeDescriptor node = (PresentableNodeDescriptor)object;
-      PresentationData presentation = node.getPresentation();
-      TextAttributesKey key = presentation.getTextAttributesKey();
-      if (key != null) {
-        TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
-        if (attributes != null && EffectType.WAVE_UNDERSCORE == attributes.getEffectType()) {
-          return ErrorStripe.create(attributes.getEffectColor(), 1);
-        }
-      }
+      TextAttributesKey key = node.getPresentation().getTextAttributesKey();
+      TextAttributes attributes = key == null ? null : EditorColorsManager.getInstance().getSchemeForCurrentUITheme().getAttributes(key);
+      Color color = attributes == null ? null : attributes.getErrorStripeColor();
+      if (color != null) return ErrorStripe.create(color, 1);
     }
     return null;
   }

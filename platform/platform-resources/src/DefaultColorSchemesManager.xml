@@ -308,6 +308,13 @@
           <option name="ERROR_STRIPE_COLOR" value="cf5b56" deuteranopia="d95716" protanopia="d95716"/>
         </value>
       </option>
+      <option name="FILESTATUS_ERRORS">
+        <value>
+          <option name="EFFECT_TYPE" value="2"/>
+          <option name="EFFECT_COLOR" value="ff0000" deuteranopia="e56000" protanopia="e56000"/>
+          <option name="ERROR_STRIPE_COLOR" value="cf5b56" deuteranopia="d95716" protanopia="d95716"/>
+        </value>
+      </option>
       <option name="RUNTIME_ERROR">
         <value>
           <option name="EFFECT_COLOR" value="f49810" />
@@ -1636,6 +1643,13 @@
         <value>
           <option name="EFFECT_COLOR" value="bc3f3c" deuteranopia="e57132" protanopia="e57132"/>
           <option name="EFFECT_TYPE" value="2" />
+          <option name="ERROR_STRIPE_COLOR" value="9e2927" deuteranopia="ff8f40" protanopia="ff8f40"/>
+        </value>
+      </option>
+      <option name="FILESTATUS_ERRORS">
+        <value>
+          <option name="EFFECT_TYPE" value="2"/>
+          <option name="EFFECT_COLOR" value="bc3f3c" deuteranopia="e57132" protanopia="e57132"/>
           <option name="ERROR_STRIPE_COLOR" value="9e2927" deuteranopia="ff8f40" protanopia="ff8f40"/>
         </value>
       </option>

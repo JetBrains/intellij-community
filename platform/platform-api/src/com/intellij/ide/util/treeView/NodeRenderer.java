@@ -116,7 +116,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
 
   @NotNull
   protected EditorColorsScheme getColorsScheme() {
-    return EditorColorsManager.getInstance().getGlobalScheme();
+    return EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
   }
 
   @NotNull
@@ -136,7 +136,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
   }
 
   public static SimpleTextAttributes getSimpleTextAttributes(@Nullable final ItemPresentation presentation) {
-    return getSimpleTextAttributes(presentation, EditorColorsManager.getInstance().getGlobalScheme());
+    return getSimpleTextAttributes(presentation, EditorColorsManager.getInstance().getSchemeForCurrentUITheme());
   }
   
   public static SimpleTextAttributes getSimpleTextAttributes(@Nullable final ItemPresentation presentation,
