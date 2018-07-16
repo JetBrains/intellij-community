@@ -1,8 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileFactory;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
@@ -104,5 +107,16 @@ public class GlobalSearchScopeTest extends PlatformTestCase {
 
     assertTrue(GlobalSearchScopes.directoryScope(myProject, libRoot, true).isSearchInLibraries());
     assertTrue(GlobalSearchScopes.directoriesScope(myProject, true, libRoot, contentRoot).isSearchInLibraries());
+  }
+
+  public void testIsInScopeDoesNotAcceptRandomNonPhysicalFilesByDefault() {
+    PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText(PlainTextLanguage.INSTANCE, "");
+    VirtualFile vFile = file.getViewProvider().getVirtualFile();
+
+    assertFalse(GlobalSearchScope.allScope(myProject).contains(vFile));
+    assertFalse(PsiSearchScopeUtil.isInScope(GlobalSearchScope.allScope(myProject), file));
+
+    assertTrue(file.getResolveScope().contains(vFile));
+    assertTrue(PsiSearchScopeUtil.isInScope(file.getResolveScope(), file));
   }
 }
