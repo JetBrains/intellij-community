@@ -45,7 +45,7 @@ public class OutsidersPsiFileSupport {
   public static class HighlightFilter implements HighlightInfoFilter {
     @Override
     public boolean accept(@NotNull HighlightInfo info, @Nullable PsiFile file) {
-      if (!isDiffFile(file)) return true;
+      if (!isOutsiderFile(file)) return true;
       if (info.getSeverity() == HighlightSeverity.ERROR) return false;
       return true;
     }
@@ -54,7 +54,7 @@ public class OutsidersPsiFileSupport {
   public static class IntentionFilter implements IntentionActionFilter {
     @Override
     public boolean accept(@NotNull IntentionAction intentionAction, @Nullable PsiFile file) {
-      return !isDiffFile(file);
+      return !isOutsiderFile(file);
     }
   }
 
@@ -62,7 +62,7 @@ public class OutsidersPsiFileSupport {
     @Nullable
     @Override
     public FileHighlightingSetting getDefaultSetting(@NotNull Project project, @NotNull VirtualFile file) {
-      if (!isDiffFile(file)) return null;
+      if (!isOutsiderFile(file)) return null;
       return FileHighlightingSetting.SKIP_INSPECTION;
     }
   }
@@ -78,11 +78,11 @@ public class OutsidersPsiFileSupport {
   }
 
 
-  public static boolean isDiffFile(@Nullable PsiFile file) {
-    return file != null && isDiffFile(file.getVirtualFile());
+  public static boolean isOutsiderFile(@Nullable PsiFile file) {
+    return file != null && isOutsiderFile(file.getVirtualFile());
   }
 
-  public static boolean isDiffFile(@Nullable VirtualFile file) {
+  public static boolean isOutsiderFile(@Nullable VirtualFile file) {
     return file != null && file.getUserData(KEY) == Boolean.TRUE;
   }
 
