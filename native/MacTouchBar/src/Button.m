@@ -403,15 +403,23 @@ void updateButton(
 void setArrowImage(id buttObj, const char *raster4ByteRGBA, int w, int h) {
     NSCustomTouchBarItem *container = buttObj; // TODO: check types
     NSButtonJAction *button = (container).view; // TODO: check types
+    NSAutoreleasePool *edtPool = [NSAutoreleasePool new];
 
-    if (raster4ByteRGBA == NULL || w <= 0) {
-        [button setArrowImg:nil];
-        return;
+    NSImage *img = nil;
+    if (raster4ByteRGBA != NULL && w > 0)
+        img = createImgFrom4ByteRGBA((const unsigned char *) raster4ByteRGBA, w, h);
+
+    if ([NSThread isMainThread]) {
+        [button setArrowImg:img];
+        //NSLog(@"sync set arrow: w=%d h=%d", w, h);
+    } else {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            // NOTE: block is copied, img/text objects is automatically retained
+            // nstrace(@"\tperform update button [%@] (thread: %@)", container.identifier, [NSThread currentThread]);
+            [button setArrowImg:img];
+            //NSLog(@"async set arrow: w=%d h=%d", w, h);
+        });
     }
 
-    NSAutoreleasePool *edtPool = [NSAutoreleasePool new];
-    NSImage *img = createImgFrom4ByteRGBA((const unsigned char *) raster4ByteRGBA, w, h);
-    [button setArrowImg:img];
-    //NSLog(@"set arrow: w=%d h=%d", w, h);
     [edtPool release];
 }

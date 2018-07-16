@@ -40,7 +40,16 @@ class TBItemButton extends TBItem {
     return this;
   }
 
-  TBItemButton setHasArrowIcon(boolean hasArrowIcon) { myHasArrowIcon = hasArrowIcon; return this; }
+  TBItemButton setHasArrowIcon(boolean hasArrowIcon) {
+    if (hasArrowIcon != myHasArrowIcon) {
+      myHasArrowIcon = hasArrowIcon;
+      if (myNativePeer != ID.NIL) {
+        final Icon ic = myHasArrowIcon ? IconLoader.getIcon("/mac/touchbar/popoverArrow_dark.svg") : null;
+        NST.setArrowImage(myNativePeer, ic);
+      }
+    }
+    return this;
+  }
 
   TBItemButton setText(String text) {
     if (!Comparing.equal(text, myText)) {
