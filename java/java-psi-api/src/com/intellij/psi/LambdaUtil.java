@@ -812,7 +812,7 @@ public class LambdaUtil {
       return  (PsiCall)anEnum.add(call);
     }
     PsiType type = PsiTypesUtil.getExpectedTypeByParent(call);
-    if (type != null) {
+    if (type != null && PsiTypesUtil.isDenotableType(type, call)) {
       return (PsiCall)copyWithExpectedType(call, type);
     }
     return (PsiCall)call.copy();
