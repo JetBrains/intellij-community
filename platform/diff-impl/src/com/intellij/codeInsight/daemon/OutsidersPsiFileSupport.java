@@ -24,6 +24,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,8 @@ import org.jetbrains.annotations.Nullable;
  * as they tend to be false-positive due to context differences.
  */
 public class OutsidersPsiFileSupport {
-  public static final Key<Boolean> KEY = Key.create("OutsidersPsiFileSupport");
+  private static final Key<Boolean> KEY = Key.create("OutsidersPsiFileSupport");
+  private static final Key<String> FILE_PATH_KEY = Key.create("OutsidersPsiFileSupport.FilePath");
 
   public static class HighlightFilter implements HighlightInfoFilter {
     @Override
@@ -67,8 +69,14 @@ public class OutsidersPsiFileSupport {
 
 
   public static void markFile(@NotNull VirtualFile file) {
-    file.putUserData(KEY, Boolean.TRUE);
+    markFile(file, null);
   }
+
+  public static void markFile(@NotNull VirtualFile file, @Nullable String originalPath) {
+    file.putUserData(KEY, Boolean.TRUE);
+    if (originalPath != null) file.putUserData(FILE_PATH_KEY, FileUtil.toSystemIndependentName(originalPath));
+  }
+
 
   public static boolean isDiffFile(@Nullable PsiFile file) {
     return file != null && isDiffFile(file.getVirtualFile());
@@ -76,5 +84,10 @@ public class OutsidersPsiFileSupport {
 
   public static boolean isDiffFile(@Nullable VirtualFile file) {
     return file != null && file.getUserData(KEY) == Boolean.TRUE;
+  }
+
+  @Nullable
+  public static String getOriginalFilePath(@NotNull VirtualFile file) {
+    return file.getUserData(FILE_PATH_KEY);
   }
 }
