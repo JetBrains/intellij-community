@@ -29,7 +29,7 @@ public class SearchTargetRequestorImpl implements SearchTargetRequestor {
 
   @NotNull
   @Override
-  public SearchTargetRequestor setSearchScope(@NotNull SearchScope scope) {
+  public SearchTargetRequestor inScope(@NotNull SearchScope scope) {
     mySearchScope = scope;
     return this;
   }

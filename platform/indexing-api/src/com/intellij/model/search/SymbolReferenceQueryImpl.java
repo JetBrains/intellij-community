@@ -37,7 +37,7 @@ final class SymbolReferenceQueryImpl extends AbstractQuery<SymbolReference> impl
 
   @NotNull
   @Override
-  public SymbolReferenceQuery setSearchScope(@NotNull SearchScope scope) {
+  public SymbolReferenceQuery inScope(@NotNull SearchScope scope) {
     if (myParameters.getOriginalSearchScope().equals(scope)) {
       return this;
     }

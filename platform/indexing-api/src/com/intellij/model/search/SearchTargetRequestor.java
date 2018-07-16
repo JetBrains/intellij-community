@@ -20,7 +20,7 @@ public interface SearchTargetRequestor {
    * @return this object
    */
   @NotNull
-  SearchTargetRequestor setSearchScope(@NotNull SearchScope scope);
+  SearchTargetRequestor inScope(@NotNull SearchScope scope);
 
   /**
    * Restricts search scope to include only selected file types.

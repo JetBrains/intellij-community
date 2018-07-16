@@ -44,7 +44,7 @@ final class SearchWordRequestorImpl implements SearchWordRequestor {
 
   @NotNull
   @Override
-  public SearchWordRequestor setSearchScope(@NotNull SearchScope searchScope) {
+  public SearchWordRequestor inScope(@NotNull SearchScope searchScope) {
     mySearchScope = searchScope;
     return this;
   }

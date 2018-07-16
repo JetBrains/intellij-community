@@ -15,7 +15,7 @@ public interface SearchWordRequestor {
    * @return this object
    */
   @NotNull
-  SearchWordRequestor setSearchScope(@NotNull SearchScope searchScope);
+  SearchWordRequestor inScope(@NotNull SearchScope searchScope);
 
   /**
    * Restricts search scope to include only selected file types.

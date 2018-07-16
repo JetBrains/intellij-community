@@ -18,7 +18,7 @@ public interface SymbolReferenceQuery extends Query<SymbolReference> {
    * @return new query instance with adjusted search scope or this instance if passed search scope is equal to original
    */
   @NotNull
-  SymbolReferenceQuery setSearchScope(@NotNull SearchScope scope);
+  SymbolReferenceQuery inScope(@NotNull SearchScope scope);
 
   /**
    * @return new query instance which will ignore access scope or this instance if access scope is already ignored
