@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -16,10 +17,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.List;
 
 import static java.awt.event.ComponentEvent.COMPONENT_FIRST;
 
 class TBItemAnActionButton extends TBItemButton {
+  private static final int ourRunConfigurationPopoverWidth = 143;
+
   public static final int SHOWMODE_IMAGE_ONLY = 0;
   public static final int SHOWMODE_TEXT_ONLY = 1;
   public static final int SHOWMODE_IMAGE_TEXT = 2;
@@ -34,13 +38,12 @@ class TBItemAnActionButton extends TBItemButton {
   private boolean myAutoVisibility = true;
   private boolean myHiddenWhenDisabled = false;
 
-  private Component myComponent;
+  private @Nullable Component myComponent;
+  private @Nullable List<TBItemAnActionButton> myLinkedButtons;
 
   TBItemAnActionButton(@NotNull String uid, @Nullable ItemListener listener, @NotNull AnAction action) {
     super(uid, listener);
-    myAnAction = action;
-    myActionId = ApplicationManager.getApplication() == null ? action.toString() : ActionManager.getInstance().getId(myAnAction);
-
+    setAnAction(action);
     setModality(null);
 
     if (action instanceof Toggleable) {
@@ -54,6 +57,8 @@ class TBItemAnActionButton extends TBItemButton {
   TBItemAnActionButton setComponent(Component component/*for DataCtx*/) { myComponent = component; return this; }
   TBItemAnActionButton setModality(ModalityState modality) { setAction(this::_performAction, true, modality); return this; }
   TBItemAnActionButton setShowMode(int showMode) { myShowMode = showMode; return this; }
+
+  void setLinkedButtons(@Nullable List<TBItemAnActionButton> linkedButtons) { myLinkedButtons = linkedButtons; }
 
   void updateAnAction(Presentation presentation) {
     if (ApplicationManager.getApplication() == null) {
@@ -83,7 +88,11 @@ class TBItemAnActionButton extends TBItemButton {
   void setHiddenWhenDisabled(boolean hiddenWhenDisabled) { myHiddenWhenDisabled = hiddenWhenDisabled; }
 
   @NotNull AnAction getAnAction() { return myAnAction; }
-  void setAnAction(@NotNull AnAction newAction) { myAnAction = newAction; } // can be safely replaced without setAction (because _performAction will use updated reference to AnAction)
+  void setAnAction(@NotNull AnAction newAction) {
+    // can be safely replaced without setAction (because _performAction will use updated reference to AnAction)
+    myAnAction = newAction;
+    myActionId = ApplicationManager.getApplication() == null ? newAction.toString() : ActionManager.getInstance().getId(newAction);
+  }
 
   // returns true when visibility changed
   boolean updateVisibility(Presentation presentation) { // called from EDT
@@ -91,11 +100,14 @@ class TBItemAnActionButton extends TBItemButton {
       return false;
 
     final boolean isVisible = presentation.isVisible() && (presentation.isEnabled() || !myHiddenWhenDisabled);
-    final boolean visibilityChanged = isVisible != myIsVisible;
+    boolean visibilityChanged = isVisible != myIsVisible;
     if (visibilityChanged) {
       myIsVisible = isVisible;
       // System.out.println(String.format("%s: visibility changed, now is [%s]", toString(), isVisible ? "visible" : "hidden"));
     }
+    if ("RunConfiguration".equals(myActionId))
+      visibilityChanged = visibilityChanged || _setLinkedVisibility(presentation.getIcon() != AllIcons.General.Add);
+
     return visibilityChanged;
   }
   void updateView(Presentation presentation) { // called from EDT
@@ -119,11 +131,33 @@ class TBItemAnActionButton extends TBItemButton {
       final Object selectedProp = presentation.getClientProperty(Toggleable.SELECTED_PROPERTY);
       isSelected = selectedProp != null && selectedProp == Boolean.TRUE;
     }
+    if ("RunConfiguration".equals(myActionId)) {
+      if (presentation.getIcon() != AllIcons.General.Add) {
+        setHasArrowIcon(true);
+        setLayout(ourRunConfigurationPopoverWidth, 0, 5, 8);
+      } else {
+        setHasArrowIcon(false);
+        setLayout(0, 0, 5, 8);
+      }
+    }
 
     final boolean hideText = myShowMode == SHOWMODE_IMAGE_ONLY || (myShowMode == SHOWMODE_IMAGE_ONLY_IF_PRESENTED && icon != null);
     final String text = hideText ? null : presentation.getText();
 
     update(icon, text, isSelected, !presentation.isEnabled());
+  }
+
+  private boolean _setLinkedVisibility(boolean visible) {
+    if (myLinkedButtons == null)
+      return false;
+    boolean visibilityChanged = false;
+    for (TBItemAnActionButton butt: myLinkedButtons) {
+      if (butt.myAutoVisibility != visible)
+        visibilityChanged = true;
+      butt.setAutoVisibility(visible);
+      butt.myIsVisible = visible;
+    }
+    return visibilityChanged;
   }
 
   private void _performAction() {
@@ -147,6 +181,8 @@ class TBItemAnActionButton extends TBItemButton {
   private static Component _getCurrentFocusComponent() {
     final KeyboardFocusManager focusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     Component focusOwner = focusManager.getFocusOwner();
+    if (focusOwner == null)
+      focusOwner = focusManager.getPermanentFocusOwner();
     if (focusOwner == null) {
       // LOG.info(String.format("WARNING: [%s:%s] _getCurrentFocusContext: null focus-owner, use focused window", myUid, myActionId));
       return focusManager.getFocusedWindow();
