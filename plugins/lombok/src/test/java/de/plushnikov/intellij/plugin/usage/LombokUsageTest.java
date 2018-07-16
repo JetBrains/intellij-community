@@ -34,6 +34,12 @@ public class LombokUsageTest extends AbstractLombokLightCodeInsightTestCase {
     assertUsages(usages, "FindUsageBuilder.builder()\n      .bar", "findUsageBuilder.getBar");
   }
 
+  public void testFindUsageSingularBuilder() {
+    final Collection<UsageInfo> usages = loadTestClass();
+    assertUsages(usages, "FindUsageSingularBuilder.builder()\n      .bar", "FindUsageSingularBuilder.builder().bars",
+      "FindUsageSingularBuilderbuilder().builder().clearBars", "findUsageBuilder.getBars");
+  }
+
   private void assertUsages(Collection<UsageInfo> usages, String... usageTexts) {
     assertEquals(usageTexts.length, usages.size());
     List<UsageInfo> sortedUsages = new ArrayList<UsageInfo>(usages);

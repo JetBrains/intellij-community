@@ -13,10 +13,12 @@ import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 class NonSingularHandler implements BuilderElementHandler {
   private static final String SETTER_PREFIX = "set";
@@ -42,6 +44,10 @@ class NonSingularHandler implements BuilderElementHandler {
       .withModifier(PsiModifier.PUBLIC)
       .withAnnotations(info.getAnnotations())
       .withBody(createCodeBlock(info.getBuilderClass(), info.isFluentBuilder(), info.getFieldName())));
+  }
+
+  public List<String> getBuilderMethodNames(@NotNull String newName, @Nullable PsiAnnotation singularAnnotation) {
+    return Collections.singletonList(createSetterName(newName, true));
   }
 
   @NotNull

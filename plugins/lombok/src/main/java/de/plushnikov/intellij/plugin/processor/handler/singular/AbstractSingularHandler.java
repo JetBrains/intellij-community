@@ -19,8 +19,10 @@ import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import de.plushnikov.intellij.plugin.util.PsiTypeUtil;
 import lombok.core.handlers.Singulars;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -55,7 +57,8 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
     List<PsiMethod> methods = new ArrayList<>();
 
     final PsiType returnType = info.isChainBuilder() ? info.getBuilderType() : PsiType.VOID;
-    final String singularName = createSingularName(info.getSingularAnnotation(), info.getFieldName());
+    final String fieldName = info.getFieldName();
+    final String singularName = createSingularName(info.getSingularAnnotation(), fieldName);
 
     final PsiClass builderClass = info.getBuilderClass();
     final LombokLightMethodBuilder oneAddMethod = new LombokLightMethodBuilder(info.getManager(), singularName)
@@ -66,31 +69,40 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
       .withAnnotations(info.getAnnotations());
 
     addOneMethodParameter(oneAddMethod, info.getFieldType(), singularName);
-    oneAddMethod.withBody(createOneAddMethodCodeBlock(builderClass, info.isFluentBuilder(), singularName, info.getFieldName(), info.getFieldType()));
+    oneAddMethod.withBody(createOneAddMethodCodeBlock(builderClass, info.isFluentBuilder(), singularName, fieldName, info.getFieldType()));
     methods.add(oneAddMethod);
 
-    final LombokLightMethodBuilder allAddMethod = new LombokLightMethodBuilder(info.getManager(), info.getFieldName())
+    final LombokLightMethodBuilder allAddMethod = new LombokLightMethodBuilder(info.getManager(), fieldName)
       .withContainingClass(builderClass)
       .withMethodReturnType(returnType)
       .withNavigationElement(info.getVariable())
       .withModifier(PsiModifier.PUBLIC)
       .withAnnotations(info.getAnnotations());
 
-    addAllMethodParameter(allAddMethod, info.getFieldType(), info.getFieldName());
-    allAddMethod.withBody(createAllAddMethodCodeBlock(builderClass, info.isFluentBuilder(), info.getFieldName(), info.getFieldType()));
+    addAllMethodParameter(allAddMethod, info.getFieldType(), fieldName);
+    allAddMethod.withBody(createAllAddMethodCodeBlock(builderClass, info.isFluentBuilder(), fieldName, info.getFieldType()));
     methods.add(allAddMethod);
 
-    final LombokLightMethodBuilder clearMethod = new LombokLightMethodBuilder(info.getManager(), "clear" + StringUtil.capitalize(info.getFieldName()))
+    final LombokLightMethodBuilder clearMethod = new LombokLightMethodBuilder(info.getManager(), createSingularClearMethodName(fieldName))
       .withContainingClass(builderClass)
       .withMethodReturnType(returnType)
       .withNavigationElement(info.getVariable())
       .withModifier(PsiModifier.PUBLIC)
       .withAnnotations(info.getAnnotations())
-      .withBody(createClearMethodCodeBlock(builderClass, info.isFluentBuilder(), info.getFieldName()));
+      .withBody(createClearMethodCodeBlock(builderClass, info.isFluentBuilder(), fieldName));
 
     methods.add(clearMethod);
 
     return methods;
+  }
+
+  @NotNull
+  private String createSingularClearMethodName(String fieldName) {
+    return "clear" + StringUtil.capitalize(fieldName);
+  }
+
+  public List<String> getBuilderMethodNames(@NotNull String fieldName, @Nullable PsiAnnotation singularAnnotation) {
+    return Arrays.asList(createSingularName(singularAnnotation, fieldName), fieldName, createSingularClearMethodName(fieldName));
   }
 
   @NotNull
@@ -121,7 +133,7 @@ public abstract class AbstractSingularHandler implements BuilderElementHandler {
 
   protected abstract String getAllMethodBody(@NotNull String singularName, @NotNull PsiType psiFieldType, PsiManager psiManager, boolean fluentBuilder);
 
-  public String createSingularName(PsiAnnotation singularAnnotation, String psiFieldName) {
+  public String createSingularName(@NotNull PsiAnnotation singularAnnotation, String psiFieldName) {
     String singularName = PsiAnnotationUtil.getStringAnnotationValue(singularAnnotation, "value");
     if (StringUtil.isEmptyOrSpaces(singularName)) {
       singularName = Singulars.autoSingularize(psiFieldName);
