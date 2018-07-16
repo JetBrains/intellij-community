@@ -79,6 +79,7 @@
     <allClassesSearch implementation="com.intellij.psi.impl.search.AllClassesSearchExecutor"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.VariableInIncompleteCodeSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.SimpleAccessorReferenceSearcher"/>
+    <searchRequestor implementation="com.intellij.psi.impl.search.SimpleAccessorReferenceRequestor"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.SPIReferencesSearcher"/>
     <referencesSearch implementation="com.intellij.psi.impl.search.ConstructorReferencesSearcher"/>
     <searchRequestor implementation="com.intellij.psi.impl.search.PsiAnnotationMethodReferencesSearcher"/>
