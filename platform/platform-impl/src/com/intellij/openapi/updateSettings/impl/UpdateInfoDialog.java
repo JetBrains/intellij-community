@@ -5,6 +5,8 @@ import com.intellij.execution.CommandLineUtil;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
@@ -129,6 +131,18 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
   }
 
   @Override
+  protected void init() {
+    super.init();
+    FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.shown");
+    if (myPatch == null) {
+      FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.shown.no.patch");
+    }
+    else if (!ApplicationManager.getApplication().isRestartCapable()) {
+      FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.shown.manual.patch");
+    }
+  }
+
+  @Override
   protected JComponent createCenterPanel() {
     return new UpdateInfoPanel().myPanel;
   }
@@ -217,7 +231,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         Application app = ApplicationManager.getApplication();
         if (app.isRestartCapable()) {
           if (indicator.isShowing()) {
-            app.invokeLater(() -> ((ApplicationImpl)app).exit(true, true, true, command));
+            restartLaterAndRunCommand(command);
           }
           else {
             String title = IdeBundle.message("update.notifications.title");
@@ -225,7 +239,7 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
             UpdateChecker.NOTIFICATIONS.createNotification(title, message, NotificationType.INFORMATION, new NotificationListener.Adapter() {
               @Override
               protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-                app.invokeLater(() -> ((ApplicationImpl)app).exit(true, true, true, command));
+                restartLaterAndRunCommand(command);
               }
             }).notify(null);
           }
@@ -235,6 +249,13 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
         }
       }
     }.queue();
+  }
+
+  private static void restartLaterAndRunCommand(String[] command) {
+    FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.update.started");
+    PropertiesComponent.getInstance().setValue(UpdateCheckerComponent.AUTO_UPDATE_STARTED_FOR_BUILD_PROPERTY, ApplicationInfo.getInstance().getBuild().asString());
+    ApplicationImpl application = (ApplicationImpl)ApplicationManager.getApplication();
+    application.invokeLater(() -> application.exit(true, true, true, command));
   }
 
   private void openDownloadPage() {
@@ -259,20 +280,24 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     }
 
     String title = IdeBundle.message("update.notifications.title"), message = IdeBundle.message("update.apply.manually.message", file);
+    FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.manual.patch.prepared");
     ApplicationManager.getApplication().invokeLater(() -> Messages.showInfoMessage(message, title));
   }
 
   private static class ButtonAction extends AbstractAction {
-    private final String myUrl;
+    private final ButtonInfo myInfo;
 
-    private ButtonAction(ButtonInfo info) {
+    private ButtonAction(@NotNull ButtonInfo info) {
       super(info.getName());
-      myUrl = info.getUrl();
+      myInfo = info;
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-      BrowserUtil.browse(augmentUrl(myUrl));
+      if (myInfo.isDownload()) {
+        FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.download.clicked");
+      }
+      BrowserUtil.browse(augmentUrl(myInfo.getUrl()));
     }
   }
 
