@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal
+package com.intellij.internal.retype
 
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupElement
@@ -12,9 +12,7 @@ import com.intellij.ide.DataManager
 import com.intellij.internal.performance.TypingLatencyReportDialog
 import com.intellij.internal.performance.latencyMap
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.command.WriteCommandAction
@@ -22,55 +20,19 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.actionSystem.LatencyRecorder
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.util.Alarm
 
-/**
- * @author yole
- */
-class RetypeFileAction : AnAction() {
-  override fun actionPerformed(e: AnActionEvent) {
-    val editor = e.getData(CommonDataKeys.EDITOR) as? EditorImpl ?: return
-    val project = e.getData(CommonDataKeys.PROJECT) ?: return
-    val existingSession = editor.getUserData(RETYPE_SESSION_KEY)
-    if (existingSession != null) {
-      existingSession.stop()
-    }
-    else {
-      val session = RetypeSession(project, editor, 400)
-      editor.putUserData(RETYPE_SESSION_KEY, session)
-      session.start()
-    }
-  }
-
-  override fun update(e: AnActionEvent) {
-    val editor = e.getData(CommonDataKeys.EDITOR)
-    e.presentation.isEnabled = e.project != null && editor != null
-    val retypeSession = editor?.getUserData(RETYPE_SESSION_KEY)
-    if (retypeSession != null) {
-      e.presentation.text = "Stop Retyping"
-    }
-    else {
-      e.presentation.text = "Retype Current File"
-    }
-  }
-}
-
-interface RetypeFileAssistant {
-  fun acceptLookupElement(element: LookupElement): Boolean
-
-  companion object {
-    val EP_NAME = ExtensionPointName.create<RetypeFileAssistant>("com.intellij.retypeFileAssistant")
-  }
-}
-
-class RetypeSession(private val project: Project, private val editor: EditorImpl, private val delayMillis: Int) : Disposable {
+class RetypeSession(
+  private val project: Project,
+  private val editor: EditorImpl,
+  private val delayMillis: Int,
+  private val threadDumpDelay: Int
+) : Disposable {
   private val document = editor.document
   private val alarm = Alarm(Alarm.ThreadToUse.SWING_THREAD, this)
   private val threadDumpAlarm = Alarm(Alarm.ThreadToUse.POOLED_THREAD, this)
@@ -112,7 +74,7 @@ class RetypeSession(private val project: Project, private val editor: EditorImpl
   }
 
   private fun typeNext() {
-    threadDumpAlarm.addRequest({ logThreadDump() }, 100)
+    threadDumpAlarm.addRequest({ logThreadDump() }, threadDumpDelay)
 
     if (column == 0) {
       if (line >= 0) {
@@ -182,7 +144,8 @@ class RetypeSession(private val project: Project, private val editor: EditorImpl
 
   private fun isLookupElementAcceptable(lookupElement: LookupElement?): Boolean {
     if (lookupElement == null) return false
-    for (retypeFileAssistant in Extensions.getExtensions(RetypeFileAssistant.EP_NAME)) {
+    for (retypeFileAssistant in Extensions.getExtensions(
+      RetypeFileAssistant.EP_NAME)) {
       if (!retypeFileAssistant.acceptLookupElement(lookupElement)) {
         return false
       }
@@ -193,7 +156,8 @@ class RetypeSession(private val project: Project, private val editor: EditorImpl
   private fun checkPrevLineInSync(): Boolean {
     val prevLine = getEditorLineText(editor.caretModel.logicalPosition.line - 1)
     if (prevLine.trimEnd() != currentLineText.trimEnd()) {
-      Messages.showErrorDialog(project, "Text has diverged. Expected:\n$currentLineText\nActual:\n$prevLine", "Retype File")
+      Messages.showErrorDialog(project, "Text has diverged. Expected:\n$currentLineText\nActual:\n$prevLine",
+                               "Retype File")
       stop()
       return true
     }
@@ -234,7 +198,9 @@ class RetypeSession(private val project: Project, private val editor: EditorImpl
   private fun executeEditorAction(actionId: String) {
     val actionManager = ActionManagerEx.getInstanceEx()
     val action = actionManager.getAction(actionId)
-    val event = AnActionEvent.createFromAnAction(action, null, "", DataManager.getInstance().getDataContext(editor.component))
+    val event = AnActionEvent.createFromAnAction(action, null, "",
+                                                 DataManager.getInstance().getDataContext(
+                                                                                     editor.component))
     action.beforeActionPerformedUpdate(event)
     actionManager.fireBeforeActionPerformed(action, event.dataContext, event)
     LatencyRecorder.getInstance().recordLatencyAwareAction(editor, actionId, System.currentTimeMillis())
@@ -250,8 +216,6 @@ class RetypeSession(private val project: Project, private val editor: EditorImpl
   }
 
   companion object {
-    val LOG = Logger.getInstance("#com.intellij.internal.RetypeSession")
+    val LOG = Logger.getInstance("#com.intellij.internal.retype.RetypeSession")
   }
 }
-
-val RETYPE_SESSION_KEY = Key.create<RetypeSession>("com.intellij.internal.RetypeSession")
