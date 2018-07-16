@@ -144,9 +144,11 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager implements Ap
     try {
       String prefix = "/" + BuiltinWebServerAccess.getUserAuthenticationToken();
       if (!url.getPath().startsWith(prefix)) {
-        /* TODO(b/111279708): fails to compile after IDEA 182.2371.4 merge
-        return new UrlImpl(url.getScheme(), url.getAuthority(), prefix + url.getPath(), url.getParameters());
-        */ return url;
+        return Urls.newUrl(
+          Objects.requireNonNull(url.getScheme()),
+          Objects.requireNonNull(url.getAuthority()),
+          prefix + url.getPath(),
+          url.getParameters());
       }
     }
     catch (IOException e) {
