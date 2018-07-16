@@ -70,6 +70,12 @@ class JavaIntentionPolicy extends IntentionPolicy {
 
 class JavaCommentingStrategy extends JavaIntentionPolicy {
   @Override
+  protected boolean shouldSkipIntention(@NotNull String actionText) {
+    return actionText.startsWith("Fix doc comment") || //change formatting settings
+           actionText.startsWith("Add Javadoc");
+  }
+
+  @Override
   public boolean checkComments(IntentionAction intention) {
     String intentionText = intention.getText();
     boolean commentChangingActions = intentionText.startsWith("Replace with end-of-line comment") ||
