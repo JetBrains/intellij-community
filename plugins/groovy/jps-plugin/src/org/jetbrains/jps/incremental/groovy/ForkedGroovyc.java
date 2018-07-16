@@ -31,6 +31,7 @@ import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ExternalProcessUtil;
+import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.service.SharedThreadPool;
@@ -74,7 +75,7 @@ class ForkedGroovyc implements GroovycFlavor {
     JpsGroovySettings settings = JpsGroovycRunner.getGroovyCompilerSettings(context);
     
     List<String> vmParams = ContainerUtilRt.newArrayList();
-    vmParams.add("-Xmx" + System.getProperty("groovyc.heap.size", settings.heapSize) + "m");
+    vmParams.add("-Xmx" + System.getProperty("groovyc.heap.size", String.valueOf(Utils.suggestForkedCompilerHeapSize())) + "m");
     vmParams.add("-Dfile.encoding=" + System.getProperty("file.encoding"));
     //vmParams.add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5239");
     
