@@ -37,6 +37,7 @@ class JavaIntentionPolicy extends IntentionPolicy {
            actionText.startsWith("Change class type parameter") || // doesn't change file text (starts live template)
            actionText.startsWith("Rename reference") || // doesn't change file text (starts live template)
            actionText.equals("Remove") || // IDEA-177220
+           actionText.equals("Add \"use strict\" pragma") || // IDEA-187427
            super.shouldSkipIntention(actionText);
   }
 
