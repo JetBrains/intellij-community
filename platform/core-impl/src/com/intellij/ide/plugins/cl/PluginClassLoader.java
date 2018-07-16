@@ -80,6 +80,7 @@ public class PluginClassLoader extends UrlClassLoader {
     "kotlin.Pair",
     "kotlin.Triple",
     "kotlin.jvm.internal.DefaultConstructorMarker",
+    "kotlin.reflect.KDeclarationContainer",
     "kotlin.properties.ReadWriteProperty",
     "kotlin.properties.ReadOnlyProperty"
   );
