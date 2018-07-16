@@ -113,7 +113,9 @@ public class ConfigImportHelper {
       return null;
     }
 
-    File[] candidates = configsHome.listFiles((file, name) -> StringUtil.startsWithIgnoreCase(name, prefix));
+    // Android Studio: account for presence of "Preview" in the paths selector for Canary and Beta.
+    String prefixTrimmed = StringUtil.trimEnd(prefix, "Preview", true);
+    File[] candidates = configsHome.listFiles((file, name) -> StringUtil.startsWithIgnoreCase(name, prefixTrimmed));
 
     File result = null;
     if (candidates != null && candidates.length > 0) {
