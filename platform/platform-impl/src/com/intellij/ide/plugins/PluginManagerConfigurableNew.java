@@ -230,7 +230,7 @@ public class PluginManagerConfigurableNew
   @Override
   public JComponent createComponent() {
     JPanel panel = new JPanel(new BorderLayout());
-    panel.setMinimumSize(new Dimension(JBUI.scale(580), -1));
+    panel.setMinimumSize(new JBDimension(580, 380));
 
     DefaultActionGroup actions = new DefaultActionGroup();
     actions.add(new DumbAwareAction("Manage Plugin Repositories...") {
@@ -677,12 +677,40 @@ public class PluginManagerConfigurableNew
       }
     }
 
-    List<IdeaPluginDescriptor> list = RepositoryHelper.loadPlugins(null);
+    List<IdeaPluginDescriptor> list = new ArrayList<>();
     Map<String, IdeaPluginDescriptor> map = new HashMap<>();
+    IOException exception = null;
 
-    for (IdeaPluginDescriptor plugin : list) {
-      map.put(plugin.getPluginId().getIdString(), plugin);
+    for (String host : RepositoryHelper.getPluginHosts()) {
+      try {
+        for (IdeaPluginDescriptor plugin : RepositoryHelper.loadPlugins(host, null)) {
+          String id = plugin.getPluginId().getIdString();
+          if (!map.containsKey(id)) {
+            list.add(plugin);
+            map.put(id, plugin);
+          }
+        }
+      }
+      catch (IOException e) {
+        if (host == null) {
+          exception = e;
+        }
+        else {
+          PluginManagerMain.LOG.info(host, e);
+        }
+      }
     }
+
+    if (exception != null) {
+      throw exception;
+    }
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      InstalledPluginsState state = InstalledPluginsState.getInstance();
+      for (IdeaPluginDescriptor descriptor : list) {
+        state.onDescriptorDownload(descriptor);
+      }
+    });
 
     synchronized (myJBRepositoryLock) {
       if (myJBRepositoryList == null) {
@@ -700,7 +728,7 @@ public class PluginManagerConfigurableNew
                         @NotNull String query,
                         @NotNull String showAllQuery) throws IOException {
     PluginsGroup group = new PluginsGroup(name);
-    loadPlugins(group.descriptors, jbRepositoryMap, excludeDescriptors, query, 6);
+    loadPlugins(group.descriptors, jbRepositoryMap, excludeDescriptors, query, 9);
 
     if (!group.descriptors.isEmpty()) {
       //noinspection unchecked
@@ -2295,7 +2323,7 @@ public class PluginManagerConfigurableNew
     private final int myFirstVOffset = JBUI.scale(10);
     private final int myMiddleVOffset = JBUI.scale(20);
     private final int myLastVOffset = JBUI.scale(30);
-    private final int myMiddleHOffset = JBUI.scale(20);
+    private final int myMiddleHOffset = JBUI.scale(1);
 
     private final Dimension myCellSize = new Dimension();
 
@@ -2304,6 +2332,9 @@ public class PluginManagerConfigurableNew
       calculateCellSize(parent);
 
       int width = getParentWidth(parent);
+      if (width == 0) {
+        width = JBUI.scale(740);
+      }
       int cellWidth = myCellSize.width;
       int columns = width / (cellWidth + myMiddleHOffset);
 
@@ -3683,7 +3714,7 @@ public class PluginManagerConfigurableNew
       addInstallButton();
 
       setOpaque(true);
-      setBorder(JBUI.Borders.empty(10));
+      setBorder(JBUI.Borders.empty(10, 5));
 
       setLayout(new AbstractLayoutManager() {
         @Override

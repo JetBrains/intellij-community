@@ -1,5 +1,3 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 // This is a generated file. Not intended for manual editing.
 package org.jetbrains.plugins.groovy.lang.psi;
 
@@ -56,6 +54,7 @@ public interface GroovyElementTypes {
   GroovyElementType ARGUMENT_LABEL = new GroovyElementType("ARGUMENT_LABEL");
   GroovyElementType ARGUMENT_LIST = new GroovyElementType("ARGUMENT_LIST");
   GroovyElementType ARRAY_DECLARATION = new GroovyElementType("ARRAY_DECLARATION");
+  GroovyElementType ARRAY_INITIALIZER = new GroovyElementType("ARRAY_INITIALIZER");
   GroovyElementType ARRAY_TYPE_ELEMENT = new GroovyElementType("ARRAY_TYPE_ELEMENT");
   GroovyElementType ASSERT_STATEMENT = new GroovyElementType("ASSERT_STATEMENT");
   GroovyElementType ASSIGNMENT_EXPRESSION = new GroovyElementType("ASSIGNMENT_EXPRESSION");

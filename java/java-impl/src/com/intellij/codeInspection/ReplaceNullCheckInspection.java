@@ -293,7 +293,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
 
     @Nullable
     static TernaryNotNullContext from(@NotNull PsiConditionalExpression ternary) {
-      PsiBinaryExpression binOp = tryCast(ternary.getCondition(), PsiBinaryExpression.class);
+      PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(ternary.getCondition()), PsiBinaryExpression.class);
       if(binOp == null) return null;
       PsiExpression value = ExpressionUtils.getValueComparedWithNull(binOp);
       PsiReferenceExpression referenceExpression = tryCast(PsiUtil.skipParenthesizedExprDown(value), PsiReferenceExpression.class);

@@ -142,11 +142,13 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       @Override
       public void excludeNode(@NotNull InspectionTreeNode node) {
         node.excludeElement();
+        node.dropProblemCountCaches();
       }
 
       @Override
       public void includeNode(@NotNull InspectionTreeNode node) {
         node.amnestyElement();
+        node.dropProblemCountCaches();
       }
 
       @Override

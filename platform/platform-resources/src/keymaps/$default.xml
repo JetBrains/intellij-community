@@ -1080,6 +1080,10 @@
     <keyboard-shortcut first-keystroke="Shift F6"/>
   </action>
 
+  <action id="ChangesView.SetDefault">
+    <keyboard-shortcut first-keystroke="control SPACE" />
+  </action>
+
   <action id="DirDiffMenu.SynchronizeDiff">
     <keyboard-shortcut first-keystroke="ENTER"/>
   </action>

@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.util;
 
+import com.intellij.util.Processor;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PagedFileStorage;
 import com.intellij.util.io.PersistentBTreeEnumerator;
@@ -41,6 +42,11 @@ public class PersistentSetImpl<T> extends PersistentBTreeEnumerator<T> implement
   @Override
   public void put(@NotNull T element) throws IOException {
     enumerate(element);
+  }
+
+  @Override
+  public void process(@NotNull Processor<T> processor) throws IOException {
+    processAllDataObject(processor, null);
   }
 
   @Override

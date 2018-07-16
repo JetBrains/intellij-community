@@ -52,7 +52,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
       throw e
     }
     catch (e: Throwable) {
-      LOG.error(e)
+      LOG.error("Cannot load data for $fileSpec", e)
     }
     return element
   }

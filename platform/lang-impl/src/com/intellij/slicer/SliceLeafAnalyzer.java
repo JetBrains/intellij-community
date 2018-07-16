@@ -159,7 +159,7 @@ public class SliceLeafAnalyzer {
 
   public Map<SliceNode, Collection<PsiElement>> createMap() {
     return ConcurrentFactoryMap.createMap(k -> ConcurrentCollectionFactory.createConcurrentSet(myLeafEquality),
-                                          () -> ConcurrentCollectionFactory.createMap(ContainerUtil.<SliceNode>identityStrategy()));
+                                          () -> ConcurrentCollectionFactory.createMap(ContainerUtil.identityStrategy()));
   }
 
   static class SliceNodeGuide implements WalkingState.TreeGuide<SliceNode> {

@@ -113,12 +113,17 @@ class JavaInlayParameterHintsProvider : InlayParameterHintsProvider {
                                                   "Do not show for methods with same-named numbered parameters",
                                                   true)
 
+  val isShowHintWhenExpressionTypeIsClear: Option = Option("java.clear.expression.type",
+                                                           "Show hints even when type of expression is clear",
+                                                           false)
+
   override fun getSupportedOptions(): List<Option> {
     return listOf(
       isDoNotShowIfMethodNameContainsParameterName,
       isShowForParamsWithSameType,
       isDoNotShowForBuilderLikeMethods,
-      ignoreOneCharOneDigitHints
+      ignoreOneCharOneDigitHints,
+      isShowHintWhenExpressionTypeIsClear
     )
   }
 }

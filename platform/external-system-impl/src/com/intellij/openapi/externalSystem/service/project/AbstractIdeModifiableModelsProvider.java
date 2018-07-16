@@ -319,11 +319,13 @@ public abstract class AbstractIdeModifiableModelsProvider extends IdeModelsProvi
 
   private Graph<Module> getModuleGraph() {
     return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<Module>() {
+      @NotNull
       @Override
       public Collection<Module> getNodes() {
         return ContainerUtil.list(getModules());
       }
 
+      @NotNull
       @Override
       public Iterator<Module> getIn(Module m) {
         Module[] dependentModules = getModifiableRootModel(m).getModuleDependencies(true);

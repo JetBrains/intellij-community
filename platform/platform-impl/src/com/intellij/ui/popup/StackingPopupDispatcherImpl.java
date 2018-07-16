@@ -215,7 +215,7 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
   }
 
   @Override
-  public void setRestoreFocusSilentely() {
+  public void setRestoreFocusSilently() {
     if (myStack.isEmpty()) return;
 
     for (JBPopup each : myAllPopups) {

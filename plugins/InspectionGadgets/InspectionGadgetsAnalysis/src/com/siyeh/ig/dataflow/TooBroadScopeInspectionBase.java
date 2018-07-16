@@ -74,7 +74,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
     return InspectionGadgetsBundle.message("too.broad.scope.problem.descriptor");
   }
 
-  protected boolean isMoveable(PsiExpression expression) {
+  protected boolean isMovable(PsiExpression expression) {
     expression = ParenthesesUtils.stripParentheses(expression);
     if (expression == null) {
       return true;
@@ -85,7 +85,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
     if (expression instanceof PsiArrayInitializerExpression) {
       final PsiArrayInitializerExpression arrayInitializerExpression = (PsiArrayInitializerExpression)expression;
       for (PsiExpression initializer : arrayInitializerExpression.getInitializers()) {
-        if (!isMoveable(initializer)) {
+        if (!isMovable(initializer)) {
           return false;
         }
       }
@@ -96,7 +96,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
       final PsiExpression[] arrayDimensions = newExpression.getArrayDimensions();
       if (arrayDimensions.length > 0) {
         for (PsiExpression arrayDimension : arrayDimensions) {
-          if (!isMoveable(arrayDimension)) {
+          if (!isMovable(arrayDimension)) {
             return false;
           }
         }
@@ -106,7 +106,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
       if (arrayInitializer != null) {
         final PsiExpression[] initializers = arrayInitializer.getInitializers();
         for (final PsiExpression initializerExpression : initializers) {
-          if (!isMoveable(initializerExpression)) {
+          if (!isMovable(initializerExpression)) {
             return false;
           }
         }
@@ -127,7 +127,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
       }
       final PsiExpression[] expressions = argumentList.getExpressions();
       for (final PsiExpression argumentExpression : expressions) {
-        if (!isMoveable(argumentExpression)) {
+        if (!isMovable(argumentExpression)) {
           return false;
         }
       }
@@ -136,7 +136,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
     if (expression instanceof PsiReferenceExpression) {
       final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression;
       final PsiExpression qualifier = referenceExpression.getQualifierExpression();
-      if (!isMoveable(qualifier)) {
+      if (!isMovable(qualifier)) {
         return false;
       }
       final PsiElement target = referenceExpression.resolve();
@@ -160,7 +160,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
     if (expression instanceof PsiPolyadicExpression) {
       final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
       for (PsiExpression operand : polyadicExpression.getOperands()) {
-        if (!isMoveable(operand)) {
+        if (!isMovable(operand)) {
           return false;
         }
       }
@@ -177,12 +177,12 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
       }
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       final PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
-      if (qualifierExpression != null && !isMoveable(qualifierExpression)) {
+      if (qualifierExpression != null && !isMovable(qualifierExpression)) {
         return false;
       }
       final PsiExpressionList argumentList = methodCallExpression.getArgumentList();
       for (PsiExpression argument : argumentList.getExpressions()){
-        if (!isMoveable(argument)) {
+        if (!isMovable(argument)) {
           return false;
         }
       }
@@ -248,7 +248,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
         return;
       }
       final PsiExpression initializer = variable.getInitializer();
-      if (!isMoveable(initializer)) {
+      if (!isMovable(initializer)) {
         return;
       }
       final List<PsiReferenceExpression> references = findReferences(variable);

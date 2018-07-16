@@ -22,7 +22,7 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
     super();
     myProject = project;
     myVcsIgnoredHolderMap = new HashMap<>();
-    myIdeIgnoredFilesHolder = new RecursiveFileHolder<>(myProject, HolderType.IGNORED);
+    myIdeIgnoredFilesHolder = new RecursiveFileHolder(myProject, HolderType.IGNORED);
     myVcsManager = ProjectLevelVcsManager.getInstance(myProject);
   }
 
@@ -102,7 +102,7 @@ public class IgnoredFilesCompositeHolder implements FileHolder {
     for (VcsIgnoredFilesHolder.Provider provider : Extensions.getExtensions(VcsIgnoredFilesHolder.VCS_IGNORED_FILES_HOLDER_EP, project)) {
       if (provider.getVcs().equals(vcs)) return provider.createHolder();
     }
-    return new RecursiveFileHolder<>(project, HolderType.IGNORED);
+    return new RecursiveFileHolder(project, HolderType.IGNORED);
   }
 
   @Override

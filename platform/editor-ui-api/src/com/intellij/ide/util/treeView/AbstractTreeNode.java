@@ -4,7 +4,7 @@ package com.intellij.ide.util.treeView;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.Map;
 
 public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<AbstractTreeNode<T>> implements NavigationItem, Queryable.Contributor {
+  private static final TextAttributesKey FILESTATUS_ERRORS = TextAttributesKey.createTextAttributesKey("FILESTATUS_ERRORS");
   private static final Logger LOG = Logger.getInstance(AbstractTreeNode.class);
   private AbstractTreeNode myParent;
   private Object myValue;
@@ -61,7 +62,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   @Override
   protected void postprocess(@NotNull PresentationData presentation) {
     if (hasProblemFileBeneath() ) {
-      presentation.setAttributesKey(CodeInsightColors.ERRORS_ATTRIBUTES);
+      presentation.setAttributesKey(FILESTATUS_ERRORS);
     }
 
     setForcedForeground(presentation);

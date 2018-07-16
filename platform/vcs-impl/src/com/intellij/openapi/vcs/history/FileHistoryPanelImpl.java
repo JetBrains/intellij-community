@@ -18,7 +18,7 @@ package com.intellij.openapi.vcs.history;
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
-import com.intellij.ide.actions.RefreshAction;
+import com.intellij.openapi.VcsInternalDataKeys;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
@@ -41,6 +41,7 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
+import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vcs.vfs.VcsFileSystem;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFile;
 import com.intellij.openapi.vcs.vfs.VcsVirtualFolder;
@@ -54,8 +55,10 @@ import com.intellij.ui.dualView.DualViewColumnInfo;
 import com.intellij.ui.dualView.TreeTableView;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.*;
-import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.PlatformIcons;
+import com.intellij.util.TreeItem;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -77,8 +80,6 @@ import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.reverseOrder;
@@ -87,7 +88,6 @@ import static java.util.Comparator.reverseOrder;
  * author: lesya
  */
 public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton implements EditorColorsListener, CopyProvider {
-  private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("File History Refresh");
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
   private static final String VCS_HISTORY_POPUP_ACTION_GROUP = "VcsHistoryInternalGroup.Popup";
   private static final String VCS_HISTORY_TOOLBAR_ACTION_GROUP = "VcsHistoryInternalGroup.Toolbar";
@@ -99,7 +99,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   @NotNull private final FileHistoryRefresherI myRefresherI;
   @NotNull private final FilePath myFilePath;
   @Nullable private final VcsRevisionNumber myStartingRevision;
-  @NotNull private final AsynchConsumer<VcsHistorySession> myHistoryPanelRefresh;
   @NotNull private final Map<VcsRevisionNumber, Integer> myRevisionsOrder = ContainerUtil.newHashMap();
   @NotNull private final Map<VcsFileRevision, VirtualFile> myRevisionToVirtualFile = ContainerUtil.newHashMap();
   @NotNull private final DetailsPanel myDetails;
@@ -109,7 +108,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   @NotNull private VcsHistorySession myHistorySession;
   private VcsFileRevision myBottomRevisionForShowDiff;
-  private volatile boolean myInRefresh;
   private List<Object> myTargetSelection;
   private boolean myIsStaticAndEmbedded;
   private Splitter myDetailsSplitter;
@@ -173,59 +171,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     if (isStaticEmbedded) {
       setIsStaticAndEmbedded(true);
     }
-
-    myHistoryPanelRefresh = new AsynchConsumer<VcsHistorySession>() {
-      @Override
-      public void finished() {
-        if (treeHistoryProvider != null) {
-          // scroll tree view to most recent change
-          final TreeTableView treeView = myDualView.getTreeView();
-          final int lastRow = treeView.getRowCount() - 1;
-          if (lastRow >= 0) {
-            treeView.scrollRectToVisible(treeView.getCellRect(lastRow, 0, true));
-          }
-        }
-        myInRefresh = false;
-        myTargetSelection = null;
-
-        mySplitter.revalidate();
-        mySplitter.repaint();
-      }
-
-      @Override
-      public void consume(@NotNull VcsHistorySession vcsHistorySession) {
-        FileHistoryPanelImpl.this.refresh(vcsHistorySession);
-      }
-    };
-
-    int delayMillis = 20_000;
-    Alarm updateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
-    // todo react to event?
-    updateAlarm.addRequest(new Runnable() {
-      Future<?> lastTask;
-
-      public void run() {
-        if (lastTask != null) {
-          lastTask.cancel(false);
-        }
-        if (myVcs.getProject().isDisposed()) {
-          return;
-        }
-
-        updateAlarm.cancelAllRequests();
-        if (updateAlarm.isDisposed()) return;
-        updateAlarm.addRequest(this, delayMillis);
-
-        if (!ApplicationManager.getApplication().isActive()) return;
-
-        lastTask = ourExecutor.submit(() -> {
-          if (!myInRefresh && !updateAlarm.isDisposed() && myHistorySession.shouldBeRefreshed()) {
-            refreshUiAndScheduleDataRefresh(true);
-          }
-        });
-      }
-    }, delayMillis);
-
     init();
 
     chooseView();
@@ -279,11 +224,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     return historyPanel.myFilePath.equals(path) && Comparing.equal(existingRevision, newRevision);
   }
 
-  @CalledInAwt
-  void scheduleRefresh(boolean canUseLastRevision) {
-    refreshUiAndScheduleDataRefresh(canUseLastRevision);
-  }
-
   @NotNull
   private DualViewColumnInfo[] createColumnList(@NotNull Project project,
                                                 @NotNull VcsHistoryProvider provider,
@@ -302,7 +242,12 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     return columns.toArray(new DualViewColumnInfo[0]);
   }
 
-  private void refresh(@NotNull VcsHistorySession session) {
+  @CalledInAwt
+  public void setHistorySession(@NotNull VcsHistorySession session) {
+    if (myTargetSelection == null) {
+      myTargetSelection = myDualView.getFlatView().getSelectedObjects();
+    }
+
     myHistorySession = session;
     refreshRevisionsOrder();
     HistoryAsTreeProvider treeHistoryProvider = session.getHistoryAsTreeProvider();
@@ -321,8 +266,26 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
                          myTargetSelection);
     }
 
+    mySplitter.revalidate();
+    mySplitter.repaint();
     myDualView.expandAll();
     myDualView.repaint();
+  }
+
+  @CalledInAwt
+  public void finishRefresh() {
+    if (myHistorySession.getHistoryAsTreeProvider() != null) {
+      // scroll tree view to most recent change
+      final TreeTableView treeView = myDualView.getTreeView();
+      final int lastRow = treeView.getRowCount() - 1;
+      if (lastRow >= 0) {
+        treeView.scrollRectToVisible(treeView.getCellRect(lastRow, 0, true));
+      }
+    }
+    myTargetSelection = null;
+
+    mySplitter.revalidate();
+    mySplitter.repaint();
   }
 
   private void adjustEmptyText() {
@@ -330,7 +293,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     if ((virtualFile == null || !virtualFile.isValid()) && !myFilePath.getIOFile().exists()) {
       myDualView.setEmptyText("File " + myFilePath.getName() + " not found");
     }
-    else if (myInRefresh) {
+    else if (VcsCachingHistory.getHistoryLock(myVcs, VcsBackgroundableActions.CREATE_HISTORY_SESSION, myFilePath, myStartingRevision).isLocked()) {
       myDualView.setEmptyText(CommonBundle.getLoadingTreeNodeText());
     }
     else {
@@ -409,15 +372,14 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   @NotNull
   private DefaultActionGroup fillActionGroup(boolean popup, DefaultActionGroup result) {
-    result.add(new RefreshFileHistoryAction());
-
     if (popup) {
       result.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     }
 
     AnAction actionGroup = ActionManager.getInstance().getAction(popup ? VCS_HISTORY_POPUP_ACTION_GROUP : VCS_HISTORY_TOOLBAR_ACTION_GROUP);
     result.add(actionGroup);
-    AnAction[] additionalActions = myProvider.getAdditionalActions(() -> refreshUiAndScheduleDataRefresh(true));
+    AnAction[] additionalActions =
+      myProvider.getAdditionalActions(() -> ApplicationManager.getApplication().invokeAndWait(() -> myRefresherI.refresh(true)));
     if (additionalActions != null) {
       for (AnAction additionalAction : additionalActions) {
         if (popup || additionalAction.getTemplatePresentation().getIcon() != null) {
@@ -434,24 +396,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     }
 
     return result;
-  }
-
-  private void refreshUiAndScheduleDataRefresh(boolean canUseLastRevisionCheck) {
-    ApplicationManager.getApplication().invokeAndWait(() -> {
-      if (myInRefresh) return;
-      myInRefresh = true;
-      myTargetSelection = myDualView.getFlatView().getSelectedObjects();
-
-      mySplitter.revalidate();
-      mySplitter.repaint();
-
-      myRefresherI.run(true, canUseLastRevisionCheck);
-    });
-  }
-
-  @NotNull
-  public AsynchConsumer<VcsHistorySession> getHistoryPanelRefresh() {
-    return myHistoryPanelRefresh;
   }
 
   public Object getData(String dataId) {
@@ -528,6 +472,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         return flatView.getRow(flatView.getSelectedRow() + 1).getRevision();
       }
     }
+    else if (VcsInternalDataKeys.FILE_HISTORY_REFRESHER.is(dataId)) {
+      return myRefresherI;
+    }
     else {
       return super.getData(dataId);
     }
@@ -578,11 +525,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   public void dispose() {
     myDualView.dispose();
-  }
-
-  @NotNull
-  public FileHistoryRefresherI getRefresher() {
-    return myRefresherI;
   }
 
   private void refreshRevisionsOrder() {
@@ -1012,24 +954,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
     public void setSelected(AnActionEvent e, boolean state) {
       VcsConfiguration.getInstance(myVcs.getProject()).SHOW_FILE_HISTORY_AS_TREE = state;
       chooseView();
-    }
-  }
-
-  private class RefreshFileHistoryAction extends RefreshAction implements DumbAware {
-    public RefreshFileHistoryAction() {
-      super(VcsBundle.message("action.name.refresh"), VcsBundle.message("action.description.refresh"), AllIcons.Actions.Refresh);
-      registerShortcutOn(FileHistoryPanelImpl.this);
-    }
-
-    public void actionPerformed(AnActionEvent e) {
-      if (myInRefresh) return;
-      refreshUiAndScheduleDataRefresh(false);
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      super.update(e);
-      e.getPresentation().setEnabled(!myInRefresh);
     }
   }
 

@@ -148,11 +148,13 @@ public class ArtifactSorter {
       myArtifactNodes = new LinkedHashSet<>(JpsBuilderArtifactService.getInstance().getArtifacts(model, true));
     }
 
+    @NotNull
     @Override
     public Collection<JpsArtifact> getNodes() {
       return myArtifactNodes;
     }
 
+    @NotNull
     @Override
     public Iterator<JpsArtifact> getIn(JpsArtifact artifact) {
       final Set<JpsArtifact> included = new LinkedHashSet<>();

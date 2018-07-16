@@ -36,19 +36,27 @@ public class DecodeDefaultsUtil {
   public static URL getDefaults(Object requestor, @NotNull String componentResourcePath) {
     URL url = RESOURCE_CACHE.get(componentResourcePath);
     if (url == null) {
-      Class<?> requestorClass = requestor.getClass();
+      Class<?> requestorClass = requestor instanceof Class ? (Class<?>)requestor : requestor.getClass();
       if (StringUtil.startsWithChar(componentResourcePath, '/')) {
-        url = requestorClass.getResource(componentResourcePath + FileStorageCoreUtil.DEFAULT_EXT);
+        url = requestorClass.getResource(appendExt(componentResourcePath));
       }
       else {
-        url = requestorClass.getResource('/' + ApplicationManagerEx.getApplicationEx().getName() + '/' + componentResourcePath + FileStorageCoreUtil.DEFAULT_EXT);
+        url = requestorClass.getResource(appendExt('/' + ApplicationManagerEx.getApplicationEx().getName() + '/' + componentResourcePath));
         if (url == null) {
-          url = requestorClass.getResource('/' + componentResourcePath + FileStorageCoreUtil.DEFAULT_EXT);
+          url = requestorClass.getResource(appendExt('/' + componentResourcePath));
         }
       }
       RESOURCE_CACHE.put(componentResourcePath, url);
     }
     return url;
+  }
+
+  private static String appendExt(@NotNull String s) {
+    return appendIfNeeded(s, FileStorageCoreUtil.DEFAULT_EXT);
+  }
+
+  private static String appendIfNeeded(@NotNull String head, @NotNull String tail) {
+    return head.endsWith(tail) ? head : head + tail;
   }
 
   @Nullable

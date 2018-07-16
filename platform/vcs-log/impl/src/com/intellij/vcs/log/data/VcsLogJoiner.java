@@ -23,6 +23,9 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+
 /**
  * Attaches the block of latest commits, which was read from the VCS, to the existing log structure.
  *
@@ -202,14 +205,14 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
 
     private void insertAllUseStack() {
       while (!newCommitsMap.isEmpty()) {
-        commitsStack.push(newCommitsMap.values().iterator().next());
+        visitCommit(notNull(getFirstItem(newCommitsMap.values())));
         while (!commitsStack.isEmpty()) {
           Commit currentCommit = commitsStack.peek();
           boolean allParentsWereAdded = true;
           for (CommitId parentHash : currentCommit.getParents()) {
             Commit parentCommit = newCommitsMap.get(parentHash);
             if (parentCommit != null) {
-              commitsStack.push(parentCommit);
+              visitCommit(parentCommit);
               allParentsWereAdded = false;
               break;
             }
@@ -232,10 +235,14 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
           }
 
           list.add(insertIndex, currentCommit);
-          newCommitsMap.remove(currentCommit.getId());
           commitsStack.pop();
         }
       }
+    }
+
+    private void visitCommit(@NotNull Commit commit) {
+      commitsStack.push(commit);
+      newCommitsMap.remove(commit.getId());
     }
 
     @NotNull

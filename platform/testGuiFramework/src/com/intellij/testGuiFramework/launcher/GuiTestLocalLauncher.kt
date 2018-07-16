@@ -19,7 +19,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testGuiFramework.impl.GuiTestStarter
-import com.intellij.testGuiFramework.launcher.classpath.ClassPathBuilder
+import com.intellij.testGuiFramework.launcher.classpath.ClassPathBuilder.Companion.toClasspathJarFile
 import com.intellij.testGuiFramework.launcher.classpath.PathUtils
 import com.intellij.testGuiFramework.launcher.ide.CommunityIde
 import com.intellij.testGuiFramework.launcher.ide.Ide
@@ -52,7 +52,7 @@ import kotlin.concurrent.thread
  */
 object GuiTestLocalLauncher {
 
-  private val LOG: Logger = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestSuiteRunner")!!
+  private val LOG: Logger = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestSuiteRunner")
 
   private const val TEST_GUI_FRAMEWORK_MODULE_NAME = "intellij.platform.testGuiFramework"
 
@@ -168,7 +168,7 @@ object GuiTestLocalLauncher {
       .plus(getDefaultAndCustomVmOptions(ide, customVmOptions))
       .plus("-Didea.gui.test.first.start.class=$firstStartClassName")
       .plus("-classpath")
-      .plus(getOsSpecificClasspath(ide.ideType.mainModule, testClassNames))
+      .plus(composeClasspathJar(ide.ideType.mainModule, testClassNames))
       .plus(mainClass)
 
     if (commandName != null) resultingArgs = resultingArgs.plus(commandName)
@@ -236,8 +236,8 @@ object GuiTestLocalLauncher {
     return PathUtils.getJreBinPath()
   }
 
-  private fun getOsSpecificClasspath(moduleName: String, testClassNames: List<String>): String = ClassPathBuilder.buildOsSpecific(
-    getFullClasspath(moduleName, testClassNames).map { it.path })
+  private fun composeClasspathJar(moduleName: String, testClassNames: List<String>): String =
+    getFullClasspath(moduleName, testClassNames).map { it.path }.toClasspathJarFile().path
 
 
   /**

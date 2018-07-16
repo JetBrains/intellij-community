@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -48,4 +49,12 @@ public interface UpdateSession {
    * @return true if the operation was cancelled, false otherwise.
    */
   boolean isCanceled();
+
+  /**
+   * Returns additional information which should be displayed in the post-update notification, or {@code null}.
+   */
+  @Nullable
+  default String getAdditionalNotificationContent() {
+    return null;
+  }
 }

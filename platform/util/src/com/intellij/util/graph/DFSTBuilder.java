@@ -245,7 +245,7 @@ public class DFSTBuilder<Node> {
   }
 
   /**
-   * @param if useNNumber is true then a node number in topological ordering will be used for comparison
+   * @param useNNumber if true then a node number in topological ordering will be used for comparison
    *           otherwise a node number in scc topological order will be used
    */
   @NotNull

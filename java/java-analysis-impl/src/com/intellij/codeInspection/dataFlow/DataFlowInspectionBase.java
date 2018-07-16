@@ -306,7 +306,8 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
                                           HashSet<PsiElement> reportedAnchors,
                                           DataFlowInstructionVisitor visitor) {
     visitor.sameValueAssignments().forEach(expr -> {
-      if(!reportedAnchors.add(expr)) return;
+      expr = PsiUtil.skipParenthesizedExprDown(expr);
+      if(expr == null || !reportedAnchors.add(expr)) return;
       PsiAssignmentExpression assignment = PsiTreeUtil.getParentOfType(expr, PsiAssignmentExpression.class);
       PsiElement context = PsiTreeUtil.getParentOfType(expr, PsiForStatement.class, PsiClassInitializer.class);
       if (context instanceof PsiForStatement && PsiTreeUtil.isAncestor(((PsiForStatement)context).getInitialization(), expr, true)) {
@@ -330,15 +331,19 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     });
   }
 
-  private static void reportMutabilityViolations(ProblemsHolder holder,
+  private void reportMutabilityViolations(ProblemsHolder holder,
                                                  Set<PsiElement> reportedAnchors,
                                                  Set<PsiElement> violations,
                                                  String message) {
     for (PsiElement violation : violations) {
       if (reportedAnchors.add(violation)) {
-        holder.registerProblem(violation, message);
+        holder.registerProblem(violation, message, createMutabilityViolationFix(holder, violation));
       }
     }
+  }
+
+  protected LocalQuickFix createMutabilityViolationFix(ProblemsHolder holder, PsiElement violation) {
+    return null;
   }
 
   private void reportNullabilityProblems(ProblemsHolder holder,

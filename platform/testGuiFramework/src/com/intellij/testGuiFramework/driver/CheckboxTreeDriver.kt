@@ -30,6 +30,7 @@ class CheckboxTreeDriver(robot: Robot) : ExtendedJTreeDriver(robot) {
     val checkBoxCenterPoint = Point(pathBounds.x + checkBox.location.x + checkBox.width / 2,
                                     pathBounds.y + checkBox.location.y + checkBox.height / 2)
     tree.scrollToPath(path)
+    tree.makeVisible(path)
     robot.click(tree, checkBoxCenterPoint)
   }
 

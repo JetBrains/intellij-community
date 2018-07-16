@@ -93,6 +93,10 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
     myState.OPEN_TABS.remove(tabId);
   }
 
+  public void resetState(@NotNull String tabId) {
+    myState.TAB_STATES.put(tabId, null);
+  }
+
   @NotNull
   public List<String> getTabs() {
     return newArrayList(myState.OPEN_TABS);

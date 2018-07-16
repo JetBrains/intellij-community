@@ -25,4 +25,6 @@ abstract class GroovyVersionBasedTest extends LightGroovyTestCase implements Hig
   void 'test for'() { highlightingTest() }
 
   void 'test try resources'() { highlightingTest() }
+
+  void 'test array initializers'() { highlightingTest() }
 }

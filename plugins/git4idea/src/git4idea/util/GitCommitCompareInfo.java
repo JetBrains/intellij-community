@@ -66,7 +66,7 @@ public class GitCommitCompareInfo {
     Pair<List<GitCommit>, List<GitCommit>> pair = myInfo.get(repo);
     if (pair == null) {
       LOG.error("Compare info not found for repository " + repo);
-      return Pair.create(Collections.<GitCommit>emptyList(), Collections.<GitCommit>emptyList());
+      return Pair.create(Collections.emptyList(), Collections.emptyList());
     }
     return pair;
   }
@@ -91,6 +91,11 @@ public class GitCommitCompareInfo {
       changes.addAll(changeCollection);
     }
     return changes;
+  }
+
+  protected void updateTotalDiff(@NotNull Map<GitRepository, Collection<Change>> newDiff) {
+    myTotalDiff.clear();
+    myTotalDiff.putAll(newDiff);
   }
 
   public enum InfoType {

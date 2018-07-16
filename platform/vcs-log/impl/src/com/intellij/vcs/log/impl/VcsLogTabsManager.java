@@ -42,17 +42,25 @@ public class VcsLogTabsManager {
   private void createLogTabs(@NotNull VcsLogManager manager) {
     List<String> tabIds = myUiProperties.getTabs();
     for (String tabId : tabIds) {
-      openLogTab(manager, tabId, false);
+      openLogTab(manager, tabId, false, false);
     }
   }
 
   public void openAnotherLogTab(@NotNull VcsLogManager manager) {
-    openLogTab(manager, VcsLogContentUtil.generateTabId(myProject), true);
+    openAnotherLogTab(manager, false);
   }
 
-  private void openLogTab(@NotNull VcsLogManager manager, @NotNull String tabId, boolean focus) {
+  @NotNull
+  public VcsLogUiImpl openAnotherLogTab(@NotNull VcsLogManager manager, boolean resetFilters) {
+    return openLogTab(manager, VcsLogContentUtil.generateTabId(myProject), true, resetFilters);
+  }
+
+  @NotNull
+  private VcsLogUiImpl openLogTab(@NotNull VcsLogManager manager, @NotNull String tabId, boolean focus, boolean resetFilters) {
+    if (resetFilters) myUiProperties.resetState(tabId);
+
     VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> factory = new PersistentVcsLogUiFactory(manager.getMainLogUiFactory(tabId));
-    VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME, tabId, factory, focus);
+   return VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME, tabId, factory, focus);
   }
 
   private class PersistentVcsLogUiFactory implements VcsLogManager.VcsLogUiFactory<VcsLogUiImpl> {

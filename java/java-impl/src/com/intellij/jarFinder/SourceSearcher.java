@@ -78,24 +78,14 @@ public abstract class SourceSearcher {
 
   @Nullable
   protected static String findMavenGroupId(@NotNull VirtualFile classesJar, String artifactId) {
-    try {
-      JarFile jarFile = new JarFile(VfsUtilCore.virtualToIoFile(classesJar));
-      try {
-        final Enumeration<JarEntry> entries = jarFile.entries();
-        while (entries.hasMoreElements()) {
-          JarEntry entry = entries.nextElement();
-          final String name = entry.getName();
-          if (StringUtil.startsWith(name, MAVEN_POM_ENTRY_PREFIX) && StringUtil.endsWith(name, "/" + artifactId + "/pom.xml")) {
-            final int index = name.indexOf('/', MAVEN_POM_ENTRY_PREFIX.length());
-            return index != -1 ? name.substring(MAVEN_POM_ENTRY_PREFIX.length(), index) : null;
-          }
-        }
-      }
-      finally {
-        try {
-          jarFile.close();
-        }
-        catch (IOException ignore) {
+    try (JarFile jarFile = new JarFile(VfsUtilCore.virtualToIoFile(classesJar))) {
+      final Enumeration<JarEntry> entries = jarFile.entries();
+      while (entries.hasMoreElements()) {
+        JarEntry entry = entries.nextElement();
+        final String name = entry.getName();
+        if (StringUtil.startsWith(name, MAVEN_POM_ENTRY_PREFIX) && StringUtil.endsWith(name, "/" + artifactId + "/pom.xml")) {
+          final int index = name.indexOf('/', MAVEN_POM_ENTRY_PREFIX.length());
+          return index != -1 ? name.substring(MAVEN_POM_ENTRY_PREFIX.length(), index) : null;
         }
       }
     }

@@ -35,11 +35,13 @@ public final class ModuleCompilerUtil {
   @NotNull
   private static Graph<Module> createModuleGraph(@NotNull Module[] modules) {
     return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<Module>() {
+      @NotNull
       @Override
       public Collection<Module> getNodes() {
         return Arrays.asList(modules);
       }
 
+      @NotNull
       @Override
       public Iterator<Module> getIn(Module module) {
         return Arrays.asList(getDependencies(module)).iterator();
@@ -113,6 +115,7 @@ public final class ModuleCompilerUtil {
   @NotNull
   private static Graph<ModuleSourceSet> createModuleSourceDependenciesGraph(@NotNull RootModelProvider provider) {
     return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<ModuleSourceSet>() {
+      @NotNull
       @Override
       public Collection<ModuleSourceSet> getNodes() {
         Module[] modules = provider.getModules();
@@ -124,6 +127,7 @@ public final class ModuleCompilerUtil {
         return result;
       }
 
+      @NotNull
       @Override
       public Iterator<ModuleSourceSet> getIn(final ModuleSourceSet n) {
         ModuleRootModel model = provider.getRootModel(n.getModule());

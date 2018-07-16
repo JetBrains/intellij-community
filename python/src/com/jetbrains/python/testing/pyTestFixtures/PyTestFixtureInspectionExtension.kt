@@ -15,5 +15,5 @@ object PyTestFixtureInspectionExtension : PyInspectionExtension() {
     local is PyNamedParameter && local.isFixture(evalContext)
 
   override fun ignoreShadowed(element: PsiElement) = element is PyFunction
-                                                     && (element.isFixture() || element.isInjectableLikeFixture())
+                                                     && (element.isFixture() || element.isCustomFixture())
 }

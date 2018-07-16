@@ -140,22 +140,16 @@ public class CompilerReferenceIndex<Input> {
   public static boolean versionDiffers(@NotNull File buildDir, int expectedVersion) {
     File versionFile = new File(getIndexDir(buildDir), VERSION_FILE);
 
-    try {
-      final DataInputStream is = new DataInputStream(new FileInputStream(versionFile));
-      try {
-        int currentIndexVersion = is.readInt();
-        boolean isDiffer = currentIndexVersion != expectedVersion;
-        if (isDiffer) {
-          LOG.info("backward reference index version differ, expected = " + expectedVersion + ", current = " + currentIndexVersion);
-        }
-        return isDiffer;
+    try (DataInputStream is = new DataInputStream(new FileInputStream(versionFile))) {
+      int currentIndexVersion = is.readInt();
+      boolean isDiffer = currentIndexVersion != expectedVersion;
+      if (isDiffer) {
+        LOG.info("backward reference index version differ, expected = " + expectedVersion + ", current = " + currentIndexVersion);
       }
-      finally {
-        is.close();
-      }
+      return isDiffer;
     }
-    catch (IOException ignored) {
-      LOG.info("backward reference index version differ due to: " + ignored.getClass());
+    catch (IOException e) {
+      LOG.info("backward reference index version differ due to: " + e.getClass());
     }
     return true;
   }

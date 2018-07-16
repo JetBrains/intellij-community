@@ -413,7 +413,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     @NotNull
     Map<VirtualFile, VcsLogProvider.Requirements> asMap(@NotNull Collection<VirtualFile> roots) {
       return ContainerUtil
-        .map2Map(roots, root -> Pair.<VirtualFile, VcsLogProvider.Requirements>create(root, this));
+        .map2Map(roots, root -> Pair.create(root, this));
     }
   }
 

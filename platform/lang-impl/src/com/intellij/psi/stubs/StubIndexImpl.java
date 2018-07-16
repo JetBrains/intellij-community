@@ -244,6 +244,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
 
   <K> void serializeIndexValue(DataOutput out, StubIndexKey<K, ?> stubIndexKey, Map<K, StubIdList> map) throws IOException {
     MyIndex<K> index = (MyIndex<K>)getAsyncState().myIndices.get(stubIndexKey);
+    if (index == null) return;
     KeyDescriptor<K> keyDescriptor = index.getExtension().getKeyDescriptor();
 
     DataInputOutputUtil.writeINT(out, map.size());
@@ -297,6 +298,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
     final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     ID<Integer, SerializedStubTree> stubUpdatingIndexId = StubUpdatingIndex.INDEX_ID;
     final MyIndex<Key> index = (MyIndex<Key>)getAsyncState().myIndices.get(indexKey);   // wait for initialization to finish
+    if (index == null) return true;
 
     fileBasedIndex.ensureUpToDate(stubUpdatingIndexId, project, scope);
 
@@ -380,6 +382,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
                                     @NotNull GlobalSearchScope scope,
                                     @Nullable IdFilter idFilter) {
     final MyIndex<K> index = (MyIndex<K>)getAsyncState().myIndices.get(indexKey); // wait for initialization to finish
+    if (index == null) return true;
     FileBasedIndex.getInstance().ensureUpToDate(StubUpdatingIndex.INDEX_ID, scope.getProject(), scope);
 
     try {
@@ -547,6 +550,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
                               @NotNull final Map<K, StubIdList> newValues) {
     try {
       final MyIndex<K> index = (MyIndex<K>)getAsyncState().myIndices.get(key);
+      if (index == null) return;
       final ThrowableComputable<InputDataDiffBuilder<K, StubIdList>, IOException>
         oldMapGetter = () -> new MapInputDataDiffBuilder<>(fileId, oldValues);
       index.updateWithMap(fileId, new UpdateData<>(newValues, oldMapGetter, key, null));

@@ -121,7 +121,11 @@ public abstract class ProjectFileListener {
   }
 
   public final void updateFromElement(@Nullable PsiElement element) {
-    updateFromFile(getVirtualFile(element));
+    VirtualFile file = getVirtualFile(element);
+    updateFromFile(file);
+    if (file != null && !file.isDirectory()) {
+      updateFromFile(file.getParent());
+    }
   }
 
   @Nullable

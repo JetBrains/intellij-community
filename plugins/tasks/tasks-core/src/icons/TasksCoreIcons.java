@@ -28,6 +28,10 @@ public class TasksCoreIcons {
     return IconLoader.getIcon(path, TasksCoreIcons.class);
   }
 
+  private static Icon load(String path, Class<?> clazz) {
+    return IconLoader.getIcon(path, clazz);
+  }
+
   public static final Icon Asana = load("/icons/asana.png"); // 16x16
   public static final Icon Assembla = load("/icons/assembla.png"); // 16x16
   public static final Icon AutoMode = load("/icons/autoMode.png"); // 16x16
@@ -36,7 +40,11 @@ public class TasksCoreIcons {
   public static final Icon Clock = load("/icons/clock.svg"); // 13x13
   public static final Icon Feature = load("/icons/feature.png"); // 16x16
   public static final Icon Fogbugz = load("/icons/fogbugz.png"); // 16x16
-  public static final Icon Github = load("/icons/github.png"); // 16x16
+
+  /** @deprecated to be removed in IDEA 2020 - use AllIcons.Vcs.Vendors.Github */
+  @SuppressWarnings("unused")
+  @Deprecated
+  public static final Icon Github = load("/vcs/vendors/github.svg", com.intellij.icons.AllIcons.class);
   public static final Icon Gitlab = load("/icons/gitlab.png"); // 16x16
   public static final Icon Jira = load("/icons/jira.png"); // 16x16
   public static final Icon Lighthouse = load("/icons/lighthouse.png"); // 16x16

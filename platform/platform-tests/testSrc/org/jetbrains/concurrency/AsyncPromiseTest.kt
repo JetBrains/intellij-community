@@ -2,12 +2,15 @@
 package org.jetbrains.concurrency
 
 import com.intellij.testFramework.assertConcurrent
+import com.intellij.testFramework.assertConcurrentPromises
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.Test
+import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.test.fail
 
 class AsyncPromiseTest {
   @Test
@@ -35,25 +38,36 @@ class AsyncPromiseTest {
   fun state() {
     val promise = AsyncPromise<String>()
     val count = AtomicInteger()
+    val log = StringBuffer()
 
-    val r = {
-      promise
-        .onSuccess { count.incrementAndGet() }
+    class Incrementer(val descr:String) : ()->Promise<String> {
+      override fun toString(): String {
+        return descr
+      }
+
+      override fun invoke(): Promise<String> {
+        return promise.onSuccess { count.incrementAndGet(); log.append("\n" + this + " " + System.identityHashCode(this)) }
+      }
     }
 
-    val s = {
+    val setResulter: () -> Promise<String> = {
       promise.setResult("test")
+      promise
     }
 
     val numThreads = 30
-    assertConcurrent(*Array(numThreads, {
-      if ((it and 1) == 0) r else s
-    }))
+    val array = Array(numThreads) {
+      if ((it and 1) == 0) Incrementer("handler $it") else setResulter
+    }
+    assertConcurrentPromises(*array)
 
+    if (count.get() != (numThreads / 2)) {
+      fail("count: "+count +" "+ log.toString()+"\n---Array:\n"+ Arrays.toString(array))
+    }
     assertThat(count.get()).isEqualTo(numThreads / 2)
     assertThat(promise.get()).isEqualTo("test")
 
-    r()
+    Incrementer("extra").invoke()
     assertThat(count.get()).isEqualTo((numThreads / 2) + 1)
   }
 

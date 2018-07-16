@@ -3,10 +3,7 @@ package org.jetbrains.plugins.groovy.lang.psi;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.GrDoWhileStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.GrExpressionList;
-import org.jetbrains.plugins.groovy.lang.psi.api.GrInExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList;
+import org.jetbrains.plugins.groovy.lang.psi.api.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -474,5 +471,9 @@ public abstract class GroovyElementVisitor {
 
   public void visitExpressionList(@NotNull GrExpressionList expressionList) {
     visitElement(expressionList);
+  }
+
+  public void visitArrayInitializer(@NotNull GrArrayInitializer arrayInitializer) {
+    visitElement(arrayInitializer);
   }
 }

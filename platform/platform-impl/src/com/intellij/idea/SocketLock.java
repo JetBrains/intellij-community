@@ -310,11 +310,9 @@ public final class SocketLock {
     public void channelActive(ChannelHandlerContext context) throws Exception {
       ByteBuf buffer = context.alloc().ioBuffer(1024);
       boolean success = false;
-      try {
-        ByteBufOutputStream out = new ByteBufOutputStream(buffer);
+      try (ByteBufOutputStream out = new ByteBufOutputStream(buffer)) {
         for (String path : myLockedPaths) out.writeUTF(path);
         out.writeUTF(PATHS_EOT_RESPONSE);
-        out.close();
         success = true;
       }
       finally {
@@ -352,10 +350,10 @@ public final class SocketLock {
 
             if (StringUtil.startsWith(command, PID_COMMAND)) {
               ByteBuf buffer = context.alloc().ioBuffer();
-              ByteBufOutputStream out = new ByteBufOutputStream(buffer);
-              String name = ManagementFactory.getRuntimeMXBean().getName();
-              out.writeUTF(name);
-              out.close();
+              try (ByteBufOutputStream out = new ByteBufOutputStream(buffer)) {
+                String name = ManagementFactory.getRuntimeMXBean().getName();
+                out.writeUTF(name);
+              }
               context.writeAndFlush(buffer);
             }
 
@@ -380,9 +378,9 @@ public final class SocketLock {
               }
 
               ByteBuf buffer = context.alloc().ioBuffer(4);
-              ByteBufOutputStream out = new ByteBufOutputStream(buffer);
-              out.writeUTF(OK_RESPONSE);
-              out.close();
+              try (ByteBufOutputStream out = new ByteBufOutputStream(buffer)) {
+                out.writeUTF(OK_RESPONSE);
+              }
               context.writeAndFlush(buffer);
             }
             context.close();

@@ -255,15 +255,11 @@ public class TipUIUtil {
   private static byte[] readBytes(@NotNull URL url) throws IOException{
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     byte[] buffer = new byte[16384];
-    InputStream stream = null;
-    try {
-      stream = url.openStream();
-      for (int len = stream.read(buffer); len >0 ; len = stream.read(buffer)) {
+    try (InputStream stream = url.openStream()) {
+      for (int len = stream.read(buffer); len > 0; len = stream.read(buffer)) {
         baos.write(buffer, 0, len);
       }
       return baos.toByteArray();
-    } finally {
-      if (stream != null) stream.close();
     }
   }
 

@@ -92,6 +92,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     return myOptionInspectionFixes;
   }
 
+  @NotNull
   public List<IntentionAction> getOptionActions() {
     return ContainerUtil.concat(myOptionIntentions, myOptionErrorFixes, myOptionInspectionFixes);
   }

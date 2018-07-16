@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
 import com.intellij.openapi.util.Getter;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,8 +29,7 @@ import java.util.List;
 public class InlayModelImpl implements InlayModel, Disposable {
   private static final Logger LOG = Logger.getInstance(InlayModelImpl.class);
   private static final Comparator<Inlay> INLAY_COMPARATOR = Comparator.comparingInt(Inlay::getOffset)
-    .thenComparing(i -> i.isRelatedToPrecedingText())
-    .thenComparingInt(i -> ((InlayImpl)i).myOriginalOffset);
+    .thenComparing(i -> i.isRelatedToPrecedingText());
 
   private final EditorImpl myEditor;
   private final EventDispatcher<Listener> myDispatcher = EventDispatcher.create(Listener.class);
@@ -51,6 +51,17 @@ public class InlayModelImpl implements InlayModel, Disposable {
           @Override
           protected Getter<InlayImpl> createGetter(@NotNull InlayImpl interval) {
             return interval;
+          }
+
+          @Override
+          void addIntervalsFrom(@NotNull IntervalNode<InlayImpl> otherNode) {
+            super.addIntervalsFrom(otherNode);
+            if (InlayImpl.ourPutAtBeginningOfMergedIntervals) {
+              List<Getter<InlayImpl>> added = ContainerUtil.subList(intervals, intervals.size() - otherNode.intervals.size());
+              List<Getter<InlayImpl>> addedCopy = new ArrayList<>(added);
+              added.clear();
+              intervals.addAll(0, addedCopy);
+            }
           }
         };
       }

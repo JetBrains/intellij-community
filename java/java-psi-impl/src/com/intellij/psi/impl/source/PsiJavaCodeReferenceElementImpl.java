@@ -644,15 +644,21 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       assert qName != null : aClass;
     }
 
-    String text = qName;
+    StringBuilder text = new StringBuilder(qName);
     PsiReferenceParameterList parameterList = getParameterList();
     if (parameterList != null) {
-      text += parameterList.getText();
+      PsiElement cur = getReferenceNameElement();
+      do {
+        assert cur != null : getText();
+        cur = cur.getNextSibling();
+        text.append(cur.getText());
+      }
+      while (cur != parameterList);
     }
 
     PsiJavaCodeReferenceElement ref;
     try {
-      ref = facade.getParserFacade().createReferenceFromText(text, getParent());
+      ref = facade.getParserFacade().createReferenceFromText(text.toString(), getParent());
     }
     catch (IncorrectOperationException e) {
       throw new IncorrectOperationException(e.getMessage() + " [qname=" + qName + " class=" + aClass + ";" + aClass.getClass().getName() + "]");

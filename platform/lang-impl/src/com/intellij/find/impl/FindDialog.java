@@ -99,12 +99,12 @@ public class FindDialog extends DialogWrapper implements FindUI {
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.FindDialog");
   private final FindUIHelper myHelper;
 
-  private ComboBox myInputComboBox;
-  private ComboBox myReplaceComboBox;
+  private ComboBox<String> myInputComboBox;
+  private ComboBox<String> myReplaceComboBox;
   private StateRestoringCheckBox myCbCaseSensitive;
   private StateRestoringCheckBox myCbPreserveCase;
   private StateRestoringCheckBox myCbWholeWordsOnly;
-  private ComboBox mySearchContext;
+  private ComboBox<String> mySearchContext;
   private StateRestoringCheckBox myCbRegularExpressions;
   private JRadioButton myRbGlobal;
   private JRadioButton myRbSelectedText;
@@ -115,13 +115,13 @@ public class FindDialog extends DialogWrapper implements FindUI {
   private JRadioButton myRbProject;
   private JRadioButton myRbDirectory;
   private JRadioButton myRbModule;
-  private ComboBox myModuleComboBox;
-  private ComboBox myDirectoryComboBox;
+  private ComboBox<String> myModuleComboBox;
+  private ComboBox<String> myDirectoryComboBox;
   private StateRestoringCheckBox myCbWithSubdirectories;
   private JCheckBox myCbToOpenInNewTab;
   private FixedSizeButton mySelectDirectoryButton;
   private StateRestoringCheckBox myUseFileFilter;
-  private ComboBox myFileFilter;
+  private ComboBox<String> myFileFilter;
   private JCheckBox myCbToSkipResultsWhenOneUsage;
   private final Project myProject;
   private final Map<EditorTextField, DocumentListener> myComboBoxListeners = new HashMap<>();
@@ -129,7 +129,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
   private Action myFindAllAction;
   private JRadioButton myRbCustomScope;
   private ScopeChooserCombo myScopeCombo;
-  protected JLabel myReplacePrompt;
+  private JLabel myReplacePrompt;
   private HideableTitledPanel myScopePanel;
   private static boolean myPreviousResultsExpandedState = true;
   private static boolean myPreviewResultsTabWasSelected;
@@ -143,7 +143,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
   private static final String PREVIEW_TITLE = UIBundle.message("tool.window.name.preview");
   private volatile ProgressIndicatorBase myResultsPreviewSearchProgress;
 
-  public FindDialog(FindUIHelper helper){
+  FindDialog(FindUIHelper helper){
     super(helper.getProject(), true);
     myHelper = helper;
     myProject = myHelper.getProject();
@@ -172,6 +172,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
     super.doCancelAction();
   }
 
+  @Override
   public void saveSettings() {
     FindSettings.getInstance().setDefaultScopeName(myScopeCombo.getSelectedScopeName());
     applyTo(FindManager.getInstance(myProject).getFindInProjectModel(), false);
@@ -235,11 +236,11 @@ public class FindDialog extends DialogWrapper implements FindUI {
     JLabel prompt = new JLabel(FindBundle.message("find.text.to.find.label"));
     panel.add(prompt, new GridBagConstraints(0,0,1,1,0,1, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0,0,UIUtil.DEFAULT_VGAP,UIUtil.DEFAULT_HGAP), 0,0));
 
-    myInputComboBox = new ComboBox(300);
+    myInputComboBox = new ComboBox<>(300);
     revealWhitespaces(myInputComboBox);
     initCombobox(myInputComboBox);
 
-    myReplaceComboBox = new ComboBox(300);
+    myReplaceComboBox = new ComboBox<>(300);
     revealWhitespaces(myReplaceComboBox);
 
     initCombobox(myReplaceComboBox);
@@ -267,7 +268,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
     return panel;
   }
 
-  private void revealWhitespaces(@NotNull ComboBox comboBox) {
+  private void revealWhitespaces(@NotNull ComboBox<String> comboBox) {
     ComboBoxEditor comboBoxEditor = new RevealingSpaceComboboxEditor(myProject, comboBox);
     comboBox.setEditor(comboBoxEditor);
     comboBox.setRenderer(new EditorComboBoxRenderer(comboBoxEditor));
@@ -372,7 +373,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
         myContent.getSelectedIndex() == RESULTS_PREVIEW_TAB_INDEX;
   }
 
-  private void makeResultsPreviewActionOverride(final JComboBox component, KeyStroke keyStroke, String newActionKey, final Runnable newAction) {
+  private void makeResultsPreviewActionOverride(final JComboBox<?> component, KeyStroke keyStroke, String newActionKey, final Runnable newAction) {
     InputMap inputMap = component.getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
     Object action = inputMap.get(keyStroke);
     inputMap.put(keyStroke, newActionKey);
@@ -703,7 +704,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
     filterPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.filter.file.name.group"),
                                                               true));
 
-    myFileFilter = new ComboBox(100);
+    myFileFilter = new ComboBox<>(100);
     initCombobox(myFileFilter);
     filterPanel.add(myUseFileFilter = createCheckbox(FindBundle.message("find.filter.file.mask.checkbox")),BorderLayout.WEST);
     filterPanel.add(myFileFilter,BorderLayout.CENTER);
@@ -715,7 +716,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
     return filterPanel;
   }
 
-  public static void initFileFilter(@NotNull final JComboBox fileFilter, @NotNull final JCheckBox useFileFilter) {
+  public static void initFileFilter(@NotNull final JComboBox<? super String> fileFilter, @NotNull final JCheckBox useFileFilter) {
     fileFilter.setEditable(true);
     String[] fileMasks = FindSettings.getInstance().getRecentFileMasks();
     for(int i=fileMasks.length-1; i >= 0; i--) {
@@ -870,7 +871,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
 
     findOptionsPanel.add(regExPanel);
 
-    mySearchContext = new ComboBox(new Object[] { getPresentableName(FindModel.SearchContext.ANY),
+    mySearchContext = new ComboBox<>(new String[]{getPresentableName(FindModel.SearchContext.ANY),
       getPresentableName(FindModel.SearchContext.IN_COMMENTS),
       getPresentableName(FindModel.SearchContext.IN_STRING_LITERALS),
       getPresentableName(FindModel.SearchContext.EXCEPT_COMMENTS),
@@ -1068,7 +1069,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
     }
 
     Arrays.sort(names,String.CASE_INSENSITIVE_ORDER);
-    myModuleComboBox = new ComboBox(names);
+    myModuleComboBox = new ComboBox<>(names);
     myModuleComboBox.addActionListener(__ -> scheduleResultsUpdate());
     scopePanel.add(myModuleComboBox, gbConstraints);
 
@@ -1087,7 +1088,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
 
     gbConstraints.gridx = 1;
     gbConstraints.weightx = 1;
-    myDirectoryComboBox = new ComboBox(200);
+    myDirectoryComboBox = new ComboBox<>(200);
     Component editorComponent = myDirectoryComboBox.getEditor().getEditorComponent();
     if (editorComponent instanceof JTextField) {
       JTextField field = (JTextField)editorComponent;
@@ -1268,7 +1269,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
     return (String)myDirectoryComboBox.getEditor().getItem();
   }
 
-  private static void setStringsToComboBox(@NotNull String[] strings, @NotNull ComboBox<String> combo, String selected) {
+  private static void setStringsToComboBox(@NotNull String[] strings, @NotNull ComboBox<? super String> combo, String selected) {
     if (combo.getItemCount() > 0){
       combo.removeAllItems();
     }
@@ -1538,7 +1539,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
         boolean highlighted = textChunk.getType() != null || at.getFontStyle() == Font.BOLD;
         return highlighted
                ? new SimpleTextAttributes(null, at.getFgColor(), at.getWaveColor(),
-                                          (at.getStyle() & ~SimpleTextAttributes.STYLE_BOLD) |
+                                          at.getStyle() & ~SimpleTextAttributes.STYLE_BOLD |
                                           SimpleTextAttributes.STYLE_SEARCH_MATCH)
                : at;
       }
@@ -1641,7 +1642,7 @@ public class FindDialog extends DialogWrapper implements FindUI {
     }
   }
 
-  protected void registerNavigateToSourceShortcutOnComponent(@NotNull final JBTable c, JComponent component) {
+  private void registerNavigateToSourceShortcutOnComponent(@NotNull final JBTable c, JComponent component) {
     AnAction anAction = new AnAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {

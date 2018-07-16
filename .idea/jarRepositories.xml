@@ -31,5 +31,10 @@
       <option name="name" value="Groovy Bintray Repository" />
       <option name="url" value="https://dl.bintray.com/groovy/maven/" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="jitpack" />
+      <option name="name" value="jitpack" />
+      <option name="url" value="https://jitpack.io" />
+    </remote-repository>
   </component>
 </project>

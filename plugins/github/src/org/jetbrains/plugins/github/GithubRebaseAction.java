@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -23,7 +24,6 @@ import git4idea.update.GitFetchResult;
 import git4idea.update.GitFetcher;
 import git4idea.update.GitUpdateResult;
 import git4idea.util.GitPreservingProcess;
-import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiTaskExecutor;
@@ -48,7 +48,7 @@ public class GithubRebaseAction extends LegacySingleAccountActionGroup {
   private static final String CANNOT_PERFORM_GITHUB_REBASE = "Can't perform GitHub rebase";
 
   public GithubRebaseAction() {
-    super("Rebase my GitHub fork", "Rebase your GitHub forked repository relative to the origin", GithubIcons.Github_icon);
+    super("Rebase my GitHub fork", "Rebase your GitHub forked repository relative to the origin", AllIcons.Vcs.Vendors.Github);
   }
 
   @Override

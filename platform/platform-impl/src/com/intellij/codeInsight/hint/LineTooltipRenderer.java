@@ -80,7 +80,10 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
     JPanel grid = new JPanel(new GridBagLayout());
     GridBag bag = new GridBag()
       .anchor(GridBagConstraints.CENTER)
-      .fillCellHorizontally();
+      //weight is required for correct working scrollpane inside gridbaglayout
+      .weightx(1.0)
+      .weighty(1.0)
+      .fillCell();
 
     pane.setBorder(JBUI.Borders.empty(6, 8, 6, 12));
     grid.add(pane, bag);
@@ -129,7 +132,6 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
 
     scrollPane.setBackground(hintHint.getTextBackground());
     scrollPane.getViewport().setBackground(hintHint.getTextBackground());
-
     scrollPane.setViewportBorder(null);
 
     if (hintHint.isRequestFocus()) {

@@ -35,14 +35,20 @@ public class GraphAlgorithmsImpl extends GraphAlgorithms {
   @Override
   public <Node> Graph<Node> invertEdgeDirections(@NotNull final Graph<Node> graph) {
     return new Graph<Node>() {
+      @Override
+      @NotNull
       public Collection<Node> getNodes() {
         return graph.getNodes();
       }
 
+      @Override
+      @NotNull
       public Iterator<Node> getIn(final Node n) {
         return graph.getOut(n);
       }
 
+      @Override
+      @NotNull
       public Iterator<Node> getOut(final Node n) {
         return graph.getIn(n);
       }
@@ -70,11 +76,13 @@ public class GraphAlgorithmsImpl extends GraphAlgorithms {
     }
 
     return GraphGenerator.generate(CachingSemiGraph.cache(new InboundSemiGraph<Chunk<Node>>() {
+      @NotNull
       @Override
       public Collection<Chunk<Node>> getNodes() {
         return chunks;
       }
 
+      @NotNull
       @Override
       public Iterator<Chunk<Node>> getIn(Chunk<Node> chunk) {
         final Set<Node> chunkNodes = chunk.getNodes();

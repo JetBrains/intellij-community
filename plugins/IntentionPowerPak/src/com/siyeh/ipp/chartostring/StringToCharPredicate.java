@@ -47,7 +47,7 @@ class StringToCharPredicate implements PsiElementPredicate {
     return isInConcatenationContext(expression);
   }
 
-  private static boolean isInConcatenationContext(PsiExpression element) {
+  static boolean isInConcatenationContext(PsiExpression element) {
     if (ExpressionUtils.isStringConcatenationOperand(element)) return true;
     final PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
     if (parent instanceof PsiAssignmentExpression) {
@@ -110,12 +110,7 @@ class StringToCharPredicate implements PsiElementPredicate {
         final PsiElement method = methodExpression.resolve();
         return method != null;
       }
-      else {
-        return false;
-      }
     }
-    else {
-      return false;
-    }
+    return false;
   }
 }

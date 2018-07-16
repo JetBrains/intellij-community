@@ -52,7 +52,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -63,9 +63,6 @@ import com.intellij.rt.coverage.data.ProjectData;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-
-import java.util.HashMap;
-import java.util.HashSet;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -76,9 +73,8 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author ven
@@ -99,6 +95,21 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
 
   private final Object myLock = new Object();
   private boolean mySubCoverageIsActive;
+
+  private final VirtualFileContentsChangedAdapter myContentListener = new VirtualFileContentsChangedAdapter() {
+    @Override
+    protected void onFileChange(@NotNull VirtualFile fileOrDirectory) {
+      if (myCurrentSuiteRoots != null && VfsUtilCore.isUnder(fileOrDirectory.getPath(), myCurrentSuiteRoots)) {
+        myCurrentSuitesBundle.restoreCoverageData();
+        updateCoverageData(myCurrentSuitesBundle);
+      }
+    }
+
+    @Override
+    protected void onBeforeFileChange(@NotNull VirtualFile fileOrDirectory) { }
+  };
+  private Set<LocalFileSystem.WatchRequest> myWatchRequests;
+  private List<String> myCurrentSuiteRoots;
 
   @Override
   public CoverageSuitesBundle getCurrentSuitesBundle() {
@@ -273,6 +284,18 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
       return;
     }
 
+    if (myWatchRequests != null) {
+      LocalFileSystem.getInstance().removeWatchedRoots(myWatchRequests);
+      VirtualFileManager.getInstance().removeVirtualFileListener(myContentListener);
+
+      myWatchRequests = null;
+      myCurrentSuiteRoots = null;
+    }
+
+    updateCoverageData(suite);
+  }
+
+  private void updateCoverageData(CoverageSuitesBundle suite) {
     LOG.assertTrue(!myProject.isDefault());
 
     fireBeforeSuiteChosen();
@@ -384,6 +407,17 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
     if (runnerSettings instanceof CoverageRunnerData) {
       processGatheredCoverage(configuration);
     }
+  }
+
+  /**
+   * Called from EDT, on external coverage suite choosing
+   */
+  public void addRootsToWatch(List<CoverageSuite> suites) {
+    myCurrentSuiteRoots = suites.stream().map(suite -> suite.getCoverageDataFileName()).collect(Collectors.toList());
+    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
+    myCurrentSuiteRoots.forEach(path -> fileSystem.refreshAndFindFileByPath(path));
+    myWatchRequests = fileSystem.addRootsToWatch(myCurrentSuiteRoots, true);
+    VirtualFileManager.getInstance().addVirtualFileListener(myContentListener);
   }
 
   public static void processGatheredCoverage(RunConfigurationBase configuration) {

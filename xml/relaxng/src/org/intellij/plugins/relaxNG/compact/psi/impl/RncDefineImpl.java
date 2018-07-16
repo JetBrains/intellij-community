@@ -25,7 +25,6 @@ import com.intellij.psi.PsiReferenceBase;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
 import org.intellij.plugins.relaxNG.compact.psi.*;
@@ -172,12 +171,6 @@ public class RncDefineImpl extends RncElementImpl implements RncDefine, PsiMetaO
 
     @Override
     public void init(PsiElement element) {
-    }
-
-    @NotNull
-    @Override
-    public Object[] getDependences() {
-      return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
   }
 }

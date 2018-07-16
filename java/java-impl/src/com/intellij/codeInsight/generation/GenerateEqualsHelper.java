@@ -19,7 +19,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -27,7 +30,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.java.generate.GenerationUtil;
 import org.jetbrains.java.generate.template.TemplateResource;
@@ -169,7 +171,6 @@ public class GenerateEqualsHelper implements Runnable {
   }
   
   private PsiMethod createEquals() throws IncorrectOperationException {
-    @NonNls StringBuilder buffer = new StringBuilder();
     JavaCodeStyleSettings styleSettings = JavaCodeStyleSettings.getInstance(myClass.getContainingFile());
     ArrayList<PsiField> equalsFields = new ArrayList<>();
     ContainerUtil.addAll(equalsFields, myEqualsFields);
@@ -201,10 +202,9 @@ public class GenerateEqualsHelper implements Runnable {
     final String methodText = GenerationUtil
       .velocityGenerateCode(myClass, equalsFields, myNonNullSet, new HashMap<>(), contextMap,
                             EqualsHashCodeTemplatesManager.getInstance().getDefaultEqualsTemplate().getTemplate(), 0, false, myUseAccessors);
-    buffer.append(methodText);
     PsiMethod result;
     try {
-      result = myFactory.createMethodFromText(buffer.toString(), myClass);
+      result = myFactory.createMethodFromText(methodText, myClass);
     }
     catch (IncorrectOperationException e) {
       return null;
@@ -242,18 +242,15 @@ public class GenerateEqualsHelper implements Runnable {
   }
 
   private PsiMethod createHashCode() throws IncorrectOperationException {
-    @NonNls StringBuilder buffer = new StringBuilder();
-
     final HashMap<String, Object> contextMap = new HashMap<>();
     contextMap.put(SUPER_HAS_HASH_CODE, mySuperHasHashCode);
 
     final String methodText = GenerationUtil
       .velocityGenerateCode(myClass, Arrays.asList(myHashCodeFields), myNonNullSet, new HashMap<>(), contextMap,
                             EqualsHashCodeTemplatesManager.getInstance().getDefaultHashcodeTemplate().getTemplate(), 0, false, myUseAccessors);
-    buffer.append(methodText);
     PsiMethod hashCode;
     try {
-      hashCode = myFactory.createMethodFromText(buffer.toString(), null);
+      hashCode = myFactory.createMethodFromText(methodText, null);
     }
     catch (IncorrectOperationException e) {
       return null;

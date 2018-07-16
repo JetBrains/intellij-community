@@ -23,7 +23,7 @@ public final class UIThemeProvider {
   @Nullable
   public UITheme createTheme() {
     try {
-      return UITheme.loadFromJson(getClass().getResourceAsStream(path), id);
+      return UITheme.loadFromJson(getClass().getResourceAsStream(path), id, getClass());
     }
     catch (IOException e) {
       Logger.getInstance(getClass()).warn(e);

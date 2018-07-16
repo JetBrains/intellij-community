@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamMigration;
 
-import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
 import com.intellij.openapi.project.Project;
@@ -79,8 +78,8 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
         if (!StreamApiUtil.isSupportedStreamElement(left.getType()) || !ExpressionUtils.isSafelyRecomputableExpression(left)) {
           return Collections.emptyList();
         }
-        if (operands[0] instanceof PsiBinaryExpression) {
-          PsiBinaryExpression binOp = (PsiBinaryExpression)operands[0];
+        PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(operands[0]), PsiBinaryExpression.class);
+        if (binOp != null) {
           if (ComparisonUtils.isComparison(binOp) &&
               (left == binOp.getLOperand() && ExpressionUtils.isSafelyRecomputableExpression(binOp.getROperand())) ||
               (left == binOp.getROperand() && ExpressionUtils.isSafelyRecomputableExpression(binOp.getLOperand()))) {
@@ -148,7 +147,8 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
       PsiExpression delimiter = null;
       PsiExpression rest = null;
       if (operands.length > 4 && ExpressionUtils.isSafelyRecomputableExpression(operands[1]) &&
-          IntStreamEx.range(1, operands.length, 2).elements(operands).pairMap(PsiEquivalenceUtil::areElementsEquivalent)
+          IntStreamEx.range(1, operands.length, 2).elements(operands)
+                     .pairMap(EquivalenceChecker.getCanonicalPsiEquivalence()::expressionsAreEquivalent)
                      .allMatch(Boolean.TRUE::equals)) {
         delimiter = operands[1];
         if (operands.length % 2 == 0) {

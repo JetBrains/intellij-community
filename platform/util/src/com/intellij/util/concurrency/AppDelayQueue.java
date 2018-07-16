@@ -30,12 +30,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
  */
 class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFutureTask> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.concurrency.AppDelayQueue");
-  private final Thread scheduledToPooledTransferer;
+  private final Thread scheduledToPooledTransferrer;
   private final AtomicBoolean shutdown = new AtomicBoolean();
 
   AppDelayQueue() {
     /* this thread takes the ready-to-execute scheduled tasks off the queue and passes them for immediate execution to {@link SchedulingWrapper#backendExecutorService} */
-    scheduledToPooledTransferer = new Thread(new Runnable() {
+    scheduledToPooledTransferrer = new Thread(new Runnable() {
       @Override
       public void run() {
         while (!shutdown.get()) {
@@ -65,21 +65,21 @@ class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFutureTask> 
             }
           }
         }
-        LOG.debug("scheduledToPooledTransferer Stopped");
+        LOG.debug("scheduledToPooledTransferrer Stopped");
       }
     }, "Periodic tasks thread");
-    scheduledToPooledTransferer.setDaemon(true); // mark as daemon to not prevent JVM to exit (needed for Kotlin CLI compiler)
-    scheduledToPooledTransferer.start();
+    scheduledToPooledTransferrer.setDaemon(true); // mark as daemon to not prevent JVM to exit (needed for Kotlin CLI compiler)
+    scheduledToPooledTransferrer.start();
   }
 
   void shutdown() {
     if (shutdown.getAndSet(true)) {
       throw new IllegalStateException("Already shutdown");
     }
-    scheduledToPooledTransferer.interrupt();
+    scheduledToPooledTransferrer.interrupt();
 
     try {
-      scheduledToPooledTransferer.join();
+      scheduledToPooledTransferrer.join();
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -88,6 +88,6 @@ class AppDelayQueue extends DelayQueue<SchedulingWrapper.MyScheduledFutureTask> 
 
   @NotNull
   Thread getThread() {
-    return scheduledToPooledTransferer;
+    return scheduledToPooledTransferrer;
   }
 }

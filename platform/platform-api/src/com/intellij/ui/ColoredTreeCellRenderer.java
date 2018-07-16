@@ -13,6 +13,8 @@
 // limitations under the License.
 package com.intellij.ui;
 
+import com.intellij.ide.util.treeView.AbstractTreeUi;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -105,6 +107,9 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     }
     customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
 
+    if (!AbstractTreeUi.isLoadingNode(value)) {
+      SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, selected);
+    }
     return this;
   }
 

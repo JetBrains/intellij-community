@@ -20,7 +20,10 @@ import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
-import java.net.*
+import java.net.InetAddress
+import java.net.InetSocketAddress
+import java.net.Socket
+import java.net.SocketException
 import java.util.*
 import java.util.concurrent.BlockingQueue
 import java.util.concurrent.Executors
@@ -30,7 +33,7 @@ import java.util.concurrent.TimeUnit
 /**
  * @author Sergey Karashevich
  */
-class JUnitClientImpl(val host: String, val port: Int, initHandlers: Array<ClientHandler>? = null) : JUnitClient {
+class JUnitClientImpl(host: String, val port: Int, initHandlers: Array<ClientHandler>? = null) : JUnitClient {
 
   private val LOG = Logger.getInstance("#com.intellij.testGuiFramework.remote.client.JUnitClientImpl")
   private val RECEIVE_THREAD = "JUnit Client Receive Thread"
@@ -65,7 +68,7 @@ class JUnitClientImpl(val host: String, val port: Int, initHandlers: Array<Clien
     clientReceiveThread = ClientReceiveThread(connection, objectInputStream)
     clientReceiveThread.start()
 
-    keepAliveThread = KeepAliveThread(connection, objectOutputStream)
+    keepAliveThread = KeepAliveThread(connection)
     keepAliveThread.start()
   }
 
@@ -96,10 +99,11 @@ class JUnitClientImpl(val host: String, val port: Int, initHandlers: Array<Clien
     LOG.info("Stopped client on port: $clientPort")
   }
 
-  inner class ClientReceiveThread(val connection: Socket, val objectInputStream: ObjectInputStream) : Thread(RECEIVE_THREAD) {
+  inner class ClientReceiveThread(private val connection: Socket, private val objectInputStream: ObjectInputStream) : Thread(
+    RECEIVE_THREAD) {
     override fun run() {
       LOG.info("Starting Client Receive Thread")
-      try{
+      try {
         while (connection.isConnected) {
           val obj = objectInputStream.readObject()
           LOG.info("Received message: $obj")
@@ -108,15 +112,17 @@ class JUnitClientImpl(val host: String, val port: Int, initHandlers: Array<Clien
             .filter { it.accept(obj) }
             .forEach { it.handle(obj) }
         }
-      } catch (e: Exception) {
+      }
+      catch (e: Exception) {
         LOG.info("Transport receiving message exception", e)
-      } finally {
+      }
+      finally {
         objectInputStream.close()
       }
     }
   }
 
-  inner class ClientSendThread(val connection: Socket, val objectOutputStream: ObjectOutputStream) : Thread(SEND_THREAD) {
+  inner class ClientSendThread(private val connection: Socket, private val objectOutputStream: ObjectOutputStream) : Thread(SEND_THREAD) {
 
     override fun run() {
       try {
@@ -127,7 +133,7 @@ class JUnitClientImpl(val host: String, val port: Int, initHandlers: Array<Clien
           objectOutputStream.writeObject(transportMessage)
         }
       }
-      catch(e: InterruptedException) {
+      catch (e: InterruptedException) {
         Thread.currentThread().interrupt()
       }
       finally {
@@ -136,14 +142,15 @@ class JUnitClientImpl(val host: String, val port: Int, initHandlers: Array<Clien
     }
   }
 
-  inner class KeepAliveThread(val connection: Socket, private val objectOutputStream: ObjectOutputStream) : Thread(KEEP_ALIVE_THREAD) {
+  inner class KeepAliveThread(private val connection: Socket) : Thread(KEEP_ALIVE_THREAD) {
     private val myExecutor = Executors.newSingleThreadScheduledExecutor()
     override fun run() {
       myExecutor.scheduleWithFixedDelay(
         {
           if (connection.isConnected) {
-            objectOutputStream.writeObject(TransportMessage(MessageType.KEEP_ALIVE))
-          } else{
+            send(TransportMessage(MessageType.KEEP_ALIVE))
+          }
+          else {
             throw SocketException("Connection is broken")
           }
         }, 0L, 5, TimeUnit.SECONDS)

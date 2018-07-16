@@ -32,12 +32,9 @@ public class TestNGSearchScope extends GlobalSearchScope {
     myFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
   }
 
+  @Override
   public boolean contains(@NotNull VirtualFile file) {
     return myFileIndex.isInContent(file) && TestNGUtil.isTestngXML(file);
-  }
-
-  public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-    return 0;
   }
 
   @Override

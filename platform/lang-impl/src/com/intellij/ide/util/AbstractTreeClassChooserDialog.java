@@ -282,14 +282,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
 
     myGotoByNamePanel.invoke(new MyCallback(), getModalityState(), false);
 
-    myTabbedPane.addChangeListener(
-      new ChangeListener() {
-        @Override
-        public void stateChanged(ChangeEvent e) {
-          handleSelectionChanged();
-        }
-      }
-    );
+    myTabbedPane.addChangeListener(__ -> handleSelectionChanged());
 
     return myTabbedPane.getComponent();
   }

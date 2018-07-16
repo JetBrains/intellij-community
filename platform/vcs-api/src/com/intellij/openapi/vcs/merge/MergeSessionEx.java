@@ -26,7 +26,7 @@ public interface MergeSessionEx extends MergeSession {
    * Called after conflict resolution for conflicting files.
    * @see  #conflictResolvedForFile
    *
-   * @param file       the conflicting file.
+   * @param files       the conflicting file.
    * @param resolution the used resolution.
    */
   void conflictResolvedForFiles(@NotNull List<VirtualFile> files, @NotNull Resolution resolution);

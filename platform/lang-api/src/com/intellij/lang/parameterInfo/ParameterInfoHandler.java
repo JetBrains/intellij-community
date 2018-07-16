@@ -42,6 +42,7 @@ public interface ParameterInfoHandler <ParameterOwner, ParameterType> {
   default boolean isWhitespaceSensitive() {
     return false;
   }
+  default void syncUpdateOnCaretMove(@NotNull UpdateParameterInfoContext context) {}
 
   /** @deprecated not used */
   @Deprecated

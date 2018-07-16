@@ -218,6 +218,7 @@ public class JavaModuleGraphUtil {
   private static RequiresGraph buildRequiresGraph(Project project) {
     MultiMap<PsiJavaModule, PsiJavaModule> relations = MultiMap.create();
     Set<String> transitiveEdges = ContainerUtil.newTroveSet();
+
     JavaModuleNameIndex index = JavaModuleNameIndex.getInstance();
     GlobalSearchScope scope = ProjectScope.getAllScope(project);
     for (String key : index.getAllKeys(project)) {
@@ -254,7 +255,7 @@ public class JavaModuleGraphUtil {
     private final Graph<PsiJavaModule> myGraph;
     private final Set<String> myTransitiveEdges;
 
-    public RequiresGraph(Graph<PsiJavaModule> graph, Set<String> transitiveEdges) {
+    private RequiresGraph(Graph<PsiJavaModule> graph, Set<String> transitiveEdges) {
       myGraph = graph;
       myTransitiveEdges = transitiveEdges;
     }
@@ -329,7 +330,7 @@ public class JavaModuleGraphUtil {
     private final MultiMap<N, N> myEdges;
     private final boolean myInbound;
 
-    public ChameleonGraph(MultiMap<N, N> edges, boolean inbound) {
+    private ChameleonGraph(MultiMap<N, N> edges, boolean inbound) {
       myNodes = new THashSet<>();
       edges.entrySet().forEach(e -> {
         myNodes.add(e.getKey());
@@ -339,16 +340,19 @@ public class JavaModuleGraphUtil {
       myInbound = inbound;
     }
 
+    @NotNull
     @Override
     public Collection<N> getNodes() {
       return myNodes;
     }
 
+    @NotNull
     @Override
     public Iterator<N> getIn(N n) {
       return myInbound ? myEdges.get(n).iterator() : Collections.emptyIterator();
     }
 
+    @NotNull
     @Override
     public Iterator<N> getOut(N n) {
       return myInbound ? Collections.emptyIterator() : myEdges.get(n).iterator();

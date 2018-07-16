@@ -147,11 +147,10 @@ public class CommandLineParser implements PsiParser, LightPsiParser {
   // (argument | option ) *
   private static boolean root_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "root_1")) return false;
-    int c = current_position_(b);
     while (true) {
+      int c = current_position_(b);
       if (!root_1_0(b, l + 1)) break;
       if (!empty_element_parsed_guard_(b, "root_1", c)) break;
-      c = current_position_(b);
     }
     return true;
   }
@@ -160,10 +159,8 @@ public class CommandLineParser implements PsiParser, LightPsiParser {
   private static boolean root_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "root_1_0")) return false;
     boolean r;
-    Marker m = enter_section_(b);
     r = argument(b, l + 1);
     if (!r) r = option(b, l + 1);
-    exit_section_(b, m, null, r);
     return r;
   }
 

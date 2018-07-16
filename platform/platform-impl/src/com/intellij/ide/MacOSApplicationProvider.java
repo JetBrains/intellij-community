@@ -112,33 +112,12 @@ public class MacOSApplicationProvider {
         List<File> list = event.getFiles();
         if (list.isEmpty()) return;
         submit("OpenFile", () -> {
-          for (File file : list) {
-            if (ProjectUtil.openOrImport(file.getAbsolutePath(), project, true) != null) {
-              LOG.debug("MacMenu: load project from ", file);
-              IdeaApplication.getInstance().disableProjectLoad();
-              return;
-            }
-          }
-          for (File file : list) {
-            if (file.exists()) {
-              LOG.debug("MacMenu: open file ", file);
-              String path = file.getAbsolutePath();
-              if (project != null) {
-                OpenFileAction.openFile(path, project);
-              } else {
-                PlatformProjectOpenProcessor processor = PlatformProjectOpenProcessor.getInstanceIfItExists();
-                if (processor != null) {
-                  VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-                  if (virtualFile != null && virtualFile.isValid()) processor.doOpenProject(virtualFile, null, false);
-                }
-              }
-            }
-          }
+          tryOpenFileList( project, list, "MacMenu");
         });
       });
       installAutoUpdateMenu();
 
-      TouchBarsManager.subscribeProjectManager();
+      TouchBarsManager.onApplicationInitialized();
     }
 
     private static void installAutoUpdateMenu() {
@@ -207,5 +186,35 @@ public class MacOSApplicationProvider {
         }
       }
     }
+  }
+
+  public static boolean tryOpenFileList(Project project, List<File> list, String location) {
+    for (File file : list) {
+      if (ProjectUtil.openOrImport(file.getAbsolutePath(), project, true) != null) {
+        LOG.debug(location + ": load project from ", file);
+        IdeaApplication.getInstance().disableProjectLoad();
+        return true;
+      }
+    }
+    boolean result = false;
+    for (File file : list) {
+      if (file.exists()) {
+        LOG.debug(location + ": open file ", file);
+        String path = file.getAbsolutePath();
+        if (project != null) {
+          OpenFileAction.openFile(path, project);
+          result = true;
+        } else {
+          PlatformProjectOpenProcessor processor = PlatformProjectOpenProcessor.getInstanceIfItExists();
+          if (processor != null) {
+            VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+            if (virtualFile != null && virtualFile.isValid()) {
+              result |= processor.doOpenProject(virtualFile, null, false) != null;
+            }
+          }
+        }
+      }
+    }
+    return result;
   }
 }

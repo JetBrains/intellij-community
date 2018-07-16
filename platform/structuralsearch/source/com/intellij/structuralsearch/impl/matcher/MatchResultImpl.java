@@ -136,6 +136,19 @@ public final class MatchResultImpl extends MatchResult {
     return null;
   }
 
+  public static MatchResultImpl findChildDeep(MatchResult match , String name) {
+    for (MatchResult child : match.getChildren()) {
+      if (name.equals(child.getName())) {
+        return (MatchResultImpl)child;
+      }
+      final MatchResultImpl deep = findChildDeep(child, name);
+      if (deep != null) {
+        return deep;
+      }
+    }
+    return null;
+  }
+
   public MatchResult removeChild(String typedVar) {
     // @todo this could be performance bottleneck, replace with hash lookup!
     for (int i = 0, size = myChildren.size(); i < size; i++) {

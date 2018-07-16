@@ -2470,4 +2470,23 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
                  "}",
                  replace(in2, "'_FieldType 'Field = '_Init?;", "$FieldType$ $Field$ = $Init$;", true));
   }
+
+  public void testMethodCall() {
+    String in = "class X {" +
+                "  void x() {}" +
+                "  void y() {" +
+                "    x();" +
+                "    this.x();" +
+                "  }" +
+                "}";
+    assertEquals("replace (un)qualified calls correctly",
+                 "class X {" +
+                 "  void x() {}" +
+                 "  void y() {" +
+                 "    x();" +
+                 "    this.x();" +
+                 "  }" +
+                 "}",
+                 replace(in, "'_Instance?.'_MethodCall('_arguments*)", "$Instance$.$MethodCall$($arguments$)", true));
+  }
 }

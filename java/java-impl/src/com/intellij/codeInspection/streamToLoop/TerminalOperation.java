@@ -145,7 +145,7 @@ abstract class TerminalOperation extends Operation {
         return new ExplicitCollectTerminalOperation(supplier, accumulator);
       }
       if (args.length == 1) {
-        return fromCollector(elementType, resultType, args[0]);
+        return fromCollector(elementType, resultType, PsiUtil.skipParenthesizedExprDown(args[0]));
       }
     }
     return null;

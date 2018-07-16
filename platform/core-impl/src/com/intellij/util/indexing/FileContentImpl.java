@@ -46,14 +46,14 @@ import java.nio.charset.Charset;
  * Class is not final since it is overridden in Upsource
  */
 public class FileContentImpl extends UserDataHolderBase implements FileContent {
-  protected final VirtualFile myFile;
-  protected final String myFileName;
-  protected final FileType myFileType;
-  protected Charset myCharset;
-  protected byte[] myContent;
-  protected CharSequence myContentAsText;
-  protected final long myStamp;
-  protected byte[] myHash;
+  private final VirtualFile myFile;
+  private final String myFileName;
+  private final FileType myFileType;
+  private Charset myCharset;
+  private byte[] myContent;
+  private CharSequence myContentAsText;
+  private final long myStamp;
+  private byte[] myHash;
   private boolean myLighterASTShouldBeThreadSafe;
   private final boolean myPhysicalContent;
 
@@ -73,8 +73,7 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
                           CharSequence contentAsText,
                           byte[] content,
                           long stamp,
-                          boolean physicalContent
-                          ) {
+                          boolean physicalContent) {
     myFile = file;
     myContentAsText = contentAsText;
     myContent = content;
@@ -153,7 +152,7 @@ public class FileContentImpl extends UserDataHolderBase implements FileContent {
   }
 
   public static class IllegalDataException extends RuntimeException {
-    public IllegalDataException(final String message) {
+    IllegalDataException(final String message) {
       super(message);
     }
   }

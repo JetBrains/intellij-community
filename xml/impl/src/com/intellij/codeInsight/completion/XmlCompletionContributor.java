@@ -353,8 +353,8 @@ public class XmlCompletionContributor extends CompletionContributor {
           s = StringUtil.trimEnd(s, ";");
 
           try {
-            final int unicodeChar = Integer.valueOf(s).intValue();
-            return result.withTypeText(String.valueOf((char)unicodeChar));
+            final char unicodeChar = (char)Integer.valueOf(s).intValue();
+            return result.withTypeText(String.valueOf(unicodeChar)).withLookupString(String.valueOf(unicodeChar));
           }
           catch (NumberFormatException e) {
             return result;

@@ -240,7 +240,7 @@ public class GitLogProviderTest extends GitSingleRepoTest {
     final List<String> hashes = ContainerUtil.newArrayList();
     myLogProvider.readAllHashes(projectRoot, timedVcsCommit -> hashes.add(timedVcsCommit.getId().asString()));
 
-    List<? extends VcsShortCommitDetails> shortDetails = myLogProvider.readShortDetails(projectRoot, hashes);
+    List<? extends VcsShortCommitDetails> shortDetails = myLogProvider.readMetadata(projectRoot, hashes);
 
     Function<VcsShortCommitDetails, String> shortDetailsToString = getShortDetailsToString();
     assertOrderedEquals(ContainerUtil.map(shortDetails, shortDetailsToString), ContainerUtil.map(log, shortDetailsToString));

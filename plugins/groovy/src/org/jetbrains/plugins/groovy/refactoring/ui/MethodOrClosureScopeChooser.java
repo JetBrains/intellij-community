@@ -121,7 +121,7 @@ public class MethodOrClosureScopeChooser {
     panel.add(scrollPane, BorderLayout.CENTER);
 
     final List<Pair<ActionListener, KeyStroke>> keyboardActions = Collections.singletonList(
-      Pair.<ActionListener, KeyStroke>create(new ActionListener() {
+      Pair.create(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
           final GrParametersOwner ToSearchIn = (GrParametersOwner)list.getSelectedValue();

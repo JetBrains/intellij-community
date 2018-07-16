@@ -11,6 +11,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiType;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -67,6 +68,7 @@ public class MapUpdateInliner implements CallInliner {
         .pushExpression(key)
         .pop()
         .pushExpression(value)
+        .boxUnbox(value, ExpectedTypeUtils.findExpectedType(value, false))
         .checkNotNull(value, NullabilityProblemKind.passingNullableToNotNullParameter)
         .evaluateFunction(function)
         .pushUnknown()

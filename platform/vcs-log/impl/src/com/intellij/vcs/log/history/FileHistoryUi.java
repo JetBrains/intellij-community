@@ -216,10 +216,17 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   }
 
   @Override
-  protected <T> void handleCommitNotFound(@NotNull T commitId, @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
-    String mainText = "Commit " + commitId.toString() + " does not exist in history for " + myPath.getName();
+  protected <T> void handleCommitNotFound(@NotNull T commitId,
+                                          boolean commitExists,
+                                          @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
+    if (!commitExists) {
+      super.handleCommitNotFound(commitId, false, rowGetter);
+      return;
+    }
+
+    String mainText = "Commit " + getCommitPresentation(commitId) + " does not exist in history for " + myPath.getName();
     if (getFilterUi().getFilters().get(VcsLogFilterCollection.BRANCH_FILTER) != null) {
-      showWarningWithLink(mainText + " in current branch.", "Show all branches and search again.", () -> {
+      showWarningWithLink(mainText + " in current branch", "View and Show All Branches", () -> {
         myUiProperties.set(FileHistoryUiProperties.SHOW_ALL_BRANCHES, true);
         invokeOnChange(() -> jumpTo(commitId, rowGetter, SettableFuture.create()));
       });
@@ -227,7 +234,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     else {
       VcsLogUiImpl mainLogUi = VcsProjectLog.getInstance(myProject).getMainLogUi();
       if (mainLogUi != null) {
-        showWarningWithLink(mainText + ".", "Search in Log.", () -> {
+        showWarningWithLink(mainText, "View in Log", () -> {
           if (VcsLogContentUtil.selectLogUi(myProject, mainLogUi)) {
             if (commitId instanceof Hash) {
               mainLogUi.jumpToCommit((Hash)commitId,
@@ -239,9 +246,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
             }
           }
         });
-      }
-      else {
-        super.handleCommitNotFound(commitId, rowGetter);
       }
     }
   }

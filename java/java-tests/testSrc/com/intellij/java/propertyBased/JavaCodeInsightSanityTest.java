@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.PropertyChecker;
 
+import java.io.File;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -80,9 +81,21 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
     }
   }
 
+  public void testParenthesesDontChangeIntention() {
+    MadTestingUtil.enableAllInspections(getProject(), getTestRootDisposable());
+    Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
+      file -> Generator.sampledFrom(new InvokeIntention(file, new JavaParenthesesPolicy()), new StripTestDataMarkup(file));
+    PropertyChecker
+      .checkScenarios(actionsOnJavaFiles(fileActions));
+  }
+
   @NotNull
   private Supplier<MadTestingAction> actionsOnJavaFiles(Function<PsiFile, Generator<? extends MadTestingAction>> fileActions) {
     return MadTestingUtil.actionsOnFileContents(myFixture, PathManager.getHomePath(), f -> f.getName().endsWith(".java"), fileActions);
+  }
+
+  public void _testGenerator() {
+    MadTestingUtil.testFileGenerator(new File(PathManager.getHomePath()), f -> f.getName().endsWith(".java"), 10000, System.out);
   }
 
   public void testReparse() {

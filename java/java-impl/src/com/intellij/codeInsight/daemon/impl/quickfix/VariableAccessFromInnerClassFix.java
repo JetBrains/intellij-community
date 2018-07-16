@@ -19,6 +19,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,6 +33,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -184,7 +186,8 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
       variableDeclarationStatement = factory.createVariableDeclarationStatement(variable.getName(), newType, init);
     }
     else {
-      PsiExpression init = factory.createExpressionFromText("{ " + initializer.getText() + " }", variable);
+      String explicitArrayDeclaration = JavaGenericsUtil.isReifiableType(type) ? "" : "new " + TypeConversionUtil.erasure(type).getCanonicalText() + "[]";
+      PsiExpression init = factory.createExpressionFromText(explicitArrayDeclaration + "{ " + initializer.getText() + " }", variable);
       variableDeclarationStatement = factory.createVariableDeclarationStatement(variable.getName(), newType, init);
     }
     PsiVariable newVariable = (PsiVariable)variableDeclarationStatement.getDeclaredElements()[0];

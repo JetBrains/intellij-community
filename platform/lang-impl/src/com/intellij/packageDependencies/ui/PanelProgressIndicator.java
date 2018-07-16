@@ -36,6 +36,7 @@ public class PanelProgressIndicator extends ProgressIndicatorBase {
     myProgressPanel = new MyProgressPanel();
     myProgressPanel.myFractionProgress.setMaximum(100);
     myComponentUpdater = componentUpdater;
+    setIndeterminate(false);
   }
 
   @Override

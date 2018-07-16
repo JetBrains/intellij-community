@@ -3,12 +3,12 @@ package org.jetbrains.plugins.gradle.nativeplatform.tooling.builder;
 
 import org.gradle.api.Project;
 import org.gradle.api.component.SoftwareComponent;
-import org.gradle.api.file.FileCollection;
-import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.file.*;
 import org.gradle.api.internal.file.FileCollectionInternal;
 import org.gradle.api.internal.file.FileCollectionVisitor;
 import org.gradle.api.internal.file.FileTreeInternal;
 import org.gradle.api.internal.file.collections.DirectoryFileTree;
+import org.gradle.api.internal.project.DefaultProject;
 import org.gradle.api.plugins.PluginContainer;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.util.PatternSet;
@@ -23,6 +23,8 @@ import org.gradle.language.cpp.plugins.CppPlugin;
 import org.gradle.language.cpp.tasks.CppCompile;
 import org.gradle.language.nativeplatform.ComponentWithExecutable;
 import org.gradle.language.nativeplatform.internal.ConfigurableComponentWithExecutable;
+import org.gradle.nativeplatform.internal.CompilerOutputFileNamingScheme;
+import org.gradle.nativeplatform.internal.CompilerOutputFileNamingSchemeFactory;
 import org.gradle.nativeplatform.tasks.LinkExecutable;
 import org.gradle.nativeplatform.toolchain.*;
 import org.gradle.nativeplatform.toolchain.internal.NativeLanguageTools;
@@ -37,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.FilePatternSetImpl;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CompilerDetails;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppBinary.TargetType;
+import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppFileSettings;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.CppProject;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.LinkerDetails;
 import org.jetbrains.plugins.gradle.nativeplatform.tooling.model.impl.*;
@@ -54,6 +57,9 @@ import java.util.*;
  * @author Vladislav.Soroka
  */
 public class CppModelBuilder implements ModelBuilderService {
+  private static final boolean IS_48_OR_BETTER = GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.8")) >= 0;
+  private static final boolean IS_47_OR_BETTER = IS_48_OR_BETTER ||
+                                                 GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.7")) >= 0;
 
   @Override
   public boolean canBuild(String modelName) {
@@ -84,9 +90,13 @@ public class CppModelBuilder implements ModelBuilderService {
           }
 
           List<String> compilerArgs = new ArrayList<String>();
-          Set<File> compileIncludePath = cppBinary.getCompileIncludePath().getFiles();
+          Set<File> compileIncludePath = new LinkedHashSet<File>(cppBinary.getCompileIncludePath().getFiles());
 
-          Set<File> sources = cppBinary.getCppSource().getFiles();
+          Map<File, CppFileSettings> sources = new HashMap<File, CppFileSettings>();
+          for (File file : cppBinary.getCppSource().getFiles()) {
+            sources.put(file, new CppFileSettingsImpl());
+          }
+
           String baseName = cppBinary.getBaseName().getOrElse("");
           String variantName = StringUtils.removeStart(cppBinary.getName(), "main");
           String compileTaskName = null;
@@ -96,7 +106,18 @@ public class CppModelBuilder implements ModelBuilderService {
             CppCompile cppCompile = compileTask.get();
             compileTaskName = cppCompile.getPath();
             compilerArgs.addAll(cppCompile.getCompilerArgs().getOrElse(Collections.<String>emptyList()));
-            systemIncludes.addAll(cppCompile.getIncludes().getFiles());
+
+            //Since Gradle 4.8, system header include directories should be accessed separately via the systemIncludes property
+            //see https://github.com/gradle/gradle-native/blob/master/docs/RELEASE-NOTES.md#better-control-over-system-include-path-for-native-compilation---583
+            if (IS_48_OR_BETTER) {
+              compileIncludePath.addAll(cppCompile.getIncludes().getFiles());
+              systemIncludes.addAll(cppCompile.getSystemIncludes().getFiles());
+            }
+            else {
+              systemIncludes.addAll(cppCompile.getIncludes().getFiles());
+            }
+
+            appendFileSettings(sources, project, cppBinary, cppCompile);
           }
 
           File executableFile = null;
@@ -139,6 +160,29 @@ public class CppModelBuilder implements ModelBuilderService {
     return cppProject;
   }
 
+  private static void appendFileSettings(Map<File, CppFileSettings> sources,
+                                         Project project,
+                                         CppBinary cppBinary,
+                                         CppCompile cppCompile) {
+
+    if (cppCompile.getObjectFileDir().isPresent()) {
+      File objectFileDir = cppCompile.getObjectFileDir().get().getAsFile();
+      Iterator<CompilerOutputFileNamingSchemeFactory> it =
+        ((DefaultProject)project).getServices().getAll(CompilerOutputFileNamingSchemeFactory.class).iterator();
+      if (it.hasNext()) {
+        CompilerOutputFileNamingSchemeFactory outputFileNamingSchemeFactory = it.next();
+        String objectFileExtension = cppBinary.getTargetPlatform().getOperatingSystem().isWindows() ? ".obj" : ".o";
+        CompilerOutputFileNamingScheme outputFileNamingScheme = outputFileNamingSchemeFactory.create();
+        outputFileNamingScheme.withOutputBaseFolder(objectFileDir).withObjectFileNameSuffix(objectFileExtension);
+
+        for (Map.Entry<File, CppFileSettings> fileSettingsEntry : sources.entrySet()) {
+          File objectFile = outputFileNamingScheme.map(fileSettingsEntry.getKey());
+          ((CppFileSettingsImpl)fileSettingsEntry.getValue()).setObjectFile(objectFile);
+        }
+      }
+    }
+  }
+
   @NotNull
   private static String getCompilerKind(CppBinary cppBinary) {
     final String compileKind;
@@ -165,7 +209,7 @@ public class CppModelBuilder implements ModelBuilderService {
   private static File getExecutableFile(LinkExecutable linkExecutable) {
     File executableFile;
     RegularFileProperty binaryFile = null;
-    if (GradleVersion.current().compareTo(GradleVersion.version("4.7")) >= 0) {
+    if (IS_47_OR_BETTER) {
       binaryFile = linkExecutable.getLinkedFile();
     }
     else {
@@ -261,7 +305,7 @@ public class CppModelBuilder implements ModelBuilderService {
       }
     }
 
-    if (GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.6")) <= 0) {
+    if (!IS_47_OR_BETTER) {
       project.getLogger().error(
         "[sync error] Unable to resolve compiler executable. " +
         "The project uses '" + GradleVersion.current() + "' try to update the gradle version");
