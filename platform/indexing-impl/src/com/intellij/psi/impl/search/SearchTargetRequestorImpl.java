@@ -14,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.psi.search.PsiSearchScopeUtil.restrictScopeTo;
 
-public class SearchTargetRequestorImpl implements SearchTargetRequestor {
+final class SearchTargetRequestorImpl implements SearchTargetRequestor {
 
   private final @NotNull SearchRequestCollectorImpl myCollector;
   private final @NotNull Symbol myTarget;
@@ -22,7 +22,7 @@ public class SearchTargetRequestorImpl implements SearchTargetRequestor {
   private SearchScope mySearchScope;
   private FileType[] myFileTypes;
 
-  public SearchTargetRequestorImpl(@NotNull SearchRequestCollectorImpl collector, @NotNull Symbol target) {
+  SearchTargetRequestorImpl(@NotNull SearchRequestCollectorImpl collector, @NotNull Symbol target) {
     myCollector = collector;
     myTarget = target;
   }
