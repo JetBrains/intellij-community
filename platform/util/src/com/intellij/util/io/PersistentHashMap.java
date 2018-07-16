@@ -1007,4 +1007,9 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   PersistentHashMapValueStorage getValueStorage() {
     return myValueStorage;
   }
+
+  @TestOnly
+  public boolean getReadOnly() {
+    return myIsReadOnly;
+  }
 }
