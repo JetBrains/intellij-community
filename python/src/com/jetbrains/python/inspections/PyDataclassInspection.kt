@@ -510,7 +510,8 @@ class PyDataclassInspection : PyInspection() {
                         ProblemHighlightType.LIKE_UNUSED_SYMBOL)
       }
 
-      val parameters = ContainerUtil.subList(postInit.getParameters(myTypeEvalContext), 1)
+      val implicitParameters = postInit.getParameters(myTypeEvalContext)
+      val parameters = if (implicitParameters.isEmpty()) emptyList<PyCallableParameter>() else ContainerUtil.subList(implicitParameters, 1)
       val message = "'$DUNDER_POST_INIT' should take all init-only variables in the same order as they are defined"
 
       if (parameters.size != initVars.size) {
