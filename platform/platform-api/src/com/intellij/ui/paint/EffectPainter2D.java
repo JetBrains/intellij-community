@@ -4,7 +4,7 @@ package com.intellij.ui.paint;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
-import com.intellij.util.JBHiDPIScaledImage;
+import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WavePainter2D;
@@ -356,8 +356,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
       BufferedImage image = paint instanceof Color ? getImage(g, (Color)paint, height) : createImage(g, paint, height);
       if (image == null) return;
 
-      int period = image.getWidth(null);
-      if (image instanceof JBHiDPIScaledImage) period /= 2;
+      double period = ImageUtil.getRealWidth(image) / ImageUtil.getImageScale(image);
       double offset = (x % period + period) % period; // normalize
       g.translate(-offset, 0);
       for (double dx = -offset; dx < width; dx += period) {
