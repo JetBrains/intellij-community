@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.util;
+package com.intellij.dvcs.util;
 
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
-import git4idea.GitCommit;
-import git4idea.repo.GitRepository;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -27,52 +28,53 @@ import java.util.*;
 /**
  * @author Kirill Likhodedov
  */
-public class GitCommitCompareInfo {
-  
-  private static final Logger LOG = Logger.getInstance(GitCommitCompareInfo.class);
-  
-  private final Map<GitRepository, Pair<List<GitCommit>, List<GitCommit>>> myInfo = new HashMap<>();
-  private final Map<GitRepository, Collection<Change>> myTotalDiff = new HashMap<>();
+public class CommitCompareInfo {
+
+  private static final Logger LOG = Logger.getInstance(CommitCompareInfo.class);
+
+  private final Map<Repository, Pair<List<VcsFullCommitDetails>, List<VcsFullCommitDetails>>> myInfo = new HashMap<>();
+  private final Map<Repository, Collection<Change>> myTotalDiff = new HashMap<>();
   private final InfoType myInfoType;
 
-  public GitCommitCompareInfo() {
+  public CommitCompareInfo() {
     this(InfoType.BOTH);
   }
 
-  public GitCommitCompareInfo(@NotNull InfoType infoType) {
+  public CommitCompareInfo(@NotNull InfoType infoType) {
     myInfoType = infoType;
   }
 
-  public void put(@NotNull GitRepository repository, @NotNull Pair<List<GitCommit>, List<GitCommit>> commits) {
-    myInfo.put(repository, commits);
+  public void put(@NotNull Repository repository, @NotNull List<? extends VcsFullCommitDetails> headToBranch, @NotNull List<? extends VcsFullCommitDetails> branchToHead) {
+    //noinspection unchecked
+    myInfo.put(repository, (Pair)Couple.of(headToBranch, branchToHead));
   }
 
-  public void put(@NotNull GitRepository repository, @NotNull Collection<Change> totalDiff) {
+  public void put(@NotNull Repository repository, @NotNull Collection<Change> totalDiff) {
     myTotalDiff.put(repository, totalDiff);
   }
 
   @NotNull
-  public List<GitCommit> getHeadToBranchCommits(@NotNull GitRepository repo) {
+  public List<VcsFullCommitDetails> getHeadToBranchCommits(@NotNull Repository repo) {
     return getCompareInfo(repo).getFirst();
   }
-  
+
   @NotNull
-  public List<GitCommit> getBranchToHeadCommits(@NotNull GitRepository repo) {
+  public List<VcsFullCommitDetails> getBranchToHeadCommits(@NotNull Repository repo) {
     return getCompareInfo(repo).getSecond();
   }
 
   @NotNull
-  private Pair<List<GitCommit>, List<GitCommit>> getCompareInfo(@NotNull GitRepository repo) {
-    Pair<List<GitCommit>, List<GitCommit>> pair = myInfo.get(repo);
+  private Pair<List<VcsFullCommitDetails>, List<VcsFullCommitDetails>> getCompareInfo(@NotNull Repository repo) {
+    Pair<List<VcsFullCommitDetails>, List<VcsFullCommitDetails>> pair = myInfo.get(repo);
     if (pair == null) {
       LOG.error("Compare info not found for repository " + repo);
-      return Pair.create(Collections.<GitCommit>emptyList(), Collections.<GitCommit>emptyList());
+      return Pair.create(Collections.<VcsFullCommitDetails>emptyList(), Collections.<VcsFullCommitDetails>emptyList());
     }
     return pair;
   }
 
   @NotNull
-  public Collection<GitRepository> getRepositories() {
+  public Collection<Repository> getRepositories() {
     return myInfo.keySet();
   }
 

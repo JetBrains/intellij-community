@@ -1,12 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.zmlx.hg4idea.branch;
 
+import com.intellij.dvcs.ui.CompareBranchesDialog;
+import com.intellij.dvcs.util.CommitCompareInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,7 +17,6 @@ import org.zmlx.hg4idea.action.HgCompareWithBranchAction;
 import org.zmlx.hg4idea.log.HgCommit;
 import org.zmlx.hg4idea.log.HgHistoryUtil;
 import org.zmlx.hg4idea.repo.HgRepository;
-import org.zmlx.hg4idea.util.HgCommitCompareInfo;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -35,7 +35,7 @@ public class HgBranchWorker {
   }
   public void compare(@NotNull final String branchName, @NotNull final List<HgRepository> repositories,
                       @NotNull final HgRepository selectedRepository) {
-    final HgCommitCompareInfo myCompareInfo = loadCommitsToCompare(repositories, branchName);
+    final CommitCompareInfo myCompareInfo = loadCommitsToCompare(repositories, branchName);
     if (myCompareInfo == null) {
       LOG.error("The task to get compare info didn't finish. Repositories: \n" + repositories + "\nbranch name: " + branchName);
       return;
@@ -45,14 +45,14 @@ public class HgBranchWorker {
       () -> displayCompareDialog(branchName, getCurrentBranchOrRev(repositories), myCompareInfo, selectedRepository));
   }
 
-  private void displayCompareDialog(@NotNull String branchName, @NotNull String currentBranch, @NotNull HgCommitCompareInfo compareInfo,
+  private void displayCompareDialog(@NotNull String branchName, @NotNull String currentBranch, @NotNull CommitCompareInfo compareInfo,
                                     @NotNull HgRepository selectedRepository) {
     if (compareInfo.isEmpty()) {
       Messages.showInfoMessage(myProject, String.format("<html>There are no changes between <code>%s</code> and <code>%s</code></html>",
                                                         currentBranch, branchName), "No Changes Detected");
     }
     else {
-      new HgCompareBranchesDialog(myProject, branchName, currentBranch, compareInfo, selectedRepository).show();
+      new CompareBranchesDialog(new HgCompareBranchesHelper(myProject), branchName, currentBranch, compareInfo, selectedRepository, false).show();
     }
   }
 
@@ -72,16 +72,16 @@ public class HgBranchWorker {
   }
 
 
-  private HgCommitCompareInfo loadCommitsToCompare(List<HgRepository> repositories, String branchName) {
-    HgCommitCompareInfo compareInfo = new HgCommitCompareInfo();
+  private CommitCompareInfo loadCommitsToCompare(List<HgRepository> repositories, String branchName) {
+    CommitCompareInfo compareInfo = new CommitCompareInfo();
     for (HgRepository repository : repositories) {
-      compareInfo.put(repository, loadCommitsToCompare(repository, branchName));
+      loadCommitsToCompare(repository, branchName, compareInfo);
       compareInfo.put(repository, loadTotalDiff(repository, branchName));
     }
     return compareInfo;
   }
-  @NotNull
-  private Couple<List<HgCommit>> loadCommitsToCompare(@NotNull HgRepository repository, @NotNull final String branchName) {
+
+  private void loadCommitsToCompare(@NotNull HgRepository repository, @NotNull final String branchName, @NotNull CommitCompareInfo compareInfo) {
     final List<HgCommit> headToBranch;
     final List<HgCommit> branchToHead;
     try {
@@ -92,7 +92,7 @@ public class HgBranchWorker {
       // we treat it as critical and report an error
       throw new HgExecutionException("Couldn't get [hg log :" + branchName + "] on repository [" + repository.getRoot() + "]", e);
     }
-    return Couple.of(headToBranch, branchToHead);
+    compareInfo.put(repository, headToBranch, branchToHead);
   }
   @NotNull
   private static Collection<Change> loadTotalDiff(@NotNull HgRepository repository, @NotNull String branchName) {

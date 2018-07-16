@@ -1,5 +1,19 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.zmlx.hg4idea.ui;
+/*
+ * Copyright 2000-2011 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -17,10 +31,10 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.log.HgCommit;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -30,12 +44,17 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
-public class HgCommitListPanel extends JPanel implements TypeSafeDataProvider {
+/**
+ * A table with the list of commits.
+ *
+ * @author Kirill Likhodedov
+ */
+public class CommitListPanel<COMMIT extends VcsFullCommitDetails> extends JPanel implements TypeSafeDataProvider {
 
-  private final List<HgCommit> myCommits;
-  private final TableView<HgCommit> myTable;
+  private final List<COMMIT> myCommits;
+  private final TableView<COMMIT> myTable;
 
-  public HgCommitListPanel(@NotNull List<HgCommit> commits, @Nullable String emptyText) {
+  public CommitListPanel(@NotNull List<COMMIT> commits, @Nullable String emptyText) {
     myCommits = commits;
 
     myTable = new TableView<>();
@@ -53,7 +72,7 @@ public class HgCommitListPanel extends JPanel implements TypeSafeDataProvider {
   /**
    * Adds a listener that would be called once user selects a commit in the table.
    */
-  public void addListSelectionListener(final @NotNull Consumer<HgCommit> listener) {
+  public void addListSelectionListener(final @NotNull Consumer<COMMIT> listener) {
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
         ListSelectionModel lsm = (ListSelectionModel)e.getSource();
@@ -69,11 +88,11 @@ public class HgCommitListPanel extends JPanel implements TypeSafeDataProvider {
   public void addListMultipleSelectionListener(final @NotNull Consumer<List<Change>> listener) {
     myTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       public void valueChanged(final ListSelectionEvent e) {
-        List<HgCommit> commits = myTable.getSelectedObjects();
+        List<COMMIT> commits = myTable.getSelectedObjects();
 
         final List<Change> changes = new ArrayList<>();
         // We need changes in asc order for zipChanges, and they are in desc order in Table
-        ListIterator<HgCommit> iterator = commits.listIterator(commits.size());
+        ListIterator<COMMIT> iterator = commits.listIterator(commits.size());
         while (iterator.hasPrevious()) {
           changes.addAll(iterator.previous().getChanges());
         }
@@ -98,10 +117,10 @@ public class HgCommitListPanel extends JPanel implements TypeSafeDataProvider {
       if (rows.length != 1) return;
       int row = rows[0];
 
-      HgCommit HgCommit = myCommits.get(row);
+      COMMIT commit = myCommits.get(row);
       // suppressing: inherited API
       //noinspection unchecked
-      sink.put(key, ArrayUtil.toObjectArray(HgCommit.getChanges(), Change.class));
+      sink.put(key, ArrayUtil.toObjectArray(commit.getChanges(), Change.class));
     }
   }
 
@@ -114,7 +133,7 @@ public class HgCommitListPanel extends JPanel implements TypeSafeDataProvider {
     myTable.clearSelection();
   }
 
-  public void setCommits(@NotNull List<HgCommit> commits) {
+  public void setCommits(@NotNull List<COMMIT> commits) {
     myCommits.clear();
     myCommits.addAll(commits);
     updateModel();
@@ -126,38 +145,38 @@ public class HgCommitListPanel extends JPanel implements TypeSafeDataProvider {
   }
 
   @NotNull
-  private ColumnInfo[] generateColumnsInfo(@NotNull List<HgCommit> commits) {
+  private ColumnInfo[] generateColumnsInfo(@NotNull List<? extends COMMIT> commits) {
     ItemAndWidth hash = new ItemAndWidth("", 0);
     ItemAndWidth author = new ItemAndWidth("", 0);
     ItemAndWidth time = new ItemAndWidth("", 0);
-    for (HgCommit commit : commits) {
+    for (COMMIT commit : commits) {
       hash = getMax(hash, getHash(commit));
       author = getMax(author, getAuthor(commit));
       time = getMax(time, getTime(commit));
     }
 
     return new ColumnInfo[] {
-      new HgCommitColumnInfo("Hash", hash.myItem) {
+      new CommitColumnInfo("Hash", hash.myItem) {
         @Override
-        public String valueOf(HgCommit commit) {
+        public String valueOf(VcsFullCommitDetails commit) {
           return getHash(commit);
         }
       },
-      new ColumnInfo<HgCommit, String>("Subject") {
+      new ColumnInfo<COMMIT, String>("Subject") {
         @Override
-        public String valueOf(HgCommit commit) {
+        public String valueOf(VcsFullCommitDetails commit) {
           return commit.getSubject();
         }
       },
-      new HgCommitColumnInfo("Author", author.myItem) {
+      new CommitColumnInfo("Author", author.myItem) {
         @Override
-        public String valueOf(HgCommit commit) {
+        public String valueOf(VcsFullCommitDetails commit) {
           return getAuthor(commit);
         }
       },
-      new HgCommitColumnInfo("Author time", time.myItem) {
+      new CommitColumnInfo("Author time", time.myItem) {
         @Override
-        public String valueOf(HgCommit commit) {
+        public String valueOf(VcsFullCommitDetails commit) {
           return getTime(commit);
         }
       }
@@ -182,23 +201,23 @@ public class HgCommitListPanel extends JPanel implements TypeSafeDataProvider {
     }
   }
 
-  private static String getHash(HgCommit commit) {
+  private static String getHash(VcsFullCommitDetails commit) {
     return DvcsUtil.getShortHash(commit.getId().toString());
   }
 
-  private static String getAuthor(HgCommit commit) {
+  private static String getAuthor(VcsFullCommitDetails commit) {
     return VcsUserUtil.getShortPresentation(commit.getAuthor());
   }
 
-  private static String getTime(HgCommit commit) {
+  private static String getTime(VcsFullCommitDetails commit) {
     return DateFormatUtil.formatPrettyDateTime(commit.getAuthorTime());
   }
 
-  private abstract static class HgCommitColumnInfo extends ColumnInfo<HgCommit, String> {
+  private abstract static class CommitColumnInfo extends ColumnInfo<VcsFullCommitDetails, String> {
 
     @NotNull private final String myMaxString;
 
-    public HgCommitColumnInfo(@NotNull String name, @NotNull String maxString) {
+    public CommitColumnInfo(@NotNull String name, @NotNull String maxString) {
       super(name);
       myMaxString = maxString;
     }

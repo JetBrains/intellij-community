@@ -3,6 +3,7 @@ package git4idea.config;
 
 import com.intellij.dvcs.branch.DvcsBranchInfo;
 import com.intellij.dvcs.branch.DvcsBranchSettings;
+import com.intellij.dvcs.branch.DvcsCompareSettings;
 import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
@@ -22,7 +23,7 @@ import java.util.*;
  * Git VCS settings
  */
 @State(name = "Git.Settings", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
-public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.State>, DvcsSyncSettings {
+public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.State>, DvcsSyncSettings, DvcsCompareSettings {
 
   private static final int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16; // Limit for previous commit authors
 
@@ -283,10 +284,12 @@ public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.S
     myState.SET_USER_NAME_GLOBALLY = value;
   }
 
+  @Override
   public boolean shouldSwapSidesInCompareBranches() {
     return myState.SWAP_SIDES_IN_COMPARE_BRANCHES;
   }
 
+  @Override
   public void setSwapSidesInCompareBranches(boolean value) {
     myState.SWAP_SIDES_IN_COMPARE_BRANCHES = value;
   }

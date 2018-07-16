@@ -1,6 +1,22 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.zmlx.hg4idea.branch;
+/*
+ * Copyright 2000-2016 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.dvcs.ui;
 
+import com.intellij.dvcs.repo.Repository;
+import com.intellij.dvcs.util.CommitCompareInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Splitter;
@@ -9,12 +25,8 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
-import org.zmlx.hg4idea.log.HgCommit;
-import org.zmlx.hg4idea.repo.HgRepository;
-import org.zmlx.hg4idea.ui.HgCommitListPanel;
-import org.zmlx.hg4idea.ui.HgRepositoryComboboxListCellRenderer;
-import org.zmlx.hg4idea.util.HgCommitCompareInfo;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,21 +35,24 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 
-class HgCompareBranchesLogPanel extends JPanel {
+/**
+ * @author Kirill Likhodedov
+ */
+class CompareBranchesLogPanel extends JPanel {
 
-  private final Project myProject;
+  private final CompareBranchesHelper myHelper;
   private final String myBranchName;
   private final String myCurrentBranchName;
-  private final HgCommitCompareInfo myCompareInfo;
-  private final HgRepository myInitialRepo;
+  private final CommitCompareInfo myCompareInfo;
+  private final Repository myInitialRepo;
 
-  private HgCommitListPanel myHeadToBranchListPanel;
-  private HgCommitListPanel myBranchToHeadListPanel;
+  private CommitListPanel<VcsFullCommitDetails> myHeadToBranchListPanel;
+  private CommitListPanel<VcsFullCommitDetails> myBranchToHeadListPanel;
 
-  HgCompareBranchesLogPanel(@NotNull Project project, @NotNull String branchName, @NotNull String currentBranchName,
-                             @NotNull HgCommitCompareInfo compareInfo, @NotNull HgRepository initialRepo) {
+  public CompareBranchesLogPanel(@NotNull CompareBranchesHelper helper, @NotNull String branchName, @NotNull String currentBranchName,
+                            @NotNull CommitCompareInfo compareInfo, @NotNull Repository initialRepo) {
     super(new BorderLayout(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP));
-    myProject = project;
+    myHelper = helper;
     myBranchName = branchName;
     myCurrentBranchName = currentBranchName;
     myCompareInfo = compareInfo;
@@ -48,12 +63,12 @@ class HgCompareBranchesLogPanel extends JPanel {
   }
 
   private JComponent createCenterPanel() {
-    final SimpleChangesBrowser changesBrowser = new SimpleChangesBrowser(myProject, false, true);
+    final SimpleChangesBrowser changesBrowser = new SimpleChangesBrowser(myHelper.getProject(), false, true);
 
-    myHeadToBranchListPanel = new HgCommitListPanel(getHeadToBranchCommits(myInitialRepo),
-                                                     String.format("Branch %s is fully merged to %s", myBranchName, myCurrentBranchName));
-    myBranchToHeadListPanel = new HgCommitListPanel(getBranchToHeadCommits(myInitialRepo),
-                                                     String.format("Branch %s is fully merged to %s", myCurrentBranchName, myBranchName));
+    myHeadToBranchListPanel = new CommitListPanel<>(getHeadToBranchCommits(myInitialRepo),
+                                                    String.format("Branch %s is fully merged to %s", myBranchName, myCurrentBranchName));
+    myBranchToHeadListPanel = new CommitListPanel<>(getBranchToHeadCommits(myInitialRepo),
+                                                    String.format("Branch %s is fully merged to %s", myCurrentBranchName, myBranchName));
 
     addSelectionListener(myHeadToBranchListPanel, myBranchToHeadListPanel, changesBrowser);
     addSelectionListener(myBranchToHeadListPanel, myHeadToBranchListPanel, changesBrowser);
@@ -86,14 +101,14 @@ class HgCompareBranchesLogPanel extends JPanel {
   }
 
   private JComponent createNorthPanel() {
-    final ComboBox<HgRepository> repoSelector = new ComboBox<>(ArrayUtil.toObjectArray(myCompareInfo.getRepositories(), HgRepository.class));
-    repoSelector.setRenderer(new HgRepositoryComboboxListCellRenderer());
+    final ComboBox<Repository> repoSelector = new ComboBox<>(ArrayUtil.toObjectArray(myCompareInfo.getRepositories(), Repository.class));
+    repoSelector.setRenderer(new RepositoryComboboxListCellRenderer());
     repoSelector.setSelectedItem(myInitialRepo);
 
     repoSelector.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        HgRepository selectedRepo = (HgRepository)repoSelector.getSelectedItem();
+        Repository selectedRepo = (Repository)repoSelector.getSelectedItem();
         myHeadToBranchListPanel.setCommits(getHeadToBranchCommits(selectedRepo));
         myBranchToHeadListPanel.setCommits(getBranchToHeadCommits(selectedRepo));
       }
@@ -112,20 +127,20 @@ class HgCompareBranchesLogPanel extends JPanel {
     return repoSelectorPanel;
   }
 
-  private ArrayList<HgCommit> getBranchToHeadCommits(HgRepository selectedRepo) {
+  private ArrayList<VcsFullCommitDetails> getBranchToHeadCommits(Repository selectedRepo) {
     return new ArrayList<>(myCompareInfo.getBranchToHeadCommits(selectedRepo));
   }
 
-  private ArrayList<HgCommit> getHeadToBranchCommits(HgRepository selectedRepo) {
+  private ArrayList<VcsFullCommitDetails> getHeadToBranchCommits(Repository selectedRepo) {
     return new ArrayList<>(myCompareInfo.getHeadToBranchCommits(selectedRepo));
   }
 
-  private HgCommitCompareInfo.InfoType getInfoType() {
+  private CommitCompareInfo.InfoType getInfoType() {
     return myCompareInfo.getInfoType();
   }
 
-  private static void addSelectionListener(@NotNull HgCommitListPanel sourcePanel,
-                                           @NotNull final HgCommitListPanel otherPanel,
+  private static void addSelectionListener(@NotNull CommitListPanel<VcsFullCommitDetails> sourcePanel,
+                                           @NotNull final CommitListPanel otherPanel,
                                            @NotNull final SimpleChangesBrowser changesBrowser) {
     sourcePanel.addListMultipleSelectionListener(changes -> {
       changesBrowser.setChangesToDisplay(changes);
@@ -147,8 +162,7 @@ class HgCompareBranchesLogPanel extends JPanel {
   private String makeDescription(boolean forward) {
     String firstBranch = forward ? myCurrentBranchName : myBranchName;
     String secondBranch = forward ? myBranchName : myCurrentBranchName;
-    return String.format("<html>Commits that exist in <code><b>%s</b></code> but don't exist in <code><b>%s</b></code> (<code>hg log -r \"reverse(%s%%%s)\"</code>):</html>",
-                         secondBranch, firstBranch, secondBranch, firstBranch);
+    return String.format("<html>Commits that exist in <code><b>%s</b></code> but don't exist in <code><b>%s</b></code> (<code>%s</code>):</html>",
+                         secondBranch, firstBranch, myHelper.formatLogCommand(firstBranch, secondBranch));
   }
 }
-

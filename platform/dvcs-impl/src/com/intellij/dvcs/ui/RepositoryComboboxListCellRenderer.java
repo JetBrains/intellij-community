@@ -13,31 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.ui;
+package com.intellij.dvcs.ui;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.repo.Repository;
 import com.intellij.ui.ListCellRendererWrapper;
-import git4idea.repo.GitRepository;
 
 import javax.swing.*;
 
 /**
- * Common {@link ListCellRenderer} do be used in {@link JComboBox} displaying {@link GitRepository GitRepositories}.
- * We don't want to use {@link git4idea.repo.GitRepository#toString()} since it is not the best way to display the repository in the UI.
- * 
+ * Common {@link ListCellRenderer} do be used in {@link JComboBox} displaying {@link Repository repositories}.
+ * We don't want to use {@link Repository#toString()} since it is not the best way to display the repository in the UI.
+ *
  * @author Kirill Likhodedov
  */
-public class GitRepositoryComboboxListCellRenderer extends ListCellRendererWrapper<GitRepository> {
-
-  private static final DefaultListCellRenderer DEFAULT_RENDERER = new DefaultListCellRenderer();
-
-  public GitRepositoryComboboxListCellRenderer(final JComboBox comboBox) {
-    super();
-  }
+public class RepositoryComboboxListCellRenderer extends ListCellRendererWrapper<Repository> {
 
   @Override
-  public void customize(JList list, GitRepository value, int index, boolean selected, boolean hasFocus) {
+  public void customize(JList list, Repository value, int index, boolean selected, boolean hasFocus) {
     setText(DvcsUtil.getShortRepositoryName(value));
   }
-
 }

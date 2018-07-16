@@ -15,10 +15,10 @@
  */
 package git4idea.ui;
 
+import com.intellij.dvcs.ui.CommitListPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.util.Consumer;
 import git4idea.GitCommit;
@@ -37,12 +37,12 @@ import java.util.List;
 public class GitCommitListWithDiffPanel extends JPanel {
 
   private final SimpleChangesBrowser myChangesBrowser;
-  private final GitCommitListPanel myCommitListPanel;
+  private final CommitListPanel<GitCommit> myCommitListPanel;
 
   public GitCommitListWithDiffPanel(@NotNull Project project, @NotNull List<GitCommit> commits) {
     super(new BorderLayout());
 
-    myCommitListPanel = new GitCommitListPanel(commits, null);
+    myCommitListPanel = new CommitListPanel<>(commits, null);
     myCommitListPanel.addListMultipleSelectionListener(new Consumer<List<Change>>() {
       @Override
       public void consume(List<Change> changes) {
