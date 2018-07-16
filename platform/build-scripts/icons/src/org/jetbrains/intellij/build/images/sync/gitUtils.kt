@@ -91,8 +91,24 @@ internal fun findGitRepoRoot(path: String, silent: Boolean = false): File = File
 
 internal fun addChangesToGit(files: List<String>, repo: File) {
   // OS has argument length limit
-  files.split(1000).forEach {
-    (listOf(GIT, "add") + it).execute(repo, true)
+  splitAndTry(1000, files, repo)
+}
+
+private fun splitAndTry(factor: Int, files: List<String>, repo: File) {
+  files.split(factor).forEach {
+    try {
+      (listOf(GIT, "add") + it).execute(repo, true)
+    }
+    catch (e: Exception) {
+      var finerFactor: Int
+      do {
+        finerFactor = factor / 2
+        if (finerFactor < 1) throw e
+      }
+      while (finerFactor == factor)
+      log("Git add command failed with ${e.message}. Retrying..")
+      splitAndTry(finerFactor, files, repo)
+    }
   }
 }
 
