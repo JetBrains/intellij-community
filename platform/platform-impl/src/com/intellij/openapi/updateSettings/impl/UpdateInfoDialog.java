@@ -85,6 +85,14 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
       String list = StringUtil.join(incompatiblePlugins, IdeaPluginDescriptor::getName, "<br/>");
       setErrorText(IdeBundle.message("updates.incompatible.plugins.found", incompatiblePlugins.size(), list));
     }
+
+    FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.shown");
+    if (myPatch == null) {
+      FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.shown.no.patch");
+    }
+    else if (!ApplicationManager.getApplication().isRestartCapable()) {
+      FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.shown.manual.patch");
+    }
   }
 
   UpdateInfoDialog(UpdateChannel channel, BuildInfo newBuild, PatchInfo patch, @Nullable File patchFile) {
@@ -127,18 +135,6 @@ class UpdateInfoDialog extends AbstractUpdateDialog {
     }
     else {
       return null;
-    }
-  }
-
-  @Override
-  protected void init() {
-    super.init();
-    FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.shown");
-    if (myPatch == null) {
-      FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.shown.no.patch");
-    }
-    else if (!ApplicationManager.getApplication().isRestartCapable()) {
-      FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "dialog.shown.manual.patch");
     }
   }
 
