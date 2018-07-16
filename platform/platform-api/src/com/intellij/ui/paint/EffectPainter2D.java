@@ -9,6 +9,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WavePainter2D;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
@@ -321,14 +322,24 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
       }
     }
 
+    @Nullable
     BufferedImage getImage(Graphics2D g, Color color, double height) {
       ConcurrentHashMap<Integer, BufferedImage> cache = UIUtil.isJreHiDPI(g) ? myHiDPICache : myNormalCache;
-      return cache.computeIfAbsent(Objects.hash(color.getRGB(), JBUI.sysScale(g), height), k -> createImage(g, color, height));
+      int key = Objects.hash(color.getRGB(), JBUI.sysScale(g), height);
+      BufferedImage image = cache.get(key);
+      if (image == null) {
+        image = createImage(g, color, height);
+        if (image != null) cache.putIfAbsent(key, image);
+      }
+      return image;
     }
 
+    @Nullable
     BufferedImage createImage(Graphics2D g, Paint paint, double height) {
       double period = getPeriod(height);
       int width = (int)period << (paint instanceof Color ? 8 : 1);
+      if (width <= 0 || height <= 0) return null;
+
       BufferedImage image = UIUtil.createImage(g, width, height, BufferedImage.TYPE_INT_ARGB, RoundingMode.FLOOR);
       paintImage(image.createGraphics(), paint, width, height, period);
       return image;
@@ -343,6 +354,8 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
 
       g.setComposite(AlphaComposite.SrcOver);
       BufferedImage image = paint instanceof Color ? getImage(g, (Color)paint, height) : createImage(g, paint, height);
+      if (image == null) return;
+
       int period = image.getWidth(null);
       if (image instanceof JBHiDPIScaledImage) period /= 2;
       double offset = (x % period + period) % period; // normalize
