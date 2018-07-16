@@ -12,7 +12,7 @@ import com.intellij.json.psi.*;
 
 public class JsonBooleanLiteralImpl extends JsonLiteralImpl implements JsonBooleanLiteral {
 
-  public JsonBooleanLiteralImpl(ASTNode node) {
+  public JsonBooleanLiteralImpl(@NotNull ASTNode node) {
     super(node);
   }
 
