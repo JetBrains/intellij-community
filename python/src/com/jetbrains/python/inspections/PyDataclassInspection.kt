@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
 import com.jetbrains.python.psi.types.*
 
 class PyDataclassInspection : PyInspection() {
@@ -102,7 +103,12 @@ class PyDataclassInspection : PyInspection() {
           PyNamedTupleInspection.inspectFieldsOrder(
             node,
             this::registerProblem,
-            { !PyTypingTypeProvider.isClassVar(it, myTypeEvalContext) },
+            {
+              val stub = it.stub
+              val fieldStub = if (stub == null) PyDataclassFieldStubImpl.create(it) else stub.getCustomStub(PyDataclassFieldStub::class.java)
+
+              fieldStub?.initValue() != false && !PyTypingTypeProvider.isClassVar(it, myTypeEvalContext)
+            },
             {
               val fieldStub = PyDataclassFieldStubImpl.create(it)
 
