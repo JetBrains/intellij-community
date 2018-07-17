@@ -1280,6 +1280,7 @@ public class PluginManagerConfigurableNew
     @TestOnly
     @NotNull
     public Point getTabLocation(@NotNull final String tabTitle) {
+      calculateSize();
       for (int i = 0; i < myTabs.size(); ++i) {
         if (myTabs.get(i).compute().equals(tabTitle)) {
           final Point point = mySizeInfo.tabs[i].getLocation();
