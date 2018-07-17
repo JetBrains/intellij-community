@@ -24,7 +24,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -119,18 +118,11 @@ public class GitChangeProvider implements ChangeProvider {
       return;
     }
 
-    final LocalFileSystem lfs = LocalFileSystem.getInstance();
     final Set<VirtualFile> rootsUnderGit = new HashSet<>(Arrays.asList(vcsManager.getRootsUnderVcs(vcs)));
     final Set<VirtualFile> inputColl = new HashSet<>(rootsUnderGit);
     final Set<VirtualFile> existingInScope = new HashSet<>();
     for (FilePath dir : recursivelyDirtyDirectories) {
-      VirtualFile vf = dir.getVirtualFile();
-      if (vf == null) {
-        vf = lfs.findFileByIoFile(dir.getIOFile());
-      }
-      if (vf == null) {
-        vf = lfs.refreshAndFindFileByIoFile(dir.getIOFile());
-      }
+      VirtualFile vf = VcsUtil.getVirtualFileWithRefresh(dir.getIOFile());
       if (vf != null) {
         existingInScope.add(vf);
       }
