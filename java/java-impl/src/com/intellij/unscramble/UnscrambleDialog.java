@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -212,6 +213,8 @@ public class UnscrambleDialog extends DialogWrapper {
 
   private void createEditor() {
     myStacktraceEditorPanel = AnalyzeStacktraceUtil.createEditorPanel(myProject, myDisposable);
+    Disposer.register(myDisposable, myStacktraceEditorPanel);
+
     myEditorPanel.setLayout(new BorderLayout());
     myEditorPanel.add(myStacktraceEditorPanel, BorderLayout.CENTER);
   }
