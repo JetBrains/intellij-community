@@ -2593,7 +2593,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(value = " -> new", pure = true)
   public static <K,V> ConcurrentMap<K,V> createConcurrentWeakMap() {
     //noinspection deprecation
-    return new ConcurrentWeakHashMap<K, V>();
+    return new ConcurrentWeakHashMap<K, V>(0.75f);
   }
 
   @NotNull
@@ -2863,7 +2863,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <K,V> Map<K,V> createWeakKeyWeakValueMap() {
     //noinspection deprecation
-    return new WeakKeyWeakValueHashMap<K, V>();
+    return new WeakKeyWeakValueHashMap<K, V>(true);
   }
 
   @Contract(value = " -> new", pure = true)
@@ -2881,7 +2881,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <K,V> Map<K,V> createSoftValueMap() {
     //noinspection deprecation
-    return new SoftValueHashMap<K, V>();
+    return new SoftValueHashMap<K, V>(ContainerUtil.<K>canonicalStrategy());
   }
 
   /**
@@ -2893,7 +2893,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <K,V> Map<K,V> createWeakValueMap() {
     //noinspection deprecation
-    return new WeakValueHashMap<K, V>();
+    return new WeakValueHashMap<K, V>(ContainerUtil.<K>canonicalStrategy());
   }
 
   /**
@@ -2905,7 +2905,7 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <K,V> Map<K,V> createSoftMap() {
     //noinspection deprecation
-    return new SoftHashMap<K, V>();
+    return new SoftHashMap<K, V>(4);
   }
 
   @Contract(value = "_ -> new", pure = true)
@@ -2923,15 +2923,13 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(value = " -> new", pure = true)
   @NotNull
   public static <K,V> Map<K,V> createWeakMap() {
-    //noinspection deprecation
-    return new WeakHashMap<K, V>();
+    return createWeakMap(4);
   }
 
   @Contract(value = "_ -> new", pure = true)
   @NotNull
   public static <K,V> Map<K,V> createWeakMap(int initialCapacity) {
-    //noinspection deprecation
-    return new WeakHashMap<K, V>(initialCapacity);
+    return createWeakMap(initialCapacity, 0.8f, ContainerUtil.<K>canonicalStrategy());
   }
 
   @Contract(value = "_, _, _ -> new", pure = true)

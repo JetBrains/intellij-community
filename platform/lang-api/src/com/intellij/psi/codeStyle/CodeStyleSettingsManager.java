@@ -165,6 +165,11 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
     myTemporarySettings = null;
   }
 
+  @Nullable
+  public CodeStyleSettings getTemporarySettings() {
+    return myTemporarySettings;
+  }
+
   public void addListener(@NotNull CodeStyleSettingsListener listener) {
     myListeners.add(listener);
   }

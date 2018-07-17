@@ -52,7 +52,7 @@ public class JavadocHelper {
   private static final String PARAM_TEXT = "param";
   
   private static final Pair<JavadocParameterInfo, List<JavadocParameterInfo>> EMPTY
-    = new Pair<>(null, Collections.<JavadocParameterInfo>emptyList());
+    = new Pair<>(null, Collections.emptyList());
   private static final JavadocHelper INSTANCE = new JavadocHelper();
   
   @NotNull

@@ -89,6 +89,16 @@ public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
     return elements;
   }
 
+  public boolean hasUnmarkedElements() {
+    Map<T, Boolean> elementMarkStates = getElementMarkStates();
+    for (Map.Entry<T, Boolean> entry : elementMarkStates.entrySet()) {
+      if (!entry.getValue()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   public void invertSelection() {
     final int count = getElementCount();
     for (int i = 0; i < count; i++) {

@@ -548,7 +548,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     boolean special = false;
     if (_handler == null) {
       _handler = pattern.getHandlerSimple(reference);
-      special = true;
+      special = reference.resolve() != null;
     }
 
     final PsiElement other = myMatchingVisitor.getElement();

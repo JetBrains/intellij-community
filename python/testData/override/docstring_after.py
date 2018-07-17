@@ -12,4 +12,4 @@ class Concrete(Abstract):
   """The docstring."""
 
   def foo(self, bar):
-      <selection>super(Concrete, self).foo(bar)</selection>
+      <selection>pass</selection>

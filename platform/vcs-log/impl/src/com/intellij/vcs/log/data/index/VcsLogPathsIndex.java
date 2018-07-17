@@ -102,7 +102,14 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     TIntHashSet result = new TIntHashSet();
     Set<Integer> renames = allPathIds;
     while (!renames.isEmpty()) {
-      renames = addCommitsAndGetRenames(renames, allPathIds, result);
+      Set<Integer> newRenames = ContainerUtil.newHashSet();
+      for (Integer key : renames) {
+        iterateCommitIdsAndValues(key, (value, commit) -> {
+          result.add(commit);
+          newRenames.addAll(ContainerUtil.filter(getOtherNames(value), r -> !allPathIds.contains(r)));
+        });
+      }
+      renames = newRenames;
       allPathIds.addAll(renames);
     }
 
@@ -184,21 +191,6 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
       allIds.addAll(startIds);
       newIds.clear();
     }
-  }
-
-  @NotNull
-  public Set<Integer> addCommitsAndGetRenames(@NotNull Set<Integer> newPathIds,
-                                              @NotNull Set<Integer> allPathIds,
-                                              @NotNull TIntHashSet commits)
-    throws StorageException {
-    Set<Integer> renames = ContainerUtil.newHashSet();
-    for (Integer key: newPathIds) {
-      iterateCommitIdsAndValues(key, (value, commit) -> {
-        commits.add(commit);
-        renames.addAll(ContainerUtil.filter(getOtherNames(value), r -> !allPathIds.contains(r)));
-      });
-    }
-    return renames;
   }
 
   @Override

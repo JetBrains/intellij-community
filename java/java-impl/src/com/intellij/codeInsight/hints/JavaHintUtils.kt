@@ -42,14 +42,14 @@ object JavaInlayHintsProvider {
       if (Registry.`is`("editor.completion.hints.virtual.comma")) {
         for (i in lastIndex + 1 until minOf(params.size, limit)) {
           params[i].name?.let {
-            infos.add(InlayInfo(", $it", trailingOffset, false, false, true))
+            infos.add(createHintWithComma(it, trailingOffset))
           }
           lastIndex = i
         }
       }
       if (method.isVarArgs && (arguments.isEmpty() && params.size == 2 || !arguments.isEmpty() && arguments.size == params.size - 1)) {
         params[params.size - 1].name?.let {
-          infos.add(InlayInfo(", $it", trailingOffset, false, false, true))
+          infos.add(createHintWithComma(it, trailingOffset))
         }
       }
       else if (Registry.`is`("editor.completion.hints.virtual.comma") && lastIndex < (params.size - 1) ||
@@ -71,6 +71,11 @@ object JavaInlayHintsProvider {
       is PsiNewExpressionImpl -> mergedHints(callExpression, callExpression.constructorFakeReference.multiResolve(false))
       else -> emptySet()
     }
+  }
+
+  private fun createHintWithComma(parameterName: String, offset: Int): InlayInfo {
+    return InlayInfo(",$parameterName", offset, false, false, true,
+                     HintWidthAdjustment(", ", parameterName, 1))
   }
 
   private fun mergedHints(callExpression: PsiCallExpression,

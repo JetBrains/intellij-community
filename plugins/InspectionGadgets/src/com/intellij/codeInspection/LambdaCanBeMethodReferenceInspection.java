@@ -373,6 +373,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
   }
 
   private static boolean isSoleParameter(@NotNull PsiVariable[] parameters, @Nullable PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
     return parameters.length == 1 &&
            expression instanceof PsiReferenceExpression &&
            parameters[0] == ((PsiReferenceExpression)expression).resolve();

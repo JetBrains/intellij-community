@@ -373,7 +373,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
   protected final void updateStep(JBCardLayout.SwipeDirection direction) {
-    //it would be better to pass 'direction' to 'updateStep' as a parameter, but since that method is used and overriden in plugins
+    //it would be better to pass 'direction' to 'updateStep' as a parameter, but since that method is used and overridden in plugins
     // we cannot do it without breaking compatibility
     try {
       myTransitionDirection = direction;

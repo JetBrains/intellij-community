@@ -483,7 +483,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       }
     }
 
-    if (!oldVisualPosition.equals(myVisibleCaret)) {
+    if (!oldVisualPosition.equals(myVisibleCaret) || !oldCaretPosition.equals(myLogicalCaret)) {
       CaretEvent event = new CaretEvent(myEditor, this, oldCaretPosition, myLogicalCaret);
       if (fireListeners) {
         myEditor.getCaretModel().fireCaretPositionChanged(event);
@@ -573,6 +573,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
       }
     }
 
+    VisualPosition oldVisualPosition = myVisibleCaret;
     myVisibleCaret = new VisualPosition(line, column, leanRight);
 
     VerticalInfo oldInfo = myCaretInfo;
@@ -593,7 +594,7 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
     myEditor.updateCaretCursor();
     requestRepaint(oldInfo);
 
-    if (fireListeners && !oldPosition.equals(myLogicalCaret)) {
+    if (fireListeners && (!oldPosition.equals(myLogicalCaret) || !oldVisualPosition.equals(myVisibleCaret))) {
       CaretEvent event = new CaretEvent(myEditor, this, oldPosition, myLogicalCaret);
       myEditor.getCaretModel().fireCaretPositionChanged(event);
     }
@@ -735,8 +736,8 @@ public class CaretImpl extends UserDataHolderBase implements Caret, Dumpable {
   void onInlayAdded(int offset) {
     updateCachedStateIfNeeded();
     int currentOffset = getOffset();
-    if (offset == currentOffset && myLogicalCaret.leansForward) {
-      VisualPosition pos = myEditor.offsetToVisualPosition(currentOffset, true, false);
+    if (offset == currentOffset) {
+      VisualPosition pos = EditorUtil.inlayAwareOffsetToVisualPosition(myEditor, offset);
       moveToVisualPosition(pos);
     }
     else {

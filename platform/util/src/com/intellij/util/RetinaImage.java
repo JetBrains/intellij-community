@@ -28,7 +28,7 @@ public class RetinaImage { // [tav] todo: create HiDPIImage class
   }
 
   /**
-   * @deprecated use {@link #createFrom(Image, float, ImageObserver)} instead
+   * @deprecated use {@link #createFrom(Image, double, ImageObserver)} instead
    */
   @Deprecated
   @NotNull

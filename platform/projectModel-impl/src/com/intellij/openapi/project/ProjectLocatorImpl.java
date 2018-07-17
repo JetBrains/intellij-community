@@ -35,28 +35,30 @@ public class ProjectLocatorImpl extends ProjectLocator {
   @Override
   @Nullable
   public Project guessProjectForFile(@Nullable VirtualFile file) {
-    ProjectManager projectManager = ProjectManager.getInstance();
-    if (projectManager == null) return null;
-    final Project[] projects = projectManager.getOpenProjects();
-    if (projects.length == 0) return null;
-    if (projects.length == 1 && !projects[0].isDisposed()) return projects[0];
+    Project project = ProjectCoreUtil.theOnlyOpenProject();
+    if (project != null && !project.isDisposed()) return project;
 
-    if (file != null) {
-      Project preferredProject = getPreferredProject(file);
-      if (preferredProject != null) {
-        return preferredProject;
-      }
-      return ReadAction.compute(()->{
-        for (Project project : projects) {
-          if (project.isInitialized() && !project.isDisposed() && ProjectRootManager.getInstance(project).getFileIndex().isInContent(file)) {
-            return project;
-          }
-        }
-        return projects[0].isDisposed() ? null : projects[0];
-      });
+    if (file == null) {
+      return null;
     }
 
-    return projects[0].isDisposed() ? null : projects[0];
+    Project preferredProject = getPreferredProject(file);
+    if (preferredProject != null) {
+      return preferredProject;
+    }
+    return ReadAction.compute(()->{
+      ProjectManager projectManager = ProjectManager.getInstance();
+      if (projectManager == null) return null;
+      final Project[] openProjects = projectManager.getOpenProjects();
+      for (Project openProject : openProjects) {
+        if (openProject.isInitialized() &&
+            !openProject.isDisposed() &&
+            ProjectRootManager.getInstance(openProject).getFileIndex().isInContent(file)) {
+          return openProject;
+        }
+      }
+      return null;
+    });
   }
 
   @Override

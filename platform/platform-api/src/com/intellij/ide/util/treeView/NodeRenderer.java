@@ -14,7 +14,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -106,9 +105,6 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
       append(text);
       setToolTipText(null);
     }
-    if (!AbstractTreeUi.isLoadingNode(value)) {
-      SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, selected);
-    }
   }
 
   @Nullable
@@ -120,7 +116,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
 
   @NotNull
   protected EditorColorsScheme getColorsScheme() {
-    return EditorColorsManager.getInstance().getGlobalScheme();
+    return EditorColorsManager.getInstance().getSchemeForCurrentUITheme();
   }
 
   @NotNull
@@ -140,7 +136,7 @@ public class NodeRenderer extends ColoredTreeCellRenderer {
   }
 
   public static SimpleTextAttributes getSimpleTextAttributes(@Nullable final ItemPresentation presentation) {
-    return getSimpleTextAttributes(presentation, EditorColorsManager.getInstance().getGlobalScheme());
+    return getSimpleTextAttributes(presentation, EditorColorsManager.getInstance().getSchemeForCurrentUITheme());
   }
   
   public static SimpleTextAttributes getSimpleTextAttributes(@Nullable final ItemPresentation presentation,

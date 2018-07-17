@@ -139,9 +139,9 @@ public class PyOverrideImplementUtil {
     if (membersToOverride == null) {
       return;
     }
-    WriteCommandAction.writeCommandAction(pyClass.getProject(), pyClass.getContainingFile()).run(() -> {
-      write(pyClass, membersToOverride, editor, implement);
-    });
+    WriteCommandAction
+      .writeCommandAction(pyClass.getProject(), pyClass.getContainingFile())
+      .run(() -> write(pyClass, membersToOverride, editor, implement));
   }
 
   private static void write(@NotNull PyClass pyClass, @NotNull List<PyMethodMember> newMembers, @NotNull Editor editor, boolean implement) {
@@ -279,7 +279,10 @@ public class PyOverrideImplementUtil {
       }
     }
 
-    if (PyNames.TYPES_INSTANCE_TYPE.equals(baseClass.getQualifiedName()) || baseFunction.onlyRaisesNotImplementedError() || implement) {
+    if (implement ||
+        PyNames.TYPES_INSTANCE_TYPE.equals(baseClass.getQualifiedName()) ||
+        baseFunction.onlyRaisesNotImplementedError() ||
+        PyKnownDecoratorUtil.hasAbstractDecorator(baseFunction, context)) {
       statementBody.append(PyNames.PASS);
     }
     else {

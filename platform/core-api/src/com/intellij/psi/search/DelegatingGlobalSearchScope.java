@@ -59,6 +59,7 @@ public class DelegatingGlobalSearchScope extends GlobalSearchScope {
     return myBaseScope.isSearchOutsideRootModel();
   }
 
+  @NotNull
   @Override
   public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
     return myBaseScope.getUnloadedModulesBelongingToScope();

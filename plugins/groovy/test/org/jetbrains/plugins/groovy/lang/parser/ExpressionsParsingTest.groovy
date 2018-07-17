@@ -81,6 +81,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testconditional$elvis2() throws Throwable { doTest() }
 
+  void testconditional$elvisNlBeforeOperator() { doTest() }
+
   void testconditional$ternaryQuestionOnly() { doTest() }
 
   void testconditional$ternaryWithoutElse() { doTest() }
@@ -715,4 +717,16 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testindex$safeIndexNewLineAfterQ() { doTest() }
 
   void testindex$safeIndexNewLineBeforeQ() { doTest() }
+
+  void testnl$binary() { doTest() }
+
+  void testnl$cast() { doTest() }
+
+  void testnl$index() { doTest() }
+
+  void testnl$postfixDec() { doTest() }
+
+  void testnl$postfixInc() { doTest() }
+
+  void testnl$unary() { doTest() }
 }

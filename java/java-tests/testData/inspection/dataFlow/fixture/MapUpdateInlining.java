@@ -59,4 +59,8 @@ class MapUpdateInlining {
       System.out.println("impossible");
     }
   }
+
+  void testBoxing(Map<String, Integer> map, String key) {
+    map.merge(key, 1, (i1, i2) -> i1+1);
+  }
 }

@@ -17,6 +17,7 @@ import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
 import com.jetbrains.python.psi.types.*
 
 class PyDataclassInspection : PyInspection() {
@@ -102,7 +103,12 @@ class PyDataclassInspection : PyInspection() {
           PyNamedTupleInspection.inspectFieldsOrder(
             node,
             this::registerProblem,
-            { !PyTypingTypeProvider.isClassVar(it, myTypeEvalContext) },
+            {
+              val stub = it.stub
+              val fieldStub = if (stub == null) PyDataclassFieldStubImpl.create(it) else stub.getCustomStub(PyDataclassFieldStub::class.java)
+
+              fieldStub?.initValue() != false && !PyTypingTypeProvider.isClassVar(it, myTypeEvalContext)
+            },
             {
               val fieldStub = PyDataclassFieldStubImpl.create(it)
 
@@ -504,7 +510,8 @@ class PyDataclassInspection : PyInspection() {
                         ProblemHighlightType.LIKE_UNUSED_SYMBOL)
       }
 
-      val parameters = ContainerUtil.subList(postInit.getParameters(myTypeEvalContext), 1)
+      val implicitParameters = postInit.getParameters(myTypeEvalContext)
+      val parameters = if (implicitParameters.isEmpty()) emptyList<PyCallableParameter>() else ContainerUtil.subList(implicitParameters, 1)
       val message = "'$DUNDER_POST_INIT' should take all init-only variables in the same order as they are defined"
 
       if (parameters.size != initVars.size) {

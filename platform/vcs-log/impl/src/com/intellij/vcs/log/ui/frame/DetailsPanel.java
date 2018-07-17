@@ -48,7 +48,7 @@ import com.intellij.util.ui.StatusText;
 import com.intellij.vcs.commit.CommitMessageInspectionProfile;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.HashImpl;
@@ -278,13 +278,13 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     cancelResolve();
   }
 
-  private class CommitSelectionListenerForDetails extends CommitSelectionListener {
+  private class CommitSelectionListenerForDetails extends CommitSelectionListener<VcsCommitMetadata> {
     public CommitSelectionListenerForDetails(VcsLogGraphTable graphTable) {
-      super(DetailsPanel.this.myLogData, graphTable);
+      super(graphTable, DetailsPanel.this.myLogData.getMiniDetailsGetter());
     }
 
     @Override
-    protected void onDetailsLoaded(@NotNull List<VcsFullCommitDetails> detailsList) {
+    protected void onDetailsLoaded(@NotNull List<VcsCommitMetadata> detailsList) {
       List<CommitId> ids = ContainerUtil.map(detailsList,
                                              detail -> new CommitId(detail.getId(), detail.getRoot()));
       Set<String> unResolvedHashes = ContainerUtil.newHashSet();

@@ -379,7 +379,7 @@ class GithubShareAction : DumbAwareAction("Share Project on GitHub", "Easily sha
 
   @TestOnly
   class GithubUntrackedFilesDialog(private val myProject: Project, untrackedFiles: List<VirtualFile>) :
-    SelectFilesDialog(myProject, untrackedFiles, null, null, true, false, false),
+    SelectFilesDialog(myProject, untrackedFiles, null, null, true, false),
     DataProvider {
     private var myCommitMessagePanel: CommitMessage? = null
 

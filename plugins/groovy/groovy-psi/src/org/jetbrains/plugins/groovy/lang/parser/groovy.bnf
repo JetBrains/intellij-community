@@ -1010,7 +1010,7 @@ private property_expression_identifiers ::= parenthesized_expression | lazy_bloc
 }
 
 private priority1_4 ::= not_expression | cast_expression
-not_expression ::= ('~' | '!') expression { elementType = unary_expression }
+not_expression ::= ('~' | '!') mb_nl expression { elementType = unary_expression }
 cast_expression ::= &cast_expression_start '(' type_element ')' cast_operand
 private cast_expression_start ::= '(' (IDENTIFIER | primitive_type) { consumeTokenMethod = 'consumeTokenFast' }
 private cast_operand ::= !empty_parens <<castOperandCheck>> priority1_4
@@ -1042,33 +1042,33 @@ multiplicative_expression ::= expression ('*' | '/' | '%') mb_nl expression
 additive_expression ::= expression ('+' | '-') mb_nl expression
 
 private shift_or_range ::= shift_expression | range_expression
-shift_expression ::= expression shift_sign expression
+shift_expression ::= expression shift_sign mb_nl expression
 private shift_sign ::= left_shift_sign | right_shift_unsigned_sign | right_shift_sign { consumeTokenMethod = 'consumeTokenFast' }
 left_shift_sign ::= '<' '<'
 right_shift_sign ::= '>' '>'
 right_shift_unsigned_sign ::= '>' '>' '>'
-range_expression ::= expression ('..' | '..<') expression
+range_expression ::= expression ('..' | '..<') mb_nl expression
 
 private priority7 ::= relational_expression | in_expression | instanceof_expression | as_expression
 relational_expression ::= expression relational_operator mb_nl expression
 private relational_operator ::= '<' !'<' | '<=' | '>' !'>' | '>=' { consumeTokenMethod = 'consumeTokenFast' }
-in_expression ::= expression mb_not ('in') expression
+in_expression ::= expression mb_not ('in') mb_nl expression
 instanceof_expression ::= expression instanceof_expression_tail
-private instanceof_expression_tail ::= mb_not ('instanceof') (type_element | expect_type) { pin = 2 }
-as_expression ::= expression 'as' type_element
+private instanceof_expression_tail ::= mb_not ('instanceof') mb_nl (type_element | expect_type) { pin = 2 }
+as_expression ::= expression 'as' mb_nl type_element
 
 private priority8 ::= equality_expression | compare_expression | regex_find_expression | regex_match_expression
-equality_expression ::= expression <<equalityOperator>> expression
+equality_expression ::= expression <<equalityOperator>> mb_nl expression
 compare_expression ::= expression '<=>' mb_nl expression
 {
   elementType = relational_expression
 }
-regex_find_expression ::= expression '=~' expression
-regex_match_expression ::= expression '==~' expression
+regex_find_expression ::= expression '=~' mb_nl expression
+regex_match_expression ::= expression '==~' mb_nl expression
 
-band_expression ::= expression '&' expression
-xor_expression ::= expression '^' expression
-bor_expression ::= expression '|' expression
+band_expression ::= expression '&' mb_nl expression
+xor_expression ::= expression '^' mb_nl expression
+bor_expression ::= expression '|' mb_nl expression
 land_expression ::= expression '&&' mb_nl expression
 lor_expression ::= expression '||' mb_nl expression
 
@@ -1076,7 +1076,7 @@ private conditionals ::= ternary_expression | elvis_expression
 ternary_expression ::= expression (ternary_tail_pin | ternary_tail)
 private ternary_tail_pin ::= '?' mb_nl !'[' expression mb_nl ':' mb_nl conditionals { pin = 3 consumeTokenMethod = 'consumeTokenFast' }
 private ternary_tail ::= '?' mb_nl expression mb_nl ':' mb_nl conditionals { pin = 5 consumeTokenMethod = 'consumeTokenFast' }
-elvis_expression ::= expression '?:' mb_nl expression
+elvis_expression ::= expression mb_nl ('?:' mb_nl) expression
 {
   rightAssociative = true
 }
@@ -1222,9 +1222,6 @@ private qualified_name ::= <<qualifiedName code_reference>>
 
 // region Variables
 private var ::= IDENTIFIER mb_initializer
-{
-  consumeTokenMethod = 'consumeTokenFast'
-}
 private mb_initializer ::= ['=' mb_nl expression_or_application]
 {
   pin('.*') = 1

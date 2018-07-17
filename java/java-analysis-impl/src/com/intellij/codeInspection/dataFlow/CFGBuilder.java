@@ -358,7 +358,7 @@ public class CFGBuilder {
    *
    * @return this builder
    */
-  public CFGBuilder boxUnbox(PsiExpression expression, PsiType expectedType) {
+  public CFGBuilder boxUnbox(@NotNull PsiExpression expression, PsiType expectedType) {
     myAnalyzer.generateBoxingUnboxingInstructionFor(expression, expectedType);
     return this;
   }
@@ -475,7 +475,7 @@ public class CFGBuilder {
   }
 
   /**
-   * Start catch section; must be created after {@link #doTry()} section and finished with {@link #end()}.
+   * Start catch section; must be created after {@link #doTry(PsiElement)} section and finished with {@link #end()}.
    *
    * @return this builder
    */

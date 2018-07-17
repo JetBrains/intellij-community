@@ -87,7 +87,7 @@ public abstract class ActionPlaces {
   public static final String ANT_EXPLORER_TOOLBAR = "AntExplorerToolbar";
   public static final String JS_BUILD_TOOL_POPUP = "JavaScriptBuildTool";
 
-  //todo: probably these context should be splitted into several contexts
+  //todo: probably these context should be split into several contexts
   public static final String CODE_INSPECTION = "CodeInspection";
   public static final String JAVADOC_TOOLBAR = "JavadocToolbar";
   public static final String JAVADOC_INPLACE_SETTINGS = "JavadocInplaceSettings";

@@ -93,12 +93,12 @@ fun checkIcons(
       }
     )
   }
-  if (doSyncIconsRepo) callSafely {
+  if (doSyncIconsRepo) {
     syncAdded(addedByDev, devIconsBackup, File(iconsRepoDir)) { iconsRepo }
     syncModified(modifiedByDev, icons, devIconsBackup)
     syncRemoved(removedByDev, icons)
   }
-  if (doSyncDevRepo) callSafely {
+  if (doSyncDevRepo) {
     syncAdded(addedByDesigners, icons, File(devRepoDir)) { findGitRepoRoot(it.absolutePath, true) }
     syncModified(modifiedByDesigners, devIconsBackup, icons)
   }

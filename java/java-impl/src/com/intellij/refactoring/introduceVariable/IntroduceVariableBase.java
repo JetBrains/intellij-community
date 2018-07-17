@@ -921,10 +921,6 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
             declaration = addDeclaration(declaration, initializer);
             LOG.assertTrue(expr1.isValid());
             if (deleteSelf) {
-              final PsiElement lastChild = statement.getLastChild();
-              if (lastChild instanceof PsiComment) { // keep trailing comment
-                declaration.addBefore(lastChild, null);
-              }
               CommentTracker commentTracker = new CommentTracker();
               commentTracker.markUnchanged(initializer);
               commentTracker.deleteAndRestoreComments(statement);

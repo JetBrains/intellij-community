@@ -196,11 +196,6 @@ public class NavBarItem extends SimpleColoredComponent implements DataProvider, 
   }
 
   @Override
-  protected boolean shouldDrawMacShadow() {
-    return myUI.isDrawMacShadow(isSelected(), isFocused());
-  }
-
-  @Override
   public boolean isIconOpaque() {
     return false;
   }

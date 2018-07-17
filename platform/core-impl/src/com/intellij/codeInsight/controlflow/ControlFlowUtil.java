@@ -44,16 +44,19 @@ public class ControlFlowUtil {
       @NotNull
       final private List<Instruction> myList = Arrays.asList(flow);
 
+      @NotNull
       @Override
       public Collection<Instruction> getNodes() {
         return myList;
       }
 
+      @NotNull
       @Override
       public Iterator<Instruction> getIn(Instruction n) {
         return n.allPred().iterator();
       }
 
+      @NotNull
       @Override
       public Iterator<Instruction> getOut(Instruction n) {
         return n.allSucc().iterator();

@@ -101,11 +101,13 @@ public class ModifiableModelCommitter {
 
     final Collection<RootModelImpl> allRootModels = nameToModel.values();
     InboundSemiGraph<RootModelImpl> graph = new InboundSemiGraph<RootModelImpl>() {
+      @NotNull
       @Override
       public Collection<RootModelImpl> getNodes() {
         return allRootModels;
       }
 
+      @NotNull
       @Override
       public Iterator<RootModelImpl> getIn(RootModelImpl rootModel) {
         OrderEnumerator entries = rootModel.orderEntries().withoutSdk().withoutLibraries().withoutModuleSourceEntries();

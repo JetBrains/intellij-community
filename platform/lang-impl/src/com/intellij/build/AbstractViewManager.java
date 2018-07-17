@@ -86,6 +86,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     return true;
   }
 
+  @NotNull
   protected abstract String getViewName();
 
   protected Map<BuildInfo, BuildView> getBuildsMap() {

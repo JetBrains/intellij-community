@@ -184,7 +184,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
     List<Computable<List<LineMarkerInfo>>> tasks = new ArrayList<>();
 
-    MultiMap<PsiClass, PsiMethod> canbeOverridden = MultiMap.create();
+    MultiMap<PsiClass, PsiMethod> canbeOverridden = MultiMap.createSet();
     MultiMap<PsiClass, PsiMethod> canHaveSiblings = MultiMap.create();
     //noinspection ForLoopReplaceableByForEach
     for (int i = 0; i < elements.size(); i++) {
@@ -216,8 +216,10 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
         }
       }
     }
-    for (PsiClass psiClass : canbeOverridden.keySet()) {
-      Collection<PsiMethod> methods = canbeOverridden.get(psiClass);
+
+    for (Map.Entry<PsiClass, Collection<PsiMethod>> entry : canbeOverridden.entrySet()) {
+      PsiClass psiClass = entry.getKey();
+      Set<PsiMethod> methods = (Set<PsiMethod>)entry.getValue();
       tasks.add(() -> collectOverridingMethods(methods, psiClass));
     }
     for (PsiClass psiClass : canHaveSiblings.keySet()) {
@@ -301,11 +303,9 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
   }
 
   @NotNull
-  private List<LineMarkerInfo> collectOverridingMethods(@NotNull final Iterable<PsiMethod> _methods, @NotNull PsiClass containingClass) {
+  private List<LineMarkerInfo> collectOverridingMethods(@NotNull final Set<PsiMethod> methodSet, @NotNull PsiClass containingClass) {
     if (!myOverriddenOption.isEnabled() && !myImplementedOption.isEnabled()) return Collections.emptyList();
     final Set<PsiMethod> overridden = new HashSet<>();
-
-    Set<PsiMethod> methodSet = ContainerUtil.newHashSet(_methods);
 
     AllOverridingMethodsSearch.search(containingClass).forEach(pair -> {
       ProgressManager.checkCanceled();
@@ -326,16 +326,12 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       }
     }
 
-    List<LineMarkerInfo> result = new ArrayList<>();
+    List<LineMarkerInfo> result = new ArrayList<>(overridden.size());
     for (PsiMethod method : overridden) {
       ProgressManager.checkCanceled();
       boolean overrides = !method.hasModifierProperty(PsiModifier.ABSTRACT);
-      if (overrides) {
-        if (!myOverriddenOption.isEnabled()) return Collections.emptyList();
-      }
-      else {
-        if (!myImplementedOption.isEnabled()) return Collections.emptyList();
-      }
+      if (overrides && !myOverriddenOption.isEnabled()) continue;
+      if (!overrides && !myImplementedOption.isEnabled()) continue;
       PsiElement range = getMethodRange(method);
       final MarkerType type = MarkerType.OVERRIDDEN_METHOD;
       final Icon icon = overrides ? AllIcons.Gutter.OverridenMethod : AllIcons.Gutter.ImplementedMethod;

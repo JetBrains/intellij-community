@@ -35,16 +35,16 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
   private volatile Set<VirtualFile> cachedDirectories;
   private volatile IndexableSetContributor[] myExtensions;
 
-  public AdditionalIndexableFileSet(Project project, IndexableSetContributor... extensions) {
+  public AdditionalIndexableFileSet(@NotNull Project project, @NotNull IndexableSetContributor... extensions) {
     myProject = project;
     myExtensions = extensions;
   }
 
-  public AdditionalIndexableFileSet(Project project) {
+  public AdditionalIndexableFileSet(@NotNull Project project) {
     myProject = project;
   }
 
-  public AdditionalIndexableFileSet(IndexableSetContributor... extensions) {
+  AdditionalIndexableFileSet(@NotNull IndexableSetContributor... extensions) {
     myProject = null;
     myExtensions = extensions;
   }
@@ -53,6 +53,7 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
     myProject = null;
   }
 
+  @NotNull
   private Set<VirtualFile> getDirectories() {
     Set<VirtualFile> directories = cachedDirectories;
     if (directories == null || VfsUtilCore.hasInvalidFiles(directories) || VfsUtilCore.hasInvalidFiles(cachedFiles)) {
@@ -61,12 +62,13 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
     return directories;
   }
 
-  private THashSet<VirtualFile> collectFilesAndDirectories() {
-    THashSet<VirtualFile> files = new THashSet<>();
-    THashSet<VirtualFile> directories = new THashSet<>();
+  @NotNull
+  private Set<VirtualFile> collectFilesAndDirectories() {
     if (myExtensions == null) {
       myExtensions = Extensions.getExtensions(IndexableSetContributor.EP_NAME);
     }
+    Set<VirtualFile> files = new THashSet<>();
+    Set<VirtualFile> directories = new THashSet<>();
     for (IndexableSetContributor contributor : myExtensions) {
       for (VirtualFile root : IndexableSetContributor.getRootsToIndex(contributor)) {
         (root.isDirectory() ? directories : files).add(root);

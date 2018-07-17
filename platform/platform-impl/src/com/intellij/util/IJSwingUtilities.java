@@ -133,6 +133,11 @@ public class IJSwingUtilities extends JBSwingUtilities {
    */
   public static void updateComponentTreeUI(@Nullable Component c) {
     if (c == null) return;
+
+    if (c instanceof RootPaneContainer) {
+      UIUtil.decorateWindowHeader(((RootPaneContainer)c).getRootPane());
+    }
+
     for (Component component : UIUtil.uiTraverser(c).postOrderDfsTraversal()) {
       if (component instanceof JComponent) ((JComponent)component).updateUI();
     }

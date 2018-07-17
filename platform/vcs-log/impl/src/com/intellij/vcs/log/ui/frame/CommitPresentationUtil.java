@@ -16,7 +16,7 @@ import com.intellij.vcs.commit.BaseCommitMessageInspection;
 import com.intellij.vcs.commit.CommitMessageInspectionProfile;
 import com.intellij.vcs.commit.SubjectLimitInspection;
 import com.intellij.vcs.log.CommitId;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import org.jetbrains.annotations.NotNull;
@@ -169,7 +169,7 @@ public class CommitPresentationUtil {
   }
 
   @NotNull
-  private static String getAuthorText(@NotNull VcsFullCommitDetails commit) {
+  private static String getAuthorText(@NotNull VcsCommitMetadata commit) {
     long authorTime = commit.getAuthorTime();
     long commitTime = commit.getCommitTime();
 
@@ -221,7 +221,7 @@ public class CommitPresentationUtil {
   }
 
   @NotNull
-  private static String formatCommitHashAndAuthor(@NotNull VcsFullCommitDetails commit) {
+  private static String formatCommitHashAndAuthor(@NotNull VcsCommitMetadata commit) {
     Font font = FontUtil.getCommitMetadataFont();
     return FontUtil.getHtmlWithFonts(commit.getId().toShortString() + " " + getAuthorText(commit), font.getStyle(), font);
   }
@@ -276,7 +276,7 @@ public class CommitPresentationUtil {
 
   @NotNull
   public static CommitPresentation buildPresentation(@NotNull Project project,
-                                                     @NotNull VcsFullCommitDetails commit,
+                                                     @NotNull VcsCommitMetadata commit,
                                                      @NotNull Set<String> unresolvedHashes) {
     String rawMessage = commit.getFullMessage();
     String hashAndAuthor = formatCommitHashAndAuthor(commit);

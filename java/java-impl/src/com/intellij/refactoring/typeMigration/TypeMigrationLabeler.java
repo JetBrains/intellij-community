@@ -201,6 +201,7 @@ public class TypeMigrationLabeler {
   private TypeMigrationUsageInfo[] sortMigratedUsages(TypeMigrationUsageInfo[] infos) {
     final DFSTBuilder<TypeMigrationUsageInfo> builder = new DFSTBuilder<>(GraphGenerator.generate(
       new InboundSemiGraph<TypeMigrationUsageInfo>() {
+        @NotNull
         @Override
         public Collection<TypeMigrationUsageInfo> getNodes() {
           final Set<TypeMigrationUsageInfo> infos = new HashSet<>();
@@ -211,6 +212,7 @@ public class TypeMigrationLabeler {
           return infos;
         }
 
+        @NotNull
         @Override
         public Iterator<TypeMigrationUsageInfo> getIn(TypeMigrationUsageInfo n) {
           final HashSet<Pair<TypeMigrationUsageInfo, PsiType>> rawNodes = myRootsTree.get(n);

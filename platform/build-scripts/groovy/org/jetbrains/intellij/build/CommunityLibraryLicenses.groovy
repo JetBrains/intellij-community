@@ -125,7 +125,7 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://code.google.com/p/fest/"),
     new LibraryLicense(name: "fest-swing", libraryName: "fest-swing", version: "", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://github.com/JetBrains/intellij-deps-swing-testing"),
-    new LibraryLicense(name: "FiraCode", attachedTo: "intellij.platform.resources", version: "1.200", license: "OFL", url: "https://github.com/tonsky/FiraCode/blob/master/LICENSE"),
+    new LibraryLicense(name: "FiraCode", attachedTo: "intellij.platform.resources", version: "1.205", license: "OFL", url: "https://github.com/tonsky/FiraCode/blob/master/LICENSE"),
     new LibraryLicense(name: "FreeMarker", attachedTo: "intellij.java.coverage", version: "2.3.15", license: "BSD", url: "http://freemarker.sourceforge.net/"),
     new LibraryLicense(name: "FreeMarker", libraryName: "freemarker-2.3.20", version: "2.3.20", license: "BSD",
                        url: "http://freemarker.sourceforge.net/"),
@@ -185,7 +185,7 @@ class CommunityLibraryLicenses {
                        url: "http://www.jcip.net", licenseUrl: "http://creativecommons.org/licenses/by/2.5"),
     new LibraryLicense(name: "JDOM", version: "1.1 (with patches by JetBrains)", license: "modified Apache", url: "http://www.jdom.org/",
                        licenseUrl: "http://www.jdom.org/docs/faq.html#a0030"),
-    new LibraryLicense(name: "JediTerm", libraryName: "jediterm-pty", version: "2.9", license: "LGPL 2",
+    new LibraryLicense(name: "JediTerm", libraryName: "jediterm-pty", version: "2.10", license: "LGPL 2",
                        url: "https://github.com/JetBrains/jediterm", licenseUrl: "https://github.com/JetBrains/jediterm/blob/master/COPYING"),
     new LibraryLicense(name: "JEuclid", libraryName: "jeuclid-core-3.1.9.jar", version: "3.1.9", license: "Apache 2.0",
                        url: "http://jeuclid.sourceforge.net", licenseUrl: "http://sourceforge.net/p/jeuclid/code/ci/default/tree/LICENSE.txt"),
@@ -423,6 +423,8 @@ class CommunityLibraryLicenses {
                        url: "http://objenesis.org/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "JetBrains Annotations", libraryName: "jetbrains-annotations", version: "16.0.1", license: "Apache 2.0",
                        url: "https://github.com/JetBrains/java-annotations"),
+    new LibraryLicense(name: "jetCheck", libraryName: "jetCheck", version: "0.1", license: "Apache 2.0",
+                       url: "https://github.com/JetBrains/jetCheck"),
     new LibraryLicense(name: "JetBrains Annotations for Java 5", libraryName: "jetbrains-annotations-java5", version: "16.0.1", license: "Apache 2.0",
                        url: "https://github.com/JetBrains/java-annotations"),
 
@@ -442,6 +444,7 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("tcServiceMessages"),
     jetbrainsLibrary("optimizedFileManager.jar"),
     jetbrainsLibrary("KotlinJavaRuntime"),
+    jetbrainsLibrary("KotlinScriptRuntime"),
     jetbrainsLibrary("kotlinx-coroutines-core"),
     jetbrainsLibrary("kotlinx-coroutines-jdk8")
   ] as List<LibraryLicense>

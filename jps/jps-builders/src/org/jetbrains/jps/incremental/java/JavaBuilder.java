@@ -457,7 +457,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         final ExternalJavacManager server = ensureJavacServerStarted(context);
         rc = server.forkJavac(
           forkSdk.getFirst(),
-          getExternalJavacHeapSize(),
+          Utils.suggestForkedCompilerHeapSize(),
           vmOptions, options, platformCp, classPath, modulePath, sourcePath,
           files, outs, diagnosticSink, classesConsumer, compilingTool, context.getCancelStatus()
         );
@@ -482,18 +482,6 @@ public class JavaBuilder extends ModuleLevelBuilder {
     for (JpsModule module : chunk.getModules()) {
       names.add(module.getName());
     }
-  }
-
-  private static int getExternalJavacHeapSize() {
-    //final JpsProject project = context.getProjectDescriptor().getProject();
-    //final JpsJavaCompilerConfiguration config = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(project);
-    //final JpsJavaCompilerOptions options = config.getCurrentCompilerOptions();
-    //return options.MAXIMUM_HEAP_SIZE;
-    final int maxMbytes = (int)(Runtime.getRuntime().maxMemory() / 1048576L);
-    if (maxMbytes < 0) {
-      return -1; // in case of int overflow, return -1 to let VM choose the heap size
-    }
-    return Math.max(maxMbytes * 75 / 100, 256); // minimum 256 Mb, maximum 75% from JPS max heap size
   }
 
   @Nullable

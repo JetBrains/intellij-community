@@ -176,7 +176,7 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       JsonObjectValueAdapter object = propertyAdapter.getParentObject();
       if (object == null) return;
 
-      JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker();
+      JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker(JsonComplianceCheckerOptions.RELAX_ENUM_CHECK);
       checker.checkByScheme(object, schema.getIf());
       if (checker.isCorrect()) {
         JsonSchemaObject then = schema.getThen();
@@ -307,6 +307,12 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       final String typeText = JsonSchemaDocumentationProvider.getBestDocumentation(true, jsonSchemaObject);
       if (!StringUtil.isEmptyOrSpaces(typeText)) {
         builder = builder.withTypeText(StringUtil.removeHtmlTags(typeText), true);
+      }
+      else {
+        JsonSchemaType type = jsonSchemaObject.getType();
+        if (type != null) {
+          builder = builder.withTypeText(type.getDescription(), true);
+        }
       }
 
       builder = builder.withIcon(getIcon(jsonSchemaObject.getType()));

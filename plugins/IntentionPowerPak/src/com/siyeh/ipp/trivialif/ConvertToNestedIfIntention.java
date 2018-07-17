@@ -56,10 +56,16 @@ public class ConvertToNestedIfIntention extends Intention {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
     final PsiBlockStatement blockStatement = (PsiBlockStatement)elementFactory.createStatementFromText("{" + newStatementText + "}", returnStatement);
     final PsiElement parent = returnStatement.getParent();
-    for (PsiStatement st : blockStatement.getCodeBlock().getStatements()) {
-      CodeStyleManager.getInstance(project).reformat(parent.addBefore(st, returnStatement));
+    if (parent instanceof PsiCodeBlock) {
+      for (PsiStatement st : blockStatement.getCodeBlock().getStatements()) {
+        CodeStyleManager.getInstance(project).reformat(parent.addBefore(st, returnStatement));
+      }
+      PsiReplacementUtil.replaceStatement(returnStatement, "return false;", tracker);
     }
-    PsiReplacementUtil.replaceStatement(returnStatement, "return false;", tracker);
+    else {
+      blockStatement.getCodeBlock().add(elementFactory.createStatementFromText("return false;", returnStatement));
+      tracker.replaceAndRestoreComments(returnStatement, blockStatement);
+    }
   }
 
   private static StringBuilder buildIf(@Nullable PsiExpression expression,

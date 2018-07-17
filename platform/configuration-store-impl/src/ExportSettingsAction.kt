@@ -172,7 +172,7 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
     }
 
     val storage = stateAnnotation.storages.sortByDeprecated().firstOrNull() ?: return@processAllImplementationClasses true
-    if (!(storage.roamingType != RoamingType.DISABLED && storage.storageClass == StateStorage::class && !storage.path.isEmpty())) {
+    if (!isStorageExportable(storage)) {
       return@processAllImplementationClasses true
     }
 
@@ -222,6 +222,13 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
     }
   }
   return result
+}
+
+private fun isStorageExportable(storage: Storage): Boolean {
+  if (storage.exportable) {
+    return true
+  }
+  return storage.roamingType != RoamingType.DISABLED && storage.storageClass == StateStorage::class && !storage.path.isEmpty()
 }
 
 private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDescriptor: PluginDescriptor?): String {

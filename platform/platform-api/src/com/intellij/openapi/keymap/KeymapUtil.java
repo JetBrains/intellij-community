@@ -304,7 +304,7 @@ public class KeymapUtil {
           button = Integer.parseInt(token.substring(6));
         }
         catch (NumberFormatException e) {
-          throw new InvalidDataException("unparseable token: " + token);
+          throw new InvalidDataException("unparsable token: " + token);
         }
       }
       else if (DOUBLE_CLICK.equals(token)) {

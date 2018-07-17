@@ -492,6 +492,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
 
     int checkBoxCount = fileStructureNodeProviders.size() + fileStructureFilters.size();
     JPanel panel = new JPanel(new BorderLayout());
+    panel.setPreferredSize(JBUI.size(540, 500));
     JPanel chkPanel = new JPanel(new GridLayout(0, checkBoxCount > 0 && checkBoxCount % 4 == 0 ? checkBoxCount / 2 : 3,
       JBUI.scale(UIUtil.DEFAULT_HGAP), 0));
     chkPanel.setOpaque(false);

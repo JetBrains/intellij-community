@@ -15,13 +15,8 @@
  */
 package com.intellij.openapi.diff;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.markup.MarkupEditorFilter;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
-
-import java.awt.*;
 
 /**
  * @deprecated use {@link com.intellij.diff.DiffManager} instead
@@ -46,13 +41,4 @@ public abstract class DiffManager {
   public abstract DiffTool getIdeaDiffTool();
 
   public abstract MarkupEditorFilter getDiffEditorFilter();
-
-  /**
-   * @param window     this window will be disposed, when user clicks on the line number
-   *                   You must call Disposer.dispose() when done.
-   * @param parentTool @deprecated use {@link #createDiffPanel(Window, Project, Disposable)} instead
-   */
-  public abstract DiffPanel createDiffPanel(Window window, @NotNull Project project, DiffTool parentTool);
-
-  public abstract DiffPanel createDiffPanel(Window window, @NotNull Project project, @NotNull Disposable parentDisposable, DiffTool parentTool);
 }

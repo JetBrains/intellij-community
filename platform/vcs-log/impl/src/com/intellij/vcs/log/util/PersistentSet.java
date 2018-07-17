@@ -15,6 +15,7 @@
  */
 package com.intellij.vcs.log.util;
 
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -24,6 +25,8 @@ public interface PersistentSet<T> {
   boolean contains(@NotNull T element) throws IOException;
 
   void put(@NotNull T element) throws IOException;
+
+  void process(@NotNull Processor<T> processor) throws IOException;
 
   void flush();
 

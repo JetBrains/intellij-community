@@ -73,11 +73,6 @@ public class CoreProjectScopeBuilder extends ProjectScopeBuilder {
     }
 
     @Override
-    public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-      return 0;
-    }
-
-    @Override
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return false;
     }
@@ -103,11 +98,6 @@ public class CoreProjectScopeBuilder extends ProjectScopeBuilder {
     }
 
     @Override
-    public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-      return 0;
-    }
-
-    @Override
     public boolean isSearchInModuleContent(@NotNull Module aModule) {
       return true;
     }
@@ -117,6 +107,7 @@ public class CoreProjectScopeBuilder extends ProjectScopeBuilder {
       return false;
     }
 
+    @NotNull
     @Override
     public Collection<UnloadedModuleDescription> getUnloadedModulesBelongingToScope() {
       return myFileIndexFacade.getUnloadedModuleDescriptions();

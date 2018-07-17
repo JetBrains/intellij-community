@@ -203,7 +203,7 @@ public class TooBroadScopeInspection extends TooBroadScopeInspectionBase {
       }
       assert statementParent != null;
       final PsiExpression initializer = variable.getInitializer();
-      if (isMoveable(initializer) && statement instanceof PsiExpressionStatement) {
+      if (isMovable(initializer) && statement instanceof PsiExpressionStatement) {
         final PsiExpressionStatement expressionStatement = (PsiExpressionStatement)statement;
         final PsiExpression expression = expressionStatement.getExpression();
         if (expression instanceof PsiAssignmentExpression) {

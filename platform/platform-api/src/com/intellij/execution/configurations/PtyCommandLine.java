@@ -72,6 +72,16 @@ public class PtyCommandLine extends GeneralCommandLine {
     super(command);
   }
 
+  public PtyCommandLine(@NotNull GeneralCommandLine original) {
+    super(original);
+    if (original instanceof PtyCommandLine) {
+      myUseCygwinLaunch = ((PtyCommandLine)original).myUseCygwinLaunch;
+      myConsoleMode = ((PtyCommandLine)original).myConsoleMode;
+      myInitialColumns = ((PtyCommandLine)original).myInitialColumns;
+      myInitialRows = ((PtyCommandLine)original).myInitialRows;
+    }
+  }
+
   @NotNull
   @Override
   protected Process startProcess(@NotNull List<String> commands) throws IOException {

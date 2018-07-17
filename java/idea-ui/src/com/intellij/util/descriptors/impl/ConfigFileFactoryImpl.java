@@ -41,8 +41,8 @@ public class ConfigFileFactoryImpl extends ConfigFileFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.descriptors.impl.ConfigFileFactoryImpl");
 
   @Override
-  public ConfigFileMetaDataProvider createMetaDataProvider(final ConfigFileMetaData... metaDatas) {
-    return new ConfigFileMetaDataRegistryImpl(metaDatas);
+  public ConfigFileMetaDataProvider createMetaDataProvider(final ConfigFileMetaData... metaData) {
+    return new ConfigFileMetaDataRegistryImpl(metaData);
   }
 
   @Override

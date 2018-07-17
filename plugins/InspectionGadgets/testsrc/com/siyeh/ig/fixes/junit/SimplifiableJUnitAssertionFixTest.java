@@ -76,6 +76,8 @@ public class SimplifiableJUnitAssertionFixTest extends IGQuickFixesTestCase {
                        "    public static void assertNotEquals(long expected, long actual) {}" +
                        "    public static void assertArrayEquals(int[] expected, int[] actual) {}" +
                        "    public static void assertNotEquals(double expected, double actual, double delta) {}" +
+                       "    public static void assertEquals(double expected, double actual, double delta) {}" +
+                       "    @Deprecated public static void assertEquals(double expected, double actual) {}" +
                        "    public static void assertFalse(String message, boolean condition) {}" +
                        "}");
 

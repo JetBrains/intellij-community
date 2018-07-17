@@ -248,7 +248,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   }
 
   private static final Pair<Set<String>, Set<TextWithImports>> EMPTY_USED_VARS =
-    Pair.create(Collections.emptySet(), Collections.<TextWithImports>emptySet());
+    Pair.create(Collections.emptySet(), Collections.emptySet());
 
   // copied from FrameVariablesTree
   private void buildVariables(DebuggerContextImpl debuggerContext,
@@ -586,7 +586,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   private static Pair<Set<String>, Set<TextWithImports>> findReferencedVars(Set<String> visibleVars, @NotNull SourcePosition position) {
     final int line = position.getLine();
     if (line < 0) {
-      return Pair.create(Collections.emptySet(), Collections.<TextWithImports>emptySet());
+      return Pair.create(Collections.emptySet(), Collections.emptySet());
     }
     final PsiFile positionFile = position.getFile();
     if (!positionFile.isValid() || !positionFile.getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
@@ -596,7 +596,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
     final VirtualFile vFile = positionFile.getVirtualFile();
     final Document doc = vFile != null ? FileDocumentManager.getInstance().getDocument(vFile) : null;
     if (doc == null || doc.getLineCount() == 0 || line > (doc.getLineCount() - 1)) {
-      return Pair.create(Collections.emptySet(), Collections.<TextWithImports>emptySet());
+      return Pair.create(Collections.emptySet(), Collections.emptySet());
     }
 
     final TextRange limit = calculateLimitRange(positionFile, doc, line);
@@ -647,7 +647,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
         }
       }
     }
-    return Pair.create(Collections.emptySet(), Collections.<TextWithImports>emptySet());
+    return Pair.create(Collections.emptySet(), Collections.emptySet());
   }
 
   private static TextRange calculateLimitRange(final PsiFile file, final Document doc, final int line) {

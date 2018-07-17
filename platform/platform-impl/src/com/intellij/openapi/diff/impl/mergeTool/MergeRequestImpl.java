@@ -136,7 +136,7 @@ public class MergeRequestImpl extends MergeRequest {
   }
 
   @Nullable
-  private MergeContent getMergeContent() {
+  public MergeContent getMergeContent() {
     if (myDiffContents[1] instanceof MergeContent) {
       return (MergeContent)myDiffContents[1];
     }
@@ -265,6 +265,11 @@ public class MergeRequestImpl extends MergeRequest {
 
     public void restoreOriginalContent() {
       myTarget.restoreOriginalContent(myProject);
+    }
+
+    @NotNull
+    public MergeVersion getMergeVersion() {
+      return myTarget;
     }
   }
 

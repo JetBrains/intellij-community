@@ -70,7 +70,7 @@ public class PsiCacheKey<T, H extends PsiElement> extends Key<SoftReference<Pair
   /**
    * Gets modification count from tracker based on {@link #myModifyCause}
    *
-   * @param tracker track to get modification count from
+   * @param element track to get modification count from
    * @return modification count
    * @throws AssertionError if {@link #myModifyCause} is junk
    */

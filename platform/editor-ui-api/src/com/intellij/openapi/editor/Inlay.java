@@ -58,9 +58,10 @@ public interface Inlay extends Disposable, UserDataHolderEx {
   int getWidthInPixels();
 
   /**
-   * Updates inlay's size by querying information from inlay's renderer.
+   * Updates inlay's size by querying information from inlay's renderer. Also, repaint the inlay.
    *
    * @see EditorCustomElementRenderer#calcWidthInPixels(Editor)
+   * @see #repaint()
    */
   void updateSize();
 

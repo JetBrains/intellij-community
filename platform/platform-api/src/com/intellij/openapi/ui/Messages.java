@@ -740,12 +740,8 @@ public class Messages {
                                                final int focusedOptionIndex,
                                                Icon icon) {
     return showCheckboxMessageDialog(message, title, new String[]{OK_BUTTON, CANCEL_BUTTON}, checkboxText, checked, defaultOptionIndex,
-                                     focusedOptionIndex, icon, new PairFunction<Integer, JCheckBox, Integer>() {
-        @Override
-        public Integer fun(final Integer exitCode, final JCheckBox cb) {
-          return exitCode == -1 ? CANCEL : exitCode + (cb.isSelected() ? 1 : 0);
-        }
-      });
+                                     focusedOptionIndex, icon,
+                                     (exitCode, cb) -> exitCode == -1 ? CANCEL : exitCode + (cb.isSelected() ? 1 : 0));
   }
 
   public static int showCheckboxMessageDialog(String message,

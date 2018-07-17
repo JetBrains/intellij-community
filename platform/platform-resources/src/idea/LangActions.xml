@@ -1170,7 +1170,7 @@
     <action class="com.intellij.internal.performance.TypingLatencyReportAction" id="TypingLatencyReport" internal="true" text="Typing Latency Report">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
-    <action id="RetypeFile" text="Retype Current File" class="com.intellij.internal.RetypeFileAction" internal="true">
+    <action id="RetypeFile" text="Retype Current File" class="com.intellij.internal.retype.RetypeFileAction" internal="true">
       <add-to-group group-id="Internal" anchor="last"/>
     </action>
   </actions>

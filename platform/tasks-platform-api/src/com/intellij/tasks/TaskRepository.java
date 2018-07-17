@@ -38,7 +38,7 @@ import java.util.concurrent.Callable;
  *
  * @author Dmitry Avdeev
  * @see TaskRepositoryType
- * @see BaseRepository
+ * @see com.intellij.tasks.impl.BaseRepository
  */
 @Tag("server")
 public abstract class TaskRepository {

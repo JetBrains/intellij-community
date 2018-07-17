@@ -13,7 +13,7 @@ import com.intellij.navigation.ItemPresentation;
 
 public class JsonPropertyImpl extends JsonPropertyMixin implements JsonProperty {
 
-  public JsonPropertyImpl(ASTNode node) {
+  public JsonPropertyImpl(@NotNull ASTNode node) {
     super(node);
   }
 

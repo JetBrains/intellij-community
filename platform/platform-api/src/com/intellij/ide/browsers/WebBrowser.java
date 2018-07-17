@@ -4,6 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 import java.util.UUID;
 
 public abstract class WebBrowser {
@@ -27,4 +28,8 @@ public abstract class WebBrowser {
 
   @Nullable
   public abstract BrowserSpecificSettings getSpecificSettings();
+
+  public void addOpenUrlParameter(@NotNull List<String> command, @NotNull String url) {
+    command.add(url);
+  }
 }

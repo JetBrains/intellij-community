@@ -108,9 +108,18 @@ public class GradleExecutionHelper {
     String gradleVersion = buildEnvironment != null ? buildEnvironment.getGradle().getGradleVersion() : null;
     if (!jvmArgs.isEmpty()) {
       // merge gradle args e.g. defined in gradle.properties
-      Collection<String> merged = buildEnvironment != null
-                                  ? mergeJvmArgs(settings.getServiceDirectory(), buildEnvironment.getJava().getJvmArguments(), jvmArgs)
-                                  : jvmArgs;
+      Collection<String> merged;
+      if (buildEnvironment != null) {
+        // the BuildEnvironment jvm arguments of the main build should be used for the 'buildSrc' import
+        // to avoid spawning of the second gradle daemon
+        List<String> buildJvmArguments = "buildSrc".equals(buildEnvironment.getBuildIdentifier().getRootDir().getName())
+                                         ? ContainerUtil.emptyList()
+                                         : buildEnvironment.getJava().getJvmArguments();
+        merged = mergeJvmArgs(settings.getServiceDirectory(), buildJvmArguments, jvmArgs);
+      }
+      else {
+        merged = jvmArgs;
+      }
 
       // filter nulls and empty strings
       List<String> filteredArgs = ContainerUtil.mapNotNull(merged, s -> StringUtil.isEmpty(s) ? null : s);

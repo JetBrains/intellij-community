@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * By the nature of the process, we do not expect here situations where one thread activates/starts and another simultaneosly
+ * By the nature of the process, we do not expect here situations where one thread activates/starts and another simultaneously
  * tries to deactivate/shutdown. It that situations, it would be very hard to decide what should be done=)
  *
  * So, synchronization here should only be used as a barrier to do not allow repeated activation etc.

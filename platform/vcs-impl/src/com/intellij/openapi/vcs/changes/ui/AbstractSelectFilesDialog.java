@@ -16,7 +16,6 @@
 
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -26,62 +25,43 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 /**
  * @author yole
  */
-public abstract class AbstractSelectFilesDialog<T> extends DialogWrapper {
-  protected JCheckBox myDoNotShowCheckbox;
-  protected final VcsShowConfirmationOption myConfirmationOption;
+public abstract class AbstractSelectFilesDialog extends DialogWrapper {
   private final String myPrompt;
-  private final boolean myShowDoNotAskOption;
 
-  public AbstractSelectFilesDialog(Project project, boolean canBeParent, final VcsShowConfirmationOption confirmationOption,
-                                   final String prompt, boolean showDoNotAskOption) {
+  public AbstractSelectFilesDialog(Project project,
+                                   boolean canBeParent,
+                                   @Nullable VcsShowConfirmationOption confirmationOption,
+                                   @Nullable String prompt) {
     super(project, canBeParent);
-    myConfirmationOption = confirmationOption;
     myPrompt = prompt;
-    myShowDoNotAskOption = showDoNotAskOption;
+
+    if (confirmationOption != null) {
+      setDoNotAskOption(new MyDoNotAskOption(confirmationOption));
+    }
   }
 
   @NotNull
   protected abstract ChangesTree getFileList();
 
-  @Nullable
-  private JLabel createPromptLabel() {
+  @Override
+  protected JComponent createNorthPanel() {
     if (myPrompt != null) {
       final JLabel label = new JLabel(myPrompt);
       label.setUI(new MultiLineLabelUI());
-      label.setBorder(new EmptyBorder(5, 1, 5, 1));
+      label.setBorder(JBUI.Borders.empty(5, 1));
       return label;
     }
     return null;
-  }
-
-  @Override
-  protected JComponent createNorthPanel() {
-    return createPromptLabel();
-  }
-
-  protected void doOKAction() {
-  if (myDoNotShowCheckbox != null && myDoNotShowCheckbox.isSelected()) {
-      myConfirmationOption.setValue(VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
-    }
-    super.doOKAction();
-  }
-
-  @Override
-  public void doCancelAction() {
-    if (myDoNotShowCheckbox != null && myDoNotShowCheckbox.isSelected()) {
-        myConfirmationOption.setValue(VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY);
-      }
-    super.doCancelAction();
   }
 
   @Override
@@ -102,15 +82,36 @@ public abstract class AbstractSelectFilesDialog<T> extends DialogWrapper {
     panel.add(toolbarPanel, BorderLayout.NORTH);
     panel.add(ScrollPaneFactory.createScrollPane(getFileList()), BorderLayout.CENTER);
 
-    if (myShowDoNotAskOption) {
-      myDoNotShowCheckbox = new JCheckBox(CommonBundle.message("dialog.options.do.not.ask"));
-      panel.add(myDoNotShowCheckbox, BorderLayout.SOUTH);
-    }
     return panel;
   }
 
   @NotNull
   protected DefaultActionGroup createToolbarActions() {
     return new DefaultActionGroup();
+  }
+
+  private static class MyDoNotAskOption extends DoNotAskOption.Adapter {
+    private final VcsShowConfirmationOption myConfirmationOption;
+
+    private MyDoNotAskOption(@NotNull VcsShowConfirmationOption confirmationOption) {
+      myConfirmationOption = confirmationOption;
+    }
+
+    @Override
+    public boolean shouldSaveOptionsOnCancel() {
+      return true;
+    }
+
+    @Override
+    public void rememberChoice(boolean isSelected, int exitCode) {
+      if (isSelected) {
+        if (exitCode == DialogWrapper.OK_EXIT_CODE) {
+          myConfirmationOption.setValue(VcsShowConfirmationOption.Value.DO_ACTION_SILENTLY);
+        }
+        if (exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
+          myConfirmationOption.setValue(VcsShowConfirmationOption.Value.DO_NOTHING_SILENTLY);
+        }
+      }
+    }
   }
 }

@@ -2,13 +2,18 @@
 package com.jetbrains.python.testing.pyTestFixtures
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.module.Module
 import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.types.TypeEvalContext
+
+internal fun getCustomFixtures(context: TypeEvalContext, forWhat: PyFunction) =
+  PyTestFixtureExtension.EP_NAME.extensions.map { it.getCustomFixtures(context, forWhat) }.flatten()
 
 fun PyFunction.isSubjectForFixture() =
   PyTestFixtureExtension.EP_NAME.extensions.find { it.isSubjectForFixture(this) } != null
 
-fun PyFunction.isInjectableLikeFixture() =
-  PyTestFixtureExtension.EP_NAME.extensions.find { it.isInjectableLikeFixture(this) } != null
+fun PyFunction.isCustomFixture() =
+  PyTestFixtureExtension.EP_NAME.extensions.find { it.isCustomFixture(this) } != null
 
 interface PyTestFixtureExtension {
   companion object {
@@ -23,5 +28,7 @@ interface PyTestFixtureExtension {
   /**
    * @return Boolean could be injected like fixture itself
    */
-  fun isInjectableLikeFixture(function: PyFunction): Boolean = false
+  fun isCustomFixture(function: PyFunction): Boolean = false
+
+  fun getCustomFixtures(context: TypeEvalContext, forWhat: PyFunction): List<PyTestFixture> = emptyList()
 }

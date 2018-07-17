@@ -61,7 +61,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     myVcsManager = (ProjectLevelVcsManagerImpl)vcsManager;
 
     myGuess = new VcsGuess(myProject);
-    myDirtBuilder = new DirtBuilder(myGuess);
+    myDirtBuilder = new DirtBuilder();
 
     ((ChangeListManagerImpl) myChangeListManager).setDirtyScopeManager(this);
   }
@@ -127,30 +127,38 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     return map;
   }
 
-  @Override
-  public void filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty) {
-    try {
-      final MultiMap<AbstractVcs, FilePath> filesConverted = groupByVcs(filesDirty);
-      final MultiMap<AbstractVcs, FilePath> dirsConverted = groupByVcs(dirsRecursivelyDirty);
-      if (filesConverted.isEmpty() && dirsConverted.isEmpty()) return;
-
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("dirty files: " + toString(filesConverted) + "; dirty dirs: " + toString(dirsConverted) + "; " + findFirstInterestingCallerClass());
-      }
-
-      boolean hasSomethingDirty;
-      synchronized (LOCK) {
-        if (!myReady) return;
-        markDirty(myDirtBuilder, filesConverted, false);
-        markDirty(myDirtBuilder, dirsConverted, true);
-        hasSomethingDirty = !myDirtBuilder.isEmpty();
-      }
-
-      if (hasSomethingDirty) {
-        myChangeListManager.scheduleUpdate();
+  @NotNull
+  private MultiMap<AbstractVcs, FilePath> groupFilesByVcs(@Nullable final Collection<VirtualFile> from) {
+    if (from == null) return MultiMap.empty();
+    MultiMap<AbstractVcs, FilePath> map = MultiMap.createSet();
+    for (VirtualFile file : from) {
+      AbstractVcs vcs = myGuess.getVcsForDirty(file);
+      if (vcs != null) {
+        map.putValue(vcs, VcsUtil.getFilePath(file));
       }
     }
-    catch (ProcessCanceledException ignore) {
+    return map;
+  }
+
+  private void fileVcsPathsDirty(@NotNull MultiMap<AbstractVcs, FilePath> filesConverted,
+                                 @NotNull MultiMap<AbstractVcs, FilePath> dirsConverted) {
+    if (filesConverted.isEmpty() && dirsConverted.isEmpty()) return;
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug(String.format("dirty files: %s; dirty dirs: %s; %s",
+                              toString(filesConverted), toString(dirsConverted), findFirstInterestingCallerClass()));
+    }
+
+    boolean hasSomethingDirty;
+    synchronized (LOCK) {
+      if (!myReady) return;
+      markDirty(myDirtBuilder, filesConverted, false);
+      markDirty(myDirtBuilder, dirsConverted, true);
+      hasSomethingDirty = !myDirtBuilder.isEmpty();
+    }
+
+    if (hasSomethingDirty) {
+      myChangeListManager.scheduleUpdate();
     }
   }
 
@@ -170,8 +178,21 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   @Override
+  public void filePathsDirty(@Nullable final Collection<FilePath> filesDirty, @Nullable final Collection<FilePath> dirsRecursivelyDirty) {
+    try {
+      fileVcsPathsDirty(groupByVcs(filesDirty), groupByVcs(dirsRecursivelyDirty));
+    }
+    catch (ProcessCanceledException ignore) {
+    }
+  }
+
+  @Override
   public void filesDirty(@Nullable final Collection<VirtualFile> filesDirty, @Nullable final Collection<VirtualFile> dirsRecursivelyDirty) {
-    filePathsDirty(toFilePaths(filesDirty), toFilePaths(dirsRecursivelyDirty));
+    try {
+      fileVcsPathsDirty(groupFilesByVcs(filesDirty), groupFilesByVcs(dirsRecursivelyDirty));
+    }
+    catch (ProcessCanceledException ignore) {
+    }
   }
 
   @NotNull
@@ -191,12 +212,12 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   }
 
   @Override
-  public void dirDirtyRecursively(final VirtualFile dir) {
+  public void dirDirtyRecursively(@NotNull final VirtualFile dir) {
     dirDirtyRecursively(VcsUtil.getFilePath(dir));
   }
 
   @Override
-  public void dirDirtyRecursively(final FilePath path) {
+  public void dirDirtyRecursively(@NotNull final FilePath path) {
     filePathsDirty(null, Collections.singleton(path));
   }
 
@@ -217,25 +238,26 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
   private VcsInvalidated calculateInvalidated(@NotNull DirtBuilder dirt) {
     MultiMap<AbstractVcs, FilePath> files = dirt.getFilesForVcs();
     MultiMap<AbstractVcs, FilePath> dirs = dirt.getDirsForVcs();
-    if (dirt.isEverythingDirty()) {
+    boolean isEverythingDirty = dirt.isEverythingDirty();
+    if (isEverythingDirty) {
       dirs.putAllValues(getEverythingDirtyRoots());
     }
     Set<AbstractVcs> keys = ContainerUtil.union(files.keySet(), dirs.keySet());
 
     Map<AbstractVcs, VcsDirtyScopeImpl> scopes = ContainerUtil.newHashMap();
     for (AbstractVcs key : keys) {
-      VcsDirtyScopeImpl scope = new VcsDirtyScopeImpl(key, myProject);
+      VcsDirtyScopeImpl scope = new VcsDirtyScopeImpl(key, myProject, isEverythingDirty);
       scopes.put(key, scope);
       scope.addDirtyData(dirs.get(key), files.get(key));
     }
 
-    return new VcsInvalidated(new ArrayList<>(scopes.values()), dirt.isEverythingDirty());
+    return new VcsInvalidated(new ArrayList<>(scopes.values()), isEverythingDirty);
   }
 
   @NotNull
   private MultiMap<AbstractVcs, FilePath> getEverythingDirtyRoots() {
     MultiMap<AbstractVcs, FilePath> dirtyRoots = MultiMap.createSet();
-    dirtyRoots.putAllValues(groupByVcs(toFilePaths(DefaultVcsRootPolicy.getInstance(myProject).getDirtyRoots())));
+    dirtyRoots.putAllValues(groupFilesByVcs(DefaultVcsRootPolicy.getInstance(myProject).getDirtyRoots()));
 
     List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
     for (VcsDirectoryMapping mapping : mappings) {
@@ -264,7 +286,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     synchronized (LOCK) {
       if (!myReady) return Collections.emptyList();
       dirtBuilder = new DirtBuilder(myDirtBuilder);
-      dirtBuilderInProgress = myDirtInProgress != null ? new DirtBuilder(myDirtInProgress) : new DirtBuilder(myGuess);
+      dirtBuilderInProgress = myDirtInProgress != null ? new DirtBuilder(myDirtInProgress) : new DirtBuilder();
     }
 
     VcsInvalidated invalidated = calculateInvalidated(dirtBuilder);

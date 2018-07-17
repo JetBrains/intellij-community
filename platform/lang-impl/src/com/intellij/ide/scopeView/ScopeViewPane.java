@@ -121,17 +121,17 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     ChangeListManager.getInstance(project).addChangeListListener(new ChangeListAdapter() {
       @Override
       public void changeListAdded(ChangeList list) {
-        myDependencyValidationManager.fireScopeListeners();
+        myAsyncTreeModel.onValidThread(myDependencyValidationManager::fireScopeListeners);
       }
 
       @Override
       public void changeListRemoved(ChangeList list) {
-        myDependencyValidationManager.fireScopeListeners();
+        myAsyncTreeModel.onValidThread(myDependencyValidationManager::fireScopeListeners);
       }
 
       @Override
       public void changeListRenamed(ChangeList list, String name) {
-        myDependencyValidationManager.fireScopeListeners();
+        myAsyncTreeModel.onValidThread(myDependencyValidationManager::fireScopeListeners);
       }
 
       @Override
@@ -233,7 +233,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     PsiElement element = object instanceof PsiElement ? (PsiElement)object : null;
     NamedScopeFilter current = myTreeModel.getFilter();
     if (select(element, file, requestFocus, current)) return;
-    for (NamedScopeFilter filter: getFilters()) {
+    for (NamedScopeFilter filter : getFilters()) {
       if (current != filter && select(element, file, requestFocus, filter)) return;
     }
   }
@@ -351,7 +351,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   @NotNull
   private static LinkedHashMap<String, NamedScopeFilter> map(NamedScopesHolder... holders) {
     LinkedHashMap<String, NamedScopeFilter> map = new LinkedHashMap<>();
-    for (NamedScopeFilter filter: NamedScopeFilter.list(holders)) {
+    for (NamedScopeFilter filter : NamedScopeFilter.list(holders)) {
       NamedScopeFilter old = map.put(filter.toString(), filter);
       if (old != null) LOG.warn("DUPLICATED: " + filter);
     }

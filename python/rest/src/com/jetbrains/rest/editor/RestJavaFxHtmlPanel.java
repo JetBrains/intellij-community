@@ -70,7 +70,7 @@ public class RestJavaFxHtmlPanel extends JavaFxHtmlPanel implements RestPreviewP
     private static final String EVENT_TYPE_CLICK = "click";
     private final WebEngine myEngine;
 
-    public HyperlinkRedirectListener(WebView view) {
+    private HyperlinkRedirectListener(WebView view) {
       myEngine = view.getEngine();
     }
 

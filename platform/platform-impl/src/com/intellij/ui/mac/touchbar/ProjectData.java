@@ -148,7 +148,7 @@ class ProjectData {
       if (child == ecmp || SwingUtilities.isDescendingFrom(child, ecmp)) {
         // System.out.println("focused header: " + ecmp);
         if (editorData.containerSearch == null) {
-          LOG.error("focused header of editor: " + editorData.editor + ", but BarContainer wasn't created, header: " + ecmp);
+          // System.out.println("focused header of editor '" + editorData.editor + "', but BarContainer wasn't created (seems that ui-component doesn't contain actions for touchbar), header: " + ecmp);
           continue;
         }
         return editorData;
