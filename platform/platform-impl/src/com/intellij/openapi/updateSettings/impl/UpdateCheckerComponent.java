@@ -136,6 +136,7 @@ public class UpdateCheckerComponent implements Disposable, ApplicationComponent 
       try {
         if (updateErrorsLog.isFile() && !StringUtil.isEmptyOrSpaces(FileUtil.loadFile(updateErrorsLog))) {
           FUSApplicationUsageTrigger.getInstance().trigger(IdeUpdateUsageTriggerCollector.class, "update.failed");
+          LOG.info("Previous update of the IDE failed");
         }
       }
       catch (IOException ignored) {
