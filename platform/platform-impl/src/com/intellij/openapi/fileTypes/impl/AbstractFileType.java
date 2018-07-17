@@ -362,7 +362,7 @@ public class AbstractFileType extends UserFileType<AbstractFileType> implements 
     return mapping;
   }
 
-  static Element writeRemovedMapping(final FileType type, final FileNameMatcher matcher, final boolean specifyTypeName, boolean approved) {
+  static Element writeRemovedMapping(@NotNull FileType type, @NotNull FileNameMatcher matcher, boolean specifyTypeName, boolean approved) {
     Element mapping = new Element(ELEMENT_REMOVED_MAPPING);
     if (matcher instanceof ExtensionFileNameMatcher) {
       mapping.setAttribute(ATTRIBUTE_EXT, ((ExtensionFileNameMatcher)matcher).getExtension());
