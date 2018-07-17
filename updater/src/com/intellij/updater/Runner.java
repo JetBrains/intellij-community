@@ -19,6 +19,7 @@ import java.util.zip.ZipInputStream;
 
 public class Runner {
   private static final String PATCH_FILE_NAME = "patch-file.zip";
+  private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log";//must be equal to com.intellij.openapi.updateSettings.impl.UpdateCheckerComponent.ERROR_LOG_FILE_NAME
 
   private static Logger logger = null;
   private static String logPath = null;
@@ -159,7 +160,7 @@ public class Runner {
       update.activateOptions();
 
       FileAppender updateError = new FileAppender();
-      updateError.setFile(new File(logDirectory, "idea_updater_error.log").getAbsolutePath());
+      updateError.setFile(new File(logDirectory, ERROR_LOG_FILE_NAME).getAbsolutePath());
       updateError.setLayout(new PatternLayout("%d{dd/MM HH:mm:ss} %-5p %C{1}.%M - %m%n"));
       updateError.setThreshold(Level.ERROR);
       updateError.setAppend(false);
