@@ -161,6 +161,29 @@ public class Py3QuickFixTest extends PyTestCase {
                      true);
   }
 
+  // PY-30789
+  public void testSetABCMetaAsMetaclassPy3() {
+    final String[] testFiles = {
+      "PyAbstractClassInspection/quickFix/SetABCMetaAsMetaclassPy3/main.py",
+      "PyAbstractClassInspection/quickFix/SetABCMetaAsMetaclassPy3/main_import.py"
+    };
+
+    doInspectionTest(testFiles,
+                     PyAbstractClassInspection.class,
+                     "Set '" + PyNames.ABC_META + "' as metaclass",
+                     true,
+                     true);
+  }
+
+  // PY-30789
+  public void testSetImportedABCMetaAsMetaclassPy3() {
+    doInspectionTest("PyAbstractClassInspection/quickFix/SetImportedABCMetaAsMetaclassPy3/main.py",
+                     PyAbstractClassInspection.class,
+                     "Set '" + PyNames.ABC_META + "' as metaclass",
+                     true,
+                     true);
+  }
+
   @Override
   @NonNls
   protected String getTestDataPath() {
