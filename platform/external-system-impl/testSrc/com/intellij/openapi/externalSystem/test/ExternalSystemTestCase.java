@@ -195,8 +195,14 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     }
   }
 
-  protected void tearDownFixtures() throws Exception {
-    myTestFixture.tearDown();
+  protected void tearDownFixtures() {
+    if (myTestFixture != null) {
+      try {
+        myTestFixture.tearDown();
+      }
+      catch (Exception ignored) {
+      }
+    }
     myTestFixture = null;
   }
 
@@ -228,7 +234,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     try {
       if (runInWriteAction()) {
         try {
-          WriteAction.runAndWait(()-> super.runTest());
+          WriteAction.runAndWait(() -> super.runTest());
         }
         catch (Throwable throwable) {
           ExceptionUtil.rethrowAllAsUnchecked(throwable);
@@ -354,7 +360,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     FileUtil.ensureExists(f.getParentFile());
     FileUtil.ensureCanCreateFile(f);
     final boolean created = f.createNewFile();
-    if(!created && !f.exists()) {
+    if (!created && !f.exists()) {
       throw new AssertionError("Unable to create the project sub file: " + f.getAbsolutePath());
     }
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
@@ -522,6 +528,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   protected static <T> void assertUnorderedElementsAreEqual(Collection<T> actual, Collection<T> expected) {
     assertEquals(new HashSet<>(expected), new HashSet<>(actual));
   }
+
   protected static void assertUnorderedPathsAreEqual(Collection<String> actual, Collection<String> expected) {
     assertEquals(new SetWithToString<>(new THashSet<>(expected, FileUtil.PATH_HASHING_STRATEGY)),
                  new SetWithToString<>(new THashSet<>(actual, FileUtil.PATH_HASHING_STRATEGY)));
@@ -565,7 +572,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
 
   public static void deleteBuildSystemDirectory() {
     BuildManager buildManager = BuildManager.getInstance();
-    if(buildManager == null) return;
+    if (buildManager == null) return;
     Path buildSystemDirectory = buildManager.getBuildSystemDirectory();
     try {
       PathKt.delete(buildSystemDirectory);
@@ -629,5 +636,4 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
       return myDelegate.hashCode();
     }
   }
-
 }
