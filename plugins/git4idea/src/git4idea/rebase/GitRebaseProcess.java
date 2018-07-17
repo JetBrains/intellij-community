@@ -21,7 +21,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,6 +35,7 @@ import git4idea.commands.GitLineHandlerListener;
 import git4idea.commands.GitUntrackedFilesOverwrittenByOperationDetector;
 import git4idea.merge.GitConflictResolver;
 import git4idea.merge.GitDefaultMergeDialogCustomizerKt;
+import git4idea.merge.GitMergeProvider;
 import git4idea.rebase.GitSuccessfulRebase.SuccessType;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
@@ -56,6 +56,7 @@ import static com.intellij.util.ObjectUtils.*;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static com.intellij.util.containers.ContainerUtilRt.newArrayList;
 import static git4idea.GitUtil.*;
+import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 
 public class GitRebaseProcess {
@@ -405,6 +406,7 @@ public class GitRebaseProcess {
 
     @Nullable private String myRebasingBranch;
     @Nullable private String myBaseBranch;
+    private boolean myOntoBranch;
 
     private GitRebaseMergeDialogCustomizer(@NotNull GitRepository repository, @NotNull GitRebaseSpec rebaseSpec) {
       GitRebaseParams rebaseParams = rebaseSpec.getParams();
@@ -423,6 +425,8 @@ public class GitRebaseProcess {
 
         myRebasingBranch = branch;
         myBaseBranch = upstream;
+        myOntoBranch = !myBaseBranch.matches("[a-fA-F0-9]{40}");
+        if (!myOntoBranch) myBaseBranch = DvcsUtil.getShortHash(myBaseBranch);
       }
     }
 
@@ -430,23 +434,21 @@ public class GitRebaseProcess {
     @Override
     public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
       if (myRebasingBranch == null || myBaseBranch == null) return super.getMultipleFileMergeDescription(files);
-      return GitDefaultMergeDialogCustomizerKt.getDescriptionForRebase(myRebasingBranch, myBaseBranch);
+      return GitDefaultMergeDialogCustomizerKt.getDescriptionForRebase(myRebasingBranch, myBaseBranch, myOntoBranch);
     }
 
     @NotNull
     @Override
     public String getLeftPanelTitle(@NotNull VirtualFile file) {
-      return myRebasingBranch != null ?
-             GitDefaultMergeDialogCustomizerKt.getDefaultLeftPanelTitleForBranch(myRebasingBranch) :
-             super.getLeftPanelTitle(file);
+      if (myRebasingBranch == null || myBaseBranch == null) return super.getLeftPanelTitle(file);
+      return GitDefaultMergeDialogCustomizerKt.getDefaultLeftPanelTitleForBranch(myRebasingBranch);
     }
 
     @NotNull
     @Override
     public String getRightPanelTitle(@NotNull VirtualFile file, @Nullable VcsRevisionNumber revisionNumber) {
-      return myBaseBranch != null ?
-             GitDefaultMergeDialogCustomizerKt.getDefaultRightPanelTitleForBranch(myBaseBranch, revisionNumber) :
-             super.getRightPanelTitle(file, revisionNumber);
+      if (myRebasingBranch == null || myBaseBranch == null) return super.getRightPanelTitle(file, revisionNumber);
+      return GitDefaultMergeDialogCustomizerKt.getDefaultRightPanelTitleForBranch(myBaseBranch, revisionNumber, myOntoBranch);
     }
   }
 

@@ -111,11 +111,11 @@ open class GitDefaultMergeDialogCustomizer(
   private data class CherryPickDetails(val shortHash: String, val authorName: String, val commitMessage: String)
 }
 
-fun getDescriptionForRebase(rebasingBranch: String?, baseBranch: String?): String {
+fun getDescriptionForRebase(rebasingBranch: String?, baseBranch: String?, ontoBranch: Boolean = true): String {
   return buildString {
     append("<html>Rebasing ")
-    append(rebasingBranch?.let { "branch <b>${XmlStringUtil.escapeString(it)}</b>" } ?: "")
-    append(baseBranch?.let { " onto branch <b>${XmlStringUtil.escapeString(it)}</b>" } ?: "diverging branches ")
+    append(rebasingBranch?.let { "branch <b>${XmlStringUtil.escapeString(it)}</b> " } ?: "")
+    append(baseBranch?.let { "onto ${if (ontoBranch) "branch " else ""}<b>${XmlStringUtil.escapeString(it)}</b>" } ?: "diverging branches ")
   }
 }
 
@@ -124,8 +124,8 @@ fun getDefaultLeftPanelTitleForBranch(branchName: String): String {
          XmlStringUtil.escapeString(branchName)}</b>"
 }
 
-fun getDefaultRightPanelTitleForBranch(branchName: String, revisionNumber: VcsRevisionNumber?) : String {
-  var title = "<html>Changes from branch <b>${XmlStringUtil.escapeString(branchName)}</b>"
+fun getDefaultRightPanelTitleForBranch(branchName: String, revisionNumber: VcsRevisionNumber?, ontoBranch: Boolean = true) : String {
+  var title = "<html>Changes from ${if (ontoBranch) "branch " else ""}<b>${XmlStringUtil.escapeString(branchName)}</b>"
   if (revisionNumber is GitRevisionNumber) title += ", revision ${revisionNumber.shortRev}"
   return title
 }
