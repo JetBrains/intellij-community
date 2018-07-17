@@ -16,7 +16,7 @@ import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Consta
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateJvmModule
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateProjectFromTemplate
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkKotlinDsl
-import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.comboHierarchyKind
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.comboProjectStructure
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupAndroid
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupApplicationForge
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupClouds
@@ -71,7 +71,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     const val textArtifactId = "ArtifactId"
     const val checkKotlinDsl = "Kotlin DSL build script"
     const val checkCreateFromArchetype = "Create from archetype"
-    const val comboHierarchyKind = "Hierarchy kind:"
+    const val comboProjectStructure = "Project structure:"
     const val textRootModuleName = "Root module name:"
     const val checkCreateJvmModule = "Create JVM module:"
     const val checkCreateJsModule = "Create JS module:"
@@ -158,8 +158,8 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
   )
 
   enum class MppProjectStructure(private val title: String) {
-    RootEmptyModule("Root empty module with common & platform children"),
-    RootCommonModule("Root common module with children platform modules")
+    FlatStructure("Flat, all created modules on the same level"),
+    HierarchicalStructure("Hierarchical, platform modules under common one")
     ;
 
     override fun toString() = title
@@ -410,13 +410,13 @@ fun NewProjectDialogModel.createKotlinMPProject(
       logUIStep("Select `$itemKotlinMpp` kind of project")
       jList(itemKotlinMpp).clickItem(itemKotlinMpp)
       button(buttonNext).click()
-      val cmb = combobox(comboHierarchyKind)
+      val cmb = combobox(comboProjectStructure)
       logUIStep("Select MP project hierarchy kind: `$mppProjectStructure`")
       if (cmb.selectedItem() != mppProjectStructure.toString()) {
         cmb
           .expand()
           .selectItem(mppProjectStructure.toString())
-        logInfo("Combobox `$comboHierarchyKind`: current selected item is `${cmb.selectedItem()}` ")
+        logInfo("Combobox `$comboProjectStructure`: current selected item is `${cmb.selectedItem()}` ")
       }
 
       logUIStep("Type root module name `$moduleName`")
@@ -449,7 +449,7 @@ fun NewProjectDialogModel.setCheckboxValue(name: String, value: Boolean) {
       val maxAttempts = 3
       val check = checkbox(name)
       while (check.isSelected != value && attempts <= maxAttempts) {
-        logUIStep("setCheckboxValue #${attempts + 1}: ${check.target().name} = ${check.isSelected}, expected value = $value")
+        logUIStep("setCheckboxValue #${attempts + 1}: ${check.target().text} = ${check.isSelected}, expected value = $value")
         check.click()
         Pause.pause(500L)
         attempts++
