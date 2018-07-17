@@ -15,7 +15,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.experimental.*
 import java.util.*
-import kotlin.coroutines.experimental.AbstractCoroutineContextElement
 import kotlin.coroutines.experimental.CoroutineContext
 import kotlin.coroutines.experimental.coroutineContext
 
@@ -134,10 +133,9 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
     }
 
     val newContext = newCoroutineContext(coroutineContext, job)
-    val dispatcher = CompositeCoroutineDispatcher(myConstraints)
-    val rescheduleLimit = RescheduleAttemptLimit()
+    val dispatcher = CompositeCoroutineDispatcherWithRescheduleAttemptLimit(myConstraints)
 
-    return withContext(newContext + dispatcher + rescheduleLimit) {
+    return withContext(newContext + dispatcher) {
       block()
     }
   }
@@ -156,55 +154,89 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
     abstract override fun toString(): String
   }
 
-  private class CompositeCoroutineDispatcher(private val myDispatchers: Array<out CoroutineDispatcher>) : CoroutineDispatcher() {
+  private abstract class CompositeCoroutineDispatcher : CoroutineDispatcher() {
+    protected abstract val dispatchers: Array<out CoroutineDispatcher>
+
     override fun isDispatchNeeded(context: CoroutineContext) = true  // we're gonna check it in dispatch() anyway
     override fun dispatch(context: CoroutineContext, block: Runnable) {
-      for (dispatcher in myDispatchers) {
-        if (dispatcher.isDispatchNeeded(context)) {
-          try {
-            context[RescheduleAttemptLimit]?.ensureCanProceed(dispatcher)
-          }
-          catch (e: TooManyRescheduleAttemptsException) {
-            context.cancel(e)
-            block.run()  // calls resumeWithException() if the job is cancelled
-            return
-          }
-
-          dispatcher.dispatch(context, Runnable {
-            this.dispatch(context, block)  // retry
-          })
+      for (dispatcher in dispatchers) {
+        if (delegateDispatchIfNeeded(dispatcher, context, block)) {
           return
         }
       }
       block.run()
     }
 
-    override fun toString() = myDispatchers.joinToString()
+    protected open fun delegateDispatchIfNeeded(dispatcher: CoroutineDispatcher,
+                                                context: CoroutineContext,
+                                                block: Runnable): Boolean {
+      if (dispatcher.isDispatchNeeded(context)) {
+        delegateDispatch(dispatcher, context, block)
+        return true
+      }
+      return false
+    }
+
+    protected open fun delegateDispatch(dispatcher: CoroutineDispatcher,
+                                        context: CoroutineContext,
+                                        block: Runnable) {
+      dispatcher.dispatch(context, Runnable {
+        this.dispatch(context, block)  // retry
+      })
+    }
+
+    override fun toString() = dispatchers.joinToString()
   }
 
-  private open class RescheduleAttemptLimit(private val myLimit: Int = 3000) : AbstractCoroutineContextElement(RescheduleAttemptLimit) {
-    companion object Key : CoroutineContext.Key<RescheduleAttemptLimit>
-
-    private var mySize: Int = 0
+  private class CompositeCoroutineDispatcherWithRescheduleAttemptLimit(override val dispatchers: Array<out CoroutineDispatcher>,
+                                                                       private val myLimit: Int = 3000) : CompositeCoroutineDispatcher() {
+    private var myAttemptCount: Int = 0
 
     private val myLogLimit: Int = 30
-    val lastConstraints: Deque<CoroutineDispatcher> = ArrayDeque(myLogLimit)
+    private val myLastDispatchers: Deque<CoroutineDispatcher> = ArrayDeque(myLogLimit)
 
-    @Throws(TooManyRescheduleAttemptsException::class)
-    fun ensureCanProceed(dispatcher: CoroutineDispatcher) {
-      val count = with(lastConstraints) {
+    private val myFallbackDispatcher: CoroutineDispatcher
+      get() = dispatchers[0] // EDT + ModalityState (refer to AppUIExecutorImpl constructor)
+
+    override fun delegateDispatchIfNeeded(dispatcher: CoroutineDispatcher, context: CoroutineContext, block: Runnable): Boolean {
+      return super.delegateDispatchIfNeeded(dispatcher, context, block).also { isDispatchNeeded ->
+        if (!isDispatchNeeded) {
+          myLastDispatchers.clear()
+          myAttemptCount = 0
+        }
+      }
+    }
+
+    override fun delegateDispatch(dispatcher: CoroutineDispatcher, context: CoroutineContext, block: Runnable) {
+      if (checkHaveMoreRescheduleAttempts(dispatcher)) {
+        super.delegateDispatch(dispatcher, context, block)
+      }
+      else {
+        context.cancel(TooManyRescheduleAttemptsException(myLastDispatchers))  // makes block.run() call resumeWithException()
+
+        // The continuation block MUST be invoked at some point in order to give the coroutine a chance
+        // to handle the cancellation exception and exit gracefully.
+        // At this point we can only provide a guarantee to resume it on EDT with a proper modality state.
+        myFallbackDispatcher.dispatch(context, block)
+      }
+    }
+
+    private fun checkHaveMoreRescheduleAttempts(dispatcher: CoroutineDispatcher): Boolean {
+      with(myLastDispatchers) {
         if (isNotEmpty() && size >= myLogLimit) removeFirst()
         addLast(dispatcher)
-        ++mySize
       }
-
-      if (count >= myLimit) {
-        throw TooManyRescheduleAttemptsException(lastConstraints)
-      }
+      return ++myAttemptCount < myLimit
     }
   }
 
-  class TooManyRescheduleAttemptsException(lastConstraints: Collection<CoroutineDispatcher>)
+  /**
+   * Thrown at a cancellation point when the executor is unable to arrange the requested context after a reasonable number of attempts.
+   *
+   * WARNING: The exception thrown is handled in a fallback context as a last resort,
+   *          The fallback context is EDT with a proper modality state, no other guarantee is made.
+   */
+  class TooManyRescheduleAttemptsException internal constructor(lastConstraints: Collection<CoroutineDispatcher>)
     : CancellationException("Too many reschedule requests, probably constraints can't be satisfied all together: " +
                             lastConstraints.joinToString())
 
