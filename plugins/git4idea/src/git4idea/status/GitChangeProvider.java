@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
@@ -145,14 +146,11 @@ public class GitChangeProvider implements ChangeProvider {
     final List<Map.Entry<String, VirtualFile>> ordered = new ArrayList<>(paths.entrySet());
     for (int i = 1; i < ordered.size(); i++) {
       final Map.Entry<String, VirtualFile> entry = ordered.get(i);
-      final String child = entry.getKey();
       final VirtualFile childVf = entry.getValue();
       for (int j = i - 1; j >= 0; j--) {
         // possible parents
-        final String parent = ordered.get(j).getKey();
         final VirtualFile parentVf = ordered.get(j).getValue();
-        if (parent == null) continue;
-        if (FileUtil.startsWith(child, parent)) {
+        if (VfsUtilCore.isAncestor(parentVf, childVf, false)) {
           if (!existingInScope.contains(childVf) && existingInScope.contains(parentVf)) {
             LOG.debug("adding git root for check. child: " + childVf.getPath() + ", parent: " + parentVf.getPath());
             ((VcsModifiableDirtyScope)dirtyScope).addDirtyDirRecursively(VcsUtil.getFilePath(childVf));
