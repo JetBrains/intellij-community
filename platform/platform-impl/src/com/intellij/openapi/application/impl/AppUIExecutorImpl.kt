@@ -14,23 +14,24 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.util.containers.ContainerUtil
 import kotlinx.coroutines.experimental.*
-import org.jetbrains.concurrency.AsyncPromise
-import org.jetbrains.concurrency.CancellablePromise
 import java.util.*
-import java.util.concurrent.Callable
+import kotlin.coroutines.experimental.AbstractCoroutineContextElement
+import kotlin.coroutines.experimental.CoroutineContext
+import kotlin.coroutines.experimental.coroutineContext
 
 /**
  * @author peter
+ * @author eldar
  */
 internal class AppUIExecutorImpl private constructor(private val myModality: ModalityState,
                                                      private val myDisposables: Set<Disposable>,
-                                                     private vararg val myConstraints: ConstrainedExecutor) : AppUIExecutor {
+                                                     private vararg val myConstraints: ConstrainedExecutor) : AppUIExecutorEx {
 
   constructor(modality: ModalityState) : this(modality, emptySet<Disposable>(), object : ConstrainedExecutor() {
     override val isCorrectContext: Boolean
       get() = ApplicationManager.getApplication().isDispatchThread && !ModalityState.current().dominates(modality)
 
-    override fun doReschedule(runnable: Runnable) {
+    override fun schedule(runnable: Runnable) {
       ApplicationManager.getApplication().invokeLater(runnable, modality)
     }
 
@@ -53,7 +54,7 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
         else
           edtEventCount != IdeEventQueue.getInstance().eventCount || usedOnce
 
-      override fun doReschedule(runnable: Runnable) {
+      override fun schedule(runnable: Runnable) {
         ApplicationManager.getApplication().invokeLater({
                                                           usedOnce = true
                                                           runnable.run()
@@ -69,7 +70,7 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
       override val isCorrectContext: Boolean
         get() = !PsiDocumentManager.getInstance(project).hasUncommitedDocuments()
 
-      override fun doReschedule(runnable: Runnable) {
+      override fun schedule(runnable: Runnable) {
         PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(runnable, myModality)
       }
 
@@ -82,7 +83,7 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
       override val isCorrectContext: Boolean
         get() = !DumbService.getInstance(project).isDumb
 
-      override fun doReschedule(runnable: Runnable) {
+      override fun schedule(runnable: Runnable) {
         DumbService.getInstance(project).smartInvokeLater(runnable, myModality)
       }
 
@@ -96,7 +97,7 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
       override val isCorrectContext: Boolean
         get() = TransactionGuard.getInstance().contextTransaction != null
 
-      override fun doReschedule(runnable: Runnable) {
+      override fun schedule(runnable: Runnable) {
         TransactionGuard.getInstance().submitTransaction(parentDisposable, id, runnable)
       }
 
@@ -112,79 +113,103 @@ internal class AppUIExecutorImpl private constructor(private val myModality: Mod
     return AppUIExecutorImpl(myModality, disposables, *myConstraints)
   }
 
-  override fun submit(task: Runnable): CancellablePromise<*> {
-    return submit<Any> {
-      task.run()
-      null
-    }
-  }
+  override suspend fun <T> runCoroutine(block: suspend () -> T): T {
+    val job = Job(coroutineContext[Job])
 
-  override fun execute(command: Runnable) {
-    submit(command)
-  }
-
-  override fun <T> submit(task: Callable<T>): CancellablePromise<T> {
-    val promise = AsyncPromise<T>()
-
-    if (!myDisposables.isEmpty()) {
-      val children = ArrayList<Disposable>()
+    if (myDisposables.isNotEmpty()) {
+      val debugTraceThrowable = Throwable()
       for (parent in myDisposables) {
-        val child = Disposable { promise.cancel() }
-        children.add(child)
+        val child = Disposable {
+          if (!job.isCancelled && !job.isCompleted) {
+            job.cancel(DisposedException(parent).apply {
+              addSuppressed(debugTraceThrowable)
+            })
+          }
+        }
         Disposer.register(parent, child)
-      }
-      promise.onProcessed { children.forEach(Consumer<Disposable> { Disposer.dispose(it) }) }
-    }
-
-    checkConstraints(task, promise, ArrayList())
-    return promise
-  }
-
-  private fun <T> checkConstraints(task: Callable<T>, future: AsyncPromise<T>, log: MutableList<ConstrainedExecutor>) {
-    val app = ApplicationManager.getApplication()
-    if (!app.isDispatchThread) {
-      app.invokeLater({ checkConstraints(task, future, log) }, myModality)
-      return
-    }
-
-    if (future.isCancelled) return
-
-    for (constraint in myConstraints) {
-      if (!constraint.isCorrectContext) {
-        log.add(constraint)
-        if (log.size > 3000) {
-          LOG.error(
-            "Too many reschedule requests, probably constraints can't be satisfied all together: " + log.subList(log.size - 30, log.size))
+        job.invokeOnCompletion {
+          Disposer.dispose(child, false)
         }
-        else {
-          constraint.rescheduleInCorrectContext(Runnable { checkConstraints(task, future, log) })
-        }
-        return
       }
     }
 
-    try {
-      val result = task.call()
-      future.setResult(result)
-    }
-    catch (e: Throwable) {
-      future.setError(e)
-    }
+    val newContext = newCoroutineContext(coroutineContext, job)
+    val dispatcher = CompositeCoroutineDispatcher(myConstraints)
+    val rescheduleLimit = RescheduleAttemptLimit()
 
+    return withContext(newContext + dispatcher + rescheduleLimit) {
+      block()
+    }
   }
 
-  private abstract class ConstrainedExecutor {
-    abstract val isCorrectContext: Boolean
-    abstract fun doReschedule(runnable: Runnable)
-    abstract override fun toString(): String
-
-    internal fun rescheduleInCorrectContext(r: Runnable) {
-      doReschedule(Runnable {
+  private abstract class ConstrainedExecutor : CoroutineDispatcher() {
+    override fun isDispatchNeeded(context: CoroutineContext) = !isCorrectContext
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+      schedule(Runnable {
         LOG.assertTrue(isCorrectContext, this)
-        r.run()
+        block.run()
       })
     }
+
+    abstract val isCorrectContext: Boolean
+    abstract fun schedule(runnable: Runnable)
+    abstract override fun toString(): String
   }
+
+  private class CompositeCoroutineDispatcher(private val myDispatchers: Array<out CoroutineDispatcher>) : CoroutineDispatcher() {
+    override fun isDispatchNeeded(context: CoroutineContext) = true  // we're gonna check it in dispatch() anyway
+    override fun dispatch(context: CoroutineContext, block: Runnable) {
+      for (dispatcher in myDispatchers) {
+        if (dispatcher.isDispatchNeeded(context)) {
+          try {
+            context[RescheduleAttemptLimit]?.ensureCanProceed(dispatcher)
+          }
+          catch (e: TooManyRescheduleAttemptsException) {
+            context.cancel(e)
+            block.run()  // calls resumeWithException() if the job is cancelled
+            return
+          }
+
+          dispatcher.dispatch(context, Runnable {
+            this.dispatch(context, block)  // retry
+          })
+          return
+        }
+      }
+      block.run()
+    }
+
+    override fun toString() = myDispatchers.joinToString()
+  }
+
+  private open class RescheduleAttemptLimit(private val myLimit: Int = 3000) : AbstractCoroutineContextElement(RescheduleAttemptLimit) {
+    companion object Key : CoroutineContext.Key<RescheduleAttemptLimit>
+
+    private var mySize: Int = 0
+
+    private val myLogLimit: Int = 30
+    val lastConstraints: Deque<CoroutineDispatcher> = ArrayDeque(myLogLimit)
+
+    @Throws(TooManyRescheduleAttemptsException::class)
+    fun ensureCanProceed(dispatcher: CoroutineDispatcher) {
+      val count = with(lastConstraints) {
+        if (isNotEmpty() && size >= myLogLimit) removeFirst()
+        addLast(dispatcher)
+        ++mySize
+      }
+
+      if (count >= myLimit) {
+        throw TooManyRescheduleAttemptsException(lastConstraints)
+      }
+    }
+  }
+
+  class TooManyRescheduleAttemptsException(lastConstraints: Collection<CoroutineDispatcher>)
+    : CancellationException("Too many reschedule requests, probably constraints can't be satisfied all together: " +
+                            lastConstraints.joinToString())
+
+  class DisposedException(disposable: Disposable)
+    : CancellationException("Already disposed: $disposable")
 
   companion object {
     private val LOG = Logger.getInstance("#com.intellij.openapi.application.impl.AppUIExecutorImpl")
