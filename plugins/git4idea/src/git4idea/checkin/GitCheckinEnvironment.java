@@ -125,10 +125,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     mySettings = settings;
   }
 
-  public boolean keepChangeListAfterCommit(ChangeList changeList) {
-    return false;
-  }
-
   @Override
   public boolean isRefreshAfterCommitNeeded() {
     return true;
