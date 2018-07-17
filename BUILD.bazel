@@ -465,12 +465,10 @@ iml_project(
         "//tools/vendor/intellij/cidr/cidr-debugger:intellij.cidr.debugger",
         "//tools/vendor/intellij/cidr/cidr-lang-dfa:intellij.c.dfa",
         "//tools/vendor/intellij/cidr/cidr-util:intellij.cidr.util",
-        "//tools/vendor/intellij/cidr/clion/lib:intellij.platform.ssh",
         "//tools/vendor/intellij/cidr:intellij.c",
         "//tools/vendor/intellij/cidr:intellij.c.doxygen",
         "//tools/vendor/intellij/cidr:intellij.cidr.common",
         "//tools/vendor/intellij/cidr:intellij.cidr.ide",
-        "//tools/vendor/intellij/cidr:intellij.clion",
         "//tools/vendor/intellij/cidr:intellij.cmake.psi",
     ],
     tags = [
