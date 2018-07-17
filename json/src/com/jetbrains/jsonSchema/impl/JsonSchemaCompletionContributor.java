@@ -308,6 +308,12 @@ public class JsonSchemaCompletionContributor extends CompletionContributor {
       if (!StringUtil.isEmptyOrSpaces(typeText)) {
         builder = builder.withTypeText(StringUtil.removeHtmlTags(typeText), true);
       }
+      else {
+        JsonSchemaType type = jsonSchemaObject.getType();
+        if (type != null) {
+          builder = builder.withTypeText(type.getDescription(), true);
+        }
+      }
 
       builder = builder.withIcon(getIcon(jsonSchemaObject.getType()));
 
