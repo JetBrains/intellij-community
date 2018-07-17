@@ -60,23 +60,10 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
 
     PsiElement context = InjectedLanguageManager.getInstance(file.getProject()).getInjectionHost(file);
 
-    if (context != null) {
-      final boolean commentInHostFile;
-      if (file.getUserData(INJECTION_FORBIDS_LINE_COMMENTS) != null) {
-        commentInHostFile = true;
-      }
-      else if (context.textContains('\'') || context.textContains('\"') || context.textContains('/')) {
-        String s = context.getText();
-        commentInHostFile = StringUtil.startsWith(s, "\"") || StringUtil.startsWith(s, "\'") || StringUtil.startsWith(s, "/");
-      }
-      else {
-        commentInHostFile = false;
-      }
-      if (commentInHostFile) {
-        file = context.getContainingFile();
-        editor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
-        caret = caret instanceof InjectedCaret ? ((InjectedCaret)caret).getDelegate() : caret;
-      }
+    if (context != null && shouldCommentInHostFile(file, context)) {
+      file = context.getContainingFile();
+      editor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+      caret = caret instanceof InjectedCaret ? ((InjectedCaret)caret).getDelegate() : caret;
     }
 
     Document document = editor.getDocument();
@@ -142,6 +129,17 @@ public class CommentByLineCommentHandler extends MultiCaretCodeInsightActionHand
                                !hasSelection ? CaretUpdate.SHIFT_DOWN :
                                wholeLinesSelected ? CaretUpdate.RESTORE_SELECTION : null;
     }
+
+  private static boolean shouldCommentInHostFile(@NotNull PsiFile file, @NotNull PsiElement context) {
+    if (file.getUserData(INJECTION_FORBIDS_LINE_COMMENTS) != null) {
+      return true;
+    }
+    if (context.textContains('\'') || context.textContains('\"') || context.textContains('/')) {
+      final String s = context.getText();
+      return StringUtil.startsWith(s, "\"") || StringUtil.startsWith(s, "\'") || StringUtil.startsWith(s, "/");
+    }
+    return false;
+  }
 
   @Override
   public void postInvoke() {
