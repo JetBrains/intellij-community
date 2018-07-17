@@ -306,6 +306,10 @@ public class BeanBinding extends NotNullDeserializeBinding {
       }
     }
 
+    if (accessors.isEmpty()) {
+      LOG.error("no accessors for " + aClass);
+    }
+
     ourAccessorCache.put(aClass, accessors);
 
     return accessors;
