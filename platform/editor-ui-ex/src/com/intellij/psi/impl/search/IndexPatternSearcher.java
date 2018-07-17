@@ -6,6 +6,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.application.QueryExecutorBase;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -24,7 +25,6 @@ import com.intellij.psi.search.searches.IndexPatternSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Processor;
-import com.intellij.util.QueryExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
@@ -38,16 +38,20 @@ import java.util.regex.Pattern;
 /**
  * @author yole
  */
-public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrence, IndexPatternSearch.SearchParameters> {
+public class IndexPatternSearcher extends QueryExecutorBase<IndexPatternOccurrence, IndexPatternSearch.SearchParameters> {
   private static final String WHITESPACE = " \t";
 
+  public IndexPatternSearcher() {
+    super(true);
+  }
+
   @Override
-  public boolean execute(@NotNull final IndexPatternSearch.SearchParameters queryParameters,
-                         @NotNull final Processor<? super IndexPatternOccurrence> consumer) {
+  public void processQuery(@NotNull IndexPatternSearch.SearchParameters queryParameters,
+                           @NotNull Processor<? super IndexPatternOccurrence> consumer) {
     final PsiFile file = queryParameters.getFile();
     VirtualFile virtualFile = file.getVirtualFile();
     if (file instanceof PsiBinaryFile || file instanceof PsiCompiledElement || virtualFile == null) {
-      return true;
+      return;
     }
 
     final TodoCacheManager cacheManager = TodoCacheManager.SERVICE.getInstance(file.getProject());
@@ -55,11 +59,12 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
     int count = patternProvider != null
                 ? cacheManager.getTodoCount(virtualFile, patternProvider)
                 : cacheManager.getTodoCount(virtualFile, queryParameters.getPattern());
-    return count == 0 || executeImpl(queryParameters, consumer);
+    if (count > 0) {
+      executeImpl(queryParameters, consumer);
+    }
   }
 
-  protected static boolean executeImpl(IndexPatternSearch.SearchParameters queryParameters,
-                                       Processor<? super IndexPatternOccurrence> consumer) {
+  protected static void executeImpl(IndexPatternSearch.SearchParameters queryParameters, Processor<? super IndexPatternOccurrence> consumer) {
     final IndexPatternProvider patternProvider = queryParameters.getPatternProvider();
     final PsiFile file = queryParameters.getFile();
     final CharSequence chars = file.getViewProvider().getContents();
@@ -75,12 +80,10 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
       for (int j = patterns.length - 1; j >=0; --j) {
         if (!collectPatternMatches(patterns, patterns[j], chars, commentRanges, i, file, queryParameters.getRange(), consumer,
                                    occurrences, multiLine)) {
-          return false;
+          return;
         }
       }
     }
-
-    return true;
   }
 
 
