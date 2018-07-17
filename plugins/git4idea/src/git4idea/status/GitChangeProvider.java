@@ -26,8 +26,6 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.PairProcessor;
-import com.intellij.util.containers.Convertor;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
@@ -137,24 +135,10 @@ public class GitChangeProvider implements ChangeProvider {
     }
     inputColl.addAll(existingInScope);
     if (LOG.isDebugEnabled()) LOG.debug("appendNestedVcsRoots. collection to remove ancestors: " + inputColl);
-    removeAncestors(inputColl, o -> o.getPath(), (parent, child) -> {
-                               if (!existingInScope.contains(child) && existingInScope.contains(parent)) {
-                                 LOG.debug("adding git root for check. child: " + child.getPath() + ", parent: " + parent.getPath());
-                                 ((VcsModifiableDirtyScope)dirtyScope).addDirtyDirRecursively(VcsUtil.getFilePath(child));
-                               }
-                               return true;
-                             }
-    );
-  }
 
-  private static void removeAncestors(final Collection<VirtualFile> files,
-                                      final Convertor<VirtualFile, String> convertor,
-                                      final PairProcessor<VirtualFile, VirtualFile> removeProcessor) {
-    if (files.isEmpty()) return;
     final TreeMap<String, VirtualFile> paths = new TreeMap<>();
-    for (VirtualFile file : files) {
-      final String path = convertor.convert(file);
-      assert path != null;
+    for (VirtualFile file : inputColl) {
+      final String path = file.getPath();
       final String canonicalPath = FileUtil.toCanonicalPath(path);
       paths.put(canonicalPath, file);
     }
@@ -169,9 +153,11 @@ public class GitChangeProvider implements ChangeProvider {
         final VirtualFile parentVf = ordered.get(j).getValue();
         if (parent == null) continue;
         if (FileUtil.startsWith(child, parent)) {
-          if (removeProcessor.process(parentVf, childVf)) {
-            break;
+          if (!existingInScope.contains(childVf) && existingInScope.contains(parentVf)) {
+            LOG.debug("adding git root for check. child: " + childVf.getPath() + ", parent: " + parentVf.getPath());
+            ((VcsModifiableDirtyScope)dirtyScope).addDirtyDirRecursively(VcsUtil.getFilePath(childVf));
           }
+          break;
         }
       }
     }
