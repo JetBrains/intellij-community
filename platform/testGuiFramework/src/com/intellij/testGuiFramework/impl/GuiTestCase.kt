@@ -124,6 +124,11 @@ open class GuiTestCase {
     if (!needToKeepDialog) dialog.waitTillGone()
   }
 
+  fun pluginDialog(timeout: Long = defaultTimeout, needToKeepDialog: Boolean = false, func: PluginFixture.() -> Unit) {
+    val pluginDialog = PluginFixture(robot(), findDialog("Plugins", false, timeout))
+    func(pluginDialog)
+    if (!needToKeepDialog) pluginDialog.waitTillGone()
+  }
 
   /**
    * Waits for a native file chooser, types the path in a textfield and closes it by clicking OK button. Or runs AppleScript if the file chooser
@@ -332,6 +337,11 @@ open class GuiTestCase {
       }
     }
   }
+
+  private fun findDialog(title: String?, ignoreCaseTitle: Boolean, timeoutInSeconds: Long): JDialog =
+    waitUntilFound(null, JDialog::class.java, timeoutInSeconds) {
+      title?.equals(it.title, ignoreCaseTitle)?.and(it.isShowing && it.isEnabled && it.isVisible) ?: true
+    }
 
   fun exists(fixture: () -> AbstractComponentFixture<*, *, *>): Boolean {
     try {
