@@ -147,20 +147,20 @@ public class GitChangeProvider implements ChangeProvider {
     );
   }
 
-  private static <T> void removeAncestors(final Collection<T> files,
-                                          final Convertor<T, String> convertor,
-                                          final PairProcessor<T, T> removeProcessor) {
+  private static void removeAncestors(final Collection<VirtualFile> files,
+                                      final Convertor<VirtualFile, String> convertor,
+                                      final PairProcessor<VirtualFile, VirtualFile> removeProcessor) {
     if (files.isEmpty()) return;
-    final TreeMap<String, T> paths = new TreeMap<String, T>();
-    for (T file : files) {
+    final TreeMap<String, VirtualFile> paths = new TreeMap<>();
+    for (VirtualFile file : files) {
       final String path = convertor.convert(file);
       assert path != null;
       final String canonicalPath = FileUtil.toCanonicalPath(path);
       paths.put(canonicalPath, file);
     }
-    final List<Map.Entry<String, T>> ordered = new ArrayList<Map.Entry<String, T>>(paths.entrySet());
+    final List<Map.Entry<String, VirtualFile>> ordered = new ArrayList<>(paths.entrySet());
     for (int i = 1; i < ordered.size(); i++) {
-      final Map.Entry<String, T> entry = ordered.get(i);
+      final Map.Entry<String, VirtualFile> entry = ordered.get(i);
       final String child = entry.getKey();
       for (int j = i - 1; j >= 0; j--) {
         // possible parents
