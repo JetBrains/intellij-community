@@ -168,6 +168,41 @@ class LibraryLicensesListGenerator {
     finally {
       out.close()
     }
+
+    // Android Studio: enforce licenses for all libraries used by the modules we're actually distributing.
+    checkLibLicenses(usedModules)
+  }
+
+  void checkLibLicenses(Set<JpsModule> usedModules) {
+    def libraries = new HashSet<JpsLibrary>()
+    def lib2Module = new HashMap<JpsLibrary, JpsModule>();
+    usedModules.each { JpsModule module ->
+      JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).getLibraries().each {
+        lib2Module[it] = module
+        libraries << it
+      }
+    }
+
+    def libWithLicenses = licensesList.collectMany { it.libraryNames } as Set<String>
+
+    List<String> withoutLicenses = []
+    libraries.each { JpsLibrary lib ->
+      def name = getLibraryName(lib)
+      if (!libWithLicenses.contains(name)) {
+        withoutLicenses << "$name (used in module ${lib2Module[lib].name})".toString()
+      }
+    }
+
+    if (!withoutLicenses.isEmpty()) {
+      def errorMessage = []
+      errorMessage << "Licenses aren't specified for ${withoutLicenses.size()} libraries:"
+      withoutLicenses.sort(true, String.CASE_INSENSITIVE_ORDER)
+      withoutLicenses.each { errorMessage << it }
+      errorMessage << "If a library is packaged into IDEA installation information about its license must be added into one of *LibraryLicenses.groovy files"
+      errorMessage << "If a library is used in tests only change its scope to 'Test'"
+      errorMessage << "If a library is used for compilation only change its scope to 'Provided'"
+      messages.error(errorMessage.join("\n"))
+    }
   }
 }
 
