@@ -19,9 +19,13 @@ public class FindUsageSingularBuilder {
   public static void main(String[] args) {
     FindUsageSingularBuilder findUsageBuilder = FindUsageSingularBuilder.builder()
       .bar("bar")
-      .fooDate(16061981, new Date())
+      .fooDate(16061981, new Date());
+
+    findUsageBuilder = FindUsageSingularBuilder.builder()
       .bars(Arrays.asList("bar1", "bar2"))
-      .fooDateMap(Collections.emptyMap())
+      .fooDateMap(Collections.emptyMap());
+
+    findUsageBuilder = FindUsageSingularBuilder.builder()
       .clearBars()
       .clearFooDateMap()
       .build();
