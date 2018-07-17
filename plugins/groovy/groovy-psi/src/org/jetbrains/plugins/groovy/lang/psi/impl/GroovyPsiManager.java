@@ -34,9 +34,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.InferenceKt;
 
 import java.util.List;
 import java.util.Map;
@@ -60,6 +62,7 @@ public class GroovyPsiManager {
   private final Map<String, GrTypeDefinition> myArrayClass = new HashMap<>();
 
   private final ConcurrentMap<GroovyPsiElement, PsiType> myCalculatedTypes = ContainerUtil.createConcurrentWeakMap();
+  private final ConcurrentMap<GrExpression, PsiType> topLevelTypes = ContainerUtil.createConcurrentWeakMap();
   private final ConcurrentMap<PsiMember, Boolean> myCompileStatic = ContainerUtil.createConcurrentWeakMap();
 
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("groovyPsiManager");
@@ -72,6 +75,7 @@ public class GroovyPsiManager {
 
   public void dropTypesCache() {
     myCalculatedTypes.clear();
+    topLevelTypes.clear();
     myCompileStatic.clear();
   }
 
@@ -146,6 +150,30 @@ public class GroovyPsiManager {
     }
     if (!type.isValid()) {
       error(element, type);
+    }
+    return UNKNOWN_TYPE == type ? null : type;
+  }
+
+  @Nullable
+  public PsiType getTopLevelType(@NotNull GrExpression expression) {
+    PsiType type = topLevelTypes.get(expression);
+    if (type == null) {
+      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      type = InferenceKt.getTopLevelType(expression);
+      if (type == null) {
+        type = UNKNOWN_TYPE;
+      }
+      if (stamp.mayCacheNow()) {
+        type = ConcurrencyUtil.cacheOrGet(topLevelTypes, expression, type);
+      } else {
+        final PsiType alreadyInferred = topLevelTypes.get(expression);
+        if (alreadyInferred != null) {
+          type = alreadyInferred;
+        }
+      }
+    }
+    if (!type.isValid()) {
+      error(expression, type);
     }
     return UNKNOWN_TYPE == type ? null : type;
   }
