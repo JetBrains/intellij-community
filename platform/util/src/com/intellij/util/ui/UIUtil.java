@@ -106,8 +106,8 @@ public class UIUtil {
     decorateWindowHeader(pane);
   }
   
-  public static void decorateWindowHeader(@NotNull JRootPane pane) {
-    if (SystemInfo.isMac) {
+  public static void decorateWindowHeader(JRootPane pane) {
+    if (pane != null && SystemInfo.isMac) {
       pane.putClientProperty("jetbrains.awt.windowDarkAppearance", Registry.is("ide.mac.allowDarkWindowDecorations") && isUnderDarcula());
     }
   }

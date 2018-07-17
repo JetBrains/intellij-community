@@ -4,134 +4,94 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.VcsTestUtil;
-import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.history.VcsAbstractHistorySession;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistorySessionConsumer;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.intellij.vcsUtil.VcsUtil.getFilePath;
+import static com.intellij.vcsUtil.VcsUtil.getFilePathOnNonLocal;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 public class SvnHistoryTest extends SvnTestCase {
+  private SubTree tree;
 
-  @Test
-  public void testRepositoryRootHistory() throws Exception {
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    final VcsHistoryProvider provider = vcs.getVcsHistoryProvider();
-    final SubTree tree = new SubTree(myWorkingCopyDir);
+
+    tree = new SubTree(myWorkingCopyDir);
     checkin();
 
     for (int i = 0; i < 10; i++) {
-      VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3\n4\n" + i);
+      editFileInCommand(tree.myS1File, "1\n2\n3\n4\n" + i);
       checkin();
     }
+  }
 
-    FilePath rootPath = VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(myRepoUrl, true);
-    int count = reportHistory(provider, rootPath, true);
+  @Test
+  public void testRepositoryRootHistory() throws Exception {
+    int count = reportHistory(getFilePathOnNonLocal(myRepoUrl, true), true);
     assertTrue(count > 0);
   }
 
   @Test
   public void testSimpleHistory() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    final VcsHistoryProvider provider = vcs.getVcsHistoryProvider();
-    final SubTree tree = new SubTree(myWorkingCopyDir);
-    checkin();
-
-    for (int i = 0; i < 10; i++) {
-      VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3\n4\n" + i);
-      checkin();
-    }
-
-    FilePath rootPath = VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(myRepoUrl + "/root/source/s1.txt", true);
-    int count = reportHistory(provider, rootPath);
+    int count = reportHistory(getFilePathOnNonLocal(myRepoUrl + "/root/source/s1.txt", true), false);
     assertEquals(11, count);
   }
 
   @Test
   public void testSimpleHistoryLocal() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    final VcsHistoryProvider provider = vcs.getVcsHistoryProvider();
-    final SubTree tree = new SubTree(myWorkingCopyDir);
-    checkin();
-
-    for (int i = 0; i < 10; i++) {
-      VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3\n4\n" + i);
-      checkin();
-    }
-
-    int count = reportHistory(provider, VcsUtil.getFilePath(tree.myS1File));
+    int count = reportHistory(tree.myS1File);
     assertEquals(11, count);
   }
 
   @Test
   public void testLocallyRenamedFileHistory() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    final VcsHistoryProvider provider = vcs.getVcsHistoryProvider();
-    final SubTree tree = new SubTree(myWorkingCopyDir);
-    checkin();
-
-    for (int i = 0; i < 10; i++) {
-      VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3\n4\n" + i);
-      checkin();
-    }
-
-    VcsTestUtil.renameFileInCommand(myProject, tree.myS1File, "renamed.txt");
+    renameFileInCommand(tree.myS1File, "renamed.txt");
     refreshChanges();
 
-    int count = reportHistory(provider, VcsUtil.getFilePath(tree.myS1File));
+    int count = reportHistory(tree.myS1File);
     assertEquals(11, count);
   }
 
   @Test
   public void testLocallyMovedToRenamedDirectory() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    final VcsHistoryProvider provider = vcs.getVcsHistoryProvider();
-    final SubTree tree = new SubTree(myWorkingCopyDir);
-    checkin();
-
-    for (int i = 0; i < 10; i++) {
-      VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3\n4\n" + i);
-      checkin();
-    }
-
-    VcsTestUtil.renameFileInCommand(myProject, tree.myTargetDir, "renamedTarget");
-    VcsTestUtil.moveFileInCommand(myProject, tree.myS1File, tree.myTargetDir);
+    renameFileInCommand(tree.myTargetDir, "renamedTarget");
+    moveFileInCommand(tree.myS1File, tree.myTargetDir);
     refreshChanges();
 
-    int count = reportHistory(provider, VcsUtil.getFilePath(tree.myS1File));
+    int count = reportHistory(tree.myS1File);
     assertEquals(11, count);
 
-    count = reportHistory(provider, VcsUtil.getFilePath(tree.myTargetDir));
+    count = reportHistory(tree.myTargetDir);
     assertEquals(1, count);
 
-    count = reportHistory(provider, VcsUtil.getFilePath(tree.myTargetFiles.get(0)));
+    count = reportHistory(tree.myTargetFiles.get(0));
     assertEquals(1, count);
   }
 
-  private static int reportHistory(@NotNull VcsHistoryProvider provider, @NotNull FilePath path) throws VcsException {
-    return reportHistory(provider, path, false);
+  private int reportHistory(@NotNull VirtualFile file) throws VcsException {
+    return reportHistory(getFilePath(file), false);
   }
 
-  private static int reportHistory(@NotNull VcsHistoryProvider provider, @NotNull FilePath path, boolean firstOnly) throws VcsException {
+  private int reportHistory(@NotNull FilePath path, boolean firstOnly) throws VcsException {
     Semaphore semaphore = new Semaphore();
     AtomicInteger count = new AtomicInteger();
 
     semaphore.down();
-    provider.reportAppendableHistory(path, new VcsHistorySessionConsumer() {
+    vcs.getVcsHistoryProvider().reportAppendableHistory(path, new VcsHistorySessionConsumer() {
       @Override
       public void reportCreatedEmptySession(VcsAbstractHistorySession session) {
       }

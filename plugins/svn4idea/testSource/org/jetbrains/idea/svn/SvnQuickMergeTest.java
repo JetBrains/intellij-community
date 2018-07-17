@@ -71,7 +71,6 @@ public class SvnQuickMergeTest extends SvnTestCase {
     //((ApplicationImpl) ApplicationManager.getApplication()).setRunPooledInTest(true);
 
     runInAndVerifyIgnoreOutput(virtualToIoFile(myWorkingCopyDir), "up");
-    Thread.sleep(10);
   }
 
   @Test
@@ -120,7 +119,6 @@ public class SvnQuickMergeTest extends SvnTestCase {
       sb.append("\nedited in branch ").append(i);
       VcsTestUtil.editFileInCommand(myProject, myBranchTree.myS1File, sb.toString());
       runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in branch " + i, myBranchTree.myS1File.getPath());
-      Thread.sleep(10);
     }
 
     AtomicReference<String> selectionError = new AtomicReference<>();
@@ -170,7 +168,6 @@ public class SvnQuickMergeTest extends SvnTestCase {
       sb.append("\nedited in branch ").append(i);
       VcsTestUtil.editFileInCommand(myProject, myBranchTree.myS1File, sb.toString());
       runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in branch " + i, myBranchTree.myS1File.getPath());
-      Thread.sleep(10);
     }
 
     // before copy
@@ -233,7 +230,6 @@ public class SvnQuickMergeTest extends SvnTestCase {
       sb.append("\nedited in branch ").append(i);
       VcsTestUtil.editFileInCommand(myProject, myBranchTree.myS1File, sb.toString());
       runInAndVerifyIgnoreOutput(myBranchRoot, "ci", "-m", "change in branch " + i, myBranchTree.myS1File.getPath());
-      Thread.sleep(10);
     }
 
     QuickMergeTestInteraction testInteraction = new QuickMergeTestInteraction(true, lists ->

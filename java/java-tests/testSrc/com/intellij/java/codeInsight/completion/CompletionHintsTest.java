@@ -1369,7 +1369,7 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
                           "}");
   }
 
-  public void testCaretMovementOverVirtualComma() throws Exception {
+  public void testCaretMovementOverVirtualComma() {
     enableVirtualComma();
 
     configureJava("class C { void m() { System.getPro<caret> } }");
@@ -1378,6 +1378,12 @@ public class CompletionHintsTest extends AbstractParameterInfoTestCase {
 
     right();
     checkResultWithInlays("class C { void m() { System.getProperty(<Hint text=\"key:\"/>, <HINT text=\"def:\"/><caret>) } }");
+  }
+
+  public void testHintsAreNotShownInImproperContext() {
+    configureJava("class C { void m() { int a = Math.ma<caret>5; } }");
+    complete("max(int a, int b)");
+    checkResult("class C { void m() { int a = Math.max(<caret>)5; } }");
   }
 
   private void checkResultWithInlays(String text) {

@@ -3,6 +3,7 @@
     <extensionPoint name="logProvider" interface="com.intellij.vcs.log.VcsLogProvider" area="IDEA_PROJECT"/>
     <extensionPoint name="logHighlighterFactory" interface="com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory"
                     area="IDEA_PROJECT"/>
+    <extensionPoint name="vcsLogIndexService" interface="com.intellij.vcs.log.VcsLogIndexService"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

@@ -43,7 +43,7 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
 
     checkin();
 
-    myWorkingCopyDir.refresh(false, true);
+    refreshVfs();
     imitateEvent(myWorkingCopyDir);
     // no dirty scope externally provided! just VFS refresh
     changeListManager.ensureUpToDate(false);
@@ -64,7 +64,7 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
 
     checkin();
 
-    myWorkingCopyDir.refresh(false, true);
+    refreshVfs();
     imitateEvent(myWorkingCopyDir);
     // no dirty scope externally provided! just VFS refresh
     changeListManager.ensureUpToDate(false);
@@ -80,7 +80,7 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
     runInAndVerifyIgnoreOutput("switch", branchUrl + "/root/target", tree.myTargetDir.getPath());
 
     sleep(50);
-    myWorkingCopyDir.refresh(false, true);
+    refreshVfs();
     imitateEvent(myWorkingCopyDir);
     // no dirty scope externally provided! just VFS refresh
     changeListManager.ensureUpToDate(false);
@@ -107,7 +107,7 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
 
     runInAndVerifyIgnoreOutput("switch", branchUrl, myWorkingCopyDir.getPath());
 
-    myWorkingCopyDir.refresh(false, true);
+    refreshVfs();
     imitateEvent(myWorkingCopyDir);
     sleep(300);
     // no dirty scope externally provided! just VFS refresh
@@ -143,7 +143,7 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
     runInAndVerifyIgnoreOutput("ci", "-m", "test", sourceDir.getPath());
     runInAndVerifyIgnoreOutput("ci", "-m", "test", externalDir.getPath());
 
-    myWorkingCopyDir.refresh(false, true);
+    refreshVfs();
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     imitateEvent(lfs.refreshAndFindFileByIoFile(sourceDir));
     imitateEvent(lfs.refreshAndFindFileByIoFile(externalDir));
