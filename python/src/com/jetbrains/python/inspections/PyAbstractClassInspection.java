@@ -16,6 +16,7 @@ import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
 import com.jetbrains.python.inspections.quickfix.PyImplementMethodsQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +53,11 @@ public class PyAbstractClassInspection extends PyInspection {
       final List<PyFunction> toImplement = PyOverrideImplementUtil.getAllSuperAbstractMethods(pyClass, myTypeEvalContext);
       final ASTNode nameNode = pyClass.getNameNode();
       if (!toImplement.isEmpty() && nameNode != null) {
-        final SmartList<LocalQuickFix> quickFixes = new SmartList<>(new PyImplementMethodsQuickFix(pyClass, toImplement));
+        final SmartList<LocalQuickFix> quickFixes = new SmartList<>(
+          new PyImplementMethodsQuickFix(pyClass, toImplement),
+          new SetABCMetaAsMetaclassQuickFix()
+        );
+
         if (LanguageLevel.forElement(pyClass).isPy3K()) {
           quickFixes.add(new AddABCToSuperclassesQuickFix());
         }
@@ -99,6 +104,28 @@ public class PyAbstractClassInspection extends PyInspection {
         if (abcClass == null) return;
 
         PyClassRefactoringUtil.addSuperclasses(project, cls, abcClass);
+      }
+    }
+
+    private static class SetABCMetaAsMetaclassQuickFix implements LocalQuickFix {
+
+      @Nls(capitalization = Nls.Capitalization.Sentence)
+      @NotNull
+      @Override
+      public String getFamilyName() {
+        return "Set '" + PyNames.ABC_META + "' as metaclass";
+      }
+
+      @Override
+      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+        final PyClass cls = PyUtil.as(descriptor.getPsiElement().getParent(), PyClass.class);
+        if (cls == null) return;
+
+        final PyClass abcMetaClass = PyPsiFacade.getInstance(project).createClassByQName(PyNames.ABC_META, cls);
+        if (abcMetaClass == null) return;
+
+        final TypeEvalContext context = TypeEvalContext.userInitiated(cls.getProject(), cls.getContainingFile());
+        PyClassRefactoringUtil.addMetaClassIfNotExist(cls, abcMetaClass, context);
       }
     }
   }

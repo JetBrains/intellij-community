@@ -4,7 +4,6 @@ package com.jetbrains.python;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.containers.ContainerUtil;
@@ -683,6 +682,15 @@ public class PyQuickFixTest extends PyTestCase {
 
   public void testAddKwargsToIncompatibleOverridingMethod() {
     doInspectionTest(PyMethodOverridingInspection.class, "<html>Change signature of m(self, <b>**kwargs</b>)</html>", true, true);
+  }
+
+  // PY-30789
+  public void testSetImportedABCMetaAsMetaclassPy2() {
+    doInspectionTest("PyAbstractClassInspection/quickFix/SetImportedABCMetaAsMetaclassPy2/main.py",
+                     PyAbstractClassInspection.class,
+                     "Set '" + PyNames.ABC_META + "' as metaclass",
+                     true,
+                     true);
   }
 
   @Override

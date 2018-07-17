@@ -116,7 +116,7 @@ class MethodsManager extends MembersManager<PyFunction> {
       final Project project = aClass.getProject();
       final PsiFile file = aClass.getContainingFile();
 
-      final PyClass abcMetaClass = PyPsiFacade.getInstance(project).createClassByQName("abc." + PyNames.ABC_META_CLASS, aClass);
+      final PyClass abcMetaClass = PyPsiFacade.getInstance(project).createClassByQName(PyNames.ABC_META, aClass);
       final TypeEvalContext context = TypeEvalContext.userInitiated(project, file);
 
       if (abcMetaClass != null && PyClassRefactoringUtil.addMetaClassIfNotExist(aClass, abcMetaClass, context)) {
