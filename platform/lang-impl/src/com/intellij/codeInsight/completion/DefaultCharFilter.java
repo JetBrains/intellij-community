@@ -19,12 +19,10 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 
-public class CompletionCharFilter extends CharFilter {
+public class DefaultCharFilter extends CharFilter {
 
   @Override
   public Result acceptChar(char c, final int prefixLength, final Lookup lookup) {
-    if (!lookup.isCompletion()) return null;
-
     if (Character.isJavaIdentifierPart(c)) return Result.ADD_TO_PREFIX;
     switch(c){
       case '.':
