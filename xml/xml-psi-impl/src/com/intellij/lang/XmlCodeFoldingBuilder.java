@@ -238,7 +238,7 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
   }
 
   @Nullable
-  private static String getEntityPlaceholder(@NotNull PsiElement psi) {
+  public static String getEntityPlaceholder(@NotNull PsiElement psi) {
     String text = psi.getText();
     String fastPath = StringUtil.unescapeXml(text);
     if (!StringUtil.equals(fastPath, text)) return fastPath;
@@ -246,18 +246,26 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
       final XmlEntityDecl resolve = XmlEntityRefImpl.resolveEntity((XmlElement)psi, text, psi.getContainingFile());
       final XmlAttributeValue value = resolve != null ? resolve.getValueElement() : null;
       if (value != null) {
-        return getEntityValue(value);
+        return getEntityValue(value.getValue());
       }
     }
     return null;
   }
 
-  private static String getEntityValue(XmlAttributeValue value) {
-    final String result = value.getValue();
-    final int i = result != null ? result.indexOf('#') : -1;
+  @Nullable
+  public static String getEntityValue(@Nullable String value) {
+    int i = value != null ? value.indexOf('#') : -1;
     if (i > 0) {
-      final int charNum = StringUtil.parseInt(StringUtil.trimEnd(result.substring(i + 1), ";"), -1);
-      return charNum >= 0 ? String.valueOf((char)charNum) : null;
+      int radix = 10;
+      String number = value.substring(i + 1);
+      if (StringUtil.startsWithIgnoreCase(number, "x")) {
+        radix = 16;
+        number = number.substring(1);
+      }
+      try {
+        final int charNum = Integer.parseInt(StringUtil.trimEnd(number, ";"), radix);
+        return String.valueOf((char)charNum);
+      } catch (Exception ignored) {}
     }
     return null;
   }
