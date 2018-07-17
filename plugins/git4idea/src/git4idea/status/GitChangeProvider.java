@@ -26,6 +26,8 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PairProcessor;
+import com.intellij.util.containers.Convertor;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
@@ -135,7 +137,7 @@ public class GitChangeProvider implements ChangeProvider {
     }
     inputColl.addAll(existingInScope);
     if (LOG.isDebugEnabled()) LOG.debug("appendNestedVcsRoots. collection to remove ancestors: " + inputColl);
-    FileUtil.removeAncestors(inputColl, o -> o.getPath(), (parent, child) -> {
+    removeAncestors(inputColl, o -> o.getPath(), (parent, child) -> {
                                if (!existingInScope.contains(child) && existingInScope.contains(parent)) {
                                  LOG.debug("adding git root for check. child: " + child.getPath() + ", parent: " + parent.getPath());
                                  ((VcsModifiableDirtyScope)dirtyScope).addDirtyDirRecursively(VcsUtil.getFilePath(child));
@@ -143,6 +145,40 @@ public class GitChangeProvider implements ChangeProvider {
                                return true;
                              }
     );
+  }
+
+  private static <T> Collection<T> removeAncestors(final Collection<T> files,
+                                                   final Convertor<T, String> convertor,
+                                                   final PairProcessor<T, T> removeProcessor) {
+    if (files.isEmpty()) return files;
+    final TreeMap<String, T> paths = new TreeMap<String, T>();
+    for (T file : files) {
+      final String path = convertor.convert(file);
+      assert path != null;
+      final String canonicalPath = FileUtil.toCanonicalPath(path);
+      paths.put(canonicalPath, file);
+    }
+    final List<Map.Entry<String, T>> ordered = new ArrayList<Map.Entry<String, T>>(paths.entrySet());
+    final List<T> result = new ArrayList<T>(ordered.size());
+    result.add(ordered.get(0).getValue());
+    for (int i = 1; i < ordered.size(); i++) {
+      final Map.Entry<String, T> entry = ordered.get(i);
+      final String child = entry.getKey();
+      boolean parentNotFound = true;
+      for (int j = i - 1; j >= 0; j--) {
+        // possible parents
+        final String parent = ordered.get(j).getKey();
+        if (parent == null) continue;
+        if (FileUtil.startsWith(child, parent) && removeProcessor.process(ordered.get(j).getValue(), entry.getValue())) {
+          parentNotFound = false;
+          break;
+        }
+      }
+      if (parentNotFound) {
+        result.add(entry.getValue());
+      }
+    }
+    return result;
   }
 
   private boolean isNewGitChangeProviderAvailable() {
