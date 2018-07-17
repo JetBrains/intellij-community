@@ -374,12 +374,22 @@ public class PsiManagerImpl extends PsiManagerEx {
       boolean enableOutOfCodeBlockTracking = ((PsiModificationTrackerImpl)myModificationTracker).isEnableCodeBlockTracker();
       for (PsiTreeChangePreprocessor preprocessor : Extensions.getExtensions(PsiTreeChangePreprocessor.EP_NAME, myProject)) {
         if (!enableOutOfCodeBlockTracking && preprocessor instanceof PsiTreeChangePreprocessorBase) continue;
-        preprocessor.treeChanged(event);
+        try {
+          preprocessor.treeChanged(event);
+        }
+        catch (Throwable e) {
+          LOG.error(e);
+        }
       }
       if (!enableOutOfCodeBlockTracking) {
         for (PsiTreeChangePreprocessor preprocessor : Extensions.getExtensions(PsiTreeChangePreprocessor.EP_NAME, myProject)) {
           if (!(preprocessor instanceof PsiTreeChangePreprocessorBase)) continue;
-          ((PsiTreeChangePreprocessorBase)preprocessor).onOutOfCodeBlockModification(event);
+          try {
+            ((PsiTreeChangePreprocessorBase)preprocessor).onOutOfCodeBlockModification(event);
+          }
+          catch (Throwable e) {
+            LOG.error(e);
+          }
         }
       }
 
@@ -435,7 +445,7 @@ public class PsiManagerImpl extends PsiManagerEx {
               break;
           }
         }
-        catch (Exception e) {
+        catch (Throwable e) {
           LOG.error(e);
         }
       }
