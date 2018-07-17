@@ -21,7 +21,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -139,9 +138,7 @@ public class GitChangeProvider implements ChangeProvider {
 
     final TreeMap<String, VirtualFile> paths = new TreeMap<>();
     for (VirtualFile file : inputColl) {
-      final String path = file.getPath();
-      final String canonicalPath = FileUtil.toCanonicalPath(path);
-      paths.put(canonicalPath, file);
+      paths.put(file.getPath(), file);
     }
     final List<Map.Entry<String, VirtualFile>> ordered = new ArrayList<>(paths.entrySet());
     for (int i = 1; i < ordered.size(); i++) {
