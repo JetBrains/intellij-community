@@ -4,10 +4,8 @@ package com.intellij.execution.ui;
 import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
+import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.macro.EditorMacro;
-import com.intellij.ide.macro.MacrosDialog;
-import com.intellij.ide.macro.PromptingMacro;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
@@ -17,12 +15,9 @@ import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.TextAccessor;
-import com.intellij.ui.components.fields.ExpandableTextField;
-import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -79,12 +74,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
   protected void initComponents() {
     myProgramParametersComponent = LabeledComponent.create(new RawCommandLineEditor(),
                                                            ExecutionBundle.message("run.configuration.program.parameters"));
-    ExpandableTextField expandableTextField = (ExpandableTextField)myProgramParametersComponent.getComponent().getTextField();
-    if (Registry.is("allow.macros.for.run.configurations")) {
-      expandableTextField.addExtension(ExtendableTextComponent.Extension.create(AllIcons.General.Add, "Insert Macros", ()
-        -> MacrosDialog.show(expandableTextField, macro -> !(macro instanceof PromptingMacro) && !(macro instanceof EditorMacro))));
-    }
-
+    ProgramParametersConfigurator.addMacroSupport(myProgramParametersComponent.getComponent().getTextField());
     FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     //noinspection DialogTitleCapitalization
     fileChooserDescriptor.setTitle(ExecutionBundle.message("select.working.directory.message"));
