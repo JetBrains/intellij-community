@@ -488,9 +488,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         registerReDetectedMappings(pair);
       }
     }
-    // Resolve unresolved mappings initialized before certain plugin initialized.
-    for (StandardFileType pair : myStandardFileTypes.values()) {
-      bindUnresolvedMappings(pair.fileType);
+
+    // resolve unresolved mappings initialized before certain plugin initialized
+    if (!myUnresolvedMappings.isEmpty()) {
+      for (StandardFileType pair : myStandardFileTypes.values()) {
+        bindUnresolvedMappings(pair.fileType);
+      }
     }
 
     boolean isAtLeastOneStandardFileTypeHasBeenRead = false;
