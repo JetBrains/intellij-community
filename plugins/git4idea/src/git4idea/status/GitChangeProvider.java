@@ -21,11 +21,13 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
@@ -136,17 +138,14 @@ public class GitChangeProvider implements ChangeProvider {
     inputColl.addAll(existingInScope);
     if (LOG.isDebugEnabled()) LOG.debug("appendNestedVcsRoots. collection to remove ancestors: " + inputColl);
 
-    final TreeMap<String, VirtualFile> paths = new TreeMap<>();
-    for (VirtualFile file : inputColl) {
-      paths.put(file.getPath(), file);
-    }
-    final List<Map.Entry<String, VirtualFile>> ordered = new ArrayList<>(paths.entrySet());
+    final List<VirtualFile> ordered = ContainerUtil.sorted(inputColl, (vf1, vf2) -> {
+      return StringUtil.compare(vf1.getPath(), vf2.getPath(), false);
+    });
     for (int i = 1; i < ordered.size(); i++) {
-      final Map.Entry<String, VirtualFile> entry = ordered.get(i);
-      final VirtualFile childVf = entry.getValue();
+      final VirtualFile childVf = ordered.get(i);
       for (int j = i - 1; j >= 0; j--) {
         // possible parents
-        final VirtualFile parentVf = ordered.get(j).getValue();
+        final VirtualFile parentVf = ordered.get(j);
         if (VfsUtilCore.isAncestor(parentVf, childVf, false)) {
           if (!existingInScope.contains(childVf) && existingInScope.contains(parentVf)) {
             LOG.debug("adding git root for check. child: " + childVf.getPath() + ", parent: " + parentVf.getPath());
