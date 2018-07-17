@@ -1222,6 +1222,15 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     }
 
+    // https://youtrack.jetbrains.com/issue/IDEA-138366
+    for (Map.Entry<FileNameMatcher, Pair<FileType, Boolean>> entry : myRemovedMappings.entrySet()) {
+      Pair<FileType, Boolean> value = entry.getValue();
+      Element content = AbstractFileType.writeRemovedMapping(value.first, entry.getKey(), true, value.second);
+      if (content != null) {
+        map.addContent(content);
+      }
+    }
+
     if (!myUnresolvedMappings.isEmpty()) {
       FileNameMatcher[] unresolvedMappingKeys = myUnresolvedMappings.keySet().toArray(new FileNameMatcher[0]);
       Arrays.sort(unresolvedMappingKeys, Comparator.comparing(FileNameMatcher::getPresentableString));
