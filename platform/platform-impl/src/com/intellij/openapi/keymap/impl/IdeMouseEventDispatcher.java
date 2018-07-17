@@ -422,7 +422,7 @@ public final class IdeMouseEventDispatcher {
 
   public static void requestFocusInNonFocusedWindow(@NotNull MouseEvent event) {
     if (event.getID() == MOUSE_PRESSED) {
-      // request focus by mouse pressed before it settles down
+      // request focus by mouse pressed before focus settles down
       requestFocusInNonFocusedWindow(event.getComponent());
     }
   }
@@ -445,6 +445,8 @@ public final class IdeMouseEventDispatcher {
   private static Container findFocusTraversalPolicyProvider(@Nullable Component component) {
     Container container = component == null || component instanceof Container ? (Container)component : component.getParent();
     while (container != null) {
+      // ensure that container is focus cycle root and provides focus traversal policy
+      // it means that Container.getFocusTraversalPolicy() returns non-null object
       if (container.isFocusCycleRoot() && container.isFocusTraversalPolicyProvider()) return container;
       container = container.getParent();
     }
