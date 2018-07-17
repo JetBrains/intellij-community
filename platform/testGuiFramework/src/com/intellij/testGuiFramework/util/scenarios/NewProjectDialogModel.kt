@@ -465,7 +465,7 @@ fun NewProjectDialogModel.setCheckboxValue(name: String, value: Boolean) {
       val maxAttempts = 3
       val check = checkbox(name)
       while (check.isSelected != value && attempts <= maxAttempts) {
-        logUIStep("setCheckboxValue #${attempts + 1}: ${check.target().name} = ${check.isSelected}, expected value = $value")
+        logUIStep("setCheckboxValue #${attempts + 1}: ${check.target().text} = ${check.isSelected}, expected value = $value")
         check.click()
         Pause.pause(500L)
         attempts++
