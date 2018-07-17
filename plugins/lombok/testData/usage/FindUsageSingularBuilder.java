@@ -11,10 +11,10 @@ import java.util.*;
 public class FindUsageSingularBuilder {
 
   @Singular("fooDate")
-  private Map<Integer, Date> m<caret>FooDateMap;
+  private Map<Integer, Date> mFooDateMap;
 
   @Singular
-  private List<String> mBars;
+  private List<String> mB<caret>ars;
 
   public static void main(String[] args) {
     FindUsageSingularBuilder findUsageBuilder = FindUsageSingularBuilder.builder()
