@@ -6,6 +6,7 @@ import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.startup.StartupManager;
@@ -43,6 +44,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
+import org.junit.rules.ExternalResource;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,9 +67,14 @@ import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
-public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
-  @ClassRule
-  public static final ApplicationRule appRule = new ApplicationRule();
+public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
+  @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
+  @ClassRule public static final ExternalResource ideaTempDirectoryRule = new ExternalResource() {
+    @Override
+    protected void before() throws Throwable {
+      ensureExists(new File(PathManager.getTempPath()));
+    }
+  };
 
   protected TempDirTestFixture myTempDirFixture;
   protected Url myRepositoryUrl;
