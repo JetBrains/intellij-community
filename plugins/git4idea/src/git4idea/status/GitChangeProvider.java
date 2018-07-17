@@ -147,10 +147,10 @@ public class GitChangeProvider implements ChangeProvider {
     );
   }
 
-  private static <T> Collection<T> removeAncestors(final Collection<T> files,
-                                                   final Convertor<T, String> convertor,
-                                                   final PairProcessor<T, T> removeProcessor) {
-    if (files.isEmpty()) return files;
+  private static <T> void removeAncestors(final Collection<T> files,
+                                          final Convertor<T, String> convertor,
+                                          final PairProcessor<T, T> removeProcessor) {
+    if (files.isEmpty()) return;
     final TreeMap<String, T> paths = new TreeMap<String, T>();
     for (T file : files) {
       final String path = convertor.convert(file);
@@ -159,26 +159,18 @@ public class GitChangeProvider implements ChangeProvider {
       paths.put(canonicalPath, file);
     }
     final List<Map.Entry<String, T>> ordered = new ArrayList<Map.Entry<String, T>>(paths.entrySet());
-    final List<T> result = new ArrayList<T>(ordered.size());
-    result.add(ordered.get(0).getValue());
     for (int i = 1; i < ordered.size(); i++) {
       final Map.Entry<String, T> entry = ordered.get(i);
       final String child = entry.getKey();
-      boolean parentNotFound = true;
       for (int j = i - 1; j >= 0; j--) {
         // possible parents
         final String parent = ordered.get(j).getKey();
         if (parent == null) continue;
         if (FileUtil.startsWith(child, parent) && removeProcessor.process(ordered.get(j).getValue(), entry.getValue())) {
-          parentNotFound = false;
           break;
         }
       }
-      if (parentNotFound) {
-        result.add(entry.getValue());
-      }
     }
-    return result;
   }
 
   private boolean isNewGitChangeProviderAvailable() {
