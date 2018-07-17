@@ -425,6 +425,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
 
     myFileSystemTree.addListener(new FileSystemTree.Listener() {
       public void selectionChanged(final List<VirtualFile> selection) {
+        // myTreeIsUpdating makes no sense for AsyncTreeModel
+        if (myTreeIsUpdating && myFileSystemTree.getTreeBuilder() == null) myTreeIsUpdating = false;
         updatePathFromTree(selection, false);
       }
     }, myDisposable);
