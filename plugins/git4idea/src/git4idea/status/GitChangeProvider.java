@@ -162,12 +162,16 @@ public class GitChangeProvider implements ChangeProvider {
     for (int i = 1; i < ordered.size(); i++) {
       final Map.Entry<String, VirtualFile> entry = ordered.get(i);
       final String child = entry.getKey();
+      final VirtualFile childVf = entry.getValue();
       for (int j = i - 1; j >= 0; j--) {
         // possible parents
         final String parent = ordered.get(j).getKey();
+        final VirtualFile parentVf = ordered.get(j).getValue();
         if (parent == null) continue;
-        if (FileUtil.startsWith(child, parent) && removeProcessor.process(ordered.get(j).getValue(), entry.getValue())) {
-          break;
+        if (FileUtil.startsWith(child, parent)) {
+          if (removeProcessor.process(parentVf, childVf)) {
+            break;
+          }
         }
       }
     }
