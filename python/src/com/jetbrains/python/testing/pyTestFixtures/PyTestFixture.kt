@@ -81,7 +81,7 @@ private val pyTestName = PyTestFrameworkService.getSdkReadableNameByFramework(Py
  *
  * @param forWhat function that you want to use fixtures with. Could be test or fixture itself.
  *
- * @return List<PyFunction> all py.test fixtures in project
+ * @return List<PyFunction> all pytest fixtures in project
  */
 internal fun getFixtures(module: Module, forWhat: PyFunction, typeEvalContext: TypeEvalContext): List<PyTestFixture> {
   // Fixtures could be used only by test functions or other fixtures.

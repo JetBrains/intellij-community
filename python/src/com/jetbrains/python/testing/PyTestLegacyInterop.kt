@@ -240,7 +240,7 @@ private abstract class LegacyConfigurationManager<
    * This method should be called from AWT thread only
    *
    * Copies config from legacy to new configuration.
-   * Used by all runners but py.test which has very different settings
+   * Used by all runners but pytest which has very different settings
    */
   open fun copyFromLegacy() {
     Preconditions.checkState(SwingUtilities.isEventDispatchThread(), "Run on AWT thread only")
@@ -272,7 +272,7 @@ private class LegacyConfigurationManagerPyTest(newConfig: PyTestConfiguration) :
   LegacyConfigurationManager<PyTestRunConfiguration, PyTestConfiguration>(
     PythonTestConfigurationType.getInstance().LEGACY_PYTEST_FACTORY, newConfig) {
   /**
-   * In Py.test target is provided as keywords, joined with "and".
+   * In Pytest target is provided as keywords, joined with "and".
    * "function_foo", "MyClass" or "MyClass and my_method" could be used here.
    */
   private val KEYWORDS_SPLIT_PATTERN = java.util.regex.Pattern.compile("\\s+and\\s+", java.util.regex.Pattern.CASE_INSENSITIVE)

@@ -8,7 +8,7 @@ import com.jetbrains.python.testing.PyTestFunctionParameterProvider
 import icons.PythonIcons
 
 /**
- * Test fixtures for py.test tests and other fixtures
+ * Test fixtures for pytest tests and other fixtures
  */
 internal object PyTestFixtureAsParameterProvider : PyTestFunctionParameterProvider {
   override fun getArguments(function: PyFunction, evalContext: TypeEvalContext, module: Module) =
