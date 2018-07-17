@@ -1249,10 +1249,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     Set<FileNameMatcher> defaultAssociations = new THashSet<>(myInitialAssociations.getAssociations(type));
 
     for (FileNameMatcher matcher : associations) {
-      if (defaultAssociations.contains(matcher)) {
-        defaultAssociations.remove(matcher);
-      }
-      else if (shouldSave(type)) {
+      boolean isDefaultAssociationContains = defaultAssociations.remove(matcher);
+      if (!isDefaultAssociationContains && shouldSave(type)) {
         Element content = AbstractFileType.writeMapping(type.getName(), matcher, specifyTypeName);
         if (content != null) {
           map.addContent(content);
