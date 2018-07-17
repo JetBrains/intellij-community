@@ -21,12 +21,10 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitRevisionNumber;
@@ -118,32 +116,24 @@ public class GitChangeProvider implements ChangeProvider {
       return;
     }
 
-    final Set<VirtualFile> rootsUnderGit = new HashSet<>(Arrays.asList(vcsManager.getRootsUnderVcs(vcs)));
-    final Set<VirtualFile> inputColl = new HashSet<>(rootsUnderGit);
-    final Set<VirtualFile> existingInScope = new HashSet<>();
+    VirtualFile[] rootsUnderGit = vcsManager.getRootsUnderVcs(vcs);
+
+    Set<VirtualFile> dirtyDirs = new HashSet<>();
     for (FilePath dir : recursivelyDirtyDirectories) {
       VirtualFile vf = VcsUtil.getVirtualFileWithRefresh(dir.getIOFile());
       if (vf != null) {
-        existingInScope.add(vf);
+        dirtyDirs.add(vf);
       }
     }
-    inputColl.addAll(existingInScope);
-    if (LOG.isDebugEnabled()) LOG.debug("appendNestedVcsRoots. collection to remove ancestors: " + inputColl);
 
-    final List<VirtualFile> ordered = ContainerUtil.sorted(inputColl, (vf1, vf2) -> {
-      return StringUtil.compare(vf1.getPath(), vf2.getPath(), false);
-    });
-    for (int i = 1; i < ordered.size(); i++) {
-      final VirtualFile childVf = ordered.get(i);
-      for (int j = i - 1; j >= 0; j--) {
-        // possible parents
-        final VirtualFile parentVf = ordered.get(j);
-        if (VfsUtilCore.isAncestor(parentVf, childVf, false)) {
-          if (!existingInScope.contains(childVf) && existingInScope.contains(parentVf)) {
-            LOG.debug("adding git root for check. child: " + childVf.getPath() + ", parent: " + parentVf.getPath());
-            ((VcsModifiableDirtyScope)dirtyScope).addDirtyDirRecursively(VcsUtil.getFilePath(childVf));
-            break;
-          }
+    for (VirtualFile root : rootsUnderGit) {
+      if (dirtyDirs.contains(root)) continue;
+
+      for (VirtualFile dirtyDir : dirtyDirs) {
+        if (VfsUtilCore.isAncestor(dirtyDir, root, false)) {
+          LOG.debug("adding git root for check. root: " + root.getPath() + ", dir: " + dirtyDir.getPath());
+          ((VcsModifiableDirtyScope)dirtyScope).addDirtyDirRecursively(VcsUtil.getFilePath(root));
+          break;
         }
       }
     }
