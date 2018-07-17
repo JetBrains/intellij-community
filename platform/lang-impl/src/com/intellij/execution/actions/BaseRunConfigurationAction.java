@@ -16,9 +16,7 @@
 
 package com.intellij.execution.actions;
 
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ProgramRunnerUtil;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.execution.*;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.LocatableConfiguration;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
@@ -95,7 +93,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   }
 
   @NotNull
-  private AnAction runAllConfigurationsAction(@NotNull ConfigurationContext context, @NotNull List<ConfigurationFromContext> producers) {
+  private AnAction runAllConfigurationsAction(@NotNull ConfigurationContext context, @NotNull List<ConfigurationFromContext> configurationsFromContext) {
     return new AnAction(
       "Run all",
       "Run all configurations available in this context",
@@ -103,8 +101,13 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     ) {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        for (ConfigurationFromContext producer : producers) {
-          perform(producer, context);
+        GroupRunId groupRunId = new GroupRunId("Run all configurations from alternative context");
+        for (ConfigurationFromContext configuration : configurationsFromContext) {
+          RunConfigurationGroupUtil.setGroupRunId(configuration.getConfiguration(), groupRunId);
+        }
+
+        for (ConfigurationFromContext configuration : configurationsFromContext) {
+          perform(configuration, context);
         }
       }
     };
