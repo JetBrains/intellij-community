@@ -54,12 +54,6 @@ internal fun PyFunction.isFixture() = decoratorList?.findDecorator(decoratorName
 data class PyTestFixture(val function: PyFunction, val resolveTarget: PyElement, val name: String)
 
 
-/**
- *
- * @param module Module
- * @param name String
- * @return (kotlin.collections.MutableCollection<(com.jetbrains.python.psi.PyDecorator..com.jetbrains.python.psi.PyDecorator?)>..kotlin.collections.Collection<(com.jetbrains.python.psi.PyDecorator..com.jetbrains.python.psi.PyDecorator?)>?)
- */
 fun findDecoratorsByName(module: Module, name: String): Iterable<PyDecorator> =
   StubIndex.getElements(PyDecoratorStubIndex.KEY, name, module.project,
                         GlobalSearchScope.union(
