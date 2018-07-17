@@ -49,6 +49,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.HintUpdateSupply;
+import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.ui.table.JBTable;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
@@ -260,7 +261,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     Runnable itemChosenCallback = prepareTable(table, editor, popupPosition, handler, maxUsages, options, isPreviewMode);
 
     @Nullable final JBPopup popup = isPreviewMode ? null : createUsagePopup(usages, visibleNodes, handler, editor, popupPosition,
-                                           maxUsages, usageView, options, table, itemChosenCallback, presentation, processIcon);
+                                           maxUsages, usageView, options, table, itemChosenCallback, presentation, processIcon, project);
     if (popup != null) {
       Disposer.register(popup, usageView);
 
@@ -615,7 +616,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
                                    @NotNull final JTable table,
                                    @NotNull final Runnable itemChoseCallback,
                                    @NotNull final UsageViewPresentation presentation,
-                                   @NotNull final AsyncProcessIcon processIcon) {
+                                   @NotNull final AsyncProcessIcon processIcon,
+                                   @NotNull Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     PopupChooserBuilder builder = JBPopupFactory.getInstance().createPopupChooserBuilder(table);
@@ -683,7 +685,13 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     final JComponent toolBar = actionToolbar.getComponent();
     toolBar.setOpaque(false);
     builder.setSettingButton(toolBar);
-    builder.setCancelKeyEnabled(false); 
+    builder.setCancelKeyEnabled(false);
+
+    PopupUpdateProcessor processor = new PopupUpdateProcessor(project) {
+      @Override
+      public void updatePopup(Object lookupItemObject) {/*not used*/}
+    };
+    builder.addListener(processor);
 
     popup[0] = builder.createPopup();
     JComponent content = popup[0].getContent();
